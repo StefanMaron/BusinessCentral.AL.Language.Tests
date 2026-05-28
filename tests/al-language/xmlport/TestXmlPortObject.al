@@ -130,7 +130,7 @@ codeunit 60206 "Test XmlPort Object"
         PrepareUniversalImportStream(InStr);
 
         ClearLastError();
-        Ok := XmlPort.Import(60023, InStr);
+        Ok := TryStaticImportUniversalXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('XmlPort.Import(Integer, InStream) must report success for a valid XmlPort and XML payload. LastError=%1', ErrorText));
@@ -142,6 +142,12 @@ codeunit 60206 "Test XmlPort Object"
     begin
         UniversalXmlPort.SetSource(InStr);
         UniversalXmlPort.Import();
+    end;
+
+    [TryFunction]
+    local procedure TryStaticImportUniversalXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60023, InStr);
     end;
 
     local procedure Initialize()
@@ -201,6 +207,7 @@ codeunit 60206 "Test XmlPort Object"
         UniversalXmlPort.SetDestination(OutStr);
         Ok := UniversalXmlPort.Export();
         Assert.IsTrue(Ok, 'Source XmlPort export must succeed before import roundtrip assertions');
+        BlobRec.Modify();
 
         DeleteUniversalRows();
 

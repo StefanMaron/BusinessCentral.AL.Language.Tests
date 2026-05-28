@@ -53,7 +53,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PrepareParentChildImportStream(InStr);
 
         ClearLastError();
-        Ok := XmlPort.Import(60024, InStr);
+        Ok := TryImportParentChildXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('Nested XmlPort import must report success. LastError=%1', ErrorText));
@@ -99,7 +99,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PrepareVariableImportStream(InStr);
 
         ClearLastError();
-        Ok := XmlPort.Import(60025, InStr);
+        Ok := TryImportVariableXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('Variable XmlPort import must report success. LastError=%1', ErrorText));
@@ -122,7 +122,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PreparePartialUniversalImportStream(InStr, 1, 99, 'Keep');
 
         ClearLastError();
-        Ok := XmlPort.Import(60026, InStr);
+        Ok := TryImportUpdateXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('AutoUpdate XmlPort import must report success. LastError=%1', ErrorText));
@@ -145,7 +145,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PreparePartialUniversalImportStream(InStr, 1, 99, 'Keep');
 
         ClearLastError();
-        Ok := XmlPort.Import(60027, InStr);
+        Ok := TryImportReplaceXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('AutoReplace XmlPort import must report success. LastError=%1', ErrorText));
@@ -167,7 +167,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PrepareFullUniversalImportStream(InStr, 1, 10, 'First');
 
         ClearLastError();
-        Ok := XmlPort.Import(60028, InStr);
+        Ok := TryImportManualXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('Manual XmlPort import must report success. LastError=%1', ErrorText));
@@ -188,7 +188,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PrepareFullUniversalImportStream(InStr, 1, 42, 'After');
 
         ClearLastError();
-        Ok := XmlPort.Import(60028, InStr);
+        Ok := TryImportManualXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('Manual XmlPort modify path must report success. LastError=%1', ErrorText));
@@ -210,7 +210,7 @@ codeunit 60207 "Test XmlPort Advanced"
         PrepareFullUniversalImportStream(InStr, 1, 10, 'Temp');
 
         ClearLastError();
-        Ok := XmlPort.Import(60029, InStr);
+        Ok := TryImportTemporaryXmlPort(InStr);
         ErrorText := GetLastErrorText();
 
         Assert.IsTrue(Ok, StrSubstNo('UseTemporary XmlPort import must report success. LastError=%1', ErrorText));
@@ -302,6 +302,7 @@ codeunit 60207 "Test XmlPort Advanced"
         ParentChildXmlPort.SetDestination(OutStr);
         Ok := ParentChildXmlPort.Export();
         Assert.IsTrue(Ok, 'Parent/child XmlPort export must succeed before import roundtrip assertions');
+        BlobRec.Modify();
 
         DeleteParentChildRows();
 
@@ -323,6 +324,7 @@ codeunit 60207 "Test XmlPort Advanced"
         VariableXmlPort.SetDestination(OutStr);
         Ok := VariableXmlPort.Export();
         Assert.IsTrue(Ok, 'Variable XmlPort export must succeed before import roundtrip assertions');
+        BlobRec.Modify();
 
         DeleteUniversalRows();
 
@@ -402,6 +404,42 @@ codeunit 60207 "Test XmlPort Advanced"
     begin
         Child.DeleteAll(false);
         Parent.DeleteAll(false);
+    end;
+
+    [TryFunction]
+    local procedure TryImportParentChildXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60024, InStr);
+    end;
+
+    [TryFunction]
+    local procedure TryImportVariableXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60025, InStr);
+    end;
+
+    [TryFunction]
+    local procedure TryImportUpdateXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60026, InStr);
+    end;
+
+    [TryFunction]
+    local procedure TryImportReplaceXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60027, InStr);
+    end;
+
+    [TryFunction]
+    local procedure TryImportManualXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60028, InStr);
+    end;
+
+    [TryFunction]
+    local procedure TryImportTemporaryXmlPort(var InStr: InStream)
+    begin
+        XmlPort.Import(60029, InStr);
     end;
 
     local procedure WritePartialUniversalXml(var OutStr: OutStream; EntryNo: Integer; IntegerValue: Integer)
