@@ -201,15 +201,6 @@ codeunit 60206 "Test XmlPort Object"
 
     local procedure StageUniversalImportBlobText(var BlobRec: Record "ALT Blob" temporary)
     var
-        XmlText: Text;
-    begin
-        XmlText := GetUniversalImportXmlText();
-        StageTempBlobFromText(BlobRec, XmlText);
-    end;
-
-    local procedure GetUniversalImportXmlText(): Text
-    var
-        BlobRec: Record "ALT Blob";
         OutStr: OutStream;
         UniversalXmlPort: XmlPort "ALT Universal XmlPort";
         Ok: Boolean;
@@ -217,17 +208,13 @@ codeunit 60206 "Test XmlPort Object"
         InsertUniversalRow(1, 10, 'First');
         InsertUniversalRow(2, 20, 'Second');
 
-        PrepareBlobOutStream('XP_SRC', BlobRec, OutStr);
+        PrepareTempBlobOutStream(BlobRec, OutStr);
         UniversalXmlPort.SetDestination(OutStr);
         Ok := UniversalXmlPort.Export();
         Assert.IsTrue(Ok, 'Source XmlPort export must succeed before import roundtrip assertions');
-        BlobRec.Modify();
-        exit(ReadBlobText('XP_SRC'));
     end;
 
-    local procedure StageTempBlobFromText(var BlobRec: Record "ALT Blob" temporary; XmlText: Text)
-    var
-        OutStr: OutStream;
+    local procedure PrepareTempBlobOutStream(var BlobRec: Record "ALT Blob" temporary; var OutStr: OutStream)
     begin
         BlobRec.Reset();
         if BlobRec.FindFirst() then
@@ -236,6 +223,13 @@ codeunit 60206 "Test XmlPort Object"
         BlobRec.Code := 'TMP';
         BlobRec.Insert();
         BlobRec.Data.CreateOutStream(OutStr);
+    end;
+
+    local procedure StageTempBlobFromText(var BlobRec: Record "ALT Blob" temporary; XmlText: Text)
+    var
+        OutStr: OutStream;
+    begin
+        PrepareTempBlobOutStream(BlobRec, OutStr);
         OutStr.WriteText(XmlText);
     end;
 

@@ -305,15 +305,6 @@ codeunit 60207 "Test XmlPort Advanced"
 
     local procedure StageParentChildImportBlobText(var BlobRec: Record "ALT Blob" temporary)
     var
-        XmlText: Text;
-    begin
-        XmlText := GetParentChildImportXmlText();
-        StageTempBlobFromText(BlobRec, XmlText);
-    end;
-
-    local procedure GetParentChildImportXmlText(): Text
-    var
-        BlobRec: Record "ALT Blob";
         OutStr: OutStream;
         ParentChildXmlPort: XmlPort "ALT Parent Child XmlPort";
         Ok: Boolean;
@@ -322,37 +313,24 @@ codeunit 60207 "Test XmlPort Advanced"
         InsertChild(10, 1, 'C10', 15);
         InsertChild(11, 1, 'C11', 25);
 
-        PrepareBlobOutStream('XPA_SRC1', BlobRec, OutStr);
+        PrepareTempBlobOutStream(BlobRec, OutStr);
         ParentChildXmlPort.SetDestination(OutStr);
         Ok := ParentChildXmlPort.Export();
         Assert.IsTrue(Ok, 'Parent/child XmlPort export must succeed before import roundtrip assertions');
-        BlobRec.Modify();
-        exit(ReadBlobText('XPA_SRC1'));
     end;
 
     local procedure StageVariableImportBlobText(var BlobRec: Record "ALT Blob" temporary)
     var
-        XmlText: Text;
-    begin
-        XmlText := GetVariableImportXmlText();
-        StageTempBlobFromText(BlobRec, XmlText);
-    end;
-
-    local procedure GetVariableImportXmlText(): Text
-    var
-        BlobRec: Record "ALT Blob";
         OutStr: OutStream;
         VariableXmlPort: XmlPort "ALT Variable XmlPort";
         Ok: Boolean;
     begin
         InsertUniversalRow(1, 3, 'alpha', '');
 
-        PrepareBlobOutStream('XPA_SRC2', BlobRec, OutStr);
+        PrepareTempBlobOutStream(BlobRec, OutStr);
         VariableXmlPort.SetDestination(OutStr);
         Ok := VariableXmlPort.Export();
         Assert.IsTrue(Ok, 'Variable XmlPort export must succeed before import roundtrip assertions');
-        BlobRec.Modify();
-        exit(ReadBlobText('XPA_SRC2'));
     end;
 
     local procedure StagePartialUniversalImportBlob(var BlobRec: Record "ALT Blob" temporary; EntryNo: Integer; IntegerValue: Integer; ExistingTextValue: Text)
@@ -381,6 +359,12 @@ codeunit 60207 "Test XmlPort Advanced"
     var
         OutStr: OutStream;
     begin
+        PrepareTempBlobOutStream(BlobRec, OutStr);
+        OutStr.WriteText(XmlText);
+    end;
+
+    local procedure PrepareTempBlobOutStream(var BlobRec: Record "ALT Blob" temporary; var OutStr: OutStream)
+    begin
         BlobRec.Reset();
         if BlobRec.FindFirst() then
             BlobRec.DeleteAll();
@@ -388,7 +372,6 @@ codeunit 60207 "Test XmlPort Advanced"
         BlobRec.Code := 'TMP';
         BlobRec.Insert();
         BlobRec.Data.CreateOutStream(OutStr);
-        OutStr.WriteText(XmlText);
     end;
 
     local procedure OpenTempBlobInStream(var BlobRec: Record "ALT Blob" temporary; var InStr: InStream)
