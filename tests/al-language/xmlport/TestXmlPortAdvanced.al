@@ -335,32 +335,18 @@ codeunit 60207 "Test XmlPort Advanced"
 
     local procedure StagePartialUniversalImportBlob(var BlobRec: Record "ALT Blob" temporary; EntryNo: Integer; IntegerValue: Integer; ExistingTextValue: Text)
     var
-        XmlText: Text;
+        OutStr: OutStream;
     begin
-        PrepareFullUniversalImportText(XmlText, EntryNo, IntegerValue, ExistingTextValue);
-        XmlText := XmlText.Replace(StrSubstNo('<TextValue>%1</TextValue>', ExistingTextValue), '');
-        StageTempBlobFromText(BlobRec, XmlText);
+        PrepareTempBlobOutStream(BlobRec, OutStr);
+        WritePartialUniversalXml(OutStr, EntryNo, IntegerValue);
     end;
 
     local procedure StageFullUniversalImportBlob(var BlobRec: Record "ALT Blob" temporary; EntryNo: Integer; IntegerValue: Integer; TextValue: Text)
     var
-        XmlText: Text;
-    begin
-        PrepareFullUniversalImportText(XmlText, EntryNo, IntegerValue, TextValue);
-        StageTempBlobFromText(BlobRec, XmlText);
-    end;
-
-    local procedure PrepareFullUniversalImportText(var XmlText: Text; EntryNo: Integer; IntegerValue: Integer; TextValue: Text)
-    begin
-        XmlText := BuildUniversalXmlFromExport(EntryNo, IntegerValue, TextValue);
-    end;
-
-    local procedure StageTempBlobFromText(var BlobRec: Record "ALT Blob" temporary; XmlText: Text)
-    var
         OutStr: OutStream;
     begin
         PrepareTempBlobOutStream(BlobRec, OutStr);
-        OutStr.WriteText(XmlText);
+        WriteFullUniversalXml(OutStr, EntryNo, IntegerValue, TextValue);
     end;
 
     local procedure PrepareTempBlobOutStream(var BlobRec: Record "ALT Blob" temporary; var OutStr: OutStream)
@@ -377,28 +363,6 @@ codeunit 60207 "Test XmlPort Advanced"
     local procedure OpenTempBlobInStream(var BlobRec: Record "ALT Blob" temporary; var InStr: InStream)
     begin
         BlobRec.Data.CreateInStream(InStr);
-    end;
-
-    local procedure BuildUniversalXmlFromExport(TargetEntryNo: Integer; IntegerValue: Integer; TextValue: Text): Text
-    var
-        BlobRec: Record "ALT Blob";
-        OutStr: OutStream;
-        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
-        XmlText: Text;
-        Ok: Boolean;
-    begin
-        InsertUniversalRow(99991, IntegerValue, TextValue, '');
-
-        PrepareBlobOutStream('XPA_TMP', BlobRec, OutStr);
-        UniversalXmlPort.SetDestination(OutStr);
-        Ok := UniversalXmlPort.Export();
-        Assert.IsTrue(Ok, 'Universal XmlPort export must succeed before import roundtrip assertions');
-        BlobRec.Modify();
-        XmlText := ReadBlobText('XPA_TMP');
-
-        DeleteUniversalRows();
-
-        exit(XmlText.Replace('<EntryNo>99991</EntryNo>', StrSubstNo('<EntryNo>%1</EntryNo>', TargetEntryNo)));
     end;
 
     local procedure DeleteUniversalRows()
