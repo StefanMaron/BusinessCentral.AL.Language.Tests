@@ -10,12 +10,12 @@ codeunit 60205 "Test Query Object"
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;
-        UniversalQuery: Query "ALT Universal Query";
 
     [Test]
     procedure Query_Open_Read_ReturnsInsertedRows()
     var
         RowCount: Integer;
+        UniversalQuery: Query "ALT Universal Query";
     begin
         Initialize();
         InsertQueryRows();
@@ -43,6 +43,8 @@ codeunit 60205 "Test Query Object"
 
     [Test]
     procedure Query_SetRange_FiltersToMatchingRow()
+    var
+        UniversalQuery: Query "ALT Universal Query";
     begin
         Initialize();
         InsertQueryRows();
@@ -62,6 +64,7 @@ codeunit 60205 "Test Query Object"
     procedure Query_GetFilter_AfterSetRange_ReturnsFilterText()
     var
         FilterText: Text;
+        UniversalQuery: Query "ALT Universal Query";
     begin
         Initialize();
         InsertQueryRows();
@@ -74,16 +77,18 @@ codeunit 60205 "Test Query Object"
 
     [Test]
     procedure Query_TopNumberOfRows_LimitsResultSet()
+    var
+        UniversalQuery: Query "ALT Universal Query";
     begin
         Initialize();
         InsertQueryRows();
 
-        Assert.AreEqual(1, UniversalQuery.TopNumberOfRows(), 'Query fixture must be configured to return one row');
+        UniversalQuery.TopNumberOfRows(1);
         UniversalQuery.Open();
 
-        Assert.IsTrue(UniversalQuery.Read(), 'TopNumberOfRows must still return the first row');
-        Assert.AreEqual(1, UniversalQuery.EntryNo, 'TopNumberOfRows must keep the first row only');
-        Assert.IsFalse(UniversalQuery.Read(), 'TopNumberOfRows must limit the dataset to one row');
+        Assert.IsTrue(UniversalQuery.Read(), 'TopNumberOfRows(1) must still return the first row');
+        Assert.AreEqual(1, UniversalQuery.EntryNo, 'TopNumberOfRows(1) must keep the first row only');
+        Assert.IsFalse(UniversalQuery.Read(), 'TopNumberOfRows(1) must limit the dataset to one row');
         UniversalQuery.Close();
     end;
 

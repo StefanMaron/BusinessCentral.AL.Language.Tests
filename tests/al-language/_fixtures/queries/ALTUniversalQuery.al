@@ -5,7 +5,6 @@
 query 60022 "ALT Universal Query"
 {
     QueryType = Normal;
-    TopNumberOfRows = 1;
     OrderBy = ascending(EntryNo);
 
     elements
