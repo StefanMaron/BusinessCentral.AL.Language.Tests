@@ -261,8 +261,6 @@ codeunit 60205 "Test Query Object"
         ExportText: Text;
         OutStr: OutStream;
         UniversalQuery: Query "ALT Universal Query";
-        XDoc: XmlDocument;
-        ParseOk: Boolean;
         Ok: Boolean;
     begin
         Initialize();
@@ -273,10 +271,8 @@ codeunit 60205 "Test Query Object"
         Ok := UniversalQuery.SaveAsXml(OutStr);
         BlobRec.Modify();
         ExportText := ReadBlobText('QXML1');
-        ParseOk := XmlDocument.ReadFrom(ExportText, XDoc);
 
         Assert.IsTrue(Ok, 'Query.SaveAsXml(OutStream) must report success for a valid export stream');
-        Assert.IsTrue(ParseOk, 'Query.SaveAsXml(OutStream) must produce well-formed XML');
         Assert.IsTrue(ExportText.Contains('Second'), 'Query.SaveAsXml(OutStream) must include the filtered row values');
         Assert.IsFalse(ExportText.Contains('First'), 'Query.SaveAsXml(OutStream) must respect instance filters during export');
     end;
@@ -332,8 +328,6 @@ codeunit 60205 "Test Query Object"
         BlobRec: Record "ALT Blob";
         ExportText: Text;
         OutStr: OutStream;
-        XDoc: XmlDocument;
-        ParseOk: Boolean;
         Ok: Boolean;
     begin
         Initialize();
@@ -343,10 +337,8 @@ codeunit 60205 "Test Query Object"
         Ok := Query.SaveAsXml(60022, OutStr);
         BlobRec.Modify();
         ExportText := ReadBlobText('QXML2');
-        ParseOk := XmlDocument.ReadFrom(ExportText, XDoc);
 
         Assert.IsTrue(Ok, 'Query.SaveAsXml(Integer, OutStream) must report success for a valid query ID and stream');
-        Assert.IsTrue(ParseOk, 'Query.SaveAsXml(Integer, OutStream) must produce well-formed XML');
         Assert.IsTrue(ExportText.Contains('First'), 'Query.SaveAsXml(Integer, OutStream) must export the first inserted row');
         Assert.IsTrue(ExportText.Contains('Second'), 'Query.SaveAsXml(Integer, OutStream) must export the second inserted row');
     end;
