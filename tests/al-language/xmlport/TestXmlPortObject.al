@@ -97,14 +97,16 @@ codeunit 60206 "Test XmlPort Object"
         Universal: Record "ALT Universal";
         UniversalXmlPort: XmlPort "ALT Universal XmlPort";
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         PrepareUniversalImportStream(InStr);
 
-        UniversalXmlPort.SetSource(InStr);
-        Ok := UniversalXmlPort.Import();
+        ClearLastError();
+        Ok := TryImportUniversalXmlPort(UniversalXmlPort, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'XmlPort.Import() must report success after SetSource(InStream)');
+        Assert.IsTrue(Ok, StrSubstNo('XmlPort.Import() must report success after SetSource(InStream). LastError=%1', ErrorText));
         Assert.AreEqual(2, Universal.Count(), 'XmlPort import must insert both rows from the XML payload');
 
         Universal.Get(1);
@@ -122,14 +124,24 @@ codeunit 60206 "Test XmlPort Object"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         PrepareUniversalImportStream(InStr);
 
+        ClearLastError();
         Ok := XmlPort.Import(60023, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'XmlPort.Import(Integer, InStream) must report success for a valid XmlPort and XML payload');
+        Assert.IsTrue(Ok, StrSubstNo('XmlPort.Import(Integer, InStream) must report success for a valid XmlPort and XML payload. LastError=%1', ErrorText));
         Assert.AreEqual(2, Universal.Count(), 'Static XmlPort.Import must insert both rows from the XML payload');
+    end;
+
+    [TryFunction]
+    local procedure TryImportUniversalXmlPort(var UniversalXmlPort: XmlPort "ALT Universal XmlPort"; var InStr: InStream)
+    begin
+        UniversalXmlPort.SetSource(InStr);
+        UniversalXmlPort.Import();
     end;
 
     local procedure Initialize()

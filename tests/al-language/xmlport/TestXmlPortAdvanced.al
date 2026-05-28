@@ -47,13 +47,16 @@ codeunit 60207 "Test XmlPort Advanced"
         Child: Record "ALT Child";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         PrepareParentChildImportStream(InStr);
 
+        ClearLastError();
         Ok := XmlPort.Import(60024, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'Nested XmlPort import must report success');
+        Assert.IsTrue(Ok, StrSubstNo('Nested XmlPort import must report success. LastError=%1', ErrorText));
         Assert.AreEqual(1, Parent.Count(), 'Nested XmlPort import must insert the parent row');
         Assert.AreEqual(2, Child.Count(), 'Nested XmlPort import must insert both child rows');
         Child.Get(10);
@@ -90,13 +93,16 @@ codeunit 60207 "Test XmlPort Advanced"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         PrepareVariableImportStream(InStr);
 
+        ClearLastError();
         Ok := XmlPort.Import(60025, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'Variable XmlPort import must report success');
+        Assert.IsTrue(Ok, StrSubstNo('Variable XmlPort import must report success. LastError=%1', ErrorText));
         Universal.Get(1);
         Assert.AreEqual(30, Universal."Integer Field", 'OnAfterAssignField must be able to mutate imported field values before insert');
         Assert.AreEqual('alpha', Universal."Text Field", 'OnAfterAssignVariable on textelement must be able to rewrite imported text values');
@@ -109,14 +115,17 @@ codeunit 60207 "Test XmlPort Advanced"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         InsertUniversalRow(1, 10, 'Keep', 'KeepDesc');
         PreparePartialUniversalImportStream(InStr, 1, 99, 'Keep');
 
+        ClearLastError();
         Ok := XmlPort.Import(60026, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'AutoUpdate XmlPort import must report success');
+        Assert.IsTrue(Ok, StrSubstNo('AutoUpdate XmlPort import must report success. LastError=%1', ErrorText));
         Universal.Get(1);
         Assert.AreEqual(99, Universal."Integer Field", 'AutoUpdate must update fields that are present in the imported XmlPort');
         Assert.AreEqual('Keep', Universal."Text Field", 'AutoUpdate must preserve fields that are not present in the imported XmlPort');
@@ -129,14 +138,17 @@ codeunit 60207 "Test XmlPort Advanced"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         InsertUniversalRow(1, 10, 'Keep', 'KeepDesc');
         PreparePartialUniversalImportStream(InStr, 1, 99, 'Keep');
 
+        ClearLastError();
         Ok := XmlPort.Import(60027, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'AutoReplace XmlPort import must report success');
+        Assert.IsTrue(Ok, StrSubstNo('AutoReplace XmlPort import must report success. LastError=%1', ErrorText));
         Universal.Get(1);
         Assert.AreEqual(99, Universal."Integer Field", 'AutoReplace must populate fields that are present in the imported XmlPort');
         Assert.AreEqual('', Universal."Text Field", 'AutoReplace must reinitialize fields that are omitted from the imported XmlPort');
@@ -149,13 +161,16 @@ codeunit 60207 "Test XmlPort Advanced"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         PrepareFullUniversalImportStream(InStr, 1, 10, 'First');
 
+        ClearLastError();
         Ok := XmlPort.Import(60028, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'Manual XmlPort import must report success');
+        Assert.IsTrue(Ok, StrSubstNo('Manual XmlPort import must report success. LastError=%1', ErrorText));
         Universal.Get(1);
         Assert.AreEqual('manual-insert-First-after', Universal."Description Field", 'AutoSave=false must allow OnBeforeInsertRecord and OnAfterInsertRecord to control persistence');
     end;
@@ -166,14 +181,17 @@ codeunit 60207 "Test XmlPort Advanced"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         InsertUniversalRow(1, 10, 'Before', 'Existing');
         PrepareFullUniversalImportStream(InStr, 1, 42, 'After');
 
+        ClearLastError();
         Ok := XmlPort.Import(60028, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'Manual XmlPort modify path must report success');
+        Assert.IsTrue(Ok, StrSubstNo('Manual XmlPort modify path must report success. LastError=%1', ErrorText));
         Universal.Get(1);
         Assert.AreEqual(42, Universal."Integer Field", 'AutoSave=false with AutoUpdate=true must allow OnBeforeModifyRecord to apply field updates manually');
         Assert.AreEqual('After', Universal."Text Field", 'AutoSave=false modify path must be able to persist imported text values manually');
@@ -186,13 +204,16 @@ codeunit 60207 "Test XmlPort Advanced"
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
+        ErrorText: Text;
     begin
         Initialize();
         PrepareFullUniversalImportStream(InStr, 1, 10, 'Temp');
 
+        ClearLastError();
         Ok := XmlPort.Import(60029, InStr);
+        ErrorText := GetLastErrorText();
 
-        Assert.IsTrue(Ok, 'UseTemporary XmlPort import must report success');
+        Assert.IsTrue(Ok, StrSubstNo('UseTemporary XmlPort import must report success. LastError=%1', ErrorText));
         Assert.IsFalse(Universal.Get(1), 'UseTemporary tableelements must not automatically persist the imported key to the real table');
         Universal.Get(1001);
         Assert.AreEqual(10, Universal."Integer Field", 'UseTemporary trigger code must be able to copy imported values into real records manually');
