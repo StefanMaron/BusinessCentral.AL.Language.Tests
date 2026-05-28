@@ -93,6 +93,7 @@ codeunit 60206 "Test XmlPort Object"
     [Test]
     procedure XmlPort_Import_SetSource_InsertsRows()
     var
+        BlobRec: Record "ALT Blob";
         InStr: InStream;
         Universal: Record "ALT Universal";
         UniversalXmlPort: XmlPort "ALT Universal XmlPort";
@@ -100,7 +101,9 @@ codeunit 60206 "Test XmlPort Object"
         ErrorText: Text;
     begin
         Initialize();
-        PrepareUniversalImportStream(InStr);
+        StageUniversalImportBlob();
+        DeleteUniversalRows();
+        OpenBlobInStream('XP_SRC', BlobRec, InStr);
 
         ClearLastError();
         Ok := TryImportUniversalXmlPort(UniversalXmlPort, InStr);
@@ -121,13 +124,16 @@ codeunit 60206 "Test XmlPort Object"
     [Test]
     procedure XmlPort_Import_StaticFromStream_InsertsRows()
     var
+        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
         Ok: Boolean;
         ErrorText: Text;
     begin
         Initialize();
-        PrepareUniversalImportStream(InStr);
+        StageUniversalImportBlob();
+        DeleteUniversalRows();
+        OpenBlobInStream('XP_SRC', BlobRec, InStr);
 
         ClearLastError();
         Ok := TryStaticImportUniversalXmlPort(InStr);
@@ -193,13 +199,6 @@ codeunit 60206 "Test XmlPort Object"
         exit(AllText);
     end;
 
-    local procedure PrepareUniversalImportStream(var InStr: InStream)
-    begin
-        StageUniversalImportBlob();
-        DeleteUniversalRows();
-        OpenBlobInStream('XP_SRC', InStr);
-    end;
-
     local procedure StageUniversalImportBlob()
     var
         BlobRec: Record "ALT Blob";
@@ -218,9 +217,7 @@ codeunit 60206 "Test XmlPort Object"
 
     end;
 
-    local procedure OpenBlobInStream(BlobCode: Code[20]; var InStr: InStream)
-    var
-        BlobRec: Record "ALT Blob";
+    local procedure OpenBlobInStream(BlobCode: Code[20]; var BlobRec: Record "ALT Blob"; var InStr: InStream)
     begin
         BlobRec.Get(BlobCode);
         BlobRec.CalcFields(Data);
