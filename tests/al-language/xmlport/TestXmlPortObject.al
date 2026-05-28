@@ -194,6 +194,13 @@ codeunit 60206 "Test XmlPort Object"
     end;
 
     local procedure PrepareUniversalImportStream(var InStr: InStream)
+    begin
+        StageUniversalImportBlob();
+        DeleteUniversalRows();
+        OpenBlobInStream('XP_SRC', InStr);
+    end;
+
+    local procedure StageUniversalImportBlob()
     var
         BlobRec: Record "ALT Blob";
         OutStr: OutStream;
@@ -209,9 +216,13 @@ codeunit 60206 "Test XmlPort Object"
         Assert.IsTrue(Ok, 'Source XmlPort export must succeed before import roundtrip assertions');
         BlobRec.Modify();
 
-        DeleteUniversalRows();
+    end;
 
-        BlobRec.Get('XP_SRC');
+    local procedure OpenBlobInStream(BlobCode: Code[20]; var InStr: InStream)
+    var
+        BlobRec: Record "ALT Blob";
+    begin
+        BlobRec.Get(BlobCode);
         BlobRec.CalcFields(Data);
         BlobRec.Data.CreateInStream(InStr);
     end;
