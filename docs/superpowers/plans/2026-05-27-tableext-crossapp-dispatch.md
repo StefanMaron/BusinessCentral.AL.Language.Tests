@@ -4,7 +4,7 @@
 
 **Goal:** Add AL tests that prove (A) a dependent app can read/write fields added by a dependency app's tableextension, and (B) cross-app method dispatch works via three distinct call paths — reproducing specific BC Runner symbol-merge and function-ID failures as executable specs.
 
-**Architecture:** The existing `al-language-internals-fixture` app (App-1) gains a `tableextension` on "Item Journal Batch" and a new cross-app interface + implementation. The existing `al-language` test app (App-2) gets two new test codeunits that reference these objects. A workspace file enables `al-compile` to resolve packages across both apps locally.
+**Architecture:** The existing `al-language-internals-fixture` app (App-1) exposes an internal fixture table and gains a `tableextension` on that table plus a new cross-app interface + implementation. The existing `al-language` test app (App-2) gets two new test codeunits that reference these objects. A workspace file enables `al-compile` to resolve packages across both apps locally.
 
 **Tech Stack:** AL Language, Business Central Cloud (BC 27.5+), `al-compile` CLI, BC Docker container for local test execution.
 
@@ -14,18 +14,18 @@
 
 ### Create
 - `tests/al.code-workspace` — workspace file so `al-compile` finds packages across both apps
-- `tests/al-language-internals-fixture/ALTItemJournalBatchExt.TableExt.al` — tableextension 61002 on "Item Journal Batch"
+- `tests/al-language-internals-fixture/ALTInternalTableExt.TableExt.al` — tableextension 60205 on "ALT Internal Table"
 - `tests/al-language-internals-fixture/ALTCrossAppInterface.al` — interface `IALTCrossCompute` + codeunit 61004 `ALT Cross Compute`
 - `tests/al-language/tableextension/TestTableExtCrossApp.al` — codeunit 60203, Part A tests
 - `tests/al-language/codeunit/TestCrossAppDispatch.al` — codeunit 60204, Part B tests
 
 ### Modify
-- `tests/al-language-internals-fixture/app.json` — add Base Application dependency
+- `tests/al-language-internals-fixture/app.json` — remove Microsoft dependencies
 - `tests/al-language/.alpackages/` — add compiled fixture app here after Task 1
 
 ---
 
-## Task 1: Workspace file + Base Application dependency
+## Task 1: Workspace file + fixture app dependency cleanup
 
 **Files:**
 - Create: `tests/al.code-workspace`
@@ -44,51 +44,14 @@
   }
   ```
 
-  This lets `al-compile` find `tests/al-language/.alpackages/` (which contains Base Application and other BC packages) when compiling the fixture app.
+  This lets `al-compile` find `tests/al-language/.alpackages/` when compiling either app locally.
 
-- [ ] **Step 2: Add Base Application dependency to the fixture app**
+- [ ] **Step 2: Remove Microsoft dependency from the fixture app**
 
-  Replace the full contents of `tests/al-language-internals-fixture/app.json` with:
+  Replace the `dependencies` block in `tests/al-language-internals-fixture/app.json` with an empty array:
 
   ```json
-  {
-    "id": "f1e2d3c4-b5a6-7890-fedc-ba9876543210",
-    "name": "AL Internals Test Fixture",
-    "publisher": "AL Language",
-    "version": "1.0.0.0",
-    "brief": "Dependency fixture exposing internal objects to the AL Language Coverage Tests app.",
-    "description": "",
-    "privacyStatement": "",
-    "EULA": "",
-    "help": "",
-    "url": "",
-    "logo": "",
-    "dependencies": [
-      {
-        "id": "437dbf0e-84ff-417a-965d-ed2bb9650972",
-        "name": "Base Application",
-        "publisher": "Microsoft",
-        "version": "27.0.0.0"
-      }
-    ],
-    "screenshots": [],
-    "internalsVisibleTo": [
-      {
-        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "name": "AL Language Coverage Tests",
-        "publisher": "AL Language"
-      }
-    ],
-    "idRanges": [
-      {
-        "from": 61000,
-        "to": 61099
-      }
-    ],
-    "features": [],
-    "runtime": "14.0",
-    "target": "Cloud"
-  }
+  "dependencies": []
   ```
 
 - [ ] **Step 3: Compile the fixture app and verify it succeeds**
@@ -98,7 +61,7 @@
   al-compile
   ```
 
-  Expected: `✓ Compilation succeeded!` with zero errors. The compiler will find `Base Application.app` via the workspace's `al-language/.alpackages/` path.
+  Expected: `✓ Compilation succeeded!` with zero errors. No Microsoft packages are required for this app anymore.
 
 - [ ] **Step 4: Copy the compiled fixture app into the test app's package cache**
 
@@ -120,31 +83,31 @@
 
 - [ ] **Step 6: Commit**
 
-  The `.alpackages/` directory is gitignored, but individual `.app` files in it are force-tracked (same pattern as Base Application.app etc.). Use `-f` to add the new file:
+  The `.alpackages/` directory is gitignored, but individual `.app` files in it are force-tracked. Use `-f` to add the new file:
 
   ```bash
   git add tests/al.code-workspace tests/al-language-internals-fixture/app.json
   git add -f "tests/al-language/.alpackages/AL Internals Test Fixture_1.0.0.0.app"
-  git commit -m "chore: workspace file + Base Application dep for fixture app"
+  git commit -m "chore: workspace file + fixture app dependency cleanup"
   ```
 
 ---
 
-## Task 2: Tableextension on "Item Journal Batch"
+## Task 2: Tableextension on "ALT Internal Table"
 
 **Files:**
-- Create: `tests/al-language-internals-fixture/ALTItemJournalBatchExt.TableExt.al`
+- Create: `tests/al-language-internals-fixture/ALTInternalTableExt.TableExt.al`
 
 - [ ] **Step 1: Create the tableextension**
 
-  Create `tests/al-language-internals-fixture/ALTItemJournalBatchExt.TableExt.al`:
+  Create `tests/al-language-internals-fixture/ALTInternalTableExt.TableExt.al`:
 
   ```al
-  // Extends "Item Journal Batch" (table 233) with two test fields.
+  // Extends "ALT Internal Table" (table 61001) with two test fields.
   // Purpose: prove that a dependent app can read/write fields added by a
   // dependency app's tableextension — the symbol-merge scenario that caused
   // AL0132/AL0133 in the BC Runner.
-  tableextension 61002 "ALT Item Journal Batch Ext" extends "Item Journal Batch"
+  tableextension 60205 "ALT Internal Table Ext" extends "ALT Internal Table"
   {
       fields
       {
@@ -188,9 +151,9 @@
 - [ ] **Step 5: Commit**
 
   ```bash
-  git add tests/al-language-internals-fixture/ALTItemJournalBatchExt.TableExt.al
+  git add tests/al-language-internals-fixture/ALTInternalTableExt.TableExt.al
   git add -f "tests/al-language/.alpackages/AL Internals Test Fixture_1.0.0.0.app"
-  git commit -m "feat: tableextension on Item Journal Batch in fixture app"
+  git commit -m "feat: tableextension on ALT Internal Table in fixture app"
   ```
 
 ---
@@ -271,12 +234,12 @@
   ```al
   // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-table-ext-object
   // Scope: in-scope (Cloud-compatible, multi-app fixture required)
-  // Fixtures used: ALT Item Journal Batch Ext (61002) on "Item Journal Batch" (table 233)
+  // Fixtures used: ALT Internal Table Ext (60205) on "ALT Internal Table" (table 61001)
   // BC versions: 27.5+
   //
   // CLAIM: a dependent app can read and write fields that a dependency app's
-  // tableextension added to a standard BC table. This exercises the symbol-merge
-  // of a tableextension loaded as a compiled .app dependency.
+  // tableextension added to an internal fixture table. This exercises the
+  // symbol-merge of a tableextension loaded as a compiled .app dependency.
 
   codeunit 60203 "Test TableExt Cross App"
   {
@@ -294,17 +257,18 @@
       // through Insert and is readable via Get from the dependent test app.
       // DOCS: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-table-ext-object
       var
-          Batch: Record "Item Journal Batch";
+          InternalRec: Record "ALT Internal Table";
+          EntryNo: Integer;
       begin
           Initialize();
-          Batch."Journal Template Name" := 'ALTTEST';
-          Batch.Name := 'BATCH1';
-          Batch."ALT Foo" := 42;
-          Batch.Insert(false);
+          InternalRec."Value" := 42;
+          InternalRec."ALT Foo" := 42;
+          InternalRec.Insert(false);
+          EntryNo := InternalRec."Entry No.";
 
-          Clear(Batch);
-          Batch.Get('ALTTEST', 'BATCH1');
-          Assert.AreEqual(42, Batch."ALT Foo", 'ALT Foo must round-trip through Insert/Get');
+          Clear(InternalRec);
+          InternalRec.Get(EntryNo);
+          Assert.AreEqual(42, InternalRec."ALT Foo", 'ALT Foo must round-trip through Insert/Get');
       end;
 
       [Test]
@@ -312,23 +276,24 @@
       // CLAIM: both extension fields ("ALT Foo" and "ALT Bar") persist correctly
       // after a Modify — proves that multiple extension fields all survive the update path.
       var
-          Batch: Record "Item Journal Batch";
+          InternalRec: Record "ALT Internal Table";
+          EntryNo: Integer;
       begin
           Initialize();
-          Batch."Journal Template Name" := 'ALTTEST';
-          Batch.Name := 'BATCH2';
-          Batch."ALT Foo" := 1;
-          Batch."ALT Bar" := 'initial';
-          Batch.Insert(false);
+          InternalRec."Value" := 1;
+          InternalRec."ALT Foo" := 1;
+          InternalRec."ALT Bar" := 'initial';
+          InternalRec.Insert(false);
+          EntryNo := InternalRec."Entry No.";
 
-          Batch."ALT Foo" := 99;
-          Batch."ALT Bar" := 'modified';
-          Batch.Modify(false);
+          InternalRec."ALT Foo" := 99;
+          InternalRec."ALT Bar" := 'modified';
+          InternalRec.Modify(false);
 
-          Clear(Batch);
-          Batch.Get('ALTTEST', 'BATCH2');
-          Assert.AreEqual(99, Batch."ALT Foo", 'ALT Foo must reflect modified value');
-          Assert.AreEqual('modified', Batch."ALT Bar", 'ALT Bar must reflect modified value');
+          Clear(InternalRec);
+          InternalRec.Get(EntryNo);
+          Assert.AreEqual(99, InternalRec."ALT Foo", 'ALT Foo must reflect modified value');
+          Assert.AreEqual('modified', InternalRec."ALT Bar", 'ALT Bar must reflect modified value');
       end;
 
       [Test]
@@ -336,50 +301,44 @@
       // CLAIM: SetRange on "ALT Foo" (an extension field) narrows the result set,
       // proving filters on extension fields work in the dependent app.
       var
-          Batch: Record "Item Journal Batch";
+          InternalRec: Record "ALT Internal Table";
       begin
           Initialize();
-          Batch."Journal Template Name" := 'ALTTEST';
-          Batch.Name := 'FILTER1';
-          Batch."ALT Foo" := 10;
-          Batch.Insert(false);
+          InternalRec."Value" := 10;
+          InternalRec."ALT Foo" := 10;
+          InternalRec.Insert(false);
 
-          Clear(Batch);
-          Batch."Journal Template Name" := 'ALTTEST';
-          Batch.Name := 'FILTER2';
-          Batch."ALT Foo" := 20;
-          Batch.Insert(false);
+          Clear(InternalRec);
+          InternalRec."Value" := 20;
+          InternalRec."ALT Foo" := 20;
+          InternalRec.Insert(false);
 
-          Batch.Reset();
-          Batch.SetRange("Journal Template Name", 'ALTTEST');
-          Batch.SetRange("ALT Foo", 10, 10);
-          Assert.AreEqual(1, Batch.Count(), 'SetRange on ALT Foo must filter to exactly one record');
+          InternalRec.Reset();
+          InternalRec.SetRange("ALT Foo", 10, 10);
+          Assert.AreEqual(1, InternalRec.Count(), 'SetRange on ALT Foo must filter to exactly one record');
       end;
 
       [Test]
-      procedure TableExt_CrossApp_DuplicateInsert_Throws()
-      // CLAIM: inserting a duplicate PK on "Item Journal Batch" throws — proves the
-      // table (with its extension) is live and enforces standard PK uniqueness.
+      procedure TableExt_CrossApp_Insert_AssignsAutoIncrementEntryNo()
+      // CLAIM: inserting a record on the internal fixture table assigns a
+      // non-zero auto-incremented primary key, proving the table and extension are live.
       var
-          Batch: Record "Item Journal Batch";
+          InternalRec: Record "ALT Internal Table";
       begin
           Initialize();
-          Batch."Journal Template Name" := 'ALTTEST';
-          Batch.Name := 'DUP1';
-          Batch."ALT Foo" := 5;
-          Batch.Insert(false);
+          InternalRec."Value" := 5;
+          InternalRec."ALT Foo" := 5;
+          InternalRec.Insert(false);
 
-          asserterror Batch.Insert(false);
-          Assert.IsTrue(GetLastErrorText() <> '', 'Duplicate Insert must throw a runtime error');
+          Assert.AreNotEqual(0, InternalRec."Entry No.", 'Auto-increment must assign a non-zero Entry No.');
       end;
 
       local procedure Initialize()
       var
-          Batch: Record "Item Journal Batch";
+          InternalRec: Record "ALT Internal Table";
       begin
           Cleanup.Initialize();
-          Batch.SetRange("Journal Template Name", 'ALTTEST');
-          Batch.DeleteAll(false);
+          InternalRec.DeleteAll(false);
       end;
   }
   ```

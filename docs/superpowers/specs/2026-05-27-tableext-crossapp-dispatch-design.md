@@ -10,7 +10,7 @@
 Add two sets of AL tests that reproduce specific BC Runner failure modes so they become executable specs the runner must pass:
 
 **A — Tableextension field visibility across app boundaries**
-A test app must be able to read and write fields that a dependency app's tableextension added to a standard BC table. Targets the symbol-merge bug that produced 37× AL0132 / 55× AL0133 in the runner until `.app`-based `SymbolReference.json` routing was fixed.
+A test app must be able to read and write fields that a dependency app's tableextension added to an internal fixture table. Targets the symbol-merge bug that produced 37× AL0132 / 55× AL0133 in the runner until `.app`-based `SymbolReference.json` routing was fixed.
 
 **B — Cross-app method dispatch by function ID**
 A test codeunit calls methods via three distinct dispatch paths — self, dependency codeunit, cross-app interface — and asserts concrete non-default return values. Targets `NavNCLCompilationException: Function ID <hash> … object <id> does not have a member with that ID`.
@@ -19,14 +19,15 @@ A test codeunit calls methods via three distinct dispatch paths — self, depend
 
 ## Architecture
 
-Two existing apps, one new dependency for the fixture app:
+Two existing apps, with the fixture app exposing an internal table that the
+test app extends through a normal app dependency:
 
 ```
 al-language-internals-fixture/   (App-1, published first)
-    app.json                     ← add Base Application dependency
+    app.json                     ← no Microsoft dependencies
     ALTInternalTable.al          (existing)
     ALTInternalCodeunit.al       (existing)
-    ALTItemJournalBatchExt.TableExt.al   ← NEW: tableextension on "Item Journal Batch"
+    ALTInternalTableExt.TableExt.al      ← NEW: tableextension on "ALT Internal Table"
     ALTCrossAppInterface.al              ← NEW: IALTCrossCompute + ALT Cross Compute
 
 al-language/                     (App-2, depends on App-1)
@@ -38,7 +39,8 @@ al-language/                     (App-2, depends on App-1)
 
 CI already publishes App-1 before App-2 via `app_dirs` / `test_app_dirs` in `ci.yml`.
 
-A `tests/al.code-workspace` file lets `al-compile` find `al-language/.alpackages` (which contains `Base Application.app`) when compiling the fixture app locally.
+A `tests/al.code-workspace` file lets `al-compile` find `al-language/.alpackages`
+(which contains the fixture app package) when compiling either app locally.
 
 ---
 
@@ -46,37 +48,30 @@ A `tests/al.code-workspace` file lets `al-compile` find `al-language/.alpackages
 
 ### Fixture app changes
 
-**`ALTItemJournalBatchExt.TableExt.al`** — tableextension object ID 61002:
-- Extends `"Item Journal Batch"` (table 232, from BC Base Application)
+**`ALTInternalTableExt.TableExt.al`** — tableextension object ID 60205:
+- Extends `"ALT Internal Table"` (table 61001, from the fixture app)
 - Adds field 50000 `"ALT Foo"` (Integer, DataClassification = SystemMetadata)
 - Adds field 50001 `"ALT Bar"` (Text[50], DataClassification = SystemMetadata)
 
-**`app.json`** — add to `dependencies`:
-```json
-{
-  "id": "437dbf0e-84ff-417a-965d-ed2bb9650972",
-  "name": "Base Application",
-  "publisher": "Microsoft",
-  "version": "27.0.0.0"
-}
-```
+**`app.json`** — no Microsoft dependencies required.
 
 ### Test codeunit: `TestTableExtCrossApp.al` (60203)
 
 Located in `tests/al-language/tableextension/`.
 
-**`Initialize()`** calls `Cleanup.Initialize()` then deletes all "Item Journal Batch" records where `"Journal Template Name" = 'ALT'`.
+**`Initialize()`** calls `Cleanup.Initialize()` then deletes all
+"ALT Internal Table" records.
 
 **Tests:**
 
 | Procedure | Claim |
 |-----------|-------|
-| `TableExt_CrossApp_FooField_InsertAndGet_RoundTrips` | Insert batch with `"ALT Foo" = 42`, Get by PK `('ALT', 'BATCH1')`, assert `"ALT Foo" = 42` |
-| `TableExt_CrossApp_BothFields_PersistAfterModify` | Insert, Modify both fields to new values, FindFirst, assert both new values |
+| `TableExt_CrossApp_FooField_InsertAndGet_RoundTrips` | Insert record with `"ALT Foo" = 42`, Get by `"Entry No."`, assert `"ALT Foo" = 42` |
+| `TableExt_CrossApp_BothFields_PersistAfterModify` | Insert, Modify both fields to new values, Get by `"Entry No."`, assert both new values |
 | `TableExt_CrossApp_SetRange_OnExtField_FiltersRecords` | Insert two batches (ALT Foo = 10 and 20), SetRange("ALT Foo", 10, 10), assert Count = 1 |
-| `TableExt_CrossApp_DuplicateInsert_Throws` | Insert batch with PK `('ALT', 'BATCH1')`, asserterror inserting same PK again — proves extension fields are live on the table (not phantom symbols) |
+| `TableExt_CrossApp_Insert_AssignsAutoIncrementEntryNo` | Insert a record, assert `"Entry No."` is non-zero — proves the table and extension are live |
 
-All records use `"Journal Template Name" = 'ALT'` so local cleanup is deterministic.
+All records use the shared internal table fixture, so local cleanup is deterministic.
 
 ---
 
@@ -108,7 +103,7 @@ Has a local private `Double(X: Integer): Integer` that returns `X * 2`.
 
 ## Cleanup Strategy
 
-- "Item Journal Batch" records are cleaned up in the test codeunit's local `Initialize()` using a filter on `"Journal Template Name" = 'ALT'`, not in the shared `ALTFixtureCleanup`. This keeps cleanup responsibility local to the test that owns the standard-table records.
+- `"ALT Internal Table"` records are cleaned up in the test codeunit's local `Initialize()` by deleting all rows after `ALTFixtureCleanup.Initialize()`. This keeps cleanup responsibility local to the test that owns the shared fixture table.
 - `ALT Cross Compute` and `IALTCrossCompute` have no state; no cleanup needed.
 
 ---
@@ -117,7 +112,7 @@ Has a local private `Double(X: Integer): Integer` that returns `X * 2`.
 
 | Object | Type | App | ID |
 |--------|------|-----|----|
-| ALTItemJournalBatchExt | tableextension | fixture | 61002 |
+| ALTInternalTableExt | tableextension | fixture | 60205 |
 | IALTCrossCompute | interface | fixture | 61003 |
 | ALT Cross Compute | codeunit | fixture | 61004 |
 | TestTableExtCrossApp | codeunit | test | 60203 |
