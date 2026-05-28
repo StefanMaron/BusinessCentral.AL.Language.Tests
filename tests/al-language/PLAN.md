@@ -22,6 +22,9 @@ method, and know exactly:
 2. What the BC documentation says should happen
 3. That BC Cloud actually does that thing when run against a real container
 
+The working backlog for uncovered or thinly covered surfaces lives in
+[`docs/al-language-coverage-gaps.md`](../../docs/al-language-coverage-gaps.md).
+
 ## Why Start From Scratch
 
 The existing `tests/bucket-*` suites are runner regression tests. They were written
@@ -225,6 +228,7 @@ agents do not write tests for them.
 - Text, TextBuilder, BigText
 - JSON (JsonObject, JsonArray, JsonToken, JsonValue)
 - XML (XmlDocument, XmlElement, XmlAttribute, XmlNamespaceManager)
+- Query objects
 - Streams (InStream, OutStream, Blob)
 - Date/Time arithmetic and formatting
 - Integer, Decimal, Boolean arithmetic and edge cases
@@ -302,6 +306,12 @@ never modified by tests — tests insert/modify/delete data, not schema.
 |---|---|
 | `ALT Simple Report` (50900) | Single-dataitem report on ALT Universal. No rendering tested. Covers RequestPage handler dispatch, OnPreReport trigger, SaveAs (throws — out of scope). |
 
+### Query
+
+| Object | Purpose |
+|---|---|
+| `ALT Universal Query` (60022) | Basic query fixture over `ALT Universal`. Covers `Open()`, `Read()`, `Close()`, `SetRange()`, `GetFilter()`, and `TopNumberOfRows()`. |
+
 ---
 
 ## Folder Structure
@@ -334,6 +344,8 @@ tests/al-language/
       ALTCardPage.al
     reports/
       ALTSimpleReport.al
+    queries/
+      ALTUniversalQuery.al
     ALTFixtureCleanup.al           ← codeunit with DeleteAll on every fixture table
   record/
     TestRecordInsert.al
@@ -400,6 +412,8 @@ tests/al-language/
     TestJsonArray.al
     TestJsonToken.al
     TestJsonValue.al
+  query/
+    TestQueryObject.al
   xml/
     TestXmlDocument.al
     TestXmlElement.al

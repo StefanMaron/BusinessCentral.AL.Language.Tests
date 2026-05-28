@@ -46,6 +46,7 @@ A test that passes on the runner but fails here means the **runner has a gap**.
 - Text, TextBuilder, BigText, Format, Evaluate
 - JSON (JsonObject, JsonArray, JsonToken, JsonValue)
 - XML (XmlDocument, XmlElement, XmlAttribute, XmlNamespaceManager)
+- Query objects
 - Streams (InStream, OutStream, Blob) -- in-memory only, no File
 - Date/Time arithmetic and formatting
 - Integer, Decimal, Boolean arithmetic and edge cases
