@@ -53,7 +53,7 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 | `error-handling/` | Error/Commit semantics, nested try-functions, confirm behavior |
 | `handlers/` | Message, Confirm, StrMenu, and page handler contracts |
 | `json/` | JsonObject, JsonArray, JsonToken — parse, write, path traversal |
-| `query/` | Query objects — open/read, filters, top rows, column access |
+| `query/` | Query objects — open/read/close, filters, column metadata, security filtering, stream exports |
 | `out-of-scope/` | One negative test each for File, .NET, HttpClient — confirms Cloud throws |
 | `session/` | Session variables, UserSecurityId, Company behavior |
 | `streams/` | InStream/OutStream, TempBlob, BLOB field contracts |

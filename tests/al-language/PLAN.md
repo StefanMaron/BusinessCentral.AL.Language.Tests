@@ -310,7 +310,7 @@ never modified by tests — tests insert/modify/delete data, not schema.
 
 | Object | Purpose |
 |---|---|
-| `ALT Universal Query` (60022) | Basic query fixture over `ALT Universal`. Covers `Open()`, `Read()`, `Close()`, `SetRange()`, `GetFilter()`, and `TopNumberOfRows()`. |
+| `ALT Universal Query` (60022) | Query fixture over `ALT Universal`. Covers `Open()`, `Read()`, `Close()`, `SetFilter()`, `SetRange()`, `GetFilter()`, `GetFilters()`, `ColumnName()`, `ColumnCaption()`, `ColumnNo()`, `TopNumberOfRows()`, `SecurityFiltering()`, and the `SaveAs*` OutStream export surface. |
 
 ---
 

@@ -37,18 +37,27 @@ Intentionally out of scope:
 
 ### 1. Query objects
 
-Status: not yet covered.
+Status: implemented for the cloud-safe surface.
 
 Why it matters:
 
 - Microsoft documents `Query` as a first-class AL surface.
 - Query objects are a natural fit for BC Cloud behavior proofs because they can be executed, filtered, and read without rendering.
 
-Recommended first slice:
+Current coverage:
 
-- Add a query fixture over `ALT Universal`.
-- Cover `Open()`, `Read()`, `Close()`, `SetRange()`, and `GetFilter()`.
-- Add a second test for `TopNumberOfRows()` once the basic open/read path is in place.
+- `Open()`, `Read()`, `Close()`
+- `SetFilter()`, `SetRange()`, `GetFilter()`, `GetFilters()`
+- `ColumnName()`, `ColumnCaption()`, `ColumnNo()`
+- `TopNumberOfRows()`
+- `SecurityFiltering()`
+- `SaveAsCsv()`, `SaveAsJson()`, `SaveAsXml()` through `OutStream`
+- static `Query.SaveAsCsv(Integer, OutStream)`, `Query.SaveAsJson(Integer, OutStream)`, and `Query.SaveAsXml(Integer, OutStream)`
+
+Notes:
+
+- The file-name export overloads documented on Microsoft Learn are on-premises oriented and are not part of the cloud-targeted compile surface exercised by this repository configuration.
+- Aggregate query behavior still needs separate fixture coverage if we want to document totals/grouping semantics beyond row iteration.
 
 ### 2. XmlPort objects
 
@@ -84,20 +93,12 @@ These are lower priority than `Query` because the current suite is already stron
 
 ## Query Coverage Target
 
-The first query implementation should prove:
+The baseline query object surface is now covered for cloud-safe execution.
 
-1. A query object can be opened against fixture data.
-2. `Read()` returns each row in the dataset.
-3. Query column values can be asserted from AL.
-4. Filters change the returned dataset in a predictable way.
+Remaining query-specific follow-up is narrower:
 
-After that, the next additions should be:
-
-- `TopNumberOfRows()`
-- `GetFilter()`
-- `GetFilters()`
-- `ColumnName()` / `ColumnNo()`
-- aggregate query behavior if we need more than row-by-row access
+1. Add a grouped/aggregate query fixture if we want to document totals and grouping behavior.
+2. Decide whether file-name export overloads need separate documentation-only notes beyond the current compile-surface note.
 
 ## Working Rule
 

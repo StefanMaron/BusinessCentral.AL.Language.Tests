@@ -11,9 +11,18 @@ query 60022 "ALT Universal Query"
     {
         dataitem(Universal; "ALT Universal")
         {
-            column(EntryNo; "Entry No.") { }
-            column(IntegerValue; "Integer Field") { }
-            column(TextValue; "Text Field") { }
+            column(EntryNo; "Entry No.")
+            {
+                Caption = 'Entry No.';
+            }
+            column(IntegerValue; "Integer Field")
+            {
+                Caption = 'Integer Value';
+            }
+            column(TextValue; "Text Field")
+            {
+                Caption = 'Text Value';
+            }
         }
     }
 }
