@@ -312,6 +312,12 @@ never modified by tests — tests insert/modify/delete data, not schema.
 |---|---|
 | `ALT Universal Query` (60022) | Query fixture over `ALT Universal`. Covers `Open()`, `Read()`, `Close()`, `SetFilter()`, `SetRange()`, `GetFilter()`, `GetFilters()`, `ColumnName()`, `ColumnCaption()`, `ColumnNo()`, `TopNumberOfRows()`, `SecurityFiltering()`, and the `SaveAs*` OutStream export surface. |
 
+### XmlPort
+
+| Object | Purpose |
+|---|---|
+| `ALT Universal XmlPort` (60023) | XmlPort fixture over `ALT Universal`. Covers instance `SetDestination()` + `Export()`, instance `SetSource()` + `Import()`, `SetTableView()`, and static `XmlPort.Export()` / `XmlPort.Import()` over streams. |
+
 ---
 
 ## Folder Structure
@@ -346,6 +352,8 @@ tests/al-language/
       ALTSimpleReport.al
     queries/
       ALTUniversalQuery.al
+    xmlports/
+      ALTUniversalXmlPort.al
     ALTFixtureCleanup.al           ← codeunit with DeleteAll on every fixture table
   record/
     TestRecordInsert.al
@@ -414,6 +422,8 @@ tests/al-language/
     TestJsonValue.al
   query/
     TestQueryObject.al
+  xmlport/
+    TestXmlPortObject.al
   xml/
     TestXmlDocument.al
     TestXmlElement.al
