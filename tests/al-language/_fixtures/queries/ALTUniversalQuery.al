@@ -4,6 +4,9 @@
 
 query 60022 "ALT Universal Query"
 {
+    QueryType = Normal;
+    OrderBy = ascending(EntryNo);
+
     elements
     {
         dataitem(Universal; "ALT Universal")
