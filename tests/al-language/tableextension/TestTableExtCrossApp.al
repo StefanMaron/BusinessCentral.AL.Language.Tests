@@ -1,11 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-table-ext-object
 // Scope: in-scope (Cloud-compatible, multi-app fixture required)
-// Fixtures used: ALT Item Journal Batch Ext (61002) on "Item Journal Batch" (table 233)
+// Fixtures used: ALT Internal Table Ext (60205) on ALT Internal Table (61001)
 // BC versions: 27.5+
 //
 // CLAIM: a dependent app can read and write fields that a dependency app's
-// tableextension added to a standard BC table. This exercises the symbol-merge
-// of a tableextension loaded as a compiled .app dependency.
+// tableextension added to an internal fixture table. This exercises the
+// symbol-merge of a tableextension loaded as a compiled .app dependency.
 
 codeunit 60203 "Test TableExt Cross App"
 {
@@ -23,17 +23,18 @@ codeunit 60203 "Test TableExt Cross App"
     // through Insert and is readable via Get from the dependent test app.
     // DOCS: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-table-ext-object
     var
-        Batch: Record "Item Journal Batch";
+        InternalRec: Record "ALT Internal Table";
+        EntryNo: Integer;
     begin
         Initialize();
-        Batch."Journal Template Name" := 'ALTTEST';
-        Batch.Name := 'BATCH1';
-        Batch."ALT Foo" := 42;
-        Batch.Insert(false);
+        InternalRec."Value" := 42;
+        InternalRec."ALT Foo" := 42;
+        InternalRec.Insert(false);
+        EntryNo := InternalRec."Entry No.";
 
-        Clear(Batch);
-        Batch.Get('ALTTEST', 'BATCH1');
-        Assert.AreEqual(42, Batch."ALT Foo", 'ALT Foo must round-trip through Insert/Get');
+        Clear(InternalRec);
+        InternalRec.Get(EntryNo);
+        Assert.AreEqual(42, InternalRec."ALT Foo", 'ALT Foo must round-trip through Insert/Get');
     end;
 
     [Test]
@@ -41,23 +42,24 @@ codeunit 60203 "Test TableExt Cross App"
     // CLAIM: both extension fields ("ALT Foo" and "ALT Bar") persist correctly
     // after a Modify — proves that multiple extension fields all survive the update path.
     var
-        Batch: Record "Item Journal Batch";
+        InternalRec: Record "ALT Internal Table";
+        EntryNo: Integer;
     begin
         Initialize();
-        Batch."Journal Template Name" := 'ALTTEST';
-        Batch.Name := 'BATCH2';
-        Batch."ALT Foo" := 1;
-        Batch."ALT Bar" := 'initial';
-        Batch.Insert(false);
+        InternalRec."Value" := 1;
+        InternalRec."ALT Foo" := 1;
+        InternalRec."ALT Bar" := 'initial';
+        InternalRec.Insert(false);
+        EntryNo := InternalRec."Entry No.";
 
-        Batch."ALT Foo" := 99;
-        Batch."ALT Bar" := 'modified';
-        Batch.Modify(false);
+        InternalRec."ALT Foo" := 99;
+        InternalRec."ALT Bar" := 'modified';
+        InternalRec.Modify(false);
 
-        Clear(Batch);
-        Batch.Get('ALTTEST', 'BATCH2');
-        Assert.AreEqual(99, Batch."ALT Foo", 'ALT Foo must reflect modified value');
-        Assert.AreEqual('modified', Batch."ALT Bar", 'ALT Bar must reflect modified value');
+        Clear(InternalRec);
+        InternalRec.Get(EntryNo);
+        Assert.AreEqual(99, InternalRec."ALT Foo", 'ALT Foo must reflect modified value');
+        Assert.AreEqual('modified', InternalRec."ALT Bar", 'ALT Bar must reflect modified value');
     end;
 
     [Test]
@@ -65,50 +67,43 @@ codeunit 60203 "Test TableExt Cross App"
     // CLAIM: SetRange on "ALT Foo" (an extension field) narrows the result set,
     // proving filters on extension fields work in the dependent app.
     var
-        Batch: Record "Item Journal Batch";
+        InternalRec: Record "ALT Internal Table";
     begin
         Initialize();
-        Batch."Journal Template Name" := 'ALTTEST';
-        Batch.Name := 'FILTER1';
-        Batch."ALT Foo" := 10;
-        Batch.Insert(false);
+        InternalRec."Value" := 10;
+        InternalRec."ALT Foo" := 10;
+        InternalRec.Insert(false);
 
-        Clear(Batch);
-        Batch."Journal Template Name" := 'ALTTEST';
-        Batch.Name := 'FILTER2';
-        Batch."ALT Foo" := 20;
-        Batch.Insert(false);
+        Clear(InternalRec);
+        InternalRec."Value" := 20;
+        InternalRec."ALT Foo" := 20;
+        InternalRec.Insert(false);
 
-        Batch.Reset();
-        Batch.SetRange("Journal Template Name", 'ALTTEST');
-        Batch.SetRange("ALT Foo", 10, 10);
-        Assert.AreEqual(1, Batch.Count(), 'SetRange on ALT Foo must filter to exactly one record');
+        InternalRec.Reset();
+        InternalRec.SetRange("ALT Foo", 10, 10);
+        Assert.AreEqual(1, InternalRec.Count(), 'SetRange on ALT Foo must filter to exactly one record');
     end;
 
     [Test]
-    procedure TableExt_CrossApp_DuplicateInsert_ReturnsFalse()
-    // CLAIM: Insert(false) on a duplicate PK returns false — proves the table (with
-    // its extension) is live and enforces PK uniqueness.
-    // NOTE: Insert(RunTrigger: Boolean) returns false on duplicate; it does not throw.
-    // The no-parameter Insert() variant throws instead.
+    procedure TableExt_CrossApp_Insert_AssignsAutoIncrementEntryNo()
+    // CLAIM: inserting a record on the internal fixture table assigns a non-zero
+    // auto-incremented primary key, proving the fixture table and extension are live.
     var
-        Batch: Record "Item Journal Batch";
+        InternalRec: Record "ALT Internal Table";
     begin
         Initialize();
-        Batch."Journal Template Name" := 'ALTTEST';
-        Batch.Name := 'DUP1';
-        Batch."ALT Foo" := 5;
-        Batch.Insert(false);
+        InternalRec."Value" := 5;
+        InternalRec."ALT Foo" := 5;
+        InternalRec.Insert(false);
 
-        Assert.IsFalse(Batch.Insert(false), 'Duplicate Insert(false) must return false');
+        Assert.AreNotEqual(0, InternalRec."Entry No.", 'Auto-increment must assign a non-zero Entry No.');
     end;
 
     local procedure Initialize()
     var
-        Batch: Record "Item Journal Batch";
+        InternalRec: Record "ALT Internal Table";
     begin
         Cleanup.Initialize();
-        Batch.SetRange("Journal Template Name", 'ALTTEST');
-        Batch.DeleteAll(false);
+        InternalRec.DeleteAll(false);
     end;
 }

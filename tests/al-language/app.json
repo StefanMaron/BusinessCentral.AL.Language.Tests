@@ -12,12 +12,6 @@
   "logo": "",
   "dependencies": [
     {
-      "id": "437dbf0e-84ff-417a-965d-ed2bb9650972",
-      "name": "Base Application",
-      "publisher": "Microsoft",
-      "version": "27.0.0.0"
-    },
-    {
       "id": "f1e2d3c4-b5a6-7890-fedc-ba9876543210",
       "name": "AL Internals Test Fixture",
       "publisher": "AL Language",

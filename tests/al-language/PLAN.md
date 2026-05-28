@@ -78,7 +78,7 @@ Run from `tests/al-language/`:
 
 ```bash
 mkdir -p .alpackages
-for app in "System" "System Application" "Base Application" "Application"; do
+for app in "System" "System Application" "Application"; do
   curl -sf -u BCRUNNER:Admin123! \
     "http://localhost:7049/BC/dev/packages?publisher=Microsoft&appName=$(echo $app | sed 's/ /%20/g')&appVersion=0.0.0.0" \
     -o ".alpackages/${app}.app" && echo "Downloaded ${app}"
