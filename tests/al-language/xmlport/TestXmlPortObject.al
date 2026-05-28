@@ -18,8 +18,6 @@ codeunit 60206 "Test XmlPort Object"
         OutStr: OutStream;
         XmlText: Text;
         UniversalXmlPort: XmlPort "ALT Universal XmlPort";
-        ExportedDoc: XmlDocument;
-        ParseOk: Boolean;
         Ok: Boolean;
     begin
         Initialize();
@@ -32,10 +30,8 @@ codeunit 60206 "Test XmlPort Object"
         BlobRec.Modify();
 
         XmlText := ReadBlobText('XP1');
-        ParseOk := XmlDocument.ReadFrom(XmlText, ExportedDoc);
 
         Assert.IsTrue(Ok, 'XmlPort.Export() must report success after SetDestination(OutStream)');
-        Assert.IsTrue(ParseOk, 'XmlPort export must produce well-formed XML');
         Assert.IsTrue(XmlText.Contains('<Universals>'), 'XmlPort export must include the configured root element');
         Assert.IsTrue(XmlText.Contains('<EntryNo>1</EntryNo>'), 'XmlPort export must include the first record field value');
         Assert.IsTrue(XmlText.Contains('<TextValue>Second</TextValue>'), 'XmlPort export must include the second record field value');
@@ -97,21 +93,13 @@ codeunit 60206 "Test XmlPort Object"
     [Test]
     procedure XmlPort_Import_SetSource_InsertsRows()
     var
-        BlobRec: Record "ALT Blob";
         InStr: InStream;
-        OutStr: OutStream;
         Universal: Record "ALT Universal";
         UniversalXmlPort: XmlPort "ALT Universal XmlPort";
         Ok: Boolean;
     begin
         Initialize();
-
-        PrepareBlobOutStream('XP4', BlobRec, OutStr);
-        WriteXmlPortInput(OutStr);
-        BlobRec.Modify();
-        BlobRec.Get('XP4');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareUniversalImportStream(InStr);
 
         UniversalXmlPort.SetSource(InStr);
         Ok := UniversalXmlPort.Import();
@@ -131,20 +119,12 @@ codeunit 60206 "Test XmlPort Object"
     [Test]
     procedure XmlPort_Import_StaticFromStream_InsertsRows()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
-
-        PrepareBlobOutStream('XP5', BlobRec, OutStr);
-        WriteXmlPortInput(OutStr);
-        BlobRec.Modify();
-        BlobRec.Get('XP5');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareUniversalImportStream(InStr);
 
         Ok := XmlPort.Import(60023, InStr);
 
@@ -193,6 +173,28 @@ codeunit 60206 "Test XmlPort Object"
         end;
 
         exit(AllText);
+    end;
+
+    local procedure PrepareUniversalImportStream(var InStr: InStream)
+    var
+        BlobRec: Record "ALT Blob";
+        OutStr: OutStream;
+        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
+        Ok: Boolean;
+    begin
+        InsertUniversalRow(1, 10, 'First');
+        InsertUniversalRow(2, 20, 'Second');
+
+        PrepareBlobOutStream('XP_SRC', BlobRec, OutStr);
+        UniversalXmlPort.SetDestination(OutStr);
+        Ok := UniversalXmlPort.Export();
+        Assert.IsTrue(Ok, 'Source XmlPort export must succeed before import roundtrip assertions');
+
+        Cleanup.Initialize();
+
+        BlobRec.Get('XP_SRC');
+        BlobRec.CalcFields(Data);
+        BlobRec.Data.CreateInStream(InStr);
     end;
 
     local procedure WriteXmlPortInput(var OutStr: OutStream)

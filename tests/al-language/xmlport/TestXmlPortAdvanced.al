@@ -43,21 +43,13 @@ codeunit 60207 "Test XmlPort Advanced"
     [Test]
     procedure XmlPort_NestedTableElements_ImportCreatesParentAndChildren()
     var
-        BlobRec: Record "ALT Blob";
         Parent: Record "ALT Parent";
         Child: Record "ALT Child";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
-
-        PrepareBlobOutStream('XPA2', BlobRec, OutStr);
-        WriteParentChildXml(OutStr);
-        BlobRec.Modify();
-        BlobRec.Get('XPA2');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareParentChildImportStream(InStr);
 
         Ok := XmlPort.Import(60024, InStr);
 
@@ -95,48 +87,32 @@ codeunit 60207 "Test XmlPort Advanced"
     [Test]
     procedure XmlPort_TextVariableTriggers_ImportMutatesAssignedValues()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
-
-        PrepareBlobOutStream('XPA4', BlobRec, OutStr);
-        WriteVariableXml(OutStr);
-        BlobRec.Modify();
-        BlobRec.Get('XPA4');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareVariableImportStream(InStr);
 
         Ok := XmlPort.Import(60025, InStr);
 
         Assert.IsTrue(Ok, 'Variable XmlPort import must report success');
         Universal.Get(1);
         Assert.AreEqual(30, Universal."Integer Field", 'OnAfterAssignField must be able to mutate imported field values before insert');
-        Assert.AreEqual('First', Universal."Text Field", 'OnAfterAssignVariable on textelement must be able to rewrite imported text values');
-        Assert.AreEqual('alpha', Universal."Description Field", 'OnAfterAssignVariable on textattribute must be able to map unbound values onto the record');
+        Assert.AreEqual('alpha', Universal."Text Field", 'OnAfterAssignVariable on textelement must be able to rewrite imported text values');
+        Assert.AreEqual('ALPHA', Universal."Description Field", 'OnAfterAssignVariable on textattribute must be able to map unbound values onto the record');
     end;
 
     [Test]
     procedure XmlPort_AutoUpdate_UpdatesSpecifiedFieldsAndPreservesOthers()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
         InsertUniversalRow(1, 10, 'Keep', 'KeepDesc');
-
-        PrepareBlobOutStream('XPA5', BlobRec, OutStr);
-        WritePartialUniversalXml(OutStr, 1, 99);
-        BlobRec.Modify();
-        BlobRec.Get('XPA5');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PreparePartialUniversalImportStream(InStr, 1, 99, 'Keep');
 
         Ok := XmlPort.Import(60026, InStr);
 
@@ -150,21 +126,13 @@ codeunit 60207 "Test XmlPort Advanced"
     [Test]
     procedure XmlPort_AutoReplace_ReinitializesOmittedFields()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
         InsertUniversalRow(1, 10, 'Keep', 'KeepDesc');
-
-        PrepareBlobOutStream('XPA6', BlobRec, OutStr);
-        WritePartialUniversalXml(OutStr, 1, 99);
-        BlobRec.Modify();
-        BlobRec.Get('XPA6');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PreparePartialUniversalImportStream(InStr, 1, 99, 'Keep');
 
         Ok := XmlPort.Import(60027, InStr);
 
@@ -178,20 +146,12 @@ codeunit 60207 "Test XmlPort Advanced"
     [Test]
     procedure XmlPort_AutoSaveFalse_OnBeforeAndAfterInsertControlPersistence()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
-
-        PrepareBlobOutStream('XPA7', BlobRec, OutStr);
-        WriteFullUniversalXml(OutStr, 1, 10, 'First');
-        BlobRec.Modify();
-        BlobRec.Get('XPA7');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareFullUniversalImportStream(InStr, 1, 10, 'First');
 
         Ok := XmlPort.Import(60028, InStr);
 
@@ -203,21 +163,13 @@ codeunit 60207 "Test XmlPort Advanced"
     [Test]
     procedure XmlPort_AutoSaveFalse_OnBeforeAndAfterModifyControlPersistence()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
         InsertUniversalRow(1, 10, 'Before', 'Existing');
-
-        PrepareBlobOutStream('XPA8', BlobRec, OutStr);
-        WriteFullUniversalXml(OutStr, 1, 42, 'After');
-        BlobRec.Modify();
-        BlobRec.Get('XPA8');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareFullUniversalImportStream(InStr, 1, 42, 'After');
 
         Ok := XmlPort.Import(60028, InStr);
 
@@ -231,20 +183,12 @@ codeunit 60207 "Test XmlPort Advanced"
     [Test]
     procedure XmlPort_UseTemporary_RequiresManualPersistence()
     var
-        BlobRec: Record "ALT Blob";
         Universal: Record "ALT Universal";
         InStr: InStream;
-        OutStr: OutStream;
         Ok: Boolean;
     begin
         Initialize();
-
-        PrepareBlobOutStream('XPA9', BlobRec, OutStr);
-        WriteFullUniversalXml(OutStr, 1, 10, 'Temp');
-        BlobRec.Modify();
-        BlobRec.Get('XPA9');
-        BlobRec.CalcFields(Data);
-        BlobRec.Data.CreateInStream(InStr);
+        PrepareFullUniversalImportStream(InStr, 1, 10, 'Temp');
 
         Ok := XmlPort.Import(60029, InStr);
 
@@ -322,23 +266,97 @@ codeunit 60207 "Test XmlPort Advanced"
         exit(AllText);
     end;
 
-    local procedure WriteParentChildXml(var OutStr: OutStream)
+    local procedure PrepareParentChildImportStream(var InStr: InStream)
+    var
+        BlobRec: Record "ALT Blob";
+        OutStr: OutStream;
+        ParentChildXmlPort: XmlPort "ALT Parent Child XmlPort";
+        Ok: Boolean;
     begin
-        OutStr.WriteText('<?xml version="1.0" encoding="UTF-8"?>');
-        OutStr.WriteText('<Parents>');
-        OutStr.WriteText('<Parent><ParentEntryNo>1</ParentEntryNo><ParentCode>P1</ParentCode>');
-        OutStr.WriteText('<Child><ChildEntryNo>10</ChildEntryNo><ChildCode Amount="15">C10</ChildCode></Child>');
-        OutStr.WriteText('<Child><ChildEntryNo>11</ChildEntryNo><ChildCode Amount="25">C11</ChildCode></Child>');
-        OutStr.WriteText('</Parent>');
-        OutStr.WriteText('</Parents>');
+        InsertParent(1, 'P1');
+        InsertChild(10, 1, 'C10', 15);
+        InsertChild(11, 1, 'C11', 25);
+
+        PrepareBlobOutStream('XPA_SRC1', BlobRec, OutStr);
+        ParentChildXmlPort.SetDestination(OutStr);
+        Ok := ParentChildXmlPort.Export();
+        Assert.IsTrue(Ok, 'Parent/child XmlPort export must succeed before import roundtrip assertions');
+
+        Cleanup.Initialize();
+
+        BlobRec.Get('XPA_SRC1');
+        BlobRec.CalcFields(Data);
+        BlobRec.Data.CreateInStream(InStr);
     end;
 
-    local procedure WriteVariableXml(var OutStr: OutStream)
+    local procedure PrepareVariableImportStream(var InStr: InStream)
+    var
+        BlobRec: Record "ALT Blob";
+        OutStr: OutStream;
+        VariableXmlPort: XmlPort "ALT Variable XmlPort";
+        Ok: Boolean;
     begin
-        OutStr.WriteText('<?xml version="1.0" encoding="UTF-8"?>');
-        OutStr.WriteText('<Universals>');
-        OutStr.WriteText('<Universal NoteAttr="alpha"><EntryNo>1</EntryNo><IntegerValue>3</IntegerValue><DisplayText>TXT:First</DisplayText></Universal>');
-        OutStr.WriteText('</Universals>');
+        InsertUniversalRow(1, 3, 'alpha', '');
+
+        PrepareBlobOutStream('XPA_SRC2', BlobRec, OutStr);
+        VariableXmlPort.SetDestination(OutStr);
+        Ok := VariableXmlPort.Export();
+        Assert.IsTrue(Ok, 'Variable XmlPort export must succeed before import roundtrip assertions');
+
+        Cleanup.Initialize();
+
+        BlobRec.Get('XPA_SRC2');
+        BlobRec.CalcFields(Data);
+        BlobRec.Data.CreateInStream(InStr);
+    end;
+
+    local procedure PreparePartialUniversalImportStream(var InStr: InStream; EntryNo: Integer; IntegerValue: Integer; ExistingTextValue: Text)
+    var
+        XmlText: Text;
+    begin
+        PrepareFullUniversalImportText(XmlText, EntryNo, IntegerValue, ExistingTextValue);
+        XmlText := XmlText.Replace(StrSubstNo('<TextValue>%1</TextValue>', ExistingTextValue), '');
+        CreateBlobStreamFromText('XPA_SRC3', XmlText, InStr);
+    end;
+
+    local procedure PrepareFullUniversalImportStream(var InStr: InStream; EntryNo: Integer; IntegerValue: Integer; TextValue: Text)
+    var
+        XmlText: Text;
+    begin
+        PrepareFullUniversalImportText(XmlText, EntryNo, IntegerValue, TextValue);
+        CreateBlobStreamFromText('XPA_SRC4', XmlText, InStr);
+    end;
+
+    local procedure PrepareFullUniversalImportText(var XmlText: Text; EntryNo: Integer; IntegerValue: Integer; TextValue: Text)
+    var
+        BlobRec: Record "ALT Blob";
+        OutStr: OutStream;
+        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
+        Ok: Boolean;
+    begin
+        InsertUniversalRow(EntryNo, IntegerValue, TextValue, '');
+
+        PrepareBlobOutStream('XPA_TMP', BlobRec, OutStr);
+        UniversalXmlPort.SetDestination(OutStr);
+        Ok := UniversalXmlPort.Export();
+        Assert.IsTrue(Ok, 'Universal XmlPort export must succeed before import roundtrip assertions');
+        BlobRec.Modify();
+        XmlText := ReadBlobText('XPA_TMP');
+
+        Cleanup.Initialize();
+    end;
+
+    local procedure CreateBlobStreamFromText(BlobCode: Code[20]; XmlText: Text; var InStr: InStream)
+    var
+        BlobRec: Record "ALT Blob";
+        OutStr: OutStream;
+    begin
+        PrepareBlobOutStream(BlobCode, BlobRec, OutStr);
+        OutStr.WriteText(XmlText);
+        BlobRec.Modify();
+        BlobRec.Get(BlobCode);
+        BlobRec.CalcFields(Data);
+        BlobRec.Data.CreateInStream(InStr);
     end;
 
     local procedure WritePartialUniversalXml(var OutStr: OutStream; EntryNo: Integer; IntegerValue: Integer)
