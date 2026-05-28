@@ -60,14 +60,14 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 | `text/` | String operations, formatting, regex, encoding |
 | `types/` | Primitive type behavior — Integer, Decimal, Date, Time, DateTime, Boolean |
 | `xml/` | XmlDocument, XmlNode, namespace handling, serialization |
-| `xmlport/` | XmlPort stream import/export, filtered table views, static import/export |
+| `xmlport/` | XmlPort stream import/export, nested data items, trigger-driven variables, import property semantics |
 | `_fixtures/` | Shared fixture library (see below) |
 
 ---
 
 ## Fixture Library
 
-All tests share a single fixture library — no per-test table definitions. The library lives in `_fixtures/` and includes 10 tables, 2 enums, 1 interface, 2 pages, 1 report, 1 query, 1 XmlPort, and 2 event codeunits.
+All tests share a single fixture library — no per-test table definitions. The library lives in `_fixtures/` and includes 10 tables, 2 enums, 1 interface, 2 pages, 1 report, 1 query, 6 XmlPorts, and 2 event codeunits.
 
 Tests reference fixtures directly; they never define their own schema objects. This keeps test files focused on a single behavioral claim.
 

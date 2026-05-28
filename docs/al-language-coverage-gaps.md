@@ -61,7 +61,7 @@ Notes:
 
 ### 2. XmlPort objects
 
-Status: baseline stream-based surface implemented.
+Status: broad baseline implemented; some specialized method/property coverage still pending.
 
 Why it matters:
 
@@ -75,11 +75,18 @@ Current coverage:
 - `SetTableView()` for filtered export
 - static `XmlPort.Export(Integer, OutStream [, Record])`
 - static `XmlPort.Import(Integer, InStream)`
+- nested `tableelement` trees with parent/child `LinkFields`
+- `fieldattribute`, `textelement`, and `textattribute` nodes
+- `OnBeforePassVariable()`, `OnAfterAssignVariable()`, and `OnAfterAssignField()`
+- `AutoUpdate=true`
+- `AutoReplace=true`
+- `AutoSave=false` with manual insert/modify in record triggers
+- `UseTemporary=true` with manual persistence from temporary rows
 
 Notes:
 
-- This first slice is intentionally stream-based. File-name and request-page driven execution paths are less useful for the repo’s cloud-safe runtime focus.
-- `Break()`, `BreakUnbound()`, `CurrentPath()`, `Skip()`, and text/fixed-width separator methods still need dedicated fixtures if we want full method-surface coverage.
+- The current slice is still intentionally stream-based. File-name and request-page driven execution paths are less useful for the repo’s cloud-safe runtime focus.
+- `Break()`, `BreakUnbound()`, `CurrentPath()`, `Skip()`, `OnPreXmlPort()` / `OnPostXmlPort()`, and text/fixed-width separator methods still need dedicated fixtures if we want full method-surface coverage.
 
 ### 3. SecretText
 
