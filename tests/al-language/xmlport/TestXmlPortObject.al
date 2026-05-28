@@ -190,11 +190,18 @@ codeunit 60206 "Test XmlPort Object"
         Ok := UniversalXmlPort.Export();
         Assert.IsTrue(Ok, 'Source XmlPort export must succeed before import roundtrip assertions');
 
-        Cleanup.Initialize();
+        DeleteUniversalRows();
 
         BlobRec.Get('XP_SRC');
         BlobRec.CalcFields(Data);
         BlobRec.Data.CreateInStream(InStr);
+    end;
+
+    local procedure DeleteUniversalRows()
+    var
+        Universal: Record "ALT Universal";
+    begin
+        Universal.DeleteAll(false);
     end;
 
     local procedure WriteXmlPortInput(var OutStr: OutStream)

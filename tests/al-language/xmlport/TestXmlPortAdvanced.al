@@ -282,7 +282,7 @@ codeunit 60207 "Test XmlPort Advanced"
         Ok := ParentChildXmlPort.Export();
         Assert.IsTrue(Ok, 'Parent/child XmlPort export must succeed before import roundtrip assertions');
 
-        Cleanup.Initialize();
+        DeleteParentChildRows();
 
         BlobRec.Get('XPA_SRC1');
         BlobRec.CalcFields(Data);
@@ -303,7 +303,7 @@ codeunit 60207 "Test XmlPort Advanced"
         Ok := VariableXmlPort.Export();
         Assert.IsTrue(Ok, 'Variable XmlPort export must succeed before import roundtrip assertions');
 
-        Cleanup.Initialize();
+        DeleteUniversalRows();
 
         BlobRec.Get('XPA_SRC2');
         BlobRec.CalcFields(Data);
@@ -328,22 +328,8 @@ codeunit 60207 "Test XmlPort Advanced"
     end;
 
     local procedure PrepareFullUniversalImportText(var XmlText: Text; EntryNo: Integer; IntegerValue: Integer; TextValue: Text)
-    var
-        BlobRec: Record "ALT Blob";
-        OutStr: OutStream;
-        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
-        Ok: Boolean;
     begin
-        InsertUniversalRow(EntryNo, IntegerValue, TextValue, '');
-
-        PrepareBlobOutStream('XPA_TMP', BlobRec, OutStr);
-        UniversalXmlPort.SetDestination(OutStr);
-        Ok := UniversalXmlPort.Export();
-        Assert.IsTrue(Ok, 'Universal XmlPort export must succeed before import roundtrip assertions');
-        BlobRec.Modify();
-        XmlText := ReadBlobText('XPA_TMP');
-
-        Cleanup.Initialize();
+        XmlText := BuildUniversalXmlFromExport(EntryNo, IntegerValue, TextValue);
     end;
 
     local procedure CreateBlobStreamFromText(BlobCode: Code[20]; XmlText: Text; var InStr: InStream)
@@ -357,6 +343,44 @@ codeunit 60207 "Test XmlPort Advanced"
         BlobRec.Get(BlobCode);
         BlobRec.CalcFields(Data);
         BlobRec.Data.CreateInStream(InStr);
+    end;
+
+    local procedure BuildUniversalXmlFromExport(TargetEntryNo: Integer; IntegerValue: Integer; TextValue: Text): Text
+    var
+        BlobRec: Record "ALT Blob";
+        OutStr: OutStream;
+        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
+        XmlText: Text;
+        Ok: Boolean;
+    begin
+        InsertUniversalRow(99991, IntegerValue, TextValue, '');
+
+        PrepareBlobOutStream('XPA_TMP', BlobRec, OutStr);
+        UniversalXmlPort.SetDestination(OutStr);
+        Ok := UniversalXmlPort.Export();
+        Assert.IsTrue(Ok, 'Universal XmlPort export must succeed before import roundtrip assertions');
+        BlobRec.Modify();
+        XmlText := ReadBlobText('XPA_TMP');
+
+        DeleteUniversalRows();
+
+        exit(XmlText.Replace('<EntryNo>99991</EntryNo>', StrSubstNo('<EntryNo>%1</EntryNo>', TargetEntryNo)));
+    end;
+
+    local procedure DeleteUniversalRows()
+    var
+        Universal: Record "ALT Universal";
+    begin
+        Universal.DeleteAll(false);
+    end;
+
+    local procedure DeleteParentChildRows()
+    var
+        Parent: Record "ALT Parent";
+        Child: Record "ALT Child";
+    begin
+        Child.DeleteAll(false);
+        Parent.DeleteAll(false);
     end;
 
     local procedure WritePartialUniversalXml(var OutStr: OutStream; EntryNo: Integer; IntegerValue: Integer)
