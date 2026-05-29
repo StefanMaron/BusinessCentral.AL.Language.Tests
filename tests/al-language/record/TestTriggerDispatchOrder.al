@@ -25,7 +25,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Validate("Watched Field", 'Validated');
 
         Assert.AreEqual(
-            'TableOnBeforeValidate,TableExtOnBeforeValidate,OnValidate,TableExtOnAfterValidate,TableOnAfterValidate',
+            'TABLEONBEFOREVALIDATE,TABLEEXTONBEFOREVALIDATE,ONVALIDATE,TABLEEXTONAFTERVALIDATE,TABLEONAFTERVALIDATE',
             GetTriggerOrder(),
             'Validate must keep the expected order across table subscribers, tableextension field triggers, and the table field trigger');
     end;
@@ -43,7 +43,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Insert(true);
 
         Assert.AreEqual(
-            'TableOnBeforeInsert,TableExtOnBeforeInsert,OnInsert,TableExtOnInsert,TableExtOnAfterInsert,TableOnAfterInsert',
+            'TABLEONBEFOREINSERT,TABLEEXTONBEFOREINSERT,ONINSERT,TABLEEXTONINSERT,TABLEEXTONAFTERINSERT,TABLEONAFTERINSERT',
             GetTriggerOrder(),
             'Insert must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
@@ -67,7 +67,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Modify(true);
 
         Assert.AreEqual(
-            'TableOnBeforeModify,TableExtOnBeforeModify,OnModify,TableExtOnModify,TableExtOnAfterModify,TableOnAfterModify',
+            'TABLEONBEFOREMODIFY,TABLEEXTONBEFOREMODIFY,ONMODIFY,TABLEEXTONMODIFY,TABLEEXTONAFTERMODIFY,TABLEONAFTERMODIFY',
             GetTriggerOrder(),
             'Modify must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
@@ -89,7 +89,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Delete(true);
 
         Assert.AreEqual(
-            'TableOnBeforeDelete,TableExtOnBeforeDelete,OnDelete,TableExtOnDelete,TableExtOnAfterDelete,TableOnAfterDelete',
+            'TABLEONBEFOREDELETE,TABLEEXTONBEFOREDELETE,ONDELETE,TABLEEXTONDELETE,TABLEEXTONAFTERDELETE,TABLEONAFTERDELETE',
             GetTriggerOrder(),
             'Delete must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
@@ -111,7 +111,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Rename(205);
 
         Assert.AreEqual(
-            'TableOnBeforeRename,TableExtOnBeforeRename,OnRename,TableExtOnRename,TableExtOnAfterRename,TableOnAfterRename',
+            'TABLEONBEFORERENAME,TABLEEXTONBEFORERENAME,ONRENAME,TABLEEXTONRENAME,TABLEEXTONAFTERRENAME,TABLEONAFTERRENAME',
             GetTriggerOrder(),
             'Rename must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
