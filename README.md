@@ -41,7 +41,7 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 
 ## Test Areas
 
-149 test files, 128+ codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
+155 test files, 155 codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
 
 | Area | Description |
 |------|-------------|
@@ -53,23 +53,27 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 | `error-handling/` | Error/Commit semantics, nested try-functions, confirm behavior |
 | `handlers/` | Message, Confirm, StrMenu, and page handler contracts |
 | `json/` | JsonObject, JsonArray, JsonToken — parse, write, path traversal |
+| `query/` | Query objects — open/read/close, filters, column metadata, security filtering, stream exports |
 | `out-of-scope/` | One negative test each for File, .NET, HttpClient — confirms Cloud throws |
 | `session/` | Session variables, UserSecurityId, Company behavior |
 | `streams/` | InStream/OutStream, TempBlob, BLOB field contracts |
 | `text/` | String operations, formatting, regex, encoding |
 | `types/` | Primitive type behavior — Integer, Decimal, Date, Time, DateTime, Boolean |
 | `xml/` | XmlDocument, XmlNode, namespace handling, serialization |
+| `xmlport/` | XmlPort stream import/export, nested data items, trigger-driven variables, import property semantics |
 | `_fixtures/` | Shared fixture library (see below) |
 
 ---
 
 ## Fixture Library
 
-All tests share a single fixture library — no per-test table definitions. The library lives in `_fixtures/` and includes 10 tables, 2 enums, 1 interface, 2 pages, 1 report, and 2 event codeunits.
+All tests share a single fixture library — no per-test table definitions. The library lives in `_fixtures/` and includes 10 tables, 2 enums, 1 interface, 2 pages, 1 report, 1 query, 6 XmlPorts, and 2 event codeunits.
 
 Tests reference fixtures directly; they never define their own schema objects. This keeps test files focused on a single behavioral claim.
 
 Full fixture reference: [PLAN.md](tests/al-language/PLAN.md)
+
+Working backlog: [AL Language Coverage Gaps](docs/al-language-coverage-gaps.md)
 
 ---
 

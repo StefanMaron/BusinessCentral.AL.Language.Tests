@@ -22,6 +22,9 @@ method, and know exactly:
 2. What the BC documentation says should happen
 3. That BC Cloud actually does that thing when run against a real container
 
+The working backlog for uncovered or thinly covered surfaces lives in
+[`docs/al-language-coverage-gaps.md`](../../docs/al-language-coverage-gaps.md).
+
 ## Why Start From Scratch
 
 The existing `tests/bucket-*` suites are runner regression tests. They were written
@@ -225,6 +228,7 @@ agents do not write tests for them.
 - Text, TextBuilder, BigText
 - JSON (JsonObject, JsonArray, JsonToken, JsonValue)
 - XML (XmlDocument, XmlElement, XmlAttribute, XmlNamespaceManager)
+- Query objects
 - Streams (InStream, OutStream, Blob)
 - Date/Time arithmetic and formatting
 - Integer, Decimal, Boolean arithmetic and edge cases
@@ -302,6 +306,24 @@ never modified by tests — tests insert/modify/delete data, not schema.
 |---|---|
 | `ALT Simple Report` (50900) | Single-dataitem report on ALT Universal. No rendering tested. Covers RequestPage handler dispatch, OnPreReport trigger, SaveAs (throws — out of scope). |
 
+### Query
+
+| Object | Purpose |
+|---|---|
+| `ALT Universal Query` (60022) | Query fixture over `ALT Universal`. Covers `Open()`, `Read()`, `Close()`, `SetFilter()`, `SetRange()`, `GetFilter()`, `GetFilters()`, `ColumnName()`, `ColumnCaption()`, `ColumnNo()`, `TopNumberOfRows()`, `SecurityFiltering()`, and the `SaveAs*` OutStream export surface. |
+
+### XmlPort
+
+| Object | Purpose |
+|---|---|
+| `ALT Universal XmlPort` (60023) | XmlPort fixture over `ALT Universal`. Covers instance `SetDestination()` + `Export()`, instance `SetSource()` + `Import()`, `SetTableView()`, and static `XmlPort.Export()` / `XmlPort.Import()` over streams. |
+| `ALT Parent Child XmlPort` (60024) | Nested parent/child XmlPort fixture over `ALT Parent` and `ALT Child`. Covers multiple tableelements, LinkFields-based nesting, and `fieldattribute` import/export. |
+| `ALT Variable XmlPort` (60025) | XmlPort fixture over `ALT Universal` with `textelement` and `textattribute` variables. Covers `OnBeforePassVariable()`, `OnAfterAssignVariable()`, and `OnAfterAssignField()`. |
+| `ALT Universal Update XmlPort` (60026) | Partial import XmlPort over `ALT Universal`. Covers `AutoUpdate=true` semantics for preserving omitted fields. |
+| `ALT Universal Replace XmlPort` (60027) | Partial import XmlPort over `ALT Universal`. Covers `AutoReplace=true` semantics for reinitializing omitted fields. |
+| `ALT Universal Manual XmlPort` (60028) | Import XmlPort over `ALT Universal` with `AutoSave=false` and `AutoUpdate=true`. Covers manual persistence through `OnAfterInitRecord()`, `OnBeforeInsertRecord()`, `OnAfterInsertRecord()`, `OnBeforeModifyRecord()`, and `OnAfterModifyRecord()`. |
+| `ALT Temp Universal XmlPort` (60029) | Import XmlPort over `ALT Universal` with `UseTemporary=true`. Covers temporary import buffering with manual persistence into real records. |
+
 ---
 
 ## Folder Structure
@@ -334,6 +356,16 @@ tests/al-language/
       ALTCardPage.al
     reports/
       ALTSimpleReport.al
+    queries/
+      ALTUniversalQuery.al
+    xmlports/
+      ALTUniversalXmlPort.al
+      ALTParentChildXmlPort.al
+      ALTVariableXmlPort.al
+      ALTUniversalUpdateXmlPort.al
+      ALTUniversalReplaceXmlPort.al
+      ALTUniversalManualXmlPort.al
+      ALTUniversalTemporaryXmlPort.al
     ALTFixtureCleanup.al           ← codeunit with DeleteAll on every fixture table
   record/
     TestRecordInsert.al
@@ -400,6 +432,11 @@ tests/al-language/
     TestJsonArray.al
     TestJsonToken.al
     TestJsonValue.al
+  query/
+    TestQueryObject.al
+  xmlport/
+    TestXmlPortObject.al
+    TestXmlPortAdvanced.al
   xml/
     TestXmlDocument.al
     TestXmlElement.al

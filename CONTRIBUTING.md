@@ -8,6 +8,7 @@ Thank you for contributing! This repo is an executable specification proving AL 
 - [Writing a test](#writing-a-test)
 - [Naming conventions](#naming-conventions)
 - [Fixture library](#fixture-library)
+- [Coverage gaps](#coverage-gaps)
 - [Version-gated tests (preprocessor directives)](#version-gated-tests-preprocessor-directives)
 - [Out-of-scope features](#out-of-scope-features)
 - [Local development](#local-development)
@@ -97,6 +98,7 @@ codeunit 60XXX "Record Insert Tests"
 tests/al-language/
   record/          TestRecordInsert.al, TestRecordFindFirst.al
   json/            TestJsonObjectGet.al, TestJsonArrayAdd.al
+  query/           TestQueryOpen.al, TestQueryFilters.al
   xml/             TestXmlDocumentLoad.al
   text/            TestTextBuilderAppend.al
   out-of-scope/    TestFileSystemThrows.al, TestHttpClientThrows.al
@@ -188,6 +190,14 @@ end;
 - Do not add more than one test per out-of-scope surface area
 
 Out-of-scope features: `File.*`, `HttpClient`, `File.Upload` / `File.Download`, SMTP, OData/SOAP calls from AL, background job scheduling, report rendering to PDF/Word/Excel, printing, `DotNet` interop.
+
+---
+
+## Coverage gaps
+
+The working backlog for expanding language coverage lives in [docs/al-language-coverage-gaps.md](docs/al-language-coverage-gaps.md).
+
+Use that document to pick the next AL surface to add before writing tests.
 
 ---
 
