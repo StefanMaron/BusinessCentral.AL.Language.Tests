@@ -43,7 +43,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Insert(true);
 
         Assert.AreEqual(
-            'TABLEONBEFOREINSERT,TABLEEXTONBEFOREINSERT,ONINSERT,TABLEEXTONINSERT,TABLEEXTONAFTERINSERT,TABLEONAFTERINSERT',
+            'TABLEONBEFOREINSERT,TABLEEXTONBEFOREINSERT,ONINSERT,TABLEEXTONINSERT,ONGLOBALINSERT,ONDATABASEINSERT,TABLEEXTONAFTERINSERT,TABLEONAFTERINSERT',
             GetTriggerOrder(),
             'Insert must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
@@ -67,7 +67,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Modify(true);
 
         Assert.AreEqual(
-            'TABLEONBEFOREMODIFY,TABLEEXTONBEFOREMODIFY,ONMODIFY,TABLEEXTONMODIFY,TABLEEXTONAFTERMODIFY,TABLEONAFTERMODIFY',
+            'TABLEONBEFOREMODIFY,TABLEEXTONBEFOREMODIFY,ONMODIFY,TABLEEXTONMODIFY,ONGLOBALMODIFY,ONDATABASEMODIFY,TABLEEXTONAFTERMODIFY,TABLEONAFTERMODIFY',
             GetTriggerOrder(),
             'Modify must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
@@ -89,7 +89,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Delete(true);
 
         Assert.AreEqual(
-            'TABLEONBEFOREDELETE,TABLEEXTONBEFOREDELETE,ONDELETE,TABLEEXTONDELETE,TABLEEXTONAFTERDELETE,TABLEONAFTERDELETE',
+            'TABLEONBEFOREDELETE,TABLEEXTONBEFOREDELETE,ONDELETE,TABLEEXTONDELETE,ONGLOBALDELETE,ONDATABASEDELETE,TABLEEXTONAFTERDELETE,TABLEONAFTERDELETE',
             GetTriggerOrder(),
             'Delete must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
@@ -111,7 +111,7 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Rename(205);
 
         Assert.AreEqual(
-            'TABLEONBEFORERENAME,TABLEEXTONBEFORERENAME,ONRENAME,TABLEEXTONRENAME,TABLEEXTONAFTERRENAME,TABLEONAFTERRENAME',
+            'TABLEONBEFORERENAME,TABLEEXTONBEFORERENAME,ONRENAME,TABLEEXTONRENAME,ONGLOBALRENAME,ONDATABASERENAME,TABLEEXTONAFTERRENAME,TABLEONAFTERRENAME',
             GetTriggerOrder(),
             'Rename must keep the expected order across table subscribers, tableextension triggers, and after-events');
     end;
