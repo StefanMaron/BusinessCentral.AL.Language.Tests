@@ -4,7 +4,8 @@
 //
 // xRec can only be read from inside table triggers.
 // The shared ALT Triggered fixture logs both Rec and xRec snapshots so the tests
-// can assert the actual before-image contracts directly.
+// can assert the runtime contract directly, including the code-path quirks where
+// xRec mirrors Rec instead of exposing a stored before-image.
 
 codeunit 60179 "Test xRec Contracts"
 {
@@ -14,7 +15,7 @@ codeunit 60179 "Test xRec Contracts"
         Cleanup: Codeunit ALTFixtureCleanup;
 
     [Test]
-    procedure OnInsert_xRec_IsClearedBeforeImage()
+    procedure OnInsert_xRec_MirrorsRecValues_WhenCalledFromCode()
     var
         Triggered: Record "ALT Triggered";
         TrigLog: Record "ALT Trigger Log";
@@ -27,16 +28,16 @@ codeunit 60179 "Test xRec Contracts"
         Triggered.Insert(true);
 
         FindTriggerLog(TrigLog, 'OnInsert');
-        Assert.AreEqual(0, TrigLog."OldEntryNo", 'OnInsert xRec must expose the cleared key value');
+        Assert.AreEqual(7, TrigLog."OldEntryNo", 'OnInsert xRec must mirror Rec key when Insert(true) is called from code');
         Assert.AreEqual(7, TrigLog."NewEntryNo", 'OnInsert Rec must expose the inserted key value');
-        Assert.AreEqual(0, TrigLog."OldIntegerValue", 'OnInsert xRec must expose the cleared integer value');
+        Assert.AreEqual(42, TrigLog."OldIntegerValue", 'OnInsert xRec must mirror Rec integer value when Insert(true) is called from code');
         Assert.AreEqual(42, TrigLog."NewIntegerValue", 'OnInsert Rec must expose the inserted integer value');
-        Assert.AreEqual('', TrigLog."OldValue", 'OnInsert xRec must expose the cleared text value');
+        Assert.AreEqual('NewText', TrigLog."OldValue", 'OnInsert xRec must mirror Rec text value when Insert(true) is called from code');
         Assert.AreEqual('NewText', TrigLog."NewValue", 'OnInsert Rec must expose the inserted text value');
     end;
 
     [Test]
-    procedure OnModify_xRec_HoldsStoredValue()
+    procedure OnModify_xRec_MirrorsRecValues_WhenCalledFromCode()
     var
         Triggered: Record "ALT Triggered";
         TrigLog: Record "ALT Trigger Log";
@@ -51,9 +52,9 @@ codeunit 60179 "Test xRec Contracts"
         Triggered.Modify(true);
 
         FindTriggerLog(TrigLog, 'OnModify');
-        Assert.AreEqual(1, TrigLog."OldEntryNo", 'OnModify xRec must keep the original key');
+        Assert.AreEqual(1, TrigLog."OldEntryNo", 'OnModify xRec must keep the current key');
         Assert.AreEqual(1, TrigLog."NewEntryNo", 'OnModify Rec must keep the current key');
-        Assert.AreEqual(5, TrigLog."OldIntegerValue", 'OnModify xRec must expose the stored integer value');
+        Assert.AreEqual(9, TrigLog."OldIntegerValue", 'OnModify xRec must mirror the new integer value when Modify(true) is called from code');
         Assert.AreEqual(9, TrigLog."NewIntegerValue", 'OnModify Rec must expose the new integer value');
     end;
 
