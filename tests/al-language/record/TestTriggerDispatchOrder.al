@@ -43,9 +43,9 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Insert(true);
 
         Assert.AreEqual(
-            'TABLEONBEFOREINSERT,TABLEEXTONBEFOREINSERT,ONINSERT,TABLEEXTONINSERT,ONGLOBALINSERT,ONDATABASEINSERT,TABLEEXTONAFTERINSERT,TABLEONAFTERINSERT',
+            'TABLEONBEFOREINSERT,TABLEEXTONBEFOREINSERT,ONINSERT,TABLEEXTONINSERT,ONDATABASEINSERT,TABLEEXTONAFTERINSERT,TABLEONAFTERINSERT',
             GetTriggerOrder(),
-            'Insert must keep the expected order across table subscribers, tableextension triggers, and after-events');
+            'Insert must keep the expected order across table subscribers, tableextension triggers, and database after-events');
     end;
 
     [Test]
@@ -67,9 +67,9 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Modify(true);
 
         Assert.AreEqual(
-            'TABLEONBEFOREMODIFY,TABLEEXTONBEFOREMODIFY,ONMODIFY,TABLEEXTONMODIFY,ONGLOBALMODIFY,ONDATABASEMODIFY,TABLEEXTONAFTERMODIFY,TABLEONAFTERMODIFY',
+            'TABLEONBEFOREMODIFY,TABLEEXTONBEFOREMODIFY,ONMODIFY,TABLEEXTONMODIFY,ONDATABASEMODIFY,TABLEEXTONAFTERMODIFY,TABLEONAFTERMODIFY',
             GetTriggerOrder(),
-            'Modify must keep the expected order across table subscribers, tableextension triggers, and after-events');
+            'Modify must keep the expected order across table subscribers, tableextension triggers, and database after-events');
     end;
 
     [Test]
@@ -89,9 +89,9 @@ codeunit 60210 "Test Trigger Dispatch Order"
         Triggered.Delete(true);
 
         Assert.AreEqual(
-            'TABLEONBEFOREDELETE,TABLEEXTONBEFOREDELETE,ONDELETE,TABLEEXTONDELETE,ONGLOBALDELETE,ONDATABASEDELETE,TABLEEXTONAFTERDELETE,TABLEONAFTERDELETE',
+            'TABLEONBEFOREDELETE,TABLEEXTONBEFOREDELETE,ONDELETE,TABLEEXTONDELETE,ONDATABASEDELETE,TABLEEXTONAFTERDELETE,TABLEONAFTERDELETE',
             GetTriggerOrder(),
-            'Delete must keep the expected order across table subscribers, tableextension triggers, and after-events');
+            'Delete must keep the expected order across table subscribers, tableextension triggers, and database after-events');
     end;
 
     [Test]
@@ -114,6 +114,50 @@ codeunit 60210 "Test Trigger Dispatch Order"
             'TABLEONBEFORERENAME,TABLEEXTONBEFORERENAME,ONRENAME,TABLEEXTONRENAME,ONGLOBALRENAME,ONDATABASERENAME,TABLEEXTONAFTERRENAME,TABLEONAFTERRENAME',
             GetTriggerOrder(),
             'Rename must keep the expected order across table subscribers, tableextension triggers, and after-events');
+    end;
+
+    [Test]
+    procedure TriggerOrder_GlobalTriggerDispatch_MatchesObservedRuntime()
+    var
+        Triggered: Record "ALT Triggered";
+    begin
+        Initialize();
+
+        Triggered."Entry No." := 106;
+        Triggered.Value := 6;
+        Triggered."Watched Field" := 'InsertGlobal';
+        Triggered.Insert(true);
+        AssertDoesNotContainTrigger('ONGLOBALINSERT', 'Insert must not publish OnGlobalInsert in BC 27.5 or 28.1');
+        AssertContainsTrigger('ONDATABASEINSERT', 'Insert must publish OnDatabaseInsert when database triggers are enabled');
+
+        ClearLog();
+
+        Triggered.Get(106);
+        Triggered.Value := 7;
+        Triggered."Watched Field" := 'ModifyGlobal';
+        Triggered.Modify(true);
+        AssertDoesNotContainTrigger('ONGLOBALMODIFY', 'Modify must not publish OnGlobalModify in BC 27.5 or 28.1');
+        AssertContainsTrigger('ONDATABASEMODIFY', 'Modify must publish OnDatabaseModify when database triggers are enabled');
+
+        ClearLog();
+
+        Triggered.Get(106);
+        Triggered.Delete(true);
+        AssertDoesNotContainTrigger('ONGLOBALDELETE', 'Delete must not publish OnGlobalDelete in BC 27.5 or 28.1');
+        AssertContainsTrigger('ONDATABASEDELETE', 'Delete must publish OnDatabaseDelete when database triggers are enabled');
+
+        ClearLog();
+
+        Triggered."Entry No." := 107;
+        Triggered.Value := 8;
+        Triggered."Watched Field" := 'RenameGlobal';
+        Triggered.Insert(false);
+        ClearLog();
+
+        Triggered.Get(107);
+        Triggered.Rename(207);
+        AssertContainsTrigger('ONGLOBALRENAME', 'Rename must publish OnGlobalRename when global triggers are enabled');
+        AssertContainsTrigger('ONDATABASERENAME', 'Rename must publish OnDatabaseRename when database triggers are enabled');
     end;
 
     local procedure Initialize()
@@ -143,5 +187,15 @@ codeunit 60210 "Test Trigger Dispatch Order"
         until TrigLog.Next() = 0;
 
         exit(OrderText);
+    end;
+
+    local procedure AssertContainsTrigger(TriggerName: Code[30]; FailureMessage: Text)
+    begin
+        Assert.AreNotEqual(0, StrPos(GetTriggerOrder(), TriggerName), FailureMessage);
+    end;
+
+    local procedure AssertDoesNotContainTrigger(TriggerName: Code[30]; FailureMessage: Text)
+    begin
+        Assert.AreEqual(0, StrPos(GetTriggerOrder(), TriggerName), FailureMessage);
     end;
 }
