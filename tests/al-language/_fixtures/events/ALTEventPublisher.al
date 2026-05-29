@@ -25,6 +25,14 @@ codeunit 60014 "ALT Event Publisher"
         OnBeforeAction(EntryNo, Handled);
     end;
 
+    procedure TriggerBeforeAndReturnHandled(EntryNo: Integer): Boolean
+    var
+        Handled: Boolean;
+    begin
+        OnBeforeAction(EntryNo, Handled);
+        exit(Handled);
+    end;
+
     procedure TriggerAfter(EntryNo: Integer; Result: Integer)
     begin
         OnAfterAction(EntryNo, Result);
