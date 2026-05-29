@@ -1,52 +1,41 @@
-codeunit 60016 "ALT Table Event Subscriber"
+tableextension 60024 "ALT Triggered Order Ext" extends "ALT Triggered"
 {
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnBeforeValidateEvent', 'Watched Field', false, false)]
-    local procedure OnBeforeValidateWatchedField(var Rec: Record "ALT Triggered"; var xRec: Record "ALT Triggered"; CurrFieldNo: Integer)
-    var
-        TrigLog: Record "ALT Trigger Log";
-    begin
-        TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnBeforeValidate';
-        TrigLog.SourceEntryNo := Rec."Entry No.";
-        TrigLog.OldValue := xRec."Watched Field";
-        TrigLog.NewValue := Rec."Watched Field";
-        TrigLog.Insert();
-    end;
+    fields
+    {
+        modify("Watched Field")
+        {
+            trigger OnBeforeValidate()
+            var
+                TrigLog: Record "ALT Trigger Log";
+            begin
+                TrigLog.Init();
+                TrigLog.TriggerName := 'TableExtOnBeforeValidate';
+                TrigLog.SourceEntryNo := Rec."Entry No.";
+                TrigLog.OldValue := xRec."Watched Field";
+                TrigLog.NewValue := Rec."Watched Field";
+                TrigLog.Insert();
+            end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnAfterValidateEvent', 'Watched Field', false, false)]
-    local procedure OnAfterValidateWatchedField(var Rec: Record "ALT Triggered"; var xRec: Record "ALT Triggered"; CurrFieldNo: Integer)
-    var
-        TrigLog: Record "ALT Trigger Log";
-    begin
-        TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnAfterValidate';
-        TrigLog.SourceEntryNo := Rec."Entry No.";
-        TrigLog.OldValue := xRec."Watched Field";
-        TrigLog.NewValue := Rec."Watched Field";
-        TrigLog.Insert();
-    end;
+            trigger OnAfterValidate()
+            var
+                TrigLog: Record "ALT Trigger Log";
+            begin
+                TrigLog.Init();
+                TrigLog.TriggerName := 'TableExtOnAfterValidate';
+                TrigLog.SourceEntryNo := Rec."Entry No.";
+                TrigLog.OldValue := xRec."Watched Field";
+                TrigLog.NewValue := Rec."Watched Field";
+                TrigLog.Insert();
+            end;
+        }
+    }
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnBeforeInsertEvent', '', false, false)]
-    local procedure OnBeforeInsertTriggered(var Rec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnBeforeInsert()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnBeforeInsert';
-        TrigLog.SourceEntryNo := Rec."Entry No.";
-        TrigLog.NewEntryNo := Rec."Entry No.";
-        TrigLog.NewIntegerValue := Rec.Value;
-        TrigLog.NewValue := Rec."Watched Field";
-        TrigLog.Insert();
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnAfterInsertEvent', '', false, false)]
-    local procedure OnAfterInsertTriggered(var Rec: Record "ALT Triggered"; RunTrigger: Boolean)
-    var
-        TrigLog: Record "ALT Trigger Log";
-    begin
-        TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnAfterInsert';
+        TrigLog.TriggerName := 'TableExtOnBeforeInsert';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
         TrigLog.NewIntegerValue := Rec.Value;
@@ -54,13 +43,38 @@ codeunit 60016 "ALT Table Event Subscriber"
         TrigLog.Insert();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnBeforeModifyEvent', '', false, false)]
-    local procedure OnBeforeModifyTriggered(var Rec: Record "ALT Triggered"; var xRec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnInsert()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnBeforeModify';
+        TrigLog.TriggerName := 'TableExtOnInsert';
+        TrigLog.SourceEntryNo := Rec."Entry No.";
+        TrigLog.NewEntryNo := Rec."Entry No.";
+        TrigLog.NewIntegerValue := Rec.Value;
+        TrigLog.NewValue := Rec."Watched Field";
+        TrigLog.Insert();
+    end;
+
+    trigger OnAfterInsert()
+    var
+        TrigLog: Record "ALT Trigger Log";
+    begin
+        TrigLog.Init();
+        TrigLog.TriggerName := 'TableExtOnAfterInsert';
+        TrigLog.SourceEntryNo := Rec."Entry No.";
+        TrigLog.NewEntryNo := Rec."Entry No.";
+        TrigLog.NewIntegerValue := Rec.Value;
+        TrigLog.NewValue := Rec."Watched Field";
+        TrigLog.Insert();
+    end;
+
+    trigger OnBeforeModify()
+    var
+        TrigLog: Record "ALT Trigger Log";
+    begin
+        TrigLog.Init();
+        TrigLog.TriggerName := 'TableExtOnBeforeModify';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.OldEntryNo := xRec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
@@ -71,13 +85,12 @@ codeunit 60016 "ALT Table Event Subscriber"
         TrigLog.Insert();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnAfterModifyEvent', '', false, false)]
-    local procedure OnAfterModifyTriggered(var Rec: Record "ALT Triggered"; var xRec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnModify()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnAfterModify';
+        TrigLog.TriggerName := 'TableExtOnModify';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.OldEntryNo := xRec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
@@ -88,13 +101,28 @@ codeunit 60016 "ALT Table Event Subscriber"
         TrigLog.Insert();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnBeforeDeleteEvent', '', false, false)]
-    local procedure OnBeforeDeleteTriggered(var Rec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnAfterModify()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnBeforeDelete';
+        TrigLog.TriggerName := 'TableExtOnAfterModify';
+        TrigLog.SourceEntryNo := Rec."Entry No.";
+        TrigLog.OldEntryNo := xRec."Entry No.";
+        TrigLog.NewEntryNo := Rec."Entry No.";
+        TrigLog.OldIntegerValue := xRec.Value;
+        TrigLog.NewIntegerValue := Rec.Value;
+        TrigLog.OldValue := xRec."Watched Field";
+        TrigLog.NewValue := Rec."Watched Field";
+        TrigLog.Insert();
+    end;
+
+    trigger OnBeforeDelete()
+    var
+        TrigLog: Record "ALT Trigger Log";
+    begin
+        TrigLog.Init();
+        TrigLog.TriggerName := 'TableExtOnBeforeDelete';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
         TrigLog.NewIntegerValue := Rec.Value;
@@ -102,13 +130,12 @@ codeunit 60016 "ALT Table Event Subscriber"
         TrigLog.Insert();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnAfterDeleteEvent', '', false, false)]
-    local procedure OnAfterDeleteTriggered(var Rec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnDelete()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnAfterDelete';
+        TrigLog.TriggerName := 'TableExtOnDelete';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
         TrigLog.NewIntegerValue := Rec.Value;
@@ -116,13 +143,25 @@ codeunit 60016 "ALT Table Event Subscriber"
         TrigLog.Insert();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnBeforeRenameEvent', '', false, false)]
-    local procedure OnBeforeRenameTriggered(var Rec: Record "ALT Triggered"; var xRec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnAfterDelete()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnBeforeRename';
+        TrigLog.TriggerName := 'TableExtOnAfterDelete';
+        TrigLog.SourceEntryNo := Rec."Entry No.";
+        TrigLog.NewEntryNo := Rec."Entry No.";
+        TrigLog.NewIntegerValue := Rec.Value;
+        TrigLog.NewValue := Rec."Watched Field";
+        TrigLog.Insert();
+    end;
+
+    trigger OnBeforeRename()
+    var
+        TrigLog: Record "ALT Trigger Log";
+    begin
+        TrigLog.Init();
+        TrigLog.TriggerName := 'TableExtOnBeforeRename';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.OldEntryNo := xRec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
@@ -131,13 +170,26 @@ codeunit 60016 "ALT Table Event Subscriber"
         TrigLog.Insert();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"ALT Triggered", 'OnAfterRenameEvent', '', false, false)]
-    local procedure OnAfterRenameTriggered(var Rec: Record "ALT Triggered"; var xRec: Record "ALT Triggered"; RunTrigger: Boolean)
+    trigger OnRename()
     var
         TrigLog: Record "ALT Trigger Log";
     begin
         TrigLog.Init();
-        TrigLog.TriggerName := 'TableOnAfterRename';
+        TrigLog.TriggerName := 'TableExtOnRename';
+        TrigLog.SourceEntryNo := Rec."Entry No.";
+        TrigLog.OldEntryNo := xRec."Entry No.";
+        TrigLog.NewEntryNo := Rec."Entry No.";
+        TrigLog.OldIntegerValue := xRec.Value;
+        TrigLog.NewIntegerValue := Rec.Value;
+        TrigLog.Insert();
+    end;
+
+    trigger OnAfterRename()
+    var
+        TrigLog: Record "ALT Trigger Log";
+    begin
+        TrigLog.Init();
+        TrigLog.TriggerName := 'TableExtOnAfterRename';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.OldEntryNo := xRec."Entry No.";
         TrigLog.NewEntryNo := Rec."Entry No.";
