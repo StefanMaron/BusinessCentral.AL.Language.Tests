@@ -297,6 +297,7 @@ never modified by tests — tests insert/modify/delete data, not schema.
 | `ALT Triggered Order Ext` (50914) | Tableextension fixture on `ALT Triggered`. Records tableextension field/table trigger order for `OnBeforeValidate`, `OnAfterValidate`, `OnBeforeInsert`, `OnInsert`, `OnAfterInsert`, `OnBeforeModify`, `OnModify`, `OnAfterModify`, `OnBeforeDelete`, `OnDelete`, `OnAfterDelete`, `OnBeforeRename`, `OnRename`, and `OnAfterRename`. |
 | `ALT Event Mutation Control` (50915) | Single-instance test control for enabling mutation scenarios in static subscribers without affecting unrelated tests. |
 | `ALT Event Mutation Sub` (50916) | Scenario-driven subscriber fixture that mutates `var` event parameters (`Handled`, `Rec`, and `xRec`) across codeunit and table events. Used to prove by-reference event mutation contracts. |
+| `ALT Standard Table Mut` (50917) | Subscriber fixture on the standard `Payment Terms` table. Mutates a different field from `OnAfterValidateEvent` on `Description` to prove by-reference propagation on precompiled publisher tables. |
 
 ### Pages
 

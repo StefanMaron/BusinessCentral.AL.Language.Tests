@@ -11,6 +11,7 @@
   "url": "",
   "logo": "",
   "platform": "27.0.0.0",
+  "application": "27.0.0.0",
   "dependencies": [
     {
       "id": "f1e2d3c4-b5a6-7890-fedc-ba9876543210",
