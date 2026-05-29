@@ -296,7 +296,7 @@ never modified by tests — tests insert/modify/delete data, not schema.
 | `ALT Internals Fanout Subscriber` (50913) | Additional subscribers for `ALT Internal Codeunit.OnValueComputed`. Used to prove integration-event fanout reaches multiple subscribers per publish. |
 | `ALT Triggered Order Ext` (50914) | Tableextension fixture on `ALT Triggered`. Records tableextension field/table trigger order for `OnBeforeValidate`, `OnAfterValidate`, `OnBeforeInsert`, `OnInsert`, `OnAfterInsert`, `OnBeforeModify`, `OnModify`, `OnAfterModify`, `OnBeforeDelete`, `OnDelete`, `OnAfterDelete`, `OnBeforeRename`, `OnRename`, and `OnAfterRename`. |
 | `ALT Event Mutation Control` (50915) | Single-instance test control for enabling mutation scenarios in static subscribers without affecting unrelated tests. |
-| `ALT Event Mutation Sub` (50916) | Scenario-driven subscriber fixture that mutates `var` event parameters (`Handled`, `Rec`, `xRec`, and `RunTrigger`) across codeunit and table events. Used to prove by-reference event mutation contracts. |
+| `ALT Event Mutation Sub` (50916) | Scenario-driven subscriber fixture that mutates `var` event parameters (`Handled`, `Rec`, and `xRec`) across codeunit and table events. Used to prove by-reference event mutation contracts. |
 
 ### Pages
 
