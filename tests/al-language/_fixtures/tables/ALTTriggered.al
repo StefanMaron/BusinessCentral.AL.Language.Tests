@@ -45,6 +45,11 @@ table 60002 "ALT Triggered"
     begin
         TrigLog."TriggerName" := 'OnInsert';
         TrigLog."SourceEntryNo" := Rec."Entry No.";
+        TrigLog."OldEntryNo" := xRec."Entry No.";
+        TrigLog."NewEntryNo" := Rec."Entry No.";
+        TrigLog."OldIntegerValue" := xRec.Value;
+        TrigLog."NewIntegerValue" := Rec.Value;
+        TrigLog."OldValue" := xRec."Watched Field";
         TrigLog."NewValue" := Rec."Watched Field";
         TrigLog."LoggedAt" := CurrentDateTime();
         TrigLog.Insert();
@@ -56,6 +61,10 @@ table 60002 "ALT Triggered"
     begin
         TrigLog."TriggerName" := 'OnModify';
         TrigLog."SourceEntryNo" := Rec."Entry No.";
+        TrigLog."OldEntryNo" := xRec."Entry No.";
+        TrigLog."NewEntryNo" := Rec."Entry No.";
+        TrigLog."OldIntegerValue" := xRec.Value;
+        TrigLog."NewIntegerValue" := Rec.Value;
         TrigLog."LoggedAt" := CurrentDateTime();
         TrigLog.Insert();
     end;
@@ -66,6 +75,10 @@ table 60002 "ALT Triggered"
     begin
         TrigLog."TriggerName" := 'OnDelete';
         TrigLog."SourceEntryNo" := Rec."Entry No.";
+        TrigLog."OldEntryNo" := xRec."Entry No.";
+        TrigLog."NewEntryNo" := Rec."Entry No.";
+        TrigLog."OldIntegerValue" := xRec.Value;
+        TrigLog."NewIntegerValue" := Rec.Value;
         TrigLog."LoggedAt" := CurrentDateTime();
         TrigLog.Insert();
     end;
@@ -76,6 +89,10 @@ table 60002 "ALT Triggered"
     begin
         TrigLog."TriggerName" := 'OnRename';
         TrigLog."SourceEntryNo" := Rec."Entry No.";
+        TrigLog."OldEntryNo" := xRec."Entry No.";
+        TrigLog."NewEntryNo" := Rec."Entry No.";
+        TrigLog."OldIntegerValue" := xRec.Value;
+        TrigLog."NewIntegerValue" := Rec.Value;
         TrigLog."LoggedAt" := CurrentDateTime();
         TrigLog.Insert();
     end;
@@ -107,6 +124,22 @@ table 60003 "ALT Trigger Log"
             DataClassification = SystemMetadata;
         }
         field(6; "LoggedAt"; DateTime)  // renamed from Timestamp (conflicts with SystemRowVersion)
+        {
+            DataClassification = SystemMetadata;
+        }
+        field(7; "OldEntryNo"; Integer)
+        {
+            DataClassification = SystemMetadata;
+        }
+        field(8; "NewEntryNo"; Integer)
+        {
+            DataClassification = SystemMetadata;
+        }
+        field(9; "OldIntegerValue"; Integer)
+        {
+            DataClassification = SystemMetadata;
+        }
+        field(10; "NewIntegerValue"; Integer)
         {
             DataClassification = SystemMetadata;
         }
