@@ -24,16 +24,6 @@ report 60544 "Test Rpt RunReqPage Dataset"
         }
     }
 
-    rendering
-    {
-        layout(RunReqPageDatasetLayout)
-        {
-            Type = RDLC;
-            LayoutFile = './TestReportRunRequestPageDatasetReport.rdl';
-            Caption = 'Test Rpt RunReqPage Dataset layout';
-        }
-    }
-
     requestpage
     {
         layout
@@ -50,6 +40,16 @@ report 60544 "Test Rpt RunReqPage Dataset"
                     }
                 }
             }
+        }
+    }
+
+    rendering
+    {
+        layout(RunReqPageDatasetLayout)
+        {
+            Type = RDLC;
+            LayoutFile = './TestReportRunRequestPageDatasetReport.rdl';
+            Caption = 'Test Rpt RunReqPage Dataset layout';
         }
     }
 
