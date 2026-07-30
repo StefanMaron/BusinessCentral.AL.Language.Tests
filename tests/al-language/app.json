@@ -20,6 +20,9 @@
     }
   ],
   "screenshots": [],
+  "resourceFolders": [
+    "session/res"
+  ],
   "idRanges": [
     {
       "from": 60000,
