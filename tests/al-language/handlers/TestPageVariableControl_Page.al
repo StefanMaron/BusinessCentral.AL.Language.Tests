@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-setvalue-method
 // Scope: in-scope
-// Fixtures used: Test Page Variable Control Row (60714), Test Page Variable Control List (60715)
+// Fixtures used: Test Page Variable Control Row (60714), Test Page Variable Control (60715)
 //
 // A list page whose first controls bind to page GLOBAL VARIABLES rather than to a
 // source-table field — the standard AL shape for a mode/filter selector above a repeater.
@@ -9,7 +9,7 @@
 // page, that setting the control actually ran the page's AL — not merely that a value was
 // stashed somewhere and handed back.
 
-page 60715 "Test Page Variable Control List"
+page 60715 "Test Page Variable Control"
 {
     PageType = List;
     SourceTable = "Test Page Variable Control Row";

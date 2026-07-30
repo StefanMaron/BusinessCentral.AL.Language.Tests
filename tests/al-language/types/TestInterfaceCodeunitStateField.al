@@ -7,7 +7,7 @@
 /// var-record field alive for a later interface method call — the codeunit instance
 /// backing the interface must not be torn down between the cast and the dispatch.
 /// </summary>
-codeunit 60372 "Test Interface Codeunit StateField"
+codeunit 60372 "Test Interface CU StateField"
 {
     Subtype = Test;
     TestPermissions = Disabled;

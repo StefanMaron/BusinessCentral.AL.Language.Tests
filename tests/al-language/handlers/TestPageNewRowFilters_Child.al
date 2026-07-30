@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagetestpage-new-method
 // Scope: in-scope
-// Fixtures used: Test Page New Row Filters Parent (60707), Test Page New Row Filters Child (60708)
+// Fixtures used: Test Page New Row Flt Parent (60707), Test Page New Row Flt Child (60708)
 //
 // Child side. Derived is derived from the PARENT, so it can only be filled if the new row
 // already knows which parent it belongs to. This is the shape that fails in the wild: the
@@ -8,7 +8,7 @@
 // second filterable field, present so a test can prove a filter on ONE field does not bleed
 // into another.
 
-table 60708 "Test Page New Row Filters Child"
+table 60708 "Test Page New Row Flt Child"
 {
     DataClassification = CustomerContent;
 
@@ -33,7 +33,7 @@ table 60708 "Test Page New Row Filters Child"
 
     trigger OnInsert()
     var
-        Parent: Record "Test Page New Row Filters Parent";
+        Parent: Record "Test Page New Row Flt Parent";
     begin
         if Parent.Get(Rec.ParentCode) then
             Rec.Derived := 'belongs-to-' + Parent.Label;

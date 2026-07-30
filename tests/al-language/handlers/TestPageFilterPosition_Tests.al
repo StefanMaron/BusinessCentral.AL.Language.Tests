@@ -9,7 +9,7 @@
 // That failure mode is the dangerous kind: the test reads a real, plausible-looking value
 // belonging to the wrong row, so it fails claiming the data is wrong rather than the cursor.
 
-codeunit 60694 "Test Page Filter Position Tests"
+codeunit 60694 "Test Page Filter Position"
 {
     Subtype = Test;
     TestPermissions = Disabled;

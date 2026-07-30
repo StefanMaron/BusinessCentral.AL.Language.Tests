@@ -10,7 +10,7 @@
 /// defect is in interface dispatch specifically, not in by-var codeunit parameters
 /// generally.
 /// </summary>
-codeunit 60377 "Test Interface Var Codeunit Out"
+codeunit 60377 "Test Interface Var CU Out"
 {
     Subtype = Test;
     TestPermissions = Disabled;

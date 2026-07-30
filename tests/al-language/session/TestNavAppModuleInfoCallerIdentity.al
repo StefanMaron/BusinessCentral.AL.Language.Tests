@@ -17,7 +17,7 @@
 // "foreign" module, which disagrees with BC's own rule (break on the very next stack
 // frame, regardless of app).
 
-codeunit 60383 "Test NavApp ModuleInfo CallerIdentity"
+codeunit 60383 "Test NavApp Caller Identity"
 {
     Subtype = Test;
     TestPermissions = Disabled;

@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagetestpage-new-method
 // Scope: in-scope
-// Fixtures used: Test Page New Row Filters Parent (60707), Test Page New Row Filters Child (60708),
+// Fixtures used: Test Page New Row Flt Parent (60707), Test Page New Row Flt Child (60708),
 //   Test Page New Row Filters List (60709)
 //
 // A filtered page is showing one parent's rows, so a row created on it belongs to that parent —
@@ -12,15 +12,15 @@
 // one step downstream: an OnValidate that looks up its parent silently finds nothing, and the
 // test fails naming a derived field instead of the key that was never set.
 
-codeunit 60710 "Test Page New Row Filters Tests"
+codeunit 60710 "Test Page New Row Flt Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     local procedure Initialize()
     var
-        Parent: Record "Test Page New Row Filters Parent";
-        Child: Record "Test Page New Row Filters Child";
+        Parent: Record "Test Page New Row Flt Parent";
+        Child: Record "Test Page New Row Flt Child";
     begin
         Child.DeleteAll();
         Parent.DeleteAll();
@@ -28,7 +28,7 @@ codeunit 60710 "Test Page New Row Filters Tests"
 
     local procedure Reset()
     var
-        Parent: Record "Test Page New Row Filters Parent";
+        Parent: Record "Test Page New Row Flt Parent";
     begin
         Parent.Init();
         Parent."Code" := 'P1';
@@ -65,7 +65,7 @@ codeunit 60710 "Test Page New Row Filters Tests"
     [Test]
     procedure New_LeavesFieldsWithNoFilterAlone()
     var
-        Child: Record "Test Page New Row Filters Child";
+        Child: Record "Test Page New Row Flt Child";
         Lines: TestPage "Test Page New Row Filters List";
     begin
         Initialize();
@@ -88,7 +88,7 @@ codeunit 60710 "Test Page New Row Filters Tests"
     [Test]
     procedure New_GivesOnInsertAParentItCanActuallyResolve()
     var
-        Child: Record "Test Page New Row Filters Child";
+        Child: Record "Test Page New Row Flt Child";
         Lines: TestPage "Test Page New Row Filters List";
     begin
         Initialize();

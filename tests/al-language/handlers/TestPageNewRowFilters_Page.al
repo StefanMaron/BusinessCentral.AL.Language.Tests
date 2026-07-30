@@ -1,11 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagetestpage-new-method
 // Scope: in-scope
-// Fixtures used: Test Page New Row Filters Child (60708), Test Page New Row Filters List (60709)
+// Fixtures used: Test Page New Row Flt Child (60708), Test Page New Row Filters List (60709)
 
 page 60709 "Test Page New Row Filters List"
 {
     PageType = List;
-    SourceTable = "Test Page New Row Filters Child";
+    SourceTable = "Test Page New Row Flt Child";
     ApplicationArea = All;
     UsageCategory = Administration;
 

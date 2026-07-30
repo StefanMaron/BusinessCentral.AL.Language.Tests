@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-setvalue-method
 // Scope: in-scope
-// Fixtures used: Test Page Variable Control Row (60714), Test Page Variable Control List (60715),
+// Fixtures used: Test Page Variable Control Row (60714), Test Page Variable Control (60715),
 //   Assert (60021)
 //
 // Pins TestPage access to a control bound to a page GLOBAL VARIABLE rather than to a
@@ -46,7 +46,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     [Test]
     procedure PageVariableControl_RoundTripsItsValue()
     var
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -65,7 +65,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     procedure PageVariableControl_FiresItsOnValidateTrigger()
     var
         Row: Record "Test Page Variable Control Row";
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -85,7 +85,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     [Test]
     procedure RecBoundControlsStillReadTheRecord()
     var
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -104,7 +104,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     procedure WritingThePageVariableDoesNotTouchTheRecord()
     var
         Row: Record "Test Page Variable Control Row";
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -130,7 +130,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     procedure OptionControl_SetByCaptionResolvesToTheRightMember()
     var
         Row: Record "Test Page Variable Control Row";
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -151,7 +151,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     procedure OptionControl_MultiWordCaptionResolvesToItsMember()
     var
         Row: Record "Test Page Variable Control Row";
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -172,7 +172,7 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     procedure OptionControl_RejectsAValueThatIsNeitherCaptionNorMember()
     var
         Row: Record "Test Page Variable Control Row";
-        PgvList: TestPage "Test Page Variable Control List";
+        PgvList: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();
@@ -190,8 +190,8 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     [Test]
     procedure PageVariableDoesNotLeakIntoASecondPageInstance()
     var
-        First: TestPage "Test Page Variable Control List";
-        Second: TestPage "Test Page Variable Control List";
+        First: TestPage "Test Page Variable Control";
+        Second: TestPage "Test Page Variable Control";
     begin
         Initialize();
         SeedRows();

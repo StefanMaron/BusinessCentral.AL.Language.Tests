@@ -46,7 +46,7 @@ codeunit 60687 "Test Page Editable Tests"
         Row.Insert();
     end;
 
-    local procedure OpenCardOn(No: Code[20]) Card: TestPage "Test Page Editable Card"
+    local procedure OpenCardOn(No: Code[20]; var Card: TestPage "Test Page Editable Card")
     var
         Row: Record "Test Page Editable Row";
     begin
@@ -62,7 +62,7 @@ codeunit 60687 "Test Page Editable Tests"
     begin
         Initialize();
         SeedRows();
-        Card := OpenCardOn('OPEN');
+        OpenCardOn('OPEN', Card);
 
         // Editable = false is a compile-time constant on the control. Even on a row the page
         // considers fully editable, this control must not be.
@@ -79,7 +79,7 @@ codeunit 60687 "Test Page Editable Tests"
     begin
         Initialize();
         SeedRows();
-        Card := OpenCardOn('OPEN');
+        OpenCardOn('OPEN', Card);
 
         // The default. A fix that reports false for everything passes every other test here
         // and fails this one.
@@ -98,13 +98,13 @@ codeunit 60687 "Test Page Editable Tests"
         SeedRows();
 
         // Editable = RowEditable, and OnAfterGetRecord sets RowEditable := not Rec.Locked.
-        Card := OpenCardOn('OPEN');
+        OpenCardOn('OPEN', Card);
         if not Card.Name.Editable() then
             Error('Name.Editable() was false on the unlocked row, expected true.');
         Card.Close();
 
         Clear(Card);
-        Card := OpenCardOn('LOCKED');
+        OpenCardOn('LOCKED', Card);
         if Card.Name.Editable() then
             Error('Name.Editable() was true on the locked row, expected false.');
         Card.Close();
@@ -117,7 +117,7 @@ codeunit 60687 "Test Page Editable Tests"
     begin
         Initialize();
         SeedRows();
-        Card := OpenCardOn('LOCKED');
+        OpenCardOn('LOCKED', Card);
 
         // Not editable is not the same as not readable. A card shows read-only data; a fix
         // that suppressed the value along with the editability would break every list test.
@@ -136,13 +136,13 @@ codeunit 60687 "Test Page Editable Tests"
         Initialize();
         SeedRows();
 
-        Card := OpenCardOn('OPEN');
+        OpenCardOn('OPEN', Card);
         if not Card.Rename.Enabled() then
             Error('Rename.Enabled() was false on the unlocked row, expected true.');
         Card.Close();
 
         Clear(Card);
-        Card := OpenCardOn('LOCKED');
+        OpenCardOn('LOCKED', Card);
         if Card.Rename.Enabled() then
             Error('Rename.Enabled() was true on the locked row, expected false.');
         // An action with no Enabled property is the negative: it must stay enabled.
@@ -161,13 +161,13 @@ codeunit 60687 "Test Page Editable Tests"
 
         // Page-level editability is a separate mechanism from the per-control property, set
         // here by OnAfterGetRecord calling CurrPage.Editable(not Rec.Locked).
-        Card := OpenCardOn('OPEN');
+        OpenCardOn('OPEN', Card);
         if not Card.Editable() then
             Error('TestPage.Editable() was false on the unlocked row, expected true.');
         Card.Close();
 
         Clear(Card);
-        Card := OpenCardOn('LOCKED');
+        OpenCardOn('LOCKED', Card);
         if Card.Editable() then
             Error('TestPage.Editable() was true on the locked row, expected false.');
         Card.Close();
