@@ -36,6 +36,17 @@ codeunit 60378 "Test Isolated Storage"
         Assert.IsFalse(IsolatedStorage.Contains('its-doomed'), 'Deleted key must not be contained.');
     end;
 
+    // Known bc-linux CI limitation, not a runner/AL gap: Encrypt()/Decrypt() and
+    // IsolatedStorage(Encrypted=true) both route through the same real BC call chain
+    // (TenantEncryptionProviderFactory → TenantRsaEncryptionProvider — plain
+    // RSACryptoServiceProvider + File.Create, no DPAPI, fully cross-platform), but
+    // bc-linux's StartupHook patch that creates the tenant encryption key is a
+    // pass-through fake — it satisfies IsolatedStorage.SetEncrypted's store/retrieve
+    // round-trip but cannot make Encrypt() output differ from its plaintext input, so
+    // this specific assertion is expected to keep failing against bc-linux. See
+    // bc-linux's KNOWN-LIMITATIONS.md. This is real, correct BC behavior being asserted
+    // — do not weaken it to match the fake; fix the fake instead if this ever needs to
+    // pass in CI.
     [Test]
     procedure IsolatedStorage_EncryptDecrypt_RoundTripsAndIsNotPlaintext()
     var
