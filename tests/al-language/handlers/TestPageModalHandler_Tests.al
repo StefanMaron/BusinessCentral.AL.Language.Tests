@@ -112,7 +112,7 @@ codeunit 60706 "Test Page Modal Handler Tests"
         Host.OpenEdit();
         Host.First();
         asserterror Host.PickIt.Invoke();
-        Assert.ExpectedError('has not been registered');
+        Assert.ExpectedError('Unhandled UI');
 
         Assert.IsFalse(Row.Get('RESULT'),
             'a refused modal page must not have let the calling AL record a result');

@@ -20,4 +20,25 @@ page 60703 "Test Page Modal"
             }
         }
     }
+
+    actions
+    {
+        area(Processing)
+        {
+            // TestPage.OK()/.Cancel() invoke an action tree lookup by SystemAction —
+            // they do NOT reach the client's implicit modal chrome buttons. Without
+            // these, real BC raises "The built-in action = Cancel is not found on
+            // the page." for both OK and Cancel.
+            action(OK)
+            {
+                ApplicationArea = All;
+                SystemAction = OK;
+            }
+            action(Cancel)
+            {
+                ApplicationArea = All;
+                SystemAction = Cancel;
+            }
+        }
+    }
 }

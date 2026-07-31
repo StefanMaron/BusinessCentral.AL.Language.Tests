@@ -73,6 +73,12 @@ codeunit 60701 "Test Page Insert Allowed Tests"
         ReadOnlyPage: TestPage "Test Page Insert ReadOnly";
     begin
         Initialize();
+        // This codeunit does not declare TestIsolation = Function, so BC's default
+        // (TestIsolation = Codeunit) keeps every [Test] method in one shared transaction.
+        // asserterror below suppresses the test failure but not the rollback the error still
+        // triggers — without this Commit, that rollback also undoes Initialize()'s DeleteAll,
+        // reverting to whatever rows an earlier test in this codeunit left behind.
+        Commit();
 
         ReadOnlyPage.OpenEdit();
         asserterror ReadOnlyPage.New();

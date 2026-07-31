@@ -35,6 +35,11 @@ codeunit 60614 "Test SingleInstance Run Scope"
     begin
         Initialize();
         SeedSetup('GBP');
+        // Real BC refuses to open the write scope Codeunit.Run needs while this
+        // transaction still has an uncommitted database write pending (the SeedSetup
+        // Insert above) — commit first, exactly like Base App code does before calling
+        // into another codeunit that manages its own transaction.
+        Commit();
 
         // Codeunit.Run gives the resolution its own scope, which is then torn down. The
         // instance cached from inside it must still be usable afterwards.

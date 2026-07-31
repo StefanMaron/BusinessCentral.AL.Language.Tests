@@ -19,6 +19,21 @@ page 60841 "TRT Card"
         }
     }
 
+    actions
+    {
+        area(Processing)
+        {
+            // TestPage.OK() has a built-in fallback and works without a declared action, but
+            // TestPage.Cancel() does not — real BC raises "The built-in action = Cancel is not
+            // found on the page." without this explicit SystemAction declaration.
+            action(Cancel)
+            {
+                ApplicationArea = All;
+                SystemAction = Cancel;
+            }
+        }
+    }
+
     trigger OnNewRecord(BelowxRec: Boolean)
     begin
         // A brand-new row belongs to the tenant; the enum's own default (Extension) is what a

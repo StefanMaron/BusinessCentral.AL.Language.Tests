@@ -38,6 +38,11 @@ codeunit 60545 "Test Report RunRequestPage"
         Row."Entry No." := 2;
         Row.Name := 'second';
         Row.Insert();
+        // Report.RunRequestPage opens its own execution/UI scope, same as RunModal —
+        // real BC refuses to do that while this transaction still has the writes above
+        // pending. Commit first, like Base App code does before calling into anything
+        // that manages its own transaction/session scope.
+        Commit();
     end;
 
     [Test]

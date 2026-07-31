@@ -106,6 +106,11 @@ codeunit 60713 "Test Page OnValidate Tests"
     begin
         Initialize();
         Seed('V-4');
+        // asserterror rolls back the current transaction on the caught error; without an
+        // explicit Commit() here, the seeded row above rolls back with it and Row.Get('V-4')
+        // below fails with "does not exist" even though the seed and the error are logically
+        // unrelated.
+        Commit();
 
         Card.OpenEdit();
         Card.First();

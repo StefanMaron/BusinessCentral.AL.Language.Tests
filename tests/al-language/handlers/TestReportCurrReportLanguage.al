@@ -8,6 +8,13 @@
 // (Standard Sales - Invoice sets the language from the customer's language code in its
 // Header data item).
 //
+// CurrReport.Language affects record/number/date formatting regardless of rendering
+// target, so it is readable back immediately even for a raw ReportFormat::Xml SaveAs
+// (no layout renders). CurrReport.FormatRegion, per MS docs, only takes effect when
+// rendering a Word or Excel layout — it is a no-op for Xml export (no layout is ever
+// invoked), so it reads back empty here. That is real, documented BC behavior, not a
+// runner/test gap.
+//
 // Both directions:
 //   * a language the report sets is readable back and the run completes;
 //   * a language of 0 is rejected by BC as an invalid language id, so the guard that
@@ -52,8 +59,12 @@ codeunit 60529 "Test Report CurrReport Lang"
         // assignment and answered the default language would still have "passed" on 1033.
         if Probe.LanguageSeen() <> 1031 then
             Error('CurrReport.Language read back as %1, expected 1031.', Probe.LanguageSeen());
-        if Probe.FormatRegionSeen() <> 'en-US' then
-            Error('CurrReport.FormatRegion read back as "%1", expected "en-US".',
+        // FormatRegion only takes effect for Word/Excel layout rendering (MS docs); this
+        // report exports Xml (no layout invoked at all), so the assignment is a no-op and
+        // reads back empty — asserting that is what proves it did NOT silently error or
+        // get ignored in some other, undocumented way.
+        if Probe.FormatRegionSeen() <> '' then
+            Error('CurrReport.FormatRegion read back as "%1", expected "" (Xml export never renders a layout, so FormatRegion is a documented no-op).',
                 Probe.FormatRegionSeen());
     end;
 

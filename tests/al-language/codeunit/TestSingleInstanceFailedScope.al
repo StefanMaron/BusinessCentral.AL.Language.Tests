@@ -35,6 +35,13 @@ codeunit 60615 "Test SingleInstance Failed Scp"
     begin
         Initialize();
         SeedSetup('CHF');
+        // Must commit before Codeunit.Run for the same reason as the success-path
+        // sibling test — but here it also matters for a second reason: Codeunit.Run's
+        // error handling rolls the transaction back to the last commit. Without this
+        // Commit, the SeedSetup insert above would itself be undone by the rollback,
+        // so GetCurrencyCode()'s Setup.Get('MAIN') below would find no row at all
+        // instead of the CHF row this test is actually about.
+        Commit();
 
         // The priming scope errors, so it is torn down through the rollback path.
         if Codeunit.Run(Codeunit::"SIS Failing Runner") then

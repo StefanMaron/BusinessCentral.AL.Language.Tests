@@ -176,6 +176,11 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
     begin
         Initialize();
         SeedRows();
+        // asserterror rolls back to the last commit; without this, that rollback also
+        // undoes Initialize()'s DeleteAll (this codeunit has no TestIsolation = Function),
+        // reverting to the 'KIND' row the previous test in this shared transaction left
+        // behind — which is exactly what made Row.Get('KIND') below wrongly return true.
+        Commit();
 
         PgvList.OpenEdit();
         asserterror PgvList.KindSelector.SetValue('Sprockets');

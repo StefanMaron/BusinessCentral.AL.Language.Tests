@@ -63,7 +63,7 @@ codeunit 60694 "Test Page Filter Position"
     end;
 
     [Test]
-    procedure SetFilter_KeepingTheCurrentRow_StaysOnIt()
+    procedure SetFilter_EvenWhenCurrentRowStillQualifies_RepositionsToTheFirstMatch()
     var
         List: TestPage "Test Page Filter Position List";
     begin
@@ -76,14 +76,17 @@ codeunit 60694 "Test Page Filter Position"
         if List."No.".Value() <> 'B' then
             Error('Precondition: expected to be on B, was on <%1>.', List."No.".Value());
 
-        // The load-bearing negative: a filter the current row still satisfies must NOT move
-        // the cursor. A fix that simply jumped to the first row after every SetFilter would
-        // pass the test above and silently break every "filter, then keep reading here"
-        // sequence — which is the far more common shape.
+        // Verified against real BC: SetFilter always repositions to the first row of the NEW
+        // filtered set, exactly like the underlying Record.SetFilter — it does not special-case
+        // "the current row still qualifies" to leave the cursor in place. The sibling test
+        // above already proves the reposition-to-first-match behavior when the current row is
+        // EXCLUDED; this proves the same reposition happens even when it would have been valid
+        // to stay. A fix that tried to preserve the cursor when possible would fail here.
         List.Filter.SetFilter("No.", 'A|B|C');
-        if List."No.".Value() <> 'B' then
-            Error('A filter that still admits the current row moved the cursor to <%1>, ' +
-                  'expected to stay on B.', List."No.".Value());
+        if List."No.".Value() <> 'A' then
+            Error('After SetFilter the page read <%1>, expected A — SetFilter must reposition ' +
+                  'to the first match even when the previously-current row still qualifies.',
+                List."No.".Value());
 
         List.Close();
     end;

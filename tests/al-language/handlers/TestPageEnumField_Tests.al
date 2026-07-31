@@ -127,6 +127,10 @@ codeunit 60691 "Test Page Enum Field Tests"
     begin
         Initialize();
         Seed('E-3');
+        // asserterror suppresses test failure but NOT the database rollback the error still
+        // triggers — without this Commit, the Seed insert above rolls back along with the
+        // rejected SetValue, and the Get below fails with "row does not exist".
+        Commit();
 
         Card.OpenEdit();
         Card.First();

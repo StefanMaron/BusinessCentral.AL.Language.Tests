@@ -53,7 +53,13 @@ codeunit 60211 "Test Codeunit Al Call Stack"
         Stack: Text;
     begin
         Initialize();
-        // No error was raised — GetLastErrorCallStack must return empty / blank.
+        // No error was raised in THIS test — GetLastErrorCallStack must return
+        // empty / blank. Explicitly clear first: BC does not reset the
+        // last-error call stack between [Test] methods in the same codeunit
+        // run, so a prior test's asserterror (e.g.
+        // CallStack_AfterAssertError_ContainsALFrames) would otherwise leak
+        // its stack into this assertion.
+        ClearLastError();
         Stack := GetLastErrorCallStack();
         Assert.AreEqual('', Stack, 'GetLastErrorCallStack must be empty when no error occurred');
     end;
