@@ -1,20 +1,21 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-installation-codeunit
 // Scope: in-scope
-// Fixtures used: Install Seed (60617), Install Seeder (60618), Not An Installer (60619), Assert (60021)
+// Fixtures used: Install Seed (60617), Install Seed Database (60621), Install Seeder (60618), Not An Installer (60619), Assert (60021)
 //
 // Proves that Subtype=Install codeunit lifecycle triggers fire once per bundle
 // BEFORE the first [Test] runs — modelling a freshly-installed app, exactly
 // like real BC's NavAppInstallationProcessor raising OnInstallAppPerDatabase /
 // OnInstallAppPerCompany on install.
 //
-// 'DATABASE' (per-database trigger), 'COMPANY1' and 'COMPANY2' (per-company
-// trigger) must exist with exact values; the look-alike procedure on the
-// NORMAL codeunit "Not An Installer" must NOT have run (no 'ROGUE' row, count
-// stays exactly 3) — the step is scoped to Subtype=Install, not name-matched.
+// 'DATABASE' (per-database trigger, "Install Seed Database") and 'COMPANY1' /
+// 'COMPANY2' (per-company trigger, "Install Seed") must exist with exact
+// values; the look-alike procedure on the NORMAL codeunit "Not An Installer"
+// must NOT have run (no 'ROGUE' row, count stays exactly 2) — the step is
+// scoped to Subtype=Install, not name-matched.
 //
 // NOTE: deliberately no Initialize()/DeleteAll() here — these tests exist
 // specifically to observe the rows seeded by install triggers BEFORE any test
-// code runs; clearing the table would defeat the test's purpose.
+// code runs; clearing the tables would defeat the test's purpose.
 
 codeunit 60620 "Test Install Trigger Seed"
 {
@@ -42,7 +43,7 @@ codeunit 60620 "Test Install Trigger Seed"
     [Test]
     procedure TestInstall_SeededPerDatabaseRowExists()
     var
-        Seed: Record "Install Seed";
+        Seed: Record "Install Seed Database";
     begin
         Seed.Get('DATABASE');
         Assert.AreEqual(99, Seed."Value", 'OnInstallAppPerDatabase must have seeded DATABASE with Value 99');
@@ -52,8 +53,10 @@ codeunit 60620 "Test Install Trigger Seed"
     procedure TestInstall_ExactlyTheThreeSeededRowsExist()
     var
         Seed: Record "Install Seed";
+        SeedDatabase: Record "Install Seed Database";
     begin
-        Assert.AreEqual(3, Seed.Count(), 'install triggers must have seeded exactly 3 rows (1 per-database + 2 per-company)');
+        Assert.AreEqual(2, Seed.Count(), 'OnInstallAppPerCompany must have seeded exactly 2 rows (COMPANY1 + COMPANY2)');
+        Assert.AreEqual(1, SeedDatabase.Count(), 'OnInstallAppPerDatabase must have seeded exactly 1 row (DATABASE)');
     end;
 
     [Test]

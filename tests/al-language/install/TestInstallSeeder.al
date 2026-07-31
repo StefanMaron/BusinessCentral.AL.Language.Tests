@@ -1,10 +1,14 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-installation-codeunit
 // Scope: in-scope
-// Fixtures used: Install Seed (60617)
+// Fixtures used: Install Seed (60617), Install Seed Database (60621)
 //
 // The Subtype=Install codeunit under test. Real BC fires its lifecycle
 // triggers on app install; each trigger inserts distinctly-marked rows so the
-// tests can prove BOTH triggers fired (not just one).
+// tests can prove BOTH triggers fired (not just one). OnInstallAppPerDatabase
+// fires once, globally, before any company exists, so it writes to the
+// per-database table. OnInstallAppPerCompany fires once per EXISTING company,
+// so it writes to the per-company table — otherwise a sandbox with more than
+// one company would collide inserting the same Code twice.
 
 codeunit 60618 "Install Seeder"
 {
@@ -12,7 +16,7 @@ codeunit 60618 "Install Seeder"
 
     trigger OnInstallAppPerDatabase()
     var
-        Seed: Record "Install Seed";
+        Seed: Record "Install Seed Database";
     begin
         Seed.Init();
         Seed."Code" := 'DATABASE';

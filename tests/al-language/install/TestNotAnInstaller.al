@@ -6,7 +6,7 @@
 // public procedure that happens to be named like an install trigger. If a
 // runtime's install step matched by method NAME instead of by codeunit
 // Subtype=Install, this would insert a 'ROGUE' row — the tests assert it did
-// NOT run (row absent, total count stays exactly 3).
+// NOT run (row absent, total count stays exactly 2).
 
 codeunit 60619 "Not An Installer"
 {
