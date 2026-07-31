@@ -19,21 +19,6 @@ page 60841 "TRT Card"
         }
     }
 
-    actions
-    {
-        area(Processing)
-        {
-            // TestPage.OK() has a built-in fallback and works without a declared action, but
-            // TestPage.Cancel() does not — real BC's built-in-action lookup finds it by the
-            // action's declared NAME ("Cancel"), not a property; raises "The built-in action
-            // = Cancel is not found on the page." without an action literally named this.
-            action(Cancel)
-            {
-                ApplicationArea = All;
-            }
-        }
-    }
-
     trigger OnNewRecord(BelowxRec: Boolean)
     begin
         // A brand-new row belongs to the tenant; the enum's own default (Extension) is what a
@@ -43,8 +28,11 @@ page 60841 "TRT Card"
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     begin
-        // The page's last word before the row is persisted.
-        Rec.Note := 'stamped-by-oninsert';
+        // The page's last word before the row is persisted. Stamps a field the client
+        // never edits — verified against real BC that a field the CLIENT also wrote (e.g.
+        // Note, above) persists the client's value regardless of what OnInsertRecord
+        // assigns to that same field, so this trigger cannot prove itself through Note.
+        Rec."Insert Stamp" := 'stamped-by-oninsert';
         exit(true);
     end;
 

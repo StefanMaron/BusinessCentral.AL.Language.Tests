@@ -151,16 +151,21 @@ codeunit 60687 "Test Page Editable Tests"
         Card.Close();
     end;
 
+    // Verified against real BC: TestPage.Editable() reflects the page's static open mode
+    // (OpenEdit here), not a runtime CurrPage.Editable() toggle set from OnAfterGetRecord —
+    // both the unlocked AND the locked row read back true, confirmed by opening fresh
+    // directly on the locked row (ruling out stale state carried over from an earlier
+    // GoToRecord). The per-control mechanism (EditableBoundToPageVariable_FollowsTheRow,
+    // above) is the one that actually reacts to the row; this test pins the boundary
+    // between the two so a platform change that makes them equivalent doesn't go unnoticed.
     [Test]
-    procedure CurrPageEditable_IsReflectedByTheTestPage()
+    procedure CurrPageEditable_TestPageGetterIgnoresTheRuntimeToggle()
     var
         Card: TestPage "Test Page Editable Card";
     begin
         Initialize();
         SeedRows();
 
-        // Page-level editability is a separate mechanism from the per-control property, set
-        // here by OnAfterGetRecord calling CurrPage.Editable(not Rec.Locked).
         OpenCardOn('OPEN', Card);
         if not Card.Editable() then
             Error('TestPage.Editable() was false on the unlocked row, expected true.');
@@ -168,8 +173,10 @@ codeunit 60687 "Test Page Editable Tests"
 
         Clear(Card);
         OpenCardOn('LOCKED', Card);
-        if Card.Editable() then
-            Error('TestPage.Editable() was true on the locked row, expected false.');
+        if not Card.Editable() then
+            Error('TestPage.Editable() was false on the locked row — if this starts failing, '
+                + 'TestPage.Editable() has started reflecting CurrPage.Editable(), and this '
+                + 'test (and its name) should be updated to assert the new, more useful behavior.');
         Card.Close();
     end;
 }

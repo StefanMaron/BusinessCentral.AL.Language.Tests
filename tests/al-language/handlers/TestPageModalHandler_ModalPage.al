@@ -6,7 +6,7 @@
 
 page 60703 "Test Page Modal"
 {
-    PageType = Card;
+    PageType = StandardDialog;
     SourceTable = "Test Page Modal Handler Row";
     ApplicationArea = All;
 
@@ -25,10 +25,12 @@ page 60703 "Test Page Modal"
     {
         area(Processing)
         {
-            // TestPage.OK()/.Cancel() find the built-in action by its declared NAME —
-            // they do NOT reach the client's implicit modal chrome buttons. Without
-            // these, real BC raises "The built-in action = Cancel is not found on
-            // the page." for both OK and Cancel.
+            // Verified against real BC: TestPage.Cancel() needs a genuine client Cancel
+            // affordance — an action literally named Cancel is not enough on a plain
+            // Card-type modal (still "not found" even when declared); PageType =
+            // StandardDialog (above) is what actually gives the client OK/Cancel chrome.
+            // These declarations exist to give the actions a caption/trigger surface, not
+            // to satisfy the built-in-action lookup by themselves.
             action(OK)
             {
                 ApplicationArea = All;

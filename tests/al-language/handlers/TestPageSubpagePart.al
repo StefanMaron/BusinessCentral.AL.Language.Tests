@@ -133,9 +133,14 @@ codeunit 60855 "TSP Tests"
 
         Assert.IsTrue(Card.Lines.First(), 'the part must have at least one row');
         repeat
-            Seen += 1;
-            Assert.IsFalse(Card.Lines.Name.Value = 'Foreign',
-                'the part must never surface a line belonging to a different header');
+            // An insertable part enumerates one extra synthetic row past the real data —
+            // LineNo 0 with every field blank, the template row TestPage.New() would fill
+            // in. It is not a persisted line and must not be counted.
+            if Card.Lines.LineNo.Value <> '0' then begin
+                Seen += 1;
+                Assert.IsFalse(Card.Lines.Name.Value = 'Foreign',
+                    'the part must never surface a line belonging to a different header');
+            end;
         until not Card.Lines.Next();
 
         Assert.AreEqual('2', Format(Seen), 'the part must show exactly header 100''s two lines');

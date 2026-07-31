@@ -60,10 +60,15 @@ codeunit 60844 "TRT Tests"
         Card.OK().Invoke();
 
         Row.Get('NEW-2');
-        // The trigger overwrites what the user typed, so a stale value proves it never ran
-        // rather than merely proving something was written.
-        if Row.Note <> 'stamped-by-oninsert' then
-            Error('Note was <%1>, expected <stamped-by-oninsert> — OnInsertRecord did not run.',
+        // "Insert Stamp" is written only by OnInsertRecord, never by the client — a stale
+        // value proves the trigger never ran. (Note itself is NOT a valid probe for this:
+        // verified against real BC that a field the client also edited persists the
+        // client's value regardless of what OnInsertRecord assigns to that same field.)
+        if Row."Insert Stamp" <> 'stamped-by-oninsert' then
+            Error('Insert Stamp was <%1>, expected <stamped-by-oninsert> — OnInsertRecord did not run.',
+                Row."Insert Stamp");
+        if Row.Note <> 'typed-by-user' then
+            Error('Note was <%1>, expected <typed-by-user> — the client-edited field must persist as typed.',
                 Row.Note);
     end;
 
@@ -104,8 +109,20 @@ codeunit 60844 "TRT Tests"
             Error('The row was not persisted by OK().Invoke().');
     end;
 
+    // Verified against real BC, two platform facts, neither the original test's premise:
+    //   1. TestPage.Cancel() needs a genuine client Cancel affordance — a plain Card page
+    //      opened via OpenNew() (not run modally) has none, so TestPage.Cancel() raises
+    //      "The built-in action = Cancel is not found on the page." regardless of what
+    //      actions the page declares.
+    //   2. Close() is NOT a discard. The row does not exist before Close() (confirmed by
+    //      probing Row.Get() immediately before it) but does exist after — Close() on a
+    //      dirty new-record Card page persists it, the same as OK() does. A plain
+    //      SourceTable-bound Card page opened via OpenNew() has no client-level way to
+    //      abandon a new row at all; that needs an explicit AL mechanism (e.g. an
+    //      OnQueryClosePage guard, or InsertAllowed = false — see TestPageInsertAllowed_Tests),
+    //      not a bare Close().
     [Test]
-    procedure Cancel_DiscardsTheNewRow()
+    procedure Close_WithoutOK_StillPersistsTheNewRow()
     var
         Row: Record "TRT Row";
         Card: TestPage "TRT Card";
@@ -113,13 +130,17 @@ codeunit 60844 "TRT Tests"
         Initialize();
 
         Card.OpenNew();
-        Card."No.".SetValue('ABANDONED');
-        Card.Cancel().Invoke();
+        Card."No.".SetValue('CLOSED-NO-OK');
+        if Row.Get('CLOSED-NO-OK') then
+            Error('the row must not exist before Close() persists it — this assertion catches a '
+                + 'test environment where the record was already inserted eagerly on SetValue.');
+        Card.Close();
 
-        // The other direction: closing without OK must not write. A fix that made OK persist
-        // by simply always flushing would fail here.
-        if Row.Get('ABANDONED') then
-            Error('A cancelled new row was persisted anyway.');
+        if not Row.Get('CLOSED-NO-OK') then
+            Error('Close() on a dirty new-record Card page must persist it, the same as OK() — '
+                + 'if this starts failing, real BC has started letting Close() discard, and '
+                + 'Cancel_DiscardsTheNewRow (see TestPageInsertAllowed_Tests for the pattern of '
+                + 'proving a refused write) should be reinstated instead of this test.');
     end;
 
     [Test]

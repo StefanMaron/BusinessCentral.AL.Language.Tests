@@ -12,6 +12,11 @@ table 60839 "TRT Row"
         // the bug would be invisible.
         field(2; Kind; Option) { OptionMembers = Extension,Tenant; }
         field(3; Note; Text[50]) { }
+        // Written ONLY by OnInsertRecord, never by a TestPage control — a field the
+        // client also writes (like Note, above) gets the client-edited value at insert
+        // regardless of what OnInsertRecord assigns it, so an insert-time stamp needs a
+        // field of its own to be provable at all.
+        field(4; "Insert Stamp"; Text[50]) { }
     }
 
     keys

@@ -37,7 +37,9 @@ codeunit 60207 "Test XmlPort Advanced"
         Assert.IsTrue(Ok, 'Nested XmlPort export must report success');
         Assert.IsTrue(XmlText.Contains('<ParentEntryNo>1</ParentEntryNo>'), 'Nested XmlPort export must include the parent row');
         Assert.IsTrue(XmlText.Contains('<ChildEntryNo>10</ChildEntryNo>'), 'Nested XmlPort export must include the first child row');
-        Assert.IsTrue(XmlText.Contains('Amount="15"'), 'Nested XmlPort export must include fieldattribute values on child elements');
+        // Amount is a Decimal; BC's XML serialization formats it with 2 decimal places
+        // regardless of the AL literal used to seed it (15, not 15.00).
+        Assert.IsTrue(XmlText.Contains('Amount="15.00"'), 'Nested XmlPort export must include fieldattribute values on child elements');
     end;
 
     [Test]

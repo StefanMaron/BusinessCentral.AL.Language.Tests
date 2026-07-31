@@ -23,6 +23,18 @@ codeunit 60545 "Test Report RunRequestPage"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    // [RequestPageHandler] callbacks execute in a read-only negotiation context —
+    // real BC raises "A transaction must be started before changes can be made to the
+    // database" for any database write attempted from inside one. The report's own
+    // OnOpenPage trigger runs in the report's real execution scope and can write fine
+    // (see 'rp-open' via the Log table below), but the handler itself cannot, so proof
+    // that the handler ran is carried through this codeunit-global instead — the
+    // handler and the [Test] procedure that declares it run on the same codeunit
+    // instance for the duration of one test, so this is ordinary AL state sharing.
+    var
+        HandlerRan: Boolean;
+        HandlerCancelled: Boolean;
+
     local procedure Initialize()
     var
         Row: Record "Test Rpt RunReqPage Row";
@@ -38,6 +50,8 @@ codeunit 60545 "Test Report RunRequestPage"
         Row."Entry No." := 2;
         Row.Name := 'second';
         Row.Insert();
+        HandlerRan := false;
+        HandlerCancelled := false;
         // Report.RunRequestPage opens its own execution/UI scope, same as RunModal —
         // real BC refuses to do that while this transaction still has the writes above
         // pending. Commit first, like Base App code does before calling into anything
@@ -59,9 +73,8 @@ codeunit 60545 "Test Report RunRequestPage"
         if LogRec.MarkerCount('rp-open') <> 1 then
             Error('The request page never opened, so its OnOpenPage never ran: expected exactly 1 rp-open log row, got %1.',
                 LogRec.MarkerCount('rp-open'));
-        if LogRec.MarkerCount('rp-handler') <> 1 then
-            Error('The [RequestPageHandler] never ran: expected exactly 1 rp-handler log row, got %1.',
-                LogRec.MarkerCount('rp-handler'));
+        if not HandlerRan then
+            Error('The [RequestPageHandler] never ran.');
         if Parameters = '' then
             Error('RunRequestPage returned an empty parameters string after the handler confirmed with OK.');
         if StrPos(Parameters, 'ReportParameters') = 0 then
@@ -88,19 +101,16 @@ codeunit 60545 "Test Report RunRequestPage"
         if LogRec.MarkerCount('rp-open') <> 1 then
             Error('The request page never opened, so its OnOpenPage never ran: expected exactly 1 rp-open log row, got %1.',
                 LogRec.MarkerCount('rp-open'));
-        if LogRec.MarkerCount('rp-cancel') <> 1 then
-            Error('The cancelling [RequestPageHandler] never ran: expected exactly 1 rp-cancel log row, got %1.',
-                LogRec.MarkerCount('rp-cancel'));
+        if not HandlerCancelled then
+            Error('The cancelling [RequestPageHandler] never ran.');
         if Parameters <> '' then
             Error('A cancelled request page must yield no parameters, got: %1', Parameters);
     end;
 
     [RequestPageHandler]
     procedure ConfirmingRequestPageHandler(var RequestPage: TestRequestPage "Test Rpt RunReqPage Report")
-    var
-        LogRec: Record "Test Rpt RunReqPage Log";
     begin
-        LogRec.Log('rp-handler');
+        HandlerRan := true;
         // Stands in for the user narrowing the report: filter the Rows data item to a single
         // entry. BC serialises every data item's record view into the parameters XML, so this
         // filter is exactly what the caller of RunRequestPage must get back.
@@ -110,10 +120,8 @@ codeunit 60545 "Test Report RunRequestPage"
 
     [RequestPageHandler]
     procedure CancellingRequestPageHandler(var RequestPage: TestRequestPage "Test Rpt RunReqPage Report")
-    var
-        LogRec: Record "Test Rpt RunReqPage Log";
     begin
-        LogRec.Log('rp-cancel');
+        HandlerCancelled := true;
         RequestPage.Cancel().Invoke();
     end;
 

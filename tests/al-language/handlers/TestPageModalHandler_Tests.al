@@ -108,6 +108,11 @@ codeunit 60706 "Test Page Modal Handler Tests"
     begin
         Initialize();
         SeedRows();
+        // asserterror rolls back to the last commit; without this, that rollback also
+        // undoes Initialize()'s DeleteAll (this codeunit has no TestIsolation = Function),
+        // reverting to the 'RESULT' row an earlier OK/Cancel test in this shared
+        // transaction left behind.
+        Commit();
 
         Host.OpenEdit();
         Host.First();

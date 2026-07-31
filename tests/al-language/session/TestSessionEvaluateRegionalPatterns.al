@@ -90,8 +90,10 @@ codeunit 60587 "Test Session Evaluate Regional"
         Initialize();
 
         // Ignoring Evaluate's return value makes it raise on failure. That error must be a
-        // real, trappable AL error.
+        // real, trappable AL error — Assert.ExpectedError('') asserts NO error text (it
+        // requires GetLastErrorText = ''), so it would only pass here if the raise were a
+        // vacuous no-message error. Assert on the actual real BC error text instead.
         asserterror Evaluate(Dt, 'not a datetime at all', 9);
-        Assert.ExpectedError('');
+        Assert.ExpectedError('can''t be evaluated');
     end;
 }
