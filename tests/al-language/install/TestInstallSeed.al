@@ -9,6 +9,11 @@
 table 60617 "Install Seed"
 {
     DataClassification = CustomerContent;
+    // Per-database (OnInstallAppPerDatabase) writes to this table before any
+    // company context exists. A per-company table (the AL default) rejects
+    // that with "You must choose a company..." — this table is intentionally
+    // global so both install triggers can seed it.
+    DataPerCompany = false;
 
     fields
     {
