@@ -24,12 +24,12 @@ page 60841 "TRT Card"
         area(Processing)
         {
             // TestPage.OK() has a built-in fallback and works without a declared action, but
-            // TestPage.Cancel() does not — real BC raises "The built-in action = Cancel is not
-            // found on the page." without this explicit SystemAction declaration.
+            // TestPage.Cancel() does not — real BC's built-in-action lookup finds it by the
+            // action's declared NAME ("Cancel"), not a property; raises "The built-in action
+            // = Cancel is not found on the page." without an action literally named this.
             action(Cancel)
             {
                 ApplicationArea = All;
-                SystemAction = Cancel;
             }
         }
     }
