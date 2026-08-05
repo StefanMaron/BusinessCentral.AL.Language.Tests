@@ -13,6 +13,7 @@ page 60020 "ALT Triggered Card Page"
                 field("Entry No."; Rec."Entry No.")
                 {
                     ApplicationArea = All;
+                    Editable = true;
                 }
                 field("Name"; Rec."Name")
                 {

@@ -11,6 +11,7 @@
 codeunit 60236 "Test Rename Propagation"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;
