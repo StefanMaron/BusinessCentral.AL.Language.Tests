@@ -1,4 +1,4 @@
-table 60026 "ALT Relation Parent"
+table 60028 "ALT Relation Parent"
 {
     DataClassification = SystemMetadata;
 
@@ -19,7 +19,7 @@ table 60026 "ALT Relation Parent"
     }
 }
 
-table 60027 "ALT Relation Child"
+table 60029 "ALT Relation Child"
 {
     DataClassification = SystemMetadata;
 

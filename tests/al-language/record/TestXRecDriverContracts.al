@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpage-first-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: ALT Triggered (60002), ALT Trigger Log (60003), ALT Triggered Card Page (60028)
+// Fixtures used: ALT Triggered (60002), ALT Trigger Log (60003), ALT Triggered Card Page (60020)
 //
 // CLAIM UNDER TEST: "Test xRec Contracts" (codeunit 60179) proves that xRec, read from a table
 // trigger, behaves differently for CODE-driven writes depending on the trigger:
@@ -10,7 +10,7 @@
 // edit) behave the same way, or does xRec only carry a real before-image when the write goes
 // through a page? See docs/handoff-2026-08-05-xrec-and-relation-propagation.md.
 
-codeunit 60205 "Test xRec Page Contracts"
+codeunit 60235 "Test xRec Page Contracts"
 {
     Subtype = Test;
     var

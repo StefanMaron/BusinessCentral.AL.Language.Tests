@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-rename-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: ALT Relation Parent (60026), ALT Relation Child (60027)
+// Fixtures used: ALT Relation Parent (60028), ALT Relation Child (60029)
 //
 // CLAIM UNDER TEST: renaming a record's primary key propagates to other tables that hold a
 // TableRelation to it, and ValidateTableRelation = false suppresses that propagation the same
@@ -8,7 +8,7 @@
 // carries no TableRelation at all and is the control: it must NEVER propagate, proving the test
 // can detect a non-propagating field.
 
-codeunit 60206 "Test Rename Propagation"
+codeunit 60236 "Test Rename Propagation"
 {
     Subtype = Test;
     var

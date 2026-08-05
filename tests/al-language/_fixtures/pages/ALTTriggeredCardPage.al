@@ -1,4 +1,4 @@
-page 60028 "ALT Triggered Card Page"
+page 60020 "ALT Triggered Card Page"
 {
     PageType = Card;
     SourceTable = "ALT Triggered";
