@@ -6,6 +6,25 @@
 // The shared ALT Triggered fixture logs both Rec and xRec snapshots so the tests
 // can assert the runtime contract directly, including the code-path quirks where
 // xRec mirrors Rec instead of exposing a stored before-image.
+//
+// PAGE-DRIVEN vs CODE-DRIVEN, resolved (see docs/handoff-2026-08-05-xrec-and-relation-propagation.md):
+// This codeunit only covers CODE-driven writes (Rec.Insert/.Modify/.Delete/.Rename). The
+// page-driven half turned out to be untestable via TestPage for renames specifically, but the
+// underlying platform question is settled:
+//   - OnModify, code-driven: xRec MIRRORS Rec (no before-image) -- see below.
+//   - OnRename, code-driven: xRec correctly holds the PREVIOUS key -- see below.
+//   - OnModify, page-driven (TestPage): xRec correctly holds the PREVIOUS value (confirmed,
+//     codeunit 60235 "Test xRec Page Contracts").
+//   - OnRename, page-driven: cannot be exercised via TestPage at all --
+//     TestPage."<pk field>".SetValue()/.Value:= silently no-op on a primary-key-bound field, on
+//     both bc-linux and real Microsoft SaaS BC (confirmed against a SaaS sandbox, BC
+//     28.3.52162.52273 -- see StefanMaron/MsDyn365Bc.On.Linux#17). It is a gap in the TestPage
+//     object itself, not in this test suite or in bc-linux. Confirmed directly against real BC
+//     (both code-driven Rec.Rename() and a real interactive Web Client edit-and-tab-out): xRec
+//     is populated correctly for OnRename in BOTH cases -- unlike OnModify, whose code-vs-page
+//     asymmetry above is real, Rename's xRec contract does NOT depend on what drove the write.
+//     TestPage just can't be used to write an automated regression test proving it for the
+//     page-driven half.
 
 codeunit 60179 "Test xRec Contracts"
 {

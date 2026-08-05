@@ -188,3 +188,21 @@ while `Soft Ref` did not.
 Those results decide the wording of the external review rule that is currently held uncommitted, and
 they should also correct or confirm the header comment in `TestXRecContracts.al`, which today asserts
 the page-vs-code distinction without ever having proven it.
+
+## Results (2026-08-05, PR #17)
+
+| Trigger | Driver | Outcome |
+|---|---|---|
+| `OnModify` | code (`Rec.Modify()`) | xRec MIRRORS Rec (new values) — no before-image |
+| `OnModify` | page (`TestPage`) | xRec correctly holds the PREVIOUS value |
+| `OnRename` | code (`Rec.Rename()`) | xRec correctly holds the PREVIOUS key |
+| `OnRename` | page | xRec correctly holds the PREVIOUS key — confirmed directly against real Microsoft SaaS BC (not just the local/CI bc-linux environment), both for a code-driven and a real interactive Web Client edit-and-tab-out. **`TestPage` itself cannot be used to write an automated regression test for this**: `TestPage."<pk field>".SetValue()`/`.Value:=` silently no-ops on a primary-key-bound field on both bc-linux and stock Microsoft SaaS BC — a gap in the `TestPage` object, not in BC's actual Rename behavior. See `StefanMaron/MsDyn365Bc.On.Linux#17` (closed as "works as intended on Microsoft's platform, not a bc-linux bug").
+
+**Q2 — `ValidateTableRelation = false`**: confirmed it suppresses rename PROPAGATION, not just input validation. `Validated Ref` follows a parent rename; `Unvalidated Ref` does not; `Soft Ref` (the no-`TableRelation` control) does not either, proving the test can detect non-propagation.
+
+**Bottom line for the external review rule**: the rule's underlying premise does NOT hold in general —
+`OnModify` demonstrably differs between code-driven and page-driven writes, so "xRec is unreliable
+under code" is a real phenomenon for `Modify`. But it does **not** apply to `OnRename` specifically:
+`xRec` is reliable for Rename regardless of what drove the write. A fix-up loop keyed on `xRec` inside
+`OnRename` is safe under both code-driven and page-driven renames. The rule, if scoped specifically to
+`OnRename` (not `OnModify` or triggers in general), can be committed as correct.
