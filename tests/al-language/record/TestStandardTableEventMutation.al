@@ -3,7 +3,7 @@
 // Fixtures used: ALT Fixture Cleanup (60001), ALT Standard Table Mut (60032)
 // BC versions: 27.5+
 
-codeunit 60212 "Test Standard Tbl Mut"
+codeunit 60238 "Test Standard Tbl Mut"
 {
     Subtype = Test;
 

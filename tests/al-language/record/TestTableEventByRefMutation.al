@@ -3,7 +3,7 @@
 // Fixtures used: ALT Triggered (60002), ALT Trigger Log (60003), ALT Event Publisher (60014), ALT Table Event Subscriber (60016), ALT Event Mutation Control (60030), ALT Event Mutation Sub (60031)
 // BC versions: 27.5+
 
-codeunit 60211 "Test Event ByRef Mut"
+codeunit 60237 "Test Event ByRef Mut"
 {
     Subtype = Test;
 
