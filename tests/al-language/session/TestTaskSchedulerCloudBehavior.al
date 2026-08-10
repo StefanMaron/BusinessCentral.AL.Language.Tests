@@ -3,8 +3,8 @@
 // Fixtures used: none
 // BC versions: 27.5+
 //
-// CLAIM: TaskScheduler.CreateTask, called from inside a running test, is refused --
-// a test transaction can't leave a scheduled task behind it that outlives the rollback.
+// CLAIM: TaskScheduler.CreateTask succeeds even when called from inside a running
+// test -- Cloud does not refuse it just because the caller is in a test transaction.
 
 codeunit 60877 "Test TaskScheduler Behavior"
 {
@@ -14,10 +14,14 @@ codeunit 60877 "Test TaskScheduler Behavior"
         Assert: Codeunit Assert;
 
     [Test]
-    procedure TaskScheduler_CreateTask_InsideTest_Throws()
+    procedure TaskScheduler_CreateTask_InsideTest_ReturnsNonEmptyGuid()
+    var
+        TaskId: Guid;
     begin
-        asserterror TaskScheduler.CreateTask(
+        TaskId := TaskScheduler.CreateTask(
             Codeunit::"Test TaskScheduler Behavior", Codeunit::"Test TaskScheduler Behavior");
-        Assert.IsTrue(GetLastErrorText() <> '', 'TaskScheduler.CreateTask must throw when called from inside a running test');
+
+        Assert.AreNotEqual(
+            EmptyGuid(), TaskId, 'TaskScheduler.CreateTask must return a real task ID, even when called from a running test');
     end;
 }

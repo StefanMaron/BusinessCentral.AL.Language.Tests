@@ -27,9 +27,6 @@ codeunit 60878 "Test Report SaveAs Pdf"
         Sample: Record "RSS Sample";
         BlobRec: Record "RSS Sample";
         OutStr: OutStream;
-        InStr: InStream;
-        Line: Text;
-        ByteCount: Integer;
     begin
         Initialize();
         Sample."Entry No." := 1;
@@ -42,12 +39,7 @@ codeunit 60878 "Test Report SaveAs Pdf"
             Report.SaveAs(Report::"RSS Fixture Report", '', ReportFormat::Pdf, OutStr),
             'Report.SaveAs(Pdf) must return true against a real RDLC layout in Cloud');
 
-        BlobRec."Blob Data".CreateInStream(InStr);
-        while not InStr.EOS() do begin
-            ByteCount += 1;
-            InStr.Read(Line, 1);
-        end;
-
-        Assert.IsTrue(ByteCount > 0, 'Report.SaveAs(Pdf) must produce a non-empty PDF stream');
+        Assert.IsTrue(
+            BlobRec."Blob Data".HasValue(), 'Report.SaveAs(Pdf) must produce a non-empty PDF stream');
     end;
 }
