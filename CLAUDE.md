@@ -82,21 +82,6 @@ first place:
 - Printing -- requires a live browser print dialog
 - `DotNet` interop -- the compiler itself rejects `DotNet` variables when
   Target = Cloud; there's no runtime call to make
-- `Report.SaveAs(..., ReportFormat::Pdf/Word/Excel, ...)` against an RDLC
-  layout, **on BC-on-Linux specifically** -- confirmed against live CI: the
-  Windows Reporting Service RDLC renderer is stubbed out on that platform
-  (bc-linux `StartupHook.cs` Patch #19) and throws a raw
-  `System.PlatformNotSupportedException`. That exception is not AL-collectible
-  -- the AL callstack shows `asserterror`'s own `AssertErrorAsync` wrapping the
-  call, yet the test still fails with "Unexpected CLR exception thrown."
-  Neither `asserterror` nor `TryFunction` can catch it, so no AL test method
-  can complete without failing while exercising this path -- there is no
-  construct that turns it into a pass/fail assertion. This is a CI/BC-on-Linux
-  platform gap, not real Cloud SaaS behavior (SaaS runs on Windows and
-  actually renders RDLC); tracked upstream in
-  MsDyn365Bc.On.Linux issue #28. The dataset-only path (`ReportFormat::Xml`,
-  no layout rendering) is unaffected and stays covered in
-  `TestReportSaveAsStream.al`.
 
 For these, don't write a test at all -- a stub that never calls the API
 (e.g. `Assert.IsTrue(true, ...)`) is worse than no test, since it reads as
