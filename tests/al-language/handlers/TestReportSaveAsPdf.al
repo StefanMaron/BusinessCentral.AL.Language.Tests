@@ -1,14 +1,14 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
-// Scope: in-scope (Cloud-compatible)
+// Scope: in-scope (documented BC-on-Linux platform limitation)
 // Fixtures used: RSS Sample (60871), RSS Fixture Report (60872); shared Assert (60021)
 //
-// CLAIM: Report.SaveAs against an RDLC layout, format Pdf, returns true but produces an
-// EMPTY blob on BC-on-Linux -- observed and reproducible on both BC 27.5 and BC 28.3.
-// SaveAs does not throw or report an error; it silently returns no rendered content.
-// This looks like a gap in BC-on-Linux's RDLC-to-PDF rendering pipeline rather than
-// documented Cloud behavior -- flagged upstream (MsDyn365Bc.On.Linux). If that's fixed,
-// this test should start failing here (HasValue() becomes true) and needs updating to
-// assert the real rendered content, matching the Xml SaveAs test in TestReportSaveAsStream.al.
+// CLAIM: Report.SaveAs against an RDLC layout, format Pdf, throws on BC-on-Linux --
+// the Windows Reporting Service RDLC renderer is stubbed out on that platform
+// (bc-linux StartupHook.cs Patch #19; see MsDyn365Bc.On.Linux issue #28). This is a
+// platform limitation, not documented Cloud SaaS behavior -- real BC SaaS runs on
+// Windows and actually renders RDLC. If BC-on-Linux ever implements this, this test
+// starts failing (SaveAs stops throwing) and should flip to asserting the real
+// rendered content, matching the Xml SaveAs test in TestReportSaveAsStream.al.
 
 codeunit 60878 "Test Report SaveAs Pdf"
 {
@@ -26,7 +26,7 @@ codeunit 60878 "Test Report SaveAs Pdf"
     end;
 
     [Test]
-    procedure SaveAsPdf_RdlcLayout_ReturnsTrueWithEmptyBlobOnLinux()
+    procedure SaveAsPdf_RdlcLayout_ThrowsOnLinux()
     var
         Sample: Record "RSS Sample";
         BlobRec: Record "RSS Sample";
@@ -39,12 +39,8 @@ codeunit 60878 "Test Report SaveAs Pdf"
         Sample.Insert();
 
         BlobRec."Blob Data".CreateOutStream(OutStr);
-        Assert.IsTrue(
-            Report.SaveAs(Report::"RSS Fixture Report", '', ReportFormat::Pdf, OutStr),
-            'Report.SaveAs(Pdf) must return true -- it does not surface a rendering failure as an error');
+        asserterror Report.SaveAs(Report::"RSS Fixture Report", '', ReportFormat::Pdf, OutStr);
 
-        Assert.IsFalse(
-            BlobRec."Blob Data".HasValue(),
-            'Report.SaveAs(Pdf) currently produces an empty blob on BC-on-Linux -- see comment above');
+        Assert.ExpectedError('RDLC report rendering is not implemented on Linux BC');
     end;
 }
