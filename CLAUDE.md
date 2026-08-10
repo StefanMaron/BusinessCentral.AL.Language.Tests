@@ -65,8 +65,6 @@ A test that passes on the runner but fails here means the **runner has a gap**.
 - Notification, Page handler, Report handler, including rendering (Report.SaveAs
   to a stream, all formats -- Cloud renders these for real)
 - `HttpClient` -- outbound HTTP is allowed in Cloud
-- `File.*` -- direct server-filesystem access; write the negative test that
-  proves it throws in Cloud (still a real call, still a real assertion)
 - `DataTransfer`, `TaskScheduler` and other install/session-scoped APIs --
   write the negative test that proves what actually happens when called
   from a running test
@@ -77,6 +75,9 @@ A small number of things have no AL statement that can invoke them from
 headless test code at all, or don't compile in a Cloud-targeted app in the
 first place:
 
+- `File.*` -- scope `OnPrem`; the compiler rejects it outright for
+  Target = Cloud (`AL0296`), confirmed against a live compile. Nothing to
+  call at runtime -- there's no app to publish.
 - `File.Upload` / `File.Download` -- require a live browser round-trip
 - Printing -- requires a live browser print dialog
 - `DotNet` interop -- the compiler itself rejects `DotNet` variables when

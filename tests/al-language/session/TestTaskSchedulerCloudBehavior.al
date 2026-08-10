@@ -16,7 +16,8 @@ codeunit 60877 "Test TaskScheduler Behavior"
     [Test]
     procedure TaskScheduler_CreateTask_InsideTest_Throws()
     begin
-        asserterror TaskScheduler.CreateTask(Codeunit::"Test TaskScheduler Behavior");
+        asserterror TaskScheduler.CreateTask(
+            Codeunit::"Test TaskScheduler Behavior", Codeunit::"Test TaskScheduler Behavior");
         Assert.IsTrue(GetLastErrorText() <> '', 'TaskScheduler.CreateTask must throw when called from inside a running test');
     end;
 }
