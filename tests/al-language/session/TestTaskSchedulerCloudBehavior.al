@@ -17,11 +17,12 @@ codeunit 60877 "Test TaskScheduler Behavior"
     procedure TaskScheduler_CreateTask_InsideTest_ReturnsNonEmptyGuid()
     var
         TaskId: Guid;
+        NoTaskId: Guid;
     begin
         TaskId := TaskScheduler.CreateTask(
             Codeunit::"Test TaskScheduler Behavior", Codeunit::"Test TaskScheduler Behavior");
 
         Assert.AreNotEqual(
-            EmptyGuid(), TaskId, 'TaskScheduler.CreateTask must return a real task ID, even when called from a running test');
+            NoTaskId, TaskId, 'TaskScheduler.CreateTask must return a real task ID, even when called from a running test');
     end;
 }
