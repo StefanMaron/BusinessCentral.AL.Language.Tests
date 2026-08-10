@@ -9,10 +9,17 @@ AL feature + the actual BC runtime + a passing assertion.
 ### Primary goal — Cloud compatibility
 
 Prove that the AL features the community relies on actually work in BC Cloud.
-If you are about to write a test, ask first: **does this feature work in a
-BC Cloud tenant?** If yes, write a positive test. If no (File.Upload,
-HttpClient, Report.SaveAs, .NET interop, etc.), write exactly one negative
-test that confirms it throws the expected error, and stop there.
+Every feature the language exposes gets a real test that exercises it against
+the actual BC runtime and asserts on the real outcome — whether that outcome
+is success or a specific thrown error. A test proving a call throws is just
+as much a positive contribution as one proving it succeeds; what's not
+acceptable is a stub that never calls the API at all (see the Verification
+Checklist).
+
+This repo has no "out of scope" list of its own. What a downstream consumer
+(the AL Runner project, which vendors this repo as a submodule to check its
+own emulation) can or cannot execute is that project's concern, tracked in
+its own repository — it does not shrink what gets tested here.
 
 ### Secondary goal — Language surface coverage
 
@@ -35,7 +42,7 @@ A test that passes on the runner but fails here means the **runner has a gap**.
 
 ---
 
-## In-Scope and Out-of-Scope
+## Scope
 
 ### Always in scope (write positive + negative tests)
 
@@ -55,22 +62,46 @@ A test that passes on the runner but fails here means the **runner has a gap**.
 - Session functions: UserId, CompanyName, Today, CurrentDateTime
 - Database: Commit, IsEmpty, Count, LockTable (in-scope overloads)
 - NavApp: GetCurrentModuleInfo, resource access
-- Notification, Page handler, Report handler (no rendering)
+- Notification, Page handler, Report handler, including rendering (Report.SaveAs
+  to a stream, all formats -- Cloud renders these for real)
+- `HttpClient` -- outbound HTTP is allowed in Cloud
+- `DataTransfer`, `TaskScheduler` and other install/session-scoped APIs --
+  write the negative test that proves what actually happens when called
+  from a running test
 
-### Out of scope -- write exactly ONE negative test confirming it throws
+### Untestable by construction -- document, don't stub
 
-- `File.*` -- direct file system access (not available in Cloud)
-- `HttpClient` -- throws in runner; one test confirming the error
-- `File.Upload` / `File.Download` -- browser round-trip
-- SMTP / email sending
-- OData / SOAP endpoint calls from AL
-- Background task scheduling / job queue execution
-- Report rendering to PDF/Word/Excel
-- Printing
-- `DotNet` interop of any kind
+A small number of things have no AL statement that can invoke them from
+headless test code at all, or don't compile in a Cloud-targeted app in the
+first place:
 
-For out-of-scope items, one test per surface area is enough. Name it
-`<Type>_<Method>_CloudSandbox_Throws` or similar.
+- `File.*` -- scope `OnPrem`; the compiler rejects it outright for
+  Target = Cloud (`AL0296`), confirmed against a live compile. Nothing to
+  call at runtime -- there's no app to publish.
+- `File.Upload` / `File.Download` -- require a live browser round-trip
+- Printing -- requires a live browser print dialog
+- `DotNet` interop -- the compiler itself rejects `DotNet` variables when
+  Target = Cloud; there's no runtime call to make
+- `Report.SaveAs(..., ReportFormat::Pdf/Word/Excel, ...)` against an RDLC
+  layout, **on BC-on-Linux specifically** -- confirmed against live CI: the
+  Windows Reporting Service RDLC renderer is stubbed out on that platform
+  (bc-linux `StartupHook.cs` Patch #19) and throws a raw
+  `System.PlatformNotSupportedException`. That exception is not AL-collectible
+  -- the AL callstack shows `asserterror`'s own `AssertErrorAsync` wrapping the
+  call, yet the test still fails with "Unexpected CLR exception thrown."
+  Neither `asserterror` nor `TryFunction` can catch it, so no AL test method
+  can complete without failing while exercising this path -- there is no
+  construct that turns it into a pass/fail assertion. This is a CI/BC-on-Linux
+  platform gap, not real Cloud SaaS behavior (SaaS runs on Windows and
+  actually renders RDLC); tracked upstream in
+  MsDyn365Bc.On.Linux issue #28. The dataset-only path (`ReportFormat::Xml`,
+  no layout rendering) is unaffected and stays covered in
+  `TestReportSaveAsStream.al`.
+
+For these, don't write a test at all -- a stub that never calls the API
+(e.g. `Assert.IsTrue(true, ...)`) is worse than no test, since it reads as
+coverage that doesn't exist. A one-line comment at the point where the
+feature would otherwise be covered, explaining why, is enough.
 
 ---
 
@@ -132,8 +163,9 @@ per-test tables, enums, pages, or codeunits.
 
 `Test<TypeName><Aspect>.al` -- e.g. `TestRecordInsert.al`, `TestJsonObject.al`
 
-Place in the area subfolder: `record/`, `json/`, `xml/`, `text/`, etc.
-Out-of-scope confirming tests go in `out-of-scope/`.
+Place in the area subfolder: `record/`, `json/`, `xml/`, `text/`, etc. --
+including tests that prove a call throws in Cloud; there is no separate
+out-of-scope folder.
 
 ### Procedures
 
@@ -143,7 +175,7 @@ Examples:
 - `Record_Insert_DuplicateKey_Throws`
 - `Record_SetRange_DateField_FiltersCorrectly`
 - `JsonObject_Get_MissingKey_ReturnsFalse`
-- `HttpClient_Send_CloudSandbox_Throws`
+- `HttpClient_Get_ValidUrl_ReturnsSuccessResponse`
 
 The full claim must be readable from the procedure name alone.
 
@@ -194,7 +226,8 @@ Before submitting a test:
 3. The test name uniquely identifies the claim without opening the body.
 4. `Initialize()` is the first line of every [Test] procedure.
 5. No per-test fixture definitions -- only shared `_fixtures/` objects.
-6. Out-of-scope tests are in `out-of-scope/` and confirm the error only.
+6. A test that asserts a call throws still calls the real API -- no
+   `Assert.IsTrue(true, ...)` stubs.
 7. The doc-link comment block is present at the top of the file.
 
 ---
