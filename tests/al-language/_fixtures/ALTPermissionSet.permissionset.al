@@ -13,5 +13,7 @@ permissionset 60022 ALTPermissionSet
         tabledata "ALT Blob" = RIMD,
         tabledata "ALT Error Trigger" = RIMD,
         tabledata "ALT Init Value" = RIMD,
-        tabledata "ALT Internal Table" = RIMD;
+        tabledata "ALT Internal Table" = RIMD,
+        tabledata "ALT Relation Parent" = RIMD,
+        tabledata "ALT Relation Child" = RIMD;
 }

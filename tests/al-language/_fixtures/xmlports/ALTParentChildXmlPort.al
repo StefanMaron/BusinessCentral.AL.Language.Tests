@@ -30,14 +30,15 @@ xmlport 60024 "ALT Parent Child XmlPort"
                     LinkFields = "Parent Entry No." = FIELD("Entry No.");
                     XmlName = 'Child';
 
+                    fieldattribute(Amount; Child.Amount)
+                    {
+                    }
+
                     fieldelement(ChildEntryNo; Child."Entry No.")
                     {
                     }
                     fieldelement(ChildCode; Child.Code)
                     {
-                        fieldattribute(Amount; Child.Amount)
-                        {
-                        }
                     }
                 }
             }

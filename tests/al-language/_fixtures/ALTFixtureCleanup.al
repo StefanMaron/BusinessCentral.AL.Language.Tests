@@ -14,6 +14,8 @@ codeunit 60019 ALTFixtureCleanup
         ALTErrorTrigger: Record "ALT Error Trigger";
         ALTInitValue: Record "ALT Init Value";
         ALTInternalTable: Record "ALT Internal Table";
+        ALTRelationChild: Record "ALT Relation Child";
+        ALTRelationParent: Record "ALT Relation Parent";
     begin
         ALTUniversal.DeleteAll(false);
         ALTComposite.DeleteAll(false);
@@ -27,5 +29,7 @@ codeunit 60019 ALTFixtureCleanup
         ALTErrorTrigger.DeleteAll(false);
         ALTInitValue.DeleteAll(false);
         ALTInternalTable.DeleteAll(false);
+        ALTRelationChild.DeleteAll(false);
+        ALTRelationParent.DeleteAll(false);
     end;
 }

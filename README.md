@@ -41,24 +41,25 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 
 ## Test Areas
 
-155 test files, 155 codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
+355 AL files, 211 test codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
 
 | Area | Description |
 |------|-------------|
 | `record/` | Record CRUD, filters, locking, keys, copy, insert/modify/delete contracts |
 | `recordref/` | Dynamic record access via RecordRef — field iteration, open/close, filters |
 | `fieldref/` | FieldRef read/write, type coercion, option values |
-| `codeunit/` | Codeunit instantiation, interface dispatch, run behavior |
+| `codeunit/` | Codeunit instantiation, interface dispatch, run behavior, single-instance lifetime/scope |
 | `collections/` | List, Dictionary, Queue, Stack — all collection types |
 | `error-handling/` | Error/Commit semantics, nested try-functions, confirm behavior |
-| `handlers/` | Message, Confirm, StrMenu, and page handler contracts |
+| `handlers/` | Message, Confirm, StrMenu, page handler, TestPage, and report execution/rendering contracts |
+| `install/` | Install/upgrade-trigger seeding lifecycle |
 | `json/` | JsonObject, JsonArray, JsonToken — parse, write, path traversal |
-| `query/` | Query objects — open/read/close, filters, column metadata, security filtering, stream exports |
+| `query/` | Query objects — open/read/close, filters, column metadata, security filtering, stream exports, join semantics |
 | `out-of-scope/` | One negative test each for File, .NET, HttpClient — confirms Cloud throws |
-| `session/` | Session variables, UserSecurityId, Company behavior |
+| `session/` | Session variables, UserSecurityId, isolated storage, NavApp module info, regional settings, Company behavior |
 | `streams/` | InStream/OutStream, TempBlob, BLOB field contracts |
 | `text/` | String operations, formatting, regex, encoding |
-| `types/` | Primitive type behavior — Integer, Decimal, Date, Time, DateTime, Boolean |
+| `types/` | Primitive type behavior — Integer, Decimal, Date, Time, DateTime, Boolean; interface dispatch and codeunit-as-variable |
 | `xml/` | XmlDocument, XmlNode, namespace handling, serialization |
 | `xmlport/` | XmlPort stream import/export, nested data items, trigger-driven variables, import property semantics |
 | `_fixtures/` | Shared fixture library (see below) |
