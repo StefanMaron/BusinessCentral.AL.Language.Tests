@@ -11,7 +11,7 @@ AL feature + the actual BC runtime + a passing assertion.
 Prove that the AL features the community relies on actually work in BC Cloud.
 If you are about to write a test, ask first: **does this feature work in a
 BC Cloud tenant?** If yes, write a positive test. If no (File.Upload,
-HttpClient, Report.SaveAs, .NET interop, etc.), write exactly one negative
+Report.SaveAs, .NET interop, etc.), write exactly one negative
 test that confirms it throws the expected error, and stop there.
 
 ### Secondary goal — Language surface coverage
@@ -56,11 +56,11 @@ A test that passes on the runner but fails here means the **runner has a gap**.
 - Database: Commit, IsEmpty, Count, LockTable (in-scope overloads)
 - NavApp: GetCurrentModuleInfo, resource access
 - Notification, Page handler, Report handler (no rendering)
+- `HttpClient` -- outbound HTTP is allowed in Cloud; write positive tests
 
 ### Out of scope -- write exactly ONE negative test confirming it throws
 
 - `File.*` -- direct file system access (not available in Cloud)
-- `HttpClient` -- throws in runner; one test confirming the error
 - `File.Upload` / `File.Download` -- browser round-trip
 - SMTP / email sending
 - OData / SOAP endpoint calls from AL
@@ -143,7 +143,7 @@ Examples:
 - `Record_Insert_DuplicateKey_Throws`
 - `Record_SetRange_DateField_FiltersCorrectly`
 - `JsonObject_Get_MissingKey_ReturnsFalse`
-- `HttpClient_Send_CloudSandbox_Throws`
+- `HttpClient_Get_ValidUrl_ReturnsSuccessResponse`
 
 The full claim must be readable from the procedure name alone.
 

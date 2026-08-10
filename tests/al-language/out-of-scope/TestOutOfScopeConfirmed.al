@@ -10,17 +10,8 @@ codeunit 60118 "Test Out Of Scope Confirmed"
         Cleanup: Codeunit ALTFixtureCleanup;
 
     // ── Out-of-Scope Features ──────────────────────────────────────────────────────
-
-    [Test]
-    procedure OutOfScope_HttpClient_ThrowsInRunner()
-    var
-        Client: HttpClient;
-        Resp: HttpResponseMessage;
-    begin
-        Initialize();
-        asserterror Client.Get('http://example.com', Resp);
-        Assert.IsTrue(GetLastErrorText() <> '', 'HttpClient.Get must throw in runner context');
-    end;
+    // HttpClient was removed from here -- it is NOT out-of-scope. Outbound HTTP is
+    // allowed in Cloud; see network/TestHttpClient.al for the positive test.
 
     [Test]
     procedure OutOfScope_DataTransfer_ThrowsOutsideUpgrade()
