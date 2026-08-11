@@ -35,6 +35,14 @@ page 60016 "ALT List Page"
                 {
                     ApplicationArea = All;
                 }
+                field("Name Field"; Rec."Name Field")
+                {
+                    // Deliberately hidden: TestPageMetadataVirtualTable / TestPageControlFieldVirtualTable
+                    // (record/) prove the Page Control Field virtual table's Visible column round-trips a
+                    // hidden control's declared Visible = false, not just the visible default.
+                    ApplicationArea = All;
+                    Visible = false;
+                }
             }
         }
     }
