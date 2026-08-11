@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpage-drilldown-method
 // Scope: in-scope
-// Fixtures used: Test Page DrillDown Row (60950), Test Page DrillDown List (60951)
+// Fixtures used: Test Page DrillDown Row (61025), Test Page DrillDown List (60965)
 //
 // A list page whose repeater has several controls bound to the SAME source field (Descr),
 // distinguished only by control name — exactly the shape needed to prove field-level
@@ -10,7 +10,7 @@
 // PlainCol declares no OnDrillDown trigger at all — the field-with-no-trigger case.
 // FailCol's OnDrillDown raises an Error, to prove DrillDown() does not swallow it.
 
-page 60951 "Test Page DrillDown List"
+page 60965 "Test Page DrillDown List"
 {
     PageType = List;
     SourceTable = "Test Page DrillDown Row";

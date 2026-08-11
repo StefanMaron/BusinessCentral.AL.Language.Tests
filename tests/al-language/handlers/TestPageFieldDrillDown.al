@@ -1,12 +1,12 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpage-drilldown-method
 // Scope: in-scope
-// Fixtures used: Test Page DrillDown Row (60950)
+// Fixtures used: Test Page DrillDown Row (61025)
 //
 // Backing table for the TestPage field-drilldown suite. Reused both for the seeded data rows
 // and for the marker rows an OnDrillDown trigger writes — the same convention
 // TestPageActionInvoke uses for its OnAction markers.
 
-table 60950 "Test Page DrillDown Row"
+table 61025 "Test Page DrillDown Row"
 {
     DataClassification = CustomerContent;
 

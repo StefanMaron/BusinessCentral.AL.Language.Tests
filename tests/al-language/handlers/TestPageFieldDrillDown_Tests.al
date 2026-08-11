@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpage-drilldown-method
 // Scope: in-scope
-// Fixtures used: Test Page DrillDown Row (60950), Test Page DrillDown List (60951), Assert (60021)
+// Fixtures used: Test Page DrillDown Row (61025), Test Page DrillDown List (60965), Assert (60021)
 //
 // Pins TestPage.<field>.DrillDown() to the control's own OnDrillDown trigger — the field-level
 // counterpart of TestPageActionInvoke_Tests, which pins the same contract for actions.
@@ -13,7 +13,7 @@
 // DIFFERENT control's OnDrillDown even though both are bound to the same source field, and one
 // records what DrillDown() does on a control with no OnDrillDown trigger declared at all.
 
-codeunit 60952 "Test Page DrillDown Tests"
+codeunit 60948 "Test Page DrillDown Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -122,11 +122,12 @@ codeunit 60952 "Test Page DrillDown Tests"
             'drilling down on StampCol must not have run OtherCol''s OnDrillDown trigger');
     end;
 
-    // A control with no OnDrillDown trigger at all. Recorded rather than assumed — see the
-    // control case above (FailCol) and the trigger case (StampCol) for what DOES happen when
-    // a trigger exists; this is what happens when one is entirely absent.
+    // Negative: a control with no OnDrillDown trigger at all. Confirmed against real BC
+    // (both 27.5 and 28.3) rather than assumed — DrillDown() on such a control raises a
+    // fixed platform error, "The NavDrilldownAction method is not supported.", instead of
+    // silently doing nothing.
     [Test]
-    procedure FieldDrillDownWithNoTriggerDoesNothingAndDoesNotThrow()
+    procedure FieldDrillDownWithNoTriggerIsRefused()
     var
         Row: Record "Test Page DrillDown Row";
         DrillList: TestPage "Test Page DrillDown List";
@@ -136,7 +137,8 @@ codeunit 60952 "Test Page DrillDown Tests"
 
         DrillList.OpenView();
         DrillList.First();
-        DrillList.PlainCol.DrillDown();
+        asserterror DrillList.PlainCol.DrillDown();
+        Assert.ExpectedError('The NavDrilldownAction method is not supported.');
         DrillList.Close();
 
         Assert.IsFalse(Row.Get('DRILL'), 'a control with no OnDrillDown trigger must not run a different control''s trigger');
