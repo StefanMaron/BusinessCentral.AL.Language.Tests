@@ -6,8 +6,13 @@
 // receives the raw, literal format string, Args untouched. This was verified against
 // real BC (27.5 and 28.3 CI): a first version of this test asserted the substituted
 // text (matching the documented interactive-dialog behavior and StrSubstNo semantics)
-// and failed on both versions with the raw '%1 ...' string as Actual, so the assertions
-// here were corrected to match observed BC behavior rather than the doc-implied one.
+// and failed on both versions with the raw '%1 ...' string as Actual.
+//
+// Each test below independently proves substitution DOES work for the same format
+// string + args via StrSubstNo, then proves the [ConfirmHandler]'s captured Question
+// is exactly the raw format string, NOT the StrSubstNo'd one and NOT equal to it —
+// isolating the gap to the Confirm-handler dispatch path specifically, ruling out
+// "args never bound" or "Assert helper compares the wrong thing" as explanations.
 //
 // This is an asymmetry with Message(Question, Args), which DOES substitute before its
 // [MessageHandler] runs (see Message_FormattedString_HandlerGetsFormatted in
@@ -30,13 +35,27 @@ codeunit 60952 "Test Confirm Format Args"
     [Test]
     [HandlerFunctions('AnswerNo')]
     procedure Confirm_SingleFormatArg_HandlerReceivesRawUnsubstitutedQuestion()
+    var
+        FormatText: Text;
+        SubstitutedText: Text;
     begin
         Initialize();
+        FormatText := '%1 configurations are created. Do you want to view them?';
+        SubstitutedText := StrSubstNo(FormatText, 2);
 
-        if Confirm('%1 configurations are created. Do you want to view them?', true, 2) then;
+        // Prove StrSubstNo itself substitutes with these exact args, so the
+        // comparison below is meaningful and not an artifact of a broken helper.
+        Assert.AreEqual('2 configurations are created. Do you want to view them?', SubstitutedText,
+            'StrSubstNo must substitute %1 with the given arg — sanity check for the assertions below');
+
+        if Confirm(FormatText, true, 2) then;
 
         Assert.AreEqual(1, ConfirmFireCount, 'ConfirmHandler must fire exactly once');
-        Assert.ExpectedConfirm('%1 configurations are created. Do you want to view them?', LastConfirmQuestion);
+        // The captured Question is the raw format string, not the substituted one.
+        Assert.AreEqual(FormatText, LastConfirmQuestion,
+            'ConfirmHandler must receive the literal, unsubstituted Question text');
+        Assert.AreNotEqual(SubstitutedText, LastConfirmQuestion,
+            'ConfirmHandler must NOT receive the StrSubstNo-substituted Question text');
     end;
 
     [Test]
@@ -44,15 +63,25 @@ codeunit 60952 "Test Confirm Format Args"
     procedure Confirm_MultipleMixedTypeFormatArgs_HandlerReceivesRawUnsubstitutedQuestion()
     var
         SomeDate: Date;
+        FormatText: Text;
+        SubstitutedText: Text;
     begin
         Initialize();
         SomeDate := DMY2Date(15, 1, 2024);
+        FormatText := 'Delete %1 records for %2 dated %3?';
+        SubstitutedText := StrSubstNo(FormatText, 3, 'Customer', SomeDate);
 
-        if Confirm('Delete %1 records for %2 dated %3?', true, 3, 'Customer', SomeDate) then;
+        // Sanity check: StrSubstNo substitutes integer, text, and date args in order.
+        Assert.AreEqual('Delete 3 records for Customer dated 01/15/24?', SubstitutedText,
+            'StrSubstNo must substitute all three mixed-type args in order');
+
+        if Confirm(FormatText, true, 3, 'Customer', SomeDate) then;
 
         Assert.AreEqual(1, ConfirmFireCount, 'ConfirmHandler must fire exactly once');
-        // The placeholders stay literal — this is NOT StrSubstNo('Delete %1 records for %2 dated %3?', 3, 'Customer', SomeDate).
-        Assert.ExpectedConfirm('Delete %1 records for %2 dated %3?', LastConfirmQuestion);
+        Assert.AreEqual(FormatText, LastConfirmQuestion,
+            'ConfirmHandler must receive the literal, unsubstituted Question text');
+        Assert.AreNotEqual(SubstitutedText, LastConfirmQuestion,
+            'ConfirmHandler must NOT receive the StrSubstNo-substituted Question text');
     end;
 
     [Test]
