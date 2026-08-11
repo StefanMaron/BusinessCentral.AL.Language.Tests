@@ -163,7 +163,11 @@ codeunit 60929 "ASK Range Tests"
 
         Line.SetRange("No.", 'H1');
         Assert.AreEqual(2, Line.Count(), 'the seeded line and the inserted one');
-        Assert.IsTrue(Line.Get('H1', -5000),
+        // AreEqual on the found row, not IsTrue(Get(...)), so a failing run REPORTS the
+        // number BC assigned instead of only denying the predicted one.
+        Line.SetFilter("Line No.", '<>%1', -10000);
+        Assert.IsTrue(Line.FindFirst(), 'the inserted line must exist alongside the seeded one');
+        Assert.AreEqual(-5000, Line."Line No.",
             'a line inserted after a single line at -10000 must land at -5000, halving the gap up to zero');
         Assert.AreEqual('after negative', Line.Descr, 'and it must be the line the test entered');
     end;
