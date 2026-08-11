@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpage-drilldown-method
 // Scope: in-scope
-// Fixtures used: Test Page DrillDown Row (60998), Test Page DrillDown List (60965), Assert (60021)
+// Fixtures used: Test Page DrillDown Row (60972), Test Page DrillDown List (60965), Assert (60021)
 //
 // Pins TestPage.<field>.DrillDown() to the control's own OnDrillDown trigger — the field-level
 // counterpart of TestPageActionInvoke_Tests, which pins the same contract for actions.
@@ -134,6 +134,11 @@ codeunit 60948 "Test Page DrillDown Tests"
     begin
         Initialize();
         SeedRows();
+        // asserterror rolls back to the last commit, same as ModalPageWithoutAHandlerIsRefused
+        // above; without this, that rollback also undoes Initialize()'s DeleteAll (this
+        // codeunit has no TestIsolation = Function), reverting to the DRILL/OTHER marker
+        // rows an earlier test in this shared transaction committed and left behind.
+        Commit();
 
         DrillList.OpenView();
         DrillList.First();
