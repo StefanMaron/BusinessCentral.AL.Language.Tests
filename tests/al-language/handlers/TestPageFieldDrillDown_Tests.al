@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpage-drilldown-method
 // Scope: in-scope
-// Fixtures used: Test Page DrillDown Row (61025), Test Page DrillDown List (60965), Assert (60021)
+// Fixtures used: Test Page DrillDown Row (60998), Test Page DrillDown List (60965), Assert (60021)
 //
 // Pins TestPage.<field>.DrillDown() to the control's own OnDrillDown trigger — the field-level
 // counterpart of TestPageActionInvoke_Tests, which pins the same contract for actions.
