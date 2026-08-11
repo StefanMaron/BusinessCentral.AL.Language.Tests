@@ -4,21 +4,33 @@
 // Fixtures used: ALT Blob (60008)
 // BC versions: 27.5+
 //
-// CLAIM (one per codeunit): an in-memory Blob write that has NOT been persisted
-// with Modify() stays local to the record variable that made it. The stored row
-// is unchanged, so a *different* Record instance that Get()s the same row reads
-// the Blob empty, and re-Get()ting on the *same* instance discards the write.
+// CLAIM (one per codeunit): who can see a Blob write that has NOT been persisted
+// with Modify() — and the answer is NOT the same for a database-backed record and
+// a temporary one.
+//
+//   * Database-backed record: the write stays local to the record variable that
+//     made it. The stored row is untouched, so a different Record instance that
+//     Get()s the row reads the Blob empty, and re-Get()ting on the writing
+//     instance itself discards the write.
+//
+//   * Temporary record: the write IS visible through the temporary store. A
+//     temporary table holds the record's own Blob object rather than a copy of
+//     it, so mutating that Blob after Insert mutates the stored row — Get() reads
+//     the unpersisted bytes back, and so does a second variable sharing the
+//     buffer via Copy(..., true).
+//
+// The divergence is the point of this file, and it is measured, not assumed: the
+// temporary tests were first written asserting isolation like the database case
+// and CI on real BC 27.5 and 28.3 rejected exactly those two, with every control
+// green. They are now pinned to what BC actually does. Anything that emulates AL
+// records over an in-memory store has to reproduce both halves — making the
+// database case isolate must not be done by a blanket copy at the store boundary,
+// because that would break the temporary case in the other direction.
 //
 // This is the isolation direction. The complementary retention direction — the
 // writing instance itself keeps the bytes across CalcFields — is covered by
 // TestBlobCalcFieldsUncommittedWrite.al (60915); lazy loading after Get() is
-// covered by TestBlob.al. Here the question is who else can see the write.
-//
-// The temporary-record counterpart is asserted separately and deliberately: a
-// temporary table is an in-memory store, and whether it copies the Blob at
-// Insert or hands out the record's own Blob object is not something the
-// non-temporary case answers. Both shapes are pinned here so the Insert/Modify
-// contract can be compared side by side against a real service tier.
+// covered by TestBlob.al.
 
 codeunit 60940 "Test Blob Uncomm Isolation"
 {
@@ -156,10 +168,13 @@ codeunit 60940 "Test Blob Uncomm Isolation"
     // ── Temporary ─────────────────────────────────────────────────────────────
 
     [Test]
-    procedure TempBlob_UncommittedWrite_SameInstanceReGet_DiscardsWrite()
-    // CLAIM: the Insert/Modify contract holds for a temporary record too. The temp
-    //        store keeps the row as inserted; a Blob written afterwards without
-    //        Modify() is not in the store, so Get() reads it back empty.
+    procedure TempBlob_UncommittedWrite_SameInstanceReGet_KeepsWrite()
+    // CLAIM: the database contract does NOT carry over to a temporary record. The
+    //        temp store holds the record's own Blob object, so bytes written after
+    //        Insert without Modify() are in the stored row already — Get() reads
+    //        them straight back instead of discarding them.
+    //        Measured: this is the exact inverse of
+    //        Blob_UncommittedWrite_SameInstanceReGet_DiscardsWrite above.
     var
         TempBlobRec: Record "ALT Blob" temporary;
         OutStr: OutStream;
@@ -179,19 +194,19 @@ codeunit 60940 "Test Blob Uncomm Isolation"
         TempBlobRec.Get('TREGET');
         TempBlobRec.CalcFields(Data);
 
-        Assert.IsFalse(TempBlobRec.Data.HasValue(), 'A temporary row must not pick up a Blob write that was never persisted with Modify');
+        Assert.IsTrue(TempBlobRec.Data.HasValue(), 'A temporary row does pick up a Blob write made after Insert without Modify');
 
         TempBlobRec.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
-        Assert.AreEqual('', ReadBack, 'Get() on a temporary record must read the stored (empty) Blob, not the uncommitted in-memory bytes');
-        Assert.AreEqual(0, StrLen(ReadBack), 'The stored temporary Blob must be zero-length');
+        Assert.AreEqual('TEMP-BYTES', ReadBack, 'Get() on a temporary record reads back the unpersisted in-memory bytes');
+        Assert.AreEqual(10, StrLen(ReadBack), 'All 10 unpersisted characters are present in the temporary store');
     end;
 
     [Test]
-    procedure TempBlob_UncommittedWrite_SharedBufferInstance_ReadsEmpty()
-    // CLAIM: the same isolation across two record variables that share one temp
-    //        buffer (Copy(..., true)). The sharing is of the stored rows, not of
-    //        the writing variable's in-memory Blob object.
+    procedure TempBlob_UncommittedWrite_SharedBufferInstance_SeesWrite()
+    // CLAIM: the same non-isolation is observable from a second record variable
+    //        sharing the temp buffer (Copy(..., true)) — so it is the stored row
+    //        that carries the bytes, not just the writing variable's own buffer.
     var
         TempWriter: Record "ALT Blob" temporary;
         TempReader: Record "ALT Blob" temporary;
@@ -213,12 +228,12 @@ codeunit 60940 "Test Blob Uncomm Isolation"
         TempReader.Get('TSHARE');
         TempReader.CalcFields(Data);
 
-        Assert.IsFalse(TempReader.Data.HasValue(), 'A second variable over a shared temp buffer must not see an unpersisted Blob write');
+        Assert.IsTrue(TempReader.Data.HasValue(), 'A second variable over a shared temp buffer does see the unpersisted Blob write');
 
         TempReader.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
-        Assert.AreEqual('', ReadBack, 'A shared-buffer temp reader must read the stored (empty) Blob');
-        Assert.AreEqual(0, StrLen(ReadBack), 'The stored temporary Blob must be zero-length for the shared-buffer reader too');
+        Assert.AreEqual('TEMP-SHARED', ReadBack, 'A shared-buffer temp reader reads the unpersisted bytes out of the stored row');
+        Assert.AreEqual(11, StrLen(ReadBack), 'All 11 unpersisted characters are present for the shared-buffer reader');
     end;
 
     [Test]
