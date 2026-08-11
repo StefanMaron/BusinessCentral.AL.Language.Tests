@@ -1,4 +1,5 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-run-method
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-runmodal-method
 // Scope: in-scope
 // Fixtures used: RRE Row (60866), RRE Log (60867), RRE ProcessingOnly Report (60868), RRE Layout Report (60869)
 //
@@ -10,6 +11,16 @@
 // tests/runner-extras/report-run-execution as a runner-specific behaviour test. The
 // "RRE Layout Report" object it used is still migrated below because
 // InstanceSaveAsXml_ExecutesTriggersAndBody (kept) also uses it.
+//
+// StaticRun_ExecutesTriggersAndBody / StaticRunModal_ExecutesTriggersAndBody added
+// separately: the STATIC forms — Report.Run(Report::X, ...) / Report.RunModal(Report::X, ...),
+// called without ever declaring a report variable — execute the same trigger lifecycle
+// (OnPreReport, per-row data item body) as the instance form. A static call hands back no
+// report reference, so the outcome cannot be read off report globals the way
+// InstanceSaveAsXml_ExecutesTriggersAndBody reads DidPreReportRun()/RowsProcessed(); it is
+// observed through the "RRE Log" table instead — a table write is visible regardless of
+// which (unreachable, in the static case) instance executed it, same reasoning
+// TestReportSetTableView.al documents for the SetTableView suite.
 //
 /// <summary>
 /// Control experiment for report EXECUTION entry points.
@@ -38,8 +49,10 @@ codeunit 60870 "RRE Tests"
     local procedure Initialize()
     var
         Row: Record "RRE Row";
+        Log: Record "RRE Log";
     begin
         Row.DeleteAll();
+        Log.DeleteAll();
         Row.Init();
         Row."Entry No." := 1;
         Row.Name := 'first';
@@ -52,6 +65,17 @@ codeunit 60870 "RRE Tests"
         Row."Entry No." := 3;
         Row.Name := 'third';
         Row.Insert();
+    end;
+
+    // Count of "RRE Log" rows carrying the given marker — read after execution, since it
+    // is the one channel a STATIC call (no report reference to read globals off) leaves
+    // behind.
+    local procedure LogMarkerCount(Marker: Text[50]): Integer
+    var
+        Log: Record "RRE Log";
+    begin
+        Log.SetRange(Marker, Marker);
+        exit(Log.Count());
     end;
 
     [Test]
@@ -98,5 +122,38 @@ codeunit 60870 "RRE Tests"
             Error('Report.SaveAs(Xml) wrote an EMPTY stream — the report produced no dataset at all.');
         if StrPos(Dataset, 'second') = 0 then
             Error('Report.SaveAs(Xml) dataset does not contain the seeded row "second" — the data item body did not run. Dataset was: %1', CopyStr(Dataset, 1, 300));
+    end;
+
+    [Test]
+    procedure StaticRun_ExecutesTriggersAndBody()
+    begin
+        // Static Report.Run(Report::X, RequestWindow, SystemPrinter) — no report variable is
+        // ever declared, so there is nothing to Clear() and nothing to read a global off
+        // afterwards. RequestWindow=false: shape A carries no request page, so this only
+        // controls whether one would have been raised.
+        Initialize();
+
+        Report.Run(Report::"RRE ProcessingOnly Report", false, false);
+
+        if LogMarkerCount('A-pre') <> 1 then
+            Error('static Report.Run: OnPreReport never fired (or fired more than once) — expected 1 "A-pre" log entry, got %1.', LogMarkerCount('A-pre'));
+        if LogMarkerCount('A-row') <> 3 then
+            Error('static Report.Run: expected 3 data item body executions ("A-row" log entries), got %1 — the report did not iterate all seeded rows.', LogMarkerCount('A-row'));
+    end;
+
+    [Test]
+    procedure StaticRunModal_ExecutesTriggersAndBody()
+    begin
+        // Same claim as StaticRun_ExecutesTriggersAndBody, for the RunModal entry point —
+        // the one #1771 (AL Runner) reported as a silent no-op: no dataset iteration, no
+        // OnPostReport, no error, quiet success.
+        Initialize();
+
+        Report.RunModal(Report::"RRE ProcessingOnly Report", false, false);
+
+        if LogMarkerCount('A-pre') <> 1 then
+            Error('static Report.RunModal: OnPreReport never fired (or fired more than once) — expected 1 "A-pre" log entry, got %1.', LogMarkerCount('A-pre'));
+        if LogMarkerCount('A-row') <> 3 then
+            Error('static Report.RunModal: expected 3 data item body executions ("A-row" log entries), got %1 — the report did not iterate all seeded rows.', LogMarkerCount('A-row'));
     end;
 }
