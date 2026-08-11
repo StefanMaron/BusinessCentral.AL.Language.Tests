@@ -1,11 +1,21 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/dialog/dialog-confirm-method
 // Scope: in-scope
 //
-// CLAIM: Confirm(Question, Default, Args) substitutes %1/%2/... placeholders in
-// Question with Args (same substitution semantics as StrSubstNo) before the
-// question reaches a declared [ConfirmHandler]. Covers more than one argument,
-// a non-text argument type (integer, decimal, date), and that Default is honored
-// when the handler does not override the reply.
+// CLAIM: Confirm(Question, Default, Args) does NOT substitute %1/%2/... placeholders
+// in Question before the question reaches a declared [ConfirmHandler] — the handler
+// receives the raw, literal format string, Args untouched. This was verified against
+// real BC (27.5 and 28.3 CI): a first version of this test asserted the substituted
+// text (matching the documented interactive-dialog behavior and StrSubstNo semantics)
+// and failed on both versions with the raw '%1 ...' string as Actual, so the assertions
+// here were corrected to match observed BC behavior rather than the doc-implied one.
+//
+// This is an asymmetry with Message(Question, Args), which DOES substitute before its
+// [MessageHandler] runs (see Message_FormattedString_HandlerGetsFormatted in
+// TestMessageHandler.al) — substitution only happens on Confirm's interactive
+// (non-test) dialog path, not on the [ConfirmHandler] test-dispatch path.
+//
+// Covers more than one argument, a non-text argument type (integer, decimal via date),
+// and that Default is honored when the handler does not override the reply.
 
 codeunit 60952 "Test Confirm Format Args"
 {
@@ -19,19 +29,19 @@ codeunit 60952 "Test Confirm Format Args"
 
     [Test]
     [HandlerFunctions('AnswerNo')]
-    procedure Confirm_SingleFormatArg_HandlerReceivesSubstitutedQuestion()
+    procedure Confirm_SingleFormatArg_HandlerReceivesRawUnsubstitutedQuestion()
     begin
         Initialize();
 
         if Confirm('%1 configurations are created. Do you want to view them?', true, 2) then;
 
         Assert.AreEqual(1, ConfirmFireCount, 'ConfirmHandler must fire exactly once');
-        Assert.ExpectedConfirm('2 configurations are created. Do you want to view them?', LastConfirmQuestion);
+        Assert.ExpectedConfirm('%1 configurations are created. Do you want to view them?', LastConfirmQuestion);
     end;
 
     [Test]
     [HandlerFunctions('AnswerNo')]
-    procedure Confirm_MultipleMixedTypeFormatArgs_HandlerReceivesSubstitutedQuestion()
+    procedure Confirm_MultipleMixedTypeFormatArgs_HandlerReceivesRawUnsubstitutedQuestion()
     var
         SomeDate: Date;
     begin
@@ -41,9 +51,8 @@ codeunit 60952 "Test Confirm Format Args"
         if Confirm('Delete %1 records for %2 dated %3?', true, 3, 'Customer', SomeDate) then;
 
         Assert.AreEqual(1, ConfirmFireCount, 'ConfirmHandler must fire exactly once');
-        Assert.ExpectedConfirm(
-            StrSubstNo('Delete %1 records for %2 dated %3?', 3, 'Customer', SomeDate),
-            LastConfirmQuestion);
+        // The placeholders stay literal — this is NOT StrSubstNo('Delete %1 records for %2 dated %3?', 3, 'Customer', SomeDate).
+        Assert.ExpectedConfirm('Delete %1 records for %2 dated %3?', LastConfirmQuestion);
     end;
 
     [Test]
