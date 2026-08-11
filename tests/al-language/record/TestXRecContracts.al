@@ -1,11 +1,20 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-overview
 // Scope: in-scope
-// Fixtures used: ALT Triggered (60002), ALT Trigger Log (60003)
+// Fixtures used: ALT Triggered (60002), ALT Trigger Log (60003),
+//                Nested Validate Row (60988), Nested Validate Log (60989)
 //
 // xRec can only be read from inside table triggers.
 // The shared ALT Triggered fixture logs both Rec and xRec snapshots so the tests
 // can assert the runtime contract directly, including the code-path quirks where
 // xRec mirrors Rec instead of exposing a stored before-image.
+//
+// NESTED VALIDATE (OnValidate_Nested_* / OnValidate_NonNested_* below):
+// A field's OnValidate trigger can itself call Validate() on a second field of the SAME
+// record ("Nested Validate Row" below: Kind's OnValidate nests Validate(Ref, ...)). xRec
+// inside that INNER trigger must still hold the record as it was BEFORE the OUTER Validate
+// call started -- not the outer call's own new value. The non-nested test is the control:
+// it pins that a plain, unnested Validate call already gets a correct before-image, so the
+// nested test isolates specifically what nesting changes.
 //
 // PAGE-DRIVEN vs CODE-DRIVEN, resolved (see docs/handoff-2026-08-05-xrec-and-relation-propagation.md):
 // This codeunit only covers CODE-driven writes (Rec.Insert/.Modify/.Delete/.Rename). The
@@ -119,9 +128,65 @@ codeunit 60179 "Test xRec Contracts"
         Assert.AreEqual(77, TrigLog."NewIntegerValue", 'OnRename Rec must keep the same field values while the key changes');
     end;
 
+    [Test]
+    procedure OnValidate_Nested_InnerTrigger_SeesPreOuterValidateBeforeImage()
+    var
+        Row: Record "Nested Validate Row";
+        Log: Record "Nested Validate Log";
+    begin
+        Initialize();
+        Row."Code" := 'A';
+        Row.Kind := Row.Kind::First;
+        Row.Insert(true);
+        Row.Validate(Ref, 'X');
+        Row.Modify(true);
+
+        // The outer Validate changes Kind; Kind's own OnValidate nests a second
+        // Validate(Ref, '') on the SAME record. That inner trigger's xRec must reflect the
+        // record as it was BEFORE this outer call -- Kind still First, Ref still 'X' -- not
+        // the outer call's own just-written new value.
+        Row.Validate(Kind, Row.Kind::Second);
+
+        Assert.IsTrue(Log.FindLast(), 'nested Validate(Ref) must run the field''s OnValidate trigger');
+        Assert.AreEqual(Format(Row.Kind::First), Format(Log."Old Kind"),
+            'nested trigger xRec.Kind must be the value from BEFORE the outer Validate(Kind, ..) call, not the outer call''s new value');
+        Assert.AreEqual('X', Log."Old Ref",
+            'nested trigger xRec.Ref must be the value from BEFORE the outer Validate(Kind, ..) call');
+        Assert.AreEqual('', Log."New Ref", 'nested trigger Rec.Ref must expose the inner Validate''s own new value');
+    end;
+
+    [Test]
+    procedure OnValidate_NonNested_InnerTrigger_SeesCurrentBeforeImage()
+    var
+        Row: Record "Nested Validate Row";
+        Log: Record "Nested Validate Log";
+    begin
+        Initialize();
+        Row."Code" := 'B';
+        Row.Kind := Row.Kind::First;
+        Row.Ref := 'X';
+        Row.Insert(true);
+
+        // Control: a plain, unnested Validate call -- nothing else touches Rec first. Pins
+        // that a correct before-image is the BASELINE, so the nested test above isolates
+        // specifically what nesting changes.
+        Row.Validate(Ref, 'Y');
+
+        Assert.IsTrue(Log.FindLast(), 'Validate(Ref) must run the field''s OnValidate trigger');
+        Assert.AreEqual('X', Log."Old Ref", 'a non-nested Validate must see the value stored before the call as xRec');
+        Assert.AreEqual('Y', Log."New Ref", 'Rec must expose the new value inside the trigger');
+    end;
+
     local procedure Initialize()
+    var
+        NestedValidateRow: Record "Nested Validate Row";
+        NestedValidateLog: Record "Nested Validate Log";
     begin
         Cleanup.Initialize();
+        NestedValidateRow.Reset();
+        NestedValidateRow.DeleteAll();
+        NestedValidateLog.Reset();
+        NestedValidateLog.DeleteAll();
     end;
 
     local procedure FindTriggerLog(var TrigLog: Record "ALT Trigger Log"; TriggerName: Code[30])
