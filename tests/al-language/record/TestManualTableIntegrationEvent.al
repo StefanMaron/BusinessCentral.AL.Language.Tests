@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-event-publisher-subscriber
 // Scope: in-scope
-// Fixtures used: ALT Manual TableEvent Pub (61030), ALT ManualTableEvt Ctrl Sub (60949),
+// Fixtures used: ALT Manual TableEvent Pub (60976), ALT ManualTableEvt Ctrl Sub (60949),
 //                 ALT Trigger Log (60003)
 //
 // Differential coverage for a manually-declared [IntegrationEvent] published from INSIDE a

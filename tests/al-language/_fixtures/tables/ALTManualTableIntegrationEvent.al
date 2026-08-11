@@ -1,4 +1,4 @@
-table 61030 "ALT Manual TableEvent Pub"
+table 60976 "ALT Manual TableEvent Pub"
 {
     // Sibling of "ALT Triggered" (60002), which only exercises the IMPLICIT table trigger
     // events (OnAfterInsertEvent, OnAfterDeleteEvent, ...). This table additionally declares
