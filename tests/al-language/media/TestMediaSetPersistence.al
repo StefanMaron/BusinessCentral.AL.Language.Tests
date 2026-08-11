@@ -97,26 +97,30 @@ codeunit 60951 "Test MediaSet Persistence"
     end;
 
     [Test]
-    procedure MediaSet_Insert_ModifyThenGetSecondVariable_CountIsOne()
-    // CLAIM: an explicitly Insert(Guid)'d media id survives Modify()+Get() even when the
-    // re-read happens through a SEPARATE AL record variable of the same row, not just the
-    // one that performed the insert.
+    procedure MediaSet_ImportStream_ModifyThenGetSecondVariable_CountIsOne()
+    // CLAIM: same claim as above, but the re-read happens through a SEPARATE AL record
+    // variable of the same row, not just the one that performed the import.
     var
         Rec1: Record "ALT Media";
         Rec2: Record "ALT Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        OutStr: OutStream;
         MediaId: Guid;
     begin
         Initialize();
 
         Rec1.Code := 'MS2';
         Rec1.Insert();
-        MediaId := CreateGuid();
-        Rec1.Images.Insert(MediaId);
+        TempBlob.CreateOutStream(OutStr);
+        OutStr.WriteText('second-variable-bytes');
+        TempBlob.CreateInStream(InStr);
+        MediaId := Rec1.Images.ImportStream(InStr, 'second variable');
         Rec1.Modify();
 
         Rec2.Get('MS2');
         Assert.AreEqual(1, Rec2.Images.Count(), 'Count() must be 1 via a second record variable pointed at the same row');
-        Assert.AreEqual(MediaId, Rec2.Images.Item(1), 'Item(1) must return the id that was inserted');
+        Assert.AreEqual(MediaId, Rec2.Images.MediaId(), 'MediaId() via the second record variable must equal ImportStream()''s returned id');
     end;
 
     [Test]
@@ -208,17 +212,23 @@ codeunit 60951 "Test MediaSet Persistence"
     // CLAIM: Remove()'s effect on Count() survives Modify()+Get(), same as Insert()'s does.
     var
         Rec: Record "ALT Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        OutStr: OutStream;
         MediaId: Guid;
     begin
         Initialize();
 
         Rec.Code := 'MS6';
         Rec.Insert();
-        MediaId := CreateGuid();
-        Rec.Images.Insert(MediaId);
+        TempBlob.CreateOutStream(OutStr);
+        OutStr.WriteText('to-be-removed-bytes');
+        TempBlob.CreateInStream(InStr);
+        Rec.Images.ImportStream(InStr, 'to be removed');
         Rec.Modify();
 
         Rec.Get('MS6');
+        MediaId := Rec.Images.Item(1);
         Assert.IsTrue(Rec.Images.Remove(MediaId), 'Remove() must return true for an id that is really in the set');
         Rec.Modify();
 
