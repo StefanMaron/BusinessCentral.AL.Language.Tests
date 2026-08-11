@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-event-publisher-subscriber
 // Scope: in-scope
-// Fixtures used: ALT Manual TableEvent Pub (60945), ALT ManualTableEvt Ctrl Sub (60946),
+// Fixtures used: ALT Manual TableEvent Pub (61030), ALT ManualTableEvt Ctrl Sub (60949),
 //                 ALT Event Publisher (60014), ALT Trigger Log (60003)
 //
 // Differential coverage for a manually-declared [IntegrationEvent] published from INSIDE a
@@ -9,7 +9,7 @@
 // kinds fire on this table's Delete() call (implicit + manual) or independently (codeunit),
 // and all three must reach their respective subscriber.
 
-codeunit 60947 "Test Manual TableEvent"
+codeunit 60950 "Test Manual TableEvent"
 {
     Subtype = Test;
 
@@ -33,7 +33,7 @@ codeunit 60947 "Test Manual TableEvent"
         Pub.Delete(true);
 
         // [THEN] the OnDelete trigger body itself ran, reaching the raise statement
-        TrigLog.SetRange(TriggerName, 'ManualTablePublisherOnDeleteRan');
+        TrigLog.SetRange(TriggerName, 'ManualTblPubOnDeleteRan');
         TrigLog.SetRange(SourceEntryNo, 1);
         Assert.IsTrue(TrigLog.FindFirst(), 'control: the OnDelete trigger body did not run');
 

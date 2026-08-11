@@ -1,4 +1,4 @@
-table 60945 "ALT Manual TableEvent Pub"
+table 61030 "ALT Manual TableEvent Pub"
 {
     // Sibling of "ALT Triggered" (60002), which only exercises the IMPLICIT table trigger
     // events (OnAfterInsertEvent, OnAfterDeleteEvent, ...). This table additionally declares
@@ -28,7 +28,7 @@ table 60945 "ALT Manual TableEvent Pub"
         // Marker proving the trigger body itself ran and reached the raise statement,
         // independent of whether the event dispatch that follows actually fires a subscriber.
         TrigLog.Init();
-        TrigLog.TriggerName := 'ManualTablePublisherOnDeleteRan';
+        TrigLog.TriggerName := 'ManualTblPubOnDeleteRan';
         TrigLog.SourceEntryNo := Rec."Entry No.";
         TrigLog.Insert();
 

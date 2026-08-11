@@ -1,4 +1,4 @@
-codeunit 60946 "ALT ManualTableEvt Ctrl Sub"
+codeunit 60949 "ALT ManualTableEvt Ctrl Sub"
 {
     // Three subscribers, one per publisher kind, distinguished only by which raises the
     // event — used by TestManualTableIntegrationEvent.al to prove that a manually-declared
