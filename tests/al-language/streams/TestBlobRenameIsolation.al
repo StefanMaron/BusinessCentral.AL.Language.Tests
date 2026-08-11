@@ -38,7 +38,7 @@
 // symmetric guess not substituting for CI. The assertions below are what CI
 // actually returned, not the original guess.
 
-codeunit 60943 "Test Blob Rename Isolation"
+codeunit 60944 "Test Blob Rename Isolation"
 {
     Subtype = Test;
     TestPermissions = Disabled;
