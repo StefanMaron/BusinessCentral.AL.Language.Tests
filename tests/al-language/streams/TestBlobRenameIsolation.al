@@ -5,24 +5,38 @@
 // BC versions: 27.5+
 //
 // CLAIM (one per codeunit): does Rename() carry the same Blob store-aliasing
-// boundary as Insert()/Modify() — i.e. does the shape of isolation for an
-// uncommitted Blob write (written via CreateOutStream, never persisted with
-// Modify()) survive a Rename() the same way it survives a plain Get()?
+// boundary as Insert()/Modify() — i.e. does the isolation of an uncommitted
+// Blob write (written via CreateOutStream, never persisted with Modify())
+// survive a Rename() the same way it survives a plain Get()?
 //
-// Follow-up to TestBlobUncommittedWriteIsolation.al (60940), which pinned the
-// Insert/Modify boundary: database-backed rows isolate an uncommitted write,
-// temporary rows do not (the temp store holds the record's own Blob object).
-// Rename() is a third store-entry point that neither that codeunit nor any
-// other exercises for Blobs — this one measures it rather than assuming it
-// matches Insert/Modify. Per the trap documented in 60940: a symmetric guess
-// is not a substitute for CI on real BC, since the first attempt at 60940
-// guessed isolation for both shapes and BC rejected exactly the temporary
-// half. Any assertion below that CI rejects must be corrected to what BC
-// actually does, not weakened to a no-op.
+// Measured, not assumed, against real BC 27.5 and 28.3 — and the answer is
+// NO. Rename() does not have the Insert/Modify isolation boundary at all:
 //
-// Each case pairs a committed write (Modify() before Rename(), positive
-// control — proves the Blob does round-trip through Rename at all) with an
-// uncommitted write (no Modify() before Rename(), the isolation question).
+//   * Database-backed record: TestBlobUncommittedWriteIsolation.al (60940)
+//     pins that an uncommitted Blob write (or plain scalar-field write) is
+//     invisible to a second instance after a bare Get(). Adding a Rename()
+//     call in between flips that outcome — the uncommitted write (Blob AND
+//     plain scalar) IS visible under the new key. Rename() re-persists the
+//     record variable's whole current buffer under the new key, not just the
+//     primary-key field(s) that changed.
+//
+//   * Temporary record: 60940 pins that an uncommitted Blob write already IS
+//     visible after a bare Get(), because the temp store holds the record's
+//     own Blob object by reference. That stays true across a Rename() too —
+//     unsurprising, since the object was already shared before Rename() ran.
+//     But the committed shape (Modify() BEFORE Rename()) is the opposite of
+//     what Insert/Modify predicts: real BC returns HasValue() = false for the
+//     renamed row — the Blob that Modify() persisted is LOST across Rename()
+//     for a temporary record. This was the biggest surprise of this
+//     measurement and is pinned exactly as observed; both database and
+//     temporary shapes disagree with the Insert/Modify boundary, and they
+//     disagree with EACH OTHER on the committed-write case.
+//
+// First-attempt assertions here guessed the Insert/Modify boundary carried
+// over unchanged and CI on real BC rejected every guess with identical
+// failures on both 27.5 and 28.3 — see the trap 60940 documents about a
+// symmetric guess not substituting for CI. The assertions below are what CI
+// actually returned, not the original guess.
 
 codeunit 60943 "Test Blob Rename Isolation"
 {
@@ -36,11 +50,12 @@ codeunit 60943 "Test Blob Rename Isolation"
     // ── Non-temporary ─────────────────────────────────────────────────────────
 
     [Test]
-    procedure Blob_UncommittedWrite_Rename_SecondInstanceGet_ReadsEmpty()
-    // CLAIM: Insert() with an empty Blob, write bytes through CreateOutStream
-    //        WITHOUT Modify(), then Rename() the row. A second Record instance
-    //        that Get()s the row under the NEW key must not see those bytes —
-    //        Rename() does not persist an uncommitted field change.
+    procedure Blob_UncommittedWrite_Rename_SecondInstanceGet_ReadsWrittenBytes()
+    // CLAIM (measured): Insert() with an empty Blob, write bytes through
+    //        CreateOutStream WITHOUT Modify(), then Rename() the row. Unlike
+    //        a bare Get() (60940), Rename() DOES carry the uncommitted write
+    //        to the renamed row — a second Record instance that Get()s the
+    //        row under the new key reads the bytes back.
     var
         Writer: Record "ALT Blob";
         Reader: Record "ALT Blob";
@@ -63,20 +78,20 @@ codeunit 60943 "Test Blob Rename Isolation"
         Reader.Get('RNLEAK2');
         Reader.CalcFields(Data);
 
-        Assert.IsFalse(Reader.Data.HasValue(), 'A second Record instance must not see a Blob write that was never persisted with Modify, even after Rename');
+        Assert.IsTrue(Reader.Data.HasValue(), 'A Rename() call persists the current buffer, so a second Record instance DOES see a Blob write that was never persisted with Modify');
 
         Reader.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
-        Assert.AreEqual('', ReadBack, 'A second Record instance must read the stored (empty) Blob after Rename, not the uncommitted in-memory bytes');
-        Assert.AreEqual(0, StrLen(ReadBack), 'The renamed row''s stored Blob must be zero-length — the uncommitted bytes must not reach it');
+        Assert.AreEqual('RENAME-LEAKED-BYTES', ReadBack, 'A second Record instance reads the exact uncommitted bytes back under the renamed key');
+        Assert.AreEqual(19, StrLen(ReadBack), 'All 19 uncommitted characters reach the renamed row');
     end;
 
     [Test]
-    procedure Blob_UncommittedWrite_Rename_SameInstanceReGet_DiscardsWrite()
-    // CLAIM: same shape, but the re-read happens on the writing instance
-    //        itself, keyed by the NEW value. Get() refreshes the buffer from
-    //        the stored row, so the uncommitted bytes are discarded rather
-    //        than surviving the Rename + round trip.
+    procedure Blob_UncommittedWrite_Rename_SameInstanceReGet_KeepsWrite()
+    // CLAIM (measured): same shape, re-read on the writing instance itself
+    //        under the new key. Get() after Rename() reads back the bytes
+    //        that Rename() carried over — it does not discard them the way a
+    //        Get() without an intervening Rename() would (60940).
     var
         Writer: Record "ALT Blob";
         OutStr: OutStream;
@@ -98,22 +113,21 @@ codeunit 60943 "Test Blob Rename Isolation"
         Writer.Get('RNREGET2');
         Writer.CalcFields(Data);
 
-        Assert.IsFalse(Writer.Data.HasValue(), 'Get() after Rename must refresh the Blob from the stored row, discarding an uncommitted write');
+        Assert.IsTrue(Writer.Data.HasValue(), 'Get() after Rename() reads back the bytes that Rename() itself persisted from the buffer');
 
         Writer.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
-        Assert.AreEqual('', ReadBack, 'Re-Get on the writing instance after Rename must read the stored (empty) Blob');
-        Assert.AreEqual(0, StrLen(ReadBack), 'The re-fetched Blob after Rename must be zero-length');
+        Assert.AreEqual('RENAME-REGET-BYTES', ReadBack, 'Re-Get on the writing instance after Rename reads the bytes Rename() carried over');
+        Assert.AreEqual(18, StrLen(ReadBack), 'All 18 characters survive the Rename + re-Get round trip');
     end;
 
     [Test]
     procedure Blob_CommittedWrite_Rename_SecondInstanceGet_ReadsWrittenBytes()
-    // CLAIM (positive control): the very same sequence WITH Modify() before
-    //        Rename() does reach the stored row and survives the Rename — a
+    // CLAIM (positive control): the same sequence WITH Modify() before
+    //        Rename() reaches the stored row and survives the Rename — a
     //        second instance reads the exact bytes back under the new key.
-    //        This is what makes the two tests above a statement about
-    //        Modify()/Rename() interaction and not a statement that Blobs
-    //        never survive a Rename at all.
+    //        Combined with the two tests above, Rename() persists whatever
+    //        the buffer holds at the time it runs, committed or not.
     var
         Writer: Record "ALT Blob";
         Reader: Record "ALT Blob";
@@ -141,16 +155,18 @@ codeunit 60943 "Test Blob Rename Isolation"
         Reader.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
         Assert.AreEqual('RENAME-COMMITTED-BYTES', ReadBack, 'A second Record instance must read exactly the persisted Blob bytes after Rename');
-        Assert.AreEqual(23, StrLen(ReadBack), 'The persisted Blob must carry all 23 written characters after Rename');
+        Assert.AreEqual(22, StrLen(ReadBack), 'The persisted Blob must carry all 22 written characters after Rename');
     end;
 
     [Test]
-    procedure Blob_UncommittedScalarWrite_Rename_SecondInstanceGet_ReadsEmpty()
-    // CLAIM (discriminating control): the isolation asserted above is the
-    //        ordinary Modify/Rename contract, not something specific to Blob
-    //        fields. A plain Text field assigned without Modify() is
-    //        invisible to a second instance after Rename in exactly the same
-    //        way.
+    procedure Blob_UncommittedScalarWrite_Rename_SecondInstanceGet_SeesUnpersistedValue()
+    // CLAIM (measured, discriminating control): the Rename() behaviour above
+    //        is not specific to Blob fields — a plain Text field assigned
+    //        without Modify() is ALSO visible to a second instance after
+    //        Rename(), the mirror image of the discriminating control in
+    //        60940 (which showed the opposite for a bare Get() with no
+    //        Rename). This confirms Rename() re-persists the whole buffer,
+    //        not just the changed key field(s).
     var
         Writer: Record "ALT Blob";
         Reader: Record "ALT Blob";
@@ -167,20 +183,19 @@ codeunit 60943 "Test Blob Rename Isolation"
         Writer.Rename('RNSCALAR2');
 
         Reader.Get('RNSCALAR2');
-        Assert.AreEqual('', Reader.Description, 'A scalar field assigned without Modify must not be visible to a second Record instance after Rename');
+        Assert.AreEqual('RENAME-SCALAR-LEAK', Reader.Description, 'Rename() persists the current buffer''s non-key fields too, so a second instance sees the unmodified scalar value');
     end;
 
     // ── Temporary ─────────────────────────────────────────────────────────────
 
     [Test]
     procedure TempBlob_UncommittedWrite_Rename_SameInstanceReGet_KeepsWrite()
-    // CLAIM: the database contract does NOT carry over to a temporary record
-    //        — matching the Insert/Modify boundary pinned by 60940. The temp
-    //        store holds the record's own Blob object, so bytes written after
-    //        Insert without Modify() are in the stored row already; Rename()
-    //        only relocates that row under a new key and the already-shared
-    //        Blob object comes with it. Get() reads the unpersisted bytes
-    //        back instead of discarding them.
+    // CLAIM: consistent with the Insert/Modify boundary pinned by 60940 for
+    //        temporary records — the temp store holds the record's own Blob
+    //        object, so bytes written after Insert without Modify() are in
+    //        the stored row already. Rename() relocates that row under a new
+    //        key and the already-shared Blob object comes with it; Get()
+    //        reads the unpersisted bytes back.
     var
         TempBlobRec: Record "ALT Blob" temporary;
         OutStr: OutStream;
@@ -207,7 +222,7 @@ codeunit 60943 "Test Blob Rename Isolation"
         TempBlobRec.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
         Assert.AreEqual('TEMP-RENAME-BYTES', ReadBack, 'Get() on a temporary record after Rename reads back the unpersisted in-memory bytes');
-        Assert.AreEqual(18, StrLen(ReadBack), 'All 18 unpersisted characters are present in the temporary store after Rename');
+        Assert.AreEqual(17, StrLen(ReadBack), 'All 17 unpersisted characters are present in the temporary store after Rename');
     end;
 
     [Test]
@@ -244,19 +259,25 @@ codeunit 60943 "Test Blob Rename Isolation"
         TempReader.Data.CreateInStream(InStr);
         InStr.ReadText(ReadBack);
         Assert.AreEqual('TEMP-RENAME-SHARED', ReadBack, 'A shared-buffer temp reader reads the unpersisted bytes out of the renamed stored row');
-        Assert.AreEqual(19, StrLen(ReadBack), 'All 19 unpersisted characters are present for the shared-buffer reader after Rename');
+        Assert.AreEqual(18, StrLen(ReadBack), 'All 18 unpersisted characters are present for the shared-buffer reader after Rename');
     end;
 
     [Test]
-    procedure TempBlob_CommittedWrite_Rename_SameInstanceReGet_ReadsWrittenBytes()
-    // CLAIM (positive control for the temporary shape): with Modify() the
-    //        bytes do reach the temp store and survive both a Rename() and a
-    //        subsequent Get().
+    procedure TempBlob_CommittedWrite_Rename_SameInstanceReGet_LosesBlobValue()
+    // CLAIM (measured — the one genuine surprise of this file): for a
+    //        temporary record, a Blob persisted with Modify() BEFORE Rename()
+    //        does NOT survive the Rename(). HasValue() on the renamed row is
+    //        false, even though the exact same Insert -> write -> Modify
+    //        sequence WITHOUT a Rename() call correctly round-trips the Blob
+    //        (see TempBlob_CommittedWrite_SameInstanceReGet_ReadsWrittenBytes
+    //        in 60940). This is the opposite of the database-backed shape,
+    //        where Modify() before Rename() is the case that DOES survive
+    //        (Blob_CommittedWrite_Rename_SecondInstanceGet_ReadsWrittenBytes
+    //        above) — the two shapes disagree with each other here, not just
+    //        with the Insert/Modify boundary.
     var
         TempBlobRec: Record "ALT Blob" temporary;
         OutStr: OutStream;
-        InStr: InStream;
-        ReadBack: Text;
     begin
         Initialize();
 
@@ -273,12 +294,7 @@ codeunit 60943 "Test Blob Rename Isolation"
         TempBlobRec.Get('TRNCOMMIT2');
         TempBlobRec.CalcFields(Data);
 
-        Assert.IsTrue(TempBlobRec.Data.HasValue(), 'A temporary row must keep a Blob write that was persisted with Modify, across a Rename');
-
-        TempBlobRec.Data.CreateInStream(InStr);
-        InStr.ReadText(ReadBack);
-        Assert.AreEqual('TEMP-RENAME-COMMITTED', ReadBack, 'Get() on a temporary record after Rename must read exactly the persisted Blob bytes');
-        Assert.AreEqual(22, StrLen(ReadBack), 'The persisted temporary Blob must carry all 22 written characters after Rename');
+        Assert.IsFalse(TempBlobRec.Data.HasValue(), 'A temporary row loses a Blob that was persisted with Modify once Rename() runs — measured against real BC, not assumed');
     end;
 
     local procedure Initialize()
