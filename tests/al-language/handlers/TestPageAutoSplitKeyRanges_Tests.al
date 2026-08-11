@@ -23,17 +23,24 @@
 //
 //   between 50000 and 70000 -> 60000   (midpoint and capped-step agree; the baseline)
 //   between 10000 and 90000 -> 20000   (midpoint would say 50000; the cap says 20000)
-//   single line at -10000   -> -5000   (a plain "last + 10000" would say 0; the range
-//                                       [ -10000 .. 0 ] is halved instead, because the
-//                                       upper bound of a rowset with no line after the
-//                                       cursor is clamped to 0 for a negative lower)
+//   single line at -10000   -> -6667   (a plain "last + 10000" would say 0 and a halved
+//                                       range would say -5000; MEASURED as -6667: the
+//                                       range [ -10000 .. 0 ] is split in THREE, because
+//                                       the grid's trailing blank placeholder row counts
+//                                       as a row after the insert when the insert is at
+//                                       the end of the rowset — 10000 / 3 = 3333 above
+//                                       the lower line)
 //   between -10000 and 10000 -> -1     (a range crossing zero reserves zero itself and
 //                                       steps (range-1)/2 = 9999 above the lower bound,
-//                                       landing at -1 rather than 0)
+//                                       landing at -1 rather than 0 — and NOT -6667's
+//                                       three-way split: mid-grid the placeholder sits
+//                                       beyond the upper line and does not participate)
 //
 // If a measured run disagrees with any of these, the measurement wins and the assertion
 // must be corrected to what BC actually assigns — the point of this file is to replace
-// derivation with measurement.
+// derivation with measurement. That happened once already: the single-negative case was
+// first predicted as -5000 and corrected to the measured -6667 (identical on 27.5 and
+// 28.3), which is what pinned the placeholder's role in the divisor.
 //
 // The BigInteger and Decimal cases pin that the arithmetic runs in the key field's own
 // type: the BigInteger seed does not fit in an Integer at all, and the Decimal seed
@@ -140,11 +147,14 @@ codeunit 60929 "ASK Range Tests"
     end;
 
     // Negative-key territory: a grid holding only a line at -10000. A plain "last + 10000"
-    // would assign 0; the prediction is that the range up to zero is halved instead,
-    // landing at -5000. Whichever way BC answers, this pins that negative keys do not
-    // simply fall back to the empty-grid constant.
+    // would assign 0, and halving the range up to zero would give -5000; BC measures -6667
+    // (identically on 27.5 and 28.3): the range is split in three, the trailing blank
+    // placeholder row counting as a third occupant because the insert sits at the end of
+    // the rowset. This pins both that negative keys do not fall back to the empty-grid
+    // constant and that the placeholder participates in the divisor here — the same
+    // placeholder the empty-grid 20000 comes from.
     [Test]
-    procedure TestPage_New_AfterSingleNegativeLine_LandsAtMinus5000()
+    procedure TestPage_New_AfterSingleNegativeLine_LandsAtMinus6667()
     var
         Header: Record "ASK Header";
         Line: Record "ASK Line";
@@ -167,8 +177,8 @@ codeunit 60929 "ASK Range Tests"
         // number BC assigned instead of only denying the predicted one.
         Line.SetFilter("Line No.", '<>%1', -10000);
         Assert.IsTrue(Line.FindFirst(), 'the inserted line must exist alongside the seeded one');
-        Assert.AreEqual(-5000, Line."Line No.",
-            'a line inserted after a single line at -10000 must land at -5000, halving the gap up to zero');
+        Assert.AreEqual(-6667, Line."Line No.",
+            'a line inserted after a single line at -10000 must land at -6667: the range up to zero split in three, the trailing placeholder row taking the third share');
         Assert.AreEqual('after negative', Line.Descr, 'and it must be the line the test entered');
     end;
 
