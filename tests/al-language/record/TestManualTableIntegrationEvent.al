@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-event-publisher-subscriber
 // Scope: in-scope
 // Fixtures used: ALT Manual TableEvent Pub (61030), ALT ManualTableEvt Ctrl Sub (60949),
-//                 ALT Event Publisher (60014), ALT Trigger Log (60003)
+//                 ALT Trigger Log (60003)
 //
 // Differential coverage for a manually-declared [IntegrationEvent] published from INSIDE a
 // table object's own trigger code (as opposed to the implicit trigger events BC synthesizes
@@ -67,14 +67,14 @@ codeunit 60950 "Test Manual TableEvent"
     [Test]
     procedure CodeunitEvent_ManualIntegrationEvent_Subscriber_Fires_Control()
     var
-        Publisher: Codeunit "ALT Event Publisher";
+        CtrlSub: Codeunit "ALT ManualTableEvt Ctrl Sub";
         TrigLog: Record "ALT Trigger Log";
     begin
         // [GIVEN] nothing table-related — this publisher is a codeunit
         Initialize();
 
         // [WHEN] the codeunit raises its manually-declared [IntegrationEvent]
-        Publisher.TriggerBefore(3);
+        CtrlSub.RaiseControlCodeunitEvent(3);
 
         // [THEN] the subscriber to the codeunit-published IntegrationEvent fired (control case)
         TrigLog.SetRange(TriggerName, 'CodeunitEventFired');
