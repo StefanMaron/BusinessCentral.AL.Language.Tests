@@ -1,4 +1,4 @@
-enum 60011 "ALT Caption Kind"
+enum 60910 "ALT Caption Kind"
 {
     Extensible = false;
 

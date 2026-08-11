@@ -1,13 +1,13 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/format-method
 // Scope: in-scope
-// Fixtures: ALT Caption Kind enum (60011): None(0)/'None', ArchivedRecord(1)/'Archived Item',
+// Fixtures: ALT Caption Kind enum (60910): None(0)/'None', ArchivedRecord(1)/'Archived Item',
 //   NoCaptionDeclared(2)/no Caption property at all.
 //
 // Format(<enum value>) must return the value's declared Caption, not its AL member
 // (identifier) name. When a value declares no Caption at all, AL's documented default
 // applies: the caption falls back to the member name itself.
 
-codeunit 60944 "Test Enum Caption"
+codeunit 60947 "Test Enum Caption"
 {
     Subtype = Test;
 
