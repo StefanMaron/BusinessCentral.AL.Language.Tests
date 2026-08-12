@@ -4,13 +4,20 @@
 //
 // TestPage.<field>.Visible() must combine the control's OWN Visible with the Visible of EVERY
 // group that wraps it, all the way up to the content area — not just its own declared value and
-// not just its immediate parent's.
+// not just its immediate parent's. This only applies to controls that are actually PRESENT on the
+// runtime page: a control whose Visible property is a compile-time LITERAL `false` (on the
+// control itself, or on any group that encloses it) is dead-code-eliminated by the AL compiler.
+// It never exists on the runtime page object at all, so any TestPage access to it — not just
+// .Visible(), the control reference itself — raises "The field with ID = ... is not found on the
+// page." A `Visible = <variable-or-expression>` property is never eliminated this way, even if it
+// currently evaluates to false: the control stays on the page and its Visible() is evaluated live,
+// combining its own value with every ancestor's, on every call.
 //
 // FieldInNestedGroup is the case that tells apart "walks one level up" from "walks the whole
 // chain": it sits inside InnerGroup, which declares no Visible of its own, wrapped by OuterGroup,
-// which does. A fix that only consulted the immediate parent (InnerGroup, always Visible) would
-// pass every other test here and still report FieldInNestedGroup visible while OuterGroup is
-// hidden.
+// whose Visible is the variable expression ShowOuter (never eliminated). A fix that only consulted
+// the immediate parent (InnerGroup, always Visible) would pass every other test here and still
+// report FieldInNestedGroup visible while OuterGroup is hidden.
 
 codeunit 60961 "Test Page Field Visible Tests"
 {
@@ -45,18 +52,21 @@ codeunit 60961 "Test Page Field Visible Tests"
         Card.Close();
     end;
 
-    // Negative: the enclosing group's Visible is the literal `false` — the field declares no
-    // Visible of its own, so this is purely the group's doing.
+    // Negative, and NOT a "combine with the group" case: the enclosing group's Visible is the
+    // compile-time LITERAL `false`, so the whole group subtree — including this field, which
+    // declares no Visible of its own — is dead-code-eliminated by the AL compiler. The control
+    // never exists on the runtime page, so even referencing it on the TestPage (before any call to
+    // .Visible()) raises "field ... is not found on the page", not a false Visible() result.
     [Test]
-    procedure FieldInGroupWithLiteralFalseVisible_IsHidden()
+    procedure FieldInGroupWithLiteralFalseVisible_IsNotOnThePage()
     var
         Card: TestPage "TP Field Visible Card";
     begin
         Initialize();
 
         Card.OpenEdit();
-        Assert.IsFalse(Card.FieldInStaticHiddenGroup.Visible(),
-            'a field inside a group with Visible = false must be hidden even though the field itself declares no Visible');
+        asserterror Card.FieldInStaticHiddenGroup.Visible();
+        Assert.ExpectedError('is not found on the page');
         Card.Close();
     end;
 
@@ -91,11 +101,12 @@ codeunit 60961 "Test Page Field Visible Tests"
         Card.Close();
     end;
 
-    // Negative: the control's OWN Visible = false must still win even while the enclosing group
-    // is visible — group visibility only ADDS a hiding condition, it never overrides a control
-    // that hides itself.
+    // Negative, same compile-time-elimination story, this time on the control's OWN Visible
+    // rather than a group's: OwnHiddenFieldInVisibleGroup declares a literal `Visible = false`
+    // directly, so it is eliminated regardless of the enclosing (visible, variable-driven) group.
+    // The control never exists on the runtime page.
     [Test]
-    procedure FieldsOwnFalseVisibleWinsEvenInsideAVisibleGroup()
+    procedure FieldWithOwnLiteralFalseVisible_IsNotOnThePageEvenInsideAVisibleGroup()
     var
         Card: TestPage "TP Field Visible Card";
     begin
@@ -104,8 +115,8 @@ codeunit 60961 "Test Page Field Visible Tests"
         Card.OpenEdit();
         Card.ToggleDynamic.SetValue(true);
         Assert.IsTrue(Card.FieldInDynamicGroup.Visible(), 'sanity: the group must actually be visible now');
-        Assert.IsFalse(Card.OwnHiddenFieldInVisibleGroup.Visible(),
-            'a control''s own Visible = false must still hide it even though the enclosing group is visible');
+        asserterror Card.OwnHiddenFieldInVisibleGroup.Visible();
+        Assert.ExpectedError('is not found on the page');
         Card.Close();
     end;
 

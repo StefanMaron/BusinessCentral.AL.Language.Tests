@@ -5,17 +5,25 @@
 // Five controls, five combinations of "does the ENCLOSING group's Visible affect this field":
 //
 //   RecValue                   - not inside any group at all (baseline, always visible).
-//   FieldInStaticHiddenGroup   - inside a group whose Visible is the literal `false`.
+//   FieldInStaticHiddenGroup   - inside a group whose Visible is the literal `false`. On real BC
+//                                 this whole subtree is dead-code-eliminated at compile time: the
+//                                 control never exists on the runtime page, so a TestPage access
+//                                 raises "field ... is not found on the page" rather than reporting
+//                                 Visible() = false.
 //   FieldInDynamicGroup        - inside a group whose Visible is a page-variable expression
-//                                 (ShowDynamic), no Visible of its own.
-//   OwnHiddenFieldInVisibleGroup - same dynamic group, but this control ALSO declares its own
-//                                 `Visible = false` — the control's own property must still win
-//                                 even while the enclosing group is visible.
+//                                 (ShowDynamic), no Visible of its own. A non-literal Visible is
+//                                 never compile-time-eliminated: the control stays on the page and
+//                                 Visible() reflects the expression's current value, live.
+//   OwnHiddenFieldInVisibleGroup - same dynamic (visible) group, but this control ALSO declares
+//                                 its own literal `Visible = false`, which eliminates it from the
+//                                 runtime page the same way FieldInStaticHiddenGroup is eliminated,
+//                                 regardless of the enclosing group's (variable-driven) visibility.
 //   FieldInNestedGroup          - two groups deep (OuterGroup > InnerGroup > field). InnerGroup
-//                                 declares no Visible of its own; only OuterGroup's
-//                                 (ShowOuter) governs it. This is the case that tells apart a
-//                                 fix that only checks the immediate parent from one that walks
-//                                 the whole ancestor chain.
+//                                 declares no Visible of its own; only OuterGroup's variable
+//                                 expression (ShowOuter) governs it, so nothing here is compile-time
+//                                 eliminated. This is the case that tells apart a fix that only
+//                                 checks the immediate parent from one that walks the whole
+//                                 ancestor chain.
 //
 // ToggleDynamic and ToggleOuter are plain page-variable-bound controls (not Rec fields) the
 // tests flip with TestPage.<field>.SetValue() to move ShowDynamic / ShowOuter between false and
