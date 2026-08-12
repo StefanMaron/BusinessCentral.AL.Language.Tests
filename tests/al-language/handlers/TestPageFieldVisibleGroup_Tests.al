@@ -61,11 +61,12 @@ codeunit 60961 "Test Page Field Visible Tests"
     procedure FieldInGroupWithLiteralFalseVisible_IsNotOnThePage()
     var
         Card: TestPage "TP Field Visible Card";
+        Dummy: Boolean;
     begin
         Initialize();
 
         Card.OpenEdit();
-        asserterror Card.FieldInStaticHiddenGroup.Visible();
+        asserterror Dummy := Card.FieldInStaticHiddenGroup.Visible();
         Assert.ExpectedError('is not found on the page');
         Card.Close();
     end;
@@ -109,13 +110,14 @@ codeunit 60961 "Test Page Field Visible Tests"
     procedure FieldWithOwnLiteralFalseVisible_IsNotOnThePageEvenInsideAVisibleGroup()
     var
         Card: TestPage "TP Field Visible Card";
+        Dummy: Boolean;
     begin
         Initialize();
 
         Card.OpenEdit();
         Card.ToggleDynamic.SetValue(true);
         Assert.IsTrue(Card.FieldInDynamicGroup.Visible(), 'sanity: the group must actually be visible now');
-        asserterror Card.OwnHiddenFieldInVisibleGroup.Visible();
+        asserterror Dummy := Card.OwnHiddenFieldInVisibleGroup.Visible();
         Assert.ExpectedError('is not found on the page');
         Card.Close();
     end;
