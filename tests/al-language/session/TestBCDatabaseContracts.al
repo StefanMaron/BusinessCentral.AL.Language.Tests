@@ -62,6 +62,40 @@ codeunit 60178 "Test BC Database Contracts"
     end;
 
     [Test]
+    procedure Database_IsInWriteTransaction_AfterDeleteAllWithNoMatches_ReturnsTrue()
+    var
+        Rec: Record "ALT Universal";
+    begin
+        // CLAIM: DeleteAll() issues a delete statement (and so opens a write transaction)
+        // even when zero rows match the current filter — the write is a property of the
+        // statement being issued, not of how many rows it happens to affect.
+        Initialize();
+
+        // The table is guaranteed empty here: Initialize() -> Cleanup.Initialize() just
+        // DeleteAll'd it (and every other ALTFixtureCleanup-covered table). A second
+        // DeleteAll immediately afterwards is a delete against zero matching rows.
+        Rec.DeleteAll(false);
+
+        Assert.IsTrue(Database.IsInWriteTransaction(), 'IsInWriteTransaction must return true after DeleteAll(), even when no rows matched');
+    end;
+
+    [Test]
+    procedure Database_IsInWriteTransaction_AfterDeleteAllWithNoMatchesThenCommit_ReturnsFalse()
+    var
+        Rec: Record "ALT Universal";
+    begin
+        // Negative pairing for the claim above: the write transaction a zero-match
+        // DeleteAll() opens is a real, resettable transaction state -- not a flag that is
+        // simply always true -- so Commit() must still clear it.
+        Initialize();
+
+        Rec.DeleteAll(false);
+        Commit();
+
+        Assert.IsFalse(Database.IsInWriteTransaction(), 'IsInWriteTransaction must return false after Commit() following a zero-match DeleteAll()');
+    end;
+
+    [Test]
     procedure Database_LastUsedRowVersion_Increases_AfterInsert()
     var
         Rec: Record "ALT Universal";
