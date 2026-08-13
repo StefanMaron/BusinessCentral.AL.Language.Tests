@@ -2,6 +2,25 @@ tableextension 60024 "ALT Triggered Order Ext" extends "ALT Triggered"
 {
     fields
     {
+        // A field the EXTENSION adds, carrying its own OnValidate — a different
+        // mechanism from the modify() OnBefore/OnAfterValidate triggers below,
+        // which attach around a BASE field's own OnValidate.
+        field(60240; "Ext Validated"; Text[50])
+        {
+            DataClassification = SystemMetadata;
+
+            trigger OnValidate()
+            var
+                TrigLog: Record "ALT Trigger Log";
+            begin
+                TrigLog.Init();
+                TrigLog.TriggerName := 'TableExtFieldOnValidate';
+                TrigLog.SourceEntryNo := Rec."Entry No.";
+                TrigLog.OldValue := xRec."Ext Validated";
+                TrigLog.NewValue := Rec."Ext Validated";
+                TrigLog.Insert();
+            end;
+        }
         modify("Watched Field")
         {
             trigger OnBeforeValidate()
