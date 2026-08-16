@@ -43,15 +43,17 @@ codeunit 60720 "Test Page Enum Var Tests"
     end;
 
     // Positive, concrete value: after RunModal returns, the page variable itself holds the
-    // SPECIFIC member the handler chose BY NAME ('Block', ordinal 1) — not the field's zero
+    // SPECIFIC member the handler chose BY CAPTION ('Blocks', ordinal 1) — not the field's zero
     // default, and not some other member. Proves the control's real current value (not a
     // stashed/default one) round-trips through the page.
     //
-    // NOTE: SetValue is deliberately driven by MEMBER NAME here, not by the enum's declared
-    // Caption ('Blocks') — TestPage caption-based resolution for an Enum-typed control (as
-    // opposed to Option's control-level OptionCaption property) is a separate, not yet proven,
-    // surface; see the runner repo's tracking issue for that gap. This suite's claim is
-    // narrower: RunModal materialises the page and the real value round-trips.
+    // SetValue is driven by the enum's declared Caption ('Blocks'), not by the member name
+    // ('Block') — verified against a real BC service tier: SetValue('Block') throws "Your entry
+    // of 'Block' is not an acceptable value for 'Kind'." (see
+    // RunModal_EnumGlobalControl_SetValueRejectsTheBareMemberName below). An Enum-typed
+    // TestPage control resolves by Caption only, the same as the control-level OptionCaption an
+    // Option-typed control declares — it does NOT fall back to the member name the way this
+    // suite originally (incorrectly) assumed.
     [Test]
     [HandlerFunctions('KindHandler')]
     procedure RunModal_EnumGlobalControl_ProcedureReadsBackTheHandlerChosenValue()
@@ -81,10 +83,36 @@ codeunit 60720 "Test Page Enum Var Tests"
             'without RunModal the page variable never left its declared default (Field = 0)');
     end;
 
+    // Negative: the bare member name is NOT an acceptable TestPage.SetValue spelling for an
+    // Enum-typed control. BC's error names the rejected value and the field it was rejected on,
+    // so this also pins the message shape, not just "some error happened".
+    [Test]
+    [HandlerFunctions('KindHandlerRejectsMemberName')]
+    procedure RunModal_EnumGlobalControl_SetValueRejectsTheBareMemberName()
+    var
+        Echo: Record "Test Page Enum Var Row";
+        Modal: Page "Test Page Enum Var Modal";
+    begin
+        Initialize();
+
+        Modal.RunModal();
+
+        Assert.IsFalse(Echo.Get('KIND'),
+            'OnValidate must not have fired — the rejected SetValue never reached the control''s bound value');
+    end;
+
     [ModalPageHandler]
     procedure KindHandler(var Modal: TestPage "Test Page Enum Var Modal")
     begin
-        Modal.KindSelector.SetValue('Block');
+        Modal.KindSelector.SetValue('Blocks');
+        Modal.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure KindHandlerRejectsMemberName(var Modal: TestPage "Test Page Enum Var Modal")
+    begin
+        asserterror Modal.KindSelector.SetValue('Block');
+        Assert.ExpectedError('not an acceptable value');
         Modal.OK().Invoke();
     end;
 }
