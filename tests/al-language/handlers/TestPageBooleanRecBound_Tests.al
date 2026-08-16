@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-setvalue-method
 // Scope: in-scope
-// Fixtures used: TP Boolean Rec Bound Row (61010), TP Boolean Rec Bound Card (61011), Assert (60021)
+// Fixtures used: TP Boolean Rec Bound Row (60994), TP Boolean Rec Bound Card (60993), Assert (60021)
 //
 // TestPage.<field>.SetValue(Boolean) on a control bound directly to a Boolean source-table
 // field (field(RecFlag; Rec.Flag)) — as opposed to a page-variable-bound Boolean control, which

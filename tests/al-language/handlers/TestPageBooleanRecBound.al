@@ -6,7 +6,7 @@
 // test; Value gives the page an unrelated field so a test can prove ONLY the boolean control's
 // own field was touched.
 
-table 61010 "TP Boolean Rec Bound Row"
+table 60994 "TP Boolean Rec Bound Row"
 {
     DataClassification = CustomerContent;
 
