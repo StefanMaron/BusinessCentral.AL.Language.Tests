@@ -1,13 +1,13 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-setvalue-method
 // Scope: in-scope
-// Fixtures used: TP Boolean Rec Bound Row (60995)
+// Fixtures used: TP Boolean Rec Bound Row (61010)
 //
 // RecFlag is bound directly to the source table field (field(RecFlag; Rec.Flag)), as opposed to
 // a page variable — see TestPageVariableControl_Page.al for the variable-bound counterpart. The
 // two look identical in AL but round-trip through different runtime plumbing, which is exactly
 // why a runner emulating this can pass one and fail the other.
 
-page 60996 "TP Boolean Rec Bound Card"
+page 61011 "TP Boolean Rec Bound Card"
 {
     PageType = Card;
     SourceTable = "TP Boolean Rec Bound Row";
