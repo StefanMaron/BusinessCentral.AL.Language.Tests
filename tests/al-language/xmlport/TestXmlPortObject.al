@@ -173,6 +173,47 @@ codeunit 60206 "Test XmlPort Object"
         Assert.AreEqual('Second', Universal."Text Field", 'Static XmlPort.Import(Integer, InStream, Record) must import the second row text value');
     end;
 
+    // CLAIM: after XmlPort.Import(Integer, InStream, Record) returns, the SAME record
+    // variable that was passed in is immediately usable -- its own field values already
+    // reflect the imported row, and it can be Delete()'d directly -- with no intervening
+    // Get() needed to "reload" it. The previous test above
+    // (XmlPort_Import_StaticWithRecord_InsertsIntoGivenRecordVariable) only proves the
+    // import inserted rows into the table; it always re-fetches with an explicit Get()
+    // before reading fields, so it cannot distinguish "the given variable is the actual
+    // buffer used by the import" from "the given variable was ignored after being used to
+    // filter the table view, and a separate, table-scoped buffer instance did the real
+    // work". This test isolates that exact distinction with a single-row payload, no Get()
+    // at all between Import and the field reads / Delete().
+    [Test]
+    procedure XmlPort_Import_StaticWithRecord_GivenVariableUsableWithoutExplicitGet()
+    var
+        BlobRec: Record "ALT Blob" temporary;
+        Universal: Record "ALT Universal";
+        InStr: InStream;
+        Ok: Boolean;
+        ErrorText: Text;
+    begin
+        Initialize();
+        DeleteUniversalRows();
+        StageTempBlobFromText(BlobRec, '<?xml version="1.0" encoding="UTF-8"?><Universals><Universal><EntryNo>1</EntryNo><IntegerValue>10</IntegerValue><TextValue>First</TextValue></Universal></Universals>');
+        OpenTempBlobInStream(BlobRec, InStr);
+
+        ClearLastError();
+        Ok := TryStaticImportUniversalXmlPortWithRecord(InStr, Universal);
+        ErrorText := GetLastErrorText();
+
+        Assert.IsTrue(Ok, StrSubstNo('XmlPort.Import(Integer, InStream, Record) must report success for a valid XmlPort and XML payload. LastError=%1', ErrorText));
+
+        // No Get() call anywhere above this point -- Universal is read and deleted exactly
+        // as XmlPort.Import(60023, InStr, Universal) left it.
+        Assert.AreEqual(1, Universal."Entry No.", 'Static XmlPort.Import(Integer, InStream, Record) must leave the given record variable positioned on the imported row, without a separate Get()');
+        Assert.AreEqual(10, Universal."Integer Field", 'Static XmlPort.Import(Integer, InStream, Record) must populate the given record variable''s own integer field, without a separate Get()');
+        Assert.AreEqual('First', Universal."Text Field", 'Static XmlPort.Import(Integer, InStream, Record) must populate the given record variable''s own text field, without a separate Get()');
+
+        Universal.Delete();
+        Assert.AreEqual(0, Universal.Count(), 'Deleting the record variable XmlPort.Import(Integer, InStream, Record) returned, with no prior Get(), must remove the imported row');
+    end;
+
     [TryFunction]
     local procedure TryImportUniversalXmlPort(var UniversalXmlPort: XmlPort "ALT Universal XmlPort"; var InStr: InStream)
     begin
