@@ -52,6 +52,21 @@ codeunit 60113 "Test NavApp"
     end;
 
     [Test]
+    procedure NavApp_GetCurrentModuleInfo_ReturnsTrueInBooleanContext()
+    // CLAIM: GetCurrentModuleInfo is Boolean-valued -- calling it in a boolean
+    // context (`if not NavApp.GetCurrentModuleInfo(Info) then`), not just the
+    // discard-the-return-value statement form used by every other test in this
+    // file, returns true and still populates Info for the running app.
+    var
+        Info: ModuleInfo;
+    begin
+        Initialize();
+        if not NavApp.GetCurrentModuleInfo(Info) then
+            Assert.Fail('NavApp.GetCurrentModuleInfo must return true when evaluated in a boolean context.');
+        Assert.AreNotEqual('', Info.Name, 'GetCurrentModuleInfo must still populate Info.Name in the boolean-context form');
+    end;
+
+    [Test]
     procedure NavApp_GetModuleInfo_ValidId_DoesNotThrow()
     var
         Info: ModuleInfo;
