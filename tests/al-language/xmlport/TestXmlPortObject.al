@@ -173,19 +173,30 @@ codeunit 60206 "Test XmlPort Object"
         Assert.AreEqual('Second', Universal."Text Field", 'Static XmlPort.Import(Integer, InStream, Record) must import the second row text value');
     end;
 
-    // CLAIM: after XmlPort.Import(Integer, InStream, Record) returns, the SAME record
-    // variable that was passed in is immediately usable -- its own field values already
-    // reflect the imported row, and it can be Delete()'d directly -- with no intervening
-    // Get() needed to "reload" it. The previous test above
-    // (XmlPort_Import_StaticWithRecord_InsertsIntoGivenRecordVariable) only proves the
-    // import inserted rows into the table; it always re-fetches with an explicit Get()
-    // before reading fields, so it cannot distinguish "the given variable is the actual
-    // buffer used by the import" from "the given variable was ignored after being used to
-    // filter the table view, and a separate, table-scoped buffer instance did the real
-    // work". This test isolates that exact distinction with a single-row payload, no Get()
-    // at all between Import and the field reads / Delete().
+    // CLAIM: XmlPort.Import(Integer, InStream, Record)'s Record argument is used ONLY to
+    // seed SetTableView's row filter -- it is NOT the buffer the import writes into, and
+    // its own field values are left exactly as they were before the call (i.e. at their
+    // Init() defaults for a freshly declared variable), with no automatic "reload" of the
+    // imported row. The row is genuinely inserted into the table (proved by Count() and by
+    // Get() below) -- it just is not reflected into the SAME variable that was passed in.
+    //
+    // The previous test above (XmlPort_Import_StaticWithRecord_InsertsIntoGivenRecordVariable)
+    // always re-fetches with an explicit Get() before reading fields, so on its own it cannot
+    // distinguish "the given variable is the actual import buffer" from "the given variable
+    // was only used to filter, and a separate internal buffer did the real work". This test
+    // isolates that distinction directly: verified against a real BC sandbox (27.5 and 28.3)
+    // that a bare Delete() on the just-passed variable -- no Get() first -- throws BC's
+    // standard "record does not exist" error, because the variable's own primary key is
+    // still at its Init() default (0), not the imported row's key (1).
+    //
+    // Found while investigating StefanMaron/BusinessCentral.AL.Runner#1946, which read this
+    // as a runner bug (a later, unrelated statement in the same procedure appearing to change
+    // an earlier call's outcome). It is not: this test proves the "later statement" was
+    // actually the FIRST thing to touch the row's real state either way -- Get() reads it in,
+    // bare Delete() doesn't, and Import itself behaves identically regardless of which one
+    // follows.
     [Test]
-    procedure XmlPort_Import_StaticWithRecord_GivenVariableUsableWithoutExplicitGet()
+    procedure XmlPort_Import_StaticWithRecord_GivenVariableUnchangedWithoutExplicitGet()
     var
         BlobRec: Record "ALT Blob" temporary;
         Universal: Record "ALT Universal";
@@ -204,14 +215,19 @@ codeunit 60206 "Test XmlPort Object"
 
         Assert.IsTrue(Ok, StrSubstNo('XmlPort.Import(Integer, InStream, Record) must report success for a valid XmlPort and XML payload. LastError=%1', ErrorText));
 
-        // No Get() call anywhere above this point -- Universal is read and deleted exactly
-        // as XmlPort.Import(60023, InStr, Universal) left it.
-        Assert.AreEqual(1, Universal."Entry No.", 'Static XmlPort.Import(Integer, InStream, Record) must leave the given record variable positioned on the imported row, without a separate Get()');
-        Assert.AreEqual(10, Universal."Integer Field", 'Static XmlPort.Import(Integer, InStream, Record) must populate the given record variable''s own integer field, without a separate Get()');
-        Assert.AreEqual('First', Universal."Text Field", 'Static XmlPort.Import(Integer, InStream, Record) must populate the given record variable''s own text field, without a separate Get()');
+        // No Get() call anywhere above this point. The given variable's own fields are
+        // untouched by Import -- still at their Init() defaults -- even though the row it
+        // describes really was inserted (proved via Count() / a SEPARATE Get() below).
+        Assert.AreEqual(0, Universal."Entry No.", 'XmlPort.Import(Integer, InStream, Record) must NOT populate the given record variable''s own key field -- it only seeds SetTableView''s filter');
+        Assert.AreEqual(0, Universal."Integer Field", 'XmlPort.Import(Integer, InStream, Record) must NOT populate the given record variable''s own field values without an explicit Get()');
+        Assert.AreEqual(1, Universal.Count(), 'XmlPort.Import(Integer, InStream, Record) must still genuinely insert the row into the table, even though the given variable itself is not updated');
 
-        Universal.Delete();
-        Assert.AreEqual(0, Universal.Count(), 'Deleting the record variable XmlPort.Import(Integer, InStream, Record) returned, with no prior Get(), must remove the imported row');
+        asserterror Universal.Delete();
+        Assert.ExpectedError('does not exist');
+
+        Universal.Get(1);
+        Assert.AreEqual(10, Universal."Integer Field", 'A separate, explicit Get() must find the row the static Import actually inserted');
+        Assert.AreEqual('First', Universal."Text Field", 'A separate, explicit Get() must return the imported field values');
     end;
 
     [TryFunction]
