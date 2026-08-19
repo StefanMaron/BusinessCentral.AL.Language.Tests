@@ -19,6 +19,7 @@ codeunit 60019 ALTFixtureCleanup
         ALTRelationParentB: Record "ALT Relation Parent B";
         ALTManualTableEventPub: Record "ALT Manual TableEvent Pub";
         ALTMedia: Record "ALT Media";
+        ALTIncludeSenderTablePub: Record "ALT IncludeSender Table Pub";
     begin
         ALTUniversal.DeleteAll(false);
         ALTComposite.DeleteAll(false);
@@ -37,5 +38,6 @@ codeunit 60019 ALTFixtureCleanup
         ALTRelationParentB.DeleteAll(false);
         ALTManualTableEventPub.DeleteAll(false);
         ALTMedia.DeleteAll(false);
+        ALTIncludeSenderTablePub.DeleteAll(false);
     end;
 }
