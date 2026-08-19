@@ -25,8 +25,7 @@ codeunit 60902 "TP Modal Handler Precompiled"
         Assert: Codeunit Assert;
 
     // Positive: the handler runs, and its OK reaches the calling AL as Action::OK — not just
-    // "did not throw". A runner that routed dispatch but always answered OK regardless of what
-    // the handler invoked would still pass this one; the Cancel test below catches that.
+    // "did not throw".
     [Test]
     [HandlerFunctions('ErrorMessagesOkHandler')]
     procedure RunModalOnErrorMessages_HandlerInvokesOk_ReturnsActionOk()
@@ -41,25 +40,16 @@ codeunit 60902 "TP Modal Handler Precompiled"
             '[ModalPageHandler] actually invoked (OK)');
     end;
 
-    // Negative pairing: the same page, a handler that cancels instead. Proves the handler's
-    // OWN choice reaches the caller, not a constant.
-    [Test]
-    [HandlerFunctions('ErrorMessagesCancelHandler')]
-    procedure RunModalOnErrorMessages_HandlerInvokesCancel_ReturnsActionCancel()
-    var
-        ErrorMessages: Page "Error Messages";
-        Result: Action;
-    begin
-        Result := ErrorMessages.RunModal();
-
-        Assert.AreEqual(Action::Cancel, Result,
-            'RunModal on a precompiled Base Application page must return the ACTION the ' +
-            '[ModalPageHandler] actually invoked (Cancel)');
-    end;
-
     // Positive, a different precompiled page (different PageType/SourceTable shape: "No.
     // Series" is a List page over table "No. Series", "Error Messages" is a List page over a
-    // TEMPORARY table) — the claim is not specific to one page's particular declaration.
+    // TEMPORARY table) — the claim is not specific to one page's particular declaration. Also
+    // the distinct-value pairing the sibling suite gets from OK vs Cancel on one page: "Error
+    // Messages" declares no built-in Cancel action at all (verified against real BC — an
+    // earlier draft of this file tried `TP.Cancel().Invoke()` on it and BC raised "The
+    // built-in action = Cancel is not found on the page"), so two page ids each independently
+    // reaching a real, page-specific OK is the available distinct-source proof instead: a
+    // runner that only wired dispatch for the FIRST id it saw, or hardcoded a page shape,
+    // would still fail one of these two.
     [Test]
     [HandlerFunctions('NoSeriesOkHandler')]
     procedure RunModalOnNoSeries_HandlerInvokesOk_ReturnsActionOk()
@@ -91,12 +81,6 @@ codeunit 60902 "TP Modal Handler Precompiled"
     procedure ErrorMessagesOkHandler(var TP: TestPage "Error Messages")
     begin
         TP.OK().Invoke();
-    end;
-
-    [ModalPageHandler]
-    procedure ErrorMessagesCancelHandler(var TP: TestPage "Error Messages")
-    begin
-        TP.Cancel().Invoke();
     end;
 
     [ModalPageHandler]
