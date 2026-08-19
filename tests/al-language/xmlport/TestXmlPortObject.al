@@ -143,6 +143,36 @@ codeunit 60206 "Test XmlPort Object"
         Assert.AreEqual(2, Universal.Count(), 'Static XmlPort.Import must insert both rows from the XML payload');
     end;
 
+    [Test]
+    procedure XmlPort_Import_StaticWithRecord_InsertsIntoGivenRecordVariable()
+    var
+        BlobRec: Record "ALT Blob" temporary;
+        Universal: Record "ALT Universal";
+        InStr: InStream;
+        Ok: Boolean;
+        ErrorText: Text;
+    begin
+        Initialize();
+        StageUniversalImportBlobText(BlobRec);
+        DeleteUniversalRows();
+        OpenTempBlobInStream(BlobRec, InStr);
+
+        ClearLastError();
+        Ok := TryStaticImportUniversalXmlPortWithRecord(InStr, Universal);
+        ErrorText := GetLastErrorText();
+
+        Assert.IsTrue(Ok, StrSubstNo('XmlPort.Import(Integer, InStream, Record) must report success for a valid XmlPort and XML payload. LastError=%1', ErrorText));
+        Assert.AreEqual(2, Universal.Count(), 'Static XmlPort.Import(Integer, InStream, Record) must insert both rows from the XML payload');
+
+        Universal.Get(1);
+        Assert.AreEqual(10, Universal."Integer Field", 'Static XmlPort.Import(Integer, InStream, Record) must populate integer field values');
+        Assert.AreEqual('First', Universal."Text Field", 'Static XmlPort.Import(Integer, InStream, Record) must populate text field values');
+
+        Universal.Get(2);
+        Assert.AreEqual(20, Universal."Integer Field", 'Static XmlPort.Import(Integer, InStream, Record) must import the second row integer value');
+        Assert.AreEqual('Second', Universal."Text Field", 'Static XmlPort.Import(Integer, InStream, Record) must import the second row text value');
+    end;
+
     [TryFunction]
     local procedure TryImportUniversalXmlPort(var UniversalXmlPort: XmlPort "ALT Universal XmlPort"; var InStr: InStream)
     begin
@@ -154,6 +184,12 @@ codeunit 60206 "Test XmlPort Object"
     local procedure TryStaticImportUniversalXmlPort(var InStr: InStream)
     begin
         XmlPort.Import(60023, InStr);
+    end;
+
+    [TryFunction]
+    local procedure TryStaticImportUniversalXmlPortWithRecord(var InStr: InStream; var Universal: Record "ALT Universal")
+    begin
+        XmlPort.Import(60023, InStr, Universal);
     end;
 
     local procedure Initialize()
