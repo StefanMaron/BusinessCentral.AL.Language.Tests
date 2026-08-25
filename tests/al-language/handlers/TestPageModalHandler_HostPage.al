@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-modal-page-handler
 // Scope: in-scope
 // Fixtures used: Test Page Modal Handler Row (60702), Test Page Modal (60703),
-//   Test Page Modal Host (60704), Test Page Modal Vars (60705)
+//   Test Page Modal Host (60704), Test Page Modal Vars (60705), Test Page Modal NoSrc (60730)
 //
 // Hosts the action that opens the modal page. The OnAction records what RunModal returned, so
 // a test can tell "the handler ran" from "the handler's answer got back".
@@ -81,6 +81,31 @@ page 60704 "Test Page Modal Host"
                     Modal: Page "Test Page Modal Vars";
                 begin
                     Modal.RunModal();
+                end;
+            }
+
+            // Issue #2007: a page with NO SourceTable at all, not merely one whose control
+            // is bound to a page variable alongside a Rec-bound repeater (PickWithVars
+            // above). The result is recorded the same way PickIt does, so Cancel is
+            // distinguishable from OK for this shape too.
+            action(PickWithNoSourceTable)
+            {
+                ApplicationArea = All;
+                Caption = 'Pick With No Source Table';
+
+                trigger OnAction()
+                var
+                    Modal: Page "Test Page Modal NoSrc";
+                    Outcome: Record "Test Page Modal Handler Row";
+                    Result: Action;
+                begin
+                    Result := Modal.RunModal();
+
+                    Outcome.Init();
+                    Outcome."No." := 'NOSRC-RESULT';
+                    Outcome.Descr := Format(Result);
+                    if not Outcome.Insert() then
+                        Outcome.Modify();
                 end;
             }
         }

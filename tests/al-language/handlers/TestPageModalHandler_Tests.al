@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-modal-page-handler
 // Scope: in-scope
 // Fixtures used: Test Page Modal Handler Row (60702), Test Page Modal (60703),
-//   Test Page Modal Host (60704), Test Page Modal Vars (60705), Assert (60021)
+//   Test Page Modal Host (60704), Test Page Modal Vars (60705), Test Page Modal NoSrc (60730),
+//   Assert (60021)
 //
 // Pins [ModalPageHandler] dispatch: AL that opens a modal page must be answered by the test
 // codeunit's handler, and the handler's OK/Cancel must reach the calling AL.
@@ -210,6 +211,72 @@ codeunit 60706 "Test Page Modal Handler Tests"
             'the handler read the Rec-bound control on the modal page');
         Assert.AreEqual('Alpha', Echo.Descr,
             'the Rec-bound control must read the current row''s value');
+    end;
+
+    // Positive: a [ModalPageHandler] must be dispatched for a page with NO SourceTable at
+    // all (issue #2007) — the ordinary StandardDialog picker/prompt shape, whose controls
+    // are bound to page globals rather than a record. The field's own OnValidate running is
+    // what proves the handler's SetValue reached the page's AL, not just a stashed value.
+    [Test]
+    [HandlerFunctions('NoSourceTableOkHandler')]
+    procedure ModalPageHandler_DispatchesForAPageWithNoSourceTable()
+    var
+        Echo: Record "Test Page Modal Handler Row";
+        Outcome: Record "Test Page Modal Handler Row";
+        Host: TestPage "Test Page Modal Host";
+    begin
+        Initialize();
+        SeedRows();
+
+        Host.OpenEdit();
+        Host.First();
+        Host.PickWithNoSourceTable.Invoke();
+        Host.Close();
+
+        Assert.IsTrue(Echo.Get('NOSRC-MODE'),
+            'the field''s OnValidate must have run for a page-variable control on a page with no SourceTable');
+        Assert.AreEqual('Blocks', Echo.Descr,
+            'the OnValidate must see the value the handler wrote to the page variable');
+
+        Assert.IsTrue(Outcome.Get('NOSRC-RESULT'), 'the calling AL must have recorded a RunModal result');
+        Assert.AreEqual('OK', Outcome.Descr,
+            'RunModal must have returned OK when the handler invoked OK');
+    end;
+
+    // Negative: a cancelling handler on a no-SourceTable page must NOT read back as OK —
+    // the mirror of the positive above, and the same shape as
+    // ModalPageHandlerCancelReachesTheCallingAl for the Rec-bound page.
+    [Test]
+    [HandlerFunctions('NoSourceTableCancelHandler')]
+    procedure ModalPageHandler_CancelForAPageWithNoSourceTableDoesNotReadBackAsOk()
+    var
+        Outcome: Record "Test Page Modal Handler Row";
+        Host: TestPage "Test Page Modal Host";
+    begin
+        Initialize();
+        SeedRows();
+
+        Host.OpenEdit();
+        Host.First();
+        Host.PickWithNoSourceTable.Invoke();
+        Host.Close();
+
+        Assert.IsTrue(Outcome.Get('NOSRC-RESULT'), 'the calling AL must have recorded a RunModal result');
+        Assert.AreEqual('Cancel', Outcome.Descr,
+            'RunModal must have returned Cancel when the handler cancelled');
+    end;
+
+    [ModalPageHandler]
+    procedure NoSourceTableOkHandler(var Modal: TestPage "Test Page Modal NoSrc")
+    begin
+        Modal.Mode.SetValue('Blocks');
+        Modal.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure NoSourceTableCancelHandler(var Modal: TestPage "Test Page Modal NoSrc")
+    begin
+        Modal.Cancel().Invoke();
     end;
 
     [ModalPageHandler]
