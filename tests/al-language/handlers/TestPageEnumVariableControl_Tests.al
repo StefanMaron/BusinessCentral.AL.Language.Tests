@@ -101,10 +101,35 @@ codeunit 60720 "Test Page Enum Var Tests"
             'OnValidate must not have fired — the rejected SetValue never reached the control''s bound value');
     end;
 
+    // Positive, read-side complement of RunModal_EnumGlobalControl_ProcedureReadsBackTheHandler-
+    // ChosenValue above: TestPage.Value() on an enum-bound page-global control must answer the
+    // member's CAPTION ('Blocks'), not the raw ordinal ('1') it stores underneath. The value is
+    // seeded to a NON-DEFAULT member before RunModal so the assertion cannot be satisfied by
+    // the default member's caption coincidentally matching.
+    [Test]
+    [HandlerFunctions('KindHandlerReadsBackTheCaption')]
+    procedure RunModal_EnumGlobalControl_ValueReturnsTheCaptionNotTheOrdinal()
+    var
+        Modal: Page "Test Page Enum Var Modal";
+    begin
+        Initialize();
+
+        Modal.SeedKind(Enum::"Test Page Enum Var Kind"::Block);
+        Modal.RunModal();
+    end;
+
     [ModalPageHandler]
     procedure KindHandler(var Modal: TestPage "Test Page Enum Var Modal")
     begin
         Modal.KindSelector.SetValue('Blocks');
+        Modal.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure KindHandlerReadsBackTheCaption(var Modal: TestPage "Test Page Enum Var Modal")
+    begin
+        Assert.AreEqual('Blocks', Format(Modal.KindSelector.Value()),
+            'the enum-bound page-global control must read back its CAPTION, not the raw ordinal it stores');
         Modal.OK().Invoke();
     end;
 

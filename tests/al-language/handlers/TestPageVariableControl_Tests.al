@@ -11,6 +11,10 @@
 // control values in one shared dictionary — the obvious cheap fix — would fail both of them:
 // writing the page variable must not disturb the record's own fields, and the variable must
 // not survive into a second, independent page instance.
+//
+// CodeField/DateField extend the same page with the other two primitive TestPage control
+// types besides Text/Option: a page-global control's SetValue/Value dispatch must not assume
+// every non-Option, non-Boolean control is Text-shaped underneath.
 
 codeunit 60716 "Test Page Variable Ctrl Tests"
 {
@@ -209,5 +213,81 @@ codeunit 60716 "Test Page Variable Ctrl Tests"
         Assert.AreEqual('', Second.Mode.Value(),
             'a freshly opened page must start with its own variable at the AL default, not the previous instance''s value');
         Second.Close();
+    end;
+
+    // Positive: a Code-typed page-global control round-trips its value.
+    [Test]
+    procedure CodeControl_RoundTripsItsValue()
+    var
+        PgvList: TestPage "Test Page Variable Control";
+    begin
+        Initialize();
+        SeedRows();
+
+        PgvList.OpenEdit();
+        PgvList.CodeField.SetValue('CONF-001');
+        Assert.AreEqual('CONF-001', PgvList.CodeField.Value(),
+            'the control bound to the page variable SelectedCode must read back what was written to it');
+        PgvList.Close();
+    end;
+
+    // Positive: setting the Code control runs the page's AL, observed from OUTSIDE the page —
+    // the same proof PageVariableControl_FiresItsOnValidateTrigger uses for the Text control.
+    [Test]
+    procedure CodeControl_FiresItsOnValidateTrigger()
+    var
+        Row: Record "Test Page Variable Control Row";
+        PgvList: TestPage "Test Page Variable Control";
+    begin
+        Initialize();
+        SeedRows();
+
+        PgvList.OpenEdit();
+        PgvList.CodeField.SetValue('CONF-002');
+        PgvList.Close();
+
+        Assert.IsTrue(Row.Get('CODE'), 'the Code control''s OnValidate trigger must have run and inserted the CODE row');
+        Assert.AreEqual('CONF-002', Row.Descr,
+            'OnValidate must have seen the value that was just assigned to the Code page variable');
+    end;
+
+    // Positive: a Date-typed page-global control round-trips its value. Read back via
+    // Evaluate() rather than a hardcoded string spelling, so the assertion holds no matter
+    // which of BC's own date text formats Value() answers with, while still failing outright
+    // if SetValue silently dropped the date or produced a different one.
+    [Test]
+    procedure DateControl_RoundTripsItsValue()
+    var
+        PgvList: TestPage "Test Page Variable Control";
+        ReadBack: Date;
+    begin
+        Initialize();
+        SeedRows();
+
+        PgvList.OpenEdit();
+        PgvList.DateField.SetValue(DMY2Date(31, 12, 2026));
+        Evaluate(ReadBack, PgvList.DateField.Value());
+        Assert.AreEqual(DMY2Date(31, 12, 2026), ReadBack,
+            'the control bound to the page variable SelectedDate must read back the exact date that was written to it');
+        PgvList.Close();
+    end;
+
+    // Positive: setting the Date control runs the page's AL, observed from OUTSIDE the page.
+    [Test]
+    procedure DateControl_FiresItsOnValidateTrigger()
+    var
+        Row: Record "Test Page Variable Control Row";
+        PgvList: TestPage "Test Page Variable Control";
+    begin
+        Initialize();
+        SeedRows();
+
+        PgvList.OpenEdit();
+        PgvList.DateField.SetValue(DMY2Date(15, 6, 2025));
+        PgvList.Close();
+
+        Assert.IsTrue(Row.Get('DATE'), 'the Date control''s OnValidate trigger must have run and inserted the DATE row');
+        Assert.AreEqual(Format(DMY2Date(15, 6, 2025)), Row.Descr,
+            'OnValidate must have seen the date that was just assigned to the Date page variable');
     end;
 }

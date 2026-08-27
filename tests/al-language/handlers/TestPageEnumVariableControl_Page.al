@@ -50,6 +50,14 @@ page 60719 "Test Page Enum Var Modal"
         exit(SelectedKind.AsInteger());
     end;
 
+    // Lets a test seed a NON-DEFAULT member before RunModal, so a read-side test proving
+    // TestPage.Value() answers the caption cannot be satisfied by coincidence (the default
+    // member's caption, 'Fields', would otherwise be the only value ever observed).
+    procedure SeedKind(NewKind: Enum "Test Page Enum Var Kind")
+    begin
+        SelectedKind := NewKind;
+    end;
+
     var
         SelectedKind: Enum "Test Page Enum Var Kind";
 }

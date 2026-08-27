@@ -65,6 +65,53 @@ page 60715 "Test Page Variable Control"
                     end;
                 end;
             }
+            // A Code-typed page global. Distinct from Mode (Text) above: Code and Text are
+            // both string-backed AL types, but a TestPage's generated SetValue/Value dispatch
+            // sees them as different NavValue subtypes under the hood, so Code needs its own
+            // coverage rather than being assumed to behave like Text.
+            field(CodeField; SelectedCode)
+            {
+                ApplicationArea = All;
+                Caption = 'Code';
+
+                trigger OnValidate()
+                var
+                    Echo: Record "Test Page Variable Control Row";
+                begin
+                    if not Echo.Get('CODE') then begin
+                        Echo.Init();
+                        Echo."No." := 'CODE';
+                        Echo.Descr := SelectedCode;
+                        Echo.Insert();
+                    end else begin
+                        Echo.Descr := SelectedCode;
+                        Echo.Modify();
+                    end;
+                end;
+            }
+            // A Date-typed page global — the other primitive TestPage control type besides
+            // Text/Code/Option that a page-global (as opposed to Rec-bound) control can bind
+            // to.
+            field(DateField; SelectedDate)
+            {
+                ApplicationArea = All;
+                Caption = 'Date';
+
+                trigger OnValidate()
+                var
+                    Echo: Record "Test Page Variable Control Row";
+                begin
+                    if not Echo.Get('DATE') then begin
+                        Echo.Init();
+                        Echo."No." := 'DATE';
+                        Echo.Descr := Format(SelectedDate);
+                        Echo.Insert();
+                    end else begin
+                        Echo.Descr := Format(SelectedDate);
+                        Echo.Modify();
+                    end;
+                end;
+            }
             repeater(Rows)
             {
                 field("No."; Rec."No.")
@@ -82,4 +129,6 @@ page 60715 "Test Page Variable Control"
     var
         SelectedMode: Text[30];
         SelectedKind: Option Field,Block,Image,Font,Custom,Label;
+        SelectedCode: Code[20];
+        SelectedDate: Date;
 }
