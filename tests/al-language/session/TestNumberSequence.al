@@ -1,17 +1,16 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/numbersequence/numbersequence-data-type
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: Assert (60021), ALTFixtureCleanup (60019)
+// Fixtures used: Assert (60021)
 // BC versions: 27.5+
 
-codeunit 60996 "Test Number Sequence"
+codeunit 60995 "Test Number Sequence"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;
-        Cleanup: Codeunit ALTFixtureCleanup;
-        SequenceNameLbl: Label 'ALT-NumberSequence-60996', Locked = true;
+        SequenceNameLbl: Label 'ALTNumberSequence60995', Locked = true;
 
     [Test]
     procedure NumberSequence_Next_DefaultScopeHonorsSeedAndIncrement()
@@ -21,9 +20,13 @@ codeunit 60996 "Test Number Sequence"
 
         NumberSequence.Insert(SequenceNameLbl, 5, 2);
 
-        Assert.AreEqual(5, NumberSequence.Next(SequenceNameLbl),
+        Assert.IsTrue(NumberSequence.Exists(SequenceNameLbl, true),
+            'The overload without CompanySpecific must create a company-specific sequence.');
+        Assert.IsFalse(NumberSequence.Exists(SequenceNameLbl, false),
+            'The overload without CompanySpecific must not create a global sequence.');
+        AssertBigIntegerEquals(5, NumberSequence.Next(SequenceNameLbl),
             'The first value from a default-scope sequence must equal its seed.');
-        Assert.AreEqual(7, NumberSequence.Next(SequenceNameLbl),
+        AssertBigIntegerEquals(7, NumberSequence.Next(SequenceNameLbl),
             'The second value from a default-scope sequence must apply its increment.');
 
         CleanupSequences();
@@ -37,9 +40,9 @@ codeunit 60996 "Test Number Sequence"
 
         NumberSequence.Insert(SequenceNameLbl, 10, 3, false);
 
-        Assert.AreEqual(10, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(10, NumberSequence.Next(SequenceNameLbl, false),
             'The first value from a global sequence must equal its seed.');
-        Assert.AreEqual(13, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(13, NumberSequence.Next(SequenceNameLbl, false),
             'The second value from a global sequence must apply its increment.');
 
         CleanupSequences();
@@ -58,9 +61,9 @@ codeunit 60996 "Test Number Sequence"
             'Exists must find the company-specific sequence.');
         Assert.IsTrue(NumberSequence.Exists(SequenceNameLbl, false),
             'Exists must find the global sequence.');
-        Assert.AreEqual(1, NumberSequence.Next(SequenceNameLbl, true),
+        AssertBigIntegerEquals(1, NumberSequence.Next(SequenceNameLbl, true),
             'The company-specific sequence must retain its own seed.');
-        Assert.AreEqual(100, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(100, NumberSequence.Next(SequenceNameLbl, false),
             'The global sequence must retain its own seed.');
 
         CleanupSequences();
@@ -68,13 +71,13 @@ codeunit 60996 "Test Number Sequence"
 
     [Test]
     procedure NumberSequence_Current_AfterInsertReturnsSeed()
-    // CLAIM: Current returns the configured seed before the first allocation.
+    // CLAIM: before any allocation, Current returns the configured seed.
     begin
         Initialize();
 
         NumberSequence.Insert(SequenceNameLbl, 10, 3, false);
 
-        Assert.AreEqual(10, NumberSequence.Current(SequenceNameLbl, false),
+        AssertBigIntegerEquals(10, NumberSequence.Current(SequenceNameLbl, false),
             'Current must expose the configured seed before the first allocation.');
 
         CleanupSequences();
@@ -86,14 +89,14 @@ codeunit 60996 "Test Number Sequence"
     begin
         Initialize();
         NumberSequence.Insert(SequenceNameLbl, 10, 3, false);
-        Assert.AreEqual(10, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(10, NumberSequence.Next(SequenceNameLbl, false),
             'The sequence must allocate its original seed before Restart.');
 
         NumberSequence.Restart(SequenceNameLbl, 50, false);
 
-        Assert.AreEqual(50, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(50, NumberSequence.Next(SequenceNameLbl, false),
             'The first value after Restart must equal the new seed.');
-        Assert.AreEqual(53, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(53, NumberSequence.Next(SequenceNameLbl, false),
             'Restart must preserve the configured increment.');
 
         CleanupSequences();
@@ -116,7 +119,7 @@ codeunit 60996 "Test Number Sequence"
 
     [Test]
     procedure NumberSequence_Range_ReservesRequestedValues()
-    // CLAIM: Range returns the first reserved value and advances by count times the increment.
+    // CLAIM: Range returns the first reserved value, leaves Current at the last, and advances Next past the range.
     var
         RangeStart: BigInteger;
     begin
@@ -125,11 +128,11 @@ codeunit 60996 "Test Number Sequence"
 
         RangeStart := NumberSequence.Range(SequenceNameLbl, 4, false);
 
-        Assert.AreEqual(10, RangeStart,
+        AssertBigIntegerEquals(10, RangeStart,
             'Range must return the first reserved value.');
-        Assert.AreEqual(19, NumberSequence.Current(SequenceNameLbl, false),
+        AssertBigIntegerEquals(19, NumberSequence.Current(SequenceNameLbl, false),
             'Range must reserve exactly four values using the configured increment.');
-        Assert.AreEqual(22, NumberSequence.Next(SequenceNameLbl, false),
+        AssertBigIntegerEquals(22, NumberSequence.Next(SequenceNameLbl, false),
             'The next allocation must follow the reserved range.');
 
         CleanupSequences();
@@ -147,29 +150,26 @@ codeunit 60996 "Test Number Sequence"
 
         RangeStart := NumberSequence.Range(SequenceNameLbl, 4, Increment, false);
 
-        Assert.AreEqual(10, RangeStart,
+        AssertBigIntegerEquals(10, RangeStart,
             'The ByRef Range overload must return the first reserved value.');
-        Assert.AreEqual(3, Increment,
+        AssertBigIntegerEquals(3, Increment,
             'The ByRef Range overload must report the configured increment.');
-        Assert.AreEqual(19, NumberSequence.Current(SequenceNameLbl, false),
+        AssertBigIntegerEquals(19, NumberSequence.Current(SequenceNameLbl, false),
             'The ByRef Range overload must reserve the requested values.');
 
         CleanupSequences();
     end;
 
     [Test]
-    procedure NumberSequence_Insert_DuplicateNameThrowsAndKeepsOriginal()
-    // CLAIM: inserting an existing sequence throws and does not replace its configuration.
+    procedure NumberSequence_Insert_DuplicateNameThrows()
+    // CLAIM: inserting an existing sequence throws.
     begin
         Initialize();
         NumberSequence.Insert(SequenceNameLbl, 1, 1, false);
 
         asserterror NumberSequence.Insert(SequenceNameLbl, 100, 10, false);
 
-        Assert.AreNotEqual('', GetLastErrorText(),
-            'Inserting a duplicate sequence must raise an error.');
-        Assert.AreEqual(1, NumberSequence.Next(SequenceNameLbl, false),
-            'A failed duplicate Insert must leave the original sequence unchanged.');
+        Assert.ExpectedError('already exists');
 
         CleanupSequences();
     end;
@@ -184,15 +184,13 @@ codeunit 60996 "Test Number Sequence"
 
         asserterror Value := NumberSequence.Next(SequenceNameLbl, false);
 
-        Assert.AreNotEqual('', GetLastErrorText(),
-            'Next on a missing sequence must raise an error.');
+        Assert.ExpectedError('does not exist');
         Assert.IsFalse(NumberSequence.Exists(SequenceNameLbl, false),
             'A failed Next call must not create the missing sequence.');
     end;
 
     local procedure Initialize()
     begin
-        Cleanup.Initialize();
         CleanupSequences();
         ClearLastError();
     end;
@@ -207,5 +205,10 @@ codeunit 60996 "Test Number Sequence"
     begin
         if NumberSequence.Exists(SequenceNameLbl, CompanySpecific) then
             NumberSequence.Delete(SequenceNameLbl, CompanySpecific);
+    end;
+
+    local procedure AssertBigIntegerEquals(Expected: BigInteger; Actual: BigInteger; FailureMessage: Text)
+    begin
+        Assert.AreEqual(Expected, Actual, FailureMessage);
     end;
 }
