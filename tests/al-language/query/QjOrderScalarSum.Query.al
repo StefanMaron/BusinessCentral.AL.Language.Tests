@@ -10,7 +10,7 @@ query 60761 "QJ Order Scalar Sum"
         dataitem(Order; "QJ Order")
         {
             column(TotalAmount; Amount) { Method = Sum; }
-            column(CountAmount; Amount) { Method = Count; }
+            column(CountAmount) { Method = Count; }
         }
     }
 }

@@ -13,7 +13,10 @@ query 60760 "QJ Order Sum"
         {
             column(CustNo; "Customer No.") { }
             column(TotalAmount; Amount) { Method = Sum; }
-            column(CountAmount; Amount) { Method = Count; }
+            // Method = Count takes NO data source: the AL compiler rejects a Count column
+            // that names a field with AL0353 ("A Column must have a valid data source or
+            // have the 'Method' property set to 'Count'"). It counts rows in the group.
+            column(CountAmount) { Method = Count; }
             column(AverageAmount; Amount) { Method = Average; }
             column(MinAmount; Amount) { Method = Min; }
             column(MaxAmount; Amount) { Method = Max; }
