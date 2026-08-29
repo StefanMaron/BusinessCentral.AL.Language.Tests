@@ -22,7 +22,7 @@
 // global Integer from its constructed default to 1. Test02 reads it and asserts the
 // value survived. If the platform builds a fresh instance per test, Test02 fails with
 // "Expected: 1  Actual: 0", which is the informative outcome either way.
-codeunit 60898 "Test Isolation Global Var Scope"
+codeunit 60898 "Test Isolation Global Var"
 {
     Subtype = Test;
     TestPermissions = Disabled;
