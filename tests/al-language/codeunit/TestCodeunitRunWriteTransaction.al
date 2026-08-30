@@ -57,7 +57,9 @@ codeunit 60254 "Test Codeunit Run Write Tx"
 
         // [THEN] the platform refuses the call outright — this is NOT the guarded form
         //        trapping an inner error and returning false; the error reaches the caller.
-        Assert.ExpectedError('write transactions');
+        //        BC keeps the AL-visible text generic here; the detail naming Codeunit.Run
+        //        goes to the admin/telemetry channel, not to GetLastErrorText.
+        Assert.ExpectedError('the transaction is stopped');
         Assert.IsFalse(Ok, 'A refused Codeunit.Run must not assign a result.');
 
         // [THEN] the codeunit never ran, so the marker row it commits does not exist.
