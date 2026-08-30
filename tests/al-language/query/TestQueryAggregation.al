@@ -171,4 +171,51 @@ codeunit 60762 "QJ Query Aggregation Tests"
 
         Assert.AreEqual(0, RowCount, 'A query WITH a grouping column must return zero rows over an empty table, unlike the scalar-aggregate case');
     end;
+
+    // A runtime SetFilter on an AGGREGATED column is a HAVING-clause filter: it is evaluated
+    // against the per-group aggregated result, not against the raw source row. C1's two raw
+    // orders (60 and 60) never individually satisfy "> 100"; only their sum (120) does. C2's
+    // single raw order (100) does not satisfy it either, and neither does its sum (100).
+    // A WHERE-style (pre-aggregation, per-row) application of the same filter would keep no
+    // customer at all, which is a different and distinguishable answer from the one below.
+    [Test]
+    procedure FilterOnAggregatedColumn_EvaluatesAgainstGroupResult_NotRawRow()
+    var
+        Query: Query "QJ Order Sum";
+        RowCount: Integer;
+    begin
+        Initialize();
+        InsertOrder(1, 'C1', 60);
+        InsertOrder(2, 'C1', 60);
+        InsertOrder(3, 'C2', 100);
+
+        Query.SetFilter(TotalAmount, '>%1', 100);
+        Query.Open();
+        while Query.Read() do begin
+            RowCount += 1;
+            Assert.AreEqual('C1', Query.CustNo, 'Only C1 has a group sum greater than 100');
+            Assert.AreEqual(120, Query.TotalAmount, 'C1 group sum must be 120 (60+60)');
+        end;
+        Query.Close();
+
+        Assert.AreEqual(1, RowCount, 'A filter on an aggregated column must keep exactly one group (C1)');
+    end;
+
+    // Negative sibling: a bound no group's aggregate reaches must return zero rows, proving
+    // the filter is genuinely evaluated and not dropped.
+    [Test]
+    procedure FilterOnAggregatedColumn_ExcludingEveryGroup_ReturnsNoRows()
+    var
+        Query: Query "QJ Order Sum";
+    begin
+        Initialize();
+        InsertOrder(1, 'C1', 60);
+        InsertOrder(2, 'C1', 60);
+        InsertOrder(3, 'C2', 100);
+
+        Query.SetFilter(TotalAmount, '>%1', 1000);
+        Query.Open();
+        Assert.IsFalse(Query.Read(), 'No group sum reaches 1000, so the result must be empty');
+        Query.Close();
+    end;
 }

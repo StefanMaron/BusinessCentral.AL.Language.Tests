@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/query/query-data-type
 //   dev-itpro/developer/devenv-query-object
 // Scope: in-scope
-// Fixtures used: QJ Customer (60861), QJ Order (60862), QJ Cust Orders Inner (60863), QJ Cust Orders Left (60864); shared Assert (60021)
+// Fixtures used: QJ Customer (60861), QJ Order (60862), QJ Cust Orders Inner (60863), QJ Cust Orders Left (60864), QJ Cust Orders Sum (60903); shared Assert (60021)
 //
 // Migrated from AL Runner tests/runner-extras/query-join (src/QueryJoinTests.al).
 // The suite's own "QJ Assert" helper (source codeunit 60390) mapped 1:1 onto the shared
@@ -228,5 +228,46 @@ codeunit 60865 "QJ Query Join Tests"
         Q.Open();
         Assert.IsFalse(Q.Read(), 'InnerJoin with no child rows must return an empty resultset');
         Q.Close();
+    end;
+
+    // A multi-dataitem JOIN query with an aggregated column groups the JOINED rows by every
+    // OTHER (non-aggregated) column — here, CustNo. C1 has two order rows and C2 has one, so
+    // an ungrouped join would return one row per joined pair (three rows). The grouped answer
+    // is two rows, one per customer, each aggregating only that customer's own orders.
+    // C3 has no order row and is dropped by the InnerJoin, as in the non-aggregated sibling.
+    [Test]
+    procedure JoinWithAggregatedColumn_GroupsJoinedRows_NotOneRowPerPair()
+    var
+        Query: Query "QJ Cust Orders Sum";
+        RowCount: Integer;
+        C1Seen, C2Seen : Boolean;
+    begin
+        Initialize();
+
+        Query.Open();
+        while Query.Read() do begin
+            RowCount += 1;
+            case Query.CustNo of
+                'C1':
+                    begin
+                        C1Seen := true;
+                        Assert.AreEqual(300, Query.TotalAmount, 'C1 must sum both its orders (100+200)');
+                        Assert.AreEqual(2, Query.CountOrders, 'C1 must count 2 orders');
+                    end;
+                'C2':
+                    begin
+                        C2Seen := true;
+                        Assert.AreEqual(300, Query.TotalAmount, 'C2 must sum its single order');
+                        Assert.AreEqual(1, Query.CountOrders, 'C2 must count 1 order');
+                    end;
+                else
+                    Error('Unexpected CustNo %1 - grouping over the join produced an extra or wrong group', Query.CustNo);
+            end;
+        end;
+        Query.Close();
+
+        Assert.IsTrue(C1Seen, 'C1 group must be present');
+        Assert.IsTrue(C2Seen, 'C2 group must be present');
+        Assert.AreEqual(2, RowCount, 'The join must group to one row per customer, not one row per joined pair');
     end;
 }
