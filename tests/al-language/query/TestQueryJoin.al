@@ -29,6 +29,10 @@
 // Expected LeftOuterJoin result (OrderBy CustNo): four rows, Carol kept with
 //   default child columns (EntryNo 0, Amount 0).
 //   (C1,Alice,1,100),(C1,Alice,2,200),(C2,Bob,3,300),(C3,Carol,0,0)
+// Expected aggregated InnerJoin result ("QJ Cust Orders Sum", OrderBy CustNo): TWO rows,
+//   because an aggregated column groups the joined rows by CustNo instead of returning one
+//   row per joined pair. Carol is still absent (InnerJoin).
+//   (C1, sum 300, count 2), (C2, sum 300, count 1)
 codeunit 60865 "QJ Query Join Tests"
 {
     Subtype = Test;
