@@ -41,7 +41,7 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 
 ## Test Areas
 
-355 AL files, 211 test codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
+519 AL files, 273 test codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
 
 | Area | Description |
 |------|-------------|
@@ -62,6 +62,7 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 | `types/` | Primitive type behavior — Integer, Decimal, Date, Time, DateTime, Boolean; interface dispatch and codeunit-as-variable |
 | `xml/` | XmlDocument, XmlNode, namespace handling, serialization |
 | `xmlport/` | XmlPort stream import/export, nested data items, trigger-driven variables, import property semantics |
+| `profile/` | Profile objects -- RoleCenter page binding in the same app and across a dependency app boundary |
 | `_fixtures/` | Shared fixture library (see below) |
 
 ---
