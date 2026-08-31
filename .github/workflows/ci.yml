@@ -1,8 +1,10 @@
 name: AL Language Test Suite
 
-# Runs the full AL language coverage suite against a real BC Cloud sandbox
-# on BC 27.5 and BC 28.3. Both matrix legs boot BC on Linux (no Windows
-# runner required) via StefanMaron/MsDyn365Bc.On.Linux.
+# Runs the full AL language coverage suite against a real BC Cloud sandbox on
+# every BC minor from 27.0 to 28.4 — the same floor and ceiling AL Runner's own
+# matrix enforces, so a green verdict here means what a consumer needs it to mean.
+# All matrix legs boot BC on Linux (no Windows runner required) via
+# StefanMaron/MsDyn365Bc.On.Linux.
 #
 # Adding a new BC version:
 #   1. In the prepare job, add an include entry to the else-branch JSON:
@@ -42,7 +44,7 @@ jobs:
             done
             JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','preprocessor_symbols':'$SYMS'}]}))")
           else
-            JSON='{"include":[{"bc_version":"27.5","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.3","preprocessor_symbols":"BC27PLUS,BC28PLUS"}]}'
+            JSON='{"include":[{"bc_version":"27.0","preprocessor_symbols":"BC27PLUS"},{"bc_version":"27.3","preprocessor_symbols":"BC27PLUS"},{"bc_version":"27.5","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.0","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.1","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.2","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.3","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.4","preprocessor_symbols":"BC27PLUS,BC28PLUS"}]}'
           fi
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
 
