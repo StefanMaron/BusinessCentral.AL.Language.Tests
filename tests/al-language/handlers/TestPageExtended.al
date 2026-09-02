@@ -166,6 +166,101 @@ codeunit 60126 "Test Page Extended"
         ListPage.Close();
     end;
 
+    // AssertEquals against an Option/Enum-typed control.
+    //
+    // The expected side of AssertEquals is an AL Option/Enum value, which is an ORDINAL; the
+    // actual side is the page control's value, which is the text the control shows. These
+    // tests pin that BC renders both sides the same way, so passing the option value that the
+    // record actually holds is a match, and that the failure message names the option by the
+    // same text on both sides rather than by its ordinal.
+
+    [Test]
+    procedure Page_TestField_AssertEquals_EnumField_MatchesOptionValue()
+    var
+        ListPage: TestPage "ALT List Page";
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        // Ordinal 2 of enum "ALT Status", so a comparison that leaked the ordinal would read '2'.
+        Rec."Status Field" := Rec."Status Field"::Active;
+        Rec.Insert();
+
+        ListPage.OpenView();
+        ListPage.First();
+        Assert.AreEqual('Active', ListPage."Status Field".Value(),
+            'An Enum control shows its value''s Caption, not the ordinal it stores');
+        ListPage."Status Field".AssertEquals(Rec."Status Field"::Active);
+        ListPage.Close();
+    end;
+
+    [Test]
+    procedure Page_TestField_AssertEquals_EnumField_WrongOptionValueFails()
+    var
+        ListPage: TestPage "ALT List Page";
+        Rec: Record "ALT Universal";
+        ErrorText: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec."Status Field" := Rec."Status Field"::Active;
+        Rec.Insert();
+
+        ListPage.OpenView();
+        ListPage.First();
+        asserterror ListPage."Status Field".AssertEquals(Rec."Status Field"::Draft);
+        ErrorText := GetLastErrorText();
+        ListPage.Close();
+
+        // Both sides of the message are the option's own text. 'Draft' is the expected side,
+        // which is the half that starts life as the ordinal 1.
+        Assert.IsSubstring(ErrorText, 'Draft');
+        Assert.IsSubstring(ErrorText, 'Active');
+    end;
+
+    [Test]
+    procedure Page_TestField_AssertEquals_OptionField_MatchesOptionValue()
+    var
+        ListPage: TestPage "ALT List Page";
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        // "Option Field" is the plain Option primitive: OptionMembers = " ",Draft,Active,Closed
+        // with no OptionCaption declared, so its members are also what the control shows.
+        Rec."Option Field" := Rec."Option Field"::Active;
+        Rec.Insert();
+
+        ListPage.OpenView();
+        ListPage.First();
+        Assert.AreEqual('Active', ListPage."Option Field".Value(),
+            'An Option control shows its member name, not the ordinal it stores');
+        ListPage."Option Field".AssertEquals(Rec."Option Field"::Active);
+        ListPage.Close();
+    end;
+
+    [Test]
+    procedure Page_TestField_AssertEquals_OptionField_WrongOptionValueFails()
+    var
+        ListPage: TestPage "ALT List Page";
+        Rec: Record "ALT Universal";
+        ErrorText: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec."Option Field" := Rec."Option Field"::Active;
+        Rec.Insert();
+
+        ListPage.OpenView();
+        ListPage.First();
+        asserterror ListPage."Option Field".AssertEquals(Rec."Option Field"::Closed);
+        ErrorText := GetLastErrorText();
+        ListPage.Close();
+
+        Assert.IsSubstring(ErrorText, 'Closed');
+        Assert.IsSubstring(ErrorText, 'Active');
+    end;
+
     // ── TestField.AsInteger() ───────────────────────────────────────────────────
 
     [Test]

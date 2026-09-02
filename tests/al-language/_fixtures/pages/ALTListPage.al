@@ -35,6 +35,13 @@ page 60016 "ALT List Page"
                 {
                     ApplicationArea = All;
                 }
+                field("Option Field"; Rec."Option Field")
+                {
+                    // The plain Option primitive, next to the Enum-typed "Status Field" above:
+                    // TestPageExtended's AssertEquals tests need BOTH, because an Option control
+                    // has no per-value Caption of its own while an Enum's values do.
+                    ApplicationArea = All;
+                }
                 field("Name Field"; Rec."Name Field")
                 {
                     // Deliberately hidden: TestPageMetadataVirtualTable / TestPageControlFieldVirtualTable
