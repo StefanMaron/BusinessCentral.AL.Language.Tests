@@ -78,10 +78,12 @@ codeunit 60640 "Test NumberSequence"
     procedure NumberSequence_Current_Missing_Throws()
     // CLAIM: the same call outside a [TryFunction] errors, and the error text names the
     // sequence that was asked for.
+    var
+        CurrentNo: BigInteger;
     begin
         Initialize();
 
-        asserterror NumberSequence.Current(MissingSeqNameTok);
+        asserterror CurrentNo := NumberSequence.Current(MissingSeqNameTok);
 
         Assert.IsSubstring(GetLastErrorText(), MissingSeqNameTok);
     end;
@@ -157,12 +159,14 @@ codeunit 60640 "Test NumberSequence"
     // CLAIM: Restart() sets the sequence back to a new seed.
     var
         CurrentNo: BigInteger;
+        Consumed: BigInteger;
     begin
         Initialize();
 
         NumberSequence.Insert(SeqNameTok, 100, 1, true);
-        NumberSequence.Next(SeqNameTok);
-        NumberSequence.Next(SeqNameTok);
+        Consumed := NumberSequence.Next(SeqNameTok);
+        Consumed := NumberSequence.Next(SeqNameTok);
+        Assert.AreEqual(101, Consumed, 'Two allocations from seed 100 with increment 1 must land on 101');
         NumberSequence.Restart(SeqNameTok, 500);
         CurrentNo := NumberSequence.Current(SeqNameTok);
 
