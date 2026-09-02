@@ -14,6 +14,10 @@
 // much weight as the positive ones: a provider that answers every Find with true would
 // satisfy the positive cases on its own.
 //
+// "Period End" is a closing date, so the expected values below are written as
+// ClosingDate(...). Base Application code depends on that: it calls NormalDate() on the
+// value whenever it wants the calendar day.
+//
 // The dates below are fixed literals, never Today or WorkDate, so the expected weekday,
 // week number and period end are constants and the test does not drift with the clock.
 
@@ -40,7 +44,7 @@ codeunit 60983 "Test Date Virtual Table"
         Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Date-type row for 19 January 2026.');
 
         // [THEN] a Date period is one day long, numbered Monday = 1 .. Sunday = 7, named for the weekday
-        Assert.AreEqual(DMY2Date(19, 1, 2026), DateRec."Period End", 'A Date period ends on the day it starts.');
+        Assert.AreEqual(ClosingDate(DMY2Date(19, 1, 2026)), DateRec."Period End", 'A Date period ends on the day it starts, as a closing date.');
         Assert.AreEqual(1, DateRec."Period No.", 'Monday is day number 1.');
         Assert.AreEqual('Monday', DateRec."Period Name", 'A Date period is named for its weekday.');
         Assert.AreEqual(1, DateRec.Count(), 'Expected exactly one Date-type row for one date.');
@@ -77,7 +81,7 @@ codeunit 60983 "Test Date Virtual Table"
         Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Week-type row starting 19 January 2026.');
 
         // [THEN] the week runs Monday to Sunday and is numbered 4 (ISO week numbering)
-        Assert.AreEqual(DMY2Date(25, 1, 2026), DateRec."Period End", 'A week ends on the Sunday.');
+        Assert.AreEqual(ClosingDate(DMY2Date(25, 1, 2026)), DateRec."Period End", 'A week ends on the Sunday, as a closing date.');
         Assert.AreEqual(4, DateRec."Period No.", '19 January 2026 falls in ISO week 4.');
         Assert.AreEqual('4', DateRec."Period Name", 'A week is named for its number.');
     end;
@@ -111,7 +115,7 @@ codeunit 60983 "Test Date Virtual Table"
         DateRec.SetRange("Period Start", DMY2Date(1, 3, 2026));
 
         Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Month-type row for March 2026.');
-        Assert.AreEqual(DMY2Date(31, 3, 2026), DateRec."Period End", 'March ends on the 31st.');
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 3, 2026)), DateRec."Period End", 'March ends on the 31st, as a closing date.');
         Assert.AreEqual(3, DateRec."Period No.", 'March is month number 3.');
         Assert.AreEqual('March', DateRec."Period Name", 'A month is named for the month.');
     end;
@@ -128,7 +132,7 @@ codeunit 60983 "Test Date Virtual Table"
         DateRec.SetRange("Period Start", DMY2Date(1, 2, 2024));
 
         Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Month-type row for February 2024.');
-        Assert.AreEqual(DMY2Date(29, 2, 2024), DateRec."Period End", 'February 2024 ends on the 29th.');
+        Assert.AreEqual(ClosingDate(DMY2Date(29, 2, 2024)), DateRec."Period End", 'February 2024 ends on the 29th, as a closing date.');
     end;
 
     [Test]
@@ -142,7 +146,7 @@ codeunit 60983 "Test Date Virtual Table"
         DateRec.SetRange("Period Start", DMY2Date(1, 4, 2026));
 
         Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Quarter-type row starting 1 April 2026.');
-        Assert.AreEqual(DMY2Date(30, 6, 2026), DateRec."Period End", 'The second quarter ends on 30 June.');
+        Assert.AreEqual(ClosingDate(DMY2Date(30, 6, 2026)), DateRec."Period End", 'The second quarter ends on 30 June, as a closing date.');
         Assert.AreEqual(2, DateRec."Period No.", 'April starts the second quarter.');
         Assert.AreEqual('2', DateRec."Period Name", 'A quarter is named for its number.');
     end;
@@ -158,9 +162,32 @@ codeunit 60983 "Test Date Virtual Table"
         DateRec.SetRange("Period Start", DMY2Date(1, 1, 2026));
 
         Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Year-type row for 2026.');
-        Assert.AreEqual(DMY2Date(31, 12, 2026), DateRec."Period End", 'A year ends on 31 December.');
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 2026)), DateRec."Period End", 'A year ends on 31 December, as a closing date.');
         Assert.AreEqual(2026, DateRec."Period No.", 'A year is numbered by the year itself.');
         Assert.AreEqual('2026', DateRec."Period Name", 'A year is named for its number.');
+    end;
+
+    [Test]
+    procedure Record_Date_PeriodEnd_IsAClosingDate()
+    var
+        DateRec: Record Date;
+    begin
+        Initialize();
+
+        // "Period End" is a closing date, not the plain last day of the period. Base Application
+        // code relies on this: it wraps the value in NormalDate() whenever it wants the calendar
+        // day (CalendarManagement, PeriodPageManagement, AvailableToPromise all do), and passes
+        // it unwrapped into a date filter when it wants the period's closing entries included.
+        // A provider that returned the plain date would satisfy every NormalDate() caller and
+        // silently change which entries a period filter covers, so this gets its own test.
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Month);
+        DateRec.SetRange("Period Start", DMY2Date(1, 3, 2026));
+        Assert.IsTrue(DateRec.FindFirst(), 'Record Date has no Month-type row for March 2026.');
+
+        Assert.AreNotEqual(DMY2Date(31, 3, 2026), DateRec."Period End", '"Period End" must not be the plain last day of the period.');
+        Assert.AreEqual(DMY2Date(31, 3, 2026), NormalDate(DateRec."Period End"), 'NormalDate("Period End") must give the last day of the period.');
+        Assert.AreEqual(DMY2Date(1, 3, 2026), DateRec."Period Start", '"Period Start", by contrast, is a plain date.');
+        Assert.AreEqual(DMY2Date(1, 3, 2026), NormalDate(DateRec."Period Start"), 'NormalDate("Period Start") must leave the value alone.');
     end;
 
     [Test]
