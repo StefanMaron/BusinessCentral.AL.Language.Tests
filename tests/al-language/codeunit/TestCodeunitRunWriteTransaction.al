@@ -1,10 +1,15 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-run-method
 // Scope: in-scope
-// Fixtures used: ALT Universal (60000), ALTFixtureCleanup (60019), ALT Run Tx Inserter (60253)
+// Fixtures used: ALT Universal (60000), ALTFixtureCleanup (60019), ALT Run Tx Inserter (60253),
+//                ALT Run Tx Dirty Inserter (60255)
 // Note: pins the write-transaction scoping rule around Codeunit.Run. Whether the
 // Boolean return value is consumed is what decides it: the guarded form needs its own
 // isolated transaction, so BC refuses it while the caller still has an uncommitted
 // write pending; the statement form just joins the caller's transaction and is allowed.
+// The last two tests pin the other half of that rule: the isolated transaction the
+// guarded form opens is the RUN codeunit's own, so writes it leaves uncommitted belong
+// to that transaction and end with it — they do not leave the CALLER holding an open
+// write transaction afterwards.
 // BC versions: 24+
 
 codeunit 60254 "Test Codeunit Run Write Tx"
@@ -39,6 +44,15 @@ codeunit 60254 "Test Codeunit Run Write Tx"
     begin
         ALTUniversal.Reset();
         ALTUniversal.SetRange("Entry No.", 9253);
+        exit(ALTUniversal.Count());
+    end;
+
+    local procedure DirtyMarkerRowCount(): Integer
+    var
+        ALTUniversal: Record "ALT Universal";
+    begin
+        ALTUniversal.Reset();
+        ALTUniversal.SetRange("Entry No.", 9255);
         exit(ALTUniversal.Count());
     end;
 
@@ -103,5 +117,59 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Assert.IsTrue(Ok, 'Guarded Codeunit.Run must succeed once Commit() has closed the write transaction.');
         Assert.AreEqual(1, MarkerRowCount(),
             'Guarded Codeunit.Run after Commit() must actually run the codeunit.');
+    end;
+
+    [Test]
+    procedure GuardedRun_LeavingUncommittedWrite_DoesNotBlockTheNextGuardedRun()
+    var
+        FirstOk: Boolean;
+        SecondOk: Boolean;
+        ThirdOk: Boolean;
+    begin
+        Initialize();
+
+        // [GIVEN] no pending write in the caller, so the first guarded call is allowed
+        // [WHEN] a guarded Codeunit.Run runs a codeunit that writes and does NOT commit
+        FirstOk := Codeunit.Run(Codeunit::"ALT Run Tx Dirty Inserter");
+        Assert.IsTrue(FirstOk, 'The first guarded Codeunit.Run must succeed.');
+        Assert.AreEqual(1, DirtyMarkerRowCount(),
+            'The run codeunit must have written its row.');
+
+        // [THEN] a SECOND guarded Codeunit.Run is still allowed: the uncommitted write
+        //        belongs to the transaction the first guarded call opened and ended, not
+        //        to the caller, so the caller holds no open write transaction here.
+        SecondOk := Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
+        Assert.IsTrue(SecondOk,
+            'A guarded Codeunit.Run must still be allowed after an earlier guarded run left an uncommitted write.');
+        Assert.AreEqual(1, MarkerRowCount(),
+            'The second guarded Codeunit.Run must actually have run the codeunit.');
+
+        // [THEN] the guard itself is intact: a write made by the CALLER, uncommitted,
+        //        still refuses the next guarded call.
+        InsertPendingRow();
+        asserterror ThirdOk := Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
+        Assert.ExpectedError('the transaction is stopped');
+        Assert.IsFalse(ThirdOk, 'A refused Codeunit.Run must not assign a result.');
+    end;
+
+    [Test]
+    procedure GuardedRun_LeavingUncommittedWrite_CommitsItWithTheRunsOwnTransaction()
+    var
+        Ok: Boolean;
+    begin
+        Initialize();
+
+        // [GIVEN] a guarded Codeunit.Run whose codeunit writes a row and does not commit it
+        Ok := Codeunit.Run(Codeunit::"ALT Run Tx Dirty Inserter");
+        Assert.IsTrue(Ok, 'The guarded Codeunit.Run must succeed.');
+
+        // [WHEN] a later, unrelated error in the CALLER rolls the caller's work back
+        asserterror Error('rollback trigger');
+        Assert.ExpectedError('rollback trigger');
+
+        // [THEN] the row survives: the guarded run's transaction was committed when the
+        //        run returned successfully, so the caller's rollback cannot reach it.
+        Assert.AreEqual(1, DirtyMarkerRowCount(),
+            'A successful guarded Codeunit.Run commits its own transaction, so its row must survive a later rollback in the caller.');
     end;
 }
