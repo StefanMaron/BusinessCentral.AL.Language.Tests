@@ -18,8 +18,15 @@ report 60543 "Test Rpt RunReqPage Report"
         dataitem(Rows; "Test Rpt RunReqPage Row")
         {
             trigger OnAfterGetRecord()
+            var
+                LogRec: Record "Test Rpt RunReqPage Log";
             begin
                 RowCount += 1;
+                // A table write, unlike the RowCount global, is observable no matter which
+                // report instance executed the body — and after Report.Run() the caller's
+                // report variable does NOT carry the globals back (measured: RowsProcessed()
+                // reads 0 there). TestReportRunWithRequestPage.al counts these.
+                LogRec.Log('rp-row');
             end;
         }
     }
