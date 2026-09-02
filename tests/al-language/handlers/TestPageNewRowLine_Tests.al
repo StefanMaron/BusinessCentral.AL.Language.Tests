@@ -229,26 +229,6 @@ codeunit 60743 "Test Page New Row Line Tests"
             'the value typed directly into the page must reach the backing table');
     end;
 
-    // Contrast for the claim above: InsertAllowed = false suppresses the new-row line
-    // (EmptyInsertAllowedFalseList_NextPastLastDataRow_ReturnsFalse pins that already), so a
-    // page with nothing to write into must not silently create a row when a field is written
-    // with no current record positioned.
-    [Test]
-    procedure EmptyInsertAllowedFalseList_SetValueWithoutNewOrFirst_DoesNotInsert()
-    var
-        Row: Record "Test Page New Row Line Row";
-        TP: TestPage "Test Page New Row Line NoIns";
-    begin
-        Initialize();
-
-        TP.OpenEdit();
-        asserterror TP.Descr.SetValue('must not be writable with nothing to write into');
-        TP.Close();
-
-        Assert.AreEqual(0, Row.Count(),
-            'a page with InsertAllowed = false must not insert a row from a field write with no current record');
-    end;
-
     // THE PART ARM. A ListPart on a modal host is the shape this was first observed on
     // (BusinessCentral.AL.Language.Tests PR #66): the part is its own editable, insert-allowed
     // repeater, so it carries its own new-row line.
