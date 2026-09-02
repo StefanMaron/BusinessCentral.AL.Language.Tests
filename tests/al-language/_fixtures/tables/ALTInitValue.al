@@ -30,6 +30,20 @@ table 60024 "ALT Init Value"
         {
             DataClassification = SystemMetadata;
         }
+        field(7; "Start Time"; Time)
+        {
+            DataClassification = SystemMetadata;
+            InitValue = 120000T;
+        }
+        field(8; "Midnight Time"; Time)
+        {
+            DataClassification = SystemMetadata;
+            InitValue = 000000T;
+        }
+        field(9; "Plain Time"; Time)
+        {
+            DataClassification = SystemMetadata;
+        }
     }
 
     keys

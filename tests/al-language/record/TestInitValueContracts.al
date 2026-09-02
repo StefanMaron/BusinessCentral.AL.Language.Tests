@@ -219,4 +219,81 @@ codeunit 60195 "Test InitValue Contracts"
         // Assert
         Assert.AreEqual(1, Rec."Status", 'InitValue must apply correctly even after DeleteAll');
     end;
+
+    // ── Time fields ─────────────────────────────────────────────────────────
+    //
+    // CLAIM: a Time field's InitValue is applied by Init() like any other type.
+    // Base Application table 1513 "Notification Schedule" field 4 declares
+    // `InitValue = 120000T`, and every approval notification path reads it, so this
+    // is ordinary BC behaviour rather than an edge case. The three fields below
+    // separate a declared non-zero time from a declared midnight and from a Time
+    // field that declares no InitValue at all -- the last two both read 0T, which is
+    // what makes "declared zero" and "absent" indistinguishable in the VALUE and so
+    // worth pinning together.
+
+    [Test]
+    procedure InitValue_Time_InitSetsToInitValue()
+    var
+        Rec: Record "ALT Init Value";
+    begin
+        // Arrange
+        Initialize();
+
+        // Act
+        Rec.Init();
+
+        // Assert
+        Assert.AreEqual(120000T, Rec."Start Time", 'After Init(), Start Time must equal InitValue = 120000T');
+    end;
+
+    [Test]
+    procedure InitValue_Time_MidnightInitValue_InitSetsToMidnight()
+    var
+        Rec: Record "ALT Init Value";
+    begin
+        // Arrange
+        Initialize();
+
+        // Act
+        Rec.Init();
+
+        // Assert
+        Assert.AreEqual(000000T, Rec."Midnight Time", 'After Init(), Midnight Time must equal InitValue = 000000T');
+    end;
+
+    [Test]
+    procedure InitValue_Time_NoInitValue_StaysBlank()
+    var
+        Rec: Record "ALT Init Value";
+    begin
+        // Arrange
+        Initialize();
+
+        // Act
+        Rec.Init();
+
+        // Assert
+        Assert.AreEqual(0T, Rec."Plain Time", 'After Init(), a Time field with no InitValue must stay 0T');
+        Assert.AreNotEqual(Rec."Start Time", Rec."Plain Time",
+            'the InitValue Time field must differ from the no-InitValue one after Init()');
+    end;
+
+    [Test]
+    procedure InitValue_Time_SurvivesInsertAndReadBack()
+    var
+        Rec: Record "ALT Init Value";
+    begin
+        // Arrange
+        Initialize();
+
+        // Act
+        Rec.Init();
+        Rec."Entry No." := 7;
+        Rec.Insert(false);
+        Clear(Rec);
+        Rec.Get(7);
+
+        // Assert
+        Assert.AreEqual(120000T, Rec."Start Time", 'the InitValue-seeded Time must round-trip through the database');
+    end;
 }
