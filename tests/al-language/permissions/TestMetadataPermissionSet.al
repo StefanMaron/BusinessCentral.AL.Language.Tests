@@ -14,8 +14,8 @@
 //     different strings, not one repeated.
 //   - "App ID" is really part of the primary key, so SUPER is not reachable under
 //     some other app's id.
-//   - "Assignable" carries both values, and a permission set that declares no Caption
-//     has a BLANK Name rather than a Name defaulted from its Role ID.
+//   - "Assignable" carries both values, and every listed permission set carries a
+//     non-blank Name.
 codeunit 60290 "Test Metadata Perm. Set"
 {
     Subtype = Test;
@@ -141,17 +141,32 @@ codeunit 60290 "Test Metadata Perm. Set"
     end;
 
     [Test]
-    procedure MetadataPermissionSet_NoDeclaredCaption_LeavesNameBlank()
-    // CLAIM: Name is the declared Caption and nothing else. A permission set that declares
-    // no Caption is listed with a BLANK Name -- BC does not substitute the Role ID, so a
-    // row with an empty Name must be findable.
+    procedure MetadataPermissionSet_EveryListedRoleCarriesAName()
+    // CLAIM: every permission set the table lists carries a non-blank Name.
+    //
+    // An earlier version of this test asserted the opposite -- that a permission set
+    // declaring no Caption is listed with a BLANK Name, so a row with an empty Name
+    // must be findable. Every BC version from 27.0 to 28.4 refused that: FindFirst
+    // under SetRange(Name, '') returns false, so no listed permission set has an
+    // empty Name. The assertion below is the measured statement.
+    //
+    // What this test deliberately does NOT claim: WHY no Name is blank. Either BC
+    // substitutes something (the Role ID) when a permission set declares no Caption,
+    // or every permission set in a stock installation happens to declare one. No
+    // service tier has been asked to distinguish those, so neither is asserted here.
     var
         MetadataPermissionSet: Record "Metadata Permission Set";
     begin
         Initialize();
         MetadataPermissionSet.SetRange(Name, '');
-        Assert.IsTrue(MetadataPermissionSet.FindFirst(), 'a permission set declaring no Caption is listed with a blank Name');
-        Assert.AreNotEqual('', MetadataPermissionSet."Role ID", 'that row still carries its Role ID');
+        Assert.IsFalse(
+            MetadataPermissionSet.FindFirst(),
+            'no permission set is listed with a blank Name');
+
+        MetadataPermissionSet.Reset();
+        Assert.IsTrue(MetadataPermissionSet.FindFirst(), 'the table lists at least one permission set');
+        Assert.AreNotEqual('', MetadataPermissionSet.Name, 'the first listed permission set carries a Name');
+        Assert.AreNotEqual('', MetadataPermissionSet."Role ID", 'and it carries its Role ID');
     end;
 
     local procedure Initialize()
