@@ -221,6 +221,40 @@ codeunit 60943 "Test AssertError Rollback"
         Error('unrelated error, raised after both inserts already landed');
     end;
 
+    [Test]
+    procedure Record_DeleteLandsThenEmptyDeleteAll_UnrelatedError_LandedDeleteRolledBack()
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+
+        Rec."Entry No." := 1;
+        Rec.Insert(false);
+        Commit();
+
+        asserterror DeleteThenEmptyDeleteAllThenUnrelatedError();
+        Assert.ExpectedError('unrelated error, raised after the delete landed and the empty DeleteAll matched nothing');
+
+        // The Delete landed BEFORE the empty DeleteAll (which itself changed nothing) and the
+        // unrelated Error() that followed both — the general rollback must still undo the
+        // landed Delete, not skip this table just because the LAST write on it (the empty
+        // DeleteAll) had no physical effect to compare against.
+        Assert.IsTrue(Rec.Get(1),
+            'a landed Delete earlier in the same asserterror''d statement must roll back even though a LATER, no-op write to the same table preceded the unrelated error');
+    end;
+
+    local procedure DeleteThenEmptyDeleteAllThenUnrelatedError()
+    var
+        Rec: Record "ALT Universal";
+        Other: Record "ALT Universal";
+    begin
+        Rec.Get(1);
+        Rec.Delete(false);
+        Other.SetRange("Entry No.", 999);
+        Other.DeleteAll(false);
+        Error('unrelated error, raised after the delete landed and the empty DeleteAll matched nothing');
+    end;
+
     local procedure Initialize()
     var
         Rec: Record "ALT Universal";
