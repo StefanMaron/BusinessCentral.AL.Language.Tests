@@ -201,6 +201,34 @@ codeunit 60743 "Test Page New Row Line Tests"
         TP.Close();
     end;
 
+    // First() answers false on an empty editable list (the arm above), but the CLIENT still
+    // shows the user exactly one row on such a page: the blank new-row line. Real Microsoft
+    // AL never calls First() before typing into a page it just opened empty — it types
+    // straight into a field (e.g. Base App's ApprovalCommentsHandler on codeunit 1535's
+    // "Approval Comments" page). This is the shape that observation depends on: no explicit
+    // New(), no explicit First()/Next(), just a field write on a page that opened with zero
+    // rows matching its view. If the client's implicit cursor position at open time is not
+    // the new-row line, the write lands on nothing and there is no row to persist.
+    [Test]
+    procedure EmptyEditableList_SetValueWithoutNewOrFirst_InsertsARow()
+    var
+        Row: Record "Test Page New Row Line Row";
+        TP: TestPage "Test Page New Row Line List";
+    begin
+        Initialize();
+
+        TP.OpenEdit();
+        TP.RowNo.SetValue('DIRECT');
+        TP.Descr.SetValue('typed without New or First');
+        TP.Close();
+
+        Assert.AreEqual(1, Row.Count(),
+            'typing into a field of an empty editable, insert-allowed list — without calling New() or First() first — must still insert a row');
+        Row.Get('DIRECT');
+        Assert.AreEqual('typed without New or First', Row.Descr,
+            'the value typed directly into the page must reach the backing table');
+    end;
+
     // THE PART ARM. A ListPart on a modal host is the shape this was first observed on
     // (BusinessCentral.AL.Language.Tests PR #66): the part is its own editable, insert-allowed
     // repeater, so it carries its own new-row line.

@@ -99,6 +99,43 @@ codeunit 60205 "Test Query Object"
     end;
 
     [Test]
+    procedure Query_SetFilter_WithWildcard_FiltersToMatchingRow()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+    begin
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(TextValue, 'S*');
+        UniversalQuery.Open();
+
+        Assert.IsTrue(UniversalQuery.Read(), 'SetFilter with a wildcard pattern must return the matching row');
+        Assert.AreEqual(2, UniversalQuery.EntryNo, 'Wildcard SetFilter must keep only the row whose text value starts with S');
+        Assert.AreEqual('Second', UniversalQuery.TextValue, 'Wildcard SetFilter must preserve the matching text value');
+        Assert.IsFalse(UniversalQuery.Read(), 'Wildcard SetFilter must exclude rows that do not match the pattern');
+        UniversalQuery.Close();
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithWildcard_NoMatch_ReturnsNoRows()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(TextValue, 'Z*');
+        UniversalQuery.Open();
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(0, RowCount, 'Wildcard SetFilter with no matching rows must return zero rows, not fail');
+    end;
+
+    [Test]
     procedure Query_GetFilter_AfterSetRange_ReturnsFilterText()
     var
         FilterText: Text;
