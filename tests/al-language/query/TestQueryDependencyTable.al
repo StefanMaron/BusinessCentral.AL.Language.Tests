@@ -7,7 +7,7 @@
 // A source-defined Query whose only dataitem's table comes from a DEPENDENCY application
 // (here, Base Application's Item) must support SetRange, Open and Read exactly like a Query
 // over an application-local table.
-codeunit 60987 "Test Query Dependency Table"
+codeunit 60990 "Test Query Dependency Table"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -20,7 +20,6 @@ codeunit 60987 "Test Query Dependency Table"
     var
         Item: Record Item;
         ItemRows: Query "IQ Item Rows";
-        RowCount: Integer;
     begin
         // [GIVEN] An Item exists with a known "No.".
         Item."No." := 'ALT-QDT-001';
@@ -33,11 +32,8 @@ codeunit 60987 "Test Query Dependency Table"
         // [THEN] It returns exactly the inserted row.
         Assert.IsTrue(ItemRows.Read(), 'Query over a dependency table must return the matching row');
         Assert.AreEqual(Item."No.", ItemRows.No, 'Query column must read the item''s No.');
-        RowCount := 1;
         Assert.IsFalse(ItemRows.Read(), 'Query must only return the one matching row');
         ItemRows.Close();
-
-        Assert.AreEqual(1, RowCount, 'Exactly one row must be returned');
     end;
 
     [Test]
