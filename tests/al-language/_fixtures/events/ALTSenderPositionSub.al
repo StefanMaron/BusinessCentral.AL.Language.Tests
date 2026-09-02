@@ -28,4 +28,24 @@ codeunit 60971 "ALT Sender Position Sub"
         Value := Sender.GetSeed() + Value;
         Sender.SetMarker(Tag);
     end;
+
+    // Sender FIRST, trailing "Tag" OMITTED entirely — AL allows a subscriber to declare only
+    // a prefix of the publisher's parameters. Proves the sender still binds when it is the
+    // subscriber's LAST declared parameter because everything after it was dropped, not
+    // because of its declared position among the publisher's own parameters.
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"ALT Sender Position Pub", 'OnAfterComputeSenderFirstOmit', '', false, false)]
+    local procedure HandleSenderFirstOmit(var Sender: Codeunit "ALT Sender Position Pub"; var Value: Integer)
+    begin
+        Value := Sender.GetSeed() + Value;
+    end;
+
+    // Sender LAST, trailing "Tag" OMITTED entirely. The subscriber's own parameter list is
+    // (Value, Sender) — two parameters total, one short of the publisher's own arity (2) plus
+    // the sender (3) — proving arity-based reasoning must not require an exact parameter-count
+    // match against the publisher's declared arity.
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"ALT Sender Position Pub", 'OnAfterComputeSenderLastOmit', '', false, false)]
+    local procedure HandleSenderLastOmit(var Value: Integer; var Sender: Codeunit "ALT Sender Position Pub")
+    begin
+        Value := Sender.GetSeed() + Value;
+    end;
 }
