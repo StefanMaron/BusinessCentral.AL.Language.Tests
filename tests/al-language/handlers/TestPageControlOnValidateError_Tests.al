@@ -45,6 +45,7 @@ codeunit 60820 "TP Control OnValidate Error"
         // some other app already uses" is a fact about this repository, not about demo data.
         ExistingProfileIdTok: Label 'ALT AllProfile Row', Locked = true;
         UnusedProfileIdTok: Label 'ALTCTLOV UNUSED', Locked = true;
+        UnusedProfileCaptionTok: Label 'ALTCTLOV UNUSED DISPLAY NAME', Locked = true;
 
     // Removes anything an earlier run of the accepting arm left behind, so the arms are
     // order-independent and a re-run starts from the same state.
@@ -121,6 +122,14 @@ codeunit 60820 "TP Control OnValidate Error"
         Assert.AreEqual(
             UnusedProfileIdTok, ProfileCard.ProfileIdField.Value(),
             'a Profile ID no other app uses must be accepted by the control and stored on the page');
+
+        // Page 9170 is DelayedInsert, so Close() is what inserts the row, and "All Profile"
+        // requires a Caption (CaptionField declares NotBlank and ShowMandatory). Leaving it
+        // blank made Close() raise "Caption must have a value in All Profile", which is real BC
+        // refusing an incomplete record and has nothing to do with the control under test --
+        // the claim above is already proven by the assertion before this line. Fill the
+        // mandatory sibling field so the page can close on a record BC considers valid.
+        ProfileCard.CaptionField.SetValue(UnusedProfileCaptionTok);
         ProfileCard.Close();
 
         Initialize();
