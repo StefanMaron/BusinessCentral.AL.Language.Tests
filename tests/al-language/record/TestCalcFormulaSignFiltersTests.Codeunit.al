@@ -46,6 +46,12 @@ codeunit 60912 "CFS Tests"
         // A second document, never asserted on: proves the parent link still filters.
         AddLine(4, 'D2', 999, true, CfsLine.Status::Open);
 
+        // A third document with NO lines at all, so the exist tests below can assert both
+        // directions of the same FlowField rather than only the populated one.
+        CfsHeader.Init();
+        CfsHeader."No." := 'D3';
+        CfsHeader.Insert(false);
+
         exit('D1');
     end;
 
@@ -145,5 +151,86 @@ codeunit 60912 "CFS Tests"
         // [THEN] Sign and const condition compose: only the Released line, negated.
         Assert.AreEqual(-20, CfsHeader."Negated Released Total",
             '-sum(... Status = const(Released)) must negate the filtered subtotal');
+    end;
+
+    [Test]
+    procedure ExistFormulaAnswersWhetherAnyRowMatches()
+    var
+        CfsHeader: Record "CFS Header";
+    begin
+        // [GIVEN] D1 has three lines; D3 has none.
+        CfsHeader.Get(Seed());
+
+        // [WHEN]
+        CfsHeader.CalcFields("Has Lines", "Has Line In Entry Range");
+
+        // [THEN] The unsigned exist is true for a document that has matching lines.
+        Assert.IsTrue(CfsHeader."Has Lines",
+            'exist(...) must be true for a document that has lines');
+        Assert.IsTrue(CfsHeader."Has Line In Entry Range",
+            'exist(... "Entry No." = filter(2..3)) must be true — entries 2 and 3 are on D1');
+
+        // [THEN] And false for one that has none.
+        CfsHeader.Get('D3');
+        CfsHeader.CalcFields("Has Lines", "Has Line In Entry Range");
+        Assert.IsFalse(CfsHeader."Has Lines",
+            'exist(...) must be false for a document with no lines');
+        Assert.IsFalse(CfsHeader."Has Line In Entry Range",
+            'exist(...) with a range condition must be false for a document with no lines');
+    end;
+
+    [Test]
+    procedure SignedExistFormulaNegatesTheBoolean()
+    var
+        CfsHeader: Record "CFS Header";
+    begin
+        // [GIVEN] D1 has three lines; D3 has none.
+        CfsHeader.Get(Seed());
+
+        // [WHEN] The signed and unsigned form of the same exist are calculated together.
+        CfsHeader.CalcFields("Has Lines", "Has No Lines",
+                             "Has Line In Entry Range", "Has No Line In Entry Range");
+
+        // [THEN] -exist(...) is the logical NOT of exist(...), never a copy of it. A
+        // dropped sign gives true here, which is the whole point of asserting both.
+        Assert.IsFalse(CfsHeader."Has No Lines",
+            '-exist(...) must be false for a document that HAS lines');
+        Assert.AreNotEqual(CfsHeader."Has Lines", CfsHeader."Has No Lines",
+            '-exist(...) and exist(...) over the same rows must disagree');
+
+        // [THEN] The same holds when the first field in the where clause is an Integer
+        // rather than a Code — a distinction AL does not expose and must not change.
+        Assert.IsFalse(CfsHeader."Has No Line In Entry Range",
+            '-exist(... "Entry No." = filter(2..3)) must be false — entries 2 and 3 exist on D1');
+        Assert.AreNotEqual(CfsHeader."Has Line In Entry Range", CfsHeader."Has No Line In Entry Range",
+            'the signed and unsigned exist must disagree whatever the where-clause field type');
+
+        // [THEN] The other direction: on a document with no lines, the negated form is true.
+        CfsHeader.Get('D3');
+        CfsHeader.CalcFields("Has No Lines", "Has No Line In Entry Range");
+        Assert.IsTrue(CfsHeader."Has No Lines",
+            '-exist(...) must be true for a document with no lines');
+        Assert.IsTrue(CfsHeader."Has No Line In Entry Range",
+            '-exist(...) with a range condition must be true for a document with no lines');
+    end;
+
+    [Test]
+    procedure SignedExistComposesWithAndedConditions()
+    var
+        CfsHeader: Record "CFS Header";
+    begin
+        // [GIVEN] The only Closed line (entry 3) IS Open, so no line is both Closed and
+        // not Open — the same impossible combination the sum test uses.
+        CfsHeader.Get(Seed());
+
+        // [WHEN]
+        CfsHeader.CalcFields("Has Lines", "Has No Closed Not Open Line");
+
+        // [THEN] No row matches, so the negated exist is true — and it takes both the
+        // ANDed conditions and the sign to get there. Dropping either gives false.
+        Assert.IsTrue(CfsHeader."Has No Closed Not Open Line",
+            '-exist(... Status = const(Closed), Open = const(false)) must be true: no line matches');
+        Assert.IsTrue(CfsHeader."Has Lines",
+            'the same document still has lines, so the conditions are what excluded them');
     end;
 }
