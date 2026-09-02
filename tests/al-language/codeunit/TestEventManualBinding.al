@@ -9,6 +9,10 @@
 // dispatched to the BOUND INSTANCE (its instance state is visible to the binder), and
 // UnbindSubscription stops delivery. All assertions verified against a real BC 28.3
 // service tier before submission.
+//
+// Contracts 8-9 pin the STATEMENT form of BindSubscription (result discarded, not
+// consumed as a Boolean) — see AL Runner issue #2393 — and the declaration-order
+// leak-across-tests shape that issue was filed against.
 
 codeunit 60240 "Test Event Manual Binding"
 {
@@ -18,6 +22,7 @@ codeunit 60240 "Test Event Manual Binding"
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;
+        LeakedManualSub: Codeunit "ALT Manual Event Sub";
 
     // ── Contract 1: Unbound Manual Subscriber Never Fires ──────────────────────────────
 
@@ -129,6 +134,68 @@ codeunit 60240 "Test Event Manual Binding"
         Assert.AreEqual(1, ManualSub2.GetFireCount(), 'Second bound instance must fire exactly once');
         UnbindSubscription(ManualSub1);
         UnbindSubscription(ManualSub2);
+    end;
+
+    // ── Contract 8: Statement-Form Rebind Of An Already-Bound Instance Raises ──────────
+    //
+    // Contract 4 covers the EXPRESSION form (assigned to / consumed as a Boolean), where
+    // BindSubscription returns false on an already-bound instance instead of raising.
+    // AL compiles BindSubscription differently when its result is discarded as a plain
+    // STATEMENT: the failure is raised, not swallowed into a false return. This is the
+    // form Microsoft's own Tests-SINGLESERVER corpus uses (Codeunit 134614
+    // "Test App Permissions": `BindSubscription(AzureADGraphTestLibrary);`), and AL
+    // Runner issue #2393 was opened against exactly this call shape.
+
+    [Test]
+    procedure BindSubscription_StatementForm_AlreadyBoundInstance_Raises()
+    var
+        ManualSub: Codeunit "ALT Manual Event Sub";
+    begin
+        Initialize();
+        BindSubscription(ManualSub);
+        asserterror BindSubscription(ManualSub);
+        Assert.ExpectedError('already been bound');
+        UnbindSubscription(ManualSub);
+    end;
+
+    // ── Contract 9: A Binding Left Open By One [Test] Survives Into The Next [Test] On
+    //    The Same Codeunit Instance ─────────────────────────────────────────────────────
+    //
+    // TestIsolation = Codeunit (the default) shares one codeunit instance across every
+    // [Test] in the codeunit - see TestIsolationGlobalVariableScope (60898). A GLOBAL
+    // codeunit-typed variable bound via BindSubscription, where UnbindSubscription is
+    // never reached before the test ends, leaves that binding in place for the next
+    // [Test] in declaration order on the SAME instance - BC does not release it as part
+    // of moving on to the next test.
+    //
+    // This is the exact shape behind AL Runner issue #2393: Microsoft's
+    // TestAppPermissions codeunit binds a global "AzureADGraphTestLibrary" once per test
+    // and unbinds it at the end of each test. When an EARLIER, unrelated assertion in one
+    // test fails, that test's own UnbindSubscription call is skipped entirely (the failure
+    // aborts the rest of the test body), and every subsequent test's BindSubscription on
+    // the same still-bound global then raises "already bound" - a real, faithful BC
+    // outcome cascading from the earlier test's own defect, not a binding-mechanism defect
+    // in its own right. Test09a below reproduces only the "Unbind never reached" half
+    // (without also asserting on an unrelated failure, to keep this suite's own pass/fail
+    // signal clean); Test09b proves what the next test then observes. These two tests are
+    // declaration-ordered on purpose, the same convention TestIsolationGlobalVariableScope
+    // uses, and must not be reordered.
+
+    [Test]
+    procedure ManualSubscriber_Test09a_BindsAndDeliberatelyNeverUnbinds()
+    begin
+        Initialize();
+        Assert.IsTrue(BindSubscription(LeakedManualSub), 'The first bind on a fresh instance must succeed');
+        // No UnbindSubscription call here - proving the binding survives into the next
+        // [Test] procedure below when Unbind is skipped, for any reason.
+    end;
+
+    [Test]
+    procedure ManualSubscriber_Test09b_RebindOnSameInstanceAfterPriorTestNeverUnbound()
+    begin
+        asserterror BindSubscription(LeakedManualSub);
+        Assert.ExpectedError('already been bound');
+        UnbindSubscription(LeakedManualSub);
     end;
 
     local procedure Initialize()
