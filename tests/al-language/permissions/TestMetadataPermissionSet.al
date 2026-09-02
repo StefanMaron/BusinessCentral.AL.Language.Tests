@@ -169,6 +169,24 @@ codeunit 60290 "Test Metadata Perm. Set"
         Assert.AreNotEqual('', MetadataPermissionSet."Role ID", 'and it carries its Role ID');
     end;
 
+    [Test]
+    procedure MetadataPermissionSet_CaptionlessRole_NameProbe()
+    // PROBE (not a claim yet): Base Application's "LOCAL" permission set (object id 1001)
+    // declares no Caption property in its own SymbolReference.json -- confirmed by reading
+    // the compiled Base Application .app directly. MetadataPermissionSet_EveryListedRoleCarriesAName
+    // proves LOCAL's listed Name (if it is listed at all) cannot be blank on any BC version
+    // from 27.0 to 28.4, but does not say what it actually is. This test exists only to read
+    // that value off a real service tier; the first assertion is a guess and CI's failure
+    // message, if it is wrong, states the true value so this test can be corrected to match.
+    var
+        MetadataPermissionSet: Record "Metadata Permission Set";
+    begin
+        Initialize();
+        MetadataPermissionSet.SetRange("Role ID", 'LOCAL');
+        Assert.IsTrue(MetadataPermissionSet.FindFirst(), 'Base Application declares the LOCAL permission set and the table lists it');
+        Assert.AreEqual('LOCAL', MetadataPermissionSet.Name, 'PROBE: what Name does a Caption-less permission set carry?');
+    end;
+
     local procedure Initialize()
     begin
         // Nothing this codeunit touches is writable -- 2000000250 is a read-only
