@@ -41,6 +41,11 @@ jobs:
       - run: python3 .github/scripts/check-object-ids.py .
 
   prepare:
+    # Gated on object-ids so a duplicate/out-of-range id never spends the BC matrix.
+    # An id collision does eventually surface as AL0297 inside each leg, but that is
+    # 8 parallel BC boots and ~8 minutes per leg to learn something a 2-second scan
+    # already knows. Failing here means the matrix is never dispatched at all.
+    needs: object-ids
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
