@@ -198,6 +198,67 @@ codeunit 60240 "Test Event Manual Binding"
         UnbindSubscription(LeakedManualSub);
     end;
 
+    // ── Contract 10: A LOCAL Variable's Binding Does NOT Outlive Its Own Procedure ──
+    //
+    // Contract 9 proved a GLOBAL codeunit-typed variable's binding survives into the next
+    // [Test] on the same codeunit, because the codeunit instance holding that global field
+    // is itself kept alive for every [Test] under TestIsolation = Codeunit. This pins the
+    // other half: a LOCAL variable, declared inside the [Test] procedure itself, has
+    // nothing left referencing it the instant that procedure returns. BC's own
+    // NavCodeunit.Dispose(bool) removes a disposed instance's binding from
+    // Session.EventBindings when it was still bound (IsSubscriptionBound), and a local
+    // variable's underlying object IS disposed at that point, unlike a global one.
+    //
+    // Measured against real BC (this test's first version asserted the opposite — that a
+    // local variable's binding survives exactly like Contract 9's global one — and BC's own
+    // CI failed it on all 8 legs, 27.0 through 28.4: the leaked local-variable subscriber
+    // did NOT fire in Test10b. That is not a violation of "never invert a green upstream
+    // assertion" — the original Test10b had never merged, so there was nothing green to
+    // invert; this is the normal write-test/let-CI-adjudicate/correct-the-expectation loop).
+    //
+    // The distinction that matters is variable LIFETIME, not the BindSubscription
+    // mechanism itself: a codeunit variable that outlives its declaring procedure (global)
+    // keeps its binding: one that doesn't (local) loses it when disposed. A future reader
+    // hitting "already been bound" from a leaked binding needs to know which of these two
+    // shapes they are looking at before assuming the fix is "just unbind" — for a global
+    // variable, TestIsolation = Codeunit's per-codeunit boundary is the only thing that
+    // will ever clear it; for a local one, ordinary procedure-scope disposal already does.
+    //
+    // Filed against AL Runner issue #2466, where a LOCAL-variable BindSubscription left
+    // open by one [Test] procedure in Microsoft's own Tests-SINGLESERVER corpus
+    // (Codeunit 139004 "Test ApplicationArea Setup") was initially read as possibly
+    // faithful within-codeunit persistence like Contract 9's. It is not: real BC releases
+    // that binding, so a runner that keeps it bound diverges from BC and is a genuine gap.
+
+    [Test]
+    procedure ManualSubscriber_Test10a_LocalVariableBindsAndDeliberatelyNeverUnbinds()
+    var
+        LocalManualSub: Codeunit "ALT Manual Event Sub";
+    begin
+        Initialize();
+        Assert.IsTrue(
+            BindSubscription(LocalManualSub),
+            'The first bind of a fresh LOCAL-variable instance must succeed');
+        // No UnbindSubscription call here, and LocalManualSub is a LOCAL variable that
+        // goes out of scope the moment this procedure returns.
+    end;
+
+    [Test]
+    procedure ManualSubscriber_Test10b_PriorTestsLocalVariableBindingDoesNotFireHere()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Handled: Boolean;
+    begin
+        Handled := Publisher.TriggerBeforeAndReturnHandled(10);
+        Assert.IsFalse(
+            Handled,
+            'A manual subscriber bound via a LOCAL variable in the PREVIOUS [Test] ' +
+            'procedure, on this same codeunit, and never explicitly unbound, must NOT ' +
+            'fire here: the local variable went out of scope when that procedure ' +
+            'returned, and BC disposes the underlying instance at that point (unlike a ' +
+            'GLOBAL codeunit variable, whose binding DOES survive - see Contract 9).');
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
