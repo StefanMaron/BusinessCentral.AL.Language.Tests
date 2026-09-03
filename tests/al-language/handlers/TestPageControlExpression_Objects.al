@@ -1,22 +1,60 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-visible-property
 // Scope: in-scope
-// Fixtures used: (none — the table below is the card page's SourceTable)
+// Fixtures used: (none)
 //
-// Backing objects for the control-property-expression suite. Visible, Editable and Enabled on a
-// page control accept an AL client expression, not only a variable name. The AL compiler limits
-// what may appear in one: a procedure call is rejected with
+// Backing objects for the control-property-expression suite.
+//
+// Visible, Editable and Enabled on a page control accept an AL client expression, not only a
+// variable name. The AL compiler limits what may appear in one: a procedure call is rejected with
 //
 //     AL0322: Procedure calls is not valid for client expressions.
 //             Client expressions can only use simple data types and field references.
 //
 // so the grammar is literals, page globals, source-table field references, `not`, `and` / `or`,
-// the comparison operators, and parentheses. Every control below is one shape from that grammar.
-// None of them is a compile-time literal, so none is dead-code-eliminated: each control exists on
-// the runtime page and its property is evaluated live on every read.
+// the comparison operators, and parentheses. Each control below is one shape from that grammar.
+// None is a compile-time literal, so none is dead-code-eliminated: every control exists on the
+// runtime page.
 //
-// ToggleHide and ToggleLock are page-variable-bound controls the tests flip with SetValue to move
-// HideIt and LockIt between false and true. ToggleFlag is bound to the source table's Boolean
-// field, which is what drives the two Rec-field-reference controls.
+// Two design decisions, both forced by measurement rather than taste:
+//
+//   1. Every control binds to its OWN source field. Controls that share one field are the subject
+//      of a separate question, and mixing the two makes a failure ambiguous about which one it is
+//      about.
+//   2. The page globals are seeded in OnOpenPage from a SingleInstance codeunit the test sets
+//      BEFORE opening, not from the record and not by a TestPage.SetValue after opening. An
+//      earlier version of this suite set them after opening and asserted the controls followed;
+//      real BC disagreed on all 8 versions, including for a bare `Visible = HideIt`. Seeding
+//      before the page exists asks what the expression evaluates to without also asking whether a
+//      later change is observable, which is a different question.
+
+codeunit 60260 "TPCE State"
+{
+    SingleInstance = true;
+
+    var
+        HideValue: Boolean;
+        SecondValue: Boolean;
+
+    procedure SetHide(NewValue: Boolean)
+    begin
+        HideValue := NewValue;
+    end;
+
+    procedure GetHide(): Boolean
+    begin
+        exit(HideValue);
+    end;
+
+    procedure SetSecond(NewValue: Boolean)
+    begin
+        SecondValue := NewValue;
+    end;
+
+    procedure GetSecond(): Boolean
+    begin
+        exit(SecondValue);
+    end;
+}
 
 table 60257 "TPCE Row"
 {
@@ -25,8 +63,17 @@ table 60257 "TPCE Row"
     fields
     {
         field(1; PK; Code[10]) { }
-        field(2; Value; Text[30]) { }
-        field(3; Flag; Boolean) { }
+        field(2; Flag; Boolean) { }
+        field(3; Value; Text[30]) { }
+        field(10; F1; Text[30]) { }
+        field(11; F2; Text[30]) { }
+        field(12; F3; Text[30]) { }
+        field(13; F4; Text[30]) { }
+        field(14; F5; Text[30]) { }
+        field(15; F6; Text[30]) { }
+        field(16; F7; Text[30]) { }
+        field(17; F8; Text[30]) { }
+        field(18; F9; Text[30]) { }
     }
 
     keys
@@ -47,134 +94,38 @@ page 60258 "TPCE Card"
     {
         area(Content)
         {
-            // A single page global on its own. The baseline: this shape already works everywhere,
-            // and every test below that reads NotGlobal reads this one too, so a fix that broke
-            // the simple case could not pass the suite.
-            field(PlainGlobal; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Plain Global';
-                Visible = HideIt;
-            }
+            // The baseline: a bare page global. The only shape whose property text is a single
+            // identifier, and the one every other test here is read against.
+            field(PlainGlobal; Rec.F1) { ApplicationArea = All; Visible = HideIt; }
 
-            field(NotGlobal; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Not Global';
-                Visible = not HideIt;
-            }
+            field(NotGlobal; Rec.F2) { ApplicationArea = All; Visible = not HideIt; }
 
-            field(AndGlobals; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'And Globals';
-                Visible = HideIt and LockIt;
-            }
+            field(AndGlobals; Rec.F3) { ApplicationArea = All; Visible = HideIt and SecondFlag; }
 
-            field(OrGlobals; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Or Globals';
-                Visible = HideIt or LockIt;
-            }
+            field(OrGlobals; Rec.F4) { ApplicationArea = All; Visible = HideIt or SecondFlag; }
 
-            field(NotParenthesized; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Not Parenthesized';
-                Visible = not (HideIt or LockIt);
-            }
+            field(NotParenthesized; Rec.F5) { ApplicationArea = All; Visible = not (HideIt or SecondFlag); }
 
-            field(RecFieldRef; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Rec Field Ref';
-                Visible = Rec.Flag;
-            }
+            field(RecFieldRef; Rec.F6) { ApplicationArea = All; Visible = Rec.Flag; }
 
-            field(NotRecFieldRef; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Not Rec Field Ref';
-                Visible = not Rec.Flag;
-            }
+            field(NotRecFieldRef; Rec.F7) { ApplicationArea = All; Visible = not Rec.Flag; }
 
-            field(Comparison; Rec.PK)
-            {
-                ApplicationArea = All;
-                Caption = 'Comparison';
-                Visible = Rec.Value <> '';
-            }
+            // The same grammar governs Editable and Enabled, not only Visible.
+            field(NotEditable; Rec.F8) { ApplicationArea = All; Editable = not HideIt; }
 
-            field(NotEditable; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Not Editable';
-                Editable = not LockIt;
-            }
-
-            field(NotEnabled; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Not Enabled';
-                Enabled = not LockIt;
-            }
-
-            field(ToggleHide; HideIt)
-            {
-                ApplicationArea = All;
-                Caption = 'Toggle Hide';
-
-                trigger OnValidate()
-                begin
-                    CurrPage.Update(false);
-                end;
-            }
-
-            field(ToggleLock; LockIt)
-            {
-                ApplicationArea = All;
-                Caption = 'Toggle Lock';
-
-                trigger OnValidate()
-                begin
-                    CurrPage.Update(false);
-                end;
-            }
-
-            field(ToggleFlag; Rec.Flag)
-            {
-                ApplicationArea = All;
-                Caption = 'Toggle Flag';
-            }
-
-            // Bound to a global that OnOpenPage sets from the record, so its value at open time
-            // is decided by which row the page opened on.
-            field(OpenTimeGlobal; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Open Time Global';
-                Visible = OpenTimeFlag;
-            }
-
-            field(NotOpenTimeGlobal; Rec.Value)
-            {
-                ApplicationArea = All;
-                Caption = 'Not Open Time Global';
-                Visible = not OpenTimeFlag;
-            }
+            field(NotEnabled; Rec.F9) { ApplicationArea = All; Enabled = not HideIt; }
         }
     }
 
     trigger OnOpenPage()
+    var
+        State: Codeunit "TPCE State";
     begin
-        // Set from the record the page opened on, so a test can control this global's value at
-        // open time without needing a later change to be observable.
-        OpenTimeFlag := Rec.Flag;
+        HideIt := State.GetHide();
+        SecondFlag := State.GetSecond();
     end;
 
     var
         HideIt: Boolean;
-        LockIt: Boolean;
-        OpenTimeFlag: Boolean;
+        SecondFlag: Boolean;
 }
