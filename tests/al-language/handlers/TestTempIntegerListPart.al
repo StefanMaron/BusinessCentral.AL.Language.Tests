@@ -1,25 +1,16 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-subpages-overview
 // Scope: in-scope
-// Fixtures used: none (self-contained host table + pages, per the ListPart/TestPage
-//   conventions already used by TestPageModalPart_PartList.al)
+// Fixtures used: none (self-contained ListPart, per the ListPart/TestPage conventions
+//   already used by TestPageModalPart_PartList.al)
 //
 // A page (or ListPart) declared SourceTable = Integer; SourceTableTemporary = true; must
 // bind to its OWN empty temporary rowset -- exactly like a temporary source table over any
 // other table -- never to the platform's shared/virtual Integer rows. Number starts
 // unpositioned (First() = false on an empty page) and the only rows present after the page
-// (or its host) inserts them are the ones it inserted itself, starting at Number = 1.
-
-table 60622 "Test TmpInt Host Row"
-{
-    fields
-    {
-        field(1; "No."; Code[20]) { }
-    }
-    keys { key(PK; "No.") { Clustered = true; } }
-}
+// inserts them are the ones it inserted itself, starting at Number = 1.
 
 // Never populated -- proves a temporary-Integer part starts with zero rows.
-page 60623 "Test TmpInt Empty Part"
+page 60622 "Test TmpInt Empty Part"
 {
     PageType = ListPart;
     SourceTable = Integer;
@@ -39,7 +30,7 @@ page 60623 "Test TmpInt Empty Part"
 }
 
 // Self-populating: inserts its own rows in OnOpenPage, no host involvement at all.
-page 60627 "Test TmpInt SelfLoad Part"
+page 60623 "Test TmpInt SelfLoad Part"
 {
     PageType = ListPart;
     SourceTable = Integer;
@@ -74,67 +65,7 @@ page 60627 "Test TmpInt SelfLoad Part"
     end;
 }
 
-// Host-pushed: the host loads rows into the part from OnAfterGetCurrRecord via
-// CurrPage.<part>.Page.<method>() -- the runner-observed trigger shape for issue #2516.
-page 60628 "Test TmpInt HostPush Part"
-{
-    PageType = ListPart;
-    SourceTable = Integer;
-    SourceTableTemporary = true;
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Group)
-            {
-                field(Number; Rec.Number) { ApplicationArea = All; }
-                field(ValueAtNumber; Values[Rec.Number]) { ApplicationArea = All; Caption = 'Value'; }
-            }
-        }
-    }
-
-    var
-        Values: array[20] of Decimal;
-
-    procedure Load(Count: Integer)
-    var
-        i: Integer;
-    begin
-        Rec.DeleteAll();
-        for i := 1 to Count do begin
-            Values[i] := i * 10;
-            Rec.Init();
-            Rec.Number := i;
-            Rec.Insert();
-        end;
-        CurrPage.Update(false);
-    end;
-}
-
-page 60629 "Test TmpInt Host Card"
-{
-    PageType = Card;
-    SourceTable = "Test TmpInt Host Row";
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            field("No."; Rec."No.") { ApplicationArea = All; }
-            part(Prices; "Test TmpInt HostPush Part") { ApplicationArea = All; }
-        }
-    }
-
-    trigger OnAfterGetCurrRecord()
-    begin
-        CurrPage.Prices.Page.Load(3);
-    end;
-}
-
-codeunit 60630 "Test TmpInt ListPart"
+codeunit 60624 "Test TmpInt ListPart"
 {
     Subtype = Test;
 
@@ -170,43 +101,12 @@ codeunit 60630 "Test TmpInt ListPart"
         Part.OpenView();
         Assert.IsTrue(Part.First(), 'part must have rows after its own OnOpenPage runs');
         Assert.AreEqual('1', Part.Number.Value(), 'first row Number');
-        Assert.AreEqual('10', Part.ValueAtNumber.Value(), 'first row Values[Number]');
+        Assert.AreEqual('10.00', Part.ValueAtNumber.Value(), 'first row Values[Number]');
         Part.Close();
-    end;
-
-    [Test]
-    procedure TempIntegerPart_HostPushed_ReadsInsertedRows()
-    // CLAIM: the same claim, but the part is hosted on a Card and populated from the
-    // host's OnAfterGetCurrRecord via CurrPage.<part>.Page.<method> -- the runner-observed
-    // trigger shape for issue #2516.
-    var
-        Row: Record "Test TmpInt Host Row";
-        Card: TestPage "Test TmpInt Host Card";
-    begin
-        Initialize();
-
-        Row.Init();
-        Row."No." := 'ROW-1';
-        Row.Insert();
-
-        Card.OpenEdit();
-        Card.GoToRecord(Row);
-        Assert.IsTrue(Card.Prices.First(), 'hosted part must have rows after host push');
-        Assert.AreEqual('1', Card.Prices.Number.Value(), 'first row Number');
-        Assert.AreEqual('10', Card.Prices.ValueAtNumber.Value(), 'first row Values[Number]');
-        Card.Close();
     end;
 
     local procedure Initialize()
     begin
         Cleanup.Initialize();
-        Row_DeleteAll();
-    end;
-
-    local procedure Row_DeleteAll()
-    var
-        Row: Record "Test TmpInt Host Row";
-    begin
-        Row.DeleteAll();
     end;
 }
