@@ -7,24 +7,19 @@
 // Companion of StefanMaron/BusinessCentral.AL.Runner#2570, which reports that AL Runner
 // refuses to import ANY recognized image format into a Media field (it needs
 // System.Drawing to decode, which has no support on the runner's Linux host), and proposes
-// narrowing that refusal for PNG specifically, since PNG validity is checkable
-// structurally (signature, chunk order, well-formed IHDR) without decoding.
+// narrowing that refusal for PNG.
 //
-// These tests MAP BC's actual validation boundary rather than assume one. The first round
-// of this PR asserted that a PNG with a valid signature but a corrupted IHDR chunk CRC is
-// rejected — real BC (27.0 through 28.4, all 8 legs) disagreed: `FAIL
-// Media_ImportStream_PngWithCorruptIhdrCrc_Fails — NavNCLAssertErrorException: An error was
-// expected inside an ASSERTERROR statement`. BC accepts it. That test is corrected below
-// (Media_ImportStream_PngWithCorruptIhdrCrc_Succeeds) rather than left asserting something
-// a real service tier falsified, per ask-the-corpus-before-claiming-bc-behavior.md.
-//
-// The remaining cases below exist to separate "BC doesn't check CRCs" from "BC does no
-// structural validation at all" — a signature-only stream, a stream truncated mid-chunk,
-// and a stream with a structurally complete but semantically nonsensical IHDR (zero
-// width) probe three different points along that line. Each asserts what its author
-// expects on independent PNG-format grounds (GDI+/libgdiplus needs real pixel data to
-// decode; a decoder does not need a chunk CRC to decode). Corpus CI is what actually
-// answers this — see the PR description for what each leg reported.
+// MEASURED, not assumed: this file went through two rounds of corpus CI (27.0-28.4, all 8
+// legs both times) correcting assumptions a decompiled exception mapper could not settle.
+// Round 1 asserted a corrupt IHDR-chunk-CRC PNG is rejected; BC accepted it. Round 2 tried
+// to separate "BC skips CRC checks" from "BC validates structure at all" with three more
+// negative cases (signature-only, truncated mid-chunk, IHDR width=0) — BC accepted every
+// one of those too, identically across all 8 legs both times. The conclusion this file now
+// encodes: BC's PNG acceptance for a Media field is the 8-byte signature match and nothing
+// more — no chunk CRC check, no IHDR structural validation, not even "is there a single
+// byte of chunk data after the signature". A PNG-signature-prefixed stream of ANY content
+// is accepted. This is the actual answer, not a hedge — see each test's CLAIM for the
+// specific round-2 case it pins.
 //
 // All PNG payloads are byte-verified independently with Python (struct + zlib.crc32) and
 // base64-encoded so the AL source stays plain text.
@@ -47,8 +42,7 @@ codeunit 60130 "Test Media Png Import"
         // IHDR's 13 data bytes, then nothing — cut off mid-chunk, no CRC, no IDAT/IEND.
         TruncatedMidIhdrPngBase64: Label 'iVBORw0KGgoAAAANSUhEUgAAAAE=', Locked = true;
         // Structurally complete otherwise (correct CRCs throughout, real IDAT/IEND), but
-        // IHDR's width field is 0. Isolates "does BC sanity-check IHDR's declared
-        // dimensions" from "does BC check chunk CRCs" (already answered above: no).
+        // IHDR's width field is 0.
         ZeroWidthIhdrPngBase64: Label 'iVBORw0KGgoAAAANSUhEUgAAAAAAAAABCAAAAADVvPBrAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', Locked = true;
         // Plain text with no PNG signature at all — the pre-existing "not an image, falls
         // back to octet-stream" path this PR must NOT change.
@@ -91,10 +85,8 @@ codeunit 60130 "Test Media Png Import"
     [Test]
     procedure Media_ImportStream_PngWithCorruptIhdrCrc_Succeeds()
     // CLAIM: a PNG whose signature and IHDR data are valid but whose IHDR chunk CRC is
-    // wrong still imports successfully. MEASURED, not assumed — the first version of this
-    // test asserted the opposite (rejection) and real BC (27.0-28.4, all 8 legs) falsified
-    // it: `NavNCLAssertErrorException: An error was expected inside an ASSERTERROR
-    // statement`. BC's PNG decode path does not validate chunk CRCs.
+    // wrong still imports successfully. MEASURED: the first version of this test asserted
+    // the opposite (rejection) and real BC (27.0-28.4, all 8 legs) falsified it.
     var
         Rec: Record "ALT Media";
     begin
@@ -106,53 +98,45 @@ codeunit 60130 "Test Media Png Import"
     end;
 
     [Test]
-    procedure Media_ImportStream_SignatureOnly_Fails()
-    // CLAIM (negative): a stream that is just the 8-byte PNG signature, with no IHDR and
-    // no pixel data at all, is rejected — there is nothing here a decoder could produce an
-    // image from, CRC-checking or not.
+    procedure Media_ImportStream_SignatureOnly_Succeeds()
+    // CLAIM: a stream that is just the 8-byte PNG signature, with no IHDR and no pixel
+    // data at all, still imports successfully. MEASURED (27.0-28.4, all 8 legs, twice):
+    // the original version of this test asserted rejection and BC accepted it both times.
+    // BC's PNG acceptance for a Media field really is the signature match alone.
     var
         Rec: Record "ALT Media";
     begin
         Initialize();
-        Rec.Init();
-        Rec.Code := 'PNG4';
-        Rec.Insert();
-
-        asserterror ImportBase64Raw(Rec, SignatureOnlyPngBase64);
-        Assert.ExpectedError('The media object could not be loaded because it is not a valid image type, such as JPEG, GIF, or PNG');
+        ImportBase64(Rec, 'PNG4', SignatureOnlyPngBase64);
+        Rec.Get('PNG4');
+        Assert.IsTrue(Rec.Picture.HasValue(), 'A signature-only stream (no IHDR at all) must still import');
     end;
 
     [Test]
-    procedure Media_ImportStream_TruncatedMidIhdr_Fails()
-    // CLAIM (negative): a stream cut off in the middle of the IHDR chunk (no CRC, no
-    // IDAT/IEND at all) is rejected, same reasoning as the signature-only case.
+    procedure Media_ImportStream_TruncatedMidIhdr_Succeeds()
+    // CLAIM: a stream cut off in the middle of the IHDR chunk (no CRC, no IDAT/IEND at
+    // all) still imports successfully. MEASURED, same as the signature-only case above.
     var
         Rec: Record "ALT Media";
     begin
         Initialize();
-        Rec.Init();
-        Rec.Code := 'PNG5';
-        Rec.Insert();
-
-        asserterror ImportBase64Raw(Rec, TruncatedMidIhdrPngBase64);
-        Assert.ExpectedError('The media object could not be loaded because it is not a valid image type, such as JPEG, GIF, or PNG');
+        ImportBase64(Rec, 'PNG5', TruncatedMidIhdrPngBase64);
+        Rec.Get('PNG5');
+        Assert.IsTrue(Rec.Picture.HasValue(), 'A stream truncated mid-IHDR-chunk must still import');
     end;
 
     [Test]
-    procedure Media_ImportStream_ZeroWidthIhdr_Fails()
-    // CLAIM (negative): a structurally complete PNG (correct CRCs, real IDAT/IEND) whose
-    // IHDR declares width=0 is rejected — a decoder cannot produce a 0-pixel-wide image,
-    // regardless of whether it checks chunk CRCs.
+    procedure Media_ImportStream_ZeroWidthIhdr_Succeeds()
+    // CLAIM: a structurally complete PNG (correct CRCs, real IDAT/IEND) whose IHDR
+    // declares width=0 still imports successfully. MEASURED, same as the two cases above —
+    // BC does not sanity-check IHDR's declared dimensions either.
     var
         Rec: Record "ALT Media";
     begin
         Initialize();
-        Rec.Init();
-        Rec.Code := 'PNG6';
-        Rec.Insert();
-
-        asserterror ImportBase64Raw(Rec, ZeroWidthIhdrPngBase64);
-        Assert.ExpectedError('The media object could not be loaded because it is not a valid image type, such as JPEG, GIF, or PNG');
+        ImportBase64(Rec, 'PNG6', ZeroWidthIhdrPngBase64);
+        Rec.Get('PNG6');
+        Assert.IsTrue(Rec.Picture.HasValue(), 'A PNG with IHDR width=0 must still import');
     end;
 
     [Test]
@@ -187,22 +171,6 @@ codeunit 60130 "Test Media Png Import"
 
         Rec.Picture.ImportStream(InStr, 'test content');
         Rec.Modify();
-    end;
-
-    local procedure ImportBase64Raw(var Rec: Record "ALT Media"; Base64Content: Text)
-    // Same as ImportBase64 but for use inside `asserterror` — no return value, no Modify()
-    // (a failed ImportStream() should not need one, and asserterror rolls back regardless).
-    var
-        TempBlob: Codeunit "Temp Blob";
-        Base64Convert: Codeunit "Base64 Convert";
-        InStr: InStream;
-        OutStr: OutStream;
-    begin
-        TempBlob.CreateOutStream(OutStr);
-        Base64Convert.FromBase64(Base64Content, OutStr);
-        TempBlob.CreateInStream(InStr);
-
-        Rec.Picture.ImportStream(InStr, 'test content');
     end;
 
     local procedure Initialize()
