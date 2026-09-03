@@ -26,6 +26,11 @@
 //      real BC disagreed on all 8 versions, including for a bare `Visible = HideIt`. Seeding
 //      before the page exists asks what the expression evaluates to without also asking whether a
 //      later change is observable, which is a different question.
+//
+// Every expression here is over PAGE GLOBALS. An expression referencing a source-table FIELD is
+// deliberately not covered: measured on all 8 BC versions, such an expression evaluates as if the
+// field held its type default whatever row the page is on, which is its own question with its own
+// test.
 
 codeunit 60260 "TPCE State"
 {
@@ -63,15 +68,11 @@ table 60257 "TPCE Row"
     fields
     {
         field(1; PK; Code[10]) { }
-        field(2; Flag; Boolean) { }
-        field(3; Value; Text[30]) { }
         field(10; F1; Text[30]) { }
         field(11; F2; Text[30]) { }
         field(12; F3; Text[30]) { }
         field(13; F4; Text[30]) { }
         field(14; F5; Text[30]) { }
-        field(15; F6; Text[30]) { }
-        field(16; F7; Text[30]) { }
         field(17; F8; Text[30]) { }
         field(18; F9; Text[30]) { }
     }
@@ -105,10 +106,6 @@ page 60258 "TPCE Card"
             field(OrGlobals; Rec.F4) { ApplicationArea = All; Visible = HideIt or SecondFlag; }
 
             field(NotParenthesized; Rec.F5) { ApplicationArea = All; Visible = not (HideIt or SecondFlag); }
-
-            field(RecFieldRef; Rec.F6) { ApplicationArea = All; Visible = Rec.Flag; }
-
-            field(NotRecFieldRef; Rec.F7) { ApplicationArea = All; Visible = not Rec.Flag; }
 
             // The same grammar governs Editable and Enabled, not only Visible.
             field(NotEditable; Rec.F8) { ApplicationArea = All; Editable = not HideIt; }
