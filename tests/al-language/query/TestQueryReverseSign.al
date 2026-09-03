@@ -1,11 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-reversesign-property
 // Scope: in-scope
-// Fixtures used: QJ Order (60862), QJ Order Reverse Sign (60960), QJ Order Sum Reverse Sign
-// (60962); shared Assert (60021)
+// Fixtures used: QJ Order (60862), QJ Order Reverse Sign (60935), QJ Order Sum Reverse Sign
+// (60939); shared Assert (60021)
 //
 // A query column's ReverseSign property negates the value the column reads — independent of
 // every OTHER column in the same query, and independent of whether the column is aggregated.
-codeunit 60963 "QJ Query Reverse Sign Tests"
+codeunit 60946 "QJ Query Reverse Sign Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;

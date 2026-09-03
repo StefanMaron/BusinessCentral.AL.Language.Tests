@@ -4,7 +4,7 @@
 // signs among the source rows), so this exists to pin the observable OUTCOME rather than to
 // distinguish an ordering that Sum itself cannot distinguish. Reuses the "QJ Order" table
 // already established by the sibling join/aggregation suites.
-query 60962 "QJ Order Sum Reverse Sign"
+query 60939 "QJ Order Sum Reverse Sign"
 {
     QueryType = Normal;
     OrderBy = ascending(CustNo);

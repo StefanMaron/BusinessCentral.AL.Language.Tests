@@ -2,7 +2,7 @@
 // OTHER column in the query — a sibling column over the SAME field without ReverseSign must
 // keep reading the un-negated value. Reuses the "QJ Order" table already established by the
 // sibling join/aggregation suites.
-query 60960 "QJ Order Reverse Sign"
+query 60935 "QJ Order Reverse Sign"
 {
     QueryType = Normal;
     OrderBy = ascending(EntryNo);
