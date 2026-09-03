@@ -45,10 +45,11 @@ codeunit 60931 "Test Aggregate Permission Set"
     end;
 
     [Test]
-    procedure AggregatePermissionSet_PermissionSetDeclaringNoCaption_HasEmptyName()
-    // CLAIM: Name is the permission set's declared Caption, not a fallback to its Role ID --
-    // a permission set declaring no Caption ("ALT PermissionSet", used only for this
-    // assertion) has an empty row Name.
+    procedure AggregatePermissionSet_PermissionSetDeclaringNoCaption_NameFallsBackToRoleId()
+    // CLAIM: a permission set declaring no Caption ("ALT PermissionSet", used only for this
+    // assertion) still gets a Name -- it falls back to the Role ID, not an empty string.
+    // Measured against a live BC container (both matrix legs): a no-Caption permission
+    // set's row Name equals its own Role ID, not ''.
     var
         AggregatePermissionSet: Record "Aggregate Permission Set";
         ThisModule: ModuleInfo;
@@ -58,9 +59,12 @@ codeunit 60931 "Test Aggregate Permission Set"
         Assert.IsTrue(
             AggregatePermissionSet.Get(AggregatePermissionSet.Scope::System, ThisModule.Id(), 'ALTPermissionSet'),
             'Get() must find the permission set');
-        Assert.AreEqual(
+        Assert.AreNotEqual(
             '', AggregatePermissionSet.Name,
-            'A permission set declaring no Caption has an empty row Name, not its Role ID');
+            'A permission set declaring no Caption still has a non-empty row Name');
+        Assert.AreEqual(
+            AggregatePermissionSet."Role ID", AggregatePermissionSet.Name,
+            'A permission set declaring no Caption falls back to its own Role ID for Name');
     end;
 
     [Test]
