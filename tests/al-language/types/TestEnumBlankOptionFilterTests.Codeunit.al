@@ -4,7 +4,10 @@
 //
 // CLAIM: BC resolves the text of an option/enum filter by matching member names with
 // both sides trimmed and case ignored, skipping members whose name is zero length,
-// and only then falling back to parsing the text as an ordinal.
+// and only then falling back to parsing the text as an ordinal. Separately, a member
+// declared with AL's quoted-identifier form (a name containing a space, e.g.
+// `"Work Center"`) validates, assigns and Formats as the plain unquoted text AL
+// declared -- the quoting is source syntax, not part of the member's name.
 //
 // The practical consequence is AL's blank enum member. AL spells it `value(0; " ")` --
 // a single space -- so the empty string matches it after the trim. Base Application
@@ -198,5 +201,74 @@ codeunit 60300 "EBF Blank Option Filter Tests"
 
         asserterror OptionRow.SetFilter("Empty Blank", '''''');
         Assert.ExpectedError('is not an option');
+    end;
+
+    [Test]
+    procedure OptionValidate_QuotedMultiwordMember_Succeeds()
+    var
+        OptionRow: Record "EBF Option Row";
+    begin
+        // [SCENARIO] A member declared with AL's quoted-identifier form (a name with a
+        //            space in it) validates and inserts like any other member.
+        Initialize();
+
+        OptionRow.Init();
+        OptionRow."Entry No." := 1;
+        OptionRow.Validate("Quoted Multiword", OptionRow."Quoted Multiword"::"Work Center");
+        OptionRow.Insert(false);
+
+        Assert.AreEqual(OptionRow."Quoted Multiword"::"Work Center", OptionRow."Quoted Multiword", 'Validate must set ordinal 1 for "Work Center"');
+    end;
+
+    [Test]
+    procedure OptionAssign_QuotedMultiwordMember_Succeeds()
+    var
+        OptionRow: Record "EBF Option Row";
+    begin
+        // [SCENARIO] Plain assignment (no Validate) of the same quoted member.
+        Initialize();
+
+        OptionRow.Init();
+        OptionRow."Entry No." := 1;
+        OptionRow."Quoted Multiword" := OptionRow."Quoted Multiword"::"Machine Center";
+        OptionRow.Insert(false);
+
+        Assert.AreEqual(OptionRow."Quoted Multiword"::"Machine Center", OptionRow."Quoted Multiword", 'assignment must set ordinal 2 for "Machine Center"');
+    end;
+
+    [Test]
+    procedure OptionFormat_QuotedMultiwordMember_HasNoQuotes()
+    var
+        OptionRow: Record "EBF Option Row";
+    begin
+        // [SCENARIO] Format() of a quoted-identifier member returns the plain text AL
+        //            declared, not the quoting used to spell the identifier.
+        Initialize();
+
+        OptionRow."Quoted Multiword" := OptionRow."Quoted Multiword"::"Work Center";
+
+        Assert.AreEqual('Work Center', Format(OptionRow."Quoted Multiword"), 'Format must strip the identifier quoting');
+    end;
+
+    [Test]
+    procedure OptionValidate_OnValidateTriggerSeesUnquotedFormat()
+    var
+        OptionRow: Record "EBF Option Row";
+    begin
+        // [SCENARIO] The OnValidate trigger on the option field itself calls Format() on
+        //            the just-validated value and clears a third field -- the shape a
+        //            real AL project uses (an option field driving a derived name field).
+        //            The trigger must see the unquoted member name, and the cleared field
+        //            must actually be cleared.
+        Initialize();
+
+        OptionRow.Init();
+        OptionRow."Entry No." := 1;
+        OptionRow."Quoted Multiword Cleared" := 'stale value';
+        OptionRow.Validate("Quoted Multiword", OptionRow."Quoted Multiword"::"Machine Center");
+        OptionRow.Insert(false);
+
+        Assert.AreEqual('Machine Center', OptionRow."Quoted Multiword Name", 'the trigger-derived name field must carry the unquoted member name');
+        Assert.AreEqual('', OptionRow."Quoted Multiword Cleared", 'the trigger must have cleared the third field');
     end;
 }

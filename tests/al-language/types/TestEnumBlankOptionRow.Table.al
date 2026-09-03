@@ -25,6 +25,29 @@ table 60301 "EBF Option Row"
             OptionMembers = ,Draft,Active;
             DataClassification = SystemMetadata;
         }
+        field(4; "Quoted Multiword"; Option)
+        {
+            // A member whose name needs AL's quoted-identifier form because it contains a
+            // space: OptionMembers = None,"Work Center","Machine Center". Distinct defect
+            // class from "Space Blank"/"Empty Blank" above -- those are about a blank
+            // member's name, this is about the quoting AL uses to write a multi-word one.
+            OptionMembers = None,"Work Center","Machine Center";
+            DataClassification = SystemMetadata;
+
+            trigger OnValidate()
+            begin
+                "Quoted Multiword Name" := Format("Quoted Multiword");
+                Clear("Quoted Multiword Cleared");
+            end;
+        }
+        field(5; "Quoted Multiword Name"; Text[50])
+        {
+            DataClassification = SystemMetadata;
+        }
+        field(6; "Quoted Multiword Cleared"; Text[50])
+        {
+            DataClassification = SystemMetadata;
+        }
     }
 
     keys
