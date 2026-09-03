@@ -1,0 +1,33 @@
+{
+  "id": "992cbdfc-7fc0-485b-a4e6-0378be8ed765",
+  "name": "AL Language DotNet Interop Tests",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "OnPrem-target coverage for AL surfaces that a Cloud-target app cannot even declare (DotNet interop). Split out from AL Language Coverage Tests because a Cloud app may not declare a `dotnet` block at all -- see #2641 / StefanMaron/BusinessCentral.AL.Runner#2576.",
+  "description": "Executable proof that AL's DotNet-interop surface works correctly against a real BC instance, on OnPrem target where AL0185 does not apply. Depends on AL Language Coverage Tests for its Assert codeunit (public, no internalsVisibleTo needed). Designed to run against a local BC Docker container, not the AL Runner.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "application": "27.0.0.0",
+  "dependencies": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "AL Language Coverage Tests",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
+    }
+  ],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 61100,
+      "to": 61199
+    }
+  ],
+  "features": [],
+  "runtime": "16.0",
+  "target": "OnPrem"
+}

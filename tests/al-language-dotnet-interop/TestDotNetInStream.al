@@ -1,12 +1,18 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/instream/instream-data-type
 // Scope: in-scope
+// Target: OnPrem — a Cloud-target app cannot declare a `dotnet` block at all (AL0185
+// "DotNet '<Type>' is missing" at compile time), so this coverage lives in its own
+// OnPrem-target app, "AL Language DotNet Interop Tests", rather than the main Cloud-target
+// "AL Language Coverage Tests" app. See that app's app.json brief and
+// StefanMaron/BusinessCentral.AL.Runner#2576 / #2641.
+//
 // Companion of StefanMaron/BusinessCentral.AL.Runner#2576, which reports that AL Runner
 // implements the conversion from a .NET Stream to an AL OutStream (used e.g. by CU 1279
 // "Cryptography Management Impl." GenerateHash(InStream, ...)), but has no counterpart for
 // the InStream direction: assigning a .NET Stream (wrapped in a DotNet variable) to an AL
 // InStream variable. These tests pin the real BC behavior of that conversion so the runner
 // gap has a real-BC-adjudicated spec to close against.
-codeunit 60118 "Test DotNet InStream"
+codeunit 61101 "Test DotNet InStream"
 {
     Subtype = Test;
 
