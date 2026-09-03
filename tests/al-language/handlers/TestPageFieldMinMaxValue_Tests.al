@@ -15,9 +15,7 @@ codeunit 60934 "Test Page Field MinMaxValue"
     var
         Assert: Codeunit Assert;
 
-    local procedure Seed(No: Code[20])
-    var
-        Row: Record "Test Page MinMax Row";
+    local procedure Seed(No: Code[20]; var Row: Record "Test Page MinMax Row")
     begin
         if Row.Get(No) then
             Row.Delete();
@@ -32,10 +30,10 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Row: Record "Test Page MinMax Row";
         Card: TestPage "Test Page MinMax Card";
     begin
-        Seed('T1');
+        Seed('T1', Row);
 
         Card.OpenEdit();
-        Card.GoToKey('T1');
+        Card.GoToRecord(Row);
         asserterror Card.Completion.SetValue(-1);
         Assert.ExpectedError('The value must be greater than or equal to 0');
         Card.Close();
@@ -50,10 +48,10 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Row: Record "Test Page MinMax Row";
         Card: TestPage "Test Page MinMax Card";
     begin
-        Seed('T2');
+        Seed('T2', Row);
 
         Card.OpenEdit();
-        Card.GoToKey('T2');
+        Card.GoToRecord(Row);
         asserterror Card.Completion.SetValue(101);
         Assert.ExpectedError('The value must be less than or equal to 100');
         Card.Close();
@@ -65,12 +63,13 @@ codeunit 60934 "Test Page Field MinMaxValue"
     [Test]
     procedure SetValue_BelowMinInteger_Refuses()
     var
+        Row: Record "Test Page MinMax Row";
         Card: TestPage "Test Page MinMax Card";
     begin
-        Seed('T3');
+        Seed('T3', Row);
 
         Card.OpenEdit();
-        Card.GoToKey('T3');
+        Card.GoToRecord(Row);
         asserterror Card.Score.SetValue(-1);
         Assert.ExpectedError('The value must be greater than or equal to 0');
         Card.Close();
@@ -79,12 +78,13 @@ codeunit 60934 "Test Page Field MinMaxValue"
     [Test]
     procedure SetValue_AboveMaxInteger_Refuses()
     var
+        Row: Record "Test Page MinMax Row";
         Card: TestPage "Test Page MinMax Card";
     begin
-        Seed('T4');
+        Seed('T4', Row);
 
         Card.OpenEdit();
-        Card.GoToKey('T4');
+        Card.GoToRecord(Row);
         asserterror Card.Score.SetValue(11);
         Assert.ExpectedError('The value must be less than or equal to 10');
         Card.Close();
@@ -96,10 +96,10 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Row: Record "Test Page MinMax Row";
         Card: TestPage "Test Page MinMax Card";
     begin
-        Seed('T5');
+        Seed('T5', Row);
 
         Card.OpenEdit();
-        Card.GoToKey('T5');
+        Card.GoToRecord(Row);
         Card.Completion.SetValue(50);
         Card.Close();
 
