@@ -120,12 +120,23 @@ jobs:
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
+      # Despite its "space-separated" input description, the reusable workflow's own
+      # compile/publish steps read test_app_dirs via `while read -r d; do ...; done <<<
+      # "$TEST_APP_DIRS"` -- a single here-string split on NEWLINES, not spaces. A
+      # space-separated value here (tried first) got read as ONE literal directory name
+      # containing a space and silently skipped ("no app.json"), then failed publish
+      # with "missing: build/al-language-dotnet-interop.app" -- not a BC/OnPrem
+      # rejection, a wiring bug in this file. Must be a YAML block scalar so the two
+      # entries are actual newline-separated lines.
+      #
       # tests/al-language-dotnet-interop (target: OnPrem) depends on
       # tests/al-language (target: Cloud) for its Assert codeunit, so it is listed
-      # second -- test_app_dirs, like app_dirs, is compile order. It exists because a
-      # Cloud-target app cannot declare a `dotnet` block at all (AL0185); see its
-      # app.json brief and StefanMaron/BusinessCentral.AL.Runner#2576 / #2641.
-      test_app_dirs:        "tests/al-language tests/al-language-dotnet-interop"
+      # second -- compile order, same as app_dirs. It exists because a Cloud-target app
+      # cannot declare a `dotnet` block at all (AL0185); see its app.json brief and
+      # StefanMaron/BusinessCentral.AL.Runner#2576 / #2641.
+      test_app_dirs: |
+        tests/al-language
+        tests/al-language-dotnet-interop
       codeunit_range:       "60000..99999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
 
