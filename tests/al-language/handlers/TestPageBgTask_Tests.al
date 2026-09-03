@@ -137,25 +137,24 @@ codeunit 60793 "Test Page BgTask Tests"
         Card.Close();
     end;
 
-    // OBSERVATION PROBE, not yet an assertion: does a WRITE the worker codeunit makes
-    // (Insert) either fail outright or land invisibly, or does it succeed and become visible
-    // to the caller's own session once RunPageBackgroundTask returns? Real BC's own platform
-    // code (NavChildSessionTaskRuntime<PageBackgroundChildSessionTask>.RunAsync) constructs
-    // the child session from NavChildSessionTask.RunInReadOnlySession, which
-    // PageBackgroundChildSessionTask never overrides -- so it defaults to the base class's
-    // `true` -- and then ends the child session's transaction with
-    // `EndTransaction(!RunInReadOnlySession)`, i.e. `EndTransaction(false)`: a rollback, not a
-    // commit. If that reading is right, either the Insert() itself is refused by a read-only
-    // session, or it "succeeds" locally and is then rolled back -- this probe distinguishes
-    // the two and records which one real BC does before any assertion is written on it.
+    // OBSERVATION PROBE, not yet an assertion (round 2): does a worker codeunit that writes
+    // DIRECTLY (no TryFunction) either fail outright, or succeed and become visible to the
+    // caller once RunPageBackgroundTask returns? Round 1 wrapped the same Insert() in a
+    // [TryFunction] local procedure and measured a DIFFERENT, unrelated restriction instead
+    // (BC 27.5 and 28.3, corpus PR #135): "Call to the function 'INSERT' is not allowed
+    // inside the call to 'RootMethodScope' when it is used as a TryFunction" -- a general
+    // restriction on TryFunction being the first call made from a freshly-dispatched root
+    // scope (a page background task's own OnRun is one), unrelated to what the write itself
+    // does. This probe's own TryFunction wraps the CALL SITE instead (an ordinary nested call
+    // from inside a ordinary [Test] procedure, not a root scope), so it does not trip that
+    // same restriction, and can observe the write's actual outcome.
     [Test]
     procedure Z_OBS_WorkerWrite_InsertOutcomeAndVisibility()
     var
         Row: Record "Test Page BgTask Row";
         Card: TestPage "Test Page BgTask Card";
         Params: Dictionary of [Text, Text];
-        Results: Dictionary of [Text, Text];
-        Outcome: Text;
+        ThrewText: Text;
         VisibleAfter: Text;
     begin
         Initialize();
@@ -164,8 +163,10 @@ codeunit 60793 "Test Page BgTask Tests"
         Clear(Params);
         Params.Add('Op', 'Insert');
         Params.Add('No', 'WR-NEW');
-        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask WriteWorker", Params, false);
-        Results.Get('Outcome', Outcome);
+        if TryRunWriteTask(Card, Params) then
+            ThrewText := 'NO-ERROR'
+        else
+            ThrewText := GetLastErrorText();
 
         if Row.Get('WR-NEW') then
             VisibleAfter := 'FOUND'
@@ -173,21 +174,19 @@ codeunit 60793 "Test Page BgTask Tests"
             VisibleAfter := 'NOT-FOUND';
 
         Card.Close();
-        Error('OBS insert-outcome=>%1< visible-after=>%2<', Outcome, VisibleAfter);
+        Error('OBS insert-threw=>%1< visible-after=>%2<', ThrewText, VisibleAfter);
     end;
 
-    // Same probe, Modify instead of Insert -- distinguishes "the write never took" (name
-    // stays 'Original') from "it took locally in the child session, then rolled back" (also
-    // 'Original', but for a different reason -- Outcome tells them apart) from "it committed"
-    // (name reads 'MODIFIED-BY-WORKER').
+    // Same probe, Modify instead of Insert against a row that already exists -- distinguishes
+    // "the write never took" (name stays 'Original') from "it committed" (name reads
+    // 'MODIFIED-BY-WORKER'), and records whatever error text (if any) came with it.
     [Test]
     procedure Z_OBS_WorkerWrite_ModifyOutcomeAndVisibility()
     var
         Row: Record "Test Page BgTask Row";
         Card: TestPage "Test Page BgTask Card";
         Params: Dictionary of [Text, Text];
-        Results: Dictionary of [Text, Text];
-        Outcome: Text;
+        ThrewText: Text;
         NameAfter: Text;
     begin
         Initialize();
@@ -197,14 +196,24 @@ codeunit 60793 "Test Page BgTask Tests"
         Clear(Params);
         Params.Add('Op', 'Modify');
         Params.Add('No', 'WR-EXIST');
-        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask WriteWorker", Params, false);
-        Results.Get('Outcome', Outcome);
+        if TryRunWriteTask(Card, Params) then
+            ThrewText := 'NO-ERROR'
+        else
+            ThrewText := GetLastErrorText();
 
         Row.Get('WR-EXIST');
         NameAfter := Row.Name;
 
         Card.Close();
-        Error('OBS modify-outcome=>%1< name-after=>%2<', Outcome, NameAfter);
+        Error('OBS modify-threw=>%1< name-after=>%2<', ThrewText, NameAfter);
+    end;
+
+    [TryFunction]
+    local procedure TryRunWriteTask(var Card: TestPage "Test Page BgTask Card"; Params: Dictionary of [Text, Text])
+    var
+        Results: Dictionary of [Text, Text];
+    begin
+        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask WriteWorker", Params, false);
     end;
 }
 

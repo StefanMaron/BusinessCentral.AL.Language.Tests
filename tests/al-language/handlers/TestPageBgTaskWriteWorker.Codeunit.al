@@ -1,19 +1,23 @@
 // Worker codeunit for TestPageBgTask_Tests.al's session-isolation probes: writes to the
-// SAME table the page's TestPage caller reads, run inside a page background task. Uses
-// TryFunction so a write refused by the platform (e.g. a read-only child session) reports
-// back through the normal Results dictionary instead of surfacing as an unhandled error --
-// the point of these tests is to OBSERVE what real BC does, not to assume it errors or
-// succeeds.
+// SAME table the page's TestPage caller reads, run inside a page background task. Writes
+// DIRECTLY (no TryFunction) -- an earlier version wrapped the write in a [TryFunction] local
+// procedure, which measured a DIFFERENT, unrelated restriction instead: real BC (BC 27.5 and
+// 28.3, corpus PR #135) rejected that shape outright with "Call to the function 'INSERT' is
+// not allowed inside the call to 'RootMethodScope' when it is used as a TryFunction" -- a
+// TryFunction cannot be the first call made from a freshly-dispatched root scope (a
+// background task's own OnRun is one), regardless of what it tries to do, so it could not
+// answer "is the write visible/committed" at all. Writing directly avoids that unrelated
+// restriction and lets the caller (Z_OBS_WorkerWrite_*) use its OWN TryFunction, from an
+// ordinary nested call site, to observe whatever the worker's write actually does.
 
 codeunit 60794 "Test Page BgTask WriteWorker"
 {
     trigger OnRun()
     var
+        Row: Record "Test Page BgTask Row";
         Params: Dictionary of [Text, Text];
-        Results: Dictionary of [Text, Text];
         Op: Text;
         RowNo: Text;
-        Outcome: Text;
     begin
         Params := Page.GetBackgroundParameters();
         Params.Get('Op', Op);
@@ -21,39 +25,18 @@ codeunit 60794 "Test Page BgTask WriteWorker"
 
         case Op of
             'Insert':
-                if TryInsertRow(CopyStr(RowNo, 1, 20)) then
-                    Outcome := 'OK'
-                else
-                    Outcome := 'ERROR:' + GetLastErrorText();
+                begin
+                    Row.Init();
+                    Row."No." := CopyStr(RowNo, 1, MaxStrLen(Row."No."));
+                    Row.Name := 'WRITTEN-BY-WORKER';
+                    Row.Insert();
+                end;
             'Modify':
-                if TryModifyRow(CopyStr(RowNo, 1, 20)) then
-                    Outcome := 'OK'
-                else
-                    Outcome := 'ERROR:' + GetLastErrorText();
+                begin
+                    Row.Get(CopyStr(RowNo, 1, MaxStrLen(Row."No.")));
+                    Row.Name := 'MODIFIED-BY-WORKER';
+                    Row.Modify();
+                end;
         end;
-
-        Results.Add('Outcome', Outcome);
-        Page.SetBackgroundTaskResult(Results);
-    end;
-
-    [TryFunction]
-    local procedure TryInsertRow(RowNo: Code[20])
-    var
-        Row: Record "Test Page BgTask Row";
-    begin
-        Row.Init();
-        Row."No." := RowNo;
-        Row.Name := 'WRITTEN-BY-WORKER';
-        Row.Insert();
-    end;
-
-    [TryFunction]
-    local procedure TryModifyRow(RowNo: Code[20])
-    var
-        Row: Record "Test Page BgTask Row";
-    begin
-        Row.Get(RowNo);
-        Row.Name := 'MODIFIED-BY-WORKER';
-        Row.Modify();
     end;
 }
