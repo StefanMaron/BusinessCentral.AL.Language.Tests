@@ -40,7 +40,7 @@ page 60623 "Test TmpInt Array Part"
     var
         Values: array[20] of Decimal;
 
-    internal procedure Load(Count: Integer)
+    procedure Load(Count: Integer)
     var
         i: Integer;
     begin
