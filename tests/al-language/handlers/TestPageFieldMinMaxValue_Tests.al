@@ -31,6 +31,7 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Card: TestPage "Test Page MinMax Card";
     begin
         Seed('T1', Row);
+        Commit();
 
         Card.OpenEdit();
         Card.GoToRecord(Row);
@@ -49,6 +50,7 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Card: TestPage "Test Page MinMax Card";
     begin
         Seed('T2', Row);
+        Commit();
 
         Card.OpenEdit();
         Card.GoToRecord(Row);
@@ -67,6 +69,7 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Card: TestPage "Test Page MinMax Card";
     begin
         Seed('T3', Row);
+        Commit();
 
         Card.OpenEdit();
         Card.GoToRecord(Row);
@@ -82,6 +85,7 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Card: TestPage "Test Page MinMax Card";
     begin
         Seed('T4', Row);
+        Commit();
 
         Card.OpenEdit();
         Card.GoToRecord(Row);
@@ -97,6 +101,7 @@ codeunit 60934 "Test Page Field MinMaxValue"
         Card: TestPage "Test Page MinMax Card";
     begin
         Seed('T5', Row);
+        Commit();
 
         Card.OpenEdit();
         Card.GoToRecord(Row);
