@@ -151,6 +151,53 @@ codeunit 60803 "Test Page NoSrc Part Tests"
             'the part page procedure must see the value the host passed it');
     end;
 
+    // Issue #2201 (AL Runner): TestPage.<part> and the host's OWN CurrPage.<part>.Page must
+    // be the SAME part page instance. Invisible for a Rec-bound part, since its state lives
+    // in the shared record — but this part's controls are page globals, so an implementation
+    // that built a second, disconnected instance for TestPage.Info would see 'Hello' here
+    // (whatever that second instance's own OnOpenPage set) instead of 'FROM-HOST' (what the
+    // host's AL actually wrote through the object it drives). Real BC: one instance, shared.
+    [Test]
+    procedure DirectOpen_NoSrcHost_HostWriteIsVisibleThroughTheSameInstance()
+    var
+        Host: TestPage "Test Page NoSrc Part NoSrc";
+    begin
+        Initialize();
+
+        Host.OpenEdit();
+        Host.Mode.SetValue('FROM-HOST');
+
+        Assert.AreEqual('FROM-HOST', Host.Info.Tag.Value(),
+            'TestPage.Info must be the SAME part page instance the host''s own AL just wrote through');
+        Host.Close();
+    end;
+
+    // The same claim under a [ModalPageHandler]: the handler's own TestPage.Info must be the
+    // instance the host's OnValidate already wrote through, not a second one seeded only by
+    // the part's own OnOpenPage.
+    [Test]
+    [HandlerFunctions('NoSrcPartNoSrcHostWriteHandler')]
+    procedure Modal_NoSrcHost_HostWriteIsVisibleThroughTheSameInstance()
+    var
+        NoSrcHost: Page "Test Page NoSrc Part NoSrc";
+        Result: Action;
+    begin
+        Initialize();
+
+        Result := NoSrcHost.RunModal();
+
+        Assert.IsTrue(Result = Action::OK, 'the handler invoked OK, so RunModal must return OK');
+    end;
+
+    [ModalPageHandler]
+    procedure NoSrcPartNoSrcHostWriteHandler(var Dlg: TestPage "Test Page NoSrc Part NoSrc")
+    begin
+        Dlg.Mode.SetValue('FROM-HANDLER');
+        Assert.AreEqual('FROM-HANDLER', Dlg.Info.Tag.Value(),
+            'under a handler too, TestPage.Info must be the SAME instance the host''s own AL wrote through');
+        Dlg.OK().Invoke();
+    end;
+
     // THE CLAIM, modal half: the same part read from inside a [ModalPageHandler].
     [Test]
     [HandlerFunctions('NoSrcPartBoundHandler')]
