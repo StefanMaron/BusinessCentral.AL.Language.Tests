@@ -36,9 +36,52 @@ jobs:
     # that setting is no longer load-bearing and corpus PRs need not be serialized.
     name: Object IDs must be unique and in range
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The cross-PR step below needs master's history to work out which ids
+          # each PR actually INTRODUCES, as opposed to inherits.
+          fetch-depth: 0
+
+      # Proves the cross-PR detector still detects. Its interesting path only
+      # fires when two open PRs genuinely collide, which is rare, so without
+      # this it would report "no collisions" whether or not it still worked.
+      - name: Self-test the cross-PR detector
+        run: python3 .github/scripts/test-cross-pr-object-ids.py
+
+      # This tree against master, and against itself.
       - run: python3 .github/scripts/check-object-ids.py .
+
+      # This PR against every OTHER open PR. Blocking: two PRs that each add the
+      # same id both pass the step above, and break master on the second merge.
+      - name: Cross-PR object id collisions
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags --quiet origin \
+            +refs/heads/${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+          BASE_REF=origin/${{ github.event.pull_request.base.ref }} \
+            python3 .github/scripts/check-cross-pr-object-ids.py
+
+      # Every open PR against every other, after master moved. NON-blocking on
+      # purpose: a collision between two open PRs is not this merge commit's
+      # fault, and a red master costs more than the annotation is worth. It runs
+      # here so the collision is visible even when neither PR pushes again.
+      - name: Cross-PR object id collisions (advisory sweep)
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --no-tags --quiet origin \
+            +refs/heads/${{ github.ref_name }}:refs/remotes/origin/${{ github.ref_name }} || true
+          BASE_REF=origin/${{ github.ref_name }} \
+            python3 .github/scripts/check-cross-pr-object-ids.py
 
   prepare:
     # Gated on object-ids so a duplicate/out-of-range id never spends the BC matrix.
