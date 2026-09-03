@@ -198,6 +198,52 @@ codeunit 60240 "Test Event Manual Binding"
         UnbindSubscription(LeakedManualSub);
     end;
 
+    // ── Contract 10: A LOCAL Variable's Leaked Binding Behaves The Same As A Global's ──
+    //
+    // Contract 9 proved the leak for a GLOBAL codeunit-typed variable. This pins the same
+    // question for a LOCAL variable — declared inside the [Test] procedure itself, so the
+    // AL variable that made the binding goes out of scope the instant that procedure
+    // returns. If BindSubscription's binding were tied to the AL VARIABLE's scope, a local
+    // variable's binding would end there and Test10b would see nothing. It is tied to the
+    // codeunit RUN instead (TestIsolation = Codeunit's per-codeunit transaction, the same
+    // boundary Contract 9 and TestIsolationRollbackScope/60897 pin), so the answer here
+    // must match Contract 9's: still bound in the next [Test] on this same codeunit.
+    //
+    // Filed against AL Runner issue #2466, where a LOCAL-variable BindSubscription left
+    // open by one [Test] procedure in Microsoft's own Tests-SINGLESERVER corpus
+    // (Codeunit 139004 "Test ApplicationArea Setup") was read as a possible runner-only
+    // leak; this settles whether it is instead the SAME faithful within-codeunit
+    // persistence Contract 9 already established, just via a local variable.
+
+    [Test]
+    procedure ManualSubscriber_Test10a_LocalVariableBindsAndDeliberatelyNeverUnbinds()
+    var
+        LocalManualSub: Codeunit "ALT Manual Event Sub";
+    begin
+        Initialize();
+        Assert.IsTrue(
+            BindSubscription(LocalManualSub),
+            'The first bind of a fresh LOCAL-variable instance must succeed');
+        // No UnbindSubscription call here, and LocalManualSub is a LOCAL variable that
+        // goes out of scope the moment this procedure returns.
+    end;
+
+    [Test]
+    procedure ManualSubscriber_Test10b_PriorTestsLocalVariableLeakStillFiresHere()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Handled: Boolean;
+    begin
+        Handled := Publisher.TriggerBeforeAndReturnHandled(10);
+        Assert.IsTrue(
+            Handled,
+            'A manual subscriber bound via a LOCAL variable in the PREVIOUS [Test] ' +
+            'procedure, on this same codeunit, and never unbound, must still fire here ' +
+            '- BindSubscription''s binding is scoped to the codeunit RUN (TestIsolation ' +
+            '= Codeunit), not to the AL variable''s own lexical scope, so it makes no ' +
+            'difference that the binder was a local variable instead of global.');
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
