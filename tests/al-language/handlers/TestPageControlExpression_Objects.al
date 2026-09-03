@@ -147,10 +147,34 @@ page 60258 "TPCE Card"
                 ApplicationArea = All;
                 Caption = 'Toggle Flag';
             }
+
+            // Bound to a global that OnOpenPage sets from the record, so its value at open time
+            // is decided by which row the page opened on.
+            field(OpenTimeGlobal; Rec.Value)
+            {
+                ApplicationArea = All;
+                Caption = 'Open Time Global';
+                Visible = OpenTimeFlag;
+            }
+
+            field(NotOpenTimeGlobal; Rec.Value)
+            {
+                ApplicationArea = All;
+                Caption = 'Not Open Time Global';
+                Visible = not OpenTimeFlag;
+            }
         }
     }
+
+    trigger OnOpenPage()
+    begin
+        // Set from the record the page opened on, so a test can control this global's value at
+        // open time without needing a later change to be observable.
+        OpenTimeFlag := Rec.Flag;
+    end;
 
     var
         HideIt: Boolean;
         LockIt: Boolean;
+        OpenTimeFlag: Boolean;
 }

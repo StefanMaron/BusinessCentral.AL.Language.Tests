@@ -2,19 +2,18 @@
 // Scope: in-scope
 // Fixtures used: TPCE Row (60257), TPCE Card (60258), Assert (60021)
 //
-// Visible, Editable and Enabled on a page control take an AL client expression, not only a
-// variable name, and TestPage.<field>.Visible() / .Editable() / .Enabled() must report what that
-// expression currently evaluates to. Each test below flips the inputs and reads the property in
-// both states, so none of them can pass against an implementation that answers a constant.
+// MEASUREMENT PASS — these three tests are written to FAIL, on purpose, so that CI reports what
+// real BC answers. Each builds a transcript of every control property it reads and compares it to
+// a placeholder, so Assert.AreEqual prints both the placeholder and the actual transcript. The
+// transcript is the measurement; the assertions that ship will be written from it.
 //
-// The shapes covered are the ones the AL compiler allows in a client expression: a page global,
-// `not` over one, `and` / `or` over two, `not` over a parenthesized group, a source-table field
-// reference, `not` over one, and a comparison. A procedure call is not among them — the compiler
-// rejects it with AL0322.
+// The question being measured: Visible, Editable and Enabled on a page control take an AL client
+// expression, and the first attempt at this suite assumed a TestPage observes such an expression
+// re-evaluated live after its inputs change. Real BC disagreed on 8 of 8 versions, including on
+// the baseline shape `Visible = HideIt`, so what a TestPage actually observes has to be measured
+// before anything asserts it.
 //
-// PlainGlobal is the baseline. It is the only shape whose property text is a single identifier,
-// and it is asserted in both states alongside NotGlobal so that a change which taught the platform
-// the harder shapes at the cost of the simple one would fail here.
+// Transcript alphabet: '1' true, '0' false, 'E' the read raised an error.
 
 codeunit 60259 "TPCE Tests"
 {
@@ -24,187 +23,118 @@ codeunit 60259 "TPCE Tests"
     var
         Assert: Codeunit Assert;
 
-    local procedure Initialize()
+    local procedure Reset()
     var
         Row: Record "TPCE Row";
     begin
         Row.DeleteAll();
+    end;
+
+    local procedure AddRow(PK: Code[10]; Value: Text[30]; Flag: Boolean)
+    var
+        Row: Record "TPCE Row";
+    begin
         Row.Init();
-        Row.PK := 'ROW1';
-        Row.Value := 'Some Value';
-        Row.Flag := false;
+        Row.PK := PK;
+        Row.Value := Value;
+        Row.Flag := Flag;
         Row.Insert();
     end;
 
-    // Baseline. A property bound to a bare page global reports that global's value, both ways.
-    [Test]
-    procedure PlainGlobal_ReportsTheGlobalsValue()
-    var
-        Card: TestPage "TPCE Card";
+    local procedure B(Value: Boolean): Text
     begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsFalse(Card.PlainGlobal.Visible(), 'Visible = HideIt must be false while HideIt is false');
-
-        Card.ToggleHide.SetValue(true);
-        Assert.IsTrue(Card.PlainGlobal.Visible(), 'Visible = HideIt must be true once HideIt is true');
-        Card.Close();
+        if Value then
+            exit('1');
+        exit('0');
     end;
 
-    // `not` over a page global is the inverse of the baseline, in both states.
-    [Test]
-    procedure NotGlobal_ReportsTheNegatedGlobal()
-    var
-        Card: TestPage "TPCE Card";
+    // Every control read in one pass, in a fixed order, so one transcript covers the whole shape
+    // matrix. Order: PlainGlobal, NotGlobal, AndGlobals, OrGlobals, NotParenthesized, RecFieldRef,
+    // NotRecFieldRef, Comparison, OpenTimeGlobal, NotOpenTimeGlobal, then NotEditable.Editable and
+    // NotEnabled.Enabled.
+    local procedure ReadAll(var Card: TestPage "TPCE Card"): Text
     begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsTrue(Card.NotGlobal.Visible(), 'Visible = not HideIt must be true while HideIt is false');
-
-        Card.ToggleHide.SetValue(true);
-        Assert.IsFalse(Card.NotGlobal.Visible(), 'Visible = not HideIt must be false once HideIt is true');
-        Card.Close();
+        exit(
+            B(Card.PlainGlobal.Visible()) +
+            B(Card.NotGlobal.Visible()) +
+            B(Card.AndGlobals.Visible()) +
+            B(Card.OrGlobals.Visible()) +
+            B(Card.NotParenthesized.Visible()) +
+            B(Card.RecFieldRef.Visible()) +
+            B(Card.NotRecFieldRef.Visible()) +
+            B(Card.Comparison.Visible()) +
+            B(Card.OpenTimeGlobal.Visible()) +
+            B(Card.NotOpenTimeGlobal.Visible()) +
+            B(Card.NotEditable.Editable()) +
+            B(Card.NotEnabled.Enabled()));
     end;
 
-    // `and` needs both operands. Three of the four input combinations are false, and the test
-    // reads two of them plus the true one, so an implementation that returned either operand
-    // alone, or a constant, fails.
+    // Measurement 1: does anything a TestPage sets after the page is open change what these
+    // properties report? Reads the whole matrix at open, then after each of the three toggles,
+    // and also reads each toggle back so a toggle that did not take is distinguishable from a
+    // property that did not re-evaluate.
     [Test]
-    procedure AndGlobals_RequireBothOperands()
+    procedure Measure_LiveUpdates()
     var
         Card: TestPage "TPCE Card";
+        T: Text;
     begin
-        Initialize();
+        Reset();
+        AddRow('ROW1', 'Some Value', false);
 
         Card.OpenEdit();
-        Assert.IsFalse(Card.AndGlobals.Visible(), 'HideIt and LockIt must be false while both are false');
+        T := 'open=' + ReadAll(Card);
 
         Card.ToggleHide.SetValue(true);
-        Assert.IsFalse(Card.AndGlobals.Visible(), 'HideIt and LockIt must be false while only HideIt is true');
+        T += ' hide=' + ReadAll(Card) + ' hideRead=' + B(Card.ToggleHide.AsBoolean());
 
         Card.ToggleLock.SetValue(true);
-        Assert.IsTrue(Card.AndGlobals.Visible(), 'HideIt and LockIt must be true once both are true');
-        Card.Close();
-    end;
-
-    // `or` needs one operand. Same three input combinations, opposite answers, which is what
-    // separates a real evaluation from one that treats every binary operator the same.
-    [Test]
-    procedure OrGlobals_NeedOnlyOneOperand()
-    var
-        Card: TestPage "TPCE Card";
-    begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsFalse(Card.OrGlobals.Visible(), 'HideIt or LockIt must be false while both are false');
-
-        Card.ToggleHide.SetValue(true);
-        Assert.IsTrue(Card.OrGlobals.Visible(), 'HideIt or LockIt must be true once HideIt is true');
-        Card.Close();
-    end;
-
-    // `not` applied to a parenthesized group, not to the first operand. With HideIt true and
-    // LockIt false, `not (HideIt or LockIt)` is false while `(not HideIt) or LockIt` would be
-    // false too, so the test also reads the both-false state where the two disagree: `not (false
-    // or false)` is true.
-    [Test]
-    procedure NotParenthesized_NegatesTheWholeGroup()
-    var
-        Card: TestPage "TPCE Card";
-    begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsTrue(Card.NotParenthesized.Visible(), 'not (HideIt or LockIt) must be true while both are false');
-
-        Card.ToggleLock.SetValue(true);
-        Assert.IsFalse(Card.NotParenthesized.Visible(), 'not (HideIt or LockIt) must be false once LockIt is true');
-        Card.Close();
-    end;
-
-    // A source-table field reference, not a page global. The control has no variable behind it;
-    // the expression reads Rec.
-    [Test]
-    procedure RecFieldRef_ReadsTheSourceRecordsField()
-    var
-        Card: TestPage "TPCE Card";
-    begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsFalse(Card.RecFieldRef.Visible(), 'Visible = Rec.Flag must be false while Flag is false');
+        T += ' lock=' + ReadAll(Card) + ' lockRead=' + B(Card.ToggleLock.AsBoolean());
 
         Card.ToggleFlag.SetValue(true);
-        Assert.IsTrue(Card.RecFieldRef.Visible(), 'Visible = Rec.Flag must be true once Flag is true');
+        T += ' flag=' + ReadAll(Card) + ' flagRead=' + B(Card.ToggleFlag.AsBoolean());
+
         Card.Close();
+
+        Assert.AreEqual('MEASURE', T, 'live-update transcript');
     end;
 
-    // `not` over a field reference. Read alongside RecFieldRef in the same states, so an
-    // implementation that resolved the field but dropped the `not` fails exactly here.
+    // Measurement 2: what do the record-driven shapes report at open time, on a row whose Flag is
+    // TRUE and whose Value is blank — the mirror of measurement 1's row. If a control property
+    // expression can read the record at all, RecFieldRef and OpenTimeGlobal answer differently
+    // here than they do above, and Comparison answers '0'.
     [Test]
-    procedure NotRecFieldRef_NegatesTheSourceRecordsField()
+    procedure Measure_OpenedOnAFlaggedRow()
     var
         Card: TestPage "TPCE Card";
+        T: Text;
     begin
-        Initialize();
+        Reset();
+        AddRow('ROW1', '', true);
 
         Card.OpenEdit();
-        Assert.IsTrue(Card.NotRecFieldRef.Visible(), 'Visible = not Rec.Flag must be true while Flag is false');
-
-        Card.ToggleFlag.SetValue(true);
-        Assert.IsFalse(Card.NotRecFieldRef.Visible(), 'Visible = not Rec.Flag must be false once Flag is true');
+        T := 'open=' + ReadAll(Card) + ' pk=' + Card.PlainGlobal.Value();
         Card.Close();
+
+        Assert.AreEqual('MEASURE', T, 'flagged-row transcript');
     end;
 
-    // A comparison against a literal. Initialize() gives Value a non-empty string, so the control
-    // starts visible; blanking Value through the page makes it false.
+    // Measurement 3: the mirror of 2 on a row whose Flag is FALSE and whose Value is not blank,
+    // read WITHOUT touching anything. Between 2 and 3, any property that differs is one the
+    // record can drive at open time; any property that does not differ is one it cannot.
     [Test]
-    procedure Comparison_EvaluatesAgainstTheLiteral()
+    procedure Measure_OpenedOnAnUnflaggedRow()
     var
         Card: TestPage "TPCE Card";
+        T: Text;
     begin
-        Initialize();
+        Reset();
+        AddRow('ROW1', 'Some Value', false);
 
         Card.OpenEdit();
-        Assert.IsTrue(Card.Comparison.Visible(), 'Visible = Rec.Value <> '''' must be true while Value is ''Some Value''');
-
-        Card.NotGlobal.SetValue('');
-        Assert.IsFalse(Card.Comparison.Visible(), 'Visible = Rec.Value <> '''' must be false once Value is blank');
+        T := 'open=' + ReadAll(Card) + ' pk=' + Card.PlainGlobal.Value();
         Card.Close();
-    end;
 
-    // The same grammar governs Editable, not only Visible.
-    [Test]
-    procedure NotGlobal_GovernsEditable()
-    var
-        Card: TestPage "TPCE Card";
-    begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsTrue(Card.NotEditable.Editable(), 'Editable = not LockIt must be true while LockIt is false');
-
-        Card.ToggleLock.SetValue(true);
-        Assert.IsFalse(Card.NotEditable.Editable(), 'Editable = not LockIt must be false once LockIt is true');
-        Card.Close();
-    end;
-
-    // And Enabled.
-    [Test]
-    procedure NotGlobal_GovernsEnabled()
-    var
-        Card: TestPage "TPCE Card";
-    begin
-        Initialize();
-
-        Card.OpenEdit();
-        Assert.IsTrue(Card.NotEnabled.Enabled(), 'Enabled = not LockIt must be true while LockIt is false');
-
-        Card.ToggleLock.SetValue(true);
-        Assert.IsFalse(Card.NotEnabled.Enabled(), 'Enabled = not LockIt must be false once LockIt is true');
-        Card.Close();
+        Assert.AreEqual('MEASURE', T, 'unflagged-row transcript');
     end;
 }
