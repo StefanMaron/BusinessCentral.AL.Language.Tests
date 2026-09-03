@@ -110,4 +110,52 @@ codeunit 60931 "Test Aggregate Permission Set"
 
         TenantPermissionSet.Delete();
     end;
+
+    [Test]
+    procedure AggregatePermissionSet_TenantRowInsertedAfterEarlierTouch_IsVisible()
+    // CLAIM: "Aggregate Permission Set" answers a Get()/FindSet() against the CURRENT state
+    // of "Tenant Permission Set", not a snapshot taken the first time anything touched the
+    // table -- a row inserted into Tenant Permission Set AFTER an earlier, unrelated touch of
+    // Aggregate Permission Set must still be visible, and a row later deleted must not remain
+    // a ghost row.
+    var
+        AggregatePermissionSetFirstTouch: Record "Aggregate Permission Set";
+        AggregatePermissionSet: Record "Aggregate Permission Set";
+        AggregatePermissionSetAfterDelete: Record "Aggregate Permission Set";
+        TenantPermissionSet: Record "Tenant Permission Set";
+        ThisModule: ModuleInfo;
+        EmptyGuid: Guid;
+        RoleIdTok: Label 'ALT TENANT AFTER', Locked = true;
+    begin
+        NavApp.GetCurrentModuleInfo(ThisModule);
+
+        // An EARLIER, unrelated touch of Aggregate Permission Set, through a separate record
+        // variable -- this is the moment a "populate once at first touch" implementation
+        // would freeze its answer.
+        if AggregatePermissionSetFirstTouch.Get(
+            AggregatePermissionSetFirstTouch.Scope::System, ThisModule.Id(), 'ALT Agg Perm Set')
+        then;
+
+        if TenantPermissionSet.Get(EmptyGuid, RoleIdTok) then
+            TenantPermissionSet.Delete();
+
+        Clear(TenantPermissionSet);
+        TenantPermissionSet."App ID" := EmptyGuid;
+        TenantPermissionSet."Role ID" := RoleIdTok;
+        TenantPermissionSet.Name := 'ALT tenant role post touch';
+        TenantPermissionSet.Assignable := true;
+        TenantPermissionSet.Insert();
+
+        Assert.IsTrue(
+            AggregatePermissionSet.Get(AggregatePermissionSet.Scope::Tenant, EmptyGuid, RoleIdTok),
+            'a Tenant Permission Set row inserted AFTER an earlier touch of Aggregate Permission Set must be visible on a later touch');
+        Assert.AreEqual(
+            'ALT tenant role post touch', AggregatePermissionSet.Name,
+            'Name must round-trip from the newly-inserted Tenant Permission Set row');
+
+        TenantPermissionSet.Delete();
+        Assert.IsFalse(
+            AggregatePermissionSetAfterDelete.Get(AggregatePermissionSetAfterDelete.Scope::Tenant, EmptyGuid, RoleIdTok),
+            'a Tenant Permission Set row deleted after being visible must not remain a ghost row in Aggregate Permission Set');
+    end;
 }
