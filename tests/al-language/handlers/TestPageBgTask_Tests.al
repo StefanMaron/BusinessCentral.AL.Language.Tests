@@ -137,25 +137,22 @@ codeunit 60793 "Test Page BgTask Tests"
         Card.Close();
     end;
 
-    // OBSERVATION PROBE, not yet an assertion (round 2): does a worker codeunit that writes
-    // DIRECTLY (no TryFunction) either fail outright, or succeed and become visible to the
-    // caller once RunPageBackgroundTask returns? Round 1 wrapped the same Insert() in a
-    // [TryFunction] local procedure and measured a DIFFERENT, unrelated restriction instead
-    // (BC 27.5 and 28.3, corpus PR #135): "Call to the function 'INSERT' is not allowed
-    // inside the call to 'RootMethodScope' when it is used as a TryFunction" -- a general
-    // restriction on TryFunction being the first call made from a freshly-dispatched root
-    // scope (a page background task's own OnRun is one), unrelated to what the write itself
-    // does. This probe's own TryFunction wraps the CALL SITE instead (an ordinary nested call
-    // from inside a ordinary [Test] procedure, not a root scope), so it does not trip that
-    // same restriction, and can observe the write's actual outcome.
+    // Negative: a worker codeunit's Insert(), called directly (no TryFunction -- round 1
+    // wrapped the write in a [TryFunction] local procedure and measured a DIFFERENT,
+    // unrelated restriction instead: "Call to the function 'INSERT' is not allowed inside the
+    // call to 'RootMethodScope' when it is used as a TryFunction", a general rule about
+    // TryFunction being the first call from a freshly-dispatched root scope, not a statement
+    // about page background tasks), must be refused by the platform's own permission-denied
+    // wording -- measured verbatim against BC 27.5 and 28.3: "Sorry, the current permissions
+    // prevented the action. (TableData 60790 Test Page BgTask Row Insert: AL Language
+    // Coverage Tests)". The row must not exist afterward -- not merely "some error was
+    // raised", the write itself must never have landed.
     [Test]
-    procedure Z_OBS_WorkerWrite_InsertOutcomeAndVisibility()
+    procedure EnqueueBackgroundTask_WorkerInsert_RefusedByReadOnlySession()
     var
         Row: Record "Test Page BgTask Row";
         Card: TestPage "Test Page BgTask Card";
         Params: Dictionary of [Text, Text];
-        ThrewText: Text;
-        VisibleAfter: Text;
     begin
         Initialize();
         Card.OpenView();
@@ -163,31 +160,23 @@ codeunit 60793 "Test Page BgTask Tests"
         Clear(Params);
         Params.Add('Op', 'Insert');
         Params.Add('No', 'WR-NEW');
-        if TryRunWriteTask(Card, Params) then
-            ThrewText := 'NO-ERROR'
-        else
-            ThrewText := GetLastErrorText();
+        Assert.IsFalse(TryRunWriteTask(Card, Params), 'a page background task worker''s Insert() must be refused');
+        Assert.ExpectedError('Sorry, the current permissions prevented the action');
 
-        if Row.Get('WR-NEW') then
-            VisibleAfter := 'FOUND'
-        else
-            VisibleAfter := 'NOT-FOUND';
-
+        Assert.IsFalse(Row.Get('WR-NEW'), 'a refused Insert() must not have landed the row');
         Card.Close();
-        Error('OBS insert-threw=>%1< visible-after=>%2<', ThrewText, VisibleAfter);
     end;
 
-    // Same probe, Modify instead of Insert against a row that already exists -- distinguishes
-    // "the write never took" (name stays 'Original') from "it committed" (name reads
-    // 'MODIFIED-BY-WORKER'), and records whatever error text (if any) came with it.
+    // Same shape, Modify against a row that already exists -- rules out "Insert specifically
+    // is refused, Modify is fine" as a narrower reading. Measured verbatim against BC 27.5
+    // and 28.3: "Sorry, the current permissions prevented the action. (TableData 60790 Test
+    // Page BgTask Row Modify: AL Language Coverage Tests)".
     [Test]
-    procedure Z_OBS_WorkerWrite_ModifyOutcomeAndVisibility()
+    procedure EnqueueBackgroundTask_WorkerModify_RefusedByReadOnlySession()
     var
         Row: Record "Test Page BgTask Row";
         Card: TestPage "Test Page BgTask Card";
         Params: Dictionary of [Text, Text];
-        ThrewText: Text;
-        NameAfter: Text;
     begin
         Initialize();
         SeedRow('WR-EXIST', 'Original', false);
@@ -196,16 +185,12 @@ codeunit 60793 "Test Page BgTask Tests"
         Clear(Params);
         Params.Add('Op', 'Modify');
         Params.Add('No', 'WR-EXIST');
-        if TryRunWriteTask(Card, Params) then
-            ThrewText := 'NO-ERROR'
-        else
-            ThrewText := GetLastErrorText();
+        Assert.IsFalse(TryRunWriteTask(Card, Params), 'a page background task worker''s Modify() must be refused');
+        Assert.ExpectedError('Sorry, the current permissions prevented the action');
 
         Row.Get('WR-EXIST');
-        NameAfter := Row.Name;
-
+        Assert.AreEqual('Original', Row.Name, 'a refused Modify() must not have changed the row');
         Card.Close();
-        Error('OBS modify-threw=>%1< name-after=>%2<', ThrewText, NameAfter);
     end;
 
     [TryFunction]
