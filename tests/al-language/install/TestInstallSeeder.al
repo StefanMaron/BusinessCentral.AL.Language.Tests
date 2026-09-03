@@ -27,6 +27,7 @@ codeunit 60618 "Install Seeder"
     trigger OnInstallAppPerCompany()
     var
         Seed: Record "Install Seed";
+        EventPublisher: Codeunit "Install Event Publisher";
     begin
         Seed.Init();
         Seed."Code" := 'COMPANY1';
@@ -37,5 +38,12 @@ codeunit 60618 "Install Seeder"
         Seed."Code" := 'COMPANY2';
         Seed."Value" := 22;
         Seed.Insert();
+
+        // Raise an integration event from inside the install trigger — the
+        // ordinary way an app lets other code contribute setup rows while it
+        // installs. Its subscriber writes to "Install Event Seed" (60832), a
+        // DIFFERENT table, so the exact-count assertions over "Install Seed"
+        // stay meaningful.
+        EventPublisher.Discover();
     end;
 }
