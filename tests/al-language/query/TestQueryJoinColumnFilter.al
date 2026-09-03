@@ -12,7 +12,7 @@
 // groups); on a plain column it is still a WHERE-style filter, evaluated against individual
 // raw JOINED rows before any grouping. A runtime SetRange/SetFilter on the SAME column still
 // REPLACES its static ColumnFilter rather than combining with it.
-codeunit 60782 "QJ Query Join ColumnFilter Tests"
+codeunit 60782 "QJ Join ColumnFilter Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;

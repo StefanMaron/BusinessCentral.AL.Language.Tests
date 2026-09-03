@@ -15,7 +15,7 @@
 //
 // Reduced from a real AL project's valuation query (assigned quantity summed per project/item,
 // joined to a ledger table to read a "Cost Amount" FlowField) that triggered this gap.
-codeunit 60789 "QJF Query Join FlowField GroupBy Tests"
+codeunit 60789 "QJF Join FF GroupBy Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
