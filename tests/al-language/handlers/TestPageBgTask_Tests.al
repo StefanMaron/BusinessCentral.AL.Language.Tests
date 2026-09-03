@@ -3,7 +3,8 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagetestpage-runpagebackgroundtask-method
 // Scope: in-scope
 // Fixtures used: Test Page BgTask Row (60790), Test Page BgTask Worker (60791),
-//                Test Page BgTask Card (60792), Assert (60021)
+//                Test Page BgTask Card (60792), Test Page BgTask WriteWorker (60794),
+//                Assert (60021)
 //
 // Page background tasks run a worker codeunit outside the AL statement that triggered them
 // and report back through Page.SetBackgroundTaskResult() / a page's OnPageBackgroundTaskCompleted
@@ -135,4 +136,84 @@ codeunit 60793 "Test Page BgTask Tests"
         Assert.ExpectedError('Test Page BgTask Worker deliberately failed for FAIL-U');
         Card.Close();
     end;
+
+    // OBSERVATION PROBE, not yet an assertion: does a WRITE the worker codeunit makes
+    // (Insert) either fail outright or land invisibly, or does it succeed and become visible
+    // to the caller's own session once RunPageBackgroundTask returns? Real BC's own platform
+    // code (NavChildSessionTaskRuntime<PageBackgroundChildSessionTask>.RunAsync) constructs
+    // the child session from NavChildSessionTask.RunInReadOnlySession, which
+    // PageBackgroundChildSessionTask never overrides -- so it defaults to the base class's
+    // `true` -- and then ends the child session's transaction with
+    // `EndTransaction(!RunInReadOnlySession)`, i.e. `EndTransaction(false)`: a rollback, not a
+    // commit. If that reading is right, either the Insert() itself is refused by a read-only
+    // session, or it "succeeds" locally and is then rolled back -- this probe distinguishes
+    // the two and records which one real BC does before any assertion is written on it.
+    [Test]
+    procedure Z_OBS_WorkerWrite_InsertOutcomeAndVisibility()
+    var
+        Row: Record "Test Page BgTask Row";
+        Card: TestPage "Test Page BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        Outcome: Text;
+        VisibleAfter: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+
+        Clear(Params);
+        Params.Add('Op', 'Insert');
+        Params.Add('No', 'WR-NEW');
+        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask WriteWorker", Params, false);
+        Results.Get('Outcome', Outcome);
+
+        if Row.Get('WR-NEW') then
+            VisibleAfter := 'FOUND'
+        else
+            VisibleAfter := 'NOT-FOUND';
+
+        Card.Close();
+        Error('OBS insert-outcome=>%1< visible-after=>%2<', Outcome, VisibleAfter);
+    end;
+
+    // Same probe, Modify instead of Insert -- distinguishes "the write never took" (name
+    // stays 'Original') from "it took locally in the child session, then rolled back" (also
+    // 'Original', but for a different reason -- Outcome tells them apart) from "it committed"
+    // (name reads 'MODIFIED-BY-WORKER').
+    [Test]
+    procedure Z_OBS_WorkerWrite_ModifyOutcomeAndVisibility()
+    var
+        Row: Record "Test Page BgTask Row";
+        Card: TestPage "Test Page BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        Outcome: Text;
+        NameAfter: Text;
+    begin
+        Initialize();
+        SeedRow('WR-EXIST', 'Original', false);
+        Card.OpenView();
+
+        Clear(Params);
+        Params.Add('Op', 'Modify');
+        Params.Add('No', 'WR-EXIST');
+        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask WriteWorker", Params, false);
+        Results.Get('Outcome', Outcome);
+
+        Row.Get('WR-EXIST');
+        NameAfter := Row.Name;
+
+        Card.Close();
+        Error('OBS modify-outcome=>%1< name-after=>%2<', Outcome, NameAfter);
+    end;
 }
+
+// CurrPage.CancelBackgroundTask is NOT covered here: it is not reachable through a TestPage
+// handle at all. AL's own compiler (the real BC language service, via al-runner's BcCompiler)
+// rejects `Card.CancelBackgroundTask(...)` against a `TestPage "Test Page BgTask Card"` variable
+// with AL0132 "'TestPage Test Page BgTask Card' does not contain a definition for
+// 'CancelBackgroundTask'" -- TestPage's generated surface exposes fields, actions and the
+// documented TestPage-only methods (OpenView/GoToRecord/Close/RunPageBackgroundTask/...), never
+// arbitrary page procedures, and CancelBackgroundTask is a plain Page-instance method, not a
+// TestPage one. This is a compile-time fact, not something a real BC service tier needs to
+// adjudicate at runtime, so there is nothing to measure -- and nothing "cheap" to add here.
