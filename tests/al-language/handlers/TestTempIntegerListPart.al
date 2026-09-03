@@ -18,7 +18,65 @@ table 60622 "Test TmpInt Host Row"
     keys { key(PK; "No.") { Clustered = true; } }
 }
 
-page 60623 "Test TmpInt Array Part"
+// Never populated -- proves a temporary-Integer part starts with zero rows.
+page 60623 "Test TmpInt Empty Part"
+{
+    PageType = ListPart;
+    SourceTable = Integer;
+    SourceTableTemporary = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field(Number; Rec.Number) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+// Self-populating: inserts its own rows in OnOpenPage, no host involvement at all.
+page 60627 "Test TmpInt SelfLoad Part"
+{
+    PageType = ListPart;
+    SourceTable = Integer;
+    SourceTableTemporary = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Group)
+            {
+                field(Number; Rec.Number) { ApplicationArea = All; }
+                field(ValueAtNumber; Values[Rec.Number]) { ApplicationArea = All; Caption = 'Value'; }
+            }
+        }
+    }
+
+    var
+        Values: array[20] of Decimal;
+
+    trigger OnOpenPage()
+    var
+        i: Integer;
+    begin
+        for i := 1 to 3 do begin
+            Values[i] := i * 10;
+            Rec.Init();
+            Rec.Number := i;
+            Rec.Insert();
+        end;
+    end;
+}
+
+// Host-pushed: the host loads rows into the part from OnAfterGetCurrRecord via
+// CurrPage.<part>.Page.<method>() -- the runner-observed trigger shape for issue #2516.
+page 60628 "Test TmpInt HostPush Part"
 {
     PageType = ListPart;
     SourceTable = Integer;
@@ -55,7 +113,7 @@ page 60623 "Test TmpInt Array Part"
     end;
 }
 
-page 60624 "Test TmpInt Host Card"
+page 60629 "Test TmpInt Host Card"
 {
     PageType = Card;
     SourceTable = "Test TmpInt Host Row";
@@ -66,7 +124,7 @@ page 60624 "Test TmpInt Host Card"
         area(Content)
         {
             field("No."; Rec."No.") { ApplicationArea = All; }
-            part(Prices; "Test TmpInt Array Part") { ApplicationArea = All; }
+            part(Prices; "Test TmpInt HostPush Part") { ApplicationArea = All; }
         }
     }
 
@@ -76,7 +134,7 @@ page 60624 "Test TmpInt Host Card"
     end;
 }
 
-codeunit 60625 "Test TmpInt ListPart"
+codeunit 60630 "Test TmpInt ListPart"
 {
     Subtype = Test;
 
@@ -88,9 +146,9 @@ codeunit 60625 "Test TmpInt ListPart"
     procedure TempIntegerPart_DirectOpen_StartsEmpty()
     // CLAIM: a TestPage over a page declaring SourceTable = Integer;
     // SourceTableTemporary = true; opens on an empty rowset -- never the platform's
-    // materialised/virtual Integer rows.
+    // materialised/virtual Integer rows (which would answer Number = -1000 first).
     var
-        Part: TestPage "Test TmpInt Array Part";
+        Part: TestPage "Test TmpInt Empty Part";
     begin
         Initialize();
 
@@ -101,16 +159,16 @@ codeunit 60625 "Test TmpInt ListPart"
 
     [Test]
     procedure TempIntegerPart_SelfLoaded_FirstRowIsNumberOne()
-    // CLAIM: rows the temporary-Integer page inserts itself are the ONLY rows visible,
-    // and Number/array-indexed columns read back exactly what was inserted.
+    // CLAIM: rows the temporary-Integer page inserts itself (in its own OnOpenPage) are
+    // the ONLY rows visible, and Number/array-indexed columns read back exactly what was
+    // inserted -- Number starts at 1, not the platform's virtual-table Number = -1000.
     var
-        Part: TestPage "Test TmpInt Array Part";
+        Part: TestPage "Test TmpInt SelfLoad Part";
     begin
         Initialize();
 
         Part.OpenView();
-        Part.Load(3);
-        Assert.IsTrue(Part.First(), 'part must have rows after Load');
+        Assert.IsTrue(Part.First(), 'part must have rows after its own OnOpenPage runs');
         Assert.AreEqual('1', Part.Number.Value(), 'first row Number');
         Assert.AreEqual('10', Part.ValueAtNumber.Value(), 'first row Values[Number]');
         Part.Close();
