@@ -12,6 +12,8 @@ No network, no token, about a second.
 """
 import importlib.util
 import os
+import contextlib
+import io
 import subprocess
 import sys
 import tempfile
@@ -66,8 +68,11 @@ def build(root: Path):
     git("checkout", "-q", "master", cwd=root)
 
 
-def run_check(root: Path, refs: dict, pr_number: str) -> int:
-    """Invoke the real main() with the GitHub API and fetch stubbed out."""
+def run_check(root: Path, refs: dict, pr_number: str) -> tuple[int, str]:
+    """Invoke the real main() with the GitHub API and fetch stubbed out.
+
+    Returns (exit code, captured stdout). See the capture note below.
+    """
     prs = [{"number": n, "sha": "0" * 40, "title": f"branch {r}",
             "author": "t", "draft": False, "ref": r} for n, r in refs.items()]
     saved_open, saved_fetch = xpr.open_prs, xpr.fetch_pr
@@ -79,7 +84,17 @@ def run_check(root: Path, refs: dict, pr_number: str) -> int:
         os.environ["GITHUB_REPOSITORY"] = "o/r"
         os.environ["BASE_REF"] = "master"
         os.environ["PR_NUMBER"] = pr_number
-        return xpr.main()
+        # Capture rather than pass through. The detector reports a collision with
+        # `::error::`, which is a GitHub workflow COMMAND, not just text: every fixture
+        # collision this self-test deliberately provokes was being hoisted into the run
+        # summary as a real object-id conflict against PRs #1 and #2, on runs where the
+        # actual check passed. The output is still printed on an unexpected result below,
+        # with the `::` prefixes defanged so a genuine self-test failure stays readable
+        # without re-entering the annotation channel.
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = xpr.main()
+        return code, buf.getvalue()
     finally:
         os.chdir(cwd)
         xpr.open_prs, xpr.fetch_pr = saved_open, saved_fetch
@@ -108,9 +123,10 @@ def main() -> int:
         ]
         for label, refs, pr, expected in cases:
             print(f"\n--- {label} (expect exit {expected}) ---")
-            got = run_check(root, refs, pr)
+            got, out = run_check(root, refs, pr)
             if got != expected:
-                failures.append(f"{label}: expected exit {expected}, got {got}")
+                defanged = out.replace("::", "__")
+                failures.append(f"{label}: expected exit {expected}, got {got}\n{defanged}")
 
     print("\n" + "=" * 78)
     if failures:
