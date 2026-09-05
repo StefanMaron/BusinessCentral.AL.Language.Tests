@@ -164,8 +164,22 @@ jobs:
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
-      test_app_dirs:        "tests/al-language"
-      codeunit_range:       "60000..60999"
+      # TWO test apps, and the second one exists ONLY for its target. Microsoft declares a
+      # number of system tables Scope = OnPrem; an AL object in a Target = Cloud app cannot
+      # name them (AL0296) and the RecordRef way round is refused at runtime as well, so
+      # those surfaces cannot be adjudicated from tests/al-language at all. Both refusals are
+      # decided by the calling app's compilation target and nothing else, so one small
+      # Target = OnPrem app is enough to reach them. The Cloud app keeps its meaning.
+      #
+      # Order matters: they compile and publish in the order listed, and each app gets every
+      # .app built so far copied into its .alpackages, so al-language-onprem can depend on
+      # al-language for the shared Assert fixture.
+      test_app_dirs: |
+        tests/al-language
+        tests/al-language-onprem
+      # One range per test app. The runner is invoked once per app with this same range, so
+      # both have to be in it; each app's own app.json idRanges is what actually bounds it.
+      codeunit_range:       "60000..60999|61200..61299"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
 
     # Optional: supply a base64-encoded BC developer license.
