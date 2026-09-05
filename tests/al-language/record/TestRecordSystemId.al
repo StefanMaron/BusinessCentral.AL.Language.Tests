@@ -253,6 +253,80 @@ codeunit 60061 "Test Record SystemId"
         Assert.AreEqual(OriginalId, Fetched.SystemId, 'ModifyAll on an ordinary field must not change the row''s SystemId');
     end;
 
+    [Test]
+    procedure Record_Insert_SystemIdOfADeletedRow_IsAcceptedAgain()
+    // CLAIM: the SystemId uniqueness constraint is over the rows that currently EXIST, not
+    // over every id the table has ever held. Deleting a row frees its SystemId, so a later
+    // Insert carrying that same id succeeds and resolves to the NEW row.
+    //
+    // The pair with Record_Insert_DuplicateSystemId_Refused above is the whole point: same
+    // two inserts, same id, and the only difference is the Delete in between. One must be
+    // refused and the other must not, so an implementation that answered the same way to both
+    // -- refusing always, or accepting always -- fails one of them.
+    var
+        First: Record "ALT Universal";
+        Second: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        ReusedId: Guid;
+    begin
+        Initialize();
+        ReusedId := CreateGuid();
+        First."Entry No." := 1;
+        First."Integer Field" := 1;
+        First.SystemId := ReusedId;
+        First.Insert(false, true);
+
+        First.Get(1);
+        First.Delete();
+
+        Second."Entry No." := 2;
+        Second."Integer Field" := 2;
+        Second.SystemId := ReusedId;
+        Second.Insert(false, true);
+
+        Clear(Fetched);
+        Assert.IsTrue(Fetched.GetBySystemId(ReusedId), 'a deleted row''s SystemId must be usable again, and must resolve after the re-insert');
+        Assert.AreEqual(2, Fetched."Entry No.", 'GetBySystemId must return the row that holds the id NOW, not the deleted one');
+        Assert.AreEqual(2, Fetched."Integer Field", 'the re-inserted row''s own field values must be the ones that come back');
+    end;
+
+    [Test]
+    procedure Record_Insert_SystemIdFreedByDeleteAll_IsAcceptedAgain()
+    // CLAIM: the same holds when the rows go away in bulk rather than one at a time. Stated
+    // separately because DeleteAll is a different platform path from Delete, and a runtime
+    // that tracked live SystemIds could plausibly maintain that tracking on one and not the
+    // other -- which would show up here and nowhere else.
+    var
+        Rec: Record "ALT Universal";
+        Reused: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        ReusedId: Guid;
+        i: Integer;
+    begin
+        Initialize();
+        for i := 1 to 5 do begin
+            Rec.Init();
+            Rec."Entry No." := i;
+            Rec."Integer Field" := i;
+            Rec.SystemId := CreateGuid();
+            Rec.Insert(false, true);
+            if i = 3 then
+                ReusedId := Rec.SystemId;
+        end;
+
+        Rec.Reset();
+        Rec.DeleteAll();
+
+        Reused."Entry No." := 99;
+        Reused."Integer Field" := 99;
+        Reused.SystemId := ReusedId;
+        Reused.Insert(false, true);
+
+        Clear(Fetched);
+        Assert.IsTrue(Fetched.GetBySystemId(ReusedId), 'a SystemId freed by DeleteAll must be usable again');
+        Assert.AreEqual(99, Fetched."Entry No.", 'GetBySystemId must return the re-inserted row');
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
