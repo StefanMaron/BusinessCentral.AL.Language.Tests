@@ -15,7 +15,14 @@
 //   * the row count                  -- D1 has 4 lines, and no answer is 4
 //   * "skip blank/zero source rows"  -- D4 is three zero rows plus one 10, so min is 0 and
 //                                       the average is 2.5, not 10
-//   * integer division               -- 125/4 = 31.25 and 21/4 = 5.25, neither an integer
+//   * integer division               -- 125/4 = 31.25 and 10/4 = 2.5, neither an integer
+//
+// One further BC rule, measured by this file rather than assumed: a FlowField and the source
+// field its CalcFormula aggregates must have the SAME type. A Decimal FlowField averaging an
+// Integer source compiles and publishes, then errors when it is calculated. That is why the
+// Integer-source average is pinned through an Integer FlowField ("Average Quantity Int") and
+// the mistyped Decimal one ("Average Quantity") is only ever reached through
+// Record_CalcFields_Average_FlowFieldTypeDiffersFromSource_Throws.
 //
 // Seeded data, once, in Initialize():
 //
@@ -193,28 +200,73 @@ codeunit 60442 "CFM Tests"
         CfmHeader.Get('D1');
 
         // [WHEN]
-        CfmHeader.CalcFields("Average Amount", "Average Quantity", "Total Amount", "Line Count");
+        CfmHeader.CalcFields("Average Amount", "Average Quantity Int", "Total Amount", "Line Count");
 
-        // [THEN] 31.25 is not the sum, not the count, and not an integer -- so an
+        // [THEN] 31.25 is not the sum (125), not the count (4), and not an integer -- so an
         // implementation that truncates, or that returns the sum, fails here.
         Assert.AreEqual(31.25, CfmHeader."Average Amount",
             'average() must be the sum divided by the matching row count, without truncating');
 
-        // [THEN] An INTEGER source averaged into a Decimal FlowField: 21 / 4 = 5.25, not 5.
-        Assert.AreEqual(5.25, CfmHeader."Average Quantity",
-            'average() over an Integer source must not be integer division');
+        // [THEN] An INTEGER source, averaged into the Integer FlowField BC's same-type rule
+        // requires: the quantities are 3, 4, 6, 8, so this is 5 -- not the sum (21), not the
+        // count (4), not the minimum (3) and not the maximum (8). It does NOT settle whether
+        // the fractional part is truncated or rounded; 5.25 gives 5 both ways, and a Decimal
+        // FlowField over an Integer source -- the shape that would settle it -- is exactly what
+        // BC refuses (see Record_CalcFields_Average_FlowFieldTypeDiffersFromSource_Throws).
+        Assert.AreEqual(5, CfmHeader."Average Quantity Int",
+            'average() over an Integer source must be the mean, not the sum or the count');
 
         // [THEN] D4: the denominator counts the three zero rows, so 10 / 4 = 2.5, not 10 / 1.
+        // This is the claim the whole test exists for, and the Decimal source keeps it exact.
         CfmHeader.Get('D4');
-        CfmHeader.CalcFields("Average Amount");
+        CfmHeader.CalcFields("Average Amount", "Average Quantity Int");
         Assert.AreEqual(2.5, CfmHeader."Average Amount",
             'average() must divide by every matching row, including zero-valued ones');
 
+        // [THEN] The same on the Integer source: quantities 1, 0, 0, 0 average to 0.25, which
+        // the Integer field holds as 0. An implementation that skipped the three zero rows
+        // would answer 1.
+        Assert.AreEqual(0, CfmHeader."Average Quantity Int",
+            'average() over an Integer source must divide by every matching row, zeros included');
+
         // [THEN] One matching row averages to its own value.
         CfmHeader.Get('D2');
-        CfmHeader.CalcFields("Average Amount");
+        CfmHeader.CalcFields("Average Amount", "Average Quantity Int");
         Assert.AreEqual(999, CfmHeader."Average Amount",
             'average() over one matching row must return that row''s value');
+        Assert.AreEqual(99, CfmHeader."Average Quantity Int",
+            'average() over one matching Integer row must return that row''s Quantity');
+    end;
+
+    [Test]
+    procedure Record_CalcFields_Average_FlowFieldTypeDiffersFromSource_Throws()
+    var
+        CfmHeader: Record "CFM Header";
+        ErrorText: Text;
+    begin
+        // [GIVEN] "Average Quantity" is a DECIMAL FlowField whose CalcFormula averages the
+        // INTEGER "CFM Line".Quantity. The AL compiler accepts it and the extension publishes
+        // with it, so this refusal is not a compile-time diagnostic -- it only appears when the
+        // aggregate is actually calculated.
+        Initialize();
+        CfmHeader.Get('D1');
+
+        // [GIVEN] The precondition that makes the refusal about the TYPES and nothing else:
+        // averaging that same Integer source into an Integer FlowField works, and gives 5.
+        CfmHeader.CalcFields("Average Quantity Int");
+        Assert.AreEqual(5, CfmHeader."Average Quantity Int",
+            'precondition: the correctly typed average over the same source must calculate');
+
+        // [WHEN] The mistyped FlowField is calculated over D1's four lines -- real rows, so
+        // this is not an empty-source-set short circuit.
+        asserterror CfmHeader.CalcFields("Average Quantity");
+
+        // [THEN] BC refuses, and the message names both fields, both tables and both types.
+        ErrorText := GetLastErrorText();
+        Assert.ExpectedError('The following fields must have the same type');
+        Assert.ExpectedMessage('Field: Average Quantity <-- Quantity', ErrorText);
+        Assert.ExpectedMessage('Table: CFM Header <-- CFM Line', ErrorText);
+        Assert.ExpectedMessage('Type: Decimal <-- Integer', ErrorText);
     end;
 
     [Test]
