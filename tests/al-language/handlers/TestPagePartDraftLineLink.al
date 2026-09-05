@@ -28,11 +28,14 @@
 /// fails on the key rather than on anything the test is about.
 ///
 /// THE CLAIMS
-///   * Reading the draft line answers blank in the linked column too. The link constrains
-///     which rows the part SHOWS; it does not pre-fill the blank line the client offers. (The
-///     "Line No." 0 that "PKFL Tests" already skips over says the same thing from the other
-///     side -- a draft line that had been through the platform's new-record step would carry
-///     an AutoSplitKey number, not a zero.)
+///   * Reading the draft line answers with the SubPageLink's value in the linked column, and
+///     blank elsewhere. This is the one claim in the file that a service tier corrected: it was
+///     written as "blank in the linked column too" and all 8 BC legs answered 'H1'
+///     (run 33995429394). The linked field is the first field of the line table's primary key,
+///     which is exactly the set RecordImplementation.InitRecordFromFilters copies a filter
+///     onto -- so the client fills the blank line's key from the part's own filter. Codeunit
+///     60648 "PKFL Tests" shows the other side: a link on a NON-key field leaves it blank
+///     there.
 ///   * Writing to it does go through that step: the row that appears carries the link's
 ///     value, and the typed field's OnValidate ALREADY SEES it. "Header Seen By Validate" is
 ///     what separates those two -- a row whose key were stamped after the validate would
@@ -112,10 +115,36 @@ codeunit 60996 "TPDL Tests"
         exit(Line.Count());
     end;
 
-    // CLAIM: the draft line of a LINKED part reads blank in the linked column. The link
-    // decides which rows the part shows; it does not pre-fill the blank line.
+    // Positions a card on H1 and walks its part onto the draft line, so the four read tests
+    // below differ only in the column they then read. Each is its own [Test] on purpose: a
+    // single procedure stops at its first failing assertion, so one wrong expectation hides
+    // whatever the remaining columns would have said. That cost a whole CI cycle the first
+    // time this file ran (all 8 legs reported only the linked column and nothing else).
+    local procedure OpenH1AndStandOnTheDraftLine(var Card: TestPage "TPDL Card")
+    begin
+        OpenCardOn('H1', Card);
+        Assert.IsTrue(Card.Lines.First(), 'the part must land on H1''s seeded line');
+        Assert.AreEqual('H1', Card.Lines.HeaderNo.Value(),
+            'the seeded data row must read the header it belongs to');
+        Assert.AreEqual('seeded', Card.Lines.Descr.Value(),
+            'the seeded data row must read its own description');
+        Assert.IsTrue(Card.Lines.Next(),
+            'Next() past the part''s last data row must land on the part''s draft line');
+    end;
+
+    // MEASURED, and it corrected this file's first expectation. The draft line does NOT read
+    // blank in the linked column: it reads the SubPageLink's value. Measured on all 8 BC legs
+    // (run 33995429394 reported Expected:<> Actual:<H1> against the original "must read blank"
+    // wording), so the client fills the blank line's key from the part's own filter before
+    // anyone types into it.
+    //
+    // That matches the rule BC applies to a row New() starts --
+    // RecordImplementation.InitRecordFromFilters copies a single-valued filter onto a field
+    // only when the field is part of the primary key -- and "Header No." is the first field of
+    // "TPDL Line"'s key. Codeunit 60648 "PKFL Tests" is the other side of it: there the linked
+    // field is NOT in the key, and the part's draft row shows it blank.
     [Test]
-    procedure LinkedPart_DraftLine_ReadsBlankInTheLinkedColumn()
+    procedure LinkedPart_DraftLine_ReadsTheLinkValueInTheLinkedKeyColumn()
     var
         Card: TestPage "TPDL Card";
     begin
@@ -123,21 +152,75 @@ codeunit 60996 "TPDL Tests"
         AddLine('H1', 10000, 'seeded');
         AddLine('H2', 10000, 'foreign');
 
-        OpenCardOn('H1', Card);
+        OpenH1AndStandOnTheDraftLine(Card);
 
-        Assert.IsTrue(Card.Lines.First(), 'the part must land on H1''s seeded line');
         Assert.AreEqual('H1', Card.Lines.HeaderNo.Value(),
-            'the seeded data row must read the header it belongs to');
-        Assert.AreEqual('seeded', Card.Lines.Descr.Value(),
-            'the seeded data row must read its own description');
+            'the draft line must read the SubPageLink''s value in the linked primary-key column');
 
-        Assert.IsTrue(Card.Lines.Next(),
-            'Next() past the part''s last data row must land on the part''s draft line');
-        Assert.AreEqual('', Card.Lines.HeaderNo.Value(),
-            'the draft line must read blank in the column the SubPageLink constrains, not the linked value');
-        Assert.AreEqual('', Card.Lines.Descr.Value(), 'the draft line must read blank');
+        Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
+        Card.Close();
+    end;
+
+    // The other half of the same claim, and what stops the one above from being read as "the
+    // draft line shows the row you would get". A column the link does not constrain is blank.
+    [Test]
+    procedure LinkedPart_DraftLine_ReadsBlankInAnUnlinkedColumn()
+    var
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenH1AndStandOnTheDraftLine(Card);
+
+        Assert.AreEqual('', Card.Lines.Descr.Value(),
+            'the draft line must read blank in a column the SubPageLink does not constrain');
+
+        Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
+        Card.Close();
+    end;
+
+    // NOT YET MEASURED. Standing on the draft line is not the same as starting a row, so the
+    // page's OnNewRecord should not have run for it -- the three write tests below show that
+    // trigger DOES run once someone types. If this arm fails with 'NEWREC', the client runs the
+    // whole new-record step when the line becomes current rather than when it is written to,
+    // and "Set By OnNewRecord" is where that shows.
+    [Test]
+    procedure LinkedPart_DraftLine_HasNotRunTheOnNewRecordTrigger()
+    var
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenH1AndStandOnTheDraftLine(Card);
+
         Assert.AreEqual('', Card.Lines.SetByOnNewRecord.Value(),
-            'the draft line has not been through the platform''s new-record step yet, so OnNewRecord must not have run for it');
+            'standing on the draft line must not run the page''s OnNewRecord trigger');
+
+        Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
+        Card.Close();
+    end;
+
+    // NOT YET MEASURED, and the companion question to the one above: AutoSplitKey is part of
+    // saving a row, so the draft line should still show 0 rather than the number the row would
+    // get. Codeunit 60648's part walk reads "Line No." 0 on its own draft row, but that part
+    // does not set AutoSplitKey, so it does not answer this. "TPDL Lines" does.
+    [Test]
+    procedure LinkedPart_DraftLine_ReadsZeroInTheAutoSplitKeyColumn()
+    var
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenH1AndStandOnTheDraftLine(Card);
+
+        Assert.AreEqual('0', Card.Lines.LineNo.Value(),
+            'the draft line must show 0 in the AutoSplitKey column -- the number is assigned when the row is saved, not when the blank line is shown');
 
         Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
         Card.Close();
