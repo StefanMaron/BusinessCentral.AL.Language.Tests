@@ -6,8 +6,15 @@
 // answer here — but a relation that carries one must still answer, and that is the case
 // nothing in this corpus covered.
 //
-// The BC-side answers asserted here are concrete table ids (60480, 60030, 225, 0), never
-// "non-zero", so an implementation that answered a fixed value could not pass.
+// A target may also be NAMESPACE-QUALIFIED -- Base Application writes
+// `Microsoft.Manufacturing.Capacity."Capacity Ledger Entry"` -- and in AL a namespace organises
+// source rather than the name a relation resolves by, so the qualified form names the same table
+// as the bare one. The last three tests pin that, on Base Application's own fields, in both the
+// shape where the last name part is the table and the shape where it is a field.
+//
+// The BC-side answers asserted here are concrete table ids (60480, 60030, 225, 5832, 99000851,
+// 2000000058, 0), never "non-zero", so an implementation that answered a fixed value could not
+// pass.
 
 codeunit 60482 "Test FieldRef Relation"
 {
@@ -209,5 +216,81 @@ codeunit 60482 "Test FieldRef Relation"
 
         Assert.AreEqual('P-SAME', Child."Where Field Ref",
             'a parent row inside the where() filter must be accepted and stored');
+    end;
+
+    [Test]
+    procedure FieldRef_Relation_NamespaceQualifiedTarget_ReturnsRelatedTableId()
+    var
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        ItemReg: Record "Item Register";
+    begin
+        Initialize();
+
+        // A TableRelation may name its target through the target's NAMESPACE, and Base
+        // Application does:
+        //   Item Register."From Capacity Entry No."
+        //     = Microsoft.Manufacturing.Capacity."Capacity Ledger Entry"
+        // The namespace is a source-organisation device; object names are global, so the
+        // qualified name means the same table as the bare one and Relation must answer that
+        // table's id. Nothing in this corpus covered a target with more than two name parts.
+        RecRef.Open(Database::"Item Register");
+        FldRef := RecRef.Field(ItemReg.FieldNo("From Capacity Entry No."));
+
+        Assert.AreEqual(
+            Database::"Capacity Ledger Entry", FldRef.Relation(),
+            'a TableRelation naming Microsoft.Manufacturing.Capacity."Capacity Ledger Entry" ' +
+            'must answer that table id (5832)');
+    end;
+
+    [Test]
+    procedure FieldRef_Relation_NamespaceQualifiedTargetNamingAField_ReturnsRelatedTableId()
+    var
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        InvtSetup: Record "Inventory Setup";
+    begin
+        Initialize();
+
+        // The other namespace-qualified shape, and it disagrees with the one above about what
+        // the LAST name part means:
+        //   Inventory Setup."Current Demand Forecast"
+        //     = Microsoft.Manufacturing.Forecast."Production Forecast Name".Name
+        // Here the last part is the FIELD and the last-but-one is the table, where in the test
+        // above the last part IS the table. Asserting both, with different expected ids, is
+        // what stops a reading that always takes the last part one way from passing.
+        RecRef.Open(Database::"Inventory Setup");
+        FldRef := RecRef.Field(InvtSetup.FieldNo("Current Demand Forecast"));
+
+        Assert.AreEqual(
+            Database::"Production Forecast Name", FldRef.Relation(),
+            'a TableRelation naming Microsoft.Manufacturing.Forecast."Production Forecast Name".Name ' +
+            'must answer the TABLE id (99000851), not the field');
+    end;
+
+    [Test]
+    procedure FieldRef_Relation_NamespaceQualifiedTargetWithWhere_ReturnsRelatedTableId()
+    var
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        ReqLine: Record "Requisition Line";
+    begin
+        Initialize();
+
+        // A namespace-qualified target narrowed by a where() clause:
+        //   Requisition Line."Demand Type"
+        //     = System.Reflection.AllObjWithCaption."Object ID" where("Object Type" = const(Table))
+        // The where() narrows which ROWS are valid and does not change the answer, exactly as
+        // FieldRef_Relation_RelationWithWhereFieldLink_ReturnsRelatedTableId establishes for the
+        // unqualified case — so this pins that the two features compose rather than one
+        // cancelling the other. The target is a virtual system table, which also keeps the claim
+        // off Base Application's own object numbering.
+        RecRef.Open(Database::"Requisition Line");
+        FldRef := RecRef.Field(ReqLine.FieldNo("Demand Type"));
+
+        Assert.AreEqual(
+            Database::AllObjWithCaption, FldRef.Relation(),
+            'a namespace-qualified target narrowed by where() must still answer the related ' +
+            'table id (2000000058)');
     end;
 }
