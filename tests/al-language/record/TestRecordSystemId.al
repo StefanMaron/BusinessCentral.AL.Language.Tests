@@ -174,6 +174,85 @@ codeunit 60061 "Test Record SystemId"
         Assert.AreEqual(42, Fetched."Integer Field", 'GetBySystemId after Modify-after-Get must return the modified field value');
     end;
 
+    [Test]
+    procedure Record_ModifyAll_OnSystemId_Fails()
+    // CLAIM: ModifyAll cannot target the SystemId field. The platform refuses the whole
+    // statement with an error rather than updating the rows and rather than quietly
+    // ignoring the field, so no row's SystemId is changed and the other fields are not
+    // updated either.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        OriginalId: Guid;
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 7;
+        Rec.Insert(true);
+        OriginalId := Rec.SystemId;
+        // Make the row durable first. The refused ModifyAll raises an error, and an error
+        // rolls the write transaction back to the last commit point — so without this the
+        // row read below is gone because of the rollback, and the test could not tell
+        // "ModifyAll left the SystemId alone" apart from "there is no row any more".
+        Commit();
+
+        Rec.Reset();
+        asserterror Rec.ModifyAll(SystemId, CreateGuid());
+        Assert.ExpectedError('cannot change the value of the SystemId field');
+
+        Clear(Fetched);
+        Fetched.Get(1);
+        Assert.AreEqual(OriginalId, Fetched.SystemId, 'A refused ModifyAll must leave the stored SystemId untouched');
+        Assert.IsTrue(Fetched.GetBySystemId(OriginalId), 'The original SystemId must still resolve after a refused ModifyAll');
+    end;
+
+    [Test]
+    procedure Record_ModifyAll_OnTemporarySystemId_Fails()
+    // CLAIM: the refusal is a property of the ModifyAll statement, not of the storage
+    // behind it — a temporary record refuses it the same way.
+    var
+        TempRec: Record "ALT Universal" temporary;
+        OriginalId: Guid;
+    begin
+        Initialize();
+        TempRec."Entry No." := 1;
+        TempRec.Insert(true);
+        OriginalId := TempRec.SystemId;
+
+        TempRec.Reset();
+        asserterror TempRec.ModifyAll(SystemId, CreateGuid());
+        Assert.ExpectedError('cannot change the value of the SystemId field');
+
+        TempRec.Get(1);
+        Assert.AreEqual(OriginalId, TempRec.SystemId, 'A refused ModifyAll must leave a temporary row''s SystemId untouched');
+    end;
+
+    [Test]
+    procedure Record_ModifyAll_OnOrdinaryField_SucceedsAndKeepsSystemId()
+    // Negative control for the two tests above. ModifyAll itself must still work: an
+    // implementation that refused every ModifyAll, or one that rewrote SystemId on an
+    // ordinary bulk update, both fail here. Asserts the concrete updated value, so an
+    // implementation that silently did nothing fails too.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        OriginalId: Guid;
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 7;
+        Rec.Insert(true);
+        OriginalId := Rec.SystemId;
+
+        Rec.Reset();
+        Rec.ModifyAll("Integer Field", 42);
+
+        Clear(Fetched);
+        Fetched.Get(1);
+        Assert.AreEqual(42, Fetched."Integer Field", 'ModifyAll on an ordinary field must update it to 42');
+        Assert.AreEqual(OriginalId, Fetched.SystemId, 'ModifyAll on an ordinary field must not change the row''s SystemId');
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
