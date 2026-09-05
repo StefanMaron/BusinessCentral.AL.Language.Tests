@@ -273,6 +273,40 @@ codeunit 60324 "TSPL Tests"
         Card.Close();
     end;
 
+    // ---------------------------------------------------------------------------------
+    // THE RULE THE THREE TESTS BELOW PIN, so nobody has to re-derive it from the failures.
+    //
+    // BC copies a SubPageLink onto the row New() starts only when the linked field is part
+    // of the PART TABLE's PRIMARY KEY. Not "because it is a field(...) link" and not
+    // "because the value is a constant" -- BC does not look at the link kind at all.
+    //
+    // The gate is RecordImplementation.InitRecordFromFilters (Ncl 28.1, decompiled). A
+    // page's SubPageLink lands on the part's record as ordinary filters; that method walks
+    // them and copies one onto the new record only when the combined filter on the field is
+    // FilterExpressionType.Equal -- exactly one value -- AND one of:
+    //
+    //   * the field is part of the primary key (NCLMetaField.FieldIsPartOfPrimaryKey), or
+    //   * the page sets PopulateAllFields, which is the includeNonPrimaryKeyFields argument
+    //     NavForm.NewRecordAsync reads from MasterPage.PageProperties.SourceObject, or
+    //   * the caller names the field's filter group in
+    //     includeNonPrimaryKeyFieldsForFilterGroups.
+    //
+    // NavForm.NewRecordAsync(bool) and NavForm.NewRecord(bool) both pass
+    // Array.Empty<int>() for that last one, and the params int[] overload has no caller
+    // inside Ncl, so through a TestPage the third route never opens and it comes down to
+    // key membership.
+    //
+    // The visible consequence, if you meet it before you meet this comment: a New() through
+    // a part whose const(...) names a NON-key field produces a row outside that part's own
+    // filter, and saving it makes BC report "The view is filtered, and the entry is outside
+    // the filter. Some actions may not work." That message is Lang.RowOutsideFilter, raised
+    // by NavBindingManager.HandleOutsideOfFilter in Microsoft.Dynamics.Nav.Client.UI.dll on
+    // DataAccessOperation.Insert / Modify / Rename only -- OnNewRecord and CloseForm are
+    // explicitly excluded -- so seeing it means the row really was inserted and really was
+    // outside the filter, not that New() itself was rejected. It is why these three tests
+    // read the row where New() left it instead of saving it.
+    // ---------------------------------------------------------------------------------
+
     // CLAIM: New() through a part stamps the field(...) half of the link -- a primary-key
     // field -- onto the new row, and leaves a const(...) on a NON-key field untouched, so
     // Kind stays at its Init() value of Comment rather than the linked Attachment. The row
