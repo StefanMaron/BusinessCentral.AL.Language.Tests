@@ -22,7 +22,16 @@ page 60997 "TPDL Lines"
                 field(LineNo; Rec."Line No.") { ApplicationArea = All; }
                 field(Descr; Rec.Descr) { ApplicationArea = All; }
                 field(HeaderSeen; Rec."Header Seen By Validate") { ApplicationArea = All; }
+                field(SetByOnNewRecord; Rec."Set By OnNewRecord") { ApplicationArea = All; }
             }
         }
     }
+
+    // The page's own OnNewRecord. It fires for New(); whether it also fires when a row is
+    // started by typing into the draft line is the second thing this fixture measures -- the
+    // draft line becoming a record is either the same platform step New() runs, or it is not.
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Rec."Set By OnNewRecord" := 'NEWREC';
+    end;
 }

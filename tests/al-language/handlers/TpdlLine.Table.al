@@ -33,6 +33,9 @@ table 60997 "TPDL Line"
             end;
         }
         field(4; "Header Seen By Validate"; Code[20]) { }
+        // Written only by the part page's OnNewRecord trigger, so a test can tell whether the
+        // platform's new-record step ran for the row at all.
+        field(5; "Set By OnNewRecord"; Code[20]) { }
     }
 
     keys

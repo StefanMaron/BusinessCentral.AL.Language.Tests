@@ -40,6 +40,9 @@
 ///   * The same holds when the draft line was reached by walking off the end of existing
 ///     data (First() then Next()), not only when the part opened empty, and when nothing
 ///     positioned the part at all.
+///   * The step that creates it is the platform's own new-record step, not a bare insert: the
+///     part page's OnNewRecord trigger runs for a row started on the draft line exactly as it
+///     does for New(). "Set By OnNewRecord" is the witness.
 ///   * A promoted draft line does not collide with the rows already there: AutoSplitKey runs
 ///     for it, so its "Line No." lands past the last existing line rather than at 0.
 ///   * Walking onto the draft line of a linked part and leaving it untouched still writes
@@ -133,6 +136,8 @@ codeunit 60996 "TPDL Tests"
         Assert.AreEqual('', Card.Lines.HeaderNo.Value(),
             'the draft line must read blank in the column the SubPageLink constrains, not the linked value');
         Assert.AreEqual('', Card.Lines.Descr.Value(), 'the draft line must read blank');
+        Assert.AreEqual('', Card.Lines.SetByOnNewRecord.Value(),
+            'the draft line has not been through the platform''s new-record step yet, so OnNewRecord must not have run for it');
 
         Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
         Card.Close();
@@ -171,6 +176,8 @@ codeunit 60996 "TPDL Tests"
             'the row started on the draft line must carry the SubPageLink''s value');
         Assert.AreEqual('H1', Line."Header Seen By Validate",
             'the link''s value must already be on the row when the typed field''s OnValidate runs, not stamped afterwards');
+        Assert.AreEqual('NEWREC', Line."Set By OnNewRecord",
+            'a row started by typing into the draft line must go through the page''s OnNewRecord, the same step New() runs');
     end;
 
     // The same claim with NOTHING positioning the part first -- no New(), no First(). This is
@@ -201,6 +208,8 @@ codeunit 60996 "TPDL Tests"
             'the row started on the draft line must carry the SubPageLink''s value');
         Assert.AreEqual('H1', Line."Header Seen By Validate",
             'the link''s value must already be on the row when the typed field''s OnValidate runs');
+        Assert.AreEqual('NEWREC', Line."Set By OnNewRecord",
+            'a row started by typing into the draft line must go through the page''s OnNewRecord');
     end;
 
     // The draft line reached by WALKING off the end of existing data, not by opening empty.
@@ -236,6 +245,8 @@ codeunit 60996 "TPDL Tests"
             'the row started on the draft line must carry the SubPageLink''s value');
         Assert.AreEqual('H1', Line."Header Seen By Validate",
             'the link''s value must already be on the row when the typed field''s OnValidate runs');
+        Assert.AreEqual('NEWREC', Line."Set By OnNewRecord",
+            'a row started by typing into the draft line must go through the page''s OnNewRecord');
         Assert.IsTrue(Line."Line No." > 10000,
             'AutoSplitKey must number the promoted draft line past the line already there, not at 0');
 
@@ -246,6 +257,8 @@ codeunit 60996 "TPDL Tests"
         Assert.AreEqual('seeded', Line.Descr, 'the seeded line must keep its own description');
         Assert.AreEqual('', Line."Header Seen By Validate",
             'the seeded line was never written through the page, so its witness field must stay blank');
+        Assert.AreEqual('', Line."Set By OnNewRecord",
+            'the seeded line was never started through the page, so OnNewRecord must not have touched it');
     end;
 
     // The linked case of codeunit 60743's NewRowLine_LeftUntouched_InsertsNothing: walking
