@@ -190,6 +190,57 @@ codeunit 60290 "Test Metadata Perm. Set"
         Assert.AreEqual('LOCAL', MetadataPermissionSet.Name, 'a Caption-less permission set is listed with its Role ID as Name');
     end;
 
+    [Test]
+    procedure MetadataPermissionSet_CaptionlessRole_RoleIdFallbackIsUpperCased()
+    // CLAIM: the Role ID substituted for a Caption-less permission set's Name is the ROLE ID --
+    // an upper-case Code value -- not the permissionset object's declared name verbatim.
+    //
+    // MetadataPermissionSet_CaptionlessRole_NameFallsBackToRoleId above settles THAT the
+    // fallback happens, but it cannot settle the casing: it uses Base Application's LOCAL,
+    // whose Role ID is already all upper case, so "the Role ID" and "the object name" are the
+    // same string there and the test passes either way.
+    //
+    // This suite's own ALTPermissionSet (permissionset 60022) is the fixture that separates
+    // them. It declares no Caption and its object name is MIXED case, so an implementation
+    // returning the declared name answers 'ALTPermissionSet' while one returning the Role ID
+    // answers 'ALTPERMISSIONSET'. Measured against real BC 27.0-28.4 on all eight CI legs:
+    // ALTPERMISSIONSET (StefanMaron/BusinessCentral.AL.Runner#2474 records the run, where an
+    // earlier version of the sibling test asserted a blank and reported
+    // Actual:<ALTPERMISSIONSET>).
+    //
+    // "Role ID" is Code[20] and AL compares Code case-insensitively, so the SetRange below
+    // finds the row whichever case is stored -- the assertion is on Name, which is Text and
+    // compares case-sensitively, and that is what makes this a casing test at all.
+    var
+        MetadataPermissionSet: Record "Metadata Permission Set";
+    begin
+        Initialize();
+        MetadataPermissionSet.SetRange("Role ID", 'ALTPermissionSet');
+        Assert.IsTrue(MetadataPermissionSet.FindFirst(), 'this app declares ALTPermissionSet and the table lists it');
+        Assert.AreEqual('ALTPERMISSIONSET', MetadataPermissionSet.Name,
+            'a Caption-less permission set is listed with its upper-case Role ID as Name, not its declared object name');
+        Assert.AreEqual('ALTPERMISSIONSET', MetadataPermissionSet."Role ID",
+            'and the Role ID column itself is that same upper-case Code value');
+    end;
+
+    [Test]
+    procedure MetadataPermissionSet_CaptionedRole_NameKeepsTheCaptionsOwnCasing()
+    // The negative control for the test above, and the reason it cannot be satisfied by
+    // upper-casing the Name column outright: the fallback is upper case because a ROLE ID is,
+    // not because Name is. A permission set that DOES declare a Caption is listed with that
+    // caption exactly as written, mixed case and spaces intact.
+    //
+    // ALT Agg Perm Set (permissionset 60930) declares Caption = 'ALT Agg Perm Set Fixture'.
+    var
+        MetadataPermissionSet: Record "Metadata Permission Set";
+    begin
+        Initialize();
+        MetadataPermissionSet.SetRange("Role ID", 'ALT Agg Perm Set');
+        Assert.IsTrue(MetadataPermissionSet.FindFirst(), 'this app declares ALT Agg Perm Set and the table lists it');
+        Assert.AreEqual('ALT Agg Perm Set Fixture', MetadataPermissionSet.Name,
+            'a permission set declaring a Caption is listed with that Caption, its own casing untouched');
+    end;
+
     local procedure Initialize()
     begin
         // Nothing this codeunit touches is writable -- 2000000250 is a read-only
