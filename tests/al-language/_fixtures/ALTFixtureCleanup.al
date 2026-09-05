@@ -17,6 +17,8 @@ codeunit 60019 ALTFixtureCleanup
         ALTRelationChild: Record "ALT Relation Child";
         ALTRelationParent: Record "ALT Relation Parent";
         ALTRelationParentB: Record "ALT Relation Parent B";
+        ALTRelWhereParent: Record "ALT Rel Where Parent";
+        ALTRelWhereChild: Record "ALT Rel Where Child";
         ALTManualTableEventPub: Record "ALT Manual TableEvent Pub";
         ALTMedia: Record "ALT Media";
         ALTIncludeSenderTablePub: Record "ALT IncludeSender Table Pub";
@@ -36,6 +38,8 @@ codeunit 60019 ALTFixtureCleanup
         ALTRelationChild.DeleteAll(false);
         ALTRelationParent.DeleteAll(false);
         ALTRelationParentB.DeleteAll(false);
+        ALTRelWhereChild.DeleteAll(false);
+        ALTRelWhereParent.DeleteAll(false);
         ALTManualTableEventPub.DeleteAll(false);
         ALTMedia.DeleteAll(false);
         ALTIncludeSenderTablePub.DeleteAll(false);
