@@ -45,7 +45,11 @@
 ///     positioned the part at all.
 ///   * The step that creates it is the platform's own new-record step, not a bare insert: the
 ///     part page's OnNewRecord trigger runs for a row started on the draft line exactly as it
-///     does for New(). "Set By OnNewRecord" is the witness.
+///     does for New(). "Set By OnNewRecord" is the witness -- and it fires as soon as the blank
+///     line becomes CURRENT, before anyone types, which is the second thing a service tier
+///     corrected here (run 33997895349 answered 'NEWREC' where this file expected blank).
+///     "Line No." staying 0 is what keeps that from meaning the row has also been numbered:
+///     the client runs NavForm.NewRecord for the draft line and stops short of the save.
 ///   * A promoted draft line does not collide with the rows already there: AutoSplitKey runs
 ///     for it, so its "Line No." lands past the last existing line rather than at 0.
 ///   * Walking onto the draft line of a linked part and leaving it untouched still writes
@@ -181,13 +185,17 @@ codeunit 60996 "TPDL Tests"
         Card.Close();
     end;
 
-    // NOT YET MEASURED. Standing on the draft line is not the same as starting a row, so the
-    // page's OnNewRecord should not have run for it -- the three write tests below show that
-    // trigger DOES run once someone types. If this arm fails with 'NEWREC', the client runs the
-    // whole new-record step when the line becomes current rather than when it is written to,
-    // and "Set By OnNewRecord" is where that shows.
+    // MEASURED, and it corrected this file's second expectation. Standing on the draft line
+    // DOES run the page's OnNewRecord: this arm was written as "must not run" and all 8 BC legs
+    // answered 'NEWREC' (run 33997895349).
+    //
+    // Together with the arm below -- "Line No." still 0 -- that says the client runs
+    // NavForm.NewRecord when the blank line becomes current, and stops there. NewRecord is
+    // ALInit, copy the single-valued filters onto the primary key, raise OnNewRecord. What it
+    // is NOT is a save: AutoSplitKey numbers the row in NavForm.SaveRecord, and nothing is
+    // written until someone types (LinkedPart_DraftLineLeftUntouched_InsertsNothing).
     [Test]
-    procedure LinkedPart_DraftLine_HasNotRunTheOnNewRecordTrigger()
+    procedure LinkedPart_DraftLine_HasRunTheOnNewRecordTrigger()
     var
         Card: TestPage "TPDL Card";
     begin
@@ -197,17 +205,18 @@ codeunit 60996 "TPDL Tests"
 
         OpenH1AndStandOnTheDraftLine(Card);
 
-        Assert.AreEqual('', Card.Lines.SetByOnNewRecord.Value(),
-            'standing on the draft line must not run the page''s OnNewRecord trigger');
+        Assert.AreEqual('NEWREC', Card.Lines.SetByOnNewRecord.Value(),
+            'standing on the draft line must run the page''s OnNewRecord trigger -- the client starts the record when the blank line becomes current, it just does not save it');
 
         Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
         Card.Close();
     end;
 
-    // NOT YET MEASURED, and the companion question to the one above: AutoSplitKey is part of
-    // saving a row, so the draft line should still show 0 rather than the number the row would
-    // get. Codeunit 60648's part walk reads "Line No." 0 on its own draft row, but that part
-    // does not set AutoSplitKey, so it does not answer this. "TPDL Lines" does.
+    // MEASURED, and the companion to the one above -- it is what stops "OnNewRecord has run"
+    // from being read as "the row has been started and numbered". AutoSplitKey belongs to
+    // saving the row, so the draft line still shows 0. Codeunit 60648's part walk reads
+    // "Line No." 0 on its own draft row too, but that part does not set AutoSplitKey, so it
+    // could not answer this on its own. "TPDL Lines" does.
     [Test]
     procedure LinkedPart_DraftLine_ReadsZeroInTheAutoSplitKeyColumn()
     var
