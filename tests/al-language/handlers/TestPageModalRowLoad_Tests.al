@@ -78,7 +78,13 @@ codeunit 60403 "Test Modal Row Load"
     [ModalPageHandler]
     procedure MrlModalHandler(var ModalCard: TestPage "MRL Modal Card")
     begin
-        // Reads nothing: the claim is about what the page did before the handler ran.
-        ModalCard.Close();
+        // Deliberately does nothing, and in particular does NOT close the page.
+        //
+        // The claim is about what the page did BEFORE the handler ran, so the handler needs no
+        // interaction at all — and it has no way to close cleanly anyway: a plain Card-type
+        // modal has no client OK/Cancel affordance (only PageType = StandardDialog gets that
+        // chrome, as TestPageModalHandler_ModalPage.al records), and calling Close() here makes
+        // RunModal raise 'The RunModal procedure could not close the page ... as it has already
+        // been closed.' on real BC. Letting RunModal close it is the correct shape.
     end;
 }
