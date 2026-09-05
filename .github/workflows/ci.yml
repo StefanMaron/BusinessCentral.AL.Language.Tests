@@ -164,22 +164,56 @@ jobs:
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
-      # TWO test apps, and the second one exists ONLY for its target. Microsoft declares a
-      # number of system tables Scope = OnPrem; an AL object in a Target = Cloud app cannot
-      # name them (AL0296) and the RecordRef way round is refused at runtime as well, so
-      # those surfaces cannot be adjudicated from tests/al-language at all. Both refusals are
-      # decided by the calling app's compilation target and nothing else, so one small
-      # Target = OnPrem app is enough to reach them. The Cloud app keeps its meaning.
-      #
-      # Order matters: they compile and publish in the order listed, and each app gets every
-      # .app built so far copied into its .alpackages, so al-language-onprem can depend on
-      # al-language for the shared Assert fixture.
-      test_app_dirs: |
+      test_app_dirs:        "tests/al-language"
+      codeunit_range:       "60000..60999"
+      preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+
+  # The Target = OnPrem test app, in a job of its own.
+  #
+  # WHY IT IS A SEPARATE JOB AND NOT A SECOND LINE IN test_app_dirs ABOVE.
+  # bc-test-from-source.yml's "Run AL tests" step loops over the test app dirs with
+  #
+  #     while IFS= read -r d; do ... done <<< "$TEST_APP_DIRS"
+  #
+  # and runs the test runner inside that loop. run-tests-hybrid.py and
+  # run-tests-altool.py both invoke the `al` tool with
+  # subprocess.run(cmd, stdout=PIPE, stderr=STDOUT) and never redirect STDIN, so the
+  # child inherits the loop's here-string and drains it. The loop therefore executes
+  # exactly ONCE no matter how many test apps are listed - and it does so SILENTLY:
+  # no "skip:" line, no error, the totals simply cover the first app and the leg goes
+  # green.
+  #
+  # Measured, not guessed: run 33996414648 on this branch listed both apps, compiled
+  # and published all three .app files, and then ran only al-language (2617 tests).
+  # al-language-onprem's tests never executed and the leg still reported success.
+  #
+  # One test app per invocation is immune to that, because there is no second
+  # iteration to lose. The cost is one extra BC boot per version. When
+  # MsDyn365Bc.On.Linux passes stdin=subprocess.DEVNULL at those two call sites, this
+  # job collapses back into a second line of the test job's test_app_dirs at zero
+  # extra cost - that is the preferred end state, and this job is the way to have the
+  # tests actually adjudicated until then.
+  #
+  # This job's checks are named "BC OnPrem <ver> / test", so the eight required
+  # "BC <ver> / test" contexts are untouched.
+  test-onprem:
+    name: BC OnPrem ${{ matrix.bc_version }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    with:
+      bc_version:           ${{ matrix.bc_version }}
+      bc_country:           "w1"
+      # al-language is a production app HERE only in the sense that it has to be
+      # published for al-language-onprem's dependency on the shared Assert fixture to
+      # resolve. Its own tests are not run in this job - the test job above owns them.
+      app_dirs: |
+        tests/al-language-internals-fixture
         tests/al-language
-        tests/al-language-onprem
-      # One range per test app. The runner is invoked once per app with this same range, so
-      # both have to be in it; each app's own app.json idRanges is what actually bounds it.
-      codeunit_range:       "60000..60999|61200..61299"
+      test_app_dirs:        "tests/al-language-onprem"
+      codeunit_range:       "61200..61299"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
 
     # Optional: supply a base64-encoded BC developer license.
