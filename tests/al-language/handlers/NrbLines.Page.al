@@ -32,6 +32,10 @@ page 60651 "NRB Lines"
                 {
                     ApplicationArea = All;
                 }
+                field("Never Validated"; Rec."Never Validated")
+                {
+                    ApplicationArea = All;
+                }
             }
         }
     }

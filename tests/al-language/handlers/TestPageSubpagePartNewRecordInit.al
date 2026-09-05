@@ -35,9 +35,10 @@
 ///     new one -- ResetRecordBuffer's effect, pinned directly;
 ///   - New() through the field(...) link still stamps "No." (pinned already by #148, kept
 ///     here as the setup precondition the second assertion in the same test depends on);
-///   - New() through that same link either DOES or DOES NOT run "No."'s OnValidate trigger
-///     on the stamped value -- this file's best-guess assertion is that it DOES, and if a
-///     real service tier disagrees the assertion flips, not the fixture.
+///   - New() through that same link DOES run "No."'s OnValidate trigger on the stamped
+///     value -- measured on all eight BC legs, so ValidateFieldsInOnNewRecord is set by
+///     whatever drives a TestPage's New();
+///   - a Boolean field control read through a TestPage answers 'Yes' / 'No'.
 /// </summary>
 codeunit 60653 "NRB Tests"
 {
@@ -105,16 +106,20 @@ codeunit 60653 "NRB Tests"
 
     [Test]
     procedure New_StampsTheLinkedFieldAndValidatesIt()
-    // CLAIM (first assertion, re-measuring #148's own rule as this test's precondition):
-    // "No." is part of "NRB Line"'s primary key, so New() through the field(...) link stamps
-    // it -- if this assertion itself fails, the second one below is not meaningful, because
-    // there would be nothing for OnValidate to have run on.
+    // CLAIM (first assertion): "No." is part of "NRB Line"'s primary key, so New() through the
+    // field(...) link stamps it -- if this fails, the rest is not meaningful, because there
+    // would be nothing for OnValidate to have run on.
     //
-    // CLAIM (second assertion, the one this file exists to settle): New() also runs "No."'s
-    // OnValidate trigger on the value it just stamped, not just an assignment. "No. Validated"
-    // is set by nothing else, so a runtime that copies SubPageLink values as raw assignments
-    // (ValidateFieldsInOnNewRecord left false) leaves it at its Init() default, while a
-    // runtime that validates leaves it true.
+    // CLAIM (second assertion, the one this file exists to settle): New() also RUNS "No."'s
+    // OnValidate trigger on the value it just stamped, rather than assigning it raw. That is
+    // NewRecordAsync's ValidateFieldsInOnNewRecord branch, and the flag has no setter anywhere
+    // in Ncl, so only a service tier can answer it.
+    //
+    // The second assertion compares "No. Validated" against "Never Validated" instead of
+    // against a text literal. Both are Boolean, both start at the same Init() default, and
+    // nothing anywhere writes the second one -- so "they differ" means the first moved, with
+    // no dependence on how a Boolean renders as text. That independence is deliberate: the
+    // rendering is a separate claim, pinned on its own below, and this one must not rest on it.
     var
         Card: TestPage "NRB Card";
     begin
@@ -125,8 +130,45 @@ codeunit 60653 "NRB Tests"
 
         Assert.AreEqual('H1', Card.Lines."No.".Value,
             '"No." is part of "NRB Line"''s primary key, so New() must stamp the link''s value onto the new row (see #148)');
-        Assert.AreEqual('True', Card.Lines."No. Validated".Value,
-            'New() must run "No."''s OnValidate trigger on the value it stamped from the SubPageLink, not just assign it');
+        Assert.AreNotEqual(Card.Lines."Never Validated".Value, Card.Lines."No. Validated".Value,
+            'New() must run "No."''s OnValidate trigger on the value it stamped from the SubPageLink -- "No. Validated" must have moved off the same default "Never Validated" still sits at');
+        Card.Close();
+    end;
+
+    [Test]
+    procedure BooleanFieldControl_ReadsAsYesOrNo()
+    // CLAIM: reading a Boolean field control through a TestPage answers 'Yes' / 'No', not
+    // 'True' / 'False'.
+    //
+    // Pinned here because it was measured here, and because getting it wrong is invisible: a
+    // comparison against the wrong spelling fails with the two values printed side by side and
+    // reads exactly like the platform disagreeing about the BEHAVIOUR under test. This suite's
+    // first version asserted 'True' for the validated flag above and went red on all eight
+    // legs with Actual:<Yes> -- the behaviour was right and only the spelling was wrong.
+    //
+    // Both directions, so the pair fixes the spelling rather than just asserting one word: the
+    // row is inserted with "No. Validated" true and "Never Validated" false, and no page
+    // control ever writes either.
+    var
+        Line: Record "NRB Line";
+        Card: TestPage "NRB Card";
+    begin
+        Initialize();
+        Line.Init();
+        Line."No." := 'H1';
+        Line."Line No." := 10000;
+        Line.Descr := 'spelling';
+        Line."No. Validated" := true;
+        Line."Never Validated" := false;
+        Line.Insert();
+
+        OpenCardOn('H1', Card);
+        Card.Lines.First();
+
+        Assert.AreEqual('Yes', Card.Lines."No. Validated".Value,
+            'a Boolean field control holding true must read as ''Yes'' through a TestPage');
+        Assert.AreEqual('No', Card.Lines."Never Validated".Value,
+            'a Boolean field control holding false must read as ''No'' through a TestPage');
         Card.Close();
     end;
 }

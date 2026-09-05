@@ -14,6 +14,10 @@
 //     question (was Validate() called, not what value arrived), so a runtime that assigns
 //     the field without validating it leaves this at its Init() default while "No." itself
 //     already carries the linked value.
+//   - "Never Validated" is the control for it: same type, same absence of a default, and
+//     NOTHING anywhere writes it. Comparing the two answers "did this flag move off its
+//     default" without depending on how a Boolean renders as text, which is a separate
+//     question this suite also pins but must not accidentally rest on.
 
 table 60650 "NRB Line"
 {
@@ -31,6 +35,7 @@ table 60650 "NRB Line"
         field(2; "Line No."; Integer) { }
         field(3; Descr; Text[50]) { }
         field(4; "No. Validated"; Boolean) { }
+        field(5; "Never Validated"; Boolean) { }
     }
 
     keys
