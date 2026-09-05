@@ -26,6 +26,50 @@ on:
         required: false
         default: ''
 
+# Supersede a run that no longer answers a question anyone is asking.
+#
+# WHY. This workflow had no concurrency control at all, so every push queued a fresh eight-leg
+# matrix and nothing ever cancelled the one it replaced. Measured on 2026-09-05: four PRs merged
+# in a row started four full master runs, none superseded — 32 legs where 8 would do. Three had
+# to be cancelled by hand. GitHub Actions concurrency is per ACCOUNT, not per repository, so
+# those legs also sit in front of StefanMaron/BusinessCentral.AL.Runner's own matrix.
+#
+# THE GROUP KEY includes the event name as well as the ref, which is one step beyond the usual
+# `workflow-ref` pairing, and it is load-bearing here rather than decorative:
+#
+#   * pull_request  -> refs/pull/<n>/merge, already unique per PR.
+#   * push          -> refs/heads/master. This is the project's health check: a green master run
+#                      is the signal that the corpus still matches what a real BC service tier
+#                      does, and AL Runner's autonomous cycle reads it as exactly that.
+#   * workflow_dispatch on master would otherwise share the push group and could CANCEL that
+#     health-check run. A manual dispatch is normally someone bisecting a red master with the
+#     bc_version override; killing the automatic run to serve it, or the reverse, loses the one
+#     answer that was wanted. Separating them keeps both.
+#
+# CANCEL-IN-PROGRESS IS TRUE FOR MASTER TOO, and that is a real trade, stated plainly: with
+# four merges in a row only the last master run finishes, so a red leg says "one of the last few
+# merges did it" rather than naming one. Three things make that the better deal here:
+#
+#   * The verdict it replaces did not exist. Queued behind an account-wide backlog, those runs
+#     report on a tree nobody has any more — the state this repository was actually in a few
+#     minutes before this file changed.
+#   * The one cross-PR interaction that genuinely escapes per-PR CI — two PRs declaring the same
+#     object id — is checked DIRECTLY by the object-ids job below, per PR against every other
+#     open PR and again as an advisory sweep on master. That gate does not depend on per-commit
+#     master runs. (Worth being honest about the limit: this repository does not require branches
+#     to be up to date, so a PR's green is not a guarantee about master for anything the object-id
+#     check does not cover.)
+#   * Recovering the per-commit answer costs one workflow_dispatch on a branch pointing at the
+#     suspect commit — precisely the run the group key above protects from the next merge.
+#
+# This changes no job's `if:` and adds no skips. The eight `BC <version> / test` legs are this
+# repository's required status contexts; a cancelled run reports them as cancelled, never as
+# skipped, so a superseded run can never satisfy a required check. ci.yml is the only workflow
+# registered here (the object-id gate is a job inside it), so this block covers everything.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   object-ids:
     # Fast gate, seconds not minutes: two PRs can each declare the SAME object id,
