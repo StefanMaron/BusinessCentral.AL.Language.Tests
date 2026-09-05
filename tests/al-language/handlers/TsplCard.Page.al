@@ -1,10 +1,13 @@
-// Fixture host card for TestPageSubpagePartConstFilter.al. Four parts over the SAME lines
-// page, each with a different SubPageLink shape:
+// Fixture host card for TestPageSubpagePartConstFilter.al. Six parts, five over the SAME
+// lines page and one over the keyed variant, each with a different SubPageLink shape:
 //   ConstLines       field(...) + const(<option member>)
 //   FilterLines      field(...) + filter(<expression>)
 //   ConstTableLines  field(...) + const(Database::<table>)
 //   ConstCodeLines   field(...) + const(<quoted text literal>) on a Code field
 //   ConstOnlyLines   const(...) alone, no field(...) link to the host row at all
+//   ConstKeyLines    field(...) + const(<option member>) over "TSPL Keyed Lines", whose
+//                    PRIMARY KEY contains the const-ed field -- the half of the New()
+//                    stamping rule that "TSPL Lines" cannot show
 page 60323 "TSPL Card"
 {
     PageType = Card;
@@ -41,6 +44,11 @@ page 60323 "TSPL Card"
             {
                 ApplicationArea = All;
                 SubPageLink = Kind = const(Comment);
+            }
+            part(ConstKeyLines; "TSPL Keyed Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Header No." = field("No."), Kind = const(Attachment);
             }
         }
     }
