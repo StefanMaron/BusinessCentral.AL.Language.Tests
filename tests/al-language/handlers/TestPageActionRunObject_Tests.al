@@ -175,6 +175,76 @@ codeunit 60455 "TPARO Tests"
             'an action with a trigger must not open any RunObject target');
     end;
 
+    // CONTROL, and the arm that decides how to read every failure above. It reaches the SAME
+    // [PageHandler], writes the SAME Log row and asserts the SAME value, but opens the target
+    // with a plain AL Page.Run instead of through an action. If this passes and the action arms
+    // fail, the handler declaration, the [HandlerFunctions] binding and the Log table are all
+    // proven good and the difference is the ACTION route alone. If this fails too, the failures
+    // above say nothing about RunObject at all.
+    [Test]
+    [HandlerFunctions('CardTargetPageHandler')]
+    procedure ControlPageRunReachesTheSameHandler()
+    var
+        Row: Record "TPARO Row";
+        Log: Record "TPARO Log";
+    begin
+        Initialize();
+
+        Row.Get('B');
+        Page.Run(Page::"TPARO Card Target", Row);
+
+        Assert.IsTrue(Log.Get('CARD'), 'a plain Page.Run must reach the [PageHandler]');
+        Assert.AreEqual('Bravo', Log.Detail,
+            'the [PageHandler] must be handed the record Page.Run was given');
+    end;
+
+    // Microsoft's own shape is a DOCUMENT/Card host with the action inside a group under
+    // area(Navigation). These two arms vary the host PageType and the action's container
+    // independently, so one run says which construction (if any) opens the target.
+    [Test]
+    [HandlerFunctions('CardTargetPageHandler')]
+    procedure RunObjectFromACardHostProcessingArea()
+    var
+        Row: Record "TPARO Row";
+        Log: Record "TPARO Log";
+        Host: TestPage "TPARO Card Host";
+    begin
+        Initialize();
+
+        Row.Get('B');
+        Host.OpenEdit();
+        Host.GotoRecord(Row);
+        Host.RunCardFromProcessing.Invoke();
+        Host.Close();
+
+        Assert.IsTrue(Log.Get('CARD'),
+            'a RunObject action on a Card host, in area(Processing), must open its target');
+        Assert.AreEqual('Bravo', Log.Detail,
+            'RunPageOnRec = true must open the target on the host page''s current row');
+    end;
+
+    [Test]
+    [HandlerFunctions('CardTargetPageHandler')]
+    procedure RunObjectFromACardHostNavigationGroup()
+    var
+        Row: Record "TPARO Row";
+        Log: Record "TPARO Log";
+        Host: TestPage "TPARO Card Host";
+    begin
+        Initialize();
+
+        Row.Get('B');
+        Host.OpenEdit();
+        Host.GotoRecord(Row);
+        Host.RunCardFromNavigationGroup.Invoke();
+        Host.Close();
+
+        Assert.IsTrue(Log.Get('CARD'),
+            'a RunObject action in a group under area(Navigation) -- Microsoft''s own shape -- must open its target');
+        Assert.AreEqual('Bravo', Log.Detail,
+            'RunPageOnRec = true must open the target on the host page''s current row');
+    end;
+
     [PageHandler]
     procedure CardTargetPageHandler(var Target: TestPage "TPARO Card Target")
     var

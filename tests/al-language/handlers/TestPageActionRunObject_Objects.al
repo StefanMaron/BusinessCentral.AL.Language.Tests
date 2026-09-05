@@ -168,3 +168,62 @@ page 60453 "TPARO Host"
         }
     }
 }
+
+// #172 investigation. The List host above produced NOTHING on all 8 BC legs -- the action
+// invoked, nothing opened, nothing raised. BC's own client has exactly two silent no-op paths
+// in ActionControl.Invoke (`if (!Enabled) return null;` and a null LogicalAction), so the
+// question is which construction reaches one of them. Microsoft's own Tests-ERM invokes this
+// same AL shape with a [PageHandler] bound (page 138 "Purchase Invoice", a DOCUMENT page, with
+// the action inside a group under area(Navigation)), so at least one construction does open.
+// This host varies the two things that differ from Microsoft's, in one run.
+page 60456 "TPARO Card Host"
+{
+    PageType = Card;
+    SourceTable = "TPARO Row";
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            field("No."; Rec."No.")
+            {
+                ApplicationArea = All;
+            }
+            field(Descr; Rec.Descr)
+            {
+                ApplicationArea = All;
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(RunCardFromProcessing)
+            {
+                ApplicationArea = All;
+                Caption = 'Run Card From Processing';
+                RunObject = Page "TPARO Card Target";
+                RunPageOnRec = true;
+            }
+        }
+
+        area(Navigation)
+        {
+            group(NavGroup)
+            {
+                Caption = 'Nav Group';
+
+                action(RunCardFromNavigationGroup)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Run Card From Navigation Group';
+                    RunObject = Page "TPARO Card Target";
+                    RunPageOnRec = true;
+                }
+            }
+        }
+    }
+}
