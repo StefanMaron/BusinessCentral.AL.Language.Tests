@@ -14,7 +14,7 @@
 //   subscriber existed to refuse happens anyway.
 // BC versions: 24+
 
-codeunit 60991 "Test Tbl Evt Async Sub Error"
+codeunit 60490 "Test Tbl Evt Async Sub Error"
 {
     Subtype = Test;
     TestPermissions = Disabled;
