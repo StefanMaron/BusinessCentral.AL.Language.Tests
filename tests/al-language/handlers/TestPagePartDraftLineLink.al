@@ -1,0 +1,276 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-subpagelink-property
+// Scope: in-scope
+// Fixtures used: TPDL Header (60996), TPDL Line (60997), TPDL Lines (60997), TPDL Card (60998);
+//                shared Assert (60021)
+//
+/// <summary>
+/// Pins what happens when a test types into the implicit DRAFT LINE of a subpage part that
+/// carries a SubPageLink -- the blank row an editable, insert-allowed repeater always shows
+/// past its data.
+///
+/// Two suites already surround this and neither answers it. Codeunit 60743 ("Test Page New
+/// Row Line Tests") measured the draft line itself: Next() past the last data row lands on
+/// it, it reads blank, walking onto it and leaving it alone writes nothing, and typing into
+/// an empty editable list with no New() and no First() still inserts a row -- all on a
+/// STANDALONE page with no link. Codeunit 60648 ("PKFL Tests") measured what New() stamps
+/// through a linked part, and pinned the primary-key gate BC applies there.
+///
+/// The gap is the intersection: a part that is BOTH linked AND written through its draft
+/// line. That is the single commonest shape in Microsoft's own test code --
+///
+///     SalesQuote.OpenNew();
+///     SalesQuote."Sell-to Customer Name".SetValue(Customer.Name);
+///     SalesQuote.SalesLines.First();                    // no lines yet
+///     SalesQuote.SalesLines."No.".SetValue(Item."No."); // types into the draft line
+///
+/// -- and the line table's first OnValidate immediately reads the document key it was linked
+/// on. If the draft line does not carry that key by the time the trigger runs, the write
+/// fails on the key rather than on anything the test is about.
+///
+/// THE CLAIMS
+///   * Reading the draft line answers blank in the linked column too. The link constrains
+///     which rows the part SHOWS; it does not pre-fill the blank line the client offers. (The
+///     "Line No." 0 that "PKFL Tests" already skips over says the same thing from the other
+///     side -- a draft line that had been through the platform's new-record step would carry
+///     an AutoSplitKey number, not a zero.)
+///   * Writing to it does go through that step: the row that appears carries the link's
+///     value, and the typed field's OnValidate ALREADY SEES it. "Header Seen By Validate" is
+///     what separates those two -- a row whose key were stamped after the validate would
+///     still finish with the right "Header No." while that field stayed blank.
+///   * The same holds when the draft line was reached by walking off the end of existing
+///     data (First() then Next()), not only when the part opened empty, and when nothing
+///     positioned the part at all.
+///   * A promoted draft line does not collide with the rows already there: AutoSplitKey runs
+///     for it, so its "Line No." lands past the last existing line rather than at 0.
+///   * Walking onto the draft line of a linked part and leaving it untouched still writes
+///     nothing -- the linked case of what codeunit 60743 pins unlinked.
+///
+/// The negative is in the data: a second header carries its own line, so a part that ignores
+/// the link, or writes through the wrong one, shows or touches a row the assertions name.
+/// </summary>
+codeunit 60996 "TPDL Tests"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+
+    local procedure Initialize()
+    var
+        Header: Record "TPDL Header";
+        Line: Record "TPDL Line";
+    begin
+        Line.DeleteAll();
+        Header.DeleteAll();
+
+        AddHeader('H1', 'First');
+        AddHeader('H2', 'Second');
+    end;
+
+    local procedure AddHeader(No: Code[20]; Descr: Text[50])
+    var
+        Header: Record "TPDL Header";
+    begin
+        Header.Init();
+        Header."No." := No;
+        Header.Descr := Descr;
+        Header.Insert();
+    end;
+
+    // Assignment, not Validate: a seeded line must NOT run Descr's OnValidate, so
+    // "Header Seen By Validate" stays blank on it and only a row written through the page can
+    // make that field non-blank.
+    local procedure AddLine(HeaderNo: Code[20]; LineNo: Integer; Descr: Text[50])
+    var
+        Line: Record "TPDL Line";
+    begin
+        Line.Init();
+        Line."Header No." := HeaderNo;
+        Line."Line No." := LineNo;
+        Line.Descr := Descr;
+        Line.Insert();
+    end;
+
+    local procedure OpenCardOn(HeaderNo: Code[20]; var Card: TestPage "TPDL Card")
+    var
+        Header: Record "TPDL Header";
+    begin
+        Header.Get(HeaderNo);
+        Card.OpenEdit();
+        Card.GoToRecord(Header);
+    end;
+
+    local procedure LineCountFor(HeaderNo: Code[20]): Integer
+    var
+        Line: Record "TPDL Line";
+    begin
+        Line.SetRange("Header No.", HeaderNo);
+        exit(Line.Count());
+    end;
+
+    // CLAIM: the draft line of a LINKED part reads blank in the linked column. The link
+    // decides which rows the part shows; it does not pre-fill the blank line.
+    [Test]
+    procedure LinkedPart_DraftLine_ReadsBlankInTheLinkedColumn()
+    var
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenCardOn('H1', Card);
+
+        Assert.IsTrue(Card.Lines.First(), 'the part must land on H1''s seeded line');
+        Assert.AreEqual('H1', Card.Lines.HeaderNo.Value(),
+            'the seeded data row must read the header it belongs to');
+        Assert.AreEqual('seeded', Card.Lines.Descr.Value(),
+            'the seeded data row must read its own description');
+
+        Assert.IsTrue(Card.Lines.Next(),
+            'Next() past the part''s last data row must land on the part''s draft line');
+        Assert.AreEqual('', Card.Lines.HeaderNo.Value(),
+            'the draft line must read blank in the column the SubPageLink constrains, not the linked value');
+        Assert.AreEqual('', Card.Lines.Descr.Value(), 'the draft line must read blank');
+
+        Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
+        Card.Close();
+    end;
+
+    // THE CLAIM THIS FILE EXISTS FOR: typing into the draft line of an EMPTY linked part
+    // creates a row that already carries the link's value -- and carries it early enough that
+    // the typed field's own OnValidate sees it.
+    [Test]
+    procedure EmptyLinkedPart_FirstThenWrite_ValidateSeesTheLinkedKey()
+    var
+        Line: Record "TPDL Line";
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H2', 10000, 'foreign');
+
+        OpenCardOn('H1', Card);
+
+        Assert.IsFalse(Card.Lines.First(),
+            'H1 has no lines, so First() on the part must return false');
+
+        Card.Lines.Descr.SetValue('typed into the draft line');
+        Card.Close();
+
+        Assert.AreEqual(1, LineCountFor('H1'),
+            'typing into the draft line of an empty linked part must insert exactly one line for H1');
+        Assert.AreEqual(1, LineCountFor('H2'),
+            'H2''s own line must be untouched -- the write must go through H1''s link, not past it');
+
+        Line.SetRange("Header No.", 'H1');
+        Line.FindFirst();
+        Assert.AreEqual('typed into the draft line', Line.Descr,
+            'the typed value must reach the backing table');
+        Assert.AreEqual('H1', Line."Header No.",
+            'the row started on the draft line must carry the SubPageLink''s value');
+        Assert.AreEqual('H1', Line."Header Seen By Validate",
+            'the link''s value must already be on the row when the typed field''s OnValidate runs, not stamped afterwards');
+    end;
+
+    // The same claim with NOTHING positioning the part first -- no New(), no First(). This is
+    // how a lot of Microsoft AL writes a fresh document line, and it is the linked twin of
+    // codeunit 60743's EmptyEditableList_SetValueWithoutNewOrFirst_InsertsARow.
+    [Test]
+    procedure EmptyLinkedPart_WriteWithoutFirst_ValidateSeesTheLinkedKey()
+    var
+        Line: Record "TPDL Line";
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H2', 10000, 'foreign');
+
+        OpenCardOn('H1', Card);
+
+        Card.Lines.Descr.SetValue('typed with no First');
+        Card.Close();
+
+        Assert.AreEqual(1, LineCountFor('H1'),
+            'typing into an empty linked part without First() must still insert one line for H1');
+        Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
+
+        Line.SetRange("Header No.", 'H1');
+        Line.FindFirst();
+        Assert.AreEqual('typed with no First', Line.Descr, 'the typed value must reach the backing table');
+        Assert.AreEqual('H1', Line."Header No.",
+            'the row started on the draft line must carry the SubPageLink''s value');
+        Assert.AreEqual('H1', Line."Header Seen By Validate",
+            'the link''s value must already be on the row when the typed field''s OnValidate runs');
+    end;
+
+    // The draft line reached by WALKING off the end of existing data, not by opening empty.
+    // The promoted row must not collide with the line already there: AutoSplitKey runs for it,
+    // so its "Line No." lands past the seeded one rather than at 0.
+    [Test]
+    procedure LinkedPart_NextPastLastLineThenWrite_ValidateSeesTheLinkedKey()
+    var
+        Line: Record "TPDL Line";
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenCardOn('H1', Card);
+
+        Assert.IsTrue(Card.Lines.First(), 'the part must land on H1''s seeded line');
+        Assert.IsTrue(Card.Lines.Next(), 'Next() must land on the part''s draft line');
+
+        Card.Lines.Descr.SetValue('typed after walking to the end');
+        Card.Close();
+
+        Assert.AreEqual(2, LineCountFor('H1'),
+            'typing into the draft line reached by Next() must add a second line for H1');
+        Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
+
+        Line.SetRange("Header No.", 'H1');
+        Line.SetRange(Descr, 'typed after walking to the end');
+        Assert.AreEqual(1, Line.Count(), 'exactly one line must carry the typed description');
+        Line.FindFirst();
+        Assert.AreEqual('H1', Line."Header No.",
+            'the row started on the draft line must carry the SubPageLink''s value');
+        Assert.AreEqual('H1', Line."Header Seen By Validate",
+            'the link''s value must already be on the row when the typed field''s OnValidate runs');
+        Assert.IsTrue(Line."Line No." > 10000,
+            'AutoSplitKey must number the promoted draft line past the line already there, not at 0');
+
+        // The seeded line is untouched, and still shows that only a page write fills in
+        // "Header Seen By Validate".
+        Line.Reset();
+        Line.Get('H1', 10000);
+        Assert.AreEqual('seeded', Line.Descr, 'the seeded line must keep its own description');
+        Assert.AreEqual('', Line."Header Seen By Validate",
+            'the seeded line was never written through the page, so its witness field must stay blank');
+    end;
+
+    // The linked case of codeunit 60743's NewRowLine_LeftUntouched_InsertsNothing: walking
+    // onto a linked part's draft line and typing nothing must write nothing.
+    [Test]
+    procedure LinkedPart_DraftLineLeftUntouched_InsertsNothing()
+    var
+        Line: Record "TPDL Line";
+        Card: TestPage "TPDL Card";
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenCardOn('H1', Card);
+
+        Assert.IsTrue(Card.Lines.First(), 'the part must land on H1''s seeded line');
+        Assert.IsTrue(Card.Lines.Next(), 'Next() must land on the part''s draft line');
+        Assert.IsFalse(Card.Lines.Next(), 'Next() from the draft line must end the part''s rowset');
+        Card.Close();
+
+        Assert.AreEqual(1, LineCountFor('H1'),
+            'walking onto a linked part''s draft line without typing must not insert a line');
+        Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
+        Line.Get('H1', 10000);
+        Assert.AreEqual('seeded', Line.Descr, 'the seeded line must be unchanged');
+    end;
+}
