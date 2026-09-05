@@ -11,6 +11,17 @@
 // keyword arms fail, the word itself is the trigger. Each positive asserts a row only the
 // named trigger writes; the negative asserts the trigger's OWN error text so a dispatcher
 // that reached a different action, or none, cannot pass it.
+//
+// "Invoking X did not run Y's trigger" is asserted on the SUCCESSFUL invokes only, never
+// after the asserterror. An error rolls the write transaction back to the last commit
+// point (TestAssertErrorRollback.al, error-handling/, pins that), which undoes this test
+// method's own Initialize()/SeedRow() and re-exposes the rows the previous test in this
+// codeunit left behind — rows survive from one test to the next inside a codeunit under
+// TestIsolation = Codeunit (TestIsolationRollbackScope.al pins that). So a post-error read
+// of a stamp row reports the state before the test began, and cannot tell "the wrong
+// trigger ran" from "no trigger ran": a wrong trigger's Insert would be rolled back too.
+// The stamp cross-checks therefore live on the invokes that do not error, matching
+// SpacedActionInvokeDoesNotRunTheUnspacedSiblingsTrigger in TestPageSpacedActionName_Tests.al.
 
 codeunit 60269 "Keyword Action Name Tests"
 {
@@ -55,6 +66,8 @@ codeunit 60269 "Keyword Action Name Tests"
 
         Assert.IsTrue(Row.Get('DELETE'), 'action Delete''s OnAction must have run');
         Assert.AreEqual('A', Row.Descr, 'the trigger must run against the page''s current row');
+        Assert.AreEqual(2, Row.Count(),
+            'exactly one action trigger may have run: the seeded row plus one stamp');
     end;
 
     [Test]
@@ -72,6 +85,8 @@ codeunit 60269 "Keyword Action Name Tests"
         KeywordList.Close();
 
         Assert.IsTrue(Row.Get('SETUP'), 'action Setup''s OnAction must have run');
+        Assert.AreEqual(2, Row.Count(),
+            'exactly one action trigger may have run: the seeded row plus one stamp');
     end;
 
     // Positive: an action named New - a C# reserved keyword, and also the name of the
@@ -92,6 +107,10 @@ codeunit 60269 "Keyword Action Name Tests"
 
         Assert.IsTrue(Row.Get('NEW'), 'action New''s OnAction must have run');
         Assert.AreEqual('A', Row.Descr, 'the trigger must run against the page''s current row');
+        Assert.AreEqual(2, Row.Count(),
+            'exactly one action trigger may have run: the seeded row plus one stamp');
+        Assert.IsFalse(Row.Get('DELETE'),
+            'invoking the keyword-named New must not have run a non-keyword action''s trigger');
     end;
 
     [Test]
@@ -109,6 +128,8 @@ codeunit 60269 "Keyword Action Name Tests"
         KeywordList.Close();
 
         Assert.IsTrue(Row.Get('DELEGATE'), 'action Delegate''s OnAction must have run');
+        Assert.AreEqual(2, Row.Count(),
+            'exactly one action trigger may have run: the seeded row plus one stamp');
     end;
 
     [Test]
@@ -126,6 +147,8 @@ codeunit 60269 "Keyword Action Name Tests"
         KeywordList.Close();
 
         Assert.IsTrue(Row.Get('FINALIZE'), 'action Finalize''s OnAction must have run');
+        Assert.AreEqual(2, Row.Count(),
+            'exactly one action trigger may have run: the seeded row plus one stamp');
     end;
 
     // Positive: the promoted actionref to a keyword-named target dispatches the target.
@@ -144,14 +167,18 @@ codeunit 60269 "Keyword Action Name Tests"
         KeywordList.Close();
 
         Assert.IsTrue(Row.Get('NEW'), 'actionref New_Promoted must run action New''s OnAction');
+        Assert.AreEqual(2, Row.Count(),
+            'exactly one action trigger may have run: the seeded row plus one stamp');
     end;
 
     // Negative: a keyword-named action whose trigger errors surfaces that trigger's own
-    // error - proof the right trigger ran, not a different one and not none.
+    // error - proof the right trigger ran, not a different one and not none. The message is
+    // raised by action Override's OnAction and by nothing else on this page, so reaching any
+    // other action would either raise a different text or none at all, and the asserterror
+    // would fail. No database assertion follows: see the rollback note in the file header.
     [Test]
     procedure KeywordActionOverrideInvokeSurfacesItsOwnError()
     var
-        Row: Record "Keyword Action Row";
         KeywordList: TestPage "Keyword Action List";
     begin
         Initialize();
@@ -161,7 +188,5 @@ codeunit 60269 "Keyword Action Name Tests"
         KeywordList.First();
         asserterror KeywordList.Override.Invoke();
         Assert.ExpectedError('Keyword Action List action refused deliberately');
-
-        Assert.IsFalse(Row.Get('NEW'), 'no other action''s trigger may have run');
     end;
 }
