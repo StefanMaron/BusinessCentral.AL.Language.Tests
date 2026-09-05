@@ -201,30 +201,40 @@ codeunit 60666 "TPB Bool Tests"
     end;
 
     [Test]
-    procedure TestPageField_SetValue_TrueFalseSpelling_IsAlsoAccepted()
-    // CLAIM: 'True' / 'False' is accepted as a write too, even though the control never reads
-    // back in that spelling.
+    procedure TestPageField_SetValue_TrueFalseSpelling_IsRefused()
+    // CLAIM: 'True' / 'False' is NOT an acceptable value for a Boolean control, even though it is
+    // the spelling AL's own Evaluate accepts for the Boolean type. BC refuses it as an ordinary
+    // field validation error, naming the control and echoing the rejected text:
     //
-    // This is the one assertion in the suite I could not settle by reading BC — it is here to be
-    // ANSWERED by a service tier rather than predicted. If it comes back red, the correct
-    // outcome is to invert it to an asserterror pinning the refusal, not to drop it: either way
-    // the corpus then states what BC does with the spelling AL's own Evaluate accepts.
+    //   Validation error for Field: RecTrue,  Message = 'Your entry of 'False' is not an
+    //   acceptable value for 'Rec True'. (Select Refresh to discard errors)'
+    //
+    // This test was written the other way round and asserted acceptance. That was my reading of
+    // what AL's Evaluate would allow, and it was wrong: measured on all eight BC legs, every one
+    // returned the refusal above with identical text. The assertion now states what the service
+    // tier does rather than what I predicted, which is the whole reason it was submitted
+    // uncertain rather than left out.
+    //
+    // The pairing with TestPageField_SetValue_TheWordItReadsAs_IsAccepted is what makes this a
+    // rule rather than a blanket refusal: 'Yes'/'No' is accepted on the same control, in the same
+    // test run, so a control that rejected every text write would fail that one.
     var
         Row: Record "TPB Bool Row";
         Card: TestPage "TPB Bool Card";
     begin
         Initialize();
         Seed();
+        // asserterror rolls back to the last commit; without this it would also undo the seed.
+        Commit();
 
         OpenSeeded(Card);
-        Card.RecTrue.SetValue('False');
-        Assert.AreEqual('No', Card.RecTrue.Value(), 'SetValue(''False'') must leave the control reading ''No''');
-        Card.RecFalse.SetValue('True');
-        Assert.AreEqual('Yes', Card.RecFalse.Value(), 'SetValue(''True'') must leave the control reading ''Yes''');
+        asserterror Card.RecTrue.SetValue('False');
+        Assert.ExpectedError('is not an acceptable value');
+
         Card.Close();
 
+        // The refused write must not have reached the row either.
         Row.Get(PKTok);
-        Assert.IsFalse(Row.TrueFlag, 'SetValue(''False'') must persist false to the row');
-        Assert.IsTrue(Row.FalseFlag, 'SetValue(''True'') must persist true to the row');
+        Assert.IsTrue(Row.TrueFlag, 'a refused SetValue(''False'') must leave the stored value untouched');
     end;
 }
