@@ -5,7 +5,8 @@
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
 // codeunit declared in the application, computed from the codeunit's own metadata rather
 // than stored anywhere. It is the sibling of Table Metadata (2000000136) and Page Metadata
-// (2000000138), which this suite already covers.
+// (2000000138), pinned in TestTableMetadataVirtualTable.al and
+// TestPageMetadataVirtualTable.al respectively.
 //
 // Each column asserted below is read off a codeunit whose declaration states a known,
 // non-default value, so a provider answering every Get with a fixed or blank row would fail
