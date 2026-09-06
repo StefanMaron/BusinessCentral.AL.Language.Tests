@@ -40,7 +40,8 @@
 ///      unambiguous members survive the round trip unchanged, and Updated does not. An
 ///      implementation that stored the AL enum member verbatim -- the obvious and otherwise
 ///      indistinguishable implementation -- passes every other test in this file and fails
-///      exactly this one.
+///      exactly this one. All of it is asserted through Format(), which is not a stylistic
+///      choice; see the CS1503 note below for why it is the only option available.
 ///   4. AddEntityKey OBEYS THE TRAPPABLE-RETURN CONVENTION IN BOTH DIRECTIONS. Adding a key
 ///      for a field id already present is an error, because the keys are a map keyed by field
 ///      id rather than a list. Like Record.Insert and its siblings, the method reports that
@@ -72,23 +73,52 @@
 ///                                    of type 'WebServiceActionContext' and
 ///                                    'WebServiceActionContext'
 ///     if R1 = R2 then                error AL0175: the same, for two operands of type
-///                                    'WebServiceActionResultCode' -- so the result code is
-///                                    compared here through Assert.AreEqual, which takes
-///                                    Variants, rather than with `=`
+///                                    'WebServiceActionResultCode'
 ///     I := ResultCode.AsInteger();   error AL0132: 'WebServiceActionResultCode' does not
 ///                                    contain a definition for 'AsInteger'. It is a platform
 ///                                    enum, not an AL enum object, so the AsInteger/AsEnum
 ///                                    pair does not exist on it and its numeric value cannot
 ///                                    be read from AL at all. This is why test 3 pins the
-///                                    Get/Updated collision by NAME through Assert.AreEqual
-///                                    rather than by comparing 200 to 200, which would prove
-///                                    nothing anyway.
-///     V := Ctx;  T := Format(Ctx);   BOTH COMPILE -- unlike SecretText, this type converts to
-///                                    Variant and has a text representation.
+///                                    Get/Updated collision by NAME rather than by comparing
+///                                    200 to 200, which would prove nothing anyway.
+///     V := Ctx;  T := Format(Ctx);   BOTH COMPILE -- unlike SecretText, the CONTEXT converts
+///                                    to Variant and has a text representation. Note this
+///                                    holds for the context, NOT for the result code: see the
+///                                    CS1503 note below, where the compiler agrees and the
+///                                    server does not.
 ///     Ctx := SomeVariant;            error AL0122: Cannot implicitly convert type 'Variant'
 ///                                    to 'WebServiceActionContext'. The Variant conversion is
 ///                                    ONE-DIRECTIONAL -- in, not out.
 ///     Clear(Ctx);                    COMPILES.
+///
+/// A RESULT CODE CANNOT BE PASSED TO A Variant PARAMETER ON A REAL SERVER, AND THE AL COMPILER
+/// DOES NOT CATCH IT. This is the most important thing measured here, it was found only by
+/// running against a service tier, and it dictates how every result-code assertion below is
+/// written.
+///
+/// `Assert.AreEqual(WebServiceActionResultCode::Created, Ctx.GetResultCode(), '...')` COMPILES
+/// CLEANLY -- Assert's parameters are Variant, and alc raises nothing. On a real BC server the
+/// codeunit then fails to LOAD, because the server generates C# for each application object at
+/// deployment time and that generated C# does not compile:
+///
+///     error CS1503: Argument 2: cannot convert from
+///     'Microsoft.Dynamics.Nav.Runtime.WebServiceActionResultCode' to
+///     'Microsoft.Dynamics.Nav.Runtime.NavValue'
+///
+/// NavValue is the runtime's boxed-value base class -- what a Variant parameter takes -- and
+/// WebServiceActionResultCode has no NavValue wrapper on the argument path, unlike ObjectType
+/// (which boxes fine and is asserted directly throughout this file). The failure is per-object
+/// and total: the first version of this file produced 71 instances of that one error, BC
+/// reported "C# compilation has failed for the application object CodeUnit_60278" plus
+/// "CLR type load failed", and NONE of the 33 tests ran on ANY of the 16 legs -- while all
+/// 2639 other tests in the app passed. A whole codeunit disappears, silently as far as AL is
+/// concerned, from one expression the compiler accepted.
+///
+/// So every assertion here compares Format(...) of a result code, never the code itself. That
+/// is not a workaround for a test-harness limitation -- it is the only way an AL author can
+/// compare two result codes at all, given that `=` is AL0175, AsInteger() is AL0132, and the
+/// Variant path does not survive deployment. Worth knowing before writing any AL that handles
+/// this type.
 ///
 /// Because `=` is refused on both types, there is no compile-time-refusal test in this file:
 /// a refusal is a compiler diagnostic, not a runtime error, so `asserterror` has nothing to
@@ -166,8 +196,8 @@ codeunit 60278 "Test WebServiceActionContext"
         Ctx: WebServiceActionContext;
     begin
         Assert.AreEqual(
-            WebServiceActionResultCode::None,
-            Ctx.GetResultCode(),
+            'None',
+            Format(Ctx.GetResultCode()),
             'A fresh WebServiceActionContext must report WebServiceActionResultCode::None');
     end;
 
@@ -263,7 +293,7 @@ codeunit 60278 "Test WebServiceActionContext"
         Assert.AreEqual(50123, Ctx.GetObjectId(), 'The object id must survive setting the result code');
         Assert.AreEqual(ObjectType::Page, Ctx.GetObjectType(), 'The object type must survive setting the result code');
         Assert.AreEqual(
-            WebServiceActionResultCode::Created, Ctx.GetResultCode(), 'The result code must survive setting the id and type');
+            'Created', Format(Ctx.GetResultCode()), 'The result code must survive setting the id and type');
     end;
 
     // ---------------------------------------------------------------------------------------
@@ -283,7 +313,7 @@ codeunit 60278 "Test WebServiceActionContext"
         Ctx.SetResultCode(WebServiceActionResultCode::Created);
 
         Assert.AreEqual(
-            WebServiceActionResultCode::Created, Ctx.GetResultCode(), 'GetResultCode must read back Created unchanged');
+            'Created', Format(Ctx.GetResultCode()), 'GetResultCode must read back Created unchanged');
     end;
 
     [Test]
@@ -294,7 +324,7 @@ codeunit 60278 "Test WebServiceActionContext"
         Ctx.SetResultCode(WebServiceActionResultCode::Deleted);
 
         Assert.AreEqual(
-            WebServiceActionResultCode::Deleted, Ctx.GetResultCode(), 'GetResultCode must read back Deleted unchanged');
+            'Deleted', Format(Ctx.GetResultCode()), 'GetResultCode must read back Deleted unchanged');
     end;
 
     [Test]
@@ -307,7 +337,7 @@ codeunit 60278 "Test WebServiceActionContext"
         // implementation that simply collapses everything onto one member.
         Ctx.SetResultCode(WebServiceActionResultCode::Get);
 
-        Assert.AreEqual(WebServiceActionResultCode::Get, Ctx.GetResultCode(), 'GetResultCode must read back Get unchanged');
+        Assert.AreEqual('Get', Format(Ctx.GetResultCode()), 'GetResultCode must read back Get unchanged');
     end;
 
     [Test]
@@ -320,7 +350,7 @@ codeunit 60278 "Test WebServiceActionContext"
         Ctx.SetResultCode(WebServiceActionResultCode::None);
 
         Assert.AreEqual(
-            WebServiceActionResultCode::None, Ctx.GetResultCode(), 'SetResultCode(None) must overwrite a previously set code');
+            'None', Format(Ctx.GetResultCode()), 'SetResultCode(None) must overwrite a previously set code');
     end;
 
     [Test]
@@ -335,8 +365,8 @@ codeunit 60278 "Test WebServiceActionContext"
         Ctx.SetResultCode(WebServiceActionResultCode::Updated);
 
         Assert.AreEqual(
-            WebServiceActionResultCode::Get,
-            Ctx.GetResultCode(),
+            'Get',
+            Format(Ctx.GetResultCode()),
             'SetResultCode(Updated) must read back as Get -- both are valued 200 and the pair collapses onto Get');
     end;
 
@@ -353,8 +383,8 @@ codeunit 60278 "Test WebServiceActionContext"
         CtxFromUpdated.SetResultCode(WebServiceActionResultCode::Updated);
 
         Assert.AreEqual(
-            CtxFromGet.GetResultCode(),
-            CtxFromUpdated.GetResultCode(),
+            Format(CtxFromGet.GetResultCode()),
+            Format(CtxFromUpdated.GetResultCode()),
             'Get and Updated share the value 200, so two contexts set from them must report the same result code');
     end;
 
@@ -371,8 +401,8 @@ codeunit 60278 "Test WebServiceActionContext"
         CtxDeleted.SetResultCode(WebServiceActionResultCode::Deleted);
 
         Assert.AreNotEqual(
-            CtxCreated.GetResultCode(),
-            CtxDeleted.GetResultCode(),
+            Format(CtxCreated.GetResultCode()),
+            Format(CtxDeleted.GetResultCode()),
             'Created and Deleted have distinct values and must remain distinguishable');
     end;
 
@@ -483,7 +513,7 @@ codeunit 60278 "Test WebServiceActionContext"
         Assert.AreEqual(50123, Ctx.GetObjectId(), 'AddEntityKey must not disturb the object id');
         Assert.AreEqual(ObjectType::Page, Ctx.GetObjectType(), 'AddEntityKey must not disturb the object type');
         Assert.AreEqual(
-            WebServiceActionResultCode::Created, Ctx.GetResultCode(), 'AddEntityKey must not disturb the result code');
+            'Created', Format(Ctx.GetResultCode()), 'AddEntityKey must not disturb the result code');
     end;
 
     [Test]
@@ -525,7 +555,7 @@ codeunit 60278 "Test WebServiceActionContext"
         // an untouched instance has. Assigning Page beforehand is what makes it meaningful.
         Assert.AreEqual(Pristine.GetObjectType(), Ctx.GetObjectType(), 'Clear must reset the object type to its pristine value');
         Assert.AreNotEqual(ObjectType::Page, Ctx.GetObjectType(), 'Clear must discard the assigned object type');
-        Assert.AreEqual(WebServiceActionResultCode::None, Ctx.GetResultCode(), 'Clear must reset the result code to None');
+        Assert.AreEqual('None', Format(Ctx.GetResultCode()), 'Clear must reset the result code to None');
     end;
 
     [Test]
@@ -611,26 +641,17 @@ codeunit 60278 "Test WebServiceActionContext"
     var
         Ctx: WebServiceActionContext;
     begin
-        // Format on the result code yields the member NAME. This is the same collision as test
-        // 3 seen through a different lens: the name is what the platform round-trips, so
-        // formatting is how AL can read the code as text at all -- AsInteger does not exist on
-        // this enum.
+        // Format on the result code yields the member NAME, and the name is what the platform
+        // round-trips -- which is why every assertion in this file goes through Format, and
+        // why it has to: `=` is AL0175, AsInteger() does not exist (AL0132), and passing the
+        // code to a Variant parameter fails to deploy (CS1503, see the header). This test
+        // pins the text form itself against a code whose name is unambiguous, so the Format
+        // path the other tests depend on is established rather than assumed.
         Ctx.SetResultCode(WebServiceActionResultCode::Deleted);
 
         Assert.AreEqual('Deleted', Format(Ctx.GetResultCode()), 'Format on the result code must yield its member name');
     end;
 
-    [Test]
-    procedure WSAC_ResultCode_FormatOfUpdatedYieldsGet()
-    var
-        Ctx: WebServiceActionContext;
-    begin
-        // The collision restated as text, which is the form an AL author is most likely to see
-        // it in -- for example when writing the code into a message or a log.
-        Ctx.SetResultCode(WebServiceActionResultCode::Updated);
-
-        Assert.AreEqual('Get', Format(Ctx.GetResultCode()), 'Format after SetResultCode(Updated) must yield Get, not Updated');
-    end;
 
     [Test]
     procedure WSAC_ConvertsToVariantButNotBack()

@@ -200,10 +200,21 @@ Notes:
   (`Table`, `Page`, `Report`, `Codeunit`, `XmlPort`, `Query`, `MenuSuite`), while the platform
   enum behind it starts at `TableData = 0`. Two tests therefore state the default relatively --
   it differs from all seven, and `Clear()` restores it -- rather than pinning a name.
+- **A `WebServiceActionResultCode` cannot be passed to a `Variant` parameter on a real BC
+  server, and `alc` does not catch it.** `Assert.AreEqual(WebServiceActionResultCode::Created,
+  ...)` compiles cleanly, then the codeunit fails to LOAD, because the server's per-object C#
+  codegen emits `error CS1503: cannot convert from ... WebServiceActionResultCode to ...
+  NavValue`. `NavValue` is the runtime's boxed-value base — `NavWebServiceActionContext`
+  derives from it and boxes fine, `NavWebServiceActionResultCode` (a `NavEnumBase`) does not.
+  This was found only by running against a service tier: the first revision of the suite
+  produced 71 instances of that one error, BC reported "C# compilation has failed for the
+  application object CodeUnit_60278", and **none of the tests ran on any of the 16 legs** while
+  all 2639 other tests passed. Every result-code assertion therefore compares `Format(...)`.
 - `=` is refused on both `WebServiceActionContext` and `WebServiceActionResultCode` (`AL0175`),
-  and `AsInteger()` does not exist on the result code (`AL0132`), so comparisons go through
-  `Assert.AreEqual`, which takes Variants. Conversion to `Variant` works; conversion back is
-  `AL0122`. The file header records all of these with their error codes.
+  and `AsInteger()` does not exist on the result code (`AL0132`). With the `Variant` path also
+  unusable, `Format()` is the **only** way AL can compare two result codes. Conversion to
+  `Variant` works for the context itself; conversion back is `AL0122`. The file header records
+  all of these with their error codes.
 - Deliberately not covered: the OData side of the contract -- that a real API page action
   returning this context makes the platform emit the corresponding HTTP status and redirect.
   That needs a web service request against a published API page, outside what a `[Test]`
