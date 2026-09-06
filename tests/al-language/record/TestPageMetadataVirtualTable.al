@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-data-type
 // Scope: in-scope
-// Fixtures used: ALT Card Page (60017), ALT List Page (60016), ALT Universal (60000)
+// Fixtures used: ALT Card Page (60017), ALT List Page (60016), ALT Universal (60000),
+//                ALT Prompt Dialog Page (60879)
 //
 // Pins the built-in "Page Metadata" system virtual table (2000000138): one row per page
 // declared in the application, computed from the page's own metadata rather than stored
@@ -48,6 +49,46 @@ codeunit 60920 "Test Page Metadata Virt Table"
         Assert.AreEqual('ALT List Page', PageMetadata.Name, 'Unexpected Name for ALT List Page.');
         Assert.AreEqual(Database::"ALT Universal", PageMetadata.SourceTable, 'Unexpected SourceTable for ALT List Page.');
         Assert.AreEqual(PageMetadata.PageType::List, PageMetadata.PageType, 'Unexpected PageType for ALT List Page.');
+    end;
+
+    [Test]
+    procedure Record_PageMetadata_Get_PromptDialogPage_ReportsAnOrdinalTheColumnDoesNotName()
+    var
+        PageMetadata: Record "Page Metadata";
+        PageTypeOrdinal: Integer;
+    begin
+        Initialize();
+
+        // The PageType column's own OptionMembers run Card..HeadlinePart — thirteen members,
+        // ordinals 0..12 — but AL accepts more page types than that, and PromptDialog is one
+        // of them. ALT Prompt Dialog Page declares it, so this reads the one case the column
+        // has no member for. Every other page fixture here declares one of the thirteen.
+        //
+        // [WHEN] reading the row of a page whose declared PageType is outside the column's own
+        // option set
+        Assert.IsTrue(
+            PageMetadata.Get(Page::"ALT Prompt Dialog Page"),
+            'Page Metadata has no row for page ALT Prompt Dialog Page.');
+
+        // [THEN] the column carries an ordinal PAST the last member it names, rather than
+        // being clamped to the last one or defaulted to the first.
+        PageTypeOrdinal := PageMetadata.PageType;
+        Assert.IsTrue(
+            PageTypeOrdinal > 12,
+            'A page declaring PageType = PromptDialog must report an ordinal past HeadlinePart, the column''s last member.');
+        Assert.AreEqual(
+            20, PageTypeOrdinal,
+            'Unexpected PageType ordinal for a page declaring PageType = PromptDialog.');
+
+        // Stated a second way, in the column's own terms, so the claim does not rest on one
+        // integer: Card is what a defaulting implementation reports, and HeadlinePart is what a
+        // clamping one reports.
+        Assert.AreNotEqual(
+            PageMetadata.PageType::Card, PageMetadata.PageType,
+            'PageType = PromptDialog must not read back as the column''s first member.');
+        Assert.AreNotEqual(
+            PageMetadata.PageType::HeadlinePart, PageMetadata.PageType,
+            'PageType = PromptDialog must not read back as the column''s last member.');
     end;
 
     [Test]

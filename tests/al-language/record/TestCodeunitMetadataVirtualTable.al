@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-codeunit-object
 // Scope: in-scope
-// Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608)
+// Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608),
+//                ALT Install Probe (60838)
 //
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
 // codeunit declared in the application, computed from the codeunit's own metadata rather
@@ -85,6 +86,42 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
         Assert.AreEqual(
             CodeunitMetadata.Subtype::Test, CodeunitMetadata.Subtype,
             'A codeunit declaring Subtype = Test must report Subtype::Test.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_InstallCodeunit_ReportsAnOrdinalTheColumnDoesNotName()
+    var
+        CodeunitMetadata: Record "CodeUnit Metadata";
+        SubTypeOrdinal: Integer;
+    begin
+        Initialize();
+
+        // The SubType column's own OptionMembers are Normal,Test,TestRunner,Upgrade — four
+        // members, ordinals 0..3 — but AL accepts a fifth codeunit subtype, Install. ALT
+        // Install Probe declares it, so this reads the one case the column has no member for.
+        //
+        // [WHEN] reading the row of a codeunit whose declared Subtype is outside the column's
+        // own option set
+        Assert.IsTrue(
+            CodeunitMetadata.Get(Codeunit::"ALT Install Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Install Probe.');
+
+        // [THEN] the column carries an ordinal PAST the last member it names, rather than
+        // being clamped to the last one or defaulted to the first.
+        SubTypeOrdinal := CodeunitMetadata.SubType;
+        Assert.AreEqual(
+            4, SubTypeOrdinal,
+            'A codeunit declaring Subtype = Install must report the ordinal after Upgrade, not a member of the column.');
+
+        // Stated a second way, in the column's own terms, so the claim does not rest on one
+        // integer: it is neither of the two members a defaulting or clamping implementation
+        // would produce.
+        Assert.AreNotEqual(
+            CodeunitMetadata.SubType::Normal, CodeunitMetadata.SubType,
+            'Subtype = Install must not read back as the column''s first member.');
+        Assert.AreNotEqual(
+            CodeunitMetadata.SubType::Upgrade, CodeunitMetadata.SubType,
+            'Subtype = Install must not read back as the column''s last member.');
     end;
 
     [Test]
