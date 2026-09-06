@@ -26,6 +26,12 @@ table 60440 "CFM Line"
         /// The Date aggregation source — the "first / last date" shape BC's own
         /// "Job Task"."Starting Date" uses.
         field(5; "Posting Date"; Date) { }
+
+        /// A DURATION aggregation source. Duration is one of the four types BC will sum or
+        /// average, so a Duration source separates "this type cannot be aggregated at all"
+        /// from "this aggregate's FlowField is typed differently from its source" -- the two
+        /// refusals "CFM Validation Tests" has to tell apart.
+        field(6; Elapsed; Duration) { }
     }
 
     keys
