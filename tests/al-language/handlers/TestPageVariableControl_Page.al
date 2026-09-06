@@ -112,6 +112,22 @@ page 60715 "Test Page Variable Control"
                     end;
                 end;
             }
+            // A page-global control that REFUSES a value. Every control above writes into the
+            // table so a test can see the trigger ran; this one exists so a test can see what
+            // happens when the trigger REFUSES, which is a different question and the only one
+            // this page could not previously ask. Nothing else writes to it, so the arms above
+            // are unaffected.
+            field(GuardField; SelectedGuard)
+            {
+                ApplicationArea = All;
+                Caption = 'Guard';
+
+                trigger OnValidate()
+                begin
+                    if SelectedGuard = RefuseTok then
+                        Error(GuardRefusedErr);
+                end;
+            }
             repeater(Rows)
             {
                 field("No."; Rec."No.")
@@ -131,4 +147,7 @@ page 60715 "Test Page Variable Control"
         SelectedKind: Option Field,Block,Image,Font,Custom,Label;
         SelectedCode: Code[20];
         SelectedDate: Date;
+        SelectedGuard: Text[30];
+        RefuseTok: Label 'REFUSE', Locked = true;
+        GuardRefusedErr: Label 'Guard control refused the value', Locked = true;
 }
