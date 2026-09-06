@@ -158,7 +158,69 @@ Notes:
   "Unhandled UI: SessionSettings" unless a `[SessionSettingsHandler]` is declared. That single
   method is the only part of the type the "UI-level" label fits.
 
-### 5. Additional platform/system surfaces
+### 5. WebServiceActionContext
+
+Status: implemented for the whole method surface (`session/TestWebServiceActionContext.al`, codeunit 60278).
+
+Why it matters:
+
+- It was the last entry in this document with no test file at all.
+- All 7 documented members are get/set pairs plus one collection-add on an in-memory object,
+  so the entire type is observable from a plain `[Test]` with no web service request in
+  flight. `scripts/al-surface-inscope.json` marks all 7 "out-of-scope"; that label classifies
+  by the type's name rather than by what the members do, and is wrong in the same way it was
+  wrong for `SecretText` and `SessionSettings`.
+
+Current coverage:
+
+- defaults on a fresh instance: object id `0`, result code `None`, and an object type that is
+  none of the seven members AL can name
+- round-tripping, last-write-wins and mutual independence of `SetObjectId()`/`GetObjectId()`
+  and `SetObjectType()`/`GetObjectType()`
+- `SetObjectId()` storing an out-of-range (negative) id without validating it
+- `SetResultCode()`/`GetResultCode()` round-tripping `None`, `Get`, `Created` and `Deleted`
+- the `Get`/`Updated` collision -- both are valued 200, so `SetResultCode(Updated)` reads back
+  as `Get` -- asserted in three ways, plus the negative case that `Created` and `Deleted`
+  stay distinguishable
+- `AddEntityKey()` accepting distinct field ids and value types, and obeying the trappable-
+  return convention: `false` for a duplicate field id when the return value is captured, a
+  catchable error naming the type when it is not
+- `Clear()` resetting the scalar properties **and** emptying the entity keys
+- assignment sharing the underlying context -- the opposite of `SessionSettings`
+- `Format()` on the result code, and one-directional conversion to `Variant`
+
+Notes:
+
+- `WebServiceActionResultCode` declares five members over four values (`None = 0`, `Get = 200`,
+  `Created = 201`, `Updated = 200`, `Deleted = 204`) and the platform round-trips the code by
+  NAME through a second, separately-declared enum, so the 200-valued pair collapses onto the
+  first-declared name. This is the single most surprising thing about the type and the reason
+  the file is worth having.
+- The default object type CANNOT be named in AL. `ObjectType` exposes exactly seven members
+  (`Table`, `Page`, `Report`, `Codeunit`, `XmlPort`, `Query`, `MenuSuite`), while the platform
+  enum behind it starts at `TableData = 0`. Two tests therefore state the default relatively --
+  it differs from all seven, and `Clear()` restores it -- rather than pinning a name.
+- **A `WebServiceActionResultCode` cannot be passed to a `Variant` parameter on a real BC
+  server, and `alc` does not catch it.** `Assert.AreEqual(WebServiceActionResultCode::Created,
+  ...)` compiles cleanly, then the codeunit fails to LOAD, because the server's per-object C#
+  codegen emits `error CS1503: cannot convert from ... WebServiceActionResultCode to ...
+  NavValue`. `NavValue` is the runtime's boxed-value base — `NavWebServiceActionContext`
+  derives from it and boxes fine, `NavWebServiceActionResultCode` (a `NavEnumBase`) does not.
+  This was found only by running against a service tier: the first revision of the suite
+  produced 71 instances of that one error, BC reported "C# compilation has failed for the
+  application object CodeUnit_60278", and **none of the tests ran on any of the 16 legs** while
+  all 2639 other tests passed. Every result-code assertion therefore compares `Format(...)`.
+- `=` is refused on both `WebServiceActionContext` and `WebServiceActionResultCode` (`AL0175`),
+  and `AsInteger()` does not exist on the result code (`AL0132`). With the `Variant` path also
+  unusable, `Format()` is the **only** way AL can compare two result codes. Conversion to
+  `Variant` works for the context itself; conversion back is `AL0122`. The file header records
+  all of these with their error codes.
+- Deliberately not covered: the OData side of the contract -- that a real API page action
+  returning this context makes the platform emit the corresponding HTTP status and redirect.
+  That needs a web service request against a published API page, outside what a `[Test]`
+  codeunit can provoke.
+
+### 6. Additional platform/system surfaces
 
 Status: partial or thin coverage.
 
@@ -167,7 +229,6 @@ Candidate areas:
 - `Media` and `MediaSet`
 - `TaskScheduler`
 - `ModuleInfo` / related app metadata
-- `WebServiceActionContext` -- no test file at all; the least-covered remaining candidate
 
 These are lower priority than `Query` because the current suite is already strong on the most commonly used runtime behaviors.
 
