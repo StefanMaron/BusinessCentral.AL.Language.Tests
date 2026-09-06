@@ -319,13 +319,22 @@ codeunit 60331 "TableExt Keys And InitValue"
         Assert.IsTrue(RecRef.KeyCount() >= 6,
             'the extended table must expose at least its own 4 keys plus the 2 the tableextension declares');
 
+        // The field-count check has to guard the index call from OUTSIDE the boolean
+        // expression. AL evaluates both operands of `and`, so writing
+        // `(KRef.FieldCount() = 2) and (KRef.FieldIndex(2).Name() = 'Ext Rank')` calls
+        // FieldIndex(2) on every one-field key in the list and raises "Index out of bounds"
+        // before the scan reaches the keys this test is about. Nesting is what actually
+        // guards it. Pinned by
+        // Boolean_AND_FalseLeftOperand_RightOperandThatRaises_StillRaises in
+        // "Test Type System Contracts".
         for i := 1 to RecRef.KeyCount() do begin
             KRef := RecRef.KeyIndex(i);
-            if (KRef.FieldCount() = 1) and (KRef.FieldIndex(1).Name() = 'Ext Rank') then
-                ExtRankKeyIndex := i;
-            if (KRef.FieldCount() = 2) and (KRef.FieldIndex(1).Name() = 'Status')
-               and (KRef.FieldIndex(2).Name() = 'Ext Rank') then
-                ExtMixedKeyIndex := i;
+            if KRef.FieldCount() = 1 then
+                if KRef.FieldIndex(1).Name() = 'Ext Rank' then
+                    ExtRankKeyIndex := i;
+            if KRef.FieldCount() = 2 then
+                if (KRef.FieldIndex(1).Name() = 'Status') and (KRef.FieldIndex(2).Name() = 'Ext Rank') then
+                    ExtMixedKeyIndex := i;
         end;
 
         Assert.AreNotEqual(0, ExtRankKeyIndex,
