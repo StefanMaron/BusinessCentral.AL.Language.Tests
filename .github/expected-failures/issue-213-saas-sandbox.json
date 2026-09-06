@@ -1,0 +1,62 @@
+{
+  "source": "https://github.com/StefanMaron/BusinessCentral.AL.Language.Tests/issues/213",
+  "measured_on": "MS SaaS sandbox, US Business Central 28.4 (Platform 28.0.53667.0 + Application 28.4.53241.54031)",
+  "note": "Partial list -- issue #213 says the sandbox run was slow or stuck and did not finish. Absence from this list is NOT evidence that a test passed on the sandbox.",
+  "corpus_commit_verified_against": "28869bc2f09ce7ada61eadfcf6f91385251633bd",
+  "environment_of_record": {
+    "region": "European format (decimal comma, dd.MM.yy) even though the environment is US -- this is the USER's region, not the tenant's",
+    "license": "SaaS Essentials"
+  },
+  "read_this_before_comparing": [
+    "The 'permissions' group below is NOT a license-tier finding. Codeunits 60013 and 60827 declare 'TestPermissions = Disabled' and no 'Permissions' property, so they acquire no permission context of their own and every write falls through to whatever the license grants. The table choice (5902 / 5406 / 5957) is incidental; the missing declaration is the defect.",
+    "A dev-licensed container is expected to MASK that defect, not resolve it. A pass on those three here means nothing for them -- it is the same masking that hid the problem until a SaaS run exposed it.",
+    "The exposure is corpus-wide, not confined to these two codeunits: at 28869bc2, 185 test codeunits declare 'TestPermissions = Disabled' and exactly 2 declare 'Permissions' at all."
+  ],
+  "failures": [
+    { "codeunit": 60013, "test": "CalcFields_TableExtensionFlowFieldOnCustomer_SumsOnlyTheMatchingLines",
+      "group": "permissions", "expected_on_windows": "pass (masked by dev license -- proves nothing)",
+      "cause": "Insert on TableData 5902 Service Line refused; cu 60013 has TestPermissions = Disabled and declares no Permissions" },
+    { "codeunit": 60013, "test": "CalcFields_TableExtensionFlowFieldOnStockkeepingUnit_SumsOnlyTheMatchingLines",
+      "group": "permissions", "expected_on_windows": "pass (masked by dev license -- proves nothing)",
+      "cause": "Insert on TableData 5406 Prod. Order Line refused; same missing Permissions declaration" },
+    { "codeunit": 60827, "test": "TableExt_Validate_ContributedRelation_RelatedRowExists_AssignsTheValue",
+      "group": "permissions", "expected_on_windows": "pass (masked by dev license -- proves nothing)",
+      "cause": "Insert on TableData 5957 Service Zone refused; cu 60827 has TestPermissions = Disabled and declares no Permissions" },
+
+    { "codeunit": 60142, "test": "System_StrSubstNo_WithDecimals",
+      "group": "culture", "expected_on_windows": "pass (en-US session pinned)",
+      "cause": "expected 99.99, got 99,99 -- decimal comma; the test hardcodes en-US formatting" },
+    { "codeunit": 60624, "test": "TempIntegerPart_SelfLoaded_FirstRowIsNumberOne",
+      "group": "culture", "expected_on_windows": "pass (en-US session pinned)",
+      "cause": "expected 10.00, got 10,00 -- decimal comma" },
+    { "codeunit": 60952, "test": "Confirm_MultipleMixedTypeFormatArgs_HandlerReceivesRawUnsubstitutedQuestion",
+      "group": "culture", "expected_on_windows": "pass (en-US session pinned)",
+      "cause": "expected 01/15/24, got 15.01.24 -- dd.MM.yy dates" },
+
+    { "codeunit": 60878, "test": "SaveAsPdf_RdlcLayout_ReturnsFalseWithLastErrorTextOnLinux",
+      "group": "image-limitation-asserted-as-bc", "expected_on_windows": "FAIL, correctly",
+      "cause": "asserts RDLC rendering is UNAVAILABLE; a Windows container renders it, so SaveAs returns true" },
+
+    { "codeunit": 60600, "test": "TestCodeunit_SingleInstance_DoesNotLeakAcrossTests",
+      "group": "divergence", "expected_on_windows": "FAIL (this is what the nightly is for)",
+      "cause": "SingleInstance state leaked across test codeunits: expected 0, got 99" },
+    { "codeunit": 60614, "test": "TestCodeunit_SingleInstance_SurvivesACodeunitRunScope",
+      "group": "divergence", "expected_on_windows": "FAIL (this is what the nightly is for)",
+      "cause": "after the Codeunit.Run scope was torn down the cached value read back as EUR, expected GBP" },
+    { "codeunit": 60615, "test": "TestCodeunit_SingleInstance_SurvivesAScopeThatErrored",
+      "group": "divergence", "expected_on_windows": "FAIL (this is what the nightly is for)",
+      "cause": "after a failed scope was torn down the cached value read back as EUR, expected CHF" },
+    { "codeunit": 60130, "test": "Media_ExportStream_ValidPng_SameByteLengthAsImported",
+      "group": "divergence", "expected_on_windows": "FAIL (this is what the nightly is for)",
+      "cause": "ExportStream returned 99 bytes, imported 68" },
+    { "codeunit": 60207, "test": "XmlPort_NestedTableElements_ExportIncludesChildRecordsAndAttribute",
+      "group": "divergence", "expected_on_windows": "FAIL (this is what the nightly is for)",
+      "cause": "nested XmlPort export omitted fieldattribute values on child elements" },
+    { "codeunit": 60290, "test": "MetadataPermissionSet_CaptionlessRole_NameFallsBackToRoleId",
+      "group": "divergence", "expected_on_windows": "unknown -- may be country/localization dependent",
+      "cause": "expected LOCAL, got 'Country/region-specific func.'" },
+    { "codeunit": 60529, "test": "TestReport_SettingCurrReportLanguage_RunsAndIsReadableBack",
+      "group": "divergence", "expected_on_windows": "unknown -- may depend on whether a layout renders",
+      "cause": "CurrReport.FormatRegion read back as en-US, expected empty" }
+  ]
+}
