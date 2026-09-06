@@ -8,6 +8,10 @@ codeunit 60173 "Test BC Platform Contracts"
 
     var
         Assert: Codeunit Assert;
+        // Mirror of tests/al-language/app.json "version". The manifest and this Label are the
+        // same fact written twice, and AL cannot read app.json, so they must be updated
+        // together. If the version test below fails, these two have drifted -- look here first.
+        AppJsonVersionTok: Label '1.0.0.0', Locked = true;
 
     local procedure Initialize()
     begin
@@ -106,8 +110,19 @@ codeunit 60173 "Test BC Platform Contracts"
         );
     end;
 
+    // The expected version is no longer written into this test's name. It used to be
+    // (IsOneOhOhOh), which made the identifier itself wrong the moment anyone bumped the
+    // manifest and gave a reader no hint that app.json was the thing to change.
+    //
+    // The literal stays, because here it cannot be derived. The OnPrem app checks this same
+    // claim by comparing two independent surfaces -- the "Published Application" row against
+    // ModuleInfo -- but that table is Scope = OnPrem and a Target = Cloud app cannot name it.
+    // In this app ModuleInfo is the only surface that reports the app's own version, so
+    // deriving the expectation from it would compare it to itself and assert nothing. What
+    // changed is that the value now lives in one named Label next to a comment naming
+    // app.json, and the failure message says what to update.
     [Test]
-    procedure NavApp_GetCurrentModuleInfo_AppVersion_IsOneOhOhOh()
+    procedure NavApp_GetCurrentModuleInfo_AppVersion_MatchesAppJsonManifest()
     var
         Info: ModuleInfo;
         Ver: Version;
@@ -116,9 +131,9 @@ codeunit 60173 "Test BC Platform Contracts"
         NavApp.GetCurrentModuleInfo(Info);
         Ver := Info.AppVersion();
         Assert.AreEqual(
-            '1.0.0.0',
+            AppJsonVersionTok,
             Format(Ver),
-            'AppVersion must match app.json "version": "1.0.0.0"'
+            'AppVersion must match app.json "version" -- if the manifest was bumped, update AppJsonVersionTok to match'
         );
     end;
 
