@@ -17,6 +17,7 @@
 codeunit 60932 "CFF Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

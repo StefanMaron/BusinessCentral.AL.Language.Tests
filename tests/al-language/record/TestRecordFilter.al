@@ -1,6 +1,7 @@
 codeunit 60055 "Test Record Filter"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

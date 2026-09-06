@@ -6,6 +6,7 @@
 codeunit 60209 "Test Integration Event Fanout"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

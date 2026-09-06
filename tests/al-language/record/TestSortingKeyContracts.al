@@ -5,6 +5,7 @@
 codeunit 60160 "Test Sorting Key Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

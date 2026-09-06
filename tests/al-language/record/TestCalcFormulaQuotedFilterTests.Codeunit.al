@@ -21,6 +21,7 @@
 codeunit 60308 "CFQ Quoted Filter Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

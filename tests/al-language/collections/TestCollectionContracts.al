@@ -1,6 +1,7 @@
 codeunit 60150 "Test Collection Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

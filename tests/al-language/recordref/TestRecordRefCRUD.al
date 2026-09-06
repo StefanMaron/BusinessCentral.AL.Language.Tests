@@ -4,6 +4,7 @@
 codeunit 60068 "Test RecordRef CRUD"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

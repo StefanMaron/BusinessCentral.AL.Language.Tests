@@ -17,6 +17,7 @@
 codeunit 60022 "TableExt Field TestPage Ctl"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

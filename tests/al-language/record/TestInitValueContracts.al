@@ -1,6 +1,7 @@
 codeunit 60195 "Test InitValue Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

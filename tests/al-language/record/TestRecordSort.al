@@ -5,6 +5,7 @@
 codeunit 60056 "Test Record Sort"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

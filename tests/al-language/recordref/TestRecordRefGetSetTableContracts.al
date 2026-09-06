@@ -9,6 +9,7 @@
 codeunit 60200 "Test RecordRef GetSetTable"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

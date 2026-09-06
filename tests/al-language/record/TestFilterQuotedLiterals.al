@@ -10,6 +10,7 @@
 codeunit 60199 "Test Filter Quoted Literals"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

@@ -5,6 +5,7 @@
 codeunit 60052 "Test Record Delete"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

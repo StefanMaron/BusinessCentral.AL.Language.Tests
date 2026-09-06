@@ -26,6 +26,7 @@
 codeunit 60130 "Test Media Png Import"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

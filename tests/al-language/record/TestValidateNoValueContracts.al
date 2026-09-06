@@ -1,6 +1,7 @@
 codeunit 60196 "Test Validate No Value"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

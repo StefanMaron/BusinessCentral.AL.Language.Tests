@@ -4,6 +4,7 @@
 codeunit 60112 "Test Database"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

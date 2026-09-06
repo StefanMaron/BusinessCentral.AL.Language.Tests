@@ -1,6 +1,7 @@
 codeunit 60175 "Test Security Filtering"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

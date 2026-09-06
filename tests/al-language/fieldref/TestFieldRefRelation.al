@@ -27,6 +27,7 @@
 codeunit 60482 "Test FieldRef Relation"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

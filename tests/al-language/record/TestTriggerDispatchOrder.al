@@ -5,6 +5,7 @@
 codeunit 60210 "Test Trigger Dispatch Order"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

@@ -5,6 +5,7 @@
 codeunit 60154 "Test Error Text Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

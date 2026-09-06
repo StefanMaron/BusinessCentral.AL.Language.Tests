@@ -6,6 +6,7 @@
 codeunit 60152 "Test Transaction Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

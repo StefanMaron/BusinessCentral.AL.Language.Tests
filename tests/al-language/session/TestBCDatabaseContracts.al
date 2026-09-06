@@ -1,6 +1,7 @@
 codeunit 60178 "Test BC Database Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

@@ -1,6 +1,7 @@
 codeunit 60077 "Test FieldRef FieldError"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

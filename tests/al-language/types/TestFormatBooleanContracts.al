@@ -1,6 +1,7 @@
 codeunit 60197 "Test Format Boolean Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

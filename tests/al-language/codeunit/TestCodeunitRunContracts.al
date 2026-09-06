@@ -1,6 +1,7 @@
 codeunit 60190 "Test Codeunit Run Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

@@ -5,6 +5,7 @@
 codeunit 60065 "Test Record Validate"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

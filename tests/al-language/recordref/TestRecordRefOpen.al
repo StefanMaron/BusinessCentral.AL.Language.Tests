@@ -5,6 +5,7 @@
 codeunit 60067 "Test RecordRef Open"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

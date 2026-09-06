@@ -5,6 +5,7 @@
 codeunit 60057 "Test Record Rename"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

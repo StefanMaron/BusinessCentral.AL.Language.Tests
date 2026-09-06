@@ -5,6 +5,7 @@
 codeunit 60059 "Test Record Triggers"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

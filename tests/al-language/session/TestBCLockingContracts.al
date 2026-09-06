@@ -4,6 +4,7 @@
 codeunit 60176 "Test BC Locking Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

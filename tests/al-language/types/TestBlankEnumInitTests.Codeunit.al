@@ -20,6 +20,7 @@
 codeunit 60895 "BEI Blank Enum Init Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

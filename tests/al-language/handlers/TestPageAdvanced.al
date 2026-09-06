@@ -5,6 +5,7 @@
 codeunit 60133 "Test Page Advanced"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

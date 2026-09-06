@@ -5,6 +5,7 @@
 codeunit 60126 "Test Page Extended"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

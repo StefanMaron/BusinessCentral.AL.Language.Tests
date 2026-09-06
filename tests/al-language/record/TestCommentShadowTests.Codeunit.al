@@ -14,6 +14,7 @@
 codeunit 60901 "CSFP Comment Shadow Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

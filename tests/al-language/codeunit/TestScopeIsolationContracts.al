@@ -1,6 +1,7 @@
 codeunit 60170 "Test Scope Isolation Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

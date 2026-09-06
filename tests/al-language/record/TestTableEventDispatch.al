@@ -5,6 +5,7 @@
 codeunit 60208 "Test Table Event Dispatch"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

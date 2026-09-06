@@ -5,6 +5,7 @@
 codeunit 60158 "Test FlowField Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

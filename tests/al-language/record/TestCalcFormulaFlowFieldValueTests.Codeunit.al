@@ -25,6 +25,7 @@
 codeunit 60942 "CFV Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

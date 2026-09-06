@@ -10,6 +10,7 @@
 codeunit 60203 "Test TableExt Cross App"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

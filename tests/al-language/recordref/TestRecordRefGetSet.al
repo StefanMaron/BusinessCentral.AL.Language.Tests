@@ -4,6 +4,7 @@
 codeunit 60072 "Test RecordRef GetSet"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

@@ -5,6 +5,7 @@
 codeunit 60061 "Test Record SystemId"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

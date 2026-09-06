@@ -9,6 +9,7 @@
 codeunit 60207 "Test XmlPort Advanced"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

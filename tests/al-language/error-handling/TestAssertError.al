@@ -4,6 +4,7 @@
 codeunit 60083 "Test AssertError"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

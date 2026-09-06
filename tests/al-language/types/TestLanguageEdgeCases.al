@@ -6,6 +6,7 @@
 codeunit 60165 "Test Language Edge Cases"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

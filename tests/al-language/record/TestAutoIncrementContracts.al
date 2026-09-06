@@ -7,6 +7,7 @@
 codeunit 60201 "Test AutoIncrement Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

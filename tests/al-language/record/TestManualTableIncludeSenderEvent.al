@@ -14,6 +14,7 @@
 codeunit 60969 "Test Table IncludeSender Evt"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;
