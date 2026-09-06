@@ -169,6 +169,9 @@ jobs:
       test_app_dirs:        "tests/al-language"
       codeunit_range:       "60000..60999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      # TEMPORARY, DO NOT MERGE: the scripts checkout is a separate ref from the
+      # workflow file, so pinning `uses:` alone still runs master's run-tests.sh.
+      bc_linux_ref:         "agent/impl-27/codeunit-ids-2048-batching"
 
     # Optional: supply a base64-encoded BC developer license.
     # Without this, BC boots with the public Cronus license (sufficient
