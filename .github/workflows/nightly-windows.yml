@@ -63,17 +63,18 @@ on:
     # 03:00 UTC. Skipped by the gate job below unless master moved in the last 25 hours.
     - cron: '0 3 * * *'
 
-  # Runs when this workflow's own files change, and only then. Two reasons:
-  #   1. GitHub only offers workflow_dispatch for workflows that exist on the DEFAULT branch,
-  #      so before this file is merged the PR trigger is the only way to actually run it --
-  #      which is the whole point, since #213 needs adjudicating now.
-  #   2. It keeps the workflow honest afterwards: a change to it is verified by running it.
-  # The paths filter means ordinary corpus PRs never spend a Windows runner on this.
+  # OPT-IN ONLY, never automatic. This fires on `labeled` and the gate job below then
+  # requires the label to be exactly `run-nightly-windows`, so an ordinary PR -- including one
+  # that edits this very file -- does NOT spend a ~2h Windows run. An earlier revision used a
+  # `paths:` filter instead; that kept it off unrelated PRs but still fired on every edit to
+  # this workflow, which is too eager for a job this expensive on a repository whose Actions
+  # concurrency is shared account-wide.
+  #
+  # It exists at all because workflow_dispatch is only offered for workflows already on the
+  # DEFAULT branch, so before this merges the label is the only way to adjudicate #213.
+  # Afterwards it stays useful: label a PR to re-measure against a real Windows tier.
   pull_request:
-    paths:
-      - '.github/workflows/nightly-windows.yml'
-      - '.github/scripts/bc-test-results.py'
-      - '.github/expected-failures/**'
+    types: [labeled]
 
 permissions:
   contents: read
@@ -89,6 +90,12 @@ jobs:
   # 60-day auto-disable, which answers a completely different question.
   gate:
     name: Did master move?
+    # On a pull_request this workflow is opt-in: nothing runs unless someone deliberately
+    # applied `run-nightly-windows`. Skipping the gate skips windows-container with it,
+    # because that job is `needs: gate`.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.label.name == 'run-nightly-windows'
     runs-on: ubuntu-latest
     outputs:
       should_run: ${{ steps.decide.outputs.should_run }}
@@ -210,43 +217,69 @@ jobs:
           }
           Write-Host "docker is in Windows container mode."
 
-      - name: Free disk space
+      # MEASURED, on the run that adjudicated #213 (run 34057062917, windows-latest):
+      # a plain `Remove-Item -Recurse -Force` over this target list took 11 MIN 53 S -- more
+      # than the BC container took to boot. Deleting an SDK tree on Windows is dominated by
+      # per-file NTFS transactions, and the Android SDK alone is ~100k files.
+      #
+      # Two changes, in order of how much they save:
+      #   1. Do not clean at all unless the disk is actually short. The threshold is checked
+      #      against the real requirement (image + extracted artifacts), not a guess.
+      #   2. When cleaning is needed, purge with `robocopy /MIR` from an empty directory --
+      #      the fastest bulk delete on Windows -- and run the targets in PARALLEL, since
+      #      they are independent trees and the cost is I/O latency, not CPU.
+      - name: Free disk space (only if short)
         if: ${{ github.event.inputs.free_disk_space != 'false' }}
         run: |
           $ErrorActionPreference = 'Continue'
-          # A BC generic image plus extracted artifacts is tens of GB. GitHub-hosted Windows
-          # runners ship with large SDKs nobody here needs. Timed, so the cost is visible.
-          $before = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+
+          # A BC generic image (~10 GB) plus extracted artifacts (~15 GB) plus the container's
+          # own database and working set. 45 GB is the point below which it is worth paying to
+          # clean; above it, cleaning buys nothing and costs minutes.
+          $requiredGB = 45
+          $free = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace / 1GB
+          Write-Host ("C: free: {0:n1} GB (threshold {1} GB)" -f $free, $requiredGB)
+          if ($free -ge $requiredGB) {
+            Write-Host "Enough free space -- skipping cleanup entirely."
+            exit 0
+          }
+
+          $empty = Join-Path $env:RUNNER_TEMP 'empty'
+          New-Item -ItemType Directory -Force -Path $empty | Out-Null
+
+          # Biggest first, so a time cap still reclaims the most.
           $targets = @(
             'C:\Android',
             'C:\Program Files (x86)\Android',
-            'C:\Program Files\Google',
-            'C:\Program Files (x86)\Google',
-            'C:\Program Files\Microsoft SDKs\Azure\CLI2',
-            'C:\Program Files (x86)\Microsoft SDKs\Azure',
+            'C:\Program Files\Unity',
             'C:\Miniconda',
+            'C:\Rust',
             'C:\Program Files\PostgreSQL',
             'C:\Program Files\MongoDB',
-            'C:\Program Files\Unity',
-            'C:\Rust',
+            'C:\Program Files\Google',
+            'C:\Program Files (x86)\Google',
             'C:\hostedtoolcache\windows\Ruby',
-            'C:\hostedtoolcache\windows\go',
-            'C:\hostedtoolcache\windows\node'
-          )
-          foreach ($t in $targets) {
-            if (Test-Path $t) {
-              $sw = [Diagnostics.Stopwatch]::StartNew()
-              try {
-                Remove-Item -LiteralPath $t -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Host ("removed {0} in {1:n0}s" -f $t, $sw.Elapsed.TotalSeconds)
-              } catch {
-                Write-Host ("could not remove {0}: {1}" -f $t, $_.Exception.Message)
-              }
+            'C:\hostedtoolcache\windows\go'
+          ) | Where-Object { Test-Path $_ }
+
+          $jobs = foreach ($t in $targets) {
+            Start-Job -ArgumentList $t, $empty -ScriptBlock {
+              param($target, $empty)
+              # /MIR against an empty source empties the tree; /NFL /NDL /NJH /NJS /NP keep it
+              # from writing a line per file, which is itself a measurable cost here.
+              robocopy $empty $target /MIR /NFL /NDL /NJH /NJS /NP /R:0 /W:0 | Out-Null
+              Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
             }
           }
-          $after = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace
-          Write-Host ("C: free before {0:n1} GB, after {1:n1} GB (reclaimed {2:n1} GB)" -f
-            ($before/1GB), ($after/1GB), (($after-$before)/1GB))
+          # Hard cap: this step exists to make the run possible, never to become the run.
+          $jobs | Wait-Job -Timeout 240 | Out-Null
+          $jobs | Stop-Job -ErrorAction SilentlyContinue
+          $jobs | Remove-Job -Force -ErrorAction SilentlyContinue
+
+          $after = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace / 1GB
+          Write-Host ("C: free {0:n1} -> {1:n1} GB (reclaimed {2:n1} GB) in {3:n0}s" -f
+            $free, $after, ($after - $free), $sw.Elapsed.TotalSeconds)
 
       - name: Install BcContainerHelper
         run: |
@@ -287,6 +320,17 @@ jobs:
           Import-Module BcContainerHelper -DisableNameChecking
           $bcContainerHelperConfig.bcartifactsCacheFolder = $env:BC_ARTIFACT_CACHE
 
+          # MEASURED (run 34057062917): without sharing the workspace, the compile step dies
+          # with "The appProjectFolder (D:\a\...) is not shared with the container."
+          # Compile-AppInBcContainer runs the AL compiler INSIDE the container, so the sources
+          # have to be reachable from in there. BcContainerHelper shares its own helper and
+          # artifact folders by default but never the GitHub workspace, which on a hosted
+          # Windows runner sits on D:. Mounting it lets Get-BcContainerPath translate
+          # D:\a\...\tests\x to c:\sources\tests\x -- which every -appProjectFolder,
+          # -appOutputFolder and -appSymbolsFolder argument later on relies on.
+          $volume = '--volume "{0}:c:\sources"' -f $env:GITHUB_WORKSPACE
+          Write-Host "sharing workspace: $volume"
+
           $password = [guid]::NewGuid().ToString() + 'aA1!'
           $cred = New-Object pscredential 'admin', (ConvertTo-SecureString $password -AsPlainText -Force)
           $cred | Export-Clixml -Path (Join-Path $env:RUNNER_TEMP 'bccred.xml')
@@ -305,6 +349,7 @@ jobs:
             doNotExportObjectsToText = $true
             useBestContainerOS   = $true      # match the host build so process isolation works
             isolation            = 'process'
+            additionalParameters = @($volume)
           }
           # Newer BcContainerHelper needs this for insider builds; older ones do not have the
           # parameter at all and would hard-error on it.
@@ -315,6 +360,14 @@ jobs:
           $sw = [Diagnostics.Stopwatch]::StartNew()
           New-BcContainer @params
           Write-Host ("container created in {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+
+          # Prove the share took, HERE, rather than discovering it later as a confusing
+          # message from inside Compile-AppInBcContainer.
+          $mapped = Get-BcContainerPath -containerName $env:CONTAINER_NAME -path $env:GITHUB_WORKSPACE
+          if (-not $mapped) {
+            throw "The workspace ($env:GITHUB_WORKSPACE) is not visible inside the container. Compiling would fail with 'is not shared with the container'."
+          }
+          Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
 
       # ---------------------------------------------------------------------------------
       # Declare the tier. Half of #213's failures are properties of the environment, so a
@@ -331,11 +384,26 @@ jobs:
             catch { return "$fallback ($($_.Exception.Message))" }
           }
 
+          # MEASURED (run 34057062917): Export-NAVServerLicenseInformation has no -Path
+          # parameter on BC 28.4, and that attempt recorded the license as
+          # "unavailable (A parameter cannot be found that matches parameter name 'Path')".
+          # The license tier is load-bearing for reading this verdict at all (see #213), so
+          # try the documented spellings in turn instead of shipping one guess.
           $license = Try-Get {
             Invoke-ScriptInBcContainer -containerName $c -scriptblock {
-              $p = Join-Path $env:TEMP 'licenseinfo.txt'
-              Export-NAVServerLicenseInformation -ServerInstance BC -Path $p -Force | Out-Null
-              (Get-Content $p -Raw)
+              $out = @()
+              try { $out += (Get-NAVServerLicenseInformation -ServerInstance BC | Out-String) } catch {}
+              if (-not ($out -join '').Trim()) {
+                try {
+                  $p = Join-Path $env:TEMP 'licenseinfo.txt'
+                  Export-NAVServerLicenseInformation -ServerInstance BC -FilePath $p -Force
+                  $out += (Get-Content $p -Raw)
+                } catch {}
+              }
+              if (-not ($out -join '').Trim()) {
+                try { $out += (Get-NAVServerConfiguration -ServerInstance BC -KeyName LicenseFile | Out-String) } catch {}
+              }
+              ($out -join "`n")
             }
           }
           # Keep the whole license dump in the artifact, but put a one-line identity in the table.
