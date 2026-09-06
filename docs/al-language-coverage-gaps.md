@@ -136,8 +136,10 @@ Current coverage:
   `TimeZone()`, `ProfileId()` and `ProfileAppId()`
 - `ProfileSystemScope()` discarding its argument -- deprecated, always tenant scope
 - assignment being a by-value copy, so mutating the copy leaves the original alone
-- `Init()` populating the instance, and overwriting values assigned beforehand
-- `RequestSessionUpdate(false)` being callable from a test and not altering the running session
+- `Init()` populating the instance, being repeatable, and overwriting values assigned beforehand
+- `RequestSessionUpdate(false)` routing through a `[SessionSettingsHandler]`: the handler is
+  invoked exactly once, receives the assigned settings, leaves the instance intact, and does
+  not change the running session's language
 - `Format()` on a settings object, and `Assert.AreEqual` value-comparison through it
 - `Clear()` returning an instance to its pristine state
 
@@ -149,6 +151,12 @@ Notes:
 - Unlike `SecretText`, this type DOES convert to `Variant` and DOES support `Format()`, so its
   compile-time refusal surface is much smaller -- only `=` is rejected (`AL0175`). The file
   header records the measurements.
+- Two behaviors were measured on real BC and are NOT what the docs suggest, so the tests are
+  shaped around them: `Init()` leaves `Company` **empty** on BC 27.5 (cloud) while populating
+  it on 28.0-28.4, so no assertion pins a company value after `Init()`; and
+  `RequestSessionUpdate()` is a genuine UI interaction that fails with
+  "Unhandled UI: SessionSettings" unless a `[SessionSettingsHandler]` is declared. That single
+  method is the only part of the type the "UI-level" label fits.
 
 ### 5. Additional platform/system surfaces
 

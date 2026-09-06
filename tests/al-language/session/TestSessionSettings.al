@@ -28,17 +28,19 @@
 ///   4. ASSIGNMENT COPIES BY VALUE. `A := B` deep-copies the settings. Mutating the copy
 ///      afterwards must not change the original. An implementation sharing one underlying
 ///      object between both variables fails.
-///   5. Init() POPULATES THE INSTANCE. Init() fills the instance from the current user's
-///      personalization, falling back to live session values when there is no stored row.
-///      Both paths populate the object, so an initialized instance cannot equal a pristine
-///      one and must carry a non-empty company -- an Init() that did nothing fails both.
-///      These assertions are deliberately relative rather than pinned to CompanyName(): which
-///      of the two sources answers is a property of the tenant's data, not of AL.
-///   6. RequestSessionUpdate() IS CALLABLE FROM A TEST, and is a request to the CLIENT for a
-///      future session -- it neither disturbs the settings instance nor retroactively changes
-///      the language of the session currently running. Under a test runner the platform
-///      intercepts the client round-trip, so the call completes rather than failing for want
-///      of a client callback.
+///   5. Init() POPULATES THE INSTANCE, DETERMINISTICALLY. Init() fills the instance from the
+///      current user's personalization, falling back to live session values when there is no
+///      stored row. An initialized instance cannot equal a pristine one, two instances
+///      initialized in the same session agree, and values assigned beforehand are replaced.
+///      All three are asserted RELATIVELY -- against another instance -- never against a
+///      hard-coded company or language, which are tenant data rather than AL. See the
+///      MEASURED note below for why that distinction is not hypothetical.
+///   6. RequestSessionUpdate() IS A UI INTERACTION requiring a [SessionSettingsHandler], like
+///      a Message requires a MessageHandler. The handler is invoked exactly once, receives the
+///      settings that were assigned, and the call leaves the instance intact and does not
+///      retroactively change the running session's language -- it is a request for a FUTURE
+///      session. The handler-invocation COUNT is asserted, so a call that silently did
+///      nothing would fail rather than pass as a no-throw.
 ///
 /// NEGATIVE CASES ARE COMPILE-TIME, NOT RUNTIME, AND THERE ARE FEWER THAN EXPECTED. There is
 /// no documented runtime error on this type that a Cloud test can provoke with `asserterror`:
@@ -64,6 +66,27 @@
 ///     T := Format(Settings);       COMPILES -- a settings object has a text representation
 ///     Clear(Settings);             COMPILES
 ///
+/// The [SessionSettingsHandler] signature is fixed by the platform and enforced by the
+/// compiler -- writing it without a return value is error AL0244, which names the required
+/// shape: SessionSettingsHandler(var SessionSettings: SessionSettings): Boolean
+///
+/// MEASURED ON REAL BC, AND IT CHANGED THIS FILE. The first CI run of this suite (16 legs)
+/// falsified two assumptions that had looked safe, and both corrections are the reason the
+/// tests above are shaped the way they are:
+///
+///   * Init() DOES NOT ALWAYS RESOLVE A COMPANY. On BC 27.5 (cloud) Init() leaves Company
+///     EMPTY; on 28.0-28.4 it is populated. Whether a company is resolved depends on the User
+///     Personalization row and the session's company -- tenant data, not AL. So no assertion
+///     here pins Company to a value after Init(); the version-independent claims (it changes a
+///     pristine instance, it is repeatable, it overwrites prior values) are pinned instead.
+///   * RequestSessionUpdate() NEEDS A HANDLER. Without one it fails with
+///     "Unhandled UI: SessionSettings". It is genuinely a client interaction, and the platform
+///     routes it through NavTestExecution.TestHandleSessionSettings, which looks up a
+///     NavHandlerType.SessionSettings handler and falls through to the client callback when
+///     none is registered. The four tests above therefore declare [SessionSettingsHandler] and
+///     assert that it really fires. This is the one place the "UI-level" label on this type is
+///     accurate -- and it applies to this single method, not to the other eight.
+///
 /// DELIBERATELY NOT TESTED: RequestSessionUpdate(true). The `true` argument makes the platform
 /// WRITE the settings to table 2000000073 "User Personalization" for the running user before
 /// sending the client request. That is a durable side effect on the tenant the suite runs
@@ -84,6 +107,8 @@ codeunit 60277 "Test SessionSettings"
 
     var
         Assert: Codeunit Assert;
+        HandlerCallCount: Integer;
+        HandlerSawTimeZone: Text;
 
     // ---------------------------------------------------------------------------------------
     // 1 + 2. Round-tripping, and independence of the accessors.
@@ -365,19 +390,25 @@ codeunit 60277 "Test SessionSettings"
     end;
 
     [Test]
-    procedure SessionSettings_Init_PopulatesANonEmptyCompany()
+    procedure SessionSettings_Init_IsRepeatableWithinOneSession()
     var
-        Settings: SessionSettings;
+        First: SessionSettings;
+        Second: SessionSettings;
     begin
-        // Init() resolves a company from one of its two documented sources -- the stored
-        // User Personalization row, or the running session. This asserts only that a company
-        // is resolved at all, deliberately NOT that it equals CompanyName(): a stored
-        // personalization row may legitimately name a different company than the one the
-        // test session happens to be running in, and pinning that equality would assert
-        // something about the CI tenant's data rather than about AL.
-        Settings.Init();
+        // Init() reads session/personalization state, so two instances initialized in the
+        // same session must agree. This is the version-independent half of Init()'s contract:
+        // it is a deterministic read, not something that varies per call.
+        //
+        // NOTE ON WHAT IS *NOT* ASSERTED HERE. An earlier revision of this file asserted that
+        // Init() leaves Company non-empty. MEASURED on this PR's first CI run, that is FALSE
+        // on BC 27.5 (cloud), where Init() leaves Company EMPTY, while it is populated on
+        // 28.0-28.4. Whether a company is resolved depends on the User Personalization row
+        // and the session's company, i.e. on tenant data -- not on AL -- so the assertion was
+        // removed rather than pinned to whichever answer the current images happen to give.
+        First.Init();
+        Second.Init();
 
-        Assert.AreNotEqual('', Settings.Company(), 'Init() must populate Company from personalization or from the session');
+        Assert.AreEqual(First, Second, 'Two SessionSettings initialized in the same session must carry the same values');
     end;
 
     [Test]
@@ -407,18 +438,22 @@ codeunit 60277 "Test SessionSettings"
     procedure SessionSettings_Init_OverwritesValuesAssignedBeforehand()
     var
         Settings: SessionSettings;
-        Sentinel: Text;
+        Pristine: SessionSettings;
     begin
         // Init() loads settings into the instance, so it must replace what was already there
-        // rather than merging into it or skipping fields that are already non-empty. The
-        // sentinel is a company name no tenant can have, so its disappearance is proof that
-        // Init() wrote over the field.
-        Sentinel := 'ALT Sentinel Company ' + Format(CreateGuid());
-        Settings.Company(Sentinel);
+        // rather than merging into it or skipping fields that are already populated.
+        //
+        // The sentinels are asserted through TimeZone and LanguageId rather than Company,
+        // because those two are populated by Init() on every leg in the matrix while Company
+        // is not (see SessionSettings_Init_IsRepeatableWithinOneSession above).
+        Settings.TimeZone('ALT Sentinel Zone');
+        Settings.LanguageId(1030);
         Settings.Init();
+        Pristine.Init();
 
-        Assert.AreNotEqual(Sentinel, Settings.Company(), 'A value assigned before Init() must not survive the call');
-        Assert.AreNotEqual('', Settings.Company(), 'Init() must replace the sentinel with a real company, not with nothing');
+        Assert.AreNotEqual(
+            'ALT Sentinel Zone', Settings.TimeZone(), 'A TimeZone assigned before Init() must not survive the call');
+        Assert.AreEqual(Pristine, Settings, 'After Init() an instance must match one initialized from scratch');
     end;
 
     // ---------------------------------------------------------------------------------------
@@ -426,45 +461,96 @@ codeunit 60277 "Test SessionSettings"
     // ---------------------------------------------------------------------------------------
 
     [Test]
-    procedure SessionSettings_RequestSessionUpdate_WithoutSaving_IsCallableFromATest()
+    [HandlerFunctions('SessionSettingsHandler')]
+    procedure SessionSettings_RequestSessionUpdate_InvokesTheSessionSettingsHandler()
     var
         Settings: SessionSettings;
     begin
-        // Under a test runner the platform intercepts the client round-trip, so the call
-        // completes instead of failing for want of a client callback. saveSettings=false
-        // means nothing is written to User Personalization.
+        // RequestSessionUpdate is a UI interaction: it asks the CLIENT to start a new session
+        // with these settings. In a test it is therefore routed to a [SessionSettingsHandler],
+        // exactly like a Message is routed to a MessageHandler.
         //
-        // The assertions after the call are what make this more than a bare no-throw test:
-        // the settings object must still hold its values afterwards, so a RequestSessionUpdate
-        // that cleared or reset the instance would be caught.
-        Settings.Init();
+        // MEASURED on this PR's first CI run: without the handler this call fails with
+        // "Unhandled UI: SessionSettings" on BC 27.5. That is the platform stating the
+        // contract, so the contract is what is pinned -- the handler is REQUIRED, and it is
+        // really invoked. Asserting the call count rather than merely not throwing is what
+        // makes this a proof: a RequestSessionUpdate that silently did nothing would leave
+        // the counter at zero and fail.
+        HandlerCallCount := 0;
+
+        Settings.RequestSessionUpdate(false);
+
+        Assert.AreEqual(1, HandlerCallCount, 'RequestSessionUpdate must invoke the SessionSettings handler exactly once');
+    end;
+
+    [Test]
+    [HandlerFunctions('SessionSettingsHandler')]
+    procedure SessionSettings_RequestSessionUpdate_PassesTheAssignedSettingsToTheHandler()
+    var
+        Settings: SessionSettings;
+    begin
+        // The handler receives the settings that were requested, not a blank object and not
+        // the running session's own settings. Asserting a distinctive time zone read back
+        // INSIDE the handler is what rules out an implementation that invokes the handler
+        // with a default-constructed argument.
+        HandlerCallCount := 0;
+        HandlerSawTimeZone := '';
+        Settings.TimeZone('Pacific Standard Time');
+
+        Settings.RequestSessionUpdate(false);
+
+        Assert.AreEqual(1, HandlerCallCount, 'The handler must be invoked once');
+        Assert.AreEqual(
+            'Pacific Standard Time', HandlerSawTimeZone, 'The handler must receive the settings that were assigned');
+    end;
+
+    [Test]
+    [HandlerFunctions('SessionSettingsHandler')]
+    procedure SessionSettings_RequestSessionUpdate_LeavesTheInstanceIntact()
+    var
+        Settings: SessionSettings;
+    begin
+        // The call must not clear or reset the settings object it was invoked on.
+        HandlerCallCount := 0;
         Settings.LanguageId(1030);
         Settings.Company('ALT Company');
 
         Settings.RequestSessionUpdate(false);
 
-        Assert.AreEqual(1030, Settings.LanguageId(), 'RequestSessionUpdate(false) must leave the settings instance intact');
-        Assert.AreEqual('ALT Company', Settings.Company(), 'RequestSessionUpdate(false) must not clear Company');
+        Assert.AreEqual(1030, Settings.LanguageId(), 'RequestSessionUpdate must leave LanguageId intact');
+        Assert.AreEqual('ALT Company', Settings.Company(), 'RequestSessionUpdate must leave Company intact');
     end;
 
     [Test]
+    [HandlerFunctions('SessionSettingsHandler')]
     procedure SessionSettings_RequestSessionUpdate_DoesNotChangeTheRunningSessionLanguage()
     var
         Settings: SessionSettings;
         LanguageBefore: Integer;
     begin
-        // A session update is a request to the CLIENT to start a new session with these
-        // settings -- it does not retroactively change the language of the session that is
-        // running now. This pins that the currently executing test session is unaffected,
-        // which is what makes the whole surface safe to exercise in a test suite.
+        // A session update is a request for a FUTURE session -- it does not retroactively
+        // change the language of the session that is running now. This is what makes the
+        // whole surface safe to exercise from a test suite.
         LanguageBefore := GlobalLanguage();
+        HandlerCallCount := 0;
 
-        Settings.Init();
         Settings.LanguageId(1030);
         Settings.RequestSessionUpdate(false);
 
+        Assert.AreEqual(1, HandlerCallCount, 'The handler must be invoked once');
         Assert.AreEqual(
             LanguageBefore, GlobalLanguage(), 'RequestSessionUpdate must not change the running session''s global language');
+    end;
+
+    // The signature is fixed by the platform and enforced by the compiler:
+    //     SessionSettingsHandler(var SessionSettings: SessionSettings): Boolean
+    // Returning a Boolean without one is error AL0244.
+    [SessionSettingsHandler]
+    procedure SessionSettingsHandler(var TheSettings: SessionSettings): Boolean
+    begin
+        HandlerCallCount += 1;
+        HandlerSawTimeZone := TheSettings.TimeZone();
+        exit(true);
     end;
 
     // ---------------------------------------------------------------------------------------
