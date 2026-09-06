@@ -148,6 +148,73 @@ table 60441 "CFM Header"
             FieldClass = FlowField;
             CalcFormula = average("CFM Line".Quantity where("Doc No." = field("No.")));
         }
+
+        // ── Fields 24-29: more of BC's same-type rule, on sum() as well as average() ──────
+        //
+        // Field 17 pins ONE instance of it. These generalise it, and they are all reachable
+        // for the same reason field 17 is: for sum() and average() the AL compiler does NOT
+        // check that the FlowField and its source share a type, so every field below
+        // compiles and publishes and is only refused when it is CALCULATED.
+        //
+        // (The compiler DOES check the equivalent rule for min(), max() and lookup(), and it
+        // checks BC's three other CalcFormula rules too, so those refusals have no AL
+        // spelling to pin -- see the header of "CFM Validation Tests".)
+        //
+        // As with field 17: never calculate any of 24-28 from a positive test. Each names its
+        // legally-typed counterpart.
+
+        /// sum() of an INTEGER source into a DECIMAL FlowField. Field 17 is the average()
+        /// version of this; sum() is a separate CalculationMethod and is pinned separately so
+        /// that "the rule is average()-only" is excluded. Legal counterpart: "Total Amount".
+        field(24; "Bad Sum Qty Decimal"; Decimal)
+        {
+            FieldClass = FlowField;
+            CalcFormula = sum("CFM Line".Quantity where("Doc No." = field("No.")));
+        }
+
+        /// sum() the other way round -- a DECIMAL source into an INTEGER FlowField. Field 24
+        /// alone would leave open that BC only objects to widening; this is the narrowing
+        /// direction. Legal counterpart: "Total Amount".
+        field(25; "Bad Sum Amount Int"; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = sum("CFM Line".Amount where("Doc No." = field("No.")));
+        }
+
+        /// average() narrowing, for the same reason: field 17 widens (Integer -> Decimal),
+        /// this narrows (Decimal -> Integer). Legal counterpart: "Average Amount".
+        field(26; "Bad Avg Amount Int"; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = average("CFM Line".Amount where("Doc No." = field("No.")));
+        }
+
+        /// average() of a DURATION source into a DECIMAL FlowField. Duration IS one of the
+        /// four types BC can average, so this cannot be refused for being non-numeric -- the
+        /// only thing wrong is the type difference. Legal counterpart: "Total Elapsed".
+        field(27; "Bad Avg Elapsed Decimal"; Decimal)
+        {
+            FieldClass = FlowField;
+            CalcFormula = average("CFM Line".Elapsed where("Doc No." = field("No.")));
+        }
+
+        /// sum() of an INTEGER source into a BIGINTEGER FlowField. Both are integers and
+        /// BigInteger cannot lose information, so this is the case where "same type" is shown
+        /// to mean the type ITSELF and not merely a compatible one. Legal counterpart:
+        /// "Line Count", which is the only BigInteger-or-Integer aggregate that is allowed.
+        field(28; "Bad Sum Qty BigInt"; BigInteger)
+        {
+            FieldClass = FlowField;
+            CalcFormula = sum("CFM Line".Quantity where("Doc No." = field("No.")));
+        }
+
+        /// The legally-typed Duration aggregate -- the control for field 27. Without it,
+        /// "BC refuses field 27" could just mean Durations cannot be aggregated at all.
+        field(29; "Total Elapsed"; Duration)
+        {
+            FieldClass = FlowField;
+            CalcFormula = sum("CFM Line".Elapsed where("Doc No." = field("No.")));
+        }
     }
 
     keys
