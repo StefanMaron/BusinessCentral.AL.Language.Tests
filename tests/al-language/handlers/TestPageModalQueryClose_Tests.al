@@ -86,28 +86,36 @@ codeunit 60276 "MQC Tests"
             'RunModal must report what the platform chose for a handler that invoked nothing');
     end;
 
-    // (b2) The cancelling half of (a)/(b), and the arm this file was missing: before it, every
-    // cancel measurement in the file was a LOOKUP-mode cancel, so "what CloseAction a cancelled
-    // PLAIN modal sees" was unpinned. It cannot be inferred from the arms around it. The two
-    // modes already disagree about the no-choice default -- (b) plain gets OK where (e) lookup
-    // gets LookupCancel -- so the plain/lookup mapping is not a uniform substitution, and the
-    // lookup-cancel value in (d) says nothing about this one.
+    // (b2) Why there is no plain-mode cancel MEASUREMENT in this file, recorded so the gap
+    // does not read as an oversight. Every cancel arm here is a LOOKUP-mode cancel. That is not
+    // an omission: BC offers no built-in Cancel action on a modal page that is NOT in lookup
+    // mode, so a plain-mode handler has nothing to invoke and there is no CloseAction for a
+    // cancelled plain modal to report.
+    //
+    // MEASURED, not predicted, and it is the correction of a wrong prediction. This arm was
+    // first written as PlainModal_HandlerCancel_RunsQueryClosePageWithCancel, asserting
+    // 'QUERYCLOSE:Cancel;CLOSEPAGE;' and Action::Cancel by symmetry with the confirming pair
+    // ((a) OK / (c) LookupOK). All eight cloud legs refused it with the message below instead.
+    // The symmetry argument was simply wrong, and the refusal is the real answer.
+    //
+    // (d) is the control that makes this a fact about the MODE rather than about the page or
+    // the handler: same page, same CancelHandler, same Cancel() call, and it passes -- the one
+    // difference is the LookupMode(true) this arm does not do. So the pair isolates the mode.
+    //
+    // This also explains (b) vs (e), the no-choice defaults that already disagreed: a plain
+    // modal has no cancelling built-in to fall back on, so it defaults to OK, while lookup mode
+    // has LookupCancel available and uses it.
     [Test]
     [HandlerFunctions('CancelHandler')]
-    procedure PlainModal_HandlerCancel_RunsQueryClosePageWithCancel()
+    procedure PlainModal_HasNoBuiltInCancelAction()
     var
-        Trace: Record "MQC Trace";
         Modal: Page "MQC Trace Modal";
-        Result: Action;
     begin
         Initialize();
 
-        Result := Modal.RunModal();
+        asserterror Modal.RunModal();
 
-        Assert.AreEqual('QUERYCLOSE:Cancel;CLOSEPAGE;', Trace.Events(),
-            'a cancelled plain modal must raise OnQueryClosePage(Cancel) and then OnClosePage');
-        Assert.AreEqual(Format(Action::Cancel), Format(Result),
-            'RunModal must report Cancel for a plain modal the handler cancelled');
+        Assert.ExpectedError('The built-in action = Cancel is not found on the page');
     end;
 
     // (c) Lookup mode changes the CloseAction the trigger sees, not whether it runs.
