@@ -90,12 +90,32 @@ Notes:
 
 ### 3. SecretText
 
-Status: not yet covered.
+Status: implemented for the cloud-safe surface (`types/TestSecretText.al`, codeunit 60275).
 
 Why it matters:
 
 - `SecretText` is a distinct AL data type with security-sensitive behavior.
 - It deserves a dedicated coverage slice rather than being folded into generic text tests.
+
+Current coverage:
+
+- construction through `SecretStrSubstNo()` -- template only, template from a `Text` variable,
+  and substitution of one or several `SecretText` arguments
+- `IsEmpty()` in both directions, including across reassignment
+- assignment from a `Text` variable, and secret-to-secret copying in both directions
+- round-tripping through `List of [SecretText]` and `Dictionary of [Text, SecretText]`
+
+Notes:
+
+- The rest of the type's contract is enforced by the AL compiler, not at runtime, so it cannot
+  be expressed as a `[Test]`. Measured against this app's `Cloud` target: `Format(SecretText)`
+  and `Message(Format(...))` are `AL0133`, assignment to a `Variant` is `AL0122`,
+  `Assert.AreEqual` on two secrets is `AL0133`, `=` on two secrets is `AL0175`, and
+  `Unwrap()` is `AL0296` (scope `OnPrem`). Those are recorded in the file's header comment.
+- `Secret := 'literal'` does not compile (`AL0122`) while `Secret := SomeTextVariable` does --
+  an asymmetry worth knowing before writing further `SecretText` tests.
+- `SecretText` on `HttpClient` / `HttpHeaders` / `HttpContent` remains out of scope with the
+  rest of the HTTP surface.
 
 ### 4. Additional platform/system surfaces
 
