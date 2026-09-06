@@ -21,6 +21,13 @@ table 60327 "CDC Ref Row"
         field(3; "Owner No."; Code[20]) { DataClassification = CustomerContent; }
 
         field(4; Amount; Decimal) { DataClassification = CustomerContent; }
+
+        /// A second Integer object-id column, pinned by the OTHER object-reference prefix the
+        /// Base Application ships in a where() clause: "Interaction Tmpl. Language"."Custom
+        /// Layout Code" is `"Custom Report Layout" where("Report ID" = const(Report::"Email
+        /// Merge"))`. Same syntax, different object kind, so a fix that only understood
+        /// Database:: would leave it broken.
+        field(5; "Report ID"; Integer) { DataClassification = CustomerContent; }
     }
 
     keys

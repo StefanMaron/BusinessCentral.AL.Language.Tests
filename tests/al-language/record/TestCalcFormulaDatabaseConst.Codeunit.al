@@ -1,17 +1,22 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-calcformula-property
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: CDC Ref Row (60327), CDC Owner (60328)
+// Fixtures used: CDC Ref Row (60327), CDC Owner (60328), ALT Simple Report (60018)
 //
 // `Database::<Object>` is AL's object-reference syntax, and it is legal inside the where()
-// clause of a CalcFormula and of a TableRelation:
+// clause of a CalcFormula and of a TableRelation. So is its sibling `Report::<Object>`, which
+// the Base Application also ships in that position:
 //
 //   CalcFormula   = count("CDC Ref Row" where("Owner No." = field("No."),
 //                                             "Table ID"  = const(Database::"CDC Owner")));
 //   TableRelation = "CDC Ref Row"."Code" where("Table ID" = const(Database::"CDC Owner"));
+//   CalcFormula   = count("CDC Ref Row" where("Report ID" = const(Report::"ALT Simple Report")));
 //
-// The Base Application leans on this constantly -- every "Coupled to Dataverse" FlowField is
-// `exist("CRM Integration Record" where("Table ID" = const(Database::<the table>)))` -- but the
-// corpus had no test for it in either property, only in a page's SubPageLink.
+// The Base Application leans on this constantly. Measured on the shipped BC 28.1 packages:
+// 22 fields carry a CalcFormula with a Database:: const (every "Coupled to Dataverse" field is
+// `exist("CRM Integration Record" where("Table ID" = const(Database::<the table>)))`), 2 carry
+// a TableRelation with one, and 3 more carry a TableRelation with a Report:: const
+// ("Interaction Tmpl. Language"."Custom Layout Code" and its two siblings). The corpus had no
+// test for any of them -- the constant was covered only in a page's SubPageLink.
 //
 // CLAIM under test: the constant contributes the referenced object's ID to the condition, on
 // an Integer column, the same as writing 60328 there by hand. Nothing about the seeded data
@@ -50,15 +55,18 @@ codeunit 60329 "CDC Tests"
 
         // O1: two rows carrying THIS table's id (100 + 20 = 120), one carrying the other
         // fixture table's id, one carrying an id belonging to neither.
-        AddRefRow('R1', Database::"CDC Owner", 'O1', 100);
-        AddRefRow('R2', Database::"CDC Owner", 'O1', 20);
-        AddRefRow('R3', Database::"CDC Ref Row", 'O1', 7);
-        AddRefRow('R4', 0, 'O1', 5000);
+        // The "Report ID" column is seeded independently of "Table ID": three of O1's four
+        // rows carry the report's id, so the Report:: count (3) differs from every Database::
+        // count on the same owner (2 and 1) and from "no filter at all" (4).
+        AddRefRow('R1', Database::"CDC Owner", Report::"ALT Simple Report", 'O1', 100);
+        AddRefRow('R2', Database::"CDC Owner", Report::"ALT Simple Report", 'O1', 20);
+        AddRefRow('R3', Database::"CDC Ref Row", Report::"ALT Simple Report", 'O1', 7);
+        AddRefRow('R4', 0, 0, 'O1', 5000);
 
         // O2: nothing carrying "CDC Owner"'s id at all, so the negative direction is a real
         // zero over a non-empty row set rather than an empty table.
-        AddRefRow('R5', Database::"CDC Ref Row", 'O2', 3);
-        AddRefRow('R6', 0, 'O2', 11);
+        AddRefRow('R5', Database::"CDC Ref Row", 0, 'O2', 3);
+        AddRefRow('R6', 0, Report::"ALT Simple Report", 'O2', 11);
     end;
 
     local procedure AddOwner(No: Code[20])
@@ -70,13 +78,14 @@ codeunit 60329 "CDC Tests"
         Owner.Insert(false);
     end;
 
-    local procedure AddRefRow(RowCode: Code[20]; TableId: Integer; OwnerNo: Code[20]; Amt: Decimal)
+    local procedure AddRefRow(RowCode: Code[20]; TableId: Integer; ReportId: Integer; OwnerNo: Code[20]; Amt: Decimal)
     var
         RefRow: Record "CDC Ref Row";
     begin
         RefRow.Init();
         RefRow."Code" := RowCode;
         RefRow."Table ID" := TableId;
+        RefRow."Report ID" := ReportId;
         RefRow."Owner No." := OwnerNo;
         RefRow.Amount := Amt;
         RefRow.Insert(false);
@@ -191,6 +200,55 @@ codeunit 60329 "CDC Tests"
             'the control relation, with no where() clause, must accept R3');
 
         asserterror Owner.Validate("Pinned Ref", 'R3');
+        Assert.ExpectedError('cannot be found in the related table');
+    end;
+
+    [Test]
+    procedure CalcFields_ConstReportObject_CountsOnlyRowsCarryingThatReportId()
+    // CLAIM: the same rule for the OTHER object-reference prefix the Base Application ships in
+    // a where() clause. Three of O1's four rows carry the report's id and one of O2's two does,
+    // so neither count can be produced by dropping the condition (4 and 2) or by matching
+    // nothing (0), and neither repeats a Database:: count on the same owner.
+    var
+        Owner: Record "CDC Owner";
+    begin
+        Initialize();
+
+        Assert.AreEqual(60018, Report::"ALT Simple Report",
+            'Report::"ALT Simple Report" is that report''s object id');
+
+        Owner.Get('O1');
+        Owner.CalcFields("Report Row Count");
+        Assert.AreEqual(3, Owner."Report Row Count",
+            'count() narrowed by const(Report::"ALT Simple Report") must count O1''s 3 rows carrying 60018');
+
+        Owner.Get('O2');
+        Owner.CalcFields("Report Row Count");
+        Assert.AreEqual(1, Owner."Report Row Count",
+            'and O2''s single row carrying 60018');
+    end;
+
+    [Test]
+    procedure Validate_RelationWhereConstReportObject_AcceptsAndRefusesByReportId()
+    // CLAIM: and in a TableRelation where() clause. R2 carries the report's id and R4 does not,
+    // while the control relation with no where() clause takes R4 -- so the refusal is the
+    // constant's doing.
+    var
+        Owner: Record "CDC Owner";
+    begin
+        Initialize();
+
+        Owner.Get('O1');
+
+        Owner.Validate("Report Ref", 'R2');
+        Assert.AreEqual('R2', Owner."Report Ref",
+            'a "CDC Ref Row" carrying const(Report::"ALT Simple Report")''s id must satisfy the relation');
+
+        Owner.Validate("Plain Ref", 'R4');
+        Assert.AreEqual('R4', Owner."Plain Ref",
+            'the control relation, with no where() clause, must accept R4');
+
+        asserterror Owner.Validate("Report Ref", 'R4');
         Assert.ExpectedError('cannot be found in the related table');
     end;
 }

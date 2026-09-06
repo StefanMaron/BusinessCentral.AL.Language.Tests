@@ -50,12 +50,28 @@ table 60328 "CDC Owner"
                                                          "Table ID" = const(Database::"CDC Owner")));
         }
 
+        /// The same shape with a Report:: constant instead of a Database:: one -- the second
+        /// object-reference prefix the Base Application actually ships in a where() clause.
+        field(14; "Report Row Count"; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("CDC Ref Row" where("Owner No." = field("No."),
+                                                    "Report ID" = const(Report::"ALT Simple Report")));
+        }
+
         /// A TableRelation narrowed by the same constant: only "CDC Ref Row" rows carrying
         /// THIS table's id are valid values.
         field(20; "Pinned Ref"; Code[20])
         {
             DataClassification = CustomerContent;
             TableRelation = "CDC Ref Row"."Code" where("Table ID" = const(Database::"CDC Owner"));
+        }
+
+        /// The relation half of the Report:: constant.
+        field(22; "Report Ref"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            TableRelation = "CDC Ref Row"."Code" where("Report ID" = const(Report::"ALT Simple Report"));
         }
 
         /// Control: same target table, no where() clause, so any existing "Code" is valid.
