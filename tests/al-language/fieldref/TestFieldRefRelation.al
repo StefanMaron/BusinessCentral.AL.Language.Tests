@@ -15,6 +15,14 @@
 // The BC-side answers asserted here are concrete table ids (60480, 60030, 225, 5832, 99000851,
 // 2000000058, 0), never "non-zero", so an implementation that answered a fixed value could not
 // pass.
+//
+// The three Validate tests at the end are about the ROLES in `where(A = field(B))`: A is a
+// field of the RELATED table, B a field of the REFERENCING one. They can only make that
+// distinction because ALTRelationWhereField.al names and numbers the two sides apart --
+// "Parent Group" (field 5 of the parent) against "Child Group" (field 2 of the child). While
+// both sides were spelled "Group Code" and both were field 2, an implementation that resolved
+// each name against the other table produced the same field either way and every test here
+// still passed. See that fixture's header for why renaming and renumbering are both needed.
 
 codeunit 60482 "Test FieldRef Relation"
 {
@@ -61,7 +69,7 @@ codeunit 60482 "Test FieldRef Relation"
 
         Assert.AreEqual(
             Database::"ALT Rel Where Parent", FldRef.Relation(),
-            'a TableRelation narrowed by where("Group Code" = field("Group Code")) must still ' +
+            'a TableRelation narrowed by where("Parent Group" = field("Child Group")) must still ' +
             'answer the related table id 60480');
     end;
 
@@ -179,15 +187,15 @@ codeunit 60482 "Test FieldRef Relation"
 
         Parent.Init();
         Parent."Code" := 'P-OTHER';
-        Parent."Group Code" := 'G2';
+        Parent."Parent Group" := 'G2';
         Parent.Insert();
 
         Child.Init();
         Child."Entry No." := 1;
-        Child."Group Code" := 'G1';
+        Child."Child Group" := 'G1';
 
         // P-OTHER exists, so this can only be refused because the where() clause narrowed the
-        // related rows to Group Code = G1 — which is what makes the field() link observable
+        // related rows to Parent Group = G1 — which is what makes the field() link observable
         // rather than decorative.
         asserterror Child.Validate("Where Field Ref", 'P-OTHER');
         Assert.ExpectedError('cannot be found in the related table');
@@ -203,12 +211,12 @@ codeunit 60482 "Test FieldRef Relation"
 
         Parent.Init();
         Parent."Code" := 'P-SAME';
-        Parent."Group Code" := 'G1';
+        Parent."Parent Group" := 'G1';
         Parent.Insert();
 
         Child.Init();
         Child."Entry No." := 1;
-        Child."Group Code" := 'G1';
+        Child."Child Group" := 'G1';
 
         // The positive direction of the test above: a relation that refused everything would
         // pass that one and fail this one.
@@ -216,6 +224,51 @@ codeunit 60482 "Test FieldRef Relation"
 
         Assert.AreEqual('P-SAME', Child."Where Field Ref",
             'a parent row inside the where() filter must be accepted and stored');
+    end;
+
+    [Test]
+    procedure Validate_RelationWithWhereFieldLink_NarrowsToTheReferencingRowsOwnGroup()
+    // CLAIM: where("Parent Group" = field("Child Group")) reads "Child Group" off the
+    // REFERENCING row and matches it against "Parent Group" on the related rows — that
+    // direction, not the reverse.
+    //
+    // The two tests above each put exactly ONE parent row in the table, so between them they
+    // establish that the clause narrows at all, but not which row it narrows to: "refuses
+    // everything when the groups differ" and "picks the caller's group" fit both equally. This
+    // one has both candidate parents present at the same time and asks the field to choose,
+    // which is the assertion the other two cannot make.
+    //
+    // The child sits in G2, the SECOND group inserted, so an implementation that ignored the
+    // clause and took the first available parent row would answer P-G1 and fail here.
+    var
+        Parent: Record "ALT Rel Where Parent";
+        Child: Record "ALT Rel Where Child";
+    begin
+        Initialize();
+
+        Parent.Init();
+        Parent."Code" := 'P-G1';
+        Parent."Parent Group" := 'G1';
+        Parent.Insert();
+
+        Parent.Init();
+        Parent."Code" := 'P-G2';
+        Parent."Parent Group" := 'G2';
+        Parent.Insert();
+
+        Child.Init();
+        Child."Entry No." := 1;
+        Child."Child Group" := 'G2';
+
+        // The parent whose "Parent Group" equals the child's "Child Group" is accepted...
+        Child.Validate("Where Field Ref", 'P-G2');
+        Assert.AreEqual('P-G2', Child."Where Field Ref",
+            'the parent row whose "Parent Group" matches the referencing row''s "Child Group" ' +
+            'must be accepted');
+
+        // ...and the other one is refused, though it exists and is a perfectly good "Code".
+        asserterror Child.Validate("Where Field Ref", 'P-G1');
+        Assert.ExpectedError('cannot be found in the related table');
     end;
 
     [Test]
