@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-codeunit-object
 // Scope: in-scope
-// Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608)
+// Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608),
+//                ALT Install Probe (60838)
 //
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
 // codeunit declared in the application, computed from the codeunit's own metadata rather
@@ -85,6 +86,50 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
         Assert.AreEqual(
             CodeunitMetadata.Subtype::Test, CodeunitMetadata.Subtype,
             'A codeunit declaring Subtype = Test must report Subtype::Test.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_InstallCodeunit_ReportsSubtypeNormal()
+    var
+        InstallCodeunit: Record "CodeUnit Metadata";
+        TestCodeunit: Record "CodeUnit Metadata";
+        InstallSubtypeOrdinal: Integer;
+        TestSubtypeOrdinal: Integer;
+    begin
+        Initialize();
+
+        // AL accepts five codeunit subtypes. This column's OptionMembers name four of them --
+        // Normal,Test,TestRunner,Upgrade -- and Install is the fifth. ALT Install Probe
+        // declares Install, so this reads the one subtype the column has no member for; every
+        // other codeunit in this suite declares one of the four.
+        //
+        // [WHEN] reading the row of a codeunit whose declared Subtype the column does not name
+        Assert.IsTrue(
+            InstallCodeunit.Get(Codeunit::"ALT Install Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Install Probe.');
+
+        // [THEN] the row exists -- an Install codeunit is enumerated like any other -- and the
+        // column reports Normal, ordinal 0. Install does not reach this column at all: it is
+        // neither carried through as an ordinal past the members the column names, nor clamped
+        // to the last of them.
+        InstallSubtypeOrdinal := InstallCodeunit.Subtype;
+        Assert.AreEqual(
+            0, InstallSubtypeOrdinal,
+            'A codeunit declaring Subtype = Install must report ordinal 0 in the SubType column.');
+        Assert.AreEqual(
+            InstallCodeunit.Subtype::Normal, InstallCodeunit.Subtype,
+            'A codeunit declaring Subtype = Install must report Subtype::Normal.');
+
+        // [AND] the column is not simply always Normal. Read in the same run, a codeunit that
+        // declares Subtype = Test reports Test, ordinal 1 -- so the answer above is what this
+        // column reports for Install specifically, not what it reports for every codeunit.
+        Assert.IsTrue(
+            TestCodeunit.Get(Codeunit::"Test Codeunit Metadata Virt T"),
+            'CodeUnit Metadata has no row for the test codeunit itself.');
+        TestSubtypeOrdinal := TestCodeunit.Subtype;
+        Assert.AreEqual(
+            1, TestSubtypeOrdinal,
+            'A codeunit declaring Subtype = Test must report ordinal 1 in the SubType column.');
     end;
 
     [Test]
