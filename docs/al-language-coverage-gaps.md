@@ -117,17 +117,49 @@ Notes:
 - `SecretText` on `HttpClient` / `HttpHeaders` / `HttpContent` remains out of scope with the
   rest of the HTTP surface.
 
-### 4. Additional platform/system surfaces
+### 4. SessionSettings
+
+Status: implemented for the cloud-safe surface (`session/TestSessionSettings.al`, codeunit 60277).
+
+Why it matters:
+
+- `SessionSettings` is a first-class AL data type with a documented 9-method surface, and
+  nothing in the suite referenced it before this file.
+- Every accessor is an in-memory get/set pair, so the whole type is observable from a test
+  without a client attached -- despite `scripts/filter-inscope.py` marking it "UI-level, not
+  testable". That classification is wrong and its own `al-surface-inscope.json` disagrees,
+  still listing all 9 members.
+
+Current coverage:
+
+- round-tripping and mutual independence of `Company()`, `LanguageId()`, `LocaleId()`,
+  `TimeZone()`, `ProfileId()` and `ProfileAppId()`
+- `ProfileSystemScope()` discarding its argument -- deprecated, always tenant scope
+- assignment being a by-value copy, so mutating the copy leaves the original alone
+- `Init()` populating the instance, and overwriting values assigned beforehand
+- `RequestSessionUpdate(false)` being callable from a test and not altering the running session
+- `Format()` on a settings object, and `Assert.AreEqual` value-comparison through it
+- `Clear()` returning an instance to its pristine state
+
+Notes:
+
+- `RequestSessionUpdate(true)` is deliberately not covered: it persists to table 2000000073
+  "User Personalization", a durable side effect on the shared test tenant that would make the
+  `Init()` tests order-dependent. Covering it needs a fixture that restores the row afterwards.
+- Unlike `SecretText`, this type DOES convert to `Variant` and DOES support `Format()`, so its
+  compile-time refusal surface is much smaller -- only `=` is rejected (`AL0175`). The file
+  header records the measurements.
+
+### 5. Additional platform/system surfaces
 
 Status: partial or thin coverage.
 
 Candidate areas:
 
-- `SessionSettings`
 - `Media` and `MediaSet`
 - `TaskScheduler`
 - `ModuleInfo` / related app metadata
-- `WebServiceActionContext`
+- `WebServiceActionContext` -- no test file at all; the least-covered remaining candidate
 
 These are lower priority than `Query` because the current suite is already strong on the most commonly used runtime behaviors.
 
