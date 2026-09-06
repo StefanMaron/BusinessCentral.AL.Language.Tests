@@ -82,10 +82,11 @@
 ///                                    Get/Updated collision by NAME rather than by comparing
 ///                                    200 to 200, which would prove nothing anyway.
 ///     V := Ctx;  T := Format(Ctx);   BOTH COMPILE -- unlike SecretText, the CONTEXT converts
-///                                    to Variant and has a text representation. Note this
-///                                    holds for the context, NOT for the result code: see the
-///                                    CS1503 note below, where the compiler agrees and the
-///                                    server does not.
+///                                    to Variant. But Format(Ctx) returns '' on real BC, so
+///                                    compiling is not the same as being readable; see the
+///                                    MEASURED note below. And this holds for the context, NOT
+///                                    for the result code: see the CS1503 note, where the
+///                                    compiler agrees and the server does not.
 ///     Ctx := SomeVariant;            error AL0122: Cannot implicitly convert type 'Variant'
 ///                                    to 'WebServiceActionContext'. The Variant conversion is
 ///                                    ONE-DIRECTIONAL -- in, not out.
@@ -124,6 +125,15 @@
 /// a refusal is a compiler diagnostic, not a runtime error, so `asserterror` has nothing to
 /// catch and a test asserting it could never fail. The refusals are recorded above instead of
 /// being fabricated into tests, following network/TestHttpClientBlockNoHandler.al.
+///
+/// A CONTEXT HAS AN EMPTY TEXT REPRESENTATION. Measured on real BC, and it falsified an
+/// assertion in the first revision of this file. `Format(Ctx)` compiles and returns '' -- even
+/// with an object id assigned beforehand. The runtime type NavWebServiceActionContext carries
+/// no ToString override (it reports GetBytesSize 0 and IsZeroOrEmpty false), so there is
+/// nothing for Format to render. The draft had asserted the opposite from the plain intuition
+/// that a populated object formats to something, and all 8 cloud legs disagreed. Useful to
+/// know before writing AL: logging a context tells you nothing, and reading its state means
+/// calling the getters.
 ///
 /// THE DEFAULT OBJECT TYPE CANNOT BE NAMED IN AL, and this shaped two tests. AL's ObjectType
 /// exposes exactly SEVEN members -- Table, Page, Report, Codeunit, XmlPort, Query, MenuSuite
@@ -659,22 +669,33 @@ codeunit 60278 "Test WebServiceActionContext"
         Ctx: WebServiceActionContext;
         Holder: Variant;
     begin
-        // The conversion is ONE-DIRECTIONAL, which is the third thing the compiler falsified
-        // while this file was written. Unlike SecretText -- which refuses Variant assignment
-        // outright with AL0122 -- this type converts INTO a Variant. It does not convert back:
+        // The conversion is ONE-DIRECTIONAL. Unlike SecretText -- which refuses Variant
+        // assignment outright with AL0122 -- this type converts INTO a Variant. It does not
+        // convert back:
         //
         //     Recovered := Holder;   error AL0122: Cannot implicitly convert type 'Variant' to
         //                            'WebServiceActionContext'. Use an explicit conversion or
         //                            change the type.
         //
-        // So the runtime half that a [Test] can assert is that the Variant is genuinely
-        // populated rather than empty. IsWebServiceActionContext does not exist on Variant, so
-        // this is pinned through Format, which is non-empty for a real context.
+        // MEASURED ON REAL BC, and it falsified the first version of this test: a context has
+        // an EMPTY text representation. Format(Ctx) compiles, and returns ''. The runtime type
+        // NavWebServiceActionContext carries no ToString override -- it reports GetBytesSize 0
+        // and IsZeroOrEmpty false -- so there is nothing for Format to render, and an object
+        // id assigned beforehand does not appear in it. The first draft asserted the opposite
+        // ("must have a non-empty text representation") purely from the intuition that a
+        // populated object formats to something, and BC disagreed on all 8 cloud legs.
+        //
+        // So the claim pinned here is the accurate one: the context does reach a Variant, and
+        // is NOT reported as any primitive type, but it carries no readable text form. That
+        // combination is the useful thing for an AL author to know -- logging a context is
+        // pointless, and reading its state requires the getters.
         Ctx.SetObjectId(50123);
 
         Holder := Ctx;
 
         Assert.IsFalse(Holder.IsInteger(), 'A context held in a Variant must not be reported as an Integer');
-        Assert.AreNotEqual('', Format(Holder), 'A context held in a Variant must have a non-empty text representation');
+        Assert.IsFalse(Holder.IsText(), 'A context held in a Variant must not be reported as Text');
+        Assert.IsFalse(Holder.IsRecord(), 'A context held in a Variant must not be reported as a Record');
+        Assert.AreEqual('', Format(Holder), 'A context has an empty text representation, even with an object id assigned');
     end;
 }
