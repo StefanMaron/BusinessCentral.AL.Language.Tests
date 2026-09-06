@@ -1,0 +1,570 @@
+name: Nightly Windows (official MS BC container)
+
+# THE AUTHORITY RUN.
+#
+# ci.yml runs this corpus on StefanMaron/MsDyn365Bc.On.Linux. That is fast, free and runs on
+# every PR -- and it is one particular container, not Business Central. Issue #213 showed the
+# gap concretely: a run against a real MS SaaS sandbox failed 14 tests that ci.yml reports
+# green. So this workflow exists to run master against an OFFICIAL MICROSOFT BC container on
+# WINDOWS and produce the verdict that outranks the Linux one.
+#
+# The operating rule the owner set in #213:
+#   "any test that fails on windows needs to be first fixed on
+#    https://github.com/StefanMaron/MsDyn365Bc.On.Linux"
+# That is, a Windows failure is a real failure. A Linux-only failure is an image bug.
+#
+# THIS IS DELIBERATELY NOT A REQUIRED STATUS CONTEXT. Do not add it to the branch ruleset.
+# It takes ~1-2 hours, it is a signal for humans, and a nightly that gates merges stalls the
+# repository. The eight "BC <ver> / test" contexts from ci.yml remain the merge gate.
+#
+# WHY THE ENVIRONMENT IS PINNED AND PRINTED, NOT JUST PINNED.
+# Six of #213's 14 failures are properties of the tier, not of BC: three are decimal-comma /
+# dd.MM.yy formatting, three are writes refused by the license. If this workflow's region or
+# license drifts, it re-reports those as failures forever and everyone learns to ignore it.
+# So the session culture is pinned explicitly (and the step FAILS if the pinning parameter is
+# not available, rather than running unpinned), and the license, region, container OS, generic
+# image and BC build are all written into an artifact next to the results.
+#
+# READ THIS BEFORE TREATING A GREEN ON THE PERMISSION TESTS AS GOOD NEWS.
+# Codeunits 60013 and 60827 declare `TestPermissions = Disabled` and no `Permissions` property,
+# so their writes fall through to whatever the license grants. A dev-licensed container is
+# expected to MASK that -- the same masking that hid it until a SaaS run exposed it. A pass
+# there means nothing for those three tests. See #213.
+
+on:
+  # The reason this trigger is first: confirming #213's list on demand is the immediate job.
+  workflow_dispatch:
+    inputs:
+      bc_version:
+        description: 'BC version, e.g. 28.4 (the version #213 was measured on)'
+        required: true
+        default: '28.4'
+      artifact_type:
+        description: 'BC artifact type. onprem carries a full CRONUS dev license; sandbox is closer to a SaaS tier but a narrower license.'
+        required: true
+        default: 'onprem'
+        type: choice
+        options: [onprem, sandbox]
+      country:
+        description: 'Localization. w1 matches ci.yml.'
+        required: true
+        default: 'w1'
+      culture:
+        description: 'Session culture for the test run. en-US is the format the corpus hardcodes.'
+        required: true
+        default: 'en-US'
+      free_disk_space:
+        description: 'Delete preinstalled SDKs before pulling the BC image. Needed on GitHub-hosted runners.'
+        required: false
+        default: true
+        type: boolean
+
+  schedule:
+    # 03:00 UTC. Skipped by the gate job below unless master moved in the last 25 hours.
+    - cron: '0 3 * * *'
+
+  # OPT-IN ONLY, never automatic. This fires on `labeled` and the gate job below then
+  # requires the label to be exactly `run-nightly-windows`, so an ordinary PR -- including one
+  # that edits this very file -- does NOT spend a ~2h Windows run. An earlier revision used a
+  # `paths:` filter instead; that kept it off unrelated PRs but still fired on every edit to
+  # this workflow, which is too eager for a job this expensive on a repository whose Actions
+  # concurrency is shared account-wide.
+  #
+  # It exists at all because workflow_dispatch is only offered for workflows already on the
+  # DEFAULT branch, so before this merges the label is the only way to adjudicate #213.
+  # Afterwards it stays useful: label a PR to re-measure against a real Windows tier.
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-windows-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Cheap gate on a Linux runner, so deciding "is there anything new to test" never costs a
+  # Windows minute. The owner asked for a nightly "whenever there was a new commit on main on
+  # the previous day" -- this is that condition, made explicit rather than left to Actions'
+  # 60-day auto-disable, which answers a completely different question.
+  gate:
+    name: Did master move?
+    # On a pull_request this workflow is opt-in: nothing runs unless someone deliberately
+    # applied `run-nightly-windows`. Skipping the gate skips windows-container with it,
+    # because that job is `needs: gate`.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.label.name == 'run-nightly-windows'
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.decide.outputs.should_run }}
+      bc_version: ${{ steps.decide.outputs.bc_version }}
+      head_sha: ${{ steps.decide.outputs.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Always measure master, whatever ref triggered this. Reading a stale or
+          # differently-pointed tree is how a wrong answer gets produced confidently.
+          ref: master
+          fetch-depth: 1
+
+      - id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.bc_version }}
+        run: |
+          set -euo pipefail
+
+          BC_VERSION="${INPUT_VERSION:-28.4}"
+          echo "bc_version=$BC_VERSION" >> "$GITHUB_OUTPUT"
+
+          HEAD_SHA=$(git rev-parse HEAD)
+          COMMIT_EPOCH=$(git log -1 --format=%ct HEAD)
+          COMMIT_ISO=$(git log -1 --format=%cI HEAD)
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+          echo "master head        : $HEAD_SHA"
+          echo "master committed at: $COMMIT_ISO"
+
+          if [ "$EVENT" != "schedule" ]; then
+            echo "Triggered by '$EVENT', not the nightly schedule -- running unconditionally."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          NOW=$(date -u +%s)
+          AGE_HOURS=$(( (NOW - COMMIT_EPOCH) / 3600 ))
+          # 25h, not 24h: the schedule fires once a day and GitHub can delay a cron by tens of
+          # minutes under load. A flat 24h window would silently drop a day whenever the run
+          # started late relative to the commit.
+          if [ "$AGE_HOURS" -lt 25 ]; then
+            echo "master last moved ${AGE_HOURS}h ago -- inside the 25h window, running."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "master last moved ${AGE_HOURS}h ago -- no new commit since the previous nightly, skipping."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Summary
+        run: |
+          {
+            echo "### Nightly gate"
+            echo ""
+            echo "- master head: \`${{ steps.decide.outputs.head_sha }}\`"
+            echo "- BC version: \`${{ steps.decide.outputs.bc_version }}\`"
+            echo "- run: **${{ steps.decide.outputs.should_run }}**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  windows-container:
+    name: BC ${{ needs.gate.outputs.bc_version }} on an official MS Windows container
+    needs: gate
+    if: needs.gate.outputs.should_run == 'true'
+    # Set the repository variable NIGHTLY_WINDOWS_RUNNER to move this onto a self-hosted
+    # Windows runner without editing the workflow -- the escape hatch if a GitHub-hosted
+    # runner turns out not to have the disk for a BC image plus artifacts.
+    runs-on: ${{ vars.NIGHTLY_WINDOWS_RUNNER || 'windows-latest' }}
+    timeout-minutes: 330
+    defaults:
+      run:
+        shell: pwsh
+
+    env:
+      BC_VERSION: ${{ needs.gate.outputs.bc_version }}
+      ARTIFACT_TYPE: ${{ github.event.inputs.artifact_type || 'onprem' }}
+      COUNTRY: ${{ github.event.inputs.country || 'w1' }}
+      CULTURE: ${{ github.event.inputs.culture || 'en-US' }}
+      TIMEZONE: 'UTC'
+      CONTAINER_NAME: 'bcnightly'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------------------------
+      # Measurement first. If a GitHub-hosted Windows runner cannot carry a BC container,
+      # this is where that shows up, with numbers attached rather than as a vague timeout.
+      # ---------------------------------------------------------------------------------
+      - name: Host, docker and disk (before)
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host "=== OS ==="
+          Get-CimInstance Win32_OperatingSystem |
+            Select-Object Caption, Version, BuildNumber, OSArchitecture | Format-List
+          Write-Host "=== CPU / RAM ==="
+          $cs = Get-CimInstance Win32_ComputerSystem
+          Write-Host ("Logical processors: {0}" -f $cs.NumberOfLogicalProcessors)
+          Write-Host ("RAM (GB)         : {0}" -f [math]::Round($cs.TotalPhysicalMemory/1GB,1))
+          Write-Host "=== Disks ==="
+          Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+            Select-Object DeviceID,
+              @{n='SizeGB';e={[math]::Round($_.Size/1GB,1)}},
+              @{n='FreeGB';e={[math]::Round($_.FreeSpace/1GB,1)}} | Format-Table -AutoSize
+          Write-Host "=== Docker ==="
+          docker version
+          Write-Host ("OSType      : {0}" -f (docker info --format '{{.OSType}}'))
+          Write-Host ("DockerRootDir: {0}" -f (docker info --format '{{.DockerRootDir}}'))
+          Write-Host ("Isolation   : {0}" -f (docker info --format '{{.Isolation}}'))
+
+      - name: Refuse to continue on a Linux docker daemon
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $osType = (docker info --format '{{.OSType}}').Trim()
+          if ($osType -ne 'windows') {
+            # The entire point of this workflow is that it is NOT the Linux image. Running a
+            # Linux container here would produce a verdict indistinguishable from ci.yml's
+            # while being labelled as the Windows authority -- worse than no verdict.
+            throw "docker is in '$osType' container mode, not 'windows'. This workflow must run an official Microsoft Windows BC container; refusing to produce a verdict that would be mistaken for one."
+          }
+          Write-Host "docker is in Windows container mode."
+
+      # MEASURED, on the run that adjudicated #213 (run 34057062917, windows-latest):
+      # a plain `Remove-Item -Recurse -Force` over this target list took 11 MIN 53 S -- more
+      # than the BC container took to boot. Deleting an SDK tree on Windows is dominated by
+      # per-file NTFS transactions, and the Android SDK alone is ~100k files.
+      #
+      # Two changes, in order of how much they save:
+      #   1. Do not clean at all unless the disk is actually short. The threshold is checked
+      #      against the real requirement (image + extracted artifacts), not a guess.
+      #   2. When cleaning is needed, purge with `robocopy /MIR` from an empty directory --
+      #      the fastest bulk delete on Windows -- and run the targets in PARALLEL, since
+      #      they are independent trees and the cost is I/O latency, not CPU.
+      - name: Free disk space (only if short)
+        if: ${{ github.event.inputs.free_disk_space != 'false' }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+
+          # A BC generic image (~10 GB) plus extracted artifacts (~15 GB) plus the container's
+          # own database and working set. 45 GB is the point below which it is worth paying to
+          # clean; above it, cleaning buys nothing and costs minutes.
+          $requiredGB = 45
+          $free = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace / 1GB
+          Write-Host ("C: free: {0:n1} GB (threshold {1} GB)" -f $free, $requiredGB)
+          if ($free -ge $requiredGB) {
+            Write-Host "Enough free space -- skipping cleanup entirely."
+            exit 0
+          }
+
+          $empty = Join-Path $env:RUNNER_TEMP 'empty'
+          New-Item -ItemType Directory -Force -Path $empty | Out-Null
+
+          # Biggest first, so a time cap still reclaims the most.
+          $targets = @(
+            'C:\Android',
+            'C:\Program Files (x86)\Android',
+            'C:\Program Files\Unity',
+            'C:\Miniconda',
+            'C:\Rust',
+            'C:\Program Files\PostgreSQL',
+            'C:\Program Files\MongoDB',
+            'C:\Program Files\Google',
+            'C:\Program Files (x86)\Google',
+            'C:\hostedtoolcache\windows\Ruby',
+            'C:\hostedtoolcache\windows\go'
+          ) | Where-Object { Test-Path $_ }
+
+          $jobs = foreach ($t in $targets) {
+            Start-Job -ArgumentList $t, $empty -ScriptBlock {
+              param($target, $empty)
+              # /MIR against an empty source empties the tree; /NFL /NDL /NJH /NJS /NP keep it
+              # from writing a line per file, which is itself a measurable cost here.
+              robocopy $empty $target /MIR /NFL /NDL /NJH /NJS /NP /R:0 /W:0 | Out-Null
+              Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
+          # Hard cap: this step exists to make the run possible, never to become the run.
+          $jobs | Wait-Job -Timeout 240 | Out-Null
+          $jobs | Stop-Job -ErrorAction SilentlyContinue
+          $jobs | Remove-Job -Force -ErrorAction SilentlyContinue
+
+          $after = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace / 1GB
+          Write-Host ("C: free {0:n1} -> {1:n1} GB (reclaimed {2:n1} GB) in {3:n0}s" -f
+            $free, $after, ($after - $free), $sw.Elapsed.TotalSeconds)
+
+      - name: Install BcContainerHelper
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module BcContainerHelper -Force -AllowClobber -Scope CurrentUser
+          Import-Module BcContainerHelper -DisableNameChecking
+          $m = Get-Module BcContainerHelper
+          Write-Host ("BcContainerHelper {0}" -f $m.Version)
+          "BCCH_VERSION=$($m.Version)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Resolve the official Microsoft artifact URL
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+
+          # Put the artifact cache on whichever fixed drive has the most room. On a
+          # GitHub-hosted runner the workspace is on D: while docker's data root is on C:,
+          # and the artifacts are large enough that guessing wrong is a run-ending mistake.
+          $best = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+                    Sort-Object FreeSpace -Descending | Select-Object -First 1
+          $cache = Join-Path $best.DeviceID 'bcartifacts.cache'
+          $bcContainerHelperConfig.bcartifactsCacheFolder = $cache
+          Write-Host ("artifact cache -> {0} ({1:n1} GB free)" -f $cache, ($best.FreeSpace/1GB))
+          "BC_ARTIFACT_CACHE=$cache" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+          $url = Get-BCArtifactUrl -type $env:ARTIFACT_TYPE -country $env:COUNTRY `
+                                   -version $env:BC_VERSION -select Latest
+          if (-not $url) {
+            throw "No $($env:ARTIFACT_TYPE) artifact found for BC $($env:BC_VERSION) country $($env:COUNTRY)."
+          }
+          Write-Host "artifactUrl: $url"
+          "BC_ARTIFACT_URL=$url" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Create the BC container
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $bcContainerHelperConfig.bcartifactsCacheFolder = $env:BC_ARTIFACT_CACHE
+
+          # MEASURED (run 34057062917): without sharing the workspace, the compile step dies
+          # with "The appProjectFolder (D:\a\...) is not shared with the container."
+          # Compile-AppInBcContainer runs the AL compiler INSIDE the container, so the sources
+          # have to be reachable from in there. BcContainerHelper shares its own helper and
+          # artifact folders by default but never the GitHub workspace, which on a hosted
+          # Windows runner sits on D:. Mounting it lets Get-BcContainerPath translate
+          # D:\a\...\tests\x to c:\sources\tests\x -- which every -appProjectFolder,
+          # -appOutputFolder and -appSymbolsFolder argument later on relies on.
+          $volume = '--volume "{0}:c:\sources"' -f $env:GITHUB_WORKSPACE
+          Write-Host "sharing workspace: $volume"
+
+          $password = [guid]::NewGuid().ToString() + 'aA1!'
+          $cred = New-Object pscredential 'admin', (ConvertTo-SecureString $password -AsPlainText -Force)
+          $cred | Export-Clixml -Path (Join-Path $env:RUNNER_TEMP 'bccred.xml')
+
+          $params = @{
+            accept_eula          = $true
+            accept_outdated      = $true
+            containerName        = $env:CONTAINER_NAME
+            artifactUrl          = $env:BC_ARTIFACT_URL
+            auth                 = 'UserPassword'
+            Credential           = $cred
+            updateHosts          = $true
+            shortcuts            = 'None'
+            includeTestToolkit   = $true      # brings the Test Runner (130450/130454/130456)
+            includeTestLibrariesOnly = $true  # ... without Microsoft's own test apps
+            doNotExportObjectsToText = $true
+            useBestContainerOS   = $true      # match the host build so process isolation works
+            isolation            = 'process'
+            additionalParameters = @($volume)
+          }
+          # Newer BcContainerHelper needs this for insider builds; older ones do not have the
+          # parameter at all and would hard-error on it.
+          if ((Get-Command New-BcContainer).Parameters.ContainsKey('accept_insiderEula')) {
+            $params['accept_insiderEula'] = $true
+          }
+
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          New-BcContainer @params
+          Write-Host ("container created in {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+
+          # Prove the share took, HERE, rather than discovering it later as a confusing
+          # message from inside Compile-AppInBcContainer.
+          $mapped = Get-BcContainerPath -containerName $env:CONTAINER_NAME -path $env:GITHUB_WORKSPACE
+          if (-not $mapped) {
+            throw "The workspace ($env:GITHUB_WORKSPACE) is not visible inside the container. Compiling would fail with 'is not shared with the container'."
+          }
+          Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
+
+      # ---------------------------------------------------------------------------------
+      # Declare the tier. Half of #213's failures are properties of the environment, so a
+      # verdict without this block attached is not interpretable.
+      # ---------------------------------------------------------------------------------
+      - name: Record the environment this verdict is about
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $c = $env:CONTAINER_NAME
+
+          function Try-Get([scriptblock]$b, $fallback = 'unavailable') {
+            try { $v = & $b; if ($null -ne $v -and "$v".Trim()) { return "$v".Trim() } else { return $fallback } }
+            catch { return "$fallback ($($_.Exception.Message))" }
+          }
+
+          # MEASURED (run 34057062917): Export-NAVServerLicenseInformation has no -Path
+          # parameter on BC 28.4, and that attempt recorded the license as
+          # "unavailable (A parameter cannot be found that matches parameter name 'Path')".
+          # The license tier is load-bearing for reading this verdict at all (see #213), so
+          # try the documented spellings in turn instead of shipping one guess.
+          $license = Try-Get {
+            Invoke-ScriptInBcContainer -containerName $c -scriptblock {
+              $out = @()
+              try { $out += (Get-NAVServerLicenseInformation -ServerInstance BC | Out-String) } catch {}
+              if (-not ($out -join '').Trim()) {
+                try {
+                  $p = Join-Path $env:TEMP 'licenseinfo.txt'
+                  Export-NAVServerLicenseInformation -ServerInstance BC -FilePath $p -Force
+                  $out += (Get-Content $p -Raw)
+                } catch {}
+              }
+              if (-not ($out -join '').Trim()) {
+                try { $out += (Get-NAVServerConfiguration -ServerInstance BC -KeyName LicenseFile | Out-String) } catch {}
+              }
+              ($out -join "`n")
+            }
+          }
+          # Keep the whole license dump in the artifact, but put a one-line identity in the table.
+          $license | Out-File 'license-information.txt' -Encoding utf8
+          $licenseLine = ($license -split "`n" | Where-Object { $_ -match '\S' } | Select-Object -First 6) -join ' / '
+
+          $containerLocale = Try-Get {
+            Invoke-ScriptInBcContainer -containerName $c -scriptblock {
+              "SystemLocale=$((Get-WinSystemLocale).Name); Culture=$((Get-Culture).Name)"
+            }
+          }
+
+          $env_table = [ordered]@{
+            'Corpus commit'          = "$env:GITHUB_SHA"
+            'BC version (requested)' = "$env:BC_VERSION"
+            'BC build (actual)'      = Try-Get { Get-BcContainerNavVersion -containerOrImageName $c }
+            'Artifact type'          = "$env:ARTIFACT_TYPE"
+            'Country / localization' = "$env:COUNTRY"
+            'Artifact URL'           = ($env:BC_ARTIFACT_URL -replace '\?.*$', '')
+            'Generic image'          = Try-Get { Get-BcContainerGenericTag -containerOrImageName $c }
+            'Container OS'           = Try-Get { Get-BcContainerOsVersion -containerOrImageName $c }
+            'Host OS'                = (Get-CimInstance Win32_OperatingSystem).Version
+            'Isolation'              = 'process'
+            'Session culture (PINNED)'  = "$env:CULTURE"
+            'Session timezone (PINNED)' = "$env:TIMEZONE"
+            'Container OS locale'    = $containerLocale
+            'License'                = $licenseLine
+            'BcContainerHelper'      = "$env:BCCH_VERSION"
+          }
+          $env_table | ConvertTo-Json | Out-File 'environment.json' -Encoding utf8
+          $env_table.GetEnumerator() | ForEach-Object { Write-Host ("{0,-26}: {1}" -f $_.Key, $_.Value) }
+
+      - name: Compile and publish the corpus apps
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $c = $env:CONTAINER_NAME
+          $cred = Import-Clixml (Join-Path $env:RUNNER_TEMP 'bccred.xml')
+
+          # Same symbols ci.yml computes, from the same rule.
+          $major = [int]($env:BC_VERSION -split '\.')[0]
+          $symbols = @()
+          foreach ($v in 27, 28) { if ($v -le $major) { $symbols += "BC${v}PLUS" } }
+          Write-Host ("preprocessor symbols: {0}" -f ($symbols -join ','))
+
+          # Order matters: the fixture is a dependency of al-language, which is in turn a
+          # dependency of al-language-onprem.
+          $apps = @('tests/al-language-internals-fixture', 'tests/al-language', 'tests/al-language-onprem')
+          $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+          foreach ($folder in $apps) {
+            Write-Host "::group::compile $folder"
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+              -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
+              -appOutputFolder $outDir `
+              -appSymbolsFolder (Join-Path $outDir 'symbols') `
+              -UpdateSymbols -preProcessorSymbols $symbols -failOn 'error'
+            Write-Host ("compiled {0} in {1:n0}s -> {2}" -f $folder, $sw.Elapsed.TotalSeconds, $appFile)
+            Write-Host "::endgroup::"
+
+            Write-Host "::group::publish $folder"
+            Publish-BcContainerApp -containerName $c -credential $cred `
+              -appFile $appFile -skipVerification -sync -install
+            Write-Host "::endgroup::"
+          }
+
+          Write-Host "=== installed apps ==="
+          Get-BcContainerAppInfo -containerName $c |
+            Select-Object Name, Publisher, Version, IsInstalled | Format-Table -AutoSize
+
+      - name: Run the corpus
+        id: run_tests
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $c = $env:CONTAINER_NAME
+          $cred = Import-Clixml (Join-Path $env:RUNNER_TEMP 'bccred.xml')
+
+          # Pinning the session culture is not optional -- three of #213's failures are pure
+          # formatting. If this build of BcContainerHelper cannot pin it, stop: an unpinned run
+          # would report those three as BC divergences on any European-defaulting image.
+          $rt = Get-Command Run-TestsInBcContainer
+          foreach ($p in 'culture', 'timezone') {
+            if (-not $rt.Parameters.ContainsKey($p)) {
+              throw "Run-TestsInBcContainer has no -$p parameter in BcContainerHelper $env:BCCH_VERSION. Refusing to run with an undeclared session $p."
+            }
+          }
+
+          $suites = @(
+            @{ name = 'al-language';        folder = 'tests/al-language' },
+            @{ name = 'al-language-onprem'; folder = 'tests/al-language-onprem' }
+          )
+
+          foreach ($s in $suites) {
+            $appJson = Get-Content (Join-Path $env:GITHUB_WORKSPACE "$($s.folder)/app.json") -Raw | ConvertFrom-Json
+            $out = Join-Path $env:GITHUB_WORKSPACE "xunit-$($s.name).xml"
+            Write-Host "::group::run $($s.name) ($($appJson.id))"
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            try {
+              Run-TestsInBcContainer -containerName $c -credential $cred `
+                -extensionId $appJson.id `
+                -culture $env:CULTURE -timezone $env:TIMEZONE `
+                -XUnitResultFileName $out -AzureDevOps 'no' -GitHubActions 'no' `
+                -detailed -returnTrueIfAllPassed | Out-Null
+            } catch {
+              # A failing test must not abort the other suite -- the artifact is the deliverable.
+              Write-Host "::warning::Run-TestsInBcContainer for $($s.name) raised: $($_.Exception.Message)"
+            }
+            Write-Host ("$($s.name) finished in {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+            Write-Host "::endgroup::"
+          }
+
+          Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'xunit-*.xml') |
+            ForEach-Object { Write-Host ("{0}: {1:n0} KB" -f $_.Name, ($_.Length/1KB)) }
+
+      - name: Compare against issue #213
+        if: always()
+        shell: bash
+        run: |
+          python .github/scripts/bc-test-results.py \
+            --xunit xunit-al-language.xml \
+            --xunit xunit-al-language-onprem.xml \
+            --baseline .github/expected-failures/issue-213-saas-sandbox.json \
+            --environment environment.json \
+            --outdir test-results
+
+      - name: Disk (after)
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+            Select-Object DeviceID,
+              @{n='SizeGB';e={[math]::Round($_.Size/1GB,1)}},
+              @{n='FreeGB';e={[math]::Round($_.FreeSpace/1GB,1)}} | Format-Table -AutoSize
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-windows-bc${{ needs.gate.outputs.bc_version }}-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 90
+          path: |
+            xunit-*.xml
+            test-results/**
+            environment.json
+            license-information.txt
+
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Import-Module BcContainerHelper -DisableNameChecking
+          Get-BcContainerEventLog -containerName $env:CONTAINER_NAME -logname Application -ErrorAction SilentlyContinue
+          docker logs $env:CONTAINER_NAME 2>&1 | Select-Object -Last 200
+
+      - name: Remove the container
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Import-Module BcContainerHelper -DisableNameChecking
+          Remove-BcContainer -containerName $env:CONTAINER_NAME -ErrorAction SilentlyContinue
