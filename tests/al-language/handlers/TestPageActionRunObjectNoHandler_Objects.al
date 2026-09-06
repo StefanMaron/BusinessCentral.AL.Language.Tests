@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-runobject-property
 // Scope: in-scope
 // Fixtures used: TPARONH Row (60280), TPARONH Card Target (60281),
-//                TPARONH Logging Target (60282), TPARONH Host (60283), TPARONH Log (60284)
+//                TPARONH Logging Target (60282), TPARONH Host (60283), TPARONH Log (60284),
+//                TPARONH Open Probe (60286)
 //
 // Fixtures for "what does a RunObject action do when no handler is bound". The answer these
 // were built to find is recorded in TestPageActionRunObjectNoHandler_Tests.al: the target page
@@ -47,6 +48,65 @@ table 60284 "TPARONH Log"
     {
         key(PK; "Entry") { Clustered = true; }
     }
+}
+
+// A SECOND record of the same event as the TPARONH Log row, kept in memory instead of the
+// database, because the log table cannot answer the question arm 6 asks.
+//
+// Arm 6 asks whether a REFUSED Page.Run opened its target. The refusal raises an error, and
+// that error -- measured on all eight cloud legs, see the note on arm 6 -- discards the
+// uncommitted rows of the transaction it unwinds. So on that one arm a missing 'OPENED' row
+// means nothing: it is missing whether the page opened or not. Every other arm reads the log
+// table happily, because no error is involved.
+//
+// SingleInstance codeunit state is memory, not database, so no rollback can reach it. That is
+// the same reason ASK Probe (60917) exists for its own suite. Reset() is called from the
+// tests' Initialize(), so each arm starts from a known state.
+codeunit 60286 "TPARONH Open Probe"
+{
+    SingleInstance = true;
+
+    var
+        Opened: Boolean;
+        DescrSeen: Text[50];
+        Sentinel: Boolean;
+
+    procedure Reset()
+    begin
+        Opened := false;
+        DescrSeen := '';
+        Sentinel := false;
+    end;
+
+    procedure MarkOpened(CurrentDescr: Text[50])
+    begin
+        Opened := true;
+        DescrSeen := CurrentDescr;
+    end;
+
+    procedure GetOpened(): Boolean
+    begin
+        exit(Opened);
+    end;
+
+    procedure GetDescrSeen(): Text[50]
+    begin
+        exit(DescrSeen);
+    end;
+
+    // Set before the refused invoke and read after it, so a test can prove this probe's own
+    // state survived the error before trusting what GetOpened() reports. Without it, a runtime
+    // that wiped the probe on the way out would look exactly like a page that never opened --
+    // the same unfalsifiable shape that a log row turned out to have here.
+    procedure MarkSentinel()
+    begin
+        Sentinel := true;
+    end;
+
+    procedure GetSentinel(): Boolean
+    begin
+        exit(Sentinel);
+    end;
 }
 
 page 60281 "TPARONH Card Target"
@@ -102,12 +162,16 @@ page 60282 "TPARONH Logging Target"
     trigger OnOpenPage()
     var
         Log: Record "TPARONH Log";
+        Probe: Codeunit "TPARONH Open Probe";
     begin
         Log.Init();
         Log.Entry := 'OPENED';
         Log.Detail := Rec.Descr;
         if not Log.Insert() then
             Log.Modify();
+
+        // The same event, recorded where a rollback cannot reach it. See the probe's own note.
+        Probe.MarkOpened(Rec.Descr);
     end;
 }
 
