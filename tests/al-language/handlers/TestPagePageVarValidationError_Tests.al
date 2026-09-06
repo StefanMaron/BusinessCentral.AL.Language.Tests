@@ -18,7 +18,8 @@
 //     `Assert.AreEqual('There should be at least one enabled ''SUPER'' user.',
 //         PermissionSetByUser.AllUsersHavePermission.GetValidationError(1), ...)`.
 //
-// Those are not the same shape. `AllUsersHavePermission` on page 9807 binds to a page GLOBAL,
+// Those are not the same shape. `AllUsersHavePermission` on page 9816 "Permission Set by User"
+// (an earlier version of this comment said 9807, which is "User Card") binds to a page GLOBAL,
 // not to a field of "Aggregate Permission Set" — checked mechanically against the page's own
 // control-binding map, not inferred from the name. A page-global control stages no row edit, so
 // there is nothing for "Refresh to discard" to discard, which is a plausible reason the suffix
