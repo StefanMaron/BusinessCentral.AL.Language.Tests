@@ -109,7 +109,7 @@
 // measured.
 // ---------------------------------------------------------------------------------------
 //
-// The five arms are one experiment, and the controls are what make arm 1 mean anything:
+// The six arms are one experiment, and the controls are what make arm 1 mean anything:
 //
 //   1. RunObjectActionWithoutAHandlerOpensItsTargetUnattended -- the answer, and the only arm
 //      with a positive observable. It invokes the RunObject action aimed at the target that
@@ -133,6 +133,11 @@
 //      With a handler bound, the logging target really does write its OPENED row and the test
 //      really can read it, so the row arm 1 finds means the page opened rather than that the
 //      probe writes that row regardless. Passes.
+//   6. ControlPageRunOnTheLoggingTargetWithoutAHandlerIsRefusedAndOpensNothing -- arm 1's
+//      direct counterpart. Same logging target, same absent handler, reached by Page.Run
+//      instead of RunObject. Asserts both that it IS refused and that nothing opened, with a
+//      sentinel row ruling out a rollback as the reason the 'OPENED' row is missing. The
+//      second half is a prediction this corpus's CI adjudicates; see the note on the arm.
 //
 // Held out of the eight-test RunObject suite (TestPageActionRunObject_Tests, codeunit 60455)
 // while this question was open, so that suite could merge; it stays silent on the no-handler
@@ -286,6 +291,56 @@ codeunit 60285 "TPARONH Tests"
             'the logging target must record its own OnOpenPage when it really opens');
         Assert.AreEqual('Bravo', Log.Detail,
             'the logging target must have opened on the record it was handed');
+    end;
+
+    // ARM 6, and the direct counterpart to arm 1: the SAME logging target, with NO handler
+    // bound, reached by a plain AL Page.Run instead of a RunObject declaration. Arm 1 measured
+    // that the RunObject route opens the target unattended and tells AL nothing. This arm asks
+    // whether the Page.Run route really does the opposite on the very same page -- refused, AND
+    // nothing opened.
+    //
+    // Control 1 could not answer that. It opens the CLEAN Card Target, which has no OnOpenPage
+    // and so records nothing whether it opens or not, and arm 4 depends on the Card Target
+    // staying the page controls 1 and 2 refuse -- so this is a new arm rather than a change to
+    // control 1.
+    //
+    // Both halves are asserted, because either alone is half the claim:
+    //
+    //   * REFUSED -- asserterror plus the specific 'Unhandled UI' message, not a bare
+    //     asserterror. Per the mechanism note at the top of this file, TestHandleForm calls
+    //     Company.RegisterForm only AFTER the handler lookup succeeds, so on this route a
+    //     handler-less form should never be registered and never open.
+    //   * NOTHING OPENED -- no 'OPENED' row. This is the half that is a prediction; a service
+    //     tier decides it, not this comment.
+    //
+    // The SENTINEL row is what makes the negative half mean anything. A missing 'OPENED' row
+    // has two possible explanations -- the page never opened, or it opened and wrote the row
+    // and the error rolled it back. The sentinel is written after the commit point and read
+    // back after the asserterror, so if the transaction had rolled back it would be gone too.
+    // Finding it still there rules the rollback explanation out inside this test, rather than
+    // asking a reader to take it on trust. (Codeunit 60170's Test04 already pins the general
+    // case: an uncommitted Insert is still readable after an asserterror.)
+    [Test]
+    procedure ControlPageRunOnTheLoggingTargetWithoutAHandlerIsRefusedAndOpensNothing()
+    var
+        Row: Record "TPARONH Row";
+        Log: Record "TPARONH Log";
+    begin
+        Initialize();
+        Commit();
+
+        Log.Init();
+        Log.Entry := 'SENTINEL';
+        Log.Insert();
+
+        Row.Get('B');
+        asserterror Page.Run(Page::"TPARONH Logging Target", Row);
+        Assert.ExpectedError('Unhandled UI');
+
+        Assert.IsTrue(Log.Get('SENTINEL'),
+            'the refused Page.Run must not have rolled the transaction back, otherwise the next assertion proves nothing');
+        Assert.IsFalse(Log.Get('OPENED'),
+            'a refused Page.Run must not have opened the target: the logging target''s OnOpenPage must never have run');
     end;
 
     [PageHandler]
