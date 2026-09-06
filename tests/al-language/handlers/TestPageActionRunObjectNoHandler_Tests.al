@@ -205,11 +205,15 @@ codeunit 60285 "TPARONH Tests"
     // out the target page, the fixture set and the absence of handlers as explanations for arm
     // 1. If this ever fails, arm 1 says nothing about RunObject and the comparison has to be
     // rebuilt.
+    //
+    // The asserterror IS the whole assertion, deliberately. The Card Target is kept free of an
+    // OnOpenPage on purpose (see the objects file), so it writes nothing whether it opens or
+    // not, and there is no post-invoke observable this arm could read. A log assertion here
+    // would be unfalsifiable, which is why there is none.
     [Test]
     procedure ControlPageRunOnTheSameTargetWithoutAHandlerIsRefused()
     var
         Row: Record "TPARONH Row";
-        Log: Record "TPARONH Log";
     begin
         Initialize();
         Commit();
@@ -217,8 +221,6 @@ codeunit 60285 "TPARONH Tests"
         Row.Get('B');
         asserterror Page.Run(Page::"TPARONH Card Target", Row);
         Assert.ExpectedError('Unhandled UI');
-
-        Assert.IsFalse(Log.Get('CARD'), 'a refused page must not have reached any handler');
     end;
 
     // CONTROL 2, passes, and the one that narrows the difference to the declaration. Same host
@@ -226,10 +228,12 @@ codeunit 60285 "TPARONH Tests"
     // an OnAction trigger calling Page.Run instead of a RunObject property. It IS refused, so
     // the action-invoke path is not what differs, and neither is the target: the RunObject
     // declaration is.
+    //
+    // As with control 1, the asserterror is the whole assertion: this arm opens the same clean
+    // Card Target, which records nothing either way.
     [Test]
     procedure ControlTriggerActionOpeningTheSameTargetWithoutAHandlerIsRefused()
     var
-        Log: Record "TPARONH Log";
         Host: TestPage "TPARONH Host";
     begin
         Initialize();
@@ -239,8 +243,6 @@ codeunit 60285 "TPARONH Tests"
         Host.First();
         asserterror Host.RunCardViaTrigger.Invoke();
         Assert.ExpectedError('Unhandled UI');
-
-        Assert.IsFalse(Log.Get('CARD'), 'a refused action must not have reached any handler');
     end;
 
     // The RunObject side of the comparison the two controls above set up: the SAME target page
