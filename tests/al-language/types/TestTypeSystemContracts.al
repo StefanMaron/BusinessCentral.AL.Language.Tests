@@ -10,6 +10,7 @@ codeunit 60153 "Test Type System Contracts"
     var
         Cleanup: Codeunit ALTFixtureCleanup;
         Assert: Codeunit Assert;
+        ProbeCalls: Integer;
 
     [Test]
     procedure Integer_MaxValue_PlusOne_Throws()
@@ -136,7 +137,11 @@ codeunit 60153 "Test Type System Contracts"
     end;
 
     [Test]
-    procedure Boolean_ShortCircuit_ORAndAND()
+    procedure Boolean_TruthTable_ORAndAND()
+    // Renamed from Boolean_ShortCircuit_ORAndAND. It only ever asserted the truth table of
+    // OR and AND over literals -- nothing here observes whether an operand was evaluated,
+    // so the old name claimed more than the body proved. The evaluation claim is now made,
+    // and measured, by the four tests below.
     begin
         Assert.IsTrue(true or false, 'true OR false must be true');
         Assert.IsTrue(true or true, 'true OR true must be true');
@@ -173,5 +178,99 @@ codeunit 60153 "Test Type System Contracts"
         V := D;
         Assert.IsTrue(V.IsDecimal(), 'After assigning Decimal to Variant, IsDecimal must be true');
         Assert.IsFalse(V.IsInteger(), 'After assigning Decimal to Variant, IsInteger must be false');
+    end;
+
+    [Test]
+    procedure Boolean_AND_FalseLeftOperand_RightOperandIsStillEvaluated()
+    // CLAIM: AL does not short-circuit AND. With a left operand that is already false at run
+    // time, the right operand is evaluated anyway. Observed through a counter a helper bumps,
+    // so the claim rests on an effect the expression had and not on the value it produced.
+    var
+        LeftOperand: Boolean;
+        Result: Boolean;
+    begin
+        ProbeCalls := 0;
+        LeftOperand := StrLen('ab') = 3; // false, but computed, so it is not a literal to fold away
+
+        Result := LeftOperand and ProbeReturnsTrue();
+
+        Assert.IsFalse(Result, 'false AND true must still evaluate to false');
+        Assert.AreEqual(1, ProbeCalls,
+            'AL evaluates both operands of AND: the right operand of a false AND must run exactly once');
+    end;
+
+    [Test]
+    procedure Boolean_OR_TrueLeftOperand_RightOperandIsStillEvaluated()
+    // CLAIM: the same for OR, in the direction where a short-circuiting language would skip
+    // the right operand -- a true left operand.
+    var
+        LeftOperand: Boolean;
+        Result: Boolean;
+    begin
+        ProbeCalls := 0;
+        LeftOperand := StrLen('ab') = 2; // true, but computed
+
+        Result := LeftOperand or ProbeReturnsFalse();
+
+        Assert.IsTrue(Result, 'true OR false must still evaluate to true');
+        Assert.AreEqual(1, ProbeCalls,
+            'AL evaluates both operands of OR: the right operand of a true OR must run exactly once');
+    end;
+
+    [Test]
+    procedure Boolean_NestedIf_GuardedOperand_IsNotEvaluated()
+    // CLAIM (the control arm for the two above): nesting the second test inside the first is
+    // what actually guards it. Same helper, same false condition, zero calls. Without this
+    // arm the counter assertions above could be satisfied by a helper that is simply never
+    // reachable in either shape.
+    var
+        LeftOperand: Boolean;
+        Reached: Boolean;
+    begin
+        ProbeCalls := 0;
+        LeftOperand := StrLen('ab') = 3; // false
+
+        if LeftOperand then
+            if ProbeReturnsTrue() then
+                Reached := true;
+
+        Assert.IsFalse(Reached, 'the guarded branch must not be reached');
+        Assert.AreEqual(0, ProbeCalls,
+            'nesting is what guards the second test: the helper must not run at all');
+    end;
+
+    [Test]
+    procedure Boolean_AND_FalseLeftOperand_RightOperandThatRaises_StillRaises()
+    // CLAIM: the consequence that bites real AL code. Guarding an out-of-range index with a
+    // count check in the SAME boolean expression does not guard it -- the index call runs and
+    // raises. KeyIndex(1) of "ALT Keyed" is its single-field primary key, so FieldIndex(2) is
+    // out of range by construction and FieldCount() = 2 is false, which is exactly the shape
+    // a short-circuiting language would never evaluate.
+    var
+        RecRef: RecordRef;
+        KRef: KeyRef;
+        Matched: Boolean;
+    begin
+        RecRef.Open(Database::"ALT Keyed");
+        KRef := RecRef.KeyIndex(1);
+        Assert.AreEqual(1, KRef.FieldCount(),
+            'the primary key of ALT Keyed must have exactly one field for this test to mean anything');
+
+        asserterror Matched := (KRef.FieldCount() = 2) and (KRef.FieldIndex(2).Name() = 'Name');
+        Assert.ExpectedError('Index out of bounds');
+
+        Assert.IsFalse(Matched, 'the assignment must not have completed');
+    end;
+
+    local procedure ProbeReturnsTrue(): Boolean
+    begin
+        ProbeCalls += 1;
+        exit(true);
+    end;
+
+    local procedure ProbeReturnsFalse(): Boolean
+    begin
+        ProbeCalls += 1;
+        exit(false);
     end;
 }
