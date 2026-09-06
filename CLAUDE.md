@@ -69,19 +69,51 @@ A test that passes on the runner but fails here means the **runner has a gap**.
   write the negative test that proves what actually happens when called
   from a running test
 
+### The two test apps, and which one a test belongs in
+
+`tests/al-language` (Target = **Cloud**) is the primary app and where almost
+every test goes. It is what "prove AL works in BC Cloud" means, and adding to
+it needs no justification.
+
+`tests/al-language-onprem` (Target = **OnPrem**) exists for one reason: some
+AL surfaces cannot be *named* from a Cloud-target app, so no test in the Cloud
+app can adjudicate them either way. Microsoft declares a number of system
+tables `Scope = OnPrem`; naming one fails `AL0296` at compile, and the
+`RecordRef` way round is refused at runtime by
+`NavRecordRef.CheckIsOpenAllowed`. Both refusals are decided by the calling
+app's **compilation target** and by nothing else -- `IsOpenAllowed` returns
+`true` immediately for an OnPrem target -- so a second app with a different
+target is all it takes to reach them.
+
+**A test belongs in the OnPrem app only when it cannot compile in the Cloud
+app.** That is the whole rule. It is not a general-purpose second home, and a
+test that would compile in `tests/al-language` and was put here instead is
+misfiled: it loses the Cloud guarantee that is this repo's primary goal. Keep
+the OnPrem app small.
+
+Its objects live in `61200..61299`, and it depends on the Cloud app so it can
+reuse the shared `Assert` fixture rather than growing a second one.
+
 ### Untestable by construction -- document, don't stub
 
 A small number of things have no AL statement that can invoke them from
-headless test code at all, or don't compile in a Cloud-targeted app in the
-first place:
+headless test code at all:
 
-- `File.*` -- scope `OnPrem`; the compiler rejects it outright for
-  Target = Cloud (`AL0296`), confirmed against a live compile. Nothing to
-  call at runtime -- there's no app to publish.
 - `File.Upload` / `File.Download` -- require a live browser round-trip
 - Printing -- requires a live browser print dialog
-- `DotNet` interop -- the compiler itself rejects `DotNet` variables when
-  Target = Cloud; there's no runtime call to make
+- `File.*` -- scope `OnPrem`; the compiler rejects it for Target = Cloud
+  (`AL0296`), confirmed against a live compile. It would now compile in the
+  OnPrem app, and that is deliberately NOT a reason to test it there: what a
+  Cloud consumer needs to know about `File` is that it is unavailable, which
+  is a compile-time fact no runtime test adds to.
+- `DotNet` interop -- same shape, same answer: the compiler rejects `DotNet`
+  variables for Target = Cloud, and the OnPrem app is not an invitation to
+  re-open surfaces Cloud deliberately removed
+
+The OnPrem app is for surfaces where a Cloud consumer's question has a
+*runtime* answer that only an OnPrem-target app can ask for -- the
+`Scope = OnPrem` system tables -- not for everything that happens to compile
+once the target changes.
 
 For these, don't write a test at all -- a stub that never calls the API
 (e.g. `Assert.IsTrue(true, ...)`) is worse than no test, since it reads as
