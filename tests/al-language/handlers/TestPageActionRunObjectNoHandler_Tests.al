@@ -4,50 +4,145 @@
 //                TPARONH Logging Target (60282), TPARONH Host (60283), TPARONH Log (60284),
 //                Assert (60021)
 //
-// OPEN QUESTION. At least one arm of this codeunit is expected to be RED on every leg, and
-// that is the point of it. Do not merge it to make the red go away, and do not rewrite the
-// first test to assert what BC was observed to do -- that would turn an unanswered question
-// into a claim about BC that no service tier has confirmed.
+// What a page action's RunObject does when the test binds NO handler at all.
 //
-// A test that opens a page with no handler bound is refused: BC raises its own unhandled-UI
-// error rather than letting a page open with nobody to answer it. The corpus already pins that
-// on both routes it covers -- TestPageRunHandler_Tests.NonModalPageRunWithoutAHandlerIsRefused
-// calls Page.Run straight from the test, and TestPageModalHandler_Tests
-// .ModalPageWithoutAHandlerIsRefused invokes a page ACTION whose OnAction trigger calls
-// Page.RunModal. Both pass on all eight BC versions this corpus runs.
+// Every other route BC offers for opening a page is refused when nothing is bound to answer
+// it. The corpus pins two of them, and both pass on all eight BC versions this corpus runs:
+// TestPageRunHandler_Tests.NonModalPageRunWithoutAHandlerIsRefused calls Page.Run straight
+// from the test, and TestPageModalHandler_Tests.ModalPageWithoutAHandlerIsRefused invokes a
+// page ACTION whose OnAction trigger calls Page.RunModal. Controls 2 and 3 below repeat both
+// shapes on this codeunit's own fixtures, and they pass here too.
 //
-// The same omission on a RunObject action raises NOTHING. Invoking an action whose effect is
-// declared as RunObject, with no [HandlerFunctions] at all, completes quietly and the
-// asserterror reports that no error was raised. Measured on BC 27.0, 27.3, 27.5, 28.0, 28.1,
-// 28.2, 28.3 and 28.4, and on two different Linux BC images: the image rebuild that turned the
-// rest of the RunObject suite (TestPageActionRunObject_Tests, codeunit 60455) from red to green
-// left this arm red, with the AL byte-identical across both runs.
+// The RunObject route does not behave that way. Measured on BC 27.0, 27.3, 27.5, 28.0, 28.1,
+// 28.2, 28.3 and 28.4, identically on every one:
 //
-// Nobody has found the mechanism. `TestHandleForm` returning false rather than raising is a
-// named guess that has never been measured, and a stock Windows service tier is what would
-// settle it -- every measurement so far is from the Linux BC image this corpus runs on, which
-// is patched.
+//   * Invoking the action raises nothing AL can see. An asserterror around the invoke fails
+//     with "An error was expected inside an ASSERTERROR statement".
+//   * The target page opens anyway. It runs its own OnOpenPage trigger, with nobody bound to
+//     answer it.
 //
-// The five arms are one experiment, and the controls are what make the red arm mean anything:
+// So the invoke is not dropped and the page is not refused. The page really opens; AL is
+// simply never told. That is what arm 1 records, and it is the opposite of what this file
+// asserted when it was first written.
 //
-//   1. RunObjectActionWithoutAHandlerIsRefused           -- the question. Measured RED.
-//   2. ControlPageRunOnTheSameTargetWithoutAHandler...   -- same target page, no host page at
-//      all. Rules out the target and the fixture set. Expected green.
-//   3. ControlTriggerActionOpeningTheSameTarget...       -- same host, same invoke, same target,
-//      same row; the action's effect is an OnAction trigger calling Page.Run instead of a
-//      RunObject property. Rules out the action-invoke path. Expected green. With 2 and 3
-//      green, the RunObject DECLARATION is the only thing left that differs.
-//   4. RunObjectActionWithoutAHandlerMustNotOpenItsTarget -- outcome unknown, and the thing the
-//      first arm cannot report: whether the target opened. A handler cannot answer that for an
-//      invoke with nothing bound, so the target page records its own OnOpenPage instead.
-//   5. ProbeControlTheLoggingTargetRecordsItsOwnOpening  -- proves that probe works, so a
-//      missing 'OPENED' row in 4 means the page did not open rather than that nothing observes
-//      it. Expected green.
+// ---------------------------------------------------------------------------------------
+// THE MECHANISM
 //
-// Held out of the eight-test RunObject suite so that suite's seven measured tests could merge.
-// That suite is deliberately silent on this question. Tracked as AL Runner issue 2975.
+// Read out of Microsoft's shipped assemblies -- Microsoft.Dynamics.Nav.Ncl.dll and
+// Microsoft.Dynamics.Nav.Types.dll from BC 27.5. Nothing below is inferred from documentation
+// or from a name; it is what Microsoft's own IL says, and it can be re-read there.
 //
-// Written by an agent (impl-1).
+// One method decides whether an unattended page is refused. NavTestExecution.FindHandler:
+//
+//     private MethodInfo FindHandler(NavHandlerType handlerType,
+//                                    NavApplicationObjectBase appObject,
+//                                    bool throwIfNotFound = true,
+//                                    string handlerDescription = null)
+//     {
+//         MethodInfo methodInfo = FindHandler(ha => ha.HandlerType == handlerType, appObject);
+//         if (methodInfo == null && throwIfNotFound
+//             && executingTestRunner != null && executingTestMethod != null)
+//             throw new NavNCLMissingUIHandlerException(...);
+//         return methodInfo;
+//     }
+//
+// Both places that look a page handler up call the TWO-argument form, so both take the
+// throwIfNotFound = true default, and both remaining guards hold for every test in this corpus
+// -- a test method is executing, under a test runner:
+//
+//     NavTestExecution.TestHandleForm  -- its only caller in Ncl.dll is NavForm.RunAsync
+//                                        (compiled as NavForm.<RunAsync>d__19), which is what
+//                                        AL's own Page.Run / Page.RunModal await.
+//     NavTestExecution.ShowForm       -- Ncl.dll contains NO caller for it; it is reached from
+//                                        the client-callback layer above Ncl.
+//
+// Each of the two has a "no handler found" branch of its own, and NEITHER can be reached while
+// a test is running, because the FindHandler call above it has already thrown:
+//
+//     TestHandleForm:  if (methodInfo == null) return false;
+//     ShowForm:        if (methodInfo == null)
+//                          throw NavTestPageInvokedWithoutHandlerException.Create(...);
+//
+// The two exception types are not interchangeable, and that is where the routes part
+// (hierarchy verified in Microsoft.Dynamics.Nav.Types.dll):
+//
+//     NavNCLMissingUIHandlerException
+//         -> NavNCLException -> NavException -> NavBaseException
+//     NavTestPageInvokedWithoutHandlerException
+//         -> NavTestBaseException -> NavNCLException -> NavException -> NavBaseException
+//
+// Only the second is a NavTestBaseException. A NavBaseException that is not a
+// NavTestBaseException is handled by the form-showing path as an ordinary UI error -- shown,
+// with the form force-closed -- instead of being rethrown into AL. The type Microsoft actually
+// throws here is therefore the one AL cannot see.
+//
+// Why that matters on one route and not the other, and why the page still opens:
+//
+//   * Page.Run / Page.RunModal (controls 2 and 3): FindHandler throws from TestHandleForm
+//     while NavForm.RunAsync is still on AL's own call stack, so the error surfaces to AL as
+//     an ordinary runtime error -- "Unhandled UI". TestHandleForm also calls
+//     Company.RegisterForm(form) only AFTER the handler lookup has succeeded, so on this route
+//     a handler-less form is never registered and never opens. Nothing runs its OnOpenPage.
+//     That is exactly what controls 2 and 3 measure.
+//
+//   * The RunObject action: Ncl.dll has no code that runs an action's RunObject at all -- its
+//     only RunObject members are metadata and permission helpers -- so the target is opened by
+//     the client-services layer above it. ShowForm, the handler lookup on that side, opens with
+//     Company.GetRegisteredForm(handle): the form already EXISTS and is already REGISTERED
+//     before any handler is looked for. So the page has been built and its OnOpenPage has
+//     already run by the time BC discovers nobody is bound, and the throw then happens off
+//     AL's call stack. Both halves of the measurement follow: the OnOpenPage row is there, and
+//     AL sees nothing.
+//
+// This looks like a defect in Microsoft's code rather than a decision. Microsoft wrote
+// NavTestPageInvokedWithoutHandlerException -- a NavTestBaseException, the kind that WOULD
+// have reached AL -- for precisely this case, and their own throwIfNotFound = true default
+// preempts it with a type that does not, leaving that throw statement unreachable. That
+// reading explains the measurement; it is NOT what this codeunit asserts. What it asserts is
+// only what eight service tiers did.
+//
+// Provenance, so a later reader can check this without its authors: the mechanism above is
+// read from Microsoft's shipped IL and can be re-read from any BC 27.x or 28.x install. Every
+// runtime number is from this corpus's CI, which runs a Linux BC image. That image is patched,
+// so a stock Windows service tier could in principle differ -- but the exception hierarchy and
+// the throwIfNotFound default are Microsoft's own, unpatched, and they predict what was
+// measured.
+// ---------------------------------------------------------------------------------------
+//
+// The five arms are one experiment, and the controls are what make arm 1 mean anything:
+//
+//   1. RunObjectActionWithoutAHandlerOpensItsTargetUnattended -- the answer, and the only arm
+//      with a positive observable. It invokes the RunObject action aimed at the target that
+//      records its own OnOpenPage, with nothing bound. The invoke is deliberately NOT wrapped
+//      in asserterror: the claim is that nothing is raised, so a refusal fails the test on the
+//      invoke line itself. The host is left on its SECOND row, so an open that did not carry
+//      the host's record would report 'Alpha' instead of 'Bravo'.
+//   2. ControlPageRunOnTheSameTargetWithoutAHandlerIsRefused -- the same target page, opened by
+//      a plain AL Page.Run with no host page in the picture at all. It IS refused, which rules
+//      out the target page and the fixture set. Passes.
+//   3. ControlTriggerActionOpeningTheSameTargetWithoutAHandlerIsRefused -- same host, same
+//      invoke, same target, same row; the action's effect is an OnAction trigger calling
+//      Page.Run instead of a RunObject property. Rules out the action-invoke path. Passes.
+//      With 2 and 3 passing, the RunObject DECLARATION is the only thing left that differs.
+//   4. RunObjectActionOnTheControlsTargetWithoutAHandler_NoThrow -- the same action 2 and 3
+//      mirror, aimed at the CLEAN Card target rather than the logging one, so the comparison
+//      has a RunObject side on exactly the page those two controls refuse. Its whole claim is
+//      that the statement completes, which is why its name says so: the clean target records
+//      nothing by design, so there is nothing further here to assert.
+//   5. ProbeControlTheLoggingTargetRecordsItsOwnOpening -- proves the probe arm 1 rests on.
+//      With a handler bound, the logging target really does write its OPENED row and the test
+//      really can read it, so the row arm 1 finds means the page opened rather than that the
+//      probe writes that row regardless. Passes.
+//
+// Held out of the eight-test RunObject suite (TestPageActionRunObject_Tests, codeunit 60455)
+// while this question was open, so that suite could merge; it stays silent on the no-handler
+// case and points here. Tracked as AL Runner issue 2975, which was filed when the RunObject
+// route appeared to open nothing at all on this tier. That premise no longer holds: codeunit
+// 60455 is green on all eight versions, so the route does open its target and does reach a
+// bound [PageHandler] -- and this codeunit settles the remaining arm, which is that it opens
+// the target with no handler bound too.
+//
+// Written by an agent (impl-1 built the experiment; impl-5 settled it and rewrote this note).
 
 codeunit 60285 "TPARONH Tests"
 {
@@ -76,33 +171,40 @@ codeunit 60285 "TPARONH Tests"
         Row.Insert();
     end;
 
-    // THE OPEN QUESTION. No [HandlerFunctions] at all. Opening a page unattended is refused on
-    // every other route BC offers, so this asserts the same of the action route. Measured: it
-    // is not refused. Whether BC really opens the target unattended here, silently drops the
-    // invoke, or refuses it in a way this shape cannot observe, is unsettled.
+    // THE ANSWER. No [HandlerFunctions] at all, on an action whose effect is declared with
+    // RunObject. Every other route BC offers refuses this; the RunObject route does not. The
+    // invoke is NOT wrapped in asserterror -- the claim is that nothing is raised, so if BC
+    // refused it the way controls 2 and 3 below are refused, this test fails on the invoke
+    // line with an unhandled 'Unhandled UI' error rather than passing quietly.
+    //
+    // The target then reports its own opening: the host is parked on the SECOND row, so an
+    // implementation that opened the target without the host's record reads 'Alpha' here, and
+    // one that did not open it at all finds no row at all. Arm 5 proves the probe works.
     [Test]
-    procedure RunObjectActionWithoutAHandlerIsRefused()
+    procedure RunObjectActionWithoutAHandlerOpensItsTargetUnattended()
     var
         Log: Record "TPARONH Log";
         Host: TestPage "TPARONH Host";
     begin
         Initialize();
-        // asserterror rolls back to the last commit; without this it also undoes Initialize().
         Commit();
 
         Host.OpenEdit();
         Host.First();
-        asserterror Host.RunCardOnRec.Invoke();
-        Assert.ExpectedError('Unhandled UI');
+        Host.Next();
+        Host.RunLoggingCardOnRec.Invoke();
 
-        Assert.IsFalse(Log.Get('CARD'), 'a refused action must not have reached any handler');
+        Assert.IsTrue(Log.Get('OPENED'),
+            'a RunObject action invoked with no handler bound still opens its target page');
+        Assert.AreEqual('Bravo', Log.Detail,
+            'the unattended target opens on the host page''s current row, as RunPageOnRec = true');
     end;
 
-    // CONTROL 1, expected to PASS. The very page the action above names, opened by a plain AL
-    // Page.Run with no handler bound and no host page in the picture at all. If this is refused
-    // and the arm above is not, the target page, the fixture set and the absence of handlers
-    // are all ruled out. If this ever FAILS, the arm above says nothing about RunObject and the
-    // whole comparison has to be rebuilt.
+    // CONTROL 1, passes. The very page the action above names, opened by a plain AL Page.Run
+    // with no handler bound and no host page in the picture at all. It IS refused, which rules
+    // out the target page, the fixture set and the absence of handlers as explanations for arm
+    // 1. If this ever fails, arm 1 says nothing about RunObject and the comparison has to be
+    // rebuilt.
     [Test]
     procedure ControlPageRunOnTheSameTargetWithoutAHandlerIsRefused()
     var
@@ -119,11 +221,11 @@ codeunit 60285 "TPARONH Tests"
         Assert.IsFalse(Log.Get('CARD'), 'a refused page must not have reached any handler');
     end;
 
-    // CONTROL 2, expected to PASS, and the one that narrows the question to the declaration.
-    // Same host page, same invoke, same target, same row, same absent handler -- the action's
-    // effect is an OnAction trigger calling Page.Run instead of a RunObject property. If this
-    // is refused and the arm above is not, then the action-invoke path is not what differs,
-    // and neither is the target: the RunObject declaration is.
+    // CONTROL 2, passes, and the one that narrows the difference to the declaration. Same host
+    // page, same invoke, same target, same row, same absent handler -- the action's effect is
+    // an OnAction trigger calling Page.Run instead of a RunObject property. It IS refused, so
+    // the action-invoke path is not what differs, and neither is the target: the RunObject
+    // declaration is.
     [Test]
     procedure ControlTriggerActionOpeningTheSameTargetWithoutAHandlerIsRefused()
     var
@@ -141,16 +243,19 @@ codeunit 60285 "TPARONH Tests"
         Assert.IsFalse(Log.Get('CARD'), 'a refused action must not have reached any handler');
     end;
 
-    // DIAGNOSTIC, outcome not known in advance -- this is what the next reader most wants and
-    // what no run so far has answered. The arm at the top says only that nothing was RAISED;
-    // it cannot say whether the target opened, because a handler is what would observe that
-    // and a handler only runs when it is bound. This target records its own OnOpenPage, so the
-    // page itself reports. The claim is the same one every other route in the corpus honours:
-    // a page must not open with nobody to answer it.
+    // The RunObject side of the comparison the two controls above set up: the SAME target page
+    // they open, reached the one way that is not refused. Arm 1 had to switch to the logging
+    // target to observe the opening, so without this arm nothing exercises RunObject against
+    // the exact page controls 1 and 2 refuse.
+    //
+    // The whole claim is that the statement completes -- hence the name. The Card target is
+    // deliberately kept clean, with no OnOpenPage of its own, so that the two refusal controls
+    // cannot be disturbed by a write happening before BC refuses; that leaves nothing further
+    // for this arm to assert. If BC refused this invoke the way it refuses controls 1 and 2,
+    // the unhandled error would fail the test here.
     [Test]
-    procedure RunObjectActionWithoutAHandlerMustNotOpenItsTarget()
+    procedure RunObjectActionOnTheControlsTargetWithoutAHandler_NoThrow()
     var
-        Log: Record "TPARONH Log";
         Host: TestPage "TPARONH Host";
     begin
         Initialize();
@@ -158,16 +263,13 @@ codeunit 60285 "TPARONH Tests"
 
         Host.OpenEdit();
         Host.First();
-        Host.RunLoggingCardOnRec.Invoke();
-
-        Assert.IsFalse(Log.Get('OPENED'),
-            'an action invoked with no handler bound must not open its target page unattended');
+        Host.RunCardOnRec.Invoke();
     end;
 
-    // PROBE CONTROL, expected to PASS, and without it the diagnostic above could pass for the
-    // wrong reason. It proves the OnOpenPage record IS written and IS visible to the test when
-    // the page really does open -- so an 'OPENED' row missing above means the page did not
-    // open, not that the probe is broken.
+    // PROBE CONTROL, passes, and without it arm 1 could pass for the wrong reason. It proves
+    // the OnOpenPage row IS written and IS visible to the test when the page really does open,
+    // so the 'OPENED' row arm 1 finds means the page opened rather than that the probe writes
+    // that row regardless.
     [Test]
     [HandlerFunctions('LoggingTargetPageHandler')]
     procedure ProbeControlTheLoggingTargetRecordsItsOwnOpening()

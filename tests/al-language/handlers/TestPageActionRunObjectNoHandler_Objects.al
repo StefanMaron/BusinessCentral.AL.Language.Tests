@@ -3,15 +3,17 @@
 // Fixtures used: TPARONH Row (60280), TPARONH Card Target (60281),
 //                TPARONH Logging Target (60282), TPARONH Host (60283), TPARONH Log (60284)
 //
-// Fixtures for the "is a RunObject action refused when no handler is bound" question.
+// Fixtures for "what does a RunObject action do when no handler is bound". The answer these
+// were built to find is recorded in TestPageActionRunObjectNoHandler_Tests.al: the target page
+// opens unattended, and AL is never told.
 //
 // These duplicate the shape of the TPARO fixtures rather than reusing them, on purpose. This
-// change is expected to sit open for a long time -- it records a question nobody has answered
-// yet -- and the corpus gate that matters here compares the object ids a pull request
-// INTRODUCES against every other open pull request. Sharing the TPARO objects would mean
-// claiming their ids too, which collides with the change that introduces them and blocks both.
-// A self-contained fixture set also means this question keeps compiling and keeps asking
-// exactly what it asked on the day it was written, whatever happens to the TPARO suite.
+// change sat open while that question was unsettled, and the corpus gate that matters here
+// compares the object ids a pull request INTRODUCES against every other open pull request.
+// Sharing the TPARO objects would have meant claiming their ids too, which collides with the
+// change that introduces them and blocks both. A self-contained fixture set also means these
+// tests keep compiling and keep measuring exactly what they measured on the day the answer was
+// recorded, whatever happens to the TPARO suite.
 
 table 60280 "TPARONH Row"
 {
@@ -71,9 +73,11 @@ page 60281 "TPARONH Card Target"
 
 // A second target, identical to the one above except that it records its own OnOpenPage. The
 // Card Target is kept clean so the refusal controls cannot be disturbed by a write happening
-// before BC decides to refuse; this one exists so a test can ask the separate question "did the
-// page open at all", without needing a handler to observe it. A handler only runs when it is
-// bound, so a handler cannot answer that question for an invoke with nothing bound.
+// before BC decides to refuse; this one exists so a test can answer the separate question "did
+// the page open at all", without needing a handler to observe it. A handler only runs when it
+// is bound, so a handler cannot answer that question for an invoke with nothing bound. It is
+// how the tests establish that an unattended RunObject target really does open: this trigger
+// runs, on the host page's current row.
 page 60282 "TPARONH Logging Target"
 {
     PageType = Card;
