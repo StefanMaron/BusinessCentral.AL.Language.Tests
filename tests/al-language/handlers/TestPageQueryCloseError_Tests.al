@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-onqueryclosepage-page-trigger
 // Scope: in-scope
-// Fixtures used: QCE Row (60675), QCE Error Modal (60676), Assert (60021)
+// Fixtures used: QCE Row (60675), QCE Error Modal (60676), QCE Error Card (60678), Assert (60021)
 //
 // TestPageModalQueryClose_Tests (60276) pins that OnQueryClosePage RUNS on a handler-driven
 // close and with which CloseAction. This suite pins what happens when that trigger FAILS:
@@ -97,6 +97,29 @@ codeunit 60677 "QCE Query Close Error Tests"
             'The committed row must keep the value it was committed with.');
         Assert.AreEqual(1, Row.Count(),
             'Only the committed row may remain after the failed close.');
+    end;
+
+    // The same claim on the shape a test drives itself: TestPage.Close() goes through the same
+    // platform close handler as a handler-driven modal close (TestPageProxy.InternalClose ->
+    // LogicalForm.Close -> the close handler), so the envelope must be the same one.
+    [Test]
+    procedure ErrorInQueryClosePage_TestPageClose_ArrivesAsAnUnhandledMessage()
+    var
+        Card: TestPage "QCE Error Card";
+        ErrText: Text;
+    begin
+        Initialize();
+
+        Card.OpenEdit();
+        asserterror Card.Close();
+        ErrText := GetLastErrorText();
+
+        Assert.IsTrue(StrPos(ErrText, CloseRefusedTxt) > 0,
+            StrSubstNo('The AL error text raised in OnQueryClosePage must survive into what the caller sees; got "%1".', ErrText));
+        Assert.IsTrue(StrPos(ErrText, 'Unhandled UI') > 0,
+            StrSubstNo('Closing a TestPage whose OnQueryClosePage errors must report unhandled UI, not the raw AL error; got "%1".', ErrText));
+        Assert.IsTrue(StrPos(ErrText, 'Message') > 0,
+            StrSubstNo('The unhandled UI must be a Message, the same envelope the handler-driven close produces; got "%1".', ErrText));
     end;
 
     local procedure RunFailingModal()
