@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-runobject-property
 // Scope: in-scope
 // Fixtures used: TPARO Row (60450), TPARO Card Target (60451), TPARO Dialog Target (60452),
-//                TPARO Host (60453), TPARO Log (60454), Assert (60021)
+//                TPARO Host (60453), TPARO Log (60454), TPARO Card Host (60456), Assert (60021)
 //
 // Pins what happens when a test invokes a page action whose effect is RunObject rather than
 // an OnAction trigger.
@@ -24,8 +24,15 @@
 //   3. The handler KIND follows the target's PageType, not the action: an ordinary Card target
 //      is answered by [PageHandler], a StandardDialog target by [ModalPageHandler]. Asserting
 //      only one of the two would let "always modal" or "always non-modal" pass.
-//   4. With no handler declared the invoke is refused with BC's own unhandled-UI error, and
-//      an actionref pointing at a RunObject action behaves exactly like the action itself.
+//   4. An actionref pointing at a RunObject action behaves exactly like the action itself, and
+//      an action that declares an OnAction trigger still runs it and opens nothing.
+//
+// What this file deliberately does NOT claim: what happens when NO handler is bound at all.
+// Both AL-side routes are refused with BC's own unhandled-UI error -- TestPageRunHandler_Tests
+// pins that for Page.Run and TestPageModalHandler_Tests for Page.RunModal -- but the same
+// omission on the ACTION route raises nothing on all eight BC versions this corpus runs, and
+// nobody has yet found the mechanism. Rather than write down either answer as settled, that
+// arm is held out; see AL Runner issue #2975.
 
 codeunit 60455 "TPARO Tests"
 {
@@ -129,27 +136,6 @@ codeunit 60455 "TPARO Tests"
             'the actionref must carry the same RunPageOnRec behaviour as its target action');
     end;
 
-    // Negative, claim 4: no [HandlerFunctions] at all. Opening a page unattended must be
-    // refused with BC's own unhandled-UI error. An implementation that opened the target and
-    // carried on would pass every positive above and fail only here.
-    [Test]
-    procedure RunObjectActionWithoutAHandlerIsRefused()
-    var
-        Log: Record "TPARO Log";
-        Host: TestPage "TPARO Host";
-    begin
-        Initialize();
-        // asserterror rolls back to the last commit; without this it also undoes Initialize().
-        Commit();
-
-        Host.OpenEdit();
-        Host.First();
-        asserterror Host.RunCardOnRec.Invoke();
-        Assert.ExpectedError('Unhandled UI');
-
-        Assert.IsFalse(Log.Get('CARD'), 'a refused action must not have reached any handler');
-    end;
-
     // Negative, claim 1: an action that DOES declare an OnAction trigger must still run its
     // trigger and must not open anything. Without this, an implementation that resolved every
     // action to "open something" would pass the positives and silently break every ordinary
@@ -198,9 +184,11 @@ codeunit 60455 "TPARO Tests"
             'the [PageHandler] must be handed the record Page.Run was given');
     end;
 
-    // Microsoft's own shape is a DOCUMENT/Card host with the action inside a group under
-    // area(Navigation). These two arms vary the host PageType and the action's container
-    // independently, so one run says which construction (if any) opens the target.
+    // Microsoft's own shape is a Document/Card host with the action inside a group under
+    // area(Navigation), not the List host with a plain area(Processing) action used above.
+    // These two arms vary the host's PageType and the action's container independently, so the
+    // suite states that the RunObject route does not depend on either -- an implementation that
+    // resolved actions only for one host kind, or only outside a group, fails here.
     [Test]
     [HandlerFunctions('CardTargetPageHandler')]
     procedure RunObjectFromACardHostProcessingArea()

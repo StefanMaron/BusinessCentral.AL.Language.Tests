@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-runobject-property
 // Scope: in-scope
 // Fixtures used: TPARO Row (60450), TPARO Card Target (60451), TPARO Dialog Target (60452),
-//                TPARO Host (60453), TPARO Log (60454)
+//                TPARO Host (60453), TPARO Log (60454), TPARO Card Host (60456)
 //
 // Fixtures for the "an action's RunObject opens its target" suite.
 //
@@ -169,13 +169,12 @@ page 60453 "TPARO Host"
     }
 }
 
-// #172 investigation. The List host above produced NOTHING on all 8 BC legs -- the action
-// invoked, nothing opened, nothing raised. BC's own client has exactly two silent no-op paths
-// in ActionControl.Invoke (`if (!Enabled) return null;` and a null LogicalAction), so the
-// question is which construction reaches one of them. Microsoft's own Tests-ERM invokes this
-// same AL shape with a [PageHandler] bound (page 138 "Purchase Invoice", a DOCUMENT page, with
-// the action inside a group under area(Navigation)), so at least one construction does open.
-// This host varies the two things that differ from Microsoft's, in one run.
+// A second host, so the suite can say the RunObject route does not depend on the host's
+// PageType or on where the action sits. Microsoft's own Tests-ERM drives this shape from a
+// Document page with the action inside a group under area(Navigation) (page 138 "Purchase
+// Invoice"); the List host above is a plain area(Processing) action on a List. This host
+// varies both of those independently against the same target, so an implementation that
+// resolved RunObject for only one host kind, or only for actions outside a group, is caught.
 page 60456 "TPARO Card Host"
 {
     PageType = Card;
