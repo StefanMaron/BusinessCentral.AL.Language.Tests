@@ -210,6 +210,23 @@ table 60441 "CFM Header"
 
         /// The legally-typed Duration aggregate -- the control for field 27. Without it,
         /// "BC refuses field 27" could just mean Durations cannot be aggregated at all.
+        /// A FlowField carrying NO CalcFormula at all -- deliberately, and kept that way.
+        ///
+        /// alc 17.0.34.45391 accepts this: the extension compiles and publishes with no
+        /// diagnostic, so the shape reaches the runtime. BC then refuses it when the field is
+        /// CALCULATED, from the same classification loop that refuses an ordinary field:
+        ///
+        ///     You must define a CalcFormula for the Unformulated Amount FlowField in the
+        ///     CFM Header table.
+        ///
+        /// This field exists ONLY so that
+        /// "CalcFields Field Class Tests".Record_CalcFields_FlowFieldWithoutCalcFormula_Throws
+        /// can pin that refusal. Never calculate it from a positive test.
+        field(30; "Unformulated Amount"; Decimal)
+        {
+            FieldClass = FlowField;
+        }
+
         field(29; "Total Elapsed"; Duration)
         {
             FieldClass = FlowField;
