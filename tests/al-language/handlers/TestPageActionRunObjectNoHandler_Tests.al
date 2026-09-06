@@ -130,14 +130,15 @@
 //      that the statement completes, which is why its name says so: the clean target records
 //      nothing by design, so there is nothing further here to assert.
 //   5. ProbeControlTheLoggingTargetRecordsItsOwnOpening -- proves the probe arm 1 rests on.
-//      With a handler bound, the logging target really does write its OPENED row and the test
-//      really can read it, so the row arm 1 finds means the page opened rather than that the
-//      probe writes that row regardless. Passes.
+//      With a handler bound, the logging target really does write its OPENED row and set its
+//      in-memory probe, and the test really can read both -- so the row arm 1 finds means the
+//      page opened, and the unset probe arm 6 finds means it did not. Passes.
 //   6. ControlPageRunOnTheLoggingTargetWithoutAHandlerIsRefusedAndOpensNothing -- arm 1's
 //      direct counterpart. Same logging target, same absent handler, reached by Page.Run
-//      instead of RunObject. Asserts both that it IS refused and that nothing opened, with a
-//      sentinel row ruling out a rollback as the reason the 'OPENED' row is missing. The
-//      second half is a prediction this corpus's CI adjudicates; see the note on the arm.
+//      instead of RunObject. Asserts both that it IS refused and that nothing opened. It is
+//      the one arm that does NOT read the log table: the refusal rolls the uncommitted rows
+//      back, measured, so it reads an in-memory probe instead. Arm 5 controls that probe.
+//      See the note on the arm for what was measured and why the shape changed.
 //
 // Held out of the eight-test RunObject suite (TestPageActionRunObject_Tests, codeunit 60455)
 // while this question was open, so that suite could merge; it stays silent on the no-handler
@@ -161,9 +162,11 @@ codeunit 60285 "TPARONH Tests"
     var
         Row: Record "TPARONH Row";
         Log: Record "TPARONH Log";
+        Probe: Codeunit "TPARONH Open Probe";
     begin
         Row.DeleteAll();
         Log.DeleteAll();
+        Probe.Reset();
 
         Row.Init();
         Row."No." := 'A';
@@ -271,16 +274,25 @@ codeunit 60285 "TPARONH Tests"
         Host.RunCardOnRec.Invoke();
     end;
 
-    // PROBE CONTROL, passes, and without it arm 1 could pass for the wrong reason. It proves
-    // the OnOpenPage row IS written and IS visible to the test when the page really does open,
-    // so the 'OPENED' row arm 1 finds means the page opened rather than that the probe writes
-    // that row regardless.
+    // PROBE CONTROL, passes, and without it neither arm 1 nor arm 6 could pass for the right
+    // reason. It proves BOTH of the logging target's records of its own opening fire, and are
+    // visible to the test, when the page really does open:
+    //
+    //   * the 'OPENED' log ROW, which arm 1 reads -- so the row arm 1 finds means the page
+    //     opened rather than that the fixture writes that row regardless;
+    //   * the in-memory PROBE, which arm 6 reads -- so the false arm 6 gets from GetOpened()
+    //     means the page did not open rather than that MarkOpened() is never called at all.
+    //
+    // The second half is what makes arm 6's negative falsifiable. A probe that no one ever set
+    // would report exactly what arm 6 expects to see, so arm 6 alone cannot tell a page that
+    // stayed shut from a probe that does not work.
     [Test]
     [HandlerFunctions('LoggingTargetPageHandler')]
     procedure ProbeControlTheLoggingTargetRecordsItsOwnOpening()
     var
         Row: Record "TPARONH Row";
         Log: Record "TPARONH Log";
+        Probe: Codeunit "TPARONH Open Probe";
     begin
         Initialize();
 
@@ -291,6 +303,11 @@ codeunit 60285 "TPARONH Tests"
             'the logging target must record its own OnOpenPage when it really opens');
         Assert.AreEqual('Bravo', Log.Detail,
             'the logging target must have opened on the record it was handed');
+
+        Assert.IsTrue(Probe.GetOpened(),
+            'the in-memory probe must also record the opening, otherwise arm 6''s negative is unfalsifiable');
+        Assert.AreEqual('Bravo', Probe.GetDescrSeen(),
+            'the probe must have been marked on the record the page was handed');
     end;
 
     // ARM 6, and the direct counterpart to arm 1: the SAME logging target, with NO handler
@@ -304,42 +321,56 @@ codeunit 60285 "TPARONH Tests"
     // staying the page controls 1 and 2 refuse -- so this is a new arm rather than a change to
     // control 1.
     //
+    // WHY THIS ARM DOES NOT READ THE LOG TABLE, which is the whole reason it looks different
+    // from every other arm in this file. It was first written reading the 'OPENED' row, with an
+    // uncommitted 'SENTINEL' row inserted before the refused call and read back after it to
+    // prove the transaction had not rolled back. All eight cloud legs failed on the SENTINEL:
+    //
+    //     FAIL ControlPageRunOnTheLoggingTargetWithoutAHandlerIsRefusedAndOpensNothing
+    //          - the refused Page.Run must not have rolled the transaction back
+    //
+    // So the refusal DOES discard the uncommitted rows of the transaction it unwinds, and a
+    // missing 'OPENED' row here would have proved nothing -- it would be missing whether the
+    // page opened or not. The guard did its job: it caught an unfalsifiable assertion before it
+    // could ship green. (Codeunit 60170's Test04 pins that an uncommitted Insert survives a
+    // plain asserterror Error(), so this is not the general case; something about this route
+    // differs, and which part is a separate question this arm does not settle.)
+    //
+    // The observable therefore has to be one a rollback cannot reach, so the logging target
+    // also marks a SingleInstance codeunit, whose state is memory rather than database. Arm 5
+    // is the control that proves that probe really is set when the page opens, without which
+    // the negative below would be as unfalsifiable as the log row was.
+    //
     // Both halves are asserted, because either alone is half the claim:
     //
     //   * REFUSED -- asserterror plus the specific 'Unhandled UI' message, not a bare
     //     asserterror. Per the mechanism note at the top of this file, TestHandleForm calls
     //     Company.RegisterForm only AFTER the handler lookup succeeds, so on this route a
     //     handler-less form should never be registered and never open.
-    //   * NOTHING OPENED -- no 'OPENED' row. This is the half that is a prediction; a service
-    //     tier decides it, not this comment.
+    //   * NOTHING OPENED -- the probe was never marked.
     //
-    // The SENTINEL row is what makes the negative half mean anything. A missing 'OPENED' row
-    // has two possible explanations -- the page never opened, or it opened and wrote the row
-    // and the error rolled it back. The sentinel is written after the commit point and read
-    // back after the asserterror, so if the transaction had rolled back it would be gone too.
-    // Finding it still there rules the rollback explanation out inside this test, rather than
-    // asking a reader to take it on trust. (Codeunit 60170's Test04 already pins the general
-    // case: an uncommitted Insert is still readable after an asserterror.)
+    // The sentinel survives, in memory rather than in a table: set before the refused call and
+    // read after it, so that if the probe's own state were ever lost on the way out -- which
+    // would look exactly like a page that never opened -- this arm fails loudly instead of
+    // passing for the wrong reason.
     [Test]
     procedure ControlPageRunOnTheLoggingTargetWithoutAHandlerIsRefusedAndOpensNothing()
     var
         Row: Record "TPARONH Row";
-        Log: Record "TPARONH Log";
+        Probe: Codeunit "TPARONH Open Probe";
     begin
         Initialize();
         Commit();
 
-        Log.Init();
-        Log.Entry := 'SENTINEL';
-        Log.Insert();
+        Probe.MarkSentinel();
 
         Row.Get('B');
         asserterror Page.Run(Page::"TPARONH Logging Target", Row);
         Assert.ExpectedError('Unhandled UI');
 
-        Assert.IsTrue(Log.Get('SENTINEL'),
-            'the refused Page.Run must not have rolled the transaction back, otherwise the next assertion proves nothing');
-        Assert.IsFalse(Log.Get('OPENED'),
+        Assert.IsTrue(Probe.GetSentinel(),
+            'the probe''s own state must survive the refused Page.Run, otherwise the next assertion proves nothing');
+        Assert.IsFalse(Probe.GetOpened(),
             'a refused Page.Run must not have opened the target: the logging target''s OnOpenPage must never have run');
     end;
 
