@@ -2,7 +2,8 @@
 // Scope: in-scope
 // Fixtures used: ALT Relation Parent (60028), ALT Relation Parent B (60030),
 //                ALT Captioned (60830), ALT Temp Only (60025), ALT CRM Entity (60291),
-//                Install Seed Database (60621), Test RunModal LookupPage Row (60995)
+//                Install Seed Database (60621), Test RunModal LookupPage Row (60995),
+//                ALT Unclassified (60837)
 // BC versions: 27.5+
 //
 // Pins the built-in "Table Metadata" system virtual table (2000000136): one row per table
@@ -23,6 +24,7 @@
 //   LookupPageID       ALT Relation Parent (0)       vs Test RunModal LookupPage Row (60996)
 //   TableType          Normal / Temporary / CRM      -- three fixtures, three answers
 //   DataClassification SystemMetadata (60028)        vs CustomerContent (60621)
+//                      -- and ALT Unclassified (60837), which declares none at all
 //   ExternalName       '' (60028)                    vs 'alt_entity' (60291)
 
 codeunit 60801 "Test Table Metadata Virt Tbl"
@@ -217,6 +219,49 @@ codeunit 60801 "Test Table Metadata Virt Tbl"
         Assert.AreEqual(
             '', TableMetadata.ExternalName,
             'ALT Relation Parent declares no ExternalName, so the column must read blank.');
+    end;
+
+    [Test]
+    procedure Record_TableMetadata_Get_TableDeclaringNoDataClassification_ReportsTheDefault()
+    // CLAIM: for a table whose declaration is silent about DataClassification, the column
+    // reports CustomerContent -- the first member of its own option set.
+    //
+    // WHY THIS TEST EXISTS. The other two DataClassification assertions in this codeunit are
+    // both on fixtures that STATE the property (SystemMetadata on 60028, CustomerContent on
+    // 60621), so neither says anything about a table that states nothing. Microsoft's
+    // DataClassification documentation describes ToBeClassified as the default, which is the
+    // SECOND member of this column's option set, so the two possibilities are distinguishable
+    // and only a service tier can say which one a real Table Metadata row carries.
+    var
+        TableMetadata: Record "Table Metadata";
+    begin
+        Initialize();
+
+        Assert.IsTrue(
+            TableMetadata.Get(Database::"ALT Unclassified"),
+            'Table Metadata has no row for table ALT Unclassified.');
+
+        // Confirms the row read below is the fixture and not some other table, so the
+        // classification assertion is about the declaration this test names.
+        Assert.AreEqual(
+            'ALT Unclassified', TableMetadata.Name,
+            'Unexpected Name for ALT Unclassified.');
+
+        // The measurement. ALT Unclassified declares no DataClassification; its single FIELD
+        // declares SystemMetadata, so an answer of SystemMetadata here would mean the column
+        // is derived from the fields, and an answer of ToBeClassified would mean the platform
+        // applies the documented default. Neither coincides with the value asserted.
+        Assert.AreEqual(
+            TableMetadata.DataClassification::CustomerContent, TableMetadata.DataClassification,
+            'ALT Unclassified declares no DataClassification.');
+
+        // The sibling option column of the same row, undeclared in the same way: TableType is
+        // the other column of Table Metadata whose value comes from an AL property this
+        // fixture does not state. Asserting both on ONE row shows the two undeclared columns
+        // are answered independently rather than by one shared "everything is zero" path.
+        Assert.AreEqual(
+            TableMetadata.TableType::Normal, TableMetadata.TableType,
+            'ALT Unclassified declares no TableType.');
     end;
 
     [Test]
