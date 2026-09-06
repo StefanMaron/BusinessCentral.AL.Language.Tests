@@ -15,16 +15,33 @@
 //
 // The claims, one per [Test]:
 //   1. a refused write records exactly one validation error on that control;
-//   2. `GetValidationError(1)` answers the BARE error text, without the wrapper;
-//   3. the exception the asserterror traps carries BOTH the wrapper and the bare text;
+//   2. `GetValidationError(1)` answers the error text BC stores, which is the AL message plus
+//      the client's " (Select Refresh to discard errors)" — but NOT the wrapper;
+//   3. the exception the asserterror traps carries the wrapper around that same stored text;
 //   4. an ACCEPTED write records nothing and stores the value;
-//   5. reading past the end of the ledger raises rather than answering an empty string.
+//   5. the index `ValidationErrorCount()` reports is readable — i.e. the ledger is 1-based.
 //
-// Claim 5 is the one with no prior measurement behind it. It is written because BC's own
-// `NavTestField.ALGetValidationError(Index)` subtracts 1 from the AL index and catches
-// `IndexOutOfRangeException` to rethrow its own out-of-bounds error — a catch that only makes
-// sense if the underlying read really does raise. This test is what turns that reading into a
-// measurement.
+// TWO OF THESE WERE WRONG IN THE FIRST DRAFT, AND THIS RUN IS WHY THEY ARE RIGHT NOW.
+// Run 34002487601 answered both, identically on every leg that reported:
+//
+//   * Claim 2 asserted the BARE AL text. Real BC stores
+//     `Deliberate OnValidate failure for VAL-1 (Select Refresh to discard errors)` — the
+//     client appends its offer to discard the staged row edit before storing. Corrected to the
+//     measured string, still an exact-equality assertion.
+//
+//   * Claim 5 asserted that reading PAST the end raises a trappable AL error, reasoning that
+//     `NavTestField.ALGetValidationError(Index)` carries a `catch (IndexOutOfRangeException)`
+//     and would not carry a catch for something unreachable. The catch IS unreachable: BC's
+//     client does `System.Linq.Enumerable.ElementAt`, which raises
+//     `ArgumentOutOfRangeException`, the catch does not match, and it escapes as
+//     `Unexpected CLR exception thrown.` — which AL `asserterror` does NOT trap. So there is
+//     no way to assert that behaviour from a PASSING AL test at all. The arm therefore stops
+//     at the boundary instead of crossing it, and asserts the part that IS observable: the
+//     index the count names is readable, which is a 1-based ledger. The measured
+//     out-of-range behaviour is recorded here rather than lost.
+//
+// Both corrections were measurements replacing readings of decompiled `Ncl.dll`, which is the
+// whole reason the claim goes upstream before the runner ships it.
 //
 // Reuses the ErrTeardown fixtures rather than adding new ones: page 60797's NameCtl control
 // already declares an OnValidate that raises when the row says so, which is exactly the
@@ -37,7 +54,11 @@ codeunit 60836 "TestPage ValidationError Tests"
 
     var
         Assert: Codeunit Assert;
+        // What the page's OnValidate raises.
         ValidateErrTok: Label 'Deliberate OnValidate failure for VAL-1', Locked = true;
+        // What BC actually STORES for it on a Rec-bound control: the message above plus the
+        // client's offer to discard the staged row edit. Measured, run 34002487601.
+        RefreshSuffixTok: Label ' (Select Refresh to discard errors)', Locked = true;
 
     local procedure Initialize()
     var
@@ -80,11 +101,13 @@ codeunit 60836 "TestPage ValidationError Tests"
         Card.Close();
     end;
 
-    // Claim 2. GetValidationError(1) answers the BARE error text the AL raised — not the
-    // "Validation error for Field: ..." wrapper the exception carries. Comparing for equality,
-    // not containment, is what pins that the two are different strings.
+    // Claim 2. GetValidationError(1) answers the text BC STORES: the AL message plus the
+    // client's " (Select Refresh to discard errors)", and NOT the "Validation error for
+    // Field: ..." wrapper the exception carries. Comparing for equality, not containment, is
+    // what pins that the stored text and the wrapped text are different strings — and it is
+    // what caught the first draft's wrong expectation instead of quietly tolerating it.
     [Test]
-    procedure TestPage_GetValidationError_RefusedByOnValidate_IsTheBareErrorText()
+    procedure TestPage_GetValidationError_RefusedByOnValidate_IsTheStoredErrorText()
     var
         Card: TestPage "TestPage ErrTeardown Card";
     begin
@@ -95,14 +118,16 @@ codeunit 60836 "TestPage ValidationError Tests"
         Card.GoToKey('VAL-1');
         asserterror Card.NameCtl.SetValue('New Name');
 
-        Assert.AreEqual(ValidateErrTok, Card.NameCtl.GetValidationError(1),
-            'GetValidationError(1) must answer the bare text the OnValidate raised');
+        Assert.AreEqual(ValidateErrTok + RefreshSuffixTok, Card.NameCtl.GetValidationError(1),
+            'GetValidationError(1) must answer the OnValidate text with the refresh suffix BC appends');
 
         Card.Close();
     end;
 
     // Claim 3. The exception the asserterror traps is BC's validation wrapper around that same
-    // bare text — both halves asserted, so a change to either is visible.
+    // STORED text — all three parts asserted, so a change to any is visible. The suffix
+    // assertion is what would catch an implementation that appended it twice, once when
+    // recording and once when wrapping.
     [Test]
     procedure TestPage_SetValue_RefusedByOnValidate_RaisesTheValidationWrapper()
     var
@@ -119,6 +144,7 @@ codeunit 60836 "TestPage ValidationError Tests"
 
         Assert.IsSubstring(Trapped, 'Validation error for Field');
         Assert.IsSubstring(Trapped, ValidateErrTok);
+        Assert.IsSubstring(Trapped, RefreshSuffixTok);
 
         Card.Close();
     end;
@@ -149,27 +175,35 @@ codeunit 60836 "TestPage ValidationError Tests"
             'The accepted value must reach the backing table');
     end;
 
-    // Claim 5. Reading past the end of the ledger raises rather than answering an empty string.
-    // The count is asserted first so this is not a bare asserterror: the control genuinely has
-    // no errors, and index 1 is genuinely past the end.
+    // Claim 5. The ledger is 1-based: the index ValidationErrorCount() reports is itself
+    // readable, so the last valid index EQUALS the count rather than count - 1. Reading through
+    // the count rather than through a literal is the point — a 0-based ledger answers the
+    // second element (or nothing) for GetValidationError(1) and fails here.
+    //
+    // This arm deliberately stops AT the boundary and does not cross it. Going one past is not
+    // an AL-observable error: BC's client reaches System.Linq.Enumerable.ElementAt, which raises
+    // ArgumentOutOfRangeException; NavTestField.ALGetValidationError's catch is for
+    // IndexOutOfRangeException and does not match; the exception escapes as "Unexpected CLR
+    // exception thrown." and `asserterror` does not trap it. Measured on run 34002487601 — see
+    // the header. There is therefore no passing AL test that can state it, which is a fact
+    // about the surface, not a gap in this suite.
     [Test]
-    procedure TestPage_GetValidationError_PastTheEnd_Raises()
+    procedure TestPage_GetValidationError_AtTheReportedCount_IsReadable()
     var
         Card: TestPage "TestPage ErrTeardown Card";
-        Ignored: Text;
+        LastIndex: Integer;
     begin
         Initialize();
-        Seed('VAL-OK', false);
+        Seed('VAL-1', true);
 
         Card.OpenView();
-        Card.GoToKey('VAL-OK');
+        Card.GoToKey('VAL-1');
+        asserterror Card.NameCtl.SetValue('New Name');
 
-        Assert.AreEqual(0, Card.NameCtl.ValidationErrorCount(),
-            'No write has been refused, so the ledger must be empty');
-
-        asserterror Ignored := Card.NameCtl.GetValidationError(1);
-        Assert.AreNotEqual('', GetLastErrorText(),
-            'GetValidationError past the end must raise, not answer an empty string');
+        LastIndex := Card.NameCtl.ValidationErrorCount();
+        Assert.AreEqual(1, LastIndex, 'One refused write must report a count of one');
+        Assert.AreEqual(ValidateErrTok + RefreshSuffixTok, Card.NameCtl.GetValidationError(LastIndex),
+            'The index ValidationErrorCount() reports must itself be readable');
 
         Card.Close();
     end;
