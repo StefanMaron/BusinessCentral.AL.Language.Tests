@@ -49,19 +49,32 @@ codeunit 61201 "Test Published App Sys Table"
     var
         PublishedApplication: Record "Published Application";
         ThisModule: ModuleInfo;
+        ThisVersion: Version;
     begin
         Initialize();
         NavApp.GetCurrentModuleInfo(ThisModule);
+        ThisVersion := ThisModule.AppVersion();
 
         PublishedApplication.SetRange(ID, ThisModule.Id());
         Assert.IsTrue(PublishedApplication.FindFirst(), 'This app must have a Published Application row of its own.');
 
         Assert.AreEqual(OnPremAppNameTok, PublishedApplication.Name, 'Name must be the manifest''s name.');
         Assert.AreEqual(PublisherTok, PublishedApplication.Publisher, 'Publisher must be the manifest''s publisher.');
-        Assert.AreEqual(1, PublishedApplication."Version Major", 'Version Major must be the manifest version''s first part.');
-        Assert.AreEqual(0, PublishedApplication."Version Minor", 'Version Minor must be the manifest version''s second part.');
-        Assert.AreEqual(0, PublishedApplication."Version Build", 'Version Build must be the manifest version''s third part.');
-        Assert.AreEqual(0, PublishedApplication."Version Revision", 'Version Revision must be the manifest version''s fourth part.');
+
+        // The four version parts are DERIVED from the manifest via ModuleInfo rather than
+        // written out as 1/0/0/0, so bumping app.json's "version" cannot break this test with a
+        // failure that points nowhere near the manifest. The claim is unchanged: the Published
+        // Application row and ModuleInfo must report the same four parts.
+        //
+        // Guard first, because two surfaces that both reported a zero version would satisfy the
+        // four comparisons vacuously. A published app always carries a non-zero version, so this
+        // holds across any future bump while still failing an implementation that reports blanks.
+        Assert.AreNotEqual('0.0.0.0', Format(ThisVersion), 'ModuleInfo must report a non-zero manifest version, otherwise the comparisons below prove nothing.');
+
+        Assert.AreEqual(ThisVersion.Major(), PublishedApplication."Version Major", 'Version Major must be the manifest version''s first part.');
+        Assert.AreEqual(ThisVersion.Minor(), PublishedApplication."Version Minor", 'Version Minor must be the manifest version''s second part.');
+        Assert.AreEqual(ThisVersion.Build(), PublishedApplication."Version Build", 'Version Build must be the manifest version''s third part.');
+        Assert.AreEqual(ThisVersion.Revision(), PublishedApplication."Version Revision", 'Version Revision must be the manifest version''s fourth part.');
 
         // The same values ModuleInfo reports, so the two platform surfaces cannot disagree
         // about who this app is.
