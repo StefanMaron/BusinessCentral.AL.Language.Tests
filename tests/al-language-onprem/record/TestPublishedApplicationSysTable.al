@@ -121,10 +121,9 @@ codeunit 61201 "Test Published App Sys Table"
 
     [Test]
     procedure PublishedApplication_TwoApps_DoNotShareEitherPackageId()
-    // CLAIM: the two apps this repository publishes are told apart by both GUID columns, and
-    // the two columns are distinct values within one row. A platform that stamped one shared
-    // value, or that used the package id as the runtime package id, would let either app's
-    // ownership check answer for the other.
+    // CLAIM: the two apps this repository publishes are told apart by both GUID columns. A
+    // platform that stamped one shared value would let either app's ownership check answer
+    // for the other.
     var
         ThisApp: Record "Published Application";
         CloudApp: Record "Published Application";
@@ -148,9 +147,37 @@ codeunit 61201 "Test Published App Sys Table"
         Assert.AreNotEqual(
             ThisApp."Package ID", CloudApp."Package ID",
             'Two published apps must not share a Package ID.');
-        Assert.AreNotEqual(
+    end;
+
+    [Test]
+    procedure PublishedApplication_ThisApp_PackageIdIsItsRuntimePackageId()
+    // CLAIM: within ONE row the two GUID columns carry the same value.
+    //
+    // Measured, and the reason this test exists rather than its opposite. The first revision
+    // of this file asserted that the two columns differ, on the reading that publishing
+    // assigns them independently. All eight BC legs, 27.0 through 28.4, of run 34023230684
+    // disagreed: every one reported the two columns equal for this app. So the pair does not
+    // discriminate within a row - what tells two apps apart is the values differing BETWEEN
+    // rows, which the test above pins.
+    //
+    // What this does NOT claim: that they are equal for every app on every tier. An app
+    // republished over an earlier version can carry a runtime package id from the later
+    // publish. The claim is about a freshly published app, which is what this tier has.
+    var
+        ThisApp: Record "Published Application";
+        ThisModule: ModuleInfo;
+        EmptyId: Guid;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+
+        ThisApp.SetRange(ID, ThisModule.Id());
+        Assert.IsTrue(ThisApp.FindFirst(), 'This app must have a Published Application row of its own.');
+
+        Assert.AreNotEqual(EmptyId, ThisApp."Package ID", 'A published app must carry a non-blank Package ID.');
+        Assert.AreEqual(
             ThisApp."Package ID", ThisApp."Runtime Package ID",
-            'Package ID and Runtime Package ID are assigned independently and must not be one value.');
+            'A freshly published app carries one GUID in both package columns.');
     end;
 
     [Test]
