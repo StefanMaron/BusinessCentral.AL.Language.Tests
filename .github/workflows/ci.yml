@@ -159,7 +159,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # TEMPORARY, DO NOT MERGE: pinned to the branch under verification for
+    # StefanMaron/MsDyn365Bc.On.Linux#<pr>. Restore @master before merging.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@agent/impl-27/codeunit-ids-2048-batching
     with:
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
