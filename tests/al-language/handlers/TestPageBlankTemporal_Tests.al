@@ -306,4 +306,93 @@ codeunit 60662 "TP Blank Temporal Tests"
         Assert.AreEqual(Row."At", RecRef.Field(5).Value, 'FieldRef.Value must hand back the stored Time');
         RecRef.Close();
     end;
+
+    // ------------------------------------ the same claim through a TYPED AssertEquals argument
+
+    // The four tests below exist because AssertEquals reaches the control's rendering by TWO
+    // different routes, and the '' tests above can only ever take one of them.
+    //
+    // NavTestField.ALAssertEquals branches on whether the expected value is already a string:
+    //
+    //     if (!(value is NavStringValue)) {
+    //         value = NavValue.CreateNavValueFromObject(
+    //                     NavValueMetadata.DefaultMetadata(testField.FieldType), value);
+    //         text  = testField.ValueToString(value.ClientObject);   // <-- typed route
+    //     } else
+    //         text  = value.ToString();                              // <-- string route
+    //
+    // So AssertEquals('') takes the string route and never reaches ValueToString, while
+    // AssertEquals(<an unassigned DateTime variable>) takes the typed route, which renders the
+    // EXPECTED value through ValueToString before comparing it ordinally against the control.
+    //
+    // This suite already pins the typed route on POPULATED values (RecWhen.AssertEquals(
+    // Row."When") and its Date/Time siblings), and the blank rendering through the string route.
+    // A blank value through the TYPED route was the one combination nothing pinned — precisely
+    // where an implementation can render a blank expected value one way and a blank control
+    // value another and still pass everything else in the file.
+
+    [Test]
+    procedure TestPageField_AssertEquals_BlankDateTimeVariable_MatchesTheBlankControl()
+    // CLAIM: AssertEquals against an unassigned DateTime VARIABLE succeeds on a blank control.
+    // Not a restatement of the AssertEquals('') test: the argument is typed, so BC renders it
+    // through ValueToString rather than taking it as a literal string.
+    var
+        Card: TestPage "TP Blank Temporal Card";
+        BlankWhen: DateTime;
+    begin
+        Initialize();
+        SeedBlank();
+
+        OpenOn(Card, BlankPKTok, 'BLANK ROW');
+        Card.RecWhen.AssertEquals(BlankWhen);
+        Card.Close();
+    end;
+
+    [Test]
+    procedure TestPageField_AssertEquals_BlankDateVariable_MatchesTheBlankControl()
+    // CLAIM: the same holds for Date.
+    var
+        Card: TestPage "TP Blank Temporal Card";
+        BlankOn: Date;
+    begin
+        Initialize();
+        SeedBlank();
+
+        OpenOn(Card, BlankPKTok, 'BLANK ROW');
+        Card.RecOn.AssertEquals(BlankOn);
+        Card.Close();
+    end;
+
+    [Test]
+    procedure TestPageField_AssertEquals_BlankTimeVariable_MatchesTheBlankControl()
+    // CLAIM: the same holds for Time.
+    var
+        Card: TestPage "TP Blank Temporal Card";
+        BlankAt: Time;
+    begin
+        Initialize();
+        SeedBlank();
+
+        OpenOn(Card, BlankPKTok, 'BLANK ROW');
+        Card.RecAt.AssertEquals(BlankAt);
+        Card.Close();
+    end;
+
+    [Test]
+    procedure TestPageField_AssertEquals_BlankDateTimeVariable_IsRefusedByAPopulatedControl()
+    // CLAIM, and the guard on the three above: the typed blank comparison is a real comparison,
+    // not one that succeeds against any control. An implementation rendering every expected
+    // temporal as '' would pass the three above and fail here.
+    var
+        Card: TestPage "TP Blank Temporal Card";
+        BlankWhen: DateTime;
+    begin
+        Initialize();
+        SeedPopulated();
+
+        OpenOn(Card, SetPKTok, 'SET ROW');
+        asserterror Card.RecWhen.AssertEquals(BlankWhen);
+        Assert.ExpectedError('Rec When');
+        Card.Close();
+    end;
 }
