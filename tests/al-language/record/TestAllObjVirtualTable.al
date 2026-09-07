@@ -2,7 +2,10 @@
 // Scope: in-scope
 // Fixtures used: ALT Relation Parent (60028), ALT Relation Parent B (60030),
 //                ALT Event Mutation Control (codeunit 60030), ALT Captioned (60830),
-//                ALT Card Page (60017)
+//                ALT Card Page (60017), ALT List Page (60016),
+//                ALT Profile RC SameApp (page 60904), Install Seeder (codeunit 60618),
+//                Not An Installer (codeunit 60619), ALT CRM Entity (60291),
+//                ALT Temp Only (60025), ALT Simple Report (60018)
 // BC versions: 27.5+
 //
 // Pins the built-in "AllObj" (2000000038) and "AllObjWithCaption" (2000000058) system
@@ -17,6 +20,18 @@
 // object id 60030 is BOTH a table and a codeunit in this app, with different names, so a
 // provider keyed on the id alone -- or one answering a fixed row -- fails exactly one of
 // the two halves.
+//
+// The AllObjWithCaption_..._ObjectSubtype... tests pin the "Object Subtype" column
+// (field 30, AllObjWithCaption only -- AllObj has no such column). Its value is
+// per-object-kind: a page reports its PageType, a codeunit its Subtype, a table its
+// TableType, and a kind with no subtype concept reports the empty string. Each of those
+// is asserted against at least two fixtures with DIFFERENT declared values, so an
+// implementation answering one constant -- including the empty string every kind would
+// otherwise take -- fails at least one half.
+//
+// The codeunit case carries the asymmetry worth pinning: a codeunit whose subtype is
+// Normal reports the EMPTY string, while a table whose TableType is Normal reports the
+// word 'Normal'.
 
 codeunit 60802 "Test AllObj Virtual Table"
 {
@@ -215,6 +230,160 @@ codeunit 60802 "Test AllObj Virtual Table"
         Assert.IsFalse(
             AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, 99999999),
             'AllObjWithCaption must not have a row for an id no object uses.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_Page_ObjectSubtypeIsThePageType()
+    // CLAIM: for a Page row, Object Subtype carries the page's declared PageType, spelled
+    // exactly as the AL PageType property is spelled.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // ALT Card Page declares PageType = Card.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Page, Page::"ALT Card Page"),
+            'AllObjWithCaption has no Page row for ALT Card Page.');
+        Assert.AreEqual(
+            'Card', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a PageType = Card page must be ''Card''.');
+
+        // ALT List Page declares PageType = List. Two pages with DIFFERENT declared page
+        // types, read the same way: an implementation answering one constant -- including
+        // the empty string, or AL's default 'Card' for every page -- fails one of them.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Page, Page::"ALT List Page"),
+            'AllObjWithCaption has no Page row for ALT List Page.');
+        Assert.AreEqual(
+            'List', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a PageType = List page must be ''List''.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_SetRange_ObjectSubtypeRoleCenter_FindsTheRoleCenterPage()
+    // CLAIM: Object Subtype is a filterable column -- filtering Page rows to
+    // Object Subtype = 'RoleCenter' selects role-center pages and excludes others. This
+    // is the shape Base Application's own Role Center picker uses.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // Positive: the one RoleCenter page this app declares is reachable through the
+        // filter, by name.
+        AllObjWithCaption.SetRange("Object Type", AllObjWithCaption."Object Type"::Page);
+        AllObjWithCaption.SetRange("Object Subtype", 'RoleCenter');
+        AllObjWithCaption.SetRange("Object ID", Page::"ALT Profile RC SameApp");
+        Assert.IsTrue(
+            AllObjWithCaption.FindFirst(),
+            'Filtering Page rows to Object Subtype ''RoleCenter'' must find ALT Profile RC SameApp.');
+        Assert.AreEqual(
+            'ALT Profile RC SameApp', AllObjWithCaption."Object Name",
+            'The RoleCenter-filtered row for that id is ALT Profile RC SameApp.');
+        Assert.AreEqual(
+            'RoleCenter', AllObjWithCaption."Object Subtype",
+            'A row selected by Object Subtype = ''RoleCenter'' must report that subtype.');
+
+        // Negative: the SAME filter over a Card page's id selects nothing, so the subtype
+        // half of the filter is doing work rather than being ignored.
+        AllObjWithCaption.SetRange("Object ID", Page::"ALT Card Page");
+        Assert.IsTrue(
+            AllObjWithCaption.IsEmpty(),
+            'A PageType = Card page must not be selected by Object Subtype = ''RoleCenter''.');
+
+        // ...and that same Card page IS selected once the subtype filter matches it, so the
+        // emptiness above is the subtype filter and not a missing row.
+        AllObjWithCaption.SetRange("Object Subtype", 'Card');
+        Assert.IsTrue(
+            AllObjWithCaption.FindFirst(),
+            'ALT Card Page must be selected by Object Subtype = ''Card''.');
+        Assert.AreEqual(
+            'ALT Card Page', AllObjWithCaption."Object Name",
+            'The Card-filtered row for that id is ALT Card Page.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_Codeunit_ObjectSubtypeIsTheSubtypeAndEmptyForNormal()
+    // CLAIM: for a Codeunit row, Object Subtype carries the declared Subtype -- and is the
+    // EMPTY string for a codeunit whose subtype is Normal, rather than the word 'Normal'.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // Install Seeder declares Subtype = Install.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Codeunit, Codeunit::"Install Seeder"),
+            'AllObjWithCaption has no Codeunit row for Install Seeder.');
+        Assert.AreEqual(
+            'Install', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a Subtype = Install codeunit must be ''Install''.');
+
+        // Not An Installer declares no Subtype at all, so its subtype is Normal -- and BC
+        // reports Normal as the empty string, not as 'Normal'. The pair is what makes this
+        // discriminating: an implementation writing the enum name unconditionally passes the
+        // first half and fails here.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Codeunit, Codeunit::"Not An Installer"),
+            'AllObjWithCaption has no Codeunit row for Not An Installer.');
+        Assert.AreEqual(
+            '', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a codeunit whose subtype is Normal must be the empty string.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_Table_ObjectSubtypeIsTheTableType()
+    // CLAIM: for a Table row, Object Subtype carries the declared TableType.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // ALT CRM Entity declares TableType = CRM.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, Database::"ALT CRM Entity"),
+            'AllObjWithCaption has no Table row for ALT CRM Entity.');
+        Assert.AreEqual(
+            'CRM', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a TableType = CRM table must be ''CRM''.');
+
+        // ALT Temp Only declares TableType = Temporary -- a different value, so the column
+        // is read off the table rather than being a constant.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, Database::"ALT Temp Only"),
+            'AllObjWithCaption has no Table row for ALT Temp Only.');
+        Assert.AreEqual(
+            'Temporary', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a TableType = Temporary table must be ''Temporary''.');
+
+        // ALT Captioned declares no TableType, so its table type is Normal. Unlike a
+        // codeunit's Normal subtype, a table's TableType is reported by NAME -- BC only
+        // special-cases Normal for codeunits.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, Database::"ALT Captioned"),
+            'AllObjWithCaption has no Table row for ALT Captioned.');
+        Assert.AreEqual(
+            'Normal', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a table declaring no TableType must be ''Normal''.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_Report_ObjectSubtypeIsEmpty()
+    // CLAIM: object kinds that have no subtype concept report the EMPTY string, not some
+    // placeholder. This is the negative control for every positive case above: an
+    // implementation inventing a subtype for every kind fails here.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Report, Report::"ALT Simple Report"),
+            'AllObjWithCaption has no Report row for ALT Simple Report.');
+        Assert.AreEqual(
+            '', AllObjWithCaption."Object Subtype",
+            'A Report has no subtype, so Object Subtype must be the empty string.');
     end;
 
     local procedure Initialize()
