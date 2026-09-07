@@ -38,6 +38,13 @@
 //   bumping app.json's version cannot break this test with a failure pointing away from the
 //   manifest; a guard first rejects a zero version, which would satisfy the comparisons
 //   vacuously.
+//
+//   One more shape a single row would satisfy: every positive test but the last reads the row
+//   of the app whose tests are RUNNING, reached through GetCurrentModuleInfo. A registry
+//   carrying exactly one row, or answering that one row to every key, would pass all of them.
+//   The last test therefore names a SECOND app by a literal id taken from its own app.json -
+//   "AL Internals Test Fixture", which this app declares as a dependency - and requires the
+//   registry to answer about it with ITS name and ITS package id, distinct from this app's.
 
 codeunit 60887 "Test NAVApp Installed App"
 {
@@ -48,6 +55,8 @@ codeunit 60887 "Test NAVApp Installed App"
         Assert: Codeunit Assert;
         AppNameTok: Label 'AL Language Coverage Tests', Locked = true;
         PublisherTok: Label 'AL Language', Locked = true;
+        FixtureAppIdTok: Label '{f1e2d3c4-b5a6-7890-fedc-ba9876543210}', Locked = true;
+        FixtureAppNameTok: Label 'AL Internals Test Fixture', Locked = true;
 
     [Test]
     procedure NavAppInstalledApp_Get_ThisAppsId_ReturnsItsManifestIdentity()
@@ -172,6 +181,51 @@ codeunit 60887 "Test NAVApp Installed App"
         until NavAppInstalledApp.Next() = 0;
 
         Assert.IsTrue(Walked > 0, 'The walk must have visited at least one row.');
+    end;
+
+    [Test]
+    procedure NavAppInstalledApp_ASecondNamedApp_IsListedWithItsOwnIdentity()
+    // CLAIM: the registry answers about a SECOND, independently named app - and answers about
+    // it with that app's OWN identity, not this one's.
+    //
+    // WHY THIS EXISTS ALONGSIDE THE TESTS ABOVE. Every other positive test in this file reads
+    // the row belonging to the app whose tests are running, reached through
+    // GetCurrentModuleInfo. A registry that carried exactly ONE row - this app's - would
+    // satisfy all of them. So would one that answered this app's row to every key.
+    //
+    // "AL Internals Test Fixture" is a separate app with its own manifest, its own app id and
+    // its own object range, which this app declares as a dependency and which is therefore
+    // installed on any tenant running these tests. Naming its id as a literal, rather than
+    // discovering it from the registry, is the point: the id comes from the fixture's app.json,
+    // so a registry that invented rows or renamed them cannot satisfy this by construction.
+    var
+        FixtureApp: Record "NAV App Installed App";
+        ThisApp: Record "NAV App Installed App";
+        ThisModule: ModuleInfo;
+        FixtureAppId: Guid;
+        EmptyId: Guid;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        Evaluate(FixtureAppId, FixtureAppIdTok);
+
+        // Guard: the two apps really are different, so the comparisons below are not a row
+        // being compared with itself.
+        Assert.AreNotEqual(ThisModule.Id(), FixtureAppId, 'The fixture app and this app must have different app ids.');
+
+        Assert.IsTrue(FixtureApp.Get(FixtureAppId),
+            'The fixture app this one depends on must be listed as installed.');
+
+        // Its OWN name, not this app's - the assertion a registry echoing one row back fails.
+        Assert.AreEqual(FixtureAppNameTok, FixtureApp.Name, 'The row keyed on the fixture app id must carry the fixture app''s name.');
+        Assert.AreEqual(PublisherTok, FixtureApp.Publisher, 'The fixture app is published by the same publisher.');
+        Assert.AreEqual(FixtureAppId, FixtureApp."App ID", 'The row must report the app id it was keyed on.');
+        Assert.AreNotEqual(EmptyId, FixtureApp."Package ID", 'The fixture app must carry a non-blank Package ID.');
+
+        // And the two rows are genuinely distinct records, not one row reached twice.
+        Assert.IsTrue(ThisApp.Get(ThisModule.Id()), 'This app must have a row of its own.');
+        Assert.AreNotEqual(ThisApp.Name, FixtureApp.Name, 'Two different apps must not report the same name.');
+        Assert.AreNotEqual(ThisApp."Package ID", FixtureApp."Package ID", 'Two different apps must not share a Package ID.');
     end;
 
     local procedure Initialize()
