@@ -25,15 +25,40 @@
 // unattended UI event becomes. That is what this codeunit measures, and only a service tier can
 // answer it.
 //
-// THE OPEN QUESTIONS, one per kind, taken from AL Runner issue 2943:
+// THE QUESTIONS, one per kind, taken from AL Runner issue 2943 -- and THE ANSWERS the eight
+// cloud legs gave when this file first ran (run 34150170570). The answers are recorded here
+// because three of the four came out the OPPOSITE way to what the shipped IL above suggests,
+// and a reader who only sees the corrected assertions has no way to know that:
 //
-//   * Report   -- does the action open the report's REQUEST PAGE (reaching a
-//                 [RequestPageHandler]) or run the report body directly? And does
-//                 UseRequestPage = false change the answer?
-//   * Codeunit -- does Codeunit.Run happen at all, and which record is it given? Does
-//                 RunPageOnRec mean anything for a codeunit target?
+//   * Report   -- does the action open the report's REQUEST PAGE or run the body directly, and
+//                 does UseRequestPage = false change it?
+//                 ANSWER: neither. The TestPage surface REFUSES the route outright, with
+//                 "The method RunReport is not supported for TestPages." UseRequestPage does
+//                 not change it: both the request-page report and the silent one are refused
+//                 identically, so the property is not consulted before the refusal.
+//   * Codeunit -- does Codeunit.Run happen at all, which record is it given, and does
+//                 RunPageOnRec mean anything on a non-page target?
+//                 ANSWER: it RUNS -- the one kind of the four that does -- and it is handed the
+//                 host page's CURRENT ROW. RunPageOnRec makes NO observable difference: the
+//                 with- and without- arms both measure 'Bravo'. That last point is the one this
+//                 file got wrong on its first run, having assumed the property was load-bearing
+//                 for a codeunit the way it is for a page.
 //   * XmlPort  -- does it run, and is a request page involved?
+//                 ANSWER: refused, "The method RunXmlPort is not supported for TestPages.",
+//                 before any request-page question arises.
 //   * Query    -- what is "opening a query" in a test session at all?
+//                 ANSWER: refused ONE STEP EARLIER than the other two, with "The method
+//                 GetQueryTableMetadata is not supported for TestPages." The other refusals
+//                 name a run method; this one never reaches a run method, because building the
+//                 generated page over the query needs the query's metadata first. So the IL's
+//                 "Query routes through CreateNavOpenTaskPageAction like a Page" is true and
+//                 still does not make a query target behave like a page target -- the page kind
+//                 opens unattended (codeunit 60285), the query kind cannot even be resolved.
+//
+// The through-line: of the five RunObject kinds, a TestPage session performs exactly two --
+// Page (opens unattended) and Codeunit (runs, on the host's row). The other three are refused
+// by the TestPage surface itself, not by the action builder, which is why the IL's per-kind
+// dispatch does not predict the outcome.
 //
 // HOW THE ARMS ARE BUILT, and why they look the way they do.
 //
@@ -44,7 +69,12 @@
 //      states the observable it found and asserts THAT -- with a message naming what a
 //      different outcome would have meant. An arm that guessed would have had to be rewritten
 //      after the first CI run anyway, and the rewrite is where a wrong guess quietly becomes an
-//      assertion nobody re-checked.
+//      assertion nobody re-checked. Three of the four arms WERE rewritten after that first run,
+//      which is this mechanism working as intended rather than a failure of it: the guesses
+//      were falsified by a service tier before they ever entered the corpus, and each rewrite
+//      asserts the exact message the tier produced instead of a weaker "something was raised".
+//      A refused arm asserts the message text precisely because the three refusals differ from
+//      each other, and a bare asserterror could not tell them apart.
 //   2. Where an arm invokes inside asserterror, it reads the SingleInstance probe rather than
 //      the log table. A refusal discards the uncommitted rows of the transaction it unwinds --
 //      measured on all eight cloud legs while building codeunit 60285 -- so a missing log row
@@ -53,7 +83,8 @@
 //      without which every negative here would be unfalsifiable.
 //
 // Written by agent stma-auto-32, an automated implementation agent acting on the account
-// holder's behalf, for AL Runner issue 2943.
+// holder's behalf, for AL Runner issue 2943. Corrected against run 34150170570's verdict by
+// agent stma-auto-2, likewise automated and acting on the account holder's behalf.
 
 codeunit 60559 "TPAROK Tests"
 {
@@ -101,7 +132,6 @@ codeunit 60559 "TPAROK Tests"
         Log: Record "TPAROK Log";
         Probe: Codeunit "TPAROK Probe";
         SilentReport: Report "TPAROK Silent Report";
-        TheReport: Report "TPAROK Report";
         TheXmlPort: XmlPort "TPAROK XmlPort";
         TempBlob: Codeunit "Temp Blob";
         Outbound: OutStream;
@@ -128,10 +158,18 @@ codeunit 60559 "TPAROK Tests"
 
         // The report WITH a request page, confirmed by a bound handler. This also establishes
         // that the request-page probe fires, which is what the report RunObject arms read to
-        // tell "opened the request page" from "ran the body directly".
+        // tell "refused" from "ran quietly".
+        //
+        // Report.Run(Report::...) -- the STATIC form -- not TheReport.Run() on a report
+        // variable. The variable form was measured raising "An error occurred and the
+        // transaction is stopped" on all eight cloud legs from inside a [Test] method with a
+        // [RequestPageHandler] bound, while the static form of the same report with the same
+        // handler passes here and in ControlTriggerActionRunningTheSameReportBehavesTheSameWay.
+        // Which of the two forms a test session accepts is its own question and is NOT what
+        // this codeunit is measuring, so this arm takes the form that works and leaves the
+        // difference for a suite that can isolate it.
         Probe.Reset();
-        Clear(TheReport);
-        TheReport.Run();
+        Report.Run(Report::"TPAROK Report");
         Assert.IsTrue(RequestPageHandlerRan, 'the bound [RequestPageHandler] must run when the report is run by AL');
         Assert.IsTrue(Probe.GetRequestPageOpened(), 'the report''s request page must record its own OnOpenPage when it really opens');
         Assert.IsTrue(Probe.GetReportRan(), 'a confirmed request page must let the report body run');
@@ -152,20 +190,21 @@ codeunit 60559 "TPAROK Tests"
     // REPORT, the kind that is 1,037 of the 1,210 non-page RunObject targets in Base
     // Application 28.1 -- so whatever this arm measures is the practical whole of the question.
     //
-    // A [RequestPageHandler] is bound. That is the arrangement that tells the two candidate
-    // answers apart, because both leave the body executed:
+    // A [RequestPageHandler] is bound, and it STAYS bound now that the answer is known. It was
+    // put there to tell two candidate answers apart -- "opens the request page, handler runs,
+    // body then runs" versus "runs the body directly, handler never called" -- and the tier
+    // produced a third the arm had not allowed for: neither, the route is refused. Leaving the
+    // handler bound is what lets this arm assert that the refusal reached NEITHER the body nor
+    // the handler. Unbinding it would silently weaken the arm to the message alone.
     //
-    //   * If the action opens the REQUEST PAGE, the handler runs, the request-page probe is
-    //     set, and the body then runs because the handler confirms.
-    //   * If the action runs the report DIRECTLY, the body runs with the request-page probe
-    //     unset and the handler never called.
-    //
-    // The invoke is NOT wrapped in asserterror: if BC refuses a report RunObject in a test
-    // session, this arm fails on the invoke line, which is the correct and loud outcome for a
-    // measurement whose answer was not known in advance.
+    // The invoke IS wrapped in asserterror, which it was not when this file was first written.
+    // Then, an unwrapped invoke was the honest shape: the answer was unknown and a refusal
+    // should fail loudly on the invoke line rather than be pre-absorbed by an asserterror that
+    // assumed one. It failed exactly that way on all eight cloud legs, which is how the answer
+    // was obtained, and asserterror is now the honest shape for the answer that came back.
     [Test]
     [HandlerFunctions('ConfirmingRequestPageHandler')]
-    procedure RunObjectNamingAReportRunsIt()
+    procedure RunObjectNamingAReportIsRefusedByTheTestPageSurface()
     var
         Probe: Codeunit "TPAROK Probe";
         Host: TestPage "TPAROK Host";
@@ -175,24 +214,24 @@ codeunit 60559 "TPAROK Tests"
 
         Host.OpenEdit();
         Host.First();
-        Host.RunTheReport.Invoke();
+        asserterror Host.RunTheReport.Invoke();
 
-        Assert.IsTrue(Probe.GetReportRan(),
-            'a RunObject action naming a report must run that report''s body: OnPreReport never fired');
-        Assert.AreEqual(2, Probe.GetReportRowCount(),
-            'the report run from the action must iterate both seeded rows');
-        Assert.IsTrue(Probe.GetRequestPageOpened(),
-            'the report''s request page must open on the RunObject route, as it does when AL calls Report.Run');
-        Assert.IsTrue(RequestPageHandlerRan,
-            'the request page opened by a RunObject action must be routed to the bound [RequestPageHandler]');
+        Assert.ExpectedError('The method RunReport is not supported for TestPages.');
+        Assert.IsFalse(Probe.GetReportRan(),
+            'a refused report RunObject must not have run the report body anyway');
+        Assert.IsFalse(RequestPageHandlerRan,
+            'a refused report RunObject must not have reached the bound [RequestPageHandler]');
     end;
 
     // REPORT with UseRequestPage = false, which the issue calls out as possibly different. No
-    // handler is bound and none can be: there is no request page to hand to one. If the action
-    // route insisted on a request page regardless of the property, this arm would fail rather
-    // than pass quietly.
+    // handler is bound and none can be: there is no request page to hand to one.
+    //
+    // The answer is that the property makes no difference: this arm and the one above are
+    // refused with the SAME message, so the TestPage surface declines the report route before
+    // it consults UseRequestPage at all. Keeping the arm is what establishes that -- one
+    // refused report would leave open whether the request page was the thing being refused.
     [Test]
-    procedure RunObjectNamingAReportWithNoRequestPageRunsItWithNoHandlerBound()
+    procedure RunObjectNamingAReportWithNoRequestPageIsRefusedTheSameWay()
     var
         Probe: Codeunit "TPAROK Probe";
         Host: TestPage "TPAROK Host";
@@ -202,20 +241,22 @@ codeunit 60559 "TPAROK Tests"
 
         Host.OpenEdit();
         Host.First();
-        Host.RunTheSilentReport.Invoke();
+        asserterror Host.RunTheSilentReport.Invoke();
 
-        Assert.IsTrue(Probe.GetReportRan(),
-            'a RunObject action naming a UseRequestPage = false report must still run it');
-        Assert.AreEqual(2, Probe.GetReportRowCount(),
-            'the silent report run from the action must iterate both seeded rows');
-        Assert.IsFalse(Probe.GetRequestPageOpened(),
-            'a report declared UseRequestPage = false must not open a request page on the RunObject route either');
+        Assert.ExpectedError('The method RunReport is not supported for TestPages.');
+        Assert.IsFalse(Probe.GetReportRan(),
+            'a refused report RunObject must not have run the report body, UseRequestPage = false or not');
     end;
 
     // CONTROL for both report arms: the SAME report target, same host, same invoke, reached by
-    // an OnAction trigger calling Report.Run instead of by a RunObject declaration. If this
-    // behaves differently from RunObjectNamingAReportRunsIt, the DECLARATION is what differs;
-    // if it behaves the same, the RunObject route is the ordinary report route.
+    // an OnAction trigger calling Report.Run instead of by a RunObject declaration.
+    //
+    // This is the arm that makes the two refusals above mean something. It PASSES -- the report
+    // runs, its request page opens, the bound handler is reached -- from an OnAction trigger on
+    // the very same TestPage, in the very same session. So what the TestPage surface refuses is
+    // specifically the RunObject ROUTE to a report, not reports, not this report, and not
+    // running a report from a TestPage at all. Without this control, "RunReport is not
+    // supported for TestPages" would read as the far broader claim its wording suggests.
     [Test]
     [HandlerFunctions('ConfirmingRequestPageHandler')]
     procedure ControlTriggerActionRunningTheSameReportBehavesTheSameWay()
@@ -236,16 +277,26 @@ codeunit 60559 "TPAROK Tests"
         Assert.IsTrue(RequestPageHandlerRan, 'the control''s request page must reach the bound handler');
     end;
 
-    // CODEUNIT, 155 of the non-page targets. Two questions in one arm: does it run at all, and
-    // which record does its OnRun see? The host is parked on the SECOND row, so a codeunit
-    // handed the host's current record reports 'Bravo' and one handed a fresh, unpositioned
-    // record reports the empty string -- two outcomes this arm can tell apart.
+    // CODEUNIT, 155 of the non-page targets, and the ONLY one of the four kinds a TestPage
+    // session actually performs. Two questions in one arm: does it run at all, and which record
+    // does its OnRun see? The host is parked on the SECOND row, so a codeunit handed the host's
+    // current record reports 'Bravo' and one handed a fresh, unpositioned record reports the
+    // empty string -- two outcomes this arm can tell apart, which is what makes 'Bravo' below a
+    // measurement rather than a restatement.
     //
-    // This action does NOT declare RunPageOnRec; the next arm is the same target WITH it, which
-    // is how the issue's "does RunPageOnRec mean anything for a codeunit" question gets an
-    // answer rather than an opinion.
+    // This action does NOT declare RunPageOnRec, and the next arm is the same target WITH it.
+    // The pair is how the issue's "does RunPageOnRec mean anything for a codeunit" question got
+    // an answer rather than an opinion, and the answer is NO: both arms measure 'Bravo', so the
+    // property changes nothing observable on a codeunit target. This arm originally asserted ''
+    // here on the assumption that RunPageOnRec is what hands over the row, as it is for a page;
+    // eight service tiers falsified that in run 34150170570 and it now asserts what they said.
+    //
+    // Keeping BOTH arms after learning they agree is deliberate. They now assert the same
+    // value, which looks redundant and is not: the pair is the only thing that would catch a
+    // future BC version making RunPageOnRec start to matter here, and that is exactly the
+    // change most likely to go unnoticed.
     [Test]
-    procedure RunObjectNamingACodeunitRunsIt()
+    procedure RunObjectNamingACodeunitRunsItOnTheHostsRow()
     var
         Probe: Codeunit "TPAROK Probe";
         Host: TestPage "TPAROK Host";
@@ -260,8 +311,8 @@ codeunit 60559 "TPAROK Tests"
 
         Assert.IsTrue(Probe.GetCodeunitRan(),
             'a RunObject action naming a codeunit must run it: OnRun never fired');
-        Assert.AreEqual('', Probe.GetCodeunitRecSeen(),
-            'without RunPageOnRec, the codeunit target must NOT be handed the host page''s current row');
+        Assert.AreEqual('Bravo', Probe.GetCodeunitRecSeen(),
+            'a codeunit target is handed the host page''s current row even WITHOUT RunPageOnRec');
     end;
 
     // CODEUNIT with RunPageOnRec = true. Same target, same host, same row; the declaration is
@@ -289,10 +340,11 @@ codeunit 60559 "TPAROK Tests"
     end;
 
     // XMLPORT, 7 of the non-page targets. Direction = Export, UseRequestPage = false, so
-    // nothing waits on a stream a test session cannot supply. The only claim is whether
-    // OnPreXmlPort fires.
+    // nothing waits on a stream a test session cannot supply -- an arrangement that removes
+    // every reason the route COULD have been refused for, which is what makes the refusal the
+    // tier reported a fact about the TestPage surface rather than about this fixture.
     [Test]
-    procedure RunObjectNamingAnXmlPortRunsIt()
+    procedure RunObjectNamingAnXmlPortIsRefusedByTheTestPageSurface()
     var
         Probe: Codeunit "TPAROK Probe";
         Host: TestPage "TPAROK Host";
@@ -302,22 +354,30 @@ codeunit 60559 "TPAROK Tests"
 
         Host.OpenEdit();
         Host.First();
-        Host.RunTheXmlPort.Invoke();
+        asserterror Host.RunTheXmlPort.Invoke();
 
-        Assert.IsTrue(Probe.GetXmlPortRan(),
-            'a RunObject action naming an xmlport must run it: OnPreXmlPort never fired');
+        Assert.ExpectedError('The method RunXmlPort is not supported for TestPages.');
+        Assert.IsFalse(Probe.GetXmlPortRan(),
+            'a refused xmlport RunObject must not have run OnPreXmlPort anyway');
     end;
 
     // QUERY, 11 of the non-page targets, and the kind with no AL surface of its own: a query
-    // has no trigger, so nothing inside it can record that it ran. BC's builder routes a query
-    // target through the same CreateNavOpenTaskPageAction as a page, with DataSourceType.Query
-    // -- so what is opened is a generated page over the query, not the query object.
+    // has no trigger, so nothing inside it can record that it ran.
     //
-    // The claim is therefore only what AL can observe: invoking it completes, with no handler
-    // bound, exactly as the page kind does (codeunit 60285 arm 1). The name says so, because
-    // that IS the whole claim and a stronger-sounding assertion here would be unfalsifiable.
+    // BC's builder routes a query target through the same CreateNavOpenTaskPageAction as a
+    // page, with DataSourceType.Query -- so the shipped IL suggested a query target would
+    // behave like the page kind, which OPENS unattended (codeunit 60285 arm 1). Eight service
+    // tiers say otherwise: it is refused, and refused ONE STEP EARLIER than the report and
+    // xmlport kinds. Those two name the run method they declined (RunReport, RunXmlPort);
+    // the query kind never reaches a run method at all, because building the generated page
+    // over the query needs GetQueryTableMetadata first, and THAT is what the TestPage surface
+    // refuses.
+    //
+    // That distinction is the reason this arm asserts the exact message rather than merely
+    // that something was raised: "refused" and "refused before it could even resolve the
+    // query's shape" are different facts, and only the message tells them apart.
     [Test]
-    procedure RunObjectNamingAQueryWithNoHandler_NoThrow()
+    procedure RunObjectNamingAQueryIsRefusedBeforeItsMetadataIsResolved()
     var
         Host: TestPage "TPAROK Host";
     begin
@@ -326,7 +386,9 @@ codeunit 60559 "TPAROK Tests"
 
         Host.OpenEdit();
         Host.First();
-        Host.RunTheQuery.Invoke();
+        asserterror Host.RunTheQuery.Invoke();
+
+        Assert.ExpectedError('The method GetQueryTableMetadata is not supported for TestPages.');
     end;
 
     [RequestPageHandler]
