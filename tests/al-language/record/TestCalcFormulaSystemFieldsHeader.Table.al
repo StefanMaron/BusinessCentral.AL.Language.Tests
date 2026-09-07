@@ -90,6 +90,48 @@ table 60816 "CFSF Header"
         {
             TableRelation = "CFSF Line".SystemId;
         }
+
+        /// SystemRowVersion is the SIXTH system field, and it is unlike the other five: the
+        /// AL compiler synthesizes it at field id 0 with metadata name `timestamp`, not in
+        /// the 2000000000-2000000004 block. So naming it in a formula exercises a resolution
+        /// path the fields above cannot reach, and these arms say what BC answers there.
+        ///
+        /// Aggregated as the SOURCE field. Every line has a distinct, increasing rowversion,
+        /// so max() over the D1 lines is the LAST line's — strictly greater than min() over
+        /// the same set, which is what makes a dropped where-arm visible: it would widen the
+        /// set rather than change the ordering.
+        field(30; "Last Line Row Version"; BigInteger)
+        {
+            FieldClass = FlowField;
+            CalcFormula = max("CFSF Line".SystemRowVersion where("Doc No." = field("No.")));
+        }
+
+        field(31; "First Line Row Version"; BigInteger)
+        {
+            FieldClass = FlowField;
+            CalcFormula = min("CFSF Line".SystemRowVersion where("Doc No." = field("No.")));
+        }
+
+        /// The same source field reached through a where-arm that links to the parent's
+        /// SystemId, so only two of D1's three lines are in scope. With the seeded rows the
+        /// answer is line 2's rowversion — NOT line 3's, which is what a dropped arm gives.
+        field(32; "Row Version By Sys Id"; BigInteger)
+        {
+            FieldClass = FlowField;
+            CalcFormula = max("CFSF Line".SystemRowVersion where("Header Sys Id" = field(SystemId)));
+        }
+
+        /// A looked-up SystemRowVersion, the third position the five system fields already
+        /// cover for SystemCreatedBy.
+        field(33; "Line Row Version"; BigInteger)
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup("CFSF Line".SystemRowVersion where("Entry No." = field("Probe Entry No.")));
+        }
+
+        /// The parent side of the where-arm carries the value being matched. Kept an ordinary
+        /// field so this arm isolates the SOURCE-side resolution above.
+        field(34; "Probe Entry No."; Integer) { }
     }
 
     keys

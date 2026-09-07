@@ -181,4 +181,109 @@ codeunit 60818 "CFSF Tests"
         asserterror CfsfHeader.Validate("Line Sys Id", CreateGuid());
         Assert.ExpectedError('cannot be found in the related table');
     end;
+
+    // ── SystemRowVersion: the sixth system field, at field id 0 ──────────────────────
+    //
+    // The five fields above all live in the 2000000000-2000000004 block. SystemRowVersion
+    // does not: Microsoft's AL compiler synthesizes it as field id 0 with metadata name
+    // `timestamp` (SynthesizedFieldHelper.AppendSystemFields), so a CalcFormula naming it
+    // resolves through a different path than the five, and nothing in the corpus said what
+    // BC answers there.
+    //
+    // Every assertion below is an ORDERING between two rowversions read in the same run,
+    // never a literal. A rowversion's absolute value is a property of the database, not of
+    // AL, so a test asserting one would be asserting the wrong thing — but the ordering is
+    // exactly what AL can rely on, and it is also what a dropped where-arm breaks.
+
+    /// max() and min() over SystemRowVersion, aggregated as the SOURCE field.
+    ///
+    /// The three D1 lines are inserted in order, so their rowversions increase. That makes
+    /// max() strictly greater than min() — an answer neither a zero default nor a formula
+    /// that lost its source field can produce, and one that also pins the two aggregates
+    /// apart rather than letting both collapse onto the same row.
+    [Test]
+    procedure Record_CalcFields_AggregatesSystemRowVersion()
+    var
+        CfsfHeader: Record "CFSF Header";
+        CfsfLine1: Record "CFSF Line";
+        CfsfLine3: Record "CFSF Line";
+    begin
+        Initialize(CfsfHeader);
+        CfsfLine1.Get(1);
+        CfsfLine3.Get(3);
+
+        CfsfHeader.CalcFields("Last Line Row Version", "First Line Row Version");
+
+        Assert.AreNotEqual(0, CfsfHeader."First Line Row Version", 'min() over SystemRowVersion must not be zero');
+        Assert.AreEqual(
+          CfsfLine1.SystemRowVersion, CfsfHeader."First Line Row Version",
+          'min() over the D1 lines is the first-inserted line''s rowversion');
+        Assert.AreEqual(
+          CfsfLine3.SystemRowVersion, CfsfHeader."Last Line Row Version",
+          'max() over the D1 lines is the last-inserted line''s rowversion');
+        Assert.IsTrue(
+          CfsfHeader."Last Line Row Version" > CfsfHeader."First Line Row Version",
+          'the three lines were inserted in order, so max() must exceed min()');
+    end;
+
+    /// where("Header Sys Id" = field(SystemId)) narrowing a SystemRowVersion aggregate.
+    ///
+    /// Only lines 1 and 2 carry the header's SystemId, so the answer is line 2's rowversion.
+    /// Line 3 was inserted last and carries an unrelated GUID, so a DROPPED where-arm answers
+    /// line 3's — strictly larger. That is the whole point of this arm: the two outcomes are
+    /// different values, not a value versus a default.
+    [Test]
+    procedure Record_CalcFields_SystemRowVersionNarrowedBySystemIdArm()
+    var
+        CfsfHeader: Record "CFSF Header";
+        CfsfLine2: Record "CFSF Line";
+        CfsfLine3: Record "CFSF Line";
+    begin
+        Initialize(CfsfHeader);
+        CfsfLine2.Get(2);
+        CfsfLine3.Get(3);
+
+        CfsfHeader.CalcFields("Row Version By Sys Id");
+
+        Assert.AreEqual(
+          CfsfLine2.SystemRowVersion, CfsfHeader."Row Version By Sys Id",
+          'only lines 1 and 2 carry the header SystemId, so max() is line 2''s rowversion');
+        Assert.AreNotEqual(
+          CfsfLine3.SystemRowVersion, CfsfHeader."Row Version By Sys Id",
+          'answering line 3''s rowversion means the SystemId where-arm was dropped');
+        Assert.IsTrue(
+          CfsfLine3.SystemRowVersion > CfsfHeader."Row Version By Sys Id",
+          'line 3 is outside the arm and was inserted last, so its rowversion is the larger one');
+    end;
+
+    /// lookup() of SystemRowVersion, selected by an ordinary where-arm.
+    ///
+    /// Pointed at two different lines in turn, so the field has to track the row selected
+    /// rather than return one fixed value.
+    [Test]
+    procedure Record_CalcFields_LooksUpSystemRowVersion()
+    var
+        CfsfHeader: Record "CFSF Header";
+        CfsfLine1: Record "CFSF Line";
+        CfsfLine3: Record "CFSF Line";
+    begin
+        Initialize(CfsfHeader);
+        CfsfLine1.Get(1);
+        CfsfLine3.Get(3);
+
+        CfsfHeader."Probe Entry No." := 1;
+        CfsfHeader.CalcFields("Line Row Version");
+        Assert.AreEqual(
+          CfsfLine1.SystemRowVersion, CfsfHeader."Line Row Version",
+          'lookup() must answer line 1''s rowversion');
+
+        CfsfHeader."Probe Entry No." := 3;
+        CfsfHeader.CalcFields("Line Row Version");
+        Assert.AreEqual(
+          CfsfLine3.SystemRowVersion, CfsfHeader."Line Row Version",
+          'lookup() must follow the where-arm to line 3');
+        Assert.AreNotEqual(
+          CfsfLine1.SystemRowVersion, CfsfHeader."Line Row Version",
+          'answering line 1 for both probes means the where-arm was not applied');
+    end;
 }
