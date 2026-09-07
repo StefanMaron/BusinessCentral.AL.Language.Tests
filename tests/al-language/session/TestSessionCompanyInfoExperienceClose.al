@@ -16,10 +16,16 @@
 // question is answerable during a page open, not merely that a TestPage variable exists.
 //
 // That same permission question is asserted for its VALUE too, through codeunit 9852's own
-// public entry point. A test session runs as SUPER, so its effective permission on a table is
-// Yes in all five of Read/Insert/Modify/Delete/Execute — and asserting the five values, rather
-// than only that the call returns, is what distinguishes "the platform answered" from "the
-// platform answered correctly".
+// public entry point — asserting the values, rather than only that the call returns, is what
+// distinguishes "the platform answered" from "the platform answered correctly".
+//
+// A test session runs as SUPER, and on a TABLE DATA object real BC answers Yes (1) for the four
+// data operations and " " (0) for Execute. Run 34143553437 measured exactly that on all 8 cloud
+// legs: Read, Insert, Modify and Delete each came back 1, and Execute came back 0. Execute is
+// not a data operation — it gates executable objects (codeunit, report, xmlport), so for
+// "Table Data" there is no Execute right to hold and the platform reports the blank option
+// rather than Yes. This file originally asserted Yes in all five; that was the mistake this
+// paragraph now records.
 
 codeunit 60702 "Test Session Comp Info Close"
 {
@@ -44,7 +50,7 @@ codeunit 60702 "Test Session Comp Info Close"
     end;
 
     [Test]
-    procedure EffectivePermissions_SuperSession_HoldsAllFiveOnATable()
+    procedure EffectivePermissions_SuperSession_HoldsTheFourDataRightsButNotExecute()
     var
         Perm: Record Permission;
         EffectivePermissionsMgt: Codeunit "Effective Permissions Mgt.";
@@ -73,10 +79,15 @@ codeunit 60702 "Test Session Comp Info Close"
         Assert.AreEqual(
           1, Ordinal,
           'A SUPER test session has direct Delete on Company Information (Permission option Yes = 1).');
+        // NOT Yes, and this is the one that carries the distinction. Execute gates EXECUTABLE
+        // objects; a "Table Data" object has no Execute right for even a SUPER session to hold,
+        // so the platform reports Permission::" " (0) rather than Yes. Asserting 0 here is the
+        // measured answer, and it is still an exact value — a build that reported Yes would fail
+        // this line just as loudly as one that reported nothing at all.
         Ordinal := Perm."Execute Permission";
         Assert.AreEqual(
-          1, Ordinal,
-          'A SUPER test session has direct Execute on Company Information (Permission option Yes = 1).');
+          0, Ordinal,
+          'Execute is not a data operation, so on a Table Data object even a SUPER session reports Permission option " " = 0, not Yes.');
     end;
 
     [Test]
