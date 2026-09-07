@@ -5,17 +5,24 @@
 // IsolatedStorage Set/Contains/Get/Delete round-trip. Values must round-trip exactly and
 // deletes must be observable; a missing key must report false, never throw.
 //
-// TIER PRECONDITION (#248): IsolatedStorage_SetEncrypted_GetRoundTripsPlaintext below needs
-// the tier to have a TENANT ENCRYPTION KEY. Without one BC refuses correctly, with
-// "An encryption key is required to complete the request." -- that is BC behaving properly,
-// not a divergence, so the tier is what has to satisfy the precondition. The two tiers this
-// corpus runs on satisfy it differently, and only one of them really does:
-//   * ci.yml (Linux)      -- StartupHook Patch #26 substitutes a pass-through provider that
-//                            always reports a key present. The round-trip below passes, but
-//                            no cryptography runs. See the REMOVED note further down.
+// TIER PRECONDITION (#248): the two encryption tests below need the tier to have a TENANT
+// ENCRYPTION KEY. Without one BC refuses correctly, with "An encryption key is required to
+// complete the request." -- that is BC behaving properly, not a divergence, so the tier is
+// what has to satisfy the precondition. Both tiers this corpus runs on now satisfy it with a
+// REAL key, and each does so in the only way open to it:
+//   * ci.yml (Linux)      -- the tier creates the key itself. MsDyn365Bc.On.Linux#72 turned
+//                            StartupHook Patch #26 (the pass-through fake) off and fixed the
+//                            real cause: the CRONUS demo backup ships its single
+//                            [$ndo$tenantproperty] row with a blank tenantid while the NST
+//                            runs tenant 'default', so the UPDATE persisting the key file
+//                            name matched zero rows and CreateKey() could not remember the
+//                            key it had just written. Nothing in CreateKey() was ever
+//                            Windows-only. entrypoint.sh sets that tenantid now.
 //   * nightly-windows.yml -- creates a real key with BC's own New-NAVEncryptionKey during
-//                            container setup, and fails the run if it cannot. That tier is
-//                            the only place this test measures what its name says.
+//                            container setup, and fails the run if it cannot (#253).
+//
+// So neither tier fakes this any more, and the EncryptDecrypt test below -- removed in the
+// Patch #26 era because a pass-through provider structurally could not satisfy it -- is back.
 
 codeunit 60378 "Test Isolated Storage"
 {
@@ -48,18 +55,36 @@ codeunit 60378 "Test Isolated Storage"
         Assert.IsFalse(IsolatedStorage.Contains('its-doomed'), 'Deleted key must not be contained.');
     end;
 
-    // REMOVED (not weakened): IsolatedStorage_EncryptDecrypt_RoundTripsAndIsNotPlaintext,
-    // which asserted Encrypt('its-secret') <> 'its-secret' and Decrypt() round-trips it
-    // back. Real, correct BC behavior — but bc-linux's tenant encryption key (StartupHook
-    // Patch #26) is a pass-through fake: it satisfies IsolatedStorage.SetEncrypted's
-    // store/retrieve round-trip (below) but never makes Encrypt() output differ from its
-    // plaintext input, so this assertion cannot pass in this CI environment as it stands
-    // today. Per the same decompile that explained the failure (Encrypt()/Decrypt() and
-    // IsolatedStorage(Encrypted=true) share one call chain — TenantEncryptionProviderFactory
-    // → TenantRsaEncryptionProvider, plain RSACryptoServiceProvider + File.Create, nothing
-    // Windows-only), there is no platform reason this has to stay broken — bc-linux's fake
-    // just needs to do real key generation instead of stubbing IsKeyCreated. Reinstate this
-    // test once that lands; track it as a bc-linux follow-up, not an AL-language gap.
+    // REINSTATED (was removed, not weakened): this test asserted Encrypt('its-secret') <>
+    // 'its-secret' and that Decrypt() round-trips it back. Real, correct BC behavior -- but it
+    // was removed while bc-linux's tenant encryption key was StartupHook Patch #26, a
+    // pass-through fake that satisfied IsolatedStorage.SetEncrypted's store/retrieve round-trip
+    // (below) while never making Encrypt() output differ from its plaintext input. A
+    // pass-through provider structurally cannot satisfy the first assertion, so the test was
+    // taken out rather than watered down to something the fake could pass.
+    //
+    // MsDyn365Bc.On.Linux#72 turned that fake off and made this tier do real RSA encryption,
+    // which is what the removal note said would have to land first. Measured there on a clean
+    // BC 28.4 boot: EncryptText returns 344 bytes of real ciphertext where the proxy returned
+    // 16. So the test comes back unchanged in what it claims.
+    [Test]
+    procedure IsolatedStorage_EncryptDecrypt_RoundTripsAndIsNotPlaintext()
+    // CLAIM: Encrypt() returns something that is not its plaintext input, and Decrypt()
+    // reverses it exactly. Both halves are asserted -- ciphertext alone would pass against a
+    // provider that returned a constant, and a round-trip alone would pass against a
+    // pass-through fake, which is the one this test exists to catch.
+    // DOCS: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-encrypt-string-method
+    var
+        Ciphertext: Text;
+    begin
+        Initialize();
+
+        Ciphertext := System.Encrypt('its-secret');
+
+        Assert.AreNotEqual('its-secret', Ciphertext, 'Encrypt() must not return its plaintext input.');
+        Assert.IsTrue(Ciphertext <> '', 'Encrypt() must return a non-empty ciphertext.');
+        Assert.AreEqual('its-secret', System.Decrypt(Ciphertext), 'Decrypt() must return the original plaintext.');
+    end;
 
     [Test]
     procedure IsolatedStorage_SetEncrypted_GetRoundTripsPlaintext()
