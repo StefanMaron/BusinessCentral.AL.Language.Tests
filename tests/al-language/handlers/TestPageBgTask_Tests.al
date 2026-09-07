@@ -4,6 +4,7 @@
 // Scope: in-scope
 // Fixtures used: Test Page BgTask Row (60790), Test Page BgTask Worker (60791),
 //                Test Page BgTask Card (60792), Test Page BgTask WriteWorker (60794),
+//                Test Page BgTask Temp Row (60783), Test Page BgTask TempWorker (60784),
 //                Assert (60021)
 //
 // Page background tasks run a worker codeunit outside the AL statement that triggered them
@@ -199,6 +200,62 @@ codeunit 60793 "Test Page BgTask Tests"
         Row.Get('WR-EXIST');
         Assert.AreEqual('Original', Row.Name, 'a refused Modify() must not have changed the row');
         Card.Close();
+    end;
+
+    // Positive contrast to the two refusals above: the read-only-session refusal a page
+    // background task worker runs under applies to DATABASE writes only. A write to a
+    // TEMPORARY record is a session-memory write -- it never reaches the database -- so it
+    // must succeed inside the very same worker dispatch that refuses the database write.
+    // Same table (60790) as EnqueueBackgroundTask_WorkerInsert_RefusedByReadOnlySession, the
+    // only difference being the `temporary` keyword on the worker's Record variable, so
+    // nothing else can account for a difference in outcome.
+    [Test]
+    procedure EnqueueBackgroundTask_WorkerInsertIntoTemporaryVar_Succeeds()
+    var
+        Row: Record "Test Page BgTask Row";
+        Card: TestPage "Test Page BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        Value: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+
+        Clear(Params);
+        Params.Add('Op', 'TempVar');
+        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask TempWorker", Params, true);
+        Card.Close();
+
+        Results.Get('Count', Value);
+        Assert.AreEqual('2', Value, 'both Insert()s into the temporary Record variable must have landed');
+        Results.Get('Name', Value);
+        Assert.AreEqual('WRITTEN-BY-WORKER', Value, 'the temporary row the worker inserted must read back with the value it wrote');
+        Assert.IsFalse(Row.Get('TMP-1'), 'a temporary write must not have reached the database table');
+    end;
+
+    // Same claim for a table declared TableType = Temporary, where the AL author never writes
+    // the `temporary` keyword anywhere -- the temporariness is a property of the table, and it
+    // must be honoured the same way inside a page background task worker.
+    [Test]
+    procedure EnqueueBackgroundTask_WorkerInsertIntoTemporaryTable_Succeeds()
+    var
+        Card: TestPage "Test Page BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        Value: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+
+        Clear(Params);
+        Params.Add('Op', 'TempTable');
+        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask TempWorker", Params, true);
+        Card.Close();
+
+        Results.Get('Count', Value);
+        Assert.AreEqual('2', Value, 'both Insert()s into the TableType = Temporary table must have landed');
+        Results.Get('Name', Value);
+        Assert.AreEqual('WRITTEN-BY-WORKER', Value, 'the TableType = Temporary row the worker inserted must read back with the value it wrote');
     end;
 
     [TryFunction]
