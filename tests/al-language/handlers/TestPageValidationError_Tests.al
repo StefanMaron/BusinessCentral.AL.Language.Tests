@@ -1,6 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testfield/testfieldvalidationerrorcount-method
 // Scope: in-scope
 // Fixtures used: TestPage ErrTeardown Row (60796), TestPage ErrTeardown Card (60797), Assert (60021)
+// Adds no fixture and no object: the page-level arms reuse card 60797, whose NameCtl OnValidate
+// already raises when the row says so.
 //
 // What a REFUSED TestPage control write leaves behind on the control.
 //
@@ -20,6 +22,12 @@
 //   3. the exception the asserterror traps carries the wrapper around that same stored text;
 //   4. an ACCEPTED write records nothing and stores the value;
 //   5. the index `ValidationErrorCount()` reports is readable — i.e. the ledger is 1-based.
+//
+// Claims 6-9 ask the same four questions of the PAGE-level pair — `TestPage.ValidationErrorCount()`
+// and `TestPage.GetValidationError(Index)`, read on the page variable itself rather than on a
+// control. That is a different ledger reached through different BC methods; see the block above
+// those tests for why it is not an alias of the control pair, and why its out-of-range arm is
+// observable from AL where the control one is not.
 //
 // TWO OF THESE WERE WRONG IN THE FIRST DRAFT, AND THIS RUN IS WHY THEY ARE RIGHT NOW.
 // Run 34002487601 answered both, identically on every leg that reported:
@@ -204,6 +212,126 @@ codeunit 60836 "TestPage ValidationError Tests"
         Assert.AreEqual(1, LastIndex, 'One refused write must report a count of one');
         Assert.AreEqual(ValidateErrTok + RefreshSuffixTok, Card.NameCtl.GetValidationError(LastIndex),
             'The index ValidationErrorCount() reports must itself be readable');
+
+        Card.Close();
+    end;
+    // ── The PAGE-level pair, as opposed to the control-level pair above ────────────────
+    //
+    // Everything above reads `Card.NameCtl.ValidationErrorCount()` — the ledger of the CONTROL
+    // the write went through. AL also exposes the same two names on the TestPage ITSELF:
+    // `Card.ValidationErrorCount()` and `Card.GetValidationError(Index)`. They are a different
+    // ledger reached through a different BC method, and nothing in this corpus pinned them on a
+    // full page.
+    //
+    // Ncl.dll shows they are genuinely distinct rather than an alias. The control pair goes
+    // through `NavTestField.ALValidationErrorCount` / `ALGetValidationError`; the page pair goes
+    // through `NavTestPageBase.ALValidationErrorCount()`, which is
+    // `CheckPageOpened(); return TestPage.ValidationErrorCount;`, and
+    // `NavTestPageBase.ALGetValidationError(index)`, which is
+    // `TestPage.GetValidationError(checked(index - 1))` wrapped in a translation of
+    // ArgumentOutOfRangeException into NavNCLIndexOutOfBoundsException. `NavTestField.CheckError`
+    // — the method wrapping every control write — reads BOTH, and raises a PAGE-named validation
+    // exception when the page count grew by more than the control's own did.
+    //
+    // Codeunit 60346 "Test TestPart" pins these four claims on a TestPart (`Host.Lines`). A part
+    // is not a page: it is reached through ITestPart and its host owns the form. These arms ask
+    // the same four questions of a full TestPage, which is the shape Microsoft's own tests hold
+    // a TestPage in and the one nothing had measured.
+    //
+    // The claims, one per [Test]:
+    //   6. a clean page reports zero — the arm that rules out "always report one";
+    //   7. a refused control write is counted on the PAGE as well as on the control;
+    //   8. the page's GetValidationError(1) is 1-based and carries the stored text;
+    //   9. index 0 is below the range and raises a catchable error.
+    //
+    // Claim 9 is worth stating separately from its control-level sibling, which CANNOT be
+    // written as a passing AL test at all (see the header: the control boundary catches
+    // IndexOutOfRangeException, which Enumerable.ElementAt never raises, so an out-of-range
+    // control read escapes untrappable). The PAGE boundary catches ArgumentOutOfRangeException,
+    // which it does raise — so on the page the same shape IS observable from AL. That asymmetry
+    // is exactly the kind of thing a service tier should settle rather than a reader of Ncl.
+
+    // Claim 6. A page nothing has refused reports zero. Without this arm, claims 7-9 would all
+    // pass against an implementation that reported a constant 1.
+    [Test]
+    procedure TestPage_PageLevel_ValidationErrorCount_IsZeroOnACleanPage()
+    var
+        Card: TestPage "TestPage ErrTeardown Card";
+    begin
+        Initialize();
+        Seed('VAL-1', false);
+
+        Card.OpenView();
+        Card.GoToKey('VAL-1');
+
+        Assert.AreEqual(0, Card.ValidationErrorCount(),
+            'A page with no refused write must report zero validation errors');
+
+        Card.Close();
+    end;
+
+    // Claim 7. The refusal is counted on the PAGE too, not only on the control it was made
+    // through. Asserted as exact equality with 1 rather than "> 0": one refused write is one
+    // error, and a page ledger that also counted the control's copy would read 2 here.
+    [Test]
+    procedure TestPage_PageLevel_ValidationErrorCount_CountsARefusedControlWrite()
+    var
+        Card: TestPage "TestPage ErrTeardown Card";
+    begin
+        Initialize();
+        Seed('VAL-1', true);
+
+        Card.OpenView();
+        Card.GoToKey('VAL-1');
+        asserterror Card.NameCtl.SetValue('New Name');
+
+        Assert.AreEqual(1, Card.ValidationErrorCount(),
+            'A refused control write must be counted on the page as well as on the control');
+
+        Card.Close();
+    end;
+
+    // Claim 8. The page ledger is 1-based and stores the same text the control's does —
+    // asserted by exact equality against the measured stored string, so it cannot pass on an
+    // arbitrary non-empty value or on BC's "Validation error for Field:" wrapper.
+    [Test]
+    procedure TestPage_PageLevel_GetValidationError_IsOneBasedAndCarriesTheStoredText()
+    var
+        Card: TestPage "TestPage ErrTeardown Card";
+    begin
+        Initialize();
+        Seed('VAL-1', true);
+
+        Card.OpenView();
+        Card.GoToKey('VAL-1');
+        asserterror Card.NameCtl.SetValue('New Name');
+
+        Assert.AreEqual(ValidateErrTok + RefreshSuffixTok, Card.GetValidationError(1),
+            'The page GetValidationError(1) must carry the same stored text the control does');
+
+        Card.Close();
+    end;
+
+    // Claim 9. Index 0 is below the 1-based range and raises a CATCHABLE error rather than
+    // answering the first error or the empty string. Unlike the control-level sibling this is
+    // observable from AL, because the page boundary catches the exception LINQ actually raises.
+    [Test]
+    procedure TestPage_PageLevel_GetValidationError_ErrorsOnIndexZero()
+    var
+        Card: TestPage "TestPage ErrTeardown Card";
+        ErrText: Text;
+    begin
+        Initialize();
+        Seed('VAL-1', true);
+
+        Card.OpenView();
+        Card.GoToKey('VAL-1');
+        asserterror Card.NameCtl.SetValue('New Name');
+
+        asserterror ErrText := Card.GetValidationError(0);
+
+        Assert.IsTrue(GetLastErrorText() <> '',
+            'The page GetValidationError(0) must raise a catchable error, because the index is 1-based');
 
         Card.Close();
     end;
