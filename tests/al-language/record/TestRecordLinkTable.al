@@ -253,36 +253,54 @@ codeunit 60777 "Test Record Link Table"
     // ── The table and the AL surface share one Link ID sequence ──────────────────────
 
     [Test]
-    procedure RecordLink_AddLink_ThenAnUnnumberedTableInsert_EachGetItsOwnLinkId()
+    procedure RecordLink_AddLink_AndUnnumberedTableInserts_ShareOneLinkIdSequence()
     var
         Host: Record "ALT Link Host";
         RecordLink: Record "Record Link";
-        AddedLinkId: Integer;
-        InsertedLinkId: Integer;
+        FirstInsertedId: Integer;
+        AddedId: Integer;
+        SecondInsertedId: Integer;
     begin
         Initialize();
         Seed(12, Host);
 
-        // AddLink writes a Record Link row and consumes a Link ID. The Insert below sets no
-        // "Link ID" at all, so the platform's own AutoIncrement has to hand out the NEXT one
-        // — it cannot reissue the one AddLink already took.
-        AddedLinkId := Host.AddLink('https://example.com/12a', 'ADDED');
-
+        // Order matters, and it is the whole point. The AL Insert goes FIRST and sets no
+        // "Link ID", so the platform's AutoIncrement assigns one and the sequence is now
+        // standing at that value. AddLink then has to continue that same sequence rather than
+        // start one of its own — and the second Insert has to continue past AddLink's row.
+        // Any writer numbering independently collides with one of the other two.
         RecordLink.Init();
         RecordLink."Record ID" := Host.RecordId();
-        RecordLink.URL1 := 'https://example.com/12b';
-        RecordLink.Description := 'INSERTED';
+        RecordLink.URL1 := 'https://example.com/12a';
+        RecordLink.Description := 'INSERTED_FIRST';
         RecordLink.Type := RecordLink.Type::Link;
         RecordLink.Company := CompanyName();
         RecordLink.Insert(true);
-        InsertedLinkId := RecordLink."Link ID";
+        FirstInsertedId := RecordLink."Link ID";
 
-        Assert.AreEqual(2, LinkRowCount(Host.RecordId()),
-            'both writers must leave a row — neither may overwrite or displace the other');
-        Assert.IsTrue(AddedLinkId > 0, 'AddLink must return a positive Link ID');
-        Assert.IsTrue(InsertedLinkId > 0, 'an AutoIncrement Insert must assign a positive Link ID');
-        Assert.AreNotEqual(AddedLinkId, InsertedLinkId,
-            'the two writers draw from ONE Link ID sequence, so they cannot be handed the same id');
+        AddedId := Host.AddLink('https://example.com/12b', 'ADDED');
+
+        Clear(RecordLink);
+        RecordLink.Init();
+        RecordLink."Record ID" := Host.RecordId();
+        RecordLink.URL1 := 'https://example.com/12c';
+        RecordLink.Description := 'INSERTED_SECOND';
+        RecordLink.Type := RecordLink.Type::Link;
+        RecordLink.Company := CompanyName();
+        RecordLink.Insert(true);
+        SecondInsertedId := RecordLink."Link ID";
+
+        Assert.AreEqual(3, LinkRowCount(Host.RecordId()),
+            'all three writes must survive — a reused Link ID would displace or reject one');
+        Assert.IsTrue(FirstInsertedId > 0, 'an AutoIncrement Insert must assign a positive Link ID');
+        Assert.IsTrue(AddedId > 0, 'AddLink must return a positive Link ID');
+        Assert.IsTrue(SecondInsertedId > 0, 'the second Insert must assign a positive Link ID');
+        Assert.AreNotEqual(FirstInsertedId, AddedId,
+            'AddLink must continue the table''s Link ID sequence, not restart one of its own');
+        Assert.AreNotEqual(AddedId, SecondInsertedId,
+            'an Insert after AddLink must continue past AddLink''s row');
+        Assert.AreNotEqual(FirstInsertedId, SecondInsertedId,
+            'the two Inserts must not be handed the same Link ID either');
     end;
 
     // ── An uncommitted link is rolled back like any other uncommitted row ────────────
@@ -296,6 +314,13 @@ codeunit 60777 "Test Record Link Table"
         Initialize();
         Seed(13, Host);
         Seed(14, Bystander);
+        // The commit point matters, and it is why this is not just "asserterror undoes things".
+        // Initialize() writes to the Record Link table itself, so without this Commit the
+        // table's pre-error image is already taken before the link surface is ever used, and
+        // the assertions below would hold whether or not the link surface participates in the
+        // transaction at all. After the Commit, the FIRST write to the Record Link table is
+        // AddLink's own.
+        Commit();
 
         // Two writers of the same table inside one failing statement: the AL link surface and
         // a direct table Insert. Both are uncommitted, so a trapped error must undo both — a
