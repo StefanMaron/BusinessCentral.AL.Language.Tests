@@ -331,8 +331,6 @@ Current coverage:
   deliberately share a value, plus the not-found arm
 - `ValidationErrorCount()` and `GetValidationError()` against a real AL validation error
   raised by the fixture table's own `OnValidate`, including the 1-based index and its range check
-- `Expand()` being **directional** on a flat ListPart: expanding a positioned row is accepted,
-  collapsing it is refused
 - `New()` adding a row that persists to the part's own source table
 
 Notes:
@@ -361,20 +359,20 @@ Notes:
   override `ALVisible`/`ALEnabled` to read the part control's own metadata, but AL cannot
   reach a control on which either would answer false, so the override is not observable from
   AL. The others: `Editable` on the host control does not propagate; `GetField` keys on
-  control ids, not table field numbers; and `Expand()` compiles on a ListPart and is then
-  accepted in one direction and refused in the other.
-- **`Expand()` took three revisions, each decided by the tier**, and the sequence is the most
-  instructive thing in the file. Rev 1 asserted `IsExpanded()` tracks the last `Expand()` and
-  failed from `BindingManager.CollapseRow`. Rev 2 read that as "a flat ListPart cannot expand",
-  asserted the refusal -- and *also* added a `First()`, changing two variables at once; it
-  failed with "An error was expected inside an ASSERTERROR statement", because with the cursor
-  on a data row `Expand(true)` succeeds. Rev 3 separated them: the refusal in rev 1 came from
-  the `Expand(false)` call, not the `Expand(true)` before it. The operative variables are
-  direction and positioning, not "ListParts cannot expand".
-- Deliberately not covered: `IsExpanded()` -- with collapsing refused, the only state it could
-  be observed in is the expanded one, so an assertion would restate the `Expand()` finding
-  rather than measure anything. Also not covered: what a genuinely **expandable** (tree-shaped)
-  part does, which needs a tree-view fixture.
+  control ids, not table field numbers.
+- **`Expand()` and `IsExpanded()` are not coverable from AL at all**, and it took three
+  tier-decided revisions to establish why. Rev 1 asserted `IsExpanded()` tracks the last
+  `Expand()` and failed from `BindingManager.CollapseRow`. Rev 2 read that as "a flat ListPart
+  cannot expand", asserted the refusal -- and *also* added a `First()`, changing two variables
+  at once; it failed with "An error was expected inside an ASSERTERROR statement", so with the
+  cursor on a data row `Expand(true)` succeeds and the rev-1 refusal came from the
+  `Expand(false)` after it. Rev 3 asserted exactly that and failed again with the **same**
+  `InvalidOperationException`, now reported from *inside* the `asserterror` body
+  (`NavMethodScope.AssertErrorAsync` in the callstack).
+  That is the answer: **`asserterror` traps AL errors, not a raw CLR exception surfacing from
+  the client proxy.** The refusal is real and reproducible on all 8 legs, and no AL construct
+  can observe it. A tree-view fixture would not help -- the obstacle is the exception boundary,
+  not the control shape.
 
 ### 8. Additional platform/system surfaces
 
