@@ -9,8 +9,20 @@
 // "Windows renders RDLC" rested on a boolean -- and a boolean cannot distinguish a rendered
 // PDF from an empty or truncated one. Issue #238.
 //
-// The predecessor that asserted only the boolean (cu 60878) has been deleted: it was red on
-// Windows by construction, and this file covers on BOTH tiers what it covered on one.
+// WHAT HAPPENED TO THE PREDECESSOR, cu 60878 (#250, corrected by #256).
+//
+// cu 60878 was deleted, correctly: it asserted a flat "SaveAs returned false", which is red on
+// a Windows tier by construction, and this file covers on BOTH tiers what that covered on one.
+//
+// But 60878 carried TWO assertions and only the first was superseded. Its return-value
+// assertion is subsumed by the branch below. Its SECOND -- the error TEXT the refusing tier
+// reports -- was not asserted anywhere in this file, and deleting the codeunit dropped it: for
+// the span between #250 and #256 nothing in the corpus pinned that string. It was a real,
+// passing measurement when it was removed (run 34099499973, PASS on all 8 cloud legs), so it
+// is restored here, in the false arm, rather than left to a codeunit that was red on Windows.
+//
+// The claim it restores is a claim about the PLATFORM, not the harness: the string appears
+// nowhere in MsDyn365Bc.On.Linux, so it comes from BC's own path under StartupHook Patch #19.
 //
 // WHY ONE TEST BRANCHING ON THE RETURN VALUE, RATHER THAN TWO PLATFORM-GUARDED TESTS.
 //
@@ -95,6 +107,9 @@
 //   char 7 in '0'..'3'           completes the signature: byte 4 is '-' and not one of the
 //                                other 15 bytes the 6-char prefix alone would admit.
 //   Length = 0 on the false path separates "refused cleanly" from "refused but wrote junk".
+//   error text on the false path separates "refused for the RDLC reason this tier documents"
+//                                from "refused silently, or for some other reason" -- the
+//                                assertion restored from cu 60878 (#256).
 
 codeunit 60774 "Test Report SaveAs Pdf Body"
 {
@@ -169,12 +184,38 @@ codeunit 60774 "Test Report SaveAs Pdf Body"
             Assert.IsTrue(
                 StrPos(PdfHeaderBase64Char7Set, CopyStr(Encoded, StrLen(PdfHeaderBase64Prefix) + 1, 1)) > 0,
                 StrSubstNo('Report.SaveAs(Pdf) returned true and wrote %1 bytes beginning "%%PDF", but the 5th byte is not "-" -- not a PDF signature.', BlobLength));
-        end else
+        end else begin
             // The non-rendering tier (BC-on-Linux, StartupHook Patch #19). Returning false
             // must mean the stream was left alone. BC's own SaveReportAsFormatCoreAsync
             // erases the target on a non-Success result, so "false" is meant to be a clean
             // refusal; this pins that it is one for the stream overload too.
             Assert.AreEqual(0, BlobLength,
                 'Report.SaveAs(Pdf) returned false but still wrote bytes into the stream -- a refused render must not leave a partial payload behind.');
+
+            // ...and the refusal must SAY WHY. Carried across from cu 60878 when that
+            // codeunit was deleted (#250): of 60878's two assertions this is the one this
+            // file did not already make, and it was passing on all 8 cloud legs at the
+            // moment it was removed (run 34099499973). See #256.
+            //
+            // WHY THIS IS IN THE FALSE ARM ONLY. On a tier that renders there is no error to
+            // read -- SaveAs returned true, nothing failed, and GetLastErrorText holds
+            // whatever unrelated text an earlier statement happened to leave behind. Asserting
+            // it there would be asserting on a value this test did not produce. The error text
+            // exists only where the render was refused.
+            //
+            // WHY NO asserterror. SaveReportAsFormatCoreAsync returns a result rather than
+            // throwing, so nothing propagates to AL and there is no statement for asserterror
+            // to wrap. The platform still SETS the last-error text on its way to returning
+            // false, and GetLastErrorText reads it -- which is what 60878 measured.
+            //
+            // AND IT CAN FAIL, which is what makes it worth adding. Assert.ExpectedError
+            // (cu 60021) takes its comparison branch whenever the expected text is non-empty,
+            // because the no-error shortcut requires BOTH sides empty; it then fails unless
+            // StrPos(GetLastErrorText, Expected) > 0. With no error in scope GetLastErrorText
+            // is '', a non-empty needle is not found in it, StrPos returns 0, and the
+            // assertion raises ExpectedErrorFailed. A tier that began refusing silently, or
+            // with different text, turns this red rather than sliding past it.
+            Assert.ExpectedError('RDLC report rendering is not implemented on Linux BC');
+        end;
     end;
 }

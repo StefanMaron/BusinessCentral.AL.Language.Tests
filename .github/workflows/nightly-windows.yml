@@ -34,6 +34,14 @@ name: Nightly Windows (official MS BC container)
 # Encrypt() return its plaintext input, so a green there says nothing about encryption. This
 # is therefore the only tier in the repository where that surface is genuinely measured.
 #
+# THAT STEP HAS NOT YET RUN SUCCESSFULLY (#255). As merged in #253 it passed three parameters
+# the cmdlets do not have, so it could not bind and failed on every run. #255 corrects the
+# invocation and makes the precheck validate PARAMETER names rather than cmdlet names, which
+# is what would have caught it. The correction is verified against the cmdlet metadata of all
+# eight BC versions in the matrix, but it is NOT yet verified by execution -- the first green
+# nightly is what will establish that, and until then "the encryption surface is measured
+# here" is the design, not an observation.
+#
 # HOW TO READ THE SUMMARY THIS PRODUCES (#249).
 # The job summary opens with "Failed on THIS run" -- that section, and nothing else in the
 # report, is this run's failure list, and its row count equals the headline failure count.
@@ -448,22 +456,88 @@ jobs:
             $ErrorActionPreference = 'Stop'
             $secure = ConvertTo-SecureString $keyPassword -AsPlainText -Force
 
-            foreach ($cmd in 'New-NAVEncryptionKey', 'Import-NAVEncryptionKey', 'Export-NAVEncryptionKey') {
-              if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+            # PRECHECK ON PARAMETERS, NOT ON NAMES (#255).
+            #
+            # The previous version of this step looped over the three cmdlet NAMES with
+            # Get-Command and passed -- while passing three parameters that do not exist, so
+            # every call failed to bind and the step failed on every run. The names were never
+            # the risk: they have been stable since NAV. What varies, and what actually broke
+            # here, is the PARAMETER SET. So probe the parameters themselves, and name the
+            # cmdlet and the missing parameter when one is absent.
+            $required = @{
+              'New-NAVEncryptionKey'    = @('KeyPath', 'Password', 'Force')
+              'Import-NAVEncryptionKey' = @('ServerInstance', 'KeyPath', 'Password', 'Force',
+                                            'ApplicationDatabaseServer', 'ApplicationDatabaseName')
+              'Export-NAVEncryptionKey' = @('ServerInstance', 'KeyPath', 'Password', 'Force')
+              # Not an encryption cmdlet, but this step now depends on its -KeyName spelling
+              # to derive the database coordinates below, so it is checked on the same terms.
+              'Get-NAVServerConfiguration' = @('ServerInstance', 'KeyName')
+            }
+            foreach ($cmd in $required.Keys) {
+              $g = Get-Command $cmd -ErrorAction SilentlyContinue
+              if (-not $g) {
                 throw "$cmd is not available in this container's NAV management module. Cannot create a tenant encryption key."
               }
+              $missing = $required[$cmd] | Where-Object { -not $g.Parameters.ContainsKey($_) }
+              if ($missing) {
+                throw ("$cmd exists but does not accept: {0}. This BC build's parameter set differs from the one this step was written against (verified identical on 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3, 28.4). Refusing to guess -- see corpus issue #255." -f ($missing -join ', '))
+              }
             }
+
+            # DERIVE THE DATABASE COORDINATES, DO NOT HARDCODE THEM (#255).
+            #
+            # Import-NAVEncryptionKey takes the application database as two MANDATORY
+            # parameters, ApplicationDatabaseServer and ApplicationDatabaseName. Inside a
+            # BcContainerHelper container these are conventionally localhost\SQLEXPRESS and
+            # CRONUS, but "conventionally" is not "always" -- a container pointed at an
+            # external SQL host, or built from a differently-named database, has neither. A
+            # hardcoded pair that happens to work today is the next silent breakage, so read
+            # the values the service instance is ACTUALLY configured with.
+            #
+            # HOW THIS READS THEM, and why -KeyName rather than parsing the whole document.
+            # Get-NAVServerConfiguration has three output shapes, and only one of them needs no
+            # assumption about object structure (decompiled from
+            # Microsoft.BusinessCentral.Management.dll, GetNavServerConfiguration, BC 28.1):
+            #   -KeyName X  -> writes the bare `value` ATTRIBUTE as a string. One value, no shape.
+            #   -AsXml      -> writes a single XmlNode for the whole configuration document.
+            #   (neither)   -> writes a STREAM of `add` XmlNodes, each carrying key/value.
+            # The last two would each need a property path that is right about how PowerShell
+            # adapts an XmlNode; -KeyName returns the string itself, so there is nothing to get
+            # wrong. It is also the spelling this workflow already uses for LicenseFile below.
+            $dbServer   = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseServer
+            $dbInstance = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseInstance
+            $dbName     = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseName
+
+            # Check before combining, so a missing value is reported as itself rather than as a
+            # confusing half-built server string.
+            if ([string]::IsNullOrWhiteSpace($dbServer) -or [string]::IsNullOrWhiteSpace($dbName)) {
+              throw "Could not read DatabaseServer/DatabaseName from Get-NAVServerConfiguration -ServerInstance BC (got server='$dbServer' instance='$dbInstance' name='$dbName'). Import-NAVEncryptionKey needs both and this step will not guess them."
+            }
+
+            # DatabaseInstance is a SEPARATE setting from DatabaseServer, and SQL addresses a
+            # named instance as SERVER\INSTANCE. This mirrors BC's own rule rather than
+            # inventing one: ServerUserSettings.CombineDatabaseServerAndInstance (decompiled
+            # from Microsoft.Dynamics.Nav.Types.dll, BC 28.1) trims a trailing backslash off
+            # the server and appends \<instance> only when DatabaseInstance is non-empty. An
+            # empty DatabaseInstance means the default instance, where the bare name is right.
+            $dbServerFull = $dbServer.TrimEnd([char]92)
+            if (-not [string]::IsNullOrEmpty($dbInstance)) { $dbServerFull = "$dbServerFull\$dbInstance" }
+
+            Write-Host "application database: $dbServerFull / $dbName"
 
             $keyPath = Join-Path $env:TEMP 'tenant-encryption.key'
             if (Test-Path $keyPath) { Remove-Item $keyPath -Force }
 
             # -Force: the instance is stopped and restarted around key generation by the
             # cmdlet itself; without it the cmdlet prompts and a non-interactive session hangs.
-            New-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure -Force
+            # No -ServerInstance: this cmdlet does not have one. It writes a key FILE and does
+            # not talk to an instance at all -- the instance only enters at Import- below.
+            New-NAVEncryptionKey -KeyPath $keyPath -Password $secure -Force
             if (-not (Test-Path $keyPath)) {
               throw "New-NAVEncryptionKey reported success but wrote no key file at $keyPath."
             }
-            Import-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure -ApplicationDatabase -Force
+            Import-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure `
+              -ApplicationDatabaseServer $dbServerFull -ApplicationDatabaseName $dbName -Force
 
             # VERIFY, do not assume. There is no Get-NAVEncryptionKey, so the check is that
             # the tier can now EXPORT a key -- which it can only do if one is loaded.
