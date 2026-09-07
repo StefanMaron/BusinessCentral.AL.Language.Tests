@@ -29,9 +29,13 @@
 // implementation answering one constant -- including the empty string every kind would
 // otherwise take -- fails at least one half.
 //
-// The codeunit case carries the asymmetry worth pinning: a codeunit whose subtype is
-// Normal reports the EMPTY string, while a table whose TableType is Normal reports the
-// word 'Normal'.
+// The codeunit case carries two things worth pinning. First the asymmetry: a codeunit
+// whose subtype is Normal reports the EMPTY string, while a table whose TableType is
+// Normal reports the word 'Normal'. Second, a Subtype = Install codeunit ALSO reports the
+// empty string -- not because Install is blanked, but because the AL compiler never writes
+// Install into object metadata in the first place, so this column sees Normal. The
+// sibling column asserts that same fact from the other side
+// (Record_CodeunitMetadata_Get_InstallCodeunit_ReportsSubtypeNormal).
 
 codeunit 60802 "Test AllObj Virtual Table"
 {
@@ -305,31 +309,63 @@ codeunit 60802 "Test AllObj Virtual Table"
 
     [Test]
     procedure AllObjWithCaption_Get_Codeunit_ObjectSubtypeIsTheSubtypeAndEmptyForNormal()
-    // CLAIM: for a Codeunit row, Object Subtype carries the declared Subtype -- and is the
-    // EMPTY string for a codeunit whose subtype is Normal, rather than the word 'Normal'.
+    // CLAIM: for a Codeunit row, Object Subtype carries the subtype the AL COMPILER wrote
+    // into object metadata -- and is the EMPTY string when that is Normal, rather than the
+    // word 'Normal'.
     var
         AllObjWithCaption: Record AllObjWithCaption;
     begin
         Initialize();
 
-        // Install Seeder declares Subtype = Install.
+        // This very codeunit declares Subtype = Test, so it reads its own row. Subtype = Test
+        // is carried into object metadata, unlike Install -- see the next test.
         Assert.IsTrue(
-            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Codeunit, Codeunit::"Install Seeder"),
-            'AllObjWithCaption has no Codeunit row for Install Seeder.');
+            AllObjWithCaption.Get(
+                AllObjWithCaption."Object Type"::Codeunit, Codeunit::"Test AllObj Virtual Table"),
+            'AllObjWithCaption has no Codeunit row for Test AllObj Virtual Table.');
         Assert.AreEqual(
-            'Install', AllObjWithCaption."Object Subtype",
-            'Object Subtype of a Subtype = Install codeunit must be ''Install''.');
+            'Test', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a Subtype = Test codeunit must be ''Test''.');
 
         // Not An Installer declares no Subtype at all, so its subtype is Normal -- and BC
         // reports Normal as the empty string, not as 'Normal'. The pair is what makes this
-        // discriminating: an implementation writing the enum name unconditionally passes the
-        // first half and fails here.
+        // discriminating: an implementation writing the subtype name unconditionally passes
+        // the first half and fails here.
         Assert.IsTrue(
             AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Codeunit, Codeunit::"Not An Installer"),
             'AllObjWithCaption has no Codeunit row for Not An Installer.');
         Assert.AreEqual(
             '', AllObjWithCaption."Object Subtype",
             'Object Subtype of a codeunit whose subtype is Normal must be the empty string.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_InstallCodeunit_ObjectSubtypeIsEmpty()
+    // CLAIM: a Subtype = Install codeunit reports the EMPTY string here, not 'Install'.
+    //
+    // This is not the Normal-is-blanked rule reaching a second case -- it is a fact about
+    // the AL COMPILER, one level upstream of this table. The compiler does not carry
+    // Install into object metadata: NCLMetaCodeunit.Subtype reads the codeunit's
+    // NavCodeunitOptionsAttribute, i.e. what the compiler wrote, and for an Install
+    // codeunit that is Normal. AllObjWithCaption then blanks Normal, so the value lands on
+    // the empty string by two steps rather than one.
+    //
+    // The sibling column asserts the same fact from the other side: CodeUnit Metadata
+    // (2000000137) reports Subtype::Normal for an Install codeunit
+    // (Record_CodeunitMetadata_Get_InstallCodeunit_ReportsSubtypeNormal). This test is why
+    // an implementation cannot satisfy the Subtype = Test case above by simply echoing the
+    // declared property.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Codeunit, Codeunit::"Install Seeder"),
+            'AllObjWithCaption has no Codeunit row for Install Seeder.');
+        Assert.AreEqual(
+            '', AllObjWithCaption."Object Subtype",
+            'A Subtype = Install codeunit reports the empty string: the compiler writes Normal.');
     end;
 
     [Test]
