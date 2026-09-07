@@ -12,9 +12,18 @@
 // a Codeunit.Run that errors) reliably reproduce it. It still pins the contract every runtime
 // must satisfy regardless of internal caching mechanism.
 //
-// ONE TEST PER CODEUNIT: the corpus's default isolation is per-codeunit, and any
-// SingleInstance cache must be reset at that boundary — two tests in the same codeunit
-// would otherwise share one cached instance.
+// ONE TEST PER CODEUNIT: two tests in the same test codeunit would share one cached
+// instance, because nothing resets a SingleInstance codeunit between them.
+//
+// AND ONE CACHE FIXTURE PER TEST CODEUNIT, for the same reason one level up. A
+// SingleInstance instance is registered on the session's company and released only when
+// that company scope is disposed — it is NOT reset between test codeunits. This test owns
+// SIS Cache (60608); its two siblings own 60625 and 60626. Sharing one cache let whichever
+// codeunit ran first decide the others' answers (corpus #261).
+//
+// SIS Cache is also the only subscriber to SIS Publisher.OnResolveCurrency, and must stay
+// the only one: Resolve() returns whatever the last subscriber assigned, so a second
+// subscriber would make the assertions below depend on subscriber dispatch order.
 
 codeunit 60613 "Test SingleInstance Scope Exit"
 {

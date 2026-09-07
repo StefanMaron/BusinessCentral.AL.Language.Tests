@@ -1,6 +1,14 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-codeunit-object
 // Scope: in-scope
-// Fixtures used: SIS Setup (60607), SIS Cache (60608), SIS Runner (60611)
+// Fixtures used: SIS Setup (60607), SIS Run Scope Cache (60625), SIS Runner (60611)
+//
+// ONE CACHE FIXTURE PER TEST CODEUNIT. A SingleInstance instance is registered on the
+// session's company and released only when that company scope is disposed, so it is shared
+// across every test codeunit in the run. Three test codeunits sharing one cache therefore
+// let whichever ran first decide the other two's answers (corpus #261). Each of the three
+// now has its own cache fixture; this one owns SIS Run Scope Cache (60625). That makes
+// execution order irrelevant by construction, rather than by a reset call that a future
+// reordering could outrun.
 
 codeunit 60614 "Test SingleInstance Run Scope"
 {
@@ -31,7 +39,7 @@ codeunit 60614 "Test SingleInstance Run Scope"
     [Test]
     procedure TestCodeunit_SingleInstance_SurvivesACodeunitRunScope()
     var
-        Cache: Codeunit "SIS Cache";
+        Cache: Codeunit "SIS Run Scope Cache";
     begin
         Initialize();
         SeedSetup('GBP');
