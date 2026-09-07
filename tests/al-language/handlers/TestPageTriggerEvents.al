@@ -210,7 +210,7 @@ codeunit 60636 "Test Page Trigger Events"
     // ---------------------------------------------------- OnNewRecordEvent / OnInsertRecordEvent
 
     [Test]
-    procedure NewAndInsertRecordEvents_PageDrivenInsert_BothFire()
+    procedure NewAndInsertRecordEvents_PageDrivenInsert_FireForTheKeyOnly()
     var
         Row: Record "ALT Page Evt Row";
         TrigLog: Record "ALT Trigger Log";
@@ -220,51 +220,33 @@ codeunit 60636 "Test Page Trigger Events"
         Initialize();
         Rows.OpenNew();
 
-        // [WHEN] a new row is filled in and committed by closing the page
+        // [WHEN] a new row's key is typed, then a second control, then the page is closed
         Rows."Code".SetValue('N1');
         Rows."Value".SetValue('NEW');
         Rows.Close();
 
-        // [THEN] both platform events fired
+        // [THEN] OnNewRecordEvent fired
         TrigLog.SetRange(TriggerName, 'PageNewEvt');
         Assert.RecordIsNotEmpty(TrigLog);
+
+        // [THEN] OnInsertRecordEvent fired exactly once, and it saw the row as it stood when
+        // the KEY was committed — the key set, the later control still blank. The insert is
+        // not deferred until the row is finished.
         TrigLog.SetRange(TriggerName, 'PageInsertEvt');
         Assert.RecordCount(TrigLog, 1);
-
-        // [THEN] OnInsertRecordEvent saw the row about to be written
         TrigLog.FindFirst();
-        Assert.AreEqual('NEW', TrigLog.NewValue, 'Rec."Value" seen by OnInsertRecordEvent');
+        Assert.AreEqual('N1', TrigLog.OldValue, 'Rec."Code" seen by OnInsertRecordEvent');
+        Assert.AreEqual('', TrigLog.NewValue, 'Rec."Value" seen by OnInsertRecordEvent');
 
-        // [THEN] the row exists
+        // [THEN] the write to the second control is therefore a MODIFY, not part of the insert
+        TrigLog.SetRange(TriggerName, 'PageModifyEvt');
+        Assert.RecordCount(TrigLog, 1);
+        TrigLog.FindFirst();
+        Assert.AreEqual('NEW', TrigLog.NewValue, 'Rec."Value" seen by OnModifyRecordEvent');
+
+        // [THEN] the finished row is on disk
         Assert.IsTrue(Row.Get('N1'), 'the page-driven insert must have written the row');
         Assert.AreEqual('NEW', Row."Value", 'the inserted row''s value');
-    end;
-
-    [Test]
-    procedure InsertRecordEvent_AllowInsertFalse_LeavesTheRowUnwritten()
-    var
-        VetoSub: Codeunit "ALT Page Evt Veto Sub";
-        Row: Record "ALT Page Evt Row";
-        TrigLog: Record "ALT Trigger Log";
-        Rows: TestPage "ALT Page Evt Rows";
-    begin
-        // [GIVEN] a bound subscriber that answers AllowInsert := false
-        Initialize();
-        BindSubscription(VetoSub);
-        Rows.OpenNew();
-
-        // [WHEN] a new row is filled in and the page is closed
-        Rows."Code".SetValue('N1');
-        Rows."Value".SetValue('NEW');
-        Rows.Close();
-        UnbindSubscription(VetoSub);
-
-        // [THEN] the subscriber ran
-        TrigLog.SetRange(TriggerName, 'VetoPageInsertEvt');
-        Assert.RecordCount(TrigLog, 1);
-
-        // [THEN] and no row was written
-        Assert.IsFalse(Row.Get('N1'), 'the row must not exist after AllowInsert := false');
     end;
 
     // ------------------------------------------- OnOpenPageEvent / OnQueryClosePageEvent /

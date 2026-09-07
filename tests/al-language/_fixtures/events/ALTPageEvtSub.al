@@ -13,7 +13,7 @@ codeunit 60633 "ALT Page Evt Sub"
     end;
 
     [EventSubscriber(ObjectType::Page, Page::"ALT Page Evt Rows", 'OnQueryClosePageEvent', '', false, false)]
-    local procedure OnQueryClosePageEvent(var Rec: Record "ALT Page Evt Row"; CloseAction: Action; var AllowClose: Boolean)
+    local procedure OnQueryClosePageEvent(var Rec: Record "ALT Page Evt Row"; var AllowClose: Boolean)
     begin
         Log('PageQueryCloseEvt', '', '');
     end;
@@ -39,7 +39,7 @@ codeunit 60633 "ALT Page Evt Sub"
     [EventSubscriber(ObjectType::Page, Page::"ALT Page Evt Rows", 'OnInsertRecordEvent', '', false, false)]
     local procedure OnInsertRecordEvent(var Rec: Record "ALT Page Evt Row"; BelowxRec: Boolean; var xRec: Record "ALT Page Evt Row"; var AllowInsert: Boolean)
     begin
-        Log('PageInsertEvt', '', Rec."Value");
+        Log('PageInsertEvt', Rec."Code", Rec."Value");
     end;
 
     [EventSubscriber(ObjectType::Page, Page::"ALT Page Evt Rows", 'OnModifyRecordEvent', '', false, false)]

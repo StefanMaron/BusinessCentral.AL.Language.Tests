@@ -74,7 +74,7 @@ page 60632 "ALT Page Evt Rows"
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     begin
-        Log('PageOnInsertTrig', '', Rec."Value");
+        Log('PageOnInsertTrig', Rec."Code", Rec."Value");
         exit(true);
     end;
 
