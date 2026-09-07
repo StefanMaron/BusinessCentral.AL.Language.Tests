@@ -27,9 +27,22 @@ name: Nightly Windows (official MS BC container)
 #
 # READ THIS BEFORE TREATING A GREEN ON THE PERMISSION TESTS AS GOOD NEWS.
 # Codeunits 60013 and 60827 declare `TestPermissions = Disabled` and no `Permissions` property,
-# so their writes fall through to whatever the license grants. A dev-licensed container is
-# expected to MASK that -- the same masking that hid it until a SaaS run exposed it. A pass
-# there means nothing for those three tests. See #213.
+# so their writes fall through to whatever the license grants. So a pass there is a statement
+# about the license, not about the test.
+#
+# WHICH LICENSE, AND WHY THE FAILURE COUNT IS EXPECTED TO RISE (#237).
+# The default artifact type is `sandbox`, which narrows that license deliberately. `onprem`
+# carries a full CRONUS dev license and MASKS license-refused writes -- the same masking that
+# hid #213's three permission failures until a SaaS run exposed them. So expect MORE failures
+# on sandbox than the onprem runs reported: that is the instrument working, not a regression,
+# and #244's three permission failures (which surfaced even on onprem) are the shape to expect
+# more of. A green on a permission test means nothing on either tier while TestPermissions is
+# Disabled; on sandbox a RED one is informative, where on onprem it would not have appeared.
+#
+# sandbox is also the tier whose TenantEnvironmentType gating matches what ci.yml runs, so
+# behaviour BC gates on environment type stops producing a false divergence between the two.
+# `onprem` stays selectable and is the right pick for a question about a platform capability
+# rather than a licensed one. See #213, #237.
 
 on:
   # The reason this trigger is first: confirming #213's list on demand is the immediate job.
@@ -40,9 +53,13 @@ on:
         required: true
         default: '28.4'
       artifact_type:
-        description: 'BC artifact type. onprem carries a full CRONUS dev license; sandbox is closer to a SaaS tier but a narrower license.'
+        # sandbox is the default because the instrument is meant to resemble the tier #213 was
+        # measured against. onprem stays selectable and is the right pick for a question about a
+        # platform capability rather than a licensed one -- the RDLC/PDF measurement used it
+        # deliberately, because there the dev license is a convenience and not a distortion.
+        description: 'BC artifact type. sandbox matches the SaaS tier #213 measured and gates TenantEnvironmentType-dependent behaviour correctly, at a narrower license. onprem carries a full CRONUS dev license -- pick it to ask about a platform capability rather than a licensed one.'
         required: true
-        default: 'onprem'
+        default: 'sandbox'
         type: choice
         options: [onprem, sandbox]
       country:
@@ -171,7 +188,12 @@ jobs:
 
     env:
       BC_VERSION: ${{ needs.gate.outputs.bc_version }}
-      ARTIFACT_TYPE: ${{ github.event.inputs.artifact_type || 'onprem' }}
+      # Keep this fallback and the workflow_dispatch input's `default:` in step. They are two
+      # separate materialisations of the same decision -- the input default applies to a manual
+      # dispatch, this fallback to `schedule` and `pull_request`, where `github.event.inputs` is
+      # empty -- and if they disagree, the nightly and the on-demand run measure different tiers
+      # while both reporting under the same name.
+      ARTIFACT_TYPE: ${{ github.event.inputs.artifact_type || 'sandbox' }}
       COUNTRY: ${{ github.event.inputs.country || 'w1' }}
       CULTURE: ${{ github.event.inputs.culture || 'en-US' }}
       TIMEZONE: 'UTC'
