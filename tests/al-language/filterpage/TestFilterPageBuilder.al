@@ -67,10 +67,17 @@
 ///      implementation returning '' fails. The literal text is NOT asserted -- it is a
 ///      localized resource and this matrix runs more than one BC version -- only that it is
 ///      non-empty, that an assigned caption replaces it, and that Clear() restores it.
-///  10. ASSIGNMENT IS A DEEP COPY, NOT A SHARED REFERENCE. Mutating the copy leaves the
-///      original's Count() and views alone. This is the OPPOSITE of WebServiceActionContext,
-///      whose assignment shares the underlying context, so the two files together pin that
-///      AL's `:=` on a complex type is per-type behavior rather than one uniform rule.
+///  10. ASSIGNMENT IS NEITHER A DEEP COPY NOR A SHARED REFERENCE -- IT IS SPLIT, AND THIS IS
+///      THE MOST SURPRISING THING ABOUT THE TYPE. The CONTROL COLLECTION is copied, so adding
+///      a control to the copy leaves the original's Count() alone; but the RECORD each
+///      control wraps is SHARED, so a view written through either builder is visible from
+///      both. Three tests pin the split, and the third of them (a view set on the copy
+///      reaching the original) is there because an earlier revision of this file asserted the
+///      OPPOSITE and all 8 cloud legs falsified it identically. The mechanism is
+///      NavRecordRef.Clone in Ncl.dll: it builds a fresh wrapper and copies `Target` by
+///      reference. Compare WebServiceActionContext, whose assignment shares outright --
+///      together the two files establish that AL's `:=` on a complex type is per-type
+///      behavior, and can even be per-FIELD within one type.
 ///  11. Clear() EMPTIES THE CONTROLS BUT KEEPS AN ASSIGNED CAPTION. Count() returns to 0 and
 ///      a previously-known name stops resolving -- so Clear() is not merely a filter reset --
 ///      but the page caption SURVIVES it. "Clear resets the whole object" is the obvious
@@ -243,7 +250,7 @@ codeunit 60279 "Test Filter Page Builder"
 
         asserterror FPB.AddTable('Bad', 0);
 
-        Assert.ExpectedError('');
+        Assert.ExpectedError('The filter page table ID must be a positive number greater than zero.');
         Assert.AreEqual(0, FPB.Count(), 'A rejected AddTable must not leave a control behind');
     end;
 
@@ -536,7 +543,10 @@ codeunit 60279 "Test Filter Page Builder"
 
         asserterror Unused := FPB.Name(0);
 
-        Assert.ExpectedError('');
+        // The message names BOTH bounds of the accepted range, so asserting it in full is a
+        // second, independent statement that the range really is 1..Count() -- one control
+        // was added, so the upper bound must read 1 and not 0.
+        Assert.ExpectedError('The filter control index value 0 is out of range. The value must be greater than or equal to 1 and less than or equal to 1.');
     end;
 
     [Test]
@@ -553,7 +563,7 @@ codeunit 60279 "Test Filter Page Builder"
 
         asserterror Unused := FPB.Name(2);
 
-        Assert.ExpectedError('');
+        Assert.ExpectedError('The filter control index value 2 is out of range. The value must be greater than or equal to 1 and less than or equal to 1.');
     end;
 
     // ── PageCaption: a platform default, not empty ─────────────────────────────────
@@ -611,11 +621,11 @@ codeunit 60279 "Test Filter Page Builder"
     // ── Assignment is a deep copy ──────────────────────────────────────────────────
 
     [Test]
-    procedure FilterPageBuilder_Assignment_IsADeepCopy_CountIndependent()
-    // CLAIM: assigning one builder to another COPIES the controls; adding to the copy leaves
-    // the original's Count() alone. This is the opposite of WebServiceActionContext, whose
-    // assignment shares the underlying object -- so the two files together establish that
-    // AL's `:=` on a complex type is per-type behavior, not one uniform rule.
+    procedure FilterPageBuilder_Assignment_CopiesTheControlCollection()
+    // CLAIM: assigning one builder to another COPIES the control collection; adding a control
+    // to the copy leaves the original's Count() alone. This is the half of the assignment
+    // semantics that IS a copy -- the record behind each control is not, see
+    // FilterPageBuilder_Assignment_ViewOnCopyDoesReachOriginal below.
     var
         Original: FilterPageBuilder;
         CopyBuilder: FilterPageBuilder;
@@ -654,10 +664,27 @@ codeunit 60279 "Test Filter Page Builder"
     end;
 
     [Test]
-    procedure FilterPageBuilder_Assignment_ViewOnCopyDoesNotReachOriginal()
-    // CLAIM: the other direction of the deep copy -- a filter set on the COPY after the
-    // assignment does not appear in the original's view. With the test above, this pins the
-    // copy as a genuine snapshot rather than a shared object that happens to read alike.
+    procedure FilterPageBuilder_Assignment_ViewOnCopyDoesReachOriginal()
+    // CLAIM: the copy is SHALLOW where it matters most, and this is the single most
+    // surprising thing about the type. A filter set on the COPY after the assignment DOES
+    // appear in the original's view -- even though adding a whole new control to the copy
+    // does not (the test above). The two together are the real semantics:
+    //
+    //     the CONTROL COLLECTION is copied  -- Count() is independent
+    //     the RECORD each control wraps is SHARED -- views written through either builder
+    //                                               are visible from both
+    //
+    // MEASURED, not assumed. An earlier revision of this file asserted the opposite -- that
+    // a view set on the copy stays on the copy -- and all 8 cloud legs of the corpus CI
+    // falsified it identically on BC 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3 and 28.4. The
+    // mechanism is visible in Microsoft.Dynamics.Nav.Ncl.dll:
+    // FilterControlInformation's copy constructor calls RecordReference.Clone(parent), and
+    // NavRecordRef.Clone builds a fresh wrapper that copies `Target` BY REFERENCE. The
+    // wrapper is new; the NavRecord holding the filters behind it is the same object.
+    //
+    // So "FilterPageBuilder assignment is a deep copy" is wrong, and so is "it is a shared
+    // reference". Neither summary survives contact with the tier; only the split above does,
+    // which is why both directions are pinned rather than one.
     var
         Original: FilterPageBuilder;
         CopyBuilder: FilterPageBuilder;
@@ -671,7 +698,7 @@ codeunit 60279 "Test Filter Page Builder"
         CopyBuilder.SetView('Universal', 'WHERE("Integer Field"=FILTER(>4711))');
         OriginalView := Original.GetView('Universal');
 
-        Assert.IsFalse(OriginalView.Contains('4711'), 'A view set on the copy must not reach the original');
+        Assert.IsSubstring(OriginalView, '4711');
     end;
 
     // ── Clear() ────────────────────────────────────────────────────────────────────

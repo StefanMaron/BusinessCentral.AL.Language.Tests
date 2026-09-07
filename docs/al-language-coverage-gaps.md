@@ -242,7 +242,7 @@ Current coverage:
   names accumulating
 - name-keyed identity: re-adding a name against the same table is idempotent (`Count()` stays
   at 1), and re-adding it against a *different* table is a redefinition error
-- argument validation: a table id below 1 is refused
+- argument validation: a table id below 1 is refused, with the exact platform message asserted
 - the trappable-return convention on `AddTable` and `SetView` -- empty string / `false` when the
   return value is captured, a catchable error when it is discarded -- asserted in both
   directions for both methods
@@ -252,11 +252,14 @@ Current coverage:
   name: `GetView` returns empty, `SetView` errors
 - `GetView(name, false)` rendering an option filter as its ordinal and `GetView(name, true)` as
   its member name
-- `Name()` being 1-based and in insertion order, with both range ends erroring
+- `Name()` being 1-based and in insertion order, with both range ends erroring; the range
+  message names both bounds, so asserting it in full independently restates the 1..`Count()`
+  range
 - `PageCaption()` returning a non-empty platform default when unset, an assigned caption
   replacing it, and last-write-wins
-- assignment being a deep copy: `Count()`, pre-existing views and post-assignment writes are all
-  independent in both directions
+- assignment being **split**: the control collection is copied (`Count()` is independent) while
+  the record behind each control is shared (a view written through either builder is visible
+  from both)
 - `Clear()` emptying the controls and allowing a cleared name to be reused
 - `Format()` and round-tripping through a `Variant`
 
@@ -276,9 +279,15 @@ Notes:
   a cleared builder reports `Count() = 0` while still returning the caption it was assigned. The
   test asserts both halves together, because an implementation that reset everything would pass
   every other `Clear` test in the file.
-- **Assignment is a deep copy**, the opposite of `WebServiceActionContext`, whose assignment
-  shares the underlying object. The two files together establish that AL's `:=` on a complex
-  type is per-type behavior rather than one uniform rule.
+- **Assignment is neither a deep copy nor a shared reference -- it is split**, and this is the
+  most surprising thing about the type. The control collection is copied, so adding a control to
+  the copy leaves the original's `Count()` alone; the `NavRecordRef` each control wraps is
+  shared, so a view written through either builder is visible from both. An earlier revision of
+  the test file asserted a full deep copy and all 8 cloud legs falsified it identically on every
+  version. The mechanism is `NavRecordRef.Clone` in `Microsoft.Dynamics.Nav.Ncl.dll`: it builds
+  a fresh wrapper and copies `Target` **by reference**. Compare `WebServiceActionContext`, whose
+  assignment shares outright -- together the two files establish that AL's `:=` on a complex
+  type is per-type behavior, and can even be per-*field* within one type.
 - `=` is refused on the type (`AL0175`), but `Format()` and conversion to a `Variant` *and back*
   all work -- a wider surface than either `SecretText` or `WebServiceActionResultCode`.
 - Deliberately not covered: `RunModal()`. It is the one genuinely UI-level member; covering it
