@@ -6,11 +6,18 @@
 //
 /// <summary>
 /// CLAIM: TestPart is the TestPage-shaped handle a test gets when it reaches a `part()`
-/// control through an open TestPage. It is NOT a thin alias for TestPage: it carries its own
-/// implementations of the three boolean accessors -- Visible(), Enabled() and Editable() --
-/// which answer from the PART CONTROL on the host, while every other member is inherited
-/// from the same base TestPage uses and answers from the part PAGE. That split is the reason
-/// this type is worth a file of its own, and it is what most of the tests below pin.
+/// control through an open TestPage. Reading Ncl.dll, it looks like it should NOT be a thin
+/// alias for TestPage -- NavTestPart overrides exactly two members, ALEnabled and ALVisible,
+/// both reading the part CONTROL's own metadata, while everything else is inherited from the
+/// base TestPage uses and reads the part PAGE.
+///
+/// A real service tier says that distinction is NOT OBSERVABLE FROM AL, and establishing
+/// that is the main result of this file. The overrides exist, but every route to a control
+/// whose Visible or Enabled would be false goes through a part that BC does not put in the
+/// test page's control tree at all -- so AL cannot reach a handle on which either answers
+/// false. Editable(), which is inherited rather than overridden, likewise does not follow the
+/// host control's Editable property. All three were first written as PAIRS asserting the
+/// opposite, and all 8 cloud legs falsified all three identically.
 ///
 /// Nothing in this repository measured TestPart as a surface before this file. Searching the
 /// suite for the type name -- with both `rg --hidden` and `command grep -rn`, which have
@@ -29,20 +36,18 @@
 ///
 /// WHAT IS PINNED HERE, and what each test would catch if it broke:
 ///
-///   1. Visible() AND Enabled() ANSWER FROM THE PART CONTROL, NOT FROM THE HOST OR THE PART
-///      PAGE. The host opens with three parts over the SAME part page; one of them is
-///      declared Visible = false and Enabled = false on the host's control. Both accessors
-///      are asserted across that PAIR on ONE open host, so an implementation hardcoding true,
-///      or reading the host's own visibility, or reading the part page's properties, fails --
-///      none of those can produce two different answers for two controls over one page.
-///      Ncl.dll agrees in advance: NavTestPart overrides exactly these two members, as
-///      `return testPart.Enabled;` and `return testPart.Visible;` against the part control's
-///      own metadata, and inherits everything else.
-///   2. Editable() IS THE THIRD MEMBER OF THAT SET AND IS ASSERTED THE SAME WAY. The host
-///      hosts the SAME part page twice, once plainly and once with Editable = false on the
-///      control. Using one page for both arms is what rules out an implementation reading the
-///      part page instead of the control: such an implementation must answer identically for
-///      the two, and the test requires it not to.
+///   1. A PART DECLARED Visible = false IS NOT IN THE TEST PAGE'S CONTROL TREE AT ALL.
+///      Reaching it is a catchable error -- "The part with ID = <n> was not found on the
+///      page." -- not a handle reporting false. Consequence: Visible() can never be observed
+///      returning false from AL, and the same is true of Enabled() by the same route. Both
+///      are pinned in the only two forms the tier permits: true for a reachable part, and
+///      the error for an unreachable one. The error is asserted by SUBSTRING because the
+///      message embeds a compiler-generated control id that differs per compilation.
+///   2. Editable = false ON THE HOST'S PART CONTROL DOES NOT PROPAGATE TO Editable(). The
+///      host hosts the SAME part page twice, once plainly and once with Editable = false, and
+///      both report editable. The load-bearing assertion is the AreEqual stating the two
+///      AGREE despite differing in the host property -- which is what an implementation
+///      honoring that property would fail.
 ///   3. Caption() READS THE PART PAGE, NOT THE HOSTING CONTROL. Two hosts host one part page:
 ///      the default host's control carries no caption, the caption host's control overrides
 ///      it with a different string. Caption() answers the PART PAGE's caption from both. The
@@ -54,9 +59,13 @@
 ///      over three seeded rows by reading a distinctive value at each stop, so an
 ///      implementation answering the first row for every position fails, and one answering
 ///      "there are rows" unconditionally fails the empty-part arm.
-///   5. Next() AND Previous() RETURN false AT THE ENDS RATHER THAN WRAPPING OR ERRORING. Both
-///      ends are asserted, and both are asserted to leave the cursor where it was -- a
-///      failed move is not a move.
+///   5. THE TWO ENDS ARE NOT SYMMETRIC, BECAUSE AN EDITABLE REPEATER CARRIES A TRAILING BLANK
+///      NEW-ROW LINE. Previous() before the first row answers false and does not move. But
+///      Next() past the last DATA row answers TRUE, stepping onto that blank line; only the
+///      step after it answers false. So an editable part's rowset is one row longer than its
+///      table. Read together with the empty-part arm -- where First() does NOT land on that
+///      same blank line -- the trailing row is reachable by walking forward but is not a row
+///      First() will find.
 ///   6. GoToKey() TAKES THE PRIMARY KEY FIELDS IN ORDER AND ITS ARITY IS CHECKED. The fixture
 ///      table's key is deliberately COMPOSITE (Grp + "Line No."), which is what makes the
 ///      negative case expressible at all: GoToKey with one value where two are required is a
@@ -70,10 +79,14 @@
 ///   8. GoToRecord() POSITIONS FROM A Record RATHER THAN FROM KEY VALUES, AND AGREES WITH
 ///      GoToKey() ON THE SAME ROW. Asserted by landing on a row that is neither first nor
 ///      last, so an implementation ignoring its argument fails.
-///   9. GetField() RESOLVES A CONTROL BY ITS FIELD ID AND THE RESULT READS THE CURRENT ROW.
-///      The value read through GetField() is asserted equal to the value read through the
-///      named control on the same row, and DIFFERENT from the value on another row -- the
-///      second half is what rules out an implementation returning a constant.
+///   9. GetField(Id) TAKES A PAGE CONTROL ID, NOT A TABLE FIELD NUMBER. Passing a table field
+///      number is refused with "The field with ID = <n> is not found on the page." Ncl.dll
+///      shows this is by design and not a lookup that merely missed: GetField is
+///      `fields.TryGetValue(id, ...)` over the page's own control dictionary, falling back to
+///      the client control tree; table field numbers are keys in neither. Control ids are
+///      compiler-generated per compilation, so no literal id is assertable here -- the test
+///      pins the refusal, and asserts alongside it that the number passed IS a real table
+///      field number, so it cannot pass merely because the number was meaningless.
 ///  10. FindFirstField()/FindNextField()/FindPreviousField() SEARCH THE ROWSET BY A CONTROL
 ///      VALUE. Two rows deliberately SHARE a Descr value while differing in key, so
 ///      FindFirstField lands on the earlier and FindNextField advances to the later; a third
@@ -144,13 +157,14 @@
 /// What DOES compile, probed rather than assumed: Format(Host.Lines), assignment of a part
 /// handle into a Variant, and Expand()/IsExpanded() on a plain ListPart.
 ///
-/// ON Expand() AND IsExpanded(): they compile on a ListPart, so they are measured below
-/// rather than withheld -- but the test that measures them makes the WEAKER of the two
-/// available claims, and says so. These two members govern expandable (tree-shaped) part
-/// controls, and this suite hosts flat ListParts, so what the pair can honestly pin here is
-/// that IsExpanded() answers consistently with the last Expand() it was given, NOT what a
-/// tree control would do. A tree-view fixture is a separate suite. Nothing else on the type
-/// is withheld.
+/// ON Expand() AND IsExpanded(): they were going to be withheld as UI-only; probing showed
+/// both COMPILE on a ListPart, so they were measured instead -- and the measurement is that
+/// COMPILING IS NOT THE SAME AS BEING SUPPORTED. All 8 cloud legs raised
+/// System.InvalidOperationException, "Expanding and collapsing are not supported on this
+/// rowEntry", from BindingManager.CollapseRow. The refusal is pinned rather than the members
+/// skipped, because that distinguishes "this part cannot expand" from "Expand() did nothing",
+/// which is exactly the difference a silent no-op would hide. What a genuinely expandable
+/// control does is still unmeasured and needs a tree-view fixture. Nothing else is withheld.
 /// </summary>
 codeunit 60346 "Test TestPart"
 {
@@ -191,10 +205,20 @@ codeunit 60346 "Test TestPart"
     // ── Visible / Enabled / Editable: the three members TestPart overrides ──────────
 
     [Test]
-    procedure TestPart_Visible_AnswersFromThePartControl()
-    // CLAIM: Visible() answers from the part control on the host, so two controls over the
-    // SAME part page answer differently when the host declares them differently. An
-    // implementation hardcoding true, or reading the host page, cannot produce both answers.
+    procedure TestPart_Visible_AnswersTrueForAReachablePart()
+    // CLAIM, and it is a NARROWER claim than the one this test was first written to make:
+    // Visible() answers true for a part that is reachable at all.
+    //
+    // The first revision asserted the pair -- a Visible = true part answering true and a
+    // Visible = false part answering false on the same open host -- and all 8 cloud legs
+    // falsified it identically, with "The part with ID = 1318487454 was not found on the
+    // page." That is the finding, and it is a sharper fact than the assertion it replaced:
+    // a part declared Visible = false is NOT RENDERED INTO THE TEST PAGE'S CONTROL TREE AT
+    // ALL, so `Host.Hidden` does not resolve and there is no handle on which to call
+    // Visible(). Visible() can therefore never be observed returning false from AL.
+    //
+    // The corollary is what the negative arm below pins instead: reaching an invisible part
+    // is a catchable error naming it, not a handle that reports false.
     var
         Host: TestPage "ALT TestPart Host";
     begin
@@ -204,17 +228,46 @@ codeunit 60346 "Test TestPart"
         Host.OpenEdit();
 
         Assert.IsTrue(Host.Lines.Visible(),
-            'the part control declared without Visible must report visible');
-        Assert.IsFalse(Host.Hidden.Visible(),
-            'the part control declared Visible = false must report not visible, on the same open host');
+            'a part that is reachable at all must report visible');
         Host.Close();
     end;
 
     [Test]
-    procedure TestPart_Enabled_AnswersFromThePartControl()
-    // CLAIM: Enabled() is the sibling of Visible() and answers the same way -- from the
-    // control, not the page. Asserted across the same pair, so the two tests together rule
-    // out an implementation that conflated the two properties.
+    procedure TestPart_InvisiblePart_IsNotInTheControlTreeAtAll()
+    // CLAIM: a part declared Visible = false on the host is absent from the test page's
+    // control tree, so REACHING it errors rather than yielding a handle that reports false.
+    // This is the negative arm that the Visible() pair was originally meant to be, relocated
+    // to where BC actually put the observable.
+    //
+    // The error text is asserted by substring on 'was not found on the page', not in full,
+    // because the message embeds a generated numeric control id that differs per compilation.
+    var
+        Host: TestPage "ALT TestPart Host";
+        Reached: Boolean;
+    begin
+        Initialize();
+        SeedThreeRows();
+
+        Host.OpenEdit();
+
+        asserterror Reached := Host.Hidden.Visible();
+
+        Assert.IsTrue(StrPos(GetLastErrorText(), 'was not found on the page') > 0,
+            'reaching a part declared Visible = false must error that the part is not on the page');
+        Host.Close();
+    end;
+
+    [Test]
+    procedure TestPart_Enabled_AnswersTrueForAReachablePart()
+    // CLAIM: the same narrowing applies to Enabled(). The fixture's disabled part is also
+    // declared Visible = false, so it is unreachable for the reason above and the pair
+    // cannot be formed through it either.
+    //
+    // Ncl.dll is worth stating here because it makes the limitation precise rather than
+    // vague: NavTestPart DOES override ALEnabled as `return testPart.Enabled;`, reading the
+    // part control's own metadata. The override exists and is real; what the tier
+    // establishes is that AL cannot reach a control whose Enabled would be false, because
+    // the routes to one go through a part that is not in the tree.
     var
         Host: TestPage "ALT TestPart Host";
     begin
@@ -224,18 +277,23 @@ codeunit 60346 "Test TestPart"
         Host.OpenEdit();
 
         Assert.IsTrue(Host.Lines.Enabled(),
-            'the part control declared without Enabled must report enabled');
-        Assert.IsFalse(Host.Hidden.Enabled(),
-            'the part control declared Enabled = false must report not enabled, on the same open host');
+            'a part that is reachable at all must report enabled');
         Host.Close();
     end;
 
     [Test]
-    procedure TestPart_Editable_AnswersFromThePartControl()
-    // CLAIM: Editable() answers from the control too. This is the sharpest of the three,
-    // because both arms host the IDENTICAL part page -- "ALT TestPart Lines" -- and differ
-    // only in the host's Editable property. An implementation reading the part page must
-    // answer the same for both, and this test requires it not to.
+    procedure TestPart_Editable_IsNotDrivenByTheHostControlsEditableProperty()
+    // CLAIM, and this one INVERTS what the test first asserted: Editable = false on the
+    // HOST'S PART CONTROL does NOT make the part report non-editable.
+    //
+    // The first revision asserted the opposite -- that the same part page hosted with
+    // Editable = false would answer false -- and all 8 cloud legs falsified it identically.
+    // So the property does not propagate to what TestPart.Editable() reports; the two
+    // controls over the same part page agree, and the surprising direction is the true one.
+    //
+    // Both halves are asserted together, and the AreEqual is the load-bearing one: it states
+    // the two controls agree DESPITE differing in the host property, which is exactly the
+    // claim an implementation honoring the host property would fail.
     var
         Host: TestPage "ALT TestPart Host";
     begin
@@ -245,9 +303,11 @@ codeunit 60346 "Test TestPart"
         Host.OpenEdit();
 
         Assert.IsTrue(Host.Lines.Editable(),
-            'the part control declared without Editable must report editable');
-        Assert.IsFalse(Host.ReadOnlyLines.Editable(),
-            'the SAME part page hosted with Editable = false must report not editable');
+            'a part hosted without an Editable property must report editable');
+        Assert.IsTrue(Host.ReadOnlyLines.Editable(),
+            'Editable = false on the HOST''s part control does not make the part report non-editable');
+        Assert.AreEqual(Host.Lines.Editable(), Host.ReadOnlyLines.Editable(),
+            'two controls over the same part page must agree, despite differing in the host''s Editable property');
         Host.Close();
     end;
 
@@ -402,11 +462,17 @@ codeunit 60346 "Test TestPart"
     end;
 
     [Test]
-    procedure TestPart_Next_AnswersFalseAtTheEndAndDoesNotMove()
-    // CLAIM: Next() past the last row answers false rather than wrapping to the first or
-    // erroring, AND leaves the cursor where it was. The second half is the one that matters:
-    // an implementation that wrapped would answer false only by accident, and the row
-    // assertion catches it.
+    procedure TestPart_Next_StepsOntoTheTrailingNewRowLineAtTheEnd()
+    // CLAIM, and it INVERTS what this test first asserted: Next() past the last DATA row of
+    // an editable repeater answers TRUE, stepping onto the trailing blank new-row line -- it
+    // is only the row after THAT which answers false.
+    //
+    // The first revision asserted false at the end and all 8 cloud legs falsified it. The
+    // corrected shape is worth more than the original: it pins that an editable part's
+    // rowset is one row LONGER than its table, that the extra row is blank, and that the end
+    // is still an end. Compare TestPart_First_AnswersFalseOnAnEmptyPart, which pins that
+    // First() does NOT land on that same blank line -- together the two say the trailing row
+    // is reachable by walking forward but is not a row First() will find.
     var
         Host: TestPage "ALT TestPart Host";
     begin
@@ -416,9 +482,14 @@ codeunit 60346 "Test TestPart"
         Host.OpenEdit();
         Host.Lines.Last();
 
-        Assert.IsFalse(Host.Lines.Next(), 'Next() past the last row must answer false');
         Assert.AreEqual('30', Host.Lines.LineNo.Value(),
-            'a failed Next() must leave the cursor on the last row, not wrap to the first');
+            'Last() must land on the last DATA row');
+        Assert.IsTrue(Host.Lines.Next(),
+            'Next() past the last data row must answer true, stepping onto the trailing new-row line');
+        Assert.AreEqual('', Host.Lines.Descr.Value(),
+            'the trailing new-row line must be blank, not a repeat of the last data row');
+        Assert.IsFalse(Host.Lines.Next(),
+            'Next() past the trailing new-row line must answer false -- the end is still an end');
         Host.Close();
     end;
 
@@ -556,30 +627,41 @@ codeunit 60346 "Test TestPart"
     // ── GetField ───────────────────────────────────────────────────────────────────
 
     [Test]
-    procedure TestPart_GetField_ResolvesByFieldIdAndReadsTheCurrentRow()
-    // CLAIM: GetField() resolves a control by the underlying FIELD id and the handle reads
-    // the CURRENT row. Asserted equal to the named control on the same row, and DIFFERENT
-    // after moving -- the second half is what rules out an implementation returning a
-    // constant or a stale first-row value.
+    procedure TestPart_GetField_TakesAControlIdNotATableFieldNo()
+    // CLAIM, and it corrects a wrong reading of the method's own documentation: GetField(Id)
+    // resolves a control by the PAGE CONTROL's generated id, NOT by the underlying table's
+    // field number.
+    //
+    // The first revision passed Row.FieldNo(Descr) -- table field 3 -- and all 8 cloud legs
+    // answered "The field with ID = 3 is not found on the page." Ncl.dll shows why, and
+    // shows it is by design rather than a lookup that merely failed: NavTestPageBase.GetField
+    // is `fields.TryGetValue(id, ...)` over the page's own control dictionary, falling back
+    // to testPage.GetField(id) against the client control tree. Table field numbers are not
+    // keys in either.
+    //
+    // Control ids are compiler-generated per compilation, so no literal id can be asserted
+    // here. What IS assertable, and is the whole content of the contract this test can reach,
+    // is the negative: a table field number is refused, with an error naming the id. That is
+    // asserted alongside the fact that the SAME number IS a valid table field number, so the
+    // test cannot pass merely because the number was meaningless.
     var
         Host: TestPage "ALT TestPart Host";
         Row: Record "ALT TestPart Row";
+        Fetched: Text;
     begin
         Initialize();
         SeedThreeRows();
 
+        Assert.AreEqual('Descr', Row.FieldName(3),
+            'field 3 must really be a valid table field, so the refusal below is about the ID SPACE');
+
         Host.OpenEdit();
         Host.Lines.First();
 
-        Assert.AreEqual(Host.Lines.Descr.Value(), Host.Lines.GetField(Row.FieldNo(Descr)).Value(),
-            'GetField() must read the same value as the named control on the same row');
-        Assert.AreEqual('Alpha', Host.Lines.GetField(Row.FieldNo(Descr)).Value(),
-            'GetField() must read the first row''s value while positioned there');
+        asserterror Fetched := Host.Lines.GetField(Row.FieldNo(Descr)).Value();
 
-        Host.Lines.Next();
-
-        Assert.AreEqual('Shared', Host.Lines.GetField(Row.FieldNo(Descr)).Value(),
-            'GetField() must follow the cursor rather than answering a stale value');
+        Assert.IsTrue(StrPos(GetLastErrorText(), 'is not found on the page') > 0,
+            'GetField() must refuse a TABLE field number: its argument is a page control id');
         Host.Close();
     end;
 
@@ -757,36 +839,35 @@ codeunit 60346 "Test TestPart"
     // ── Expand / IsExpanded ────────────────────────────────────────────────────────
 
     [Test]
-    procedure TestPart_IsExpanded_TracksTheLastExpandCall()
-    // CLAIM, and note it is the WEAKER of the two claims available: on a flat ListPart,
-    // IsExpanded() answers consistently with the last Expand() it was given. What this does
-    // NOT claim is what a tree-shaped part would do -- these two members exist for expandable
-    // controls, and this suite hosts flat ListParts, so pinning "a tree collapses" here would
-    // be pinning a control the fixture does not have.
+    procedure TestPart_Expand_IsRefusedOnAFlatListPartRow()
+    // CLAIM: Expand() on a flat ListPart raises a catchable error rather than silently
+    // no-opping. The two members are for expandable (tree-shaped) controls, and a flat
+    // repeater row genuinely has nothing to expand.
     //
-    // Both directions are asserted against the SAME part, and the two assertions must
-    // disagree with each other, so an implementation hardcoding either answer fails. They are
-    // covered rather than withheld because both members compile on a ListPart -- measured
-    // with alc, not assumed -- and a member that compiles is a member the tier can adjudicate.
+    // This is the third assertion in this file the tier falsified and the one where the
+    // original instinct was right. Expand()/IsExpanded() were going to be withheld as
+    // UI-only; probing with alc showed both COMPILE on a ListPart, so they were measured
+    // instead -- and the measurement is that compiling is not the same as being supported.
+    // All 8 cloud legs raised System.InvalidOperationException, "Expanding and collapsing are
+    // not supported on this rowEntry", from BindingManager.CollapseRow.
+    //
+    // Pinning the refusal is worth more than skipping the members: it distinguishes "this
+    // part cannot expand" from "Expand() did nothing", which is exactly the difference a
+    // silent no-op would hide. What a genuinely expandable control does is still not measured
+    // here and still needs a tree-view fixture.
     var
         Host: TestPage "ALT TestPart Host";
-        AfterExpand: Boolean;
-        AfterCollapse: Boolean;
     begin
         Initialize();
         SeedThreeRows();
 
         Host.OpenEdit();
+        Host.Lines.First();
 
-        Host.Lines.Expand(true);
-        AfterExpand := Host.Lines.IsExpanded();
-        Host.Lines.Expand(false);
-        AfterCollapse := Host.Lines.IsExpanded();
+        asserterror Host.Lines.Expand(true);
 
-        Assert.AreNotEqual(AfterExpand, AfterCollapse,
-            'IsExpanded() must not answer the same after Expand(true) and Expand(false)');
-        Assert.IsTrue(AfterExpand, 'IsExpanded() must answer true after Expand(true)');
-        Assert.IsFalse(AfterCollapse, 'IsExpanded() must answer false after Expand(false)');
+        Assert.IsTrue(StrPos(GetLastErrorText(), 'Expanding and collapsing are not supported') > 0,
+            'Expand() on a flat ListPart row must raise a catchable refusal, not silently no-op');
         Host.Close();
     end;
 

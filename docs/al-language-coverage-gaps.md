@@ -312,21 +312,26 @@ Why it matters:
 
 Current coverage:
 
-- `Visible()`, `Enabled()` and `Editable()` answering from the **part control on the host**,
-  each asserted across a pair of controls over the *same* part page on one open host
+- `Visible()` and `Enabled()` answering true for a reachable part, plus the finding that makes
+  the obvious pair impossible: a part declared `Visible = false` is **not in the test page's
+  control tree at all**, so reaching it errors rather than yielding a handle that reports false
+- `Editable()` **not** following the host part control's `Editable` property -- two controls
+  over the same part page agree despite differing in it
 - `Caption()` answering the **part page's** caption rather than the host's or the hosting
   control's override, measured across two hosts
 - `First()` / `Next()` / `Last()` / `Previous()` walking the part's own rowset in key order,
-  with the empty-part arm and both end-of-rowset arms (false, and the cursor does not move)
+  with the empty-part arm, and the **asymmetry of the two ends**: `Previous()` before the first
+  row answers false, while `Next()` past the last *data* row answers **true**, stepping onto an
+  editable repeater's trailing blank new-row line
 - `GoToKey()` on a **composite** primary key: positioning, the trappable-return convention in
   both directions, and the arity check
 - `GoToRecord()` positioning from a `Record` variable
-- `GetField()` resolving by field id and following the cursor
+- `GetField()` refusing a **table field number**: its argument is a page **control** id
 - `FindFirstField()` / `FindNextField()` / `FindPreviousField()` over two rows that
   deliberately share a value, plus the not-found arm
 - `ValidationErrorCount()` and `GetValidationError()` against a real AL validation error
   raised by the fixture table's own `OnValidate`, including the 1-based index and its range check
-- `Expand()` / `IsExpanded()` answering consistently on a flat ListPart
+- `Expand()` raising a catchable refusal on a flat ListPart row rather than silently no-opping
 - `New()` adding a row that persists to the part's own source table
 
 Notes:
@@ -349,9 +354,16 @@ Notes:
 - The fixture table's primary key is deliberately **composite**. Every other part fixture in
   this repository keys on a single field, where a one-value `GoToKey` is correct and the arity
   check is invisible.
-- Deliberately not covered: nothing on the type, beyond the qualification that
-  `Expand()`/`IsExpanded()` are pinned only as far as a flat ListPart can pin them. A
-  tree-shaped part fixture would be a separate suite.
+- **A real service tier falsified five of this file's first-revision assertions, identically
+  on all 8 cloud legs**, and each correction is a sharper fact than the assertion it replaced.
+  Reading `Ncl.dll` alone would have got three of them wrong: `NavTestPart` really does
+  override `ALVisible`/`ALEnabled` to read the part control's own metadata, but AL cannot
+  reach a control on which either would answer false, so the override is not observable from
+  AL. The others: `Editable` on the host control does not propagate; `GetField` keys on
+  control ids, not table field numbers; and `Expand()` compiles on a ListPart but is refused
+  at runtime -- compiling is not the same as being supported.
+- Deliberately not covered: what a genuinely **expandable** (tree-shaped) part does. The
+  refusal on a flat ListPart is pinned; a tree-view fixture is a separate suite.
 
 ### 8. Additional platform/system surfaces
 
