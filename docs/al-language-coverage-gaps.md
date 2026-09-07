@@ -293,7 +293,88 @@ Notes:
 - Deliberately not covered: `RunModal()`. It is the one genuinely UI-level member; covering it
   needs a handler fixture and is a separate suite.
 
-### 7. Additional platform/system surfaces
+### 7. TestPart
+
+Status: implemented for the whole reachable surface (`testpart/TestTestPart.al`, codeunit 60346).
+
+Why it matters:
+
+- It carried a documented 20-member surface with **17 members entirely unmeasured**. The
+  other three (`First`, `New`, `Next`) were used incidentally by other suites as a way to
+  reach rows while testing something else -- never asserted as claims about `TestPart`.
+- It is the type a test gets whenever it reaches a `part()` control through an open
+  `TestPage`, so a great deal of this repository's existing page coverage runs *through* it
+  while never measuring it.
+- `scripts/al-surface-inscope.json` marks all 20 members "test-only". That label is **accurate
+  here**, unlike the four preceding suites where it was wrong -- `TestPart` genuinely only
+  exists inside a test. What it does not mean is "unreachable": a `[Test]` codeunit is exactly
+  the context the type is for.
+
+Current coverage:
+
+- `Visible()` and `Enabled()` answering true for a reachable part, plus the finding that makes
+  the obvious pair impossible: a part declared `Visible = false` is **not in the test page's
+  control tree at all**, so reaching it errors rather than yielding a handle that reports false
+- `Editable()` **not** following the host part control's `Editable` property -- two controls
+  over the same part page agree despite differing in it
+- `Caption()` answering the **part page's** caption rather than the host's or the hosting
+  control's override, measured across two hosts
+- `First()` / `Next()` / `Last()` / `Previous()` walking the part's own rowset in key order,
+  with the empty-part arm, and the **asymmetry of the two ends**: `Previous()` before the first
+  row answers false, while `Next()` past the last *data* row answers **true**, stepping onto an
+  editable repeater's trailing blank new-row line
+- `GoToKey()` on a **composite** primary key: positioning, the trappable-return convention in
+  both directions, and the arity check
+- `GoToRecord()` positioning from a `Record` variable
+- `GetField()` refusing a **table field number**: its argument is a page **control** id
+- `FindFirstField()` / `FindNextField()` / `FindPreviousField()` over two rows that
+  deliberately share a value, plus the not-found arm
+- `ValidationErrorCount()` and `GetValidationError()` against a real AL validation error
+  raised by the fixture table's own `OnValidate`, including the 1-based index and its range check
+- `New()` adding a row that persists to the part's own source table
+
+Notes:
+
+- **`Prev()` is a documented member that no longer exists.** `scripts/al-surface.json` lists
+  `Prev` and `Previous` side by side, and Microsoft Learn still publishes
+  `testpart-prev-method`, but this app targets runtime 16.0 and `alc` refuses the call with
+  `error AL0666`: supported `3.0` until, but not including, `13.0`. So one of the twenty
+  members is unreachable, and the obvious claim about the pair -- that the two are spellings
+  of one operation -- is not expressible here. Every backward walk uses `Previous()`.
+- **`GetField(Id)` compiles but is deprecated** (`warning AL0667`, runtime `3.0` or greater).
+  It is covered because it is still callable; when that warning becomes an error the file will
+  need the same treatment `Prev` just got.
+- **`TestPart` is not a declarable variable type** -- `var P: TestPart` is `error AL0134`. A
+  part handle exists *only* as the member access `Host.PartName`, so unlike
+  `FilterPageBuilder` and `WebServiceActionContext` there is no assignment-semantics question
+  to ask about it. Relatedly, `=` on two part handles is `AL0175` and the message names the
+  two **control** types (`'Lines'` and `'ReadOnlyLines'`), not `TestPart` -- each part control
+  on a host is its own generated type.
+- The fixture table's primary key is deliberately **composite**. Every other part fixture in
+  this repository keys on a single field, where a one-value `GoToKey` is correct and the arity
+  check is invisible.
+- **A real service tier falsified five of this file's first-revision assertions, identically
+  on all 8 cloud legs**, and each correction is a sharper fact than the assertion it replaced.
+  Reading `Ncl.dll` alone would have got three of them wrong: `NavTestPart` really does
+  override `ALVisible`/`ALEnabled` to read the part control's own metadata, but AL cannot
+  reach a control on which either would answer false, so the override is not observable from
+  AL. The others: `Editable` on the host control does not propagate; `GetField` keys on
+  control ids, not table field numbers.
+- **`Expand()` and `IsExpanded()` are not coverable from AL at all**, and it took three
+  tier-decided revisions to establish why. Rev 1 asserted `IsExpanded()` tracks the last
+  `Expand()` and failed from `BindingManager.CollapseRow`. Rev 2 read that as "a flat ListPart
+  cannot expand", asserted the refusal -- and *also* added a `First()`, changing two variables
+  at once; it failed with "An error was expected inside an ASSERTERROR statement", so with the
+  cursor on a data row `Expand(true)` succeeds and the rev-1 refusal came from the
+  `Expand(false)` after it. Rev 3 asserted exactly that and failed again with the **same**
+  `InvalidOperationException`, now reported from *inside* the `asserterror` body
+  (`NavMethodScope.AssertErrorAsync` in the callstack).
+  That is the answer: **`asserterror` traps AL errors, not a raw CLR exception surfacing from
+  the client proxy.** The refusal is real and reproducible on all 8 legs, and no AL construct
+  can observe it. A tree-view fixture would not help -- the obstacle is the exception boundary,
+  not the control shape.
+
+### 8. Additional platform/system surfaces
 
 Status: partial or thin coverage.
 
@@ -305,10 +386,31 @@ Candidate areas:
 
 These are lower priority than `Query` because the current suite is already strong on the most commonly used runtime behaviors.
 
-Still entirely unmeasured, and the natural next picks after `FilterPageBuilder`: `ProductName`
-(3 members, trivially observable). `Cookie` and `Debugger` are genuinely unreachable here --
-`Cookie` is only obtainable from an `HttpResponseMessage`, and the whole HTTP surface is out of
-scope; `Debugger` needs a debugging session attached to the tenant.
+Still entirely unmeasured, with the next pick and the reasons the others were passed over:
+
+- **`TestFilter` (5 members) -- the recommended next pick.** `Ascending()`, `CurrentKey()`,
+  `GetFilter()`, `SetCurrentKey()` and `SetFilter()`, reached as `SomeTestPage.Filter`. Zero
+  references in the suite today. It is small, but unlike `ProductName` every member takes
+  arguments and has a negative case, so it can carry real discriminators: a filter that is set
+  and read back, a key that changes the walk order, and the not-found arm. It also pairs
+  naturally with the `TestPart` suite just landed, since a part has its own `Filter`.
+- **`ProductName` (3 members) -- examined and passed over as too thin.** `Full()`,
+  `Marketing()` and `Short()` take no arguments, have no negative case, and return localized
+  strings that differ by BC version, so nothing beyond "these three differ from each other and
+  are non-empty" can be asserted without pinning a localization detail. That is roughly three
+  tests, and padding it further would produce assertions that pass for the wrong reason. Worth
+  folding into a broader "platform identity" suite alongside `SessionInformation` (4 members,
+  6 references) rather than given a file of its own.
+- **`Cookie` and `Debugger` remain genuinely unreachable.** `Cookie` is only obtainable from an
+  `HttpResponseMessage`, and the whole HTTP surface is out of scope; `Debugger` needs a
+  debugging session attached to the tenant.
+- **`TestHttpRequestMessage` / `TestHttpResponseMessage`** are zero-reference but belong to the
+  out-of-scope HTTP surface.
+- One caution for whoever picks next: a **zero-reference count in `scripts/al-surface.json` is
+  not the same as an unmeasured surface**. `TextConst` shows 0 references and 20 members, but
+  those 20 are the `Text` data type's own methods (`Contains`, `Split`, `PadLeft`, ...), which
+  the suite covers thoroughly under `text/`. The count is zero only because nobody writes the
+  literal word "TextConst". Check what the members actually are before trusting the ranking.
 
 ## Query Coverage Target
 
