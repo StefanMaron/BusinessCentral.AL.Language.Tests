@@ -4,9 +4,8 @@
 //                ONRC Lines (60356), ONRC Card (60357); shared Assert (60021)
 //
 /// <summary>
-/// Pins HOW MANY TIMES a subpage part's OnNewRecord trigger runs for a single row -- the
-/// question codeunit 60996 ("TPDL Tests") leaves open, and cannot answer with the witness it
-/// uses.
+/// Pins HOW MANY TIMES a subpage part's OnNewRecord trigger runs -- the question codeunit 60996
+/// ("TPDL Tests") leaves open, and cannot answer with the witness it uses.
 ///
 /// WHY THE EXISTING SUITE CANNOT ANSWER IT. 60996 measured, on all 8 BC legs, that the draft
 /// line of a linked part has ALREADY run the page's OnNewRecord before anyone types into it
@@ -17,34 +16,47 @@
 /// any OnNewRecord that only assigns defaults -- which is what most real ones do.
 ///
 /// That matters as soon as an OnNewRecord has a SIDE EFFECT rather than only a default: a
-/// number-series draw, a log row, a counter, a call out to a setup codeunit. A double firing
-/// silently doubles it, and nothing in the finished row says so.
+/// number-series draw, a log row, a counter, a call out to a setup codeunit. Repeated firings
+/// silently multiply it, and nothing in the finished row says so.
 ///
-/// THE WITNESS HERE IS A COUNT. "ONRC Lines"'s OnNewRecord appends one row to "ONRC Log", a
-/// table the page does not own, and every assertion below names a concrete integer. That is
-/// what makes the claim falsifiable in both directions at once: `Assert.AreEqual(1, ...)` fails
-/// against an implementation that never fires the trigger (0) and against one that fires it
-/// twice (2). It is a separate table because a counter kept on the line row could not survive
-/// -- NavForm.NewRecord's ALInit wipes the buffer the trigger runs against, and a draft line
-/// nobody types into is discarded rather than saved.
+/// WHAT REAL BC ANSWERED, and it is not "once". This file was first written asserting one firing
+/// per row throughout. A real service tier said otherwise, identically on all 8 cloud legs of
+/// run 34140530877 (BC 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3, 28.4):
+///
+///   * opening the card on an EMPTY part and landing on its draft line costs SIX firings,
+///     not one (three separate arms measured 6);
+///   * New() on that same empty part costs SEVEN -- the six above, plus one for New() itself.
+///
+/// Those numbers are the measurement, and the assertions below now pin them. They are stable
+/// across every version, so this is deterministic platform behaviour rather than a range, and
+/// the exact figures are pinned as exact figures.
+///
+/// THE MECHANISM the numbers point at, stated as the reading it is: showing a blank draft line
+/// in an EMPTY repeater raises the trigger repeatedly as the client fills the visible viewport,
+/// whereas a row that genuinely starts adds exactly one. Arm 4 is what makes that reading
+/// falsifiable rather than decorative -- on a part that already HAS a row, opening costs zero
+/// (landing on real data is not a new record) and walking onto the draft line with Next() costs
+/// exactly one. So the six is a property of rendering an empty repeater, not a per-row cost.
+///
+/// HOW THE LATER ASSERTIONS IN EACH ARM ARE WRITTEN, and why they are not absolute integers.
+/// Run 34140530877 failed each arm at its FIRST count assertion, so only that first number was
+/// measured; every count after it in the same arm never executed. Rather than invent absolutes
+/// that no tier has confirmed, each arm now captures the measured baseline in a variable and
+/// asserts the exact DELTA from it -- +0 for a step that must not start a record, +1 for a step
+/// that starts exactly one. The deltas are exact integers, so nothing here is weakened to a
+/// range or an inequality: an implementation that fires an extra time fails, and one that stops
+/// firing fails too.
 ///
 /// THE ARMS, and what each isolates.
 ///
-///   1. DraftLine_Shown  -- land on the draft line and touch nothing. Counts the firings that
-///      merely SHOWING the blank line costs. 60996 already establishes this is not zero; this
-///      arm says what it is.
-///   2. DraftLine_Written -- land on the draft line and write one field. Counts the firings for
-///      the whole show-then-promote sequence.
-///   3. New_OnEmptyPart  -- the control. New() is one NavForm.NewRecord by construction, so an
-///      answer other than 1 here would say the fixture itself miscounts, and every other number
-///      in the file would have to be read in that light.
-///
-/// ARM 2 MINUS ARM 1 IS THE ANSWER TO "does the write start the record a second time". If the
-/// promotion re-runs the platform's new-record step, arm 2 exceeds arm 1; if typing only marks
-/// an already-started row for saving, they are equal.
-///
-/// A fourth arm walks off the end of EXISTING data rather than opening empty, because that is
-/// the other route onto the draft line and the two need not cost the same.
+///   1. DraftLine_Shown  -- land on the draft line and touch nothing. Counts what merely SHOWING
+///      the blank line costs. Measured: 6.
+///   2. DraftLine_Written -- land on the draft line and write one field. Arm 2's delta over
+///      arm 1's baseline answers "does the write start the record a second time".
+///   3. New_OnEmptyPart  -- New() on an empty part. Measured: 7, i.e. arm 1's six plus one.
+///   4. DraftLine_ReachedByNext -- the control, and the arm that passed unchanged. A part with
+///      existing data: opening costs 0, Next() onto the draft line costs 1. This is what keeps
+///      the sixes above attributable to the empty-repeater render rather than to counting at all.
 ///
 /// The negative is in the data: a second header carries its own line, so an implementation that
 /// ignores the SubPageLink shows a row it should not, and the counts move.
@@ -56,6 +68,15 @@ codeunit 60358 "ONRC Tests"
 
     var
         Assert: Codeunit Assert;
+
+    // The firings a card open costs when the linked part is EMPTY, so the client renders the
+    // blank draft line to fill the viewport. Measured on all 8 cloud legs of run 34140530877.
+    // A procedure rather than a literal repeated in three arms, so the measured constant and the
+    // run that measured it are stated once.
+    local procedure OpenOnEmptyPartFirings(): Integer
+    begin
+        exit(6);
+    end;
 
     local procedure Initialize()
     var
@@ -118,13 +139,17 @@ codeunit 60358 "ONRC Tests"
         exit(Line.Count());
     end;
 
-    // ARM 3, THE CONTROL, and it runs first in this file on purpose: every other number here is
-    // read against it. New() is exactly one NavForm.NewRecord, so a count other than 1 would
-    // mean the fixture cannot count and no other arm's figure could be trusted.
+    // ARM 3. New() on an empty linked part. Real BC answers SEVEN: the six that opening the card
+    // on an empty part costs, plus exactly one for the New() itself. The name ends in
+    // "OncePlusTheOpenCost" because that +1 -- not the absolute 7 -- is the claim this arm makes
+    // about New(); the 6 underneath it is
+    // arm 1's measured constant, asserted here again so a change in it cannot hide inside this
+    // arm's total.
     [Test]
-    procedure New_OnEmptyLinkedPart_RunsOnNewRecordExactlyOnce()
+    procedure New_OnEmptyLinkedPart_RunsOnNewRecordOncePlusTheOpenCost()
     var
         Card: TestPage "ONRC Card";
+        AfterNew: Integer;
     begin
         Initialize();
         AddLine('H2', 10000, 'foreign');
@@ -132,28 +157,29 @@ codeunit 60358 "ONRC Tests"
         OpenCardOn('H1', Card);
         Card.Lines.New();
 
-        Assert.AreEqual(1, OnNewRecordCount(),
-            'New() on an empty linked part must raise the part page''s OnNewRecord exactly once');
+        AfterNew := OnNewRecordCount();
+        Assert.AreEqual(OpenOnEmptyPartFirings() + 1, AfterNew,
+            'New() on an empty linked part must raise OnNewRecord exactly once more than opening the card on that empty part already did');
 
         Card.Lines.Descr.SetValue('typed after New');
         Card.Close();
 
         // The write after New() must not start a SECOND record: the row New() started is the one
-        // being filled in. This is the same distinction arm 2 draws for the draft line, on the
-        // path where the answer is already settled.
-        Assert.AreEqual(1, OnNewRecordCount(),
+        // being filled in. Asserted as an exact delta of zero against the count measured above.
+        Assert.AreEqual(AfterNew, OnNewRecordCount(),
             'writing into the row New() started must not raise OnNewRecord again');
         Assert.AreEqual(1, LineCountFor('H1'), 'exactly one line must have been written for H1');
         Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
     end;
 
-    // ARM 1. Merely showing the draft line. 60996 established the trigger has run by this point;
-    // this says how often. Nothing is typed, so nothing is saved either -- asserted, so a count
-    // of 1 cannot be explained away as a row having been written.
+    // ARM 1. Merely showing the draft line of an EMPTY part. Real BC answers SIX -- the blank
+    // line is rendered repeatedly to fill the viewport. Nothing is typed, so nothing is saved
+    // either, which is asserted: the six firings cannot be explained as rows having been written.
     [Test]
-    procedure DraftLine_ShownAndUntouched_RunsOnNewRecordExactlyOnce()
+    procedure DraftLine_ShownAndUntouched_RunsOnNewRecordOncePerRenderedBlankLine()
     var
         Card: TestPage "ONRC Card";
+        AfterShown: Integer;
     begin
         Initialize();
         AddLine('H2', 10000, 'foreign');
@@ -162,27 +188,29 @@ codeunit 60358 "ONRC Tests"
         Assert.IsFalse(Card.Lines.First(),
             'H1 has no lines, so First() on the part must return false and land on the draft line');
 
-        Assert.AreEqual(1, OnNewRecordCount(),
-            'landing on the draft line must raise the part page''s OnNewRecord exactly once');
+        AfterShown := OnNewRecordCount();
+        Assert.AreEqual(OpenOnEmptyPartFirings(), AfterShown,
+            'landing on the draft line of an empty part must raise OnNewRecord once per rendered blank line');
 
         Card.Close();
 
-        Assert.AreEqual(1, OnNewRecordCount(),
+        Assert.AreEqual(AfterShown, OnNewRecordCount(),
             'closing a card over an untouched draft line must not raise OnNewRecord again');
         Assert.AreEqual(0, LineCountFor('H1'),
-            'an untouched draft line must not be written -- so the firing above cannot be a saved row');
+            'an untouched draft line must not be written -- so the firings above cannot be saved rows');
         Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
     end;
 
     // ARM 2, AND THE ONE THIS FILE EXISTS FOR. Land on the draft line, then write one field.
-    // Against arm 1 this isolates what the WRITE costs: equal counts mean typing only marks an
-    // already-started row for saving, a higher count means the promotion starts the record
-    // again.
+    // Against arm 1's measured baseline this isolates what the WRITE costs: an equal count means
+    // typing only marks an already-started row for saving, a higher count means the promotion
+    // starts the record again. Asserted as an exact delta so either answer is falsifiable.
     [Test]
-    procedure DraftLine_ShownThenWritten_RunsOnNewRecordExactlyOnce()
+    procedure DraftLine_ShownThenWritten_WriteDoesNotRaiseOnNewRecordAgain()
     var
         Line: Record "ONRC Line";
         Card: TestPage "ONRC Card";
+        AfterShown: Integer;
     begin
         Initialize();
         AddLine('H2', 10000, 'foreign');
@@ -190,19 +218,20 @@ codeunit 60358 "ONRC Tests"
         OpenCardOn('H1', Card);
         Assert.IsFalse(Card.Lines.First(),
             'H1 has no lines, so First() on the part must return false and land on the draft line');
-        Assert.AreEqual(1, OnNewRecordCount(),
-            'landing on the draft line must raise OnNewRecord once, before anything is typed');
+        AfterShown := OnNewRecordCount();
+        Assert.AreEqual(OpenOnEmptyPartFirings(), AfterShown,
+            'landing on the draft line of an empty part must raise OnNewRecord once per rendered blank line, before anything is typed');
 
         Card.Lines.Descr.SetValue('typed into the draft line');
 
         // THE MEASUREMENT. Read BEFORE Close(), so a later firing on the way out cannot be
-        // mistaken for one the write caused.
-        Assert.AreEqual(1, OnNewRecordCount(),
-            'writing into the draft line must not raise OnNewRecord a second time -- the row was already started when the blank line became current');
+        // mistaken for one the write caused. Exact delta of zero against the baseline above.
+        Assert.AreEqual(AfterShown, OnNewRecordCount(),
+            'writing into the draft line must not raise OnNewRecord again -- the row was already started when the blank line became current');
 
         Card.Close();
 
-        Assert.AreEqual(1, OnNewRecordCount(),
+        Assert.AreEqual(AfterShown, OnNewRecordCount(),
             'saving the promoted draft line on close must not raise OnNewRecord again');
         Assert.AreEqual(1, LineCountFor('H1'),
             'typing into the draft line must insert exactly one line for H1');
@@ -216,10 +245,11 @@ codeunit 60358 "ONRC Tests"
             'the promoted row must carry the SubPageLink''s value');
     end;
 
-    // ARM 4. The other route onto the draft line: walking off the end of existing data rather
-    // than opening empty. Two firings are expected here and only one of them is the draft line's
-    // -- First() lands on a real row, which is not a new record at all, so the total still says
-    // ONE new-record step for the one row that gets created.
+    // ARM 4, THE CONTROL, and the one arm run 34140530877 passed exactly as written -- so not a
+    // character of it is changed here. It is what stops the sixes above from being read as "the
+    // fixture miscounts": on a part that already has a row, opening costs ZERO and Next() onto
+    // the draft line costs exactly ONE. The empty-part cost is therefore a render property, not
+    // a counting artefact and not a per-row price.
     [Test]
     procedure DraftLine_ReachedByNextThenWritten_RunsOnNewRecordExactlyOnce()
     var
@@ -263,13 +293,16 @@ codeunit 60358 "ONRC Tests"
             'AutoSplitKey must number the promoted line past the line already there');
     end;
 
-    // TWO ROWS, TWO FIRINGS -- the arm that stops every "exactly once" above from being read as
-    // "the trigger can only ever fire once per page". The count tracks ROWS STARTED, so a second
-    // draft line promoted after the first is saved raises it again.
+    // TWO ROWS. The arm that stops the constants above from being read as "the trigger fires a
+    // fixed number of times per page and then stops". The count tracks work the platform does,
+    // so a second row started after the first is saved raises it AGAIN -- asserted as an exact
+    // +1 delta over the count measured after the first row, which is the per-row claim stated in
+    // the only form run 34140530877 left measured.
     [Test]
-    procedure TwoRowsWrittenThroughTheDraftLine_RunOnNewRecordTwice()
+    procedure TwoRowsWrittenThroughTheDraftLine_SecondRowRaisesOnNewRecordOnceMore()
     var
         Card: TestPage "ONRC Card";
+        AfterFirstRow: Integer;
     begin
         Initialize();
         AddLine('H2', 10000, 'foreign');
@@ -278,18 +311,21 @@ codeunit 60358 "ONRC Tests"
         Assert.IsFalse(Card.Lines.First(), 'H1 has no lines, so First() must return false');
 
         Card.Lines.Descr.SetValue('first line');
-        Assert.AreEqual(1, OnNewRecordCount(), 'the first row must account for exactly one firing');
+        AfterFirstRow := OnNewRecordCount();
+        Assert.AreEqual(OpenOnEmptyPartFirings(), AfterFirstRow,
+            'writing the first row must cost nothing beyond the firings opening the empty part already paid');
 
         Assert.IsTrue(Card.Lines.Next(),
             'Next() must leave the row just written and land on a fresh draft line');
         Card.Lines.Descr.SetValue('second line');
 
-        Assert.AreEqual(2, OnNewRecordCount(),
-            'a second row started through the draft line must raise OnNewRecord once more -- one firing per row, not one per page');
+        Assert.AreEqual(AfterFirstRow + 1, OnNewRecordCount(),
+            'a second row started through the draft line must raise OnNewRecord exactly once more -- one firing per row started, not a fixed budget per page');
 
         Card.Close();
 
-        Assert.AreEqual(2, OnNewRecordCount(), 'closing the card must not raise OnNewRecord again');
+        Assert.AreEqual(AfterFirstRow + 1, OnNewRecordCount(),
+            'closing the card must not raise OnNewRecord again');
         Assert.AreEqual(2, LineCountFor('H1'), 'both rows must be written for H1');
         Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
     end;
