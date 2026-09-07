@@ -2,18 +2,15 @@
 // Scope: in-scope
 // Fixtures used: RSS Sample (60871), RSS Fixture Report (60872); shared Assert (60021)
 //
-// WHAT THIS MEASURES, AND WHY IT IS SEPARATE FROM CU 60878.
+// WHAT THIS MEASURES.
 //
-// Codeunit 60878 asserts only the RETURN VALUE of Report.SaveAs(..., Pdf, ...). The stream
-// it writes into is never read back, so nothing in the corpus establishes what SaveAs
-// actually PUT THERE. Issue #238. This codeunit reads the blob back and asserts over the
-// bytes; it deliberately does not touch cu 60878, whose own second problem (an
-// Assert.ExpectedError running unconditionally after a passing Assert.IsFalse) is part of
-// the #213 decision and is not this file's business.
+// What Report.SaveAs(..., Pdf, ...) actually PUTS IN THE STREAM, on both tiers. Before this
+// file the corpus asserted only the RETURN VALUE and never read the blob back, so
+// "Windows renders RDLC" rested on a boolean -- and a boolean cannot distinguish a rendered
+// PDF from an empty or truncated one. Issue #238.
 //
-// It is a measurement, not a verdict on #213. It supplies the input #213 is currently
-// missing: "Windows renders RDLC" rests today on a boolean, and a boolean cannot
-// distinguish a rendered PDF from an empty or truncated blob.
+// The predecessor that asserted only the boolean (cu 60878) has been deleted: it was red on
+// Windows by construction, and this file covers on BOTH tiers what it covered on one.
 //
 // WHY ONE TEST BRANCHING ON THE RETURN VALUE, RATHER THAN TWO PLATFORM-GUARDED TESTS.
 //
@@ -54,9 +51,14 @@
 //     it is the first time the corpus will have established that the Windows RDLC path
 //     produces actual PDF bytes rather than merely returning true.
 //
-//   Note the asymmetry: this test is green on both tiers TODAY, unlike cu 60878 which is
-//   red on Windows by construction. Whichever way #213 is decided, this file does not have
-//   to change: it already describes both tiers.
+//   Both arms are now MEASURED, not anticipated:
+//     Linux   -- corpus PR #239, green on all 8 cloud legs: SaveAs false, blob EMPTY.
+//     Windows -- nightly run 34094539603, official MS container, BC 28.4: SaveAs true and
+//                the %PDF- arm green. The first time the corpus established that the
+//                Windows RDLC path emits real PDF bytes rather than merely returning true.
+//
+//   The negative arm is the half most likely to be assumed rather than checked: a tier that
+//   refuses to render leaves the stream UNTOUCHED, not partially written.
 //
 // WHY BASE64 AND NOT ReadText.
 //
