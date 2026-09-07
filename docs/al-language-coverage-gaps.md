@@ -374,7 +374,76 @@ Notes:
   can observe it. A tree-view fixture would not help -- the obstacle is the exception boundary,
   not the control shape.
 
-### 8. Additional platform/system surfaces
+### 8. TestFilter
+
+Status: implemented for the whole surface (`testfilter/TestTestFilter.al`, codeunit 60350).
+
+Why it matters:
+
+- Four of its five members -- `Ascending()`, `CurrentKey()`, `GetFilter()`, `SetCurrentKey()` --
+  had **zero** occurrences anywhere in the suite. The fifth, `SetFilter()`, had nine, and every
+  one was **incidental**: it arranged a rowset while some other claim was tested (page cursor
+  position, new-row defaults, `SourceTableView` interaction). Not one of the nine read a filter
+  back.
+- It is the only route by which an AL test can change **which rows** an open page has and **in
+  what order** it walks them, so a great deal of this repository's page coverage depends on it
+  behaving as assumed, while nothing checked that it does.
+
+Current coverage:
+
+- `SetFilter`/`GetFilter` round-tripping a **range** expression, with the unfiltered-field arm
+  reading back empty
+- the filter restricting the actual **rowset**, not merely what `GetFilter` reports
+- a field with **no control on the page** still being filterable, and really restricting
+- `SetFilter` **replacing** per field but **combining** across fields, asserted as a pair
+- `CurrentKey()` naming the key being walked, and not naming a field of a key it is not walking
+- `SetCurrentKey()` changing both the reported key and the observed row order
+- `SetCurrentKey` accepting a **composite** key, asserted to name both fields
+- `Ascending()` defaulting true; `Ascending(false)` reversing the walk, being reported back, and
+  restoring on `Ascending(true)`
+- the direction applying to the key `SetCurrentKey` installed, not to the primary key
+- a **part** carrying its own `Filter`, independent of a sibling part over the same table
+
+Notes:
+
+- **TestFilter's field argument resolves against the SOURCE TABLE, not the page's controls**, and
+  this is the file's central finding. It is the exact opposite of `TestPart`/`TestPage.GetField(Id)`,
+  whose argument is a page **control** id and which refuses a table field number. The fixture page
+  names its control over `"Entry No."` as `EntryNo`, so the namespaces are distinguishable:
+  `Filter.GetFilter(EntryNo)` is `AL0118` while `Filter.GetFilter("Entry No.")` compiles. The sharp
+  end is the fixture's `OffPage` field, which carries **no control on the page at all** and is
+  still a valid filter target -- and filtering it really does restrict the rowset. `Ncl.dll`
+  explains why: `NavTestFilter.ALGetFilter`/`ALSetFilter` take a plain `int fieldNo`, and
+  `NavTestFilter` carries `GetFieldName(int) => fieldNo.ToString()` -- the runtime type never had a
+  control name to work with.
+- **`Ncl.dll` fixed the AL boundary and settled none of the semantics.** `NavTestFilter` is a thin
+  wrapper over an `ITestFilter`, and that interface is **not in `Ncl.dll`** -- it lives client-side.
+  So the runtime assembly answered "the argument is a field number", "`SetFilter` is void" and
+  "`SetCurrentKey`'s trapping overload catches `NavClientPageAbortException`", and answered nothing
+  about whether a filter replaces or accumulates, what `CurrentKey`'s string looks like, or whether
+  `Ascending` reorders an already-open page. Every one of those was decided by the service tier.
+- **`var F: TestFilter` is `AL0134`**, exactly as for `TestPart`: the handle exists only as
+  `Page.Filter`. So the assignment-semantics question that `FilterPageBuilder` (split copy) and
+  `WebServiceActionContext` (shared reference) each answered is **inexpressible** here.
+- **`SetFilter` has no return value** (`AL0122` on capture), so unlike `FilterPageBuilder.SetView`
+  and `TestPart.GoToKey` there is no trappable-return convention to test on it. `CurrentKey`'s
+  return is mandatory (`AL0192`), and `SetCurrentKey` requires at least one field (`AL0135`).
+- **The `AL0135` message is misleading about arity.** It renders the signature as
+  `SetCurrentKey(TestFilterField, [TestFilterField])`, which reads as "at most two fields". Three
+  fields compile; the message renders only the first optional parameter of a variadic list, and
+  `Ncl.dll` confirms `params int[] fields`. Not asserted, because the fixture declares no
+  three-field key to observe.
+- **Every test opens the list with `OpenView()`, not `OpenEdit()`, and that is load-bearing.** The
+  `TestPart` suite established that an editable repeater carries a trailing blank new-row line that
+  `Next()` steps onto answering true; walking such a page would append an empty entry to every
+  order sequence the file builds. For the same reason the part test proves an excluded row is gone
+  with `GoToKey` rather than `IsFalse(Next())`.
+- Unusually for this series, **the tier falsified nothing** -- all 8 cloud legs passed on the first
+  revision. The compiler did the falsifying instead, and did a lot of it: the control-name/table-
+  field question, the missing `SetFilter` return, the mandatory `CurrentKey` return and the
+  `TestFilter`-is-not-a-type refusal were all discovered by `alc` before CI ran.
+
+### 9. Additional platform/system surfaces
 
 Status: partial or thin coverage.
 
@@ -388,12 +457,53 @@ These are lower priority than `Query` because the current suite is already stron
 
 Still entirely unmeasured, with the next pick and the reasons the others were passed over:
 
-- **`TestFilter` (5 members) -- the recommended next pick.** `Ascending()`, `CurrentKey()`,
-  `GetFilter()`, `SetCurrentKey()` and `SetFilter()`, reached as `SomeTestPage.Filter`. Zero
-  references in the suite today. It is small, but unlike `ProductName` every member takes
-  arguments and has a negative case, so it can carry real discriminators: a filter that is set
-  and read back, a key that changes the walk order, and the not-found arm. It also pairs
-  naturally with the `TestPart` suite just landed, since a part has its own `Filter`.
+- **`ErrorInfo` (21 members) -- the recommended next pick, and REACHABILITY IS CHECKED, not
+  assumed.** It is the largest completely unmeasured surface left. Two things make it a
+  stronger pick than its reference count suggests:
+
+  **The existing `error-handling/TestErrorInfo.al` does not use the type at all.** Its six
+  tests exercise plain `Error()` text formatting and `GetLastErrorText`/`GetLastErrorCode`;
+  a grep for `: ErrorInfo` or `ErrorInfo.` in that file returns **zero**. The file is named
+  for the type and measures none of it, so the name is why the surface looks covered and is
+  not. Whoever picks this up should check whether the new tests belong beside it or in a
+  file of their own.
+
+  **Its header's scope note -- "ErrorInfo type is OnPrem-only" -- is falsified by the
+  compiler.** Probed with the real `alc` against this app's Cloud target (runtime 16.0), all
+  of the following compile: `ErrorInfo.Create(text, collectible)`, `Message()`, the `Title`
+  and `DetailedMessage` setters, `Collectible()`, `Callstack()`,
+  `AddAction(label, codeunit, method)`, `AddNavigationAction(label)` and
+  `CustomDimensions.Get(key)`. So the type is reachable from a Cloud `[Test]` and the note
+  should be corrected as part of the work. (What is NOT yet established is whether a
+  collectible error's *runtime* behavior -- collection into an error set, the action
+  callbacks actually firing -- is observable from a `[Test]` without a client. That is the
+  question for the tier to settle, and it is exactly the shape of question this series
+  exists to ask.)
+
+  It carries real negative cases, which is what `ProductName` lacked: `Create` with and
+  without collectibility, `AddAction` naming a method that does not exist, `Verbosity` and
+  `DataClassification` enums with specific values, and `FieldNo`/`TableId`/`RecordId`
+  round-tripping against a real record.
+
+- **`XmlCData` and `XmlComment` (17 members each, 1 reference) -- plausible, and cheaper than
+  they look.** Their member lists are nearly identical to each other and largely shared with
+  the `XmlNode` surface the suite already covers under `xml/`, so much of the 17 is the
+  common node protocol (`AddAfterSelf`, `Replacewith`, `GetParent`, `SelectNodes`, `WriteTo`)
+  rather than 17 distinct behaviors. Worth taking as **one** suite covering both types, since
+  the interesting claims are where CData and Comment differ from an element and from each
+  other -- escaping, `Value` round-tripping, and what `SelectNodes` does with them.
+
+- **`File` (48 members, 2 references) is the largest surface here and is deliberately NOT
+  recommended.** It is out of scope on Cloud; the corpus app targets Cloud.
+
+- **`ProductName` (3 members) -- examined and passed over as too thin.** `Full()`,
+  `Marketing()` and `Short()` take no arguments, have no negative case, and return localized
+  strings that differ by BC version, so nothing beyond "these three differ from each other and
+  are non-empty" can be asserted without pinning a localization detail. That is roughly three
+  tests, and padding it further would produce assertions that pass for the wrong reason. Worth
+  folding into a broader "platform identity" suite alongside `SessionInformation` (4 members,
+  6 references) rather than given a file of its own. **This judgement has now been made twice;
+  do not resurrect it to pad a suite.**
 - **`ProductName` (3 members) -- examined and passed over as too thin.** `Full()`,
   `Marketing()` and `Short()` take no arguments, have no negative case, and return localized
   strings that differ by BC version, so nothing beyond "these three differ from each other and
