@@ -652,8 +652,13 @@ codeunit 60346 "Test TestPart"
         Initialize();
         SeedThreeRows();
 
-        Assert.AreEqual('Descr', Row.FieldName(3),
-            'field 3 must really be a valid table field, so the refusal below is about the ID SPACE');
+        // The number GetField() is about to refuse IS a real table field number. Asserting
+        // that first is what stops this test passing merely because the number was
+        // meaningless -- the refusal below is about the ID SPACE, not about a bad id.
+        // Spelled FieldNo(Descr) rather than the literal 3: AL0166 refuses a constant
+        // argument to FieldName/FieldNo, so the field must be named.
+        Assert.AreEqual(3, Row.FieldNo(Descr),
+            'Descr must really be table field 3, so the refusal below is about the ID SPACE');
 
         Host.OpenEdit();
         Host.Lines.First();
