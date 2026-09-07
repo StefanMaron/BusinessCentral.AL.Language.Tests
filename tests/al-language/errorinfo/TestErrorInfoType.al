@@ -91,7 +91,9 @@
 ///  12. ClearCollectedErrors() EMPTIES THE SET, asserted in both directions inside the
 ///      scope, AND DISARMS THE SCOPE-EXIT RETHROW: with the set cleared the helper returns
 ///      normally and needs no asserterror, which is the sharpest available proof that the
-///      clear really emptied it rather than merely hiding it from the getter.
+///      clear really emptied it rather than merely hiding it from the getter. Returning
+///      normally is itself the assertion -- had the clear not worked, the scope would have
+///      rethrown and the call would have raised.
 ///  13. AddAction() AND AddNavigationAction() BIND AND DO NOT THROW against a real target
 ///      codeunit and method, and adding actions LEAVES THE REST OF THE OBJECT INTACT. This
 ///      is a deliberately LIMITED claim -- the callback cannot fire without a client, so the
@@ -134,6 +136,17 @@
 ///      Note what this means about revision 2's correction B: it was necessary but not
 ///      sufficient. Both facts had to hold at once before any collection test could pass,
 ///      which is why one round of the tier could not separate them.
+///
+///   D. HasCollectedErrors() IS ONLY MEANINGFUL INSIDE A COLLECTING SCOPE, and outside one
+///      it answers TRUE. Revision 3 asserted it was false at test level once the scope had
+///      exited, and that failed on all 8 legs. Ncl.dll's ALHasCollectedErrors computes
+///      `0 < (collectedErrors?.Count ?? 0) - currentCollectionScopeStart`, and
+///      StopCollecting resets currentCollectionScopeStart to the NoActiveCollectionScope
+///      sentinel, -1, on the way out. With no list and no scope that is 0 - (-1) = 1, i.e.
+///      TRUE -- an artifact of the arithmetic, not a report that anything is held. So the
+///      global is a within-scope predicate, and asking it from outside is a question the
+///      API does not define. Both caller-side assertions were removed rather than inverted:
+///      pinning "it answers true when nothing is collected" would enshrine the artifact.
 ///
 /// COMPILE-TIME REFUSALS, measured with alc and recorded here because asserterror cannot
 /// catch a compile error (so these are NOT tests):
@@ -471,7 +484,10 @@ codeunit 60351 "Test ErrorInfo Type"
         // RAISER's, not a scope-exit rethrow.
         asserterror CollectNonCollectible('not collectible');
         Assert.ExpectedError('not collectible');
-        Assert.IsFalse(HasCollectedErrors(), 'a non-collectible error must leave nothing collected');
+        // No HasCollectedErrors() assertion here: OUTSIDE a collecting scope that global is
+        // not a meaningful question -- see finding D in the header. The proof that nothing
+        // was collected is the Assert.Fail() inside the scope that is never reached, plus
+        // the trapped message being the raiser's own rather than a scope-exit rethrow.
     end;
 
     [Test]
@@ -496,9 +512,10 @@ codeunit 60351 "Test ErrorInfo Type"
         // Clearing INSIDE the scope also disarms the scope-exit rethrow -- there is nothing
         // left to throw -- so this helper returns normally and needs no asserterror. That is
         // the sharpest available proof that the clear really emptied the set.
+        // Returning normally at all IS the claim: had the clear not emptied the set, the
+        // scope would have rethrown on exit and this call would have raised. The assertions
+        // that the set is empty live inside the scope, where the question is meaningful.
         ClearInsideScopeAndAssertEmpty('to be cleared');
-
-        Assert.IsFalse(HasCollectedErrors(), 'nothing must remain collected after the scope exits');
     end;
 
     // ---------------------------------------------------------------- claim 13

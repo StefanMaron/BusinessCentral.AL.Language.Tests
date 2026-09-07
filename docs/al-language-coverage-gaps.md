@@ -515,6 +515,14 @@ Notes:
     attribute makes errors raised by the methods it *calls* collectable; it does not swallow
     an `Error()` in its own body. `Ncl.dll` shows the scope being opened and says nothing
     about which frame the `Error()` must be in -- only the tier could answer that.
+  - **`HasCollectedErrors()` is only meaningful inside a collecting scope, and answers
+    `true` outside one.** `ALHasCollectedErrors` computes
+    `0 < (collectedErrors?.Count ?? 0) - currentCollectionScopeStart`, and `StopCollecting`
+    resets that offset to the `NoActiveCollectionScope` sentinel `-1` on the way out — so
+    with no list and no scope the expression is `0 - (-1) = 1`, true by arithmetic rather
+    than by anything being held. The two caller-side assertions were **removed rather than
+    inverted**: pinning "it answers true when nothing is collected" would enshrine an
+    artifact as a specification.
   - **A collecting scope rethrows what it collected when it exits**, so `GetCollectedErrors()`
     has to be read *inside* the scope. `ErrorCollection.StopCollecting` throws
     `NavNCLDialogException` with the single collected message, or a "Multiple errors
