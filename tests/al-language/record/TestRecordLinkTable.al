@@ -249,4 +249,89 @@ codeunit 60777 "Test Record Link Table"
 
         Assert.ExpectedError('already exists');
     end;
+
+    // ── The table and the AL surface share one Link ID sequence ──────────────────────
+
+    [Test]
+    procedure RecordLink_AddLink_ThenAnUnnumberedTableInsert_EachGetItsOwnLinkId()
+    var
+        Host: Record "ALT Link Host";
+        RecordLink: Record "Record Link";
+        AddedLinkId: Integer;
+        InsertedLinkId: Integer;
+    begin
+        Initialize();
+        Seed(12, Host);
+
+        // AddLink writes a Record Link row and consumes a Link ID. The Insert below sets no
+        // "Link ID" at all, so the platform's own AutoIncrement has to hand out the NEXT one
+        // — it cannot reissue the one AddLink already took.
+        AddedLinkId := Host.AddLink('https://example.com/12a', 'ADDED');
+
+        RecordLink.Init();
+        RecordLink."Record ID" := Host.RecordId();
+        RecordLink.URL1 := 'https://example.com/12b';
+        RecordLink.Description := 'INSERTED';
+        RecordLink.Type := RecordLink.Type::Link;
+        RecordLink.Company := CompanyName();
+        RecordLink.Insert(true);
+        InsertedLinkId := RecordLink."Link ID";
+
+        Assert.AreEqual(2, LinkRowCount(Host.RecordId()),
+            'both writers must leave a row — neither may overwrite or displace the other');
+        Assert.IsTrue(AddedLinkId > 0, 'AddLink must return a positive Link ID');
+        Assert.IsTrue(InsertedLinkId > 0, 'an AutoIncrement Insert must assign a positive Link ID');
+        Assert.AreNotEqual(AddedLinkId, InsertedLinkId,
+            'the two writers draw from ONE Link ID sequence, so they cannot be handed the same id');
+    end;
+
+    // ── An uncommitted link is rolled back like any other uncommitted row ────────────
+
+    [Test]
+    procedure RecordLink_AddLink_InsideATrappedError_IsRolledBackLikeATableInsert()
+    var
+        Host: Record "ALT Link Host";
+        Bystander: Record "ALT Link Host";
+    begin
+        Initialize();
+        Seed(13, Host);
+        Seed(14, Bystander);
+
+        // Two writers of the same table inside one failing statement: the AL link surface and
+        // a direct table Insert. Both are uncommitted, so a trapped error must undo both — a
+        // link that survived while the row beside it vanished would be one table with two
+        // different transaction invariants.
+        asserterror
+        begin
+            Host.AddLink('https://example.com/13', 'ADDED');
+            InsertLinkRow(Bystander.RecordId(), 'https://example.com/14', 'INSERTED');
+            Error('ALT rollback probe');
+        end;
+        Assert.ExpectedError('ALT rollback probe');
+
+        Assert.AreEqual(0, LinkRowCount(Host.RecordId()),
+            'a link added inside a trapped error must be rolled back');
+        Assert.AreEqual(0, LinkRowCount(Bystander.RecordId()),
+            'a Record Link row inserted inside the same trapped error must be rolled back too');
+        Assert.IsFalse(Host.HasLinks(), 'HasLinks() must be false after the rollback');
+    end;
+
+    // ── Copying a record onto itself ────────────────────────────────────────────────
+
+    [Test]
+    procedure RecordLinkManagement_CopyLinks_SourceOntoItself_DoesNotDuplicateTheRows()
+    var
+        Host: Record "ALT Link Host";
+        RecordLinkManagement: Codeunit "Record Link Management";
+    begin
+        Initialize();
+        Seed(15, Host);
+        InsertLinkRow(Host.RecordId(), 'https://example.com/15a', 'LINK_ALPHA');
+        InsertLinkRow(Host.RecordId(), 'https://example.com/15b', 'LINK_BRAVO');
+
+        RecordLinkManagement.CopyLinks(Host, Host);
+
+        Assert.AreEqual(2, LinkRowCount(Host.RecordId()),
+            'copying a record''s links onto itself must not duplicate them');
+    end;
 }
