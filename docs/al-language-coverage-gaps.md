@@ -443,7 +443,86 @@ Notes:
   field question, the missing `SetFilter` return, the mandatory `CurrentKey` return and the
   `TestFilter`-is-not-a-type refusal were all discovered by `alc` before CI ran.
 
-### 9. Additional platform/system surfaces
+### 9. ErrorInfo
+
+Status: implemented for the whole reachable surface (`errorinfo/TestErrorInfoType.al`,
+codeunit 60351).
+
+Why it matters:
+
+- It was the largest completely unmeasured surface left: 21 documented member groups, and
+  before this file the string `ErrorInfo` appeared **exactly once** in the whole corpus --
+  as the name of a codeunit that does not use the type.
+- **`error-handling/TestErrorInfo.al` is named for the type and measures none of it.** Its
+  six tests exercise plain `Error()` text formatting and `GetLastErrorText`/
+  `GetLastErrorCode`; a search for `: ErrorInfo` or `ErrorInfo.` in it returns nothing.
+  That name is precisely why the surface looked covered and was not. The new tests were
+  therefore given a directory of their own rather than being folded into that file, which
+  keeps the older file honest about what it does measure (error *text*, not the type).
+
+Current coverage:
+
+- `Create()` defaults, asserted as specific values: `Verbosity::Error`,
+  `DataClassification::CustomerContent`, `Collectible = false`, and empty
+  `Message`/`Title`/`DetailedMessage`
+- round-tripping and **mutual independence** of `Message()`, `Title()`,
+  `DetailedMessage()`, `ControlName()`, `FieldNo()`, `PageNo()`, `Verbosity()` and
+  `DataClassification()`, plus last-write-wins on `Message()`
+- all five `Verbosity` members round-tripping by name
+- `Collectible()` in both directions, and `Create(Message, Collectible)` taking
+  collectibility from its argument -- asserted as a pair whose two halves must disagree
+- the `var Record` overload populating `TableId()` and `RecordId()` from a real seeded row,
+  checked against a **second, different** row so the comparison cannot pass by both sides
+  being the same thing; plus the no-record arm leaving `TableId` at 0
+- `CustomDimensions()` empty on a fresh instance and round-tripping assigned entries
+- the **error-collection runtime**: a collectible error raised under
+  `[ErrorBehavior(ErrorBehavior::Collect)]` not aborting its caller, landing in
+  `GetCollectedErrors()` with its message, two errors accumulating in raise order,
+  `ClearCollectedErrors()` emptying the set, and `HasCollectedErrors()` tracking both
+  directions
+- the complement that makes those discriminating: a **non-collectible** ErrorInfo raised
+  inside a collecting scope throws normally and is **not** collected
+- `AddAction()` / `AddNavigationAction()` binding against a real target codeunit
+  (`ALT ErrorInfo Action Sink`, 60352) without throwing and without disturbing the object
+
+Notes:
+
+- **The old file's scope note, "ErrorInfo type is OnPrem-only", was false**, and correcting
+  it was part of this work. Measured with the real `alc` against this app's Cloud target
+  (runtime 16.0), all 21 member groups bind, as do `GetCollectedErrors()`,
+  `HasCollectedErrors()`, `ClearCollectedErrors()`, `Error(ErrorInfo)` and the
+  `[ErrorBehavior(ErrorBehavior::Collect)]` attribute. A wrong scope note is exactly what
+  keeps a surface unmeasured, which is why it is worth stating that this one was measured
+  rather than reasoned about.
+- **The open question from the `TestFilter` handoff -- whether a collectible error's runtime
+  behavior is observable from a `[Test]` without a client -- is answered YES**, and
+  `Ncl.dll` says why structurally: `ErrorCollection.ALGetCollectedErrors` reads
+  `NavCurrentThread.Session.ErrorCollection`, server-side session state with no client proxy
+  on the path. That is the opposite of `TestPart.Expand`/`IsExpanded`, which is unreachable
+  *because* its refusal crosses up from the client proxy as a raw CLR exception.
+- **Two places where `Ncl.dll` is ahead of the AL surface**, both recorded in the file header
+  and neither assertable: `NavALErrorInfo.ALCreate` takes a tenth parameter, `string title`,
+  which AL does not expose (the 10-argument call is `AL0126`, the 9-argument one compiles);
+  and `AddActionInternal` refuses a **fourth** action (`if (actions.Count >= 3)`) returning
+  false, which AL cannot observe because `AddAction`'s return is not capturable (`AL0122`)
+  and a fourth call compiles cleanly. The limit is real in the runtime and invisible from AL.
+- Compile-time refusals measured with `alc`, recorded in the file header rather than tested
+  because `asserterror` cannot catch a compile error: `=` is `AL0175`, `ErrorInfo := Variant`
+  is `AL0122` (though `Variant := ErrorInfo` compiles), capturing `AddAction`'s return is
+  `AL0122`, discarding `Create`'s return is `AL0192`, `Callstack` is read-only (`AL0126`),
+  and `Verbosity` has no `AsInteger()` (`AL0132`).
+- Deliberately not covered: **action callbacks firing.** `Ncl.dll` stores them in a
+  `CodeunitFunctionAction` list that only the client dispatches when a user presses the
+  button, so a `[Test]` cannot provoke one. Binding is covered; invocation is not
+  observable here.
+- Deliberately not covered: **assignment semantics** (`EI2 := EI1`). `FilterPageBuilder`
+  answered "split copy" and `WebServiceActionContext` "shared reference", so the question is
+  a real one, and `NavALErrorInfo.Clone()` is a genuine deep copy. But `Clone()` being a deep
+  copy does **not** establish that AL's `:=` calls it -- that is the exact inference the tier
+  falsified on `TestPart`. Left as a follow-up that can put it to a service tier as its own
+  claim.
+
+### 10. Additional platform/system surfaces
 
 Status: partial or thin coverage.
 
@@ -457,41 +536,18 @@ These are lower priority than `Query` because the current suite is already stron
 
 Still entirely unmeasured, with the next pick and the reasons the others were passed over:
 
-- **`ErrorInfo` (21 members) -- the recommended next pick, and REACHABILITY IS CHECKED, not
-  assumed.** It is the largest completely unmeasured surface left. Two things make it a
-  stronger pick than its reference count suggests:
-
-  **The existing `error-handling/TestErrorInfo.al` does not use the type at all.** Its six
-  tests exercise plain `Error()` text formatting and `GetLastErrorText`/`GetLastErrorCode`;
-  a grep for `: ErrorInfo` or `ErrorInfo.` in that file returns **zero**. The file is named
-  for the type and measures none of it, so the name is why the surface looks covered and is
-  not. Whoever picks this up should check whether the new tests belong beside it or in a
-  file of their own.
-
-  **Its header's scope note -- "ErrorInfo type is OnPrem-only" -- is falsified by the
-  compiler.** Probed with the real `alc` against this app's Cloud target (runtime 16.0), all
-  of the following compile: `ErrorInfo.Create(text, collectible)`, `Message()`, the `Title`
-  and `DetailedMessage` setters, `Collectible()`, `Callstack()`,
-  `AddAction(label, codeunit, method)`, `AddNavigationAction(label)` and
-  `CustomDimensions.Get(key)`. So the type is reachable from a Cloud `[Test]` and the note
-  should be corrected as part of the work. (What is NOT yet established is whether a
-  collectible error's *runtime* behavior -- collection into an error set, the action
-  callbacks actually firing -- is observable from a `[Test]` without a client. That is the
-  question for the tier to settle, and it is exactly the shape of question this series
-  exists to ask.)
-
-  It carries real negative cases, which is what `ProductName` lacked: `Create` with and
-  without collectibility, `AddAction` naming a method that does not exist, `Verbosity` and
-  `DataClassification` enums with specific values, and `FieldNo`/`TableId`/`RecordId`
-  round-tripping against a real record.
-
-- **`XmlCData` and `XmlComment` (17 members each, 1 reference) -- plausible, and cheaper than
-  they look.** Their member lists are nearly identical to each other and largely shared with
-  the `XmlNode` surface the suite already covers under `xml/`, so much of the 17 is the
-  common node protocol (`AddAfterSelf`, `Replacewith`, `GetParent`, `SelectNodes`, `WriteTo`)
-  rather than 17 distinct behaviors. Worth taking as **one** suite covering both types, since
+- **`XmlCData` and `XmlComment` (17 members each, 1 reference) -- THE RECOMMENDED NEXT PICK,
+  and reachability is checked rather than assumed.** Probed with the real `alc` against this
+  app's Cloud target: `XmlCData.Create(text)`, `XmlComment.Create(text)`, `Value`/`WriteTo`,
+  `AsXmlNode()` and the shared node protocol (`GetParent`, `AddAfterSelf`, `ReplaceWith`,
+  `SelectNodes`) all bind, and both types are constructible without a document, so a plain
+  `[Test]` can drive them. Their member lists are nearly identical to each other and largely
+  shared with the `XmlNode` surface the suite already covers under `xml/`, so much of the 17
+  is the common node protocol rather than 17 distinct behaviors. Take them as **one** suite:
   the interesting claims are where CData and Comment differ from an element and from each
-  other -- escaping, `Value` round-tripping, and what `SelectNodes` does with them.
+  other -- escaping (a `]]>` sequence in CData content, `--` in a comment), `Value`
+  round-tripping, and what `SelectNodes`/`SelectSingleNode` do with a comment node that an
+  XPath element query should skip.
 
 - **`File` (48 members, 2 references) is the largest surface here and is deliberately NOT
   recommended.** It is out of scope on Cloud; the corpus app targets Cloud.
@@ -504,13 +560,6 @@ Still entirely unmeasured, with the next pick and the reasons the others were pa
   folding into a broader "platform identity" suite alongside `SessionInformation` (4 members,
   6 references) rather than given a file of its own. **This judgement has now been made twice;
   do not resurrect it to pad a suite.**
-- **`ProductName` (3 members) -- examined and passed over as too thin.** `Full()`,
-  `Marketing()` and `Short()` take no arguments, have no negative case, and return localized
-  strings that differ by BC version, so nothing beyond "these three differ from each other and
-  are non-empty" can be asserted without pinning a localization detail. That is roughly three
-  tests, and padding it further would produce assertions that pass for the wrong reason. Worth
-  folding into a broader "platform identity" suite alongside `SessionInformation` (4 members,
-  6 references) rather than given a file of its own.
 - **`Cookie` and `Debugger` remain genuinely unreachable.** `Cookie` is only obtainable from an
   `HttpResponseMessage`, and the whole HTTP surface is out of scope; `Debugger` needs a
   debugging session attached to the tenant.
