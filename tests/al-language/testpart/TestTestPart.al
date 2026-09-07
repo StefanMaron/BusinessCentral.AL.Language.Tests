@@ -98,6 +98,9 @@
 ///      validation error from the part's AL, not a platform type-conversion message whose
 ///      text is a localization detail. The clean-part arm asserts the count is 0, which is
 ///      what rules out an implementation that always reports one.
+///  12a. Expand() IS DIRECTIONAL: accepted expanding a positioned row, refused collapsing it.
+///      Both directions asserted together -- an implementation refusing both fails the first,
+///      one accepting both fails the second.
 ///  12. GetValidationError() IS 1-BASED AND RANGE-CHECKED. Index 1 is the first error and
 ///      index 0 errors. Ncl.dll shows why this is worth pinning rather than assuming:
 ///      ALGetValidationError(index) is literally
@@ -157,14 +160,20 @@
 /// What DOES compile, probed rather than assumed: Format(Host.Lines), assignment of a part
 /// handle into a Variant, and Expand()/IsExpanded() on a plain ListPart.
 ///
-/// ON Expand() AND IsExpanded(): they were going to be withheld as UI-only; probing showed
-/// both COMPILE on a ListPart, so they were measured instead -- and the measurement is that
-/// COMPILING IS NOT THE SAME AS BEING SUPPORTED. All 8 cloud legs raised
+/// ON Expand(): it was going to be withheld as UI-only; probing showed it COMPILES on a
+/// ListPart, so it was measured instead -- and it took three revisions, each decided by the
+/// tier, to find out what it actually does. The answer is that the two DIRECTIONS differ:
+/// Expand(true) against a positioned row is ACCEPTED, while Expand(false) is REFUSED with
 /// System.InvalidOperationException, "Expanding and collapsing are not supported on this
-/// rowEntry", from BindingManager.CollapseRow. The refusal is pinned rather than the members
-/// skipped, because that distinguishes "this part cannot expand" from "Expand() did nothing",
-/// which is exactly the difference a silent no-op would hide. What a genuinely expandable
-/// control does is still unmeasured and needs a tree-view fixture. Nothing else is withheld.
+/// rowEntry", from BindingManager.CollapseRow. The obvious reading of the first failure --
+/// "a flat ListPart cannot expand" -- was wrong, and the second revision proved it wrong by
+/// changing two things at once (asserting the refusal AND adding a First()); only separating
+/// them showed that positioning and direction are the operative variables. What a genuinely
+/// expandable control does is still unmeasured and needs a tree-view fixture.
+///
+/// IsExpanded() is consequently NOT covered: with collapsing refused, the only state it could
+/// be observed in is the expanded one, so an assertion on it would restate the line above
+/// rather than measure anything. Named here rather than silently dropped.
 /// </summary>
 codeunit 60346 "Test TestPart"
 {
@@ -844,22 +853,26 @@ codeunit 60346 "Test TestPart"
     // ── Expand / IsExpanded ────────────────────────────────────────────────────────
 
     [Test]
-    procedure TestPart_Expand_IsRefusedOnAFlatListPartRow()
-    // CLAIM: Expand() on a flat ListPart raises a catchable error rather than silently
-    // no-opping. The two members are for expandable (tree-shaped) controls, and a flat
-    // repeater row genuinely has nothing to expand.
+    procedure TestPart_Expand_IsAcceptedOnAPositionedRowAndCollapseIsRefused()
+    // CLAIM: on a flat ListPart, Expand(true) against a POSITIONED row is accepted, while
+    // COLLAPSING is refused with "Expanding and collapsing are not supported on this
+    // rowEntry" -- the two directions are not symmetric.
     //
-    // This is the third assertion in this file the tier falsified and the one where the
-    // original instinct was right. Expand()/IsExpanded() were going to be withheld as
-    // UI-only; probing with alc showed both COMPILE on a ListPart, so they were measured
-    // instead -- and the measurement is that compiling is not the same as being supported.
-    // All 8 cloud legs raised System.InvalidOperationException, "Expanding and collapsing are
-    // not supported on this rowEntry", from BindingManager.CollapseRow.
+    // This test took three revisions and the service tier decided each one, so the sequence
+    // is worth recording rather than just the answer:
     //
-    // Pinning the refusal is worth more than skipping the members: it distinguishes "this
-    // part cannot expand" from "Expand() did nothing", which is exactly the difference a
-    // silent no-op would hide. What a genuinely expandable control does is still not measured
-    // here and still needs a tree-view fixture.
+    //   rev 1 asserted IsExpanded() tracks the last Expand() call, with no First() before it.
+    //         All 8 legs raised InvalidOperationException from BindingManager.CollapseRow.
+    //   rev 2 read that as "Expand is refused on a flat ListPart" and asserted the refusal --
+    //         but ALSO added a First(). All 8 legs then reported "An error was expected inside
+    //         an ASSERTERROR statement": with the cursor on a data row, Expand(true) SUCCEEDS.
+    //   rev 3, here, separates the two variables rev 2 changed at once. The refusal in rev 1
+    //         came from CollapseRow -- the Expand(FALSE) call, not the Expand(true) before it.
+    //
+    // So the operative distinctions are direction and positioning, not "ListParts cannot
+    // expand". Both are asserted below, and asserting them together is what keeps the test
+    // honest: an implementation that refused both directions fails the first assertion, and
+    // one that accepted both fails the second.
     var
         Host: TestPage "ALT TestPart Host";
     begin
@@ -869,10 +882,14 @@ codeunit 60346 "Test TestPart"
         Host.OpenEdit();
         Host.Lines.First();
 
-        asserterror Host.Lines.Expand(true);
+        // Accepted: no error, on a positioned row.
+        Host.Lines.Expand(true);
+
+        // Refused: collapsing is what BindingManager.CollapseRow rejects.
+        asserterror Host.Lines.Expand(false);
 
         Assert.IsTrue(StrPos(GetLastErrorText(), 'Expanding and collapsing are not supported') > 0,
-            'Expand() on a flat ListPart row must raise a catchable refusal, not silently no-op');
+            'collapsing a flat ListPart row must raise a catchable refusal naming the rowEntry');
         Host.Close();
     end;
 
