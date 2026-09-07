@@ -477,11 +477,11 @@ Current coverage:
   checked against a **second, different** row so the comparison cannot pass by both sides
   being the same thing; plus the no-record arm leaving `TableId` at 0
 - `CustomDimensions()` empty on a fresh instance and round-tripping assigned entries
-- the **error-collection runtime**: a collectible error raised under
-  `[ErrorBehavior(ErrorBehavior::Collect)]` not aborting its caller, landing in
-  `GetCollectedErrors()` with its message, two errors accumulating in raise order,
-  `ClearCollectedErrors()` emptying the set, and `HasCollectedErrors()` tracking both
-  directions
+- the **error-collection runtime**: a collectible error not aborting the collecting scope,
+  landing in `GetCollectedErrors()` with its message, two errors accumulating in raise
+  order, `ClearCollectedErrors()` emptying the set and disarming the scope-exit rethrow, and
+  `HasCollectedErrors()` tracking both directions -- all asserted **inside** the scope,
+  because the scope rethrows what it collected when it exits
 - the complement that makes those discriminating: a **non-collectible** ErrorInfo raised
   inside a collecting scope throws normally and is **not** collected
 - `AddAction()` / `AddNavigationAction()` binding against a real target codeunit
@@ -515,6 +515,14 @@ Notes:
     attribute makes errors raised by the methods it *calls* collectable; it does not swallow
     an `Error()` in its own body. `Ncl.dll` shows the scope being opened and says nothing
     about which frame the `Error()` must be in -- only the tier could answer that.
+  - **A collecting scope rethrows what it collected when it exits**, so `GetCollectedErrors()`
+    has to be read *inside* the scope. `ErrorCollection.StopCollecting` throws
+    `NavNCLDialogException` with the single collected message, or a "Multiple errors
+    occurred..." summary for more than one, and nulls the list on the way out -- by the time
+    the caller regains control the set is gone and an exception is in flight. This took a
+    third tier round to isolate, because it and the previous point had to be fixed together
+    before any collection test could pass; one round could not separate them. The rethrow is
+    now itself pinned: the singular message is verbatim, the plural one is the summary.
 - **Two places where `Ncl.dll` is ahead of the AL surface**, both recorded in the file header
   and neither assertable: `NavALErrorInfo.ALCreate` takes a tenth parameter, `string title`,
   which AL does not expose (the 10-argument call is `AL0126`, the 9-argument one compiles);

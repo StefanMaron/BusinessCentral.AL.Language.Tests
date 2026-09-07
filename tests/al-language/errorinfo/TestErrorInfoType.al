@@ -69,22 +69,29 @@
 ///   7. CustomDimensions ROUND-TRIPS A DICTIONARY, and a fresh ErrorInfo's is EMPTY. Both
 ///      halves, so "always returns the dictionary you last passed anyone" and "always
 ///      returns empty" both fail.
-///   8. A COLLECTIBLE ERROR RAISED UNDER [ErrorBehavior(ErrorBehavior::Collect)] DOES NOT
-///      ABORT ITS CALLER, and lands in GetCollectedErrors() -- the central runtime claim.
-///      Asserted by reaching a statement AFTER the Error() call, so an implementation that
-///      let the error propagate fails by never running the assertion at all.
+///   8. A COLLECTIBLE ERROR DOES NOT ABORT THE COLLECTING SCOPE. Execution continues past
+///      the failed call: the helper sets a flag AFTER the raiser returns and asserts it,
+///      which an implementation that let the error unwind could never reach. The scope then
+///      rethrows on exit, and the caller traps that -- so the test also pins that the
+///      rethrown text is the collected message.
 ///   9. THE COLLECTED ERROR CARRIES THE MESSAGE IT WAS RAISED WITH, and the count is
-///      exactly 1 -- not merely non-empty.
-///  10. A NON-COLLECTIBLE ErrorInfo IS NOT COLLECTED EVEN INSIDE A COLLECTING SCOPE; it
-///      throws normally and is trappable with asserterror. This is claim 8's complement
-///      and the discriminating half of the pair: Ncl.dll's ErrorCollection.Collect returns
-///      false unless error.ALCollectible, and an implementation that collected everything
-///      passes claim 8 while failing this one.
-///  11. TWO COLLECTED ERRORS ACCUMULATE IN RAISE ORDER, so an implementation keeping only
-///      the last (or only the first) fails. The two messages differ, and both are asserted
-///      by position.
-///  12. ClearCollectedErrors() EMPTIES THE SET AND HasCollectedErrors() TRACKS IT in both
-///      directions -- true while errors are held, false after clearing.
+///      exactly 1 -- not merely non-empty. Read INSIDE the scope, which is the only place
+///      the set still exists.
+///  10. A NON-COLLECTIBLE ErrorInfo IS NOT COLLECTED EVEN INSIDE A COLLECTING SCOPE. It
+///      unwinds immediately -- an Assert.Fail() after the call is never reached -- and
+///      nothing is left collected. This is the discriminating half of the pair: Ncl.dll's
+///      ErrorCollection.Collect returns false unless error.ALCollectible, so an
+///      implementation that collected everything passes claims 8-9 and fails this one. The
+///      message trapped here is the RAISER's, not a scope-exit rethrow, which is itself the
+///      observable difference between the two paths.
+///  11. TWO COLLECTED ERRORS ACCUMULATE IN RAISE ORDER, asserted by position with different
+///      messages, so keeping only the first, only the last, or reversing all fail. Two
+///      collected errors also make the scope exit with the MULTIPLE-errors summary rather
+///      than the verbatim message -- a difference from claim 8 that the test pins.
+///  12. ClearCollectedErrors() EMPTIES THE SET, asserted in both directions inside the
+///      scope, AND DISARMS THE SCOPE-EXIT RETHROW: with the set cleared the helper returns
+///      normally and needs no asserterror, which is the sharpest available proof that the
+///      clear really emptied it rather than merely hiding it from the getter.
 ///  13. AddAction() AND AddNavigationAction() BIND AND DO NOT THROW against a real target
 ///      codeunit and method, and adding actions LEAVES THE REST OF THE OBJECT INTACT. This
 ///      is a deliberately LIMITED claim -- the callback cannot fire without a client, so the
@@ -111,6 +118,22 @@
 ///      unattributed raiser. Ncl.dll shows ALMethodScope.ALStart calling StartCollecting()
 ///      for the scope, and says nothing about which frame the Error() has to be in -- a
 ///      question about AL's execution model that only the tier could answer.
+///
+///   C. A COLLECTING SCOPE RETHROWS WHAT IT COLLECTED WHEN IT EXITS, so GetCollectedErrors()
+///      must be read INSIDE the scope. Revision 2 called the collecting helper and then
+///      asserted in the caller; all 8 legs failed with the collected message surfacing as an
+///      error out of the call. Ncl.dll's ErrorCollection.StopCollecting is explicit once you
+///      look at it: on closing the outermost scope it throws NavNCLDialogException with the
+///      single collected message, or a "Multiple errors occurred..." summary carrying the
+///      first one, and nulls the list on the way out. So by the time a caller regains
+///      control the set is gone AND an exception is in flight. Every collection assertion
+///      now lives inside the scope, and the callers trap the rethrow -- which turned the
+///      rethrow itself into two extra pinned claims (the singular message is verbatim, the
+///      plural one is the summary).
+///
+///      Note what this means about revision 2's correction B: it was necessary but not
+///      sufficient. Both facts had to hold at once before any collection test could pass,
+///      which is why one round of the tier could not separate them.
 ///
 /// COMPILE-TIME REFUSALS, measured with alc and recorded here because asserterror cannot
 /// catch a compile error (so these are NOT tests):
@@ -410,96 +433,72 @@ codeunit 60351 "Test ErrorInfo Type"
 
     [Test]
     procedure CollectibleError_UnderCollectScope_DoesNotAbortCaller()
-    var
-        Reached: Boolean;
     begin
         Initialize();
         ClearCollectedErrors();
 
-        Reached := false;
-        RaiseOneCollectible('collected message');
-        // Reaching this line at all IS the claim: a collectible error raised in a
-        // [ErrorBehavior(ErrorBehavior::Collect)] method must return to its caller instead
-        // of unwinding it. An implementation that let the error propagate never runs it.
-        Reached := true;
-
-        Assert.IsTrue(Reached, 'a collectible error must not abort the calling test method');
-        Assert.IsTrue(HasCollectedErrors(), 'HasCollectedErrors must report true after a collectible error');
+        // The scope RETHROWS on exit (see finding C in the header), so the assertions live
+        // inside it and the caller traps the rethrow. What is proved here is that execution
+        // CONTINUED past the failed call inside the scope: the helper sets a flag after the
+        // raiser returns and asserts it, which an implementation that let the error unwind
+        // could never reach.
+        asserterror CollectAndAssertCallerNotAborted('collected message');
+        // The rethrown message is the collected one -- itself a claim about StopCollecting.
+        Assert.ExpectedError('collected message');
     end;
 
     [Test]
     procedure CollectibleError_IsCollectedWithItsMessage()
-    var
-        Errors: List of [ErrorInfo];
-        Collected: ErrorInfo;
     begin
         Initialize();
         ClearCollectedErrors();
 
-        RaiseOneCollectible('the collected message');
-
-        Errors := GetCollectedErrors();
-        // Exactly one -- not merely "not empty".
-        Assert.AreEqual(1, Errors.Count(), 'exactly one error must have been collected');
-        Collected := Errors.Get(1);
-        Assert.AreEqual('the collected message', Collected.Message(), 'the collected error must carry the message it was raised with');
+        asserterror CollectAndAssertOneWithMessage('the collected message');
+        Assert.ExpectedError('the collected message');
     end;
 
     [Test]
-    procedure NonCollectibleError_InCollectScope_ThrowsInsteadOfCollecting()
-    var
-        Errors: List of [ErrorInfo];
+    procedure NonCollectibleError_InCollectScope_IsNotCollected()
     begin
         Initialize();
         ClearCollectedErrors();
 
-        // The complement of the two claims above, and the discriminating half of the pair:
-        // Ncl.dll's ErrorCollection.Collect returns false unless error.ALCollectible, so an
-        // implementation that collected everything passes those and fails this.
-        asserterror RaiseOneNonCollectible('not collectible');
+        // The complement, and the discriminating half of the pair: Ncl.dll's
+        // ErrorCollection.Collect returns false unless error.ALCollectible, so an
+        // implementation that collected everything passes the two tests above and fails
+        // this one. A non-collectible error unwinds immediately, so the scope never reaches
+        // its own assertions -- which is exactly why the message trapped here is the
+        // RAISER's, not a scope-exit rethrow.
+        asserterror CollectNonCollectible('not collectible');
         Assert.ExpectedError('not collectible');
-
-        Errors := GetCollectedErrors();
-        Assert.AreEqual(0, Errors.Count(), 'a non-collectible error must not be added to the collected set');
-        Assert.IsFalse(HasCollectedErrors(), 'HasCollectedErrors must stay false when nothing collectible was raised');
+        Assert.IsFalse(HasCollectedErrors(), 'a non-collectible error must leave nothing collected');
     end;
 
     [Test]
     procedure CollectedErrors_AccumulateInRaiseOrder()
-    var
-        Errors: List of [ErrorInfo];
     begin
         Initialize();
         ClearCollectedErrors();
 
-        RaiseTwoCollectible('first raised', 'second raised');
-
-        Errors := GetCollectedErrors();
-        Assert.AreEqual(2, Errors.Count(), 'both collectible errors must be collected');
-        // By position, with different messages -- so keeping only the first, only the last,
-        // or reversing the order all fail.
-        Assert.AreEqual('first raised', Errors.Get(1).Message(), 'the first raised error must be first in the collected set');
-        Assert.AreEqual('second raised', Errors.Get(2).Message(), 'the second raised error must be second in the collected set');
+        asserterror CollectTwoAndAssertOrder('first raised', 'second raised');
+        // Two collected errors make StopCollecting throw the MULTIPLE-errors message, whose
+        // text leads with the first one. That the singular case above reports the message
+        // verbatim and this one does not is itself a pinned difference.
+        Assert.ExpectedError('first raised');
     end;
 
     [Test]
-    procedure ClearCollectedErrors_EmptiesTheSet()
-    var
-        Errors: List of [ErrorInfo];
+    procedure ClearCollectedErrors_EmptiesTheSetInsideTheScope()
     begin
         Initialize();
         ClearCollectedErrors();
 
-        RaiseOneCollectible('to be cleared');
-        Assert.IsTrue(HasCollectedErrors(), 'the error must be held before clearing');
-        Assert.AreEqual(1, GetCollectedErrors().Count(), 'exactly one error must be held before clearing');
+        // Clearing INSIDE the scope also disarms the scope-exit rethrow -- there is nothing
+        // left to throw -- so this helper returns normally and needs no asserterror. That is
+        // the sharpest available proof that the clear really emptied the set.
+        ClearInsideScopeAndAssertEmpty('to be cleared');
 
-        ClearCollectedErrors();
-
-        // Both directions of the same flag, so an implementation hardcoding either answer fails.
-        Assert.IsFalse(HasCollectedErrors(), 'HasCollectedErrors must report false after clearing');
-        Errors := GetCollectedErrors();
-        Assert.AreEqual(0, Errors.Count(), 'the collected set must be empty after clearing');
+        Assert.IsFalse(HasCollectedErrors(), 'nothing must remain collected after the scope exits');
     end;
 
     // ---------------------------------------------------------------- claim 13
@@ -542,32 +541,84 @@ codeunit 60351 "Test ErrorInfo Type"
 
     // ---------------------------------------------------------------- helpers
 
-    // THE SCOPE MUST WRAP THE RAISER, NOT BE IT. [ErrorBehavior(ErrorBehavior::Collect)]
-    // makes errors raised by the methods this one CALLS collectable; the Error() statement
-    // still unwinds the method it appears in. So each collecting method below calls a
-    // separate, unattributed raiser, and execution resumes in the collecting method after
-    // the failed call returns. The first revision of this file put the attribute on the
-    // raiser itself and all 8 cloud legs failed identically, with the error propagating out
-    // -- see the header note.
+    // THE COLLECTING SCOPE IS WHERE THE ASSERTIONS HAVE TO LIVE. Two facts, both settled
+    // by the tier, force this shape:
+    //   - The attribute must WRAP the raiser, not be it: [ErrorBehavior(Collect)] makes
+    //     errors from the methods it CALLS collectable, and does not swallow an Error() in
+    //     its own body. So each helper below calls a separate, unattributed raiser.
+    //   - The scope RETHROWS whatever it collected when it exits (Ncl.dll:
+    //     ErrorCollection.StopCollecting throws NavNCLDialogException with the single
+    //     message, or the "Multiple errors occurred" summary for more than one). So
+    //     GetCollectedErrors() has to be read INSIDE the scope; by the time the caller
+    //     regains control the set is gone and an exception is in flight.
+    // Assertions that fail inside a collecting scope surface through that rethrow, so a
+    // broken claim still fails the test rather than being swallowed.
+
     [ErrorBehavior(ErrorBehavior::Collect)]
-    local procedure RaiseOneCollectible(Message: Text)
+    local procedure CollectAndAssertCallerNotAborted(Message: Text)
+    var
+        Reached: Boolean;
     begin
+        Reached := false;
         RaiseCollectible(Message);
+        // Reaching this line at all IS the claim.
+        Reached := true;
+        Assert.IsTrue(Reached, 'execution must continue past a collected error inside the scope');
+        Assert.IsTrue(HasCollectedErrors(), 'HasCollectedErrors must report true inside the scope');
     end;
 
     [ErrorBehavior(ErrorBehavior::Collect)]
-    local procedure RaiseTwoCollectible(FirstMessage: Text; SecondMessage: Text)
+    local procedure CollectAndAssertOneWithMessage(Message: Text)
+    var
+        Errors: List of [ErrorInfo];
+    begin
+        RaiseCollectible(Message);
+        Errors := GetCollectedErrors();
+        // Exactly one -- not merely "not empty".
+        Assert.AreEqual(1, Errors.Count(), 'exactly one error must have been collected');
+        Assert.AreEqual(Message, Errors.Get(1).Message(), 'the collected error must carry the message it was raised with');
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure CollectTwoAndAssertOrder(FirstMessage: Text; SecondMessage: Text)
+    var
+        Errors: List of [ErrorInfo];
     begin
         // Two separate calls: the first is collected and execution continues into the
         // second, which is the whole point of a collecting scope.
         RaiseCollectible(FirstMessage);
         RaiseCollectible(SecondMessage);
+        Errors := GetCollectedErrors();
+        Assert.AreEqual(2, Errors.Count(), 'both collectible errors must be collected');
+        // By position, with different messages -- so keeping only the first, only the last,
+        // or reversing the order all fail.
+        Assert.AreEqual(FirstMessage, Errors.Get(1).Message(), 'the first raised error must be first in the collected set');
+        Assert.AreEqual(SecondMessage, Errors.Get(2).Message(), 'the second raised error must be second in the collected set');
     end;
 
     [ErrorBehavior(ErrorBehavior::Collect)]
-    local procedure RaiseOneNonCollectible(Message: Text)
+    local procedure CollectNonCollectible(Message: Text)
     begin
+        // Unwinds immediately, so nothing after this line runs.
         RaiseNonCollectible(Message);
+        Assert.Fail('a non-collectible error must not be collected; the scope should never reach this line');
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure ClearInsideScopeAndAssertEmpty(Message: Text)
+    var
+        Errors: List of [ErrorInfo];
+    begin
+        RaiseCollectible(Message);
+        Assert.IsTrue(HasCollectedErrors(), 'the error must be held before clearing');
+        Assert.AreEqual(1, GetCollectedErrors().Count(), 'exactly one error must be held before clearing');
+
+        ClearCollectedErrors();
+
+        // Both directions of the same flag, so an implementation hardcoding either fails.
+        Assert.IsFalse(HasCollectedErrors(), 'HasCollectedErrors must report false after clearing');
+        Errors := GetCollectedErrors();
+        Assert.AreEqual(0, Errors.Count(), 'the collected set must be empty after clearing');
     end;
 
     // The actual raisers, deliberately WITHOUT the attribute.
