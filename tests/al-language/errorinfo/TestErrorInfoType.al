@@ -34,17 +34,20 @@
 /// the opposite of TestPart.Expand/IsExpanded (testpart/TestTestPart.al), which is
 /// unreachable precisely BECAUSE the refusal crosses up from the client proxy as a raw CLR
 /// exception. Collection is therefore expected to be observable, and claims 8-12 below are
-/// what actually put that to the tier.
+/// what actually put that to the tier. THE TIER CONFIRMED IT, but only after correcting
+/// HOW the scope is opened -- see "what the tier falsified" below.
 ///
 /// WHAT IS PINNED HERE, and what each test would catch if it broke:
 ///
-///   1. Create() DEFAULTS ARE SPECIFIC VALUES, NOT ARBITRARY ONES. A fresh ErrorInfo
-///      reports Verbosity::Error, DataClassification::CustomerContent, Collectible=false
-///      and empty Message/Title/DetailedMessage. Ncl.dll's ALCreate sets exactly these.
-///      Asserted together, so an implementation defaulting everything to the zero value of
-///      its type fails: Verbosity::Error is NOT Verbosity's first member (Verbosity::Normal
-///      sorts before it), so "returns the zero enum member" is a DIFFERENT and failing
-///      answer.
+///   1. THE TWO Create() OVERLOADS DISAGREE ABOUT COLLECTIBILITY, and this is the sharpest
+///      thing in the file. The ZERO-ARGUMENT ErrorInfo.Create() produces a COLLECTIBLE
+///      ErrorInfo; ErrorInfo.Create(Message) produces a NON-collectible one. Both halves are
+///      asserted, in adjacent tests, so the asymmetry is pinned rather than incidental.
+///      Everything else a fresh instance reports is also pinned: Verbosity::Error,
+///      DataClassification::CustomerContent, and empty Message/Title/DetailedMessage. An
+///      implementation defaulting everything to the zero value of its type fails, because
+///      Verbosity::Error is NOT Verbosity's first member -- Verbosity::Normal sorts before
+///      it -- so "returns the zero enum member" is a DIFFERENT and failing answer.
 ///   2. EVERY SCALAR ACCESSOR ROUND-TRIPS, AND THEY ARE MUTUALLY INDEPENDENT. Each setter
 ///      is written with a distinct value and every OTHER accessor is then re-read, so an
 ///      implementation backing two properties with one field fails. The independence half
@@ -87,6 +90,27 @@
 ///      is a deliberately LIMITED claim -- the callback cannot fire without a client, so the
 ///      test names say NoThrow. The intact-state half is what keeps it from being vacuous:
 ///      an implementation whose AddAction corrupted or reset the message would fail it.
+///
+/// WHAT THE TIER FALSIFIED, on all 8 cloud legs identically, and what each correction
+/// teaches. Both were wrong readings of Ncl.dll, not wrong guesses about AL:
+///
+///   A. THE ZERO-ARGUMENT Create() IS COLLECTIBLE. The first revision asserted
+///      Collectible = false for a fresh instance, on the strength of NavALErrorInfo.ALCreate
+///      whose signature reads `bool collectible = false`. There are TWO ALCreate overloads,
+///      and the zero-argument one is a different method that sets `ALCollectible = true`
+///      outright. Reading one overload and generalising to "the type's default" is what went
+///      wrong; the parameterised overload's default applies only when you call it. Identical
+///      from 27.0 through 28.4 (compare_symbols: body unchanged), which matches all 8 legs
+///      failing the same way. This is now claim 1, asserted in BOTH directions.
+///
+///   B. [ErrorBehavior(ErrorBehavior::Collect)] MUST WRAP THE RAISER, NOT BE IT. The first
+///      revision put the attribute on the method containing Error(), and every collectible
+///      error propagated out and failed its test -- the collection scope does not swallow an
+///      Error() raised in the attributed method's OWN body. The attribute makes errors from
+///      the methods it CALLS collectable. Each collecting helper now calls a separate,
+///      unattributed raiser. Ncl.dll shows ALMethodScope.ALStart calling StartCollecting()
+///      for the scope, and says nothing about which frame the Error() has to be in -- a
+///      question about AL's execution model that only the tier could answer.
 ///
 /// COMPILE-TIME REFUSALS, measured with alc and recorded here because asserterror cannot
 /// catch a compile error (so these are NOT tests):
@@ -149,7 +173,9 @@ codeunit 60351 "Test ErrorInfo Type"
         // failing answer.
         Assert.AreEqual('Error', Format(EI.Verbosity()), 'a fresh ErrorInfo must default to Verbosity::Error');
         Assert.AreEqual('CustomerContent', Format(EI.DataClassification()), 'a fresh ErrorInfo must default to DataClassification::CustomerContent');
-        Assert.IsFalse(EI.Collectible(), 'a fresh ErrorInfo must not be collectible');
+        // COLLECTIBLE, not false. The zero-argument ErrorInfo.Create() sets collectibility
+        // TRUE, the opposite of every other way of making one. See claim 1 in the header.
+        Assert.IsTrue(EI.Collectible(), 'the zero-argument ErrorInfo.Create() must produce a COLLECTIBLE ErrorInfo');
         Assert.AreEqual('', EI.Message(), 'a fresh ErrorInfo must have an empty Message');
         Assert.AreEqual('', EI.Title(), 'a fresh ErrorInfo must have an empty Title');
         Assert.AreEqual('', EI.DetailedMessage(), 'a fresh ErrorInfo must have an empty DetailedMessage');
@@ -166,7 +192,9 @@ codeunit 60351 "Test ErrorInfo Type"
         Assert.AreEqual('the message', EI.Message(), 'Create(Message) must set the message');
         // The complement: setting the message must not disturb the other defaults.
         Assert.AreEqual('', EI.Title(), 'Create(Message) must leave Title empty');
-        Assert.IsFalse(EI.Collectible(), 'Create(Message) must leave Collectible false');
+        // FALSE here, while the ZERO-ARGUMENT Create() above answers TRUE. Asserting both
+        // in one file is what makes the asymmetry a pinned claim rather than an accident.
+        Assert.IsFalse(EI.Collectible(), 'Create(Message) must leave Collectible false, unlike the zero-argument Create()');
         Assert.AreEqual('Error', Format(EI.Verbosity()), 'Create(Message) must leave Verbosity::Error');
     end;
 
@@ -257,8 +285,9 @@ codeunit 60351 "Test ErrorInfo Type"
         EI: ErrorInfo;
     begin
         Initialize();
-        EI := ErrorInfo.Create();
-        Assert.IsFalse(EI.Collectible(), 'Collectible must start false');
+        // Create(Message) -- NOT the zero-argument Create(), which starts collectible.
+        EI := ErrorInfo.Create('m');
+        Assert.IsFalse(EI.Collectible(), 'Create(Message) must start non-collectible');
 
         EI.Collectible(true);
         Assert.IsTrue(EI.Collectible(), 'Collectible(true) must be readable back as true');
@@ -513,11 +542,36 @@ codeunit 60351 "Test ErrorInfo Type"
 
     // ---------------------------------------------------------------- helpers
 
-    // Collectible errors are raised from methods carrying the ErrorBehavior attribute; the
-    // attribute is what opens the collection scope (Ncl.dll: ALMethodScope.ALStart calls
-    // Session.ErrorCollection.StartCollecting() when errorBehavior == Collect).
+    // THE SCOPE MUST WRAP THE RAISER, NOT BE IT. [ErrorBehavior(ErrorBehavior::Collect)]
+    // makes errors raised by the methods this one CALLS collectable; the Error() statement
+    // still unwinds the method it appears in. So each collecting method below calls a
+    // separate, unattributed raiser, and execution resumes in the collecting method after
+    // the failed call returns. The first revision of this file put the attribute on the
+    // raiser itself and all 8 cloud legs failed identically, with the error propagating out
+    // -- see the header note.
     [ErrorBehavior(ErrorBehavior::Collect)]
     local procedure RaiseOneCollectible(Message: Text)
+    begin
+        RaiseCollectible(Message);
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure RaiseTwoCollectible(FirstMessage: Text; SecondMessage: Text)
+    begin
+        // Two separate calls: the first is collected and execution continues into the
+        // second, which is the whole point of a collecting scope.
+        RaiseCollectible(FirstMessage);
+        RaiseCollectible(SecondMessage);
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure RaiseOneNonCollectible(Message: Text)
+    begin
+        RaiseNonCollectible(Message);
+    end;
+
+    // The actual raisers, deliberately WITHOUT the attribute.
+    local procedure RaiseCollectible(Message: Text)
     var
         EI: ErrorInfo;
     begin
@@ -525,23 +579,12 @@ codeunit 60351 "Test ErrorInfo Type"
         Error(EI);
     end;
 
-    [ErrorBehavior(ErrorBehavior::Collect)]
-    local procedure RaiseTwoCollectible(FirstMessage: Text; SecondMessage: Text)
-    var
-        First: ErrorInfo;
-        Second: ErrorInfo;
-    begin
-        First := ErrorInfo.Create(FirstMessage, true);
-        Error(First);
-        Second := ErrorInfo.Create(SecondMessage, true);
-        Error(Second);
-    end;
-
-    [ErrorBehavior(ErrorBehavior::Collect)]
-    local procedure RaiseOneNonCollectible(Message: Text)
+    local procedure RaiseNonCollectible(Message: Text)
     var
         EI: ErrorInfo;
     begin
+        // Create(Message, false) is used rather than Create(), because Create() produces a
+        // COLLECTIBLE ErrorInfo -- see claim 1.
         EI := ErrorInfo.Create(Message, false);
         Error(EI);
     end;

@@ -462,8 +462,10 @@ Why it matters:
 
 Current coverage:
 
-- `Create()` defaults, asserted as specific values: `Verbosity::Error`,
-  `DataClassification::CustomerContent`, `Collectible = false`, and empty
+- the **disagreement between the two `Create()` overloads**: the zero-argument
+  `ErrorInfo.Create()` produces a **collectible** ErrorInfo while `ErrorInfo.Create(Message)`
+  produces a non-collectible one, asserted in both directions; plus the other fresh-instance
+  defaults, `Verbosity::Error`, `DataClassification::CustomerContent` and empty
   `Message`/`Title`/`DetailedMessage`
 - round-tripping and **mutual independence** of `Message()`, `Title()`,
   `DetailedMessage()`, `ControlName()`, `FieldNo()`, `PageNo()`, `Verbosity()` and
@@ -500,6 +502,19 @@ Notes:
   `NavCurrentThread.Session.ErrorCollection`, server-side session state with no client proxy
   on the path. That is the opposite of `TestPart.Expand`/`IsExpanded`, which is unreachable
   *because* its refusal crosses up from the client proxy as a raw CLR exception.
+- **The tier falsified two things, both of them wrong READINGS of `Ncl.dll` rather than wrong
+  guesses about AL**, and both are worth carrying forward as cautions:
+  - **The zero-argument `Create()` is collectible.** The first revision asserted
+    `Collectible = false` on the strength of `NavALErrorInfo.ALCreate`, whose signature reads
+    `bool collectible = false`. There are **two** `ALCreate` overloads and the zero-argument
+    one is a different method that sets `ALCollectible = true` outright. Reading one overload
+    and generalising to "the type's default" is the mistake; a parameterised default applies
+    only when you call that overload. Unchanged 27.0 through 28.4.
+  - **`[ErrorBehavior(ErrorBehavior::Collect)]` must wrap the raiser, not be it.** With the
+    attribute on the method containing `Error()`, every collectible error propagated out. The
+    attribute makes errors raised by the methods it *calls* collectable; it does not swallow
+    an `Error()` in its own body. `Ncl.dll` shows the scope being opened and says nothing
+    about which frame the `Error()` must be in -- only the tier could answer that.
 - **Two places where `Ncl.dll` is ahead of the AL surface**, both recorded in the file header
   and neither assertable: `NavALErrorInfo.ALCreate` takes a tenth parameter, `string title`,
   which AL does not expose (the 10-argument call is `AL0126`, the 9-argument one compiles);
