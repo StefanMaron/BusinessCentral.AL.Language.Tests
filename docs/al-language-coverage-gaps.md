@@ -220,7 +220,80 @@ Notes:
   That needs a web service request against a published API page, outside what a `[Test]`
   codeunit can provoke.
 
-### 6. Additional platform/system surfaces
+### 6. FilterPageBuilder
+
+Status: implemented for everything except `RunModal()` (`filterpage/TestFilterPageBuilder.al`,
+codeunit 60279).
+
+Why it matters:
+
+- It had no test file and no mention in this document, while carrying a documented 12-member
+  surface -- the largest completely unmeasured type left in the suite.
+- Eleven of the twelve members are plain object-graph operations over an ordered dictionary of
+  `RecordRef`s. A client is only needed for `RunModal()`, the point at which the accumulated
+  controls are finally shown. `scripts/al-surface-inscope.json` marks all 12 "out-of-scope",
+  classifying by the type's name on the assumption that anything ending in "PageBuilder" is UI;
+  that is wrong in the same way it was wrong for `SecretText`, `SessionSettings` and
+  `WebServiceActionContext`.
+
+Current coverage:
+
+- `AddTable()`, `AddRecord()` and `AddRecordRef()` returning the control name, and distinct
+  names accumulating
+- name-keyed identity: re-adding a name against the same table is idempotent (`Count()` stays
+  at 1), and re-adding it against a *different* table is a redefinition error
+- argument validation: a table id below 1 is refused, with the exact platform message asserted
+- the trappable-return convention on `AddTable` and `SetView` -- empty string / `false` when the
+  return value is captured, a catchable error when it is discarded -- asserted in both
+  directions for both methods
+- `AddField()` returning `true` for a known control and `false` for an unknown one, and its
+  optional default-filter argument reaching the view (with the no-filter negative)
+- `SetView()` / `GetView()` round-tripping a filter, and their asymmetry on an unknown control
+  name: `GetView` returns empty, `SetView` errors
+- `GetView(name, false)` rendering an option filter as its ordinal and `GetView(name, true)` as
+  its member name
+- `Name()` being 1-based and in insertion order, with both range ends erroring; the range
+  message names both bounds, so asserting it in full independently restates the 1..`Count()`
+  range
+- `PageCaption()` returning a non-empty platform default when unset, an assigned caption
+  replacing it, and last-write-wins
+- assignment being **split**: the control collection is copied (`Count()` is independent) while
+  the record behind each control is shared (a view written through either builder is visible
+  from both)
+- `Clear()` emptying the controls and allowing a cleared name to be reused
+- `Format()` and round-tripping through a `Variant`
+
+Notes:
+
+- **`AddField(Name, FieldNo: Integer)` is not callable from AL.** Microsoft Learn documents it
+  as `filterpagebuilder-addfieldno-method`, but only the `FieldRef` overload is exposed --
+  passing an Integer is `AL0133`. Every `AddField` test therefore goes through a
+  `RecordRef`/`FieldRef` pair. `GetView(Index: Integer)` likewise does not exist; controls are
+  addressed by name, and `Name(Index)` is the bridge between the two.
+- **`Name()` is the one method whose return value is mandatory** (`AL0192` if discarded), which
+  is why its two range tests assign into a variable inside `asserterror`. `AddTable`,
+  `AddField` and `SetView` all compile with theirs discarded -- which is exactly what makes
+  their trappable-return behavior testable.
+- **`Clear()` does NOT reset the page caption.** "Clear resets the whole object" is the obvious
+  reading and it is wrong: the caption is not part of the control collection `Clear()` walks, so
+  a cleared builder reports `Count() = 0` while still returning the caption it was assigned. The
+  test asserts both halves together, because an implementation that reset everything would pass
+  every other `Clear` test in the file.
+- **Assignment is neither a deep copy nor a shared reference -- it is split**, and this is the
+  most surprising thing about the type. The control collection is copied, so adding a control to
+  the copy leaves the original's `Count()` alone; the `NavRecordRef` each control wraps is
+  shared, so a view written through either builder is visible from both. An earlier revision of
+  the test file asserted a full deep copy and all 8 cloud legs falsified it identically on every
+  version. The mechanism is `NavRecordRef.Clone` in `Microsoft.Dynamics.Nav.Ncl.dll`: it builds
+  a fresh wrapper and copies `Target` **by reference**. Compare `WebServiceActionContext`, whose
+  assignment shares outright -- together the two files establish that AL's `:=` on a complex
+  type is per-type behavior, and can even be per-*field* within one type.
+- `=` is refused on the type (`AL0175`), but `Format()` and conversion to a `Variant` *and back*
+  all work -- a wider surface than either `SecretText` or `WebServiceActionResultCode`.
+- Deliberately not covered: `RunModal()`. It is the one genuinely UI-level member; covering it
+  needs a handler fixture and is a separate suite.
+
+### 7. Additional platform/system surfaces
 
 Status: partial or thin coverage.
 
@@ -231,6 +304,11 @@ Candidate areas:
 - `ModuleInfo` / related app metadata
 
 These are lower priority than `Query` because the current suite is already strong on the most commonly used runtime behaviors.
+
+Still entirely unmeasured, and the natural next picks after `FilterPageBuilder`: `ProductName`
+(3 members, trivially observable). `Cookie` and `Debugger` are genuinely unreachable here --
+`Cookie` is only obtainable from an `HttpResponseMessage`, and the whole HTTP surface is out of
+scope; `Debugger` needs a debugging session attached to the tenant.
 
 ## Query Coverage Target
 
