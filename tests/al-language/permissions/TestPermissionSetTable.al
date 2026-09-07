@@ -24,7 +24,7 @@
 //
 // The table is ObsoleteState = Pending on every version in range (its stated reason
 // is a scope change, not removal), so each reference is wrapped in the AL0432 pragma.
-codeunit 60291 "Test Permission Set Table"
+codeunit 60294 "Test Permission Set Table"
 {
     Subtype = Test;
     TestPermissions = Disabled;
