@@ -383,6 +383,14 @@ codeunit 60662 "TP Blank Temporal Tests"
     // CLAIM, and the guard on the three above: the typed blank comparison is a real comparison,
     // not one that succeeds against any control. An implementation rendering every expected
     // temporal as '' would pass the three above and fail here.
+    //
+    // The expected substring names the CONTROL, 'RecWhen', not the field caption 'Rec When' -
+    // BC reports an AssertEquals mismatch against the page control's name. It also pins
+    // "Expected = ''", which is the half of the message this test exists to establish: the
+    // blank DateTime argument reached the comparison rendered as the empty string, so the
+    // failure is a genuine mismatch and not a refusal to compare. The ACTUAL half is
+    // deliberately left out - it formats the seeded 2024-03-17 14:30 under the service tier's
+    // locale ('3/17/2024 2:30 PM' on CI), which is not what this test is about.
     var
         Card: TestPage "TP Blank Temporal Card";
         BlankWhen: DateTime;
@@ -392,7 +400,7 @@ codeunit 60662 "TP Blank Temporal Tests"
 
         OpenOn(Card, SetPKTok, 'SET ROW');
         asserterror Card.RecWhen.AssertEquals(BlankWhen);
-        Assert.ExpectedError('Rec When');
+        Assert.ExpectedError('AssertEquals for Field: RecWhen Expected = ''''');
         Card.Close();
     end;
 }
