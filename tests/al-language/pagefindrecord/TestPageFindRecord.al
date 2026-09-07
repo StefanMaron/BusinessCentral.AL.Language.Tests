@@ -49,8 +49,8 @@
 /// form at page open and the equal-or-previous form at a CurrPage.Update refresh -- and then
 /// walks with OnNextRecord(1) or OnNextRecord(-1), caching rows as it goes. So a First() or a
 /// Next() over rows the client already holds raises nothing at all, which is why the trace
-/// assertion below is made across the refresh that BUILDS the rowset rather than across the
-/// navigation that reads it.
+/// assertion below spans the refresh that BUILDS the rowset as well as the navigation that
+/// reads it, and asserts only that each trigger was reached at least once.
 /// The count and the shape of that prefetch are a client-side detail that a version is free to
 /// change, which is why what is asserted here is the rows the walk produces and that the
 /// triggers were reached -- not how many times.
@@ -245,9 +245,15 @@ codeunit 60679 "ALT Page Find Record Tests"
         // [SCENARIO] The rows are the answer; this is the evidence they came from the page. The
         // counts are asserted as "at least one", never as an exact figure: how many rows the
         // client prefetches is a client-side detail (see the summary), while reaching the two
-        // triggers at all is not. The trace is taken across the action, because that is where
-        // the client rebuilds the rowset -- navigation afterwards reads rows it already holds
-        // and legitimately raises nothing.
+        // triggers at all is not.
+        //
+        // The window opens BEFORE the action, and closes after a walk that reaches both ends of
+        // the rowset AND steps between them. Both halves of that are deliberate. A window that
+        // began after the action would hold no OnNextRecord call on a client that had already
+        // cached every row, and a window holding only Last()/First() would hold none either --
+        // an end-to-end jump is a find, not a step. The Next() is what makes "OnNextRecord was
+        // reached" a claim any implementation of the rowset must satisfy rather than an
+        // accident of how far this client happened to prefetch.
         SeedUniform();
 
         List.OpenView();
@@ -258,6 +264,8 @@ codeunit 60679 "ALT Page Find Record Tests"
         Assert.AreEqual('L0001', List."No.".Value, 'the last row the triggers serve');
         Assert.IsTrue(List.First(), 'First()');
         Assert.AreEqual('L0007', List."No.".Value, 'the first row the triggers serve');
+        Assert.IsTrue(List.Next(), 'Next() from the first row');
+        Assert.AreEqual('L0005', List."No.".Value, 'the row after the first one');
 
         Assert.IsTrue(Trace.GetFindCalls() > 0, 'the page''s own OnFindRecord was reached');
         Assert.IsTrue(Trace.GetNextCalls() > 0, 'the page''s own OnNextRecord was reached');
