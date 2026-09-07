@@ -71,6 +71,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Every self-test under .github/scripts/, discovered BY GLOB rather than named.
+  #
+  # WHY GLOB. A new self-test that has to be added to this file by hand is a new
+  # self-test that gates from the day someone remembers, not the day it lands. The
+  # trade is that searching this workflow for a test's filename finds nothing, which
+  # is NOT evidence the test is un-gated -- so the loop prints every file it runs.
+  #
+  # WHY IT REFUSES AN EMPTY LIST. A glob that matches nothing exits 0 and prints
+  # nothing, which is indistinguishable from "everything passed". That failure shape
+  # is exactly what a gate must not have.
+  script-self-tests:
+    name: .github/scripts self-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run every .github/scripts/test-*.py
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          suites=(.github/scripts/test-*.py)
+          if [ ${#suites[@]} -eq 0 ]; then
+            echo "::error::no .github/scripts/test-*.py found. Either the self-tests were deleted or this glob stopped matching; refusing to report a green on zero suites."
+            exit 1
+          fi
+          echo "discovered ${#suites[@]} suite(s):"
+          printf '  %s\n' "${suites[@]}"
+          for s in "${suites[@]}"; do
+            echo "::group::$s"
+            python3 "$s"
+            echo "::endgroup::"
+          done
+
   object-ids:
     # Fast gate, seconds not minutes: two PRs can each declare the SAME object id,
     # each compile green in isolation, and break master the moment both merge --

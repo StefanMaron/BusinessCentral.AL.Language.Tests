@@ -19,3 +19,7 @@ tests/al-language/v2-classification.json
 .DS_Store
 *.swp
 *~
+
+# Python bytecode from the .github/scripts self-tests
+__pycache__/
+*.pyc

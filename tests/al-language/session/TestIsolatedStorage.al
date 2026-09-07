@@ -4,6 +4,18 @@
 //
 // IsolatedStorage Set/Contains/Get/Delete round-trip. Values must round-trip exactly and
 // deletes must be observable; a missing key must report false, never throw.
+//
+// TIER PRECONDITION (#248): IsolatedStorage_SetEncrypted_GetRoundTripsPlaintext below needs
+// the tier to have a TENANT ENCRYPTION KEY. Without one BC refuses correctly, with
+// "An encryption key is required to complete the request." -- that is BC behaving properly,
+// not a divergence, so the tier is what has to satisfy the precondition. The two tiers this
+// corpus runs on satisfy it differently, and only one of them really does:
+//   * ci.yml (Linux)      -- StartupHook Patch #26 substitutes a pass-through provider that
+//                            always reports a key present. The round-trip below passes, but
+//                            no cryptography runs. See the REMOVED note further down.
+//   * nightly-windows.yml -- creates a real key with BC's own New-NAVEncryptionKey during
+//                            container setup, and fails the run if it cannot. That tier is
+//                            the only place this test measures what its name says.
 
 codeunit 60378 "Test Isolated Storage"
 {

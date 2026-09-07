@@ -35,7 +35,8 @@
 
     { "codeunit": 60878, "test": "SaveAsPdf_RdlcLayout_ReturnsFalseWithLastErrorTextOnLinux",
       "group": "image-limitation-asserted-as-bc", "expected_on_windows": "FAIL, correctly",
-      "cause": "asserts RDLC rendering is UNAVAILABLE; a Windows container renders it, so SaveAs returns true" },
+      "cause": "asserts RDLC rendering is UNAVAILABLE; a Windows container renders it, so SaveAs returns true",
+      "note": "DELETED FROM THE CORPUS by PR #250, superseded by cu 60774. It therefore has no result on any run from that commit onward, and the report lists it under 'Baseline entries with no result here' -- which is not a failure. The entry is kept because #213 is a record of what the SaaS sandbox measured, and rewriting history to match the current corpus would destroy that. Do not read its recurring appearance in the missing bucket as a problem." },
 
     { "codeunit": 60600, "test": "TestCodeunit_SingleInstance_DoesNotLeakAcrossTests",
       "group": "divergence", "expected_on_windows": "FAIL (this is what the nightly is for)",

@@ -25,6 +25,23 @@ name: Nightly Windows (official MS BC container)
 # not available, rather than running unpinned), and the license, region, container OS, generic
 # image and BC build are all written into an artifact next to the results.
 #
+# THE TENANT ENCRYPTION KEY IS CREATED HERE, AND ONLY HERE (#248).
+# A BcContainerHelper container has no tenant encryption key, so IsolatedStorage.SetEncrypted
+# and AL's ENCRYPT/DECRYPT refuse outright. A step below creates a real one with BC's own
+# New-NAVEncryptionKey and FAILS THE RUN if it cannot -- same reasoning as the culture pin:
+# a nightly that continues without it re-reports cu 60378 forever until everyone ignores it.
+# ci.yml's Linux image instead installs a pass-through fake (StartupHook Patch #26) that makes
+# Encrypt() return its plaintext input, so a green there says nothing about encryption. This
+# is therefore the only tier in the repository where that surface is genuinely measured.
+#
+# HOW TO READ THE SUMMARY THIS PRODUCES (#249).
+# The job summary opens with "Failed on THIS run" -- that section, and nothing else in the
+# report, is this run's failure list, and its row count equals the headline failure count.
+# Everything under the "Historical" rule below it is about the #213 SaaS baseline; error text
+# there is replayed from a file and prefixed `sandbox saw:`, and describes events that did not
+# happen here. Reading a historical row as a result is how #244 and #246 came to be filed on
+# tests that had passed; both were withdrawn.
+#
 # READ THIS BEFORE TREATING A GREEN ON THE PERMISSION TESTS AS GOOD NEWS.
 # Codeunits 60013 and 60827 declare `TestPermissions = Disabled` and no `Permissions` property,
 # so their writes fall through to whatever the license grants. So a pass there is a statement
@@ -392,6 +409,90 @@ jobs:
           Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
 
       # ---------------------------------------------------------------------------------
+      # Create a tenant encryption key (#248).
+      #
+      # WHY THIS STEP EXISTS. `IsolatedStorage.SetEncrypted`, AL's ENCRYPT/DECRYPT and Data
+      # Encryption Management all resolve their key through the same call chain
+      # (TenantEncryptionProviderFactory -> TenantRsaEncryptionProvider). A container created
+      # by New-BcContainer has no tenant encryption key, so BC correctly refuses with
+      # "An encryption key is required to complete the request." and cu 60378's
+      # IsolatedStorage_SetEncrypted_GetRoundTripsPlaintext fails. That is a property of the
+      # tier, not a BC divergence -- so the tier is what gets fixed.
+      #
+      # This is also the only tier in this repository that exercises REAL cryptography here.
+      # ci.yml's Linux image installs StartupHook Patch #26, a pass-through fake that reports
+      # "encryption present" and makes Encrypt() return its plaintext input unchanged. So a
+      # green on Linux says nothing about encryption; a green here, with a real RSA key
+      # created by BC's own cmdlet, does.
+      #
+      # WHY THE CMDLETS ARE BC'S AND NOT BcContainerHelper'S. BcContainerHelper ships no
+      # encryption-key cmdlet at all -- there is no New-BcContainerTenantEncryptionKey. The
+      # three that exist are BC's own, in Microsoft.Dynamics.Nav.Management.dll:
+      # New-NAVEncryptionKey, Import-NAVEncryptionKey, Export-NAVEncryptionKey. There is no
+      # Get-, which is why the verification below is Export- succeeding rather than a query.
+      #
+      # WHY IT THROWS RATHER THAN WARNING. Same reasoning the culture pin already uses above:
+      # a nightly that silently continues without a key re-reports cu 60378 forever, and
+      # everyone learns to ignore a failure that is really a setup defect. If the key cannot
+      # be created, that is a fact about this run that must stop it, not a footnote.
+      - name: Create a tenant encryption key
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $c = $env:CONTAINER_NAME
+
+          $keyPassword = [guid]::NewGuid().ToString() + 'aA1!'
+
+          $result = Invoke-ScriptInBcContainer -containerName $c -argumentList $keyPassword -scriptblock {
+            param($keyPassword)
+            $ErrorActionPreference = 'Stop'
+            $secure = ConvertTo-SecureString $keyPassword -AsPlainText -Force
+
+            foreach ($cmd in 'New-NAVEncryptionKey', 'Import-NAVEncryptionKey', 'Export-NAVEncryptionKey') {
+              if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+                throw "$cmd is not available in this container's NAV management module. Cannot create a tenant encryption key."
+              }
+            }
+
+            $keyPath = Join-Path $env:TEMP 'tenant-encryption.key'
+            if (Test-Path $keyPath) { Remove-Item $keyPath -Force }
+
+            # -Force: the instance is stopped and restarted around key generation by the
+            # cmdlet itself; without it the cmdlet prompts and a non-interactive session hangs.
+            New-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure -Force
+            if (-not (Test-Path $keyPath)) {
+              throw "New-NAVEncryptionKey reported success but wrote no key file at $keyPath."
+            }
+            Import-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure -ApplicationDatabase -Force
+
+            # VERIFY, do not assume. There is no Get-NAVEncryptionKey, so the check is that
+            # the tier can now EXPORT a key -- which it can only do if one is loaded.
+            $verifyPath = Join-Path $env:TEMP 'tenant-encryption-verify.key'
+            if (Test-Path $verifyPath) { Remove-Item $verifyPath -Force }
+            Export-NAVEncryptionKey -ServerInstance BC -KeyPath $verifyPath -Password $secure -Force
+            if (-not (Test-Path $verifyPath)) {
+              throw "Export-NAVEncryptionKey wrote no file: the service instance has no usable tenant encryption key after import."
+            }
+            $bytes = (Get-Item $verifyPath).Length
+            Remove-Item $verifyPath -Force -ErrorAction SilentlyContinue
+
+            "OK key exported, $bytes bytes"
+          }
+
+          # $result is the scriptblock's whole output stream, and the NAV cmdlets can emit
+          # objects of their own onto it, so match the sentinel ANYWHERE in it rather than
+          # anchoring at the start -- an anchored test would throw on a successful run whose
+          # output merely had something printed ahead of the sentinel.
+          $resultText = ($result | Out-String)
+          Write-Host "tenant encryption key step returned:"
+          Write-Host $resultText
+          if ($resultText -notmatch 'OK key exported, \d+ bytes') {
+            throw "Tenant encryption key setup did not confirm success. Refusing to run: cu 60378's SetEncrypted test would then fail for a setup reason and be read as a BC divergence. Output was: $resultText"
+          }
+          "TENANT_ENCRYPTION_KEY=created (New-NAVEncryptionKey, verified by Export-NAVEncryptionKey)" |
+            Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      # ---------------------------------------------------------------------------------
       # Declare the tier. Half of #213's failures are properties of the environment, so a
       # verdict without this block attached is not interpretable.
       # ---------------------------------------------------------------------------------
@@ -452,6 +553,9 @@ jobs:
             'Session culture (PINNED)'  = "$env:CULTURE"
             'Session timezone (PINNED)' = "$env:TIMEZONE"
             'Container OS locale'    = $containerLocale
+            # #248: a tier without one refuses IsolatedStorage.SetEncrypted / ENCRYPT outright,
+            # and ci.yml's Linux image fakes it (Patch #26). Record which of the two this was.
+            'Tenant encryption key'  = ("$env:TENANT_ENCRYPTION_KEY", 'NOT CREATED')[[string]::IsNullOrWhiteSpace($env:TENANT_ENCRYPTION_KEY)]
             'License'                = $licenseLine
             'BcContainerHelper'      = "$env:BCCH_VERSION"
           }
