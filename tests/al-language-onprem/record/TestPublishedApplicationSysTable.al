@@ -30,6 +30,17 @@
 //
 //   Every assertion is about two apps that this repository itself publishes, so nothing here
 //   depends on which Microsoft apps a particular tier happens to carry.
+//
+// THE THREE FLOWFIELDS, AND WHY "READS FALSE" IS NOT AN ANSWER
+//   Published Application carries three FlowFields - Installed, "Tenant Visible" and
+//   "PerTenant Or Installed". All three are Boolean, so an implementation that computes
+//   NOTHING and one that computes "no" are indistinguishable from AL: both read false.
+//
+//   That is not hypothetical. Installed was read as false by a consumer of this corpus on the
+//   reasoning that it was "a FlowField with nothing behind it", and this file's Installed test
+//   is what showed a real tier answering true. The other two were left unmeasured at the time.
+//   They are measured here, for the same reason and in the same shape: each pins TRUE, which
+//   only a real computation can produce, rather than false, which anything can produce.
 
 codeunit 61201 "Test Published App Sys Table"
 {
@@ -262,6 +273,95 @@ codeunit 61201 "Test Published App Sys Table"
 
         PublishedApplication.CalcFields(Installed);
         Assert.IsTrue(PublishedApplication.Installed, 'The app whose tests are running must read as installed.');
+    end;
+
+    [Test]
+    procedure PublishedApplication_CalcFields_TenantVisible_IsTrueForThisApp()
+    // CLAIM: "Tenant Visible" is a Lookup FlowField over "NAV App Extra" (2000000157) matched
+    // on "Runtime Package ID". An app that is published and whose test codeunits are running
+    // is visible to the tenant running them, so it reads true.
+    //
+    // WHY THIS IS WORTH ASKING. The column reads FALSE where nothing computes it, and false is
+    // also the Boolean default, so the two are indistinguishable from the outside. That is
+    // exactly the shape that made the Installed assertion below wrong for a long time before
+    // this repository measured it: an implementation that computes nothing looks identical to
+    // one that computes "no". Pinning true here separates them, because true is a value only a
+    // real computation can produce.
+    var
+        PublishedApplication: Record "Published Application";
+        ThisModule: ModuleInfo;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+
+        PublishedApplication.SetRange(ID, ThisModule.Id());
+        Assert.IsTrue(PublishedApplication.FindFirst(), 'This app must have a Published Application row of its own.');
+
+        PublishedApplication.CalcFields("Tenant Visible");
+        Assert.IsTrue(PublishedApplication."Tenant Visible", 'The app whose tests are running must be visible to this tenant.');
+    end;
+
+    [Test]
+    procedure PublishedApplication_CalcFields_PerTenantOrInstalled_IsTrueForThisApp()
+    // CLAIM: "PerTenant Or Installed" is the second Lookup FlowField over "NAV App Extra",
+    // matched on the same "Runtime Package ID". An app that is installed in this tenant
+    // satisfies the "Or Installed" half however it was scoped, so it reads true.
+    //
+    // Same reasoning as the test above about why true rather than false is the claim worth
+    // pinning: false is unfalsifiable here, true is not.
+    var
+        PublishedApplication: Record "Published Application";
+        ThisModule: ModuleInfo;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+
+        PublishedApplication.SetRange(ID, ThisModule.Id());
+        Assert.IsTrue(PublishedApplication.FindFirst(), 'This app must have a Published Application row of its own.');
+
+        PublishedApplication.CalcFields("PerTenant Or Installed");
+        Assert.IsTrue(PublishedApplication."PerTenant Or Installed", 'The app whose tests are running must read as per-tenant or installed.');
+    end;
+
+    [Test]
+    procedure PublishedApplication_CalcFields_BothFlowFields_AlsoTrueForTheOtherApp()
+    // CLAIM: the two tests above are not passing because THIS app happens to be special. The
+    // Cloud coverage app this one depends on is a second, separately published app with its
+    // own "Runtime Package ID", and it must answer the same way.
+    //
+    // What this adds over the two tests above: it forces the lookup to be performed for a
+    // SECOND key. An implementation that answered the first row correctly and every other row
+    // by default would pass both tests above and fail this one.
+    var
+        CloudApp: Record "Published Application";
+        CloudAppId: Guid;
+    begin
+        Initialize();
+        Evaluate(CloudAppId, CloudAppIdTok);
+
+        CloudApp.SetRange(ID, CloudAppId);
+        Assert.IsTrue(CloudApp.FindFirst(), 'The Cloud coverage app this one depends on must be listed too.');
+        Assert.AreEqual('AL Language Coverage Tests', CloudApp.Name, 'The row found by app id must be the Cloud coverage app''s.');
+
+        CloudApp.CalcFields("Tenant Visible", "PerTenant Or Installed", Installed);
+        Assert.IsTrue(CloudApp."Tenant Visible", 'The other published app must be visible to this tenant too.');
+        Assert.IsTrue(CloudApp."PerTenant Or Installed", 'The other published app must read as per-tenant or installed too.');
+        Assert.IsTrue(CloudApp.Installed, 'The other published app is installed - this app depends on it, so it cannot not be.');
+    end;
+
+    [Test]
+    procedure PublishedApplication_CalcFields_UnpublishedRuntimePackageId_HasNoRowToLookUp()
+    // CLAIM: the negative half. The three FlowFields resolve through "Runtime Package ID", and
+    // a runtime package id nobody published has no Published Application row at all - so there
+    // is nothing for CalcFields to be called on. Without this the tests above would also pass
+    // against a platform whose every row answered to every id.
+    var
+        PublishedApplication: Record "Published Application";
+    begin
+        Initialize();
+
+        PublishedApplication.SetRange("Runtime Package ID", CreateGuid());
+        Assert.IsTrue(PublishedApplication.IsEmpty(), 'No app was published under a freshly created runtime package id.');
     end;
 
     local procedure Initialize()
