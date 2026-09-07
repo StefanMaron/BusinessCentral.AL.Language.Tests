@@ -5,6 +5,7 @@
 codeunit 60115 "Test Page Handler"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

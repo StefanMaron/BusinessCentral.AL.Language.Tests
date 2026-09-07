@@ -1,6 +1,7 @@
 codeunit 60168 "Test Filter Advanced Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

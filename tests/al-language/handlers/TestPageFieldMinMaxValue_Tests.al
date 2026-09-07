@@ -11,6 +11,7 @@
 codeunit 60934 "Test Page Field MinMaxValue"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

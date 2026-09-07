@@ -5,6 +5,7 @@
 codeunit 60063 "Test Record Count"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

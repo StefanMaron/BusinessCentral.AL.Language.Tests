@@ -38,6 +38,7 @@
 codeunit 60179 "Test xRec Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

@@ -1,6 +1,7 @@
 codeunit 60153 "Test Type System Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     trigger OnRun()
     begin

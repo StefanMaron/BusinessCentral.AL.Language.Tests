@@ -25,6 +25,7 @@
 codeunit 60331 "TableExt Keys And InitValue"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

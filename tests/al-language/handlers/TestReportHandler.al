@@ -5,6 +5,7 @@
 codeunit 60116 "Test Report Handler"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

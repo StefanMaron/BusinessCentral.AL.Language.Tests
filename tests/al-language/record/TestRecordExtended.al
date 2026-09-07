@@ -5,6 +5,7 @@
 codeunit 60129 "Test Record Extended"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

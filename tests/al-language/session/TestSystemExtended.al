@@ -5,6 +5,7 @@
 codeunit 60135 "Test System Extended"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

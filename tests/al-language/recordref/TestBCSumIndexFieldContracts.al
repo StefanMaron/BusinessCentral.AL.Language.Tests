@@ -5,6 +5,7 @@
 codeunit 60177 "Test BC SumIndex Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

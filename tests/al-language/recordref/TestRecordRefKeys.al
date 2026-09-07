@@ -4,6 +4,7 @@
 codeunit 60071 "Test RecordRef Keys"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

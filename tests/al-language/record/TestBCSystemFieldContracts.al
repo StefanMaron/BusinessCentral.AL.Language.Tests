@@ -7,6 +7,7 @@
 codeunit 60172 "Test BC System Field Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

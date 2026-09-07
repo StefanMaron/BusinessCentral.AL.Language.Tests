@@ -5,6 +5,7 @@
 codeunit 60054 "Test Record Find"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

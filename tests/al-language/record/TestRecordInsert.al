@@ -5,6 +5,7 @@
 codeunit 60050 "Test Record Insert"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

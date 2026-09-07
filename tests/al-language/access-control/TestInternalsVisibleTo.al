@@ -6,6 +6,7 @@
 codeunit 60202 "Test InternalsVisibleTo"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

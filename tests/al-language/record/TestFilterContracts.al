@@ -6,6 +6,7 @@
 codeunit 60149 "Test Filter Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

@@ -5,6 +5,7 @@
 codeunit 60058 "Test Record FlowField"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

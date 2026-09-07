@@ -11,6 +11,7 @@
 codeunit 60986 "Test Manual ObjectEvent"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

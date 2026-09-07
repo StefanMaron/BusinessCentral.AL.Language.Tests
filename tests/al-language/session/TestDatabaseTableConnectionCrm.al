@@ -17,6 +17,7 @@
 codeunit 60292 "Test Database TableConn CRM"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

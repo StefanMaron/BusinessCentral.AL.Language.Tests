@@ -4,6 +4,7 @@
 codeunit 60086 "Test GetLastError"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

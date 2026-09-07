@@ -5,6 +5,7 @@
 codeunit 60064 "Test Record TransferFields"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

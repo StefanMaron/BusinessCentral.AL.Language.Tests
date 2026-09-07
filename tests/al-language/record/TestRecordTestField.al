@@ -5,6 +5,7 @@
 codeunit 60066 "Test Record TestField"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

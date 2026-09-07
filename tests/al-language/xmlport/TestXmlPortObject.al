@@ -6,6 +6,7 @@
 codeunit 60206 "Test XmlPort Object"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

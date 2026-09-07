@@ -20,6 +20,7 @@
 codeunit 60912 "CFS Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

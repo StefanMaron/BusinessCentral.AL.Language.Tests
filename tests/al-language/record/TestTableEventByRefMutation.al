@@ -6,6 +6,7 @@
 codeunit 60237 "Test Event ByRef Mut"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

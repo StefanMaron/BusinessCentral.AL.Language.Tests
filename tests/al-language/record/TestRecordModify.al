@@ -5,6 +5,7 @@
 codeunit 60051 "Test Record Modify"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

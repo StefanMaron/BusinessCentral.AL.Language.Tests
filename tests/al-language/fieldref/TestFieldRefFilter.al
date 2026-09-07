@@ -1,6 +1,7 @@
 codeunit 60075 "Test FieldRef Filter"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

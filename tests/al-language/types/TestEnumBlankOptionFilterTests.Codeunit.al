@@ -20,6 +20,7 @@
 codeunit 60300 "EBF Blank Option Filter Tests"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

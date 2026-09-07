@@ -12,6 +12,7 @@
 codeunit 60950 "Test Manual TableEvent"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

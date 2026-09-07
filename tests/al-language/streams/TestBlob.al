@@ -3,6 +3,7 @@
 codeunit 60110 "Test Blob"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

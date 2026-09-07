@@ -6,6 +6,7 @@
 codeunit 60155 "Test Record Nav Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

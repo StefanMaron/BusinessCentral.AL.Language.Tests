@@ -4,6 +4,7 @@
 codeunit 60081 "Test Codeunit Subscriber"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

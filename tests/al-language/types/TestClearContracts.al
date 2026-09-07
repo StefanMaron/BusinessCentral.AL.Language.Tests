@@ -5,6 +5,7 @@
 codeunit 60181 "Test Clear Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

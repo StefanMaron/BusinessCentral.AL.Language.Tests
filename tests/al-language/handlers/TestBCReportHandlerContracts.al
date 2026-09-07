@@ -1,6 +1,7 @@
 codeunit 60174 "Test BC Report Handlers"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

@@ -4,6 +4,7 @@
 codeunit 60069 "Test RecordRef Filter"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;

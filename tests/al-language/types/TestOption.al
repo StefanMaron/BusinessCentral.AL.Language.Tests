@@ -4,6 +4,7 @@
 codeunit 60098 "Test Option"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

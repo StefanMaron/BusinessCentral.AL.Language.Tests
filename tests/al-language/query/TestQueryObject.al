@@ -6,6 +6,7 @@
 codeunit 60205 "Test Query Object"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

@@ -5,6 +5,7 @@
 codeunit 60159 "Test Event Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

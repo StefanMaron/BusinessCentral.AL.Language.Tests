@@ -5,6 +5,7 @@
 codeunit 60080 "Test Codeunit Events"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

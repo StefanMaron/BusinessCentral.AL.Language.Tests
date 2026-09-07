@@ -5,6 +5,7 @@
 codeunit 60109 "Test InOutStream"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

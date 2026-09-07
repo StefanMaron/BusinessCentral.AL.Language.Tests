@@ -13,6 +13,7 @@
 codeunit 60994 "Test TableExt Field Validate"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

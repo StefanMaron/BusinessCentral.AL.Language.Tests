@@ -1,6 +1,7 @@
 codeunit 60164 "Test Collection Identity"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

@@ -5,6 +5,7 @@
 codeunit 60148 "Test Trigger Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

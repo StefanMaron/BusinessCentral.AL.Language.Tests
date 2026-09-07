@@ -1,6 +1,7 @@
 codeunit 60171 "Test BC Metadata Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

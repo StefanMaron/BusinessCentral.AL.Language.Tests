@@ -1,6 +1,7 @@
 codeunit 60073 "Test FieldRef Value"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

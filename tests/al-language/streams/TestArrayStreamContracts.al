@@ -1,6 +1,7 @@
 codeunit 60167 "Test Array Stream Contracts"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;

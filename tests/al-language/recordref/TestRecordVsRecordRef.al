@@ -1,6 +1,7 @@
 codeunit 60147 "Test Record vs RecordRef"
 {
     Subtype = Test;
+    TestPermissions = Disabled;
 
     var
         Assert: Codeunit Assert;
