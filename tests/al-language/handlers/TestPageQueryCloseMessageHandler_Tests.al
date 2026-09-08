@@ -97,8 +97,8 @@ codeunit 60602 "QCM Query Close Msg Tests"
 
         Assert.IsTrue(Witness.Get(ModalTag),
             'An error raised in OnQueryClosePage must reach a declared [MessageHandler] -- it is shown as a message, not propagated raw.');
-        Assert.AreEqual(1, Witness."Seen Count",
-            'The close-time message must be delivered exactly once.');
+        Assert.AreEqual(2, Witness."Seen Count",
+            'The RunModal route must deliver the close-time message once per close attempt, and it makes two. Corpus 60276 pins that OK().Invoke() itself runs OnQueryClosePage exactly once, so the second delivery belongs to the refusal, not to invoking the action.');
         Assert.IsTrue(StrPos(Witness."Last Text", CloseRefusedTxt) > 0,
             StrSubstNo('The [MessageHandler] must receive the AL error text the trigger raised; got "%1".', Witness."Last Text"));
     end;
@@ -137,8 +137,8 @@ codeunit 60602 "QCM Query Close Msg Tests"
         // because a [MessageHandler] consumed it.
         Assert.IsTrue(Witness.Get(ModalTag),
             'The [MessageHandler] must have consumed the close-time message before the caller regains control.');
-        Assert.AreEqual(1, Witness."Seen Count",
-            'The close-time message must be delivered exactly once.');
+        Assert.AreEqual(2, Witness."Seen Count",
+            'The RunModal route must deliver the close-time message once per close attempt, and it makes two. Corpus 60276 pins that OK().Invoke() itself runs OnQueryClosePage exactly once, so the second delivery belongs to the refusal, not to invoking the action.');
         Assert.AreEqual(Format(Action::OK), Format(Result),
             'RunModal must report the action the [ModalPageHandler] chose, even though the close itself was refused.');
     end;
@@ -146,10 +146,15 @@ codeunit 60602 "QCM Query Close Msg Tests"
     // CLAIM 3: what became of the page's own uncommitted write.
     //
     // 60677 pins that WITHOUT a [MessageHandler] the failing close discards the page's
-    // uncommitted write and stops at the last Commit(). The message being consumed rather than
-    // escalated could plausibly change that -- if control returns normally, nothing obviously
-    // rolls anything back. Asserting the row and the count together means neither "everything was
-    // rolled back" nor "nothing was" can pass without being the measured answer.
+    // uncommitted write and stops at the last Commit(). Measured here, consuming the message
+    // changes it: the write SURVIVES. 60677 takes its measurement behind asserterror, so what
+    // rolls the write back there is the framework unwinding a PROPAGATED error -- and a consumed
+    // message propagates nothing, so nothing unwinds. The rollback belongs to the error escaping,
+    // not to the close failing.
+    //
+    // Asserting the surviving row's value and the count together means neither "everything was
+    // rolled back" nor "a row reappeared empty from somewhere else" can pass as the measured
+    // answer.
     [Test]
     [HandlerFunctions('QcmOkHandler,QcmMessageHandler')]
     procedure ErrorInQueryClosePage_MessageConsumed_SettlesThePagesUncommittedWrite()
@@ -167,10 +172,12 @@ codeunit 60602 "QCM Query Close Msg Tests"
             'The row committed before the page opened must survive -- any rollback stops at the last Commit().');
         Assert.AreEqual(7, Row."Set ID",
             'The committed row must keep the value it was committed with.');
-        Assert.IsFalse(Row.Get('OPENED'),
-            'The row OnOpenPage inserted without committing must not survive a close whose trigger raised an error.');
-        Assert.AreEqual(1, Row.Count(),
-            'Only the committed row may remain after the failed close.');
+        Assert.IsTrue(Row.Get('OPENED'),
+            'The row OnOpenPage inserted without committing must SURVIVE here. 60677 measures the rollback behind asserterror, where the framework unwinds a propagated error; a consumed message propagates nothing, so nothing unwinds. The rollback belongs to the error escaping, not to the close failing.');
+        Assert.AreEqual(42, Row."Set ID",
+            'The surviving uncommitted row must carry the value OnOpenPage wrote, not a default -- so a row resurrected empty by anything else cannot satisfy the assertion above.');
+        Assert.AreEqual(2, Row.Count(),
+            'Both rows must remain: the committed one and the uncommitted one the consumed message left in place.');
     end;
 
     // The TestPage twin: a page the test opens and closes ITSELF, with a [MessageHandler]
@@ -194,7 +201,7 @@ codeunit 60602 "QCM Query Close Msg Tests"
         Assert.IsTrue(Witness.Get(CardTag),
             'Closing a TestPage whose OnQueryClosePage errors must deliver the text to a declared [MessageHandler].');
         Assert.AreEqual(1, Witness."Seen Count",
-            'The close-time message must be delivered exactly once on the TestPage path too.');
+            'The TestPage route must deliver the close-time message once. It differs from the RunModal arms above deliberately: this shape has no [ModalPageHandler] closing the page underneath the caller, so there is one close attempt rather than two.');
         Assert.IsTrue(StrPos(Witness."Last Text", CloseRefusedTxt) > 0,
             StrSubstNo('The [MessageHandler] must receive the trigger''s own error text; got "%1".', Witness."Last Text"));
     end;
@@ -244,10 +251,11 @@ codeunit 60602 "QCM Query Close Msg Tests"
         Witness."Seen Count" := Witness."Seen Count" + 1;
         Witness."Last Text" := CopyStr(Msg, 1, MaxStrLen(Witness."Last Text"));
         Witness.Modify();
-        // The witness must outlive whatever the close does to the transaction: the arms above read
-        // it back AFTER a round trip that 60677 already showed discards the page's own
-        // uncommitted write. Without this the handler's own record would be rolled back with it
-        // and every assertion would read "the handler never ran".
+        // The witness must outlive whatever the close does to the transaction. The arms above read
+        // it back after a round trip that may unwind: 60677 shows an uncommitted write discarded
+        // when the close-time error PROPAGATES, and this suite only avoids that because the
+        // handler consumes it. Committing here keeps the witness readable either way, so a failure
+        // can never be the ambiguous "the handler never ran".
         Commit();
     end;
 
