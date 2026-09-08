@@ -19,17 +19,38 @@
 /// number-series draw, a log row, a counter, a call out to a setup codeunit. Repeated firings
 /// silently multiply it, and nothing in the finished row says so.
 ///
-/// WHAT REAL BC ANSWERED, and it is not "once". This file was first written asserting one firing
-/// per row throughout. A real service tier said otherwise, identically on all 8 cloud legs of
-/// run 34140530877 (BC 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3, 28.4):
+/// WHAT REAL BC ANSWERED, and it is not "once" -- nor is it one number. This file was first
+/// written asserting one firing per row throughout. A real service tier said otherwise,
+/// identically on all 8 cloud legs of run 34140530877 (BC 27.0 through 28.4):
 ///
-///   * opening the card on an EMPTY part and landing on its draft line costs SIX firings,
-///     not one (three separate arms measured 6);
-///   * New() on that same empty part costs SEVEN -- the six above, plus one for New() itself.
+///   * opening the card on an EMPTY part and landing on its draft line cost SIX firings;
+///   * New() on that same empty part cost SEVEN -- the six above, plus one for New() itself.
 ///
-/// Those numbers are the measurement, and the assertions below now pin them. They are stable
-/// across every version, so this is deterministic platform behaviour rather than a range, and
-/// the exact figures are pinned as exact figures.
+/// Those six and seven were then pinned here as exact constants, described as deterministic
+/// platform behaviour. THAT WAS WRONG, and a second real tier is what showed it. The official
+/// Microsoft BC container on Windows, BC 28.4, nightly run 34182689878, answers THREE and FOUR
+/// for the same two arms (corpus issue #281).
+///
+/// So the absolute count is a property of the TIER, not of the platform, and this file no
+/// longer asserts one. What differs between the two tiers is how many blank rows the client
+/// renders to fill the viewport, which is exactly what the mechanism below predicts would vary.
+///
+/// WHAT IS ASSERTED INSTEAD, and why nothing is weakened by it. Every claim this file exists to
+/// make is a DELTA, and both tiers agree on all of them:
+///
+///   * landing on an existing data row costs 0, and Next() onto the draft line costs exactly 1
+///     (arm 4, absolute and portable, because it never renders an empty repeater);
+///   * First() on an ALREADY-open empty part costs exactly 0 more -- the draft line was
+///     started during the open (arm 1);
+///   * New() on an empty part costs exactly +1 over the open (arm 3);
+///   * writing into a draft line already started costs exactly +0 (arms 2 and 5);
+///   * a second row started through the draft line costs exactly +1 (arm 5).
+///
+/// Those are exact integers, so an implementation that fires an extra time still fails and one
+/// that stops firing still fails. The single non-exact assertion in the file is arm 1's "the
+/// open cost is greater than zero", which is the honest portable form of "showing a blank draft
+/// line raises the trigger at all": the tier decides how many times, and both measured tiers
+/// agree that it is more than once.
 ///
 /// THE MECHANISM the numbers point at, stated as the reading it is: showing a blank draft line
 /// in an EMPTY repeater raises the trigger repeatedly as the client fills the visible viewport,
@@ -68,15 +89,6 @@ codeunit 60358 "ONRC Tests"
 
     var
         Assert: Codeunit Assert;
-
-    // The firings a card open costs when the linked part is EMPTY, so the client renders the
-    // blank draft line to fill the viewport. Measured on all 8 cloud legs of run 34140530877.
-    // A procedure rather than a literal repeated in three arms, so the measured constant and the
-    // run that measured it are stated once.
-    local procedure OpenOnEmptyPartFirings(): Integer
-    begin
-        exit(6);
-    end;
 
     local procedure Initialize()
     var
@@ -139,26 +151,31 @@ codeunit 60358 "ONRC Tests"
         exit(Line.Count());
     end;
 
-    // ARM 3. New() on an empty linked part. Real BC answers SEVEN: the six that opening the card
-    // on an empty part costs, plus exactly one for the New() itself. The name ends in
-    // "OncePlusTheOpenCost" because that +1 -- not the absolute 7 -- is the claim this arm makes
-    // about New(); the 6 underneath it is
-    // arm 1's measured constant, asserted here again so a change in it cannot hide inside this
-    // arm's total.
+    // ARM 3. New() on an empty linked part. The claim is the DELTA: New() raises OnNewRecord
+    // exactly once more than opening the card on that empty part already did. The open cost
+    // itself is measured here rather than asserted, because it differs by tier -- 6 on bc-linux
+    // and 3 on the official MS Windows container (#281).
     [Test]
     procedure New_OnEmptyLinkedPart_RunsOnNewRecordOncePlusTheOpenCost()
     var
         Card: TestPage "ONRC Card";
+        AfterOpen: Integer;
         AfterNew: Integer;
     begin
         Initialize();
         AddLine('H2', 10000, 'foreign');
 
         OpenCardOn('H1', Card);
+
+        // The tier's own open cost, measured, not assumed. Every assertion below is a delta
+        // from it, so a tier that renders a different number of blank lines does not change
+        // what this arm claims.
+        AfterOpen := OnNewRecordCount();
+
         Card.Lines.New();
 
         AfterNew := OnNewRecordCount();
-        Assert.AreEqual(OpenOnEmptyPartFirings() + 1, AfterNew,
+        Assert.AreEqual(AfterOpen + 1, AfterNew,
             'New() on an empty linked part must raise OnNewRecord exactly once more than opening the card on that empty part already did');
 
         Card.Lines.Descr.SetValue('typed after New');
@@ -172,25 +189,40 @@ codeunit 60358 "ONRC Tests"
         Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
     end;
 
-    // ARM 1. Merely showing the draft line of an EMPTY part. Real BC answers SIX -- the blank
-    // line is rendered repeatedly to fill the viewport. Nothing is typed, so nothing is saved
-    // either, which is asserted: the six firings cannot be explained as rows having been written.
+    // ARM 1. Merely showing the draft line of an EMPTY part, and the arm that establishes what
+    // the open costs on whatever tier is running. Two claims, both portable:
+    //
+    //   * the open raises the trigger AT ALL -- the one non-exact assertion in this file, and
+    //     the honest form of the claim, since how many times is the tier's decision (6 on
+    //     bc-linux, 3 on the official MS Windows container -- #281);
+    //   * First() on an already-open empty part then costs EXACTLY ZERO more, because the draft
+    //     line was already started during the open. That is an exact integer and it is the
+    //     mechanism claim this whole file rests on.
+    //
+    // Nothing is typed, so nothing is saved either, which is asserted: the firings cannot be
+    // explained as rows having been written.
     [Test]
     procedure DraftLine_ShownAndUntouched_RunsOnNewRecordOncePerRenderedBlankLine()
     var
         Card: TestPage "ONRC Card";
+        AfterOpen: Integer;
         AfterShown: Integer;
     begin
         Initialize();
         AddLine('H2', 10000, 'foreign');
 
         OpenCardOn('H1', Card);
+
+        AfterOpen := OnNewRecordCount();
+        Assert.IsTrue(AfterOpen > 0,
+            'opening a card on an empty part must raise the part''s OnNewRecord at least once -- the blank draft line is rendered, and rendering it starts a record');
+
         Assert.IsFalse(Card.Lines.First(),
             'H1 has no lines, so First() on the part must return false and land on the draft line');
 
         AfterShown := OnNewRecordCount();
-        Assert.AreEqual(OpenOnEmptyPartFirings(), AfterShown,
-            'landing on the draft line of an empty part must raise OnNewRecord once per rendered blank line');
+        Assert.AreEqual(AfterOpen, AfterShown,
+            'First() on an empty part must not raise OnNewRecord again -- the draft line was already started while the card opened');
 
         Card.Close();
 
@@ -202,9 +234,11 @@ codeunit 60358 "ONRC Tests"
     end;
 
     // ARM 2, AND THE ONE THIS FILE EXISTS FOR. Land on the draft line, then write one field.
-    // Against arm 1's measured baseline this isolates what the WRITE costs: an equal count means
-    // typing only marks an already-started row for saving, a higher count means the promotion
-    // starts the record again. Asserted as an exact delta so either answer is falsifiable.
+    // Against the baseline measured in the same arm this isolates what the WRITE costs: an equal
+    // count means typing only marks an already-started row for saving, a higher count means the
+    // promotion starts the record again. Asserted as an exact delta so either answer is
+    // falsifiable, and measured rather than compared against a constant so the claim holds on
+    // any tier (#281).
     [Test]
     procedure DraftLine_ShownThenWritten_WriteDoesNotRaiseOnNewRecordAgain()
     var
@@ -219,8 +253,6 @@ codeunit 60358 "ONRC Tests"
         Assert.IsFalse(Card.Lines.First(),
             'H1 has no lines, so First() on the part must return false and land on the draft line');
         AfterShown := OnNewRecordCount();
-        Assert.AreEqual(OpenOnEmptyPartFirings(), AfterShown,
-            'landing on the draft line of an empty part must raise OnNewRecord once per rendered blank line, before anything is typed');
 
         Card.Lines.Descr.SetValue('typed into the draft line');
 
@@ -293,15 +325,16 @@ codeunit 60358 "ONRC Tests"
             'AutoSplitKey must number the promoted line past the line already there');
     end;
 
-    // TWO ROWS. The arm that stops the constants above from being read as "the trigger fires a
-    // fixed number of times per page and then stops". The count tracks work the platform does,
-    // so a second row started after the first is saved raises it AGAIN -- asserted as an exact
-    // +1 delta over the count measured after the first row, which is the per-row claim stated in
-    // the only form run 34140530877 left measured.
+    // TWO ROWS. The arm that stops the counts above from being read as "the trigger fires a fixed
+    // number of times per page and then stops". The count tracks work the platform does, so a
+    // second row started after the first is saved raises it AGAIN. Both claims are exact deltas
+    // against a baseline this arm measures for itself: writing the first row costs +0 over the
+    // open, and the second row costs +1 over that (#281).
     [Test]
     procedure TwoRowsWrittenThroughTheDraftLine_SecondRowRaisesOnNewRecordOnceMore()
     var
         Card: TestPage "ONRC Card";
+        AfterShown: Integer;
         AfterFirstRow: Integer;
     begin
         Initialize();
@@ -310,9 +343,12 @@ codeunit 60358 "ONRC Tests"
         OpenCardOn('H1', Card);
         Assert.IsFalse(Card.Lines.First(), 'H1 has no lines, so First() must return false');
 
+        // Measured BEFORE the write, so the next assertion is a delta across the write alone.
+        AfterShown := OnNewRecordCount();
+
         Card.Lines.Descr.SetValue('first line');
         AfterFirstRow := OnNewRecordCount();
-        Assert.AreEqual(OpenOnEmptyPartFirings(), AfterFirstRow,
+        Assert.AreEqual(AfterShown, AfterFirstRow,
             'writing the first row must cost nothing beyond the firings opening the empty part already paid');
 
         Assert.IsTrue(Card.Lines.Next(),
