@@ -20,7 +20,7 @@
 //                 3 -> C2 amount 300
 //   C3 "Carol" has NO order row, so she is the discriminator: an InnerJoin default drops
 //   her (3 rows) and a LeftOuterJoin default keeps her (4 rows).
-codeunit 60602 "QJ Query Join Default Tests"
+codeunit 60603 "QJ Query Join Default Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
