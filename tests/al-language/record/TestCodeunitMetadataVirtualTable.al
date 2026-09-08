@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-codeunit-object
 // Scope: in-scope
 // Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608),
-//                ALT Install Probe (60838)
+//                ALT Install Probe (60838), ALT Quoted Install Probe (60828),
+//                ALT Quoted Upgrade Probe (60829)
 //
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
 // codeunit declared in the application, computed from the codeunit's own metadata rather
@@ -166,6 +167,116 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
         Assert.AreEqual(0, CodeunitMetadata.Count(), 'A filter on an unused id must select no rows.');
         Assert.IsFalse(CodeunitMetadata.FindSet(), 'FindSet must fail for a filter naming no codeunit.');
         Assert.IsTrue(CodeunitMetadata.IsEmpty(), 'IsEmpty must be true for a filter naming no codeunit.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_QuotedSubtypeInstall_ReportsSubtypeNormal()
+    var
+        QuotedInstall: Record "CodeUnit Metadata";
+        BareInstall: Record "CodeUnit Metadata";
+        QuotedOrdinal: Integer;
+        BareOrdinal: Integer;
+    begin
+        Initialize();
+
+        // AL lets a property value be written as a quoted identifier: ALT Quoted Install Probe
+        // declares Subtype = "Install" where ALT Install Probe declares Subtype = Install. The
+        // quotes are lexical, so the two declarations state the same subtype.
+        //
+        // [WHEN] reading the row of a codeunit whose Subtype is written as a quoted identifier
+        Assert.IsTrue(
+            QuotedInstall.Get(Codeunit::"ALT Quoted Install Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Quoted Install Probe.');
+
+        // [THEN] the column reports what it reports for the bare spelling -- Normal, ordinal 0.
+        QuotedOrdinal := QuotedInstall.Subtype;
+        Assert.AreEqual(
+            0, QuotedOrdinal,
+            'A codeunit declaring Subtype = "Install" must report ordinal 0 in the SubType column.');
+        Assert.AreEqual(
+            QuotedInstall.Subtype::Normal, QuotedInstall.Subtype,
+            'A codeunit declaring Subtype = "Install" must report Subtype::Normal.');
+
+        // [AND] the two spellings agree, read in the same run.
+        Assert.IsTrue(
+            BareInstall.Get(Codeunit::"ALT Install Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Install Probe.');
+        BareOrdinal := BareInstall.Subtype;
+        Assert.AreEqual(
+            BareOrdinal, QuotedOrdinal,
+            'Quoting the Subtype identifier must not change what the SubType column reports.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_QuotedSubtypeUpgrade_ReportsSubtypeUpgrade()
+    var
+        QuotedUpgrade: Record "CodeUnit Metadata";
+        QuotedInstall: Record "CodeUnit Metadata";
+        UpgradeOrdinal: Integer;
+    begin
+        Initialize();
+
+        // The companion fixture quotes Upgrade, which this column DOES name a member for. It
+        // separates the quoting from the subtype: if quoting alone were what mattered, this
+        // would answer the same as the Install probe above, and it must not.
+        Assert.IsTrue(
+            QuotedUpgrade.Get(Codeunit::"ALT Quoted Upgrade Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Quoted Upgrade Probe.');
+
+        UpgradeOrdinal := QuotedUpgrade.Subtype;
+        Assert.AreEqual(
+            3, UpgradeOrdinal,
+            'A codeunit declaring Subtype = "Upgrade" must report ordinal 3 in the SubType column.');
+        Assert.AreEqual(
+            QuotedUpgrade.Subtype::Upgrade, QuotedUpgrade.Subtype,
+            'A codeunit declaring Subtype = "Upgrade" must report Subtype::Upgrade.');
+
+        // Negative control for the pair: the two quoted probes differ, so the column is not
+        // answering "whatever a quoted Subtype means" with one fixed value.
+        Assert.IsTrue(
+            QuotedInstall.Get(Codeunit::"ALT Quoted Install Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Quoted Install Probe.');
+        Assert.AreNotEqual(
+            QuotedInstall.Subtype, QuotedUpgrade.Subtype,
+            'Two codeunits with different quoted Subtypes must not report the same SubType.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_FindSet_EnumeratesEveryProbe_WhenAQuotedSubtypeIsPresent()
+    var
+        CodeunitMetadata: Record "CodeUnit Metadata";
+        SeenIds: List of [Integer];
+    begin
+        Initialize();
+
+        // Enumeration, not Get: the table must serve every row it knows about even though one
+        // of the codeunits in the filtered set states a Subtype this column names no member for
+        // AND writes it as a quoted identifier. A provider that stopped enumerating when it met
+        // such a row would answer fewer than three here.
+        CodeunitMetadata.SetFilter(
+            ID, '%1|%2|%3',
+            Codeunit::"ALT Quoted Install Probe",
+            Codeunit::"ALT Quoted Upgrade Probe",
+            Codeunit::"ALT Codeunit Meta Probe");
+
+        Assert.AreEqual(
+            3, CodeunitMetadata.Count(),
+            'A filter naming three existing codeunits must select three rows.');
+        Assert.IsTrue(CodeunitMetadata.FindSet(), 'FindSet must succeed for a filter naming existing codeunits.');
+        repeat
+            SeenIds.Add(CodeunitMetadata.ID);
+        until CodeunitMetadata.Next() = 0;
+
+        Assert.AreEqual(3, SeenIds.Count(), 'FindSet/Next must walk all three filtered rows.');
+        Assert.IsTrue(
+            SeenIds.Contains(Codeunit::"ALT Quoted Install Probe"),
+            'The walk must include the codeunit declaring Subtype = "Install".');
+        Assert.IsTrue(
+            SeenIds.Contains(Codeunit::"ALT Quoted Upgrade Probe"),
+            'The walk must include the codeunit declaring Subtype = "Upgrade".');
+        Assert.IsTrue(
+            SeenIds.Contains(Codeunit::"ALT Codeunit Meta Probe"),
+            'The walk must include the plain codeunit filtered alongside the quoted ones.');
     end;
 
     local procedure Initialize()
