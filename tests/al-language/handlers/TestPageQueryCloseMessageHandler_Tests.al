@@ -108,7 +108,10 @@ codeunit 60602 "QCM Query Close Msg Tests"
     // This is the question AlRunner#3179 exists to settle and the reason the suite was written.
     // The platform's close handler returns "close refused" after showing the message, so either
     // the caller regains control -- and RunModal reports something -- or the refusal reaches AL
-    // as an error.
+    // as an error. Measured: the first. Control returns, and RunModal reports None rather than
+    // the OK the [ModalPageHandler] chose, because a refused close completed no action. Contrast
+    // the negative control above, where the same handler chooses OK, the close succeeds, and
+    // RunModal does report OK -- so None here is the refusal being reported, not an action lost.
     //
     // Deliberately NOT written with [TryFunction]. A TryFunction turns every outcome into a
     // boolean, and an implementation that raises an out-of-scope signal here would be absorbed by
@@ -139,8 +142,8 @@ codeunit 60602 "QCM Query Close Msg Tests"
             'The [MessageHandler] must have consumed the close-time message before the caller regains control.');
         Assert.AreEqual(2, Witness."Seen Count",
             'The RunModal route must deliver the close-time message once per close attempt, and it makes two. Corpus 60276 pins that OK().Invoke() itself runs OnQueryClosePage exactly once, so the second delivery belongs to the refusal, not to invoking the action.');
-        Assert.AreEqual(Format(Action::OK), Format(Result),
-            'RunModal must report the action the [ModalPageHandler] chose, even though the close itself was refused.');
+        Assert.AreEqual(Format(Action::None), Format(Result),
+            'RunModal must report None, NOT the action the [ModalPageHandler] chose. The handler picked OK, but a refused close means no action completed, so the caller cannot be told one did. This is what makes the refusal observable to the caller at all -- the consumed message left nothing else for it to see.');
     end;
 
     // CLAIM 3: what became of the page's own uncommitted write.
