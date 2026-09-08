@@ -336,51 +336,65 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
     end;
 
     [Test]
-    procedure Record_CodeunitMetadata_Get_CodeunitStatingNoTestIsolation_ReportsTheUnstatedValue()
+    procedure Record_CodeunitMetadata_Get_TestSubtypeCodeunit_ReportsADifferentTestIsolationFromAPlainOne()
     var
-        Unstated: Record "CodeUnit Metadata";
-        Stated: Record "CodeUnit Metadata";
-        Ordinary: Record "CodeUnit Metadata";
-        UnstatedOrdinal: Integer;
-        StatedOrdinal: Integer;
-        OrdinaryOrdinal: Integer;
+        TestSubtype: Record "CodeUnit Metadata";
+        PlainCodeunit: Record "CodeUnit Metadata";
+        RunnerUnstated: Record "CodeUnit Metadata";
+        TestSubtypeOrdinal: Integer;
+        PlainOrdinal: Integer;
+        RunnerUnstatedOrdinal: Integer;
     begin
         Initialize();
 
-        // Every ordinary codeunit in an application leaves TestIsolation unstated -- it cannot
-        // state it, because AL only accepts the property on a TestRunner. So what the column
-        // reports for an unstated declaration is the answer that applies to almost every row of
-        // this table, and it is the one value no other test here can reach.
+        // Three codeunits, none of which declares TestIsolation, and they do not all report the
+        // same thing. That is the point: the column is not simply "whatever the codeunit
+        // declared, else one constant".
         //
-        // ALT Iso Runner Unstated is a TestRunner that declares no TestIsolation; ALT Codeunit
-        // Meta Probe is an ordinary codeunit that cannot declare one. Reading both pins that
-        // the answer follows the ABSENT declaration rather than the Subtype.
+        //   * This test codeunit declares Subtype = Test.
+        //   * ALT Codeunit Meta Probe is an ordinary codeunit -- no Subtype at all.
+        //   * ALT Iso Runner Unstated is a TestRunner that omits the property.
+        //
+        // AL only accepts TestIsolation on a TestRunner (AL0223), so none of the three could
+        // have stated it even if it wanted to.
         Assert.IsTrue(
-            Unstated.Get(Codeunit::"ALT Iso Runner Unstated"),
-            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Unstated.');
+            TestSubtype.Get(Codeunit::"Test Codeunit Metadata Virt T"),
+            'CodeUnit Metadata has no row for the test codeunit itself.');
         Assert.IsTrue(
-            Ordinary.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            PlainCodeunit.Get(Codeunit::"ALT Codeunit Meta Probe"),
             'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
         Assert.IsTrue(
-            Stated.Get(Codeunit::"ALT Iso Runner Disabled"),
-            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Disabled.');
+            RunnerUnstated.Get(Codeunit::"ALT Iso Runner Unstated"),
+            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Unstated.');
 
-        UnstatedOrdinal := Unstated.RequiredTestIsolation;
-        OrdinaryOrdinal := Ordinary.RequiredTestIsolation;
-        StatedOrdinal := Stated.RequiredTestIsolation;
+        TestSubtypeOrdinal := TestSubtype.RequiredTestIsolation;
+        PlainOrdinal := PlainCodeunit.RequiredTestIsolation;
+        RunnerUnstatedOrdinal := RunnerUnstated.RequiredTestIsolation;
 
-        // [THEN] the two codeunits that state nothing agree with each other...
+        // [THEN] a Subtype = Test codeunit reports None...
         Assert.AreEqual(
-            UnstatedOrdinal, OrdinaryOrdinal,
-            'A TestRunner stating no TestIsolation and an ordinary codeunit, which cannot state one, must report the same RequiredTestIsolation.');
+            TestSubtype.RequiredTestIsolation::None, TestSubtype.RequiredTestIsolation,
+            'A codeunit declaring Subtype = Test must report RequiredTestIsolation::None.');
 
-        // [AND] they do NOT agree with a codeunit that explicitly declares Disabled. That is
-        // the discriminating assertion: "unstated" and "Disabled" are different answers, so a
-        // provider that collapsed the unstated case onto Disabled would fail here while passing
-        // every other assertion in this suite.
+        // [AND] a codeunit that is not a test reports Disabled, whether it is an ordinary
+        // codeunit or a TestRunner that omits the property. Two different Subtypes agreeing
+        // here is what shows the answer follows the SUBTYPE rather than the Subtype value.
+        Assert.AreEqual(
+            PlainCodeunit.RequiredTestIsolation::Disabled, PlainCodeunit.RequiredTestIsolation,
+            'An ordinary codeunit must report RequiredTestIsolation::Disabled.');
+        Assert.AreEqual(
+            RunnerUnstated.RequiredTestIsolation::Disabled, RunnerUnstated.RequiredTestIsolation,
+            'A TestRunner that omits TestIsolation must report RequiredTestIsolation::Disabled.');
+
+        // [AND] the two answers are genuinely different, so neither is what this column reports
+        // for everybody. A provider answering one fixed value would fail this pair whichever
+        // value it chose.
         Assert.AreNotEqual(
-            StatedOrdinal, UnstatedOrdinal,
-            'A codeunit that declares TestIsolation = Disabled and one that declares no TestIsolation must not report the same RequiredTestIsolation.');
+            TestSubtypeOrdinal, PlainOrdinal,
+            'A Subtype = Test codeunit and an ordinary codeunit must not report the same RequiredTestIsolation.');
+        Assert.AreEqual(
+            PlainOrdinal, RunnerUnstatedOrdinal,
+            'An ordinary codeunit and a TestRunner omitting TestIsolation must report the same RequiredTestIsolation.');
     end;
 
     [Test]
