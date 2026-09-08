@@ -160,15 +160,13 @@ codeunit 60559 "TPAROK Tests"
         // that the request-page probe fires, which is what the report RunObject arms read to
         // tell "refused" from "ran quietly".
         //
-        // Report.Run(Report::...) -- the STATIC form -- not TheReport.Run() on a report
-        // variable. The variable form was measured raising "An error occurred and the
-        // transaction is stopped" on all eight cloud legs from inside a [Test] method with a
-        // [RequestPageHandler] bound, while the static form of the same report with the same
-        // handler passes here and in ControlTriggerActionRunningTheSameReportBehavesTheSameWay.
-        // Which of the two forms a test session accepts is its own question and is NOT what
-        // this codeunit is measuring, so this arm takes the form that works and leaves the
-        // difference for a suite that can isolate it.
+        // Commit() first, and it is load-bearing. The codeunit and the silent report above each
+        // inserted a log row that is still uncommitted here, and opening a report's request page
+        // with writes pending raises "An error occurred and the transaction is stopped". Corpus
+        // 60933 runs a report with a bound [RequestPageHandler] and passes -- it commits in its
+        // own Initialize() -- so what matters is the pending write, not which call form is used.
         Probe.Reset();
+        Commit();
         Report.Run(Report::"TPAROK Report");
         Assert.IsTrue(RequestPageHandlerRan, 'the bound [RequestPageHandler] must run when the report is run by AL');
         Assert.IsTrue(Probe.GetRequestPageOpened(), 'the report''s request page must record its own OnOpenPage when it really opens');
@@ -190,12 +188,18 @@ codeunit 60559 "TPAROK Tests"
     // REPORT, the kind that is 1,037 of the 1,210 non-page RunObject targets in Base
     // Application 28.1 -- so whatever this arm measures is the practical whole of the question.
     //
-    // A [RequestPageHandler] is bound, and it STAYS bound now that the answer is known. It was
-    // put there to tell two candidate answers apart -- "opens the request page, handler runs,
-    // body then runs" versus "runs the body directly, handler never called" -- and the tier
-    // produced a third the arm had not allowed for: neither, the route is refused. Leaving the
-    // handler bound is what lets this arm assert that the refusal reached NEITHER the body nor
-    // the handler. Unbinding it would silently weaken the arm to the message alone.
+    // NO [RequestPageHandler] is bound, and that is the measured shape rather than an omission.
+    // One was bound while the answer was unknown, to tell "opens the request page, handler runs,
+    // body then runs" from "runs the body directly, handler never called". The tier produced a
+    // third answer neither allowed for -- the route is refused before the request page -- and at
+    // that point the binding became unusable in both directions: the framework fails a test whose
+    // declared handler never fires, so the arm could not pass, and its own
+    // Assert.IsFalse(RequestPageHandlerRan) could never be reached to fail either.
+    //
+    // The probe carries the claim instead. GetRequestPageOpened() is written by the request
+    // page's own OnOpenPage, so "the refusal preceded the request page" is asserted by something
+    // the refusal cannot fake, and the arm stays falsifiable without binding a handler that
+    // cannot run.
     //
     // The invoke IS wrapped in asserterror, which it was not when this file was first written.
     // Then, an unwrapped invoke was the honest shape: the answer was unknown and a refusal
@@ -203,7 +207,6 @@ codeunit 60559 "TPAROK Tests"
     // assumed one. It failed exactly that way on all eight cloud legs, which is how the answer
     // was obtained, and asserterror is now the honest shape for the answer that came back.
     [Test]
-    [HandlerFunctions('ConfirmingRequestPageHandler')]
     procedure RunObjectNamingAReportIsRefusedByTheTestPageSurface()
     var
         Probe: Codeunit "TPAROK Probe";
@@ -219,8 +222,8 @@ codeunit 60559 "TPAROK Tests"
         Assert.ExpectedError('The method RunReport is not supported for TestPages.');
         Assert.IsFalse(Probe.GetReportRan(),
             'a refused report RunObject must not have run the report body anyway');
-        Assert.IsFalse(RequestPageHandlerRan,
-            'a refused report RunObject must not have reached the bound [RequestPageHandler]');
+        Assert.IsFalse(Probe.GetRequestPageOpened(),
+            'the refusal must precede the request page -- no [RequestPageHandler] is bound here, because a bound handler that never fires is itself a test failure and would mask this');
     end;
 
     // REPORT with UseRequestPage = false, which the issue calls out as possibly different. No
