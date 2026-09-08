@@ -2,7 +2,10 @@
 // Scope: in-scope
 // Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608),
 //                ALT Install Probe (60838), ALT Quoted Install Probe (60828),
-//                ALT Quoted Upgrade Probe (60829)
+//                ALT Quoted Upgrade Probe (60829), ALT Iso Runner Disabled (60036),
+//                ALT Iso Runner Codeunit (60048), ALT Iso Runner Function (60049),
+//                ALT Iso Runner Unstated (60137), ALT Inherent Perm Probe (60138),
+//                ALT Inherent Ent Probe (60287), ALT Namespaced Probe (60288)
 //
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
 // codeunit declared in the application, computed from the codeunit's own metadata rather
@@ -277,6 +280,200 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
         Assert.IsTrue(
             SeenIds.Contains(Codeunit::"ALT Codeunit Meta Probe"),
             'The walk must include the plain codeunit filtered alongside the quoted ones.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_TestRunnerCodeunits_ReportEachDeclaredTestIsolation()
+    var
+        Disabled: Record "CodeUnit Metadata";
+        PerCodeunit: Record "CodeUnit Metadata";
+        PerFunction: Record "CodeUnit Metadata";
+        DisabledOrdinal: Integer;
+        CodeunitOrdinal: Integer;
+        FunctionOrdinal: Integer;
+    begin
+        Initialize();
+
+        // AL accepts TestIsolation only on a codeunit whose Subtype is TestRunner (AL0223), so
+        // the three fixtures read here are the only shape that can state the property at all.
+        // They differ in nothing else, which is what makes the three answers below attributable
+        // to the declaration rather than to anything about the codeunits.
+        Assert.IsTrue(
+            Disabled.Get(Codeunit::"ALT Iso Runner Disabled"),
+            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Disabled.');
+        Assert.IsTrue(
+            PerCodeunit.Get(Codeunit::"ALT Iso Runner Codeunit"),
+            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Codeunit.');
+        Assert.IsTrue(
+            PerFunction.Get(Codeunit::"ALT Iso Runner Function"),
+            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Function.');
+
+        // [THEN] each row reports the value its own codeunit declares, by member AND by
+        // ordinal. The ordinals are asserted as well as the members because a provider that
+        // mapped every declaration onto one member would still satisfy a member-only
+        // assertion if that member happened to be the one asserted.
+        DisabledOrdinal := Disabled.RequiredTestIsolation;
+        CodeunitOrdinal := PerCodeunit.RequiredTestIsolation;
+        FunctionOrdinal := PerFunction.RequiredTestIsolation;
+
+        Assert.AreEqual(
+            Disabled.RequiredTestIsolation::Disabled, Disabled.RequiredTestIsolation,
+            'A TestRunner declaring TestIsolation = Disabled must report RequiredTestIsolation::Disabled.');
+        Assert.AreEqual(
+            PerCodeunit.RequiredTestIsolation::Codeunit, PerCodeunit.RequiredTestIsolation,
+            'A TestRunner declaring TestIsolation = Codeunit must report RequiredTestIsolation::Codeunit.');
+        Assert.AreEqual(
+            PerFunction.RequiredTestIsolation::Function, PerFunction.RequiredTestIsolation,
+            'A TestRunner declaring TestIsolation = Function must report RequiredTestIsolation::Function.');
+
+        // [AND] the three are distinct, so the column is not answering one fixed value.
+        Assert.AreNotEqual(
+            DisabledOrdinal, CodeunitOrdinal,
+            'TestIsolation = Disabled and TestIsolation = Codeunit must not report the same ordinal.');
+        Assert.AreNotEqual(
+            CodeunitOrdinal, FunctionOrdinal,
+            'TestIsolation = Codeunit and TestIsolation = Function must not report the same ordinal.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_CodeunitStatingNoTestIsolation_ReportsTheUnstatedValue()
+    var
+        Unstated: Record "CodeUnit Metadata";
+        Stated: Record "CodeUnit Metadata";
+        Ordinary: Record "CodeUnit Metadata";
+        UnstatedOrdinal: Integer;
+        StatedOrdinal: Integer;
+        OrdinaryOrdinal: Integer;
+    begin
+        Initialize();
+
+        // Every ordinary codeunit in an application leaves TestIsolation unstated -- it cannot
+        // state it, because AL only accepts the property on a TestRunner. So what the column
+        // reports for an unstated declaration is the answer that applies to almost every row of
+        // this table, and it is the one value no other test here can reach.
+        //
+        // ALT Iso Runner Unstated is a TestRunner that declares no TestIsolation; ALT Codeunit
+        // Meta Probe is an ordinary codeunit that cannot declare one. Reading both pins that
+        // the answer follows the ABSENT declaration rather than the Subtype.
+        Assert.IsTrue(
+            Unstated.Get(Codeunit::"ALT Iso Runner Unstated"),
+            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Unstated.');
+        Assert.IsTrue(
+            Ordinary.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+        Assert.IsTrue(
+            Stated.Get(Codeunit::"ALT Iso Runner Disabled"),
+            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Disabled.');
+
+        UnstatedOrdinal := Unstated.RequiredTestIsolation;
+        OrdinaryOrdinal := Ordinary.RequiredTestIsolation;
+        StatedOrdinal := Stated.RequiredTestIsolation;
+
+        // [THEN] the two codeunits that state nothing agree with each other...
+        Assert.AreEqual(
+            UnstatedOrdinal, OrdinaryOrdinal,
+            'A TestRunner stating no TestIsolation and an ordinary codeunit, which cannot state one, must report the same RequiredTestIsolation.');
+
+        // [AND] they do NOT agree with a codeunit that explicitly declares Disabled. That is
+        // the discriminating assertion: "unstated" and "Disabled" are different answers, so a
+        // provider that collapsed the unstated case onto Disabled would fail here while passing
+        // every other assertion in this suite.
+        Assert.AreNotEqual(
+            StatedOrdinal, UnstatedOrdinal,
+            'A codeunit that declares TestIsolation = Disabled and one that declares no TestIsolation must not report the same RequiredTestIsolation.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_InherentPermissionsAndEntitlements_ReadIndependently()
+    var
+        PermProbe: Record "CodeUnit Metadata";
+        EntProbe: Record "CodeUnit Metadata";
+        Neither: Record "CodeUnit Metadata";
+    begin
+        Initialize();
+
+        // On a codeunit AL accepts exactly one permission kind for these two properties: X
+        // (Execute); anything else is AL0195. ALT Inherent Perm Probe declares
+        // InherentPermissions = X and no entitlement; ALT Inherent Ent Probe declares
+        // InherentEntitlements = X and no permission. Splitting them is what proves the two
+        // columns are read independently rather than one being echoed into the other.
+        Assert.IsTrue(
+            PermProbe.Get(Codeunit::"ALT Inherent Perm Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Inherent Perm Probe.');
+        Assert.IsTrue(
+            EntProbe.Get(Codeunit::"ALT Inherent Ent Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Inherent Ent Probe.');
+        Assert.IsTrue(
+            Neither.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+
+        // [THEN] the declared property is spelled 'X' in the mask string...
+        Assert.AreEqual(
+            'X', PermProbe.InherentPermissions,
+            'A codeunit declaring InherentPermissions = X must report InherentPermissions = ''X''.');
+        Assert.AreEqual(
+            'X', EntProbe.InherentEntitlements,
+            'A codeunit declaring InherentEntitlements = X must report InherentEntitlements = ''X''.');
+
+        // [AND] the property the codeunit did NOT declare stays empty on the same row, which is
+        // what separates the two columns from each other.
+        Assert.AreEqual(
+            '', PermProbe.InherentEntitlements,
+            'A codeunit declaring only InherentPermissions must report an empty InherentEntitlements.');
+        Assert.AreEqual(
+            '', EntProbe.InherentPermissions,
+            'A codeunit declaring only InherentEntitlements must report an empty InherentPermissions.');
+
+        // [AND] a codeunit declaring neither reports both empty -- the negative control that
+        // stops 'X' from being what this table answers for every codeunit.
+        Assert.AreEqual(
+            '', Neither.InherentPermissions,
+            'A codeunit declaring no InherentPermissions must report an empty InherentPermissions.');
+        Assert.AreEqual(
+            '', Neither.InherentEntitlements,
+            'A codeunit declaring no InherentEntitlements must report an empty InherentEntitlements.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_ALNamespace_ReportsTheDeclaringFilesNamespace()
+    var
+        Namespaced: Record "CodeUnit Metadata";
+        UnNamespaced: Record "CodeUnit Metadata";
+    begin
+        Initialize();
+
+        // ALT Namespaced Probe is declared inside `namespace ALLanguage.Coverage.MetadataProbes;`
+        // and is the only object in this application that is. ALT Codeunit Meta Probe sits in a
+        // file with no namespace statement. Reading both is what makes this a claim about the
+        // column: a column that reported the same string for every codeunit -- blank or
+        // otherwise -- would fail one of the two assertions below.
+        Assert.IsTrue(
+            Namespaced.Get(Codeunit::"ALT Namespaced Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Namespaced Probe.');
+        Assert.IsTrue(
+            UnNamespaced.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+
+        // [THEN] the namespaced codeunit reports its full dotted namespace -- not the last
+        // segment, not the first, and not the codeunit's own name.
+        Assert.AreEqual(
+            'ALLanguage.Coverage.MetadataProbes', Namespaced."AL Namespace",
+            'A codeunit declared inside a namespace must report that namespace in AL Namespace.');
+
+        // [AND] a codeunit whose file states no namespace reports the empty string.
+        Assert.AreEqual(
+            '', UnNamespaced."AL Namespace",
+            'A codeunit declared in a file with no namespace must report an empty AL Namespace.');
+
+        // Negative control: the rows are not blank overall -- Name on each row carries that
+        // codeunit's real name, so the values above are what this column answers rather than a
+        // symptom of the provider handing back empty rows.
+        Assert.AreEqual(
+            'ALT Namespaced Probe', Namespaced.Name,
+            'The namespaced row must be the codeunit that was asked for.');
+        Assert.AreEqual(
+            'ALT Codeunit Meta Probe', UnNamespaced.Name,
+            'The un-namespaced row must be the codeunit that was asked for.');
     end;
 
     local procedure Initialize()
