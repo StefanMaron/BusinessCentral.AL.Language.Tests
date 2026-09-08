@@ -174,19 +174,26 @@ codeunit 61201 "Test Published App Sys Table"
     end;
 
     [Test]
-    procedure PublishedApplication_ThisApp_PackageIdIsItsRuntimePackageId()
-    // CLAIM: within ONE row the two GUID columns carry the same value.
+    procedure PublishedApplication_ThisApp_BothPackageColumnsAreNonBlank()
+    // CLAIM: a published app carries a non-blank GUID in each of the two package columns.
     //
-    // Measured, and the reason this test exists rather than its opposite. The first revision
-    // of this file asserted that the two columns differ, on the reading that publishing
-    // assigns them independently. All eight BC legs, 27.0 through 28.4, of run 34023230684
-    // disagreed: every one reported the two columns equal for this app. So the pair does not
-    // discriminate within a row - what tells two apps apart is the values differing BETWEEN
-    // rows, which the test above pins.
+    // This test used to assert the stronger claim that the two columns hold the SAME value
+    // within one row. Two real tiers disagree about that, so it was not a platform claim:
     //
-    // What this does NOT claim: that they are equal for every app on every tier. An app
-    // republished over an earlier version can carry a runtime package id from the later
-    // publish. The claim is about a freshly published app, which is what this tier has.
+    //   * bc-linux, all 8 legs of run 34023230684, BC 27.0 through 28.4: equal.
+    //   * the official Microsoft BC container on Windows, BC 28.4, nightly run 34182689878:
+    //     different, and it failed the same way on the three nightly runs before that.
+    //
+    // The Windows container publishes through Compile-AppInBcContainer followed by
+    // Publish-BcContainerApp -sync -install, and on that path the two columns come out
+    // different. So the equality describes a publish path rather than the platform, which is
+    // what the removed assertion's own note had already allowed for: an app republished over
+    // an earlier version can carry a runtime package id from the later publish. See #283.
+    //
+    // What survives is what both tiers agree on: each column is populated. The claim that the
+    // pair actually DISCRIMINATES between apps is asserted by
+    // PublishedApplication_TwoApps_DoNotShareEitherPackageId above, which passed on both
+    // tiers and is the assertion that matters for ownership questions.
     var
         ThisApp: Record "Published Application";
         ThisModule: ModuleInfo;
@@ -199,9 +206,7 @@ codeunit 61201 "Test Published App Sys Table"
         Assert.IsTrue(ThisApp.FindFirst(), 'This app must have a Published Application row of its own.');
 
         Assert.AreNotEqual(EmptyId, ThisApp."Package ID", 'A published app must carry a non-blank Package ID.');
-        Assert.AreEqual(
-            ThisApp."Package ID", ThisApp."Runtime Package ID",
-            'A freshly published app carries one GUID in both package columns.');
+        Assert.AreNotEqual(EmptyId, ThisApp."Runtime Package ID", 'A published app must carry a non-blank Runtime Package ID.');
     end;
 
     [Test]
