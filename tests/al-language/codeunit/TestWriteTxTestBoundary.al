@@ -1,8 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testisolation-property
 // Scope: in-scope
-// Fixtures used: ALT Universal (60000), ALTFixtureCleanup (60019), shared Assert (60021),
-//                ALT Run Tx Inserter (60253), ALT Run Tx Dirty Inserter (60255),
-//                ALT Run Tx None Inserter (60879), ALT Run Tx None Dirty Inserter (60880)
+// Fixtures used: ALT Universal (60000), ALT Blob (60008), ALTFixtureCleanup (60019),
+//                shared Assert (60021), ALT Run Tx Inserter (60253),
+//                ALT Run Tx Dirty Inserter (60255), ALT Run Tx None Inserter (60879),
+//                ALT Run Tx None Dirty Inserter (60880),
+//                ALT Run Tx None Rep Inserter (60412), ALT Run Tx None XmlPort (60413),
+//                ALT Run Tx None Card (60414)
 //
 // Asks whether a write transaction survives a TEST-METHOD boundary. "Test Codeunit Run
 // Write Tx" (60254) pins the write-transaction rule around Codeunit.Run WITHIN one test
@@ -19,7 +22,7 @@
 // row survives AND the transaction is gone, which Test06 asserts together.
 //
 // The tests below are declaration-ordered and share a codeunit, the same way 60897's are.
-// Only Test01 and Test11 clear the fixture, and they do so WITHOUT a Commit: they carry no
+// Only Test01 and Test14 clear the fixture, and they do so WITHOUT a Commit: they carry no
 // TransactionModel attribute, so the platform commits their work at the boundary. A Commit
 // inside any of the AutoRollback tests would be refused outright ("Tests cannot call the
 // Commit function if TransactionModel property is set to AutoRollback"), and a Commit
@@ -34,7 +37,17 @@
 // codeunit the test RUNS may write anyway, because Codeunit.Run begins a transaction of its
 // own (Test10).
 //
-// Measured on a real BC 28.4.53241.0 service tier, all eleven green.
+// Codeunit.Run is not the only AL construct that begins a transaction, and Test10 on its own
+// says nothing about the others. Test11-Test13 ask the same question of a report, an xmlport
+// import, and a page field's OnValidate driven through a TestPage — one arm per construct,
+// because "it is a construct that begins a transaction" is a claim about each of them
+// separately and the answer for one does not carry to the next. Each arm writes its own
+// marker number and the page arm seeds its own row (Test13a), so one arm coming back refused
+// still leaves the other two measurable.
+//
+// Test01-Test10 were measured on a real BC 28.4.53241.0 service tier. Test11-Test13 are
+// measured by the CI run of the pull request that adds them; whatever the tier reports is
+// the answer, including a refusal.
 // BC versions: 24+
 
 codeunit 60878 "Test Write Tx Test Boundary"
@@ -236,8 +249,123 @@ codeunit 60878 "Test Write Tx Test Boundary"
             'The transaction Codeunit.Run began ends with the run, so the None test body is left with none.');
     end;
 
+    // Test11-Test13 ask Test10's question of the three OTHER AL constructs that begin a
+    // transaction on BC — a report, an xmlport import, and a page's field validation. Each is
+    // shaped exactly like Test10: a marker row that does not exist before the construct runs,
+    // the construct, the row, and then the observation that the body is again left with no
+    // transaction. The write is made by the CONSTRUCT, never by an AL statement in the test
+    // body, which Test09 has already established is refused.
+
     [Test]
-    procedure WriteTxBoundary_Test11_ClearsTheFixtureAgain()
+    [TransactionModel(TransactionModel::None)]
+    procedure WriteTxBoundary_Test11_AReportMayWriteUnderNone()
+    var
+        RepInserter: Report "ALT Run Tx None Rep Inserter";
+    begin
+        Assert.AreEqual(0, MarkerCount(9412),
+            'The marker row the report below writes must not exist before it runs.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'A TransactionModel::None test must not start inside a write transaction.');
+
+        // ProcessingOnly and UseRequestPage = false, so this neither renders nor opens a
+        // request page: the only thing it does is run its dataitem trigger, which writes.
+        RepInserter.UseRequestPage(false);
+        RepInserter.RunModal();
+
+        Assert.AreEqual(1, MarkerCount(9412),
+            'A report run from a None test must be able to write.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'The transaction the report began ends with the report, so the None test body is left with none.');
+    end;
+
+    [Test]
+    [TransactionModel(TransactionModel::None)]
+    procedure WriteTxBoundary_Test12_AnXmlPortImportMayWriteUnderNone()
+    var
+        Staging: Record "ALT Blob" temporary;
+        NoneXmlPort: XmlPort "ALT Run Tx None XmlPort";
+        OutStr: OutStream;
+        InStr: InStream;
+    begin
+        Assert.AreEqual(0, MarkerCount(9413),
+            'The row the import below writes must not exist before it runs.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'A TransactionModel::None test must not start inside a write transaction.');
+
+        // The payload is staged in a TEMPORARY record on purpose. A temporary record is not a
+        // database write, so staging it needs no transaction and cannot itself be what the
+        // assertion below measures — the only database write in this test is the import's.
+        Staging.Init();
+        Staging.Code := 'TXN-NONE';
+        Staging.Insert();
+        Staging.Data.CreateOutStream(OutStr);
+        OutStr.WriteText('<?xml version="1.0" encoding="UTF-8"?>' +
+            '<Universals><Universal><EntryNo>9413</EntryNo>' +
+            '<TextValue>DIRTY-NONE-XMLPORT</TextValue></Universal></Universals>');
+        Staging.Modify();
+        Staging.CalcFields(Data);
+        Staging.Data.CreateInStream(InStr);
+
+        NoneXmlPort.SetSource(InStr);
+        NoneXmlPort.Import();
+
+        Assert.AreEqual(1, MarkerCount(9413),
+            'An XmlPort import run from a None test must be able to write.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'The transaction the import began ends with it, so the None test body is left with none.');
+    end;
+
+    [Test]
+    procedure WriteTxBoundary_Test13a_SeedsTheRowThePageArmOpensOn()
+    var
+        ALTUniversal: Record "ALT Universal";
+    begin
+        // The page arm needs a row to open a Card on, and Test09 established that a None test
+        // body cannot write one for itself. So a default-model test writes it here, one method
+        // earlier, and the platform commits it at this boundary.
+        //
+        // Deliberately its OWN row rather than one of the rows Test11 and Test12 write: if
+        // either of those arms comes back refused, the page arm must still be measurable. An
+        // arm that fails because a DIFFERENT arm failed measures nothing.
+        ALTUniversal.Init();
+        ALTUniversal."Entry No." := 9415;
+        ALTUniversal."Text Field" := 'PAGE-ARM-SEED';
+        ALTUniversal.Insert();
+
+        Assert.IsTrue(Database.IsInWriteTransaction(),
+            'An uncommitted Insert must leave a write transaction open inside the test that made it.');
+    end;
+
+    [Test]
+    [TransactionModel(TransactionModel::None)]
+    procedure WriteTxBoundary_Test13_APageFieldValidateMayWriteUnderNone()
+    var
+        ALTUniversal: Record "ALT Universal";
+        Card: TestPage "ALT Run Tx None Card";
+    begin
+        Assert.AreEqual(0, MarkerCount(9414),
+            'The marker row the OnValidate below writes must not exist before it runs.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'A TransactionModel::None test must not start inside a write transaction.');
+        Assert.IsTrue(ALTUniversal.Get(9415),
+            'The previous default-model test''s seed row must be visible here.');
+
+        // The SetValue fires the field's OnValidate, which writes a marker row of its own — a
+        // different row from the one the page is sitting on, so the assertion below cannot be
+        // satisfied by the page's own Modify of the current record.
+        Card.OpenEdit();
+        Card.GoToKey(9415);
+        Card."Text Field".SetValue('EDITED-UNDER-NONE');
+        Card.Close();
+
+        Assert.AreEqual(1, MarkerCount(9414),
+            'A page field''s OnValidate, driven from a None test, must be able to write.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'The transaction the page began ends with it, so the None test body is left with none.');
+    end;
+
+    [Test]
+    procedure WriteTxBoundary_Test14_ClearsTheFixtureAgain()
     begin
         // Leaves nothing behind for the codeunits that share these fixture tables. No
         // TransactionModel attribute, so the platform commits this at the boundary.
@@ -245,5 +373,9 @@ codeunit 60878 "Test Write Tx Test Boundary"
 
         Assert.AreEqual(0, MarkerCount(9879), 'The fixture must be empty again.');
         Assert.AreEqual(0, MarkerCount(9880), 'The fixture must be empty again.');
+        Assert.AreEqual(0, MarkerCount(9412), 'The report arm''s marker must be gone too.');
+        Assert.AreEqual(0, MarkerCount(9413), 'The xmlport arm''s row must be gone too.');
+        Assert.AreEqual(0, MarkerCount(9414), 'The page arm''s marker must be gone too.');
+        Assert.AreEqual(0, MarkerCount(9415), 'The page arm''s seed row must be gone too.');
     end;
 }
