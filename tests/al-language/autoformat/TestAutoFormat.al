@@ -41,7 +41,7 @@ codeunit 60605 "ALT AutoFormat Tests"
     end;
 
     [Test]
-    procedure AutoFormat_PlainControl_ReadsTheUnformattedDecimal()
+    procedure AutoFormat_PlainControl_FallsToTheTwoDecimalDefault()
     var
         Card: TestPage "ALT AutoFormat Card";
     begin
@@ -49,8 +49,11 @@ codeunit 60605 "ALT AutoFormat Tests"
         SeedRow('');
 
         Card.OpenView();
-        Assert.AreEqual('1,234.5', Card.Plain.Value,
-          'AutoFormatType = 0 with no DecimalPlaces should read back the plain decimal');
+        // Measured, not assumed: the tier answers 1,234.50 on 27.0 and 28.1 alike. A Decimal
+        // control with no AutoFormat and no DecimalPlaces is still formatted - it falls to the
+        // two-decimal default - so "no AutoFormatType" does not mean "unformatted".
+        Assert.AreEqual('1,234.50', Card.Plain.Value,
+          'AutoFormatType = 0 with no DecimalPlaces still formats to two decimals');
         Card.Close();
     end;
 
