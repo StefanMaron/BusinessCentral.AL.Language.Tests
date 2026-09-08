@@ -5,7 +5,14 @@
 //                ALT Card Page (60017), ALT List Page (60016),
 //                ALT Profile RC SameApp (page 60904), Install Seeder (codeunit 60618),
 //                Not An Installer (codeunit 60619), ALT CRM Entity (60291),
-//                ALT Temp Only (60025), ALT Simple Report (60018)
+//                ALT Temp Only (60025), ALT Simple Report (60018),
+//                ALT Triggered Order Ext (tableextension 60024 over ALT Triggered 60002),
+//                ALT Keyed Ext (tableextension 60330 over ALT Keyed 60006),
+//                TPX List Ext (pageextension 60723 over TPX List 60722),
+//                EEM Status Ext (enumextension 60881 over EEM Status 60880),
+//                TP CurrFieldNo Job Ext (tableextension 60390 over Job),
+//                Spaced Action Base Ext (pageextension 60245 over Item Attribute Values),
+//                TP Precompiled Capture Ext (pageextension 60735 over Item Attribute)
 // BC versions: 27.5+
 //
 // Pins the built-in "AllObj" (2000000038) and "AllObjWithCaption" (2000000058) system
@@ -29,6 +36,19 @@
 // implementation answering one constant -- including the empty string every kind would
 // otherwise take -- fails at least one half.
 //
+// The AllObjWithCaption_..._Extension_... tests pin the same column for the *extension
+// object kinds, where the rule is different in kind rather than in value: BC reports the
+// ID OF THE OBJECT THE EXTENSION EXTENDS, as a decimal string, instead of a type name.
+// Three of the five kinds the option set carries are covered (TableExtension,
+// PageExtension, EnumExtension); this app declares no permissionsetextension and no
+// reportextension, so those two are unasserted rather than asserted empty.
+//
+// Three properties are pinned separately, because an implementation can get the simple
+// case right and each of these wrong: the target may live in ANOTHER app (an extension
+// over Base Application's Job / Item Attribute reports that object's id, not nothing);
+// the id is resolved in the TARGET KIND's own namespace; and two extensions over one
+// target both report it, so the value identifies the target rather than the extension.
+
 // The codeunit case carries two things worth pinning. First the asymmetry: a codeunit
 // whose subtype is Normal reports the EMPTY string, while a table whose TableType is
 // Normal reports the word 'Normal'. Second, a Subtype = Install codeunit ALSO reports the
@@ -420,6 +440,159 @@ codeunit 60802 "Test AllObj Virtual Table"
         Assert.AreEqual(
             '', AllObjWithCaption."Object Subtype",
             'A Report has no subtype, so Object Subtype must be the empty string.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_TableExtension_ObjectSubtypeIsTheTargetTableId()
+    // CLAIM: for a TableExtension row, Object Subtype is the ID OF THE TABLE IT EXTENDS,
+    // rendered as a decimal string -- not a type name, unlike every other object kind on
+    // this table, and not the empty string.
+    //
+    // The two extensions below target DIFFERENT tables, so an implementation answering one
+    // constant -- including the empty string, or the extension's own id -- fails at least
+    // one half. The second pair (an extension id and its target id that are far apart)
+    // additionally rules out "the id minus a fixed offset".
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // tableextension 60024 "ALT Triggered Order Ext" extends table 60002 "ALT Triggered".
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::TableExtension, 60024),
+            'AllObjWithCaption has no TableExtension row for ALT Triggered Order Ext.');
+        Assert.AreEqual(
+            'ALT Triggered Order Ext', AllObjWithCaption."Object Name",
+            'Unexpected Object Name for the TableExtension row 60024.');
+        Assert.AreEqual(
+            '60002', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a tableextension must be the id of the table it extends.');
+
+        // tableextension 60330 "ALT Keyed Ext" extends table 60006 "ALT Keyed" -- a
+        // different target, read the same way.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::TableExtension, 60330),
+            'AllObjWithCaption has no TableExtension row for ALT Keyed Ext.');
+        Assert.AreEqual(
+            'ALT Keyed Ext', AllObjWithCaption."Object Name",
+            'Unexpected Object Name for the TableExtension row 60330.');
+        Assert.AreEqual(
+            '60006', AllObjWithCaption."Object Subtype",
+            'Object Subtype of ALT Keyed Ext must be 60006, the id of ALT Keyed.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_PageExtension_ObjectSubtypeIsTheTargetPageId()
+    // CLAIM: the same rule holds for a PageExtension, and the id it reports is resolved in
+    // the PAGE id namespace -- AL gives every object kind its own, so a tableextension and
+    // a pageextension naming the same number extend two different objects.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // pageextension 60723 "TPX List Ext" extends page 60722 "TPX List".
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::PageExtension, 60723),
+            'AllObjWithCaption has no PageExtension row for TPX List Ext.');
+        Assert.AreEqual(
+            'TPX List Ext', AllObjWithCaption."Object Name",
+            'Unexpected Object Name for the PageExtension row 60723.');
+        Assert.AreEqual(
+            '60722', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a pageextension must be the id of the page it extends.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_EnumExtension_ObjectSubtypeIsTheTargetEnumId()
+    // CLAIM: and for an EnumExtension -- a third kind, so the rule is per-extension-kind
+    // rather than a property of tables and pages.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // enumextension 60881 "EEM Status Ext" extends enum 60880 "EEM Status".
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::EnumExtension, 60881),
+            'AllObjWithCaption has no EnumExtension row for EEM Status Ext.');
+        Assert.AreEqual(
+            'EEM Status Ext', AllObjWithCaption."Object Name",
+            'Unexpected Object Name for the EnumExtension row 60881.');
+        Assert.AreEqual(
+            '60880', AllObjWithCaption."Object Subtype",
+            'Object Subtype of an enumextension must be the id of the enum it extends.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_ExtensionOfPrecompiledObject_ObjectSubtypeIsTheTargetId()
+    // CLAIM: the target does not have to live in this app. "TP CurrFieldNo Job Ext"
+    // extends Job (table 167), which ships in the Base Application -- so the column
+    // reports an id from ANOTHER app rather than only ids this app declares.
+    //
+    // This is the second of the three sub-questions the runner-side issue asks: whether an
+    // extension whose target is in another app reports that target's id, or nothing.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // tableextension 60390 "TP CurrFieldNo Job Ext" extends Job.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::TableExtension, 60390),
+            'AllObjWithCaption has no TableExtension row for TP CurrFieldNo Job Ext.');
+        Assert.AreEqual(
+            Format(Database::Job), AllObjWithCaption."Object Subtype",
+            'Object Subtype of an extension over a Base Application table must be that table''s id.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_SetRange_ObjectSubtypeOfTwoExtensionsOverOneTarget_SelectsBoth()
+    // CLAIM: two extensions over the SAME target both report that target's id -- the value
+    // identifies the target, not the extension, so it is not unique across rows.
+    //
+    // This is the third sub-question the runner-side issue asks. "Spaced Action Base Ext"
+    // (60245) and "TP Precompiled Capture Ext" (60735) are two pageextensions over two
+    // DIFFERENT Base Application pages, which is the control: if the column were a
+    // constant, or the extension's own id, the two filters below could not separate them.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // pageextension 60245 "Spaced Action Base Ext" extends "Item Attribute Values".
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::PageExtension, 60245),
+            'AllObjWithCaption has no PageExtension row for Spaced Action Base Ext.');
+        Assert.AreEqual(
+            Format(Page::"Item Attribute Values"), AllObjWithCaption."Object Subtype",
+            'Spaced Action Base Ext extends Item Attribute Values, so it reports that page''s id.');
+
+        // pageextension 60735 "TP Precompiled Capture Ext" extends "Item Attribute" -- a
+        // DIFFERENT Base Application page, so the two rows carry different subtypes.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::PageExtension, 60735),
+            'AllObjWithCaption has no PageExtension row for TP Precompiled Capture Ext.');
+        Assert.AreEqual(
+            Format(Page::"Item Attribute"), AllObjWithCaption."Object Subtype",
+            'TP Precompiled Capture Ext extends Item Attribute, so it reports that page''s id.');
+
+        // And the column is filterable in this shape too: filtering PageExtension rows to
+        // the target's id selects the extension over that target and not the other one.
+        AllObjWithCaption.SetRange("Object Type", AllObjWithCaption."Object Type"::PageExtension);
+        AllObjWithCaption.SetRange("Object Subtype", Format(Page::"Item Attribute"));
+        AllObjWithCaption.SetRange("Object ID", 60245);
+        Assert.IsTrue(
+            AllObjWithCaption.IsEmpty(),
+            'Spaced Action Base Ext does not extend Item Attribute, so that filter must not select it.');
+
+        AllObjWithCaption.SetRange("Object ID", 60735);
+        Assert.IsTrue(
+            AllObjWithCaption.FindFirst(),
+            'TP Precompiled Capture Ext extends Item Attribute, so that filter must select it.');
+        Assert.AreEqual(
+            'TP Precompiled Capture Ext', AllObjWithCaption."Object Name",
+            'The row selected by the Item Attribute subtype filter is TP Precompiled Capture Ext.');
     end;
 
     local procedure Initialize()
