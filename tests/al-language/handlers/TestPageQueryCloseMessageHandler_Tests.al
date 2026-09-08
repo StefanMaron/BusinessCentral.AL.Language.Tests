@@ -98,7 +98,7 @@ codeunit 60602 "QCM Query Close Msg Tests"
         Assert.IsTrue(Witness.Get(ModalTag),
             'An error raised in OnQueryClosePage must reach a declared [MessageHandler] -- it is shown as a message, not propagated raw.');
         Assert.AreEqual(2, Witness."Seen Count",
-            'The RunModal route must deliver the close-time message once per close attempt, and it makes two. Corpus 60276 pins that OK().Invoke() itself runs OnQueryClosePage exactly once, so the second delivery belongs to the refusal, not to invoking the action.');
+            'The RunModal route must deliver the close-time message twice. Corpus 60276 pins that this OK().Invoke() shape runs OnQueryClosePage exactly once when the trigger allows the close -- its trigger exits true -- so the second delivery here arrives only once the close is refused. What 60276 does not settle is what a refusal does next; that the TestPage arm below sees exactly one is the corroboration, not proof.');
         Assert.IsTrue(StrPos(Witness."Last Text", CloseRefusedTxt) > 0,
             StrSubstNo('The [MessageHandler] must receive the AL error text the trigger raised; got "%1".', Witness."Last Text"));
     end;
@@ -141,7 +141,7 @@ codeunit 60602 "QCM Query Close Msg Tests"
         Assert.IsTrue(Witness.Get(ModalTag),
             'The [MessageHandler] must have consumed the close-time message before the caller regains control.');
         Assert.AreEqual(2, Witness."Seen Count",
-            'The RunModal route must deliver the close-time message once per close attempt, and it makes two. Corpus 60276 pins that OK().Invoke() itself runs OnQueryClosePage exactly once, so the second delivery belongs to the refusal, not to invoking the action.');
+            'The RunModal route must deliver the close-time message twice. Corpus 60276 pins that this OK().Invoke() shape runs OnQueryClosePage exactly once when the trigger allows the close -- its trigger exits true -- so the second delivery here arrives only once the close is refused. What 60276 does not settle is what a refusal does next; that the TestPage arm below sees exactly one is the corroboration, not proof.');
         Assert.AreEqual(Format(Action::None), Format(Result),
             'RunModal must report None, NOT the action the [ModalPageHandler] chose. The handler picked OK, but a refused close means no action completed, so the caller cannot be told one did. This is what makes the refusal observable to the caller at all -- the consumed message left nothing else for it to see.');
     end;
