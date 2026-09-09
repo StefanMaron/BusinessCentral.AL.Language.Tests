@@ -5,7 +5,7 @@
 // the extension leaves alone. The pair is the point: a test reading field 10 alone could
 // pass because captions are broken in some other direction, and field 11 is the control that
 // rules that out.
-table 60498 "ALT Modified"
+table 60506 "ALT Modified"
 {
     fields
     {

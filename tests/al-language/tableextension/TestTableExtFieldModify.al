@@ -2,7 +2,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-caption-property
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-fieldcaption-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: ALT Modified (60498) and ALT Modified Ext (60499), the tableextension that
+// Fixtures used: ALT Modified (60506) and ALT Modified Ext (60499), the tableextension that
 //   changes field 10's Caption through modify(...), leaves field 11 alone, and adds field
 //   50000.
 // BC versions: 27.0+
@@ -90,7 +90,7 @@ codeunit 60500 "TableExt Field Modify"
         RecRef: RecordRef;
         FldRef: FieldRef;
     begin
-        RecRef.Open(60498);
+        RecRef.Open(60506);
         FldRef := RecRef.Field(10);
         Assert.AreEqual(
           'Extension Overridden Caption', FldRef.Caption(),
@@ -104,7 +104,7 @@ codeunit 60500 "TableExt Field Modify"
         RecRef: RecordRef;
         FldRef: FieldRef;
     begin
-        RecRef.Open(60498);
+        RecRef.Open(60506);
         FldRef := RecRef.Field(11);
         Assert.AreEqual(
           'Original Untouched Caption', FldRef.Caption(),
@@ -128,7 +128,7 @@ codeunit 60500 "TableExt Field Modify"
           'Overridden Field', Modified.FieldName("Overridden Field"),
           'modify(...) must not change the field''s NAME');
 
-        RecRef.Open(60498);
+        RecRef.Open(60506);
         FldRef := RecRef.Field(10);
         FldRef.Value := 'still a Text field';
         Assert.AreEqual(

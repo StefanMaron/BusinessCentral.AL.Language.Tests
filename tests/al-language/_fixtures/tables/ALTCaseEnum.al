@@ -8,7 +8,7 @@
 //
 // "ALT Status" is reused rather than a new enum declared: the claim is about the TYPE
 // KEYWORD, so holding the enum itself fixed is what makes the three fields comparable.
-table 60497 "ALT Case Enum"
+table 60505 "ALT Case Enum"
 {
     fields
     {

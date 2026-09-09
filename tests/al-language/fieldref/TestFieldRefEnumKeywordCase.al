@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/fieldref/fieldref-data-type
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-enum-type
 // Scope: in-scope
-// Fixtures used: ALT Case Enum (60497), which declares the SAME enum type "ALT Status" on
+// Fixtures used: ALT Case Enum (60505), which declares the SAME enum type "ALT Status" on
 //   three fields written `Enum` (field 10), `enum` (field 11) and `ENUM` (field 12).
 // BC versions: 27.0+
 //
@@ -34,7 +34,7 @@ codeunit 60501 "Test FieldRef Enum Kwd Case"
     var
         RecRef: RecordRef;
     begin
-        RecRef.Open(60497);  // ALT Case Enum
+        RecRef.Open(60505);  // ALT Case Enum
         FldRef := RecRef.Field(FieldNo);
     end;
 
