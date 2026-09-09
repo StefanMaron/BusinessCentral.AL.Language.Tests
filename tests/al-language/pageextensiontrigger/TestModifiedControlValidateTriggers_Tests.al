@@ -13,6 +13,11 @@
 // Scoped to the SUCCESS path on purpose. What an Error() inside OnBeforeValidate leaves in
 // the page's buffer is a separate claim about BC and is not asserted here -- see the note
 // below the third arm.
+//
+// The OnAssistEdit arms pin the third control-acting modify() trigger, and the base-page form
+// of the same trigger. Both were entirely unstated: BC's ITestField.AssistEdit returns void,
+// so "the trigger ran" and "nothing happened" are the same observable unless the trigger
+// leaves a trace behind, which is why every assist-edit arm asserts on Rec.Trace.
 
 codeunit 60514 "MCV Validate Trigger Tests"
 {
@@ -173,6 +178,97 @@ codeunit 60514 "MCV Validate Trigger Tests"
 
         Assert.AreEqual('extlookup;', Card.Trace.Value(),
           'a modify() block''s OnLookup must run for the control it modifies');
+
+        Card.Close();
+    end;
+
+    // Positive: a BASE-page control's own OnAssistEdit runs when the TestPage drives
+    // AssistEdit(). Nothing in the corpus stated that it runs at all, and the observable is
+    // silence either way -- BC's ITestField.AssistEdit returns void and an implementation
+    // that does nothing is indistinguishable from one that dispatched, except through the
+    // trigger's own effect. Hence the trace tag rather than a return value.
+    [Test]
+    procedure ABaseControlsOwnOnAssistEditRuns()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(9);
+        Card.Name.AssistEdit();
+
+        Assert.AreEqual('baseassist;', Card.Trace.Value(),
+          'a control''s own OnAssistEdit must run when the TestPage calls AssistEdit()');
+
+        Card.Close();
+    end;
+
+    // Positive: a modify() block's OnAssistEdit runs for the control it modifies. Extra
+    // declares no OnAssistEdit on the base page, so the extension's block is the only
+    // possible source of this tag -- which is what makes this arm about the EXTENSION route
+    // rather than a second reading of the arm above.
+    [Test]
+    procedure AModifyBlocksOnAssistEditRunsForTheModifiedControl()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(10);
+        Card.Extra.AssistEdit();
+
+        Assert.AreEqual('extassist;', Card.Trace.Value(),
+          'a modify() block''s OnAssistEdit must run for the control it modifies');
+
+        Card.Close();
+    end;
+
+    // Negative on TARGETING: assist-editing Name must not raise the extension's block on
+    // Extra, and assist-editing Extra must not raise Name's own trigger. An implementation
+    // that raises every OnAssistEdit it can find on the page passes both arms above and
+    // fails here.
+    [Test]
+    procedure OnAssistEditIsRaisedOnlyForTheControlItWasCalledOn()
+    var
+        Card: TestPage "MCV Card";
+        AfterName: Text;
+        AfterExtra: Text;
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(11);
+        Card.Name.AssistEdit();
+        AfterName := Card.Trace.Value();
+        Card.Extra.AssistEdit();
+        AfterExtra := Card.Trace.Value();
+        Card.Close();
+
+        Assert.AreEqual(0, StrPos(AfterName, 'extassist;'),
+          'assist-editing Name must not raise the modify() block on Extra');
+        Assert.AreEqual('baseassist;extassist;', AfterExtra,
+          'each AssistEdit() must raise exactly its own control''s trigger, in call order');
+    end;
+
+    // Positive: OnAssistEdit runs once per call, not once per page. An implementation that
+    // latches after the first dispatch, or raises at page open, fails here and passes the
+    // arms above.
+    [Test]
+    procedure OnAssistEditRunsOncePerCall()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(12);
+        Card.Name.AssistEdit();
+        Card.Name.AssistEdit();
+
+        Assert.AreEqual('baseassist;baseassist;', Card.Trace.Value(),
+          'each AssistEdit() call must run the trigger again');
 
         Card.Close();
     end;
