@@ -283,6 +283,29 @@ codeunit 60479 "TPMS Tests"
         List.Close();
     end;
 
+    // The shape the switch exists for. Microsoft's own tests do it inside a handler --
+    // SubscriptionBilling's ContractRenewalTest is `if not Page.Editable then Page.Edit().Invoke()`
+    // in a [ModalPageHandler] -- and a page a handler is handed was never opened by the test, so
+    // it reaches its editability by a different route than the arms above.
+    [Test]
+    [HandlerFunctions('CardModalHandler')]
+    procedure ACardHandedToAModalPageHandlerSwitchesModeInPlaceToo()
+    var
+        Probe: Codeunit "TPMS Open Probe";
+        Row: Record "TPMS Row";
+    begin
+        Initialize();
+        Commit();
+
+        Row.FindFirst();
+        Page.RunModal(Page::"TPMS Card", Row);
+
+        Assert.AreEqual('Yes;No;Yes', Probe.GetSteps(),
+            'the handler reads Editable(), invokes View(), reads it again, invokes Edit(), and reads it a third time');
+        Assert.AreEqual(1, Probe.GetCardOpens(),
+            'both switches happen on the page the handler was handed: OnOpenPage must run once');
+    end;
+
     [PageHandler]
     procedure RoCardPageHandler(var Target: TestPage "TPMS RO Card")
     var
@@ -290,5 +313,17 @@ codeunit 60479 "TPMS Tests"
     begin
         Probe.MarkHandled(Target.Editable());
         Target.Close();
+    end;
+
+    [ModalPageHandler]
+    procedure CardModalHandler(var Target: TestPage "TPMS Card")
+    var
+        Probe: Codeunit "TPMS Open Probe";
+    begin
+        Probe.AddStep(Format(Target.Editable()));
+        Target.View().Invoke();
+        Probe.AddStep(Format(Target.Editable()));
+        Target.Edit().Invoke();
+        Probe.AddStep(Format(Target.Editable()));
     end;
 }

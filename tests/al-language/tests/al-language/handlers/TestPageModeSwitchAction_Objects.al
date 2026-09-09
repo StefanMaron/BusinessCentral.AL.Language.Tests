@@ -46,6 +46,7 @@ codeunit 60473 "TPMS Open Probe"
         RoCardOpens: Integer;
         HandlerRuns: Integer;
         LastHandlerEditable: Boolean;
+        Steps: Text;
 
     procedure Reset()
     begin
@@ -53,6 +54,7 @@ codeunit 60473 "TPMS Open Probe"
         RoCardOpens := 0;
         HandlerRuns := 0;
         LastHandlerEditable := false;
+        Steps := '';
     end;
 
     procedure MarkCardOpened()
@@ -91,6 +93,20 @@ codeunit 60473 "TPMS Open Probe"
     procedure GetLastHandlerEditable(): Boolean
     begin
         exit(LastHandlerEditable);
+    end;
+
+    // A running log, for a handler that observes the same page more than once: three separate
+    // "last value" fields could not say what order they happened in.
+    procedure AddStep(Step: Text)
+    begin
+        if Steps <> '' then
+            Steps += ';';
+        Steps += Step;
+    end;
+
+    procedure GetSteps(): Text
+    begin
+        exit(Steps);
     end;
 }
 
