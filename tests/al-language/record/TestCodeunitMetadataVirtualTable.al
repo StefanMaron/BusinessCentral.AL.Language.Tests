@@ -2,7 +2,8 @@
 // Scope: in-scope
 // Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608),
 //                ALT Install Probe (60838), ALT Quoted Install Probe (60828),
-//                ALT Quoted Upgrade Probe (60829)
+//                ALT Quoted Upgrade Probe (60829), ALT Inherent Perm Probe (60138),
+//                ALT Inherent Ent Probe (60287), ALT Namespaced Probe (60288)
 //
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
 // codeunit declared in the application, computed from the codeunit's own metadata rather
@@ -277,6 +278,99 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
         Assert.IsTrue(
             SeenIds.Contains(Codeunit::"ALT Codeunit Meta Probe"),
             'The walk must include the plain codeunit filtered alongside the quoted ones.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_InherentPermissionsAndEntitlements_ReadIndependently()
+    var
+        PermProbe: Record "CodeUnit Metadata";
+        EntProbe: Record "CodeUnit Metadata";
+        Neither: Record "CodeUnit Metadata";
+    begin
+        Initialize();
+
+        // On a codeunit AL accepts exactly one permission kind for these two properties: X
+        // (Execute); anything else is AL0195. ALT Inherent Perm Probe declares
+        // InherentPermissions = X and no entitlement; ALT Inherent Ent Probe declares
+        // InherentEntitlements = X and no permission. Splitting them is what proves the two
+        // columns are read independently rather than one being echoed into the other.
+        Assert.IsTrue(
+            PermProbe.Get(Codeunit::"ALT Inherent Perm Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Inherent Perm Probe.');
+        Assert.IsTrue(
+            EntProbe.Get(Codeunit::"ALT Inherent Ent Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Inherent Ent Probe.');
+        Assert.IsTrue(
+            Neither.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+
+        // [THEN] the declared property is spelled 'X' in the mask string...
+        Assert.AreEqual(
+            'X', PermProbe.InherentPermissions,
+            'A codeunit declaring InherentPermissions = X must report InherentPermissions = ''X''.');
+        Assert.AreEqual(
+            'X', EntProbe.InherentEntitlements,
+            'A codeunit declaring InherentEntitlements = X must report InherentEntitlements = ''X''.');
+
+        // [AND] the property the codeunit did NOT declare stays empty on the same row, which is
+        // what separates the two columns from each other.
+        Assert.AreEqual(
+            '', PermProbe.InherentEntitlements,
+            'A codeunit declaring only InherentPermissions must report an empty InherentEntitlements.');
+        Assert.AreEqual(
+            '', EntProbe.InherentPermissions,
+            'A codeunit declaring only InherentEntitlements must report an empty InherentPermissions.');
+
+        // [AND] a codeunit declaring neither reports both empty -- the negative control that
+        // stops 'X' from being what this table answers for every codeunit.
+        Assert.AreEqual(
+            '', Neither.InherentPermissions,
+            'A codeunit declaring no InherentPermissions must report an empty InherentPermissions.');
+        Assert.AreEqual(
+            '', Neither.InherentEntitlements,
+            'A codeunit declaring no InherentEntitlements must report an empty InherentEntitlements.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_ALNamespace_ReportsTheDeclaringFilesNamespace()
+    var
+        Namespaced: Record "CodeUnit Metadata";
+        UnNamespaced: Record "CodeUnit Metadata";
+    begin
+        Initialize();
+
+        // ALT Namespaced Probe is declared inside `namespace ALLanguage.Coverage.MetadataProbes;`
+        // and is the only object in this application that is. ALT Codeunit Meta Probe sits in a
+        // file with no namespace statement. Reading both is what makes this a claim about the
+        // column: a column that reported the same string for every codeunit -- blank or
+        // otherwise -- would fail one of the two assertions below.
+        Assert.IsTrue(
+            Namespaced.Get(Codeunit::"ALT Namespaced Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Namespaced Probe.');
+        Assert.IsTrue(
+            UnNamespaced.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+
+        // [THEN] the namespaced codeunit reports its full dotted namespace -- not the last
+        // segment, not the first, and not the codeunit's own name.
+        Assert.AreEqual(
+            'ALLanguage.Coverage.MetadataProbes', Namespaced."AL Namespace",
+            'A codeunit declared inside a namespace must report that namespace in AL Namespace.');
+
+        // [AND] a codeunit whose file states no namespace reports the empty string.
+        Assert.AreEqual(
+            '', UnNamespaced."AL Namespace",
+            'A codeunit declared in a file with no namespace must report an empty AL Namespace.');
+
+        // Negative control: the rows are not blank overall -- Name on each row carries that
+        // codeunit's real name, so the values above are what this column answers rather than a
+        // symptom of the provider handing back empty rows.
+        Assert.AreEqual(
+            'ALT Namespaced Probe', Namespaced.Name,
+            'The namespaced row must be the codeunit that was asked for.');
+        Assert.AreEqual(
+            'ALT Codeunit Meta Probe', UnNamespaced.Name,
+            'The un-namespaced row must be the codeunit that was asked for.');
     end;
 
     local procedure Initialize()
