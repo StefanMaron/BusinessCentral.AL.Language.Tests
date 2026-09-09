@@ -38,6 +38,14 @@ page 60511 "MCV Card"
                 begin
                     Rec.Trace := Rec.Trace + 'page;';
                 end;
+
+                // A BASE-page control's own OnAssistEdit. Separate from the extension's
+                // (on Extra, below) so the two dispatch routes are told apart: an
+                // implementation reaching only one of them fails exactly one arm.
+                trigger OnAssistEdit()
+                begin
+                    Rec.Trace := Rec.Trace + 'baseassist;';
+                end;
             }
             // A second control carrying its own OnValidate, so an implementation that raises
             // every modify() trigger it can find regardless of which control is being
@@ -93,11 +101,23 @@ pageextension 60512 "MCV Card Ext" extends "MCV Card"
     }
 }
 
-// A modify() block accepts more than the before/after validate pair: OnLookup, OnDrillDown
-// and OnAssistEdit are legal there too (the compiler rejects OnValidate and OnControlAddIn
-// inside one). Those reach the control through the same identity rule, so the suite pins two
-// of them on their own control -- a control separate from Name, so a drilldown or lookup arm
-// cannot perturb the validate-order arms.
+// A modify() block accepts more than the before/after validate pair. The AL compiler's own
+// TriggerTypeKind enum names SIX ControlExtension* triggers: OnBeforeValidate,
+// OnAfterValidate, OnLookup, OnDrillDown, OnAssistEdit and OnAfterAfterLookup (the doubled
+// "After" is the real spelling; OnAfterLookup is rejected with AL0162). The compiler rejects
+// OnValidate and OnControlAddIn inside a modify() block.
+//
+// Those reach the control through the same identity rule, so the suite pins three of them on
+// their own control -- a control separate from Name, so a drilldown, lookup or assist-edit
+// arm cannot perturb the validate-order arms.
+//
+// OnAfterAfterLookup is NOT pinned here, and deliberately: BC raises it from
+// NavForm.RaiseOnAfterLookupAsync, reached over the client-server protocol
+// (IService.AfterLookupField) when a user picks a row in a lookup PAGE. ITestField -- the
+// interface a TestPage drives a control through -- declares Lookup, AssistEdit and Drilldown
+// and has no after-lookup member at all, so a TestPage cannot raise it on real BC either.
+// Pinning it would need a lookup page and a handler selecting a row, which is a different
+// suite from this one.
 pageextension 60513 "MCV Other Ext" extends "MCV Card"
 {
     layout
@@ -126,6 +146,14 @@ pageextension 60513 "MCV Other Ext" extends "MCV Card"
             begin
                 Rec.Trace := Rec.Trace + 'extlookup;';
                 exit(false);
+            end;
+
+            // The third of the modify() triggers that act on a control rather than
+            // wrapping its validate. Extra carries no OnAssistEdit of its own on the base
+            // page, so this block is the only possible source of the tag below.
+            trigger OnAssistEdit()
+            begin
+                Rec.Trace := Rec.Trace + 'extassist;';
             end;
         }
     }
