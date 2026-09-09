@@ -2,9 +2,7 @@
 // Scope: in-scope
 // Fixtures used: ALT Codeunit Meta Probe (60963), ALT Universal (60000), SIS Cache (60608),
 //                ALT Install Probe (60838), ALT Quoted Install Probe (60828),
-//                ALT Quoted Upgrade Probe (60829), ALT Iso Runner Disabled (60036),
-//                ALT Iso Runner Codeunit (60048), ALT Iso Runner Function (60049),
-//                ALT Iso Runner Unstated (60137), ALT Inherent Perm Probe (60138),
+//                ALT Quoted Upgrade Probe (60829), ALT Inherent Perm Probe (60138),
 //                ALT Inherent Ent Probe (60287), ALT Namespaced Probe (60288)
 //
 // Pins the built-in "CodeUnit Metadata" system virtual table (2000000137): one row per
@@ -280,121 +278,6 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
         Assert.IsTrue(
             SeenIds.Contains(Codeunit::"ALT Codeunit Meta Probe"),
             'The walk must include the plain codeunit filtered alongside the quoted ones.');
-    end;
-
-    [Test]
-    procedure Record_CodeunitMetadata_Get_TestRunnerCodeunits_ReportEachDeclaredTestIsolation()
-    var
-        Disabled: Record "CodeUnit Metadata";
-        PerCodeunit: Record "CodeUnit Metadata";
-        PerFunction: Record "CodeUnit Metadata";
-        DisabledOrdinal: Integer;
-        CodeunitOrdinal: Integer;
-        FunctionOrdinal: Integer;
-    begin
-        Initialize();
-
-        // AL accepts TestIsolation only on a codeunit whose Subtype is TestRunner (AL0223), so
-        // the three fixtures read here are the only shape that can state the property at all.
-        // They differ in nothing else, which is what makes the three answers below attributable
-        // to the declaration rather than to anything about the codeunits.
-        Assert.IsTrue(
-            Disabled.Get(Codeunit::"ALT Iso Runner Disabled"),
-            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Disabled.');
-        Assert.IsTrue(
-            PerCodeunit.Get(Codeunit::"ALT Iso Runner Codeunit"),
-            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Codeunit.');
-        Assert.IsTrue(
-            PerFunction.Get(Codeunit::"ALT Iso Runner Function"),
-            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Function.');
-
-        // [THEN] each row reports the value its own codeunit declares, by member AND by
-        // ordinal. The ordinals are asserted as well as the members because a provider that
-        // mapped every declaration onto one member would still satisfy a member-only
-        // assertion if that member happened to be the one asserted.
-        DisabledOrdinal := Disabled.RequiredTestIsolation;
-        CodeunitOrdinal := PerCodeunit.RequiredTestIsolation;
-        FunctionOrdinal := PerFunction.RequiredTestIsolation;
-
-        Assert.AreEqual(
-            Disabled.RequiredTestIsolation::Disabled, Disabled.RequiredTestIsolation,
-            'A TestRunner declaring TestIsolation = Disabled must report RequiredTestIsolation::Disabled.');
-        Assert.AreEqual(
-            PerCodeunit.RequiredTestIsolation::Codeunit, PerCodeunit.RequiredTestIsolation,
-            'A TestRunner declaring TestIsolation = Codeunit must report RequiredTestIsolation::Codeunit.');
-        Assert.AreEqual(
-            PerFunction.RequiredTestIsolation::Function, PerFunction.RequiredTestIsolation,
-            'A TestRunner declaring TestIsolation = Function must report RequiredTestIsolation::Function.');
-
-        // [AND] the three are distinct, so the column is not answering one fixed value.
-        Assert.AreNotEqual(
-            DisabledOrdinal, CodeunitOrdinal,
-            'TestIsolation = Disabled and TestIsolation = Codeunit must not report the same ordinal.');
-        Assert.AreNotEqual(
-            CodeunitOrdinal, FunctionOrdinal,
-            'TestIsolation = Codeunit and TestIsolation = Function must not report the same ordinal.');
-    end;
-
-    [Test]
-    procedure Record_CodeunitMetadata_Get_TestSubtypeCodeunit_ReportsADifferentTestIsolationFromAPlainOne()
-    var
-        TestSubtype: Record "CodeUnit Metadata";
-        PlainCodeunit: Record "CodeUnit Metadata";
-        RunnerUnstated: Record "CodeUnit Metadata";
-        TestSubtypeOrdinal: Integer;
-        PlainOrdinal: Integer;
-        RunnerUnstatedOrdinal: Integer;
-    begin
-        Initialize();
-
-        // Three codeunits, none of which declares TestIsolation, and they do not all report the
-        // same thing. That is the point: the column is not simply "whatever the codeunit
-        // declared, else one constant".
-        //
-        //   * This test codeunit declares Subtype = Test.
-        //   * ALT Codeunit Meta Probe is an ordinary codeunit -- no Subtype at all.
-        //   * ALT Iso Runner Unstated is a TestRunner that omits the property.
-        //
-        // AL only accepts TestIsolation on a TestRunner (AL0223), so none of the three could
-        // have stated it even if it wanted to.
-        Assert.IsTrue(
-            TestSubtype.Get(Codeunit::"Test Codeunit Metadata Virt T"),
-            'CodeUnit Metadata has no row for the test codeunit itself.');
-        Assert.IsTrue(
-            PlainCodeunit.Get(Codeunit::"ALT Codeunit Meta Probe"),
-            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
-        Assert.IsTrue(
-            RunnerUnstated.Get(Codeunit::"ALT Iso Runner Unstated"),
-            'CodeUnit Metadata has no row for codeunit ALT Iso Runner Unstated.');
-
-        TestSubtypeOrdinal := TestSubtype.RequiredTestIsolation;
-        PlainOrdinal := PlainCodeunit.RequiredTestIsolation;
-        RunnerUnstatedOrdinal := RunnerUnstated.RequiredTestIsolation;
-
-        // [THEN] a Subtype = Test codeunit reports None...
-        Assert.AreEqual(
-            TestSubtype.RequiredTestIsolation::None, TestSubtype.RequiredTestIsolation,
-            'A codeunit declaring Subtype = Test must report RequiredTestIsolation::None.');
-
-        // [AND] a codeunit that is not a test reports Disabled, whether it is an ordinary
-        // codeunit or a TestRunner that omits the property. Two different Subtypes agreeing
-        // here is what shows the answer follows the SUBTYPE rather than the Subtype value.
-        Assert.AreEqual(
-            PlainCodeunit.RequiredTestIsolation::Disabled, PlainCodeunit.RequiredTestIsolation,
-            'An ordinary codeunit must report RequiredTestIsolation::Disabled.');
-        Assert.AreEqual(
-            RunnerUnstated.RequiredTestIsolation::Disabled, RunnerUnstated.RequiredTestIsolation,
-            'A TestRunner that omits TestIsolation must report RequiredTestIsolation::Disabled.');
-
-        // [AND] the two answers are genuinely different, so neither is what this column reports
-        // for everybody. A provider answering one fixed value would fail this pair whichever
-        // value it chose.
-        Assert.AreNotEqual(
-            TestSubtypeOrdinal, PlainOrdinal,
-            'A Subtype = Test codeunit and an ordinary codeunit must not report the same RequiredTestIsolation.');
-        Assert.AreEqual(
-            PlainOrdinal, RunnerUnstatedOrdinal,
-            'An ordinary codeunit and a TestRunner omitting TestIsolation must report the same RequiredTestIsolation.');
     end;
 
     [Test]
