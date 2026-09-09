@@ -312,6 +312,10 @@ codeunit 60479 "TPMS Tests"
         Probe: Codeunit "TPMS Open Probe";
     begin
         Probe.MarkHandled(Target.Editable());
+        // The card declares Editable = false, so it is already in the mode the View action
+        // would put it in. Enabled is the channel that says so.
+        Assert.IsFalse(Target.View().Enabled(),
+            'the built-in View action is not enabled on a card that is already read-only');
         Target.Close();
     end;
 
