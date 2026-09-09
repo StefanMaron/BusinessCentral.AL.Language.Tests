@@ -32,8 +32,11 @@ page 60425 "ALT Control Defaults Page"
             {
                 field(BareControl; Rec."Entry No.")
                 {
-                    // Declares NEITHER Editable, Enabled NOR Visible. What the table
-                    // reports for each of the three is the whole question.
+                    // Declares NEITHER Editable, Enabled NOR Visible, and is bound to a
+                    // field that declares no Editable either. What the table reports for
+                    // each of the three is the whole question, and the measured answer is
+                    // that it does not answer alike: 'true' for Enabled and Visible,
+                    // 'True' for Editable.
                     ApplicationArea = All;
                 }
                 field(EnumBoundControl; Rec."Status Field")
