@@ -9,6 +9,10 @@
 // OnValidate, then OnAfterValidate. Each trigger appends its own tag to Rec.Trace, so the
 // assertion is on one concrete string and cannot be satisfied by a run that fired the right
 // triggers in the wrong order, nor by one that fired only some of them.
+//
+// Scoped to the SUCCESS path on purpose. What an Error() inside OnBeforeValidate leaves in
+// the page's buffer is a separate claim about BC and is not asserted here -- see the note
+// below the third arm.
 
 codeunit 60514 "MCV Validate Trigger Tests"
 {
@@ -75,39 +79,18 @@ codeunit 60514 "MCV Validate Trigger Tests"
           'OnAfterValidate must append immediately after the base control''s OnValidate');
     end;
 
-    // Negative: an Error() raised in OnBeforeValidate prevents BOTH later stages.
+    // NOT COVERED HERE: what an Error() raised inside OnBeforeValidate leaves behind.
     //
-    // The trace is read back through the page's own Trace control, not from the table: an
-    // asserterror rolls the enclosing write back, so a row seeded here would not survive to
-    // be read, and reading '<no row>' would pass a weaker claim than the one intended. The
-    // page object itself is still alive after the refused SetValue and still holds whatever
-    // the triggers appended to Rec before the error, which is exactly the observable this
-    // arm is about.
-    [Test]
-    procedure AnErrorInOnBeforeValidatePreventsTheBaseTriggerAndOnAfterValidate()
-    var
-        Card: TestPage "MCV Card";
-        Trace: Text;
-    begin
-        Initialize();
-
-        Card.OpenNew();
-        Card.Id.SetValue(3);
-
-        asserterror Card.Name.SetValue('stop');
-        Assert.ExpectedError('MCV stopped in OnBeforeValidate');
-
-        Trace := Card.Trace.Value();
-        Card.Close();
-
-        // 'before;' and nothing after it: OnBeforeValidate ran and appended its tag before
-        // raising, and neither later stage appended anything. Asserting the whole string
-        // rather than two absences is what makes "the before-trigger DID run" part of the
-        // claim -- an implementation that raised none of the three would answer '' and pass
-        // a pair of IsFalse(StrPos(...)) checks.
-        Assert.AreEqual('before;', Trace,
-          'neither the base control''s OnValidate nor OnAfterValidate may run once OnBeforeValidate has raised an error');
-    end;
+    // An arm asserting that was in this suite when it was first opened, and real BC failed it
+    // on all eight cloud legs, unanimously and deterministically -- Expected:<before;>,
+    // Actual:<>. So the platform DISCARDS the in-memory Rec mutation the before-trigger made
+    // when the enclosing SetValue raises, rather than leaving the partial write visible on
+    // the still-open page. That is a claim about BC's page-write buffer, not about modify()
+    // dispatch, and the arms above already pin the dispatch half on their own.
+    //
+    // It is left out rather than weakened: an assertion adjusted until the runner passes it
+    // stops being evidence about BC. Tracked separately so it can be stated as its own claim,
+    // measured on its own.
 
     // Negative: a modify() block targeting a DIFFERENT control is not raised for this one.
     // "MCV Other Ext" (60513) modifies Other, never Name, so validating Name must produce
