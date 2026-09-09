@@ -15,6 +15,8 @@
 //                       (the sorted field's spelling inside SORTING(...) is not pinned)
 //   Related Table ID    a real table id; 0 is what an unresolved name answers
 //   Indentation Level   the fixture nests one data item; a flat list answers 0 for both
+//   Sorting Fields      the sorted key is not the primary key and not in field order
+//   Request Filter Fields  the filtered fields are not field 1 and not the sorted ones
 //
 // The data item's own ID is deliberately NOT asserted as a literal. The platform assigns it
 // from the report's compiled metadata rather than from declaration order, so its value is not
@@ -113,8 +115,7 @@ codeunit 60361 "Test Report Metadata Columns"
         Initialize();
 
         ReportDataItems.SetRange("Report ID", 60360);
-        ReportDataItems.SetRange("Related Table ID", 60359);
-        ReportDataItems.SetRange("Indentation Level", 0);
+        ReportDataItems.SetRange(Name, 'Src');
         Assert.IsTrue(ReportDataItems.FindFirst(), 'the root data item has a row');
 
         // The platform reports the view it COMPILED, not the AL source text. Two things
@@ -138,11 +139,11 @@ codeunit 60361 "Test Report Metadata Columns"
         Initialize();
 
         ReportDataItems.SetRange("Report ID", 60360);
-        ReportDataItems.SetRange("Indentation Level", 0);
+        ReportDataItems.SetRange(Name, 'Src');
         Assert.IsTrue(ReportDataItems.FindFirst(), 'the root data item has a row');
 
         Assert.AreEqual(60359, ReportDataItems."Related Table ID", 'Related Table ID');
-        Assert.AreEqual('Src', ReportDataItems.Name, 'the root data item name');
+        Assert.AreEqual(0, ReportDataItems."Indentation Level", 'the root data item is not nested');
     end;
 
     // Positive: nesting is real. The fixture declares Child inside Src, so the two rows must
@@ -162,7 +163,7 @@ codeunit 60361 "Test Report Metadata Columns"
         Assert.AreEqual(60359, ReportDataItems."Related Table ID", 'the nested data item table');
     end;
 
-    // Positive: the report has exactly the two data items it declares — no more, no fewer.
+    // Positive: the report has exactly the four data items it declares — no more, no fewer.
     [Test]
     procedure TestReportDataItems_Count_MatchesTheDeclaredDataItems()
     var
@@ -172,7 +173,7 @@ codeunit 60361 "Test Report Metadata Columns"
 
         ReportDataItems.SetRange("Report ID", 60360);
 
-        Assert.AreEqual(2, ReportDataItems.Count(), 'data items declared by report 60360');
+        Assert.AreEqual(4, ReportDataItems.Count(), 'data items declared by report 60360');
     end;
 
     // Positive: the two data items are distinguishable by their own ID, and that ID selects
@@ -188,7 +189,7 @@ codeunit 60361 "Test Report Metadata Columns"
         Initialize();
 
         ReportDataItems.SetRange("Report ID", 60360);
-        ReportDataItems.SetRange("Indentation Level", 0);
+        ReportDataItems.SetRange(Name, 'Src');
         Assert.IsTrue(ReportDataItems.FindFirst(), 'the root data item has a row');
         RootId := ReportDataItems."Data Item ID";
 
@@ -226,5 +227,94 @@ codeunit 60361 "Test Report Metadata Columns"
         ReportDataItems.SetRange("Report ID", 99999997);
 
         Assert.AreEqual(0, ReportDataItems.Count(), 'an undeclared report has no data-item rows');
+    end;
+
+    // Positive: Request Filter Fields reports FIELD NUMBERS, not the names AL wrote. The
+    // fixture's Filtered data item declares `RequestFilterFields = Description, "Alt Code"`,
+    // which are fields 2 and 5 — so every plausible wrong answer is excluded at once:
+    //   'Description, "Alt Code"'  the AL source text
+    //   '1'                        the first field
+    //   '5,2'                      the sorted key's fields, in the sorted key's order
+    //   ''                         the property not read at all
+    [Test]
+    procedure TestReportDataItems_RequestFilterFields_ReportsFieldNumbersInDeclarationOrder()
+    var
+        ReportDataItems: Record "Report Data Items";
+    begin
+        Initialize();
+
+        ReportDataItems.SetRange("Report ID", 60360);
+        ReportDataItems.SetRange(Name, 'Filtered');
+        Assert.IsTrue(ReportDataItems.FindFirst(), 'the Filtered data item has a row');
+
+        Assert.AreEqual('2,5', ReportDataItems."Request Filter Fields", 'Request Filter Fields');
+    end;
+
+    // Positive: Sorting Fields reports the field numbers of the sorted key, in the KEY's own
+    // order. The fixture sorts on key Alt = ("Alt Code", Description) = fields 5 then 2, so:
+    //   '1'    the primary key
+    //   '2,5'  ascending field order, and also what Request Filter Fields says
+    //   ''     the property not read at all
+    // are each excluded, and so is any answer carrying a field NAME.
+    [Test]
+    procedure TestReportDataItems_SortingFields_ReportsTheSortedKeysFieldNumbersInKeyOrder()
+    var
+        ReportDataItems: Record "Report Data Items";
+    begin
+        Initialize();
+
+        ReportDataItems.SetRange("Report ID", 60360);
+        ReportDataItems.SetRange(Name, 'Filtered');
+        Assert.IsTrue(ReportDataItems.FindFirst(), 'the Filtered data item has a row');
+
+        Assert.AreEqual('5,2', ReportDataItems."Sorting Fields", 'Sorting Fields');
+    end;
+
+    // Negative, and the assertion that gives the two above their meaning: a data item that
+    // declares NEITHER property reports empty for both. Without this, an implementation that
+    // answered '2,5' and '5,2' for every data item in the report would pass both tests above.
+    [Test]
+    procedure TestReportDataItems_ADataItemDeclaringNeitherProperty_ReportsBothColumnsEmpty()
+    var
+        ReportDataItems: Record "Report Data Items";
+    begin
+        Initialize();
+
+        ReportDataItems.SetRange("Report ID", 60360);
+        ReportDataItems.SetRange(Name, 'Plain');
+        Assert.IsTrue(ReportDataItems.FindFirst(), 'the Plain data item has a row');
+
+        Assert.AreEqual('', ReportDataItems."Request Filter Fields",
+          'a data item declaring no RequestFilterFields reports none');
+        Assert.AreEqual('', ReportDataItems."Sorting Fields",
+          'a data item declaring no DataItemTableView reports no sorting fields');
+    end;
+
+    // Negative: the two columns are independent of each other, and this is the row that shows
+    // it — the root data item sorts on the PRIMARY key ("Entry No.", field 1) while filtering
+    // on Description (field 2), so the two columns hold DIFFERENT values on the same row. An
+    // implementation deriving one from the other, or filling both from one source, cannot pass
+    // this together with the Filtered assertions above, where the two differ again and in the
+    // other direction.
+    [Test]
+    procedure TestReportDataItems_SortingFieldsAndRequestFilterFields_AreIndependentColumns()
+    var
+        ReportDataItems: Record "Report Data Items";
+    begin
+        Initialize();
+
+        ReportDataItems.SetRange("Report ID", 60360);
+        ReportDataItems.SetRange(Name, 'Src');
+        Assert.IsTrue(ReportDataItems.FindFirst(), 'the root data item has a row');
+
+        Assert.AreEqual('1', ReportDataItems."Sorting Fields",
+          'the root data item sorts on the primary key, field 1');
+        Assert.AreEqual('2', ReportDataItems."Request Filter Fields",
+          'the root data item filters on Description, field 2');
+
+        // The sorted field is not the filtered field, on this row. Stated as its own
+        // assertion so the claim survives a future edit to either literal above.
+        Assert.AreNotEqual(ReportDataItems."Sorting Fields", ReportDataItems."Request Filter Fields",
+          'the two columns report different things about the same data item');
     end;
 }

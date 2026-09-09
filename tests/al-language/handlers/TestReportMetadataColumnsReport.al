@@ -11,6 +11,13 @@
 //   WordMergeDataItem  = Src    (non-empty, so an empty-string answer is wrong)
 //   DataItemTableView  sorted DESCENDING on a named key, so the direction is observable
 //   RequestFilterFields names field 2, not field 1, so "the first field" is not the answer
+//
+// The Filtered and Plain data items exist for the two columns that report field NUMBERS
+// (Sorting Fields, Request Filter Fields). Filtered declares both properties against the
+// SECONDARY key, naming fields that are neither field 1 nor in ascending field order, and it
+// declares them in two DIFFERENT orders — so "the primary key", "the first field", "ascending
+// field order" and "whatever the other column says" are each a wrong answer. Plain declares
+// neither, which is the shape whose correct answer is empty for both.
 
 report 60360 "Test Rpt Meta Cols Fixture"
 {
@@ -33,6 +40,21 @@ report 60360 "Test Rpt Meta Cols Fixture"
                 DataItemLink = "Entry No." = field("Entry No.");
                 column(ChildEntryNo; "Entry No.") { }
             }
+        }
+
+        // Sorts on key Alt = ("Alt Code", Description) = fields 5 then 2.
+        // Filters on Description then "Alt Code"           = fields 2 then 5.
+        dataitem(Filtered; "Test Rpt Meta Cols Sample")
+        {
+            DataItemTableView = sorting("Alt Code", Description);
+            RequestFilterFields = Description, "Alt Code";
+
+            column(FilteredEntryNo; "Entry No.") { }
+        }
+
+        dataitem(Plain; "Test Rpt Meta Cols Sample")
+        {
+            column(PlainEntryNo; "Entry No.") { }
         }
     }
 }
