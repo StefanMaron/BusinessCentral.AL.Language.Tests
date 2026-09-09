@@ -10,9 +10,17 @@
 // assertion is on one concrete string and cannot be satisfied by a run that fired the right
 // triggers in the wrong order, nor by one that fired only some of them.
 //
-// Scoped to the SUCCESS path on purpose. What an Error() inside OnBeforeValidate leaves in
-// the page's buffer is a separate claim about BC and is not asserted here -- see the note
-// below the third arm.
+// The suite also pins the FAILED path, as its own set of claims: what an Error() inside
+// OnBeforeValidate leaves in the page's buffer. That is a statement about BC's page-write
+// buffer rather than about modify() dispatch, so it carries its own arms and its own
+// negatives -- see the four arms after the order ones.
+//
+// One of those four is split in a way worth knowing about before editing it. Closing the page
+// after a refused write is NOT the same on every supported version: 28.0-28.4 close cleanly,
+// 27.0/27.3/27.5 raise "The record that you tried to open is not available." once a
+// SUCCESSFUL write has followed the refused one. Measured, corpus run 34328827788. The trace
+// claim is green on all eight and is stated without a Close(); the closability claim is
+// stated separately, on the case that is green on all eight. Do not merge them back together.
 //
 // The OnAssistEdit arms pin the third control-acting modify() trigger, and the base-page form
 // of the same trigger. Both were entirely unstated: BC's ITestField.AssistEdit returns void,
@@ -84,18 +92,137 @@ codeunit 60514 "MCV Validate Trigger Tests"
           'OnAfterValidate must append immediately after the base control''s OnValidate');
     end;
 
-    // NOT COVERED HERE: what an Error() raised inside OnBeforeValidate leaves behind.
+    // The claim the arms above deliberately left out, now stated in the direction real BC
+    // answered it. An Error() raised inside OnBeforeValidate DISCARDS the in-memory Rec
+    // mutation that same trigger made before raising: the still-open page reads '' for Trace,
+    // not the 'before;' the trigger appended one statement earlier.
     //
-    // An arm asserting that was in this suite when it was first opened, and real BC failed it
-    // on all eight cloud legs, unanimously and deterministically -- Expected:<before;>,
-    // Actual:<>. So the platform DISCARDS the in-memory Rec mutation the before-trigger made
-    // when the enclosing SetValue raises, rather than leaving the partial write visible on
-    // the still-open page. That is a claim about BC's page-write buffer, not about modify()
-    // dispatch, and the arms above already pin the dispatch half on their own.
+    // This was measured before it was written. An arm asserting the opposite was in this suite
+    // when it was first opened and all eight cloud legs failed it, unanimously and
+    // deterministically -- Expected:<before;>, Actual:<> -- so the assertion below is what the
+    // tier said, not what any implementation makes convenient.
     //
-    // It is left out rather than weakened: an assertion adjusted until the runner passes it
-    // stops being evidence about BC. Tracked separately so it can be stated as its own claim,
-    // measured on its own.
+    // Why the page is read rather than the table: the row was never written, so the table
+    // cannot distinguish "the mutation was discarded" from "nothing was ever stored". The
+    // page's own Trace control is the only place a surviving partial write would be visible,
+    // which is exactly the observable under test.
+    [Test]
+    procedure AnErrorInOnBeforeValidateDiscardsThatTriggersOwnRecMutation()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(3);
+        asserterror Card.Name.SetValue('stop');
+
+        Assert.AreEqual('', Card.Trace.Value(),
+          'a SetValue that raises must leave none of its triggers'' Rec mutations visible on the page');
+
+        Card.Close();
+    end;
+
+    // Negative complement, and the arm that stops the one above from being satisfied by an
+    // implementation that simply never runs OnBeforeValidate at all. The trigger DID run --
+    // it is what raised -- so the error must be the one it raised, by its own message.
+    //
+    // Without this, "Trace is empty after a failed write" is equally true of a platform that
+    // dispatched no extension trigger whatsoever, which is the state this whole suite exists
+    // to tell apart from a working one.
+    [Test]
+    procedure TheRaisingTriggerDidRunEvenThoughItsMutationIsDiscarded()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(9);
+        asserterror Card.Name.SetValue('stop');
+
+        Assert.ExpectedError('MCV stopped in OnBeforeValidate');
+
+        Card.Close();
+    end;
+
+    // Third claim, on the OTHER side of the discard: the buffer is RESTORED, not torn down,
+    // so a subsequent successful write on the same page traces exactly one clean sequence. An
+    // implementation that discarded the mutation by abandoning the buffer answers something
+    // other than 'before;page;after;' here while passing both arms above.
+    //
+    // The page is deliberately NOT closed. That is not tidiness -- it is what the tier
+    // measured, and the reason this arm and the one below it are two arms rather than one.
+    //
+    // MEASURED, corpus run 34328827788 on this suite's first eight-leg run. An earlier version
+    // of this arm ended in Card.Close(), and it failed on 27.0, 27.3 and 27.5 -- all three,
+    // identically -- while passing on 28.0 through 28.4:
+    //
+    //     FAIL AWriteAfterARefusedOneTracesFromTheRestoredBuffer
+    //          Unhandled UI: Message  The record that you tried to open is not available.
+    //                                 The page will close or show the next record.
+    //
+    // The failing statement was the Close(), not the assertion: the stack frame is RunTests
+    // with no Assert frame, and the two arms above ALSO do asserterror-then-Close() and pass
+    // on those same three legs. So the trace claim below is green on all eight; what differs
+    // by version is only what closing the page does afterwards, which the next arm states on
+    // its own.
+    [Test]
+    procedure AWriteAfterARefusedOneTracesFromTheRestoredBuffer()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(10);
+        asserterror Card.Name.SetValue('stop');
+        Card.Name.SetValue('value');
+
+        Assert.AreEqual('before;page;after;', Card.Trace.Value(),
+          'a successful write after a refused one must trace exactly one full sequence, from the restored buffer');
+    end;
+
+    // The half that splitting the arm above separated out, and the reason it is separate: what
+    // CLOSING the page does after a refused write followed by a successful one is not the same
+    // on every supported version, so pinning it together with the trace claim made a green
+    // claim unstatable on three legs.
+    //
+    // 28.0-28.4 close cleanly. 27.0/27.3/27.5 raise an unhandled UI message -- "The record
+    // that you tried to open is not available." -- from the Close() itself. Both are stated
+    // here as what the tier answered, and neither is asserted as the correct one: this arm
+    // pins that the page is closable WITHOUT the second write, which is true on all eight,
+    // and leaves the version-split case to the comment above rather than encoding one
+    // version's answer as the rule.
+    //
+    // Why not just assert the split with a version branch: the corpus states what AL and BC
+    // do, and a test that branches on the platform version to pick an expected value asserts
+    // nothing about either -- it records the split instead of testing it. The split is
+    // recorded above, where a reader looking for it will find the run id.
+    [Test]
+    procedure APageIsStillClosableAfterARefusedWrite()
+    var
+        Card: TestPage "MCV Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Id.SetValue(11);
+        asserterror Card.Name.SetValue('stop');
+
+        // Read BEFORE closing -- a closed TestPage has no control to read -- so the arm is
+        // ordered: observe, then close. The Close() is the assertion here: reaching the end of
+        // this test without an unhandled UI message is what "still closable" means, and it is
+        // what the three 27.x legs refused when a second successful write preceded it.
+        Assert.AreEqual('', Card.Trace.Value(),
+          'the refused write''s mutation must still be discarded on the arm that closes the page');
+
+        // The claim: a refused write ON ITS OWN leaves the page in a state Close() accepts.
+        // Green on all eight legs -- it is the SECOND, successful write that 27.x objects to,
+        // not the refusal, which is what the two arms above already demonstrate by closing
+        // successfully on every leg after their own asserterror.
+        Card.Close();
+    end;
 
     // Negative: a modify() block targeting a DIFFERENT control is not raised for this one.
     // "MCV Other Ext" (60513) modifies Other, never Name, so validating Name must produce

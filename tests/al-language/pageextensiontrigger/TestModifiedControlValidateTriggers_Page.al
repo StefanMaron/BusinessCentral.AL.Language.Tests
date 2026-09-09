@@ -83,12 +83,14 @@ pageextension 60512 "MCV Card Ext" extends "MCV Card"
             trigger OnBeforeValidate()
             begin
                 Rec.Trace := Rec.Trace + 'before;';
-                // Deliberately kept though no arm in this suite currently drives it: what an
-                // Error() here leaves behind is a claim about BC's page-write buffer rather
-                // than about modify() dispatch, and is tracked as its own follow-up. Real BC
-                // discards the mutation above when this raises (measured: eight cloud legs
-                // answered '' where a surviving mutation would read 'before;'). Keeping the
-                // hook means that follow-up adds an arm rather than re-shaping the fixture.
+                // Drives the failed-write arms: what an Error() here leaves behind is a
+                // claim about BC's page-write buffer rather than about modify() dispatch.
+                // Real BC discards the mutation appended above when this raises -- eight
+                // cloud legs answered '' where a surviving mutation would read 'before;'.
+                //
+                // The sentinel is the VALUE rather than a separate control, so the raising
+                // path and the succeeding path are the same trigger on the same control and
+                // differ in nothing else.
                 if Rec.Name = 'stop' then
                     Error('MCV stopped in OnBeforeValidate');
             end;
