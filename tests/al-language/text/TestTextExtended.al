@@ -585,6 +585,33 @@ codeunit 60119 "Test Text Extended"
     end;
 
     [Test]
+    procedure TextSplit_AdjacentSeparators_KeepEmptyParts()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        // A comma immediately followed by a semicolon leaves an empty part between them, and a
+        // trailing separator leaves an empty last part: nothing is collapsed or trimmed.
+        Parts := 'a,;b;'.Split(',', ';');
+        Assert.AreEqual(4, Parts.Count(), 'Split(",", ";") on "a,;b;" must keep the empty parts and return 4');
+        Assert.AreEqual('a', Parts.Get(1), 'First part must be "a"');
+        Assert.AreEqual('', Parts.Get(2), 'Second part must be empty: "," and ";" are adjacent');
+        Assert.AreEqual('b', Parts.Get(3), 'Third part must be "b"');
+        Assert.AreEqual('', Parts.Get(4), 'Fourth part must be empty: the text ends with a separator');
+    end;
+
+    [Test]
+    procedure TextSplit_NoSeparatorArgument_SplitsOnWhitespace()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Parts := 'a b c'.Split();
+        Assert.AreEqual(3, Parts.Count(), 'Split() with no separator must split "a b c" on whitespace into 3 parts');
+        Assert.AreEqual('b', Parts.Get(2), 'Second part must be "b"');
+    end;
+
+    [Test]
     procedure TextSplit_EmptyString()
     var
         Text1: Text;
