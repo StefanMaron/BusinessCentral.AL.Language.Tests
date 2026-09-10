@@ -29,6 +29,8 @@ codeunit 60618 "Install Seeder"
         Seed: Record "Install Seed";
         EventPublisher: Codeunit "Install Event Publisher";
     begin
+        RecordWhatTheInstallTriggerCouldSee();
+
         Seed.Init();
         Seed."Code" := 'COMPANY1';
         Seed."Value" := 11;
@@ -45,5 +47,29 @@ codeunit 60618 "Install Seeder"
         // DIFFERENT table, so the exact-count assertions over "Install Seed"
         // stay meaningful.
         EventPublisher.Discover();
+    end;
+
+    // What the environment looked like from inside the install trigger. An install trigger runs
+    // in a company that already exists, under a session whose permissions are already in place,
+    // so both questions have answers here. Read back by TestInstallEnvVisible_Tests.
+    local procedure RecordWhatTheInstallTriggerCouldSee()
+    var
+        Observation: Record "Install Env Observation";
+        Comp: Record Company;
+        UserPermissions: Codeunit "User Permissions";
+    begin
+        Observation.Init();
+        Observation."Code" := 'ENV';
+        Observation."Observed Company Name" := CopyStr(CompanyName(), 1, MaxStrLen(Observation."Observed Company Name"));
+
+        Observation."Company Row Existed" := Comp.Get(CompanyName());
+        if Observation."Company Row Existed" then
+            Observation."Company Row Name" := Comp.Name;
+        // Negative control, recorded from inside the same trigger: Get must consult the key here
+        // too, or "Company Row Existed" would prove nothing.
+        Observation."Other Company Row Existed" := Comp.Get('NO SUCH COMPANY');
+
+        Observation."Session User Was Super" := UserPermissions.IsSuper(UserSecurityId());
+        Observation.Insert();
     end;
 }
