@@ -15,7 +15,7 @@
 // the declared value would answer 40 for Custom and collide with GermanStandardFanfold,
 // leaving the enum with 67 distinct ordinals across 68 values. Both assertions below
 // would catch that, from opposite directions.
-codeunit 60036 "Enum Shipped Ordinal Tests"
+codeunit 60137 "Enum Shipped Ordinal Tests"
 {
     Subtype = Test;
 
