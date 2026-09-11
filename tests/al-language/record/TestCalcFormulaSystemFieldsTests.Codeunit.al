@@ -182,13 +182,52 @@ codeunit 60818 "CFSF Tests"
         Assert.ExpectedError('cannot be found in the related table');
     end;
 
+    /// TableRelation = "CFSF Line".SystemRowVersion — the SystemId test above, moved onto the
+    /// sixth system field.
+    ///
+    /// Three things were unknown here and this test settles all three at once. Whether
+    /// Microsoft's AL compiler accepts the relation at all: it does, or this file does not
+    /// build and CI says so before any assertion runs. Whether Validate enforces it: the
+    /// second arm refuses a rowversion no line carries, which a dropped relation cannot do.
+    /// And, the arm that actually discriminates, whether the value it enforces against is the
+    /// related table's ROWVERSION or its primary key: a relation resolved onto the primary key
+    /// refuses an existing line's rowversion too, because no "CFSF Line" has "Entry No." equal
+    /// to a rowversion.
+    ///
+    /// So the first arm is not a formality. It is the only assertion that tells the two apart,
+    /// and both outcomes are informative: accepted means the relation reaches the rowversion
+    /// column, refused means BC resolves a SystemRowVersion target to something else.
+    [Test]
+    procedure Record_Validate_TableRelationOntoSystemRowVersion()
+    var
+        CfsfHeader: Record "CFSF Header";
+        CfsfLine: Record "CFSF Line";
+        NoSuchRowVersion: BigInteger;
+    begin
+        Initialize(CfsfHeader);
+        CfsfLine.Get(1);
+        Assert.AreNotEqual(0, CfsfLine.SystemRowVersion, 'the seeded line must carry a rowversion');
+
+        CfsfHeader.Validate("Line Row Version Ref", CfsfLine.SystemRowVersion);
+        Assert.AreEqual(
+          CfsfLine.SystemRowVersion, CfsfHeader."Line Row Version Ref",
+          'an existing line''s SystemRowVersion is accepted by the relation');
+
+        // Larger than any rowversion the database can have issued in this run, so no line
+        // carries it however the tier assigns them.
+        NoSuchRowVersion := CfsfLine.SystemRowVersion + 1000000000;
+        asserterror CfsfHeader.Validate("Line Row Version Ref", NoSuchRowVersion);
+        Assert.ExpectedError('cannot be found in the related table');
+    end;
+
     // ── SystemRowVersion: the sixth system field, at field id 0 ──────────────────────
     //
     // The five fields above all live in the 2000000000-2000000004 block. SystemRowVersion
     // does not: Microsoft's AL compiler synthesizes it as field id 0 with metadata name
     // `timestamp` (SynthesizedFieldHelper.AppendSystemFields), so a CalcFormula naming it
     // resolves through a different path than the five, and nothing in the corpus said what
-    // BC answers there.
+    // BC answers there. The TableRelation arm sits just above this block, with the SystemId
+    // relation it has to be contrasted against.
     //
     // Every assertion below is an ORDERING between two rowversions read in the same run,
     // never a literal. A rowversion's absolute value is a property of the database, not of

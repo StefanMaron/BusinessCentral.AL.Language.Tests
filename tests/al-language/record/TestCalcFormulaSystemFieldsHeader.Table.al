@@ -132,6 +132,15 @@ table 60816 "CFSF Header"
         /// The parent side of the where-arm carries the value being matched. Kept an ordinary
         /// field so this arm isolates the SOURCE-side resolution above.
         field(34; "Probe Entry No."; Integer) { }
+
+        /// A TableRelation whose target is SystemRowVersion — the same shape as "Line Sys Id"
+        /// above, but onto the sixth system field rather than SystemId. Nothing in the corpus
+        /// said whether BC accepts such a relation at all, what it validates against, or
+        /// whether Microsoft's AL compiler refuses it outright; "CFSF Tests" answers that.
+        field(35; "Line Row Version Ref"; BigInteger)
+        {
+            TableRelation = "CFSF Line".SystemRowVersion;
+        }
     }
 
     keys
