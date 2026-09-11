@@ -23,15 +23,22 @@
 // Both are defensible readings of "are these fields loaded", and nothing in the documentation
 // states which one BC implements. This codeunit asks a real service tier.
 //
-// The assertions below are written to record BC's answer, not to argue for one. Whichever way
-// the service tier answers, that answer is the specification -- and the reason this test exists
-// is that an implementation which guesses the other way is silently wrong on this ordering
-// while passing all five of 60775's tests.
+// BC'S ANSWER, MEASURED. The service tier answered (a) -- the buffer in hand -- on the 27.3 and
+// 27.5 cloud legs of corpus PR #323, identically. It went further than the question asked: the
+// field stays loaded even across a RE-FETCH, which the first version of test 3 asserted would
+// unload it. That assertion was wrong and has been corrected to what BC does; this comment is
+// the record of it, per ask-the-corpus-before-claiming-bc-behavior.md -- the tier adjudicates,
+// and a corpus assertion is never adjusted to match anything but BC.
 //
-// Test 3 is the control. It performs the SAME narrowing and then DOES re-fetch, which is
-// 60775's shape, so a reader can see that the only difference between the two answers is the
-// missing re-fetch. Without it, a failure in tests 1-2 could not be distinguished from the
-// narrowing itself not taking effect at all.
+// THE DISTINGUISHING FACTOR IS THE PRECEDING FULL FETCH, not the re-fetch. That is what
+// reconciles this file with 60775, whose PartialLoad_SetLoadFieldsNoArgs_ResetsToFullLoad
+// asserts UNLOADED and is green in the same run: there the record is first fetched under an
+// ALREADY-NARROW set, so the field was never in the buffer to begin with. Narrowing is a hint
+// about what to fetch next; it does not evict a row already materialised.
+//
+// Each test therefore carries both directions. Test 3's negative half fetches a DIFFERENT row
+// for the first time under the narrow set and asserts UNLOADED, so the file cannot be satisfied
+// by an implementation that simply answers "loaded" to everything.
 
 codeunit 60766 "Test Rec Partial Load Narrow"
 {
@@ -112,15 +119,26 @@ codeunit 60766 "Test Rec Partial Load Narrow"
           'Widening the requested set WITHOUT a re-fetch must not make an absent field loaded: no fetch has filled the buffer');
     end;
 
-    // ── The control: the same narrowing, WITH the re-fetch 60775 always does ─────
+    // ── The same narrowing, WITH a re-fetch: still loaded, plus the negative half ─
 
     [Test]
-    procedure PartialLoadNarrow_AfterFetch_WithRefetch_ReportsNarrowedSet()
-    // CLAIM: the control arm. Identical narrowing to test 1, but followed by a re-fetch, which
-    // is the shape every test in 60775 uses. Here the answer flips to FALSE. The pair
-    // establishes that the re-fetch -- not the SetLoadFields call on its own -- is what makes
-    // the narrowed set observable, so tests 1 and 2 cannot pass merely because the narrowing
-    // never took effect.
+    procedure PartialLoadNarrow_AfterFetch_WithRefetch_KeepsTheFieldLoaded()
+    // CLAIM: narrowing after a FULL fetch does not unload what is already in hand, even when a
+    // re-fetch follows. The field stays LOADED.
+    //
+    // MEASURED, not predicted. The first version of this test asserted the opposite -- that the
+    // re-fetch makes the narrowed set observable -- and BC said no, identically on the 27.3 and
+    // 27.5 cloud legs of corpus PR #323 (two independent binaries; 27.0 and 27.3 ship the same
+    // Ncl.dll). The assertion below is BC's answer, and the comment is the correction.
+    //
+    // WHY THIS DOES NOT CONTRADICT 60775, which asserts UNLOADED on an apparently similar shape
+    // (PartialLoad_SetLoadFieldsNoArgs_ResetsToFullLoad, green on the same legs in the same run):
+    // the distinguishing factor is the PRECEDING FULL FETCH, not the re-fetch. 60775 starts from
+    // Clear(Rec) and first fetches under an ALREADY-NARROW set, so the field was never in the
+    // buffer. This test fetches everything first, so the field IS in the buffer, and narrowing
+    // does not evict it -- SetLoadFields updates the requested set and invalidates the result-set
+    // enumerator, but nothing discards a row already materialised. Narrowing is a hint about what
+    // to fetch NEXT, not an instruction to forget what was already fetched.
     var
         Rec: Record "ALT Universal";
     begin
@@ -131,27 +149,39 @@ codeunit 60766 "Test Rec Partial Load Narrow"
         Rec."Text Field" := 'narrow-with-refetch';
         Rec.Insert();
 
+        Rec."Entry No." := 523;
+        Rec."Integer Field" := 77;
+        Rec."Text Field" := 'never-widely-fetched';
+        Rec.Insert();
+
         Clear(Rec);
         Rec.Get(522);
         Assert.IsTrue(
           Rec.AreFieldsLoaded(Rec."Text Field"),
           'Precondition: after a full fetch, Text Field must be LOADED');
 
-        // The same narrowing as test 1 -- but this time re-fetch before asking.
+        // The same narrowing as test 1 -- and this time re-fetch before asking.
         Rec.SetLoadFields(Rec."Integer Field");
         Rec.Get(522);
 
-        Assert.IsFalse(
-          Rec.AreFieldsLoaded(Rec."Text Field"),
-          'After narrowing AND re-fetching, the narrowed load set is what answers, so Text Field must be UNLOADED');
-
-        // Claim 3 of 60775 still holds on this path: the omitted field JIT-loads its real value.
-        Assert.AreEqual(
-          'narrow-with-refetch', Rec."Text Field",
-          'Reading the omitted field must JIT-load its stored value, not return the empty default');
         Assert.IsTrue(
           Rec.AreFieldsLoaded(Rec."Text Field"),
-          'After the JIT load, Text Field must report as loaded');
+          'Narrowing after a full fetch must not unload a field already in the buffer, even across a re-fetch');
+
+        // The value is readable, which is what "still loaded" has to mean to be worth asserting.
+        Assert.AreEqual(
+          'narrow-with-refetch', Rec."Text Field",
+          'The field that stayed loaded must read its stored value');
+
+        // The negative half, so this is not merely "everything is always loaded": a field the
+        // narrowed set excludes AND that was never fetched under a wider set is genuinely
+        // unloaded. Entry 523 is read for the first time under the narrow set.
+        Clear(Rec);
+        Rec.SetLoadFields(Rec."Integer Field");
+        Rec.Get(523);
+        Assert.IsFalse(
+          Rec.AreFieldsLoaded(Rec."Text Field"),
+          'A field never fetched under a wider set must be UNLOADED under the narrowed set');
     end;
 
     local procedure Initialize()
