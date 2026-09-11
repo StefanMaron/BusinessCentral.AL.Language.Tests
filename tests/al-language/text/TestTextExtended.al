@@ -514,6 +514,103 @@ codeunit 60119 "Test Text Extended"
         Assert.AreEqual(3, Parts.Count(), 'Text.Split must split on multiple separator chars');
     end;
 
+    // Text.Split(Separator1, Separator2, ...): several separator ARGUMENTS, each a whole
+    // string, as opposed to the List of [Char] form above where each character separates.
+
+    [Test]
+    procedure TextSplit_TwoSeparatorLiterals_SplitsOnEither()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Parts := 'a,b;c'.Split(',', ';');
+        Assert.AreEqual(3, Parts.Count(), 'Split(",", ";") must split "a,b;c" into 3 parts');
+        Assert.AreEqual('a', Parts.Get(1), 'First part must be "a"');
+        Assert.AreEqual('b', Parts.Get(2), 'Second part must be "b"');
+        Assert.AreEqual('c', Parts.Get(3), 'Third part must be "c"');
+    end;
+
+    [Test]
+    procedure TextSplit_ThreeSeparatorLiterals_SplitsOnAny()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Parts := 'a,b;c|d'.Split(',', ';', '|');
+        Assert.AreEqual(4, Parts.Count(), 'Split(",", ";", "|") must split "a,b;c|d" into 4 parts');
+        Assert.AreEqual('d', Parts.Get(4), 'Fourth part must be "d"');
+    end;
+
+    [Test]
+    procedure TextSplit_TwoSeparatorVariables_SplitsOnEither()
+    var
+        Input: Text;
+        Sep1: Text;
+        Sep2: Text;
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Input := 'a,b;c';
+        Sep1 := ',';
+        Sep2 := ';';
+        Parts := Input.Split(Sep1, Sep2);
+        Assert.AreEqual(3, Parts.Count(), 'Split(Sep1, Sep2) with Text variables must split "a,b;c" into 3 parts');
+        Assert.AreEqual('b', Parts.Get(2), 'Second part must be "b"');
+    end;
+
+    [Test]
+    procedure TextSplit_TwoMultiCharSeparators_EachIsAWholeString()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Parts := 'a--b::c'.Split('--', '::');
+        Assert.AreEqual(3, Parts.Count(), 'Split("--", "::") must treat each separator as a whole string and yield 3 parts');
+        Assert.AreEqual('b', Parts.Get(2), 'Second part must be "b"');
+        // A lone "-" is not "--": nothing to split on, the whole text comes back as one part.
+        Parts := 'a-b'.Split('--', '::');
+        Assert.AreEqual(1, Parts.Count(), 'Split("--", "::") on "a-b" must find no separator and return 1 part');
+        Assert.AreEqual('a-b', Parts.Get(1), 'The single part must be the whole text');
+    end;
+
+    [Test]
+    procedure TextSplit_TwoSeparatorsNoneFound_ReturnsWholeText()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Parts := 'abc'.Split(',', ';');
+        Assert.AreEqual(1, Parts.Count(), 'Split(",", ";") on "abc" must return exactly 1 part');
+        Assert.AreEqual('abc', Parts.Get(1), 'The single part must be the whole text');
+    end;
+
+    [Test]
+    procedure TextSplit_AdjacentSeparators_KeepEmptyParts()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        // A comma immediately followed by a semicolon leaves an empty part between them, and a
+        // trailing separator leaves an empty last part: nothing is collapsed or trimmed.
+        Parts := 'a,;b;'.Split(',', ';');
+        Assert.AreEqual(4, Parts.Count(), 'Split(",", ";") on "a,;b;" must keep the empty parts and return 4');
+        Assert.AreEqual('a', Parts.Get(1), 'First part must be "a"');
+        Assert.AreEqual('', Parts.Get(2), 'Second part must be empty: "," and ";" are adjacent');
+        Assert.AreEqual('b', Parts.Get(3), 'Third part must be "b"');
+        Assert.AreEqual('', Parts.Get(4), 'Fourth part must be empty: the text ends with a separator');
+    end;
+
+    [Test]
+    procedure TextSplit_NoSeparatorArgument_SplitsOnWhitespace()
+    var
+        Parts: List of [Text];
+    begin
+        Initialize();
+        Parts := 'a b c'.Split();
+        Assert.AreEqual(3, Parts.Count(), 'Split() with no separator must split "a b c" on whitespace into 3 parts');
+        Assert.AreEqual('b', Parts.Get(2), 'Second part must be "b"');
+    end;
+
     [Test]
     procedure TextSplit_EmptyString()
     var
