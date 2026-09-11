@@ -134,9 +134,11 @@ table 60816 "CFSF Header"
         field(34; "Probe Entry No."; Integer) { }
 
         /// A TableRelation whose target is SystemRowVersion — the same shape as "Line Sys Id"
-        /// above, but onto the sixth system field rather than SystemId. Nothing in the corpus
-        /// said whether BC accepts such a relation at all, what it validates against, or
-        /// whether Microsoft's AL compiler refuses it outright; "CFSF Tests" answers that.
+        /// above, but onto the sixth system field rather than SystemId. It behaves nothing
+        /// like it: the AL compiler accepts the relation, and BC then refuses EVERY value,
+        /// an existing line's own rowversion included, because the rowversion sits at field
+        /// id 0 and 0 is also BC's encoding for "relate to the primary key". Measured on the
+        /// tier, not assumed — see "CFSF Tests".
         field(35; "Line Row Version Ref"; BigInteger)
         {
             TableRelation = "CFSF Line".SystemRowVersion;

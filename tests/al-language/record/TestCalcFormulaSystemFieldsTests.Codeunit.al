@@ -183,38 +183,74 @@ codeunit 60818 "CFSF Tests"
     end;
 
     /// TableRelation = "CFSF Line".SystemRowVersion — the SystemId test above, moved onto the
-    /// sixth system field.
+    /// sixth system field. BC refuses EVERY value here, an existing line's own rowversion
+    /// included, and that is the finding.
     ///
-    /// Three things were unknown here and this test settles all three at once. Whether
-    /// Microsoft's AL compiler accepts the relation at all: it does, or this file does not
-    /// build and CI says so before any assertion runs. Whether Validate enforces it: the
-    /// second arm refuses a rowversion no line carries, which a dropped relation cannot do.
-    /// And, the arm that actually discriminates, whether the value it enforces against is the
-    /// related table's ROWVERSION or its primary key: a relation resolved onto the primary key
-    /// refuses an existing line's rowversion too, because no "CFSF Line" has "Entry No." equal
-    /// to a rowversion.
+    /// Three things were unknown and the service tier settled all three. Microsoft's AL
+    /// compiler ACCEPTS the relation — this file builds and publishes, so the refusal below is
+    /// a runtime one rather than a compile-time one. Validate ENFORCES it, rather than dropping
+    /// an unrepresentable relation silently. And the value it enforces against is NOT the
+    /// related table's rowversion column.
     ///
-    /// So the first arm is not a formality. It is the only assertion that tells the two apart,
-    /// and both outcomes are informative: accepted means the relation reaches the rowversion
-    /// column, refused means BC resolves a SystemRowVersion target to something else.
+    /// The first arm is what established the third point, and it is why this test is written
+    /// as two asserterrors rather than an accept/refuse pair. The two candidate mechanisms are
+    /// distinguishable only there:
+    ///
+    ///     target resolved to the rowversion COLUMN  -> an existing rowversion is ACCEPTED
+    ///     target resolved to the PRIMARY KEY        -> an existing rowversion is REFUSED
+    ///
+    /// because no "CFSF Line" has "Entry No." equal to a rowversion. BC refused it, naming the
+    /// value it could not find. So SystemRowVersion is unlike SystemId: SystemId lives at
+    /// 2000000000 and relates to the SystemId column, while the rowversion sits at field id 0,
+    /// which is also BC's encoding for "relate to the primary key" — and the primary key is
+    /// what wins.
+    ///
+    /// Consequence for anyone writing AL: a TableRelation onto SystemRowVersion compiles and
+    /// then rejects everything. It is not a usable foreign key, and the SystemId relation above
+    /// is the shape that works.
+    ///
+    /// This is not a runner-driven expectation. The first arm was written asserting ACCEPTED,
+    /// three BC legs refuted it (run 34573236729, BC 27.0/27.3/27.5: "The field Line Row
+    /// Version Ref of table CFSF Header contains a value (397405) that cannot be found in the
+    /// related table (CFSF Line)"), and the assertion was corrected to what BC does.
     [Test]
     procedure Record_Validate_TableRelationOntoSystemRowVersion()
     var
         CfsfHeader: Record "CFSF Header";
         CfsfLine: Record "CFSF Line";
         NoSuchRowVersion: BigInteger;
+        ZeroRowVersion: BigInteger;
     begin
         Initialize(CfsfHeader);
         CfsfLine.Get(1);
         Assert.AreNotEqual(0, CfsfLine.SystemRowVersion, 'the seeded line must carry a rowversion');
 
-        CfsfHeader.Validate("Line Row Version Ref", CfsfLine.SystemRowVersion);
+        // The control, FIRST rather than last, and that ordering is forced: an asserterror on
+        // Validate rolls the transaction back, so the rows Initialize seeded are gone after
+        // the arms below and nothing can be validated against them. Without this arm, "BC
+        // refuses everything on a system-field relation" would read as the finding, and it is
+        // not — the refusal is specific to SystemRowVersion's field id 0.
+        CfsfHeader.Validate("Line Sys Id", CfsfLine.SystemId);
         Assert.AreEqual(
-          CfsfLine.SystemRowVersion, CfsfHeader."Line Row Version Ref",
-          'an existing line''s SystemRowVersion is accepted by the relation');
+          CfsfLine.SystemId, CfsfHeader."Line Sys Id",
+          'the SystemId relation on the same table accepts an existing line');
+
+        // The discriminating arm. This value IS a rowversion line 1 carries, so a relation
+        // reaching the rowversion column would accept it. BC refuses, which is what says the
+        // target resolved to the primary key instead.
+        asserterror CfsfHeader.Validate("Line Row Version Ref", CfsfLine.SystemRowVersion);
+        Assert.ExpectedError('cannot be found in the related table');
+        // ZeroRowVersion rather than a bare 0: Assert.AreEqual compares the variant's TYPE as
+        // well as its value, and an Integer 0 does not equal a BigInteger 0.
+        ZeroRowVersion := 0;
+        Assert.AreEqual(
+          ZeroRowVersion, CfsfHeader."Line Row Version Ref",
+          'the refused Validate must leave the field at its default, not store the value');
 
         // Larger than any rowversion the database can have issued in this run, so no line
-        // carries it however the tier assigns them.
+        // carries it however the tier assigns them. Refused for the ordinary reason, and
+        // asserted so that "the relation is enforced at all" is pinned independently of the
+        // arm above.
         NoSuchRowVersion := CfsfLine.SystemRowVersion + 1000000000;
         asserterror CfsfHeader.Validate("Line Row Version Ref", NoSuchRowVersion);
         Assert.ExpectedError('cannot be found in the related table');
