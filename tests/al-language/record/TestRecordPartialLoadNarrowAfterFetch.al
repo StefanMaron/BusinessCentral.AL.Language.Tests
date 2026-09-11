@@ -128,8 +128,13 @@ codeunit 60766 "Test Rec Partial Load Narrow"
     //
     // MEASURED, not predicted. The first version of this test asserted the opposite -- that the
     // re-fetch makes the narrowed set observable -- and BC said no, identically on the 27.3 and
-    // 27.5 cloud legs of corpus PR #323 (two independent binaries; 27.0 and 27.3 ship the same
-    // Ncl.dll). The assertion below is BC's answer, and the comment is the correction.
+    // 27.5 cloud legs of corpus PR #323. The assertion below is BC's answer, and the comment is
+    // the correction.
+    //
+    // What carries the claim is the MECHANISM below, not the number of legs: on the box where
+    // this was investigated, 27.0, 27.3 and 27.5 all ship a byte-identical Ncl.dll
+    // (sha256 affa03c9..., 10716984 bytes), so those two legs are one binary and are NOT
+    // independent confirmations of each other. Treat 28.x as the version axis here.
     //
     // WHY THIS DOES NOT CONTRADICT 60775, which asserts UNLOADED on an apparently similar shape
     // (PartialLoad_SetLoadFieldsNoArgs_ResetsToFullLoad, green on the same legs in the same run):
