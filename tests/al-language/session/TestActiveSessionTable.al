@@ -167,18 +167,4 @@ codeunit 60976 "Test Active Session Table"
         Assert.IsTrue(Agrees, StrSubstNo('Active Session."Client Type" (%1) must describe the same client as CurrentClientType() (%2)',
             Format(ActiveSession."Client Type"), Format(Current)));
     end;
-
-    [Test]
-    procedure ZZProbe_ActiveSessionClientType_Measure()
-    // TEMPORARY MEASUREMENT PROBE -- fails on purpose to print the values; removed before merge.
-    var
-        ActiveSession: Record "Active Session";
-        Sess: Record Session;
-    begin
-        ActiveSession.Get(ServiceInstanceId(), SessionId());
-        Sess.Get(SessionId());
-        Error('PROBE CurrentClientType=%1 DefaultClientType=%2 ActiveSession.ClientType=%3 (ordinal %4) Session.ApplicationName=%5 Session.LoginType=%6 ExecutionContext=%7',
-            Format(CurrentClientType()), Format(DefaultClientType()), Format(ActiveSession."Client Type"), Format(ActiveSession."Client Type", 0, 2),
-            Sess."Application Name", Format(Sess."Login Type"), Format(Session.GetExecutionContext()));
-    end;
 }
