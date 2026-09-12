@@ -6,7 +6,8 @@
 // CLAIM: the session running this test has a row in Active Session, keyed by
 // (ServiceInstanceId(), SessionId()), and that row carries the same identity the platform's
 // own surfaces report -- UserId(), UserSecurityId() -- and the same user the Session virtual
-// table (2000000009) reports for this session.
+// table (2000000009) reports for this session. Its Client Type names a real client and agrees
+// with CurrentClientType().
 //
 // Active Session is Scope = Cloud, so a Target = Cloud app can name it directly.
 //
@@ -111,5 +112,73 @@ codeunit 60976 "Test Active Session Table"
     begin
         Assert.IsFalse(ActiveSession.Get(ServiceInstanceId(), -987654),
             'a session id belonging to no session must not resolve to a row');
+    end;
+
+    [Test]
+    procedure ActiveSession_ReadingSessionRow_ClientTypeIsNotUnknown()
+    // CLAIM: the reading session arrived over a real connection, so the platform can name its
+    // client type. "Unknown" is what BC's own mapping answers for a session with no connection
+    // type at all. No literal: which client type a test run arrives as is a property of how the
+    // tier is driven (web service, client services, ...), not of the platform.
+    var
+        ActiveSession: Record "Active Session";
+    begin
+        Assert.IsTrue(ActiveSession.Get(ServiceInstanceId(), SessionId()), 'Active Session must hold the reading session');
+        Assert.AreNotEqual(ActiveSession."Client Type"::Unknown, ActiveSession."Client Type",
+            'Active Session."Client Type" must not be Unknown for the reading session');
+    end;
+
+    [Test]
+    procedure ActiveSession_ReadingSessionRow_ClientTypeAgreesWithCurrentClientType()
+    // CLAIM: the row's Client Type and CurrentClientType() describe the same connection, so they
+    // agree under the platform's correspondence between the two vocabularies: every web-service
+    // flavor is one "Web Service" row value, and the Web client type is either of the two
+    // web-client row values. Both are read in the same session, so no environment property can
+    // make them differ.
+    var
+        ActiveSession: Record "Active Session";
+        Current: ClientType;
+        Agrees: Boolean;
+    begin
+        Assert.IsTrue(ActiveSession.Get(ServiceInstanceId(), SessionId()), 'Active Session must hold the reading session');
+        Current := CurrentClientType();
+        case Current of
+            ClientType::Windows:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::"Windows Client";
+            ClientType::SOAP, ClientType::OData, ClientType::ODataV4, ClientType::Api:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::"Web Service";
+            ClientType::Web:
+                Agrees := ActiveSession."Client Type" in [ActiveSession."Client Type"::"Client Service", ActiveSession."Client Type"::"Web Client"];
+            ClientType::NAS:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::NAS;
+            ClientType::Background:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::Background;
+            ClientType::Management:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::"Management Client";
+            ClientType::Tablet:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::Tablet;
+            ClientType::Phone:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::Phone;
+            ClientType::Desktop:
+                Agrees := ActiveSession."Client Type" = ActiveSession."Client Type"::Desktop;
+            else
+                Agrees := false;
+        end;
+        Assert.IsTrue(Agrees, StrSubstNo('Active Session."Client Type" (%1) must describe the same client as CurrentClientType() (%2)',
+            Format(ActiveSession."Client Type"), Format(Current)));
+    end;
+
+    [Test]
+    procedure ZZProbe_ActiveSessionClientType_Measure()
+    // TEMPORARY MEASUREMENT PROBE -- fails on purpose to print the values; removed before merge.
+    var
+        ActiveSession: Record "Active Session";
+        Sess: Record Session;
+    begin
+        ActiveSession.Get(ServiceInstanceId(), SessionId());
+        Sess.Get(SessionId());
+        Error('PROBE CurrentClientType=%1 DefaultClientType=%2 ActiveSession.ClientType=%3 (ordinal %4) Session.ApplicationName=%5 Session.LoginType=%6 ExecutionContext=%7',
+            Format(CurrentClientType()), Format(DefaultClientType()), Format(ActiveSession."Client Type"), Format(ActiveSession."Client Type", 0, 2),
+            Sess."Application Name", Format(Sess."Login Type"), Format(Session.GetExecutionContext()));
     end;
 }
