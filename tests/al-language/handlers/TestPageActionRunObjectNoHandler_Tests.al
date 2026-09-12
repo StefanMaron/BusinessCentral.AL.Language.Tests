@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: TPARONH Row (60280), TPARONH Card Target (60281),
 //                TPARONH Logging Target (60282), TPARONH Host (60283), TPARONH Log (60284),
-//                Assert (60021)
+//                TPARONH Open Probe (60286), TPARONH Dialog Target (page 60284), Assert (60021)
 //
 // What a page action's RunObject does when the test binds NO handler at all.
 //
@@ -140,6 +140,9 @@
 //      back, measured, so it reads an in-memory probe instead. Arm 5 controls that probe.
 //      See the note on the arm for what was measured and why the shape changed.
 //
+// Arms 7-9 ask the same question of a DIALOG target (PageType = StandardDialog), which every
+// arm above leaves open because both targets above are Cards. See the note above arm 7.
+//
 // Held out of the eight-test RunObject suite (TestPageActionRunObject_Tests, codeunit 60455)
 // while this question was open, so that suite could merge; it stays silent on the no-handler
 // case and points here. Tracked as AL Runner issue 2975, which was filed when the RunObject
@@ -148,7 +151,8 @@
 // bound [PageHandler] -- and this codeunit settles the remaining arm, which is that it opens
 // the target with no handler bound too.
 //
-// Written by an agent (impl-1 built the experiment; impl-5 settled it and rewrote this note).
+// Written by an agent (impl-1 built the experiment; impl-5 settled it and rewrote this note;
+// stma-auto2-5 added the dialog arms 7-9).
 
 codeunit 60285 "TPARONH Tests"
 {
@@ -157,6 +161,8 @@ codeunit 60285 "TPARONH Tests"
 
     var
         Assert: Codeunit Assert;
+        DialogHandlerCalls: Integer;
+        DialogHandlerDescr: Text[50];
 
     local procedure Initialize()
     var
@@ -374,6 +380,99 @@ codeunit 60285 "TPARONH Tests"
             'the probe''s own state must survive the refused Page.Run, otherwise the next assertion proves nothing');
         Assert.IsFalse(Probe.GetOpened(),
             'a refused Page.Run must not have opened the target: the logging target''s OnOpenPage must never have run');
+    end;
+
+    // ARMS 7-9: THE DIALOG TARGET (AL Runner issue 3223).
+    //
+    // A dialog target is looked up differently. Read from Microsoft.Dynamics.Nav.Ncl.dll (28.4),
+    // NavTestExecution.ShowDialog asks FindHandler(ModalPage, form, throwIfNotFound: false) and,
+    // when nothing is bound, throws NavTestPageInvokedWithoutHandlerException -- a
+    // NavTestBaseException, whose resource text is "TestPages that are invoked from a RunObject
+    // action must have a handler. Page No. = {0}". Unlike the Card route's
+    // NavNCLMissingUIHandlerException, that type is one the form-showing path rethrows. That is
+    // a reading, not a measurement; these arms are the measurement.
+
+    // ARM 7: invoked with nothing bound, the dialog RunObject IS refused, and with the message
+    // written for this case -- not the 'Unhandled UI' the Page.Run controls above get.
+    [Test]
+    procedure RunObjectActionOnADialogTargetWithoutAHandlerIsRefused()
+    var
+        Host: TestPage "TPARONH Host";
+    begin
+        Initialize();
+        Commit();
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        asserterror Host.RunDialogOnRec.Invoke();
+        Assert.ExpectedError('TestPages that are invoked from a RunObject action must have a handler');
+    end;
+
+    // ARM 8: whether the refused dialog target had already OPENED -- its OnOpenPage ran, on the
+    // host's current row -- before BC found nobody bound. Kept apart from arm 7 so the error and
+    // the opening are measured independently. Reads the in-memory probe, since the refusal rolls
+    // uncommitted rows back; the sentinel proves the probe survived the error.
+    [Test]
+    procedure RunObjectActionOnADialogTargetWithoutAHandlerOpensItBeforeRefusing()
+    var
+        Host: TestPage "TPARONH Host";
+        Probe: Codeunit "TPARONH Open Probe";
+    begin
+        Initialize();
+        Commit();
+
+        Probe.MarkSentinel();
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        asserterror Host.RunDialogOnRec.Invoke();
+
+        Assert.IsTrue(Probe.GetSentinel(),
+            'the probe''s own state must survive the refused invoke, otherwise the next assertions prove nothing');
+        Assert.IsTrue(Probe.GetOpened(),
+            'the dialog target opens (runs its OnOpenPage) before BC finds no [ModalPageHandler] bound');
+        Assert.AreEqual('Bravo', Probe.GetDescrSeen(),
+            'the dialog target opens on the host page''s current row, as RunPageOnRec = true');
+    end;
+
+    // ARM 9, the control for 7 and 8: with a [ModalPageHandler] bound, the same invoke reaches it,
+    // raises nothing, and the dialog target's probe records the opening on the host's row. So the
+    // action does open this target modally, and the probe arm 8 reads really is set when it opens.
+    [Test]
+    [HandlerFunctions('DialogTargetModalHandler')]
+    procedure ProbeControlTheDialogTargetIsAnsweredByABoundModalHandler()
+    var
+        Host: TestPage "TPARONH Host";
+        Probe: Codeunit "TPARONH Open Probe";
+    begin
+        Initialize();
+        DialogHandlerCalls := 0;
+        DialogHandlerDescr := '';
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        Host.RunDialogOnRec.Invoke();
+        Host.Close();
+
+        Assert.AreEqual(1, DialogHandlerCalls,
+            'a dialog RunObject target must be answered by the bound [ModalPageHandler] exactly once');
+        Assert.AreEqual('Bravo', DialogHandlerDescr,
+            'the modal handler must see the dialog target on the host page''s current row');
+        Assert.IsTrue(Probe.GetOpened(),
+            'the dialog target must record its own OnOpenPage when it really opens');
+        Assert.AreEqual('Bravo', Probe.GetDescrSeen(),
+            'the probe must have been marked on the record the dialog was opened on');
+    end;
+
+    [ModalPageHandler]
+    procedure DialogTargetModalHandler(var Target: TestPage "TPARONH Dialog Target")
+    begin
+        DialogHandlerCalls += 1;
+        DialogHandlerDescr := CopyStr(Target.Descr.Value(), 1, MaxStrLen(DialogHandlerDescr));
+        Target.OK().Invoke();
     end;
 
     [PageHandler]
