@@ -57,6 +57,14 @@
 // sibling column asserts that same fact from the other side
 // (Record_CodeunitMetadata_Get_InstallCodeunit_ReportsSubtypeNormal).
 
+// The AllObjWithCaption_..._App... tests pin the three owning-app columns of
+// AllObjWithCaption: "App Package ID" (60), "App Runtime Package ID" (61) and "App ID" (62).
+// 60 and 61 must equal AllObj's own columns for the same (Object Type, Object ID) -- the two
+// tables describe one object. "App ID" is the owning app's MANIFEST id (NavApp module id),
+// not a package id: this app's objects report this module's id, a Base Application table
+// reports Base Application's. And "App ID" is filled per object kind: an enum reports the
+// empty guid even when its package columns are filled.
+
 codeunit 60802 "Test AllObj Virtual Table"
 {
     Subtype = Test;
@@ -593,6 +601,139 @@ codeunit 60802 "Test AllObj Virtual Table"
         Assert.AreEqual(
             'TP Precompiled Capture Ext', AllObjWithCaption."Object Name",
             'The row selected by the Item Attribute subtype filter is TP Precompiled Capture Ext.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_OwnObjects_AppIdIsThisModulesId()
+    // CLAIM: "App ID" on a row for an object this app declares is this app's module id --
+    // for a table, a page and a codeunit alike.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+        ThisModule: ModuleInfo;
+        EmptyId: Guid;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        Assert.AreNotEqual(EmptyId, ThisModule.Id(), 'The current module must have an id.');
+
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, Database::"ALT Relation Parent"),
+            'AllObjWithCaption has no Table row for ALT Relation Parent.');
+        Assert.AreEqual(
+            ThisModule.Id(), AllObjWithCaption."App ID",
+            'App ID of a table this app declares must be this app''s id.');
+
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Page, Page::"ALT Card Page"),
+            'AllObjWithCaption has no Page row for ALT Card Page.');
+        Assert.AreEqual(
+            ThisModule.Id(), AllObjWithCaption."App ID",
+            'App ID of a page this app declares must be this app''s id.');
+
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Codeunit, Codeunit::"ALT Event Mutation Control"),
+            'AllObjWithCaption has no Codeunit row for ALT Event Mutation Control.');
+        Assert.AreEqual(
+            ThisModule.Id(), AllObjWithCaption."App ID",
+            'App ID of a codeunit this app declares must be this app''s id.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_OwnTable_PackageIdsEqualAllObj()
+    // CLAIM: "App Package ID" and "App Runtime Package ID" are the same values AllObj reports
+    // for the same object, and for an object this app declares they are not empty. And "App
+    // ID" is NOT one of them: it is the manifest id, a different guid.
+    var
+        AllObj: Record AllObj;
+        AllObjWithCaption: Record AllObjWithCaption;
+        EmptyId: Guid;
+    begin
+        Initialize();
+
+        Assert.IsTrue(
+            AllObj.Get(AllObj."Object Type"::Table, Database::"ALT Relation Parent"),
+            'AllObj has no Table row for ALT Relation Parent.');
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, Database::"ALT Relation Parent"),
+            'AllObjWithCaption has no Table row for ALT Relation Parent.');
+
+        Assert.AreNotEqual(
+            EmptyId, AllObjWithCaption."App Runtime Package ID",
+            'App Runtime Package ID of a table this app declares must not be empty.');
+        Assert.AreEqual(
+            AllObj."App Runtime Package ID", AllObjWithCaption."App Runtime Package ID",
+            'AllObjWithCaption and AllObj must report the same App Runtime Package ID for one table.');
+        Assert.AreEqual(
+            AllObj."App Package ID", AllObjWithCaption."App Package ID",
+            'AllObjWithCaption and AllObj must report the same App Package ID for one table.');
+        Assert.AreNotEqual(
+            AllObjWithCaption."App Runtime Package ID", AllObjWithCaption."App ID",
+            'App ID is the app''s manifest id, not its runtime package id.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_BaseApplicationTable_AppIdIsBaseApplication()
+    // CLAIM: a table from ANOTHER app reports THAT app's id -- Base Application's for
+    // Customer -- and its package columns still equal AllObj's. The control against an
+    // implementation stamping the current module's id on every row.
+    var
+        AllObj: Record AllObj;
+        AllObjWithCaption: Record AllObjWithCaption;
+        ThisModule: ModuleInfo;
+        BaseApplicationId: Guid;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        Evaluate(BaseApplicationId, '437dbf0e-84ff-417a-965d-ed2bb9650972');
+
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Table, Database::Customer),
+            'AllObjWithCaption has no Table row for Customer.');
+        Assert.AreEqual(
+            BaseApplicationId, AllObjWithCaption."App ID",
+            'App ID of Customer must be Base Application''s id.');
+        Assert.AreNotEqual(
+            ThisModule.Id(), AllObjWithCaption."App ID",
+            'App ID of Customer must not be the calling app''s id.');
+
+        Assert.IsTrue(
+            AllObj.Get(AllObj."Object Type"::Table, Database::Customer),
+            'AllObj has no Table row for Customer.');
+        Assert.AreEqual(
+            AllObj."App Runtime Package ID", AllObjWithCaption."App Runtime Package ID",
+            'AllObjWithCaption and AllObj must report the same App Runtime Package ID for Customer.');
+        Assert.AreEqual(
+            AllObj."App Package ID", AllObjWithCaption."App Package ID",
+            'AllObjWithCaption and AllObj must report the same App Package ID for Customer.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_FindEnum_BaseApplicationEnum_AppIdIsEmpty()
+    // CLAIM: "App ID" is filled per object kind, and an Enum is not one of the kinds that get
+    // it: a Base Application enum reports the empty App ID, while its package columns still
+    // equal AllObj's. The control against an implementation copying the owner onto every kind.
+    var
+        AllObj: Record AllObj;
+        AllObjWithCaption: Record AllObjWithCaption;
+        EmptyId: Guid;
+    begin
+        Initialize();
+
+        AllObjWithCaption.SetRange("Object Type", AllObjWithCaption."Object Type"::Enum);
+        AllObjWithCaption.SetRange("Object Name", 'Sales Document Type');
+        Assert.IsTrue(
+            AllObjWithCaption.FindFirst(),
+            'AllObjWithCaption has no Enum row for Sales Document Type.');
+        Assert.AreEqual(
+            EmptyId, AllObjWithCaption."App ID",
+            'App ID of an enum must be the empty guid.');
+
+        Assert.IsTrue(
+            AllObj.Get(AllObj."Object Type"::Enum, AllObjWithCaption."Object ID"),
+            'AllObj has no Enum row for Sales Document Type.');
+        Assert.AreEqual(
+            AllObj."App Runtime Package ID", AllObjWithCaption."App Runtime Package ID",
+            'AllObjWithCaption and AllObj must report the same App Runtime Package ID for an enum.');
     end;
 
     local procedure Initialize()
