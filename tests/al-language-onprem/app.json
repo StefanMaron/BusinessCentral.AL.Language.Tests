@@ -36,6 +36,12 @@
       "name": "System Application Test Library",
       "publisher": "Microsoft",
       "version": "27.0.0.0"
+    },
+    {
+      "id": "40860557-a18d-42ad-aecb-22b7dd80dc80",
+      "name": "Permissions Mock",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
     }
   ],
   "screenshots": [],
