@@ -104,6 +104,51 @@ codeunit 60136 "Test NavApp Extended"
     end;
 
     [Test]
+    procedure NavApp_GetModuleInfo_CurrentApp_BooleanForm_ReturnsTrue()
+    var
+        Info: ModuleInfo;
+        Info2: ModuleInfo;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(Info);
+        Assert.IsTrue(NavApp.GetModuleInfo(Info.Id, Info2), 'GetModuleInfo boolean form must return true for an installed app id');
+        Assert.AreEqual(Info.Name, Info2.Name, 'GetModuleInfo boolean form must populate the module name');
+    end;
+
+    // The unknown id must not be the null GUID: BC answers GetModuleInfo(Guid.Empty) with
+    // true and a synthesized Microsoft module, so a null id would invert these tests.
+    [Test]
+    procedure NavApp_GetModuleInfo_UnknownId_StatementForm_RaisesNamingTheId()
+    var
+        Info: ModuleInfo;
+    begin
+        Initialize();
+        asserterror NavApp.GetModuleInfo('00000000-dead-beef-0000-000000000002', Info);
+        Assert.ExpectedError('00000000-dead-beef-0000-000000000002');
+    end;
+
+    [Test]
+    procedure NavApp_GetModuleInfo_UnknownId_StatementForm_RaisesNotInstalledMessage()
+    var
+        Info: ModuleInfo;
+    begin
+        Initialize();
+        asserterror NavApp.GetModuleInfo('00000000-dead-beef-0000-000000000003', Info);
+        Assert.ExpectedError('No installed extension was found with ID');
+    end;
+
+    [Test]
+    procedure NavApp_GetModuleInfo_UnknownId_BooleanForm_ReturnsFalseWithoutRaising()
+    var
+        Info: ModuleInfo;
+    begin
+        Initialize();
+        ClearLastError();
+        Assert.IsFalse(NavApp.GetModuleInfo('00000000-dead-beef-0000-000000000004', Info), 'GetModuleInfo boolean form must return false for an id that is not installed');
+        Assert.AreEqual('', GetLastErrorText(), 'GetModuleInfo boolean form must not raise for an id that is not installed');
+    end;
+
+    [Test]
     procedure NavApp_GetCurrentModuleInfo_Id_NonNull()
     var
         Info: ModuleInfo;
