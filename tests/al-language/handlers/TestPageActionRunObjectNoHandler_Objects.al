@@ -2,7 +2,10 @@
 // Scope: in-scope
 // Fixtures used: TPARONH Row (60280), TPARONH Card Target (60281),
 //                TPARONH Logging Target (60282), TPARONH Host (60283), TPARONH Log (60284),
-//                TPARONH Open Probe (60286)
+//                TPARONH Open Probe (60286), TPARONH Dialog Target (page 60284)
+//
+// Object ids are scoped per object KIND in AL: page 60284 and table 60284 "TPARONH Log" are two
+// different objects, which is legal and compiles.
 //
 // Fixtures for "what does a RunObject action do when no handler is bound". The answer these
 // were built to find is recorded in TestPageActionRunObjectNoHandler_Tests.al: the target page
@@ -175,6 +178,41 @@ page 60282 "TPARONH Logging Target"
     end;
 }
 
+// The dialog arm (AL Runner issue 3223). Same shape as the Logging Target, differing only in
+// PageType. A StandardDialog target is shown as a dialog, so BC looks up a [ModalPageHandler]
+// for it rather than a [PageHandler] -- a different lookup, which is why the no-handler answer
+// the Card targets gave cannot be assumed to carry over. It records its opening only in the
+// in-memory probe: a refusal rolls uncommitted rows back (see arm 6), so a log row could not
+// say whether the page opened.
+page 60284 "TPARONH Dialog Target"
+{
+    PageType = StandardDialog;
+    SourceTable = "TPARONH Row";
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            field("No."; Rec."No.")
+            {
+                ApplicationArea = All;
+            }
+            field(Descr; Rec.Descr)
+            {
+                ApplicationArea = All;
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Probe: Codeunit "TPARONH Open Probe";
+    begin
+        Probe.MarkOpened(Rec.Descr);
+    end;
+}
+
 page 60283 "TPARONH Host"
 {
     PageType = List;
@@ -221,6 +259,16 @@ page 60283 "TPARONH Host"
                 ApplicationArea = All;
                 Caption = 'Run Logging Card On Rec';
                 RunObject = Page "TPARONH Logging Target";
+                RunPageOnRec = true;
+            }
+
+            // The dialog arm: the same declaration as RunLoggingCardOnRec, aimed at a
+            // StandardDialog target instead of a Card.
+            action(RunDialogOnRec)
+            {
+                ApplicationArea = All;
+                Caption = 'Run Dialog On Rec';
+                RunObject = Page "TPARONH Dialog Target";
                 RunPageOnRec = true;
             }
 
