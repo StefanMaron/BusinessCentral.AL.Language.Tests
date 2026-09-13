@@ -1,5 +1,5 @@
 // Fixture for TestPageBlankKeyInsert.al: a table whose OnInsert assigns the primary key when it
-// is blank (the No. Series pattern, without Base Application).
+// is blank (AUTO1, AUTO2, ... — the No. Series pattern, without Base Application).
 table 60572 "TPBK Row"
 {
     DataClassification = CustomerContent;
@@ -8,6 +8,7 @@ table 60572 "TPBK Row"
     {
         field(1; "No."; Code[20]) { }
         field(2; Description; Text[100]) { }
+        field(3; Note; Text[100]) { }
     }
 
     keys
@@ -18,9 +19,10 @@ table 60572 "TPBK Row"
     trigger OnInsert()
     var
         Log: Record "TPBK Log";
+        Existing: Record "TPBK Row";
     begin
         if "No." = '' then
-            "No." := 'AUTO1';
+            "No." := 'AUTO' + Format(Existing.Count() + 1);
         Log.Note(Description);
     end;
 }

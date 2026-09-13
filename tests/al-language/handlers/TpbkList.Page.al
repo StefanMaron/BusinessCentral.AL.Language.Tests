@@ -14,6 +14,7 @@ page 60580 "TPBK List"
             {
                 field("No."; Rec."No.") { ApplicationArea = All; }
                 field(Description; Rec.Description) { ApplicationArea = All; }
+                field(Note; Rec.Note) { ApplicationArea = All; }
             }
         }
     }

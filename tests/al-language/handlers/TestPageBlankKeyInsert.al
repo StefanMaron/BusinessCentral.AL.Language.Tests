@@ -213,4 +213,28 @@ codeunit 60576 "TPBK Tests"
 
         Assert.AreEqual('rows=0;inserts=0;descAtInsert=', Observed, 'table state right after "No.".Activate() on a new Card');
     end;
+
+    [Test]
+    procedure List_NewRow_FocusArrivingFromTheOtherRowDoesNotInsert()
+    // CLAIM: on a List, focus that arrives on a new row from another row does not insert it; the
+    // next move to a different non-key control on that row does.
+    var
+        Rows: TestPage "TPBK List";
+        AfterDescription: Text;
+        AfterNote: Text;
+    begin
+        Initialize();
+
+        Rows.OpenNew();
+        Rows.Description.SetValue('a');
+        Rows.New();
+        Rows.Description.SetValue('b');
+        AfterDescription := Observe();
+        Rows.Note.SetValue('c');
+        AfterNote := Observe();
+        Rows.Close();
+
+        Assert.AreEqual('after b: rows=1;inserts=1;descAtInsert= | after c: rows=2;inserts=2;descAtInsert=b',
+            'after b: ' + AfterDescription + ' | after c: ' + AfterNote, 'table state while filling a second new List line');
+    end;
 }
