@@ -136,6 +136,26 @@ codeunit 60982 "Test Table Relations Metadata"
         Assert.AreEqual(SalesLine.FieldNo(Type), Relations."Condition Field No.", 'the Item relation is conditioned on Type');
     end;
 
+    [Test]
+    procedure Record_TableRelationsMetadata_TableIdRange_YieldsEveryRelationOfTheTablesInIt()
+    // CLAIM: a range filter on "Table ID" yields the rows of every table in the range. Of
+    // 60028..60030 only ALT Relation Child declares relations: "Validated Ref", "Unvalidated Ref",
+    // two for "Conditional Ref", "Single Cond Ref" and "Filtered Ref" -- six rows. A where() filter
+    // on the related table is not a condition row. The field filter leaves out the system fields
+    // (numbered from 2000000000), whose own relations are not what this test is about.
+    var
+        Relations: Record "Table Relations Metadata";
+    begin
+        Initialize();
+
+        Relations.SetRange("Table ID", Database::"ALT Relation Parent", Database::"ALT Relation Parent B");
+        Relations.SetRange("Field No.", 1, 1999999999);
+
+        Assert.AreEqual(6, Relations.Count(), 'Count: six relation rows across 60028..60030, all on ALT Relation Child');
+        Assert.IsTrue(Relations.FindFirst(), 'FindFirst');
+        Assert.AreEqual(Database::"ALT Relation Child", Relations."Table ID", 'the first row belongs to the only table in the range with relations');
+    end;
+
     local procedure Initialize()
     begin
         // Table Relations Metadata is a read-only system virtual table -- nothing to DeleteAll.
