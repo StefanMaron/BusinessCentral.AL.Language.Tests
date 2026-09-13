@@ -2,7 +2,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testisolation-property
 // Scope: in-scope
 // Fixtures used: ALT Base (60007); TxRpt ReqPage Marker (60026), TxRpt Update Marker (60027),
-//   TxRpt Plain Marker (60028); shared Assert (60021)
+//   TxRpt Plain Marker (60028), TxRpt ReqPage Error Marker (60029); shared Assert (60021)
 //
 // The report sibling of "Test TxModel RunModal" (60903), and the case that one cannot cover.
 //
@@ -24,7 +24,8 @@
 // Test03 is the control for both: a report with no request page and the default TransactionType
 // enters no transaction world, so it neither is refused nor commits. Test02 is the control for
 // the control: with no report at all, a trapped error rolls back a default-model test's write.
-// Test09/Test10 pin the AutoRollback exemption.
+// Test09/Test10 pin the AutoRollback exemption. Test12 pins the failure branch: a report that
+// raises inside its transaction world does not commit the write it made before raising.
 //
 // The tests are declaration-ordered and share a codeunit. Test01 clears every key this codeunit
 // writes and Test11 clears them again, both without an attribute so the platform commits the
@@ -245,6 +246,33 @@ codeunit 60040 "Test TxModel Report Run"
         ClearKeys();
         ALTBase.SetRange("Entry No.", 60040000, 60040999);
         Assert.AreEqual(0, ALTBase.Count(), 'The rows Test06 and Test07 committed must be removable.');
+    end;
+
+    [Test]
+    [HandlerFunctions('ConfirmErrorRequestPageHandler')]
+    procedure TxReportRun_Test12_RequestPageReportThatFailsCommitsNothing()
+    var
+        ErrorRpt: Report "TxRpt ReqPage Error Marker";
+    begin
+        RequestPageHandled := false;
+
+        // No pending write, so the transaction world is entered; the body writes its marker
+        // and then raises. The report's own transaction ends without committing, so the marker
+        // must not survive — unlike Test06, where the same write is committed on return.
+        ErrorRpt.SetMarker(60040121);
+        asserterror ErrorRpt.Run();
+        Assert.ExpectedError('txrpt report body error');
+
+        Assert.IsTrue(RequestPageHandled, 'The [RequestPageHandler] must have run, so the transaction world was entered.');
+        Assert.IsFalse(BaseExists(60040121),
+            'A report that raises inside its transaction world must not commit the write it made before raising.');
+    end;
+
+    [RequestPageHandler]
+    procedure ConfirmErrorRequestPageHandler(var RequestPage: TestRequestPage "TxRpt ReqPage Error Marker")
+    begin
+        RequestPageHandled := true;
+        RequestPage.OK().Invoke();
     end;
 
     [RequestPageHandler]

@@ -12,6 +12,7 @@
 //   60027 has no request page and declares TransactionType = Update.
 //   60028 has no request page and the default TransactionType — the report that does NOT
 //         enter a transaction world, and so the control for the other two.
+//   60029 is 60026 whose body raises right after its write: the failure branch.
 
 report 60026 "TxRpt ReqPage Marker"
 {
@@ -131,6 +132,61 @@ report 60028 "TxRpt Plain Marker"
 
     var
         MarkerNo: Integer;
+
+    procedure SetMarker(NewMarkerNo: Integer)
+    begin
+        MarkerNo := NewMarkerNo;
+    end;
+}
+
+report 60029 "TxRpt ReqPage Error Marker"
+{
+    Caption = 'TxRpt ReqPage Error Marker';
+    UsageCategory = ReportsAndAnalysis;
+    ApplicationArea = All;
+    ProcessingOnly = true;
+
+    dataset
+    {
+        dataitem(Loop; Integer)
+        {
+            DataItemTableView = sorting(Number) where(Number = const(1));
+
+            trigger OnAfterGetRecord()
+            var
+                ALTBase: Record "ALT Base";
+            begin
+                ALTBase.Init();
+                ALTBase."Entry No." := MarkerNo;
+                ALTBase.Name := 'txrpt-error-marker';
+                ALTBase.Insert();
+                Error('txrpt report body error');
+            end;
+        }
+    }
+
+    requestpage
+    {
+        layout
+        {
+            area(Content)
+            {
+                group(Options)
+                {
+                    field(EchoText; EchoText)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Echo Text';
+                        ToolTip = 'Unused; present so the report has a real request page.';
+                    }
+                }
+            }
+        }
+    }
+
+    var
+        MarkerNo: Integer;
+        EchoText: Text[30];
 
     procedure SetMarker(NewMarkerNo: Integer)
     begin
