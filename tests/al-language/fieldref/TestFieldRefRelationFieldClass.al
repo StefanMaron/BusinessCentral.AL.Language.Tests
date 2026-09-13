@@ -5,6 +5,9 @@
 // arm of a conditional relation from the current record, and Validate checks it unless the
 // field says ValidateTableRelation = false.
 //
+// One exception to "picks the arm from the current record": a condition whose field is itself a
+// FlowFilter is not evaluated, so the first arm applies. Two tests pin that, one per route.
+//
 // The first half uses the fixture table ALTRelationFieldClass.al. The second half asks the same
 // questions of Base Application fields, which this app does not compile, so they reach the
 // runner's metadata by a different route than the fixture does.
@@ -101,6 +104,24 @@ codeunit 60483 "Test Relation Field Class"
     end;
 
     [Test]
+    procedure FieldRef_Relation_ConditionOnFlowFilterDiscriminator_FirstArmApplies()
+    var
+        RecRef: RecordRef;
+    begin
+        Initialize();
+
+        // The fixture form of FieldRef_Relation_BaseApplicationConditionOnFlowFilter_FirstArmApplies:
+        // "Kind Filter" is a FlowFilter holding B, which matches only the SECOND arm, yet the
+        // first arm applies because BC does not evaluate a condition on a FlowFilter.
+        RecRef.Open(Database::"ALT Rel Field Class");
+        RecRef.Field(8).Value := 1; // Kind Filter::B
+
+        Assert.AreEqual(
+            Database::"ALT Rel Where Parent", RecRef.Field(9).Relation(),
+            'a condition on a FlowFilter discriminator is not evaluated, so the first arm (60480) applies');
+    end;
+
+    [Test]
     procedure Validate_FlowFilter_UnknownValue_IsRefused()
     var
         Rec: Record "ALT Rel Field Class";
@@ -162,7 +183,7 @@ codeunit 60483 "Test Relation Field Class"
     end;
 
     [Test]
-    procedure FieldRef_Relation_BaseApplicationConditionalFlowFilter_SelectsCustomerArm()
+    procedure FieldRef_Relation_BaseApplicationConditionOnFlowFilter_FirstArmApplies()
     var
         AnalysisLine: Record "Analysis Line";
         RecRef: RecordRef;
@@ -173,31 +194,17 @@ codeunit 60483 "Test Relation Field Class"
         //   if ("Source Type Filter" = const(Customer)) Customer
         //   else if ("Source Type Filter" = const(Vendor)) Vendor
         //   else if ("Source Type Filter" = const(Item)) Item
-        // and "Source Type Filter" is itself a FlowFilter of Enum "Analysis Source Type".
-        AnalysisLine."Source Type Filter" := AnalysisLine."Source Type Filter"::Customer;
-        RecRef.GetTable(AnalysisLine);
-
-        Assert.AreEqual(
-            Database::Customer, RecRef.Field(AnalysisLine.FieldNo("Source No. Filter")).Relation(),
-            'with Source Type Filter = Customer, "Source No. Filter" must answer Customer (18)');
-    end;
-
-    [Test]
-    procedure FieldRef_Relation_BaseApplicationConditionalFlowFilter_SelectsItemArm()
-    var
-        AnalysisLine: Record "Analysis Line";
-        RecRef: RecordRef;
-    begin
-        Initialize();
-
-        // Same field as the test above, the third arm, so an answer fixed to one arm fails one
-        // of the two.
+        // and "Source Type Filter" is itself a FlowFilter. BC's arm selection
+        // (RecordImplementation.EvaluateRelation) evaluates only conditions on Normal fields
+        // and FlowFields, so a condition on a FlowFilter does not rule an arm out and the first
+        // arm applies whatever the discriminator holds. Item is set here so that "the condition
+        // was evaluated" (27) and "it was not" (18) give different answers.
         AnalysisLine."Source Type Filter" := AnalysisLine."Source Type Filter"::Item;
         RecRef.GetTable(AnalysisLine);
 
         Assert.AreEqual(
-            Database::Item, RecRef.Field(AnalysisLine.FieldNo("Source No. Filter")).Relation(),
-            'with Source Type Filter = Item, "Source No. Filter" must answer Item (27)');
+            Database::Customer, RecRef.Field(AnalysisLine.FieldNo("Source No. Filter")).Relation(),
+            'a condition on a FlowFilter discriminator is not evaluated, so the first arm (Customer, 18) applies');
     end;
 
     [Test]

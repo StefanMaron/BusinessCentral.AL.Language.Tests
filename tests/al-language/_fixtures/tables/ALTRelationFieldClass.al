@@ -53,6 +53,20 @@ table 60483 "ALT Rel Field Class"
         {
             FieldClass = FlowFilter;
         }
+        // A conditional relation whose discriminator is itself a FlowFilter, the only shape
+        // Base Application uses for a conditional FlowFilter relation.
+        field(8; "Kind Filter"; Option)
+        {
+            FieldClass = FlowFilter;
+            OptionMembers = A,B;
+        }
+        field(9; "Cond On Filter Ref"; Code[20])
+        {
+            FieldClass = FlowFilter;
+            TableRelation = if ("Kind Filter" = const(A)) "ALT Rel Where Parent"."Code"
+            else
+            if ("Kind Filter" = const(B)) "ALT Relation Parent B"."Code";
+        }
     }
 
     keys
