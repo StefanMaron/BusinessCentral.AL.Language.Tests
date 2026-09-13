@@ -11,6 +11,11 @@
 /// the same thing without Base Application: OnInsert fills a blank "No." with AUTO1 and logs the
 /// Description it saw.
 ///
+/// Mechanism, read from the client (Microsoft.Dynamics.Nav.Client.UI AutoInsertPattern): on a draft
+/// row of a page whose DelayedInsert is false, the row is inserted when focus moves from a field
+/// control to a non-key field control. TestFieldProxy's Value setter activates the control before
+/// writing, so SetValue on a non-key control inserts first and writes second.
+///
 /// Each test builds one observation string and compares it whole, so a failure shows every
 /// observed value at once.
 ///
@@ -48,7 +53,8 @@ codeunit 60576 "TPBK Tests"
     [Test]
     procedure Card_BlankKey_NonKeyWrite_InsertsTheRowBeforeClose()
     // CLAIM: on a DelayedInsert=false Card, the first non-key write to a new record with a blank
-    // key inserts it right away: OnInsert runs once, after the written value is on the record.
+    // key inserts it right away. The insert happens when the control is ACTIVATED, before its value
+    // is written, so OnInsert sees Description still blank and the write is a modify.
     var
         Card: TestPage "TPBK Card";
         Observed: Text;
@@ -61,7 +67,7 @@ codeunit 60576 "TPBK Tests"
         Observed := Observe();
         Card.Close();
 
-        Assert.AreEqual('rows=1;inserts=1;descAtInsert=x', Observed, 'table state right after Description.SetValue on a new Card');
+        Assert.AreEqual('rows=1;inserts=1;descAtInsert=', Observed, 'table state right after Description.SetValue on a new Card');
     end;
 
     [Test]
@@ -101,7 +107,7 @@ codeunit 60576 "TPBK Tests"
         Card.Close();
         Observed := Observe();
 
-        Assert.AreEqual('rows=1;inserts=1;descAtInsert=x', Observed, 'table state after two writes and Close');
+        Assert.AreEqual('rows=1;inserts=1;descAtInsert=', Observed, 'table state after two writes and Close');
         Assert.IsTrue(Row.Get('AUTO1'), 'the numbered row after Close');
         Assert.AreEqual('y', Row.Description, 'the second write must have reached the row');
     end;
@@ -124,7 +130,7 @@ codeunit 60576 "TPBK Tests"
         AfterNonKey := Observe();
         Card.Close();
 
-        Assert.AreEqual('after key: rows=0;inserts=0;descAtInsert= | after description: rows=1;inserts=1;descAtInsert=x',
+        Assert.AreEqual('after key: rows=0;inserts=0;descAtInsert= | after description: rows=1;inserts=1;descAtInsert=',
             'after key: ' + AfterKey + ' | after description: ' + AfterNonKey, 'table state while filling a new Card whose key is typed');
     end;
 
@@ -168,7 +174,43 @@ codeunit 60576 "TPBK Tests"
         No := Rows."No.".Value();
         Rows.Close();
 
-        Assert.AreEqual('rows=1;inserts=1;descAtInsert=x;no=AUTO1', Observed + ';no=' + No,
+        Assert.AreEqual('rows=1;inserts=1;descAtInsert=;no=AUTO1', Observed + ';no=' + No,
             'table state and "No." control right after Description.SetValue on a new List line');
+    end;
+
+    [Test]
+    procedure Card_BlankKey_ActivateNonKeyControl_InsertsWithoutAnyWrite()
+    // CLAIM: moving focus to a non-key control is what inserts the new record — no value is written.
+    var
+        Row: Record "TPBK Row";
+        Card: TestPage "TPBK Card";
+        Observed: Text;
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Description.Activate();
+        Observed := Observe();
+        Card.Close();
+
+        Assert.AreEqual('rows=1;inserts=1;descAtInsert=', Observed, 'table state right after Description.Activate() on a new Card');
+        Assert.IsTrue(Row.Get('AUTO1'), 'the numbered row after Close');
+    end;
+
+    [Test]
+    procedure Card_BlankKey_ActivateKeyControl_DoesNotInsert()
+    // CLAIM: activating the KEY control does not insert; only a non-key control does.
+    var
+        Card: TestPage "TPBK Card";
+        Observed: Text;
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card."No.".Activate();
+        Observed := Observe();
+        Card.Close();
+
+        Assert.AreEqual('rows=0;inserts=0;descAtInsert=', Observed, 'table state right after "No.".Activate() on a new Card');
     end;
 }
