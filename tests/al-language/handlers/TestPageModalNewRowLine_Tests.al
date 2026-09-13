@@ -138,6 +138,20 @@ codeunit 60309 "Test Modal New Row Line"
             'OpenEdit on a re-enabled Editable = false list: rows walked by the test');
     end;
 
+    // What TestPage.Editable() answers inside the handler for the same page, not lookup mode.
+    [Test]
+    [HandlerFunctions('ReEditableEditableHandler')]
+    procedure ReEditable_RunModalById_EditableAnswer()
+    var
+        Row: Record "Test Modal NRL Row";
+    begin
+        Seed();
+        Row.SetRange(Closed, false);
+        Page.RunModal(Page::"Test Modal NRL ReEditable", Row);
+        Assert.AreEqual(Format(false), Seen,
+            'TestPage.Editable() in a handler for a re-enabled Editable = false list opened with Page.RunModal(id, Rec)');
+    end;
+
     // ---- Declared Editable = false, nothing re-enables it -------------------------------------
 
     [Test]
@@ -214,6 +228,24 @@ codeunit 60309 "Test Modal New Row Line"
             'Page.RunModal(0, Rec) on a list with no Editable property: rows walked by the handler');
     end;
 
+    // What TestPage.Editable() answers inside the handler for a page with no Editable property
+    // opened in lookup mode.
+    [Test]
+    [HandlerFunctions('PlainEditableHandler')]
+    procedure Plain_LookupModeTrue_EditableAnswer()
+    var
+        Row: Record "Test Modal NRL Row";
+        ListPage: Page "Test Modal NRL Plain";
+    begin
+        Seed();
+        Row.SetRange(Closed, false);
+        ListPage.SetTableView(Row);
+        ListPage.LookupMode(true);
+        ListPage.RunModal();
+        Assert.AreEqual(Format(false), Seen,
+            'TestPage.Editable() in a handler for a list with no Editable property opened with LookupMode(true)');
+    end;
+
     // ---- Handlers ------------------------------------------------------------------------------
 
     [ModalPageHandler]
@@ -223,6 +255,12 @@ codeunit 60309 "Test Modal New Row Line"
             repeat
                 Seen += '[' + TP.RowNo.Value() + ']';
             until not TP.Next();
+    end;
+
+    [ModalPageHandler]
+    procedure ReEditableEditableHandler(var TP: TestPage "Test Modal NRL ReEditable")
+    begin
+        Seen := Format(TP.Editable());
     end;
 
     [ModalPageHandler]
@@ -241,6 +279,12 @@ codeunit 60309 "Test Modal New Row Line"
             repeat
                 Seen += '[' + TP.RowNo.Value() + ']';
             until not TP.Next();
+    end;
+
+    [ModalPageHandler]
+    procedure PlainEditableHandler(var TP: TestPage "Test Modal NRL Plain")
+    begin
+        Seen := Format(TP.Editable());
     end;
 
     [ModalPageHandler]
