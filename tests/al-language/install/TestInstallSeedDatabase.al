@@ -17,6 +17,10 @@ table 60621 "Install Seed Database"
     {
         field(1; "Code"; Code[20]) { }
         field(2; "Value"; Integer) { }
+        // What Session.GetExecutionContext() answered inside OnInstallAppPerDatabase; read back
+        // by Test Install Env Visible (60589).
+        field(3; "Exec Ctx Was Install"; Boolean) { }
+        field(4; "Exec Ctx Text"; Text[30]) { }
     }
 
     keys
