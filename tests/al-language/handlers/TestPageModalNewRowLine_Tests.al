@@ -20,6 +20,11 @@
 // handler can carry a new-row line at all, so the arms answering without one are measuring
 // the input they vary.
 //
+// Measured on BC 27.0 and 28.2: the declared Editable = false hides the new-row line whatever
+// OnOpenPage does with CurrPage.Editable, and TestPage.Editable() stays false; LookupMode(true)
+// hides it on a page with no Editable property; Page.RunModal(0, Rec) and Page.RunModal(id, Rec)
+// do not.
+//
 // Seen on Microsoft's own tests: Base Application page 5123 "Opportunity List" declares
 // Editable = false and sets CurrPage.Editable := true in OnOpenPage; codeunit 136215 opens it
 // with PAGE.RunModal(0, Opportunity) and counts its rows with no blank row.
@@ -215,16 +220,18 @@ codeunit 60309 "Test Modal New Row Line"
             'LookupMode(true) + RunModal() on a list with no Editable property: rows walked by the handler');
     end;
 
+    // Page.RunModal(0, Rec) is not the same as LookupMode(true) here: the page it opens keeps
+    // its new-row line. So on page 5123 it is the declared Editable = false that hides it.
     [Test]
     [HandlerFunctions('PlainLookupHandler')]
-    procedure Plain_RunModalZero_HasNoNewRowLine()
+    procedure Plain_RunModalZero_HasTheNewRowLine()
     var
         Row: Record "Test Modal NRL Plain Row";
     begin
         SeedPlain();
         Row.SetRange(Closed, false);
         Page.RunModal(0, Row);
-        Assert.AreEqual('[A][C][D]', Seen,
+        Assert.AreEqual('[A][C][D][]', Seen,
             'Page.RunModal(0, Rec) on a list with no Editable property: rows walked by the handler');
     end;
 
