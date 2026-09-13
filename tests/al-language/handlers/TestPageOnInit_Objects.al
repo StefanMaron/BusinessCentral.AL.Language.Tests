@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-oninit-page-trigger
 // Scope: in-scope (Cloud-compatible) -- every member is driven from a [Test] with no client
-// Fixtures used: POI Row (60486), POI Wizard (60487)
+// Fixtures used: POI Row (60486), POI Wizard (60487), POI Refusing Page (60489)
 //
 // Fixtures for the page OnInit suite (codeunit 60488).
 //
@@ -140,4 +140,18 @@ page 60487 "POI Wizard"
         Step: Integer;
         NextEnabled: Boolean;
         BackEnabled: Boolean;
+}
+
+// OnInit refuses. Nothing else in the page runs, so the only error a caller can see is this one.
+page 60489 "POI Refusing Page"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    UsageCategory = Administration;
+    Caption = 'POI Refusing Page';
+
+    trigger OnInit()
+    begin
+        Error('POI OnInit refused to open the page');
+    end;
 }

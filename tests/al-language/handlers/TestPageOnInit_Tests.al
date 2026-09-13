@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-oninit-page-trigger
 //                   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testaction/testaction-enabled-method
 // Scope: in-scope (Cloud-compatible) -- every member is driven from a [Test] with no client
-// Fixtures used: POI Row (60486), POI Wizard (60487); shared Assert (60021)
+// Fixtures used: POI Row (60486), POI Wizard (60487), POI Refusing Page (60489); shared Assert (60021)
 // BC versions: 27.0+
 //
 /// <summary>
@@ -235,6 +235,50 @@ codeunit 60488 "POI Tests"
         Assert.AreEqual('1', Trapped.StepNo.Value(), 'the step the setter chose must survive into the trapped page');
         Assert.IsTrue(Trapped.BackAction.Enabled(), 'Back must follow the setter''s step');
         Trapped.Close();
+    end;
+
+    // An Error() raised in OnInit is the caller's error, with its own text, whichever way the
+    // page is opened. Three routes, because they construct the page differently: a TestPage open,
+    // RunModal on a Page variable, and the static Page.RunModal. No handler is declared: the page
+    // never gets as far as being shown.
+    [Test]
+    procedure POI_ErrorInOnInit_ReachesTestPageOpenWithItsOwnText()
+    var
+        Refusing: TestPage "POI Refusing Page";
+    begin
+        Initialize();
+
+        asserterror Refusing.OpenView();
+
+        Assert.ExpectedError('POI OnInit refused to open the page');
+        Assert.AreEqual('POI OnInit refused to open the page', GetLastErrorText(),
+            'the error text must be OnInit''s own, not a wrapper around it');
+    end;
+
+    [Test]
+    procedure POI_ErrorInOnInit_ReachesPageVariableRunModalWithItsOwnText()
+    var
+        Refusing: Page "POI Refusing Page";
+    begin
+        Initialize();
+
+        asserterror Refusing.RunModal();
+
+        Assert.ExpectedError('POI OnInit refused to open the page');
+        Assert.AreEqual('POI OnInit refused to open the page', GetLastErrorText(),
+            'the error text must be OnInit''s own, not a wrapper around it');
+    end;
+
+    [Test]
+    procedure POI_ErrorInOnInit_ReachesStaticPageRunModalWithItsOwnText()
+    begin
+        Initialize();
+
+        asserterror Page.RunModal(Page::"POI Refusing Page");
+
+        Assert.ExpectedError('POI OnInit refused to open the page');
+        Assert.AreEqual('POI OnInit refused to open the page', GetLastErrorText(),
+            'the error text must be OnInit''s own, not a wrapper around it');
     end;
 
     [ModalPageHandler]
