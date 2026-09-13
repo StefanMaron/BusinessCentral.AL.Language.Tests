@@ -50,6 +50,15 @@ codeunit 60576 "TPBK Tests"
         exit(StrSubstNo('rows=%1;inserts=%2;descAtInsert=%3', Row.Count(), Log.InsertCount(), Log."Description At Insert"));
     end;
 
+    local procedure ObserveShort(): Text
+    var
+        Row: Record "TPBK Row";
+        Log: Record "TPBK Log";
+    begin
+        if Log.Get('INS') then;
+        exit(StrSubstNo('r%1 i%2 d%3', Row.Count(), Log.InsertCount(), Log."Description At Insert"));
+    end;
+
     [Test]
     procedure Card_BlankKey_NonKeyWrite_InsertsTheRowBeforeClose()
     // CLAIM: on a DelayedInsert=false Card, the first non-key write to a new record with a blank
@@ -215,13 +224,16 @@ codeunit 60576 "TPBK Tests"
     end;
 
     [Test]
-    procedure List_NewRow_FocusArrivingFromTheOtherRowDoesNotInsert()
-    // CLAIM: on a List, focus that arrives on a new row from another row does not insert it; the
-    // next move to a different non-key control on that row does.
+    procedure List_NewRow_FocusStaysOnTheOldRowUntilTwoControlsOfTheNewRowTakeIt()
+    // CLAIM: on a List, after New() the row is inserted only once focus moves between two
+    // different controls of the NEW row. A write to the control that already had focus on the
+    // previous row does not move focus; the next control takes focus from the old row, which
+    // does not insert; the move after that does.
     var
         Rows: TestPage "TPBK List";
-        AfterDescription: Text;
-        AfterNote: Text;
+        AfterB: Text;
+        AfterC: Text;
+        AfterD: Text;
     begin
         Initialize();
 
@@ -229,12 +241,14 @@ codeunit 60576 "TPBK Tests"
         Rows.Description.SetValue('a');
         Rows.New();
         Rows.Description.SetValue('b');
-        AfterDescription := Observe();
+        AfterB := ObserveShort();
         Rows.Note.SetValue('c');
-        AfterNote := Observe();
+        AfterC := ObserveShort();
+        Rows.Description.SetValue('d');
+        AfterD := ObserveShort();
         Rows.Close();
 
-        Assert.AreEqual('after b: rows=1;inserts=1;descAtInsert= | after c: rows=2;inserts=2;descAtInsert=b',
-            'after b: ' + AfterDescription + ' | after c: ' + AfterNote, 'table state while filling a second new List line');
+        Assert.AreEqual('b[r1 i1 d] c[r1 i1 d] d[r2 i2 db]', 'b[' + AfterB + '] c[' + AfterC + '] d[' + AfterD + ']',
+            'rows (r), OnInsert runs (i) and the Description OnInsert last saw (d), per step on a second new List line');
     end;
 }
