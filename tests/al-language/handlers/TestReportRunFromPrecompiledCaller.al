@@ -13,10 +13,12 @@
 // ("Inter. Log Entry Comment Sheet"), so a handler given a page instead of the request page
 // would not find the Cancel built-in action.
 //
-// Two claims:
+// Three claims:
 //   1. The handler runs exactly once, and Cancel on the request page closes it with no error.
 //   2. An error the handler raises reaches the test through the Base Application caller,
 //      unchanged — the handler is really on the call path, not bypassed.
+//   3. The request page of this ProcessingOnly report offers a plain OK, and confirming with it
+//      runs the report with no error.
 codeunit 60037 "Rpt Run Precompiled Caller"
 {
     Subtype = Test;
@@ -57,6 +59,22 @@ codeunit 60037 "Rpt Run Precompiled Caller"
             Error('Expected the handler''s own error to reach the test, got: %1', GetLastErrorText());
     end;
 
+    [Test]
+    [HandlerFunctions('OkGenerateDuplSearchString')]
+    procedure ReportRun_FromBaseAppPageAction_HandlerConfirmsOk()
+    var
+        ContactDuplicates: TestPage "Contact Duplicates";
+    begin
+        HandlerCalls := 0;
+        ContactDuplicates.OpenEdit();
+
+        ContactDuplicates.GenerateDuplicateSearchString.Invoke();
+
+        if HandlerCalls <> 1 then
+            Error('Expected the OK [RequestPageHandler] to run exactly once, got %1.', HandlerCalls);
+        ContactDuplicates.Close();
+    end;
+
     [RequestPageHandler]
     procedure CancelGenerateDuplSearchString(var RequestPage: TestRequestPage "Generate Dupl. Search String")
     begin
@@ -69,5 +87,12 @@ codeunit 60037 "Rpt Run Precompiled Caller"
     begin
         HandlerCalls += 1;
         Error('RPPC handler stopped the report');
+    end;
+
+    [RequestPageHandler]
+    procedure OkGenerateDuplSearchString(var RequestPage: TestRequestPage "Generate Dupl. Search String")
+    begin
+        HandlerCalls += 1;
+        RequestPage.OK().Invoke();
     end;
 }
