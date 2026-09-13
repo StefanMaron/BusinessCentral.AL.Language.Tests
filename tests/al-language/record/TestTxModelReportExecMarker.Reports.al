@@ -8,7 +8,7 @@
 // decide whether a report run enters a transaction world: whether a request page is used, and
 // whether the declared TransactionType differs from the session's.
 //
-//   60029 has a request page (UseRequestPage defaults to true) and the default TransactionType.
+//   60032 has a request page (UseRequestPage defaults to true) and the default TransactionType.
 //   60030 has no request page and declares TransactionType = Update.
 //   60031 has no request page and the default TransactionType.
 //
@@ -16,7 +16,7 @@
 // reaches it; each report then writes its own fixed default key (60029990-60029992) instead of 0,
 // so a static arm cannot collide with a row another codeunit wrote at key 0.
 
-report 60029 "TxExec ReqPage Marker"
+report 60032 "TxExec ReqPage Marker"
 {
     Caption = 'TxExec ReqPage Marker';
     UsageCategory = ReportsAndAnalysis;

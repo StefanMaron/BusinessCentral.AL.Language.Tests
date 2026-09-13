@@ -2,7 +2,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-print-method
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-runrequestpage-method
 // Scope: in-scope
-// Fixtures used: ALT Base (60007); TxExec ReqPage Marker (60029), TxExec Update Marker (60030),
+// Fixtures used: ALT Base (60007); TxExec ReqPage Marker (60032), TxExec Update Marker (60030),
 //   TxExec Plain Marker (60031); shared Assert (60021)
 //
 // Report.Run and Report.RunModal are not the only report calls that can enter a transaction
