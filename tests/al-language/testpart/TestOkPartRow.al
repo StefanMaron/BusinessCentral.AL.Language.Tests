@@ -33,6 +33,7 @@ codeunit 60760 "OKP Ok Part Row Tests"
         Header.Init();
         Header."Code" := 'H1';
         Header.Descr := 'Host';
+        Header."Seen Lines" := -1;
         Header.Insert();
     end;
 
@@ -112,5 +113,33 @@ codeunit 60760 "OKP Ok Part Row Tests"
 
         Assert.AreEqual(0, CountLines('H1'),
             'A part row that New() started and nothing was typed into must not be saved.');
+    end;
+
+    // ORDER: the header and a part row are both pending when OK is pressed. The header's
+    // OnModify records how many lines exist when it runs. BC's client saves child forms before
+    // the form's own record on a saving close (LogicalForm.Save in Microsoft.Dynamics.Framework.UI),
+    // so the header's OnModify sees the typed line.
+    [Test]
+    procedure OkInvoke_HeaderOnModifySeesThePartRowSavedFirst()
+    var
+        Header: Record "OKP Header";
+        Card: TestPage "OKP Header Card";
+    begin
+        Initialize(Header);
+
+        Card.OpenEdit();
+        Card.GoToRecord(Header);
+        Card.Lines.New();
+        Card.Lines.Reference.SetValue('Alpha');
+        Card.Descr.SetValue('Changed');
+        Card.OK().Invoke();
+
+        Assert.AreEqual(1, CountLines('H1'),
+            'The typed part row must be saved.');
+        Header.Get('H1');
+        Assert.AreEqual('Changed', Header.Descr,
+            'The header change must be saved.');
+        Assert.AreEqual(1, Header."Seen Lines",
+            'The header''s OnModify must see the part row: the part is saved before the header record.');
     end;
 }
