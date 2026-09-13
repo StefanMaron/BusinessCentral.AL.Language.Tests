@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: ALT Relation Child (60029), ALT Relation Parent (60028), ALT Relation Parent B (60030);
 //                Base Application "Sales Line" (37) and Item (27)
-// BC versions: 27.5+
+// BC versions: every version in the CI matrix; nothing here is version-guarded
 //
 // Pins the built-in "Table Relations Metadata" system virtual table (2000000141): one row per
 // (table, field, relation, condition) computed from each field's TableRelation property. Base
@@ -154,6 +154,26 @@ codeunit 60982 "Test Table Relations Metadata"
         Assert.AreEqual(6, Relations.Count(), 'Count: six relation rows across 60028..60030, all on ALT Relation Child');
         Assert.IsTrue(Relations.FindFirst(), 'FindFirst');
         Assert.AreEqual(Database::"ALT Relation Child", Relations."Table ID", 'the first row belongs to the only table in the range with relations');
+    end;
+
+    [Test]
+    procedure Record_TableRelationsMetadata_TableIdRange_ReadsInKeyOrderBothWays()
+    // CLAIM: rows come back in primary-key order, and Ascending(false) reverses it at the
+    // Table ID level. "Sales Header" (36) and "Sales Line" (37) both declare relations, so an
+    // ascending FindFirst over 36..37 starts on 36 and a descending one starts on 37.
+    var
+        Relations: Record "Table Relations Metadata";
+    begin
+        Initialize();
+
+        Relations.SetRange("Table ID", Database::"Sales Header", Database::"Sales Line");
+
+        Assert.IsTrue(Relations.FindFirst(), 'ascending FindFirst');
+        Assert.AreEqual(Database::"Sales Header", Relations."Table ID", 'ascending starts at the lowest table id with relations');
+
+        Relations.Ascending(false);
+        Assert.IsTrue(Relations.FindFirst(), 'descending FindFirst');
+        Assert.AreEqual(Database::"Sales Line", Relations."Table ID", 'descending starts at the highest table id with relations');
     end;
 
     local procedure Initialize()
