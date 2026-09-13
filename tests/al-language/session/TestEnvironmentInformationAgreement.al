@@ -14,7 +14,7 @@
 // that tier is configured (this repository's CI configures TenantEnvironmentType = Sandbox; an
 // on-premises container answers Production), so no test here pins which answer it gives.
 // Written for AL Runner issue #3514, where a runner answered IsSandbox() without a test asking.
-codeunit 60984 "Test Environment Info Agreement"
+codeunit 60984 "Test Env Info Agreement"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -36,11 +36,8 @@ codeunit 60984 "Test Environment Info Agreement"
     var
         EnvironmentInformation: Codeunit "Environment Information";
     begin
-        if EnvironmentInformation.IsSandbox() then
-            Assert.IsTrue(EnvironmentInformation.IsSaaS(), 'a sandbox must report IsSaaS()')
-        else
-            Assert.IsFalse(EnvironmentInformation.IsSandbox() and not EnvironmentInformation.IsSaaS(),
-              'a non-sandbox has no sandbox-without-SaaS combination to report');
+        Assert.IsFalse(EnvironmentInformation.IsSandbox() and not EnvironmentInformation.IsSaaS(),
+          'IsSandbox() must imply IsSaaS()');
     end;
 
     [Test]
