@@ -9,7 +9,8 @@
 // actions' Enabled is bound to. Nothing else sets them, so every value the tests read is one
 // only OnInit (or an action that ran) could have produced.
 //
-//   Trace      'I' appended by OnInit, 'O' by OnOpenPage -- how often, and in what order, both ran
+//   Trace      'I' appended by OnInit, 'S' by SetStep, 'O' by OnOpenPage -- how often, and in
+//              what order, each ran
 //   NextAction Enabled = NextEnabled   OnInit sets it TRUE  (Step 0 of 0..2)
 //   BackAction Enabled = BackEnabled   OnInit sets it FALSE (Step 0 of 0..2)
 //
@@ -104,6 +105,15 @@ page 60487 "POI Wizard"
     trigger OnOpenPage()
     begin
         Trace += 'O';
+    end;
+
+    // Called by AL on the page VARIABLE before it is run. BC constructs the instance -- and
+    // runs OnInit -- the first time the variable is used, so this always runs after OnInit.
+    procedure SetStep(NewStep: Integer)
+    begin
+        Trace += 'S';
+        Step := NewStep;
+        UpdateControls();
     end;
 
     local procedure UpdateControls()

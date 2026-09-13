@@ -5,9 +5,10 @@
 // BC versions: 27.0+
 //
 /// <summary>
-/// CLAIM: a page's OnInit trigger runs when the page is opened -- through TestPage.OpenEdit,
-/// through Page.RunModal and Page.Run -- before OnOpenPage, and again on every reopen; and a
-/// page global it assigns is what the controls and the actions' Enabled read afterwards.
+/// CLAIM: a page's OnInit trigger runs once per page INSTANCE, when the instance is constructed
+/// -- so before OnOpenPage, before any procedure AL calls on a Page variable, and again for the
+/// fresh instance every TestPage open gets -- and a page global it assigns is what the controls
+/// and the actions' Enabled read afterwards, unless something that ran after OnInit changed it.
 ///
 /// Every arm reads a value only OnInit writes, so an implementation that never runs OnInit
 /// fails all of them: Trace stays '' instead of 'IO', and NextAction (Enabled = NextEnabled,
@@ -28,6 +29,7 @@ codeunit 60488 "POI Tests"
         SeenTrace: Text;
         SeenNextEnabled: Boolean;
         SeenBackEnabled: Boolean;
+        SeenStep: Text;
 
     local procedure Initialize()
     var
@@ -37,6 +39,7 @@ codeunit 60488 "POI Tests"
         SeenTrace := '?';
         SeenNextEnabled := false;
         SeenBackEnabled := true;
+        SeenStep := '?';
     end;
 
     local procedure HitsOf(No: Code[20]): Integer
@@ -176,10 +179,69 @@ codeunit 60488 "POI Tests"
         Assert.IsTrue(SeenNextEnabled, 'Next must be enabled in the page handler');
     end;
 
+    // OnInit runs when the page instance is CONSTRUCTED, not when it is opened. A procedure
+    // called on a Page variable before RunModal therefore runs after OnInit, and what it sets
+    // must survive: the trace reads I (OnInit), S (SetStep), O (OnOpenPage), and the step and
+    // both actions show the setter's step 2, not OnInit's step 0.
+    [Test]
+    [HandlerFunctions('WizardModalHandler')]
+    procedure POI_SetterBeforeRunModal_RunsAfterOnInitAndSurvives()
+    var
+        Wizard: Page "POI Wizard";
+    begin
+        Initialize();
+
+        Wizard.SetStep(2);
+        Wizard.RunModal();
+
+        Assert.AreEqual('ISO', SeenTrace, 'OnInit must run once, before the setter, and OnOpenPage after both');
+        Assert.AreEqual('2', SeenStep, 'the step the setter chose must survive into the opened page');
+        Assert.IsFalse(SeenNextEnabled, 'Next must follow the setter''s last step, not OnInit''s first');
+        Assert.IsTrue(SeenBackEnabled, 'Back must follow the setter''s last step, not OnInit''s first');
+    end;
+
+    // The non-modal twin, reached through Page.Run on the same variable.
+    [Test]
+    [HandlerFunctions('WizardPageHandler')]
+    procedure POI_SetterBeforeRun_RunsAfterOnInitAndSurvives()
+    var
+        Wizard: Page "POI Wizard";
+    begin
+        Initialize();
+
+        Wizard.SetStep(1);
+        Wizard.Run();
+
+        Assert.AreEqual('ISO', SeenTrace, 'OnInit must run once, before the setter, and OnOpenPage after both');
+        Assert.AreEqual('1', SeenStep, 'the step the setter chose must survive into the opened page');
+    end;
+
+    // A TestPage cannot call a page procedure before it opens, so the TestPage side of the order
+    // is reached through Trap: the test traps the page, sets it up through the Page variable,
+    // runs it, and reads the trapped TestPage.
+    [Test]
+    procedure POI_SetterBeforeTrappedRun_RunsAfterOnInitAndSurvives()
+    var
+        Wizard: Page "POI Wizard";
+        Trapped: TestPage "POI Wizard";
+    begin
+        Initialize();
+
+        Trapped.Trap();
+        Wizard.SetStep(1);
+        Wizard.Run();
+
+        Assert.AreEqual('ISO', Trapped.TraceText.Value(), 'OnInit must run once, before the setter, and OnOpenPage after both');
+        Assert.AreEqual('1', Trapped.StepNo.Value(), 'the step the setter chose must survive into the trapped page');
+        Assert.IsTrue(Trapped.BackAction.Enabled(), 'Back must follow the setter''s step');
+        Trapped.Close();
+    end;
+
     [ModalPageHandler]
     procedure WizardModalHandler(var Wizard: TestPage "POI Wizard")
     begin
         SeenTrace := Wizard.TraceText.Value();
+        SeenStep := Wizard.StepNo.Value();
         SeenNextEnabled := Wizard.NextAction.Enabled();
         SeenBackEnabled := Wizard.BackAction.Enabled();
     end;
@@ -188,6 +250,7 @@ codeunit 60488 "POI Tests"
     procedure WizardPageHandler(var Wizard: TestPage "POI Wizard")
     begin
         SeenTrace := Wizard.TraceText.Value();
+        SeenStep := Wizard.StepNo.Value();
         SeenNextEnabled := Wizard.NextAction.Enabled();
     end;
 }
