@@ -113,39 +113,35 @@ codeunit 60040 "Test TxModel Report Run"
     end;
 
     [Test]
-    [HandlerFunctions('ConfirmRequestPageHandler')]
     procedure TxReportRun_Test04_RequestPageReportWithPendingWriteIsRefused()
     var
         ReqPage: Report "TxRpt ReqPage Marker";
     begin
-        RequestPageHandled := false;
         InsertBase(60040041);
 
+        // No [HandlerFunctions]: the refusal comes before the request page is shown, and a
+        // declared handler that never runs fails the test. Without the refusal the request
+        // page would be unhandled, and ExpectedError below would report that text instead.
         ReqPage.SetMarker(60040042);
         asserterror ReqPage.Run();
         Assert.ExpectedError('the transaction is stopped');
 
-        Assert.IsFalse(RequestPageHandled,
-            'The refusal happens before the request page is shown, so the [RequestPageHandler] must not have run.');
         Assert.IsFalse(BaseExists(60040042), 'A refused report must not have run its body.');
         Assert.IsFalse(BaseExists(60040041), 'The trapped refusal must roll back the pending write that caused it.');
     end;
 
     [Test]
-    [HandlerFunctions('ConfirmRequestPageHandler')]
     procedure TxReportRun_Test05_RequestPageReportRunModalWithPendingWriteIsRefused()
     var
         ReqPage: Report "TxRpt ReqPage Marker";
     begin
-        RequestPageHandled := false;
         InsertBase(60040051);
 
+        // No [HandlerFunctions], for the same reason as Test04.
         ReqPage.SetMarker(60040052);
         asserterror ReqPage.RunModal();
         Assert.ExpectedError('the transaction is stopped');
 
-        Assert.IsFalse(RequestPageHandled,
-            'The refusal happens before the request page is shown, so the [RequestPageHandler] must not have run.');
         Assert.IsFalse(BaseExists(60040052), 'A refused report must not have run its body.');
         Assert.IsFalse(BaseExists(60040051), 'The trapped refusal must roll back the pending write that caused it.');
     end;
