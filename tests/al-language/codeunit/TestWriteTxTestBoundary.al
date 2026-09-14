@@ -368,6 +368,7 @@ codeunit 60878 "Test Write Tx Test Boundary"
     procedure WriteTxBoundary_Test13b_SeedsTheRowTheModifyArmOpensOn()
     var
         ALTUniversal: Record "ALT Universal";
+        Marker: Record "ALT Universal";
     begin
         // Same reason as Test13a, and deliberately its own row: the modify arm below must stay
         // measurable even if the insert arm or the field-validate arm comes back refused.
@@ -376,8 +377,18 @@ codeunit 60878 "Test Write Tx Test Boundary"
         ALTUniversal."Text Field" := 'ROW-MODIFY-SEED';
         ALTUniversal.Insert();
 
+        // The card's "Text Field" OnValidate inserts marker 9414, and Test13 already left one
+        // behind. Editing that field again would re-run the trigger and fail on the duplicate
+        // key -- a fixture collision between two arms, which says nothing about whether the
+        // page's row Modify may write. Clearing it here, in a default-model test that is
+        // allowed to write, keeps Test13d measuring the row write and nothing else.
+        if Marker.Get(9414) then
+            Marker.Delete();
+
         Assert.IsTrue(Database.IsInWriteTransaction(),
             'An uncommitted Insert must leave a write transaction open inside the test that made it.');
+        Assert.AreEqual(0, MarkerCount(9414),
+            'Test13''s OnValidate marker must be cleared before the modify arm re-fires that trigger.');
     end;
 
     [Test]
@@ -449,6 +460,9 @@ codeunit 60878 "Test Write Tx Test Boundary"
             'The seed row must still exist after the page edited it.');
         Assert.AreEqual('ROW-MODIFIED-UNDER-NONE', ALTUniversal."Text Field",
             'A page-driven row Modify, from a None test, must be able to write.');
+        Assert.AreEqual(1, MarkerCount(9414),
+            'The edit must have reached the field''s OnValidate, so a failure above is the ROW '
+            + 'write being refused rather than the page never getting that far.');
         Assert.IsFalse(Database.IsInWriteTransaction(),
             'The transaction the page began ends with it, so the None test body is left with none.');
     end;
