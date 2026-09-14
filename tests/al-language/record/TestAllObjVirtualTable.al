@@ -736,6 +736,70 @@ codeunit 60802 "Test AllObj Virtual Table"
             'AllObjWithCaption and AllObj must report the same App Runtime Package ID for an enum.');
     end;
 
+    [Test]
+    procedure AllObjWithCaption_Get_ReportExtension_ObjectSubtypeIsTheTargetReportId()
+    // CLAIM: for a ReportExtension row, Object Subtype is the ID OF THE REPORT IT EXTENDS,
+    // rendered as a decimal string -- the same rule the tableextension, pageextension and
+    // enumextension tests above pin, extended to the fourth *extension kind.
+    //
+    // Worth its own assertion rather than resting on the other three: a reportextension
+    // carries its target under a different manifest spelling from the kinds already covered,
+    // so it is the kind where a wrong reading yields an empty subtype -- indistinguishable
+    // from "this kind has no subtype concept", which is the answer every non-extension kind
+    // legitimately gives. See AL Runner issue #3566.
+    //
+    // The two extensions target reports 394 apart, so one constant -- the empty string, the
+    // extension's own id, or a fixed offset -- fails at least one half.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // reportextension 60011 "ALT Simple Report Ext" extends report 60018.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::ReportExtension, 60011),
+            'AllObjWithCaption has no ReportExtension row for ALT Simple Report Ext.');
+        Assert.AreEqual(
+            '60018', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a reportextension must be the id of the report it extends.');
+
+        // reportextension 60012 "ALT Tx None Rep Ext" extends report 60412.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::ReportExtension, 60012),
+            'AllObjWithCaption has no ReportExtension row for ALT Tx None Rep Ext.');
+        Assert.AreEqual(
+            '60412', AllObjWithCaption."Object Subtype",
+            'A second reportextension must report ITS target, not the first one''s.');
+    end;
+
+    [Test]
+    procedure AllObjWithCaption_Get_PermissionSetExtension_ObjectSubtypeIsTheTargetSetId()
+    // CLAIM: for a PermissionSetExtension row, Object Subtype is the ID OF THE PERMISSION SET
+    // IT EXTENDS, rendered as a decimal string -- the fifth and last *extension kind.
+    //
+    // The two extensions target permission sets 907 apart. See AL Runner issue #3566.
+    var
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        Initialize();
+
+        // permissionsetextension 60019 "ALT NonAssignable Ext" extends permissionset 60023.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::PermissionSetExtension, 60019),
+            'AllObjWithCaption has no PermissionSetExtension row for ALT NonAssignable Ext.');
+        Assert.AreEqual(
+            '60023', AllObjWithCaption."Object Subtype",
+            'Object Subtype of a permissionsetextension must be the id of the set it extends.');
+
+        // permissionsetextension 60021 "ALT Agg Perm Set Ext" extends permissionset 60930.
+        Assert.IsTrue(
+            AllObjWithCaption.Get(AllObjWithCaption."Object Type"::PermissionSetExtension, 60021),
+            'AllObjWithCaption has no PermissionSetExtension row for ALT Agg Perm Set Ext.');
+        Assert.AreEqual(
+            '60930', AllObjWithCaption."Object Subtype",
+            'A second permissionsetextension must report ITS target, not the first one''s.');
+    end;
+
     local procedure Initialize()
     begin
         // AllObj and AllObjWithCaption are read-only system virtual tables -- nothing to
