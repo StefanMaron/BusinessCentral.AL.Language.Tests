@@ -21,6 +21,8 @@ codeunit 60618 "Install Seeder"
         Seed.Init();
         Seed."Code" := 'DATABASE';
         Seed."Value" := 99;
+        Seed."Exec Ctx Was Install" := Session.GetExecutionContext() = ExecutionContext::Install;
+        Seed."Exec Ctx Text" := CopyStr(Format(Session.GetExecutionContext()), 1, MaxStrLen(Seed."Exec Ctx Text"));
         Seed.Insert();
     end;
 
@@ -70,6 +72,13 @@ codeunit 60618 "Install Seeder"
         Observation."Other Company Row Existed" := Comp.Get('NO SUCH COMPANY');
 
         Observation."Session User Was Super" := UserPermissions.IsSuper(UserSecurityId());
+
+        // The two calls are separate APIs and are recorded separately: the session-wide context
+        // and the context of the module this code belongs to.
+        Observation."Exec Ctx Was Install" := Session.GetExecutionContext() = ExecutionContext::Install;
+        Observation."Exec Ctx Text" := CopyStr(Format(Session.GetExecutionContext()), 1, MaxStrLen(Observation."Exec Ctx Text"));
+        Observation."Module Exec Ctx Was Install" := Session.GetCurrentModuleExecutionContext() = ExecutionContext::Install;
+        Observation."Module Exec Ctx Text" := CopyStr(Format(Session.GetCurrentModuleExecutionContext()), 1, MaxStrLen(Observation."Module Exec Ctx Text"));
         Observation.Insert();
     end;
 }

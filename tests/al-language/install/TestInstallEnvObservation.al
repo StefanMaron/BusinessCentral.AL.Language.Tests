@@ -23,6 +23,10 @@ table 60588 "Install Env Observation"
         field(4; "Other Company Row Existed"; Boolean) { }
         field(5; "Session User Was Super"; Boolean) { }
         field(6; "Observed Company Name"; Text[30]) { }
+        field(7; "Exec Ctx Was Install"; Boolean) { }
+        field(8; "Exec Ctx Text"; Text[30]) { }
+        field(9; "Module Exec Ctx Was Install"; Boolean) { }
+        field(10; "Module Exec Ctx Text"; Text[30]) { }
     }
 
     keys
