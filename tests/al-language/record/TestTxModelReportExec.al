@@ -29,7 +29,7 @@
 // the deletes at the test boundary — Test07 commits a row on purpose.
 //
 // Handler proof is carried on codeunit globals: a [RequestPageHandler] body may not write.
-codeunit 60988 "Test TxModel Report Exec"
+codeunit 60981 "Test TxModel Report Exec"
 {
     Subtype = Test;
     TestPermissions = Disabled;
