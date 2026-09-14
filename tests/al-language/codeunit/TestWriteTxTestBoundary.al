@@ -365,6 +365,95 @@ codeunit 60878 "Test Write Tx Test Boundary"
     end;
 
     [Test]
+    procedure WriteTxBoundary_Test13b_SeedsTheRowTheModifyArmOpensOn()
+    var
+        ALTUniversal: Record "ALT Universal";
+    begin
+        // Same reason as Test13a, and deliberately its own row: the modify arm below must stay
+        // measurable even if the insert arm or the field-validate arm comes back refused.
+        ALTUniversal.Init();
+        ALTUniversal."Entry No." := 9417;
+        ALTUniversal."Text Field" := 'ROW-MODIFY-SEED';
+        ALTUniversal.Insert();
+
+        Assert.IsTrue(Database.IsInWriteTransaction(),
+            'An uncommitted Insert must leave a write transaction open inside the test that made it.');
+    end;
+
+    [Test]
+    [TransactionModel(TransactionModel::None)]
+    procedure WriteTxBoundary_Test13c_APageRowInsertUnderNone()
+    // CLAIM: whether a page-driven ROW INSERT -- the write a TestPage defers to Close() --
+    // may write under TransactionModel::None, the way a report, an xmlport import and a field
+    // OnValidate each may (Test11, Test12, Test13).
+    //
+    // This is a DIFFERENT write from Test13's. There the observable is a marker row an
+    // OnValidate writes; here it is the page's own row, inserted by the page as it closes.
+    // AL Runner issue StefanMaron/BusinessCentral.AL.Runner#3586 measured the runner refusing
+    // this one while allowing the page-driven Modify below -- an asymmetry no corpus arm
+    // covers, so nothing establishes which half is right.
+    //
+    // No assertion here predicts the answer: the arm records what BC does. If BC refuses, this
+    // arm is the one that says so and the runner's refusal is correct; if BC allows it, the
+    // runner has a gap. Either way the pair below discriminates, because both halves run.
+    var
+        Card: TestPage "ALT Run Tx None Card";
+    begin
+        Assert.AreEqual(0, MarkerCount(9416),
+            'The row this arm inserts must not exist before it runs.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'A TransactionModel::None test must not start inside a write transaction.');
+
+        Card.OpenNew();
+        Card."Entry No.".SetValue(9416);
+        Card.Close();
+
+        Assert.AreEqual(1, MarkerCount(9416),
+            'A page-driven row Insert, from a None test, must be able to write.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'The transaction the page began ends with it, so the None test body is left with none.');
+    end;
+
+    [Test]
+    [TransactionModel(TransactionModel::None)]
+    procedure WriteTxBoundary_Test13d_APageRowModifyUnderNone()
+    // CLAIM: the same question for a page-driven ROW MODIFY -- the other half of FlushRow().
+    //
+    // Paired with Test13c on purpose. #3586's finding is that these two behave DIFFERENTLY in
+    // the runner today (Insert refused, Modify never checked), and one arm alone cannot show
+    // that: it would report a single outcome with nothing to compare it against. Two arms over
+    // the same construct, differing only in which row write the page performs, make the
+    // asymmetry visible if BC has one and rule it out if BC does not.
+    //
+    // The observable is the row's own field, not a marker written by a trigger, so this
+    // measures the page's Modify rather than anything OnValidate does. It reads back through a
+    // fresh Record to avoid asserting against the TestPage's in-memory view.
+    var
+        ALTUniversal: Record "ALT Universal";
+        Card: TestPage "ALT Run Tx None Card";
+    begin
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'A TransactionModel::None test must not start inside a write transaction.');
+        Assert.IsTrue(ALTUniversal.Get(9417),
+            'The previous default-model test''s seed row must be visible here.');
+        Assert.AreEqual('ROW-MODIFY-SEED', ALTUniversal."Text Field",
+            'The seed row must carry its seeded value before the page edits it.');
+
+        Card.OpenEdit();
+        Card.GoToKey(9417);
+        Card."Text Field".SetValue('ROW-MODIFIED-UNDER-NONE');
+        Card.Close();
+
+        Clear(ALTUniversal);
+        Assert.IsTrue(ALTUniversal.Get(9417),
+            'The seed row must still exist after the page edited it.');
+        Assert.AreEqual('ROW-MODIFIED-UNDER-NONE', ALTUniversal."Text Field",
+            'A page-driven row Modify, from a None test, must be able to write.');
+        Assert.IsFalse(Database.IsInWriteTransaction(),
+            'The transaction the page began ends with it, so the None test body is left with none.');
+    end;
+
+    [Test]
     procedure WriteTxBoundary_Test14_ClearsTheFixtureAgain()
     begin
         // Leaves nothing behind for the codeunits that share these fixture tables. No
@@ -377,5 +466,7 @@ codeunit 60878 "Test Write Tx Test Boundary"
         Assert.AreEqual(0, MarkerCount(9413), 'The xmlport arm''s row must be gone too.');
         Assert.AreEqual(0, MarkerCount(9414), 'The page arm''s marker must be gone too.');
         Assert.AreEqual(0, MarkerCount(9415), 'The page arm''s seed row must be gone too.');
+        Assert.AreEqual(0, MarkerCount(9416), 'The row-insert arm''s row must be gone too.');
+        Assert.AreEqual(0, MarkerCount(9417), 'The row-modify arm''s seed row must be gone too.');
     end;
 }
