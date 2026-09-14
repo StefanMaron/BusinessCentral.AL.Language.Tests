@@ -98,7 +98,7 @@ codeunit 60978 "PXC Tests"
 // shape had never been measured -- #4181 says so explicitly, calling its own expectation
 // "an expectation from the top-level result, not a verdict".
 
-codeunit 60981 "PXC Sub Tests"
+codeunit 60980 "PXC Sub Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
