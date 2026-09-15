@@ -12,20 +12,27 @@
 /// part's SubPageLink (group 4, "Link"). Nothing upstream covers the action/RunPageLink side:
 /// no corpus file mentions RunPageLink and FilterGroup together.
 ///
-/// Written for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4160, which measures the
-/// runner applying these filters in whatever group is current (0) and cites BC's own client
-/// (ApplicationActionFilterContext -> NavFilterHelper.AddFilter, forwarding
-/// filterDefinition.FilterGroup) for the claim that BC uses the group the metadata declares.
-/// That issue says plainly it has NOT checked which group the compiler writes on
-/// RunFormLink.TableFilters. These arms are what answer it, in whichever direction.
+/// MEASURED, and it is NOT the same group as SubPageLink. Real BC puts the filter in
+/// FilterGroup(0):
 ///
-/// THE PROBE READS THREE GROUPS, and that is what makes a failure attributable rather than
-/// merely red. The opened page records GetFilter("Code") under groups 0, 2 and 4, so the arms
-/// below distinguish:
-///   - the link landing in 4 (the SubPageLink group, which is what #4160 expects),
-///   - the link landing in 0 (what the runner does today),
-///   - the link landing in 2, or nowhere at all.
-/// A single "is it in group 4" assertion could not tell the last three apart.
+///     g0=AAA|g2=|g4=          (8 cloud legs, corpus run 34930362542)
+///
+/// That is worth pinning precisely because the analogy tempts the other answer. A part's
+/// SubPageLink lands in group 4 ("Link") and Base Application reads it back with
+/// Rec.FilterGroup(4) -- see TestPagePartLinkFilterGroup.al. An action's RunPageLink does not
+/// follow that pattern, so code that assumes symmetry between the two is wrong about one of
+/// them.
+///
+/// Written for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4160, which predicted
+/// group 4 by that analogy and said plainly it had not checked which group the compiler writes
+/// on RunFormLink.TableFilters. It had not, and the prediction was wrong: the runner's existing
+/// behaviour (filters in the current group, 0) already matches BC.
+///
+/// THE PROBE READS THREE GROUPS and both arms assert all three in ONE string, so a failure
+/// names the group that actually holds the filter rather than only reporting that the expected
+/// one does not. The first version of these arms asserted each group separately, which stopped
+/// at the first failure and could not say where the filter had gone -- the question the test
+/// exists to answer.
 /// </summary>
 
 table 60978 "ARLG Row"
@@ -196,7 +203,7 @@ codeunit 60941 "ARLG Tests"
 
     [Test]
     [HandlerFunctions('ArlgTargetHandler')]
-    procedure RunPageLink_FilterLandsInGroup4_NotGroup0()
+    procedure RunPageLink_FilterLandsInGroup0_NotTheLinkGroup()
     // THE SUBJECT. The three groups are read in one open, so this arm says not just "is it in
     // 4" but "which of the three has it" -- and the two companion assertions are what rule out
     // the runner's current answer (group 0) and the remaining candidate (group 2).
@@ -213,9 +220,9 @@ codeunit 60941 "ARLG Tests"
         // The expected string names the group BC is claimed to use; the actual string says
         // where the filter really is.
         Assert.AreEqual(
-            'g0=|g2=|g4=AAA',
+            'g0=AAA|g2=|g4=',
             'g0=' + Probe.Group0() + '|g2=' + Probe.Group2() + '|g4=' + Probe.Group4(),
-            'An action''s RunPageLink filter must land in FilterGroup(4), the Link group, and in no other group.');
+            'An action''s RunPageLink filter lands in FilterGroup(0), NOT the Link group a part''s SubPageLink uses.');
     end;
 
     [Test]
@@ -231,9 +238,9 @@ codeunit 60941 "ARLG Tests"
 
         Assert.IsTrue(Probe.WasOpened(), 'The action must have opened the target page.');
         Assert.AreEqual(
-            'g0=|g2=|g4=BBB',
+            'g0=BBB|g2=|g4=',
             'g0=' + Probe.Group0() + '|g2=' + Probe.Group2() + '|g4=' + Probe.Group4(),
-            'The RunPageLink filter must carry the host row''s own Code, in the Link group and no other.');
+            'The RunPageLink filter carries the host row''s own Code, in FilterGroup(0).');
     end;
 
     [PageHandler]
