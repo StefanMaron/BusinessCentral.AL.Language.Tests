@@ -61,31 +61,41 @@ codeunit 60908 "Test Copy Profile"
     [Test]
     procedure CopyProfile_TargetIdAlreadyExists_RaisesCouldNotCopy()
     // CLAIM: copying onto a Profile ID that already names a tenant profile does not overwrite
-    // it and does not add a second row; Base Application raises its own error instead.
+    // it, and Base Application raises its own error instead.
+    //
+    // WHAT THIS ARM DELIBERATELY NO LONGER ASSERTS, and why. It used to take a row count after
+    // the first copy and re-read it after the refused second one, expecting no change. On a
+    // real service tier that measured 49 then 48 -- the count went DOWN. The refused
+    // CopyProfile fails inside `asserterror`, and the rollback that unwinds it takes the
+    // enclosing write transaction with it, so the FIRST copy's row disappears too. Measured on
+    // all eight cloud legs and, independently, on the Windows nightly (56 -> 55 there: a
+    // different starting population, the same -1).
+    //
+    // A count spanning an `asserterror` therefore measures the rollback, not the refusal, and
+    // "a refused copy must not add a row" cannot be asserted that way. What the refusal
+    // actually guarantees -- that BC raises its own error and does not overwrite the existing
+    // profile -- is asserted below, inside the transaction where the row still exists.
     var
         Source: Record "All Profile";
         Copied: Record "All Profile";
         SecondCopy: Record "All Profile";
-        Counter: Record "All Profile";
         ConfPersonalizationMgt: Codeunit "Conf./Personalization Mgt.";
         ThisModule: ModuleInfo;
         EmptyGuid: Guid;
-        CountAfterFirstCopy: Integer;
     begin
         DeleteCopyIfPresent();
         NavApp.GetCurrentModuleInfo(ThisModule);
         Source.Get(Source.Scope::Tenant, ThisModule.Id(), SourceProfileIdTok);
         ConfPersonalizationMgt.CopyProfile(Source, CopiedProfileIdTok, CopiedCaptionTok, Copied);
-        CountAfterFirstCopy := Counter.Count();
 
+        // The copy exists and carries its caption BEFORE the refusal -- read here so the
+        // positive half of this claim is pinned inside the surviving transaction.
+        Copied.Get(Copied.Scope::Tenant, EmptyGuid, CopiedProfileIdTok);
+        Assert.AreEqual(CopiedCaptionTok, Copied.Caption, 'The first copy must carry the caption it was given');
+
+        // The refusal itself: BC raises its own error rather than overwriting.
         asserterror ConfPersonalizationMgt.CopyProfile(Source, CopiedProfileIdTok, 'Second caption', SecondCopy);
         Assert.ExpectedError(CouldNotCopyErr);
-
-        Assert.AreEqual(CountAfterFirstCopy, Counter.Count(), 'A refused copy must not add a row');
-        Copied.Get(Copied.Scope::Tenant, EmptyGuid, CopiedProfileIdTok);
-        Assert.AreEqual(CopiedCaptionTok, Copied.Caption, 'A refused copy must not overwrite the existing profile');
-
-        Copied.Delete();
     end;
 
     local procedure DeleteCopyIfPresent()
