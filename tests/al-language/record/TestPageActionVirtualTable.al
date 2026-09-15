@@ -82,7 +82,7 @@ table 60901 "ALT Page Action Probe Src"
     }
 }
 
-codeunit 60908 "Test Page Action Virtual Table"
+codeunit 60911 "Test Page Action Virtual Table"
 {
     Subtype = Test;
     TestPermissions = Disabled;
