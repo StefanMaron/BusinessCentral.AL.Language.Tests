@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-dataitemtablefilter-property
 //   dev-itpro/developer/methods-auto/query/query-data-type
 // Scope: in-scope
-// Fixtures used: QDTF Row (60497), QDTF Open Rows (60500), QDTF Two Field Filter (60501);
-//   shared Assert (60021)
+// Fixtures used: QDTF Row (60497), QDTF Open Rows (60500), QDTF Two Field Filter (60501),
+//   QDTF Status Filtered (60507), QDTF Self Join Status (60508); shared Assert (60021)
 //
 // A query dataitem's DataItemTableFilter property is a STATIC filter on the dataitem's own
 // TABLE rows, applied before anything is projected. It differs from a column's ColumnFilter
@@ -18,7 +18,13 @@
 //     filter(...) form with a comparison operator;
 //   - a runtime SetRange on a projected column COMBINES with the static table filter rather
 //     than replacing it — the opposite of ColumnFilter, where a runtime filter on the same
-//     column replaces the static one (TestQueryColumnFilter.al pins that).
+//     column replaces the static one (TestQueryColumnFilter.al pins that);
+//   - a runtime SetRange on a column over the VERY FIELD the static table filter names combines
+//     with it too, in both directions: agreeing conditions admit the rows, contradictory ones
+//     admit none. The older runtime-filter tests above filter on a different field (RowCode),
+//     so neither of them pins what happens when the two name one field;
+//   - two dataitems of a self-join each filtering that one field keep their filters apart, so a
+//     contradictory pair returns nothing rather than one condition standing for both.
 codeunit 60503 "QDTF Table Filter Tests"
 {
     Subtype = Test;
@@ -191,5 +197,99 @@ codeunit 60503 "QDTF Table Filter Tests"
         Q.Close();
 
         Assert.AreEqual(0, Seen, 'rows returned when no row satisfies the static table filter');
+    end;
+
+    [Test]
+    procedure RuntimeFilterAgreeingWithTheTableFilterOnOneFieldAdmitsTheRows()
+    var
+        Row: Record "QDTF Row";
+        Q: Query "QDTF Status Filtered";
+        Seen: Integer;
+        First: Code[20];
+        Last: Code[20];
+    begin
+        // [SCENARIO] The static table filter says Status = Open and a runtime SetRange on
+        // RowStatus — a column over that same field — says Open as well. Both Open rows come
+        // back: naming one field twice is not an error and does not narrow to nothing.
+        SeedThreeStatuses();
+
+        Q.SetRange(RowStatus, Row.Status::Open);
+        Q.Open();
+        while Q.Read() do begin
+            Seen += 1;
+            if Seen = 1 then
+                First := Q.RowCode;
+            Last := Q.RowCode;
+        end;
+        Q.Close();
+
+        Assert.AreEqual(2, Seen, 'rows when the static table filter and a runtime filter on the same field agree');
+        Assert.AreEqual('B-OPEN', First, 'first row (OrderBy ascending RowCode)');
+        Assert.AreEqual('D-OPEN', Last, 'last row');
+    end;
+
+    [Test]
+    procedure RuntimeFilterContradictingTheTableFilterOnOneFieldAdmitsNothing()
+    var
+        Row: Record "QDTF Row";
+        Q: Query "QDTF Status Filtered";
+        Seen: Integer;
+    begin
+        // [SCENARIO] The discriminating direction of the test above. Static says Status = Open,
+        // runtime says Status = Closed, and no row is both — so the answer is zero rows.
+        // A query letting the runtime filter REPLACE the static one answers 1 ('A-CLOSED');
+        // one letting the static filter win answers 2.
+        SeedThreeStatuses();
+
+        Q.SetRange(RowStatus, Row.Status::Closed);
+        Q.Open();
+        while Q.Read() do
+            Seen += 1;
+        Q.Close();
+
+        Assert.AreEqual(0, Seen, 'rows when the static table filter and a runtime filter on the same field contradict');
+    end;
+
+    [Test]
+    procedure SelfJoinFilteringOneFieldFromBothDataItemsAdmitsTheRows()
+    var
+        Row: Record "QDTF Row";
+        Q: Query "QDTF Self Join Status";
+        Seen: Integer;
+    begin
+        // [SCENARIO] Two dataitems over one table, linked on the primary key, each with its own
+        // filter column over Status. With both set to Open the join returns the two Open rows.
+        SeedThreeStatuses();
+
+        Q.SetRange(OuterStatus, Row.Status::Open);
+        Q.SetRange(InnerStatus, Row.Status::Open);
+        Q.Open();
+        while Q.Read() do
+            Seen += 1;
+        Q.Close();
+
+        Assert.AreEqual(2, Seen, 'joined rows when both dataitems filter Status = Open');
+    end;
+
+    [Test]
+    procedure SelfJoinFilteringOneFieldContradictorilyAdmitsNothing()
+    var
+        Row: Record "QDTF Row";
+        Q: Query "QDTF Self Join Status";
+        Seen: Integer;
+    begin
+        // [SCENARIO] The negative companion. The link is the primary key, so the two dataitems
+        // are always the same row, and no row is Open and Closed at once. Anything other than
+        // zero means one dataitem's filter was dropped or the two were folded into one.
+        SeedThreeStatuses();
+
+        Q.SetRange(OuterStatus, Row.Status::Open);
+        Q.SetRange(InnerStatus, Row.Status::Closed);
+        Q.Open();
+        while Q.Read() do
+            Seen += 1;
+        Q.Close();
+
+        Assert.AreEqual(0, Seen, 'joined rows when the two dataitems filter Status contradictorily');
     end;
 }
