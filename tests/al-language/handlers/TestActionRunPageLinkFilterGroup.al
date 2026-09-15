@@ -206,9 +206,16 @@ codeunit 60941 "ARLG Tests"
         InvokeTheAction('AAA');
 
         Assert.IsTrue(Probe.WasOpened(), 'The action must have opened the target page, or the filter assertions below mean nothing.');
-        Assert.AreEqual('AAA', Probe.Group4(), 'An action''s RunPageLink filter must land in FilterGroup(4), the Link group.');
-        Assert.AreEqual('', Probe.Group0(), 'The RunPageLink filter must NOT land in FilterGroup(0).');
-        Assert.AreEqual('', Probe.Group2(), 'The RunPageLink filter must NOT land in FilterGroup(2).');
+
+        // ONE assertion carrying ALL THREE groups, deliberately. Asserting them separately
+        // stops at the first failure and reports only that one group was wrong -- which is
+        // precisely the question this test exists to answer, so the message has to survive it.
+        // The expected string names the group BC is claimed to use; the actual string says
+        // where the filter really is.
+        Assert.AreEqual(
+            'g0=|g2=|g4=AAA',
+            'g0=' + Probe.Group0() + '|g2=' + Probe.Group2() + '|g4=' + Probe.Group4(),
+            'An action''s RunPageLink filter must land in FilterGroup(4), the Link group, and in no other group.');
     end;
 
     [Test]
@@ -223,8 +230,10 @@ codeunit 60941 "ARLG Tests"
         InvokeTheAction('BBB');
 
         Assert.IsTrue(Probe.WasOpened(), 'The action must have opened the target page.');
-        Assert.AreEqual('BBB', Probe.Group4(), 'The RunPageLink filter must carry the host row''s own Code, not a fixed value.');
-        Assert.AreEqual('', Probe.Group0(), 'The RunPageLink filter must NOT land in FilterGroup(0) for this row either.');
+        Assert.AreEqual(
+            'g0=|g2=|g4=BBB',
+            'g0=' + Probe.Group0() + '|g2=' + Probe.Group2() + '|g4=' + Probe.Group4(),
+            'The RunPageLink filter must carry the host row''s own Code, in the Link group and no other.');
     end;
 
     [PageHandler]
