@@ -30,7 +30,10 @@
 /// a part's SubPageLink uses. That was measured, not inferred -- BC's own
 /// NavForm.ApplySourceTableView uses group 2, and predicting 4-vs-2 from that IL would have been
 /// wrong, because that method applies a PAGE's own SourceTableView and Ncl.dll declares no
-/// member referencing SubFormView at all.
+/// member referencing SubFormView at all. The group is read from the part's
+/// OnAfterGetCurrRecord, as the sibling SubPageLink test reads its own -- a part's OnOpenPage
+/// runs before the part is positioned on a row, so a GetFilter there answers empty for a link
+/// as readily as for a view, and would measure trigger ordering rather than the filter group.
 ///
 /// BOTH ARMS WALK THE PART WITH First/Next AND ASSERT WHICH ENTRIES APPEAR, rather than
 /// counting rows to a total. An editable ListPart shows a trailing blank new row, so a count
@@ -77,7 +80,7 @@ codeunit 60953 "SPV Probe"
         Opened := true;
     end;
 
-    procedure WasOpened(): Boolean
+    procedure WasRead(): Boolean
     begin
         exit(Opened);
     end;
@@ -111,9 +114,12 @@ page 60986 "SPV Filtered Part"
         }
     }
 
-    // Record which filter group the view's filter landed in. Reading here rather than
-    // asserting keeps the page a fixture; the arm decides what the values mean.
-    trigger OnOpenPage()
+    // OnAfterGetCurrRecord, NOT OnOpenPage. The sibling SubPageLink test reads its groups from
+    // this trigger too, and the difference is load-bearing rather than stylistic: a part's
+    // OnOpenPage runs before the host has positioned the part on a row, so a GetFilter there
+    // answers empty for a link as well as a view. Reading at OnOpenPage measured the runner's
+    // trigger ordering rather than the filter group, which is not this test's subject.
+    trigger OnAfterGetCurrRecord()
     var
         Probe: Codeunit "SPV Probe";
         F0: Text;
@@ -297,7 +303,10 @@ codeunit 60938 "SPV Tests"
         Host.OpenEdit();
         Host.GoToKey(1);
 
-        Assert.IsTrue(Probe.WasOpened(), 'the filtered part must have opened, or the groups below mean nothing');
+        // Land on a row: OnAfterGetCurrRecord fires per row, so without this the probe holds
+        // nothing and the assertion below would compare two empty strings and pass vacuously.
+        Assert.IsTrue(Host.FilteredPart.First(), 'the filtered part must have a row, or the groups below mean nothing');
+        Assert.IsTrue(Probe.WasRead(), 'the part''s OnAfterGetCurrRecord must have run');
         Assert.AreEqual(
             'g0=|g2=|g4=KEEP', Probe.Groups(),
             'A part SubPageView''s filter lands in FilterGroup(4), the same Link group a SubPageLink uses -- not group 0, and not the group 2 a PAGE''s own SourceTableView uses.');
