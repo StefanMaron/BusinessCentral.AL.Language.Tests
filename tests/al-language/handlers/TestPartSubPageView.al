@@ -25,6 +25,12 @@
 ///   - both parts showing nothing says the fixture never seeded, and neither arm above means
 ///     anything.
 /// A single part could not separate the second case from the third.
+///
+/// BOTH ARMS WALK THE PART WITH First/Next AND ASSERT WHICH ENTRIES APPEAR, rather than
+/// counting rows to a total. An editable ListPart shows a trailing blank new row, so a count
+/// measures n+1 (BC answered 5 for four seeded rows, and the blank row's empty Bucket read as a
+/// view violation). Asserting entry numbers is also stronger than a count: it says the filtered
+/// part skips entry 2 specifically, and the control part reaches it.
 
 table 60979 "SPV Row"
 {
@@ -145,23 +151,24 @@ codeunit 60938 "SPV Tests"
     // it actually shows.
     var
         Host: TestPage "SPV Host";
-        Seen: Integer;
     begin
         Seed();
 
         Host.OpenEdit();
         Host.GoToKey(1);
 
-        Seen := 0;
-        if Host.FilteredPart.First() then
-            repeat
-                Seen := Seen + 1;
-                Assert.AreEqual(
-                    'KEEP', Host.FilteredPart.Bucket.Value(),
-                    'Every row the part shows must match its SubPageView, so no DROP row may appear.');
-            until not Host.FilteredPart.Next();
+        // A BOUNDED WALK, not a count to a total. An editable ListPart shows a trailing blank
+        // new row, so counting every row the part yields measures 2 + 1 rather than 2 -- the
+        // first version of this arm did exactly that and read the blank row's empty Bucket.
+        // The sibling SubPageLink test (TestPagePartLinkFilterGroup.al) walks the same way.
+        Assert.IsTrue(Host.FilteredPart.First(), 'the filtered part has a first row');
+        Assert.AreEqual('KEEP', Host.FilteredPart.Bucket.Value(), 'the first row the view selects is a KEEP row');
+        Assert.AreEqual('1', Host.FilteredPart."Entry No.".Value(), 'the first row the view selects is entry 1');
 
-        Assert.AreEqual(2, Seen, 'The part must show exactly the two rows its SubPageView selects.');
+        Assert.IsTrue(Host.FilteredPart.Next(), 'the filtered part has a second row');
+        Assert.AreEqual('KEEP', Host.FilteredPart.Bucket.Value(), 'the second row the view selects is a KEEP row');
+        Assert.AreEqual('3', Host.FilteredPart."Entry No.".Value(), 'the second row the view selects is entry 3 -- entry 2 is a DROP row the view excludes');
+
         Host.Close();
     end;
 
@@ -172,20 +179,22 @@ codeunit 60938 "SPV Tests"
     // nothing. It is what makes a "4 vs 2" result attributable to the view.
     var
         Host: TestPage "SPV Host";
-        Seen: Integer;
     begin
         Seed();
 
         Host.OpenEdit();
         Host.GoToKey(1);
 
-        Seen := 0;
-        if Host.OpenPart.First() then
-            repeat
-                Seen := Seen + 1;
-            until not Host.OpenPart.Next();
+        // Same bounded walk. Entry 2 is the discriminator: the view would have excluded it, and
+        // this part has no view, so reaching it proves the rows are there to be filtered.
+        Assert.IsTrue(Host.OpenPart.First(), 'the open part has a first row');
+        Assert.AreEqual('1', Host.OpenPart."Entry No.".Value(), 'the open part starts at entry 1');
 
-        Assert.AreEqual(4, Seen, 'A part with no SubPageView must show every row in its source table.');
+        Assert.IsTrue(Host.OpenPart.Next(), 'the open part has a second row');
+        Assert.AreEqual(
+            '2', Host.OpenPart."Entry No.".Value(),
+            'the open part shows entry 2, a DROP row -- so the excluded rows exist and the other arm is measuring the view rather than an empty table');
+
         Host.Close();
     end;
 }
