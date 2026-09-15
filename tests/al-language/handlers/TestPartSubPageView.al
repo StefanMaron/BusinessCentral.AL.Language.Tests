@@ -284,7 +284,7 @@ codeunit 60938 "SPV Tests"
     //     action RunPageLink        -> 0  (corpus codeunit 60941)
     //     part   SubPageLink        -> 4  (TestPagePartLinkFilterGroup.al)
     //     part   SubPageView        -> 4  (this arm)
-    //     page   SourceTableView    -> 2  (BC's IL; NOT pinned by any corpus arm yet)
+    //     page   SourceTableView    -> 2  (TestPageSourceTableView.al, both directions)
     //
     // All three groups in ONE assertion: asserting them separately stops at the first failure
     // and cannot say which group actually holds the filter, which is the question.
