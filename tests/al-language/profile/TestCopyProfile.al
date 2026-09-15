@@ -60,8 +60,14 @@ codeunit 60908 "Test Copy Profile"
 
     [Test]
     procedure CopyProfile_TargetIdAlreadyExists_RaisesCouldNotCopy()
-    // CLAIM: copying onto a Profile ID that already names a tenant profile does not overwrite
-    // it, and Base Application raises its own error instead.
+    // CLAIM: copying onto a Profile ID that already names a tenant profile is refused with
+    // Base Application's own error.
+    //
+    // It deliberately does NOT claim "does not overwrite". That is unobservable from here: the
+    // refused copy's rollback removes the first copy's row too, so there is nothing left to
+    // re-read afterwards and compare. Asserting it would mean committing the first copy, which
+    // leaks a real profile into shared tier state for every later codeunit when a mid-test
+    // failure skips the cleanup.
     //
     // WHAT THIS ARM DELIBERATELY NO LONGER ASSERTS, and why. It used to take a row count after
     // the first copy and re-read it after the refused second one, expecting no change. On a
@@ -72,12 +78,15 @@ codeunit 60908 "Test Copy Profile"
     // different starting population, the same -1).
     //
     // A count spanning an `asserterror` therefore measures the rollback, not the refusal, and
-    // "a refused copy must not add a row" cannot be asserted that way. What the refusal
-    // actually guarantees -- that BC raises its own error and does not overwrite the existing
-    // profile -- is asserted below, inside the transaction where the row still exists.
+    // "a refused copy must not add a row" cannot be asserted that way. The mechanism is pinned
+    // independently in this corpus by error-handling/TestAssertErrorRollback.al (codeunit
+    // 60943), which shows an uncommitted insert rolled back by an UNRELATED `asserterror`.
+    //
+    // What survives is the refusal itself, asserted below.
     var
         Source: Record "All Profile";
         Copied: Record "All Profile";
+        ReadBack: Record "All Profile";
         SecondCopy: Record "All Profile";
         ConfPersonalizationMgt: Codeunit "Conf./Personalization Mgt.";
         ThisModule: ModuleInfo;
@@ -88,10 +97,14 @@ codeunit 60908 "Test Copy Profile"
         Source.Get(Source.Scope::Tenant, ThisModule.Id(), SourceProfileIdTok);
         ConfPersonalizationMgt.CopyProfile(Source, CopiedProfileIdTok, CopiedCaptionTok, Copied);
 
-        // The copy exists and carries its caption BEFORE the refusal -- read here so the
-        // positive half of this claim is pinned inside the surviving transaction.
-        Copied.Get(Copied.Scope::Tenant, EmptyGuid, CopiedProfileIdTok);
-        Assert.AreEqual(CopiedCaptionTok, Copied.Caption, 'The first copy must carry the caption it was given');
+        // Read the copy back through a SEPARATE record, and check the Get succeeded. Re-reading
+        // into `Copied` would prove nothing: CopyProfile already populated it as a VAR
+        // out-param, so the row would be there whether or not the database holds it. Same shape
+        // as the sibling arm's ReadBack.
+        Assert.IsTrue(
+          ReadBack.Get(ReadBack.Scope::Tenant, EmptyGuid, CopiedProfileIdTok),
+          'The first copy must be readable from the database before the refusal');
+        Assert.AreEqual(CopiedCaptionTok, ReadBack.Caption, 'The first copy must carry the caption it was given');
 
         // The refusal itself: BC raises its own error rather than overwriting.
         asserterror ConfPersonalizationMgt.CopyProfile(Source, CopiedProfileIdTok, 'Second caption', SecondCopy);
