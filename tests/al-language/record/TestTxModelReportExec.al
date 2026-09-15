@@ -240,23 +240,25 @@ codeunit 60981 "Test TxModel Report Exec"
 
     [Test]
     [TransactionModel(TransactionModel::AutoRollback)]
-    procedure TxReportExec_Test12_AutoRollbackExecuteUpdateReportWithPendingWriteRuns()
+    procedure TxReportExec_Test12_AutoRollbackExecuteUpdateReportRuns()
     var
         UpdateRpt: Report "TxExec Update Marker";
     begin
-        InsertBase(60029121);
-
+        // No write precedes the call on purpose. A pending write opens the transaction, and a
+        // report declaring `TransactionType = Update` then requires a transaction TYPE CHANGE,
+        // which BC refuses once a transaction has started -- pinned by
+        // `Database_CurrentTransactionType_SetAfterWriteOp_Throws`. AutoRollback exempts entry
+        // into a new transaction world, NOT the type-change rule, so with a pending write this
+        // arm's premise is unreachable on BC rather than mis-sequenced.
         UpdateRpt.SetMarker(60029122);
         UpdateRpt.Execute('');
 
         Assert.IsTrue(BaseExists(60029122), 'The report body must have run and written its marker row.');
-        Assert.IsTrue(BaseExists(60029121), 'The write made before the report must still be readable.');
     end;
 
     [Test]
     procedure TxReportExec_Test13_AutoRollbackExecuteCommittedNothing()
     begin
-        Assert.IsFalse(BaseExists(60029121), 'Under AutoRollback Execute is not a commit: the previous test''s prior write must be rolled back.');
         Assert.IsFalse(BaseExists(60029122), 'Under AutoRollback Execute is not a commit: the previous test''s report write must be rolled back.');
     end;
 
