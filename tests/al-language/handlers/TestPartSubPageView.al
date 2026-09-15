@@ -45,6 +45,43 @@ table 60979 "SPV Row"
     keys { key(PK; "Entry No.") { Clustered = true; } }
 }
 
+codeunit 60953 "SPV Probe"
+{
+    SingleInstance = true;
+
+    var
+        G0: Text;
+        G2: Text;
+        G4: Text;
+        Opened: Boolean;
+
+    procedure Reset()
+    begin
+        G0 := '';
+        G2 := '';
+        G4 := '';
+        Opened := false;
+    end;
+
+    procedure Record(NewG0: Text; NewG2: Text; NewG4: Text)
+    begin
+        G0 := NewG0;
+        G2 := NewG2;
+        G4 := NewG4;
+        Opened := true;
+    end;
+
+    procedure WasOpened(): Boolean
+    begin
+        exit(Opened);
+    end;
+
+    procedure Groups(): Text
+    begin
+        exit('g0=' + G0 + '|g2=' + G2 + '|g4=' + G4);
+    end;
+}
+
 page 60986 "SPV Filtered Part"
 {
     PageType = ListPart;
@@ -67,6 +104,25 @@ page 60986 "SPV Filtered Part"
             }
         }
     }
+
+    // Record which filter group the view's filter landed in. Reading here rather than
+    // asserting keeps the page a fixture; the arm decides what the values mean.
+    trigger OnOpenPage()
+    var
+        Probe: Codeunit "SPV Probe";
+        F0: Text;
+        F2: Text;
+        F4: Text;
+    begin
+        Rec.FilterGroup(0);
+        F0 := Rec.GetFilter(Bucket);
+        Rec.FilterGroup(2);
+        F2 := Rec.GetFilter(Bucket);
+        Rec.FilterGroup(4);
+        F4 := Rec.GetFilter(Bucket);
+        Rec.FilterGroup(0);
+        Probe.Record(F0, F2, F4);
+    end;
 }
 
 page 60987 "SPV Open Part"
@@ -127,7 +183,9 @@ codeunit 60938 "SPV Tests"
     local procedure Seed()
     var
         Row: Record "SPV Row";
+        Probe: Codeunit "SPV Probe";
     begin
+        Probe.Reset();
         Row.DeleteAll();
         AddRow(1, 'KEEP');
         AddRow(2, 'DROP');
@@ -194,6 +252,36 @@ codeunit 60938 "SPV Tests"
         Assert.AreEqual(
             '2', Host.OpenPart."Entry No.".Value(),
             'the open part shows entry 2, a DROP row -- so the excluded rows exist and the other arm is measuring the view rather than an empty table');
+
+        Host.Close();
+    end;
+    [Test]
+    procedure SubPageView_FilterLandsInFilterGroup2()
+    // WHICH GROUP the view's filter lands in. Distinct from the arms above, which assert the
+    // rows shown and would pass whatever group held the filter.
+    //
+    // Worth its own arm because the three sibling properties do NOT agree, and assuming they do
+    // has already been wrong once: an action's RunPageLink lands in group 0 (corpus codeunit
+    // 60941), a part's SubPageLink in group 4 (TestPagePartLinkFilterGroup.al). BC's own
+    // NavForm.ApplySourceTableView sets ALFilterGroup = 2 around a view's TableFilters, so 2 is
+    // the expected answer here -- but that is read off BC's IL, and this arm is what turns it
+    // into a service-tier verdict.
+    //
+    // All three groups in ONE assertion: asserting them separately stops at the first failure
+    // and cannot say which group actually holds the filter, which is the question.
+    var
+        Host: TestPage "SPV Host";
+        Probe: Codeunit "SPV Probe";
+    begin
+        Seed();
+
+        Host.OpenEdit();
+        Host.GoToKey(1);
+
+        Assert.IsTrue(Probe.WasOpened(), 'the filtered part must have opened, or the groups below mean nothing');
+        Assert.AreEqual(
+            'g0=|g2=KEEP|g4=', Probe.Groups(),
+            'A part SubPageView''s filter lands in FilterGroup(2) -- not group 0 and not the Link group 4 a SubPageLink uses.');
 
         Host.Close();
     end;
