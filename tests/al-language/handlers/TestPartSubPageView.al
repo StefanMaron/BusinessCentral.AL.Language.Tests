@@ -26,6 +26,12 @@
 ///     anything.
 /// A single part could not separate the second case from the third.
 ///
+/// A THIRD ARM pins which FILTER GROUP the view's filter lands in: group 4, the same Link group
+/// a part's SubPageLink uses. That was measured, not inferred -- BC's own
+/// NavForm.ApplySourceTableView uses group 2, and predicting 4-vs-2 from that IL would have been
+/// wrong, because that method applies a PAGE's own SourceTableView and Ncl.dll declares no
+/// member referencing SubFormView at all.
+///
 /// BOTH ARMS WALK THE PART WITH First/Next AND ASSERT WHICH ENTRIES APPEAR, rather than
 /// counting rows to a total. An editable ListPart shows a trailing blank new row, so a count
 /// measures n+1 (BC answered 5 for four seeded rows, and the blank row's empty Bucket read as a
@@ -256,16 +262,29 @@ codeunit 60938 "SPV Tests"
         Host.Close();
     end;
     [Test]
-    procedure SubPageView_FilterLandsInFilterGroup2()
+    procedure SubPageView_FilterLandsInTheLinkFilterGroup4()
     // WHICH GROUP the view's filter lands in. Distinct from the arms above, which assert the
     // rows shown and would pass whatever group held the filter.
     //
-    // Worth its own arm because the three sibling properties do NOT agree, and assuming they do
-    // has already been wrong once: an action's RunPageLink lands in group 0 (corpus codeunit
-    // 60941), a part's SubPageLink in group 4 (TestPagePartLinkFilterGroup.al). BC's own
-    // NavForm.ApplySourceTableView sets ALFilterGroup = 2 around a view's TableFilters, so 2 is
-    // the expected answer here -- but that is read off BC's IL, and this arm is what turns it
-    // into a service-tier verdict.
+    // MEASURED, and it falsified a prediction taken from BC's own IL -- which is why this arm
+    // exists rather than a comment citing the IL.
+    //
+    // NavForm.ApplySourceTableView (Ncl 28.1, 060011F4) wraps a view's TableFilters in
+    // `SourceTable.ALFilterGroup = 2`, so 2 was the expected answer. BC answered 4:
+    //
+    //     Expected: g0=|g2=KEEP|g4=        Actual: g0=|g2=|g4=KEEP
+    //
+    // The reconciliation is that ApplySourceTableView applies a PAGE's OWN SourceTableView, and
+    // a part's SubPageView is applied elsewhere -- Ncl.dll declares no member referencing
+    // SubFormView at all, so the part path is not in that assembly. Reading the page path's IL
+    // and assuming the part path matches is the same class of error as assuming a part's
+    // SubPageLink group from an action's RunPageLink group, which #4160 already got wrong.
+    //
+    // So the four known groups, each measured rather than inferred:
+    //     action RunPageLink        -> 0  (corpus codeunit 60941)
+    //     part   SubPageLink        -> 4  (TestPagePartLinkFilterGroup.al)
+    //     part   SubPageView        -> 4  (this arm)
+    //     page   SourceTableView    -> 2  (BC's IL; NOT pinned by any corpus arm yet)
     //
     // All three groups in ONE assertion: asserting them separately stops at the first failure
     // and cannot say which group actually holds the filter, which is the question.
@@ -280,8 +299,8 @@ codeunit 60938 "SPV Tests"
 
         Assert.IsTrue(Probe.WasOpened(), 'the filtered part must have opened, or the groups below mean nothing');
         Assert.AreEqual(
-            'g0=|g2=KEEP|g4=', Probe.Groups(),
-            'A part SubPageView''s filter lands in FilterGroup(2) -- not group 0 and not the Link group 4 a SubPageLink uses.');
+            'g0=|g2=|g4=KEEP', Probe.Groups(),
+            'A part SubPageView''s filter lands in FilterGroup(4), the same Link group a SubPageLink uses -- not group 0, and not the group 2 a PAGE''s own SourceTableView uses.');
 
         Host.Close();
     end;
