@@ -23,7 +23,9 @@
 // four other arms passed, which is what says the extra row is real rather than a provider
 // miscounting. The arm below names it, because a count alone records the number without
 // saying what the extra row is, and a provider inventing a spurious fourth row would satisfy
-// a bare count just as well.
+// a bare count just as well. It is named '$systemId' -- the SQL column name, not the
+// AL field name 'SystemId'. That spelling was itself measured: asserting the AL name answered
+// Actual:<$systemId>.
 
 table 60977 "ALT Key Probe"
 {
@@ -91,9 +93,13 @@ codeunit 60936 "Test Key Virtual Table"
         Initialize();
 
         KeyRec.Get(ProbeTableId, 4);
+        // '$systemId', not 'SystemId': the Key table's KeyFields column carries the SQL column
+        // name for this implicit key, not the AL field name. Measured -- asserting the AL
+        // spelling failed with Actual:<$systemId>. A runner implementation deriving this row
+        // from NCLMetaField.FieldName would produce the wrong spelling and pass nothing here.
         Assert.AreEqual(
-            'SystemId', KeyRec."Key",
-            'The key BC adds beyond the three declared is the implicit SystemId key.');
+            '$systemId', KeyRec."Key",
+            'The key BC adds beyond the three declared is the implicit SystemId key, named by its SQL column.');
         Assert.AreEqual(true, KeyRec.Unique, 'The implicit SystemId key is unique.');
     end;
 
