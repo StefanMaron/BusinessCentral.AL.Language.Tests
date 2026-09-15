@@ -131,20 +131,20 @@ codeunit 60908 "Test Page Action Virtual Table"
         Ctr: Record "Page Action";
         Grp: Record "Page Action";
     begin
-        // Parentage and nesting together: the group's ParentActionId must be the area's
-        // ActionId, and its Indentation must be exactly one deeper. Asserting the RELATION
-        // rather than absolute ids, because BC assigns container ids from a negative
-        // auto-counter when the container declares none, and this test does not pin that.
-        Ctr.SetRange("Page ID", ProbePage());
-        Ctr.SetRange(Indentation, 0);
-        Assert.IsTrue(Ctr.FindFirst(), 'The action area is reported at indentation 0.');
-
+        // Navigate UP from the named group to its declared parent, rather than picking an
+        // indentation-0 row and hoping it is ours: a page carries several action containers
+        // BC adds itself (the promoted/category containers), so "the first row at indentation
+        // 0" is not necessarily the one containing this group.
         Grp.SetRange("Page ID", ProbePage());
         Grp.SetRange(Name, 'ProbeGroup');
         Assert.IsTrue(Grp.FindFirst(), 'The declared group is reported by name.');
 
-        Assert.AreEqual(Ctr.Indentation + 1, Grp.Indentation, 'The group sits one level inside the area that contains it.');
-        Assert.AreEqual(Ctr."Action ID", Grp."Parent Action ID", 'The group''s parent is the area that contains it.');
+        Ctr.SetRange("Page ID", ProbePage());
+        Ctr.SetRange("Action ID", Grp."Parent Action ID");
+        Assert.IsTrue(Ctr.FindFirst(), 'The group''s parent is itself a row in the table.');
+
+        Assert.AreEqual(0, Ctr.Indentation, 'The action container that holds the group sits at the outermost level.');
+        Assert.AreEqual(Ctr.Indentation + 1, Grp.Indentation, 'The group sits one level inside the container that holds it.');
     end;
 
     [Test]
@@ -172,20 +172,24 @@ codeunit 60908 "Test Page Action Virtual Table"
         AreaType: Integer;
         GroupType: Integer;
         ActionType: Integer;
+        ParentId: Integer;
     begin
         // Three different rows must carry three different ActionType values. The arm asserts
         // they DIFFER rather than naming BC's integers, so it stays true if BC renumbers the
         // option while still distinguishing the three kinds.
         PageAction.SetRange("Page ID", ProbePage());
-        PageAction.SetRange(Indentation, 0);
-        Assert.IsTrue(PageAction.FindFirst(), 'The action area is reported.');
-        AreaType := PageAction."Action Type";
-
-        PageAction.Reset();
-        PageAction.SetRange("Page ID", ProbePage());
         PageAction.SetRange(Name, 'ProbeGroup');
         Assert.IsTrue(PageAction.FindFirst(), 'The declared group is reported.');
         GroupType := PageAction."Action Type";
+        ParentId := PageAction."Parent Action ID";
+
+        // The container is resolved through the group's parent id, not by taking whichever row
+        // sits at indentation 0 -- a page carries several containers BC adds itself.
+        PageAction.Reset();
+        PageAction.SetRange("Page ID", ProbePage());
+        PageAction.SetRange("Action ID", ParentId);
+        Assert.IsTrue(PageAction.FindFirst(), 'The container holding the group is reported.');
+        AreaType := PageAction."Action Type";
 
         PageAction.Reset();
         PageAction.SetRange("Page ID", ProbePage());
