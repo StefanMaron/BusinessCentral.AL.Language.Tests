@@ -17,6 +17,13 @@
 // a clustered primary key, a second key that is NOT clustered, and a third that is disabled.
 // A provider answering a fixed or blank row for every Get would satisfy none of the arms
 // below, and the negatives carry as much weight as the positives for that reason.
+//
+// MEASURED: BC reports FOUR rows for a table declaring three keys. The fourth is the implicit
+// SystemId key BC adds to every table -- the first run asserted 3 and answered 4, while all
+// four other arms passed, which is what says the extra row is real rather than a provider
+// miscounting. The arm below names it, because a count alone records the number without
+// saying what the extra row is, and a provider inventing a spurious fourth row would satisfy
+// a bare count just as well.
 
 table 60977 "ALT Key Probe"
 {
@@ -68,8 +75,26 @@ codeunit 60936 "Test Key Virtual Table"
 
         KeyRec.SetRange(TableNo, ProbeTableId);
         Assert.AreEqual(
-            3, KeyRec.Count(),
-            'The Key virtual table must report one row per key the table declares, and this table declares three.');
+            4, KeyRec.Count(),
+            'The Key virtual table reports the three keys the table declares PLUS the implicit SystemId key BC adds to every table.');
+    end;
+
+    [Test]
+    procedure Record_Key_TheFourthKey_IsTheImplicitSystemIdKey()
+    // MEASURED, and it is why the count arm above says 4 rather than 3. The table declares
+    // three keys; BC reports four. Asserting the count alone would record the number without
+    // saying what the extra row IS, which is the part a reader needs -- and a provider that
+    // invented a spurious fourth row would satisfy a bare count just as well.
+    var
+        KeyRec: Record "Key";
+    begin
+        Initialize();
+
+        KeyRec.Get(ProbeTableId, 4);
+        Assert.AreEqual(
+            'SystemId', KeyRec."Key",
+            'The key BC adds beyond the three declared is the implicit SystemId key.');
+        Assert.AreEqual(true, KeyRec.Unique, 'The implicit SystemId key is unique.');
     end;
 
     [Test]
