@@ -22,6 +22,8 @@ codeunit 60019 ALTFixtureCleanup
         ALTManualTableEventPub: Record "ALT Manual TableEvent Pub";
         ALTMedia: Record "ALT Media";
         ALTIncludeSenderTablePub: Record "ALT IncludeSender Table Pub";
+        ALTNoSubscriberTable: Record "ALT No Subscriber Table";
+        ALTSubscribedTable: Record "ALT Subscribed Table";
     begin
         ALTUniversal.DeleteAll(false);
         ALTComposite.DeleteAll(false);
@@ -43,5 +45,7 @@ codeunit 60019 ALTFixtureCleanup
         ALTManualTableEventPub.DeleteAll(false);
         ALTMedia.DeleteAll(false);
         ALTIncludeSenderTablePub.DeleteAll(false);
+        ALTNoSubscriberTable.DeleteAll(false);
+        ALTSubscribedTable.DeleteAll(false);
     end;
 }
