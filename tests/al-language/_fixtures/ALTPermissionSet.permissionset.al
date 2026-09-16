@@ -18,7 +18,5 @@ permissionset 60022 ALTPermissionSet
         tabledata "ALT Relation Parent B" = RIMD,
         tabledata "ALT Relation Child" = RIMD,
         tabledata "ALT Rel Where Parent" = RIMD,
-        tabledata "ALT Rel Where Child" = RIMD,
-        tabledata "ALT No Subscriber Table" = RIMD,
-        tabledata "ALT Subscribed Table" = RIMD;
+        tabledata "ALT Rel Where Child" = RIMD;
 }
