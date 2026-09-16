@@ -3,7 +3,7 @@
 // Deliberately NOT added to ALTPermissionSet (60022): "Test Perm. Set Grants" (60604)
 // asserts that set declares EXACTLY 17 tabledata grants, so extending it silently breaks a
 // passing test that has nothing to do with events.
-permissionset 60594 ALTNoSubscriberPermSet
+permissionset 60594 ALTNoSubEventPermSet
 {
     Assignable = true;
     Permissions =
