@@ -3,10 +3,14 @@
 // "Opf Result" (60638)'s, and it is here for one arm only.
 //
 // The two-row discriminator asks whether Cancel keeps the part row that New() already committed.
-// Without this witness a final count of 0 has two causes -- Cancel rolled a committed row back,
-// or New() never committed the first row and Cancel dropped two pending ones -- and nothing in
-// the fixture separates them. The handler records the count right after the second New(), which
-// is the moment the first row is expected to have been committed, so a 0 leg is attributable.
+// Without this witness a final count of 0 would have had two causes -- Cancel rolled a committed
+// row back, or New() never committed the first row and Cancel dropped two pending ones -- and
+// nothing else in the fixture separates them. The handler records the count right after the
+// second New(), the moment the first row is expected to have been committed.
+//
+// BC answered 2, not 0, so the ambiguity did not arise; the probe is what says so rather than
+// leaving it assumed. It read 1 on all eight cloud legs of run 35239632216, which is what makes
+// the 2 mean "Cancel kept both" instead of "nothing was ever committed".
 table 60536 "PCN Probe"
 {
     DataClassification = CustomerContent;

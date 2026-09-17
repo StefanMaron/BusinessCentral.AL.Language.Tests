@@ -18,12 +18,20 @@
 // opened with OpenNew(). So a Card cannot answer a question about Cancel at all; it is kept here
 // for two arms that do not need one.
 //
-// **These assertions are what I expected, not what a tier has confirmed.** The two plausible
-// answers are far apart and the decompile in AlRunner#4150 does not choose between them: Cancel
-// could leave the pending row unwritten, or it could write it like any other close, since a
-// card's already-committed edits are famously NOT rolled back by Cancel or Escape and a close
-// that sets no explicit save-or-discard intent has to do one of the two. If the tier disagrees,
-// the assertion follows the tier.
+// THE ANSWER: Cancel saves everything. A row still being edited when Cancel is pressed is
+// written; a row New() had already committed stays written; and a pending change to the host
+// record's own field is written too. Cancel closes the page and reports Cancel to the caller,
+// and that is the whole of what it does -- it is not a discard, and nothing is rolled back.
+//
+// That is measured, not read: run 35239632216 on this PR, all eight cloud legs, 27.0 27.3 27.5
+// 28.0 28.1 28.2 28.3 28.4, identical on every one. The arms below were first written the other
+// way round, expecting Cancel to drop what was pending, and BC said otherwise; they now assert
+// what BC answered. The reading they were built on -- that a close setting no explicit
+// save-or-discard intent must do one or the other -- was simply wrong about which.
+//
+// It is the same answer "TRT Tests" (60844) reaches for a different route: Close() on a dirty
+// new-record Card page persists it, and a plain SourceTable-bound page has no client-level way
+// to abandon a row at all. Cancel on a modal is now a third route to that same platform fact.
 //
 // How the arms separate those, and separate both from a broken fixture:
 //
@@ -37,18 +45,19 @@
 //   * ..._SavesThePendingPartRow (OK, dialog) -- the positive control for the measurements. The
 //     row CAN be written through this fixture, so a zero below is about Cancel and not about a
 //     SubPageLink that never worked.
-//   * ..._DiscardsThePendingPartRow -- the measurement.
-//   * ..._KeepsTheCommittedPartRowAndDropsThePendingOne -- the discriminator. Two rows are
-//     typed: the first is committed when New() moves off it, the second is still being edited
-//     when Cancel is pressed. 2 means Cancel saves everything, 1 means it drops only what is
-//     pending, 0 means it rolls the part back. The handler also records what it saw right after
-//     the second New(), in "PCN Probe" (60536), because a 0 has a second cause -- New() never
-//     committed the first row either -- which the count alone cannot separate from a rollback.
-//   * the two host-field arms -- the same question one level up, so the part answer can be
-//     compared against the host answer instead of assumed to match it. They come as a pair on
-//     purpose: the Cancel arm asserts the value Initialize() seeded, so on its own it would pass
-//     if SetValue silently no-opped or the field were not editable, and the OK arm is what rules
-//     that out.
+//   * ..._SavesThePendingPartRow (Cancel) -- the measurement.
+//   * ..._KeepsBothTheCommittedAndThePendingPartRow -- the discriminator, and the arm that makes
+//     the answer precise. Two rows are typed: the first is committed when New() moves off it,
+//     the second is still being edited when Cancel is pressed. 2 means Cancel saves everything,
+//     1 that it drops only what is pending, 0 that it rolls the part back. BC answers 2.
+//     The handler also records what it saw right after the second New(), in "PCN Probe" (60536),
+//     because a 0 would have had a second cause -- New() never committed the first row either --
+//     which the count alone cannot separate from a rollback. That probe assertion passed on all
+//     eight legs, so the 2 is "Cancel kept both" and not "nothing was ever committed".
+//   * the two host-field arms -- the same question one level up. They were written as an
+//     opposed pair and BC made them agree: OK and Cancel both write the pending host field
+//     change. The pair stays for that reason -- the agreement is the finding, and the OK arm is
+//     still what stops the Cancel arm passing on a value that never moved.
 //
 // Every assertion reads the table AFTER RunModal has returned, so a row that only ever lived in
 // the page cannot satisfy one.
@@ -199,11 +208,11 @@ codeunit 60535 "PCN Tests"
             'The saved part row must carry the value the handler typed.');
     end;
 
-    // CLAIM: a part row that was started and typed into but never left is not written when the
-    // handler closes the modal with Cancel.
+    // CLAIM: a part row that was started and typed into but never left IS written when the
+    // handler closes the modal with Cancel. Measured; the arm first asserted the opposite.
     [Test]
     [HandlerFunctions('PcnDialogTypeALineThenCancelHandler')]
-    procedure CancelInvoke_OnAStandardDialog_DiscardsThePendingPartRow()
+    procedure CancelInvoke_OnAStandardDialog_SavesThePendingPartRow()
     var
         Header: Record "PCN Header";
         Dialog: Page "PCN Dialog";
@@ -216,16 +225,19 @@ codeunit 60535 "PCN Tests"
 
         Assert.AreEqual(Format(Action::Cancel), Format(Result),
             'Cancel().Invoke() must close the modal reporting Cancel even after a part row was typed.');
-        Assert.AreEqual(0, CountLines('H1'),
-            'Cancel must not write the part row that was still being edited when it was pressed.');
+        Assert.AreEqual(1, CountLines('H1'),
+            'Cancel writes the part row that was still being edited when it was pressed: it closes the page, it does not discard.');
+        Assert.AreEqual('Alpha', FirstReference('H1'),
+            'The row Cancel wrote must carry the value the handler typed, not a blank row.');
     end;
 
     // DISCRIMINATOR: 2 = Cancel saves everything, 1 = it drops only the pending row,
-    // 0 = it rolls the part back -- and the probe is what makes that third reading safe, because
-    // 0 would also be the answer if New() had never committed the first row.
+    // 0 = it rolls the part back. BC answers 2. The probe is what makes that reading safe: a 0
+    // would also have been the answer if New() had never committed the first row, and the probe
+    // passing says it did.
     [Test]
     [HandlerFunctions('PcnDialogTypeTwoLinesThenCancelHandler')]
-    procedure CancelInvoke_OnAStandardDialog_KeepsTheCommittedPartRowAndDropsThePendingOne()
+    procedure CancelInvoke_OnAStandardDialog_KeepsBothTheCommittedAndThePendingPartRow()
     var
         Header: Record "PCN Header";
         Probe: Record "PCN Probe";
@@ -239,15 +251,15 @@ codeunit 60535 "PCN Tests"
         Assert.IsTrue(Probe.Get('AFTER-SECOND-NEW'),
             'The handler must have recorded what it saw after the second New().');
         Assert.AreEqual(1, Probe."Line Count",
-            'Moving to a second row with New() must have committed the first one, so a zero below is a rollback and not a row that was never written.');
-        Assert.AreEqual(1, CountLines('H1'),
-            'Cancel must keep the part row that New() already committed and drop only the one still being edited.');
+            'Moving to a second row with New() must have committed the first one, so a count below is a statement about Cancel and not about a row that was never written.');
+        Assert.AreEqual(2, CountLines('H1'),
+            'Cancel keeps the part row New() had committed AND writes the one still being edited: it saves everything.');
         Assert.AreEqual('First', FirstReference('H1'),
-            'The row that survives Cancel must be the one the handler finished, not the one it was still typing.');
+            'The first row in key order must be the one the handler typed first.');
     end;
 
-    // HOST FIELD, positive half: a field change on the host record itself is saved by OK. This is
-    // what stops the Cancel arm below from passing on the value Initialize() seeded.
+    // HOST FIELD, one half of a pair that BC made agree: a field change on the host record itself
+    // is saved by OK. It also stops the Cancel arm below from passing on a value that never moved.
     [Test]
     [HandlerFunctions('PcnDialogTypeHeaderFieldThenOkHandler')]
     procedure OkInvoke_OnAStandardDialog_SavesThePendingHostFieldChange()
@@ -265,10 +277,11 @@ codeunit 60535 "PCN Tests"
             'OK must write the host field change the handler typed.');
     end;
 
-    // HOST FIELD, the question: the same change, cancelled.
+    // HOST FIELD, the other half: the same change, cancelled -- and saved just the same. Measured;
+    // the arm first asserted the opposite.
     [Test]
     [HandlerFunctions('PcnDialogTypeHeaderFieldThenCancelHandler')]
-    procedure CancelInvoke_OnAStandardDialog_DiscardsThePendingHostFieldChange()
+    procedure CancelInvoke_OnAStandardDialog_SavesThePendingHostFieldChange()
     var
         Header: Record "PCN Header";
         Dialog: Page "PCN Dialog";
@@ -279,8 +292,8 @@ codeunit 60535 "PCN Tests"
         Dialog.RunModal();
 
         Header.Get('H1');
-        Assert.AreEqual('Host', Header.Descr,
-            'Cancel must not write the host field change that was pending when it was pressed.');
+        Assert.AreEqual('Changed', Header.Descr,
+            'Cancel writes the host field change that was pending when it was pressed, the same as OK does.');
     end;
 
     // --- handlers ---------------------------------------------------------------------------
