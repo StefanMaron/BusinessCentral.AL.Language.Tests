@@ -15,6 +15,25 @@
 // ever held by the page fails it.
 //
 // Filed from AlRunner#4146.
+//
+// NOT COVERED, and not coverable: a part INSIDE a part. AlRunner#4150 asks whether a row typed
+// two levels down is saved when the host closes. No AL test can type one, by two separate
+// compile-time refusals measured with BC's own compiler
+// (Microsoft.Dynamics.Nav.CodeAnalysis.dll, 28.1.49838.53910):
+//
+//   * a CardPart or ListPart that declares a part of its own is rejected outright --
+//     "error AL0215: A Part type page cannot contain other parts. Part pages (List Part, Card
+//     Part) can only contain fields and actions.";
+//   * routing around that with a non-part page type in the middle does compile -- a ListPlus
+//     page hosted as a part, itself hosting a ListPart -- but the TestPage type generated for
+//     the middle exposes no member for the inner part, so addressing it is
+//     "error AL0132: 'Middle' does not contain a definition for 'Leaf'". The middle page's own
+//     field resolves and passes in the same file, so this is about the nested part and not
+//     about the fixture.
+//
+// Per this repo's "untestable by construction -- document, don't stub" rule that is a comment
+// rather than a test: a stub asserting the compiler's refusal would read as coverage of a
+// runtime behaviour nothing here can reach.
 codeunit 60760 "OKP Ok Part Row Tests"
 {
     Subtype = Test;
