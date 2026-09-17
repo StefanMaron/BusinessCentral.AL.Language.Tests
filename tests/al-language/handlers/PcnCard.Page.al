@@ -1,7 +1,12 @@
 // Fixture for "PCN Tests" (60535). A card over "PCN Header" (60533) hosting "PCN Lines Part"
-// (60534). No triggers and no declared actions: the suite measures what the platform itself
-// does with a pending part row when the built-in Cancel closes the card, so anything this page
-// did of its own would be in the way.
+// (60534). No triggers and no declared actions, so nothing this page does of its own is in the
+// way of what the platform does by itself.
+//
+// This host carries the OK arm and the no-built-in-Cancel refusal arm. It cannot carry a Cancel
+// MEASUREMENT: "Test Page Modal" (60703) records, verified against real BC, that a plain
+// Card-type modal has no client Cancel affordance and that TestPage.Cancel() answers "not found"
+// on one even when the page declares an action named Cancel. "PCN Dialog" (60535) is the host
+// the Cancel measurements run on.
 page 60533 "PCN Card"
 {
     PageType = Card;
