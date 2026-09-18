@@ -24,6 +24,13 @@
 /// Each refusal is paired with a negative control that differs in exactly one thing — no
 /// subscriber, or no filter on the FlowField — because a tier or runner that refused
 /// Truncate() unconditionally would otherwise pass the positive arms.
+///
+/// Deliberately NOT asserted after a refusal: that the seeded row survives. `asserterror`
+/// unwinds the write transaction the test method opened, so the seeding Insert is rolled back
+/// too and Count() reads 0 — measured on all eight cloud legs, which reported
+/// `Expected:<1> Actual:<0>` while the message assertions above them passed. That count
+/// measures BC's test-isolation rollback, not the guard, and an arm asserting it would fail
+/// for a reason that has nothing to do with Truncate().
 /// </summary>
 codeunit 60518 "Test Record Truncate Guards"
 {
@@ -56,10 +63,6 @@ codeunit 60518 "Test Record Truncate Guards"
             TruncateWithEventErr,
             GetLastErrorText(),
             'Truncate() on a table with an OnBeforeDeleteEvent subscriber must raise the event refusal');
-
-        // The refusal happens during validation, before any row is removed.
-        GuardRow.Reset();
-        Assert.AreEqual(1, GuardRow.Count(), 'A refused Truncate() must not delete rows');
     end;
 
     [Test]
@@ -105,9 +108,6 @@ codeunit 60518 "Test Record Truncate Guards"
             TruncateFlowFilterErr,
             GetLastErrorText(),
             'Truncate() with a filter on a FlowField must raise the FlowField refusal');
-
-        FlowRow.Reset();
-        Assert.AreEqual(1, FlowRow.Count(), 'A refused Truncate() must not delete rows');
     end;
 
     [Test]
