@@ -64,6 +64,54 @@ codeunit 60211 "Test Codeunit Al Call Stack"
         Assert.AreEqual('', Stack, 'GetLastErrorCallStack must be empty when no error occurred');
     end;
 
+    [Test]
+    procedure CallStack_ErrorInsideOnRunTrigger_MarksTheFrameAsATrigger()
+    // CLAIM: a frame for an AL TRIGGER carries the "(Trigger)" marker BC appends directly
+    // after the method name, and a frame for an ordinary procedure does not. Both frames are
+    // produced by the same mechanism in the same stack, so the pair pins the DISTINCTION
+    // rather than merely the presence of the token somewhere in the text.
+    var
+        TriggerHelper: Codeunit "AL Call Stack Trigger Helper";
+        Stack: Text;
+    begin
+        ClearLastError();
+
+        // Arrange/Act — Run() enters the helper's OnRun trigger, which errors.
+        asserterror TriggerHelper.Run();
+        Stack := GetLastErrorCallStack();
+
+        // Assert — the trigger frame names the helper AND is marked as a trigger.
+        Assert.IsTrue(
+            Stack.Contains('(CodeUnit 60228)'),
+            'Call stack must contain "(CodeUnit 60228)" for the trigger helper. Actual stack: ' + Stack);
+
+        Assert.IsTrue(
+            Stack.Contains('OnRun(Trigger)'),
+            'The OnRun trigger frame must be marked "OnRun(Trigger)". Actual stack: ' + Stack);
+    end;
+
+    [Test]
+    procedure CallStack_ErrorInsideAProcedure_DoesNotMarkTheFrameAsATrigger()
+    // CLAIM: the negative half of the pair above. RaiseError is an ordinary procedure, so its
+    // frame carries the method name with NO "(Trigger)" marker. Without this arm a runner that
+    // marked EVERY frame as a trigger would pass the positive test.
+    var
+        Stack: Text;
+    begin
+        ClearLastError();
+
+        asserterror RaiseViaHelper();
+        Stack := GetLastErrorCallStack();
+
+        Assert.IsTrue(
+            Stack.Contains('(CodeUnit 60212)'),
+            'Call stack must contain "(CodeUnit 60212)" for the helper codeunit. Actual stack: ' + Stack);
+
+        Assert.IsFalse(
+            Stack.Contains('RaiseError(Trigger)'),
+            'A plain procedure frame must NOT be marked as a trigger. Actual stack: ' + Stack);
+    end;
+
     local procedure Initialize()
     begin
     end;
