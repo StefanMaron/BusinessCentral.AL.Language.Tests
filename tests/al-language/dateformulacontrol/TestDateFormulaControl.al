@@ -22,6 +22,13 @@
 // still takes its string unchanged. An implementation that routed every control through
 // DateFormula evaluation would pass every arm above and fail those two, which is what makes
 // this suite discriminate rather than merely cover.
+//
+// The last arm is the negative direction, and it is deliberately NOT "an invalid value is
+// refused". That was measured and is false: BC's DateFormula parser reads a leading token and
+// stops, so 'not a formula' and '<1X>' are both accepted rather than rejected. What the arm
+// pins instead is that two formulas differing ONLY in the quantifier do not land on the same
+// stored value -- which is what fails if a platform stores the text verbatim, truncates it,
+// or blanks it, and which needs no prediction of the tier's own formatting.
 
 codeunit 60601 "ALT DateFormula Control Tests"
 {
@@ -188,21 +195,33 @@ codeunit 60601 "ALT DateFormula Control Tests"
         Card.Close();
     end;
 
-    // ── Negative: a value that is not a date formula at all ─────────────────────
+    // ── Negative: the quantifier is read, not merely echoed ─────────────────────
 
     [Test]
-    procedure SetValue_NotAFormula_OnDateFormulaControl_IsRefused()
+    procedure SetValue_DifferentQuantifiers_OnDateFormulaControl_AreNotInterchangeable()
     var
         Card: TestPage "ALT DateFormula Card";
+        Row: Record "ALT DateFormula Row";
+        OneDay: DateFormula;
+        Stored: Text;
     begin
-        // The negative direction. Without it, a platform that silently stored a blank formula
-        // for anything it could not read would pass every arm above.
+        // The discriminating negative. '<1D>' and '<1M>' differ only in the quantifier, so a
+        // platform that stored the incoming text verbatim, or truncated it, or blanked it,
+        // would make these two agree -- and every positive arm above would still pass.
+        // Asserting they DIFFER pins that the quantifier reached the stored value, without
+        // this suite having to predict the tier's formatting for either one.
         SeedRow();
+        Evaluate(OneDay, '<1D>');
 
         Card.OpenEdit();
-        asserterror Card.RecPeriod.SetValue('not a formula');
+        Card.RecPeriod.SetValue('<1M>');
+        Card.Close();
 
-        Assert.AreNotEqual('', GetLastErrorText(),
-          'SetValue with a value that is not a date formula must be refused with a message');
+        Row.Get('DF-1');
+        Stored := Format(Row."Period Length");
+        Assert.AreNotEqual(Format(OneDay), Stored,
+          'a month formula must not store the same value as a day formula');
+        Assert.AreNotEqual('', Stored,
+          'a valid month formula must not store a blank DateFormula');
     end;
 }
