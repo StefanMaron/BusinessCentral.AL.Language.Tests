@@ -21,12 +21,19 @@
 ///     lookup differs from merely opening a page.
 ///   - A handler that CANCELS leaves the host field unchanged -- the write-back is conditional
 ///     on the outcome, not unconditional.
-///   - A field with neither a trigger nor a TableRelation has nothing to resolve, and the
-///     lookup does not silently open some other page.
+///   - A field with neither a trigger nor a TableRelation has nothing to resolve, and Lookup()
+///     then COMPLETES WITHOUT ERROR, leaving the field exactly as it was.
 ///
 /// The fourth is the one that keeps the first three honest. An implementation that opened a
-/// page for every triggerless lookup -- the first page it found, or the host's own -- passes
-/// the first three and fails only this one.
+/// page for every triggerless lookup -- the first page it found, or the host's own -- fails
+/// it, because a page that opened with no handler declared would raise.
+///
+/// That fourth claim was measured rather than assumed, and the first version of this suite got
+/// it wrong. It asserted that BC RAISES for that shape; all eight cloud legs answered
+/// "An error was expected inside an ASSERTERROR statement" on run 35445556865, identically on
+/// 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3 and 28.4. So BC does nothing at all here -- no
+/// error, no page -- and the assertion now says that. The other five claims below passed on
+/// all eight legs of that same run.
 /// </summary>
 codeunit 60569 "TRL Tests"
 {
@@ -122,21 +129,31 @@ codeunit 60569 "TRL Tests"
     end;
 
     // CLAIM: a field with no trigger AND no TableRelation has nothing to resolve a lookup
-    // from, and no page opens. "Plain Code" is "Related Code" minus exactly one property, so
-    // this separates "the relation was followed" from "a page was opened for any triggerless
-    // lookup". No handler is declared here at all: if a page did open, the test fails on the
-    // unhandled-UI refusal rather than on the assertion.
+    // from, and Lookup() then completes without error, having changed nothing. "Plain Code" is
+    // "Related Code" minus exactly one property, so this separates "the relation was followed"
+    // from "a page was opened for any triggerless lookup".
+    //
+    // No handler is declared here, deliberately, and that is what carries the "no page opened"
+    // half: a modal page opening with no [ModalPageHandler] bound raises on real BC, so if this
+    // shape DID open something the call would fail rather than reach the assertion below. The
+    // assertion then carries the other half -- that the field is untouched.
+    //
+    // Measured, not assumed: this test first asserted that BC RAISES here, and all eight cloud
+    // legs disagreed (run 35445556865). BC's answer is silence.
     [Test]
-    procedure Lookup_NoTriggerAndNoTableRelation_OpensNothing()
+    procedure Lookup_NoTriggerAndNoTableRelation_DoesNothing()
     var
         Card: TestPage "TRL Card";
     begin
         OpenOn(Card);
+        Card."Plain Code".SetValue('KEEP');
 
-        asserterror Card."Plain Code".Lookup();
+        // No asserterror: this must not raise. An implementation that opened a page here fails
+        // on the unhandled-UI refusal before reaching the assertion.
+        Card."Plain Code".Lookup();
 
-        Assert.AreNotEqual('', GetLastErrorText(),
-            'a lookup with neither an OnLookup trigger nor a TableRelation must not silently succeed');
+        Assert.AreEqual('KEEP', Card."Plain Code".Value,
+            'a lookup with neither an OnLookup trigger nor a TableRelation must leave the field exactly as it was');
         Card.Close();
     end;
 
