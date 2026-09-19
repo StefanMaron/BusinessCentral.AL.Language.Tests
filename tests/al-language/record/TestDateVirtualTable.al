@@ -348,6 +348,134 @@ codeunit 60983 "Test Date Virtual Table"
         Assert.AreEqual(DMY2Date(1, 1, 2300), DateRec."Period Start", 'Expected the row after 10 January 2000 to be 1 January 2300.');
     end;
 
+    [Test]
+    procedure Record_Date_LastPeriodStart_PerPeriodType_IsTheLastPeriodThatFitsInTheYear9999()
+    var
+        DateRec: Record Date;
+    begin
+        Initialize();
+
+        // The high end of the table. The platform computes periods rather than storing them, so
+        // the last row for each period type is decided by arithmetic, and that arithmetic runs
+        // out at 31 December 9999 - the last date the platform can represent. What each period
+        // type answers there is not the same date, because a period whose END would fall past
+        // 9999-12-31 is not a period the table can carry.
+        //
+        // The negative direction matters as much as the positive one: a provider that ran its
+        // loop one period too far would answer a row here whose "Period End" had wrapped, and a
+        // provider that stopped one period short would answer the period before.
+
+        // Date: every day is a period, so the last one is the last representable day itself.
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Date);
+        Assert.IsTrue(DateRec.FindLast(), 'Record Date returned no last row for period type Date.');
+        Assert.AreEqual(DMY2Date(31, 12, 9999), DateRec."Period Start", 'The last Date period starts on 31 December 9999.');
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 9999)), DateRec."Period End", 'The last Date period ends on the day it starts.');
+
+        // Week: weeks start on Monday. 27 December 9999 is a Monday, but its week would end on
+        // 2 January of year 10000, so the last week the table carries is the one before it.
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Week);
+        Assert.IsTrue(DateRec.FindLast(), 'Record Date returned no last row for period type Week.');
+        Assert.AreEqual(DMY2Date(20, 12, 9999), DateRec."Period Start", 'The last Week period starts on Monday 20 December 9999.');
+        Assert.AreEqual(ClosingDate(DMY2Date(26, 12, 9999)), DateRec."Period End", 'The last Week period ends on Sunday 26 December 9999.');
+
+        // Month, Quarter, Year: the last period of each that ends on or before 31 December 9999.
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Month);
+        Assert.IsTrue(DateRec.FindLast(), 'Record Date returned no last row for period type Month.');
+        Assert.AreEqual(DMY2Date(1, 12, 9999), DateRec."Period Start", 'The last Month period starts on 1 December 9999.');
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 9999)), DateRec."Period End", 'The last Month period ends on 31 December 9999.');
+
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Quarter);
+        Assert.IsTrue(DateRec.FindLast(), 'Record Date returned no last row for period type Quarter.');
+        Assert.AreEqual(DMY2Date(1, 10, 9999), DateRec."Period Start", 'The last Quarter period starts on 1 October 9999.');
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 9999)), DateRec."Period End", 'The last Quarter period ends on 31 December 9999.');
+
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Year);
+        Assert.IsTrue(DateRec.FindLast(), 'Record Date returned no last row for period type Year.');
+        Assert.AreEqual(DMY2Date(1, 1, 9999), DateRec."Period Start", 'The last Year period starts on 1 January 9999.');
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 9999)), DateRec."Period End", 'The last Year period ends on 31 December 9999.');
+    end;
+
+    [Test]
+    procedure Record_Date_FirstPeriodStart_PerPeriodType_IsTheFirstPeriodThatFitsInYearOne()
+    var
+        DateRec: Record Date;
+    begin
+        Initialize();
+
+        // The low end, the mirror of the test above. Year 1 does not begin the table for every
+        // period type: a period whose start would fall before 1 January of year 1 cannot be
+        // represented, so each type begins at the first period that fits whole.
+        //
+        // Record_Date_RangeOpenAtTheLowEnd_ReachesBackToTheFirstPeriodStart already pins the
+        // Date type's first row through a filter; this reaches the same row through FindFirst
+        // and adds the four period types that test does not cover.
+
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Date);
+        Assert.IsTrue(DateRec.FindFirst(), 'Record Date returned no first row for period type Date.');
+        Assert.AreEqual(DMY2Date(3, 1, 1), DateRec."Period Start", 'The first Date period starts on 3 January of year 1.');
+
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Week);
+        Assert.IsTrue(DateRec.FindFirst(), 'Record Date returned no first row for period type Week.');
+        Assert.AreEqual(DMY2Date(8, 1, 1), DateRec."Period Start", 'The first Week period starts on Monday 8 January of year 1.');
+        Assert.AreEqual(ClosingDate(DMY2Date(14, 1, 1)), DateRec."Period End", 'The first Week period ends on Sunday 14 January of year 1.');
+
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Month);
+        Assert.IsTrue(DateRec.FindFirst(), 'Record Date returned no first row for period type Month.');
+        Assert.AreEqual(DMY2Date(1, 2, 1), DateRec."Period Start", 'The first Month period starts on 1 February of year 1.');
+
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Quarter);
+        Assert.IsTrue(DateRec.FindFirst(), 'Record Date returned no first row for period type Quarter.');
+        Assert.AreEqual(DMY2Date(1, 4, 1), DateRec."Period Start", 'The first Quarter period starts on 1 April of year 1.');
+
+        DateRec.Reset();
+        DateRec.SetRange("Period Type", DateRec."Period Type"::Year);
+        Assert.IsTrue(DateRec.FindFirst(), 'Record Date returned no first row for period type Year.');
+        Assert.AreEqual(DMY2Date(1, 1, 2), DateRec."Period Start", 'The first Year period starts on 1 January of year 2.');
+    end;
+
+    [Test]
+    procedure Record_Date_KeyedGetAtBothRepresentableBoundaries_AnswersTheRow()
+    var
+        DateRec: Record Date;
+    begin
+        Initialize();
+
+        // A keyed Get - not a filtered read - at each end of the table. This is the shape that
+        // reaches the platform's primary-key path, and the boundary is where a provider that
+        // computes "the period before" or "the period after" to locate a row runs its own
+        // arithmetic off the end of the representable range.
+        //
+        // Both ends must answer the row itself, with the period's own end date.
+        DateRec.Get(DateRec."Period Type"::Date, DMY2Date(3, 1, 1));
+        Assert.AreEqual(ClosingDate(DMY2Date(3, 1, 1)), DateRec."Period End", 'Get at the first Date period returned a different period.');
+
+        Clear(DateRec);
+        DateRec.Get(DateRec."Period Type"::Date, DMY2Date(31, 12, 9999));
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 9999)), DateRec."Period End", 'Get at the last Date period returned a different period.');
+
+        Clear(DateRec);
+        DateRec.Get(DateRec."Period Type"::Year, DMY2Date(1, 1, 9999));
+        Assert.AreEqual(ClosingDate(DMY2Date(31, 12, 9999)), DateRec."Period End", 'Get at the last Year period returned a different period.');
+
+        // The negatives, one period past each edge. 2 January of year 1 precedes the first Date
+        // period, and 1 January of year 1 precedes the first Year period; neither is a period
+        // start, so each must raise rather than hand back a blank row or an invented one.
+        Clear(DateRec);
+        asserterror DateRec.Get(DateRec."Period Type"::Date, DMY2Date(2, 1, 1));
+        Assert.ExpectedErrorCannotFind(Database::Date);
+
+        Clear(DateRec);
+        asserterror DateRec.Get(DateRec."Period Type"::Year, DMY2Date(1, 1, 1));
+        Assert.ExpectedErrorCannotFind(Database::Date);
+    end;
+
     local procedure Initialize()
     begin
         // Record Date is a read-only computed system virtual table — nothing to clean up.
