@@ -203,6 +203,7 @@ codeunit 60601 "ALT DateFormula Control Tests"
         Card: TestPage "ALT DateFormula Card";
         Row: Record "ALT DateFormula Row";
         OneDay: DateFormula;
+        RoundTrip: DateFormula;
         Stored: Text;
     begin
         // The discriminating negative. '<1D>' and '<1M>' differ only in the quantifier, so a
@@ -223,5 +224,12 @@ codeunit 60601 "ALT DateFormula Control Tests"
           'a month formula must not store the same value as a day formula');
         Assert.AreNotEqual('', Stored,
           'a valid month formula must not store a blank DateFormula');
+        // AreNotEqual alone is too weak on its own: a truncated '<' differs from a day formula
+        // too, so it would satisfy both assertions above. Pinning the round trip is what makes
+        // this arm fail for a platform that stores anything other than the evaluated month
+        // formula, without predicting the tier's spelling for it.
+        Evaluate(RoundTrip, Stored);
+        Assert.AreEqual(Stored, Format(RoundTrip),
+          'the stored month formula must itself re-evaluate to the same formula');
     end;
 }
