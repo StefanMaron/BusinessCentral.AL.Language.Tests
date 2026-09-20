@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-tablerelation-property
 // Scope: in-scope
 // Fixtures used: TRL Related (60563), TRL Related List (60564), TRL Host (60565),
-//   TRL Card (60566), TRL Pageless (60570); shared Assert (60021)
+//   TRL Card (60566), TRL Pageless (60570), TRL Pageless List (60571);
+//   shared Assert (60021)
 //
 /// <summary>
 /// Pins what a TestPage field's Lookup() does when the ONLY thing that can resolve the lookup
@@ -24,10 +25,12 @@
 ///   - A field with neither a trigger nor a TableRelation has nothing to resolve, and Lookup()
 ///     then COMPLETES WITHOUT ERROR, leaving the field exactly as it was.
 ///   - A field whose TableRelation RESOLVES, to a table declaring neither LookupPageId nor
-///     DrillDownPageId, has a related table and no page that table names. What BC does then is
-///     what the last two tests measure -- see their comments; the answer was not assumed, and
-///     the second of them asserts the two relation-bearing fields answer DIFFERENTLY within
-///     one card, which is what attributes the difference to the page declaration itself.
+///     DrillDownPageId, STILL OPENS A MODAL PAGE. That was measured, and it refuted the
+///     expectation the arm was written with: run 35493508143 answered "Unhandled UI:
+///     ModalPage" on 27.0, 27.3 and 27.5, which is raised from inside BC's own
+///     NavTestExecution.ShowLookupForm and therefore only once BC has decided to show a form.
+///     The arm after it asks WHICH page, since "a page opens" is not yet a rule anything can
+///     implement.
 ///
 /// The fourth is the one that keeps the first three honest. An implementation that opened a
 /// page for every triggerless lookup -- the first page it found, or the host's own -- fails
@@ -48,6 +51,8 @@ codeunit 60569 "TRL Tests"
     var
         Assert: Codeunit Assert;
         HandlerRan: Boolean;
+        PagelessHandlerRan: Boolean;
+        PagelessFirstRowSeen: Code[20];
 
     local procedure OpenOn(var Card: TestPage "TRL Card")
     var
@@ -56,6 +61,8 @@ codeunit 60569 "TRL Tests"
         Pageless: Record "TRL Pageless";
     begin
         HandlerRan := false;
+        PagelessHandlerRan := false;
+        PagelessFirstRowSeen := '';
 
         Related.DeleteAll();
         Related.Init();
@@ -174,87 +181,94 @@ codeunit 60569 "TRL Tests"
     end;
 
     // CLAIM: a lookup whose TableRelation resolves to a table declaring NEITHER LookupPageId
-    // NOR DrillDownPageId completes WITHOUT ERROR, leaving the field exactly as it was.
+    // NOR DrillDownPageId still OPENS A MODAL PAGE. It is neither silent nor an error.
     //
-    // This is the shape the suite did not previously cover, and it is a genuinely different
-    // question from either shape above. "Plain Code" gives the lookup nothing to resolve;
-    // here the relation RESOLVES -- there is a related table, with rows -- and what is absent
-    // is only the page that table would name. BC's own NavRecord.GetPageToOpen returns
-    // LookupFormId falling back to DrillDownPageId, which is 0 for "TRL Pageless"; what the
-    // lookup path does with that 0 is not visible from the server assembly, because the
-    // page-picking happens client-side.
+    // MEASURED, and it refuted the expectation this arm was written with. The first version
+    // asserted BC does nothing -- the same shape as the "Plain Code" arm above -- and run
+    // 35493508143 answered, on 27.0, 27.3 and 27.5:
     //
-    // No handler is declared, deliberately, and that is what carries the "no page opened"
-    // half: a modal page opening with no [ModalPageHandler] bound raises on real BC, so if
-    // this shape opened ANY page -- the related table's card, the host's own page, a
-    // system-generated list -- this call fails rather than reaching the assertion. The
-    // assertion carries the other half, that the field is untouched.
+    //     FAIL  Lookup_RelationToTableWithNoLookupPage_DoesNothing - Unhandled UI: ModalPage
     //
-    // NOT assumed. The sibling shape in this same suite was asserted as an error by its author
-    // and refuted on all eight cloud legs, so the analogy in either direction is worthless
-    // here; this arm and its sibling below were written to be read together, and whichever one
-    // CI fails is the measurement.
+    // "Unhandled UI: ModalPage" is raised from inside BC's own NavTestExecution.ShowLookupForm,
+    // which is reached only once BC has decided to show a form and then found no handler
+    // registered for it. A shape that opened nothing never enters that method -- which is
+    // exactly how the "Plain Code" arm above passes on the very same leg.
     //
-    // Why this shape rather than asserterror, given the answer was not known when it was
-    // written: this form distinguishes all three possible answers and cannot pass for the
-    // wrong reason, and an asserterror form cannot say that. Silence passes; an error fails
-    // and prints BC's own message; an opened page fails with the distinct unhandled-UI
-    // message. Under asserterror an opened page would be SWALLOWED by the asserterror itself
-    // and could report green for an outcome the test does not mean -- so the choice is about
-    // which failures stay legible, not a prediction of which one occurs.
+    // So BC has a page-picking rule for this shape, and "there is no page to open" is false.
+    // This arm now pins the fact that a page opens; the arm after it asks which.
     [Test]
-    procedure Lookup_RelationToTableWithNoLookupPage_DoesNothing()
+    [HandlerFunctions('PagelessListHandler')]
+    procedure Lookup_RelationToTableWithNoLookupPage_StillOpensAPage()
     var
         Card: TestPage "TRL Card";
     begin
         OpenOn(Card);
         // PL-A, not an arbitrary string: the field carries a TableRelation, so SetValue
-        // validates against "TRL Pageless" and any value absent from it raises here rather
-        // than at the Lookup() this test is about. A pre-set value is what makes "unchanged"
-        // observable at all -- an empty field cannot distinguish "left alone" from "blanked".
+        // validates against "TRL Pageless" and any value absent from it would raise here
+        // rather than at the Lookup() this test is about.
         Card."Pageless Code".SetValue('PL-A');
 
         Card."Pageless Code".Lookup();
 
-        Assert.AreEqual('PL-A', Card."Pageless Code".Value,
-            'a lookup whose TableRelation resolves to a table declaring no LookupPageId and no DrillDownPageId must leave the field exactly as it was');
+        // Reaching this line at all is half the claim: an implementation that refused, or that
+        // opened a page with no handler bound, fails before it.
+        Assert.IsTrue(PagelessHandlerRan,
+            'a lookup whose TableRelation resolves to a table declaring no LookupPageId and no DrillDownPageId still opens a modal page -- measured on 27.0, 27.3 and 27.5, run 35493508143');
         Card.Close();
     end;
 
-    // CLAIM: within ONE card instance, the two relation-bearing fields answer DIFFERENTLY,
-    // and the only thing that differs between them is whether the target table declares a
-    // page. This is the discriminating form of the arm above, and it asserts something no
-    // other test in this codeunit does -- the others each exercise one field, so none of them
-    // can say that one page-declaration property is what separates two lookups.
+    // CLAIM: the page BC picks for that shape is an AL-DECLARED page whose SourceTable is the
+    // related table -- not a generated one, and not a page the table names, because the table
+    // names none.
     //
-    // The order matters and is deliberate: the pageless lookup runs FIRST, while no handler
-    // has been consumed. [HandlerFunctions] supplies exactly one invocation of
-    // RelatedListHandler; if the pageless lookup opened a page it would consume that handler,
-    // and the served lookup afterwards would then find none and raise. So a greedy
-    // implementation that opens something for both fields fails here even though each field
-    // taken alone would look served.
+    // This is the question "a page opens" leaves open, and it is the one the runner needs
+    // answered before it can model anything: a rule of the form "pick a page over the source
+    // table" is implementable, while "BC generates something" is not.
+    //
+    // The discrimination is carried by the handler's TYPE. [ModalPageHandler] binds to exactly
+    // one page object, so PagelessListHandler can only run if the page BC opened IS
+    // "TRL Pageless List" (60571). Nothing connects that page to "TRL Pageless" except its
+    // SourceTable -- the table declares neither LookupPageId nor DrillDownPageId, which is the
+    // whole premise of the fixture.
+    //
+    // A handler that does not run leaves this red with "Unhandled UI: ModalPage", which is the
+    // OTHER answer and is equally a result: BC would then be opening something no AL object
+    // names, and the runner cannot model a rule by picking an object id.
     [Test]
-    [HandlerFunctions('RelatedListHandler')]
-    procedure Lookup_OnlyTheRelationWhoseTargetDeclaresAPageOpensOne()
+    [HandlerFunctions('PagelessListRecordsHandler')]
+    procedure Lookup_PagelessTargetOpensAnAlPageOverThatTable()
     var
         Card: TestPage "TRL Card";
     begin
         OpenOn(Card);
         Card."Pageless Code".SetValue('PL-A');
 
-        // Target declares no page. Must not consume the single declared handler.
         Card."Pageless Code".Lookup();
-        Assert.IsTrue(not HandlerRan,
-            'the lookup whose target table declares no LookupPageId and no DrillDownPageId must not open the OTHER table''s lookup page');
-        Assert.AreEqual('PL-A', Card."Pageless Code".Value,
-            'and it must leave its own field unchanged');
 
-        // Target declares LookupPageId. Same card, same instant, opposite answer.
-        Card."Related Code".Lookup();
-        Assert.IsTrue(HandlerRan,
-            'the sibling field, differing only in which table its TableRelation names, must still open that table''s LookupPageId page');
-
+        // The handler asserts it is bound to the right table by reading a row it seeded.
+        Assert.AreEqual('PL-B', PagelessFirstRowSeen,
+            'the page BC opens for a pageless relation target must be bound to that table -- the handler navigated to PL-B and read it back');
         Card.Close();
+    end;
+
+    // Bound to "TRL Pageless List" (60571). It can only run if THAT page is what BC opened,
+    // which is what makes the two tests above discriminate rather than merely observe.
+    [ModalPageHandler]
+    procedure PagelessListHandler(var Modal: TestPage "TRL Pageless List")
+    begin
+        PagelessHandlerRan := true;
+        Modal.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure PagelessListRecordsHandler(var Modal: TestPage "TRL Pageless List")
+    begin
+        PagelessHandlerRan := true;
+        // Reading a row proves the page is bound to "TRL Pageless" and not merely that some
+        // page of that type opened.
+        Modal.GoToKey('PL-B');
+        PagelessFirstRowSeen := Modal."Code".Value();
+        Modal.OK().Invoke();
     end;
 
     [ModalPageHandler]
