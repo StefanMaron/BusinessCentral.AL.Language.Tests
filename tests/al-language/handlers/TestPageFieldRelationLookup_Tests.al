@@ -25,7 +25,9 @@
 ///     then COMPLETES WITHOUT ERROR, leaving the field exactly as it was.
 ///   - A field whose TableRelation RESOLVES, to a table declaring neither LookupPageId nor
 ///     DrillDownPageId, has a related table and no page that table names. What BC does then is
-///     what the last two tests measure -- see their comments; the answer was not assumed.
+///     what the last two tests measure -- see their comments; the answer was not assumed, and
+///     the second of them asserts the two relation-bearing fields answer DIFFERENTLY within
+///     one card, which is what attributes the difference to the page declaration itself.
 ///
 /// The fourth is the one that keeps the first three honest. An implementation that opened a
 /// page for every triggerless lookup -- the first page it found, or the host's own -- fails
@@ -219,28 +221,39 @@ codeunit 60569 "TRL Tests"
         Card.Close();
     end;
 
-    // CLAIM: the shape above is decided by the TARGET table''s page declaration, not by the
-    // relation being present -- so the matched sibling, whose relation points at a table that
-    // DOES declare LookupPageId, still opens a page from the same starting state.
+    // CLAIM: within ONE card instance, the two relation-bearing fields answer DIFFERENTLY,
+    // and the only thing that differs between them is whether the target table declares a
+    // page. This is the discriminating form of the arm above, and it asserts something no
+    // other test in this codeunit does -- the others each exercise one field, so none of them
+    // can say that one page-declaration property is what separates two lookups.
     //
-    // Without this arm the test above passes for an implementation in which a lookup on this
-    // card never opens anything at all, which is the failure mode the suite''s "Plain Code"
-    // control was added to rule out for the other shapes. Here the two fields differ in
-    // exactly one property -- which table the relation names -- so a green pair pins the
-    // difference to the page declaration rather than to the lookup path being dead.
+    // The order matters and is deliberate: the pageless lookup runs FIRST, while no handler
+    // has been consumed. [HandlerFunctions] supplies exactly one invocation of
+    // RelatedListHandler; if the pageless lookup opened a page it would consume that handler,
+    // and the served lookup afterwards would then find none and raise. So a greedy
+    // implementation that opens something for both fields fails here even though each field
+    // taken alone would look served.
     [Test]
     [HandlerFunctions('RelatedListHandler')]
-    procedure Lookup_PagelessAndServedRelationsDifferOnlyInTheTargetsPage()
+    procedure Lookup_OnlyTheRelationWhoseTargetDeclaresAPageOpensOne()
     var
         Card: TestPage "TRL Card";
     begin
         OpenOn(Card);
+        Card."Pageless Code".SetValue('PL-A');
 
-        // Same card, same starting state, same absence of any OnLookup trigger.
+        // Target declares no page. Must not consume the single declared handler.
+        Card."Pageless Code".Lookup();
+        Assert.IsTrue(not HandlerRan,
+            'the lookup whose target table declares no LookupPageId and no DrillDownPageId must not open the OTHER table''s lookup page');
+        Assert.AreEqual('PL-A', Card."Pageless Code".Value,
+            'and it must leave its own field unchanged');
+
+        // Target declares LookupPageId. Same card, same instant, opposite answer.
         Card."Related Code".Lookup();
-
         Assert.IsTrue(HandlerRan,
-            'the served relation must still open its target''s LookupPageId page, so the pageless arm''s silence is about the target''s page declaration and not about lookups being inert on this card');
+            'the sibling field, differing only in which table its TableRelation names, must still open that table''s LookupPageId page');
+
         Card.Close();
     end;
 
