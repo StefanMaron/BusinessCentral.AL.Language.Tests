@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-tablerelation-property
 // Scope: in-scope
 // Fixtures used: TRL Related (60563), TRL Related List (60564), TRL Host (60565),
-//   TRL Card (60566); shared Assert (60021)
+//   TRL Card (60566), TRL Pageless (60570); shared Assert (60021)
 //
 /// <summary>
 /// Pins what a TestPage field's Lookup() does when the ONLY thing that can resolve the lookup
@@ -23,6 +23,9 @@
 ///     on the outcome, not unconditional.
 ///   - A field with neither a trigger nor a TableRelation has nothing to resolve, and Lookup()
 ///     then COMPLETES WITHOUT ERROR, leaving the field exactly as it was.
+///   - A field whose TableRelation RESOLVES, to a table declaring neither LookupPageId nor
+///     DrillDownPageId, has a related table and no page that table names. What BC does then is
+///     what the last two tests measure -- see their comments; the answer was not assumed.
 ///
 /// The fourth is the one that keeps the first three honest. An implementation that opened a
 /// page for every triggerless lookup -- the first page it found, or the host's own -- fails
@@ -48,6 +51,7 @@ codeunit 60569 "TRL Tests"
     var
         Host: Record "TRL Host";
         Related: Record "TRL Related";
+        Pageless: Record "TRL Pageless";
     begin
         HandlerRan := false;
 
@@ -60,6 +64,16 @@ codeunit 60569 "TRL Tests"
         Related."Code" := 'REL-B';
         Related.Descr := 'Beta';
         Related.Insert();
+
+        Pageless.DeleteAll();
+        Pageless.Init();
+        Pageless."Code" := 'PL-A';
+        Pageless.Descr := 'Pageless Alpha';
+        Pageless.Insert();
+        Pageless.Init();
+        Pageless."Code" := 'PL-B';
+        Pageless.Descr := 'Pageless Beta';
+        Pageless.Insert();
 
         Host.DeleteAll();
         Host.Init();
@@ -154,6 +168,79 @@ codeunit 60569 "TRL Tests"
 
         Assert.AreEqual('KEEP', Card."Plain Code".Value,
             'a lookup with neither an OnLookup trigger nor a TableRelation must leave the field exactly as it was');
+        Card.Close();
+    end;
+
+    // CLAIM: a lookup whose TableRelation resolves to a table declaring NEITHER LookupPageId
+    // NOR DrillDownPageId completes WITHOUT ERROR, leaving the field exactly as it was.
+    //
+    // This is the shape the suite did not previously cover, and it is a genuinely different
+    // question from either shape above. "Plain Code" gives the lookup nothing to resolve;
+    // here the relation RESOLVES -- there is a related table, with rows -- and what is absent
+    // is only the page that table would name. BC's own NavRecord.GetPageToOpen returns
+    // LookupFormId falling back to DrillDownPageId, which is 0 for "TRL Pageless"; what the
+    // lookup path does with that 0 is not visible from the server assembly, because the
+    // page-picking happens client-side.
+    //
+    // No handler is declared, deliberately, and that is what carries the "no page opened"
+    // half: a modal page opening with no [ModalPageHandler] bound raises on real BC, so if
+    // this shape opened ANY page -- the related table's card, the host's own page, a
+    // system-generated list -- this call fails rather than reaching the assertion. The
+    // assertion carries the other half, that the field is untouched.
+    //
+    // NOT assumed. The sibling shape in this same suite was asserted as an error by its author
+    // and refuted on all eight cloud legs, so the analogy in either direction is worthless
+    // here; this arm and its sibling below were written to be read together, and whichever one
+    // CI fails is the measurement.
+    //
+    // Why this shape rather than asserterror, given the answer was not known when it was
+    // written: this form distinguishes all three possible answers and cannot pass for the
+    // wrong reason, and an asserterror form cannot say that. Silence passes; an error fails
+    // and prints BC's own message; an opened page fails with the distinct unhandled-UI
+    // message. Under asserterror an opened page would be SWALLOWED by the asserterror itself
+    // and could report green for an outcome the test does not mean -- so the choice is about
+    // which failures stay legible, not a prediction of which one occurs.
+    [Test]
+    procedure Lookup_RelationToTableWithNoLookupPage_DoesNothing()
+    var
+        Card: TestPage "TRL Card";
+    begin
+        OpenOn(Card);
+        // PL-A, not an arbitrary string: the field carries a TableRelation, so SetValue
+        // validates against "TRL Pageless" and any value absent from it raises here rather
+        // than at the Lookup() this test is about. A pre-set value is what makes "unchanged"
+        // observable at all -- an empty field cannot distinguish "left alone" from "blanked".
+        Card."Pageless Code".SetValue('PL-A');
+
+        Card."Pageless Code".Lookup();
+
+        Assert.AreEqual('PL-A', Card."Pageless Code".Value,
+            'a lookup whose TableRelation resolves to a table declaring no LookupPageId and no DrillDownPageId must leave the field exactly as it was');
+        Card.Close();
+    end;
+
+    // CLAIM: the shape above is decided by the TARGET table''s page declaration, not by the
+    // relation being present -- so the matched sibling, whose relation points at a table that
+    // DOES declare LookupPageId, still opens a page from the same starting state.
+    //
+    // Without this arm the test above passes for an implementation in which a lookup on this
+    // card never opens anything at all, which is the failure mode the suite''s "Plain Code"
+    // control was added to rule out for the other shapes. Here the two fields differ in
+    // exactly one property -- which table the relation names -- so a green pair pins the
+    // difference to the page declaration rather than to the lookup path being dead.
+    [Test]
+    [HandlerFunctions('RelatedListHandler')]
+    procedure Lookup_PagelessAndServedRelationsDifferOnlyInTheTargetsPage()
+    var
+        Card: TestPage "TRL Card";
+    begin
+        OpenOn(Card);
+
+        // Same card, same starting state, same absence of any OnLookup trigger.
+        Card."Related Code".Lookup();
+
+        Assert.IsTrue(HandlerRan,
+            'the served relation must still open its target''s LookupPageId page, so the pageless arm''s silence is about the target''s page declaration and not about lookups being inert on this card');
         Card.Close();
     end;
 
