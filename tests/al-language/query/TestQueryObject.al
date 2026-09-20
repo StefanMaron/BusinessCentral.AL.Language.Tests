@@ -137,6 +137,176 @@ codeunit 60205 "Test Query Object"
     end;
 
     [Test]
+    procedure Query_SetFilter_WithInclusiveRange_KeepsOnlyRowsInsideRange()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] A two-sided range filter (low..high) on a query column keeps exactly the
+        // rows whose column value falls inside the range, inclusive at both ends. Rows are
+        // (Entry 1, Integer 10) and (Entry 2, Integer 20), so '15..25' must keep only entry 2.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '%1..%2', 15, 25);
+        UniversalQuery.Open();
+
+        Assert.IsTrue(UniversalQuery.Read(), 'A range SetFilter must return the row inside the range');
+        Assert.AreEqual(2, UniversalQuery.EntryNo, 'A range SetFilter must keep only the row whose integer value is inside 15..25');
+        Assert.AreEqual(20, UniversalQuery.IntegerValue, 'A range SetFilter must preserve the matching integer value');
+        RowCount := 1;
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(1, RowCount, 'A range SetFilter must exclude the row whose integer value is below the range');
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithInclusiveRange_IncludesBothEndpoints()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] The range endpoints themselves are INSIDE the range: '10..20' spans both
+        // rows exactly, so it must return both rather than dropping either endpoint. This is the
+        // arm that distinguishes an inclusive range from an exclusive one.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '%1..%2', 10, 20);
+        UniversalQuery.Open();
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(2, RowCount, 'An inclusive range SetFilter spanning both values must return both rows');
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithOpenEndedFromRange_KeepsRowsAtOrAboveLowValue()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] An open-ended '20..' range keeps every row at or above the low value. Only
+        // entry 2 (Integer 20) qualifies, and it qualifies because the low end is inclusive.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '%1..', 20);
+        UniversalQuery.Open();
+
+        Assert.IsTrue(UniversalQuery.Read(), 'An open-ended from-range must return the row at the low value');
+        Assert.AreEqual(2, UniversalQuery.EntryNo, 'An open-ended from-range must keep the row whose integer value equals the low value');
+        RowCount := 1;
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(1, RowCount, 'An open-ended from-range must exclude the row below the low value');
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithOpenEndedToRange_KeepsRowsAtOrBelowHighValue()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] The mirror of the from-range: '..10' keeps every row at or below the high
+        // value, so only entry 1 (Integer 10) qualifies.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '..%1', 10);
+        UniversalQuery.Open();
+
+        Assert.IsTrue(UniversalQuery.Read(), 'An open-ended to-range must return the row at the high value');
+        Assert.AreEqual(1, UniversalQuery.EntryNo, 'An open-ended to-range must keep the row whose integer value equals the high value');
+        RowCount := 1;
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(1, RowCount, 'An open-ended to-range must exclude the row above the high value');
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithRange_NoMatch_ReturnsNoRows()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] The negative arm: a range that no row falls inside returns zero rows rather
+        // than failing or returning the unfiltered set.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '%1..%2', 30, 40);
+        UniversalQuery.Open();
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(0, RowCount, 'A range SetFilter matching no row must return zero rows, not fail');
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithAlternatedRanges_KeepsRowsInEitherRange()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] Two ranges alternated with '|' form an OR over two range conditions, so a
+        // row qualifies when it falls inside EITHER. '5..12|18..25' spans entry 1 through its
+        // first range and entry 2 through its second, so both come back.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '%1..%2|%3..%4', 5, 12, 18, 25);
+        UniversalQuery.Open();
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(2, RowCount, 'Alternated ranges must return the rows matching either range');
+    end;
+
+    [Test]
+    procedure Query_SetFilter_WithAlternatedRanges_ExcludesRowBetweenTheRanges()
+    var
+        UniversalQuery: Query "ALT Universal Query";
+        RowCount: Integer;
+    begin
+        // [SCENARIO] The discriminating arm for the alternation: a gap BETWEEN the two ranges
+        // must exclude the row sitting in it. '5..12|30..40' keeps entry 1 (Integer 10) and drops
+        // entry 2 (Integer 20), which falls between the two ranges. Without this arm the
+        // alternation test above would also pass against an implementation that ignored the
+        // filter entirely and returned both rows.
+        Initialize();
+        InsertQueryRows();
+
+        UniversalQuery.SetFilter(IntegerValue, '%1..%2|%3..%4', 5, 12, 30, 40);
+        UniversalQuery.Open();
+
+        Assert.IsTrue(UniversalQuery.Read(), 'Alternated ranges must return the row inside the first range');
+        Assert.AreEqual(1, UniversalQuery.EntryNo, 'Alternated ranges must keep the row inside the first range');
+        RowCount := 1;
+
+        while UniversalQuery.Read() do
+            RowCount += 1;
+        UniversalQuery.Close();
+
+        Assert.AreEqual(1, RowCount, 'Alternated ranges must exclude the row falling between the two ranges');
+    end;
+
+    [Test]
     procedure Query_GetFilter_AfterSetRange_ReturnsFilterText()
     var
         FilterText: Text;
