@@ -1,6 +1,5 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-direction-property
-//   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-encoding-property
 // Scope: in-scope
 // Fixtures used: ALT Blob (60008) — as a stream sink only; every object under test ships
 //   in the System Application.
@@ -12,15 +11,22 @@
 // obtain an xmlport's metadata rather than having emitted it.
 //
 // Every assertion is about what BC itself answers, so a service tier decides all of it:
-//   * a dependency's xmlport can be declared as a variable and constructed at all;
-//   * its declared Direction is honoured (an Export-only port refuses Import);
+//   * a dependency's xmlport can be declared as a variable and its runtime methods called;
+//   * its declared Direction is honoured (an Export-only port refuses Import, and vice versa);
 //   * its object identity (XmlPort::<name>) resolves to the documented id.
 //
-// The three ports used are the ones whose declared properties are unambiguous in the
-// System Application source:
-//   9862 "Export Permission Sets System"  Direction = Export, Encoding = UTF8
-//   9863 "Export Permission Sets Tenant"  Direction = Export, Encoding = UTF8
-//   9864 "Import Permission Sets"         Direction = Import, Encoding = UTF8
+// WHAT IS DELIBERATELY NOT PINNED HERE: an xmlport's Encoding, PreserveWhiteSpace and
+// UseRequestPage. Those are DESIGN-TIME properties with no AL-reachable accessor on an xmlport
+// object — `Port.UseRequestPage(false)` is rejected by the compiler (AL0127 where the port
+// declares the property, AL0132 where it does not), and measured across Base Application +
+// System Application 28.1.49838.53910 there are 64 UseRequestPage() calls with a Report
+// receiver and zero with an XmlPort receiver. Direction is the one declared property with an
+// AL-observable CONSEQUENCE, which is why the two tests below carry the property-level claim.
+//
+// The ports used, and the declared Direction each states in the System Application source:
+//   9862 "Export Permission Sets System"  Direction = Export   (construction + refuses Import)
+//   9864 "Import Permission Sets"         Direction = Import   (construction + refuses Export)
+//   9863 "Export Permission Sets Tenant"  Direction = Export   (identity only)
 //
 // Export is deliberately NOT invoked. These ports write real permission-set data, and a test
 // that exported them would assert against whatever the tenant happens to hold — which is a
@@ -36,38 +42,45 @@ codeunit 60918 "Test XmlPort Precompiled Obj"
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;
 
-    // An xmlport belonging to a DEPENDENCY app can be declared and constructed, and the
-    // instance BC hands back is the one that object declares. The variable declaration alone
-    // is a compile-time claim; touching the instance is what forces the platform to obtain
-    // the object's metadata at run time, which is the part that can fail independently of
-    // compiling.
+    // An xmlport belonging to a DEPENDENCY app can be declared as a variable and its runtime
+    // methods called. The variable declaration alone is a compile-time claim; calling a real
+    // instance method is what forces the platform to obtain the object's metadata at run time,
+    // which is the part that can fail independently of compiling.
     //
-    // Named *_NoThrow per the corpus convention for a test whose claim is bounded: the
-    // ASSERTED value is the object identity, and the no-throw part is the calls above it.
-    // The three property-level claims are in the Direction tests below, which is where a
-    // value rather than an absence is observable.
+    // SetTableView is the instance call used, because the platform must resolve it against the
+    // port's OWN FIRST tableelement — so it cannot succeed against an object whose definition
+    // the platform failed to load, and the record type it accepts is decided by that node
+    // rather than by this test. The two ports take DIFFERENT types for exactly that reason,
+    // read from their own source: 9862's first tableelement is "Metadata Permission Set" and
+    // 9864's is "Tenant Permission Set". Nothing is exported: see the file header.
+    //
+    // NOT UseRequestPage. On an xmlport that is a DESIGN-TIME property, not a runtime method:
+    // the AL compiler rejects `Port.UseRequestPage(false)` with AL0127 on a port that declares
+    // it (it is a property, not a method) and AL0132 on one that does not (no such member at
+    // all). Measured across Base Application + System Application 28.1.49838.53910: 64 calls
+    // to UseRequestPage() with a Report receiver and ZERO with an XmlPort receiver. The
+    // equivalent Report method does not imply an XmlPort one.
     [Test]
     procedure PrecompiledXmlPort_ConstructsAndKeepsItsIdentity_NoThrow()
     var
         ExportSystem: XmlPort "Export Permission Sets System";
-        ExportTenant: XmlPort "Export Permission Sets Tenant";
         ImportSets: XmlPort "Import Permission Sets";
+        MetadataPermissionSet: Record "Metadata Permission Set";
+        TenantPermissionSet: Record "Tenant Permission Set";
     begin
         Initialize();
 
-        // Real instance calls, so they cannot succeed against an object whose metadata the
-        // platform failed to load. Nothing is exported: see the file header for why.
-        ExportSystem.UseRequestPage(false);
-        ExportTenant.UseRequestPage(false);
-        ImportSets.UseRequestPage(false);
+        // A real instance call on each port, resolved against its own first tableelement.
+        ExportSystem.SetTableView(MetadataPermissionSet);
+        ImportSets.SetTableView(TenantPermissionSet);
 
-        // A concrete value rather than IsTrue(true): each constructed port still answers the
-        // id its own app declares, so the three variables are three distinct objects and not
-        // one fallback instance handed back three times.
+        // A concrete value rather than IsTrue(true): each port still answers the id its own app
+        // declares, so these are two distinct objects rather than one fallback instance handed
+        // back twice.
         Assert.AreEqual(9862, XmlPort::"Export Permission Sets System",
             'the constructed Export-system port must still be the object the System Application declares');
         Assert.AreEqual(9864, XmlPort::"Import Permission Sets",
-            'the constructed Import port must be a DIFFERENT object from the two Export ports');
+            'the constructed Import port must be a DIFFERENT object from the Export port');
     end;
 
     // Direction is a declared property of the xmlport object, and the platform enforces it:
@@ -79,17 +92,24 @@ codeunit 60918 "Test XmlPort Precompiled Obj"
     var
         ExportSystem: XmlPort "Export Permission Sets System";
         InStr: InStream;
-        TempBlob: Record "ALT Blob" temporary;
+        BlobRec: Record "ALT Blob";
         OutStr: OutStream;
     begin
         Initialize();
 
-        TempBlob.Init();
-        TempBlob.Code := 'XPP1';
-        TempBlob.Insert();
-        TempBlob.Data.CreateOutStream(OutStr);
+        // The persisted ALT Blob pattern TestXmlPortObject already uses, rather than a
+        // temporary: the Modify/CalcFields round-trip is what makes the written bytes
+        // readable back as a stream, and this test should not be the first to rely on a
+        // different one.
+        BlobRec.Init();
+        BlobRec.Code := 'XPP1';
+        BlobRec.Insert();
+        BlobRec.Data.CreateOutStream(OutStr);
         OutStr.WriteText('<root />');
-        TempBlob.Data.CreateInStream(InStr);
+        BlobRec.Modify();
+
+        BlobRec.CalcFields(Data);
+        BlobRec.Data.CreateInStream(InStr);
 
         ExportSystem.SetSource(InStr);
         asserterror ExportSystem.Import();
@@ -112,15 +132,15 @@ codeunit 60918 "Test XmlPort Precompiled Obj"
     procedure PrecompiledXmlPort_DeclaredImportDirection_RefusesExport()
     var
         ImportSets: XmlPort "Import Permission Sets";
-        TempBlob: Record "ALT Blob" temporary;
+        BlobRec: Record "ALT Blob";
         OutStr: OutStream;
     begin
         Initialize();
 
-        TempBlob.Init();
-        TempBlob.Code := 'XPP2';
-        TempBlob.Insert();
-        TempBlob.Data.CreateOutStream(OutStr);
+        BlobRec.Init();
+        BlobRec.Code := 'XPP2';
+        BlobRec.Insert();
+        BlobRec.Data.CreateOutStream(OutStr);
 
         ImportSets.SetDestination(OutStr);
         asserterror ImportSets.Export();
