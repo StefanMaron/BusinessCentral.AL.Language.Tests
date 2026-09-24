@@ -121,8 +121,18 @@ codeunit 60818 "CFSF Tests"
 
         CfsfHeader.CalcFields("Last Line Created At", "First Line Created At");
 
-        Assert.AreEqual(Latest, CfsfHeader."Last Line Created At", 'max() over SystemCreatedAt');
-        Assert.AreEqual(Earliest, CfsfHeader."First Line Created At", 'min() over SystemCreatedAt');
+        // Format(_, 0, 9) is the round-trip form ('2026-09-20T11:10:12.851Z') and carries
+        // milliseconds. Assert's own Equal compares non-numeric variants as
+        // Format(_, 0, 2), which for a DateTime renders to the MINUTE -- and the three
+        // lines are seeded back-to-back in Initialize(), so Earliest and Latest are
+        // milliseconds apart. At minute resolution they format identically to each other
+        // AND to every other line's stamp, so both arms below passed whichever row the
+        // FlowField picked. Comparing the format-9 strings is what makes min()/max()
+        // distinguishable from each other and from the wrong row.
+        Assert.AreEqual(Format(Latest, 0, 9), Format(CfsfHeader."Last Line Created At", 0, 9),
+            'max() over SystemCreatedAt');
+        Assert.AreEqual(Format(Earliest, 0, 9), Format(CfsfHeader."First Line Created At", 0, 9),
+            'min() over SystemCreatedAt');
     end;
 
     /// lookup() of SystemCreatedBy — the looked-up source field is a system field.
