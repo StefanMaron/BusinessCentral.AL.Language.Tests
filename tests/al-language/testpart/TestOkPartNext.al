@@ -27,7 +27,7 @@
 // a part that ignored the link or stayed on the first header's rows fails on the value.
 //
 // Filed from AlRunner#4623.
-codeunit 60762 "OKP Part Next Tests"
+codeunit 60229 "OKP Part Next Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
