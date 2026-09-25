@@ -16,7 +16,9 @@
 //      filter on Grp does NOT override the group-2 filter — both stay in force, and a value
 //      the group-2 filter excludes shows no rows. This is the negative case: it separates
 //      "the TestPage filter goes to group 0" from "the TestPage filter replaces the field's
-//      filter in every group".
+//      filter in every group". Filter.GetFilter(Grp) then reads the group-2 value 'A', not
+//      the 'B' the test set: it answers the first filter on the field across the page's
+//      filter groups, and group 2 was written before the TestPage filter's group 0.
 //
 // Rows seeded by every test:
 //   Entry No.  Grp  Rank
@@ -120,8 +122,8 @@ codeunit 60919 "Test TestFilter Filter Groups"
 
         L.Filter.SetFilter(Grp, 'B');
 
-        Assert.AreEqual('B', L.Filter.GetFilter(Grp), 'TestPage filter on Grp reads back');
         Assert.AreEqual('', WalkHidden(L), 'the group-2 Grp = A filter stays in force, so Grp B shows no rows');
+        Assert.AreEqual('A', L.Filter.GetFilter(Grp), 'GetFilter reads the first filter on Grp across filter groups: group 2, written by OnOpenPage before the TestPage filter');
         L.Close();
     end;
 
