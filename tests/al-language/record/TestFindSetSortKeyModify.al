@@ -191,4 +191,58 @@ codeunit 60367 "FSK Tests"
         Assert.AreEqual('1:A1 ', Trace, 'visit order');
         Assert.AreEqual(1, Visits, 'rows visited');
     end;
+
+    // The record that did the Modify, rather than a second variable: after moving itself out of
+    // its own filter, Find() still answers from that record's current result. Base Application's
+    // test 134932 MakeTwoMultilineDocumentsOutOfBalanceByMovingToThirdDocument relies on this.
+
+    [Test]
+    procedure OwnFilter_ModifiedOutOfIt_FindStillFindsTheRow()
+    var
+        Row: Record "FSK Row";
+    begin
+        Seed('A');
+        Row.SetRange(Doc, 'A2');
+        Row.FindFirst();
+        Row.Doc := 'Q2';
+        Row.Modify();
+        Assert.IsTrue(Row.Find(), 'Find() on the record that moved itself out of its filter');
+        Assert.AreEqual(2, Row.Id, 'Id');
+        Assert.AreEqual('Q2', Row.Doc, 'Doc');
+    end;
+
+    [Test]
+    procedure OwnFilter_ModifiedOutOfItInsideFindSet_FindStillFindsTheRow()
+    // Same, on the second row of a FindSet over a range filter.
+    var
+        Row: Record "FSK Row";
+    begin
+        Seed('A');
+        Row.SetRange(Doc, 'A1', 'A3');
+        Row.FindSet();
+        Row.Next();
+        Row.Doc := 'Q2';
+        Row.Modify();
+        Assert.IsTrue(Row.Find(), 'Find() on the record that moved itself out of its filter');
+        Assert.AreEqual(2, Row.Id, 'Id');
+        Assert.AreEqual('Q2', Row.Doc, 'Doc');
+    end;
+
+    [Test]
+    procedure OwnFilter_SecondVarWithTheSameFilter_FindDoesNotFindTheRow()
+    // The contrast: a second variable carrying the same filter and the same key reads the
+    // table, where the row no longer matches.
+    var
+        Row: Record "FSK Row";
+        Row2: Record "FSK Row";
+    begin
+        Seed('A');
+        Row.SetRange(Doc, 'A2');
+        Row.FindFirst();
+        Row.Doc := 'Q2';
+        Row.Modify();
+        Row2.SetRange(Doc, 'A2');
+        Row2.Id := 2;
+        Assert.IsFalse(Row2.Find(), 'Find() on a second variable with the old filter');
+    end;
 }
