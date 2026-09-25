@@ -13,7 +13,7 @@
 /// The raising arms run their page calls inside one asserterror, recording the name of the call
 /// they are about to make; the observation is 'step=<the call that raised>;error=<what it raised>'.
 /// The List arms raise nothing on any leg, so they record what happened to the line instead: the
-/// cursor's key after New()/Next(), both fields' validation error counts, and the table afterwards.
+/// cursor's key after the move (New, Next, Previous, First, Last), both fields' validation error counts, and the table afterwards.
 ///
 /// Measured on real BC (corpus run 36145940845, all nine cloud legs): insert on focus and Close()
 /// raise at the call; OK().Invoke() raises nothing itself and the error surfaces when the TestPage
@@ -105,7 +105,7 @@ codeunit 60045 "IPF Tests"
     begin
         Initialize();
 
-        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', true),
+        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'New'),
             'what New() does with a started line whose insert fails');
     end;
 
@@ -115,8 +115,38 @@ codeunit 60045 "IPF Tests"
     begin
         Initialize();
 
-        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', false),
+        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Next'),
             'what Next() does with a started line whose insert fails');
+    end;
+
+    [Test]
+    procedure DelayedList_DuplicateKey_Previous_RaisesNothing()
+    // The same line left through Previous(), which lands on the existing row.
+    begin
+        Initialize();
+
+        Assert.AreEqual('cur=DUP;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Previous'),
+            'what Previous() does with a started line whose insert fails');
+    end;
+
+    [Test]
+    procedure DelayedList_DuplicateKey_First_RaisesNothing()
+    // The same line left through First().
+    begin
+        Initialize();
+
+        Assert.AreEqual('cur=DUP;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'First'),
+            'what First() does with a started line whose insert fails');
+    end;
+
+    [Test]
+    procedure DelayedList_DuplicateKey_Last_RaisesNothing()
+    // The same line left through Last().
+    begin
+        Initialize();
+
+        Assert.AreEqual('cur=DUP;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Last'),
+            'what Last() does with a started line whose insert fails');
     end;
 
     [Test]
@@ -128,7 +158,7 @@ codeunit 60045 "IPF Tests"
     begin
         Initialize();
 
-        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=2;dup=orig', DriveDelayedListObserved('NEW1', true),
+        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=2;dup=orig', DriveDelayedListObserved('NEW1', 'New'),
             'what New() does with a started line whose insert succeeds');
         Assert.IsTrue(Row.Get('NEW1'), 'New() must insert the started line');
         Assert.AreEqual('typed', Row.Description, 'the inserted line''s Description');
@@ -207,7 +237,7 @@ codeunit 60045 "IPF Tests"
         Step := 'completed';
     end;
 
-    local procedure DriveDelayedListObserved(NewKey: Code[20]; ViaNew: Boolean): Text
+    local procedure DriveDelayedListObserved(NewKey: Code[20]; Move: Text): Text
     var
         Row: Record "IPF Row";
         Rows: TestPage "IPF Delayed List";
@@ -216,10 +246,18 @@ codeunit 60045 "IPF Tests"
         Rows.OpenNew();
         Rows."No.".SetValue(NewKey);
         Rows.Description.SetValue('typed');
-        if ViaNew then
-            Rows.New()
-        else
-            Rows.Next();
+        case Move of
+            'New':
+                Rows.New();
+            'Next':
+                Rows.Next();
+            'Previous':
+                Rows.Previous();
+            'First':
+                Rows.First();
+            'Last':
+                Rows.Last();
+        end;
         Observed := StrSubstNo('cur=%1;noErr=%2;descErr=%3', Rows."No.".Value(),
             Rows."No.".ValidationErrorCount(), Rows.Description.ValidationErrorCount());
         Rows.Close();
