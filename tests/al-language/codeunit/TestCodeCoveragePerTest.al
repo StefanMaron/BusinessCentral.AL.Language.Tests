@@ -63,7 +63,6 @@ codeunit 60925 "Test Code Coverage Per Test"
     procedure TestsRun_TestStartedWhileRecording_HasOneRowNamingIt()
     var
         TestsRun: Record "Code Coverage Tests Run";
-        CurrentModule: ModuleInfo;
     begin
         // [GIVEN] a [Test] procedure started and finished while recording
         RecordOneTest();
@@ -73,8 +72,20 @@ codeunit 60925 "Test Code Coverage Per Test"
         Assert.AreEqual(1, TestsRun.Count(), 'exactly one test of this codeunit started while recording.');
         TestsRun.FindFirst();
         Assert.AreEqual('RecordedTest_RunsTripled', TestsRun."Method Name", 'the row must name the test that started.');
+    end;
 
-        // [THEN] and the app that owns the test
+    [Test]
+    procedure TestsRun_TestStartedWhileRecording_NamesTheOwningApp()
+    var
+        TestsRun: Record "Code Coverage Tests Run";
+        CurrentModule: ModuleInfo;
+    begin
+        // [GIVEN] a [Test] procedure started and finished while recording
+        RecordOneTest();
+        TestsRun.SetRange("Object ID", Codeunit::"Test Code Coverage Per Test");
+        Assert.IsTrue(TestsRun.FindFirst(), 'the recorded test must have a Tests Run row.');
+
+        // [THEN] the row names the app the test belongs to
         NavApp.GetCurrentModuleInfo(CurrentModule);
         Assert.AreEqual(CurrentModule.Id, TestsRun."Owning Application", 'the row must name the app the test belongs to.');
     end;
