@@ -3,9 +3,8 @@
 // Fixtures used: Test Rpt RunReqPage Row (60541), Test Rpt RunReqPage Log (60542)
 //
 // A report whose request page declares its own ACTIONS, next to one control bound to a report
-// global. Each action's OnAction trigger writes report globals; the data item logs what it reads
-// back. So the only way 'set-by-action' reaches the log is that invoking the action from a
-// [RequestPageHandler] ran its OnAction on the same report instance the body then runs on.
+// global. Each action's OnAction trigger writes report globals and the data item logs what it
+// reads back, so the log shows whether any OnAction ran before the body.
 //
 // ProcessingOnly so no part of the claim depends on rendering.
 
