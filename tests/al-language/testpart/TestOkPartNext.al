@@ -168,6 +168,31 @@ codeunit 60229 "OKP Part Next Tests"
         Card.Close();
     end;
 
+    // CONTROL: New() is a navigation of its own. After New() and a write on a part nothing had
+    // positioned, Next() steps on from the new row -- which the part started below the row it
+    // stood on, the first one -- to the SECOND existing row. It does not go back to the first
+    // row the way an unpositioned part's first Next() does.
+    [Test]
+    procedure LinkedPart_NewThenWriteThenNext_LandsOnTheSecondRow()
+    var
+        Line: Record "OKP Line";
+        Card: TestPage "OKP Header Card";
+    begin
+        Initialize();
+        Card.OpenEdit();
+        Assert.AreEqual('H1', Card."Code".Value(), 'the card must open on the lowest header');
+        Card.Lines.New();
+        Card.Lines.Reference.SetValue('H1-NEW');
+        Assert.IsTrue(Card.Lines.Next(), 'Next() after a new row must answer true while a row follows it');
+        Assert.AreEqual('H1-SECOND', Card.Lines.Reference.Value(),
+            'Next() after New() and a write must land on the row after the new one, not on the first row');
+        Card.Close();
+
+        Line.SetRange("Header Code", 'H1');
+        Line.SetRange(Reference, 'H1-NEW');
+        Assert.AreEqual(1, Line.Count(), 'the new row must have been saved under the host''s header');
+    end;
+
     // CLAIM: a part with no SubPageLink behaves the same way at open -- the first Next() lands
     // on the first row of its own rowset.
     [Test]
