@@ -93,6 +93,31 @@ codeunit 60670 "Test TestPage Temporal Value"
         Assert.AreEqual(Expected, Row."The DateTime", 'Rec-bound DateTime control, DateTime variable');
     end;
 
+    // The arm above seeds midnight, where a round trip that shifts the time of day by a
+    // whole-hour or half-hour offset can still read back equal. 14:30 has non-zero minutes, so
+    // an hour-granular or 30-minute error in the control's DateTime path cannot pass here
+    // (StefanMaron/BusinessCentral.AL.Runner#4499, #3567).
+    [Test]
+    procedure TemporalSetValue_RecBoundDateTimeControlKeepsANonMidnightTimeOfDay()
+    var
+        Row: Record "ALT Temporal Row";
+        Card: TestPage "ALT Temporal Card";
+        Expected: DateTime;
+    begin
+        Row := TemporalSetValue_Seed('TSV-DT');
+        Expected := CreateDateTime(TemporalSetValue_Date(), 143000T);
+
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        Card."The DateTime".SetValue(Expected);
+        Card.Close();
+
+        Row.Get('TSV-DT');
+        Assert.AreEqual(Expected, Row."The DateTime", 'Rec-bound DateTime control, 14:30 DateTime variable');
+        Assert.AreEqual(143000T, DT2Time(Row."The DateTime"), 'Rec-bound DateTime control must keep the 14:30 time of day');
+        Assert.AreEqual(TemporalSetValue_Date(), DT2Date(Row."The DateTime"), 'Rec-bound DateTime control must keep the date');
+    end;
+
     [Test]
     procedure TemporalSetValue_RecBoundTimeControlTakesATimeVariable()
     var
@@ -199,6 +224,27 @@ codeunit 60670 "Test TestPage Temporal Value"
         Assert.AreEqual(
             Format(Expected, 0, '<Year4>-<Month,2>-<Day,2> <Hours24,2>:<Minutes,2>:<Seconds,2>'),
             Globals.GEcho.Value(), 'page-variable DateTime control, DateTime variable');
+        Globals.Close();
+    end;
+
+    // Same reason as the Rec-bound 14:30 arm: the arm above is midnight only.
+    [Test]
+    procedure TemporalSetValue_PageVariableDateTimeControlKeepsANonMidnightTimeOfDay()
+    var
+        Globals: TestPage "ALT Temporal Globals";
+        Expected: DateTime;
+    begin
+        Expected := CreateDateTime(TemporalSetValue_Date(), 143000T);
+
+        Globals.OpenEdit();
+        Globals.GDateTime.SetValue(Expected);
+
+        Assert.AreEqual(
+            Format(Expected, 0, '<Year4>-<Month,2>-<Day,2> <Hours24,2>:<Minutes,2>:<Seconds,2>'),
+            Globals.GEcho.Value(), 'page-variable DateTime control, 14:30 DateTime variable');
+        Assert.AreNotEqual(
+            Format(CreateDateTime(TemporalSetValue_Date(), 0T), 0, '<Year4>-<Month,2>-<Day,2> <Hours24,2>:<Minutes,2>:<Seconds,2>'),
+            Globals.GEcho.Value(), 'page-variable DateTime control must not collapse 14:30 to midnight');
         Globals.Close();
     end;
 
