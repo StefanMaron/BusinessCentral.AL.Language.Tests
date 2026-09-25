@@ -129,6 +129,44 @@ codeunit 60868 "ONPL Tests"
         AssertOneLineWrittenFor('AUTO1', 'typed line');
     end;
 
+    // Explicit navigation positions the part for good: once the header is inserted and has
+    // lines, Last() puts the part on the last line, and a write that follows lands there rather
+    // than on the first line or on a new one.
+    [Test]
+    procedure OpenNew_LinesInsertedInCode_LastThenWriteLandsOnTheLastLine()
+    var
+        Line: Record "TPDL Line";
+        Card: TestPage "ONPL Card";
+    begin
+        Initialize();
+
+        Card.OpenNew();
+        Card.Descr.SetValue('typed header');
+        Assert.AreEqual('AUTO1', Card."No.".Value(), 'writing the first field must insert the header');
+
+        Line.Init();
+        Line."Header No." := 'AUTO1';
+        Line."Line No." := 10000;
+        Line.Descr := 'first';
+        Line.Insert();
+        Line.Init();
+        Line."Header No." := 'AUTO1';
+        Line."Line No." := 20000;
+        Line.Descr := 'second';
+        Line.Insert();
+
+        Assert.IsTrue(Card.Lines.Last(), 'the header has two lines, so Last() must return true');
+        Card.Lines.Descr.SetValue('typed on last');
+        Card.Close();
+
+        Assert.AreEqual(2, LineCountFor('AUTO1'), 'the write must modify a line, not insert one');
+        Line.Get('AUTO1', 20000);
+        Assert.AreEqual('typed on last', Line.Descr, 'the write after Last() must land on the last line');
+        Line.Get('AUTO1', 10000);
+        Assert.AreEqual('first', Line.Descr, 'the first line must be untouched');
+        Assert.AreEqual(1, LineCountFor('OTHER'), 'the other header''s line must be untouched');
+    end;
+
     // The Purchase Invoice subform's first control is bound to a page variable whose OnValidate
     // writes Rec. That write must also see the header number: the line's own Descr OnValidate
     // tests "Header No." and copies it into "Header Seen By Validate", read back through the part.
