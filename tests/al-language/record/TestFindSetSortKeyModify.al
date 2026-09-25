@@ -21,6 +21,7 @@ table 60999 "FSK Row"
     {
         field(1; Id; Integer) { }
         field(2; Doc; Code[20]) { }
+        field(3; Payload; Integer) { }
     }
 
     keys
@@ -144,6 +145,36 @@ codeunit 60919 "FSK Tests"
         Assert.AreEqual('Z2', Row.Doc, 'row 2');
         Row.Get(3);
         Assert.AreEqual('Z3', Row.Doc, 'row 3');
+    end;
+
+    [Test]
+    procedure SecondVar_NonKeyFieldOfUnvisitedRowChanged_LoopReadsTheValueAsFound()
+    // A companion question the fix for #4678 has to answer: when the second variable changes
+    // a NON-key field of a row the loop has not reached yet, does Next() hand that row back
+    // with the value FindSet found, or with the new one? Three rows sit in one batch.
+    var
+        Row: Record "FSK Row";
+        Row2: Record "FSK Row";
+        Seen: Integer;
+        Visits: Integer;
+    begin
+        Seed('A');
+        Row.SetCurrentKey(Doc);
+        if Row.FindSet() then
+            repeat
+                Visits += 1;
+                if Visits = 1 then begin
+                    Row2.Get(3);
+                    Row2.Payload := 99;
+                    Row2.Modify();
+                end;
+                if Row.Id = 3 then
+                    Seen := Row.Payload;
+            until (Row.Next() = 0) or (Visits > 10);
+        Assert.AreEqual(3, Visits, 'rows visited');
+        Assert.AreEqual(0, Seen, 'Payload of row 3 as the loop reached it');
+        Row2.Get(3);
+        Assert.AreEqual(99, Row2.Payload, 'the write itself landed');
     end;
 
     [Test]
