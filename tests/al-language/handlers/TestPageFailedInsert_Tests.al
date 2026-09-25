@@ -12,12 +12,14 @@
 ///
 /// The raising arms run their page calls inside one asserterror, recording the name of the call
 /// they are about to make; the observation is 'step=<the call that raised>;error=<what it raised>'.
-/// The List arms raise nothing on any leg, so they record what happened to the line instead: the
-/// cursor's key after the move (New, Next, Previous, First, Last), both fields' validation error counts, and the table afterwards.
+/// The silent arms record what happened to the line instead: the cursor's key after the move,
+/// both fields' validation error counts, and the table afterwards.
 ///
-/// Measured on real BC (corpus run 36145940845, all nine cloud legs): insert on focus and Close()
-/// raise at the call; OK().Invoke() raises nothing itself and the error surfaces when the TestPage
-/// variable goes out of scope; New() and Next() on a DelayedInsert List raise nothing at all.
+/// Measured on real BC (corpus runs 36145940845 and 36148838859, all nine cloud legs): insert on
+/// focus and Close() raise; OK().Invoke() raises nothing, and nothing is raised when the TestPage
+/// variable goes out of scope either. On a DelayedInsert List, New(), Next() and Last() raise
+/// nothing: the cursor stays on the refused line and the "No." control records one validation
+/// error. Previous() and First() raise the duplicate-key error.
 ///
 /// Written for AL Runner#4624, where the runner's page-driven insert trapped the error and the
 /// row, with every value typed into it, disappeared without one.
@@ -82,70 +84,81 @@ codeunit 60045 "IPF Tests"
     end;
 
     [Test]
-    procedure DelayedCard_DuplicateKey_OK_RaisesWhenThePageGoesOutOfScope()
-    // MEASURED (corpus run 36145940845, all nine cloud legs): OK().Invoke() itself raises nothing
-    // when the insert fails. The duplicate-key error surfaces later, once the drive procedure
-    // returns and its TestPage variable is released. Here the drive procedure ends normally after
-    // OK(), so the only error the asserterror can catch is that one.
+    procedure DelayedCard_DuplicateKey_OK_RaisesNothing()
+    // MEASURED (corpus run 36148838859, all nine cloud legs): OK().Invoke() raises nothing when the
+    // insert fails, and neither does the TestPage variable going out of scope when the drive
+    // procedure returns. This arm also records that the existing row keeps its own value.
+    var
+        Row: Record "IPF Row";
     begin
         Initialize();
 
-        asserterror DriveDelayedCardViaOK();
+        DriveDelayedCardViaOK();
 
-        Assert.AreEqual('step=completed;error=already exists', Observe(),
-            'which call raised, and what, when OK() cannot insert the new Card row');
+        Row.Get('DUP');
+        Assert.AreEqual('step=completed;rows=1;dup=orig',
+            StrSubstNo('step=%1;rows=%2;dup=%3', Step, Row.Count(), Row.Description),
+            'what OK() leaves behind when it cannot insert the new Card row');
     end;
 
     [Test]
     procedure DelayedList_DuplicateKey_New_RaisesNothing()
-    // MEASURED (corpus run 36145940845, all nine cloud legs): on a DelayedInsert List, New() after
-    // a started line whose insert would fail raises no error, and neither does the Close() after
-    // it. This arm records what happens to that line: the field validation errors, where the
-    // cursor is, and what the table holds once the page is closed.
+    // MEASURED (corpus run 36148838859, all nine cloud legs): on a DelayedInsert List, New() after
+    // a started line whose insert fails raises no error, and neither does the Close() after it.
+    // The cursor stays on the refused line, the "No." control holds one validation error, and the
+    // existing row is untouched.
     begin
         Initialize();
 
-        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'New'),
+        Assert.AreEqual('cur=DUP;noErr=1;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'New'),
             'what New() does with a started line whose insert fails');
     end;
 
     [Test]
     procedure DelayedList_DuplicateKey_Next_RaisesNothing()
-    // MEASURED (corpus run 36145940845, all nine cloud legs): the same through Next().
+    // MEASURED (corpus run 36148838859, all nine cloud legs): the same through Next().
     begin
         Initialize();
 
-        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Next'),
+        Assert.AreEqual('cur=DUP;noErr=1;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Next'),
             'what Next() does with a started line whose insert fails');
     end;
 
     [Test]
-    procedure DelayedList_DuplicateKey_Previous_RaisesNothing()
-    // The same line left through Previous(), which lands on the existing row.
+    procedure DelayedList_DuplicateKey_Previous_RaisesTheInsertError()
+    // MEASURED (corpus run 36148838859, all nine cloud legs): leaving the line through Previous()
+    // raises "The record in table IPF Row already exists. Identification fields and values:
+    // No.='DUP'". CLAIM: it is Previous() itself that raises.
     begin
         Initialize();
 
-        Assert.AreEqual('cur=DUP;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Previous'),
-            'what Previous() does with a started line whose insert fails');
+        asserterror DriveDelayedListRaising('Previous');
+
+        Assert.AreEqual('step=Previous;error=already exists', Observe(),
+            'which call raised, and what, when Previous() leaves a line whose insert fails');
     end;
 
     [Test]
-    procedure DelayedList_DuplicateKey_First_RaisesNothing()
-    // The same line left through First().
+    procedure DelayedList_DuplicateKey_First_RaisesTheInsertError()
+    // MEASURED (corpus run 36148838859, all nine cloud legs): the same through First().
+    // CLAIM: it is First() itself that raises.
     begin
         Initialize();
 
-        Assert.AreEqual('cur=DUP;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'First'),
-            'what First() does with a started line whose insert fails');
+        asserterror DriveDelayedListRaising('First');
+
+        Assert.AreEqual('step=First;error=already exists', Observe(),
+            'which call raised, and what, when First() leaves a line whose insert fails');
     end;
 
     [Test]
     procedure DelayedList_DuplicateKey_Last_RaisesNothing()
-    // The same line left through Last().
+    // MEASURED (corpus run 36148838859, all nine cloud legs): Last() raises nothing, the cursor
+    // stays on the refused line and the "No." control holds one validation error.
     begin
         Initialize();
 
-        Assert.AreEqual('cur=DUP;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Last'),
+        Assert.AreEqual('cur=DUP;noErr=1;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', 'Last'),
             'what Last() does with a started line whose insert fails');
     end;
 
@@ -235,6 +248,29 @@ codeunit 60045 "IPF Tests"
         Step := 'OK';
         Card.OK().Invoke();
         Step := 'completed';
+    end;
+
+    local procedure DriveDelayedListRaising(Move: Text)
+    var
+        Rows: TestPage "IPF Delayed List";
+    begin
+        Step := 'OpenNew';
+        Rows.OpenNew();
+        Step := 'No.SetValue';
+        Rows."No.".SetValue('DUP');
+        Step := 'Description.SetValue';
+        Rows.Description.SetValue('typed');
+        Step := Move;
+        case Move of
+            'Previous':
+                Rows.Previous();
+            'First':
+                Rows.First();
+        end;
+        Step := 'Close';
+        Rows.Close();
+        Step := 'completed';
+        Error(NoErrorRaisedTxt);
     end;
 
     local procedure DriveDelayedListObserved(NewKey: Code[20]; Move: Text): Text
