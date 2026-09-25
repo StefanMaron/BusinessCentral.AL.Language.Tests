@@ -16,4 +16,13 @@ table 60950 "ONG Row"
     {
         key(PK; "No.") { Clustered = true; }
     }
+
+    // Counts table-trigger inserts. A Customer's OnInsert is where its Contact and Contact
+    // Business Relation are created, so running it twice for one row is the observable defect.
+    trigger OnInsert()
+    var
+        Echo: Record "TRT Echo";
+    begin
+        Echo.Bump('ONG-ONINSERT');
+    end;
 }

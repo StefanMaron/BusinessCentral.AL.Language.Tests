@@ -59,6 +59,7 @@ codeunit 60927 "ONG Tests"
         Assert.IsTrue(Row."Made By Template", 'the row is the template row');
         Assert.AreEqual('typed', Row.Name, 'the typed value reached the template row');
         Assert.AreEqual(1, Hits('ONG-TEMPL'), 'typing does not run the template step again');
+        Assert.AreEqual(1, Hits('ONG-ONINSERT'), 'the table''s OnInsert runs once, for the template insert only');
     end;
 
     [Test]
