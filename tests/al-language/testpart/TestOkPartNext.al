@@ -6,27 +6,17 @@
 //
 // WHERE does a part's FIRST Next() land when nothing has navigated the part yet?
 //
-// "Test TestPart" (60346) walks a part with Next() only after First() or Last(). Microsoft's
-// own tests also call Next() on a part nothing has positioned, right after moving the host:
-//
-//     PostedSalesInvoice.OpenEdit();
-//     PostedSalesInvoice.GotoKey(PostedSalesInvoiceNo);
-//     PostedSalesInvoice.SalesInvLines.Next();   // expected: the invoice's FIRST line
-//
-// (codeunit 135407 "Prepayments Plan-based E2E", VerifyPostedSalesInvoicePrepayment). That
-// test passes on BC, so the first Next() there lands on the first line, not the second.
-//
-// The claim, per arm: a part's repeater starts unpositioned -- its current row already reads
-// as the first row, but the first Next() moves ONTO that first row rather than past it. That
-// holds when the host has just opened, and again after the host moves to another row and the
-// part refills. Once the test has positioned the part itself (First()), Next() steps to the
-// second row as usual; that control arm is what stops a part which simply never moves from
-// passing the others.
+// "Test TestPart" (60346) walks a part with Next() only after First() or Last(). This codeunit
+// pins the unpositioned case: right after the host opens, and right after the host moves with
+// GoToKey. Measured on a service tier (27.0 through 28.5): the part already reads its FIRST
+// row, and the first Next() steps PAST it to the SECOND row -- the same as Next() after
+// First(). It does not move "onto" the row the part already shows. On an editable host a
+// second Next() then lands on the part's new-row line, which reads blank.
 //
 // Two headers with two lines each, and every line's Reference names its header and line, so
 // a part that ignored the link or stayed on the first header's rows fails on the value.
 //
-// Filed from AlRunner#4623.
+// Filed from AlRunner#4623 (a first draft asserted the opposite and was red on every leg).
 codeunit 60229 "OKP Part Next Tests"
 {
     Subtype = Test;
@@ -71,10 +61,10 @@ codeunit 60229 "OKP Part Next Tests"
         Line.Insert();
     end;
 
-    // CLAIM: the shape Microsoft's test uses. Host opened, moved to another header by GotoKey,
-    // then one Next() on the part: it lands on that header's FIRST line.
+    // CLAIM: host opened, moved to another header by GotoKey, then one Next() on the part: it
+    // answers true and lands on that header's SECOND line, not its first.
     [Test]
-    procedure LinkedPart_AfterHostGotoKey_FirstNextLandsOnTheFirstRow()
+    procedure LinkedPart_AfterHostGotoKey_FirstNextLandsOnTheSecondRow()
     var
         Card: TestPage "OKP Header Card";
     begin
@@ -82,15 +72,15 @@ codeunit 60229 "OKP Part Next Tests"
         Card.OpenEdit();
         Card.GoToKey('H2');
         Assert.IsTrue(Card.Lines.Next(), 'the first Next() on a part with rows must answer true');
-        Assert.AreEqual('H2-FIRST', Card.Lines.Reference.Value(),
-            'the first Next() after the host''s GotoKey must land on the part''s first row');
+        Assert.AreEqual('H2-SECOND', Card.Lines.Reference.Value(),
+            'the first Next() after the host''s GotoKey must step past the first row to the second');
         Card.Close();
     end;
 
-    // CLAIM: and the second Next() then lands on the second line, so the first one was a real
-    // move onto row one and the walk continues from there.
+    // CLAIM: on an editable host the second Next() then moves past the last line onto the
+    // part's new-row line: it answers true and the line reads blank.
     [Test]
-    procedure LinkedPart_AfterHostGotoKey_SecondNextLandsOnTheSecondRow()
+    procedure LinkedPart_AfterHostGotoKey_SecondNextLandsOnTheNewRowLine()
     var
         Card: TestPage "OKP Header Card";
     begin
@@ -98,9 +88,9 @@ codeunit 60229 "OKP Part Next Tests"
         Card.OpenEdit();
         Card.GoToKey('H2');
         Card.Lines.Next();
-        Assert.IsTrue(Card.Lines.Next(), 'the second Next() must answer true while a second row exists');
-        Assert.AreEqual('H2-SECOND', Card.Lines.Reference.Value(),
-            'the second Next() after the host''s GotoKey must land on the part''s second row');
+        Assert.IsTrue(Card.Lines.Next(), 'the second Next() on an editable part must answer true (new-row line)');
+        Assert.AreEqual('', Card.Lines.Reference.Value(),
+            'the second Next() after the host''s GotoKey must land on the blank new-row line');
         Card.Close();
     end;
 
@@ -119,10 +109,10 @@ codeunit 60229 "OKP Part Next Tests"
         Card.Close();
     end;
 
-    // CLAIM: the same holds on a read-only host, which is how Microsoft's test opens a posted
-    // document (its subform has no draft line).
+    // CLAIM: the same holds on a read-only host, which is how Microsoft's tests open a posted
+    // document: the first Next() lands on the second line.
     [Test]
-    procedure LinkedPart_OpenView_AfterHostGotoKey_FirstNextLandsOnTheFirstRow()
+    procedure LinkedPart_OpenView_AfterHostGotoKey_FirstNextLandsOnTheSecondRow()
     var
         Card: TestPage "OKP Header Card";
     begin
@@ -130,15 +120,15 @@ codeunit 60229 "OKP Part Next Tests"
         Card.OpenView();
         Card.GoToKey('H2');
         Assert.IsTrue(Card.Lines.Next(), 'the first Next() on a part with rows must answer true');
-        Assert.AreEqual('H2-FIRST', Card.Lines.Reference.Value(),
-            'on a read-only host the first Next() after GotoKey must land on the part''s first row');
+        Assert.AreEqual('H2-SECOND', Card.Lines.Reference.Value(),
+            'on a read-only host the first Next() after GotoKey must land on the part''s second row');
         Card.Close();
     end;
 
     // CLAIM: with no host move at all -- the host has just opened on its first header -- the
-    // part's first Next() also lands on its first row.
+    // part's first Next() also lands on its second row.
     [Test]
-    procedure LinkedPart_AtOpen_FirstNextLandsOnTheFirstRow()
+    procedure LinkedPart_AtOpen_FirstNextLandsOnTheSecondRow()
     var
         Card: TestPage "OKP Header Card";
     begin
@@ -146,13 +136,13 @@ codeunit 60229 "OKP Part Next Tests"
         Card.OpenEdit();
         Assert.AreEqual('H1', Card."Code".Value(), 'the card must open on the lowest header');
         Assert.IsTrue(Card.Lines.Next(), 'the first Next() on a part with rows must answer true');
-        Assert.AreEqual('H1-FIRST', Card.Lines.Reference.Value(),
-            'the first Next() after the host opens must land on the part''s first row');
+        Assert.AreEqual('H1-SECOND', Card.Lines.Reference.Value(),
+            'the first Next() after the host opens must land on the part''s second row');
         Card.Close();
     end;
 
-    // CONTROL: once the test has positioned the part itself with First(), Next() steps to the
-    // SECOND row. A part whose Next() never moves at all passes the arms above and fails here.
+    // CONTROL: with First() first, Next() also steps to the SECOND row -- so the unpositioned
+    // part above behaves exactly as if it stood on its first row.
     [Test]
     procedure LinkedPart_FirstThenNext_LandsOnTheSecondRow()
     var
@@ -168,10 +158,8 @@ codeunit 60229 "OKP Part Next Tests"
         Card.Close();
     end;
 
-    // CONTROL: New() is a navigation of its own. After New() and a write on a part nothing had
-    // positioned, Next() steps on from the new row -- which the part started below the row it
-    // stood on, the first one -- to the SECOND existing row. It does not go back to the first
-    // row the way an unpositioned part's first Next() does.
+    // CONTROL: after New() and a write on a part nothing had positioned, Next() steps on from
+    // the new row to the SECOND existing row.
     [Test]
     procedure LinkedPart_NewThenWriteThenNext_LandsOnTheSecondRow()
     var
@@ -194,9 +182,9 @@ codeunit 60229 "OKP Part Next Tests"
     end;
 
     // CLAIM: a part with no SubPageLink behaves the same way at open -- the first Next() lands
-    // on the first row of its own rowset.
+    // on the second row of its own rowset.
     [Test]
-    procedure UnlinkedPart_AtOpen_FirstNextLandsOnTheFirstRow()
+    procedure UnlinkedPart_AtOpen_FirstNextLandsOnTheSecondRow()
     var
         Row: Record "ALT TestPart Row";
         Host: TestPage "ALT TestPart Host";
@@ -215,8 +203,8 @@ codeunit 60229 "OKP Part Next Tests"
 
         Host.OpenEdit();
         Assert.IsTrue(Host.Lines.Next(), 'the first Next() on a part with rows must answer true');
-        Assert.AreEqual('10', Host.Lines.LineNo.Value(),
-            'the first Next() after the host opens must land on the unlinked part''s first row');
+        Assert.AreEqual('20', Host.Lines.LineNo.Value(),
+            'the first Next() after the host opens must land on the unlinked part''s second row');
         Host.Close();
     end;
 }
