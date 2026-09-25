@@ -8,8 +8,10 @@
 //
 //   * FILTERS -- does the codeunit's Rec see the host's row set (the page's filters), or the
 //     whole table? A codeunit that walks Rec would process different rows if the two differ.
-//   * ISOLATION -- when the codeunit moves, re-filters or modifies its Rec, does the TestPage
-//     move with it, keep its own filters, and show the modified value?
+//   * SHARING -- when the codeunit moves, re-filters or modifies its Rec, does the TestPage
+//     move with it and show the modified value? It does: on every cloud leg of corpus PR 410's
+//     first run the host read the row the codeunit moved its Rec to (Echo / E), so the codeunit
+//     is handed the host's own record, not a copy of it.
 //
 // Five rows in two groups: A Alpha G1, B Bravo G2, C Charlie G1, D Delta G1, E Echo G2. Every
 // arm parks the host on a row the codeunit can report back, so each assertion distinguishes
@@ -102,10 +104,11 @@ codeunit 60606 "TPARCR Tests"
         Assert.AreEqual(3, Probe.GetCountSeen(), 'the codeunit''s Rec counts only the host page''s filtered rows');
     end;
 
-    // ISOLATION, position. The codeunit drops its filters and moves its Rec to E. The probe's
-    // 'Echo' proves the move happened; the host then still reads B, and its next row is C.
+    // SHARING, position. The codeunit drops its filters and moves its Rec to E. The probe's
+    // 'Echo' proves the move happened; the host then reads E too, because the codeunit moved the
+    // host's own record rather than a copy of it.
     [Test]
-    procedure CodeunitMovingItsRecDoesNotMoveTheHost()
+    procedure CodeunitMovingItsRecMovesTheHost()
     var
         Probe: Codeunit "TPARCR Probe";
         Host: TestPage "TPARCR Host";
@@ -118,16 +121,14 @@ codeunit 60606 "TPARCR Tests"
         Host.RunTarget.Invoke();
 
         Assert.AreEqual('Echo', Probe.GetMovedTo(), 'precondition: the codeunit really moved its Rec to E');
-        Assert.AreEqual('Bravo', Host.Descr.Value(), 'the host page stays on its own row after the codeunit moves its Rec');
-        Assert.IsTrue(Host.Next(), 'the host has a row after B');
-        Assert.AreEqual('Charlie', Host.Descr.Value(), 'the host''s cursor continues from its own row, not from the codeunit''s');
+        Assert.AreEqual('Echo', Host.Descr.Value(), 'the host page follows the codeunit moving its Rec');
     end;
 
-    // ISOLATION, filters. The host is filtered to G1 and parked on A; the codeunit Resets its Rec
-    // and lands on E, a G2 row. The host still reads A, and its next row is C -- so the host's
-    // filter survived, where the codeunit's Reset would have made the next row B.
+    // SHARING, filters. The host is filtered to G1 and parked on A; the codeunit Resets its Rec
+    // and lands on E, a G2 row. The host then reads E: a row its own G1 filter excludes, so the
+    // codeunit's Reset reached the host's record along with the move.
     [Test]
-    procedure CodeunitResettingItsRecDoesNotClearTheHostsFilters()
+    procedure CodeunitResettingItsRecMovesTheFilteredHostOutsideItsFilter()
     var
         Probe: Codeunit "TPARCR Probe";
         Host: TestPage "TPARCR Host";
@@ -140,9 +141,7 @@ codeunit 60606 "TPARCR Tests"
         Host.RunTarget.Invoke();
 
         Assert.AreEqual('Echo', Probe.GetMovedTo(), 'precondition: the codeunit really moved its Rec to E');
-        Assert.AreEqual('A', Host."No.".Value(), 'the filtered host stays on its own row');
-        Assert.IsTrue(Host.Next(), 'the filtered host has a row after A');
-        Assert.AreEqual('C', Host."No.".Value(), 'the host keeps its own filter after the codeunit Resets its Rec');
+        Assert.AreEqual('E', Host."No.".Value(), 'the filtered host follows the codeunit to a row outside the host''s filter');
     end;
 
     // WRITE-BACK. The codeunit modifies the row it was handed. The database row changes; the
