@@ -165,4 +165,27 @@ codeunit 60606 "TPARCR Tests"
         Assert.AreEqual('B', Host."No.".Value(), 'the host stays on the modified row');
         Assert.AreEqual('Written', Host.Descr.Value(), 'the host page shows the value the codeunit wrote to its row');
     end;
+
+    // WRITE-BACK, then an edit on the host. After the codeunit modified row B, the host edits the
+    // same row and leaves it. The edit must land on top of the codeunit's write, not fail as a
+    // write over a stale copy and not put 'Bravo' back.
+    [Test]
+    procedure HostEditAfterTheCodeunitModifiedTheRowIsSaved()
+    var
+        Row: Record "TPARCR Row";
+        Host: TestPage "TPARCR Host";
+    begin
+        Initialize('WRITE');
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        Host.RunTarget.Invoke();
+        Host.Grp.SetValue('G9');
+        Host.Next();
+
+        Row.Get('B');
+        Assert.AreEqual('G9', Row.Grp, 'the host''s edit after the action must be saved');
+        Assert.AreEqual('Written', Row.Descr, 'the host''s save must not overwrite the codeunit''s write with the value the host loaded');
+    end;
 }
