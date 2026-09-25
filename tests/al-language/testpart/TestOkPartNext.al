@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpart/testpart-next-method
 // Scope: in-scope
 // Fixtures used: OKP Header (60760), OKP Line (60761), OKP Header Card (60760),
-//                OKP Lines Part (60761), ALT TestPart Row (60341), ALT TestPart Host (60344),
+//                OKP Lines Part (60761), OKP Read-Only Header Card (60013),
+//                OKP Read-Only Lines Part (60014), ALT TestPart Row (60341), ALT TestPart Host (60344),
 //                Assert (60021)
 //
 // WHERE does a part's FIRST Next() land when nothing has navigated the part yet?
@@ -206,5 +207,38 @@ codeunit 60229 "OKP Part Next Tests"
         Assert.AreEqual('20', Host.Lines.LineNo.Value(),
             'the first Next() after the host opens must land on the unlinked part''s second row');
         Host.Close();
+    end;
+
+    // CLAIM: a part page declared Editable = false behaves the same way: after the host's
+    // GotoKey the part reads its first row, and the first Next() lands on the second row.
+    [Test]
+    procedure ReadOnlyPart_AfterHostGotoKey_FirstNextLandsOnTheSecondRow()
+    var
+        Card: TestPage "OKP Read-Only Header Card";
+    begin
+        Initialize();
+        Card.OpenEdit();
+        Card.GoToKey('H2');
+        Assert.AreEqual('H2-FIRST', Card.Lines.Reference.Value(),
+            'before any navigation the read-only part must read its first row');
+        Assert.IsTrue(Card.Lines.Next(), 'the first Next() on a read-only part with two rows must answer true');
+        Assert.AreEqual('H2-SECOND', Card.Lines.Reference.Value(),
+            'the first Next() after the host''s GotoKey must land on the read-only part''s second row');
+        Card.Close();
+    end;
+
+    // CLAIM: a read-only part has no new-row line, so after the first Next() lands on the last
+    // of two rows, a second Next() answers false.
+    [Test]
+    procedure ReadOnlyPart_AfterHostGotoKey_SecondNextAnswersFalse()
+    var
+        Card: TestPage "OKP Read-Only Header Card";
+    begin
+        Initialize();
+        Card.OpenEdit();
+        Card.GoToKey('H2');
+        Card.Lines.Next();
+        Assert.IsFalse(Card.Lines.Next(), 'a second Next() on a two-row read-only part must answer false');
+        Card.Close();
     end;
 }
