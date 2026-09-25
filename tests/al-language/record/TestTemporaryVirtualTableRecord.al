@@ -93,6 +93,45 @@ codeunit 60118 "Test Temporary Virtual Tbl Rec"
             'A temporary Field record must not answer from the platform''s real field metadata.');
     end;
 
+    [Test]
+    procedure Record_Field_Temporary_DeleteStaysInTheTemporaryRecord()
+    // CLAIM: Delete and DeleteAll on a Record "Field" temporary remove exactly the rows AL
+    // named from the temporary record, and never reach the real Field table -- even for a row
+    // whose key (ALT Universal, field 1) is also a real row of the non-temporary table.
+    var
+        FieldRec: Record "Field";
+        TempFieldRec: Record "Field" temporary;
+    begin
+        Initialize();
+
+        // [GIVEN] three rows AL wrote, one of them on the key of a real Field row
+        InsertTempField(TempFieldRec, 1);
+        InsertTempField(TempFieldRec, 998);
+        InsertTempField(TempFieldRec, 999);
+
+        // [WHEN] one row is deleted by Get + Delete, and another by a filtered DeleteAll
+        Assert.IsTrue(TempFieldRec.Get(Database::"ALT Universal", 998), 'Get must find row 998 AL inserted.');
+        TempFieldRec.Delete();
+        TempFieldRec.Reset();
+        TempFieldRec.SetRange(TableNo, Database::"ALT Universal");
+        TempFieldRec.SetRange("No.", 1);
+        TempFieldRec.DeleteAll();
+
+        // [THEN] only row 999 remains in the temporary record
+        TempFieldRec.Reset();
+        Assert.AreEqual(1, TempFieldRec.Count(), 'Exactly one of the three rows AL inserted must remain after deleting two.');
+        Assert.IsTrue(TempFieldRec.FindFirst(), 'The remaining row must still be found.');
+        Assert.AreEqual(999, TempFieldRec."No.", 'The remaining row must be the one AL did not delete.');
+        Assert.IsFalse(TempFieldRec.Get(Database::"ALT Universal", 998), 'Row 998 was deleted by Delete and must be gone.');
+        Assert.IsFalse(TempFieldRec.Get(Database::"ALT Universal", 1), 'Row 1 was deleted by DeleteAll and must be gone.');
+
+        // [THEN] the real Field table still has field 1 of ALT Universal
+        Assert.IsTrue(
+            FieldRec.Get(Database::"ALT Universal", 1),
+            'Deleting from a temporary Field record must not remove the real Field row.');
+        Assert.AreEqual('Entry No.', FieldRec.FieldName, 'The real Field row must be unchanged.');
+    end;
+
     // ── Date (2000000007) ───────────────────────────────────────────────────────────────
 
     [Test]
@@ -151,6 +190,44 @@ codeunit 60118 "Test Temporary Virtual Tbl Rec"
         Assert.IsFalse(
             TempDateRec.Get(TempDateRec."Period Type"::Date, DMY2Date(16, 1, 2099)),
             'A temporary Date record must not answer from the platform''s computed calendar.');
+    end;
+
+    [Test]
+    procedure Record_Date_Temporary_DeleteStaysInTheTemporaryRecord()
+    // CLAIM: Delete and DeleteAll on a Record Date temporary remove exactly the rows AL named,
+    // and the non-temporary Date table still computes the same days afterwards.
+    var
+        DateRec: Record Date;
+        TempDateRec: Record Date temporary;
+    begin
+        Initialize();
+
+        // [GIVEN] three days AL wrote into January 2099
+        InsertTempDate(TempDateRec, DMY2Date(15, 1, 2099));
+        InsertTempDate(TempDateRec, DMY2Date(16, 1, 2099));
+        InsertTempDate(TempDateRec, DMY2Date(17, 1, 2099));
+
+        // [WHEN] one row is deleted by Get + Delete, and another by a filtered DeleteAll
+        Assert.IsTrue(TempDateRec.Get(TempDateRec."Period Type"::Date, DMY2Date(16, 1, 2099)), 'Get must find 16 January 2099 AL inserted.');
+        TempDateRec.Delete();
+        TempDateRec.Reset();
+        TempDateRec.SetRange("Period Type", TempDateRec."Period Type"::Date);
+        TempDateRec.SetRange("Period Start", DMY2Date(15, 1, 2099));
+        TempDateRec.DeleteAll();
+
+        // [THEN] only 17 January remains in the temporary record
+        TempDateRec.Reset();
+        Assert.AreEqual(1, TempDateRec.Count(), 'Exactly one of the three rows AL inserted must remain after deleting two.');
+        Assert.IsTrue(TempDateRec.FindFirst(), 'The remaining row must still be found.');
+        Assert.AreEqual(DMY2Date(17, 1, 2099), TempDateRec."Period Start", 'The remaining row must be the one AL did not delete.');
+
+        // [THEN] the non-temporary Date table still computes both deleted days
+        Assert.IsTrue(
+            DateRec.Get(DateRec."Period Type"::Date, DMY2Date(15, 1, 2099)),
+            'Deleting from a temporary Date record must not remove 15 January 2099 from the real Date table.');
+        Assert.IsTrue(
+            DateRec.Get(DateRec."Period Type"::Date, DMY2Date(16, 1, 2099)),
+            'Deleting from a temporary Date record must not remove 16 January 2099 from the real Date table.');
     end;
 
     // ── "Aggregate Permission Set" (2000000167) ─────────────────────────────────────────
@@ -213,6 +290,70 @@ codeunit 60118 "Test Temporary Virtual Tbl Rec"
         Assert.IsFalse(
             TempAggPermSet.Get(AggPermSet.Scope::System, ThisModule.Id(), 'ALT Agg Perm Set'),
             'A temporary Aggregate Permission Set record must not answer from the platform''s declared permission sets.');
+    end;
+
+    [Test]
+    procedure Record_AggregatePermissionSet_Temporary_DeleteStaysInTheTemporaryRecord()
+    // CLAIM: Delete and DeleteAll on a Record "Aggregate Permission Set" temporary remove
+    // exactly the rows AL named -- including a row on the key of this app's REAL declared
+    // permission set -- and the non-temporary table still carries that permission set.
+    var
+        AggPermSet: Record "Aggregate Permission Set";
+        TempAggPermSet: Record "Aggregate Permission Set" temporary;
+        ThisModule: ModuleInfo;
+    begin
+        Initialize();
+        NavApp.GetCurrentModuleInfo(ThisModule);
+
+        // [GIVEN] three rows AL wrote, one of them on the key of the real "ALT Agg Perm Set"
+        InsertTempAggPermSet(TempAggPermSet, ThisModule.Id(), 'ALT Agg Perm Set');
+        InsertTempAggPermSet(TempAggPermSet, ThisModule.Id(), 'ALT TEMP ROLE A');
+        InsertTempAggPermSet(TempAggPermSet, ThisModule.Id(), 'ALT TEMP ROLE B');
+
+        // [WHEN] one row is deleted by Get + Delete, and another by a filtered DeleteAll
+        Assert.IsTrue(
+            TempAggPermSet.Get(TempAggPermSet.Scope::System, ThisModule.Id(), 'ALT TEMP ROLE A'),
+            'Get must find the row AL inserted.');
+        TempAggPermSet.Delete();
+        TempAggPermSet.Reset();
+        TempAggPermSet.SetRange("Role ID", 'ALT Agg Perm Set');
+        TempAggPermSet.DeleteAll();
+
+        // [THEN] only ALT TEMP ROLE B remains in the temporary record
+        TempAggPermSet.Reset();
+        Assert.AreEqual(1, TempAggPermSet.Count(), 'Exactly one of the three rows AL inserted must remain after deleting two.');
+        Assert.IsTrue(TempAggPermSet.FindFirst(), 'The remaining row must still be found.');
+        Assert.AreEqual('ALT TEMP ROLE B', TempAggPermSet."Role ID", 'The remaining row must be the one AL did not delete.');
+
+        // [THEN] the non-temporary table still carries this app's declared permission set
+        Assert.IsTrue(
+            AggPermSet.Get(AggPermSet.Scope::System, ThisModule.Id(), 'ALT Agg Perm Set'),
+            'Deleting from a temporary Aggregate Permission Set record must not remove the real declared permission set.');
+    end;
+
+    local procedure InsertTempField(var TempFieldRec: Record "Field" temporary; FieldNo: Integer)
+    begin
+        TempFieldRec.Init();
+        TempFieldRec.TableNo := Database::"ALT Universal";
+        TempFieldRec."No." := FieldNo;
+        TempFieldRec.Insert();
+    end;
+
+    local procedure InsertTempDate(var TempDateRec: Record Date temporary; PeriodStart: Date)
+    begin
+        TempDateRec.Init();
+        TempDateRec."Period Type" := TempDateRec."Period Type"::Date;
+        TempDateRec."Period Start" := PeriodStart;
+        TempDateRec.Insert();
+    end;
+
+    local procedure InsertTempAggPermSet(var TempAggPermSet: Record "Aggregate Permission Set" temporary; AppId: Guid; RoleId: Code[20])
+    begin
+        TempAggPermSet.Init();
+        TempAggPermSet.Scope := TempAggPermSet.Scope::System;
+        TempAggPermSet."App ID" := AppId;
+        TempAggPermSet."Role ID" := RoleId;
+        TempAggPermSet.Insert();
     end;
 
     local procedure Initialize()

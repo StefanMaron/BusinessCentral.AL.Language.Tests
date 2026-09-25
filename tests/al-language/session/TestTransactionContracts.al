@@ -182,7 +182,12 @@ codeunit 60152 "Test Transaction Contracts"
         Rec."Integer Field" := 42;
         Rec.Modify();
         Rec.Get(1);
-        Assert.AreEqual(Created, Rec.SystemCreatedAt, 'SystemCreatedAt must not change on Modify');
+        // Through Assert's Format(_, 0, 2) this held even if SystemCreatedAt had moved by
+        // most of a minute, which is exactly what "must not change" is asserting against.
+        // The format-9 round-trip form carries milliseconds; same claim, three orders of
+        // magnitude finer.
+        Assert.AreEqual(Format(Created, 0, 9), Format(Rec.SystemCreatedAt, 0, 9),
+            'SystemCreatedAt must not change on Modify');
     end;
 
     // ── Record Locking and Updates ───────────────────────────────────────────────

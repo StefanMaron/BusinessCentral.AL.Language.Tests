@@ -373,6 +373,99 @@ codeunit 60962 "Test Codeunit Metadata Virt T"
             'The un-namespaced row must be the codeunit that was asked for.');
     end;
 
+    [Test]
+    procedure Record_CodeunitMetadata_Get_TestCodeunit_ReportsTestTypeUnitTest()
+    var
+        TestCodeunit: Record "CodeUnit Metadata";
+        NormalCodeunit: Record "CodeUnit Metadata";
+        TestTypeOrdinal: Integer;
+        NormalTestTypeOrdinal: Integer;
+    begin
+        Initialize();
+
+        // TestType (field 9) names None,UnitTest,IntegrationTest,Uncategorized,AITest. No AL
+        // property sets it: it is not a declaration a codeunit can carry, so every value this
+        // column reports is computed by the platform from the codeunit's Subtype.
+        //
+        // [WHEN] reading the row of a codeunit declaring Subtype = Test and nothing else
+        Assert.IsTrue(
+            TestCodeunit.Get(Codeunit::"Test Codeunit Metadata Virt T"),
+            'CodeUnit Metadata has no row for the test codeunit itself.');
+
+        // [THEN] the column reports a value for a test codeunit. Both spellings are asserted
+        // because they fail differently: the ordinal catches a column that reports a member
+        // this option does not name, the member catches an off-by-one between them.
+        TestTypeOrdinal := TestCodeunit.TestType;
+        Assert.AreEqual(
+            1, TestTypeOrdinal,
+            'A codeunit declaring Subtype = Test must report ordinal 1 in the TestType column.');
+        Assert.AreEqual(
+            TestCodeunit.TestType::UnitTest, TestCodeunit.TestType,
+            'A codeunit declaring Subtype = Test must report TestType::UnitTest.');
+
+        // [AND] the column is not simply always UnitTest. Read in the same run, a codeunit
+        // that declares no Subtype at all reports None, ordinal 0 -- so the answer above is
+        // what this column reports for a test codeunit specifically, and a provider handing
+        // back one fixed TestType for every row would fail one of the two.
+        Assert.IsTrue(
+            NormalCodeunit.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+        NormalTestTypeOrdinal := NormalCodeunit.TestType;
+        Assert.AreEqual(
+            0, NormalTestTypeOrdinal,
+            'A codeunit declaring no Subtype must report ordinal 0 in the TestType column.');
+        Assert.AreEqual(
+            NormalCodeunit.TestType::None, NormalCodeunit.TestType,
+            'A codeunit declaring no Subtype must report TestType::None.');
+    end;
+
+    [Test]
+    procedure Record_CodeunitMetadata_Get_RequiredTestIsolation_ReportsNoneForEveryCodeunit()
+    var
+        TestCodeunit: Record "CodeUnit Metadata";
+        NormalCodeunit: Record "CodeUnit Metadata";
+        TestIsolationOrdinal: Integer;
+        NormalIsolationOrdinal: Integer;
+    begin
+        Initialize();
+
+        // RequiredTestIsolation (field 10) names None,Disabled,Codeunit,Function. Corpus PR
+        // 296 measured a TestRunner declaring TestIsolation = Disabled and every cloud leg
+        // reported None, so the column does not track the declaration; those fixtures and
+        // assertions were withdrawn. This test pins what is left -- that the column reports
+        // None -- so the answer is stated by the suite rather than remembered from a PR that
+        // removed its own tests.
+        //
+        // [WHEN] reading rows of two codeunits whose Subtype differs
+        Assert.IsTrue(
+            TestCodeunit.Get(Codeunit::"Test Codeunit Metadata Virt T"),
+            'CodeUnit Metadata has no row for the test codeunit itself.');
+        Assert.IsTrue(
+            NormalCodeunit.Get(Codeunit::"ALT Codeunit Meta Probe"),
+            'CodeUnit Metadata has no row for codeunit ALT Codeunit Meta Probe.');
+
+        // [THEN] both report None, ordinal 0.
+        TestIsolationOrdinal := TestCodeunit.RequiredTestIsolation;
+        Assert.AreEqual(
+            0, TestIsolationOrdinal,
+            'A codeunit declaring Subtype = Test must report ordinal 0 in RequiredTestIsolation.');
+        Assert.AreEqual(
+            TestCodeunit.RequiredTestIsolation::None, TestCodeunit.RequiredTestIsolation,
+            'A codeunit declaring Subtype = Test must report RequiredTestIsolation::None.');
+
+        NormalIsolationOrdinal := NormalCodeunit.RequiredTestIsolation;
+        Assert.AreEqual(
+            0, NormalIsolationOrdinal,
+            'A codeunit declaring no Subtype must report ordinal 0 in RequiredTestIsolation.');
+
+        // Negative control: these two rows DO differ from each other on a neighbouring column
+        // read in the same run, so the matching answers above are this column reporting the
+        // same value for both, not two reads of one row or a provider returning blank rows.
+        Assert.AreNotEqual(
+            NormalCodeunit.Subtype, TestCodeunit.Subtype,
+            'The two rows must be different codeunits: their Subtype must differ.');
+    end;
+
     local procedure Initialize()
     begin
         // CodeUnit Metadata is a read-only system virtual table — nothing to DeleteAll.
