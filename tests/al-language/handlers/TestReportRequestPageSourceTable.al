@@ -14,11 +14,17 @@
 //     OnAfterSetPeriodIsEditable(Rec, PeriodIsEditable);
 // so the integration event hands out the row OnOpenPage found. A subscriber records it.
 //
-// Two claims:
+// Two claims, both about which row OnOpenPage finds:
 //   1. With two headers and a filter on the second, OnOpenPage finds the SECOND one: its Rec is a
 //      VAT Report Header carrying the filters the report's data item was run with.
-//   2. With a filter no header matches, Rec.FindFirst() raises the ordinary "no record within the
-//      filter" error, which reaches the test through Report.RunModal, and the event never fires.
+//   2. With a range filter covering two headers, OnOpenPage finds the FIRST of them, so Rec is
+//      not simply positioned on the last row of the filter.
+//
+// No test here lets OnOpenPage raise. A [RequestPageHandler] is queued before the request page
+// opens and is consumed only when the page is shown; an error in OnOpenPage leaves it queued, and
+// a later test in the same session that shows a modal page without queueing its own handler then
+// runs this codeunit's handler against the other codeunit's instance ("TargetException: Object
+// does not match target type", seen on codeunit 60455 in corpus PR #420's first run).
 codeunit 60926 "RPST Probe"
 {
     SingleInstance = true;
@@ -82,20 +88,22 @@ codeunit 60928 "Rpt RequestPage SourceTable"
 
     [Test]
     [HandlerFunctions('CancelVATReportRequestPage')]
-    procedure RequestPageRec_OnOpenPage_FindFirstOnAnEmptyFilterRaises()
+    procedure RequestPageRec_OnOpenPage_FindsTheFirstRowOfARangeFilter()
     var
         VATReportHeader: Record "VAT Report Header";
     begin
         Probe.Reset();
         HandlerCalls := 0;
         InsertHeader('RPST-C');
+        InsertHeader('RPST-D');
         Commit();
 
-        VATReportHeader.SetRange("No.", 'RPST-NONE');
-        asserterror Report.RunModal(Report::"VAT Report Request Page", true, false, VATReportHeader);
+        VATReportHeader.SetFilter("No.", '%1..%2', 'RPST-C', 'RPST-D');
+        Report.RunModal(Report::"VAT Report Request Page", true, false, VATReportHeader);
 
-        Assert.ExpectedError('There is no VAT Report Header within the filter.');
-        Assert.AreEqual(0, Probe.GetCalls(), 'OnOpenPage stops at Rec.FindFirst, before the event');
+        Assert.AreEqual(1, Probe.GetCalls(), 'OnOpenPage should reach OnAfterSetPeriodIsEditable once');
+        Assert.AreEqual('RPST-C', Probe.GetSeenNo(), 'Rec.FindFirst on the request page should find the first row of the filter');
+        Assert.AreEqual(1, HandlerCalls, 'the [RequestPageHandler] should run once');
     end;
 
     local procedure InsertHeader(No: Code[20])
