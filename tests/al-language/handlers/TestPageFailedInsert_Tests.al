@@ -10,11 +10,14 @@
 /// "DUP" into a new record. The fixture table has no triggers, so nothing but the insert itself
 /// can fail.
 ///
-/// Each arm runs its page calls inside one asserterror, recording the name of the call it is
-/// about to make. The last line of every drive procedure raises NO-ERROR-RAISED, so an arm whose
-/// page calls all succeed still produces an error, and the observation says so instead of the
-/// asserterror failing without detail. The observation is 'step=<the call that raised>;error=<what
-/// it raised>'.
+/// The raising arms run their page calls inside one asserterror, recording the name of the call
+/// they are about to make; the observation is 'step=<the call that raised>;error=<what it raised>'.
+/// The List arms raise nothing on any leg, so they record what happened to the line instead: the
+/// cursor's key after New()/Next(), both fields' validation error counts, and the table afterwards.
+///
+/// Measured on real BC (corpus run 36145940845, all nine cloud legs): insert on focus and Close()
+/// raise at the call; OK().Invoke() raises nothing itself and the error surfaces when the TestPage
+/// variable goes out of scope; New() and Next() on a DelayedInsert List raise nothing at all.
 ///
 /// Written for AL Runner#4624, where the runner's page-driven insert trapped the error and the
 /// row, with every value typed into it, disappeared without one.
@@ -79,40 +82,56 @@ codeunit 60045 "IPF Tests"
     end;
 
     [Test]
-    procedure DelayedCard_DuplicateKey_OK_RaisesTheInsertError()
-    // CLAIM: the same insert reached through the OK action raises the same error from OK().Invoke().
+    procedure DelayedCard_DuplicateKey_OK_RaisesWhenThePageGoesOutOfScope()
+    // MEASURED (corpus run 36145940845, all nine cloud legs): OK().Invoke() itself raises nothing
+    // when the insert fails. The duplicate-key error surfaces later, once the drive procedure
+    // returns and its TestPage variable is released. Here the drive procedure ends normally after
+    // OK(), so the only error the asserterror can catch is that one.
     begin
         Initialize();
 
-        asserterror DriveDelayedCard(true);
+        asserterror DriveDelayedCardViaOK();
 
-        Assert.AreEqual('step=OK;error=already exists', Observe(),
+        Assert.AreEqual('step=completed;error=already exists', Observe(),
             'which call raised, and what, when OK() cannot insert the new Card row');
     end;
 
     [Test]
-    procedure DelayedList_DuplicateKey_New_RaisesTheInsertError()
-    // CLAIM: on a DelayedInsert List, New() leaves the started line and inserts it; when that
-    // insert fails, New() raises the duplicate-key error.
+    procedure DelayedList_DuplicateKey_New_RaisesNothing()
+    // MEASURED (corpus run 36145940845, all nine cloud legs): on a DelayedInsert List, New() after
+    // a started line whose insert would fail raises no error, and neither does the Close() after
+    // it. This arm records what happens to that line: the field validation errors, where the
+    // cursor is, and what the table holds once the page is closed.
     begin
         Initialize();
 
-        asserterror DriveDelayedList(true);
-
-        Assert.AreEqual('step=New;error=already exists', Observe(),
-            'which call raised, and what, when New() cannot insert the line it leaves');
+        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', true),
+            'what New() does with a started line whose insert fails');
     end;
 
     [Test]
-    procedure DelayedList_DuplicateKey_Next_RaisesTheInsertError()
-    // CLAIM: Next() leaving the started line inserts it the same way, and raises the same error.
+    procedure DelayedList_DuplicateKey_Next_RaisesNothing()
+    // MEASURED (corpus run 36145940845, all nine cloud legs): the same through Next().
     begin
         Initialize();
 
-        asserterror DriveDelayedList(false);
+        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=1;dup=orig', DriveDelayedListObserved('DUP', false),
+            'what Next() does with a started line whose insert fails');
+    end;
 
-        Assert.AreEqual('step=Next;error=already exists', Observe(),
-            'which call raised, and what, when Next() cannot insert the line it leaves');
+    [Test]
+    procedure DelayedList_NewKey_New_InsertsTheLine()
+    // CLAIM (contrast): with a key that does not exist yet, New() inserts the started line with its
+    // typed value, so the duplicate-key arms above differ only in the insert failing.
+    var
+        Row: Record "IPF Row";
+    begin
+        Initialize();
+
+        Assert.AreEqual('cur=;noErr=0;descErr=0;rows=2;dup=orig', DriveDelayedListObserved('NEW1', true),
+            'what New() does with a started line whose insert succeeds');
+        Assert.IsTrue(Row.Get('NEW1'), 'New() must insert the started line');
+        Assert.AreEqual('typed', Row.Description, 'the inserted line''s Description');
     end;
 
     [Test]
@@ -173,26 +192,38 @@ codeunit 60045 "IPF Tests"
         Error(NoErrorRaisedTxt);
     end;
 
-    local procedure DriveDelayedList(ViaNew: Boolean)
+    local procedure DriveDelayedCardViaOK()
     var
-        Rows: TestPage "IPF Delayed List";
+        Card: TestPage "IPF Delayed Card";
     begin
         Step := 'OpenNew';
-        Rows.OpenNew();
+        Card.OpenNew();
         Step := 'No.SetValue';
-        Rows."No.".SetValue('DUP');
+        Card."No.".SetValue('DUP');
         Step := 'Description.SetValue';
-        Rows.Description.SetValue('typed');
-        if ViaNew then begin
-            Step := 'New';
-            Rows.New();
-        end else begin
-            Step := 'Next';
-            Rows.Next();
-        end;
-        Step := 'Close';
-        Rows.Close();
+        Card.Description.SetValue('typed');
+        Step := 'OK';
+        Card.OK().Invoke();
         Step := 'completed';
-        Error(NoErrorRaisedTxt);
+    end;
+
+    local procedure DriveDelayedListObserved(NewKey: Code[20]; ViaNew: Boolean): Text
+    var
+        Row: Record "IPF Row";
+        Rows: TestPage "IPF Delayed List";
+        Observed: Text;
+    begin
+        Rows.OpenNew();
+        Rows."No.".SetValue(NewKey);
+        Rows.Description.SetValue('typed');
+        if ViaNew then
+            Rows.New()
+        else
+            Rows.Next();
+        Observed := StrSubstNo('cur=%1;noErr=%2;descErr=%3', Rows."No.".Value(),
+            Rows."No.".ValidationErrorCount(), Rows.Description.ValidationErrorCount());
+        Rows.Close();
+        Row.Get('DUP');
+        exit(StrSubstNo('%1;rows=%2;dup=%3', Observed, Row.Count(), Row.Description));
     end;
 }
