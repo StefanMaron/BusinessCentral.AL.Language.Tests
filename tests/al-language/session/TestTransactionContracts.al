@@ -221,12 +221,15 @@ codeunit 60152 "Test Transaction Contracts"
     procedure SystemRowVersion_NonZero_After_Insert()
     var
         Rec: Record "ALT Universal";
+        NoRowVersion: BigInteger;
     begin
         Initialize();
         Rec."Entry No." := 1;
         Rec.Insert();
         Rec.Get(1);
-        Assert.AreNotEqual(0, Rec.SystemRowVersion, 'SystemRowVersion must be non-zero after insert');
+        // NoRowVersion rather than a bare 0: Assert compares the variant's TYPE as well as its
+        // value, so an Integer 0 is never equal to a BigInteger and AreNotEqual(0, ...) cannot fail.
+        Assert.AreNotEqual(NoRowVersion, Rec.SystemRowVersion, 'SystemRowVersion must be non-zero after insert');
     end;
 
     [Test]

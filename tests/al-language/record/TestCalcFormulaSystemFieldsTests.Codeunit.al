@@ -233,7 +233,10 @@ codeunit 60818 "CFSF Tests"
     begin
         Initialize(CfsfHeader);
         CfsfLine.Get(1);
-        Assert.AreNotEqual(0, CfsfLine.SystemRowVersion, 'the seeded line must carry a rowversion');
+        // ZeroRowVersion (still at its default here) rather than a bare 0, for the reason given
+        // at the AreEqual below: an Integer 0 never equals a BigInteger, so AreNotEqual(0, ...)
+        // cannot fail.
+        Assert.AreNotEqual(ZeroRowVersion, CfsfLine.SystemRowVersion, 'the seeded line must carry a rowversion');
 
         // The control, FIRST rather than last, and that ordering is forced: an asserterror on
         // Validate rolls the transaction back, so the rows Initialize seeded are gone after
@@ -292,6 +295,7 @@ codeunit 60818 "CFSF Tests"
         CfsfHeader: Record "CFSF Header";
         CfsfLine1: Record "CFSF Line";
         CfsfLine3: Record "CFSF Line";
+        NoRowVersion: BigInteger;
     begin
         Initialize(CfsfHeader);
         CfsfLine1.Get(1);
@@ -299,7 +303,9 @@ codeunit 60818 "CFSF Tests"
 
         CfsfHeader.CalcFields("Last Line Row Version", "First Line Row Version");
 
-        Assert.AreNotEqual(0, CfsfHeader."First Line Row Version", 'min() over SystemRowVersion must not be zero');
+        // NoRowVersion rather than a bare 0: an Integer 0 never equals a BigInteger, so
+        // AreNotEqual(0, ...) cannot fail.
+        Assert.AreNotEqual(NoRowVersion, CfsfHeader."First Line Row Version", 'min() over SystemRowVersion must not be zero');
         Assert.AreEqual(
           CfsfLine1.SystemRowVersion, CfsfHeader."First Line Row Version",
           'min() over the D1 lines is the first-inserted line''s rowversion');
