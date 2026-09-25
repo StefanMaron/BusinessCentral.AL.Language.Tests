@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-onaftergetcurrrecord-page-trigger
 // Scope: in-scope
-// Fixtures used: ONG Row (60950), ONG Card (60950), TRT Echo (60840), shared Assert (60021)
+// Fixtures used: ONG Row (60950), ONG Card (60950), TRT Row (60839), TRT Card (60841),
+//                 TRT Echo (60840), shared Assert (60021)
 //
 // A page opened with OpenNew() — or moved to a new record with New() — runs its
 // OnAfterGetCurrRecord for that new record, after OnNewRecord and before the test types
@@ -104,6 +105,36 @@ codeunit 60927 "ONG Tests"
         Assert.AreEqual(1, Hits('ONG-TEMPL'), 'New() runs OnAfterGetCurrRecord for the new record, after OnNewRecord');
         Assert.RecordCount(Row, 2);
         Card.Close();
+    end;
+
+    [Test]
+    procedure OpenNew_WhenABlankKeyedRowIsStored_StillInsertsTheNewRow()
+    var
+        Row: Record "TRT Row";
+        Card: TestPage "TRT Card";
+    begin
+        // The negative side of the template case. "TRT Card" runs OnAfterGetCurrRecord but hands
+        // the page no row. A stored row whose key equals the new row's starting (blank) key is
+        // not the new row: typing a key and pressing OK inserts a second row and leaves the
+        // blank-keyed one as it was.
+        Initialize();
+        Row.DeleteAll();
+        Row.Init();
+        Row."No." := '';
+        Row.Note := 'blank';
+        Row.Insert();
+
+        Card.OpenNew();
+        Card."No.".SetValue('ONG-N2');
+        Card.Note.SetValue('typed');
+        Card.OK().Invoke();
+
+        Assert.RecordCount(Row, 2);
+        Row.Get('');
+        Assert.AreEqual('blank', Row.Note, 'the stored blank-keyed row is untouched');
+        Row.Get('ONG-N2');
+        Assert.AreEqual('typed', Row.Note, 'the new row carries the typed value');
+        Row.DeleteAll();
     end;
 
     local procedure Initialize()
