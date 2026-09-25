@@ -19,7 +19,8 @@
 /// focus and Close() raise; OK().Invoke() raises nothing, and nothing is raised when the TestPage
 /// variable goes out of scope either. On a DelayedInsert List, New(), Next() and Last() raise
 /// nothing: the cursor stays on the refused line and the "No." control records one validation
-/// error. Previous() and First() raise the duplicate-key error.
+/// error. Previous() and First() raise nothing either, but the duplicate-key error then surfaces
+/// at the Close() that follows (corpus run 36159837227, all nine cloud legs).
 ///
 /// Written for AL Runner#4624, where the runner's page-driven insert trapped the error and the
 /// row, with every value typed into it, disappeared without one.
@@ -125,29 +126,30 @@ codeunit 60045 "IPF Tests"
     end;
 
     [Test]
-    procedure DelayedList_DuplicateKey_Previous_RaisesTheInsertError()
-    // MEASURED (corpus run 36148838859, all nine cloud legs): leaving the line through Previous()
-    // raises "The record in table IPF Row already exists. Identification fields and values:
-    // No.='DUP'". CLAIM: it is Previous() itself that raises.
+    procedure DelayedList_DuplicateKey_Previous_CloseRaisesTheInsertError()
+    // MEASURED (corpus run 36148838859, all nine cloud legs): after Previous() leaves the line,
+    // the TestPage raises "The record in table IPF Row already exists. Identification fields and
+    // values: No.='DUP'". MEASURED (corpus run 36159837227, all nine cloud legs): Previous()
+    // itself raises nothing; the error comes from the Close() after it.
     begin
         Initialize();
 
         asserterror DriveDelayedListRaising('Previous');
 
-        Assert.AreEqual('step=Previous;error=already exists', Observe(),
+        Assert.AreEqual('step=Close;error=already exists', Observe(),
             'which call raised, and what, when Previous() leaves a line whose insert fails');
     end;
 
     [Test]
-    procedure DelayedList_DuplicateKey_First_RaisesTheInsertError()
-    // MEASURED (corpus run 36148838859, all nine cloud legs): the same through First().
-    // CLAIM: it is First() itself that raises.
+    procedure DelayedList_DuplicateKey_First_CloseRaisesTheInsertError()
+    // MEASURED (corpus runs 36148838859 and 36159837227, all nine cloud legs): the same through
+    // First() -- First() raises nothing, and the Close() after it raises the insert error.
     begin
         Initialize();
 
         asserterror DriveDelayedListRaising('First');
 
-        Assert.AreEqual('step=First;error=already exists', Observe(),
+        Assert.AreEqual('step=Close;error=already exists', Observe(),
             'which call raised, and what, when First() leaves a line whose insert fails');
     end;
 
