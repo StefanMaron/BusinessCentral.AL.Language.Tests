@@ -3,15 +3,16 @@
 // Fixtures used: Assert (60021), and the table below
 //
 // The subject: a FindSet()/Next() loop sorted on a secondary key, where the loop body
-// changes that key field on the current row. Which rows does Next() still reach?
+// changes that key field through a SECOND record variable. Which rows does Next() reach?
 //
-// Written for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4678. Base Application's
-// Gen. Journal Line.RenumberDocumentNo loops on a key that includes "Document No." and
-// writes the new "Document No." through a SECOND record variable (Get + Modify). Microsoft's
-// own tests (codeunit 134920 "ERM General Journal UT") expect every line to be visited once.
+// Written for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4678 (Base Application's
+// Gen. Journal Line.RenumberDocumentNo writes "Document No." through a second variable).
 //
-// Three rows only: a SQL-backed FindSet reads in batches, and a small set keeps every arm
-// inside the first one, so the answer does not depend on a batch size.
+// What BC does: a write to the table invalidates every other open result set on it, and the
+// next Next() re-reads from the loop variable's current key values, strictly after them. So a
+// row renamed to sort after the cursor is reached again, and a value written after FindSet is
+// the value the loop reads. The loops below stop at 11 visits; without the cap the "rename
+// past the cursor" shape does not terminate.
 
 table 60398 "FSK Row"
 {
@@ -89,22 +90,22 @@ codeunit 60367 "FSK Tests"
     end;
 
     [Test]
-    procedure SecondVar_KeyMovedPastUnvisitedRows_EveryRowVisitedOnce()
+    procedure SecondVar_KeyMovedPastUnvisitedRows_NextRevisitsRenamedRows()
     // THE ARM from #4678. Each visited row is renamed to sort after every unvisited row.
-    // The loop variable itself is never modified, so Next() must walk the three rows it
-    // started with, in their original order, exactly once each.
+    // Next() seeks past the loop variable's key (A1, A2, ...), so after A3 it finds the
+    // renamed rows Z1, Z2, Z3, renames them again, and keeps going until the cap.
     var
         Visits: Integer;
         Trace: Text;
     begin
         Seed('A');
         Trace := Walk(1, false, Visits);
-        Assert.AreEqual('1:A1 2:A2 3:A3 ', Trace, 'visit order');
-        Assert.AreEqual(3, Visits, 'rows visited');
+        Assert.AreEqual('1:A1 2:A2 3:A3 1:Z1 2:Z2 3:Z3 1:Z4 2:Z5 3:Z6 1:Z7 2:Z8 ', Trace, 'visit order');
+        Assert.AreEqual(11, Visits, 'rows visited');
     end;
 
     [Test]
-    procedure SecondVar_KeyMovedPastUnvisitedRows_FindSetForUpdate_EveryRowVisitedOnce()
+    procedure SecondVar_KeyMovedPastUnvisitedRows_FindSetForUpdate_NextRevisitsRenamedRows()
     // Same as above with FindSet(true): the lock does not change which rows Next() reaches.
     var
         Visits: Integer;
@@ -112,8 +113,8 @@ codeunit 60367 "FSK Tests"
     begin
         Seed('A');
         Trace := Walk(1, true, Visits);
-        Assert.AreEqual('1:A1 2:A2 3:A3 ', Trace, 'visit order');
-        Assert.AreEqual(3, Visits, 'rows visited');
+        Assert.AreEqual('1:A1 2:A2 3:A3 1:Z1 2:Z2 3:Z3 1:Z4 2:Z5 3:Z6 1:Z7 2:Z8 ', Trace, 'visit order');
+        Assert.AreEqual(11, Visits, 'rows visited');
     end;
 
     [Test]
@@ -130,9 +131,9 @@ codeunit 60367 "FSK Tests"
     end;
 
     [Test]
-    procedure SecondVar_AfterLoop_EveryRowCarriesItsNewKey()
-    // The writes themselves landed: after the loop each row holds the value written on
-    // its own visit, so the visit order above is also the renumbering order.
+    procedure SecondVar_AfterLoop_EachRowCarriesItsLastVisitsKey()
+    // The writes themselves landed: each row holds the value written on its LAST visit
+    // (visits 10, 11 and 9 for rows 1, 2 and 3).
     var
         Row: Record "FSK Row";
         Visits: Integer;
@@ -140,18 +141,17 @@ codeunit 60367 "FSK Tests"
         Seed('A');
         Walk(1, false, Visits);
         Row.Get(1);
-        Assert.AreEqual('Z1', Row.Doc, 'row 1');
+        Assert.AreEqual('Z10', Row.Doc, 'row 1');
         Row.Get(2);
-        Assert.AreEqual('Z2', Row.Doc, 'row 2');
+        Assert.AreEqual('Z11', Row.Doc, 'row 2');
         Row.Get(3);
-        Assert.AreEqual('Z3', Row.Doc, 'row 3');
+        Assert.AreEqual('Z9', Row.Doc, 'row 3');
     end;
 
     [Test]
-    procedure SecondVar_NonKeyFieldOfUnvisitedRowChanged_LoopReadsTheValueAsFound()
-    // A companion question the fix for #4678 has to answer: when the second variable changes
-    // a NON-key field of a row the loop has not reached yet, does Next() hand that row back
-    // with the value FindSet found, or with the new one? Three rows sit in one batch.
+    procedure SecondVar_NonKeyFieldOfUnvisitedRowChanged_LoopReadsTheNewValue()
+    // When the second variable changes a NON-key field of a row the loop has not reached yet,
+    // Next() hands that row back with the new value, not the one FindSet found.
     var
         Row: Record "FSK Row";
         Row2: Record "FSK Row";
@@ -172,7 +172,7 @@ codeunit 60367 "FSK Tests"
                     Seen := Row.Payload;
             until (Row.Next() = 0) or (Visits > 10);
         Assert.AreEqual(3, Visits, 'rows visited');
-        Assert.AreEqual(0, Seen, 'Payload of row 3 as the loop reached it');
+        Assert.AreEqual(99, Seen, 'Payload of row 3 as the loop reached it');
         Row2.Get(3);
         Assert.AreEqual(99, Row2.Payload, 'the write itself landed');
     end;
