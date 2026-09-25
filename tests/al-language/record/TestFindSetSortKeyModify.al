@@ -13,7 +13,7 @@
 // Three rows only: a SQL-backed FindSet reads in batches, and a small set keeps every arm
 // inside the first one, so the answer does not depend on a batch size.
 
-table 60999 "FSK Row"
+table 60398 "FSK Row"
 {
     DataClassification = CustomerContent;
 
@@ -31,7 +31,7 @@ table 60999 "FSK Row"
     }
 }
 
-codeunit 60919 "FSK Tests"
+codeunit 60367 "FSK Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
