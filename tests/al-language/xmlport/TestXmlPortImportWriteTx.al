@@ -2,7 +2,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/xmlport/xmlport-instance-import-method
 // Scope: in-scope
 // Fixtures used: ALT Universal (60000), ALT Blob (60008), ALTFixtureCleanup (60019),
-//                ALT Universal XmlPort (60023)
+//                ALT Universal XmlPort (60023), ALT Run Tx Inserter (60253)
 // Note: the XmlPort.Import counterpart of "Test Codeunit Run Write Tx" (60254). Whether the
 // Boolean result is consumed decides which branch the platform takes: the statement form
 // joins the caller's transaction and is allowed while an uncommitted write is pending; the
@@ -53,7 +53,21 @@ codeunit 60041 "Test XmlPort Import Write Tx"
         exit(ALTUniversal.Count());
     end;
 
+    local procedure SecondImportRowCount(): Integer
+    var
+        ALTUniversal: Record "ALT Universal";
+    begin
+        ALTUniversal.Reset();
+        ALTUniversal.SetRange("Entry No.", 9311, 9312);
+        exit(ALTUniversal.Count());
+    end;
+
     local procedure OpenPayload(var BlobRec: Record "ALT Blob" temporary; var InStr: InStream)
+    begin
+        OpenPayloadFrom(BlobRec, InStr, 9301);
+    end;
+
+    local procedure OpenPayloadFrom(var BlobRec: Record "ALT Blob" temporary; var InStr: InStream; FirstEntryNo: Integer)
     var
         OutStr: OutStream;
     begin
@@ -64,8 +78,8 @@ codeunit 60041 "Test XmlPort Import Write Tx"
         BlobRec.Insert();
         BlobRec.Data.CreateOutStream(OutStr);
         OutStr.WriteText('<?xml version="1.0" encoding="UTF-8"?><Universals>' +
-            '<Universal><EntryNo>9301</EntryNo><IntegerValue>10</IntegerValue><TextValue>First</TextValue></Universal>' +
-            '<Universal><EntryNo>9302</EntryNo><IntegerValue>20</IntegerValue><TextValue>Second</TextValue></Universal>' +
+            StrSubstNo('<Universal><EntryNo>%1</EntryNo><IntegerValue>10</IntegerValue><TextValue>First</TextValue></Universal>', FirstEntryNo) +
+            StrSubstNo('<Universal><EntryNo>%1</EntryNo><IntegerValue>20</IntegerValue><TextValue>Second</TextValue></Universal>', FirstEntryNo + 1) +
             '</Universals>');
         BlobRec.Data.CreateInStream(InStr);
     end;
@@ -205,5 +219,43 @@ codeunit 60041 "Test XmlPort Import Write Tx"
         Assert.IsTrue(Ok, 'A value-consuming XmlPort Import must succeed once Commit() has closed the write transaction.');
         Assert.AreEqual(2, ImportedRowCount(),
             'A value-consuming XmlPort Import after Commit() must import both rows.');
+    end;
+
+    [Test]
+    procedure GuardedImport_LeavingImportedRows_DoesNotBlockTheNextGuardedImport()
+    var
+        FirstBlob: Record "ALT Blob" temporary;
+        SecondBlob: Record "ALT Blob" temporary;
+        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
+        FirstInStr: InStream;
+        SecondInStr: InStream;
+        FirstOk: Boolean;
+        SecondOk: Boolean;
+        ThirdOk: Boolean;
+    begin
+        Initialize();
+        OpenPayload(FirstBlob, FirstInStr);
+        OpenPayloadFrom(SecondBlob, SecondInStr, 9311);
+
+        // [GIVEN] no pending write in the caller, so the first value-consuming import is allowed
+        FirstOk := XmlPort.Import(XmlPort::"ALT Universal XmlPort", FirstInStr);
+        Assert.IsTrue(FirstOk, 'The first value-consuming XmlPort.Import must succeed.');
+        Assert.AreEqual(2, ImportedRowCount(), 'The first import must have written its rows.');
+
+        // [THEN] a SECOND value-consuming import is still allowed: the rows the first one wrote
+        //        belong to the transaction it opened and ended, not to the caller, so the caller
+        //        holds no open write transaction here.
+        UniversalXmlPort.SetSource(SecondInStr);
+        SecondOk := UniversalXmlPort.Import();
+        Assert.IsTrue(SecondOk,
+            'A value-consuming XmlPort Import must still be allowed after an earlier one wrote rows.');
+        Assert.AreEqual(2, SecondImportRowCount(), 'The second import must have written its rows.');
+
+        // [THEN] the guard itself is intact: a write made by the CALLER, uncommitted, still
+        //        refuses the next value-consuming call.
+        InsertPendingRow();
+        asserterror ThirdOk := Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
+        Assert.ExpectedError('the transaction is stopped');
+        Assert.IsFalse(ThirdOk, 'A refused Codeunit.Run must not assign a result.');
     end;
 }
