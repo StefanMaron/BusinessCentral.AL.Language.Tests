@@ -119,7 +119,9 @@ When there is no special condition, omit it: `Record_Insert_AssignsSystemId`.
 
 ### Codeunit IDs
 
-Use the next available ID in the `60000–60999` range. Check existing files to avoid conflicts — the last assigned ID is visible in the test area you're adding to.
+The Cloud app (`tests/al-language`) declares two ID ranges: `60000–60999` and `67000–69999`. The first range is nearly full, so **allocate new objects from `67000–69999`**. Check existing files and open pull requests to avoid conflicts — `check-object-ids.py` and `check-cross-pr-object-ids.py` catch duplicates and out-of-range ids.
+
+If you add a third range, add it to `codeunit_range` in `.github/workflows/ci.yml` too. That value decides which test codeunits CI runs, and a test codeunit outside it compiles but never runs, with every leg still green.
 
 ---
 
