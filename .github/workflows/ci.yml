@@ -199,7 +199,7 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "60000..60999"
+      codeunit_range:       "60000..60999|67000..69999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
 
   # The Target = OnPrem test app, in a job of its own.

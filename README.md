@@ -41,7 +41,7 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 
 ## Test Areas
 
-519 AL files, 273 test codeunits (ID range 60000–60999), target `Cloud`, runtime 16.1 (BC 27+).
+519 AL files, 273 test codeunits (ID ranges 60000–60999 and 67000–69999; new objects go in 67000–69999), target `Cloud`, runtime 16.1 (BC 27+).
 
 | Area | Description |
 |------|-------------|
