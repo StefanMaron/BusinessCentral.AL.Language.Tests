@@ -11,7 +11,8 @@
 ///   1. A Card whose current row was deleted -- by its own action, or by the test underneath it
 ///      -- is closed once an action on it returns: the TestPage is no longer open afterwards,
 ///      Close() included. CurrPage.Update(false) is not what closes it; an action that only
-///      deletes does the same.
+///      deletes does the same. A new row the table does not hold yet is not "deleted": an action
+///      on the untouched row OpenNew starts leaves the Card open.
 ///   2. A List in the same shape moves to the neighbouring row instead.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
@@ -140,6 +141,28 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         asserterror Card.Close();
         Assert.ExpectedError('The TestPage is not open.');
+    end;
+
+    [Test]
+    procedure Card_OpenNew_UntouchedRow_UpdateAction_StaysOpen()
+    var
+        Row: Record "ALT Page Update Gone Row";
+        Card: TestPage "ALT Page Update Gone Card";
+        Recorded: Text;
+        Shown: Text;
+    begin
+        Row.DeleteAll();
+        Card.OpenNew();
+        Trace.Reset();
+
+        Card.UpdateOnly.Invoke();
+        Recorded := Trace.Get();
+        Shown := Card.CodeField.Value();
+
+        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'an action on the untouched new row; shows ' + Shown);
+        Assert.AreEqual('', Shown, 'the untouched new row is still shown; trace ' + Recorded);
+        Assert.IsTrue(Row.IsEmpty(), 'the action did not insert the untouched new row');
+        Card.Close();
     end;
 
     [Test]
