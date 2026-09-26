@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-runpageonrec-property
 // Scope: in-scope
 // Fixtures used: TPARPR Row (67350), TPARPR Probe (67350), TPARPR Host (67350),
-//                TPARPR Target (67351), Assert (60021)
+//                TPARPR Target (67351), TPARPR Calc Host (67352), Assert (60021)
 //
 // A page action with RunObject = Page and RunPageOnRec = true opens the target on the host
 // page's current row (codeunit 60455). This codeunit pins what the two pages share after that:
@@ -10,7 +10,10 @@
 //   * POSITION -- when the target moves its Rec (in OnOpenPage, or through the TestPage in the
 //     handler), does the host move with it? Codeunit 60606 answers yes for a RunObject codeunit.
 //   * WRITE-BACK -- when the target edits the row and closes, does the host show the new value,
-//     and can the host still save its own edit of that row afterwards?
+//     and can the host still save its own edit of that row afterwards? Which xRec does that save
+//     carry into the table's OnModify?
+//   * HOST TRIGGERS -- after the target closes, does the host still show what its own
+//     OnAfterGetRecord wrote into Rec, and for which read of the row did that trigger run?
 //
 // Five rows in two groups: A Alpha G1, B Bravo G2, C Charlie G1, D Delta G1, E Echo G2. Every
 // arm parks the host on a row the target can report back, so each assertion distinguishes
@@ -185,6 +188,86 @@ codeunit 67351 "TPARPR Tests"
         Row.Get('B');
         Assert.AreEqual('G9', Row.Grp, 'the host''s edit after the action must be saved');
         Assert.AreEqual('Written', Row.Descr, 'the host''s save must not overwrite the target''s write with the value the host loaded');
+    end;
+
+    // WRITE-BACK, the before-image. The table's OnModify records xRec.Descr>Rec.Descr. After the
+    // target wrote 'Written' to row B, the host edits Grp on that row and leaves it; the arm reads
+    // the images the host's save carried.
+    [Test]
+    [HandlerFunctions('TargetHandler')]
+    procedure HostSaveAfterTheTargetEditedTheRowCarriesXRec()
+    var
+        Probe: Codeunit "TPARPR Probe";
+        Host: TestPage "TPARPR Host";
+    begin
+        Initialize('WRITE');
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        Host.RunTarget.Invoke();
+        Assert.AreEqual('Bravo>Written', Probe.GetLastModify(), 'precondition: the target''s own save of row B');
+        Host.Grp.SetValue('G9');
+        Host.Next();
+
+        Assert.AreEqual('Written>Written', Probe.GetLastModify(), 'xRec>Rec in OnModify for the host''s save after the target wrote the row');
+    end;
+
+    // HOST TRIGGERS, plain RunObject. The target opens on its own rowset and changes nothing.
+    [Test]
+    [HandlerFunctions('TargetHandler')]
+    procedure HostOnAfterGetRecordValueAfterPlainRunObject()
+    var
+        Host: TestPage "TPARPR Calc Host";
+    begin
+        Initialize('READ');
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        Assert.AreEqual('CALC:Bravo', Host.Calc.Value(), 'precondition: the host''s OnAfterGetRecord ran for B');
+        Host.RunPlain.Invoke();
+
+        Assert.AreEqual('B', Host."No.".Value(), 'the host stays on its row');
+        Assert.AreEqual('CALC:Bravo', Host.Calc.Value(), 'the host''s OnAfterGetRecord value after a plain RunObject page closed');
+    end;
+
+    // HOST TRIGGERS, RunPageOnRec. The target opens on the host's row and changes nothing.
+    [Test]
+    [HandlerFunctions('TargetHandler')]
+    procedure HostOnAfterGetRecordValueAfterRunPageOnRec()
+    var
+        Host: TestPage "TPARPR Calc Host";
+    begin
+        Initialize('READ');
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        Host.RunOnRec.Invoke();
+
+        Assert.AreEqual('B', Host."No.".Value(), 'the host stays on its row');
+        Assert.AreEqual('CALC:Bravo', Host.Calc.Value(), 'the host''s OnAfterGetRecord value after a RunPageOnRec page closed');
+    end;
+
+    // HOST TRIGGERS, after a write. The target writes 'Written' to the host's row. 'CALC:Written'
+    // means the host's OnAfterGetRecord ran again on the re-read row; 'CALC:Bravo' that it did
+    // not; '' that the row was re-read with no trigger.
+    [Test]
+    [HandlerFunctions('TargetHandler')]
+    procedure HostOnAfterGetRecordAfterTheTargetWroteTheRow()
+    var
+        Host: TestPage "TPARPR Calc Host";
+    begin
+        Initialize('WRITE');
+
+        Host.OpenEdit();
+        Host.First();
+        Host.Next();
+        Host.RunOnRec.Invoke();
+
+        Assert.AreEqual('Written', Host.Descr.Value(), 'the value the host shows for the row the target edited');
+        Assert.AreEqual('CALC:Written', Host.Calc.Value(), 'the host''s OnAfterGetRecord value after the target wrote the row');
     end;
 
     // CONTROL, no action involved. AL's own Page.Run(Number, Record) hands the page a record;
