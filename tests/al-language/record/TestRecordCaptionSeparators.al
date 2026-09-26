@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-tablecaption-method
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-fieldcaption-method
 // Scope: in-scope
-// Fixtures used: ALT Separator Captioned (60026), ALT Separator Captioned Ext (60026)
+// Fixtures used: ALT Separator Captioned (60026), ALT Separator Captioned Ext (60026),
+//                ALT Separator Caption Query (60023)
 //
 // A declared Caption is stored as a multi-language value, whose own syntax uses ';', '='
 // and a leading '"'. These tests pin that a caption containing any of them is returned
@@ -81,6 +82,24 @@ codeunit 60038 "Test Record Caption Separators"
     begin
         Assert.AreEqual('Changed; by "extension"', Rec.FieldCaption("Modified Field"),
             'FieldCaption() must return the whole Caption a tableextension set through modify()');
+    end;
+
+    [Test]
+    procedure Query_ColumnCaption_CaptionWithSemicolon_ReturnsWholeCaption()
+    var
+        SeparatorQuery: Query "ALT Separator Caption Query";
+    begin
+        Assert.AreEqual('Column; with semicolon', SeparatorQuery.ColumnCaption(EntryNo),
+            'Query.ColumnCaption() must return the whole declared Caption, including the text after ";"');
+    end;
+
+    [Test]
+    procedure Query_ColumnCaption_CaptionStartingWithQuote_KeepsTheQuotes()
+    var
+        SeparatorQuery: Query "ALT Separator Caption Query";
+    begin
+        Assert.AreEqual('"Quoted" column', SeparatorQuery.ColumnCaption(QuotedStart),
+            'Query.ColumnCaption() must return a Caption that opens with a double quote unchanged');
     end;
 
     [Test]
