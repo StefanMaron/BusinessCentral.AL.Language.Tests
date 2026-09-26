@@ -17,7 +17,8 @@
 // is not enabled for the session -- TestPage then reports it as not found. Which areas a test
 // session starts with depends on how the harness opened it (an empty string enables all; an
 // experience tier such as Essential does not include #Service), so every arm sets the session's
-// application areas itself, to a value that includes #Service, and restores the previous value.
+// application areas itself, to a value that includes #Service, and restores the previous value
+// BEFORE it asserts, so a failing assertion does not leave the widened areas to later tests.
 //
 // Written by agent stma-auto2-14, an automated implementation agent acting on the account
 // holder's behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4660.
@@ -67,6 +68,7 @@ codeunit 67400 "PXCP Tests"
         Setup: Record "VAT Rate Change Setup";
         SetupPage: TestPage "VAT Rate Change Setup";
         Wanted: Boolean;
+        ReadBack: Boolean;
         PreviousAreas: Text;
     begin
         PreviousAreas := EnableServiceArea();
@@ -74,14 +76,15 @@ codeunit 67400 "PXCP Tests"
 
         SetupPage.OpenEdit();
         SetupPage."Ignore Status on Service Docs.".SetValue(Wanted);
-        Assert.AreEqual(Wanted, SetupPage."Ignore Status on Service Docs.".AsBoolean(),
-            'the precompiled pageextension control must read back the value just set');
+        ReadBack := SetupPage."Ignore Status on Service Docs.".AsBoolean();
         SetupPage.Close();
 
         Setup.Get();
+        ApplicationArea(PreviousAreas);
+        Assert.AreEqual(Wanted, ReadBack,
+            'the precompiled pageextension control must read back the value just set');
         Assert.AreEqual(Wanted, Setup."Ignore Status on Service Docs.",
             'the precompiled pageextension control must write the tableextension field');
-        ApplicationArea(PreviousAreas);
     end;
 
     [Test]
@@ -90,6 +93,7 @@ codeunit 67400 "PXCP Tests"
         Setup: Record "VAT Rate Change Setup";
         SetupPage: TestPage "VAT Rate Change Setup";
         Wanted: Boolean;
+        ReadBack: Boolean;
         PreviousAreas: Text;
     begin
         PreviousAreas := EnableServiceArea();
@@ -97,14 +101,15 @@ codeunit 67400 "PXCP Tests"
 
         SetupPage.OpenEdit();
         SetupPage.PXCPIgnoreStatus.SetValue(Wanted);
-        Assert.AreEqual(Wanted, SetupPage.PXCPIgnoreStatus.AsBoolean(),
-            'the pageextension control must read back the value just set');
+        ReadBack := SetupPage.PXCPIgnoreStatus.AsBoolean();
         SetupPage.Close();
 
         Setup.Get();
+        ApplicationArea(PreviousAreas);
+        Assert.AreEqual(Wanted, ReadBack,
+            'the pageextension control must read back the value just set');
         Assert.AreEqual(Wanted, Setup."Ignore Status on Service Docs.",
             'the pageextension control must write the tableextension field');
-        ApplicationArea(PreviousAreas);
     end;
 
     [Test]
@@ -117,7 +122,7 @@ codeunit 67400 "PXCP Tests"
         PreviousAreas := EnableServiceArea();
         SetupPage.OpenEdit();
         asserterror SetupPage.GetField(12345).SetValue(true);
-        Assert.ExpectedError('The field with ID = 12345 is not found on the page.');
         ApplicationArea(PreviousAreas);
+        Assert.ExpectedError('The field with ID = 12345 is not found on the page.');
     end;
 }
