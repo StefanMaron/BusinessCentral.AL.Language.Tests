@@ -67,7 +67,10 @@ codeunit 67361 "TPARPS Tests"
         Initialize(false);
         OpenHostOnB(Host);
         Host.RunTarget.Invoke();
-        Assert.AreEqual('B:CALC', Probe.GetOpenSeen(), 'what the RunPageOnRec target''s Rec holds in OnOpenPage');
+        // Measured on every cloud leg of corpus run 36246988612: the target's Rec is already the
+        // stored row in OnOpenPage, unlike Page.Run(Id, Rec) below, which hands OnOpenPage the
+        // caller's in-memory values.
+        Assert.AreEqual('B:G2', Probe.GetOpenSeen(), 'what the RunPageOnRec target''s Rec holds in OnOpenPage');
         Host.Close();
     end;
 
