@@ -19,7 +19,8 @@
 ///   2. A List in the same shape moves to the neighbouring row instead: the next row, the
 ///      previous one when the deleted row was the last, and no stored row when it was the only
 ///      one -- with or without CurrPage.Update(false) in the action. A List that declares
-///      OnFindRecord: the re-read goes through that trigger, with Which '=><'.
+///      OnFindRecord: the re-read goes through that trigger, three times, with Which '=', then
+///      '=>', then '=' again, and the page shows the row the trigger answers.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
 ///      OnAfterGetCurrRecord for the unsaved row. Once with the key set, once without.
@@ -188,6 +189,15 @@ codeunit 67300 "ALT Page Update Gone Test"
         Assert.AreEqual('', Shown, 'the untouched new row is still shown; trace ' + Recorded);
         Assert.IsTrue(Row.IsEmpty(), 'the action did not insert the untouched new row');
         Card.Close();
+    end;
+
+    local procedure FindCalls(Recorded: Text) Calls: Text
+    var
+        Entry: Text;
+    begin
+        foreach Entry in Recorded.Split(';') do
+            if Entry.StartsWith('Find:') then
+                Calls += Entry + ';';
     end;
 
     [TryFunction]
@@ -394,9 +404,13 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         // The page's OnFindRecord answers the first row once the action ran; the default re-read
         // of a deleted middle row lands on C. So A means the re-read went through the trigger.
+        // BC calls it three times after the action: '=' for the gone row, '=>' to read the rows
+        // from there on, and '=' again for the row it settled on.
         Assert.AreEqual('A', Shown, 'list with OnFindRecord: the row shown after deleting B; after ' + After);
-        Assert.AreNotEqual(0, StrPos(After, 'Find:=><;'), After);
-        Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'list with OnFindRecord: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
+        Assert.AreEqual('Find:=;Find:=>;Find:=;', FindCalls(After), 'list with OnFindRecord: the Which strings, in order; after ' + After);
+        Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'list with OnFindRecord: no OnAfterGetRecord for the deleted row; after ' + After);
+        Assert.IsTrue(After.EndsWith('AGCR:A;'),
+            'list with OnFindRecord: OnAfterGetCurrRecord runs for the row the trigger answered; after ' + After);
         List.Close();
     end;
 
