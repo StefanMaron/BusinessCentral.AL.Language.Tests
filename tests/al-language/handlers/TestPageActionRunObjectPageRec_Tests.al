@@ -192,7 +192,8 @@ codeunit 67351 "TPARPR Tests"
 
     // WRITE-BACK, the before-image. The table's OnModify records xRec.Descr>Rec.Descr. After the
     // target wrote 'Written' to row B, the host edits Grp on that row and leaves it; the arm reads
-    // the images the host's save carried.
+    // the images the host's save carried. The host's Rec shows the target's write, but its xRec
+    // is still the row as the host loaded it before the action.
     [Test]
     [HandlerFunctions('TargetHandler')]
     procedure HostSaveAfterTheTargetEditedTheRowCarriesXRec()
@@ -210,7 +211,7 @@ codeunit 67351 "TPARPR Tests"
         Host.Grp.SetValue('G9');
         Host.Next();
 
-        Assert.AreEqual('Written>Written', Probe.GetLastModify(), 'xRec>Rec in OnModify for the host''s save after the target wrote the row');
+        Assert.AreEqual('Bravo>Written', Probe.GetLastModify(), 'xRec>Rec in OnModify for the host''s save after the target wrote the row');
     end;
 
     // HOST TRIGGERS, plain RunObject. The target opens on its own rowset and changes nothing.
