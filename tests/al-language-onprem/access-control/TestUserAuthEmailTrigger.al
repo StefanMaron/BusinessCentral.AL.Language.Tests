@@ -17,6 +17,12 @@
 // the user's "Authentication Object ID". The same Modify trigger refuses a user name another
 // user already carries, as the Insert trigger does.
 //
+// LICENSE: every User written here is a "Device Only User". The platform's User trigger flags
+// a commit-time named-user license check for any other license type (except External User),
+// and on a tier licensed for a fixed number of full users that check - not the behaviour under
+// test - refuses the transaction. Device Only users are neither flagged nor counted, and the
+// email and user-name rules below do not read the license type.
+//
 // Every refusal is paired with the case that must still be accepted - a disabled user's email
 // may be reused, a user may keep its own email and name on Modify - so none of these can be
 // satisfied by refusing more. Refusal tests read nothing that an asserterror rollback could
@@ -88,6 +94,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         UserRec.Init();
         UserRec."User Security ID" := CreateGuid();
         UserRec."User Name" := NewUserName();
+        UserRec."License Type" := UserRec."License Type"::"Device Only User";
         UserRec.Validate("Authentication Email", '  ' + Email + '  ');
         Assert.AreEqual('  ' + Email + '  ', UserRec."Authentication Email", 'Validate must leave the email exactly as assigned');
 
@@ -141,6 +148,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         UserRec.Init();
         UserRec."User Security ID" := Sid;
         UserRec."User Name" := NewUserName();
+        UserRec."License Type" := UserRec."License Type"::"Device Only User";
         UserRec."Authentication Email" := 'Abc.example.com';
 
         asserterror UserRec.Insert();
@@ -164,6 +172,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         SecondUser.Init();
         SecondUser."User Security ID" := Sid;
         SecondUser."User Name" := NewUserName();
+        SecondUser."License Type" := SecondUser."License Type"::"Device Only User";
         SecondUser."Authentication Email" := CopyStr(' ' + Email, 1, MaxStrLen(SecondUser."Authentication Email"));
 
         // The padded copy is refused too: uniqueness is checked on the normalised address.
@@ -261,6 +270,53 @@ codeunit 61206 "Test User Auth Email Trigger"
     end;
 
     [Test]
+    procedure AuthEmail_Insert_DisabledUserWithAnEnabledUsersEmailIsAccepted()
+    // Only a row that is itself ENABLED claims its email exclusively: a disabled user may be
+    // written carrying an address an enabled user already has.
+    var
+        FirstUser: Record User;
+        SecondUser: Record User;
+        Reader: Record User;
+        Email: Text;
+    begin
+        Email := NewEmail();
+        NewUser(FirstUser, Email);
+
+        SecondUser.Init();
+        SecondUser."User Security ID" := CreateGuid();
+        SecondUser."User Name" := NewUserName();
+        SecondUser."License Type" := SecondUser."License Type"::"Device Only User";
+        SecondUser.State := SecondUser.State::Disabled;
+        SecondUser."Authentication Email" := CopyStr(Email, 1, MaxStrLen(SecondUser."Authentication Email"));
+        SecondUser.Insert();
+
+        Assert.IsTrue(Reader.Get(SecondUser."User Security ID"), 'a disabled user may carry an enabled user''s email');
+        Assert.AreEqual(Email, Reader."Authentication Email", 'the disabled user must carry the email as written');
+    end;
+
+    [Test]
+    procedure AuthEmail_Modify_DisabledUserToAnEnabledUsersEmailIsAccepted()
+    // The Modify mirror of the test above.
+    var
+        FirstUser: Record User;
+        SecondUser: Record User;
+        Reader: Record User;
+        Email: Text;
+    begin
+        Email := NewEmail();
+        NewUser(FirstUser, Email);
+        NewUser(SecondUser, NewEmail());
+        SecondUser.State := SecondUser.State::Disabled;
+        SecondUser.Modify();
+
+        SecondUser."Authentication Email" := CopyStr(Email, 1, MaxStrLen(SecondUser."Authentication Email"));
+        SecondUser.Modify();
+
+        Reader.Get(SecondUser."User Security ID");
+        Assert.AreEqual(Email, Reader."Authentication Email", 'a disabled user may be given an enabled user''s email');
+    end;
+
+    [Test]
     procedure UserName_Modify_ToAnotherUsersNameIsRefused()
     var
         FirstUser: Record User;
@@ -297,6 +353,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         UserRec.Init();
         UserRec."User Security ID" := CreateGuid();
         UserRec."User Name" := NewUserName();
+        UserRec."License Type" := UserRec."License Type"::"Device Only User";
         UserRec."Authentication Email" := CopyStr(Email, 1, MaxStrLen(UserRec."Authentication Email"));
         UserRec.Insert();
     end;
