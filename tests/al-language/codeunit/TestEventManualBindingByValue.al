@@ -61,6 +61,16 @@ codeunit 67370 "Test Manual Bind By Value"
     end;
 
     [Test]
+    procedure TwoLocalsSharingOneInstanceInCallee_DoNotFireAfterReturn()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+    begin
+        Assert.IsTrue(Passer.BindTwoSharingLocalsAndReturn(), 'BindSubscription inside the callee must return true');
+        Assert.IsFalse(Publisher.TriggerBeforeAndReturnHandled(7), 'An instance referenced only by the callee''s two locals must lose its binding when the callee returns');
+    end;
+
+    [Test]
     procedure LocalBoundInCallee_AssignedToCallerVariable_StillFires()
     var
         Publisher: Codeunit "ALT Event Publisher";
