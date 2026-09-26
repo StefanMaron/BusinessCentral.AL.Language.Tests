@@ -292,6 +292,35 @@ codeunit 67300 "ALT Page Update Gone Test"
     end;
 
     [Test]
+    procedure List_DeletedByAction_MiddleRow_MovesToTheNextRow()
+    var
+        Row: Record "ALT Page Update Gone Row";
+        List: TestPage "ALT Page Update Gone List";
+        After: Text;
+        Shown: Text;
+    begin
+        Seed(true);
+        Row.Init();
+        Row.Code := 'C';
+        Row.Name := 'Gamma';
+        Row.Insert();
+        List.OpenEdit();
+        List.GoToKey('B');
+        Trace.Reset();
+
+        List.DeleteAndUpdate.Invoke();
+        After := Trace.AfterActionEnd();
+        Shown := List.CodeField.Value();
+
+        // Rows on both sides of B: the page is expected on C, the row after it, not on the first row.
+        Assert.AreEqual('C', Shown, 'list, middle row: the row shown after deleting the current one; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'list, middle row: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
+        Assert.IsTrue(After.EndsWith('AGCR:C;'),
+            'list, middle row: OnAfterGetCurrRecord runs for the next row; trace ' + Trace.Get());
+        List.Close();
+    end;
+
+    [Test]
     procedure List_DeletedByAction_OnlyRow_ShowsNoStoredRow()
     var
         Row: Record "ALT Page Update Gone Row";
