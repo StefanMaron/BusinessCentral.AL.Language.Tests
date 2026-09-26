@@ -23,7 +23,7 @@
 ///      '=>', then '=' again, and the page shows the row the trigger answers. A pass-through
 ///      OnFindRecord (exit(Rec.Find(Which))) answers false on the deleted key, and BC still asks
 ///      '=>' and then '=' for the row it lands on: the next row, else the previous one; with no
-///      row left it asks '=' and '=>' only and shows no stored row.
+///      row left it asks '=>' and '=><' only, no '=', and shows no stored row.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
 ///      OnAfterGetCurrRecord for the unsaved row. Once with the key set, once without.
@@ -494,8 +494,9 @@ codeunit 67300 "ALT Page Update Gone Test"
         After := Trace.AfterActionEnd();
         Shown := List.CodeField.Value();
 
-        // No row either side: '=' and '=>' both answer false, and there is no row to settle on.
-        Assert.AreEqual('Find:=;Find:=>;', FindCalls(After),
+        // No row either side: BC does not ask '=' at all here; it asks '=>' and then '=><', both
+        // answer false, and there is no row to settle on.
+        Assert.AreEqual('Find:=>;Find:=><;', FindCalls(After),
             'pass-through OnFindRecord, only row: the Which strings, in order; after ' + After);
         Assert.AreEqual('', Shown, 'pass-through OnFindRecord, only row: the row shown after deleting A; after ' + After);
         Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'pass-through OnFindRecord, only row: no OnAfterGetRecord for the deleted row; after ' + After);
