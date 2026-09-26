@@ -21,6 +21,9 @@
 ///   2. A SetValue whose OnValidate saves the row with CurrPage.Update() does raise
 ///      OnAfterGetRecord, for the saved name: the other side of the boundary.
 ///   3. That save wrote exactly one row, keyed by the Guid OnInsertRecord assigned.
+///   4. OpenNew, counted exactly: the trace is one OnAfterGetCurrRecord, so the refresh raises no
+///      OnAfterGetCurrRecord of its own on the unsaved row either. Codeunit 60872 measures the
+///      same shape over a temporary source table.
 /// </summary>
 codeunit 60893 "ALT Page Update New Row Test"
 {
@@ -49,6 +52,20 @@ codeunit 60893 "ALT Page Update New Row Test"
             'control: OnAfterGetCurrRecord must run for the new row; trace: ' + Trace.Get());
         Assert.AreEqual(0, StrPos(Trace.Get(), 'AGR:'),
             'OnAfterGetRecord must not run for the unsaved new row; trace: ' + Trace.Get());
+        Card.Close();
+    end;
+
+    [Test]
+    procedure OpenNew_TraceIsOneOnAfterGetCurrRecord()
+    var
+        Card: TestPage "ALT Page Update New Row Card";
+    begin
+        Trace.Reset();
+
+        Card.OpenNew();
+
+        Assert.AreEqual('AGCR;', Trace.Get(),
+            'OpenNew raises OnAfterGetCurrRecord once, and the refresh its CurrPage.Update(false) asks for raises no trigger on the unsaved row; trace: ' + Trace.Get());
         Card.Close();
     end;
 
