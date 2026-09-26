@@ -5,7 +5,7 @@
 // "ALT Variable XmlPort" (60025: Direction = Both, Format = Xml, UseRequestPage = false), so a
 // provider that answers one fixed value per column cannot satisfy both rows.
 
-xmlport 67351 "ALT XPM Probe"
+xmlport 67451 "ALT XPM Probe"
 {
     Caption = 'ALT XPM Probe Caption';
     Direction = Export;

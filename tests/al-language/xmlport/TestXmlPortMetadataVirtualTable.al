@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: ALT XPM Probe (xmlport 67351), ALT Variable XmlPort (xmlport 60025),
+// Fixtures used: ALT XPM Probe (xmlport 67451), ALT Variable XmlPort (xmlport 60025),
 //   System Application's "Export Permission Sets System" (xmlport 9862), Assert (60021)
 //
 // Pins the built-in "XmlPort Metadata" system virtual table (2000000280): one row per xmlport
@@ -16,7 +16,7 @@
 // so a provider answering one fixed value per column cannot pass. The System Application row
 // is the precompiled-dependency case: an xmlport this app only depends on.
 
-codeunit 67350 "Test XmlPort Metadata VT"
+codeunit 67450 "Test XmlPort Metadata VT"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -50,8 +50,8 @@ codeunit 67350 "Test XmlPort Metadata VT"
         XmlPortMetadata: Record "XmlPort Metadata";
     begin
         // The control that separates "the provider works" from "the provider answers rows for
-        // anything". 67352 is not an xmlport in this app or its dependencies.
-        Assert.IsFalse(XmlPortMetadata.Get(67352), 'An object id that is not an xmlport has no XmlPort Metadata row.');
+        // anything". 67452 is not an xmlport in this app or its dependencies.
+        Assert.IsFalse(XmlPortMetadata.Get(67452), 'An object id that is not an xmlport has no XmlPort Metadata row.');
     end;
 
     [Test]
