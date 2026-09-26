@@ -15,7 +15,9 @@
 ///      on the untouched row OpenNew starts leaves the Card open, and so does an action on a Card
 ///      opened with OpenEdit that never showed a stored row (an empty table, or a filter that
 ///      matches nothing).
-///   2. A List in the same shape moves to the neighbouring row instead.
+///   2. A List in the same shape moves to the neighbouring row instead: the next row, the
+///      previous one when the deleted row was the last, and no stored row when it was the only
+///      one -- with or without CurrPage.Update(false) in the action.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
 ///      OnAfterGetCurrRecord for the unsaved row. Once with the key set, once without.
@@ -262,6 +264,79 @@ codeunit 67300 "ALT Page Update Gone Test"
         Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
         Assert.IsTrue(After.EndsWith('AGCR:B;'),
             'list: OnAfterGetCurrRecord runs for the neighbour; trace ' + Trace.Get());
+        List.Close();
+    end;
+
+    [Test]
+    procedure List_DeletedByAction_LastRow_MovesToThePreviousRow()
+    var
+        List: TestPage "ALT Page Update Gone List";
+        After: Text;
+        Shown: Text;
+    begin
+        Seed(true);
+        List.OpenEdit();
+        List.GoToKey('B');
+        Trace.Reset();
+
+        List.DeleteAndUpdate.Invoke();
+        After := Trace.AfterActionEnd();
+        Shown := List.CodeField.Value();
+
+        // B was the last row: with no row after it, the page is expected on A, the row before it.
+        Assert.AreEqual('A', Shown, 'list, last row: the row shown after deleting the current one; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'list, last row: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
+        Assert.IsTrue(After.EndsWith('AGCR:A;'),
+            'list, last row: OnAfterGetCurrRecord runs for the previous row; trace ' + Trace.Get());
+        List.Close();
+    end;
+
+    [Test]
+    procedure List_DeletedByAction_OnlyRow_ShowsNoStoredRow()
+    var
+        Row: Record "ALT Page Update Gone Row";
+        List: TestPage "ALT Page Update Gone List";
+        After: Text;
+        Shown: Text;
+    begin
+        Seed(false);
+        List.OpenEdit();
+        List.GoToKey('A');
+        Trace.Reset();
+
+        List.DeleteAndUpdate.Invoke();
+        After := Trace.AfterActionEnd();
+        Shown := List.CodeField.Value();
+
+        // No neighbour either side: the List stays open and shows no stored row.
+        Assert.AreEqual('', Shown, 'list, only row: the row shown after deleting the only one; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list, only row: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGCR:A;'), 'list, only row: no OnAfterGetCurrRecord for the deleted row; trace ' + Trace.Get());
+        Assert.IsTrue(Row.IsEmpty(), 'list, only row: nothing re-inserted the deleted row');
+        List.Close();
+    end;
+
+    [Test]
+    procedure List_DeletedByAction_NoUpdate_MovesToTheNeighbour()
+    var
+        List: TestPage "ALT Page Update Gone List";
+        After: Text;
+        Shown: Text;
+    begin
+        Seed(true);
+        List.OpenEdit();
+        List.GoToKey('A');
+        Trace.Reset();
+
+        List.DeleteOnly.Invoke();
+        After := Trace.AfterActionEnd();
+        Shown := List.CodeField.Value();
+
+        // The same move without CurrPage.Update: the re-read after the action is what moves the page.
+        Assert.AreEqual('B', Shown, 'list, no update: the row shown after deleting the current one; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list, no update: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
+        Assert.IsTrue(After.EndsWith('AGCR:B;'),
+            'list, no update: OnAfterGetCurrRecord runs for the neighbour; trace ' + Trace.Get());
         List.Close();
     end;
 
