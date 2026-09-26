@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/session/session-bindsubscription-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: ALT Event Publisher (60014), ALT Manual Event Sub (60033), ALT Manual Sub Passer (67371)
+// Fixtures used: ALT Event Publisher (60014), ALT Manual Event Sub (60033), ALT Manual Sub Passer (67371),
+//   ALT SI Manual Event Sub (67372)
 // BC versions: 27.5+
 //
 // Companion to TestEventManualBinding's Contract 10 (codeunit 60240): a LOCAL codeunit
@@ -68,6 +69,41 @@ codeunit 67370 "Test Manual Bind By Value"
     begin
         Assert.IsTrue(Passer.BindTwoSharingLocalsAndReturn(), 'BindSubscription inside the callee must return true');
         Assert.IsFalse(Publisher.TriggerBeforeAndReturnHandled(7), 'An instance referenced only by the callee''s two locals must lose its binding when the callee returns');
+    end;
+
+    [Test]
+    procedure LocalPassedByValueInCallee_OwnerReturns_DoesNotFire()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+    begin
+        Assert.AreEqual(0, Passer.BindPassByValueAndReturn(), 'The by-value callee must see the bound, not yet fired, instance');
+        Assert.IsFalse(Publisher.TriggerBeforeAndReturnHandled(8), 'Once the by-value callee and then the owner have returned, nothing references the instance, so its binding must end');
+    end;
+
+    [Test]
+    procedure LocalCopiedToSiblingViaCallee_OwnerReturns_DoesNotFire()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+    begin
+        Assert.IsTrue(Passer.BindCopyToSiblingViaCalleeAndReturn(), 'BindSubscription inside the callee must return true');
+        Assert.IsFalse(Publisher.TriggerBeforeAndReturnHandled(9), 'An instance referenced only by the returned procedure''s two locals must lose its binding when it returns');
+    end;
+
+    [Test]
+    procedure SingleInstanceLocalBoundInCallee_StillFiresAfterReturn()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+        SingleInstanceSub: Codeunit "ALT SI Manual Event Sub";
+        Handled: Boolean;
+    begin
+        Assert.IsTrue(Passer.BindSingleInstanceLocalAndReturn(), 'BindSubscription inside the callee must return true');
+        Handled := Publisher.TriggerBeforeAndReturnHandled(10);
+        UnbindSubscription(SingleInstanceSub);
+        Assert.IsTrue(Handled, 'A SingleInstance codeunit outlives the callee''s local, so its binding must survive the return');
+        Assert.IsFalse(Publisher.TriggerBeforeAndReturnHandled(11), 'Unbinding through another variable of the same SingleInstance codeunit must end the binding');
     end;
 
     [Test]
