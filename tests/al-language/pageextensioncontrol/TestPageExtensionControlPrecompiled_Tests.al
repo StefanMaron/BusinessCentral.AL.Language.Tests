@@ -12,6 +12,13 @@
 // Each arm writes the opposite of the stored value, so the assertion cannot pass on the value
 // the setup record already held.
 //
+// APPLICATION AREA: Base Application declares "Ignore Status on Service Docs." with
+// ApplicationArea = #Service, and BC removes a control from the page when its application area
+// is not enabled for the session -- TestPage then reports it as not found. Which areas a test
+// session starts with depends on how the harness opened it (an empty string enables all; an
+// experience tier such as Essential does not include #Service), so every arm sets the session's
+// application areas itself, to a value that includes #Service, and restores the previous value.
+//
 // Written by agent stma-auto2-14, an automated implementation agent acting on the account
 // holder's behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4660.
 
@@ -37,6 +44,12 @@ codeunit 67400 "PXCP Tests"
     var
         Assert: Codeunit Assert;
 
+    local procedure EnableServiceArea() Previous: Text
+    begin
+        Previous := ApplicationArea();
+        ApplicationArea('#Basic,#Suite,#Service');
+    end;
+
     local procedure StoredIgnoreStatus(): Boolean
     var
         Setup: Record "VAT Rate Change Setup";
@@ -54,7 +67,9 @@ codeunit 67400 "PXCP Tests"
         Setup: Record "VAT Rate Change Setup";
         SetupPage: TestPage "VAT Rate Change Setup";
         Wanted: Boolean;
+        PreviousAreas: Text;
     begin
+        PreviousAreas := EnableServiceArea();
         Wanted := not StoredIgnoreStatus();
 
         SetupPage.OpenEdit();
@@ -66,6 +81,7 @@ codeunit 67400 "PXCP Tests"
         Setup.Get();
         Assert.AreEqual(Wanted, Setup."Ignore Status on Service Docs.",
             'the precompiled pageextension control must write the tableextension field');
+        ApplicationArea(PreviousAreas);
     end;
 
     [Test]
@@ -74,7 +90,9 @@ codeunit 67400 "PXCP Tests"
         Setup: Record "VAT Rate Change Setup";
         SetupPage: TestPage "VAT Rate Change Setup";
         Wanted: Boolean;
+        PreviousAreas: Text;
     begin
+        PreviousAreas := EnableServiceArea();
         Wanted := not StoredIgnoreStatus();
 
         SetupPage.OpenEdit();
@@ -86,6 +104,7 @@ codeunit 67400 "PXCP Tests"
         Setup.Get();
         Assert.AreEqual(Wanted, Setup."Ignore Status on Service Docs.",
             'the pageextension control must write the tableextension field');
+        ApplicationArea(PreviousAreas);
     end;
 
     [Test]
@@ -93,9 +112,12 @@ codeunit 67400 "PXCP Tests"
     // The negative direction: folding extension controls in must not make every id resolve.
     var
         SetupPage: TestPage "VAT Rate Change Setup";
+        PreviousAreas: Text;
     begin
+        PreviousAreas := EnableServiceArea();
         SetupPage.OpenEdit();
         asserterror SetupPage.GetField(12345).SetValue(true);
         Assert.ExpectedError('The field with ID = 12345 is not found on the page.');
+        ApplicationArea(PreviousAreas);
     end;
 }
