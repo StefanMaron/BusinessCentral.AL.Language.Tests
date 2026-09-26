@@ -2,13 +2,14 @@
 // Scope: in-scope
 // Fixtures used: ALT Page Update Gone Row (67300), ALT Page Update Gone Trace (67301)
 //
-// Two shapes of CurrPage.Update(false) on a current row the table does not hold:
-//   - the DeleteAndUpdate action deletes the current row and then calls CurrPage.Update(false);
+// Two shapes of a current row the table does not hold:
+//   - the DeleteOnly action deletes the current row; DeleteAndUpdate then also calls
+//     CurrPage.Update(false);
 //   - the name field's OnValidate calls CurrPage.Update(false), which on this DelayedInsert page
 //     leaves a new row unsaved.
-// Controls: UpdateOnly calls CurrPage.Update(false) on a row that is still stored; DeleteOnly
-// deletes the current row and asks for no refresh.
-// OnAfterGetRecord and OnAfterGetCurrRecord record the key they see.
+// Control: UpdateOnly calls CurrPage.Update(false) on a row that is still stored.
+// OnAfterGetRecord and OnAfterGetCurrRecord record the key they see; OnClosePage is recorded
+// so the trace shows whether the page's close trigger runs when the client closes it.
 
 page 67300 "ALT Page Update Gone Card"
 {
@@ -90,6 +91,11 @@ page 67300 "ALT Page Update Gone Card"
     trigger OnAfterGetCurrRecord()
     begin
         Trace.Note('AGCR:' + Rec.Code);
+    end;
+
+    trigger OnClosePage()
+    begin
+        Trace.Note('ClosePage');
     end;
 
     var

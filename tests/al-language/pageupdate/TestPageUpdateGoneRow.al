@@ -5,13 +5,14 @@
 // BC versions: 27.0+
 //
 /// <summary>
-/// CLAIM: what the refresh CurrPage.Update(false) asks for does when the page's current row is
-/// not in the table.
+/// CLAIM: what a page does when its current row is not in the table after an action, and what
+/// the refresh CurrPage.Update(false) asks for raises on an unsaved DelayedInsert row.
 ///
 ///   1. A Card whose current row was deleted -- by its own action, or by the test underneath it
-///      -- closes when an action's CurrPage.Update(false) refreshes it: the TestPage is no longer
-///      open afterwards. Control: deleting the row without CurrPage.Update leaves it open.
-///   2. The same shape on a List page.
+///      -- is closed once an action on it returns: the TestPage is no longer open afterwards,
+///      Close() included. CurrPage.Update(false) is not what closes it; an action that only
+///      deletes does the same.
+///   2. A List in the same shape moves to the neighbouring row instead.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
 ///      OnAfterGetCurrRecord for the unsaved row. Once with the key set, once without.
@@ -48,6 +49,7 @@ codeunit 67300 "ALT Page Update Gone Test"
     var
         Card: TestPage "ALT Page Update Gone Card";
         Recorded: Text;
+        Probe: Text;
     begin
         Seed(true);
         Card.OpenEdit();
@@ -57,9 +59,9 @@ codeunit 67300 "ALT Page Update Gone Test"
         Card.DeleteAndUpdate.Invoke();
         Recorded := Trace.Get();
 
-        asserterror Card.CodeField.Value();
+        asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the refresh of a deleted row');
+        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close');
     end;
 
     [Test]
@@ -67,6 +69,7 @@ codeunit 67300 "ALT Page Update Gone Test"
     var
         Card: TestPage "ALT Page Update Gone Card";
         Recorded: Text;
+        Probe: Text;
     begin
         Seed(false);
         Card.OpenEdit();
@@ -76,9 +79,9 @@ codeunit 67300 "ALT Page Update Gone Test"
         Card.DeleteAndUpdate.Invoke();
         Recorded := Trace.Get();
 
-        asserterror Card.CodeField.Value();
+        asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the refresh of the deleted only row');
+        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close of the only row');
     end;
 
     [Test]
@@ -87,6 +90,7 @@ codeunit 67300 "ALT Page Update Gone Test"
         Row: Record "ALT Page Update Gone Row";
         Card: TestPage "ALT Page Update Gone Card";
         Recorded: Text;
+        Probe: Text;
     begin
         Seed(true);
         Card.OpenEdit();
@@ -98,17 +102,17 @@ codeunit 67300 "ALT Page Update Gone Test"
         Card.UpdateOnly.Invoke();
         Recorded := Trace.Get();
 
-        asserterror Card.CodeField.Value();
+        asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the refresh of a row deleted underneath');
+        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close of a row deleted underneath');
     end;
 
     [Test]
-    procedure Card_DeletedByAction_NoUpdate_PageStaysOpen()
+    procedure Card_DeletedByAction_NoUpdate_ClosesThePage()
     var
         Card: TestPage "ALT Page Update Gone Card";
         Recorded: Text;
-        Shown: Text;
+        Probe: Text;
     begin
         Seed(true);
         Card.OpenEdit();
@@ -117,18 +121,32 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         Card.DeleteOnly.Invoke();
         Recorded := Trace.Get();
-        Shown := Card.CodeField.Value();
 
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'control: deleting without CurrPage.Update; shows ' + Shown);
-        Assert.AreEqual('A', Shown, 'control: the row shown after deleting without CurrPage.Update; trace ' + Recorded);
-        Card.Close();
+        asserterror Probe := Card.CodeField.Value();
+        Assert.ExpectedError('The TestPage is not open.');
+        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close, no CurrPage.Update');
     end;
 
     [Test]
-    procedure List_DeletedByAction_WithNeighbour_Refresh()
+    procedure Card_DeletedByAction_CloseAfterwards_IsNotOpen()
+    var
+        Card: TestPage "ALT Page Update Gone Card";
+    begin
+        Seed(true);
+        Card.OpenEdit();
+        Card.GoToKey('A');
+
+        Card.DeleteOnly.Invoke();
+
+        asserterror Card.Close();
+        Assert.ExpectedError('The TestPage is not open.');
+    end;
+
+    [Test]
+    procedure List_DeletedByAction_WithNeighbour_MovesToTheNeighbour()
     var
         List: TestPage "ALT Page Update Gone List";
-        Recorded: Text;
+        After: Text;
         Shown: Text;
     begin
         Seed(true);
@@ -137,11 +155,15 @@ codeunit 67300 "ALT Page Update Gone Test"
         Trace.Reset();
 
         List.DeleteAndUpdate.Invoke();
-        Recorded := Trace.Get();
+        After := Trace.AfterActionEnd();
         Shown := List.CodeField.Value();
 
-        Assert.AreEqual('ActionBegin;ActionEnd;AGR:B;AGCR:B;', Recorded, 'list: refresh after deleting the current row; shows ' + Shown);
-        Assert.AreEqual('B', Shown, 'list: the row shown after the refresh; trace ' + Recorded);
+        // BC raises OnAfterGetRecord and OnAfterGetCurrRecord for the neighbour more than once
+        // (AGR:B;AGR:B;AGCR:B;AGR:B;AGR:B;AGCR:B on the first run); the row is the claim.
+        Assert.AreEqual('B', Shown, 'list: the row shown after deleting the current one; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
+        Assert.AreEqual('AGCR:B;', CopyStr(After, StrLen(After) - StrLen('AGCR:B;') + 1),
+            'list: OnAfterGetCurrRecord runs for the neighbour; trace ' + Trace.Get());
         List.Close();
     end;
 
