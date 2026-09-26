@@ -1,0 +1,80 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/session/session-bindsubscription-method
+// Scope: in-scope (Cloud-compatible)
+// Fixtures used: ALT Event Publisher (60014), ALT Manual Event Sub (60033), ALT Manual Sub Passer (67371)
+// BC versions: 27.5+
+//
+// Companion to TestEventManualBinding's Contract 10 (codeunit 60240): a LOCAL codeunit
+// variable's manual binding ends when its procedure returns, because nothing references the
+// instance any more. This file pins the other side of that boundary: the binding ends only
+// when the LAST reference to the instance goes away. A bound instance handed to another
+// procedure BY VALUE, or assigned out to the caller before the local goes out of scope, is
+// still referenced when the callee returns, so it stays bound.
+//
+// The by-value shape is how Base Application's "Error Message Management".PushContext keeps
+// its "Error Context Element" bound after handing it to "Last Error Context Element".Set
+// (AL Runner issue #4737).
+
+codeunit 67370 "Test Manual Bind By Value"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+
+    [Test]
+    procedure BoundInstance_PassedByValueToAnotherCodeunit_StillFires()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+        ManualSub: Codeunit "ALT Manual Event Sub";
+    begin
+        Assert.IsTrue(BindSubscription(ManualSub), 'BindSubscription on an unbound manual subscriber must return true');
+        Assert.AreEqual(0, Passer.ReadFireCountByValue(ManualSub), 'The by-value callee must see the same, not yet fired, instance');
+        Assert.IsTrue(Publisher.TriggerBeforeAndReturnHandled(3), 'A bound instance passed by value must stay bound after the callee returns');
+        Assert.AreEqual(1, ManualSub.GetFireCount(), 'The bound instance itself must have received the event');
+        Assert.AreEqual(1, Passer.ReadFireCountByValue(ManualSub), 'The by-value parameter must share the caller''s instance');
+        UnbindSubscription(ManualSub);
+    end;
+
+    [Test]
+    procedure BoundInstance_PassedByValueToLocalProcedure_StillFires()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        ManualSub: Codeunit "ALT Manual Event Sub";
+    begin
+        Assert.IsTrue(BindSubscription(ManualSub), 'BindSubscription on an unbound manual subscriber must return true');
+        Assert.AreEqual(0, ReadFireCountByValue(ManualSub), 'The by-value callee must see the same, not yet fired, instance');
+        Assert.IsTrue(Publisher.TriggerBeforeAndReturnHandled(4), 'A bound instance passed by value must stay bound after a local callee returns');
+        Assert.AreEqual(4, ManualSub.GetLastEntryNo(), 'The bound instance itself must have seen the published EntryNo');
+        UnbindSubscription(ManualSub);
+    end;
+
+    [Test]
+    procedure LocalBoundInCallee_NotReferencedAfterReturn_DoesNotFire()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+    begin
+        Assert.IsTrue(Passer.BindLocalAndReturn(), 'BindSubscription inside the callee must return true');
+        Assert.IsFalse(Publisher.TriggerBeforeAndReturnHandled(5), 'A binding held only by the callee''s local must end when the callee returns');
+    end;
+
+    [Test]
+    procedure LocalBoundInCallee_AssignedToCallerVariable_StillFires()
+    var
+        Publisher: Codeunit "ALT Event Publisher";
+        Passer: Codeunit "ALT Manual Sub Passer";
+        ManualSub: Codeunit "ALT Manual Event Sub";
+    begin
+        Assert.IsTrue(Passer.BindLocalIntoCallerVariable(ManualSub), 'BindSubscription inside the callee must return true');
+        Assert.IsTrue(Publisher.TriggerBeforeAndReturnHandled(6), 'An instance the caller still references must stay bound after the callee returns');
+        Assert.AreEqual(1, ManualSub.GetFireCount(), 'The caller''s variable must hold the bound instance');
+        UnbindSubscription(ManualSub);
+    end;
+
+    local procedure ReadFireCountByValue(ManualSub: Codeunit "ALT Manual Event Sub"): Integer
+    begin
+        exit(ManualSub.GetFireCount());
+    end;
+}
