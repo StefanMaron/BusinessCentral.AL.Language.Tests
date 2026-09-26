@@ -2,17 +2,12 @@
 // Scope: in-scope
 // Fixtures used: ALT Page Update Gone Row (67300), ALT Page Update Gone Trace (67301)
 //
-// Two shapes of CurrPage.Update(false) on a current row the table does not hold:
-//   - the DeleteAndUpdate action deletes the current row and then calls CurrPage.Update(false);
-//   - the name field's OnValidate calls CurrPage.Update(false), which on this DelayedInsert page
-//     leaves a new row unsaved.
-// Controls: UpdateOnly calls CurrPage.Update(false) on a row that is still stored; DeleteOnly
-// deletes the current row and asks for no refresh.
-// OnAfterGetRecord and OnAfterGetCurrRecord record the key they see.
+// "ALT Page Update Gone Card" (67300) as a List, so the suite can tell whether what happens to a
+// page whose current row is gone depends on the page type.
 
-page 67300 "ALT Page Update Gone Card"
+page 67301 "ALT Page Update Gone List"
 {
-    PageType = Card;
+    PageType = List;
     SourceTable = "ALT Page Update Gone Row";
     DelayedInsert = true;
     UsageCategory = None;
@@ -21,19 +16,22 @@ page 67300 "ALT Page Update Gone Card"
     {
         area(Content)
         {
-            field(CodeField; Rec.Code)
+            repeater(Rows)
             {
-                ApplicationArea = All;
-            }
-            field(NameField; Rec.Name)
-            {
-                ApplicationArea = All;
+                field(CodeField; Rec.Code)
+                {
+                    ApplicationArea = All;
+                }
+                field(NameField; Rec.Name)
+                {
+                    ApplicationArea = All;
 
-                trigger OnValidate()
-                begin
-                    Trace.Note('Validate');
-                    CurrPage.Update(false);
-                end;
+                    trigger OnValidate()
+                    begin
+                        Trace.Note('Validate');
+                        CurrPage.Update(false);
+                    end;
+                }
             }
         }
     }
