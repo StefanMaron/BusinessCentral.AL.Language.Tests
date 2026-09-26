@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpage-data-type
 // Scope: in-scope
-// Fixtures used: TPNO Row (67040), TPNO Row Card (67040), QCV Probe (60439),
-//                QCV Veto Card (60484), Assert (60021)
+// Fixtures used: TPNO Row (67040), TPNO Row Card (67040), TPNO Probe (67041),
+//                TPNO Veto Card (67041), Assert (60021)
 //
 // Which TestPage variables are open, and when.
 //
@@ -24,7 +24,7 @@ codeunit 67040 "TPNO Never Opened Tests"
 
     var
         Assert: Codeunit Assert;
-        Probe: Codeunit "QCV Probe";
+        Probe: Codeunit "TPNO Probe";
         HandlerDescr: Text;
         HandlerCalls: Integer;
         MessageCalls: Integer;
@@ -136,7 +136,7 @@ codeunit 67040 "TPNO Never Opened Tests"
     [Test]
     procedure VetoedClose_VariableOpensAgain()
     var
-        Card: TestPage "QCV Veto Card";
+        Card: TestPage "TPNO Veto Card";
     begin
         Probe.Reset(Probe.ModeVeto());
 
@@ -154,7 +154,7 @@ codeunit 67040 "TPNO Never Opened Tests"
     [HandlerFunctions('TpnoMessage')]
     procedure ErrorConsumedClose_VariableOpensAgain()
     var
-        Card: TestPage "QCV Veto Card";
+        Card: TestPage "TPNO Veto Card";
     begin
         MessageCalls := 0;
         Probe.Reset(Probe.ModeError());
