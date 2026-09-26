@@ -18,7 +18,14 @@
 // the output type without validating it. Report 101 "Customer - List" is the report id, only
 // because "Object ID to Run" must name a report that exists.
 //
-// Each arm closes through Cancel: an OK close would enqueue a job queue entry.
+// THE ACTION SIDE: pageextension 9805 "Approval Job Queue Entries" modifies two actions the base
+// page "Job Queue Entries" declares -- ResetStatusWithoutApproval and RestartWithoutApproval -- with
+// Enabled = false and Visible = false, and adds ResetStatus / Restart in their place. The base
+// page declares neither property on the two actions it owns, so without the override both would
+// be enabled and visible. The extension-added ResetStatus declares neither, so it stays enabled:
+// that arm is the control that proves the page opened and the actions resolve at all.
+//
+// The Schedule a Report arms close through Cancel: an OK close would enqueue a job queue entry.
 //
 // APPLICATION AREA: both fields declare ApplicationArea = Basic, Suite. Each arm enables those
 // and restores the previous areas before it asserts.
@@ -56,6 +63,32 @@ codeunit 67403 "PXCM Tests"
 
         UnbindSubscription(OutputTypeSetter);
         ApplicationArea(PreviousAreas);
+    end;
+
+    [Test]
+    procedure PrecompiledPageExtModifyAction_ResetStatusWithoutApproval_IsDisabledAndHidden()
+    var
+        JobQueueEntries: TestPage "Job Queue Entries";
+        PreviousAreas: Text;
+        OverriddenEnabled: Boolean;
+        OverriddenVisible: Boolean;
+        RestartEnabled: Boolean;
+        AddedEnabled: Boolean;
+    begin
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite');
+        JobQueueEntries.OpenView();
+        OverriddenEnabled := JobQueueEntries.ResetStatusWithoutApproval.Enabled();
+        OverriddenVisible := JobQueueEntries.ResetStatusWithoutApproval.Visible();
+        RestartEnabled := JobQueueEntries.RestartWithoutApproval.Enabled();
+        AddedEnabled := JobQueueEntries.ResetStatus.Enabled();
+        JobQueueEntries.Close();
+        ApplicationArea(PreviousAreas);
+
+        Assert.IsTrue(AddedEnabled, 'ResetStatus, added by pageextension "Approval Job Queue Entries" with no Enabled of its own, must be enabled.');
+        Assert.IsFalse(OverriddenEnabled, 'ResetStatusWithoutApproval must be disabled: pageextension "Approval Job Queue Entries" sets Enabled = false through modify().');
+        Assert.IsFalse(OverriddenVisible, 'ResetStatusWithoutApproval must be hidden: pageextension "Approval Job Queue Entries" sets Visible = false through modify().');
+        Assert.IsFalse(RestartEnabled, 'RestartWithoutApproval must be disabled: pageextension "Approval Job Queue Entries" sets Enabled = false through modify().');
     end;
 
     [Test]
