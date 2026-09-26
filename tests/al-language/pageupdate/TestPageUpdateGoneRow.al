@@ -394,9 +394,8 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         // The page's OnFindRecord answers the first row once the action ran; the default re-read
         // of a deleted middle row lands on C. So A means the re-read went through the trigger.
-        Assert.AreEqual('A', Shown, 'list with OnFindRecord: the row shown after deleting B; trace ' + Trace.Get());
-        Assert.AreNotEqual(0, StrPos(After, 'Find:=><;'),
-            'list with OnFindRecord: the re-read passes =>< to the trigger; trace ' + Trace.Get());
+        Assert.AreEqual('A', Shown, 'list with OnFindRecord: the row shown after deleting B; after ' + After);
+        Assert.AreNotEqual(0, StrPos(After, 'Find:=><;'), After);
         Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'list with OnFindRecord: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
         List.Close();
     end;
