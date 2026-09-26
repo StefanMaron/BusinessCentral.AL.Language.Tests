@@ -12,7 +12,8 @@
 //   - the worker reads the caller's uncommitted rows (inserts and deletes alike);
 //   - the worker is not itself in a write transaction, so a guarded Codeunit.Run -- refused
 //     in the caller while its write is pending -- is allowed inside the worker;
-//   - the caller's write transaction is still open after the task returns.
+//   - the caller's write transaction is still open after the task returns, and a commit
+//     inside the worker does not commit the caller's rows.
 // Base Application's Journal Errors factbox ("Check Gen. Jnl. Line. Backgr.", 9081) depends
 // on all three: it runs Gen. Jnl.-Check Line through a guarded Codeunit.Run over journal
 // lines the test has not committed (BusinessCentral.AL.Runner#4679).
@@ -99,6 +100,34 @@ codeunit 67202 "Test Page BgTask Tx Tests"
         Assert.IsTrue(Database.IsInWriteTransaction(), 'the caller''s write transaction must still be open after the task');
         asserterror Ok := Codeunit.Run(Codeunit::"Test Page BgTask TxNoop");
         Assert.ExpectedError('the transaction is stopped');
+    end;
+
+    // The worker's guarded Codeunit.Run commits the worker's own transaction, not the
+    // caller's: a trapped error afterwards still rolls back the row the caller wrote before
+    // the task ran.
+    [Test]
+    procedure RunPageBackgroundTask_WorkerCommitLeavesCallersRowsUncommitted()
+    var
+        Row: Record "Test Page BgTask Row";
+        Card: TestPage "Test Page BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        Value: Text;
+    begin
+        Initialize();
+        SeedRow('TX-RB');
+
+        Card.OpenView();
+        Results := Card.RunPageBackgroundTask(Codeunit::"Test Page BgTask TxWorker", Params, true);
+        Card.Close();
+        Results.Get('GuardedRun', Value);
+        Assert.AreEqual('true', Value, 'precondition: the worker''s guarded Codeunit.Run must have run and committed');
+        Assert.IsTrue(Row.Get('TX-RB'), 'the caller''s row must still be readable after the task');
+
+        asserterror Error('bgtx rollback probe');
+        Assert.ExpectedError('bgtx rollback probe');
+
+        Assert.IsFalse(Row.Get('TX-RB'), 'the worker''s commit must not have made the caller''s uncommitted row durable');
     end;
 
     // The FactBox shape: CurrPage.EnqueueBackgroundTask from OnAfterGetCurrRecord, over rows
