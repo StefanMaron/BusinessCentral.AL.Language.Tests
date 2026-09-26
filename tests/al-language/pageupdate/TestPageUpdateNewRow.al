@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-update-method
 // Scope: in-scope (Cloud-compatible) -- every member is driven from a [Test] with no client
 // Fixtures used: ALT Page Update New Row (60998), ALT Page Update New Row Card (60992),
-//   ALT Page Update Trace (60492); shared Assert (60021)
+//   ALT Page Update New Row Trace (60866); shared Assert (60021)
 // BC versions: 27.0+
 //
 /// <summary>
@@ -29,7 +29,7 @@ codeunit 60893 "ALT Page Update New Row Test"
 
     var
         Assert: Codeunit Assert;
-        Trace: Codeunit "ALT Page Update Trace";
+        Trace: Codeunit "ALT Page Update New Row Trace";
 
     local procedure NewName(): Code[50]
     begin

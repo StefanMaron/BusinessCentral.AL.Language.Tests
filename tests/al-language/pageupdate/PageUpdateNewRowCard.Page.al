@@ -54,5 +54,5 @@ page 60992 "ALT Page Update New Row Card"
     end;
 
     var
-        Trace: Codeunit "ALT Page Update Trace";
+        Trace: Codeunit "ALT Page Update New Row Trace";
 }
