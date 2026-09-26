@@ -187,6 +187,48 @@ codeunit 67351 "TPARPR Tests"
         Assert.AreEqual('Written', Row.Descr, 'the host''s save must not overwrite the target''s write with the value the host loaded');
     end;
 
+    // CONTROL, no action involved. AL's own Page.Run(Number, Record) hands the page a record;
+    // the page's OnOpenPage then moves its Rec to E. The arm reads the caller's record after.
+    [Test]
+    [HandlerFunctions('TargetHandler')]
+    procedure PageRunTargetMovingItsRecAndTheCallersRecord()
+    var
+        Probe: Codeunit "TPARPR Probe";
+        Row: Record "TPARPR Row";
+    begin
+        Initialize('MOVE');
+
+        Row.Get('B');
+        Page.Run(Page::"TPARPR Target", Row);
+
+        Assert.AreEqual('Echo', Probe.GetMovedTo(), 'precondition: the page really moved its Rec to E');
+        Assert.AreEqual('Bravo', Row.Descr, 'the caller''s record after Page.Run''s page moved its Rec');
+        Assert.AreEqual('B', Row."No.", 'the caller''s record position after Page.Run''s page moved its Rec');
+    end;
+
+    // CONTROL, modal. The same through Page.RunModal, answered by a [ModalPageHandler].
+    [Test]
+    [HandlerFunctions('TargetModalHandler')]
+    procedure PageRunModalTargetMovingItsRecAndTheCallersRecord()
+    var
+        Probe: Codeunit "TPARPR Probe";
+        Row: Record "TPARPR Row";
+    begin
+        Initialize('MOVE');
+
+        Row.Get('B');
+        Page.RunModal(Page::"TPARPR Target", Row);
+
+        Assert.AreEqual('Echo', Probe.GetMovedTo(), 'precondition: the page really moved its Rec to E');
+        Assert.AreEqual('Bravo', Row.Descr, 'the caller''s record after Page.RunModal''s page moved its Rec');
+        Assert.AreEqual('B', Row."No.", 'the caller''s record position after Page.RunModal''s page moved its Rec');
+    end;
+
+    [ModalPageHandler]
+    procedure TargetModalHandler(var Target: TestPage "TPARPR Target")
+    begin
+    end;
+
     [PageHandler]
     procedure TargetHandler(var Target: TestPage "TPARPR Target")
     var
