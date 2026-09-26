@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testfilter/testfilter-data-type
 // Scope: in-scope (Cloud-compatible)
 // Fixtures used: ALT TestFilter Row (60347), ALT TestFilter Grp Left List (60975),
-//   ALT TestFilter Grp Hidden List (60976); shared Assert (60021)
+//   ALT TestFilter Grp Hidden List (60976), ALT TestFilter Grp Both List (67960);
+//   shared Assert (60021)
 //
 // CLAIM: TestPage.Filter.SetFilter writes the page's user filter (filter group 0), whatever
 // filter group the page's own OnOpenPage left active on Rec.
@@ -19,6 +20,12 @@
 //      filter in every group". Filter.GetFilter(Grp) then reads the group-2 value 'A', not
 //      the 'B' the test set: it answers the first filter on the field across the page's
 //      filter groups, and group 2 was written before the TestPage filter's group 0.
+//   4. OnOpenPage set Grp = A in group 0 and THEN Grp = A|B in group 2 (page 67960). Before
+//      any TestPage filter, Filter.GetFilter(Grp) reads group 0's 'A', the group written
+//      first. A TestPage filter change - on Grp, or on another field entirely - leaves group 0
+//      AHEAD of group 2, so GetFilter(Grp) reads group 0: 'B' after a filter on Grp, still 'A'
+//      after a filter on Rank. Re-applying the user filters does not move group 0 behind the
+//      page's other groups (AL Runner issue #4690).
 //
 // Rows seeded by every test:
 //   Entry No.  Grp  Rank
@@ -26,7 +33,7 @@
 //       2      'B'   20
 //       3      'A'   30
 //
-// AL Runner issue: StefanMaron/BusinessCentral.AL.Runner#4677
+// AL Runner issues: StefanMaron/BusinessCentral.AL.Runner#4677, #4690
 
 codeunit 60919 "Test TestFilter Filter Groups"
 {
@@ -138,6 +145,61 @@ codeunit 60919 "Test TestFilter Filter Groups"
         L.Filter.SetFilter(Rank, '20..30');
 
         Assert.AreEqual('3', WalkHidden(L), 'a TestPage filter on another field combines with the group-2 Grp filter');
+        L.Close();
+    end;
+
+    local procedure WalkBoth(var L: TestPage "ALT TestFilter Grp Both List") Seq: Text
+    begin
+        if not L.First() then
+            exit('');
+        repeat
+            if Seq <> '' then
+                Seq += '|';
+            Seq += Format(L.EntryNo.AsInteger());
+        until not L.Next();
+    end;
+
+    [Test]
+    procedure GetFilter_ReadsGroupZero_WhenOnOpenPageWroteItBeforeGroupTwo()
+    var
+        L: TestPage "ALT TestFilter Grp Both List";
+    begin
+        SeedRows();
+        L.OpenView();
+
+        Assert.AreEqual('1|3', WalkBoth(L), 'group 0 Grp = A and group 2 Grp = A|B admit the Grp A rows');
+        Assert.AreEqual('A', L.Filter.GetFilter(Grp), 'with no TestPage filter, GetFilter reads group 0, written before group 2');
+        L.Close();
+    end;
+
+    [Test]
+    procedure GetFilter_StillReadsGroupZero_AfterTestPageFilterOnSameField()
+    var
+        L: TestPage "ALT TestFilter Grp Both List";
+    begin
+        SeedRows();
+        L.OpenView();
+
+        L.Filter.SetFilter(Grp, 'B');
+
+        Assert.AreEqual('2', WalkBoth(L), 'group 0 Grp = B and group 2 Grp = A|B admit only the Grp B row');
+        Assert.AreEqual('B', L.Filter.GetFilter(Grp), 'group 0 stays ahead of group 2 after a TestPage filter change, so GetFilter reads the TestPage filter');
+        L.Close();
+    end;
+
+    [Test]
+    procedure GetFilter_StillReadsGroupZero_AfterTestPageFilterOnOtherField()
+    var
+        L: TestPage "ALT TestFilter Grp Both List";
+    begin
+        SeedRows();
+        L.OpenView();
+
+        L.Filter.SetFilter(Rank, '20..30');
+
+        Assert.AreEqual('3', WalkBoth(L), 'Rank 20..30 combines with group 0 Grp = A');
+        Assert.AreEqual('A', L.Filter.GetFilter(Grp), 'a TestPage filter on another field leaves group 0 ahead of group 2, so GetFilter still reads group 0');
+        Assert.AreEqual('20..30', L.Filter.GetFilter(Rank), 'the TestPage filter on Rank reads back');
         L.Close();
     end;
 }
