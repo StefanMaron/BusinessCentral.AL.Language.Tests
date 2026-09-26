@@ -1,0 +1,50 @@
+// Fixture for TestSourceReportLayoutFlags.al — a report this app compiles, with four Excel
+// layouts covering the states of the two "Report Layout List" columns under test:
+//   SrlPlain     declares neither property          -> not obsolete, sheet configuration Default
+//   SrlRetiring  ObsoleteState = Pending            -> obsolete
+//   SrlSheets    ExcelLayoutMultipleDataSheets = true  -> Multiple data sheets
+//   SrlOneSheet  ExcelLayoutMultipleDataSheets = false -> Single Data sheet
+report 67500 "SRL Layout Flags Report"
+{
+    Caption = 'SRL Layout Flags Report';
+    UseRequestPage = false;
+    DefaultRenderingLayout = SrlPlain;
+
+    dataset
+    {
+        dataitem(Numbers; Integer)
+        {
+            DataItemTableView = where(Number = const(1));
+            column(Number; Number) { }
+        }
+    }
+
+    rendering
+    {
+        layout(SrlPlain)
+        {
+            Type = Excel;
+            LayoutFile = './SrlLayout.xlsx';
+        }
+        layout(SrlRetiring)
+        {
+            Type = Excel;
+            LayoutFile = './SrlLayout.xlsx';
+            ObsoleteState = Pending;
+            ObsoleteReason = 'Replaced by SrlPlain.';
+            ObsoleteTag = '1.0';
+        }
+        layout(SrlSheets)
+        {
+            Type = Excel;
+            LayoutFile = './SrlLayout.xlsx';
+            ExcelLayoutMultipleDataSheets = true;
+        }
+        layout(SrlOneSheet)
+        {
+            Type = Excel;
+            LayoutFile = './SrlLayout.xlsx';
+            ExcelLayoutMultipleDataSheets = false;
+        }
+    }
+}
