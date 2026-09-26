@@ -22,9 +22,10 @@
 //      filter groups, and group 2 was written before the TestPage filter's group 0.
 //   4. OnOpenPage set Grp = A in group 0 and THEN Grp = A|B in group 2 (page 67960). Before
 //      any TestPage filter, Filter.GetFilter(Grp) reads group 0's 'A', the group written
-//      first. A TestPage filter change - on Grp, or on another field entirely - re-applies
-//      the page's user filters, and GetFilter(Grp) then reads group 2's 'A|B': the user-filter
-//      group is re-created after the page's other filter groups (AL Runner issue #4690).
+//      first. A TestPage filter change - on Grp, or on another field entirely - leaves group 0
+//      AHEAD of group 2, so GetFilter(Grp) reads group 0: 'B' after a filter on Grp, still 'A'
+//      after a filter on Rank. Re-applying the user filters does not move group 0 behind the
+//      page's other groups (AL Runner issue #4690).
 //
 // Rows seeded by every test:
 //   Entry No.  Grp  Rank
@@ -172,7 +173,7 @@ codeunit 60919 "Test TestFilter Filter Groups"
     end;
 
     [Test]
-    procedure GetFilter_ReadsGroupTwo_AfterTestPageFilterOnSameField()
+    procedure GetFilter_StillReadsGroupZero_AfterTestPageFilterOnSameField()
     var
         L: TestPage "ALT TestFilter Grp Both List";
     begin
@@ -182,12 +183,12 @@ codeunit 60919 "Test TestFilter Filter Groups"
         L.Filter.SetFilter(Grp, 'B');
 
         Assert.AreEqual('2', WalkBoth(L), 'group 0 Grp = B and group 2 Grp = A|B admit only the Grp B row');
-        Assert.AreEqual('A|B', L.Filter.GetFilter(Grp), 'after a TestPage filter change, group 0 follows group 2, so GetFilter reads group 2');
+        Assert.AreEqual('B', L.Filter.GetFilter(Grp), 'group 0 stays ahead of group 2 after a TestPage filter change, so GetFilter reads the TestPage filter');
         L.Close();
     end;
 
     [Test]
-    procedure GetFilter_ReadsGroupTwo_AfterTestPageFilterOnOtherField()
+    procedure GetFilter_StillReadsGroupZero_AfterTestPageFilterOnOtherField()
     var
         L: TestPage "ALT TestFilter Grp Both List";
     begin
@@ -197,7 +198,7 @@ codeunit 60919 "Test TestFilter Filter Groups"
         L.Filter.SetFilter(Rank, '20..30');
 
         Assert.AreEqual('3', WalkBoth(L), 'Rank 20..30 combines with group 0 Grp = A');
-        Assert.AreEqual('A|B', L.Filter.GetFilter(Grp), 'a TestPage filter on another field also re-applies group 0 after group 2');
+        Assert.AreEqual('A', L.Filter.GetFilter(Grp), 'a TestPage filter on another field leaves group 0 ahead of group 2, so GetFilter still reads group 0');
         Assert.AreEqual('20..30', L.Filter.GetFilter(Rank), 'the TestPage filter on Rank reads back');
         L.Close();
     end;
