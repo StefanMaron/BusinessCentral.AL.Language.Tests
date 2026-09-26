@@ -9,8 +9,8 @@
 /// the refresh CurrPage.Update(false) asks for raises on an unsaved DelayedInsert row.
 ///
 ///   1. A Card whose current row was deleted -- by its own action, or by the test underneath it
-///      -- is closed once an action on it returns: the TestPage is no longer open afterwards,
-///      Close() included. CurrPage.Update(false) is not what closes it; an action that only
+///      -- is closed once an action on it returns: OnClosePage runs, no OnAfterGetCurrRecord
+///      does, and the TestPage is no longer open afterwards, Close() included. CurrPage.Update(false) is not what closes it; an action that only
 ///      deletes does the same. A new row the table does not hold yet is not "deleted": an action
 ///      on the untouched row OpenNew starts leaves the Card open.
 ///   2. A List in the same shape moves to the neighbouring row instead.
@@ -45,6 +45,25 @@ codeunit 67300 "ALT Page Update Gone Test"
         end;
     end;
 
+    // What BC raises once an action returns and the Card's row is gone, measured on every cloud
+    // leg: 'AGR:A;ActionBegin;ActionEnd;AGR:B;ClosePage;' with a neighbour B, and
+    // 'AGR:A;ActionBegin;ActionEnd;ClosePage;' without one. The OnAfterGetRecord calls are the
+    // client re-reading rows; the claim is that OnClosePage ends the trace, and that neither the
+    // deleted row's OnAfterGetRecord nor any OnAfterGetCurrRecord runs after the action.
+    local procedure AssertClosedAfterAction(Recorded: Text)
+    var
+        After: Text;
+        Position: Integer;
+    begin
+        Position := StrPos(Recorded, 'ActionEnd;');
+        Assert.AreNotEqual(0, Position, 'the action ran; trace ' + Recorded);
+        After := CopyStr(Recorded, Position + StrLen('ActionEnd;'));
+        Assert.IsTrue(After.EndsWith('ClosePage;'),
+            'OnClosePage ends the trace; trace ' + Recorded);
+        Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'no OnAfterGetRecord for the deleted row; trace ' + Recorded);
+        Assert.AreEqual(0, StrPos(After, 'AGCR'), 'no OnAfterGetCurrRecord after the action; trace ' + Recorded);
+    end;
+
     [Test]
     procedure Card_DeletedByAction_WithNeighbour_UpdateClosesThePage()
     var
@@ -62,7 +81,7 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close');
+        AssertClosedAfterAction(Recorded);
     end;
 
     [Test]
@@ -82,7 +101,7 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close of the only row');
+        AssertClosedAfterAction(Recorded);
     end;
 
     [Test]
@@ -105,7 +124,7 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close of a row deleted underneath');
+        AssertClosedAfterAction(Recorded);
     end;
 
     [Test]
@@ -125,7 +144,7 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         asserterror Probe := Card.CodeField.Value();
         Assert.ExpectedError('The TestPage is not open.');
-        Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'triggers raised around the close, no CurrPage.Update');
+        AssertClosedAfterAction(Recorded);
     end;
 
     [Test]
@@ -185,7 +204,7 @@ codeunit 67300 "ALT Page Update Gone Test"
         // (AGR:B;AGR:B;AGCR:B;AGR:B;AGR:B;AGCR:B on the first run); the row is the claim.
         Assert.AreEqual('B', Shown, 'list: the row shown after deleting the current one; trace ' + Trace.Get());
         Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
-        Assert.AreEqual('AGCR:B;', CopyStr(After, StrLen(After) - StrLen('AGCR:B;') + 1),
+        Assert.IsTrue(After.EndsWith('AGCR:B;'),
             'list: OnAfterGetCurrRecord runs for the neighbour; trace ' + Trace.Get());
         List.Close();
     end;
@@ -206,7 +225,7 @@ codeunit 67300 "ALT Page Update Gone Test"
 
         // BC raises OnAfterGetRecord more than once around an action (AGR:A;AGR:A;AGCR:A on the
         // first run of this suite); the count of OnAfterGetCurrRecord and the row are the claim.
-        Assert.AreEqual('AGCR:A;', CopyStr(After, StrLen(After) - StrLen('AGCR:A;') + 1),
+        Assert.IsTrue(After.EndsWith('AGCR:A;'),
             'control: the refresh of a stored row ends with its OnAfterGetCurrRecord; trace ' + Trace.Get());
         Assert.AreNotEqual(0, StrPos(After, 'AGR:A;'), 'control: OnAfterGetRecord runs for the stored row; trace ' + Trace.Get());
         Assert.AreEqual('A', Card.CodeField.Value(), 'control: the page stays on the stored row');
