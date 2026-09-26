@@ -7,7 +7,8 @@
 //     CurrPage.Update(false);
 //   - the name field's OnValidate calls CurrPage.Update(false), which on this DelayedInsert page
 //     leaves a new row unsaved.
-// Control: UpdateOnly calls CurrPage.Update(false) on a row that is still stored.
+// Control: UpdateOnly calls CurrPage.Update(false) on a row that is still stored; NoOp does
+// nothing but record that it ran, for a Card that never showed a stored row.
 // OnAfterGetRecord and OnAfterGetCurrRecord record the key they see; OnClosePage is recorded
 // so the trace shows whether the page's close trigger runs when the client closes it.
 
@@ -66,6 +67,16 @@ page 67300 "ALT Page Update Gone Card"
                     Trace.Note('ActionBegin');
                     Rec.Delete();
                     Trace.Note('ActionEnd');
+                end;
+            }
+            action(NoOp)
+            {
+                ApplicationArea = All;
+                Caption = 'No Op';
+
+                trigger OnAction()
+                begin
+                    Trace.Note('NoOp');
                 end;
             }
             action(UpdateOnly)

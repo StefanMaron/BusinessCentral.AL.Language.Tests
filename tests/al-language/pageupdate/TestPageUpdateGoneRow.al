@@ -12,7 +12,9 @@
 ///      -- is closed once an action on it returns: OnClosePage runs, no OnAfterGetCurrRecord
 ///      does, and the TestPage is no longer open afterwards, Close() included. CurrPage.Update(false) is not what closes it; an action that only
 ///      deletes does the same. A new row the table does not hold yet is not "deleted": an action
-///      on the untouched row OpenNew starts leaves the Card open.
+///      on the untouched row OpenNew starts leaves the Card open, and so does an action on a Card
+///      opened with OpenEdit that never showed a stored row (an empty table, or a filter that
+///      matches nothing).
 ///   2. A List in the same shape moves to the neighbouring row instead.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
@@ -181,6 +183,58 @@ codeunit 67300 "ALT Page Update Gone Test"
         Assert.AreEqual('ActionBegin;ActionEnd;', Recorded, 'an action on the untouched new row; shows ' + Shown);
         Assert.AreEqual('', Shown, 'the untouched new row is still shown; trace ' + Recorded);
         Assert.IsTrue(Row.IsEmpty(), 'the action did not insert the untouched new row');
+        Card.Close();
+    end;
+
+    [TryFunction]
+    local procedure TryReadCode(var Card: TestPage "ALT Page Update Gone Card"; var Shown: Text)
+    begin
+        Shown := Card.CodeField.Value();
+    end;
+
+    [Test]
+    procedure Card_OpenEdit_EmptyTable_NoOpAction_StaysOpen()
+    var
+        Row: Record "ALT Page Update Gone Row";
+        Card: TestPage "ALT Page Update Gone Card";
+        Recorded: Text;
+        Shown: Text;
+        Readable: Boolean;
+    begin
+        Row.DeleteAll();
+        Card.OpenEdit();
+        Trace.Reset();
+
+        Card.NoOp.Invoke();
+        Recorded := Trace.Get();
+        Readable := TryReadCode(Card, Shown);
+
+        Assert.IsTrue(Readable, 'empty table: the Card is still open after the action; error ' + GetLastErrorText() + '; trace ' + Recorded);
+        Assert.AreEqual('', Shown, 'empty table: the Card still shows a blank row; trace ' + Recorded);
+        Assert.AreEqual(0, StrPos(Recorded, 'ClosePage'), 'empty table: no OnClosePage; trace ' + Recorded);
+        Card.Close();
+    end;
+
+    [Test]
+    procedure Card_OpenEdit_FilterMatchesNothing_NoOpAction_StaysOpen()
+    var
+        Card: TestPage "ALT Page Update Gone Card";
+        Recorded: Text;
+        Shown: Text;
+        Readable: Boolean;
+    begin
+        Seed(false);
+        Card.OpenEdit();
+        Card.Filter.SetFilter(Code, 'Q');
+        Trace.Reset();
+
+        Card.NoOp.Invoke();
+        Recorded := Trace.Get();
+        Readable := TryReadCode(Card, Shown);
+
+        Assert.IsTrue(Readable, 'no-match filter: the Card is still open after the action; error ' + GetLastErrorText() + '; trace ' + Recorded);
+        Assert.AreEqual('', Shown, 'no-match filter: the Card shows a blank row, not A; trace ' + Recorded);
+        Assert.AreEqual(0, StrPos(Recorded, 'ClosePage'), 'no-match filter: no OnClosePage; trace ' + Recorded);
         Card.Close();
     end;
 
