@@ -21,8 +21,9 @@
 ///      one -- with or without CurrPage.Update(false) in the action. A List that declares
 ///      OnFindRecord: the re-read goes through that trigger, three times, with Which '=', then
 ///      '=>', then '=' again, and the page shows the row the trigger answers. A pass-through
-///      OnFindRecord (exit(Rec.Find(Which))) answers false on the deleted key; the arms
-///      List_DeletedByAction_PassThroughFind_* pin what BC asks it next and the row it shows.
+///      OnFindRecord (exit(Rec.Find(Which))) answers false on the deleted key, and BC still asks
+///      '=>' and then '=' for the row it lands on: the next row, else the previous one; with no
+///      row left it asks '=' and '=>' only and shows no stored row.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
 ///      OnAfterGetCurrRecord for the unsaved row. Once with the key set, once without.
@@ -437,10 +438,11 @@ codeunit 67300 "ALT Page Update Gone Test"
         After := Trace.AfterActionEnd();
         Shown := List.CodeField.Value();
 
-        // The trigger is exit(Rec.Find(Which)), so it answers false to a Which that asks for the
-        // deleted key B alone. What BC asks next, and which row it shows, is the claim.
+        // The trigger is exit(Rec.Find(Which)), so it answers false to '=' on the deleted key B.
+        // BC asks the same three Which strings as for a trigger that answers true: '=', then '=>',
+        // which reaches C, then '=' for C.
         Assert.AreEqual('C', Shown, 'pass-through OnFindRecord, middle row: the row shown after deleting B; after ' + After);
-        Assert.AreEqual('Find:=;Find:=><;Find:=>;Find:=;', FindCalls(After),
+        Assert.AreEqual('Find:=;Find:=>;Find:=;', FindCalls(After),
             'pass-through OnFindRecord, middle row: the Which strings, in order; after ' + After);
         Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'pass-through OnFindRecord, middle row: no OnAfterGetRecord for the deleted row; after ' + After);
         Assert.IsTrue(After.EndsWith('AGCR:C;'),
@@ -464,13 +466,41 @@ codeunit 67300 "ALT Page Update Gone Test"
         After := Trace.AfterActionEnd();
         Shown := List.CodeField.Value();
 
-        // Nothing after B: a pass-through trigger has only the previous row A to land on.
+        // Nothing after B, so '=>' answers false too; the page still lands on the previous row A,
+        // and the third '=' is asked for A.
         Assert.AreEqual('A', Shown, 'pass-through OnFindRecord, last row: the row shown after deleting B; after ' + After);
-        Assert.AreEqual('Find:=;Find:=><;Find:=>;Find:=;', FindCalls(After),
+        Assert.AreEqual('Find:=;Find:=>;Find:=;', FindCalls(After),
             'pass-through OnFindRecord, last row: the Which strings, in order; after ' + After);
         Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'pass-through OnFindRecord, last row: no OnAfterGetRecord for the deleted row; after ' + After);
         Assert.IsTrue(After.EndsWith('AGCR:A;'),
             'pass-through OnFindRecord, last row: OnAfterGetCurrRecord runs for the row shown; after ' + After);
+        List.Close();
+    end;
+
+    [Test]
+    procedure List_DeletedByAction_PassThroughFind_OnlyRow()
+    var
+        Row: Record "ALT Page Update Gone Row";
+        List: TestPage "ALT Page Update Gone Find List";
+        After: Text;
+        Shown: Text;
+    begin
+        Seed(false);
+        List.OpenEdit();
+        List.GoToKey('A');
+        Trace.Reset();
+
+        List.DeletePassThrough.Invoke();
+        After := Trace.AfterActionEnd();
+        Shown := List.CodeField.Value();
+
+        // No row either side: '=' and '=>' both answer false, and there is no row to settle on.
+        Assert.AreEqual('Find:=;Find:=>;', FindCalls(After),
+            'pass-through OnFindRecord, only row: the Which strings, in order; after ' + After);
+        Assert.AreEqual('', Shown, 'pass-through OnFindRecord, only row: the row shown after deleting A; after ' + After);
+        Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'pass-through OnFindRecord, only row: no OnAfterGetRecord for the deleted row; after ' + After);
+        Assert.AreEqual(0, StrPos(After, 'AGCR:A;'), 'pass-through OnFindRecord, only row: no OnAfterGetCurrRecord for the deleted row; after ' + After);
+        Assert.IsTrue(Row.IsEmpty(), 'pass-through OnFindRecord, only row: nothing re-inserted the deleted row');
         List.Close();
     end;
 
