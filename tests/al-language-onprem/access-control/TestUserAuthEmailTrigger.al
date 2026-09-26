@@ -17,10 +17,12 @@
 // the user's "Authentication Object ID". The same Modify trigger refuses a user name another
 // user already carries, as the Insert trigger does.
 //
-// LICENSE: every User written here is a "Device Only User". The platform's User trigger flags
-// a commit-time named-user license check for any other license type (except External User),
-// and on a tier licensed for a fixed number of full users that check - not the behaviour under
-// test - refuses the transaction. Device Only users are neither flagged nor counted, and the
+// LICENSE: every User written here is an "External User". The platform's User trigger flags
+// a commit-time named-user license check for every license type except Device Only User and
+// External User, and on a tier licensed for a fixed number of full users that check - not the
+// behaviour under test - refuses the transaction. External users are neither flagged nor
+// counted as full or limited users. Device Only User would do the same for the platform, but
+// Base Application refuses that type when the tenant is an online (sandbox) environment. The
 // email and user-name rules below do not read the license type.
 //
 // Every refusal is paired with the case that must still be accepted - a disabled user's email
@@ -94,7 +96,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         UserRec.Init();
         UserRec."User Security ID" := CreateGuid();
         UserRec."User Name" := NewUserName();
-        UserRec."License Type" := UserRec."License Type"::"Device Only User";
+        UserRec."License Type" := UserRec."License Type"::"External User";
         UserRec.Validate("Authentication Email", '  ' + Email + '  ');
         Assert.AreEqual('  ' + Email + '  ', UserRec."Authentication Email", 'Validate must leave the email exactly as assigned');
 
@@ -148,7 +150,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         UserRec.Init();
         UserRec."User Security ID" := Sid;
         UserRec."User Name" := NewUserName();
-        UserRec."License Type" := UserRec."License Type"::"Device Only User";
+        UserRec."License Type" := UserRec."License Type"::"External User";
         UserRec."Authentication Email" := 'Abc.example.com';
 
         asserterror UserRec.Insert();
@@ -172,7 +174,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         SecondUser.Init();
         SecondUser."User Security ID" := Sid;
         SecondUser."User Name" := NewUserName();
-        SecondUser."License Type" := SecondUser."License Type"::"Device Only User";
+        SecondUser."License Type" := SecondUser."License Type"::"External User";
         SecondUser."Authentication Email" := CopyStr(' ' + Email, 1, MaxStrLen(SecondUser."Authentication Email"));
 
         // The padded copy is refused too: uniqueness is checked on the normalised address.
@@ -285,7 +287,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         SecondUser.Init();
         SecondUser."User Security ID" := CreateGuid();
         SecondUser."User Name" := NewUserName();
-        SecondUser."License Type" := SecondUser."License Type"::"Device Only User";
+        SecondUser."License Type" := SecondUser."License Type"::"External User";
         SecondUser.State := SecondUser.State::Disabled;
         SecondUser."Authentication Email" := CopyStr(Email, 1, MaxStrLen(SecondUser."Authentication Email"));
         SecondUser.Insert();
@@ -353,7 +355,7 @@ codeunit 61206 "Test User Auth Email Trigger"
         UserRec.Init();
         UserRec."User Security ID" := CreateGuid();
         UserRec."User Name" := NewUserName();
-        UserRec."License Type" := UserRec."License Type"::"Device Only User";
+        UserRec."License Type" := UserRec."License Type"::"External User";
         UserRec."Authentication Email" := CopyStr(Email, 1, MaxStrLen(UserRec."Authentication Email"));
         UserRec.Insert();
     end;
