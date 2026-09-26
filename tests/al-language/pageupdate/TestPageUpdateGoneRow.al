@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-update-method
 // Scope: in-scope (Cloud-compatible) -- every member is driven from a [Test] with no client
 // Fixtures used: ALT Page Update Gone Row (67300), ALT Page Update Gone Card (67300),
-//   ALT Page Update Gone List (67301), ALT Page Update Gone Trace (67301); shared Assert (60021)
+//   ALT Page Update Gone List (67301), ALT Page Update Gone Find List (67302),
+//   ALT Page Update Gone Trace (67301); shared Assert (60021)
 // BC versions: 27.0+
 //
 /// <summary>
@@ -17,7 +18,8 @@
 ///      matches nothing).
 ///   2. A List in the same shape moves to the neighbouring row instead: the next row, the
 ///      previous one when the deleted row was the last, and no stored row when it was the only
-///      one -- with or without CurrPage.Update(false) in the action.
+///      one -- with or without CurrPage.Update(false) in the action. A List that declares
+///      OnFindRecord: the re-read goes through that trigger, with Which '=><'.
 ///   3. A new row on a DelayedInsert page whose field OnValidate calls CurrPage.Update(false):
 ///      the call does not save, and the refresh raises neither OnAfterGetRecord nor
 ///      OnAfterGetCurrRecord for the unsaved row. Once with the key set, once without.
@@ -366,6 +368,36 @@ codeunit 67300 "ALT Page Update Gone Test"
         Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list, no update: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
         Assert.IsTrue(After.EndsWith('AGCR:B;'),
             'list, no update: OnAfterGetCurrRecord runs for the neighbour; trace ' + Trace.Get());
+        List.Close();
+    end;
+
+    [Test]
+    procedure List_DeletedByAction_OnFindRecord_PicksTheRow()
+    var
+        Row: Record "ALT Page Update Gone Row";
+        List: TestPage "ALT Page Update Gone Find List";
+        After: Text;
+        Shown: Text;
+    begin
+        Seed(true);
+        Row.Init();
+        Row.Code := 'C';
+        Row.Name := 'Gamma';
+        Row.Insert();
+        List.OpenEdit();
+        List.GoToKey('B');
+        Trace.Reset();
+
+        List.DeleteAndPickFirst.Invoke();
+        After := Trace.AfterActionEnd();
+        Shown := List.CodeField.Value();
+
+        // The page's OnFindRecord answers the first row once the action ran; the default re-read
+        // of a deleted middle row lands on C. So A means the re-read went through the trigger.
+        Assert.AreEqual('A', Shown, 'list with OnFindRecord: the row shown after deleting B; trace ' + Trace.Get());
+        Assert.AreNotEqual(0, StrPos(After, 'Find:=><;'),
+            'list with OnFindRecord: the re-read passes =>< to the trigger; trace ' + Trace.Get());
+        Assert.AreEqual(0, StrPos(After, 'AGR:B;'), 'list with OnFindRecord: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
         List.Close();
     end;
 
