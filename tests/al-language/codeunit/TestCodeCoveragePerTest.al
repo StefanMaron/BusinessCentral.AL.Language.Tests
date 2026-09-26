@@ -16,7 +16,8 @@
 //       compared between rows.
 //
 //       Written for AlRunner#4666, where both tables read empty after recording across a test
-//       start.
+//       start. The trigger arm was added for AlRunner#4682: a trigger that runs inside a recorded
+//       test is a method run inside it too, so it gets its own Test Lookup row.
 // BC versions: 24+
 
 codeunit 60925 "Test Code Coverage Per Test"
@@ -57,6 +58,12 @@ codeunit 60925 "Test Code Coverage Per Test"
         CodeCoverageLog(true, false);
         RecordedTest_RunsTripled();
         CodeCoverageLog(false, false);
+    end;
+
+    [Test]
+    procedure RecordedTest_RunsTrigger()
+    begin
+        Codeunit.Run(Codeunit::"Test Code Coverage Trigger");
     end;
 
     [Test]
@@ -133,5 +140,39 @@ codeunit 60925 "Test Code Coverage Per Test"
         TestLookup.SetRange("Object Type", TestLookup."Object Type"::Codeunit);
         TestLookup.SetRange("Object ID", Codeunit::"Test Code Coverage Per Test");
         Assert.IsTrue(TestLookup.IsEmpty(), 'no test started while recording, so Test Lookup must hold no row for this codeunit.');
+    end;
+
+    [Test]
+    procedure TestLookup_TriggerRunInsideRecordedTest_HasARow()
+    var
+        TestsRun: Record "Code Coverage Tests Run";
+        TestLookup: Record "Code Coverage Test Lookup";
+    begin
+        // [GIVEN] a [Test] procedure that runs a codeunit's OnRun trigger started and finished while recording
+        Initialize();
+        CodeCoverageLog(true, false);
+        RecordedTest_RunsTrigger();
+        CodeCoverageLog(false, false);
+        TestsRun.SetRange("Object ID", Codeunit::"Test Code Coverage Per Test");
+        TestsRun.SetRange("Method Name", 'RecordedTest_RunsTrigger');
+        Assert.IsTrue(TestsRun.FindFirst(), 'the recorded test must have a Tests Run row.');
+
+        // [THEN] Test Lookup links the trigger's codeunit to that test, once
+        TestLookup.SetRange("Object Type", TestLookup."Object Type"::Codeunit);
+        TestLookup.SetRange("Object ID", Codeunit::"Test Code Coverage Trigger");
+        TestLookup.SetRange("Test ID", TestsRun."Test ID");
+        Assert.AreEqual(1, TestLookup.Count(), 'the OnRun trigger that ran inside the recorded test must have exactly one Test Lookup row.');
+    end;
+}
+
+codeunit 60242 "Test Code Coverage Trigger"
+{
+    trigger OnRun()
+    var
+        Value: Integer;
+    begin
+        Value := 3;
+        if Value <> 3 then
+            Error('Value must be 3.');
     end;
 }
