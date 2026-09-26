@@ -28,17 +28,25 @@ codeunit 60018 "Test Rename Key Relation"
         Initialize();
         InsertKeyParent('OLDKEY');
         InsertKeyParent('OTHERKEY');
+        // Three children under the renamed parent: every one must be re-keyed, not just the first.
         InsertKeyChild('OLDKEY', 1);
+        InsertKeyChild('OLDKEY', 2);
+        InsertKeyChild('OLDKEY', 3);
         InsertKeyChild('OTHERKEY', 1);
 
         Parent.Get('OLDKEY');
         Parent.Rename('NEWKEY');
 
-        Assert.IsTrue(Child.Get('NEWKEY', 1), 'The child must be found under the parent''s new key');
-        Assert.IsFalse(Child.Get('OLDKEY', 1), 'No child may be left under the parent''s old key');
+        Assert.IsTrue(Child.Get('NEWKEY', 1), 'Child line 1 must be found under the parent''s new key');
+        Assert.IsTrue(Child.Get('NEWKEY', 2), 'Child line 2 must be found under the parent''s new key');
+        Assert.IsTrue(Child.Get('NEWKEY', 3), 'Child line 3 must be found under the parent''s new key');
+        Child.SetRange("Parent Code", 'NEWKEY');
+        Assert.AreEqual(3, Child.Count(), 'All three children must be under the parent''s new key');
+        Child.SetRange("Parent Code", 'OLDKEY');
+        Assert.AreEqual(0, Child.Count(), 'No child may be left under the parent''s old key');
         Assert.IsTrue(Child.Get('OTHERKEY', 1), 'Control: a child of another parent must not move');
         Child.Reset();
-        Assert.AreEqual(2, Child.Count(), 'The rename must re-key the child, not add or drop rows');
+        Assert.AreEqual(4, Child.Count(), 'The rename must re-key the children, not add or drop rows');
     end;
 
     [Test]

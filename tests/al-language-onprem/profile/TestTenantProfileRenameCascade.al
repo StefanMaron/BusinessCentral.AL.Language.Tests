@@ -44,14 +44,18 @@ codeunit 61207 "Test Tenant Profile Rename"
         UserPersonalization: Record "User Personalization";
         EmptyGuid: Guid;
         RenamedUserSid: Guid;
+        SecondRenamedUserSid: Guid;
         ControlUserSid: Guid;
     begin
         Cleanup();
         InsertTenantProfile(OldProfileIdTok);
         InsertTenantProfile(OtherProfileIdTok);
         RenamedUserSid := CreateGuid();
+        SecondRenamedUserSid := CreateGuid();
         ControlUserSid := CreateGuid();
+        // Two users on the renamed profile: both must follow, not just the first.
         InsertUserPersonalization(RenamedUserSid, OldProfileIdTok);
+        InsertUserPersonalization(SecondRenamedUserSid, OldProfileIdTok);
         InsertUserPersonalization(ControlUserSid, OtherProfileIdTok);
 
         AllProfile.Get(AllProfile.Scope::Tenant, EmptyGuid, OldProfileIdTok);
@@ -61,6 +65,14 @@ codeunit 61207 "Test Tenant Profile Rename"
         Assert.AreEqual(
             NewProfileIdTok, UserPersonalization."Profile ID",
             'A User Personalization row naming the renamed profile must follow the rename');
+        UserPersonalization.Get(SecondRenamedUserSid);
+        Assert.AreEqual(
+            NewProfileIdTok, UserPersonalization."Profile ID",
+            'Every User Personalization row naming the renamed profile must follow the rename');
+        UserPersonalization.Reset();
+        UserPersonalization.SetRange("Profile ID", OldProfileIdTok);
+        Assert.AreEqual(0, UserPersonalization.Count(), 'No User Personalization row may be left on the old profile id');
+        UserPersonalization.Reset();
         UserPersonalization.Get(ControlUserSid);
         Assert.AreEqual(
             OtherProfileIdTok, UserPersonalization."Profile ID",
