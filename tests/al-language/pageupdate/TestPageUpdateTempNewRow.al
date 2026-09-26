@@ -13,8 +13,10 @@
 ///   1. OpenNew raises OnAfterGetCurrRecord for the new row, whose CurrPage.Update(false) asks
 ///      for a refresh, and no OnAfterGetRecord runs. The AGCR assertion is the control that
 ///      the request was made at all.
-///   2. The same OpenNew, counted exactly: the trace holds only OnAfterGetCurrRecord entries,
-///      and how many of them there are pins whether the refresh raised one of its own.
+///   2. The same OpenNew, counted exactly: the trace is one OnAfterGetCurrRecord. The refresh
+///      the CurrPage.Update(false) asked for raises neither trigger for the unsaved row, so
+///      OnAfterGetCurrRecord is not raised a second time either (all nine cloud legs, corpus
+///      PR #434's first run, answered `AGCR;`).
 ///   3. A SetValue whose OnValidate saves the row with CurrPage.Update() does raise
 ///      OnAfterGetRecord, for the saved name: the other side of the boundary.
 /// </summary>
@@ -49,7 +51,7 @@ codeunit 60872 "ALT Page Update Temp New Test"
     end;
 
     [Test]
-    procedure TempSource_OpenNew_TraceIsTwoOnAfterGetCurrRecord()
+    procedure TempSource_OpenNew_TraceIsOneOnAfterGetCurrRecord()
     var
         Card: TestPage "ALT Page Update Temp New Card";
     begin
@@ -57,8 +59,8 @@ codeunit 60872 "ALT Page Update Temp New Test"
 
         Card.OpenNew();
 
-        Assert.AreEqual('AGCR;AGCR;', Trace.Get(),
-            'OpenNew, then the refresh CurrPage.Update(false) asked for, each raise OnAfterGetCurrRecord once; trace: ' + Trace.Get());
+        Assert.AreEqual('AGCR;', Trace.Get(),
+            'OpenNew raises OnAfterGetCurrRecord once, and the refresh its CurrPage.Update(false) asks for raises no trigger on the unsaved row; trace: ' + Trace.Get());
         Card.Close();
     end;
 
