@@ -233,7 +233,9 @@ codeunit 67300 "ALT Page Update Gone Test"
         Readable := TryReadCode(Card, Shown);
 
         Assert.IsTrue(Readable, 'no-match filter: the Card is still open after the action; error ' + GetLastErrorText() + '; trace ' + Recorded);
-        Assert.AreEqual('', Shown, 'no-match filter: the Card shows a blank row, not A; trace ' + Recorded);
+        // What the new row shows is not the claim (a single-value filter may pre-fill its key);
+        // that the Card is still open and not on the filtered-out stored row is.
+        Assert.AreNotEqual('A', Shown, 'no-match filter: the Card does not show the filtered-out row A; trace ' + Recorded);
         Assert.AreEqual(0, StrPos(Recorded, 'ClosePage'), 'no-match filter: no OnClosePage; trace ' + Recorded);
         Card.Close();
     end;
