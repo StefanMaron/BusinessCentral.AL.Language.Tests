@@ -356,6 +356,8 @@ codeunit 67300 "ALT Page Update Gone Test"
         Assert.AreEqual('', Shown, 'list, only row: the row shown after deleting the only one; trace ' + Trace.Get());
         Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'list, only row: no OnAfterGetRecord for the deleted row; trace ' + Trace.Get());
         Assert.AreEqual(0, StrPos(After, 'AGCR:A;'), 'list, only row: no OnAfterGetCurrRecord for the deleted row; trace ' + Trace.Get());
+        // The blank line raises OnAfterGetCurrRecord; the whole trace after the action is pinned.
+        Assert.AreEqual('AGCR:;AGCR:;AGCR:;', After, 'list only row: trace');
         Assert.IsTrue(Row.IsEmpty(), 'list, only row: nothing re-inserted the deleted row');
         List.Close();
     end;
@@ -501,6 +503,10 @@ codeunit 67300 "ALT Page Update Gone Test"
         Assert.AreEqual('', Shown, 'pass-through OnFindRecord, only row: the row shown after deleting A; after ' + After);
         Assert.AreEqual(0, StrPos(After, 'AGR:A;'), 'pass-through OnFindRecord, only row: no OnAfterGetRecord for the deleted row; after ' + After);
         Assert.AreEqual(0, StrPos(After, 'AGCR:A;'), 'pass-through OnFindRecord, only row: no OnAfterGetCurrRecord for the deleted row; after ' + After);
+        // The blank line raises OnAfterGetCurrRecord. The whole trace after the action is pinned,
+        // with a short message: a failure message is cut at 200 characters, which is how the first
+        // read of this trace lost its end.
+        Assert.AreEqual('AGCR:;Find:=>;Find:=><;AGCR:;AGCR:;', After, 'pass-through only row: trace');
         Assert.IsTrue(Row.IsEmpty(), 'pass-through OnFindRecord, only row: nothing re-inserted the deleted row');
         List.Close();
     end;
