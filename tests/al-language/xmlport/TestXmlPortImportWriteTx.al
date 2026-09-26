@@ -16,6 +16,12 @@
 // In both refused arms the xmlport never runs, so its rows do not exist.
 //
 // Asked by StefanMaron/BusinessCentral.AL.Runner#2184.
+//
+// The FailingImport tests ask the other half of the value-consuming form: when the import
+// itself fails part-way (the second element carries a value its field cannot hold), is the
+// row the first element already wrote rolled back with the transaction the import opened?
+// A row committed by the caller before the import must survive either way.
+// Asked by StefanMaron/BusinessCentral.AL.Runner#4643.
 // BC versions: 24+
 
 codeunit 60041 "Test XmlPort Import Write Tx"
@@ -80,6 +86,34 @@ codeunit 60041 "Test XmlPort Import Write Tx"
         OutStr.WriteText('<?xml version="1.0" encoding="UTF-8"?><Universals>' +
             StrSubstNo('<Universal><EntryNo>%1</EntryNo><IntegerValue>10</IntegerValue><TextValue>First</TextValue></Universal>', FirstEntryNo) +
             StrSubstNo('<Universal><EntryNo>%1</EntryNo><IntegerValue>20</IntegerValue><TextValue>Second</TextValue></Universal>', FirstEntryNo + 1) +
+            '</Universals>');
+        BlobRec.Data.CreateInStream(InStr);
+    end;
+
+    local procedure FailingImportRowCount(): Integer
+    var
+        ALTUniversal: Record "ALT Universal";
+    begin
+        ALTUniversal.Reset();
+        ALTUniversal.SetRange("Entry No.", 9321, 9322);
+        exit(ALTUniversal.Count());
+    end;
+
+    local procedure OpenFailingPayload(var BlobRec: Record "ALT Blob" temporary; var InStr: InStream)
+    var
+        OutStr: OutStream;
+    begin
+        // The first element is valid and imports; the second carries a non-integer in an
+        // Integer field, so the import fails after the first row has been written.
+        BlobRec.Reset();
+        BlobRec.DeleteAll();
+        BlobRec.Init();
+        BlobRec.Code := 'TMP';
+        BlobRec.Insert();
+        BlobRec.Data.CreateOutStream(OutStr);
+        OutStr.WriteText('<?xml version="1.0" encoding="UTF-8"?><Universals>' +
+            '<Universal><EntryNo>9321</EntryNo><IntegerValue>10</IntegerValue><TextValue>First</TextValue></Universal>' +
+            '<Universal><EntryNo>9322</EntryNo><IntegerValue>NotAnInteger</IntegerValue><TextValue>Second</TextValue></Universal>' +
             '</Universals>');
         BlobRec.Data.CreateInStream(InStr);
     end;
@@ -257,5 +291,59 @@ codeunit 60041 "Test XmlPort Import Write Tx"
         asserterror ThirdOk := Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
         Assert.ExpectedError('the transaction is stopped');
         Assert.IsFalse(ThirdOk, 'A refused Codeunit.Run must not assign a result.');
+    end;
+
+    [Test]
+    procedure StaticGuardedImport_FailingSecondElement_ReturnsFalse_AndRollsBackTheFirstRow()
+    var
+        BlobRec: Record "ALT Blob" temporary;
+        ALTUniversal: Record "ALT Universal";
+        InStr: InStream;
+        Ok: Boolean;
+    begin
+        Initialize();
+        OpenFailingPayload(BlobRec, InStr);
+
+        // [GIVEN] a row the caller wrote and committed, so no write transaction is open
+        InsertPendingRow();
+        Commit();
+
+        // [WHEN] a value-consuming static XmlPort.Import fails on its second element
+        Ok := XmlPort.Import(XmlPort::"ALT Universal XmlPort", InStr);
+
+        // [THEN] it reports failure, the row its first element wrote is rolled back,
+        //        and the caller's committed row is untouched
+        Assert.IsFalse(Ok, 'A value-consuming static XmlPort.Import whose payload fails must return false.');
+        Assert.AreEqual(0, FailingImportRowCount(),
+            'A failed value-consuming static XmlPort.Import must roll back the row its first element wrote.');
+        Assert.IsTrue(ALTUniversal.Get(1), 'The row the caller committed before the import must survive the failed import.');
+    end;
+
+    [Test]
+    procedure InstanceGuardedImport_FailingSecondElement_ReturnsFalse_AndRollsBackTheFirstRow()
+    var
+        BlobRec: Record "ALT Blob" temporary;
+        ALTUniversal: Record "ALT Universal";
+        UniversalXmlPort: XmlPort "ALT Universal XmlPort";
+        InStr: InStream;
+        Ok: Boolean;
+    begin
+        Initialize();
+        OpenFailingPayload(BlobRec, InStr);
+
+        // [GIVEN] a row the caller wrote and committed, so no write transaction is open
+        InsertPendingRow();
+        Commit();
+
+        // [WHEN] a value-consuming instance Import fails on its second element
+        UniversalXmlPort.SetSource(InStr);
+        Ok := UniversalXmlPort.Import();
+
+        // [THEN] it reports failure, the row its first element wrote is rolled back,
+        //        and the caller's committed row is untouched
+        Assert.IsFalse(Ok, 'A value-consuming XmlPort Import whose payload fails must return false.');
+        Assert.AreEqual(0, FailingImportRowCount(),
+            'A failed value-consuming XmlPort Import must roll back the row its first element wrote.');
+        Assert.IsTrue(ALTUniversal.Get(1), 'The row the caller committed before the import must survive the failed import.');
     end;
 }
