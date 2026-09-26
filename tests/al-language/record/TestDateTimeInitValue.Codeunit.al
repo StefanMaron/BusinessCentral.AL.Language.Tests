@@ -3,10 +3,13 @@
 // Scope: in-scope (Cloud-compatible)
 // Fixtures used: tables 67512 and 67513, tableextensions 67512 and 67513, all in this folder.
 //
-// CLAIM: Init() applies a DateTime field's InitValue = 0DT (the field is blank afterwards) and a
-// Date field's closing-date InitValue C20260101D (the field holds ClosingDate(20260101D), not the
-// normal date 20260101D), both on a table compiled in this app and on a field a tableextension
-// adds to a Base Application table. TestDateInitValue (67510) pins normal Date literals and 0D.
+// CLAIM: the compiler accepts InitValue = 0DT on a DateTime field and the closing-date literal
+// InitValue = C20260101D on a Date field, but Init() on the table then raises an error, because
+// the service tier cannot evaluate the InitValue text the compiler stored for either shape:
+//   0DT        -> The value "01/01/0001 00:00:00" can't be evaluated into type DateTime.
+//   C20260101D -> The format of the Date 'C20260101D' does not match your device's date settings.
+// The same holds on a table compiled in this app and on a field a tableextension adds to a Base
+// Application table. TestDateInitValue (67510) pins the Date literals Init() does apply.
 //
 // Written by agent stma-auto2-3 for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4794.
 codeunit 67512 "Test DateTime InitValue"
@@ -16,57 +19,42 @@ codeunit 67512 "Test DateTime InitValue"
 
     var
         Assert: Codeunit Assert;
+        ZeroDateTimeErr: Label 'The value "01/01/0001 00:00:00" can''t be evaluated into type DateTime.', Locked = true;
+        ClosingDateErr: Label 'The format of the Date ''C20260101D'' does not match your device''s date settings.', Locked = true;
 
     [Test]
-    procedure DateTimeInitValue_Table_ZeroDateTimeLeavesTheFieldBlank()
+    procedure DateTimeInitValue_Table_ZeroDateTimeInitValueFailsInit()
     var
         Rec: Record "ALT DateTime Init Value";
     begin
-        Rec."Zero DateTime" := CreateDateTime(20300615D, 120000T);
-        Rec."Plain DateTime" := CreateDateTime(20300615D, 120000T);
-
-        Rec.Init();
-
-        Assert.AreEqual(0DT, Rec."Zero DateTime", 'InitValue = 0DT must leave the field blank after Init()');
-        Assert.AreEqual(0DT, Rec."Plain DateTime", 'a DateTime field with no InitValue must be blank after Init()');
+        asserterror Rec.Init();
+        Assert.ExpectedError(ZeroDateTimeErr);
     end;
 
     [Test]
-    procedure DateTimeInitValue_Table_ClosingDateInitValueIsTheClosingDate()
+    procedure DateTimeInitValue_Table_ClosingDateInitValueFailsInit()
     var
         Rec: Record "ALT Closing Date Init Value";
     begin
-        Rec."Closing Date" := 20300615D;
-
-        Rec.Init();
-
-        Assert.AreEqual(ClosingDate(20260101D), Rec."Closing Date", 'Init() must set the field to its InitValue C20260101D');
-        Assert.AreNotEqual(20260101D, Rec."Closing Date", 'a closing-date InitValue must not collapse to the normal date');
-        Assert.AreEqual(20260101D, NormalDate(Rec."Closing Date"), 'the closing date must be the one for 2026-01-01');
+        asserterror Rec.Init();
+        Assert.ExpectedError(ClosingDateErr);
     end;
 
     [Test]
-    procedure DateTimeInitValue_TableExtOnBaseAppTable_ZeroDateTimeLeavesTheFieldBlank()
+    procedure DateTimeInitValue_TableExtOnBaseAppTable_ZeroDateTimeInitValueFailsInit()
     var
         IndustryGroup: Record "Industry Group";
     begin
-        IndustryGroup."ALT Ext Zero DateTime" := CreateDateTime(20300615D, 120000T);
-
-        IndustryGroup.Init();
-
-        Assert.AreEqual(0DT, IndustryGroup."ALT Ext Zero DateTime", 'InitValue = 0DT must leave the extension field blank after Init()');
+        asserterror IndustryGroup.Init();
+        Assert.ExpectedError(ZeroDateTimeErr);
     end;
 
     [Test]
-    procedure DateTimeInitValue_TableExtOnBaseAppTable_ClosingDateInitValueIsTheClosingDate()
+    procedure DateTimeInitValue_TableExtOnBaseAppTable_ClosingDateInitValueFailsInit()
     var
         MailingGroup: Record "Mailing Group";
     begin
-        MailingGroup."ALT Ext Closing Date" := 20300615D;
-
-        MailingGroup.Init();
-
-        Assert.AreEqual(ClosingDate(20260101D), MailingGroup."ALT Ext Closing Date", 'Init() must set the extension field to its InitValue C20260101D');
-        Assert.AreNotEqual(20260101D, MailingGroup."ALT Ext Closing Date", 'a closing-date InitValue must not collapse to the normal date');
+        asserterror MailingGroup.Init();
+        Assert.ExpectedError(ClosingDateErr);
     end;
 }
