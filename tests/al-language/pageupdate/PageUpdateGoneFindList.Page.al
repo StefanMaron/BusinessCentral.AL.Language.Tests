@@ -5,7 +5,8 @@
 // "ALT Page Update Gone List" (67301) with an OnFindRecord trigger, so the suite can tell whether
 // the client's re-read of a List whose current row is gone goes through that trigger, and with
 // which Which string. The DeleteAndPickFirst action makes the trigger answer the first row, which
-// the default re-read would not land on when a middle row is deleted.
+// the default re-read would not land on when a middle row is deleted. DeletePassThrough leaves the
+// trigger a plain Rec.Find(Which), the common shape, which answers false on the deleted key.
 
 page 67302 "ALT Page Update Gone Find List"
 {
@@ -44,6 +45,18 @@ page 67302 "ALT Page Update Gone Find List"
                 begin
                     Trace.Note('ActionBegin');
                     PickFirst := true;
+                    Rec.Delete();
+                    Trace.Note('ActionEnd');
+                end;
+            }
+            action(DeletePassThrough)
+            {
+                ApplicationArea = All;
+                Caption = 'Delete Pass Through';
+
+                trigger OnAction()
+                begin
+                    Trace.Note('ActionBegin');
                     Rec.Delete();
                     Trace.Note('ActionEnd');
                 end;
