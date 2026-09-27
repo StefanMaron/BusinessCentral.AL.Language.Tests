@@ -145,6 +145,64 @@ codeunit 60907 "Test All Profile Table"
     end;
 
     [Test]
+    procedure AllProfile_RenameAppOwnedProfileToItsOwnKey_Succeeds()
+    // CLAIM: the refusal above is about a KEY CHANGE. A Rename of an app-owned profile onto its
+    // own App ID and Profile ID changes neither, so the platform does not refuse it.
+    var
+        AllProfile: Record "All Profile";
+        ThisModule: ModuleInfo;
+    begin
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), RowFixtureProfileIdTok);
+
+        AllProfile.Rename(AllProfile.Scope::Tenant, ThisModule.Id(), RowFixtureProfileIdTok);
+
+        Clear(AllProfile);
+        Assert.IsTrue(
+            AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), RowFixtureProfileIdTok),
+            'A Rename onto the profile''s own key must leave it where it is');
+    end;
+
+    [Test]
+    procedure AllProfile_RenameTenantProfileOntoAnInstalledAppId_IsRefused()
+    // CLAIM: the platform judges the key a profile is renamed TO. A tenant-owned profile renamed
+    // onto an installed app's App ID is refused with the same message, naming the Profile ID,
+    // and stays tenant-owned under its old key.
+    var
+        AllProfile: Record "All Profile";
+        ThisModule: ModuleInfo;
+        EmptyGuid: Guid;
+        ProfileIdTok: Label 'ALT TENANT RENAME PROFILE', Locked = true;
+    begin
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        if AllProfile.Get(AllProfile.Scope::Tenant, EmptyGuid, ProfileIdTok) then
+            AllProfile.Delete();
+        Clear(AllProfile);
+        AllProfile.Init();
+        AllProfile.Scope := AllProfile.Scope::Tenant;
+        AllProfile."Profile ID" := ProfileIdTok;
+        AllProfile.Description := 'Tenant-owned rename coverage profile.';
+        AllProfile."Role Center ID" := Page::"ALT Profile RC SameApp";
+        AllProfile.Enabled := false;
+        AllProfile.Insert();
+        // asserterror rolls back to the last commit point, which would take the Insert too.
+        Commit();
+
+        asserterror AllProfile.Rename(AllProfile.Scope::Tenant, ThisModule.Id(), ProfileIdTok);
+
+        Assert.ExpectedError(
+            StrSubstNo('Cannot modify the Scope, Profile ID, or RoleCenter fields on the %1 profile because it is part of an installed app.', ProfileIdTok));
+        Clear(AllProfile);
+        Assert.IsFalse(
+            AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), ProfileIdTok),
+            'A refused Rename must not create the profile under the app''s App ID');
+        Assert.IsTrue(
+            AllProfile.Get(AllProfile.Scope::Tenant, EmptyGuid, ProfileIdTok),
+            'A refused Rename must leave the tenant profile under its old key');
+        AllProfile.Delete();
+    end;
+
+    [Test]
     procedure AllProfile_TenantOwnedProfile_CanBeInsertedReadBackAndDeleted()
     // CLAIM: "All Profile" is writable for a tenant-owned profile (App ID = the empty GUID).
     // The inserted row reads back with the values it was given, and Delete() removes it.
