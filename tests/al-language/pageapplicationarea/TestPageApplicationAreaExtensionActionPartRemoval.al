@@ -13,7 +13,8 @@
 //     object-level ApplicationArea;
 //   * the modify()'s value, which REPLACES the base action's area.
 // An actionref the extension adds is not found when its target action is not (ExtServiceRef), and
-// one stating no area of its own is found when its target is (ExtBasicRef).
+// one stating no area of its own is found when its target is (ExtBasicRef). Invoking either
+// actionref runs its target's OnAction.
 // Codeunit 67538 asks this of a page compiled in this app, codeunit 67539 of a page that ships
 // precompiled. Each negative arm pairs with an element on the same page that IS found under the
 // same areas, so a page that failed to open cannot pass as "not found".
@@ -390,6 +391,47 @@ codeunit 67538 "PAA Ext Action Part Tests"
         AreaPage.Close();
         ApplicationArea(PreviousAreas);
         Assert.IsTrue(Found, 'the extension''s actionref to a #Service action must be found with #Service enabled');
+    end;
+
+    // Invoking the actionref runs its target's OnAction -- for a target the same pageextension
+    // adds, and for a target the base page declares. Written for AL Runner issue
+    // StefanMaron/BusinessCentral.AL.Runner#4878 by agent stma-auto2-4.
+    [Test]
+    procedure ExtActionRef_ToExtensionAction_InvokeRunsTheTargetsTrigger()
+    var
+        AreaRec: Record "PAA ExtAct Record";
+        AreaPage: TestPage "PAA ExtAct Card";
+        PreviousAreas: Text;
+    begin
+        MakeRecord(AreaRec);
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite,#Service');
+
+        AreaPage.OpenEdit();
+        AreaPage.GoToRecord(AreaRec);
+        AreaPage.ExtServiceRef.Invoke();
+        AreaPage.Close();
+        ApplicationArea(PreviousAreas);
+        Assert.AreEqual('EXT-SERVICE', RanValue(), 'invoking the extension''s actionref must run the OnAction of the action the same extension adds');
+    end;
+
+    [Test]
+    procedure ExtActionRef_ToBasePageAction_InvokeRunsTheTargetsTrigger()
+    var
+        AreaRec: Record "PAA ExtAct Record";
+        AreaPage: TestPage "PAA ExtAct Card";
+        PreviousAreas: Text;
+    begin
+        MakeRecord(AreaRec);
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite');
+
+        AreaPage.OpenEdit();
+        AreaPage.GoToRecord(AreaRec);
+        AreaPage.ExtBasicRef.Invoke();
+        AreaPage.Close();
+        ApplicationArea(PreviousAreas);
+        Assert.AreEqual('BASE-BASIC', RanValue(), 'invoking the extension''s actionref must run the OnAction of the base page action it points at');
     end;
 
     [Test]
