@@ -11,8 +11,15 @@
 // no area (PAAXNoAreaDesc) is not found whenever the session has areas set -- it does not take
 // the page's #Reservation. With the empty area string both are found.
 //
-// The extension only ADDS controls; it modifies nothing on the Microsoft page, so codeunit 67534's
-// assertions about the same page are unaffected.
+// It also shows that a modify() stating ApplicationArea on a precompiled page's control REPLACES that
+// control's area (pageextension 67537 over Base Application's "Standard Text Codes", whose "Code" and
+// "Description" controls each state #Basic,#Suite): with only #Service enabled, "Description" (moved to
+// #Service) is found while "Code" is not; with #Basic,#Suite enabled, "Code" is found and
+// "Description" is not.
+//
+// Pageextension 67536 only ADDS controls; it modifies nothing on "Reservation Wksh. Batches", so
+// codeunit 67534's assertions about that page are unaffected. No other corpus test opens "Standard
+// Text Codes".
 //
 // Written by agent stma-auto2-1, an automated implementation agent acting on the account holder's
 // behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4866.
@@ -28,6 +35,17 @@ pageextension 67536 "PAA Ext Resv Batches Ext" extends "Reservation Wksh. Batche
                 ApplicationArea = Service;
             }
             field(PAAXNoAreaDesc; Rec.Description) { }
+        }
+    }
+}
+
+pageextension 67537 "PAA Ext Std Text Codes Ext" extends "Standard Text Codes"
+{
+    layout
+    {
+        modify(Description)
+        {
+            ApplicationArea = Service;
         }
     }
 }
@@ -108,5 +126,41 @@ codeunit 67536 "PAA Ext Precompiled Host Tests"
         Batches.Close();
         ApplicationArea(PreviousAreas);
         Assert.AreEqual('Description', Caption, 'with every area enabled the no-area extension control must be found');
+    end;
+
+    [Test]
+    procedure ModifiedAreaOnPrecompiledPage_BaseValueNoLongerApplies_IsNotFound()
+    var
+        StdTextCodes: TestPage "Standard Text Codes";
+        PreviousAreas: Text;
+        Caption: Text;
+    begin
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite');
+
+        StdTextCodes.OpenView();
+        Caption := StdTextCodes.Code.Caption();
+        asserterror StdTextCodes.Description.SetValue('X');
+        ApplicationArea(PreviousAreas);
+        Assert.ExpectedError('is not found on the page.');
+        Assert.AreEqual('Code', Caption, 'the page''s own "Code" control must be found under #Basic,#Suite');
+    end;
+
+    [Test]
+    procedure ModifiedAreaOnPrecompiledPage_ModifyValueEnabled_IsFound()
+    var
+        StdTextCodes: TestPage "Standard Text Codes";
+        PreviousAreas: Text;
+        Caption: Text;
+    begin
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Service');
+
+        StdTextCodes.OpenView();
+        Caption := StdTextCodes.Description.Caption();
+        asserterror StdTextCodes.Code.SetValue('X');
+        ApplicationArea(PreviousAreas);
+        Assert.ExpectedError('is not found on the page.');
+        Assert.AreEqual('Description', Caption, 'the control the modify() moved to #Service must be found under #Service');
     end;
 }
