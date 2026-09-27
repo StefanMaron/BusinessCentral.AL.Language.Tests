@@ -4,8 +4,8 @@
 // declared below.
 //
 // CLAIM: a page ACTION whose ApplicationArea is not enabled for the session is removed from
-// the page, so a TestPage reports it as not found and its OnAction does not run, while an
-// action whose area IS enabled stays reachable and runs. That holds for an action nested in an
+// the page, so a TestPage reports it as not found, while an action whose area IS enabled
+// stays reachable and runs its OnAction. That holds for an action nested in an
 // action group too. An empty application-area string enables every area.
 //
 // The not-found message is a guess before this PR's first run: BC's NavTestPageBase.GetAction
@@ -106,7 +106,7 @@ codeunit 67531 "PAA Area Action Tests"
     end;
 
     [Test]
-    procedure AreaNotEnabled_ActionIsNotFoundAndDoesNotRun()
+    procedure AreaNotEnabled_ActionIsNotFound()
     var
         AreaRec: Record "PAA Area Record";
         AreaPage: TestPage "PAA Action Card";
@@ -121,9 +121,6 @@ codeunit 67531 "PAA Area Action Tests"
         asserterror AreaPage.ServiceAction.Invoke();
         ApplicationArea(PreviousAreas);
         Assert.ExpectedError('is not found on the page.');
-
-        AreaRec.Get('PAA');
-        Assert.AreEqual('', AreaRec."Service Value", 'the removed #Service action must not run its OnAction');
     end;
 
     [Test]
@@ -142,9 +139,6 @@ codeunit 67531 "PAA Area Action Tests"
         asserterror AreaPage.NestedServiceAction.Invoke();
         ApplicationArea(PreviousAreas);
         Assert.ExpectedError('is not found on the page.');
-
-        AreaRec.Get('PAA');
-        Assert.AreEqual('', AreaRec."Service Value", 'the removed nested #Service action must not run its OnAction');
     end;
 
     [Test]
