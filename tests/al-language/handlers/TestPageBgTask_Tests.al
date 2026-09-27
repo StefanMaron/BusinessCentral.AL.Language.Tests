@@ -202,6 +202,30 @@ codeunit 60793 "Test Page BgTask Tests"
         Card.Close();
     end;
 
+    // Same shape, Rename against a row that already exists: a key change is a write too, and
+    // the read-only session refuses it with the same permission-denied wording.
+    [Test]
+    procedure EnqueueBackgroundTask_WorkerRename_RefusedByReadOnlySession()
+    var
+        Row: Record "Test Page BgTask Row";
+        Card: TestPage "Test Page BgTask Card";
+        Params: Dictionary of [Text, Text];
+    begin
+        Initialize();
+        SeedRow('WR-REN', 'Original', false);
+        Card.OpenView();
+
+        Clear(Params);
+        Params.Add('Op', 'Rename');
+        Params.Add('No', 'WR-REN');
+        Assert.IsFalse(TryRunWriteTask(Card, Params), 'a page background task worker''s Rename() must be refused');
+        Assert.ExpectedError('Sorry, the current permissions prevented the action');
+
+        Assert.IsTrue(Row.Get('WR-REN'), 'a refused Rename() must leave the row under its old key');
+        Assert.IsFalse(Row.Get('WR-REN-R'), 'a refused Rename() must not create the new key');
+        Card.Close();
+    end;
+
     // Positive contrast to the two refusals above: the read-only-session refusal a page
     // background task worker runs under applies to DATABASE writes only. A write to a
     // TEMPORARY record is a session-memory write -- it never reaches the database -- so it
