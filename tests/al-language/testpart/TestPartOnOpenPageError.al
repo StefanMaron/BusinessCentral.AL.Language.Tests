@@ -135,7 +135,7 @@ page 67013 "POE Clean Host"
     end;
 }
 
-codeunit 67010 "POE Part OnOpenPage Error Tests"
+codeunit 67010 "POE Part Open Error Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
