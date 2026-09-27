@@ -13,6 +13,9 @@
 //   * page 2592's Status control declares no OptionCaption, so TestPage Value() answers the
 //     table field's caption.
 //   * Evaluate() of text that is neither refuses, and its message lists the captions.
+//   * The same holds for a field's plain Caption: field 12 "Completed" declares Caption =
+//     'Ran Once', which FieldCaption and FieldRef.Caption answer; field 3 declares none and
+//     answers its name.
 
 codeunit 67600 "Precompiled Field Opt Caption"
 {
@@ -74,6 +77,30 @@ codeunit 67600 "Precompiled Field Opt Caption"
             'the refusal must name the text it refused; got: ' + GetLastErrorText());
         Assert.IsTrue(StrPos(GetLastErrorText(), 'Validation in Process') > 0,
             'the refusal must list the option''s captions; got: ' + GetLastErrorText());
+    end;
+
+    [Test]
+    procedure FieldCaption_AnswersTheDeclaredCaption()
+    var
+        DimCorrection: Record "Dimension Correction";
+        RecRef: RecordRef;
+    begin
+        // Field 12 is named "Completed" and declares Caption = 'Ran Once'.
+        Assert.AreEqual('Ran Once', DimCorrection.FieldCaption(Completed),
+            'FieldCaption must answer the field''s declared Caption, not its name');
+        RecRef.Open(Database::"Dimension Correction");
+        Assert.AreEqual('Ran Once', RecRef.Field(DimCorrection.FieldNo(Completed)).Caption(),
+            'FieldRef.Caption must answer the field''s declared Caption, not its name');
+    end;
+
+    [Test]
+    procedure FieldCaption_NoDeclaredCaption_AnswersTheName()
+    var
+        DimCorrection: Record "Dimension Correction";
+    begin
+        // Field 3 "Description" declares no Caption, so BC falls back to the name.
+        Assert.AreEqual('Description', DimCorrection.FieldCaption(Description),
+            'a field declaring no Caption must answer its name');
     end;
 
     [Test]
