@@ -1,7 +1,8 @@
 // Module-scoped IsolatedStorage, written and read from INSIDE the fixture (dependency) app.
 // Purpose: give a test in the main app a second app whose module storage it can compare its
 // own against -- IsolatedStorage's default DataScope is Module, and a module is an app.
-// The Company-scope procedures exist to show the app boundary holds for that scope too.
+// OnStoreRequested lets a subscriber in another app write storage while this app raised the
+// event. The Company-scope procedures exist to show the app boundary holds for that scope too.
 codeunit 61010 "ALT Isolated Storage Owner"
 {
     procedure SetValue(StorageKey: Text; Value: Text): Boolean
@@ -23,6 +24,16 @@ codeunit 61010 "ALT Isolated Storage Owner"
     begin
         if IsolatedStorage.Contains(StorageKey) then
             IsolatedStorage.Delete(StorageKey);
+    end;
+
+    procedure RaiseStoreRequested(StorageKey: Text; Value: Text)
+    begin
+        OnStoreRequested(StorageKey, Value);
+    end;
+
+    [IntegrationEvent(false, false)]
+    procedure OnStoreRequested(StorageKey: Text; Value: Text)
+    begin
     end;
 
     procedure SetCompanyValue(StorageKey: Text; Value: Text): Boolean

@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/isolatedstorage/isolatedstorage-data-type
 // Scope: in-scope
-// Fixtures used: codeunit 61010 "ALT Isolated Storage Owner" (al-language-internals-fixture)
+// Fixtures used: codeunit 61010 "ALT Isolated Storage Owner" (al-language-internals-fixture),
+//                codeunit 67581 "ALT IS Store Subscriber"
 //
 // IsolatedStorage's default DataScope is Module, and a module is the app that owns the code
 // calling it. So a key one app stores is invisible to another app, and the same key can hold
@@ -80,11 +81,32 @@ codeunit 67580 "Test Isolated Storage Per App"
         Assert.AreEqual('', Value, 'a failed Get must leave the value empty.');
     end;
 
+    [Test]
+    procedure IsolatedStorage_SubscriberInThisApp_WritesThisAppsStore()
+    // CLAIM: the module is the app owning the code that calls IsolatedStorage, not the app that
+    // raised the event -- a subscriber here, handling the dependency app's event, stores here.
+    var
+        Subscriber: Codeunit "ALT IS Store Subscriber";
+        Value: Text;
+    begin
+        Initialize();
+
+        BindSubscription(Subscriber);
+        Owner.RaiseStoreRequested('ispa-event', 'subscriber value');
+        UnbindSubscription(Subscriber);
+
+        Assert.IsTrue(IsolatedStorage.Get('ispa-event', Value), 'the subscriber''s write must land in the subscriber''s app.');
+        Assert.AreEqual('subscriber value', Value, 'the subscriber''s value must be readable here.');
+        Assert.IsFalse(Owner.Contains('ispa-event'), 'the raising app must not see a key its subscriber stored in another app.');
+    end;
+
     local procedure Initialize()
     begin
         DeleteIfPresent('ispa-theirs');
         DeleteIfPresent('ispa-ours');
         DeleteIfPresent('ispa-shared');
+        DeleteIfPresent('ispa-event');
+        Owner.DeleteIfPresent('ispa-event');
         Owner.DeleteIfPresent('ispa-theirs');
         Owner.DeleteIfPresent('ispa-ours');
         Owner.DeleteIfPresent('ispa-shared');
