@@ -3,9 +3,13 @@
 // Fixtures used: Assert (60021), and the table, page and codeunit declared below.
 //
 // CLAIM: a TestPage field's Value() called as a statement of its own, with the result thrown
-// away, is still evaluated. On a control that application areas removed from the page it raises
-// the same "is not found on the page." error an assignment from Value() does; on a control that
-// is on the page it raises nothing.
+// away, is not evaluated: on a control that application areas removed from the page it raises
+// nothing, while assigning the same Value() to a variable raises "is not found on the page.".
+// On a control that is on the page, the discarded call raises nothing either.
+//
+// Settled on the service tier by this file's first revision, which asserted the opposite and
+// failed on every cloud leg (27.0 to 28.5) with "An error was expected inside an ASSERTERROR
+// statement.". The AL compiler emits no call for a discarded Value(): only the statement hit.
 //
 // Every test sets the session's application areas itself and restores the previous value
 // BEFORE it asserts, as TestPageApplicationAreaControlRemoval.al does.
@@ -77,11 +81,12 @@ codeunit 67612 "PDV Discarded Value Tests"
     end;
 
     [Test]
-    procedure RemovedControl_DiscardedValueCall_RaisesNotFound()
+    procedure RemovedControl_DiscardedValueCall_RaisesNothing()
     var
         AreaRec: Record "PDV Area Record";
         AreaPage: TestPage "PDV Area Card";
         PreviousAreas: Text;
+        Reached: Boolean;
     begin
         MakeRecord(AreaRec);
         PreviousAreas := ApplicationArea();
@@ -89,9 +94,14 @@ codeunit 67612 "PDV Discarded Value Tests"
 
         AreaPage.OpenView();
         AreaPage.GoToRecord(AreaRec);
-        asserterror AreaPage.ServiceCtl.Value();
+        ClearLastError();
+        AreaPage.ServiceCtl.Value();
+        Reached := true;
+        AreaPage.Close();
         ApplicationArea(PreviousAreas);
-        Assert.ExpectedError('is not found on the page.');
+
+        Assert.IsTrue(Reached, 'the statement after a discarded Value() on a removed control must run');
+        Assert.AreEqual('', GetLastErrorText(), 'a discarded Value() on a removed control must raise nothing');
     end;
 
     [Test]
