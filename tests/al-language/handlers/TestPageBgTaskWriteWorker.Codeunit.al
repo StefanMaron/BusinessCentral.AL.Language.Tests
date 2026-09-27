@@ -37,6 +37,11 @@ codeunit 60794 "Test Page BgTask WriteWorker"
                     Row.Name := 'MODIFIED-BY-WORKER';
                     Row.Modify();
                 end;
+            'Rename':
+                begin
+                    Row.Get(CopyStr(RowNo, 1, MaxStrLen(Row."No.")));
+                    Row.Rename(CopyStr(RowNo + '-R', 1, MaxStrLen(Row."No.")));
+                end;
         end;
     end;
 }

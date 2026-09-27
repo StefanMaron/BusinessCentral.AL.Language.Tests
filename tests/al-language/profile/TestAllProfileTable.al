@@ -119,6 +119,32 @@ codeunit 60907 "Test All Profile Table"
     end;
 
     [Test]
+    procedure AllProfile_RenameAppOwnedProfile_IsRefused()
+    // CLAIM: a profile owned by an installed app cannot be renamed through "All Profile" -- a
+    // plain Rec.Rename is refused with the platform's message naming the key it was renamed TO,
+    // and the row stays under its old key.
+    var
+        AllProfile: Record "All Profile";
+        ThisModule: ModuleInfo;
+        NewProfileIdTok: Label 'ALT RENAMED PROFILE', Locked = true;
+    begin
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), RowFixtureProfileIdTok);
+
+        asserterror AllProfile.Rename(AllProfile.Scope::Tenant, ThisModule.Id(), NewProfileIdTok);
+
+        Assert.ExpectedError(
+            StrSubstNo('Cannot modify the Scope, Profile ID, or RoleCenter fields on the %1 profile because it is part of an installed app.', NewProfileIdTok));
+        Clear(AllProfile);
+        Assert.IsTrue(
+            AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), RowFixtureProfileIdTok),
+            'A refused Rename must leave the profile under its old key');
+        Assert.IsFalse(
+            AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), NewProfileIdTok),
+            'A refused Rename must not create the new key');
+    end;
+
+    [Test]
     procedure AllProfile_TenantOwnedProfile_CanBeInsertedReadBackAndDeleted()
     // CLAIM: "All Profile" is writable for a tenant-owned profile (App ID = the empty GUID).
     // The inserted row reads back with the values it was given, and Delete() removes it.
