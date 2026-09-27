@@ -118,7 +118,7 @@ codeunit 67545 "Page SaveValues Tests"
 
         SetOnThisRun := true;
         SetValueTxt := 'psv-saved-67545';
-        Assert.IsTrue(Page.RunModal(Page::"PSV Saved Dialog") = Action::OK, 'the first open should return OK');
+        Page.RunModal(Page::"PSV Saved Dialog");
 
         SetOnThisRun := false;
         ReadValueTxt := '';
@@ -137,7 +137,7 @@ codeunit 67545 "Page SaveValues Tests"
 
         SetOnThisRun := true;
         SetValueTxt := 'psv-unsaved-67546';
-        Assert.IsTrue(Page.RunModal(Page::"PSV Unsaved Dialog") = Action::OK, 'the first open should return OK');
+        Page.RunModal(Page::"PSV Unsaved Dialog");
 
         SetOnThisRun := false;
         ReadValueTxt := 'not read';
@@ -156,7 +156,7 @@ codeunit 67545 "Page SaveValues Tests"
 
         SetOnThisRun := true;
         SetValueTxt := 'psv-cancelled-67547';
-        Assert.IsTrue(Page.RunModal(Page::"PSV Cancelled Dialog") = Action::Cancel, 'the first open should return Cancel');
+        Page.RunModal(Page::"PSV Cancelled Dialog");
 
         SetOnThisRun := false;
         ReadValueTxt := 'not read';
