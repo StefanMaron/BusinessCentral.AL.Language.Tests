@@ -5,13 +5,12 @@
 //
 // CLAIM: a page ACTION whose ApplicationArea is not enabled for the session is removed from
 // the page, so a TestPage reports it as not found, while an action whose area IS enabled
-// stays reachable and runs its OnAction. That holds for an action nested in an
-// action group too. An empty application-area string enables every area.
+// stays reachable and runs its OnAction. That holds for an action nested in an action group,
+// and for a promoted actionref whose target action's area is not enabled. An empty
+// application-area string enables every area.
 //
-// The not-found message is a guess before this PR's first run: BC's NavTestPageBase.GetAction
-// raises NavTestActionNotFoundException ("The action with ID = ... is not found on the page.")
-// when the page has no such action; nothing has measured that on a service tier for an action
-// removed by application area.
+// The not-found message was measured on every required leg by corpus run 36292953218. The two
+// actionref tests were added after that run; their expectations are a guess until the next run.
 //
 // Every test sets the session's application areas itself and restores the previous value
 // BEFORE it asserts, so the result does not depend on which areas the harness opened the
@@ -45,6 +44,11 @@ page 67531 "PAA Action Card"
 
     actions
     {
+        area(Promoted)
+        {
+            actionref(BasicRef; BasicAction) { }
+            actionref(ServiceRef; ServiceAction) { }
+        }
         area(Processing)
         {
             action(BasicAction)
@@ -139,6 +143,45 @@ codeunit 67531 "PAA Area Action Tests"
         asserterror AreaPage.NestedServiceAction.Invoke();
         ApplicationArea(PreviousAreas);
         Assert.ExpectedError('is not found on the page.');
+    end;
+
+    [Test]
+    procedure AreaNotEnabled_ActionRefToRemovedActionIsNotFound()
+    var
+        AreaRec: Record "PAA Area Record";
+        AreaPage: TestPage "PAA Action Card";
+        PreviousAreas: Text;
+    begin
+        MakeRecord(AreaRec);
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite');
+
+        AreaPage.OpenEdit();
+        AreaPage.GoToRecord(AreaRec);
+        asserterror AreaPage.ServiceRef.Invoke();
+        ApplicationArea(PreviousAreas);
+        Assert.ExpectedError('is not found on the page.');
+    end;
+
+    [Test]
+    procedure AreaNotEnabled_ActionRefToEnabledActionRuns()
+    var
+        AreaRec: Record "PAA Area Record";
+        AreaPage: TestPage "PAA Action Card";
+        PreviousAreas: Text;
+    begin
+        MakeRecord(AreaRec);
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite');
+
+        AreaPage.OpenEdit();
+        AreaPage.GoToRecord(AreaRec);
+        AreaPage.BasicRef.Invoke();
+        AreaPage.Close();
+        ApplicationArea(PreviousAreas);
+
+        AreaRec.Get('PAA');
+        Assert.AreEqual('BASIC-RAN', AreaRec."Basic Value", 'the actionref to the #Basic action must run its target''s OnAction');
     end;
 
     [Test]
