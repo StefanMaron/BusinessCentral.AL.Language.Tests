@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-run-method
 // Scope: in-scope
-// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67569
+// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67574
 //
 // Codeunit.Run on a Subtype = Test codeunit, from inside a running [Test], is refused: BC
 // does not nest test codeunit runs. The refusal is an error even in the guarded form
@@ -55,7 +55,7 @@ codeunit 67567 "NTC Inner Ran Publisher"
     end;
 }
 
-codeunit 67569 "NTC Inner Ran Observer"
+codeunit 67574 "NTC Inner Ran Observer"
 {
     EventSubscriberInstance = Manual;
 
