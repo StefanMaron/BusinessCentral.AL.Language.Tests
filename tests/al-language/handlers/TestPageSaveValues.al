@@ -10,6 +10,7 @@
 //   - modal, closed with OK, no SaveValues:  the second open shows the default
 //   - modal, closed with Cancel, SaveValues: the second open shows the default
 //   - non-modal Page.Run with a [PageHandler], SaveValues
+//   - opened by the test itself (TestPage.OpenView) and closed with TestPage.Close(), SaveValues
 // Every arm uses its own page, so no value another test saved can be what a second open shows.
 
 page 67545 "PSV Saved Dialog"
@@ -78,6 +79,28 @@ page 67547 "PSV Cancelled Dialog"
 }
 
 page 67548 "PSV Saved Card"
+{
+    PageType = Card;
+    UsageCategory = None;
+    SaveValues = true;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Remembered; RememberedTxt)
+            {
+                ApplicationArea = All;
+                Caption = 'Remembered';
+            }
+        }
+    }
+
+    var
+        RememberedTxt: Text[30];
+}
+
+page 67549 "PSV Test Opened Card"
 {
     PageType = Card;
     UsageCategory = None;
@@ -184,6 +207,24 @@ codeunit 67545 "Page SaveValues Tests"
         Assert.AreEqual(2, HandlerCalls, 'the [PageHandler] should run once per open');
         Assert.AreEqual('psv-card-67548', ReadValueTxt,
             'a SaveValues page run through a [PageHandler] should reopen on the value it was closed with');
+    end;
+
+    [Test]
+    procedure TestOpened_SaveValues_ClosedWithClose_NextOpenShowsTheValue()
+    var
+        Card: TestPage "PSV Test Opened Card";
+    begin
+        // No handler: the test opens the page itself and closes it with TestPage.Close().
+        Card.OpenView();
+        Card.Remembered.SetValue('psv-test-opened-67549');
+        Card.Close();
+
+        Card.OpenView();
+        ReadValueTxt := Card.Remembered.Value();
+        Card.Close();
+
+        Assert.AreEqual('psv-test-opened-67549', ReadValueTxt,
+            'a SaveValues page the test opened and closed should reopen on the value it was closed with');
     end;
 
     [ModalPageHandler]
