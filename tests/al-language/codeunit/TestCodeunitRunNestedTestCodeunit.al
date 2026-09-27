@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-run-method
 // Scope: in-scope
-// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568
+// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67569
 //
 // Codeunit.Run on a Subtype = Test codeunit, from inside a running [Test], is refused: BC
 // does not nest test codeunit runs. The refusal is an error even in the guarded form
@@ -12,7 +12,9 @@
 // own, unlike NavCodeunit.DoRunAsync, which is why the guarded form is expected to raise too.
 //
 // Independent of run order: the outer [Test] is always inside a running test codeunit, and the
-// inner codeunit's own test passes whenever the harness runs it on its own.
+// inner codeunit's own test passes whenever the harness runs it on its own. Whether the inner test
+// body ran is observed through a MANUALLY bound event subscriber each test binds for itself, not a
+// SingleInstance counter, so no state is shared between test codeunits (corpus issue #261).
 //
 // AL Runner issue: StefanMaron/BusinessCentral.AL.Runner#4827 (the runner ran the nested
 // codeunit's OnRun and returned true).
@@ -30,28 +32,43 @@ codeunit 67565 "NTC Inner Tests"
     procedure InnerTest_RunByTheHarness_Runs()
     // CLAIM: the inner codeunit's test runs normally when the harness runs it on its own.
     var
-        RunCount: Codeunit "NTC Inner Run Count";
-        Before: Integer;
+        Publisher: Codeunit "NTC Inner Ran Publisher";
+        Observer: Codeunit "NTC Inner Ran Observer";
     begin
-        Before := RunCount.Get();
-        RunCount.Bump();
-        Assert.AreEqual(Before + 1, RunCount.Get(), 'the inner test body must run and bump the counter');
+        BindSubscription(Observer);
+        Publisher.RaiseInnerRan();
+        UnbindSubscription(Observer);
+        Assert.AreEqual(1, Observer.GetCount(), 'the inner test body must run and raise its event once');
     end;
 }
 
-codeunit 67567 "NTC Inner Run Count"
+codeunit 67567 "NTC Inner Ran Publisher"
 {
-    SingleInstance = true;
+    procedure RaiseInnerRan()
+    begin
+        OnInnerRan();
+    end;
+
+    [IntegrationEvent(false, false)]
+    local procedure OnInnerRan()
+    begin
+    end;
+}
+
+codeunit 67569 "NTC Inner Ran Observer"
+{
+    EventSubscriberInstance = Manual;
 
     var
         Count: Integer;
 
-    procedure Bump()
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"NTC Inner Ran Publisher", 'OnInnerRan', '', false, false)]
+    local procedure HandleInnerRan()
     begin
         Count += 1;
     end;
 
-    procedure Get(): Integer
+    procedure GetCount(): Integer
     begin
         exit(Count);
     end;
@@ -109,16 +126,29 @@ codeunit 67566 "NTC Nested Run Tests"
     end;
 
     [Test]
+    procedure InnerRanObserver_Bound_SeesTheInnerEvent()
+    // CLAIM (control for the next test): a bound observer counts the event the inner test body raises.
+    var
+        Publisher: Codeunit "NTC Inner Ran Publisher";
+        Observer: Codeunit "NTC Inner Ran Observer";
+    begin
+        BindSubscription(Observer);
+        Publisher.RaiseInnerRan();
+        UnbindSubscription(Observer);
+        Assert.AreEqual(1, Observer.GetCount(), 'the bound observer must count the raised event');
+    end;
+
+    [Test]
     procedure CodeunitRun_TestCodeunitFromTest_RunsNoInnerTest()
     // CLAIM: the refused run executes none of the inner codeunit's test methods.
     var
-        RunCount: Codeunit "NTC Inner Run Count";
-        Before: Integer;
+        Observer: Codeunit "NTC Inner Ran Observer";
     begin
-        Before := RunCount.Get();
+        BindSubscription(Observer);
         asserterror Codeunit.Run(Codeunit::"NTC Inner Tests");
+        UnbindSubscription(Observer);
         Assert.ExpectedError(NestedErr);
-        Assert.AreEqual(Before, RunCount.Get(), 'no inner test method may run when the nested run is refused');
+        Assert.AreEqual(0, Observer.GetCount(), 'no inner test method may run when the nested run is refused');
     end;
 
     [Test]
