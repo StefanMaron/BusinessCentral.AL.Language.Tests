@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-run-method
 // Scope: in-scope
-// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67574 and page 67565
+// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67574 and pages 67565, 67566
 //
 // Codeunit.Run on a Subtype = Test codeunit, from inside a running [Test], is refused: BC
 // does not nest test codeunit runs. The refusal is an error even in the guarded form
@@ -82,6 +82,14 @@ page 67565 "NTC Dialog"
     UsageCategory = None;
 }
 
+page 67566 "NTC Card"
+{
+    Caption = 'NTC Card';
+    PageType = Card;
+    ApplicationArea = All;
+    UsageCategory = None;
+}
+
 codeunit 67568 "NTC Plain Codeunit"
 {
     trigger OnRun()
@@ -101,6 +109,7 @@ codeunit 67566 "NTC Nested Run Tests"
         NestedErr: Label 'You cannot nest the execution of test codeunits.', Locked = true;
         NestedCodeunitErr: Label 'Test codeunit 67565 NTC Inner Tests was called from another test codeunit.', Locked = true;
         DialogHandled: Boolean;
+        CardHandled: Boolean;
 
     [Test]
     procedure CodeunitRun_TestCodeunitFromTest_Unguarded_Throws()
@@ -178,6 +187,25 @@ codeunit 67566 "NTC Nested Run Tests"
     procedure NtcDialogHandler(var Dialog: TestPage "NTC Dialog")
     begin
         DialogHandled := true;
+    end;
+
+    [Test]
+    [HandlerFunctions('NtcCardHandler')]
+    procedure CodeunitRun_RefusedNestedRun_LaterPageRunReachesItsHandler()
+    // CLAIM: after a refused nested run, a non-modal Page.Run in the same test still reaches its
+    // [PageHandler].
+    begin
+        CardHandled := false;
+        asserterror Codeunit.Run(Codeunit::"NTC Inner Tests");
+        Assert.ExpectedError(NestedErr);
+        Page.Run(Page::"NTC Card");
+        Assert.IsTrue(CardHandled, 'the page handler must run after the refused nested run');
+    end;
+
+    [PageHandler]
+    procedure NtcCardHandler(var Card: TestPage "NTC Card")
+    begin
+        CardHandled := true;
     end;
 
     [Test]
