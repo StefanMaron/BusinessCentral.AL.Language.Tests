@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-run-method
 // Scope: in-scope
-// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67574
+// Fixtures used: Assert (60021); self-contained codeunits 67565, 67567, 67568, 67574 and page 67565
 //
 // Codeunit.Run on a Subtype = Test codeunit, from inside a running [Test], is refused: BC
 // does not nest test codeunit runs. The refusal is an error even in the guarded form
@@ -74,6 +74,14 @@ codeunit 67574 "NTC Inner Ran Observer"
     end;
 }
 
+page 67565 "NTC Dialog"
+{
+    Caption = 'NTC Dialog';
+    PageType = StandardDialog;
+    ApplicationArea = All;
+    UsageCategory = None;
+}
+
 codeunit 67568 "NTC Plain Codeunit"
 {
     trigger OnRun()
@@ -92,6 +100,7 @@ codeunit 67566 "NTC Nested Run Tests"
         // NavNCLTestCodeUnitNestedInvocationException.Create resource text.
         NestedErr: Label 'You cannot nest the execution of test codeunits.', Locked = true;
         NestedCodeunitErr: Label 'Test codeunit 67565 NTC Inner Tests was called from another test codeunit.', Locked = true;
+        DialogHandled: Boolean;
 
     [Test]
     procedure CodeunitRun_TestCodeunitFromTest_Unguarded_Throws()
@@ -149,6 +158,26 @@ codeunit 67566 "NTC Nested Run Tests"
         UnbindSubscription(Observer);
         Assert.ExpectedError(NestedErr);
         Assert.AreEqual(0, Observer.GetCount(), 'no inner test method may run when the nested run is refused');
+    end;
+
+    [Test]
+    [HandlerFunctions('NtcDialogHandler')]
+    procedure CodeunitRun_RefusedNestedRun_LaterModalPageReachesItsHandler()
+    // CLAIM: after a refused nested run, a modal page opened in the same test still reaches its
+    // [ModalPageHandler]. The refused DoRunAsync releases the test page client in its finally;
+    // the next modal dispatch must get a working one back.
+    begin
+        DialogHandled := false;
+        asserterror Codeunit.Run(Codeunit::"NTC Inner Tests");
+        Assert.ExpectedError(NestedErr);
+        Page.RunModal(Page::"NTC Dialog");
+        Assert.IsTrue(DialogHandled, 'the modal page handler must run after the refused nested run');
+    end;
+
+    [ModalPageHandler]
+    procedure NtcDialogHandler(var Dialog: TestPage "NTC Dialog")
+    begin
+        DialogHandled := true;
     end;
 
     [Test]
