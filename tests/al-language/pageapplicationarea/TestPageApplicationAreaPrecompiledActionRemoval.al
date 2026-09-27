@@ -1,8 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-app-area
 // Scope: in-scope
-// Fixtures used: Assert (60021), and Base Application page 6516 "Package No. Information List",
-//                which ships PRECOMPILED and which no other corpus test opens. No Base Application
-//                pageextension targets it.
+// Fixtures used: Assert (60021), Base Application page 6516 "Package No. Information List",
+//                which ships PRECOMPILED and which no other corpus test opens (no Base Application
+//                pageextension targets it), and Business Foundation PromptDialog page 332
+//                "No. Series Generation", also precompiled and opened by no other corpus test.
 //
 // CLAIM: application-area removal applies to the ACTIONS of a page that ships precompiled, as it
 // does to a page compiled here (codeunit 67531). The page states ApplicationArea = ItemTracking at
@@ -12,6 +13,10 @@
 //   * for a promoted actionref ("Navigate_Promoted", which states no area of its own), its
 //     target action's area.
 // Each negative arm pairs with an action on the same page that IS found under the same areas.
+//
+// A PromptDialog's system actions (page 332's Generate) are never removed by area: they are found
+// under #Basic although they state no ApplicationArea and the session does not enable #All
+// explicitly.
 //
 // Every test sets the session's application areas itself and restores the previous value BEFORE
 // it asserts, as codeunit 67530 does.
@@ -26,6 +31,7 @@ codeunit 67543 "PAA Precompiled Action Tests"
 
     var
         Assert: Codeunit Assert;
+        GenerateVisible: Boolean;
 
     [Test]
     procedure OwnArea_Enabled_IsFound_PageAreaAction_IsNotFound()
@@ -96,5 +102,27 @@ codeunit 67543 "PAA Precompiled Action Tests"
         Packages.Close();
         ApplicationArea(PreviousAreas);
         Assert.IsTrue(RefVisible, 'the actionref to "Navigate" must be found when "Navigate" is');
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadGenerateHandler')]
+    procedure PromptDialogSystemAction_IsFoundUnderAnyArea()
+    var
+        PreviousAreas: Text;
+    begin
+        GenerateVisible := false;
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic');
+
+        Page.RunModal(Page::"No. Series Generation");
+        ApplicationArea(PreviousAreas);
+        Assert.IsTrue(GenerateVisible, 'the PromptDialog system action "Generate" must be found under #Basic');
+    end;
+
+    [ModalPageHandler]
+    procedure ReadGenerateHandler(var Generation: TestPage "No. Series Generation")
+    begin
+        GenerateVisible := Generation.Generate.Visible();
+        Generation.Cancel().Invoke();
     end;
 }
