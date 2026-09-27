@@ -10,7 +10,7 @@
 //   - modal, closed with OK, no SaveValues:  the second open shows the default
 //   - modal, closed with Cancel, SaveValues: the second open shows the default
 //   - non-modal Page.Run with a [PageHandler], SaveValues
-//   - opened by the test itself (TestPage.OpenView) and closed with TestPage.Close(), SaveValues
+//   - opened by the test itself (TestPage.OpenEdit) and closed with TestPage.Close(), SaveValues
 // Every arm uses its own page, so no value another test saved can be what a second open shows.
 
 page 67545 "PSV Saved Dialog"
@@ -215,11 +215,11 @@ codeunit 67545 "Page SaveValues Tests"
         Card: TestPage "PSV Test Opened Card";
     begin
         // No handler: the test opens the page itself and closes it with TestPage.Close().
-        Card.OpenView();
+        Card.OpenEdit();
         Card.Remembered.SetValue('psv-test-opened-67549');
         Card.Close();
 
-        Card.OpenView();
+        Card.OpenEdit();
         ReadValueTxt := Card.Remembered.Value();
         Card.Close();
 
