@@ -87,7 +87,7 @@ codeunit 67534 "PAA Precompiled Area Tests"
         ApplicationArea('#Basic,#Suite');
 
         Batches.OpenView();
-        asserterror Batches.Name.Value();
+        asserterror Batches.Name.SetValue('X');
         ApplicationArea(PreviousAreas);
         Assert.ExpectedError('The field with ID = 301776846 is not found on the page.');
     end;
@@ -119,7 +119,7 @@ codeunit 67534 "PAA Precompiled Area Tests"
         ApplicationArea('#Basic,#Suite');
 
         Mappings.OpenView();
-        asserterror Mappings."User Defined".Value();
+        asserterror Mappings."User Defined".SetValue(true);
         ApplicationArea(PreviousAreas);
         Assert.ExpectedError('The field with ID = 104384132 is not found on the page.');
     end;
