@@ -11,7 +11,8 @@
 //     Earlier (.txt)", "Version F&O"; OptionCaption ends 'Dynamics 365 Finance (.txt)'.
 //   * page 6520's TraceMethod: members "Origin->Usage", "Usage->Origin"; OptionCaption
 //     'Origin -> Usage,Usage -> Origin'. OnOpenPage sets it to "Usage->Origin".
-// A caption that is none of the option's captions is refused, and the value is left as it was.
+// A caption that is none of the option's captions is refused ("Your entry of '...' is not an
+// acceptable value"), and the value is left as it was.
 
 codeunit 67575 "Precompiled Option Caption"
 {
@@ -70,9 +71,10 @@ codeunit 67575 "Precompiled Option Caption"
         Report.Run(Report::"Export Consolidation");
 
         Assert.IsTrue(HandlerRan, 'the [RequestPageHandler] never ran');
-        Assert.AreEqual(
-            'Your entry of ''Not A Format'' is not an acceptable value for ''File Format''.',
-            SeenError, 'SetValue with a caption the option does not declare must be refused');
+        // BC wraps this in "Validation error for Field: FileFormat,  Message = '...'"; the
+        // assertion pins the refusal itself.
+        Assert.IsTrue(StrPos(SeenError, 'Your entry of ''Not A Format'' is not an acceptable value') > 0,
+            'SetValue with a caption the option does not declare must be refused; got: ' + SeenError);
         Assert.AreEqual('Version 4.00 or Later (.xml)', SeenValue,
             'a refused SetValue must leave the option at its previous value');
     end;
