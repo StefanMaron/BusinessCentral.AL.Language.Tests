@@ -4,6 +4,8 @@
 //
 // What the platform writes into the Record Link (2000000068) columns that the caller does not
 // pass: "User ID", Created and Company on Rec.AddLink, and which columns a CopyLinks copy keeps.
+// And how the link readers (HasLinks, DeleteLinks, DeleteLink, CopyLinks, Rename) filter on the
+// Company column.
 // Codeunit 60777 "Test Record Link Table" covers the rows' existence, URL1/Description/Type and
 // the Link ID; this one covers the provenance columns it leaves out.
 
@@ -259,5 +261,205 @@ codeunit 67681 "Test Record Link Columns"
         OnlyLinkOf(Target.RecordId(), CopiedLink);
         Assert.AreEqual(CompanyName(), CopiedLink.Company,
             'a copy onto a per-company table must carry the current company');
+    end;
+
+    // ── The readers filter Company for a per-company table, and only then ────────────
+    //
+    // HasLinks, DeleteLinks, CopyLinks and a Rename's link move find a record's links by
+    // "Record ID" and, when the record's table is per company, also by Company = the record's
+    // company. A Record Link row naming another company, or no company, is not one of the
+    // links of a per-company record. DeleteLink(ID) compares Company with the record's company
+    // whatever the table.
+
+    local procedure InsertLinkRowWithCompany(RecId: RecordId; Url: Text[2048]; LinkCompany: Text[30]): Integer
+    var
+        RecordLink: Record "Record Link";
+    begin
+        RecordLink.Init();
+        RecordLink."Record ID" := RecId;
+        RecordLink.URL1 := Url;
+        RecordLink.Description := 'COMPANY FILTER';
+        RecordLink.Company := LinkCompany;
+        RecordLink.Insert(true);
+        exit(RecordLink."Link ID");
+    end;
+
+    local procedure LinkRowCount(RecId: RecordId): Integer
+    var
+        RecordLink: Record "Record Link";
+    begin
+        RecordLink.SetRange("Record ID", RecId);
+        exit(RecordLink.Count());
+    end;
+
+    local procedure OtherCompany(): Text[30]
+    begin
+        exit('ALT LINK OTHER COMPANY');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_HasLinks_OnAPerCompanyTable_IgnoresARowOfAnotherCompany()
+    var
+        Host: Record "ALT Link Host";
+    begin
+        Initialize();
+        Seed(12, Host);
+        InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/12', OtherCompany());
+
+        Assert.AreEqual(1, LinkRowCount(Host.RecordId()), 'the row of another company must be in the table');
+        Assert.IsFalse(Host.HasLinks(),
+            'HasLinks() on a per-company table must not see a Record Link row of another company');
+
+        InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/12b', CompanyName());
+        Assert.IsTrue(Host.HasLinks(), 'HasLinks() must see the row of the current company');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_HasLinks_OnAPerCompanyTable_IgnoresARowWithNoCompany()
+    var
+        Host: Record "ALT Link Host";
+    begin
+        Initialize();
+        Seed(13, Host);
+        InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/13', '');
+
+        Assert.AreEqual(1, LinkRowCount(Host.RecordId()), 'the row with no company must be in the table');
+        Assert.IsFalse(Host.HasLinks(),
+            'HasLinks() on a per-company table must not see a Record Link row with an empty Company');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_HasLinks_OnATableNotPerCompany_SeesARowOfAnyCompany()
+    var
+        Host: Record "ALT Link Host No Company";
+    begin
+        Initialize();
+        SeedNoCompany(14, Host);
+        InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/14', OtherCompany());
+
+        Assert.IsTrue(Host.HasLinks(),
+            'HasLinks() on a table that is not per company must not filter on Company');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_DeleteLinks_OnAPerCompanyTable_LeavesTheRowOfAnotherCompany()
+    var
+        Host: Record "ALT Link Host";
+        RecordLink: Record "Record Link";
+        OtherId: Integer;
+    begin
+        Initialize();
+        Seed(15, Host);
+        OtherId := InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/15a', OtherCompany());
+        Host.AddLink('https://example.com/cols/15b', 'OWN');
+        Assert.AreEqual(2, LinkRowCount(Host.RecordId()), 'two Record Link rows before DeleteLinks()');
+
+        Host.DeleteLinks();
+
+        Assert.AreEqual(1, LinkRowCount(Host.RecordId()),
+            'DeleteLinks() on a per-company table must delete only the current company''s rows');
+        Assert.IsTrue(RecordLink.Get(OtherId), 'the row of another company must survive DeleteLinks()');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_DeleteLinks_OnATableNotPerCompany_DeletesARowOfAnyCompany()
+    var
+        Host: Record "ALT Link Host No Company";
+    begin
+        Initialize();
+        SeedNoCompany(16, Host);
+        InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/16', OtherCompany());
+
+        Host.DeleteLinks();
+
+        Assert.AreEqual(0, LinkRowCount(Host.RecordId()),
+            'DeleteLinks() on a table that is not per company must not filter on Company');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_DeleteLink_OnAPerCompanyTable_LeavesTheRowOfAnotherCompany()
+    var
+        Host: Record "ALT Link Host";
+        RecordLink: Record "Record Link";
+        OtherId: Integer;
+    begin
+        Initialize();
+        Seed(17, Host);
+        OtherId := InsertLinkRowWithCompany(Host.RecordId(), 'https://example.com/cols/17', OtherCompany());
+
+        Host.DeleteLink(OtherId);
+
+        Assert.IsTrue(RecordLink.Get(OtherId),
+            'DeleteLink(ID) must not delete a row whose Company is not the record''s company');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_DeleteLink_OnATableNotPerCompany_LeavesTheRowItsAddLinkWrote()
+    var
+        Host: Record "ALT Link Host No Company";
+        RecordLink: Record "Record Link";
+        LinkId: Integer;
+    begin
+        Initialize();
+        SeedNoCompany(18, Host);
+        LinkId := Host.AddLink('https://example.com/cols/18', 'NO COMPANY');
+
+        Host.DeleteLink(LinkId);
+
+        // AddLink wrote an empty Company, and DeleteLink(ID) compares it with the record's
+        // company, which for an open record is the session's company whatever the table.
+        Assert.IsTrue(RecordLink.Get(LinkId),
+            'DeleteLink(ID) compares Company with the record''s company even when the table is not per company');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_CopyLinks_FromAPerCompanyTable_CopiesOnlyTheCurrentCompanysRows()
+    var
+        Source: Record "ALT Link Host";
+        Target: Record "ALT Link Host";
+        CopiedLink: Record "Record Link";
+    begin
+        Initialize();
+        Seed(19, Source);
+        Seed(20, Target);
+        InsertLinkRowWithCompany(Source.RecordId(), 'https://example.com/cols/19a', OtherCompany());
+        Source.AddLink('https://example.com/cols/19b', 'OWN');
+
+        Target.CopyLinks(Source);
+
+        OnlyLinkOf(Target.RecordId(), CopiedLink);
+        Assert.AreEqual('https://example.com/cols/19b', CopiedLink.URL1,
+            'CopyLinks() from a per-company table must copy only the current company''s row');
+    end;
+
+    [Test]
+    procedure RecordLinkColumns_Rename_OnAPerCompanyTable_MovesOnlyTheCurrentCompanysRows()
+    var
+        Host: Record "ALT Link Host";
+        Renamed: Record "ALT Link Host";
+        RecordLink: Record "Record Link";
+        OldRecId: RecordId;
+        OtherId: Integer;
+    begin
+        Initialize();
+        Seed(21, Host);
+        OldRecId := Host.RecordId();
+        // Initialize finds link rows through existing hosts; a row left on this key by an earlier
+        // run of this test has no host any more, so clear it by key.
+        RecordLink.SetRange("Record ID", OldRecId);
+        RecordLink.DeleteAll(false);
+        RecordLink.Reset();
+        OtherId := InsertLinkRowWithCompany(OldRecId, 'https://example.com/cols/21a', OtherCompany());
+        Host.AddLink('https://example.com/cols/21b', 'OWN');
+
+        Host.Rename(22);
+
+        Renamed.Get(22);
+        OnlyLinkOf(Renamed.RecordId(), RecordLink);
+        Assert.AreEqual('https://example.com/cols/21b', RecordLink.URL1,
+            'Rename() must move the current company''s link to the new key');
+        RecordLink.Get(OtherId);
+        Assert.AreEqual(Format(OldRecId), Format(RecordLink."Record ID"),
+            'Rename() must leave the row of another company on the old key');
     end;
 }
