@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-caption-method
 // Scope: in-scope
 // Fixtures used: TP Var Control Caption (67640), TP Rec Control Caption (67641); Base Application report 91 "Export Consolidation",
-//   page 6520 "Item Tracing" and page 3731 "Product Video Topics"
+//   page 6520 "Item Tracing", page 3731 "Product Video Topics" and page 16 "Chart of Accounts"
 //
 // TestPage.<field>.Caption() on a control bound to a page VARIABLE, not to a source-table
 // field, and the caption BC names when such a control refuses a value. Each control's caption
@@ -11,7 +11,9 @@
 //   * report 91's request-page control FileFormat (variable FileFormat, Caption 'File Format')
 //     and ClientFileNameControl (variable ClientFileName, Caption 'File Name');
 //   * page 6520's TraceMethod (variable TraceMethod, Caption 'Trace Method');
-//   * page 3731's Name (variable TopicName, no Caption).
+//   * page 3731's Name (variable TopicName, no Caption);
+//   * and, for contrast, page 16's Rec-bound "Default Deferral Template Code", whose control
+//     Caption 'Default Deferral Template' differs from its field's.
 
 codeunit 67640 "TP Var Control Caption"
 {
@@ -123,6 +125,17 @@ codeunit 67640 "TP Var Control Caption"
         Assert.AreEqual('Name', ProductVideoTopics.Name.Caption(),
             'page 3731 declares field(Name; TopicName) with no Caption; the control name answers, not the variable name TopicName');
         ProductVideoTopics.Close();
+    end;
+
+    [Test]
+    procedure PrecompiledPage_RecordFieldControl_DeclaredCaption_WinsOverFieldCaption()
+    var
+        ChartOfAccounts: TestPage "Chart of Accounts";
+    begin
+        ChartOfAccounts.OpenView();
+        Assert.AreEqual('Default Deferral Template', ChartOfAccounts."Default Deferral Template Code".Caption(),
+            'page 16 declares Caption = ''Default Deferral Template'' on the control bound to Rec."Default Deferral Template Code", whose field Caption is ''Default Deferral Template Code''');
+        ChartOfAccounts.Close();
     end;
 
     [Test]
