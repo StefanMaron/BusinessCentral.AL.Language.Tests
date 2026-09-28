@@ -8,7 +8,8 @@
 //   1. A failed AssertEquals reads "AssertEquals for Field: <control> Expected = '<expected>',
 //      Actual = '<actual>'".
 //   2. A refused SetValue is wrapped in "Validation error for Field: <control>,".
-//   3. The same holds on a precompiled page: for a control bound to a page variable
+//   3. The same holds for a control a pageextension adds (ExtNameCtl), and on a precompiled
+//      page: for a control bound to a page variable
 //      (Item Tracing's TraceMethod) and for one bound to a Rec field whose Caption differs
 //      from its name (Allocation Account List's AccountType, Caption 'Account Type').
 //
@@ -27,6 +28,7 @@ table 67630 "FEN Row"
         field(1; "No."; Code[20]) { }
         field(2; "Cust Name"; Text[30]) { Caption = 'Field Caption'; }
         field(3; "Cust Count"; Integer) { Caption = 'Count Field Caption'; }
+        field(4; "Ext Name"; Text[30]) { Caption = 'Ext Field Caption'; }
     }
 
     keys
@@ -61,6 +63,21 @@ page 67630 "FEN Card"
     }
 }
 
+pageextension 67630 "FEN Card Ext" extends "FEN Card"
+{
+    layout
+    {
+        addlast(Content)
+        {
+            field(ExtNameCtl; Rec."Ext Name")
+            {
+                ApplicationArea = All;
+                Caption = 'Ext Control Caption';
+            }
+        }
+    }
+}
+
 codeunit 67630 "FEN Field Error Tests"
 {
     Subtype = Test;
@@ -78,6 +95,7 @@ codeunit 67630 "FEN Field Error Tests"
         Row."No." := 'FEN';
         Row."Cust Name" := 'Alpha';
         Row."Cust Count" := 7;
+        Row."Ext Name" := 'Beta';
         Row.Insert();
         Card.OpenEdit();
         Card.GoToRecord(Row);
@@ -115,6 +133,19 @@ codeunit 67630 "FEN Field Error Tests"
         OpenSeeded(Card);
         asserterror Card.CustCountCtl.SetValue('not a number');
         Assert.ExpectedError('Validation error for Field: CustCountCtl,');
+        Card.Close();
+    end;
+
+    [Test]
+    procedure PageExtensionControl_AssertEquals_Mismatch_NamesTheControl()
+    var
+        Card: TestPage "FEN Card";
+    begin
+        OpenSeeded(Card);
+        asserterror Card.ExtNameCtl.AssertEquals('Wrong');
+        Assert.ExpectedError('AssertEquals for Field: ExtNameCtl Expected = ''Wrong'', Actual = ''Beta''');
+        Assert.IsFalse(StrPos(GetLastErrorText(), 'Caption') > 0,
+            'the AssertEquals error must not name a caption; got: ' + GetLastErrorText());
         Card.Close();
     end;
 
