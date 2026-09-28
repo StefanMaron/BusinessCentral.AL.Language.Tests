@@ -1,16 +1,17 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-caption-method
 // Scope: in-scope
-// Fixtures used: TP Var Control Caption (67640), TP Rec Control Caption (67641); Base Application report 91 "Export Consolidation"
-//   and page 6520 "Item Tracing"
+// Fixtures used: TP Var Control Caption (67640), TP Rec Control Caption (67641); Base Application report 91 "Export Consolidation",
+//   page 6520 "Item Tracing" and page 3731 "Product Video Topics"
 //
 // TestPage.<field>.Caption() on a control bound to a page VARIABLE, not to a source-table
-// field, and the caption BC names when such a control refuses a value. Every control here spells
-// its name, its bound variable and its caption differently, so an answer taken from the wrong
-// one of the three cannot pass.
+// field, and the caption BC names when such a control refuses a value. Each control's caption
+// differs from its bound variable's name, and from its control name wherever it declares one, so
+// an answer taken from the wrong one of the three cannot pass.
 //   * source pages 67640 and 67641 (see TestPageVariableControlCaption_Page.al);
 //   * report 91's request-page control FileFormat (variable FileFormat, Caption 'File Format')
 //     and ClientFileNameControl (variable ClientFileName, Caption 'File Name');
-//   * page 6520's TraceMethod (variable TraceMethod, Caption 'Trace Method').
+//   * page 6520's TraceMethod (variable TraceMethod, Caption 'Trace Method');
+//   * page 3731's Name (variable TopicName, no Caption).
 
 codeunit 67640 "TP Var Control Caption"
 {
@@ -111,6 +112,17 @@ codeunit 67640 "TP Var Control Caption"
         Assert.AreEqual('Trace Method', ItemTracing.TraceMethod.Caption(),
             'page 6520 declares Caption = ''Trace Method'' on control TraceMethod');
         ItemTracing.Close();
+    end;
+
+    [Test]
+    procedure PrecompiledPage_PageVariableControl_NoCaption_IsTheControlName()
+    var
+        ProductVideoTopics: TestPage "Product Video Topics";
+    begin
+        ProductVideoTopics.OpenView();
+        Assert.AreEqual('Name', ProductVideoTopics.Name.Caption(),
+            'page 3731 declares field(Name; TopicName) with no Caption; the control name answers, not the variable name TopicName');
+        ProductVideoTopics.Close();
     end;
 
     [Test]
