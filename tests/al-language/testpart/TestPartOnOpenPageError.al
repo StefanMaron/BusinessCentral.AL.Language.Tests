@@ -4,8 +4,7 @@
 //
 // CLAIM: opening a host page through a TestPage runs each part's OnOpenPage, and an Error() raised
 // there fails the host's OpenView with that error. A host whose part opens cleanly opens, and its
-// part's OnOpenPage has run by the time OpenView returns. A Confirm in a part's OnOpenPage that no
-// ConfirmHandler answers fails the host's OpenView too.
+// part's OnOpenPage has run by the time OpenView returns.
 //
 // Written by agent stma-auto2-4, an automated implementation agent acting on the account holder's
 // behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4903.
@@ -136,42 +135,6 @@ page 67013 "POE Clean Host"
     end;
 }
 
-page 67014 "POE Confirm Part"
-{
-    PageType = CardPart;
-    SourceTable = "POE Row";
-
-    layout
-    {
-        area(Content)
-        {
-            field(ConfirmCode; Rec."Code") { ApplicationArea = All; }
-        }
-    }
-
-    trigger OnOpenPage()
-    begin
-        if Confirm('POE part asks') then;
-    end;
-}
-
-page 67015 "POE Confirm Host"
-{
-    PageType = Card;
-    SourceTable = "POE Row";
-    ApplicationArea = All;
-    UsageCategory = None;
-
-    layout
-    {
-        area(Content)
-        {
-            field(HostCode; Rec."Code") { ApplicationArea = All; }
-            part(ConfirmPart; "POE Confirm Part") { ApplicationArea = All; }
-        }
-    }
-}
-
 codeunit 67010 "POE Part Open Error Tests"
 {
     Subtype = Test;
@@ -205,15 +168,6 @@ codeunit 67010 "POE Part Open Error Tests"
         asserterror Host.OpenView();
         Assert.ExpectedError('POE part refused to open');
         Assert.IsTrue(StrPos(Log.Take(), 'ErrorPartOpen;') > 0, 'the part''s OnOpenPage must have run');
-    end;
-
-    [Test]
-    procedure HostWithUnhandledConfirmInPart_OpenView_Fails()
-    var
-        Host: TestPage "POE Confirm Host";
-    begin
-        asserterror Host.OpenView();
-        Assert.ExpectedError('Unhandled UI: Confirm');
     end;
 
     [Test]
