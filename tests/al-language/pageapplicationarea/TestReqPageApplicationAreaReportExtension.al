@@ -16,6 +16,10 @@
 // Each negative arm first reads a control on the same request page that IS found under the same
 // areas, so a request page that never opened cannot pass as "not found".
 //
+// A handler can also WRITE an extension field and read it back when the report runs through a
+// Report variable rather than Report.RunRequestPage(id) (ReportVariable_ExtField_RoundTrips) --
+// the extension is bound to the report however it is constructed.
+//
 // Every test sets the session's application areas itself and restores the previous value BEFORE
 // it asserts, as codeunit 67530 does.
 //
@@ -99,6 +103,7 @@ codeunit 67546 "PAA RExt ReqPage Tests"
     var
         Assert: Codeunit Assert;
         FoundControlRead: Boolean;
+        SeenValue: Text;
 
     local procedure RunUnder(Areas: Text)
     var
@@ -167,6 +172,30 @@ codeunit 67546 "PAA RExt ReqPage Tests"
         Parameters := Report.RunRequestPage(Report::"PAA RExt Report");
         ApplicationArea(PreviousAreas);
         Assert.IsTrue(FoundControlRead, 'the extension''s #Service control must be found with #Service enabled');
+    end;
+
+    [Test]
+    [HandlerFunctions('SetExtServiceHandler')]
+    procedure ReportVariable_ExtField_RoundTrips()
+    var
+        RExtReport: Report "PAA RExt Report";
+        PreviousAreas: Text;
+        Parameters: Text;
+    begin
+        SeenValue := '';
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite,#Service');
+        Parameters := RExtReport.RunRequestPage();
+        ApplicationArea(PreviousAreas);
+        Assert.AreEqual('EXT-SET', SeenValue, 'the handler must read back the value it set on the extension''s field');
+    end;
+
+    [RequestPageHandler]
+    procedure SetExtServiceHandler(var RequestPage: TestRequestPage "PAA RExt Report")
+    begin
+        RequestPage.ExtServiceCtl.SetValue('EXT-SET');
+        SeenValue := RequestPage.ExtServiceCtl.Value();
+        RequestPage.Cancel().Invoke();
     end;
 
     [RequestPageHandler]
