@@ -7,6 +7,9 @@
 // Extensions whose modify() changes a control's Caption or OptionCaption, read by codeunit 67670:
 //   * pageextensions 67670 and 67673 over page 67670, declared in THIS app;
 //   * pageextension 67671 over the dependency app's page 61020, which this app sees precompiled;
+//   * pageextension 67674 over Base Application page 7389 "Warehouse Reason Codes", which ships
+//     precompiled: its Description control (field Caption 'Description') gets 'WRC Modified
+//     Description';
 //   * reportextension 67672 over report 67672, declared in this app.
 // Page 67670's controls:
 //   RenCtl   - Rec.Klass (field Caption 'Severity'), no control Caption; modify gives 'Modified Ren'.
@@ -74,6 +77,14 @@ pageextension 67671 "TP Modify Caption Dep Ext" extends "ALT Modify Caption Page
         modify(FxTextCtl) { Caption = 'Main Ext Text'; }
         modify(FxOptCtl) { Caption = 'Main Ext Option'; OptionCaption = 'Red Mod,Green Mod'; }
         modify(FxBothCtl) { Caption = 'Main Ext Both'; }
+    }
+}
+
+pageextension 67674 "TP Modify Caption WRC Ext" extends "Warehouse Reason Codes"
+{
+    layout
+    {
+        modify(Description) { Caption = 'WRC Modified Description'; }
     }
 }
 

@@ -9,6 +9,7 @@
 // control's SetValue/Value read, for
 //   * a control of a page in this app, modified by a pageextension in this app;
 //   * a control of a page in a dependency app, modified by a pageextension in this app;
+//   * a control of a Base Application page, modified by a pageextension in this app;
 //   * a control of a page in a dependency app, modified by a pageextension in that same app;
 //   * a request-page control of a report in this app, modified by a reportextension in this app;
 //   * a request-page control of a report in a dependency app, modified by a reportextension in
@@ -93,6 +94,28 @@ codeunit 67670 "TP Ext Modify Caption"
         Assert.AreEqual('Second Ext Twice', TP.TwiceCtl.Caption(),
             'pageextensions 67670 and 67673 of one app both modify the Caption; the answer is 67673''s');
         TP.Close();
+    end;
+
+    [Test]
+    procedure BaseAppPage_ModifiedCaption_FromThisApp()
+    var
+        WRC: TestPage "Warehouse Reason Codes";
+        PreviousAreas: Text;
+        SeenDescriptionCaption: Text;
+        SeenCodeCaption: Text;
+    begin
+        PreviousAreas := ApplicationArea();
+        ApplicationArea('#Basic,#Suite,#Warehouse');
+        WRC.OpenView();
+        SeenDescriptionCaption := WRC.Description.Caption();
+        SeenCodeCaption := WRC.Code.Caption();
+        WRC.Close();
+        ApplicationArea(PreviousAreas);
+
+        Assert.AreEqual('WRC Modified Description', SeenDescriptionCaption,
+            'this app''s modify() Caption on a Base Application page''s control replaces the field Caption Description');
+        Assert.AreEqual('Code', SeenCodeCaption,
+            'a control of that page no extension modifies keeps the field Caption');
     end;
 
     [Test]
