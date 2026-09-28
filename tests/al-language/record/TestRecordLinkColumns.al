@@ -145,6 +145,31 @@ codeunit 67681 "Test Record Link Columns"
         Assert.IsTrue(Host.HasLinks(), 'HasLinks() must find the link of a table that is not per company');
     end;
 
+    [Test]
+    procedure RecordLinkColumns_AddLink_GivesEachRowItsOwnSystemId()
+    var
+        Host: Record "ALT Link Host";
+        RecordLink: Record "Record Link";
+        FirstId: Integer;
+        SecondId: Integer;
+        FirstSystemId: Guid;
+    begin
+        Initialize();
+        Seed(11, Host);
+
+        FirstId := Host.AddLink('https://example.com/cols/11a', 'FIRST');
+        SecondId := Host.AddLink('https://example.com/cols/11b', 'SECOND');
+
+        RecordLink.Get(FirstId);
+        Assert.IsFalse(IsNullGuid(RecordLink.SystemId), 'AddLink() must give the row a SystemId');
+        FirstSystemId := RecordLink.SystemId;
+        RecordLink.Get(SecondId);
+        Assert.IsFalse(IsNullGuid(RecordLink.SystemId), 'AddLink() must give the second row a SystemId');
+        Assert.AreNotEqual(FirstSystemId, RecordLink.SystemId, 'two AddLink() rows must not share a SystemId');
+        Assert.IsTrue(RecordLink.GetBySystemId(FirstSystemId), 'GetBySystemId must find a row AddLink() wrote');
+        Assert.AreEqual(FirstId, RecordLink."Link ID", 'GetBySystemId must find the first AddLink() row');
+    end;
+
     // ── CopyLinks copies the row, it does not re-create it ──────────────────────────
 
     [Test]
@@ -182,6 +207,8 @@ codeunit 67681 "Test Record Link Columns"
 
         OnlyLinkOf(Target.RecordId(), CopiedLink);
         Assert.AreNotEqual(SourceLink."Link ID", CopiedLink."Link ID", 'the copy must be a new row');
+        Assert.IsFalse(IsNullGuid(CopiedLink.SystemId), 'the copy must have a SystemId');
+        Assert.AreNotEqual(SourceLink.SystemId, CopiedLink.SystemId, 'the copy must have its own SystemId');
         Assert.AreEqual('PROVENANCE', CopiedLink.Description, 'the copy must keep the Description');
         Assert.AreEqual('Note', Format(CopiedLink.Type), 'the copy must keep the Type');
         Assert.AreEqual('LINKAUTHOR', CopiedLink."User ID", 'the copy must keep the source row''s User ID');
