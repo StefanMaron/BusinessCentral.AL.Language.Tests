@@ -1,14 +1,16 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testfield/testfield-assertequals-method
 // Scope: in-scope
-// Fixtures used: Assert (60021), Base Application page 5530 "Item Tracing", and the table,
-// page and codeunit declared below.
+// Fixtures used: Assert (60021), Base Application pages "Item Tracing" and "Allocation Account
+// List" (table "Allocation Account"), and the table, page and codeunit declared below.
 //
 // CLAIM: the errors a TestPage field raises name the page CONTROL, the AL identifier in
 // field(<Name>; ...), and not the control's Caption or the source field's name or caption.
 //   1. A failed AssertEquals reads "AssertEquals for Field: <control> Expected = '<expected>',
 //      Actual = '<actual>'".
 //   2. A refused SetValue is wrapped in "Validation error for Field: <control>,".
-//   3. The same holds for a control on a precompiled page.
+//   3. The same holds on a precompiled page: for a control bound to a page variable
+//      (Item Tracing's TraceMethod) and for one bound to a Rec field whose Caption differs
+//      from its name (Allocation Account List's AccountType, Caption 'Account Type').
 //
 // The fixture gives every name a different spelling: the field is "Cust Name" with Caption
 // 'Field Caption', and the control is CustNameCtl with Caption 'Control Caption'.
@@ -125,5 +127,26 @@ codeunit 67630 "FEN Field Error Tests"
         asserterror ItemTracing.TraceMethod.AssertEquals('Wrong');
         Assert.ExpectedError('AssertEquals for Field: TraceMethod Expected = ''Wrong'', Actual = ''Usage -> Origin''');
         ItemTracing.Close();
+    end;
+
+    [Test]
+    procedure PrecompiledPage_RecBoundControl_AssertEquals_Mismatch_NamesTheControl()
+    var
+        AllocationAccount: Record "Allocation Account";
+        AccountList: TestPage "Allocation Account List";
+    begin
+        AllocationAccount.SetRange("No.", 'FEN');
+        AllocationAccount.DeleteAll();
+        AllocationAccount.Init();
+        AllocationAccount."No." := 'FEN';
+        AllocationAccount.Insert();
+
+        AccountList.OpenView();
+        AccountList.GoToRecord(AllocationAccount);
+        asserterror AccountList.AccountType.AssertEquals('Wrong');
+        Assert.ExpectedError('AssertEquals for Field: AccountType Expected = ''Wrong''');
+        Assert.IsFalse(StrPos(GetLastErrorText(), 'Account Type') > 0,
+            'the AssertEquals error must not name the control''s caption; got: ' + GetLastErrorText());
+        AccountList.Close();
     end;
 }
