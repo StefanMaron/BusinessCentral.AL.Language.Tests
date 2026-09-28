@@ -8,6 +8,7 @@
 //   FxOptCtl   - modified only by the main app's pageextension 67671 (Caption and OptionCaption).
 //   FxBothCtl  - modified by pageextension 61021 below AND by the main app's pageextension 67671,
 //                to different Captions: which one BC applies is what the test measures.
+//   FxBoth2Ctl - the same, where the main app's pageextension (60941) has the LOWER object id.
 //   FxOwnCtl   - modified only by pageextension 61021 below.
 // Report 61022's request-page controls are modified only by reportextension 61023 below.
 //
@@ -27,6 +28,7 @@ page 61020 "ALT Modify Caption Page"
             field(FxTextCtl; FxText) { ApplicationArea = All; Caption = 'Fixture Text'; }
             field(FxOptCtl; FxOpt) { ApplicationArea = All; Caption = 'Fixture Option'; OptionCaption = 'Red,Green'; }
             field(FxBothCtl; FxBoth) { ApplicationArea = All; Caption = 'Fixture Both'; }
+            field(FxBoth2Ctl; FxBoth2) { ApplicationArea = All; Caption = 'Fixture Both2'; }
             field(FxOwnCtl; FxOwn) { ApplicationArea = All; Caption = 'Fixture Own'; }
         }
     }
@@ -35,6 +37,7 @@ page 61020 "ALT Modify Caption Page"
         FxText: Text[30];
         FxOpt: Option Red,Green;
         FxBoth: Text[30];
+        FxBoth2: Text[30];
         FxOwn: Text[30];
 }
 
@@ -43,6 +46,7 @@ pageextension 61021 "ALT Modify Caption Page Ext" extends "ALT Modify Caption Pa
     layout
     {
         modify(FxBothCtl) { Caption = 'Fixture Ext Both'; }
+        modify(FxBoth2Ctl) { Caption = 'Fixture Ext Both2'; }
         modify(FxOwnCtl) { Caption = 'Fixture Ext Own'; }
     }
 }

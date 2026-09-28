@@ -5,8 +5,8 @@
 //   reportextension 61023 (tests/al-language-internals-fixture/ALTModifyCaption.al).
 //
 // Extensions whose modify() changes a control's Caption or OptionCaption, read by codeunit 67670:
-//   * pageextensions 67670 and 67673 over page 67670, declared in THIS app;
-//   * pageextension 67671 over the dependency app's page 61020, which this app sees precompiled;
+//   * pageextensions 67670, 67673, 67675 and 67676 over page 67670, declared in THIS app;
+//   * pageextensions 67671 and 60941 over the dependency app's page 61020;
 //   * pageextension 67674 over Base Application page 7389 "Warehouse Reason Codes", which ships
 //     precompiled: its Description control (field Caption 'Description') gets 'WRC Modified
 //     Description';
@@ -20,6 +20,12 @@
 //   PlainCtl - page variable, Caption 'Host Plain'; nothing modifies it.
 //   TwiceCtl - page variable, Caption 'Host Twice'; pageextension 67670 modifies it to
 //              'First Ext Twice' and pageextension 67673, in the same app, to 'Second Ext Twice'.
+//   Twice2Ctl - page variable, Caption 'Host Twice2'; pageextension 67676, declared FIRST and named
+//              'TP Mod Cap AAA High', modifies it to 'High Id Twice2'; pageextension 67675,
+//              declared after it and named 'TP Mod Cap ZZZ Low', to 'Low Id Twice2'. So object id,
+//              declaration order and name order do not all point the same way.
+// Page 61020's FxBoth2Ctl is modified by the dependency's pageextension 61021 and by this app's
+// pageextension 60941, whose object id is LOWER than 61021's.
 //
 // Written by agent stma-auto-6 (Claude agent), an automated implementation agent acting on the
 // account holder's behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4928.
@@ -41,6 +47,7 @@ page 67670 "TP Modify Caption Host"
             field(OptCtl; HostOpt) { ApplicationArea = All; Caption = 'Host Option'; OptionCaption = 'Alpha Cap,Beta Cap'; }
             field(PlainCtl; HostPlain) { ApplicationArea = All; Caption = 'Host Plain'; }
             field(TwiceCtl; HostTwice) { ApplicationArea = All; Caption = 'Host Twice'; }
+            field(Twice2Ctl; HostTwice2) { ApplicationArea = All; Caption = 'Host Twice2'; }
         }
     }
 
@@ -49,6 +56,7 @@ page 67670 "TP Modify Caption Host"
         HostOpt: Option Alpha,Beta;
         HostPlain: Text[30];
         HostTwice: Text[30];
+        HostTwice2: Text[30];
 }
 
 pageextension 67670 "TP Modify Caption Host Ext" extends "TP Modify Caption Host"
@@ -67,6 +75,30 @@ pageextension 67673 "TP Modify Caption Host Ext 2" extends "TP Modify Caption Ho
     layout
     {
         modify(TwiceCtl) { Caption = 'Second Ext Twice'; }
+    }
+}
+
+pageextension 67676 "TP Mod Cap AAA High" extends "TP Modify Caption Host"
+{
+    layout
+    {
+        modify(Twice2Ctl) { Caption = 'High Id Twice2'; }
+    }
+}
+
+pageextension 67675 "TP Mod Cap ZZZ Low" extends "TP Modify Caption Host"
+{
+    layout
+    {
+        modify(Twice2Ctl) { Caption = 'Low Id Twice2'; }
+    }
+}
+
+pageextension 60941 "TP Modify Caption Dep Low Ext" extends "ALT Modify Caption Page"
+{
+    layout
+    {
+        modify(FxBoth2Ctl) { Caption = 'Main Low Ext Both2'; }
     }
 }
 

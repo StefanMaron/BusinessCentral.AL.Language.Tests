@@ -16,7 +16,9 @@
 //     that same app;
 // and when a dependency app's pageextension and this app's pageextension both modify one control's
 // Caption, the caption the control answers is this app's (FxBothCtl); when two pageextensions of
-// this app both modify it, the one with the higher object id is the one answered (TwiceCtl).
+// this app both modify it, the one with the higher object id is the one answered (TwiceCtl), whatever
+// the declaration and name order (Twice2Ctl); and this app's value wins over its dependency's even
+// when this app's extension has the lower object id (FxBoth2Ctl).
 // An Option control's refusal of a value names the modified Caption.
 //
 // Written by agent stma-auto-6 (Claude agent), an automated implementation agent acting on the
@@ -97,6 +99,17 @@ codeunit 67670 "TP Ext Modify Caption"
     end;
 
     [Test]
+    procedure SamePage_TwoExtensionsOfOneApp_HigherIdWins_WhateverTheOrder()
+    var
+        TP: TestPage "TP Modify Caption Host";
+    begin
+        TP.OpenEdit();
+        Assert.AreEqual('High Id Twice2', TP.Twice2Ctl.Caption(),
+            'pageextension 67676, declared before 67675 and named before it, still answers over 67675');
+        TP.Close();
+    end;
+
+    [Test]
     procedure BaseAppPage_ModifiedCaption_FromThisApp()
     var
         WRC: TestPage "Warehouse Reason Codes";
@@ -162,6 +175,17 @@ codeunit 67670 "TP Ext Modify Caption"
         TP.OpenEdit();
         Assert.AreEqual('Main Ext Both', TP.FxBothCtl.Caption(),
             'when the dependency app and this app both modify the Caption, the dependent (this) app''s value is applied');
+        TP.Close();
+    end;
+
+    [Test]
+    procedure DependencyPage_ModifiedByBothApps_ThisAppWins_EvenWithTheLowerId()
+    var
+        TP: TestPage "ALT Modify Caption Page";
+    begin
+        TP.OpenEdit();
+        Assert.AreEqual('Main Low Ext Both2', TP.FxBoth2Ctl.Caption(),
+            'this app''s pageextension 60941 answers over the dependency''s 61021 although its object id is lower');
         TP.Close();
     end;
 
