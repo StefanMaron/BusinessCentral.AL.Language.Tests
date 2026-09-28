@@ -150,4 +150,36 @@ codeunit 60340 "Test Session Virtual Table"
                     'the reading session must not also appear as a row flagged "not my session"');
             until Sess.Next() = 0;
     end;
+    [Test]
+    procedure SessionTable_MySessionRow_ApplicationNameIsActiveSessionsClientType()
+    // AGREEMENT: "Application Name" is the reading session's Active Session "Client Type",
+    // as text -- the platform projects one from the other. The client type itself depends on
+    // how the tier runs tests, so no literal is asserted.
+    var
+        Sess: Record Session;
+        ActiveSession: Record "Active Session";
+    begin
+        Sess.SetRange("My Session", true);
+        Assert.IsTrue(Sess.FindFirst(), 'the reading session must be a row of Session');
+        Assert.IsTrue(ActiveSession.Get(ServiceInstanceId(), SessionId()),
+            'the reading session must be a row of Active Session');
+        Assert.AreEqual(Format(ActiveSession."Client Type"), Sess."Application Name",
+            'Session."Application Name" must be the reading session''s Active Session "Client Type", as text');
+    end;
+
+    [Test]
+    procedure SessionTable_MySessionRow_DatabaseNameIsActiveSessionsDatabaseName()
+    // AGREEMENT: "Database Name" is the reading session's Active Session "Database Name".
+    // The name is a property of the environment, so no literal is asserted.
+    var
+        Sess: Record Session;
+        ActiveSession: Record "Active Session";
+    begin
+        Sess.SetRange("My Session", true);
+        Assert.IsTrue(Sess.FindFirst(), 'the reading session must be a row of Session');
+        Assert.IsTrue(ActiveSession.Get(ServiceInstanceId(), SessionId()),
+            'the reading session must be a row of Active Session');
+        Assert.AreEqual(ActiveSession."Database Name", Sess."Database Name",
+            'Session."Database Name" must be the reading session''s Active Session "Database Name"');
+    end;
 }
