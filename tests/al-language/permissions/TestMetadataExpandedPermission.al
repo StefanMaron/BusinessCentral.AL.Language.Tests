@@ -191,6 +191,39 @@ codeunit 67945 "Test Metadata Expanded Perm"
         Assert.AreEqual(ExpandedPermission.Scope::System, ExpandedPermission.Scope, 'an extension-declared set is Scope System');
     end;
 
+    [Test]
+    procedure ExpandedPermission_OpenVariable_SeesATenantSetInsertedAfterItsFirstRead()
+    // CLAIM: the table is computed per request, not per Record variable: a variable that
+    // already read "no rows" for a role finds that role's grant once a tenant set for it is
+    // inserted, on Get, Count and IsEmpty alike.
+    var
+        TenantPermissionSet: Record "Tenant Permission Set";
+        TenantPermission: Record "Tenant Permission";
+        ExpandedPermission: Record "Expanded Permission";
+        NullGuid: Guid;
+    begin
+        Initialize();
+
+        ExpandedPermission.SetRange("App ID", NullGuid);
+        ExpandedPermission.SetRange("Role ID", TenantRoleTok);
+        Assert.IsTrue(ExpandedPermission.IsEmpty(), 'no tenant set exists yet');
+
+        TenantPermissionSet."App ID" := NullGuid;
+        TenantPermissionSet."Role ID" := TenantRoleTok;
+        TenantPermissionSet.Name := 'ALT ExpPerm Tenant';
+        TenantPermissionSet.Insert();
+        TenantPermission."App ID" := NullGuid;
+        TenantPermission."Role ID" := TenantRoleTok;
+        TenantPermission."Object Type" := TenantPermission."Object Type"::"Table Data";
+        TenantPermission."Object ID" := Database::"ALT Keyed";
+        TenantPermission.Insert();
+
+        Assert.IsFalse(ExpandedPermission.IsEmpty(), 'the same variable sees the new set');
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the new set''s one grant');
+        Assert.IsTrue(ExpandedPermission.Get(NullGuid, TenantRoleTok, ExpandedPermission."Object Type"::"Table Data", Database::"ALT Keyed"),
+            'the same variable finds the new grant by key');
+    end;
+
     local procedure CurrentAppId(): Guid
     var
         Info: ModuleInfo;
