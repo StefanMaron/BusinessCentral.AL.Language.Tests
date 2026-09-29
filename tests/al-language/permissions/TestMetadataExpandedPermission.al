@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-permissionset-object
 // Scope: in-scope (reads two platform virtual tables served from permission-set metadata)
 // Fixtures used: ALT ExpPerm Leaf (67945), ALT ExpPerm Comp (67946), ALT Universal, ALT Keyed,
-//   ALT Composite; writes one Tenant Permission Set + Tenant Permission row, removed by Initialize()
+//   ALT Composite, ALT Base; writes one Tenant Permission Set and its Tenant Permission rows,
+//   removed by Initialize()
 // BC versions: 27.5+
 //
 // "Permission" (2000000005) is pinned by "Test Perm. Set Grants" (60604). Its two siblings
@@ -193,14 +194,15 @@ codeunit 67945 "Test Metadata Expanded Perm"
 
     [Test]
     procedure ExpandedPermission_OpenVariable_SeesATenantSetInsertedAfterItsFirstRead()
-    // CLAIM: the table is computed per request, not per Record variable: a variable that
-    // already read "no rows" for a role finds that role's grant once a tenant set for it is
-    // inserted, on Get, Count and IsEmpty alike.
+    // CLAIM: the table is computed per request, not per Record variable. One variable that
+    // already read "no rows" for a role sees each grant inserted after its previous read, on
+    // each of the four read paths in turn -- IsEmpty, Count, FindSet and Get. A grant is
+    // inserted before each read, so every path is the first to see a row the others did not.
     var
         TenantPermissionSet: Record "Tenant Permission Set";
-        TenantPermission: Record "Tenant Permission";
         ExpandedPermission: Record "Expanded Permission";
         NullGuid: Guid;
+        Rows: Integer;
     begin
         Initialize();
 
@@ -212,16 +214,35 @@ codeunit 67945 "Test Metadata Expanded Perm"
         TenantPermissionSet."Role ID" := TenantRoleTok;
         TenantPermissionSet.Name := 'ALT ExpPerm Tenant';
         TenantPermissionSet.Insert();
+
+        InsertTenantGrant(Database::"ALT Keyed");
+        Assert.IsFalse(ExpandedPermission.IsEmpty(), 'IsEmpty on the same variable sees the first grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'Count on the same variable sees the second grant');
+
+        InsertTenantGrant(Database::"ALT Composite");
+        Assert.IsTrue(ExpandedPermission.FindSet(), 'FindSet on the same variable finds rows');
+        repeat
+            Rows += 1;
+        until ExpandedPermission.Next() = 0;
+        Assert.AreEqual(3, Rows, 'FindSet on the same variable walks the third grant');
+
+        InsertTenantGrant(Database::"ALT Base");
+        Assert.IsTrue(ExpandedPermission.Get(NullGuid, TenantRoleTok, ExpandedPermission."Object Type"::"Table Data", Database::"ALT Base"),
+            'Get on the same variable finds the fourth grant by key');
+    end;
+
+    local procedure InsertTenantGrant(TableId: Integer)
+    var
+        TenantPermission: Record "Tenant Permission";
+        NullGuid: Guid;
+    begin
         TenantPermission."App ID" := NullGuid;
         TenantPermission."Role ID" := TenantRoleTok;
         TenantPermission."Object Type" := TenantPermission."Object Type"::"Table Data";
-        TenantPermission."Object ID" := Database::"ALT Keyed";
+        TenantPermission."Object ID" := TableId;
         TenantPermission.Insert();
-
-        Assert.IsFalse(ExpandedPermission.IsEmpty(), 'the same variable sees the new set');
-        Assert.AreEqual(1, ExpandedPermission.Count(), 'the new set''s one grant');
-        Assert.IsTrue(ExpandedPermission.Get(NullGuid, TenantRoleTok, ExpandedPermission."Object Type"::"Table Data", Database::"ALT Keyed"),
-            'the same variable finds the new grant by key');
     end;
 
     local procedure CurrentAppId(): Guid
