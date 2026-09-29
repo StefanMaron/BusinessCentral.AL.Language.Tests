@@ -3,8 +3,8 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-runpagelink-property
 // Scope: in-scope
 // Fixtures used: ARPV Row (67002), ARPV Probe (67003), ARPV Target (67004), ARPV Host (67005),
-//                Assert (60021) -- and Base Application pages 6018 "Skill Codes" and
-//                6019 "Resource Skills"
+//                ARPV Skills Probe (67008), Assert (60021) -- and Base Application pages
+//                6018 "Skill Codes" and 6019 "Resource Skills"
 //
 /// <summary>
 /// Pins what an ACTION's RunPageView does to the page it opens: which rows the page shows, in
@@ -18,10 +18,12 @@
 /// holder's behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4974, which
 /// measured that the runner reads an action's RunPageView nowhere.
 ///
-/// EVERY ARM ASSERTS ONE STRING carrying the rows the opened page showed AND the state its
-/// OnOpenPage saw (the view's filter in groups 0, 2, 3 and 4, the current key, the sort
-/// direction). One assertion, so a failure prints everything BC did rather than stopping at the
-/// first difference.
+/// EVERY ARM ASSERTS ONE STRING carrying the row the opened page stood on, the rows it showed,
+/// AND the state its OnOpenPage saw: the filter group Rec is in when OnOpenPage starts (fg=,
+/// read before anything changes it -- a filter an OnOpenPage then sets lands in that group), the
+/// view's filter in groups 0, 2, 3 and 4, the current key and the sort direction. One
+/// assertion, so a failure prints everything BC did rather than stopping at the first
+/// difference.
 ///
 /// The rows are read by walking the opened TestPage in the page handler; the state is read by
 /// the target's own OnOpenPage through a SingleInstance probe. Four seeded rows:
@@ -80,7 +82,7 @@ codeunit 67003 "ARPV Probe"
 
     procedure Observed(): Text
     begin
-        exit('rows=' + Shown + '|' + OpenState);
+        exit(Shown + '|' + OpenState);
     end;
 }
 
@@ -114,7 +116,10 @@ page 67004 "ARPV Target"
         F2: Text;
         F3: Text;
         F4: Text;
+        StartGroup: Text;
     begin
+        // First, before any FilterGroup(n) call moves it.
+        StartGroup := Format(Rec.FilterGroup());
         Rec.FilterGroup(0);
         F0 := Rec.GetFilter(Bucket);
         Rec.FilterGroup(2);
@@ -125,7 +130,7 @@ page 67004 "ARPV Target"
         F4 := Rec.GetFilter(Bucket);
         Rec.FilterGroup(0);
         Probe.RecordOpenState(
-            'g0=' + F0 + '|g2=' + F2 + '|g3=' + F3 + '|g4=' + F4 +
+            'fg=' + StartGroup + '|g0=' + F0 + '|g2=' + F2 + '|g3=' + F3 + '|g4=' + F4 +
             '|key=' + Rec.CurrentKey() + '|asc=' + Format(Rec.Ascending()));
     end;
 }
@@ -176,6 +181,14 @@ page 67005 "ARPV Host"
                 Caption = 'Open Descending';
                 RunObject = page "ARPV Target";
                 RunPageView = sorting("Entry No.") order(descending);
+            }
+            action(OpenOnRecSorted)
+            {
+                ApplicationArea = All;
+                Caption = 'Open On Rec Sorted';
+                RunObject = page "ARPV Target";
+                RunPageOnRec = true;
+                RunPageView = sorting(Rank) where(Bucket = const('KEEP'));
             }
             action(OpenLinkedSorted)
             {
@@ -242,7 +255,7 @@ codeunit 67006 "ARPV Tests"
         Host.Close();
 
         Assert.AreEqual(
-            'rows=1,2,3,4|g0=|g2=|g3=|g4=|key=Entry No.|asc=Yes', Probe.Observed(),
+            'cur=1;rows=1,2,3,4|fg=0|g0=|g2=|g3=|g4=|key=Entry No.|asc=Yes', Probe.Observed(),
             'An action with no RunPageView opens its page on every row, in primary-key order.');
     end;
 
@@ -258,7 +271,7 @@ codeunit 67006 "ARPV Tests"
         Host.Close();
 
         Assert.AreEqual(
-            'rows=1,3,4|g0=|g2=|g3=KEEP|g4=|key=Entry No.|asc=Yes', Probe.Observed(),
+            'cur=1;rows=1,3,4|fg=0|g0=|g2=|g3=KEEP|g4=|key=Entry No.|asc=Yes', Probe.Observed(),
             'An action''s RunPageView where() filters the page it opens.');
     end;
 
@@ -274,7 +287,7 @@ codeunit 67006 "ARPV Tests"
         Host.Close();
 
         Assert.AreEqual(
-            'rows=3,4,1|g0=|g2=|g3=KEEP|g4=|key=Rank|asc=Yes', Probe.Observed(),
+            'cur=3;rows=3,4,1|fg=0|g0=|g2=|g3=KEEP|g4=|key=Rank|asc=Yes', Probe.Observed(),
             'An action''s RunPageView sorting() orders, and its where() filters, the page it opens.');
     end;
 
@@ -290,8 +303,26 @@ codeunit 67006 "ARPV Tests"
         Host.Close();
 
         Assert.AreEqual(
-            'rows=4,3,2,1|g0=|g2=|g3=|g4=|key=Entry No.|asc=No', Probe.Observed(),
+            'cur=4;rows=4,3,2,1|fg=0|g0=|g2=|g3=|g4=|key=Entry No.|asc=No', Probe.Observed(),
             'An action''s RunPageView order(descending) opens the page in descending order.');
+    end;
+
+    [Test]
+    [HandlerFunctions('ArpvTargetHandler')]
+    procedure RunPageView_WithRunPageOnRec_OpensOnTheHostRowInsideTheView()
+    // RunPageOnRec hands the target the host's row; the view still filters and orders it.
+    // Host on entry 4, which is neither the first row by key nor by rank.
+    var
+        Host: TestPage "ARPV Host";
+        Probe: Codeunit "ARPV Probe";
+    begin
+        OpenHost(Host, 4);
+        Host.OpenOnRecSorted.Invoke();
+        Host.Close();
+
+        Assert.AreEqual(
+            'cur=4;rows=3,4,1|fg=0|g0=|g2=|g3=KEEP|g4=|key=Rank|asc=Yes', Probe.Observed(),
+            'RunPageOnRec opens the page on the host row, with the RunPageView filter and order applied.');
     end;
 
     [Test]
@@ -308,7 +339,7 @@ codeunit 67006 "ARPV Tests"
         Host.Close();
 
         Assert.AreEqual(
-            'rows=3,4,1|g0=KEEP|g2=|g3=|g4=|key=Rank|asc=Yes', Probe.Observed(),
+            'cur=3;rows=3,4,1|fg=0|g0=KEEP|g2=|g3=|g4=|key=Rank|asc=Yes', Probe.Observed(),
             'RunPageLink filters and RunPageView sorts the same opened page.');
     end;
 
@@ -319,15 +350,49 @@ codeunit 67006 "ARPV Tests"
         Shown: Text;
         Guard: Integer;
     begin
+        // The row the page opened on, before First() moves it.
+        Shown := 'cur=' + Target."Entry No.".Value() + ';rows=';
         if Target.First() then
             repeat
-                if Shown <> '' then
+                if Guard > 0 then
                     Shown += ',';
                 Shown += Target."Entry No.".Value();
                 Guard += 1;
             until (not Target.Next()) or (Guard >= 10);
         Probe.RecordShown(Shown);
         Target.Close();
+    end;
+}
+
+codeunit 67008 "ARPV Skills Probe"
+{
+    // Bound only by the arm that reads it, so no other test opening Resource Skills sees it.
+    EventSubscriberInstance = Manual;
+
+    var
+        State: Text;
+
+    [EventSubscriber(ObjectType::Page, Page::"Resource Skills", 'OnOpenPageEvent', '', false, false)]
+    local procedure ReadFilterGroups(var Rec: Record "Resource Skill")
+    begin
+        // First, before any FilterGroup(n) call below moves it.
+        State := 'fg=' + Format(Rec.FilterGroup());
+        ReadGroup(Rec, 0);
+        ReadGroup(Rec, 2);
+        ReadGroup(Rec, 3);
+        ReadGroup(Rec, 4);
+        Rec.FilterGroup(0);
+    end;
+
+    local procedure ReadGroup(var Rec: Record "Resource Skill"; Group: Integer)
+    begin
+        Rec.FilterGroup(Group);
+        State += '|g' + Format(Group) + ':type=' + Rec.GetFilter(Type) + ',skill=' + Rec.GetFilter("Skill Code");
+    end;
+
+    procedure Observed(): Text
+    begin
+        exit(State);
     end;
 }
 
@@ -372,6 +437,49 @@ codeunit 67007 "ARPV Precompiled Tests"
         Assert.AreEqual(
             'ARPV-R1,ARPV-R2', ResourceSkillsShown,
             'The precompiled action''s RunPageView where(Type = const(Resource)) excludes the Item row.');
+    end;
+
+    [Test]
+    [HandlerFunctions('ResourceSkillsHandler')]
+    procedure PrecompiledRunPageView_WhereLandsInFilterGroup3_LinkInGroup0()
+    // WHICH GROUP each filter lands in on the precompiled route, read from the target page's
+    // OnOpenPageEvent: the link's "Skill Code" in 0, the view's Type in 3 -- the same split the
+    // source-compiled arms measure on ARPV Target.
+    var
+        Probe: Codeunit "ARPV Skills Probe";
+        Host: TestPage "Skill Codes";
+    begin
+        SeedSkills();
+        BindSubscription(Probe);
+
+        Host.OpenView();
+        Host.GoToKey('ARPVSK');
+        Host."&Resource Skills".Invoke();
+        Host.Close();
+        UnbindSubscription(Probe);
+
+        Assert.AreEqual(
+            'fg=0|g0:type=,skill=ARPVSK|g2:type=,skill=|g3:type=Resource,skill=|g4:type=,skill=',
+            Probe.Observed(),
+            'The precompiled action''s RunPageLink lands in FilterGroup(0) and its RunPageView where() in FilterGroup(3).');
+    end;
+
+    local procedure SeedSkills()
+    var
+        SkillCode: Record "Skill Code";
+        ResourceSkill: Record "Resource Skill";
+    begin
+        ResourceSkillsShown := '';
+        if SkillCode.Get('ARPVSK') then
+            SkillCode.Delete();
+        SkillCode.Init();
+        SkillCode.Code := 'ARPVSK';
+        SkillCode.Insert();
+        ResourceSkill.SetRange("Skill Code", 'ARPVSK');
+        ResourceSkill.DeleteAll();
+        AddResourceSkill(ResourceSkill.Type::Resource, 'ARPV-R2');
+        AddResourceSkill(ResourceSkill.Type::Item, 'ARPV-I1');
+        AddResourceSkill(ResourceSkill.Type::Resource, 'ARPV-R1');
     end;
 
     local procedure AddResourceSkill(SkillType: Enum "Resource Skill Type"; No: Code[20])
