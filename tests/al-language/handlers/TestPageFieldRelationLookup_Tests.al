@@ -257,6 +257,38 @@ codeunit 60569 "TRL Tests"
         Card.Close();
     end;
 
+    // CLAIM: with a [ModalPageHandler] BOUND, the same lookup still fails, the bound handler
+    // never runs, and the field is unchanged.
+    //
+    // The two arms above bind no handler. This one binds RelatedListHandler -- a handler for
+    // "TRL Related List", a page over a DIFFERENT table -- and asks what BC does with it. A
+    // handler-bound probe of this shape failed on Linux run 35494023689 with a
+    // NullReferenceException inside NavTestExecution.ShowLookupForm, reported as a TEST
+    // failure rather than as an AL error; nothing has yet said whether asserterror catches it,
+    // or what GetLastErrorText then reads. ExpectedError is pinned to the CLR message so that,
+    // if BC raises something else, the failure prints BC's actual text.
+    //
+    // HandlerRan staying false is the discriminating half: BC must not hand a page it never
+    // materialised to a handler bound for another page.
+    [Test]
+    [HandlerFunctions('RelatedListHandler')]
+    procedure Lookup_RelationToTableWithNoLookupPage_HandlerBound_FailsWithoutRunningIt()
+    var
+        Card: TestPage "TRL Card";
+    begin
+        OpenOn(Card);
+        Card."Pageless Code".SetValue('PL-A');
+
+        asserterror Card."Pageless Code".Lookup();
+
+        Assert.ExpectedError('Object reference not set to an instance of an object');
+        Assert.IsFalse(HandlerRan,
+            'a lookup whose relation target declares no page must not run a handler bound for another page');
+        Assert.AreEqual('PL-A', Card."Pageless Code".Value,
+            'a failed lookup must leave the field exactly as it was');
+        Card.Close();
+    end;
+
     [ModalPageHandler]
     procedure RelatedListHandler(var Modal: TestPage "TRL Related List")
     begin
