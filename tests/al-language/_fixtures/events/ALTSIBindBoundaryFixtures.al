@@ -4,16 +4,17 @@ codeunit 67690 "ALT SI Bind Publisher"
     // binding either of them leaves open cannot reach any other test.
 
     [IntegrationEvent(false, false)]
-    procedure OnProbe(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean)
+    procedure OnProbe(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean; var SameSession: Boolean)
     begin
     end;
 
-    procedure Raise(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean)
+    procedure Raise(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean; var SameSession: Boolean)
     begin
         SingleInstanceHit := false;
         PlainHit := false;
         HeldHit := false;
-        OnProbe(SingleInstanceHit, PlainHit, HeldHit);
+        SameSession := false;
+        OnProbe(SingleInstanceHit, PlainHit, HeldHit, SameSession);
     end;
 }
 
@@ -26,7 +27,7 @@ codeunit 67691 "ALT SI Bind Survivor"
     EventSubscriberInstance = Manual;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"ALT SI Bind Publisher", 'OnProbe', '', false, false)]
-    local procedure OnProbeSingleInstance(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean)
+    local procedure OnProbeSingleInstance(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean; var SameSession: Boolean)
     begin
         SingleInstanceHit := true;
     end;
@@ -39,7 +40,7 @@ codeunit 67692 "ALT Plain Bind Contrast"
     EventSubscriberInstance = Manual;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"ALT SI Bind Publisher", 'OnProbe', '', false, false)]
-    local procedure OnProbePlain(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean)
+    local procedure OnProbePlain(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean; var SameSession: Boolean)
     begin
         PlainHit := true;
     end;
@@ -68,8 +69,30 @@ codeunit 67696 "ALT SI Held Subscriber"
     EventSubscriberInstance = Manual;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"ALT SI Bind Publisher", 'OnProbe', '', false, false)]
-    local procedure OnProbeHeld(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean)
+    local procedure OnProbeHeld(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean; var SameSession: Boolean)
     begin
         HeldHit := true;
+    end;
+}
+
+codeunit 67697 "ALT SI Session Witness"
+{
+    // SingleInstance, automatically subscribed: reports whether 67693 armed it in THIS session,
+    // without 67694 declaring it (check-singleinstance-fixture-owners.py). A harness that starts
+    // a new session per test codeunit (the altool `al runtests` path) answers false.
+    SingleInstance = true;
+
+    var
+        Armed: Boolean;
+
+    procedure Arm()
+    begin
+        Armed := true;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"ALT SI Bind Publisher", 'OnProbe', '', false, false)]
+    local procedure OnProbeWitness(var SingleInstanceHit: Boolean; var PlainHit: Boolean; var HeldHit: Boolean; var SameSession: Boolean)
+    begin
+        SameSession := Armed;
     end;
 }
