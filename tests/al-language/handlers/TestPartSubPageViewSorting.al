@@ -24,7 +24,7 @@
 ///     OpenPart         (no view)                                 1, 2, 3, 4
 ///     RankAscPart      sorting(Rank)                             2, 4, 1, 3
 ///     RankDescPart     sorting(Rank) order(descending)           3, 1, 4, 2
-///     PKDescPart       order(descending)                         4, 3, 2, 1
+///     PKDescPart       order(descending)                         1, 2, 3, 4   (measured; see its arm)
 ///     KeepRankDescPart sorting(Rank) order(descending)
 ///                      where(Bucket = const('KEEP'))             3, 1, 4
 ///     LinkedRankDesc   SubPageLink Bucket = field(Bucket)
@@ -223,21 +223,27 @@ codeunit 67930 "SPS Tests"
     end;
 
     [Test]
-    procedure SubPageViewOrderOnly_ReversesThePrimaryKeyOrder()
-    // order(descending) with no sorting(): the primary key, reversed.
+    procedure SubPageViewOrderOnly_KeepsPrimaryKeyOrder()
+    // order(descending) with no sorting(): the part stays in primary key order, ASCENDING.
+    //
+    // Measured, and it falsified the first version of this arm, which expected 4, 3, 2, 1.
+    // Every cloud leg (27.0 through 28.5) and the official Windows container (28.4.53241.55369,
+    // nightly run 36585163649) answered `Expected:<4> Actual:<1>`. On a part, a view's order()
+    // takes effect only together with a sorting() key -- the RankDescPart arm, which names one,
+    // does descend.
     var
         Host: TestPage "SPS Host";
     begin
         OpenHost(Host);
 
         Assert.IsTrue(Host.PKDescPart.First(), 'the order-only part has a first row');
-        Assert.AreEqual('4', Host.PKDescPart."Entry No.".Value(), 'row 1 is entry 4');
+        Assert.AreEqual('1', Host.PKDescPart."Entry No.".Value(), 'row 1 is entry 1');
         Assert.IsTrue(Host.PKDescPart.Next(), 'the order-only part has a second row');
-        Assert.AreEqual('3', Host.PKDescPart."Entry No.".Value(), 'row 2 is entry 3');
+        Assert.AreEqual('2', Host.PKDescPart."Entry No.".Value(), 'row 2 is entry 2');
         Assert.IsTrue(Host.PKDescPart.Next(), 'the order-only part has a third row');
-        Assert.AreEqual('2', Host.PKDescPart."Entry No.".Value(), 'row 3 is entry 2');
+        Assert.AreEqual('3', Host.PKDescPart."Entry No.".Value(), 'row 3 is entry 3');
         Assert.IsTrue(Host.PKDescPart.Next(), 'the order-only part has a fourth row');
-        Assert.AreEqual('1', Host.PKDescPart."Entry No.".Value(), 'row 4 is entry 1');
+        Assert.AreEqual('4', Host.PKDescPart."Entry No.".Value(), 'row 4 is entry 4');
 
         Host.Close();
     end;
