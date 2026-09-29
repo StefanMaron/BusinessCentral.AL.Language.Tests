@@ -4,7 +4,7 @@
 // Scope: in-scope
 // Fixtures used: SPO Row (67950), SPO View Part (67950), SPO View Desc Part (67951),
 //   SPO Key Part (67952), SPO Key Desc Part (67953), SPO Desc Part (67954), SPO Host (67955),
-//   Assert (60021)
+//   SPO Key Desc List (67956), SPO Key Asc False List (67957), Assert (60021)
 //
 /// <summary>
 /// Pins which order a part shows when the PART PAGE sets its own order and the host's part
@@ -17,6 +17,16 @@
 /// The part page sets its order in one of three ways: SourceTableView sorting(), OnOpenPage
 /// SetCurrentKey (optionally with SetAscending), or OnOpenPage Ascending(false). Each part page
 /// appears once with no SubPageView (the control) and once or more with one.
+///
+/// What the arms show, first measured on the BC 27.5 cloud leg of this file's pull request:
+/// the part control's SubPageView sorting is applied FIRST. The part page's own
+/// SourceTableView is applied after it and sets only the halves it names -- sorting() sets
+/// the key, order() the direction -- and the part's OnOpenPage runs last. So a part view
+/// naming a key but no order() keeps the control's direction on the part's key, and an
+/// OnOpenPage Ascending(false) with no key reverses the control's key.
+///
+/// SetAscending(Field, false) in OnOpenPage is not shown in the part's rows at all. The two
+/// ListPage arms ask the same of a top-level list page.
 ///
 /// The primary key, Rank and Score orders disagree, and so do their reverses, so every
 /// candidate answer is a distinct sequence:
@@ -235,6 +245,62 @@ page 67955 "SPO Host"
     }
 }
 
+page 67956 "SPO Key Desc List"
+{
+    PageType = List;
+    SourceTable = "SPO Row";
+    ApplicationArea = All;
+    UsageCategory = Lists;
+    Caption = 'SPO Key Desc List';
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Lines)
+            {
+                field("Entry No."; Rec."Entry No.") { ApplicationArea = All; }
+                field(Score; Rec.Score) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        Rec.SetCurrentKey(Score);
+        Rec.SetAscending(Score, false);
+    end;
+}
+
+page 67957 "SPO Key Asc False List"
+{
+    PageType = List;
+    SourceTable = "SPO Row";
+    ApplicationArea = All;
+    UsageCategory = Lists;
+    Caption = 'SPO Key Asc False List';
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Lines)
+            {
+                field("Entry No."; Rec."Entry No.") { ApplicationArea = All; }
+                field(Score; Rec.Score) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        Rec.SetCurrentKey(Score);
+        Rec.Ascending(false);
+    end;
+}
+
 codeunit 67950 "SPO Tests"
 {
     Subtype = Test;
@@ -296,8 +362,9 @@ codeunit 67950 "SPO Tests"
     end;
 
     [Test]
-    procedure PartSourceTableView_WithSubPageViewSorting()
-    // Part: sorting(Score). Control: sorting(Rank). Rank asc is 2,4,1,3; Score asc is 4,1,3,2.
+    procedure PartSourceTableView_WithSubPageViewSorting_ThePartsKeyWins()
+    // Part: sorting(Score). Control: sorting(Rank). The part's key wins: Score ascending,
+    // not Rank ascending (2,4,1,3).
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -312,14 +379,16 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.ViewSubRank."Entry No.".Value();
         Host.ViewSubRank.Next();
         Seq += ',' + Host.ViewSubRank."Entry No.".Value();
-        Assert.AreEqual('2,4,1,3', Seq, 'the entry numbers the ViewSubRank part shows, in order');
+        Assert.AreEqual('4,1,3,2', Seq, 'the entry numbers the ViewSubRank part shows, in order');
 
         Host.Close();
     end;
 
     [Test]
-    procedure PartSourceTableView_WithSubPageViewSortingDescending()
-    // Part: sorting(Score). Control: sorting(Rank) order(descending). Rank desc is 3,1,4,2.
+    procedure PartSourceTableView_WithSubPageViewSortingDescending_KeyFromPartDirectionFromView()
+    // Part: sorting(Score), no order(). Control: sorting(Rank) order(descending).
+    // The part's view sets only the key it names, so the control's direction survives:
+    // Score DESCENDING. Neither Rank descending (3,1,4,2) nor Score ascending (4,1,3,2).
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -334,14 +403,15 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.ViewSubRankDesc."Entry No.".Value();
         Host.ViewSubRankDesc.Next();
         Seq += ',' + Host.ViewSubRankDesc."Entry No.".Value();
-        Assert.AreEqual('3,1,4,2', Seq, 'the entry numbers the ViewSubRankDesc part shows, in order');
+        Assert.AreEqual('2,3,1,4', Seq, 'the entry numbers the ViewSubRankDesc part shows, in order');
 
         Host.Close();
     end;
 
     [Test]
-    procedure PartSourceTableView_WithFilterOnlySubPageView()
-    // Part: sorting(Score). Control: where(Bucket = const('KEEP')) and no sorting(). Score asc over KEEP is 4,1,3; primary key order would be 1,3,4.
+    procedure PartSourceTableView_WithFilterOnlySubPageView_KeepsThePartsKey()
+    // Part: sorting(Score). Control: where(Bucket = const('KEEP')), no sorting().
+    // Score ascending over the KEEP rows; primary key order would be 1,3,4.
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -382,8 +452,9 @@ codeunit 67950 "SPO Tests"
     end;
 
     [Test]
-    procedure PartSourceTableViewDescending_WithSubPageViewSorting()
-    // Part: sorting(Score) order(descending). Control: sorting(Rank), no order(). Rank asc 2,4,1,3; Rank desc 3,1,4,2; Score desc 2,3,1,4.
+    procedure PartSourceTableViewDescending_WithSubPageViewSorting_ThePartsViewWins()
+    // Part: sorting(Score) order(descending). Control: sorting(Rank), no order().
+    // The part's view names both halves and both win: Score descending.
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -398,7 +469,7 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.ViewDescSubRank."Entry No.".Value();
         Host.ViewDescSubRank.Next();
         Seq += ',' + Host.ViewDescSubRank."Entry No.".Value();
-        Assert.AreEqual('2,4,1,3', Seq, 'the entry numbers the ViewDescSubRank part shows, in order');
+        Assert.AreEqual('2,3,1,4', Seq, 'the entry numbers the ViewDescSubRank part shows, in order');
 
         Host.Close();
     end;
@@ -426,8 +497,9 @@ codeunit 67950 "SPO Tests"
     end;
 
     [Test]
-    procedure PartOnOpenPageSetCurrentKey_WithSubPageViewSorting()
-    // Part: OnOpenPage SetCurrentKey(Score). Control: sorting(Rank). Rank asc 2,4,1,3; Score asc 4,1,3,2.
+    procedure PartOnOpenPageSetCurrentKey_WithSubPageViewSorting_OnOpenPageWins()
+    // Part: OnOpenPage SetCurrentKey(Score). Control: sorting(Rank). OnOpenPage runs after
+    // the view is applied: Score ascending, not Rank ascending (2,4,1,3).
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -442,14 +514,16 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.KeySubRank."Entry No.".Value();
         Host.KeySubRank.Next();
         Seq += ',' + Host.KeySubRank."Entry No.".Value();
-        Assert.AreEqual('2,4,1,3', Seq, 'the entry numbers the KeySubRank part shows, in order');
+        Assert.AreEqual('4,1,3,2', Seq, 'the entry numbers the KeySubRank part shows, in order');
 
         Host.Close();
     end;
 
     [Test]
-    procedure PartOnOpenPageSetAscending_NoSubPageView()
-    // The control for the OnOpenPage SetCurrentKey(Score) + SetAscending(Score, false) part: Score descending.
+    procedure PartOnOpenPageSetAscending_NoSubPageView_ShowsAscending()
+    // Part: OnOpenPage SetCurrentKey(Score) then SetAscending(Score, false). The part shows
+    // Score ASCENDING, not descending (2,3,1,4): the per-field direction does not reach the
+    // rows a part shows. See ListPageOnOpenPageSetAscending for a top-level page.
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -464,14 +538,15 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.KeyDescNoSub."Entry No.".Value();
         Host.KeyDescNoSub.Next();
         Seq += ',' + Host.KeyDescNoSub."Entry No.".Value();
-        Assert.AreEqual('2,3,1,4', Seq, 'the entry numbers the KeyDescNoSub part shows, in order');
+        Assert.AreEqual('4,1,3,2', Seq, 'the entry numbers the KeyDescNoSub part shows, in order');
 
         Host.Close();
     end;
 
     [Test]
     procedure PartOnOpenPageSetAscending_WithSubPageViewSorting()
-    // Part: OnOpenPage SetCurrentKey(Score) + SetAscending(Score, false). Control: sorting(Rank). Rank asc 2,4,1,3; Rank desc 3,1,4,2; Score desc 2,3,1,4.
+    // Part: as KeyDescNoSub. Control: sorting(Rank). SetCurrentKey(Score) wins, and the
+    // SetAscending is again not shown: Score ascending.
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -486,7 +561,7 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.KeyDescSubRank."Entry No.".Value();
         Host.KeyDescSubRank.Next();
         Seq += ',' + Host.KeyDescSubRank."Entry No.".Value();
-        Assert.AreEqual('2,4,1,3', Seq, 'the entry numbers the KeyDescSubRank part shows, in order');
+        Assert.AreEqual('4,1,3,2', Seq, 'the entry numbers the KeyDescSubRank part shows, in order');
 
         Host.Close();
     end;
@@ -514,8 +589,10 @@ codeunit 67950 "SPO Tests"
     end;
 
     [Test]
-    procedure PartOnOpenPageAscendingFalse_WithSubPageViewSorting()
-    // Part: OnOpenPage Ascending(false) on the primary key. Control: sorting(Rank). Rank asc 2,4,1,3; Rank desc 3,1,4,2; PK desc 4,3,2,1.
+    procedure PartOnOpenPageAscendingFalse_WithSubPageViewSorting_KeyFromViewDirectionFromOnOpenPage()
+    // Part: OnOpenPage Ascending(false), no key. Control: sorting(Rank). The view's key
+    // survives and OnOpenPage's direction applies to it: Rank descending. Neither Rank
+    // ascending (2,4,1,3) nor primary key descending (4,3,2,1).
     var
         Host: TestPage "SPO Host";
         Seq: Text;
@@ -530,8 +607,56 @@ codeunit 67950 "SPO Tests"
         Seq += ',' + Host.DescSubRank."Entry No.".Value();
         Host.DescSubRank.Next();
         Seq += ',' + Host.DescSubRank."Entry No.".Value();
-        Assert.AreEqual('2,4,1,3', Seq, 'the entry numbers the DescSubRank part shows, in order');
+        Assert.AreEqual('3,1,4,2', Seq, 'the entry numbers the DescSubRank part shows, in order');
 
         Host.Close();
+    end;
+
+    [Test]
+    procedure ListPageOnOpenPageAscendingFalse_ShowsDescending()
+    // The control for the next arm, on a top-level list page: OnOpenPage SetCurrentKey(Score)
+    // then Ascending(false) shows Score descending.
+    var
+        ListPage: TestPage "SPO Key Asc False List";
+        Seq: Text;
+    begin
+        Seed();
+        ListPage.OpenView();
+
+        Assert.IsTrue(ListPage.First(), 'the list has a first row');
+        Seq := ListPage."Entry No.".Value();
+        ListPage.Next();
+        Seq += ',' + ListPage."Entry No.".Value();
+        ListPage.Next();
+        Seq += ',' + ListPage."Entry No.".Value();
+        ListPage.Next();
+        Seq += ',' + ListPage."Entry No.".Value();
+        Assert.AreEqual('2,3,1,4', Seq, 'the entry numbers the list page shows, in order');
+
+        ListPage.Close();
+    end;
+
+    [Test]
+    procedure ListPageOnOpenPageSetAscending()
+    // The same question as the KeyDesc part arms, on a top-level list page: OnOpenPage
+    // SetCurrentKey(Score) then SetAscending(Score, false). Score descending is 2,3,1,4.
+    var
+        ListPage: TestPage "SPO Key Desc List";
+        Seq: Text;
+    begin
+        Seed();
+        ListPage.OpenView();
+
+        Assert.IsTrue(ListPage.First(), 'the list has a first row');
+        Seq := ListPage."Entry No.".Value();
+        ListPage.Next();
+        Seq += ',' + ListPage."Entry No.".Value();
+        ListPage.Next();
+        Seq += ',' + ListPage."Entry No.".Value();
+        ListPage.Next();
+        Seq += ',' + ListPage."Entry No.".Value();
+        Assert.AreEqual('4,1,3,2', Seq, 'the entry numbers the list page shows, in order');
+
+        ListPage.Close();
     end;
 }
