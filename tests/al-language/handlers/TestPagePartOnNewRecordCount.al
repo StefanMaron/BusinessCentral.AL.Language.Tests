@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/pagetriggers/devenv-triggers-auto-onnewrecord
 // Scope: in-scope
 // Fixtures used: ONRC Log (60353), ONRC Header (60354), ONRC Line (60355),
-//                ONRC Lines (60356), ONRC Card (60357); shared Assert (60021)
+//                ONRC Lines (60356), ONRC Card (60357), ONRC Line List (67001);
+//                shared Assert (60021)
 //
 /// <summary>
 /// Pins HOW MANY TIMES a subpage part's OnNewRecord trigger runs -- the question codeunit 60996
@@ -364,5 +365,94 @@ codeunit 60358 "ONRC Tests"
             'closing the card must not raise OnNewRecord again');
         Assert.AreEqual(2, LineCountFor('H1'), 'both rows must be written for H1');
         Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
+    end;
+
+    // ARM 6. New() while standing on a draft line reached by Next() on a part that HAS rows.
+    // Arm 4 shows Next() onto the draft line costs exactly 1; this asks whether New() there is
+    // one more new-record step or only commits the row the draft line already started. Exact
+    // delta from the count after Next().
+    [Test]
+    procedure New_OnDraftLineReachedByNext_RunsOnNewRecordOnceMore()
+    var
+        Card: TestPage "ONRC Card";
+        AfterNext: Integer;
+        AfterNew: Integer;
+    begin
+        Initialize();
+        AddLine('H1', 10000, 'seeded');
+        AddLine('H2', 10000, 'foreign');
+
+        OpenCardOn('H1', Card);
+        Assert.IsTrue(Card.Lines.First(), 'the part must land on H1''s seeded line');
+        Assert.IsTrue(Card.Lines.Next(), 'Next() past the last data row must land on the draft line');
+        AfterNext := OnNewRecordCount();
+
+        Card.Lines.New();
+
+        AfterNew := OnNewRecordCount();
+        Assert.AreEqual(AfterNext + 1, AfterNew,
+            'New() on a draft line reached by Next() must raise OnNewRecord exactly once more');
+
+        Card.Lines.Descr.SetValue('typed after New');
+        Card.Close();
+
+        Assert.AreEqual(AfterNew, OnNewRecordCount(),
+            'writing into the row New() started must not raise OnNewRecord again');
+        Assert.AreEqual(2, LineCountFor('H1'), 'the row New() started must be a second line for H1');
+        Assert.AreEqual(1, LineCountFor('H2'), 'H2''s own line must be untouched');
+    end;
+
+    // ARM 7. New() on an EMPTY top-level list page, not a part. The open cost is measured, not
+    // asserted; the claim is the delta New() adds, and that the write after it adds nothing.
+    [Test]
+    procedure ListPage_New_OnEmptyList_RunsOnNewRecordOnceMoreThanTheOpen()
+    var
+        List: TestPage "ONRC Line List";
+        AfterOpen: Integer;
+        AfterNew: Integer;
+    begin
+        Initialize();
+
+        List.OpenEdit();
+        AfterOpen := OnNewRecordCount();
+
+        List.New();
+
+        AfterNew := OnNewRecordCount();
+        Assert.AreEqual(AfterOpen + 1, AfterNew,
+            'New() on an empty list page must raise OnNewRecord exactly once more than opening it did');
+
+        List.Descr.SetValue('typed after New');
+        List.Close();
+
+        Assert.AreEqual(AfterNew, OnNewRecordCount(),
+            'writing into the row New() started must not raise OnNewRecord again');
+        Assert.AreEqual(1, LineCountFor(''), 'exactly one line must have been written');
+    end;
+
+    // ARM 8, the control for arm 7. The same list page with a row, standing on that row: New()
+    // costs exactly one more than whatever opening and landing on the row cost.
+    [Test]
+    procedure ListPage_New_OnDataRow_RunsOnNewRecordExactlyOnce()
+    var
+        List: TestPage "ONRC Line List";
+        OnRow: Integer;
+    begin
+        Initialize();
+        AddLine('', 10000, 'seeded');
+
+        List.OpenEdit();
+        Assert.IsTrue(List.First(), 'the list must land on its seeded row');
+        OnRow := OnNewRecordCount();
+
+        List.New();
+        Assert.AreEqual(OnRow + 1, OnNewRecordCount(),
+            'New() from an existing data row must raise OnNewRecord exactly once');
+
+        List.Descr.SetValue('typed after New');
+        List.Close();
+
+        Assert.AreEqual(OnRow + 1, OnNewRecordCount(), 'the write must not raise OnNewRecord again');
+        Assert.AreEqual(2, LineCountFor(''), 'the row New() started must be a second line');
     end;
 }
