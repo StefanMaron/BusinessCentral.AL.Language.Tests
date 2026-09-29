@@ -28,6 +28,10 @@
 // ONE session. A harness that opens a new session per test codeunit (`al runtests`, one
 // TestRunnerHub connection each) carries nothing across: 67697, armed by 67693, tells 67694
 // which case it is in, and 67694 asserts the matching outcome.
+// Today the real claim (the SingleInstance and held-subscriber arms) is asserted only where both
+// codeunits share a session: BC 27.x Linux legs and the Windows nightly. The 28.x Linux legs (one
+// `al runtests` per codeunit, a fresh NavSession) assert only the new-session branch. If 27.x ever
+// moves to a session per codeunit, no Linux leg asserts the claim, and every leg stays green.
 
 codeunit 67693 "Test SI Bind Boundary Setup"
 {
