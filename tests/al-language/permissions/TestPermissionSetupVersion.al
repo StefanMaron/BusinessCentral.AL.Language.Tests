@@ -11,7 +11,9 @@
 //   - after Commit(), on the same Record variable and on a fresh one;
 //   - not before it, even on a fresh Record variable (the memo is not per variable);
 //   - after an asserterror rolls back a grant the composition had included;
-//   - across a test-method boundary, where the earlier test's transaction ended.
+//   - across a test-method boundary, where the earlier test's transaction ended;
+//   - after a guarded Codeunit.Run whose codeunit composed the set and then failed, and after
+//     one that inserted a grant and succeeded (the run codeunits 67948 and 67949 below).
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
 // That is why the second one does not Commit before its first read, and every other test does.
@@ -138,6 +140,50 @@ codeunit 67947 "Test Perm Setup Version"
         Assert.AreEqual(2, ExpandedPermission.Count(), 'a later test sees the grants it inserted');
     end;
 
+    [Test]
+    procedure ExpandedPermission_FailedGuardedRun_ReReadDropsTheRolledBackGrant()
+    // CLAIM: a guarded Codeunit.Run whose codeunit inserts a grant, composes the set with it and
+    // then raises an error is rolled back, and the next read of the set outside the run answers
+    // only the committed grant -- not the two the failed run composed.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Ok: Boolean;
+    begin
+        Initialize();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+        Commit();
+
+        Ok := Codeunit.Run(Codeunit::"ALT PermVer Failing Run");
+
+        Assert.IsFalse(Ok, 'the run codeunit raised an error');
+        Assert.AreEqual('ALT PermVer run composed 2', GetLastErrorText(), 'inside the run the set was composed with both grants');
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'after the failed run the set answers only the committed grant');
+    end;
+
+    [Test]
+    procedure ExpandedPermission_SucceededGuardedRun_SameVariableSeesTheRunsGrant()
+    // CLAIM: a set composed with one grant before a guarded Codeunit.Run that inserts a second
+    // grant and succeeds answers both grants on the next read of the same Record variable.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Ok: Boolean;
+    begin
+        Initialize();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+        Commit();
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        Ok := Codeunit.Run(Codeunit::"ALT PermVer Granting Run");
+
+        Assert.IsTrue(Ok, 'the run codeunit succeeded');
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'after the successful run the same variable sees both grants');
+    end;
+
     local procedure FilterOnTenantSet(var ExpandedPermission: Record "Expanded Permission")
     var
         NullGuid: Guid;
@@ -190,5 +236,43 @@ codeunit 67947 "Test Perm Setup Version"
         TenantPermission.DeleteAll();
         TenantPermissionSet.SetRange("Role ID", RoleTok);
         TenantPermissionSet.DeleteAll();
+    end;
+}
+
+codeunit 67948 "ALT PermVer Failing Run"
+{
+    // Run by 67947: inserts the second grant, composes the set with it, then fails, so the
+    // guarded Codeunit.Run rolls the grant back. The error text carries the composed count.
+    trigger OnRun()
+    var
+        TenantPermission: Record "Tenant Permission";
+        ExpandedPermission: Record "Expanded Permission";
+        NullGuid: Guid;
+    begin
+        TenantPermission."App ID" := NullGuid;
+        TenantPermission."Role ID" := 'ALT PERMVER TENANT';
+        TenantPermission."Object Type" := TenantPermission."Object Type"::"Table Data";
+        TenantPermission."Object ID" := Database::"ALT Universal";
+        TenantPermission.Insert();
+
+        ExpandedPermission.SetRange("App ID", NullGuid);
+        ExpandedPermission.SetRange("Role ID", 'ALT PERMVER TENANT');
+        Error('ALT PermVer run composed %1', ExpandedPermission.Count());
+    end;
+}
+
+codeunit 67949 "ALT PermVer Granting Run"
+{
+    // Run by 67947: inserts the second grant and succeeds, so the guarded Codeunit.Run commits it.
+    trigger OnRun()
+    var
+        TenantPermission: Record "Tenant Permission";
+        NullGuid: Guid;
+    begin
+        TenantPermission."App ID" := NullGuid;
+        TenantPermission."Role ID" := 'ALT PERMVER TENANT';
+        TenantPermission."Object Type" := TenantPermission."Object Type"::"Table Data";
+        TenantPermission."Object ID" := Database::"ALT Universal";
+        TenantPermission.Insert();
     end;
 }
