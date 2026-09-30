@@ -14,6 +14,7 @@
 //   - across a test-method boundary, where the earlier test's transaction ended.
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
+// That is why the second one does not Commit before its first read, and every other test does.
 codeunit 67947 "Test Perm Setup Version"
 {
     Subtype = Test;
@@ -30,7 +31,7 @@ codeunit 67947 "Test Perm Setup Version"
     var
         ExpandedPermission: Record "Expanded Permission";
     begin
-        Initialize();
+        InitializeAndCommit();
         InsertTenantSet();
         InsertTenantGrant(Database::"ALT Keyed");
 
@@ -51,7 +52,7 @@ codeunit 67947 "Test Perm Setup Version"
         ExpandedPermission: Record "Expanded Permission";
         FreshExpandedPermission: Record "Expanded Permission";
     begin
-        Initialize();
+        InitializeAndCommit();
         InsertTenantSet();
         InsertTenantGrant(Database::"ALT Keyed");
 
@@ -73,7 +74,7 @@ codeunit 67947 "Test Perm Setup Version"
         ExpandedPermission: Record "Expanded Permission";
         FreshExpandedPermission: Record "Expanded Permission";
     begin
-        Initialize();
+        InitializeAndCommit();
         InsertTenantSet();
         InsertTenantGrant(Database::"ALT Keyed");
 
@@ -113,7 +114,7 @@ codeunit 67947 "Test Perm Setup Version"
     var
         ExpandedPermission: Record "Expanded Permission";
     begin
-        Initialize();
+        InitializeAndCommit();
         InsertTenantSet();
         InsertTenantGrant(Database::"ALT Keyed");
 
@@ -166,6 +167,16 @@ codeunit 67947 "Test Perm Setup Version"
         TenantPermission."Object Type" := TenantPermission."Object Type"::"Table Data";
         TenantPermission."Object ID" := TableId;
         TenantPermission.Insert();
+    end;
+
+    local procedure InitializeAndCommit()
+    begin
+        // The composition a previous test made after its last transaction end still answers
+        // this test's first read until a transaction ends: without this Commit, the Commit test
+        // below read 2 where it had inserted one grant, on every cloud leg of corpus run
+        // 36673250565. Ending the transaction here makes this test's first read its own.
+        Initialize();
+        Commit();
     end;
 
     local procedure Initialize()
