@@ -74,11 +74,11 @@ codeunit 67015 "ARPM Probe"
         Trail := '';
     end;
 
-    procedure Note(Event: Text)
+    procedure Note(TriggerName: Text)
     begin
         if Trail <> '' then
             Trail += ',';
-        Trail += Event;
+        Trail += TriggerName;
     end;
 
     procedure Triggers(): Text
