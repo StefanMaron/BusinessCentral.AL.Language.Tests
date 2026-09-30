@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/database/database-commit-method
 // Scope: in-scope (reads a platform virtual table served from permission-set metadata)
-// Fixtures used: ALT Universal, ALT Keyed; writes one Tenant Permission Set and its Tenant
-//   Permission rows, removed by Initialize()
+// Fixtures used: ALT Universal, ALT Keyed; writes one Tenant Permission Set, its Tenant
+//   Permission rows and the Company rows 'ALT PERMVER CO' / 'ALT PERMVER CO2', removed by
+//   Initialize()
 // BC versions: 27.5+
 //
 // "Test Metadata Expanded Perm" (67945) pins that a grant inserted AFTER a set's permissions
@@ -14,6 +15,8 @@
 //   - across a test-method boundary, where the earlier test's transaction ended;
 //   - after a guarded Codeunit.Run whose codeunit composed the set and then failed, and after
 //     one that inserted a grant and succeeded (the run codeunits 67948 and 67949 below).
+//   - after a Company insert, rename or delete in the same transaction, before any Commit
+//     (the platform recomputes on a write to the Company table, not only at transaction end).
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
 // That is why the second one does not Commit before its first read, and every other test does.
@@ -25,6 +28,8 @@ codeunit 67947 "Test Perm Setup Version"
     var
         Assert: Codeunit Assert;
         RoleTok: Label 'ALT PERMVER TENANT', Locked = true;
+        CompanyTok: Label 'ALT PERMVER CO', Locked = true;
+        RenamedCompanyTok: Label 'ALT PERMVER CO2', Locked = true;
 
     [Test]
     procedure ExpandedPermission_Commit_SameVariableSeesTheLaterGrant()
@@ -184,6 +189,95 @@ codeunit 67947 "Test Perm Setup Version"
         Assert.AreEqual(2, ExpandedPermission.Count(), 'after the successful run the same variable sees both grants');
     end;
 
+    [Test]
+    procedure ExpandedPermission_CompanyInsert_SameTransactionSeesTheLaterGrant()
+    // CLAIM: inserting a Company after a grant that followed the composition makes the next
+    // read of the set, in the same transaction, answer that grant.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+    begin
+        InitializeAndCommit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        InsertCompany(CompanyTok);
+
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'after the Company insert the set answers both grants');
+        RemoveCompanies();
+    end;
+
+    [Test]
+    procedure ExpandedPermission_CompanyRename_SameTransactionSeesTheLaterGrant()
+    // CLAIM: renaming a Company after a grant that followed the composition makes the next
+    // read of the set, in the same transaction, answer that grant.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Company: Record Company;
+    begin
+        Initialize();
+        InsertCompany(CompanyTok);
+        Commit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        Company.Get(CompanyTok);
+        Company.Rename(RenamedCompanyTok);
+
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'after the Company rename the set answers both grants');
+        RemoveCompanies();
+    end;
+
+    [Test]
+    procedure ExpandedPermission_CompanyDelete_SameTransactionSeesTheLaterGrant()
+    // CLAIM: deleting a Company after a grant that followed the composition makes the next
+    // read of the set, in the same transaction, answer that grant.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Company: Record Company;
+    begin
+        Initialize();
+        InsertCompany(CompanyTok);
+        Commit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        Company.Get(CompanyTok);
+        Company.Delete();
+
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'after the Company delete the set answers both grants');
+    end;
+
+    local procedure InsertCompany(Name: Text[30])
+    var
+        Company: Record Company;
+    begin
+        Company.Init();
+        Company.Name := Name;
+        Company.Insert();
+    end;
+
+    local procedure RemoveCompanies()
+    var
+        Company: Record Company;
+    begin
+        if Company.Get(CompanyTok) then
+            Company.Delete();
+        if Company.Get(RenamedCompanyTok) then
+            Company.Delete();
+    end;
+
     local procedure FilterOnTenantSet(var ExpandedPermission: Record "Expanded Permission")
     var
         NullGuid: Guid;
@@ -230,12 +324,13 @@ codeunit 67947 "Test Perm Setup Version"
         TenantPermissionSet: Record "Tenant Permission Set";
         TenantPermission: Record "Tenant Permission";
     begin
-        // The only rows this codeunit writes are the tenant set and its grants; a test that
-        // commits leaves them behind, so each test removes them first.
+        // The rows this codeunit writes are the tenant set, its grants and the Company rows; a
+        // test that commits leaves them behind, so each test removes them first.
         TenantPermission.SetRange("Role ID", RoleTok);
         TenantPermission.DeleteAll();
         TenantPermissionSet.SetRange("Role ID", RoleTok);
         TenantPermissionSet.DeleteAll();
+        RemoveCompanies();
     end;
 }
 
