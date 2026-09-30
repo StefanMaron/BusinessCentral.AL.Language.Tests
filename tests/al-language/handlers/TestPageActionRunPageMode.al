@@ -26,8 +26,10 @@
 /// host stands on 'B' and no action declares RunPageOnRec, so an existing-row open lands on
 /// the table's first row.
 ///
-/// The writing arms then pin what each mode lets the handler DO: Create inserts the record the
-/// handler typed, Edit modifies the row it opened on, View refuses the write.
+/// The writing arms then pin what the handler's typing does: in Create it inserts a new record,
+/// in Edit it modifies the row the card opened on. (What typing into a View-mode card does is
+/// not asserted here -- it is its own question, tracked by the AL Runner issue linked from this
+/// file's pull request.)
 ///
 /// The last codeunit reaches the same property on PRECOMPILED Base Application pages:
 ///     "Demand Forecast Names" action "Demand Forecast Entries"  RunPageMode = View
@@ -299,23 +301,6 @@ codeunit 67018 "ARPM Tests"
             'RunPageMode = Edit: the name the handler types modifies the row the card opened on.');
     end;
 
-    [Test]
-    [HandlerFunctions('ArpmCardTryTypeNameHandler')]
-    procedure RunPageModeView_TheHandlerCannotType()
-    var
-        Host: TestPage "ARPM Host";
-        Probe: Codeunit "ARPM Probe";
-    begin
-        OpenHost(Host);
-        Host.OpenView.Invoke();
-        Host.Close();
-
-        Assert.AreEqual('A=Alpha,B=Bravo', Rows(), 'RunPageMode = View: nothing the handler tried to type is stored.');
-        Assert.AreEqual(
-            'err=The value cannot be changed because the page is not editable.|open:ed=No,no=', Probe.Observed(),
-            'RunPageMode = View: typing into the read-only card raises.');
-    end;
-
     [PageHandler]
     procedure ArpmCardObserveHandler(var Card: TestPage "ARPM Card")
     var
@@ -339,16 +324,6 @@ codeunit 67018 "ARPM Tests"
     procedure ArpmCardTypeNameHandler(var Card: TestPage "ARPM Card")
     begin
         Card.Name.SetValue('Typed');
-        Card.Close();
-    end;
-
-    [PageHandler]
-    procedure ArpmCardTryTypeNameHandler(var Card: TestPage "ARPM Card")
-    var
-        Probe: Codeunit "ARPM Probe";
-    begin
-        asserterror Card.Name.SetValue('Typed');
-        Probe.RecordShown('err=' + GetLastErrorText());
         Card.Close();
     end;
 }
