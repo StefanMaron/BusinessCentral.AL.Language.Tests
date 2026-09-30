@@ -362,15 +362,16 @@ codeunit 68015 "RSV Tests"
     end;
 
     [Test]
-    procedure OpenView_PageVariableControl_IsNotEditable()
-    // A control bound to a page variable rather than to a field of Rec.
+    procedure OpenView_PageVariableControl_StaysEditable()
+    // A control bound to a page variable rather than to a field of Rec: OpenView makes the
+    // page and its Rec-bound controls read-only, and leaves this one editable.
     var
         Card: TestPage "RSV Card";
     begin
         Seed();
         Card.OpenView();
-        Assert.AreEqual('pageEd=No;ctlEd=No', Editability(Card.Editable(), Card.NoteCtl.Editable()),
-            'A page-variable control on a page opened with OpenView.');
+        Assert.AreEqual('pageEd=No;ctlEd=Yes', Editability(Card.Editable(), Card.NoteCtl.Editable()),
+            'A page-variable control on a page opened with OpenView stays editable.');
         Card.Close();
     end;
 
