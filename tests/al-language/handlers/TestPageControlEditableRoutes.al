@@ -29,7 +29,11 @@
 /// leg (run 36682070555) and on Windows 28.4.53241.55369 (run 36682070188), and now assert what
 /// BC printed: lookup mode makes a list read-only, page-variable control included, and leaves a
 /// card editable; CurrPage.Editable(true) in OnOpenPage does not widen an OpenView card;
-/// CurrPage.Editable(false) there narrows a page-variable control too.
+/// CurrPage.Editable(false) there narrows a page-variable control too. The second head
+/// (ee15ce13) predicted a worksheet read-only in lookup mode; every cloud leg (run 36685203105)
+/// and Windows 28.4.53241.55369 (run 36685799115) printed it editable, like the card, the
+/// document and the ListPlus page. Only the list is
+/// read-only.
 ///
 /// Written by agent stma-auto-5, an automated implementation agent acting on the account
 /// holder's behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#5012.
@@ -475,7 +479,7 @@ codeunit 68024 "CER Tests"
         Seed();
         SheetPage.LookupMode(true);
         SheetPage.RunModal();
-        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=No', Probe.Recorded(),
+        Assert.AreEqual('pageEd=Yes;ctlEd=Yes;varEd=Yes', Probe.Recorded(),
             'A worksheet handed to a ModalPageHandler in lookup mode.');
     end;
 
