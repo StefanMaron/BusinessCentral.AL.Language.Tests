@@ -31,6 +31,12 @@
 /// not asserted here -- it is its own question, tracked by the AL Runner issue linked from this
 /// file's pull request.)
 ///
+/// The Triggers arms (AL Runner issue StefanMaron/BusinessCentral.AL.Runner#5005, also by
+/// stma-auto-3) record which of the card's own triggers ran, in order -- OnOpenPage as 'open',
+/// OnNewRecord as 'new:no=<key>' -- for a Create-mode open answered by a handler, by
+/// TestPage.Trap(), and by nothing at all, with an Edit-mode open answered by nothing as the
+/// negative control.
+///
 /// The last codeunit reaches the same property on PRECOMPILED Base Application pages:
 ///     "Demand Forecast Names" action "Demand Forecast Entries"  RunPageMode = View
 ///     "Config Templates"      action "NewConfigTemplate"        RunPageMode = Create
@@ -59,11 +65,25 @@ codeunit 67015 "ARPM Probe"
     var
         OpenState: Text;
         Shown: Text;
+        Trail: Text;
 
     procedure Reset()
     begin
         OpenState := '';
         Shown := '';
+        Trail := '';
+    end;
+
+    procedure Note(Event: Text)
+    begin
+        if Trail <> '' then
+            Trail += ',';
+        Trail += Event;
+    end;
+
+    procedure Triggers(): Text
+    begin
+        exit(Trail);
     end;
 
     procedure RecordOpenState(NewState: Text)
@@ -103,6 +123,14 @@ page 67016 "ARPM Card"
         Probe: Codeunit "ARPM Probe";
     begin
         Probe.RecordOpenState('open:ed=' + Format(CurrPage.Editable()) + ',no=' + Rec."No.");
+        Probe.Note('open');
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Probe: Codeunit "ARPM Probe";
+    begin
+        Probe.Note('new:no=' + Rec."No.");
     end;
 }
 
@@ -289,6 +317,78 @@ codeunit 67018 "ARPM Tests"
         Assert.AreEqual(
             '|open:ed=No,no=', Probe.Observed(),
             'RunPageMode = View with no page handler bound: the card''s OnOpenPage still sees it read-only.');
+    end;
+
+    [Test]
+    [HandlerFunctions('ArpmCardObserveHandler')]
+    procedure RunPageModeCreate_HandlerBound_OnNewRecordRuns()
+    // The control for the no-handler arms below: with a handler bound, the card's triggers in
+    // the order they ran. It is what shows the probe sees OnNewRecord at all.
+    var
+        Host: TestPage "ARPM Host";
+        Probe: Codeunit "ARPM Probe";
+    begin
+        OpenHost(Host);
+        Host.OpenCreate.Invoke();
+        Host.Close();
+
+        Assert.AreEqual('open,new:no=', Probe.Triggers(),
+            'RunPageMode = Create with a page handler bound: the card''s triggers, in order.');
+    end;
+
+    [Test]
+    procedure RunPageModeCreate_NoHandlerBound_Triggers()
+    // AL Runner issue #5005: nothing is bound to answer the card an action opens in Create mode.
+    // Which of the card's triggers run, in order, and whether anything is inserted.
+    var
+        Host: TestPage "ARPM Host";
+        Probe: Codeunit "ARPM Probe";
+    begin
+        OpenHost(Host);
+        Host.OpenCreate.Invoke();
+        Host.Close();
+
+        Assert.AreEqual('open,new:no=', Probe.Triggers(),
+            'RunPageMode = Create with no page handler bound: the card''s triggers, in order.');
+        Assert.AreEqual('A=Alpha,B=Bravo', Rows(),
+            'RunPageMode = Create with no page handler bound inserts nothing.');
+    end;
+
+    [Test]
+    procedure RunPageModeEdit_NoHandlerBound_Triggers()
+    // The negative control for the arm above: Edit mode, nothing bound.
+    var
+        Host: TestPage "ARPM Host";
+        Probe: Codeunit "ARPM Probe";
+    begin
+        OpenHost(Host);
+        Host.OpenEdit.Invoke();
+        Host.Close();
+
+        Assert.AreEqual('open', Probe.Triggers(),
+            'RunPageMode = Edit with no page handler bound: the card''s triggers, in order.');
+    end;
+
+    [Test]
+    procedure RunPageModeCreate_Trapped_Triggers()
+    // The card an action opens in Create mode, caught by TestPage.Trap() rather than a handler.
+    var
+        Host: TestPage "ARPM Host";
+        Card: TestPage "ARPM Card";
+        Probe: Codeunit "ARPM Probe";
+        Shown: Text;
+    begin
+        OpenHost(Host);
+        Card.Trap();
+        Host.OpenCreate.Invoke();
+        Shown := 'ed=' + Format(Card.Editable()) + ';no=' + Card."No.".Value();
+        Card.Close();
+        Host.Close();
+
+        Assert.AreEqual('ed=Yes;no=|open,new:no=', Shown + '|' + Probe.Triggers(),
+            'RunPageMode = Create caught by TestPage.Trap(): what the card shows, then its triggers in order.');
+        Assert.AreEqual('A=Alpha,B=Bravo', Rows(),
+            'RunPageMode = Create caught by TestPage.Trap() and closed untouched inserts nothing.');
     end;
 
     [Test]
