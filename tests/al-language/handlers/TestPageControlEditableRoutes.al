@@ -6,7 +6,8 @@
 // Scope: in-scope
 // Fixtures used: CER Row (68016), CER Card (68017), CER Part (68018), CER Host (68019),
 //                CER List (68020), CER ReEdit Card (68021), CER Lock Card (68022),
-//                CER Probe (68023), Assert (60021)
+//                CER Probe (68023), CER Worksheet (68025), CER Document (68026),
+//                CER ListPlus (68027), Assert (60021)
 //
 /// <summary>
 /// What a control's Editable() answers on the page routes codeunit 68015 "RSV Tests" did not
@@ -18,10 +19,17 @@
 ///
 /// The routes:
 ///     a subpage part, the host opened with OpenEdit(), OpenView(), or OpenEdit() then View()
-///     a card and a list handed to a [ModalPageHandler] with LookupMode(true), and without it
+///     a list, a card, a worksheet, a document and a ListPlus page handed to a
+///     [ModalPageHandler] with LookupMode(true); the list also without it
 ///     a card opened by an action with RunPageMode = View, read in the [PageHandler]
 ///     a card whose OnOpenPage calls CurrPage.Editable(true), opened with OpenView()
 ///     a card whose OnOpenPage calls CurrPage.Editable(false), opened with OpenEdit()
+///
+/// The first head (89c7f9a8) asserted predictions. Four were wrong, identically on every cloud
+/// leg (run 36682070555) and on Windows 28.4.53241.55369 (run 36682070188), and now assert what
+/// BC printed: lookup mode makes a list read-only, page-variable control included, and leaves a
+/// card editable; CurrPage.Editable(true) in OnOpenPage does not widen an OpenView card;
+/// CurrPage.Editable(false) there narrows a page-variable control too.
 ///
 /// Written by agent stma-auto-5, an automated implementation agent acting on the account
 /// holder's behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#5012.
@@ -220,6 +228,90 @@ page 68022 "CER Lock Card"
         Note: Text[50];
 }
 
+page 68025 "CER Worksheet"
+{
+    PageType = Worksheet;
+    SourceTable = "CER Row";
+    ApplicationArea = All;
+    Caption = 'CER Worksheet';
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+                field(NoteCtl; Note)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Note';
+                }
+            }
+        }
+    }
+
+    var
+        Note: Text[50];
+}
+
+page 68026 "CER Document"
+{
+    PageType = Document;
+    SourceTable = "CER Row";
+    ApplicationArea = All;
+    Caption = 'CER Document';
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+                field(NoteCtl; Note)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Note';
+                }
+            }
+        }
+    }
+
+    var
+        Note: Text[50];
+}
+
+page 68027 "CER ListPlus"
+{
+    PageType = ListPlus;
+    SourceTable = "CER Row";
+    ApplicationArea = All;
+    Caption = 'CER ListPlus';
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+                field(NoteCtl; Note)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Note';
+                }
+            }
+        }
+    }
+
+    var
+        Note: Text[50];
+}
+
 codeunit 68023 "CER Probe"
 {
     SingleInstance = true;
@@ -355,7 +447,7 @@ codeunit 68024 "CER Tests"
         Seed();
         ListPage.LookupMode(true);
         ListPage.RunModal();
-        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=Yes', Probe.Recorded(),
+        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=No', Probe.Recorded(),
             'A list handed to a ModalPageHandler in lookup mode.');
     end;
 
@@ -369,8 +461,50 @@ codeunit 68024 "CER Tests"
         Seed();
         CardPage.LookupMode(true);
         CardPage.RunModal();
-        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=Yes', Probe.Recorded(),
+        Assert.AreEqual('pageEd=Yes;ctlEd=Yes;varEd=Yes', Probe.Recorded(),
             'A card handed to a ModalPageHandler in lookup mode.');
+    end;
+
+    [Test]
+    [HandlerFunctions('WorksheetModalHandler')]
+    procedure Worksheet_RunModal_LookupMode()
+    var
+        SheetPage: Page "CER Worksheet";
+        Probe: Codeunit "CER Probe";
+    begin
+        Seed();
+        SheetPage.LookupMode(true);
+        SheetPage.RunModal();
+        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=No', Probe.Recorded(),
+            'A worksheet handed to a ModalPageHandler in lookup mode.');
+    end;
+
+    [Test]
+    [HandlerFunctions('DocumentModalHandler')]
+    procedure Document_RunModal_LookupMode()
+    var
+        DocPage: Page "CER Document";
+        Probe: Codeunit "CER Probe";
+    begin
+        Seed();
+        DocPage.LookupMode(true);
+        DocPage.RunModal();
+        Assert.AreEqual('pageEd=Yes;ctlEd=Yes;varEd=Yes', Probe.Recorded(),
+            'A document page handed to a ModalPageHandler in lookup mode.');
+    end;
+
+    [Test]
+    [HandlerFunctions('ListPlusModalHandler')]
+    procedure ListPlus_RunModal_LookupMode()
+    var
+        PlusPage: Page "CER ListPlus";
+        Probe: Codeunit "CER Probe";
+    begin
+        Seed();
+        PlusPage.LookupMode(true);
+        PlusPage.RunModal();
+        Assert.AreEqual('pageEd=Yes;ctlEd=Yes;varEd=Yes', Probe.Recorded(),
+            'A ListPlus page handed to a ModalPageHandler in lookup mode.');
     end;
 
     // ---- An action with RunPageMode = View ----------------------------------------------------
@@ -400,7 +534,7 @@ codeunit 68024 "CER Tests"
     begin
         Seed();
         Card.OpenView();
-        Assert.AreEqual('pageEd=Yes;ctlEd=Yes;varEd=Yes', Editability(Card.Editable(), Card.Name.Editable(), Card.NoteCtl.Editable()),
+        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=Yes', Editability(Card.Editable(), Card.Name.Editable(), Card.NoteCtl.Editable()),
             'OnOpenPage calls CurrPage.Editable(true) on a card opened with OpenView.');
         Card.Close();
     end;
@@ -412,7 +546,7 @@ codeunit 68024 "CER Tests"
     begin
         Seed();
         Card.OpenEdit();
-        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=Yes', Editability(Card.Editable(), Card.Name.Editable(), Card.NoteCtl.Editable()),
+        Assert.AreEqual('pageEd=No;ctlEd=No;varEd=No', Editability(Card.Editable(), Card.Name.Editable(), Card.NoteCtl.Editable()),
             'OnOpenPage calls CurrPage.Editable(false) on a card opened with OpenEdit.');
         Card.Close();
     end;
@@ -434,6 +568,31 @@ codeunit 68024 "CER Tests"
         Probe: Codeunit "CER Probe";
     begin
         Probe.Save(Editability(CardPage.Editable(), CardPage.Name.Editable(), CardPage.NoteCtl.Editable()));
+    end;
+
+    [ModalPageHandler]
+    procedure WorksheetModalHandler(var SheetPage: TestPage "CER Worksheet")
+    var
+        Probe: Codeunit "CER Probe";
+    begin
+        SheetPage.First();
+        Probe.Save(Editability(SheetPage.Editable(), SheetPage.Name.Editable(), SheetPage.NoteCtl.Editable()));
+    end;
+
+    [ModalPageHandler]
+    procedure DocumentModalHandler(var DocPage: TestPage "CER Document")
+    var
+        Probe: Codeunit "CER Probe";
+    begin
+        Probe.Save(Editability(DocPage.Editable(), DocPage.Name.Editable(), DocPage.NoteCtl.Editable()));
+    end;
+
+    [ModalPageHandler]
+    procedure ListPlusModalHandler(var PlusPage: TestPage "CER ListPlus")
+    var
+        Probe: Codeunit "CER Probe";
+    begin
+        Probe.Save(Editability(PlusPage.Editable(), PlusPage.Name.Editable(), PlusPage.NoteCtl.Editable()));
     end;
 
     [PageHandler]
