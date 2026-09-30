@@ -274,6 +274,24 @@ codeunit 67018 "ARPM Tests"
     end;
 
     [Test]
+    procedure RunPageModeView_NoHandlerBound_OnOpenPageSeesTheCardReadOnly()
+    // Nothing is bound to answer the opened card. A RunObject action still opens it and runs its
+    // OnOpenPage before BC finds no handler, and the invoke returns normally (codeunit 60285).
+    // What that OnOpenPage sees is the mode: the handler never runs, so Shown stays empty.
+    var
+        Host: TestPage "ARPM Host";
+        Probe: Codeunit "ARPM Probe";
+    begin
+        OpenHost(Host);
+        Host.OpenView.Invoke();
+        Host.Close();
+
+        Assert.AreEqual(
+            '|open:ed=No,no=', Probe.Observed(),
+            'RunPageMode = View with no page handler bound: the card''s OnOpenPage still sees it read-only.');
+    end;
+
+    [Test]
     [HandlerFunctions('ArpmCardTypeHandler')]
     procedure RunPageModeCreate_WhatTheHandlerTypesIsInserted()
     var
