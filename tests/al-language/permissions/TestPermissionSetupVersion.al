@@ -10,6 +10,7 @@
 // This codeunit pins when that composition is recomputed:
 //   - after Commit(), on the same Record variable and on a fresh one;
 //   - not before it, even on a fresh Record variable (the memo is not per variable);
+//   - after an asserterror rolls back a grant the composition had included;
 //   - across a test-method boundary, where the earlier test's transaction ended.
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
@@ -83,6 +84,27 @@ codeunit 67947 "Test Perm Setup Version"
 
         FilterOnTenantSet(FreshExpandedPermission);
         Assert.AreEqual(1, FreshExpandedPermission.Count(), 'without Commit a fresh variable answers the composed set');
+    end;
+
+    [Test]
+    procedure ExpandedPermission_AssertErrorRollback_ReReadDropsTheRolledBackGrant()
+    // CLAIM: a set composed with a grant that an asserterror then rolls back is recomputed on
+    // the next read -- it answers the one committed grant, not the two it was composed with.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+    begin
+        Initialize();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+        Commit();
+
+        InsertTenantGrant(Database::"ALT Universal");
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'the set is composed with the committed and the pending grant');
+
+        asserterror Error('roll back the pending grant');
+
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'after the rollback the set answers only the committed grant');
     end;
 
     [Test]
