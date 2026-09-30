@@ -122,6 +122,11 @@ page 68012 "RSV Card"
                     Probe.Log('p');
                 end;
             }
+            field(NoteCtl; Note)
+            {
+                ApplicationArea = All;
+                Caption = 'Note';
+            }
             field(Locked; Rec.Locked)
             {
                 ApplicationArea = All;
@@ -136,6 +141,9 @@ page 68012 "RSV Card"
             }
         }
     }
+
+    var
+        Note: Text[50];
 }
 
 page 68013 "RSV Locked Card"
@@ -351,6 +359,45 @@ codeunit 68015 "RSV Tests"
         Assert.AreEqual(
             'pageEd=Yes;ctlEd=No;err=;valErrs=0;shown=Typed;now=A=Alpha/LA,B=Bravo/LB;closed=A=Alpha/Typed,B=Bravo/LB;log=tp', Observed(After),
             'SetValue on a control declaring Editable = false, on a page opened with OpenEdit.');
+    end;
+
+    [Test]
+    procedure OpenView_PageVariableControl_IsNotEditable()
+    // A control bound to a page variable rather than to a field of Rec.
+    var
+        Card: TestPage "RSV Card";
+    begin
+        Seed();
+        Card.OpenView();
+        Assert.AreEqual('pageEd=No;ctlEd=No', Editability(Card.Editable(), Card.NoteCtl.Editable()),
+            'A page-variable control on a page opened with OpenView.');
+        Card.Close();
+    end;
+
+    [Test]
+    procedure OpenView_ThenEditAction_ControlBecomesEditable()
+    var
+        Card: TestPage "RSV Card";
+    begin
+        Seed();
+        Card.OpenView();
+        Card.Edit().Invoke();
+        Assert.AreEqual('pageEd=Yes;ctlEd=Yes', Editability(Card.Editable(), Card.Name.Editable()),
+            'The built-in Edit action switches an OpenView card to editable, controls included.');
+        Card.Close();
+    end;
+
+    [Test]
+    procedure OpenEdit_ThenViewAction_ControlBecomesReadOnly()
+    var
+        Card: TestPage "RSV Card";
+    begin
+        Seed();
+        Card.OpenEdit();
+        Card.View().Invoke();
+        Assert.AreEqual('pageEd=No;ctlEd=No', Editability(Card.Editable(), Card.Name.Editable()),
+            'The built-in View action switches an OpenEdit card to read-only, controls included.');
+        Card.Close();
     end;
 
     [PageHandler]
