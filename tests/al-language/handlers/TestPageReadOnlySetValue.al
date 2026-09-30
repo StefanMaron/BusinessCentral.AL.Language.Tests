@@ -14,13 +14,13 @@
 ///     Editable = false on the page
 ///     Editable = false on the control, on a page opened with OpenEdit()
 ///
-/// Every arm types under asserterror and asserts ONE string carrying:
+/// Every arm types WITHOUT asserterror and asserts ONE string carrying:
 ///     pageEd=  TestPage.Editable() before typing
 ///     ctlEd=   the typed control's Editable() before typing
-///     err=     GetLastErrorText() after the asserterror
-///     code=    GetLastErrorCode()
-///     shown=   what the control reads back straight after the failed SetValue
-///     now=     the table's rows straight after the failed SetValue, before the page closes
+///     err=     GetLastErrorText() after the SetValue (cleared just before it)
+///     valErrs= TestPage.ValidationErrorCount() after the SetValue
+///     shown=   what the control reads back straight after the SetValue
+///     now=     the table's rows straight after the SetValue, before the page closes
 ///     closed=  the table's rows after the page has closed
 ///     log=     which OnValidate triggers ran (t = the table field's, p = the page control's)
 /// so a failure prints everything BC did rather than stopping at the first difference.
@@ -242,12 +242,12 @@ codeunit 68015 "RSV Tests"
 
     local procedure Editability(PageEditable: Boolean; ControlEditable: Boolean): Text
     begin
-        exit('pageEd=' + Format(PageEditable) + ';ctlEd=' + Format(ControlEditable) + ';');
+        exit('pageEd=' + Format(PageEditable) + ';ctlEd=' + Format(ControlEditable));
     end;
 
-    local procedure AfterFailedSetValue(ShownValue: Text): Text
+    local procedure AfterSetValue(ShownValue: Text; ValidationErrors: Integer): Text
     begin
-        exit('err=' + GetLastErrorText() + ';code=' + GetLastErrorCode() +
+        exit(';err=' + GetLastErrorText() + ';valErrs=' + Format(ValidationErrors) +
              ';shown=' + ShownValue + ';now=' + Rows());
     end;
 
@@ -268,11 +268,13 @@ codeunit 68015 "RSV Tests"
         Seed();
         Card.OpenEdit();
         After := Editability(Card.Editable(), Card.Name.Editable());
+        ClearLastError();
         Card.Name.SetValue('Typed');
-        After += 'shown=' + Card.Name.Value() + ';now=' + Rows();
+        After += AfterSetValue(Card.Name.Value(), Card.ValidationErrorCount());
         Card.Close();
 
-        Assert.AreEqual('?', Observed(After),
+        Assert.AreEqual(
+            'pageEd=Yes;ctlEd=Yes;err=;valErrs=0;shown=Typed;now=A=Alpha/LA,B=Bravo/LB;closed=A=Typed/LA,B=Bravo/LB;log=tp', Observed(After),
             'SetValue on an editable control of a page opened with OpenEdit.');
     end;
 
@@ -285,11 +287,13 @@ codeunit 68015 "RSV Tests"
         Seed();
         Card.OpenView();
         After := Editability(Card.Editable(), Card.Name.Editable());
-        asserterror Card.Name.SetValue('Typed');
-        After += AfterFailedSetValue(Card.Name.Value());
+        ClearLastError();
+        Card.Name.SetValue('Typed');
+        After += AfterSetValue(Card.Name.Value(), Card.ValidationErrorCount());
         Card.Close();
 
-        Assert.AreEqual('?', Observed(After),
+        Assert.AreEqual(
+            'pageEd=No;ctlEd=No;err=;valErrs=0;shown=Typed;now=A=Alpha/LA,B=Bravo/LB;closed=A=Typed/LA,B=Bravo/LB;log=tp', Observed(After),
             'SetValue on a page opened with OpenView.');
     end;
 
@@ -306,7 +310,8 @@ codeunit 68015 "RSV Tests"
         Host.OpenCardView.Invoke();
         Host.Close();
 
-        Assert.AreEqual('?', Observed(Probe.GetShown()),
+        Assert.AreEqual(
+            'pageEd=No;ctlEd=No;err=;valErrs=0;shown=Typed;now=A=Alpha/LA,B=Bravo/LB;closed=A=Typed/LA,B=Bravo/LB;log=tp', Observed(Probe.GetShown()),
             'SetValue on a card opened by an action with RunPageMode = View.');
     end;
 
@@ -319,11 +324,13 @@ codeunit 68015 "RSV Tests"
         Seed();
         Card.OpenEdit();
         After := Editability(Card.Editable(), Card.Name.Editable());
-        asserterror Card.Name.SetValue('Typed');
-        After += AfterFailedSetValue(Card.Name.Value());
+        ClearLastError();
+        Card.Name.SetValue('Typed');
+        After += AfterSetValue(Card.Name.Value(), Card.ValidationErrorCount());
         Card.Close();
 
-        Assert.AreEqual('?', Observed(After),
+        Assert.AreEqual(
+            'pageEd=No;ctlEd=No;err=;valErrs=0;shown=Typed;now=A=Alpha/LA,B=Bravo/LB;closed=A=Typed/LA,B=Bravo/LB;log=tp', Observed(After),
             'SetValue on a page declaring Editable = false, opened with OpenEdit.');
     end;
 
@@ -336,11 +343,13 @@ codeunit 68015 "RSV Tests"
         Seed();
         Card.OpenEdit();
         After := Editability(Card.Editable(), Card.Locked.Editable());
-        asserterror Card.Locked.SetValue('Typed');
-        After += AfterFailedSetValue(Card.Locked.Value());
+        ClearLastError();
+        Card.Locked.SetValue('Typed');
+        After += AfterSetValue(Card.Locked.Value(), Card.ValidationErrorCount());
         Card.Close();
 
-        Assert.AreEqual('?', Observed(After),
+        Assert.AreEqual(
+            'pageEd=Yes;ctlEd=No;err=;valErrs=0;shown=Typed;now=A=Alpha/LA,B=Bravo/LB;closed=A=Alpha/Typed,B=Bravo/LB;log=tp', Observed(After),
             'SetValue on a control declaring Editable = false, on a page opened with OpenEdit.');
     end;
 
@@ -348,11 +357,13 @@ codeunit 68015 "RSV Tests"
     procedure RsvCardTypeHandler(var Card: TestPage "RSV Card")
     var
         Probe: Codeunit "RSV Probe";
-        Before: Text;
+        After: Text;
     begin
-        Before := Editability(Card.Editable(), Card.Name.Editable());
-        asserterror Card.Name.SetValue('Typed');
-        Probe.RecordShown(Before + AfterFailedSetValue(Card.Name.Value()));
+        After := Editability(Card.Editable(), Card.Name.Editable());
+        ClearLastError();
+        Card.Name.SetValue('Typed');
+        After += AfterSetValue(Card.Name.Value(), Card.ValidationErrorCount());
+        Probe.RecordShown(After);
         Card.Close();
     end;
 }
