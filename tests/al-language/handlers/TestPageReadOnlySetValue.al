@@ -15,6 +15,8 @@
 ///     Editable = false on the control, on a page opened with OpenEdit()
 ///
 /// Every arm types under asserterror and asserts ONE string carrying:
+///     pageEd=  TestPage.Editable() before typing
+///     ctlEd=   the typed control's Editable() before typing
 ///     err=     GetLastErrorText() after the asserterror
 ///     code=    GetLastErrorCode()
 ///     shown=   what the control reads back straight after the failed SetValue
@@ -238,6 +240,11 @@ codeunit 68015 "RSV Tests"
         exit(Result);
     end;
 
+    local procedure Editability(PageEditable: Boolean; ControlEditable: Boolean): Text
+    begin
+        exit('pageEd=' + Format(PageEditable) + ';ctlEd=' + Format(ControlEditable) + ';');
+    end;
+
     local procedure AfterFailedSetValue(ShownValue: Text): Text
     begin
         exit('err=' + GetLastErrorText() + ';code=' + GetLastErrorCode() +
@@ -260,8 +267,9 @@ codeunit 68015 "RSV Tests"
     begin
         Seed();
         Card.OpenEdit();
+        After := Editability(Card.Editable(), Card.Name.Editable());
         Card.Name.SetValue('Typed');
-        After := 'shown=' + Card.Name.Value() + ';now=' + Rows();
+        After += 'shown=' + Card.Name.Value() + ';now=' + Rows();
         Card.Close();
 
         Assert.AreEqual('?', Observed(After),
@@ -276,8 +284,9 @@ codeunit 68015 "RSV Tests"
     begin
         Seed();
         Card.OpenView();
+        After := Editability(Card.Editable(), Card.Name.Editable());
         asserterror Card.Name.SetValue('Typed');
-        After := AfterFailedSetValue(Card.Name.Value());
+        After += AfterFailedSetValue(Card.Name.Value());
         Card.Close();
 
         Assert.AreEqual('?', Observed(After),
@@ -309,8 +318,9 @@ codeunit 68015 "RSV Tests"
     begin
         Seed();
         Card.OpenEdit();
+        After := Editability(Card.Editable(), Card.Name.Editable());
         asserterror Card.Name.SetValue('Typed');
-        After := AfterFailedSetValue(Card.Name.Value());
+        After += AfterFailedSetValue(Card.Name.Value());
         Card.Close();
 
         Assert.AreEqual('?', Observed(After),
@@ -325,8 +335,9 @@ codeunit 68015 "RSV Tests"
     begin
         Seed();
         Card.OpenEdit();
+        After := Editability(Card.Editable(), Card.Locked.Editable());
         asserterror Card.Locked.SetValue('Typed');
-        After := AfterFailedSetValue(Card.Locked.Value());
+        After += AfterFailedSetValue(Card.Locked.Value());
         Card.Close();
 
         Assert.AreEqual('?', Observed(After),
@@ -337,9 +348,11 @@ codeunit 68015 "RSV Tests"
     procedure RsvCardTypeHandler(var Card: TestPage "RSV Card")
     var
         Probe: Codeunit "RSV Probe";
+        Before: Text;
     begin
+        Before := Editability(Card.Editable(), Card.Name.Editable());
         asserterror Card.Name.SetValue('Typed');
-        Probe.RecordShown(AfterFailedSetValue(Card.Name.Value()));
+        Probe.RecordShown(Before + AfterFailedSetValue(Card.Name.Value()));
         Card.Close();
     end;
 }
