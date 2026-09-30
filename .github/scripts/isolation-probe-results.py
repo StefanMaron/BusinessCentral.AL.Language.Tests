@@ -107,7 +107,8 @@ def main():
     for spec in args.run:
         if "=" not in spec:
             raise SystemExit(f"::error::--run expects LABEL=XUNIT, got {spec!r}")
-        label, path = spec.split("=", 1)
+        # The PATH is after the LAST '=': a label may itself contain one ("TestIsolation = Function").
+        label, path = spec.rsplit("=", 1)
         lines, ok, _ = render_run(label, path, expected, parse_xunit)
         out += lines
         all_ok = all_ok and ok

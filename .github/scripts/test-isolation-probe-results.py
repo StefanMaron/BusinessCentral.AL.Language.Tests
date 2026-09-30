@@ -81,6 +81,11 @@ def main():
         check(OBSERVED in md, "the failure message (the observed value) is in the row")
         check("NO VERDICT" not in md, "a complete run is not reported as NO VERDICT")
 
+        print("== a label containing '=' still finds its file (nightly run 36727084058) ==")
+        rc, md = run(tmp, [("TestIsolation = Function (runner 61300)", full)])
+        check(rc == 0, f"label with '=' exits 0 (got {rc})")
+        check("#### TestIsolation = Function (runner 61300)" in md, "the whole label is the heading")
+
         print("== no file is NO VERDICT, exit 3 ==")
         rc, md = run(tmp, [("Function (61300)", full), ("Codeunit (61301)", Path(tmp) / "absent.xml")])
         check(rc == 3, f"missing file exits 3 (got {rc})")
