@@ -16,7 +16,8 @@
 //   - after a guarded Codeunit.Run whose codeunit composed the set and then failed, and after
 //     one that inserted a grant and succeeded (the run codeunits 67948 and 67949 below).
 //   - after a Company insert, rename or delete in the same transaction, before any Commit
-//     (the platform recomputes on a write to the Company table, not only at transaction end).
+//     (the platform recomputes on a write to the Company table, not only at transaction end);
+//     not after a Company insert that answers false because the name is taken.
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
 // That is why the second one does not Commit before its first read, and every other test does.
@@ -257,6 +258,32 @@ codeunit 67947 "Test Perm Setup Version"
         Company.Delete();
 
         Assert.AreEqual(2, ExpandedPermission.Count(), 'after the Company delete the set answers both grants');
+    end;
+
+    [Test]
+    procedure ExpandedPermission_CompanyInsertThatDoesNotLand_AnswersTheComposedSet()
+    // CLAIM: a Company insert that answers false because the name is taken does not recompose
+    // the set -- the next read still answers the composition from before the later grant.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Company: Record Company;
+    begin
+        Initialize();
+        InsertCompany(CompanyTok);
+        Commit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        Company.Init();
+        Company.Name := CompanyTok;
+        Assert.IsFalse(Company.Insert(), 'a company under that name already exists');
+
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'an insert that did not land leaves the composed set');
+        RemoveCompanies();
     end;
 
     local procedure InsertCompany(Name: Text[30])
