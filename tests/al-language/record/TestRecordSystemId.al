@@ -123,6 +123,62 @@ codeunit 60061 "Test Record SystemId"
     end;
 
     [Test]
+    procedure Record_Insert_DuplicateSystemId_ErrorNamesFieldByCaption()
+    // CLAIM: the unique-index error for a duplicate SystemId lists the field by its CAPTION
+    // (FieldCaption(SystemId)), followed by =' and the value, the way BC formats every other
+    // key field list. It does not list it by its name.
+    var
+        First: Record "ALT Universal";
+        Second: Record "ALT Universal";
+        DuplicateId: Guid;
+    begin
+        Initialize();
+        DuplicateId := CreateGuid();
+        First."Entry No." := 1;
+        First.SystemId := DuplicateId;
+        First.Insert(false, true);
+
+        Second."Entry No." := 2;
+        Second.SystemId := DuplicateId;
+        asserterror Second.Insert(false, true);
+        Assert.ExpectedError('unique index');
+        Assert.ExpectedError(StrSubstNo('the following fields: %1=''', First.FieldCaption(SystemId)));
+    end;
+
+    [Test]
+    procedure Record_Insert_DuplicateSystemId_ErrorQuotesTheFormattedValue()
+    // CLAIM: the field list in the duplicate-SystemId error is exactly
+    // <FieldCaption(SystemId)>='<Format(SystemId)>', so the value is quoted and rendered the
+    // way Format renders a Guid.
+    var
+        First: Record "ALT Universal";
+        Second: Record "ALT Universal";
+        DuplicateId: Guid;
+    begin
+        Initialize();
+        DuplicateId := CreateGuid();
+        First."Entry No." := 1;
+        First.SystemId := DuplicateId;
+        First.Insert(false, true);
+
+        Second."Entry No." := 2;
+        Second.SystemId := DuplicateId;
+        asserterror Second.Insert(false, true);
+        Assert.ExpectedError(
+            StrSubstNo('the following fields: %1=''%2''', First.FieldCaption(SystemId), Format(DuplicateId)));
+    end;
+
+    [Test]
+    procedure Record_SystemId_FieldCaption_IsSystemID()
+    // CLAIM: the caption of the platform SystemId field is 'System ID' (en-US), not its name
+    // 'SystemId'. The duplicate-SystemId errors above list the field by this caption.
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Assert.AreEqual('System ID', Rec.FieldCaption(SystemId), 'FieldCaption(SystemId)');
+    end;
+
+    [Test]
     procedure Record_Modify_KeepsOriginalSystemId()
     // CLAIM: Modify() never changes an existing row's SystemId, even when the record
     // buffer's SystemId slot no longer carries the original value (e.g. because the
