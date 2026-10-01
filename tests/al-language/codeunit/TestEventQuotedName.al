@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-events-in-al
 // Scope: in-scope (Cloud-compatible)
 // Fixtures used: QEvt Publisher (67042), QEvt Publisher Table (67043),
-//                QEvt Subscriber (67044), QEvt Iso Subscriber (67045)
+//                QEvt Subscriber (67044), QEvt Iso Subscriber (67045),
+//                QEvt Iso Witness (67047)
 // BC versions: 27.5+
 //
 // An event whose name is a quoted identifier is an ordinary event: a bound subscriber that
@@ -114,13 +115,18 @@ codeunit 67046 "Test Event Quoted Name"
     procedure IsolatedSpacedName_SubscriberError_DoesNotReachTheCaller()
     var
         Publisher: Codeunit "QEvt Publisher";
+        Witness: Codeunit "QEvt Iso Witness";
+        CallsBefore: Integer;
         ReachedAfterPublish: Boolean;
     begin
         // An isolated event isolates its subscribers only when the caller holds no
         // uncommitted write (see codeunit 67103), so close any transaction first.
         Commit();
+        CallsBefore := Witness.Count();
         Publisher.RaiseIsolated();
         ReachedAfterPublish := true;
         Assert.IsTrue(ReachedAfterPublish, 'RaiseIsolated must return normally when the isolated subscriber raises');
+        // The subscriber must actually have run; otherwise returning normally proves nothing.
+        Assert.AreEqual(CallsBefore + 1, Witness.Count(), 'The isolated subscriber of "On Isolated Quoted" must run exactly once');
     end;
 }
