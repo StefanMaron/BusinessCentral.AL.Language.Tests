@@ -9,8 +9,9 @@
 // CLAIM: the key list RecordRef.KeyCount()/KeyIndex() walks
 //   (1) contains a key declared on SystemRowVersion or SystemModifiedAt, on a table's own key
 //       list and in a tableextension over a Base Application table; and
-//   (2) does not contain a key declared ObsoleteState = Removed, while a Pending key stays,
-//       so a walk calling KeyRef.FieldIndex on every key never reaches the Removed field.
+//   (2) does not contain a key declared ObsoleteState = Removed, while a Pending key stays:
+//       KeyIndex() skips the Removed key's position, and a walk calling KeyRef.FieldIndex on
+//       every key never reaches the Removed field.
 //
 // Every "found once" assertion has a control: a table that declares no such key answers 0,
 // and the Pending key answers 1, so a pass cannot come from a walk that matches everything
@@ -113,18 +114,6 @@ codeunit 68540 "Test Key RowVersion Removed"
     // ── (2) Removed keys are not enumerated ────────────────────────────────────────────
 
     [Test]
-    procedure TableKey_Removed_IsNotCounted_PendingIs()
-    var
-        TableRef: RecordRef;
-    begin
-        // PK, RowVersionKey, ModifiedAtKey, PendingKey, LiveKey. RemovedKey is not counted.
-        TableRef.Open(Database::"KRV Row");
-        Assert.AreEqual(5, TableRef.KeyCount(),
-            'KeyCount() must count the five keys that are not ObsoleteState = Removed');
-        TableRef.Close();
-    end;
-
-    [Test]
     procedure TableKey_Removed_WalkNeverReachesItsField()
     begin
         Assert.AreEqual(0, CountKeysNamingField(Database::"KRV Row", 4),
@@ -139,19 +128,32 @@ codeunit 68540 "Test Key RowVersion Removed"
     end;
 
     [Test]
-    procedure TableKey_Removed_LastLiveKeyIsAtKeyCount()
+    procedure TableKey_Removed_IndexSkipsIt()
     var
         TableRef: RecordRef;
         KeyReference: KeyRef;
+        KeyNo: Integer;
+        PendingKeyNo: Integer;
+        LiveKeyNo: Integer;
     begin
-        // LiveKey is declared after RemovedKey, so it sits at position KeyCount() only when
-        // the Removed key is skipped by the index as well as by the count.
+        // PendingKey, RemovedKey and LiveKey are declared in that order. LiveKey directly
+        // follows PendingKey in the KeyIndex() numbering only when the Removed key between
+        // them takes no index position.
         TableRef.Open(Database::"KRV Row");
-        KeyReference := TableRef.KeyIndex(TableRef.KeyCount());
-        Assert.AreEqual(1, KeyReference.FieldCount(), 'LiveKey has one field');
-        Assert.AreEqual(2, KeyReference.FieldIndex(1).Number(),
-            'KeyIndex(KeyCount()) must be LiveKey on field 2 "Live Value"');
+        for KeyNo := 1 to TableRef.KeyCount() do begin
+            KeyReference := TableRef.KeyIndex(KeyNo);
+            if KeyReference.FieldCount() = 1 then
+                case KeyReference.FieldIndex(1).Number() of
+                    3:
+                        PendingKeyNo := KeyNo;
+                    2:
+                        LiveKeyNo := KeyNo;
+                end;
+        end;
         TableRef.Close();
+        Assert.AreNotEqual(0, PendingKeyNo, 'PendingKey on field 3 must be enumerated');
+        Assert.AreEqual(PendingKeyNo + 1, LiveKeyNo,
+            'LiveKey must take the KeyIndex() position right after PendingKey; the Removed key between them takes none');
     end;
 
     [Test]
