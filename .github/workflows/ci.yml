@@ -201,6 +201,13 @@ jobs:
       test_app_dirs:        "tests/al-language"
       codeunit_range:       "60000..60999|67000..69999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      # Creating a company creates its tables, including Base Application's
+      # OptimizeForTextSearch indexes, so a test that inserts a Company needs SQL Server
+      # Full-Text Search. No official SQL Server Linux image ships it; this tag adds it
+      # (MsDyn365Bc.On.Linux issue #20, KNOWN-LIMITATIONS.md). Opt-in there because it
+      # adds ~550 MB to the SQL pull. Only this job runs Company-insert tests (67947);
+      # test-onprem does not, so it keeps the default image.
+      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
   # The Target = OnPrem test app, in a job of its own.
   #
