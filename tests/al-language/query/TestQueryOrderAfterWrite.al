@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-orderby-property
 // Scope: in-scope
-// Fixtures used: QRO Entry (68534), QRO Descending (68534), QRO By Amount (68535);
-// shared Assert (60021)
+// Fixtures used: QRO Entry (68534), QRO Group (68535), QRO Descending (68534), QRO By Amount
+// (68535), QRO Joined Descending (68536); shared Assert (60021)
 //
-// A one-dataitem query returns its rows in its OrderBy, not in primary-key order, and a write
+// A query returns its rows in its OrderBy, not in primary-key order, and a write
 // to its table between two Read() calls resumes after the last row in that same order. Each
 // shape is read once without a write and once with a Modify in the loop.
 //
@@ -21,7 +21,13 @@ codeunit 68534 "QRO Query Order After Write"
     local procedure InsertEntries()
     var
         Entry: Record "QRO Entry";
+        Grp: Record "QRO Group";
     begin
+        Grp.DeleteAll();
+        Grp.Init();
+        Grp.Code := 'G';
+        Grp.Description := 'Group';
+        Grp.Insert();
         Entry.DeleteAll();
         InsertEntry(1, 10);
         InsertEntry(2, 10);
@@ -36,6 +42,7 @@ codeunit 68534 "QRO Query Order After Write"
         Entry.Init();
         Entry."Entry No." := EntryNo;
         Entry.Amount := EntryAmount;
+        Entry."Group Code" := 'G';
         Entry.Insert();
     end;
 
@@ -142,5 +149,53 @@ codeunit 68534 "QRO Query Order After Write"
         end;
         Entries.Close();
         Assert.AreEqual('4;3;', Seen, 'A Modify in the loop must keep TopNumberOfRows(2) to two rows in total');
+    end;
+
+    // The same with two dataitems.
+    [Test]
+    procedure JoinedDescending_NoWrite_ReadsInOrderByOrder()
+    var
+        Entries: Query "QRO Joined Descending";
+        Seen: Text;
+    begin
+        InsertEntries();
+        Entries.Open();
+        while Entries.Read() do
+            Seen += Format(Entries.EntryNo) + ';';
+        Entries.Close();
+        Assert.AreEqual('4;3;2;1;', Seen, 'A joined query must return its rows in descending OrderBy order');
+    end;
+
+    [Test]
+    procedure JoinedDescending_ModifyInLoop_ResumesInOrderByOrder()
+    var
+        Entries: Query "QRO Joined Descending";
+        Seen: Text;
+    begin
+        InsertEntries();
+        Entries.Open();
+        while Entries.Read() do begin
+            Seen += Format(Entries.EntryNo) + ';';
+            MarkProcessed(Entries.EntryNo);
+        end;
+        Entries.Close();
+        Assert.AreEqual('4;3;2;1;', Seen, 'A Modify in the loop must resume after the last row of a joined query');
+    end;
+
+    [Test]
+    procedure JoinedTop2_ModifyInLoop_StillReadsTwoRows()
+    var
+        Entries: Query "QRO Joined Descending";
+        Seen: Text;
+    begin
+        InsertEntries();
+        Entries.TopNumberOfRows(2);
+        Entries.Open();
+        while Entries.Read() do begin
+            Seen += Format(Entries.EntryNo) + ';';
+            MarkProcessed(Entries.EntryNo);
+        end;
+        Entries.Close();
+        Assert.AreEqual('4;3;', Seen, 'A Modify in the loop must keep a joined TopNumberOfRows(2) to two rows');
     end;
 }
