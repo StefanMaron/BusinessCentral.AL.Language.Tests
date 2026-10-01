@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/database/database-commit-method
 // Scope: in-scope (reads a platform virtual table served from permission-set metadata)
-// Fixtures used: ALT Universal, ALT Keyed; writes one Tenant Permission Set and its Tenant
-//   Permission rows, removed by Initialize()
+// Fixtures used: ALT Universal, ALT Keyed; writes one Tenant Permission Set, its Tenant
+//   Permission rows; removes any Company rows 'ALT PERMVER CO' / 'ALT PERMVER CO2' that
+//   codeunits 67951..67954 left behind, in Initialize()
 // BC versions: 27.5+
 //
 // "Test Metadata Expanded Perm" (67945) pins that a grant inserted AFTER a set's permissions
@@ -14,6 +15,12 @@
 //   - across a test-method boundary, where the earlier test's transaction ended;
 //   - after a guarded Codeunit.Run whose codeunit composed the set and then failed, and after
 //     one that inserted a grant and succeeded (the run codeunits 67948 and 67949 below).
+//   - after a Company delete that finds no row, in the same transaction, before any Commit
+//     (the platform recomputes on a write to the Company table, not only at transaction end);
+//     not after an insert into a temporary Company record. The arms that CREATE a company --
+//     insert, rename, delete, and an insert that does not land -- are codeunits 67951..67954
+//     in TestPermissionSetupVersionCompany.al, one each: creating a company creates all of its
+//     tables, which costs minutes on the Linux tier, and the harness stops a codeunit at 10.
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
 // That is why the second one does not Commit before its first read, and every other test does.
@@ -25,6 +32,8 @@ codeunit 67947 "Test Perm Setup Version"
     var
         Assert: Codeunit Assert;
         RoleTok: Label 'ALT PERMVER TENANT', Locked = true;
+        CompanyTok: Label 'ALT PERMVER CO', Locked = true;
+        RenamedCompanyTok: Label 'ALT PERMVER CO2', Locked = true;
 
     [Test]
     procedure ExpandedPermission_Commit_SameVariableSeesTheLaterGrant()
@@ -184,6 +193,61 @@ codeunit 67947 "Test Perm Setup Version"
         Assert.AreEqual(2, ExpandedPermission.Count(), 'after the successful run the same variable sees both grants');
     end;
 
+    [Test]
+    procedure ExpandedPermission_CompanyDeleteThatDoesNotLand_SameTransactionSeesTheLaterGrant()
+    // CLAIM: a Company delete of a name no company has -- Delete() answers false -- still
+    // recomposes the set: the platform's Company delete arm runs before the row is looked up.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Company: Record Company;
+    begin
+        InitializeAndCommit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        Company.Name := CompanyTok;
+        Assert.IsFalse(Company.Delete(), 'no company has that name');
+
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'after the Company delete that found no row the set answers both grants');
+    end;
+
+    [Test]
+    procedure ExpandedPermission_TemporaryCompanyInsert_AnswersTheComposedSet()
+    // CLAIM: inserting into a temporary Company record writes no Company row, so the set is
+    // not recomposed -- the next read answers the composition from before the later grant.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        TempCompany: Record Company temporary;
+    begin
+        InitializeAndCommit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        TempCompany.Init();
+        TempCompany.Name := CompanyTok;
+        TempCompany.Insert();
+
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'a temporary Company insert leaves the composed set');
+    end;
+
+    local procedure RemoveCompanies()
+    var
+        Company: Record Company;
+    begin
+        if Company.Get(CompanyTok) then
+            Company.Delete();
+        if Company.Get(RenamedCompanyTok) then
+            Company.Delete();
+    end;
+
     local procedure FilterOnTenantSet(var ExpandedPermission: Record "Expanded Permission")
     var
         NullGuid: Guid;
@@ -230,12 +294,13 @@ codeunit 67947 "Test Perm Setup Version"
         TenantPermissionSet: Record "Tenant Permission Set";
         TenantPermission: Record "Tenant Permission";
     begin
-        // The only rows this codeunit writes are the tenant set and its grants; a test that
-        // commits leaves them behind, so each test removes them first.
+        // The rows this codeunit writes are the tenant set, its grants and the Company rows; a
+        // test that commits leaves them behind, so each test removes them first.
         TenantPermission.SetRange("Role ID", RoleTok);
         TenantPermission.DeleteAll();
         TenantPermissionSet.SetRange("Role ID", RoleTok);
         TenantPermissionSet.DeleteAll();
+        RemoveCompanies();
     end;
 }
 
