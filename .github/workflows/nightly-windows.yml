@@ -721,6 +721,66 @@ jobs:
           Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'xunit-*.xml') |
             ForEach-Object { Write-Host ("{0}: {1:n0} KB" -f $_.Name, ($_.Length/1KB)) }
 
+      # ---------------------------------------------------------------------------------
+      # Isolation probe (AL Runner #4826). ADDITIVE: it runs after the corpus, writes its own
+      # XUnit files, never reaches the headline or the #213 comparison above, and cannot fail
+      # the job (continue-on-error). ci.yml's Linux legs never compile this app.
+      #
+      # Why it is here and nowhere else: the corpus harness always runs under 130450
+      # (TestIsolation = Codeunit), and a test cannot start a second test runner
+      # (NavNCLTestCodeUnitNestedInvocationException). So what TestIsolation = Function resets
+      # between [Test] methods can only be measured by a TOP-LEVEL custom runner, which is what
+      # -testRunnerCodeunitId selects. 61300 is that runner; 61301 is the identical runner with
+      # TestIsolation = Codeunit, as the control that shows the fixture's T5 can fail. The
+      # per-test rows land in the summary via isolation-probe-results.py below.
+      # ---------------------------------------------------------------------------------
+      - name: Isolation probe -- compile, publish, run under two custom test runners
+        id: isolation_probe
+        continue-on-error: true
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $c = $env:CONTAINER_NAME
+          $cred = Import-Clixml (Join-Path $env:RUNNER_TEMP 'bccred.xml')
+
+          # Without this parameter the probe would silently run under the default runner
+          # (130450) and report Codeunit isolation as Function isolation.
+          if (-not (Get-Command Run-TestsInBcContainer).Parameters.ContainsKey('testRunnerCodeunitId')) {
+            throw "Run-TestsInBcContainer has no -testRunnerCodeunitId in BcContainerHelper $env:BCCH_VERSION. Refusing to run the isolation probe under a runner it did not choose."
+          }
+
+          $folder = 'tests/al-language-isolation-probe'
+          $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+            -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
+            -appOutputFolder $outDir `
+            -appSymbolsFolder (Join-Path $outDir 'symbols') `
+            -UpdateSymbols -failOn 'error'
+          Publish-BcContainerApp -containerName $c -credential $cred `
+            -appFile $appFile -skipVerification -sync -install
+
+          $appJson = Get-Content (Join-Path $env:GITHUB_WORKSPACE "$folder/app.json") -Raw | ConvertFrom-Json
+          # Function first: the SingleInstance mark T1 sets would otherwise already be there.
+          $runs = @(
+            @{ runner = '61300'; out = 'xunit-isolation-function.xml' },
+            @{ runner = '61301'; out = 'xunit-isolation-codeunit.xml' }
+          )
+          foreach ($r in $runs) {
+            Write-Host "::group::isolation probe under runner $($r.runner)"
+            try {
+              Run-TestsInBcContainer -containerName $c -credential $cred `
+                -extensionId $appJson.id -testRunnerCodeunitId $r.runner `
+                -culture $env:CULTURE -timezone $env:TIMEZONE `
+                -XUnitResultFileName (Join-Path $env:GITHUB_WORKSPACE $r.out) `
+                -AzureDevOps 'no' -GitHubActions 'no' `
+                -detailed -returnTrueIfAllPassed | Out-Null
+            } catch {
+              Write-Host "::warning::isolation probe under runner $($r.runner) raised: $($_.Exception.Message)"
+            }
+            Write-Host "::endgroup::"
+          }
+
       - name: Compare against issue #213
         if: always()
         shell: bash
@@ -730,6 +790,17 @@ jobs:
             --xunit xunit-al-language-onprem.xml \
             --baseline .github/expected-failures/issue-213-saas-sandbox.json \
             --environment environment.json \
+            --outdir test-results
+
+      - name: Isolation probe -- per-test rows
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          python .github/scripts/isolation-probe-results.py \
+            --fixture tests/al-language-isolation-probe/src/IsolProbeFixture.Codeunit.al \
+            --run "TestIsolation = Function (runner 61300)=xunit-isolation-function.xml" \
+            --run "TestIsolation = Codeunit control (runner 61301)=xunit-isolation-codeunit.xml" \
             --outdir test-results
 
       - name: Disk (after)

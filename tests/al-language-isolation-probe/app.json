@@ -1,0 +1,32 @@
+{
+  "id": "445e9293-7a48-47f5-bbbe-5b2b9f6407da",
+  "name": "AL Language Isolation Probe",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "Custom test runners that measure what BC's TestIsolation modes reset between tests.",
+  "description": "Run only by the Windows nightly, with Run-TestsInBcContainer -testRunnerCodeunitId. The main corpus always runs under Microsoft's Test Runner - Isol. Codeunit (130450), and a test cannot start a second test runner (NavNCLTestCodeUnitNestedInvocationException), so the TestIsolation = Function behaviour can only be measured by a top-level runner of our own. Not part of ci.yml's Linux legs.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [
+    {
+      "id": "23de40a6-dfe8-4f80-80db-d70f83ce8caf",
+      "name": "Test Runner",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    }
+  ],
+  "platform": "27.0.0.0",
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 61300,
+      "to": 61349
+    }
+  ],
+  "features": [],
+  "runtime": "16.0",
+  "target": "Cloud"
+}
