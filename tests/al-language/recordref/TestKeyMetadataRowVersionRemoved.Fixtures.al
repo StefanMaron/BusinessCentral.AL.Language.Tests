@@ -6,7 +6,10 @@
 // field (itself Removed). Declaring a Removed field from scratch compiles cleanly; see
 // record/TestFieldObsoleteStateFixture.Table.al.
 //
-// The two tableextensions put the same questions to precompiled Base Application tables:
+// "KRV Modified Row" is the same table with a tableextension that modifies one field's Caption,
+// so each own-key question is asked of two tables whose keys are declared identically.
+//
+// Two more tableextensions put the same questions to precompiled Base Application tables:
 // a key on SystemRowVersion over "Customer Bank Account", and over Item a live key plus a
 // Removed key on a Removed field.
 //
@@ -54,6 +57,65 @@ table 68540 "KRV Row"
             ObsoleteTag = '1.0';
         }
         key(LiveKey; "Live Value") { }
+    }
+}
+
+table 68541 "KRV Modified Row"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+        field(2; "Live Value"; Integer) { }
+        field(3; "Pending Value"; Integer)
+        {
+            ObsoleteState = Pending;
+            ObsoleteReason = 'pending in fixture';
+            ObsoleteTag = '1.0';
+        }
+        field(4; "Removed Value"; Integer)
+        {
+            ObsoleteState = Removed;
+            ObsoleteReason = 'removed in fixture';
+            ObsoleteTag = '1.0';
+        }
+    }
+    keys
+    {
+        key(PK; "Code")
+        {
+            Clustered = true;
+        }
+        key(RowVersionKey; SystemRowVersion) { }
+        key(ModifiedAtKey; SystemModifiedAt) { }
+        key(PendingKey; "Pending Value")
+        {
+            ObsoleteState = Pending;
+            ObsoleteReason = 'pending in fixture';
+            ObsoleteTag = '1.0';
+        }
+        key(RemovedKey; "Removed Value")
+        {
+            ObsoleteState = Removed;
+            ObsoleteReason = 'removed in fixture';
+            ObsoleteTag = '1.0';
+        }
+        key(LiveKey; "Live Value") { }
+    }
+}
+
+// The same table again, with a tableextension that changes one field's Caption through
+// modify(...). Nothing about its keys differs from "KRV Row"; the extension exists so that the
+// two tables' key lists can be compared, and must agree.
+tableextension 68542 "KRV Modified Row Ext" extends "KRV Modified Row"
+{
+    fields
+    {
+        modify("Live Value")
+        {
+            Caption = 'Live Value (modified)';
+        }
     }
 }
 
