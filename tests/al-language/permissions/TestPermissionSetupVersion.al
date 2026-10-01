@@ -17,7 +17,8 @@
 //     one that inserted a grant and succeeded (the run codeunits 67948 and 67949 below).
 //   - after a Company insert, rename or delete in the same transaction, before any Commit
 //     (the platform recomputes on a write to the Company table, not only at transaction end);
-//     not after a Company insert that answers false because the name is taken.
+//     not after a Company insert that answers false because the name is taken, nor after an
+//     insert into a temporary Company record; but after a delete that finds no row.
 // The two TestBoundary tests are declared in the order they run: the second reads the same
 // set the first composed, so a memo that outlived the boundary answers the first test's count.
 // That is why the second one does not Commit before its first read, and every other test does.
@@ -284,6 +285,51 @@ codeunit 67947 "Test Perm Setup Version"
 
         Assert.AreEqual(1, ExpandedPermission.Count(), 'an insert that did not land leaves the composed set');
         RemoveCompanies();
+    end;
+
+    [Test]
+    procedure ExpandedPermission_CompanyDeleteThatDoesNotLand_SameTransactionSeesTheLaterGrant()
+    // CLAIM: a Company delete of a name no company has -- Delete() answers false -- still
+    // recomposes the set: the platform's Company delete arm runs before the row is looked up.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        Company: Record Company;
+    begin
+        InitializeAndCommit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        Company.Name := CompanyTok;
+        Assert.IsFalse(Company.Delete(), 'no company has that name');
+
+        Assert.AreEqual(2, ExpandedPermission.Count(), 'after the Company delete that found no row the set answers both grants');
+    end;
+
+    [Test]
+    procedure ExpandedPermission_TemporaryCompanyInsert_AnswersTheComposedSet()
+    // CLAIM: inserting into a temporary Company record writes no Company row, so the set is
+    // not recomposed -- the next read answers the composition from before the later grant.
+    var
+        ExpandedPermission: Record "Expanded Permission";
+        TempCompany: Record Company temporary;
+    begin
+        InitializeAndCommit();
+        InsertTenantSet();
+        InsertTenantGrant(Database::"ALT Keyed");
+
+        FilterOnTenantSet(ExpandedPermission);
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'the set is composed with its one grant');
+
+        InsertTenantGrant(Database::"ALT Universal");
+        TempCompany.Init();
+        TempCompany.Name := CompanyTok;
+        TempCompany.Insert();
+
+        Assert.AreEqual(1, ExpandedPermission.Count(), 'a temporary Company insert leaves the composed set');
     end;
 
     local procedure InsertCompany(Name: Text[30])
