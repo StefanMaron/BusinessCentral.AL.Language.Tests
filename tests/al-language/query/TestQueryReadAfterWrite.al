@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/query/queryinstance-read-method
 // Scope: in-scope
-// Fixtures used: QRW Entry (68530), QRW Entries Ordered (68530), QRW Entries Unordered (68531);
+// Fixtures used: QRW Entry (68530), QRW Entries Ordered (68530), QRW Entries Unordered (68531),
+// QRW Amounts (68532);
 // shared Assert (60021)
 //
 // A write to a table an open query reads, made between two Read() calls, invalidates the
@@ -8,8 +9,8 @@
 // query's OrderBy. Base Application relies on this: codeunit 5895 "Inventory Adjustment"
 // modifies "Item Application Entry" inside a Read() loop over query 304, which is ordered.
 //
-// Without an OrderBy there is no position to resume from (the platform's positioning filter
-// is built from the OrderBy columns), so the tests below pin what Read() does in that case too.
+// A query with no OrderBy resumes too: the platform orders every non-aggregated query by the
+// primary key of its dataitems for uniqueness, even when the key is not one of its columns.
 //
 // Written for StefanMaron/BusinessCentral.AL.Runner#5133.
 codeunit 68530 "QRW Query Read After Write"
@@ -57,9 +58,14 @@ codeunit 68530 "QRW Query Read After Write"
 
     local procedure Append(Seen: Text; EntryNo: Integer): Text
     begin
+        exit(AppendText(Seen, Format(EntryNo)));
+    end;
+
+    local procedure AppendText(Seen: Text; Value: Text): Text
+    begin
         if Seen = '' then
-            exit(Format(EntryNo));
-        exit(Seen + ',' + Format(EntryNo));
+            exit(Value);
+        exit(Seen + ',' + Value);
     end;
 
     // Control: the loop with no write reads every row once.
@@ -193,21 +199,42 @@ codeunit 68530 "QRW Query Read After Write"
         Assert.AreEqual(3, RowsRead, 'A write to a temporary record must not affect the rows read');
     end;
 
-    // Without an OrderBy the re-read has no position to resume from. Pins how many rows
-    // Read() returns when the loop modifies the row it just read.
+    // Without an OrderBy the re-read still resumes after the last row: the primary key is the
+    // implicit order.
     [Test]
-    procedure UnorderedQuery_ModifyInLoop_StopsAfterTheWrite()
+    procedure UnorderedQuery_ModifyInLoop_ResumesAfterLastRow()
     var
         Entries: Query "QRW Entries Unordered";
-        RowsRead: Integer;
+        Seen: Text;
     begin
         InsertEntries();
         Entries.Open();
         while Entries.Read() do begin
-            RowsRead += 1;
+            Seen := Append(Seen, Entries.EntryNo);
             MarkProcessed(Entries.EntryNo);
         end;
         Entries.Close();
-        Assert.AreEqual(1, RowsRead, 'An unordered query has no position to resume from after a write');
+        Assert.AreEqual('1,2,3', Seen, 'An unordered query must resume after the last row returned');
+    end;
+
+    // The same when the primary key is not a column of the query: the position is still the key.
+    [Test]
+    procedure KeylessQuery_ModifyInLoop_ResumesAfterLastRow()
+    var
+        Entry: Record "QRW Entry";
+        Amounts: Query "QRW Amounts";
+        Seen: Text;
+    begin
+        InsertEntries();
+        Amounts.Open();
+        while Amounts.Read() do begin
+            Seen := AppendText(Seen, Format(Amounts.Amount));
+            Entry.SetRange(Amount, Amounts.Amount);
+            Entry.FindFirst();
+            Entry.Processed := true;
+            Entry.Modify();
+        end;
+        Amounts.Close();
+        Assert.AreEqual('10,20,30', Seen, 'A query without its key as a column must resume after the last row');
     end;
 }
