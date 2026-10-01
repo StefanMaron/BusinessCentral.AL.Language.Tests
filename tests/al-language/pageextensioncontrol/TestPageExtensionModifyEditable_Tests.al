@@ -13,6 +13,12 @@
 // One test walks a locked row and an unlocked row on one open page, so an answer of false (or
 // true) for every row fails it.
 //
+// REPLACE OR COMBINE: a second test asks whether the extension's property REPLACES the base's or
+// is combined with it. GateCtl and the GateAct action declare Editable / Enabled = BaseGate, a
+// page global nothing assigns, so the base answers false; the extension sets them to
+// `not PXMSLocked`, which is true on OPEN. GateBaseCtl declares the same Editable = BaseGate and is
+// not modified: its read-only answer shows the base expression really is false on that row.
+//
 // Written by agent stma-auto-8, an automated implementation agent acting on the account holder's
 // behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#5139.
 
@@ -27,6 +33,8 @@ table 68620 "PXMS Row"
         field(3; Flag; Boolean) { }
         field(4; Other; Text[30]) { }
         field(5; Plain; Text[30]) { }
+        field(6; Gate; Text[30]) { }
+        field(7; GateBase; Text[30]) { }
     }
     keys
     {
@@ -63,6 +71,8 @@ page 68620 "PXMS Card"
             field(FlagCtl; Rec.Flag) { ApplicationArea = All; Editable = BaseEditable; }
             field(OtherCtl; Rec.Other) { ApplicationArea = All; }
             field(PlainCtl; Rec.Plain) { ApplicationArea = All; }
+            field(GateCtl; Rec.Gate) { ApplicationArea = All; Editable = BaseGate; }
+            field(GateBaseCtl; Rec.GateBase) { ApplicationArea = All; Editable = BaseGate; }
         }
     }
 
@@ -77,11 +87,20 @@ page 68620 "PXMS Card"
                 begin
                 end;
             }
+            action(GateAct)
+            {
+                ApplicationArea = All;
+                Enabled = BaseGate;
+                trigger OnAction()
+                begin
+                end;
+            }
         }
     }
 
     var
         BaseEditable: Boolean;
+        BaseGate: Boolean;
 
     trigger OnAfterGetCurrRecord()
     begin
@@ -96,11 +115,13 @@ pageextension 68621 "PXMS Card Ext" extends "PXMS Card"
         modify(NameCtl) { Editable = not PXMSLocked; }
         modify(FlagCtl) { Editable = not PXMSLocked; }
         modify(OtherCtl) { Enabled = not PXMSLocked; }
+        modify(GateCtl) { Editable = not PXMSLocked; }
     }
 
     actions
     {
         modify(DoIt) { Enabled = not PXMSLocked; }
+        modify(GateAct) { Enabled = not PXMSLocked; }
     }
 
     var
@@ -154,5 +175,35 @@ codeunit 68621 "PXMS Tests"
         Assert.IsTrue(Card.OtherCtl.Enabled(), 'OtherCtl must be enabled on OPEN.');
         Assert.IsTrue(Card.DoIt.Enabled(), 'Action DoIt must be enabled on OPEN.');
         Card.Close();
+    end;
+
+    [Test]
+    procedure SourcePageExtModifyEditable_SourcePage_BaseFalseExtensionTrue_ExtensionReplacesTheBase()
+    var
+        Row: Record "PXMS Row";
+        Lock: Record "PXMS Lock";
+        Card: TestPage "PXMS Card";
+        GateEditable: Boolean;
+        GateBaseEditable: Boolean;
+        GateActEnabled: Boolean;
+        PlainEditable: Boolean;
+    begin
+        Row.DeleteAll();
+        Lock.DeleteAll();
+        Row.Code := 'OPEN';
+        Row.Insert();
+
+        Card.OpenEdit();
+        Assert.IsTrue(Card.GoToRecord(Row), 'GoToRecord must position the card on OPEN.');
+        PlainEditable := Card.PlainCtl.Editable();
+        GateBaseEditable := Card.GateBaseCtl.Editable();
+        GateEditable := Card.GateCtl.Editable();
+        GateActEnabled := Card.GateAct.Enabled();
+        Card.Close();
+
+        Assert.IsTrue(PlainEditable, 'PlainCtl must be editable: the page is open for edit.');
+        Assert.IsFalse(GateBaseEditable, 'GateBaseCtl (Editable = BaseGate, unassigned, not modified) must be read-only: the base expression is false on OPEN.');
+        Assert.IsTrue(GateEditable, 'GateCtl (base Editable = BaseGate, false; Editable = not PXMSLocked set by modify(), true on OPEN) must be editable: the extension''s Editable replaces the base''s.');
+        Assert.IsTrue(GateActEnabled, 'Action GateAct (base Enabled = BaseGate, false; Enabled = not PXMSLocked set by modify(), true on OPEN) must be enabled: the extension''s Enabled replaces the base''s.');
     end;
 }
