@@ -433,6 +433,112 @@ codeunit 60061 "Test Record SystemId"
         Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
     end;
 
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemCreatedAt()
+    // CLAIM: in the shape above, row 2 keeps the SystemCreatedAt it was inserted with,
+    // and row 1's is untouched. The buffer still carries row 1's SystemCreatedAt.
+    // Format(_, 0, 9) keeps millisecond resolution; the rows are inserted 200 ms apart.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstCreatedAt: Text;
+        SecondCreatedAt: Text;
+    begin
+        Initialize();
+        InsertTwoRowsApart(FirstCreatedAt, SecondCreatedAt);
+        Assert.AreNotEqual(FirstCreatedAt, SecondCreatedAt, 'the two rows must have distinct SystemCreatedAt values');
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        Fetched.Get(2);
+        Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
+        Assert.AreEqual(SecondCreatedAt, Format(Fetched.SystemCreatedAt, 0, 9),
+            'row 2 must keep its own SystemCreatedAt, not take the one read from row 1');
+        Fetched.Get(1);
+        Assert.AreEqual(FirstCreatedAt, Format(Fetched.SystemCreatedAt, 0, 9), 'row 1 must keep its own SystemCreatedAt');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemCreatedBy()
+    // CLAIM: in the same shape, row 2's SystemCreatedBy is the one it was inserted with.
+    // Both rows are inserted by the same user, so this pins the value, not which row it
+    // was taken from.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstCreatedAt: Text;
+        SecondCreatedAt: Text;
+        SecondCreatedBy: Guid;
+    begin
+        Initialize();
+        InsertTwoRowsApart(FirstCreatedAt, SecondCreatedAt);
+        Fetched.Get(2);
+        SecondCreatedBy := Fetched.SystemCreatedBy;
+        Assert.IsFalse(IsNullGuid(SecondCreatedBy), 'SystemCreatedBy must be set on insert');
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        Fetched.Get(2);
+        Assert.AreEqual(SecondCreatedBy, Fetched.SystemCreatedBy, 'row 2 must keep its own SystemCreatedBy');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetGetsAFreshSystemModifiedAt()
+    // CLAIM: in the same shape, row 2's SystemModifiedAt moves past the value it had
+    // before the Modify, and SystemModifiedBy is still set. One user inserts and modifies
+    // here, so the SystemModifiedBy check cannot tell which row the value came from.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstCreatedAt: Text;
+        SecondCreatedAt: Text;
+        SecondModifiedAt: DateTime;
+        SecondModifiedBy: Guid;
+    begin
+        Initialize();
+        InsertTwoRowsApart(FirstCreatedAt, SecondCreatedAt);
+        Fetched.Get(2);
+        SecondModifiedAt := Fetched.SystemModifiedAt;
+        SecondModifiedBy := Fetched.SystemModifiedBy;
+        Assert.IsFalse(IsNullGuid(SecondModifiedBy), 'SystemModifiedBy must be set on insert');
+        Sleep(200);
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        Fetched.Get(2);
+        Assert.IsTrue(Fetched.SystemModifiedAt > SecondModifiedAt,
+            StrSubstNo('row 2''s SystemModifiedAt must move past %1, was %2',
+                Format(SecondModifiedAt, 0, 9), Format(Fetched.SystemModifiedAt, 0, 9)));
+        Assert.AreEqual(SecondModifiedBy, Fetched.SystemModifiedBy, 'SystemModifiedBy must still be the one user of this session');
+    end;
+
+    local procedure InsertTwoRowsApart(var FirstCreatedAt: Text; var SecondCreatedAt: Text)
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 1;
+        Rec.Insert();
+        Rec.Get(1);
+        FirstCreatedAt := Format(Rec.SystemCreatedAt, 0, 9);
+        Sleep(200);
+        Clear(Rec);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 2;
+        Rec.Insert();
+        Rec.Get(2);
+        SecondCreatedAt := Format(Rec.SystemCreatedAt, 0, 9);
+    end;
+
     local procedure InsertTwoRows(var FirstId: Guid; var SecondId: Guid)
     var
         Rec: Record "ALT Universal";
