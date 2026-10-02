@@ -384,6 +384,87 @@ codeunit 60061 "Test Record SystemId"
         Assert.AreEqual(99, Fetched."Entry No.", 'GetBySystemId must return the re-inserted row');
     end;
 
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemId()
+    // CLAIM: a record read as row 1, whose primary key is then set to row 2's before
+    // Modify(), modifies row 2 — and row 2 keeps ITS OWN SystemId. The buffer still
+    // carries row 1's SystemId, but $systemId is never part of an UPDATE, so no two
+    // rows can end up sharing one.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstId: Guid;
+        SecondId: Guid;
+    begin
+        Initialize();
+        InsertTwoRows(FirstId, SecondId);
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        AssertRowsKeepTheirSystemIds(FirstId, SecondId);
+        Fetched.Get(2);
+        Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterLockedGetAndKeySetToAnotherRow_TargetKeepsItsOwnSystemId()
+    // CLAIM: same as Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemId,
+    // with the row read under LockTable() first.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstId: Guid;
+        SecondId: Guid;
+    begin
+        Initialize();
+        InsertTwoRows(FirstId, SecondId);
+
+        Rec.LockTable();
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        AssertRowsKeepTheirSystemIds(FirstId, SecondId);
+        Fetched.Get(2);
+        Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
+    end;
+
+    local procedure InsertTwoRows(var FirstId: Guid; var SecondId: Guid)
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 1;
+        Rec.Insert();
+        FirstId := Rec.SystemId;
+        Clear(Rec);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 2;
+        Rec.Insert();
+        SecondId := Rec.SystemId;
+    end;
+
+    local procedure AssertRowsKeepTheirSystemIds(FirstId: Guid; SecondId: Guid)
+    var
+        Fetched: Record "ALT Universal";
+    begin
+        Assert.AreNotEqual(FirstId, SecondId, 'the two inserted rows must have distinct SystemIds');
+        Fetched.Get(1);
+        Assert.AreEqual(FirstId, Fetched.SystemId, 'row 1 must keep its own SystemId');
+        Fetched.Get(2);
+        Assert.AreEqual(SecondId, Fetched.SystemId, 'row 2 must keep its own SystemId, not take the one read from row 1');
+        Clear(Fetched);
+        Assert.IsTrue(Fetched.GetBySystemId(SecondId), 'row 2''s SystemId must still resolve');
+        Assert.AreEqual(2, Fetched."Entry No.", 'row 2''s SystemId must resolve to row 2');
+        Clear(Fetched);
+        Fetched.SetRange(SystemId, FirstId);
+        Assert.AreEqual(1, Fetched.Count(), 'exactly one row may carry row 1''s SystemId');
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
