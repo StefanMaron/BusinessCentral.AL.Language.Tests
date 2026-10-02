@@ -10,6 +10,10 @@
 //   namespaces and not the local one: their names mean Base Application's tables.
 // - 69202 and 69203 are each extended by a tableextension whose modify(...) changes the
 //   relation field; 69200 and 69201 are not. Same names, same expected answers.
+// - A tableextension field writes its names in the extension's file, not the base table's:
+//   69207 sits in the same file as table 69203 (Base Application's table); 69206 is added to
+//   69203 by an extension declared in the local namespace (ALTRelationScopeExtension.al), so it
+//   means the local table.
 //
 // Each test asserts a concrete id or count. The Validate tests also assert the OTHER table is
 // refused, and each FlowField test fills both tables with different row counts.
@@ -200,6 +204,28 @@ codeunit 69210 "Test Relation Target NS Scope"
 
         Assert.AreEqual(1, RecRef.Field(3).Value,
             'the FlowField in table 69203 counts the Base Application "Config. Package Table" (1 row), not the same-named table 60991 (2 rows)');
+    end;
+
+    [Test]
+    procedure RelationScope_UsingsModified_ExtensionFieldInTheSameFile_RelationAnswersTheImportedTable()
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(69203);
+
+        Assert.AreEqual(291, RecRef.Field(69207).Relation(),
+            'the extension field "Ext Agent Code" is written under using Microsoft.Foundation.Shipping and relates to Base Application table 291');
+    end;
+
+    [Test]
+    procedure RelationScope_UsingsModified_ExtensionFieldInAnotherNamespace_RelationFollowsTheExtension()
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(69203);
+
+        Assert.AreEqual(60990, RecRef.Field(69206).Relation(),
+            'the extension field is written in the namespace that declares table 60990, so its "Shipping Agent" is that table, although table 69203 itself is written under using Microsoft.Foundation.Shipping');
     end;
 
     local procedure InsertAgents()

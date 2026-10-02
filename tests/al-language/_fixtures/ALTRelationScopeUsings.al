@@ -62,6 +62,10 @@ tableextension 69205 "ALT Rel Usings Mod Ext" extends "ALT Rel Usings Mod"
 {
     fields
     {
+        field(69207; "Ext Agent Code"; Code[10])
+        {
+            TableRelation = "Shipping Agent";
+        }
         modify("Agent Code")
         {
             Caption = 'Agent Code (modified)';
