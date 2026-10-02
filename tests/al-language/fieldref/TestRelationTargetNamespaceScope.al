@@ -13,7 +13,10 @@
 // - A tableextension field writes its names in the extension's file, not the base table's:
 //   69207 sits in the same file as table 69203 (Base Application's table); 69206 is added to
 //   69203 by an extension declared in the local namespace (ALTRelationScopeExtension.al), so it
-//   means the local table.
+//   means the local table; the FlowField it adds counts the local "Config. Package Table".
+// - 69214 and 69215 (plain, and modify twin 69216 extension) are declared in a third namespace
+//   that imports the namespace of the same-named local tables and no Base Application one: the
+//   names mean the local tables, reached through a using within the app.
 //
 // Each test asserts a concrete id or count. The Validate tests also assert the OTHER table is
 // refused, and each FlowField test fills both tables with different row counts.
@@ -226,6 +229,112 @@ codeunit 69210 "Test Relation Target NS Scope"
 
         Assert.AreEqual(60990, RecRef.Field(69206).Relation(),
             'the extension field is written in the namespace that declares table 60990, so its "Shipping Agent" is that table, although table 69203 itself is written under using Microsoft.Foundation.Shipping');
+    end;
+
+    [Test]
+    procedure RelationScope_Third_RelationAnswersTheLocalTableThroughUsing()
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(69214);
+
+        Assert.AreEqual(60990, RecRef.Field(2).Relation(),
+            'the unqualified "Shipping Agent" in table 69214 relates to 60990, which using ALLanguage.Coverage.RelationNameCollision brings in');
+    end;
+
+    [Test]
+    procedure RelationScope_Third_Validate_AcceptsLocalRefusesBase()
+    var
+        RecRef: RecordRef;
+    begin
+        InsertAgents();
+
+        RecRef.Open(69214);
+        RecRef.Init();
+        RecRef.Field(1).Value := 'A';
+        RecRef.Field(2).Validate('ALTLOCAL');
+        Assert.AreEqual('ALTLOCAL', Format(RecRef.Field(2).Value),
+            'a value present only in the same-app table 60990 validates');
+
+        asserterror RecRef.Field(2).Validate('ALTBASE');
+        Assert.ExpectedError('cannot be found in the related table');
+    end;
+
+    [Test]
+    procedure RelationScope_Third_FlowField_CountsTheLocalTableThroughUsing()
+    var
+        RecRef: RecordRef;
+    begin
+        InsertPackageTables('ALTPKG69214');
+
+        RecRef.Open(69214);
+        RecRef.Init();
+        RecRef.Field(1).Value := 'ALTPKG69214';
+        RecRef.Field(3).CalcField();
+
+        Assert.AreEqual(2, RecRef.Field(3).Value,
+            'the FlowField in table 69214 counts the local "Config. Package Table" (2 rows) that the using brings in, not Base Application''s (1 row)');
+    end;
+
+    [Test]
+    procedure RelationScope_ThirdModified_RelationAnswersTheLocalTableThroughUsing()
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(69215);
+
+        Assert.AreEqual(60990, RecRef.Field(2).Relation(),
+            'the unqualified "Shipping Agent" in table 69215 relates to 60990, which using ALLanguage.Coverage.RelationNameCollision brings in');
+    end;
+
+    [Test]
+    procedure RelationScope_ThirdModified_Validate_AcceptsLocalRefusesBase()
+    var
+        RecRef: RecordRef;
+    begin
+        InsertAgents();
+
+        RecRef.Open(69215);
+        RecRef.Init();
+        RecRef.Field(1).Value := 'A';
+        RecRef.Field(2).Validate('ALTLOCAL');
+        Assert.AreEqual('ALTLOCAL', Format(RecRef.Field(2).Value),
+            'a value present only in the same-app table 60990 validates');
+
+        asserterror RecRef.Field(2).Validate('ALTBASE');
+        Assert.ExpectedError('cannot be found in the related table');
+    end;
+
+    [Test]
+    procedure RelationScope_ThirdModified_FlowField_CountsTheLocalTableThroughUsing()
+    var
+        RecRef: RecordRef;
+    begin
+        InsertPackageTables('ALTPKG69215');
+
+        RecRef.Open(69215);
+        RecRef.Init();
+        RecRef.Field(1).Value := 'ALTPKG69215';
+        RecRef.Field(3).CalcField();
+
+        Assert.AreEqual(2, RecRef.Field(3).Value,
+            'the FlowField in table 69215 counts the local "Config. Package Table" (2 rows) that the using brings in, not Base Application''s (1 row)');
+    end;
+
+    [Test]
+    procedure RelationScope_UsingsModified_ExtensionFieldInAnotherNamespace_FlowFieldCountsTheExtensionsTable()
+    var
+        RecRef: RecordRef;
+    begin
+        InsertPackageTables('ALTPKGEXT');
+
+        RecRef.Open(69203);
+        RecRef.Init();
+        RecRef.Field(1).Value := 'ALTPKGEXT';
+        RecRef.Field(69208).CalcField();
+
+        Assert.AreEqual(2, RecRef.Field(69208).Value,
+            'the extension FlowField is written in the namespace that declares table 60991, so it counts that table (2 rows), not the Base Application "Config. Package Table" (1 row) that table 69203 itself imports');
     end;
 
     local procedure InsertAgents()
