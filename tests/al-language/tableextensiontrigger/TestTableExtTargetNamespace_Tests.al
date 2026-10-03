@@ -2,6 +2,7 @@
 // Scope: in-scope
 // Fixtures used: TXN Log (69420), Shipment Method (69422), TXN Local Own Ext (69423),
 //   TXN Local Qualified Ext (69424), TXN Base Qualified Ext (69425), TXN Base Imported Ext (69427),
+//   TXN Own Namespace Ext (69429),
 //   Assert (60021) -- and Base Application table "Shipment Method"
 //
 // A tableextension extends ONE table: the one its `extends` clause names, with the namespace
@@ -167,5 +168,27 @@ codeunit 69428 "TXN Target Namespace Tests"
     begin
         Assert.AreEqual('TXN Local Code', LocalEntry.FieldCaption("Code"), 'the local extension''s modify must set the local table''s caption');
         Assert.AreEqual('TXN Base Code', BaseEntry.FieldCaption("Code"), 'the base extension''s modify must set Base Application''s caption');
+    end;
+
+    // A bare clause resolves in the file's own namespace first, so an extension declared in Base
+    // Application's namespace extends its table although the file imports this app's same-named
+    // table: the trigger runs for Base Application's table and its field is stored there.
+    [Test]
+    procedure BareClauseFromTheBaseNamespaceExtendsTheBaseTableDespiteAnImportedLocalTable()
+    var
+        Entry: Record Microsoft.Foundation.Shipping."Shipment Method";
+    begin
+        Initialize();
+        if Entry.Get('TXN-O') then
+            Entry.Delete();
+
+        Entry.Code := 'TXN-O';
+        Entry."TXN Own Namespace Added" := 7;
+        Entry.Insert(true);
+
+        Assert.AreEqual(1, CountOf('base-own-namespace'), 'the extension declared in Base Application''s namespace must run once for Base Application''s table');
+        Entry.Get('TXN-O');
+        Assert.AreEqual(7, Entry."TXN Own Namespace Added", 'the field that extension adds must be stored on Base Application''s table');
+        Entry.Delete();
     end;
 }
