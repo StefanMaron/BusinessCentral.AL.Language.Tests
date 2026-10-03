@@ -20,7 +20,7 @@ table 69422 "Shipment Method"
     fields
     {
         field(1; "Code"; Code[10]) { }
-        field(2; Name; Text[50]) { }
+        field(2; Description; Text[100]) { }
     }
 
     keys
@@ -50,7 +50,7 @@ tableextension 69423 "TXN Local Own Ext" extends "Shipment Method"
 
     keys
     {
-        key(TXNLocalKey; "TXN Local Only") { }
+        key(TXNLocalKey; "Code", Description) { }
     }
 
     trigger OnInsert()

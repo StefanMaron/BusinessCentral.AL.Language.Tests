@@ -47,7 +47,7 @@ tableextension 69425 "TXN Base Qualified Ext" extends Microsoft.Foundation.Shipp
 
     keys
     {
-        key(TXNBaseKey; "TXN Base Only") { }
+        key(TXNBaseKey; Description, "Code") { }
     }
 
     trigger OnInsert()

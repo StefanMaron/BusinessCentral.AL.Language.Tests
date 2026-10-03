@@ -33,7 +33,8 @@ codeunit 69428 "TXN Target Namespace Tests"
         exit(LogRec.Count());
     end;
 
-    local procedure KeysStartingWith(var RecRef: RecordRef; FieldNo: Integer): Integer
+    // How many keys of the table are made of exactly these two fields, in this order.
+    local procedure KeysOver(var RecRef: RecordRef; FirstField: Text; SecondField: Text): Integer
     var
         KeyRef: KeyRef;
         I: Integer;
@@ -41,8 +42,8 @@ codeunit 69428 "TXN Target Namespace Tests"
     begin
         for I := 1 to RecRef.KeyCount() do begin
             KeyRef := RecRef.KeyIndex(I);
-            if KeyRef.FieldCount() > 0 then
-                if KeyRef.FieldIndex(1).Number() = FieldNo then
+            if KeyRef.FieldCount() = 2 then
+                if (KeyRef.FieldIndex(1).Name() = FirstField) and (KeyRef.FieldIndex(2).Name() = SecondField) then
                     Result += 1;
         end;
         exit(Result);
@@ -140,8 +141,8 @@ codeunit 69428 "TXN Target Namespace Tests"
         Assert.AreEqual('abc', BaseEntry."TXN Base Shared Id", 'the base field must hold the validated value');
     end;
 
-    // A key an extension declares is a key of the table it extends. The two keys are on fields
-    // of different ids, so counting the keys that lead with each says which table carries which.
+    // A key an extension declares is a key of the table it extends. Both keys are made of fields
+    // both tables have, so a table that took the other extension's key would show it.
     [Test]
     procedure ExtensionKeysBelongToTheTableTheExtensionExtends()
     var
@@ -151,10 +152,10 @@ codeunit 69428 "TXN Target Namespace Tests"
         LocalRef.Open(Database::ALLanguage.Coverage.TxnLocal."Shipment Method");
         BaseRef.Open(Database::Microsoft.Foundation.Shipping."Shipment Method");
 
-        Assert.AreEqual(1, KeysStartingWith(LocalRef, 69424), 'the local table must carry the key its own extension declares');
-        Assert.AreEqual(0, KeysStartingWith(LocalRef, 69425), 'the local table must not carry the key Base Application''s extension declares');
-        Assert.AreEqual(1, KeysStartingWith(BaseRef, 69425), 'Base Application''s table must carry the key its own extension declares');
-        Assert.AreEqual(0, KeysStartingWith(BaseRef, 69424), 'Base Application''s table must not carry the key the local extension declares');
+        Assert.AreEqual(1, KeysOver(LocalRef, 'Code', 'Description'), 'the local table must carry the key its own extension declares');
+        Assert.AreEqual(0, KeysOver(LocalRef, 'Description', 'Code'), 'the local table must not carry the key Base Application''s extension declares');
+        Assert.AreEqual(1, KeysOver(BaseRef, 'Description', 'Code'), 'Base Application''s table must carry the key its own extension declares');
+        Assert.AreEqual(0, KeysOver(BaseRef, 'Code', 'Description'), 'Base Application''s table must not carry the key the local extension declares');
     end;
 
     // A modify() of a field's caption applies to the table it extends only.
