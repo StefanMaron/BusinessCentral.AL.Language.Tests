@@ -750,8 +750,8 @@ codeunit 60061 "Test Record SystemId"
 
     [Test]
     procedure Record_Rename_ToTheSameKey_MovesSystemModifiedAt()
-    // CLAIM (probe, AlRunner#5209): renaming a row to the key it already has. The failure
-    // message of this test is what records the platform's answer.
+    // CLAIM: renaming a row to the key it already has still stamps: RenameRecordAsync does not
+    // optimise the key fields away the way ModifyRecordAsync optimises unchanged fields.
     var
         Rec: Record "ALT Universal";
         Before: DateTime;
