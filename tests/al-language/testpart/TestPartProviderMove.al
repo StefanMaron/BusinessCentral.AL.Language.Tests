@@ -33,6 +33,13 @@ codeunit 69143 "PVD Provider Move Tests"
         Header."Line No." := 1;
         Header.Insert();
 
+        Header.Init();
+        Header."No." := 'H5';
+        Header."Line No." := 1;
+        Header.Insert();
+
+        InsertLine('H5', 70);
+        InsertLine('H5', 80);
         InsertLine('H1', 10);
         InsertLine('H1', 20);
         InsertLine('H3', 30);
@@ -77,6 +84,12 @@ codeunit 69143 "PVD Provider Move Tests"
     end;
 
     [TryFunction]
+    local procedure TryReadHeaderNo(var Card: TestPage "PVD Header Card"; var Result: Text)
+    begin
+        Result := Card.Lines.HeaderNo.Value;
+    end;
+
+    [TryFunction]
     local procedure TryReadLineNo(var Card: TestPage "PVD Header Card"; var Result: Text)
     begin
         Result := Card.Lines.LineNo.Value;
@@ -96,6 +109,15 @@ codeunit 69143 "PVD Provider Move Tests"
         Result: Text;
     begin
         if TryReadInfo(Card, Result) then
+            exit('[' + Result + ']');
+        exit('[ERR ' + GetLastErrorText + ']');
+    end;
+
+    local procedure ReadHeaderNo(var Card: TestPage "PVD Header Card"): Text
+    var
+        Result: Text;
+    begin
+        if TryReadHeaderNo(Card, Result) then
             exit('[' + Result + ']');
         exit('[ERR ' + GetLastErrorText + ']');
     end;
@@ -121,7 +143,7 @@ codeunit 69143 "PVD Provider Move Tests"
     // d = what the dependent part's Info reads, l = what the Provider's LineNo reads, f = First().
     local procedure R(var Card: TestPage "PVD Header Card"): Text
     begin
-        exit(' d=' + ReadInfo(Card) + ' l=' + ReadLineNo(Card));
+        exit(' d=' + ReadInfo(Card) + ' l=' + ReadLineNo(Card) + ' h=' + ReadHeaderNo(Card));
     end;
 
     local procedure Open(var Card: TestPage "PVD Header Card")
@@ -281,6 +303,45 @@ codeunit 69143 "PVD Provider Move Tests"
     end;
 
     [Test]
+    procedure Probe_K_ArrivalRowOfAnUnpositionedPart()
+    var
+        Card: TestPage "PVD Header Card";
+        Obs: Text;
+    begin
+        Open(Card);
+        Obs += 'K0 H1' + R(Card);
+        Card.GoToKey('H5');
+        Obs += ' |K1 H5 l=' + ReadLineNo(Card);
+        Card.GoToKey('H1');
+        Obs += ' |K2 H1 l=' + ReadLineNo(Card);
+        Card.GoToKey('H5');
+        Obs += ' |K3 H5 l=' + ReadLineNo(Card);
+        Card.GoToKey('H1');
+        Obs += ' |K4 H1 l=' + ReadLineNo(Card);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_L_ArrivalRowFromAThreeRowProvider()
+    var
+        Card: TestPage "PVD Header Card";
+        Obs: Text;
+    begin
+        Open(Card);
+        Card.GoToKey('H3');
+        Obs += 'L0 H3 l=' + ReadLineNo(Card);
+        Card.GoToKey('H5');
+        Obs += ' |L1 H5 l=' + ReadLineNo(Card);
+        Card.GoToKey('H3');
+        Obs += ' |L2 H3 l=' + ReadLineNo(Card);
+        Card.GoToKey('H1');
+        Obs += ' |L3 H1 l=' + ReadLineNo(Card);
+        Card.GoToKey('H3');
+        Obs += ' |L4 H3 l=' + ReadLineNo(Card);
+        Error(Obs);
+    end;
+
+    [Test]
     procedure Probe_J_PlainLinkedPart_HostMoves()
     var
         Card: TestPage "PVD Plain Card";
@@ -302,6 +363,12 @@ codeunit 69143 "PVD Provider Move Tests"
     end;
 
     [TryFunction]
+    local procedure TryPlainHeaderNo(var Card: TestPage "PVD Plain Card"; var Result: Text)
+    begin
+        Result := Card.Lines.HeaderNo.Value;
+    end;
+
+    [TryFunction]
     local procedure TryPlainLineNo(var Card: TestPage "PVD Plain Card"; var Result: Text)
     begin
         Result := Card.Lines.LineNo.Value;
@@ -310,9 +377,14 @@ codeunit 69143 "PVD Provider Move Tests"
     local procedure PlainLineNo(var Card: TestPage "PVD Plain Card"): Text
     var
         Result: Text;
+        HeaderResult: Text;
     begin
         if TryPlainLineNo(Card, Result) then
-            exit('[' + Result + ']');
-        exit('[ERR ' + GetLastErrorText + ']');
+            Result := '[' + Result + ']'
+        else
+            Result := '[ERR ' + GetLastErrorText + ']';
+        if TryPlainHeaderNo(Card, HeaderResult) then
+            exit(Result + ' h=[' + HeaderResult + ']');
+        exit(Result + ' h=[ERR ' + GetLastErrorText + ']');
     end;
 }
