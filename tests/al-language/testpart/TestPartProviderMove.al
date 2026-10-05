@@ -279,4 +279,40 @@ codeunit 69143 "PVD Provider Move Tests"
         Obs += ' |I3' + R(Card);
         Error(Obs);
     end;
+
+    [Test]
+    procedure Probe_J_PlainLinkedPart_HostMoves()
+    var
+        Card: TestPage "PVD Plain Card";
+        Obs: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        Card.GoToKey('H1');
+        Obs += 'J0 l=' + PlainLineNo(Card);
+        Card.GoToKey('H2');
+        Obs += ' |J1 l=' + PlainLineNo(Card);
+        Card.GoToKey('H3');
+        Obs += ' |J2 l=' + PlainLineNo(Card);
+        Card.Lines.Next();
+        Obs += ' |J3 next l=' + PlainLineNo(Card);
+        Card.GoToKey('H1');
+        Obs += ' |J4 l=' + PlainLineNo(Card);
+        Error(Obs);
+    end;
+
+    [TryFunction]
+    local procedure TryPlainLineNo(var Card: TestPage "PVD Plain Card"; var Result: Text)
+    begin
+        Result := Card.Lines.LineNo.Value;
+    end;
+
+    local procedure PlainLineNo(var Card: TestPage "PVD Plain Card"): Text
+    var
+        Result: Text;
+    begin
+        if TryPlainLineNo(Card, Result) then
+            exit('[' + Result + ']');
+        exit('[ERR ' + GetLastErrorText + ']');
+    end;
 }
