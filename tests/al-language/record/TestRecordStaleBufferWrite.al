@@ -26,7 +26,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec."Integer Field" := 42;
         Rec.Modify();
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Rec.Get(2);
         Assert.Fail('PROBE_A ' + Res + ' | stored=' + Format(Rec."Integer Field"));
     end;
@@ -46,7 +47,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec."Integer Field" := 42;
         Rec.Modify(true);
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModifyTrue(Stale));
+        asserterror Stale.Modify(true);
+        Res := Outcome();
         Assert.Fail('PROBE_A2 ' + Res);
     end;
 
@@ -64,7 +66,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec.Get(2);
         Rec."Integer Field" := 42;
         Rec.Modify();
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_A3 ' + Res);
     end;
 
@@ -83,7 +86,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec."Integer Field" := 42;
         Rec.Modify();
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_A4 ' + Res);
     end;
 
@@ -100,7 +104,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec."Integer Field" := 42;
         Rec.Modify();
         Rec."Integer Field" := 43;
-        Res := Outcome(TryModify(Rec));
+        asserterror Rec.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_A5 ' + Res);
     end;
 
@@ -120,7 +125,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec.Modify();
         Stale.Get(2);
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_A6 ' + Res);
     end;
 
@@ -139,8 +145,27 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Other."Integer Field" := 42;
         Other.Modify();
         Rec."Integer Field" := 7;
-        Res := Outcome(TryModify(Rec));
+        asserterror Rec.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_A7 ' + Res);
+    end;
+
+    [Test]
+    procedure Probe_B_StaleModify_AfterOtherModifyAll()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Rec.ModifyAll("Integer Field", 42);
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_B ' + Res);
     end;
 
     [Test]
@@ -157,7 +182,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec.Get(2);
         Rec.Rename(3);
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_C ' + Res);
     end;
 
@@ -175,7 +201,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec.Get(2);
         Rec."Integer Field" := 42;
         Rec.Modify();
-        Res := Outcome(TryDelete(Stale));
+        asserterror Stale.Delete();
+        Res := Outcome();
         Assert.Fail('PROBE_D ' + Res + ' | count=' + Format(Rec.Count()));
     end;
 
@@ -192,7 +219,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Stale.Get(2);
         Rec.Get(2);
         Rec.Delete();
-        Res := Outcome(TryDelete(Stale));
+        asserterror Stale.Delete();
+        Res := Outcome();
         Assert.Fail('PROBE_D2 ' + Res);
     end;
 
@@ -210,7 +238,8 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec.Get(2);
         Rec.Delete();
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_D3 ' + Res);
     end;
 
@@ -230,9 +259,9 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec."Integer Field" := 42;
         Rec.Modify();
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        Stale.Modify();
         Rec.Get(2);
-        Assert.Fail('PROBE_E ' + Res + ' | stored=' + Format(Rec."Integer Field"));
+        Assert.Fail('PROBE_E accepted | stored=' + Format(Rec."Integer Field"));
     end;
 
     [Test]
@@ -251,32 +280,13 @@ codeunit 69920 "Test Record Stale Buffer Write"
         Rec."Integer Field" := 42;
         Rec.Modify();
         Stale."Integer Field" := 7;
-        Res := Outcome(TryModify(Stale));
+        asserterror Stale.Modify();
+        Res := Outcome();
         Assert.Fail('PROBE_G ' + Res);
     end;
 
-    [TryFunction]
-    local procedure TryModify(var Rec: Record "ALT Universal")
+    local procedure Outcome(): Text
     begin
-        Rec.Modify();
-    end;
-
-    [TryFunction]
-    local procedure TryModifyTrue(var Rec: Record "ALT Universal")
-    begin
-        Rec.Modify(true);
-    end;
-
-    [TryFunction]
-    local procedure TryDelete(var Rec: Record "ALT Universal")
-    begin
-        Rec.Delete();
-    end;
-
-    local procedure Outcome(Succeeded: Boolean): Text
-    begin
-        if Succeeded then
-            exit('<none>');
         exit('code=' + GetLastErrorCode() + ' text=' + GetLastErrorText());
     end;
 
