@@ -571,6 +571,207 @@ codeunit 60061 "Test Record SystemId"
         Assert.AreEqual(1, Fetched.Count(), 'exactly one row may carry row 1''s SystemId');
     end;
 
+    // ── Rename and Modify: when the Modified pair moves (AlRunner#5209) ─────────
+    // The platform stamps SystemModifiedAt and SystemModifiedBy on a write that modifies at
+    // least one field. A rename modifies the primary key fields, so the Modified pair moves
+    // with it; SystemCreatedAt/By and SystemId do not.
+
+    [Test]
+    procedure Record_Rename_MovesSystemModifiedAtPastItsPreRenameValue()
+    // CLAIM: Rename(newKey) stamps SystemModifiedAt, so the renamed row's value is later than
+    // the one the row had before the rename.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('Rename must move SystemModifiedAt past %1, was %2',
+                Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9)));
+    end;
+
+    [Test]
+    procedure Record_Rename_StampsSystemModifiedByWithUserSecurityId()
+    // CLAIM: a renamed row's SystemModifiedBy is the renaming user's UserSecurityId().
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Sleep(200);
+
+        Rec.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.AreEqual(UserSecurityId(), Rec.SystemModifiedBy, 'SystemModifiedBy must be the renaming user''s UserSecurityId()');
+    end;
+
+    [Test]
+    procedure Record_Rename_KeepsSystemCreatedAtAndSystemId()
+    // CLAIM: a rename does not touch the Created pair or SystemId: the row keeps the
+    // values it was inserted with, and its SystemModifiedAt moves past its SystemCreatedAt.
+    var
+        Rec: Record "ALT Universal";
+        CreatedAt: Text;
+        CreatedBy: Guid;
+        RowId: Guid;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        CreatedAt := Format(Rec.SystemCreatedAt, 0, 9);
+        CreatedBy := Rec.SystemCreatedBy;
+        RowId := Rec.SystemId;
+        Sleep(200);
+
+        Rec.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.AreEqual(CreatedAt, Format(Rec.SystemCreatedAt, 0, 9), 'Rename must keep SystemCreatedAt');
+        Assert.AreEqual(CreatedBy, Rec.SystemCreatedBy, 'Rename must keep SystemCreatedBy');
+        Assert.AreEqual(RowId, Rec.SystemId, 'Rename must keep SystemId');
+        Assert.IsTrue(Rec.SystemModifiedAt > Rec.SystemCreatedAt, 'Rename must leave SystemModifiedAt later than SystemCreatedAt');
+    end;
+
+    [Test]
+    procedure RecordRef_Rename_MovesSystemModifiedAtPastItsPreRenameValue()
+    // CLAIM: RecordRef.Rename stamps the Modified pair the same way Record.Rename does.
+    var
+        Rec: Record "ALT Universal";
+        RecRef: RecordRef;
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        RecRef.GetTable(Rec);
+        RecRef.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('RecordRef.Rename must move SystemModifiedAt past %1, was %2',
+                Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9)));
+        Assert.AreEqual(UserSecurityId(), Rec.SystemModifiedBy, 'SystemModifiedBy must be the renaming user''s UserSecurityId()');
+    end;
+
+    [Test]
+    procedure Record_Modify_WithNoFieldChanged_LeavesSystemModifiedAt()
+    // CLAIM: a Modify that changes no field does not stamp: SystemModifiedAt keeps the value
+    // the row had. Control: Record_Modify_WithAChangedField_MovesSystemModifiedAt.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec."Integer Field" := 7;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec.Modify();
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.AreEqual(Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9),
+            'a Modify that changes no field must leave SystemModifiedAt alone');
+    end;
+
+    [Test]
+    procedure Record_Modify_FieldAssignedItsCurrentValue_LeavesSystemModifiedAt()
+    // CLAIM: assigning a field the value it already holds changes nothing, so Modify does not
+    // stamp either.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec."Integer Field" := 7;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec."Integer Field" := 7;
+        Rec.Modify();
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.AreEqual(Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9),
+            'a Modify that assigns a field its current value must leave SystemModifiedAt alone');
+    end;
+
+    [Test]
+    procedure Record_Modify_WithAChangedField_MovesSystemModifiedAt()
+    // CLAIM (control for the two above): a Modify that really changes a field moves
+    // SystemModifiedAt past its pre-Modify value.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec."Integer Field" := 7;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec."Integer Field" := 8;
+        Rec.Modify();
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('a changing Modify must move SystemModifiedAt past %1, was %2',
+                Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9)));
+    end;
+
+    [Test]
+    procedure Record_Rename_ToTheSameKey_MovesSystemModifiedAt()
+    // CLAIM: renaming a row to the key it already has still stamps: RenameRecordAsync does not
+    // optimise the key fields away the way ModifyRecordAsync optimises unchanged fields.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec.Rename(504);
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('same-key Rename left SystemModifiedAt at %1 (was %2)',
+                Format(Rec.SystemModifiedAt, 0, 9), Format(Before, 0, 9)));
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
