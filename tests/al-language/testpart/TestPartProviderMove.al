@@ -24,11 +24,28 @@ codeunit 69143 "PVD Provider Move Tests"
         Header."Line No." := 1;
         Header.Insert();
 
+        Header.Init();
+        Header."No." := 'H3';
+        Header."Line No." := 1;
+        Header.Insert();
+        Header.Init();
+        Header."No." := 'H4';
+        Header."Line No." := 1;
+        Header.Insert();
+
         InsertLine('H1', 10);
         InsertLine('H1', 20);
+        InsertLine('H3', 30);
+        InsertLine('H3', 40);
+        InsertLine('H3', 50);
+        InsertLine('H4', 60);
         InsertDetail(1, 10, 'ten');
         InsertDetail(2, 20, 'twenty');
         InsertDetail(3, 1, 'decoy');
+        InsertDetail(4, 30, 'thirty');
+        InsertDetail(5, 40, 'forty');
+        InsertDetail(6, 50, 'fifty');
+        InsertDetail(7, 60, 'sixty');
     end;
 
     local procedure InsertLine(HeaderNo: Code[20]; LineNo: Integer)
@@ -101,87 +118,165 @@ codeunit 69143 "PVD Provider Move Tests"
         exit('[ERR ' + GetLastErrorText + ']');
     end;
 
+    // d = what the dependent part's Info reads, l = what the Provider's LineNo reads, f = First().
+    local procedure R(var Card: TestPage "PVD Header Card"): Text
+    begin
+        exit(' d=' + ReadInfo(Card) + ' l=' + ReadLineNo(Card));
+    end;
+
+    local procedure Open(var Card: TestPage "PVD Header Card")
+    begin
+        Initialize();
+        Card.OpenView();
+    end;
+
     [Test]
-    procedure Probe_ProviderMoves_DependentNotMoved()
+    procedure Probe_A_ProviderFirstNextPrevious()
     var
         Card: TestPage "PVD Header Card";
         Obs: Text;
     begin
-        Initialize();
-        Card.OpenView();
+        Open(Card);
         Card.GoToKey('H1');
-        Obs += 'A0 detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Obs += 'A0' + R(Card);
         Card.Lines.First();
-        Obs += ' | A1 afterLinesFirst detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Obs += ' |A1' + R(Card);
         Card.Lines.Next();
-        Obs += ' | A2 afterLinesNext detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
-        Obs += ' | A3 detailFirst=' + ReadDetailAfterFirst(Card);
+        Obs += ' |A2' + R(Card);
         Card.Lines.Previous();
-        Obs += ' | A4 afterLinesPrevious detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
-        Obs += ' | A5 detailFirst=' + ReadDetailAfterFirst(Card);
+        Obs += ' |A3' + R(Card);
         Error(Obs);
     end;
 
     [Test]
-    procedure Probe_ProviderNextWithoutFirst_DependentNotMoved()
+    procedure Probe_B_ProviderNextWithoutFirst()
     var
         Card: TestPage "PVD Header Card";
         Obs: Text;
     begin
-        Initialize();
-        Card.OpenView();
+        Open(Card);
         Card.GoToKey('H1');
-        Obs += 'B0 detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Obs += 'B0' + R(Card);
         Card.Lines.Next();
-        Obs += ' | B1 afterLinesNext detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Obs += ' |B1' + R(Card);
+        Card.Lines.Next();
+        Obs += ' |B2' + R(Card);
+        Card.Lines.Last();
+        Obs += ' |B3' + R(Card);
         Error(Obs);
     end;
 
     [Test]
-    procedure Probe_HostMovesToEmptyProvider_DependentNotMoved()
+    procedure Probe_C_DependentFirstAndNextAfterProviderMove()
     var
         Card: TestPage "PVD Header Card";
         Obs: Text;
     begin
-        Initialize();
-        Card.OpenView();
+        Open(Card);
+        Card.GoToKey('H3');
+        Card.Lines.First();
+        Obs += 'C0' + R(Card);
+        Card.Lines.Next();
+        Obs += ' |C1' + R(Card);
+        Obs += ' |C2 detNext=' + Format(Card.Detail.Next()) + R(Card);
+        Obs += ' |C3 detFirst=' + Format(Card.Detail.First()) + R(Card);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_D_HostMovesToEmptyProvider()
+    var
+        Card: TestPage "PVD Header Card";
+        Obs: Text;
+    begin
+        Open(Card);
         Card.GoToKey('H1');
-        Obs += 'C0 detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Obs += 'D0' + R(Card);
         Card.GoToKey('H2');
-        Obs += ' | C1 afterHostH2 detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
-        Obs += ' | C2 detailFirst=' + ReadDetailAfterFirst(Card);
-        Obs += ' | C3 detail=' + ReadInfo(Card);
-        Card.GoToKey('H1');
-        Obs += ' | C4 backToH1 detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Obs += ' |D1' + R(Card);
+        Obs += ' |D2 detFirst=' + Format(Card.Detail.First()) + R(Card);
+        Obs += ' |D3 linesFirst=' + Format(Card.Lines.First()) + R(Card);
         Error(Obs);
     end;
 
     [Test]
-    procedure Probe_NoProviderPart_ContrastOnHostMove()
+    procedure Probe_E_HostBackFromEmptyProvider()
     var
         Card: TestPage "PVD Header Card";
         Obs: Text;
     begin
-        Initialize();
-        Card.OpenView();
+        Open(Card);
         Card.GoToKey('H1');
-        Obs += 'D0 lines=' + ReadLineNo(Card);
         Card.GoToKey('H2');
-        Obs += ' | D1 afterHostH2 lines=' + ReadLineNo(Card);
         Card.GoToKey('H1');
-        Obs += ' | D2 backToH1 lines=' + ReadLineNo(Card);
+        Obs += 'E0' + R(Card);
+        Card.Lines.First();
+        Obs += ' |E1' + R(Card);
         Error(Obs);
     end;
 
     [Test]
-    procedure Probe_ReadBeforeAnyNavigation()
+    procedure Probe_F_HostMovesBetweenNonEmptyProviders()
     var
         Card: TestPage "PVD Header Card";
         Obs: Text;
     begin
-        Initialize();
-        Card.OpenView();
-        Obs += 'E0 afterOpen detail=' + ReadInfo(Card) + ' lines=' + ReadLineNo(Card);
+        Open(Card);
+        Card.GoToKey('H1');
+        Obs += 'F0' + R(Card);
+        Card.GoToKey('H3');
+        Obs += ' |F1' + R(Card);
+        Card.GoToKey('H4');
+        Obs += ' |F2' + R(Card);
+        Card.GoToKey('H1');
+        Obs += ' |F3' + R(Card);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_G_HostMovesAfterProviderStoodOnSecondRow()
+    var
+        Card: TestPage "PVD Header Card";
+        Obs: Text;
+    begin
+        Open(Card);
+        Card.GoToKey('H3');
+        Card.Lines.First();
+        Card.Lines.Next();
+        Obs += 'G0' + R(Card);
+        Card.GoToKey('H1');
+        Obs += ' |G1' + R(Card);
+        Card.GoToKey('H3');
+        Obs += ' |G2' + R(Card);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_H_ReadBeforeAnyNavigation()
+    var
+        Card: TestPage "PVD Header Card";
+        Obs: Text;
+    begin
+        Open(Card);
+        Obs += 'H0' + R(Card);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_I_HostMovesToEmptyThenToNonEmpty()
+    var
+        Card: TestPage "PVD Header Card";
+        Obs: Text;
+    begin
+        Open(Card);
+        Card.GoToKey('H2');
+        Obs += 'I0' + R(Card);
+        Card.GoToKey('H3');
+        Obs += ' |I1' + R(Card);
+        Card.GoToKey('H2');
+        Obs += ' |I2' + R(Card);
+        Card.GoToKey('H4');
+        Obs += ' |I3' + R(Card);
         Error(Obs);
     end;
 }
