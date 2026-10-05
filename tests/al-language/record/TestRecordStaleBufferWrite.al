@@ -169,6 +169,182 @@ codeunit 69920 "Test Record Stale Buffer Write"
     end;
 
     [Test]
+    procedure Probe_B3_StaleDelete_AfterOtherModifyAll()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Rec.ModifyAll("Integer Field", 42);
+        asserterror Stale.Delete();
+        Res := Outcome();
+        Assert.Fail('PROBE_B3 ' + Res + ' | count=' + Format(Rec.Count()));
+    end;
+
+    [Test]
+    procedure Probe_B4_Control_GetAfterModifyAll_ThenModify()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Rec.ModifyAll("Integer Field", 42);
+        Stale.Get(2);
+        Stale."Integer Field" := 7;
+        Stale.Modify();
+        Rec.Get(2);
+        Assert.Fail('PROBE_B4 accepted | stored=' + Format(Rec."Integer Field"));
+    end;
+
+    [Test]
+    procedure Probe_B6_Temporary_ModifyAll_StaleModify()
+    var
+        Rec: Record "ALT Universal" temporary;
+        Stale: Record "ALT Universal" temporary;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Copy(Rec, true);
+        Stale.Get(2);
+        Rec.ModifyAll("Integer Field", 42);
+        Stale."Integer Field" := 7;
+        Stale.Modify();
+        Rec.Get(2);
+        Assert.Fail('PROBE_B6 accepted | stored=' + Format(Rec."Integer Field"));
+    end;
+
+    [Test]
+    procedure Probe_B7_SameVariable_ModifyAll_ThenModify()
+    var
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Stale."Entry No." := 2;
+        Stale.Insert();
+        Stale.Get(2);
+        Stale.ModifyAll("Integer Field", 42);
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_B7 ' + Res);
+    end;
+
+    [Test]
+    procedure Probe_B8_StaleModify_AfterOtherModifyThenModifyAll()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Rec.Get(2);
+        Rec."Integer Field" := 41;
+        Rec.Modify();
+        Rec.ModifyAll("Integer Field", 42);
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_B8 ' + Res);
+    end;
+
+    [Test]
+    procedure Probe_A8_StaleModify_AfterOtherModifyAndCommit()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Commit();
+        Stale.Get(2);
+        Rec.Get(2);
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+        Commit();
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_A8 ' + Res);
+    end;
+
+    [Test]
+    procedure Probe_A9_StaleModify_AfterOtherRenamedAway()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Rec.Get(2);
+        Rec.Rename(3);
+        Rec.Rename(2);
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_A9 ' + Res);
+    end;
+
+    [Test]
+    procedure Probe_A10_StaleModify_AfterOtherDeletedAndReinserted()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Rec.Delete();
+        Rec.Init();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_A10 ' + Res);
+    end;
+
+    [Test]
+    procedure Probe_A11_StaleModify_AfterRecordRefModify()
+    var
+        Rec: Record "ALT Universal";
+        Stale: Record "ALT Universal";
+        Ref: RecordRef;
+        Res: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 2;
+        Rec.Insert();
+        Stale.Get(2);
+        Ref.GetTable(Rec);
+        Ref.Get(Rec.RecordId);
+        Ref.Field(3).Value := 42;
+        Ref.Modify();
+        Stale."Integer Field" := 7;
+        asserterror Stale.Modify();
+        Res := Outcome();
+        Assert.Fail('PROBE_A11 ' + Res);
+    end;
+
+    [Test]
     procedure Probe_C_StaleModify_AfterOtherRenamed()
     var
         Rec: Record "ALT Universal";
