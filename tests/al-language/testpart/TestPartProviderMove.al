@@ -52,28 +52,53 @@ codeunit 69143 "PVD Provider Move Tests"
         Detail.Insert();
     end;
 
-    local procedure ReadInfo(var Card: TestPage "PVD Header Card"): Text
+    // A TryFunction, not asserterror: an error caught by asserterror rolls the test's writes back.
+    [TryFunction]
+    local procedure TryReadInfo(var Card: TestPage "PVD Header Card"; var Result: Text)
     begin
-        asserterror Error('v=%1', Card.Detail.Info.Value);
-        exit('[' + GetLastErrorText + ']');
+        Result := Card.Detail.Info.Value;
+    end;
+
+    [TryFunction]
+    local procedure TryReadLineNo(var Card: TestPage "PVD Header Card"; var Result: Text)
+    begin
+        Result := Card.Lines.LineNo.Value;
+    end;
+
+    [TryFunction]
+    local procedure TryFirstThenRead(var Card: TestPage "PVD Header Card"; var Result: Text)
+    var
+        Found: Boolean;
+    begin
+        Found := Card.Detail.First();
+        Result := StrSubstNo('first=%1 v=%2', Found, Card.Detail.Info.Value);
+    end;
+
+    local procedure ReadInfo(var Card: TestPage "PVD Header Card"): Text
+    var
+        Result: Text;
+    begin
+        if TryReadInfo(Card, Result) then
+            exit('[' + Result + ']');
+        exit('[ERR ' + GetLastErrorText + ']');
     end;
 
     local procedure ReadLineNo(var Card: TestPage "PVD Header Card"): Text
+    var
+        Result: Text;
     begin
-        asserterror Error('v=%1', Card.Lines.LineNo.Value);
-        exit('[' + GetLastErrorText + ']');
+        if TryReadLineNo(Card, Result) then
+            exit('[' + Result + ']');
+        exit('[ERR ' + GetLastErrorText + ']');
     end;
 
     local procedure ReadDetailAfterFirst(var Card: TestPage "PVD Header Card"): Text
     var
-        Found: Boolean;
+        Result: Text;
     begin
-        asserterror
-        begin
-            Found := Card.Detail.First();
-            Error('first=%1 v=%2', Found, Card.Detail.Info.Value);
-        end;
-        exit('[' + GetLastErrorText + ']');
+        if TryFirstThenRead(Card, Result) then
+            exit('[' + Result + ']');
+        exit('[ERR ' + GetLastErrorText + ']');
     end;
 
     [Test]
