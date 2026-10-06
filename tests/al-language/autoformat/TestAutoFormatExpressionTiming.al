@@ -602,6 +602,19 @@ codeunit 69600 "AFT Expression Timing Tests"
         Assert.IsFalse(HandlerRan, 'the page failed to open, so the handler is never handed it');
     end;
 
+    [Test]
+    [HandlerFunctions('NeverRunHandler')]
+    procedure FailingFormat_RunModalOnAnEmptyTable_RaisesBeforeAnyHandler()
+    var
+        Row: Record "AFT Row";
+    begin
+        Row.DeleteAll();
+        HandlerRan := false;
+        asserterror Page.RunModal(Page::"AFT Always Card", Row);
+        Assert.ExpectedError('AFT format expression failed');
+        Assert.IsFalse(HandlerRan, 'the page failed to open, so the handler is never handed it');
+    end;
+
     // ---- the controls that have nothing to raise ----
 
     [Test]
@@ -678,17 +691,60 @@ codeunit 69600 "AFT Expression Timing Tests"
     end;
 
     [Test]
-    procedure RowFormat_MovingOntoARowThatDoesNotFail_Reads()
+    procedure RowFormat_GoToKeyPastTheFailingRow_ReadsAsTheTestPageNotOpen()
     var
         P: TestPage "AFT Row Card";
         Shown: Text;
     begin
+        // The search for C walks through B, and B's expression raises, so C is never reached.
         Seed();
+        P.OpenView();
+        asserterror P.GoToKey('C');
+        Assert.ExpectedError('The TestPage is not open.');
+        asserterror Shown := P.NoCtl.Value();
+        Assert.ExpectedError('The TestPage is not open.');
+    end;
+
+    [Test]
+    procedure RowFormat_MovingOntoARowThatDoesNotFail_Reads()
+    var
+        P: TestPage "AFT Row Card";
+        Row: Record "AFT Row";
+        Shown: Text;
+    begin
+        Seed();
+        Row.Get('B');
+        Row.Delete();
         P.OpenView();
         P.GoToKey('C');
         Shown := P.RowCtl.Value();
         P.Close();
         Assert.AreEqual('9.000', Shown, 'the row that does not fail reads in the format its expression answers');
+    end;
+
+    [Test]
+    procedure RowFormat_AfterAFailedOpen_TheSamePageVariableOpensAgain()
+    var
+        P: TestPage "AFT Row Card";
+        Row: Record "AFT Row";
+        Shown: Text;
+    begin
+        Seed();
+        Row.Get('A');
+        Row.Delete();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT row format failed for B');
+        // Written again rather than edited: whether the failed open rolled the seed back is not
+        // this test's claim.
+        Row.DeleteAll();
+        Row.Init();
+        Row."No." := 'C';
+        Row.Amount := 9;
+        Row.Insert();
+        P.OpenView();
+        Shown := P.RowCtl.Value();
+        P.Close();
+        Assert.AreEqual('9.000', Shown, 'a new open is a new page: the failed one does not carry over');
     end;
 
     [Test]
