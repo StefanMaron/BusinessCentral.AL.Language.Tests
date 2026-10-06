@@ -263,7 +263,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: a part whose link matches no row reads blank in every control.
     [Test]
-    procedure PartShowingNoRow_EveryControlReadsBlank()
+    procedure NoRow_Part_EveryControlReadsBlank()
     var
         Card: TestPage "BNR Card";
     begin
@@ -277,7 +277,7 @@ codeunit 69940 "BNR Blank Part Tests"
     // CLAIM: the typed accessors of such a control answer the type's default, also for a field whose
     // InitValue is not the default.
     [Test]
-    procedure PartShowingNoRow_TypedReadsAreTheTypeDefault()
+    procedure NoRow_Part_TypedReadsAreTheTypeDefault()
     var
         Card: TestPage "BNR Card";
     begin
@@ -291,7 +291,7 @@ codeunit 69940 "BNR Blank Part Tests"
     // CLAIM: the part blanks while the host shows a row without lines and reads its row again after,
     // so the blank is the part's state and not a one-way latch.
     [Test]
-    procedure PartThatShowedARow_ReadsBlankWhileTheHostShowsNoLines_AndItsValuesAgainAfter()
+    procedure NoRow_Part_ReadsBlankWhileTheHostShowsNoLines_AndItsValuesAgainAfter()
     var
         Card: TestPage "BNR Card";
     begin
@@ -313,7 +313,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: a part of a host that has no row at all reads blank too.
     [Test]
-    procedure PartOfAHostOverAnEmptyTable_EveryControlReadsBlank()
+    procedure NoRow_PartOfAHostOverAnEmptyTable_EveryControlReadsBlank()
     var
         Card: TestPage "BNR Card";
         Header: Record "BNR Header";
@@ -328,7 +328,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: a list over an empty table reads blank in every control, and so do its typed accessors.
     [Test]
-    procedure ListOverAnEmptyTable_EveryControlReadsBlank()
+    procedure NoRow_ListOverAnEmptyTable_EveryControlReadsBlank()
     var
         Card: TestPage "BNR Lines List";
     begin
@@ -340,7 +340,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: First() and Last() on that list answer false and leave it showing no row.
     [Test]
-    procedure ListOverAnEmptyTable_AfterFirstAndLast_StillReadsBlank()
+    procedure NoRow_ListOverAnEmptyTable_AfterFirstAndLast_StillReadsBlank()
     var
         Card: TestPage "BNR Lines List";
     begin
@@ -354,7 +354,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CONTRAST: the same list with a row reads that row, so the blank above is the absence of a row.
     [Test]
-    procedure ListWithARow_ReadsItsValues()
+    procedure NoRow_Contrast_ListWithARow_ReadsItsValues()
     var
         Card: TestPage "BNR Lines List";
     begin
@@ -368,7 +368,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: a card over an empty table reads blank in every control.
     [Test]
-    procedure CardOverAnEmptyTable_EveryControlReadsBlank()
+    procedure NoRow_CardOverAnEmptyTable_EveryControlReadsBlank()
     var
         Card: TestPage "BNR Line Card";
     begin
@@ -379,7 +379,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: a list filtered to nothing reads blank.
     [Test]
-    procedure ListFilteredToNothing_EveryControlReadsBlank()
+    procedure NoRow_ListFilteredToNothing_EveryControlReadsBlank()
     var
         Card: TestPage "BNR Lines List";
     begin
@@ -393,7 +393,7 @@ codeunit 69940 "BNR Blank Part Tests"
     // CONTRAST: the draft line of an editable list over an empty table is a row, whose controls read
     // the defaults it was started with.
     [Test]
-    procedure EditableListOverAnEmptyTable_ShowsTheDraftLine_ReadingItsDefaults()
+    procedure NoRow_Contrast_EditableListOverAnEmptyTable_ShowsTheDraftLine_ReadingItsDefaults()
     var
         Card: TestPage "BNR Lines List";
     begin
@@ -404,7 +404,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CONTRAST: and so is the draft line of a part under an editable host.
     [Test]
-    procedure PartUnderAnEditableHostWithNoLines_ShowsTheDraftLine_ReadingItsDefaults()
+    procedure NoRow_Contrast_PartUnderAnEditableHostWithNoLines_ShowsTheDraftLine_ReadingItsDefaults()
     var
         Card: TestPage "BNR Card";
     begin
@@ -418,7 +418,7 @@ codeunit 69940 "BNR Blank Part Tests"
 
     // CLAIM: a row started with New() on an empty editable list reads the values written to it.
     [Test]
-    procedure NewRowOnAnEmptyEditableList_ReadsTheValuesWrittenToIt()
+    procedure NoRow_Contrast_NewRowOnAnEmptyEditableList_ReadsTheValuesWrittenToIt()
     var
         Card: TestPage "BNR Lines List";
     begin
