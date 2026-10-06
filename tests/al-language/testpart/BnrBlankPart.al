@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testpage-class
 // Scope: in-scope
 // Fixtures used: BNR Header (69940), BNR Line (69941), BNR Kind (enum 69940), BNR Lines Part (69940),
-//                BNR Card (69941), BNR Lines List (69942), BNR Line Card (69943); shared Assert (60021)
+//                BNR Card (69941), BNR Lines List (69942), BNR Line Card (69943), BNR Temp List (69944),
+//                BNR Temp Open List (69945), BNR Get List (69946), BNR Real List (69948); shared Assert (60021)
 //
 // WHAT does a control read when its part or page shows NO row?
 // The first revisions of this file recorded the readings of one control of every field type
@@ -15,9 +16,16 @@
 // nothing. It does NOT hold for the draft line of an editable page, which is a row: there the
 // controls read the defaults the line was started with (QInt 0, QIntInit its InitValue 5).
 //
+// A page that showed no row shows one again once page code has put a row into its rowset and
+// positioned Rec on it (the NoRow_Action_ arms: a temporary-source list filled by an action, the shape
+// of Navigate). Page code that only changes the buffer, sets a key it never inserts, or Gets a row the
+// page's filter hides, shows nothing; neither does a row test code inserts after the page opened.
+// A top-level card over an empty table reads blank with OpenEdit and its defaults with OpenNew.
+//
 // NOT pinned here, on purpose: AsDateTime() on a control with no row raises an unhandled CLR
 // NullReferenceException on BC (BC unboxes a null into a DateTime), and the text of that failure is
-// not something an AL test should assert. The Value of a populated Date/Time/DateTime/Guid/Duration
+// not something an AL test should assert. Nor is which row First() shows after test code inserted rows behind
+// the page's back: BC stayed blank (the page keeps the rowset it loaded), the runner re-queries. The Value of a populated Date/Time/DateTime/Guid/Duration
 // control is not asserted either; its spelling is not this file's claim.
 codeunit 69940 "BNR Blank Part Tests"
 {
@@ -431,5 +439,197 @@ codeunit 69940 "BNR Blank Part Tests"
         Assert.AreEqual('5', Card.QInt.Value, 'the new row reads what was written');
         Assert.AreEqual(5, Card.QInt.AsInteger(), 'typed read of the new row');
         Assert.AreEqual('X', Card.HeaderNo.Value, 'the new row reads its key');
+    end;
+
+    // The actions below fill and position Rec from AL, the shape of Navigate: a list over a temporary
+    // source table that shows nothing when it opens, then an action inserts rows and positions Rec.
+    // CLAIM: once page code has put a row into the rowset and positioned Rec on it, the page shows
+    // that row, whether or not the page showed nothing before.
+    [Test]
+    procedure NoRow_Action_TempListInsertAndFind_ShowsTheRow()
+    var
+        Card: TestPage "BNR Temp List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Assert.AreEqual('', Card.QInt.Value, 'no row before the action');
+        Card.InsertFind.Invoke();
+        Assert.AreEqual('T', Card.HeaderNo.Value, 'the row the action inserted is shown');
+        Assert.AreEqual('1', Card.LineNo.Value, 'its line');
+        Assert.AreEqual('found', Card.QTxt.Value, 'its text');
+        Assert.AreEqual('7', Card.QInt.Value, 'its integer');
+        Assert.AreEqual(7, Card.QInt.AsInteger(), 'and its typed read');
+    end;
+
+    // CLAIM: the same when the action also calls CurrPage.Update.
+    [Test]
+    procedure NoRow_Action_TempListInsertFindUpdate_ShowsTheRow()
+    var
+        Card: TestPage "BNR Temp List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Card.InsertFindUpdate.Invoke();
+        Assert.AreEqual('7', Card.QInt.Value, 'the row is shown after CurrPage.Update');
+        Assert.AreEqual('found', Card.QTxt.Value, 'its text');
+    end;
+
+    // CLAIM: an Insert alone leaves Rec on the inserted row, and the page shows it.
+    [Test]
+    procedure NoRow_Action_TempListInsertOnly_ShowsTheRow()
+    var
+        Card: TestPage "BNR Temp List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Card.InsertOnly.Invoke();
+        Assert.AreEqual('7', Card.QInt.Value, 'the inserted row is shown');
+    end;
+
+    // CLAIM: two inserts and a FindLast: the page shows the row Rec stands on, and First() shows the other.
+    [Test]
+    procedure NoRow_Action_TempListTwoInsertsAndFindLast_ShowsTheLastRow()
+    var
+        Card: TestPage "BNR Temp List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Card.InsertTwoFindLast.Invoke();
+        Assert.AreEqual('2', Card.QInt.Value, 'Rec stands on the second row');
+        Card.First();
+        Assert.AreEqual('1', Card.QInt.Value, 'First() shows the first row');
+    end;
+
+    // CLAIM: the same on a list over the stored table.
+    [Test]
+    procedure NoRow_Action_StoredListInsertAndFind_ShowsTheRow()
+    var
+        Card: TestPage "BNR Real List";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenView();
+        Assert.AreEqual('', Card.QInt.Value, 'no row before the action');
+        Card.InsertFind.Invoke();
+        Assert.AreEqual('4', Card.QInt.Value, 'the inserted row is shown');
+        Assert.AreEqual('R', Card.HeaderNo.Value, 'its key');
+    end;
+
+    // CLAIM: an insert of a row the page's filter lets through, positioned on, is shown.
+    [Test]
+    procedure NoRow_Action_InsertOfARowTheFilterAdmits_ShowsTheRow()
+    var
+        Card: TestPage "BNR Get List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Assert.AreEqual('', Card.QInt.Value, 'no row before the action');
+        Card.InsertMatching.Invoke();
+        Assert.AreEqual('3', Card.QInt.Value, 'the inserted row is shown');
+        Assert.AreEqual('ZZZ', Card.HeaderNo.Value, 'its key');
+    end;
+
+    // CONTRAST: page code that changes only the buffer, with no row in the rowset, shows nothing.
+    [Test]
+    procedure NoRow_Action_TempListFieldsOnly_StaysBlank()
+    var
+        Card: TestPage "BNR Temp List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Card.FieldsOnly.Invoke();
+        Assert.AreEqual('', Card.QInt.Value, 'QInt');
+        Assert.AreEqual('', Card.QTxt.Value, 'QTxt');
+        Assert.AreEqual(0, Card.QInt.AsInteger(), 'typed');
+    end;
+
+    // CONTRAST: and so does a key set on Rec that was never inserted.
+    [Test]
+    procedure NoRow_Action_TempListKeyOnlyNoInsert_StaysBlank()
+    var
+        Card: TestPage "BNR Temp List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Card.KeyOnly.Invoke();
+        Assert.AreEqual('', Card.HeaderNo.Value, 'the key');
+        Assert.AreEqual('', Card.QInt.Value, 'QInt');
+    end;
+
+    // CONTRAST: Get of a stored row the page's filter hides leaves the page showing nothing.
+    [Test]
+    procedure NoRow_Action_GetOfARowTheFilterHides_StaysBlank()
+    var
+        Card: TestPage "BNR Get List";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GetRow.Invoke();
+        Assert.AreEqual('', Card.QInt.Value, 'Rec is on a stored row the page filters out');
+        Assert.AreEqual('', Card.QTxt.Value, 'its text');
+    end;
+
+    // CONTRAST: a row that test code inserts after the page opened is not shown before the list moves.
+    [Test]
+    procedure NoRow_TestCodeInsertAfterOpen_StaysBlankUntilTheListMoves()
+    var
+        Card: TestPage "BNR Real List";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenView();
+        Line.Init();
+        Line."Header No." := 'R';
+        Line."Line No." := 9;
+        Line.QTxt := 'late';
+        Line.QInt := 6;
+        Line.Insert();
+        Assert.AreEqual('', Card.QInt.Value, 'the page has not seen the new row');
+        Assert.AreEqual('', Card.QTxt.Value, 'its text');
+    end;
+
+    // CLAIM: rows a temporary-source page inserts in its own OnOpenPage are shown, not blank.
+    [Test]
+    procedure NoRow_TempListInsertingInOnOpenPage_ShowsARow()
+    var
+        Card: TestPage "BNR Temp Open List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Assert.AreEqual('T', Card.HeaderNo.Value, 'a row the page inserted is shown');
+        Assert.AreNotEqual('', Card.QInt.Value, 'its integer is not blank');
+    end;
+
+    // CLAIM: a card over an empty table opened for editing reads blank (a card has no draft line) ...
+    [Test]
+    procedure NoRow_Card_OpenEditOverAnEmptyTable_ReadsBlank()
+    var
+        Card: TestPage "BNR Line Card";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenEdit();
+        AssertLineCardBlank(Card);
+    end;
+
+    // ... and one opened with OpenNew reads the defaults of the new record.
+    [Test]
+    procedure NoRow_Contrast_CardOpenNewOverAnEmptyTable_ReadsItsDefaults()
+    var
+        Card: TestPage "BNR Line Card";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenNew();
+        Assert.AreEqual('', Card.HeaderNo.Value, 'the key is blank');
+        Assert.AreEqual('0', Card.LineNo.Value, 'the integer key reads its default');
+        Assert.AreEqual('0', Card.QInt.Value, 'QInt reads its default');
+        Assert.AreEqual('5', Card.QIntInit.Value, 'QIntInit reads its InitValue');
+        Assert.AreEqual(0, Card.QInt.AsInteger(), 'typed');
     end;
 }
