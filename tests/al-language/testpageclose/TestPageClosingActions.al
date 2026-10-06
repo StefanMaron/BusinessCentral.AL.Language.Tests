@@ -267,8 +267,6 @@ codeunit 69651 "TPC Closing Action Probes"
             'ok': P.OK().Invoke();
             'cancel': P.Cancel().Invoke();
             'close': P.Close();
-            'lookupok': P.LookupOK().Invoke();
-            'lookupcancel': P.LookupCancel().Invoke();
             'none': ;
         end;
         Res := 'done';
@@ -548,8 +546,6 @@ codeunit 69651 "TPC Closing Action Probes"
             'ok': P.OK().Invoke();
             'cancel': P.Cancel().Invoke();
             'close': P.Close();
-            'lookupok': P.LookupOK().Invoke();
-            'lookupcancel': P.LookupCancel().Invoke();
             'none': ;
         end;
         Res := 'done';
@@ -927,23 +923,16 @@ Ops.Add('new');
 
     [Test]
     [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerLookup_AfterLookupOK()
-    begin
-        RunHandlerList('lookupok', true);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerLookup_AfterLookupCancel()
-    begin
-        RunHandlerList('lookupcancel', true);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
     procedure Probe_HandlerLookup_AfterOK()
     begin
         RunHandlerList('ok', true);
+    end;
+
+    [Test]
+    [HandlerFunctions('ListHandler')]
+    procedure Probe_HandlerLookup_AfterCancel()
+    begin
+        RunHandlerList('cancel', true);
     end;
 
     // ---- a request page ----
