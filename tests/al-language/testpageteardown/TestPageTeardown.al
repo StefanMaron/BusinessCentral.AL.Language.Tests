@@ -1528,6 +1528,25 @@ codeunit 69640 "TPT Teardown Tests"
     end;
 
     [Test]
+    procedure CardExpression_AfterATeardown_TheDataGone_TheVariableOpensOnABlankRow()
+    var
+        P: TestPage "TPT Expression Card";
+        Row: Record "TPT Row";
+        T: Text;
+    begin
+        Seed();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Assert.ExpectedError(NotOpenTxt);
+        Row.DeleteAll();
+        Commit();
+        P.OpenView();
+        T := P.NoCtl.Value();
+        P.Close();
+        Assert.AreEqual('', T, 'over a table with no rows the reopened page shows a blank row, not the row that tore the old page down');
+    end;
+
+    [Test]
     procedure CardExpression_FailingRowIsTheLastOne_AfterATeardown_TheVariableOpensOnTheFirstRow()
     var
         P: TestPage "TPT Expression Card";
