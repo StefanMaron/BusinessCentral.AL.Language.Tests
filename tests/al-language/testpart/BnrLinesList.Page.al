@@ -1,8 +1,8 @@
-// Fixture for codeunit 69940 "NRB Blank Part Tests": a top-level list over the same table.
-page 69942 "NRB Lines List"
+// Fixture for codeunit 69940 "BNR Blank Part Tests": a top-level list over the same table.
+page 69942 "BNR Lines List"
 {
     PageType = List;
-    SourceTable = "NRB Line";
+    SourceTable = "BNR Line";
     ApplicationArea = All;
     UsageCategory = None;
 

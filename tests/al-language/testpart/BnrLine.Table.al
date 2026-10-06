@@ -1,6 +1,6 @@
-// Fixture for codeunit 69940 "NRB Blank Part Tests": one field of each type a page can show.
+// Fixture for codeunit 69940 "BNR Blank Part Tests": one field of each type a page can show.
 // QIntInit, QDecInit and QBoolInit carry an InitValue, so a buffer that was Init()ed reads that value.
-table 69941 "NRB Line"
+table 69941 "BNR Line"
 {
     DataClassification = CustomerContent;
 
@@ -17,7 +17,7 @@ table 69941 "NRB Line"
         field(16; QDt; Date) { }
         field(17; QTm; Time) { }
         field(18; QDtTm; DateTime) { }
-        field(19; QEn; Enum "NRB Kind") { }
+        field(19; QEn; Enum "BNR Kind") { }
         field(20; QBig; BigInteger) { }
         field(21; QGd; Guid) { }
         field(22; QDur; Duration) { }

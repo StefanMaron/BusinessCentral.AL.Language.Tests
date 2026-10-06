@@ -1,8 +1,8 @@
-// Fixture for codeunit 69940 "NRB Blank Part Tests": a host whose part is linked by SubPageLink.
-page 69941 "NRB Card"
+// Fixture for codeunit 69940 "BNR Blank Part Tests": a host whose part is linked by SubPageLink.
+page 69941 "BNR Card"
 {
     PageType = Card;
-    SourceTable = "NRB Header";
+    SourceTable = "BNR Header";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -11,7 +11,7 @@ page 69941 "NRB Card"
         area(Content)
         {
             field("No."; Rec."No.") { ApplicationArea = All; }
-            part(Lines; "NRB Lines Part")
+            part(Lines; "BNR Lines Part")
             {
                 ApplicationArea = All;
                 SubPageLink = "Header No." = field("No.");

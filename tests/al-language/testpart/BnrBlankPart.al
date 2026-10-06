@@ -1,18 +1,18 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testpage-class
 // Scope: in-scope
-// Fixtures used: NRB Header (69940), NRB Line (69941), NRB Kind (enum 69940), NRB Lines Part (69940),
-//                NRB Card (69941), NRB Lines List (69942), NRB Line Card (69943)
+// Fixtures used: BNR Header (69940), BNR Line (69941), BNR Kind (enum 69940), BNR Lines Part (69940),
+//                BNR Card (69941), BNR Lines List (69942), BNR Line Card (69943)
 //
 // PROBE revision: records what each control reads on a part or page that shows no row, per field type.
-codeunit 69940 "NRB Blank Part Tests"
+codeunit 69940 "BNR Blank Part Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     local procedure Initialize()
     var
-        Header: Record "NRB Header";
-        Line: Record "NRB Line";
+        Header: Record "BNR Header";
+        Line: Record "BNR Line";
     begin
         Line.DeleteAll();
         Header.DeleteAll();
@@ -26,7 +26,7 @@ codeunit 69940 "NRB Blank Part Tests"
 
     local procedure InsertFullLine(HeaderNo: Code[20]; LineNo: Integer)
     var
-        Line: Record "NRB Line";
+        Line: Record "BNR Line";
     begin
         Line.Init();
         Line."Header No." := HeaderNo;
@@ -52,7 +52,7 @@ codeunit 69940 "NRB Blank Part Tests"
 
     // ---- Part ----
     [TryFunction]
-    local procedure TryPartQInt(var Card: TestPage "NRB Card"; var Result: Text)
+    local procedure TryPartQInt(var Card: TestPage "BNR Card"; var Result: Text)
     var
         V: Integer;
     begin
@@ -61,7 +61,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryPartQDec(var Card: TestPage "NRB Card"; var Result: Text)
+    local procedure TryPartQDec(var Card: TestPage "BNR Card"; var Result: Text)
     var
         V: Decimal;
     begin
@@ -70,7 +70,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryPartQBool(var Card: TestPage "NRB Card"; var Result: Text)
+    local procedure TryPartQBool(var Card: TestPage "BNR Card"; var Result: Text)
     var
         V: Boolean;
     begin
@@ -79,7 +79,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryPartQDt(var Card: TestPage "NRB Card"; var Result: Text)
+    local procedure TryPartQDt(var Card: TestPage "BNR Card"; var Result: Text)
     var
         V: Date;
     begin
@@ -88,7 +88,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryPartQTm(var Card: TestPage "NRB Card"; var Result: Text)
+    local procedure TryPartQTm(var Card: TestPage "BNR Card"; var Result: Text)
     var
         V: Time;
     begin
@@ -97,7 +97,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryPartQDtTm(var Card: TestPage "NRB Card"; var Result: Text)
+    local procedure TryPartQDtTm(var Card: TestPage "BNR Card"; var Result: Text)
     var
         V: DateTime;
     begin
@@ -105,7 +105,7 @@ codeunit 69940 "NRB Blank Part Tests"
         Result := Format(V);
     end;
 
-    local procedure ObsPart(var Card: TestPage "NRB Card"): Text
+    local procedure ObsPart(var Card: TestPage "BNR Card"): Text
     var
         Obs: Text;
         Typed: Text;
@@ -145,7 +145,7 @@ codeunit 69940 "NRB Blank Part Tests"
 
     // ---- List ----
     [TryFunction]
-    local procedure TryListQInt(var Card: TestPage "NRB Lines List"; var Result: Text)
+    local procedure TryListQInt(var Card: TestPage "BNR Lines List"; var Result: Text)
     var
         V: Integer;
     begin
@@ -154,7 +154,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryListQDec(var Card: TestPage "NRB Lines List"; var Result: Text)
+    local procedure TryListQDec(var Card: TestPage "BNR Lines List"; var Result: Text)
     var
         V: Decimal;
     begin
@@ -163,7 +163,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryListQBool(var Card: TestPage "NRB Lines List"; var Result: Text)
+    local procedure TryListQBool(var Card: TestPage "BNR Lines List"; var Result: Text)
     var
         V: Boolean;
     begin
@@ -172,7 +172,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryListQDt(var Card: TestPage "NRB Lines List"; var Result: Text)
+    local procedure TryListQDt(var Card: TestPage "BNR Lines List"; var Result: Text)
     var
         V: Date;
     begin
@@ -181,7 +181,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryListQTm(var Card: TestPage "NRB Lines List"; var Result: Text)
+    local procedure TryListQTm(var Card: TestPage "BNR Lines List"; var Result: Text)
     var
         V: Time;
     begin
@@ -190,7 +190,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryListQDtTm(var Card: TestPage "NRB Lines List"; var Result: Text)
+    local procedure TryListQDtTm(var Card: TestPage "BNR Lines List"; var Result: Text)
     var
         V: DateTime;
     begin
@@ -198,7 +198,7 @@ codeunit 69940 "NRB Blank Part Tests"
         Result := Format(V);
     end;
 
-    local procedure ObsList(var Card: TestPage "NRB Lines List"): Text
+    local procedure ObsList(var Card: TestPage "BNR Lines List"): Text
     var
         Obs: Text;
         Typed: Text;
@@ -238,7 +238,7 @@ codeunit 69940 "NRB Blank Part Tests"
 
     // ---- LCard ----
     [TryFunction]
-    local procedure TryLCardQInt(var Card: TestPage "NRB Line Card"; var Result: Text)
+    local procedure TryLCardQInt(var Card: TestPage "BNR Line Card"; var Result: Text)
     var
         V: Integer;
     begin
@@ -247,7 +247,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryLCardQDec(var Card: TestPage "NRB Line Card"; var Result: Text)
+    local procedure TryLCardQDec(var Card: TestPage "BNR Line Card"; var Result: Text)
     var
         V: Decimal;
     begin
@@ -256,7 +256,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryLCardQBool(var Card: TestPage "NRB Line Card"; var Result: Text)
+    local procedure TryLCardQBool(var Card: TestPage "BNR Line Card"; var Result: Text)
     var
         V: Boolean;
     begin
@@ -265,7 +265,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryLCardQDt(var Card: TestPage "NRB Line Card"; var Result: Text)
+    local procedure TryLCardQDt(var Card: TestPage "BNR Line Card"; var Result: Text)
     var
         V: Date;
     begin
@@ -274,7 +274,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryLCardQTm(var Card: TestPage "NRB Line Card"; var Result: Text)
+    local procedure TryLCardQTm(var Card: TestPage "BNR Line Card"; var Result: Text)
     var
         V: Time;
     begin
@@ -283,7 +283,7 @@ codeunit 69940 "NRB Blank Part Tests"
     end;
 
     [TryFunction]
-    local procedure TryLCardQDtTm(var Card: TestPage "NRB Line Card"; var Result: Text)
+    local procedure TryLCardQDtTm(var Card: TestPage "BNR Line Card"; var Result: Text)
     var
         V: DateTime;
     begin
@@ -291,7 +291,7 @@ codeunit 69940 "NRB Blank Part Tests"
         Result := Format(V);
     end;
 
-    local procedure ObsLCard(var Card: TestPage "NRB Line Card"): Text
+    local procedure ObsLCard(var Card: TestPage "BNR Line Card"): Text
     var
         Obs: Text;
         Typed: Text;
@@ -332,7 +332,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P0_PartWithRow()
     var
-        Card: TestPage "NRB Card";
+        Card: TestPage "BNR Card";
     begin
         Initialize();
         InsertFullLine('H1', 10);
@@ -344,7 +344,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P1_PartHostRowWithNoLines()
     var
-        Card: TestPage "NRB Card";
+        Card: TestPage "BNR Card";
     begin
         Initialize();
         InsertFullLine('H1', 10);
@@ -356,7 +356,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P2_PartHostMovedFromRowToEmpty()
     var
-        Card: TestPage "NRB Card";
+        Card: TestPage "BNR Card";
         Seen: Text;
     begin
         Initialize();
@@ -371,9 +371,9 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P3_PartHostOpenedOnEmptyHeaderTable()
     var
-        Card: TestPage "NRB Card";
-        Header: Record "NRB Header";
-        Line: Record "NRB Line";
+        Card: TestPage "BNR Card";
+        Header: Record "BNR Header";
+        Line: Record "BNR Line";
     begin
         Initialize();
         Header.DeleteAll();
@@ -385,7 +385,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P4_ListOpenedOnEmptyTable()
     var
-        Card: TestPage "NRB Lines List";
+        Card: TestPage "BNR Lines List";
     begin
         Initialize();
         Card.OpenView();
@@ -395,7 +395,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P5_ListWithRow()
     var
-        Card: TestPage "NRB Lines List";
+        Card: TestPage "BNR Lines List";
     begin
         Initialize();
         InsertFullLine('H1', 10);
@@ -406,7 +406,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P6_CardOpenedOnEmptyTable()
     var
-        Card: TestPage "NRB Line Card";
+        Card: TestPage "BNR Line Card";
     begin
         Initialize();
         Card.OpenView();
@@ -416,7 +416,7 @@ codeunit 69940 "NRB Blank Part Tests"
     [Test]
     procedure P7_ListFilteredToNothing()
     var
-        Card: TestPage "NRB Lines List";
+        Card: TestPage "BNR Lines List";
     begin
         Initialize();
         InsertFullLine('H1', 10);

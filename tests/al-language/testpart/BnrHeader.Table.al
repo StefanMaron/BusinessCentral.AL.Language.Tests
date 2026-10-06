@@ -1,5 +1,5 @@
-// Fixture for codeunit 69940 "NRB Blank Part Tests": the host row a part is linked to.
-table 69940 "NRB Header"
+// Fixture for codeunit 69940 "BNR Blank Part Tests": the host row a part is linked to.
+table 69940 "BNR Header"
 {
     DataClassification = CustomerContent;
 

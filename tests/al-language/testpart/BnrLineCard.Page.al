@@ -1,8 +1,8 @@
-// Fixture for codeunit 69940 "NRB Blank Part Tests": the part, one control per field type.
-page 69940 "NRB Lines Part"
+// Fixture for codeunit 69940 "BNR Blank Part Tests": a top-level card over the same table.
+page 69943 "BNR Line Card"
 {
-    PageType = ListPart;
-    SourceTable = "NRB Line";
+    PageType = Card;
+    SourceTable = "BNR Line";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -10,7 +10,7 @@ page 69940 "NRB Lines Part"
     {
         area(Content)
         {
-            repeater(Lines)
+            group(General)
             {
                 field(HeaderNo; Rec."Header No.") { ApplicationArea = All; }
                 field(LineNo; Rec."Line No.") { ApplicationArea = All; }
