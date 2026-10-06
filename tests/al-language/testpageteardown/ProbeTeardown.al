@@ -203,6 +203,16 @@ codeunit 69640 "PRB Teardown Probe"
         end;
     end;
 
+    local procedure SeedPlain()
+    var
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Row.Init(); Row."No." := 'A'; Row.Qty := 1; Row.Insert();
+        Row.Init(); Row."No." := 'B'; Row.Qty := 2; Row.Insert();
+        Row.Init(); Row."No." := 'C'; Row.Qty := 3; Row.Insert();
+    end;
+
     local procedure SeedBoomFirst()
     var
         Row: Record "PRB Row";
@@ -2452,6 +2462,108 @@ codeunit 69640 "PRB Teardown Probe"
         FixData();
         P.OpenView();
         Error('OBS reopen ok NoCtl=' + P.NoCtl.Value());
+    end;
+
+    [Test]
+    procedure Probe_Reopen_Position_CE_MoveCloseReopen()
+    var
+        P: TestPage "PRB Fmt Card";
+        T: Text;
+        I: Integer;
+        B: Boolean;
+        Row: Record "PRB Row";
+    begin
+        SeedPlain();
+        P.OpenView();
+        P.GoToKey('C');
+        P.Close();
+        P.OpenView();
+        Error('OBS reopened at NoCtl=' + P.NoCtl.Value());
+    end;
+
+    [Test]
+    procedure Probe_Reopen_Position_CE_MoveCloseReopenEdit()
+    var
+        P: TestPage "PRB Fmt Card";
+        T: Text;
+        I: Integer;
+        B: Boolean;
+        Row: Record "PRB Row";
+    begin
+        SeedPlain();
+        P.OpenEdit();
+        P.GoToKey('C');
+        P.Close();
+        P.OpenEdit();
+        Error('OBS reopened(edit) at NoCtl=' + P.NoCtl.Value());
+    end;
+
+    [Test]
+    procedure Probe_Reopen_Position_LE_MoveCloseReopen()
+    var
+        P: TestPage "PRB Fmt List";
+        T: Text;
+        I: Integer;
+        B: Boolean;
+        Row: Record "PRB Row";
+    begin
+        SeedPlain();
+        P.OpenView();
+        P.Last();
+        P.Close();
+        P.OpenView();
+        Error('OBS reopened at NoCtl=' + P.NoCtl.Value());
+    end;
+
+    [Test]
+    procedure Probe_Reopen_Position_LE_MoveCloseReopenEdit()
+    var
+        P: TestPage "PRB Fmt List";
+        T: Text;
+        I: Integer;
+        B: Boolean;
+        Row: Record "PRB Row";
+    begin
+        SeedPlain();
+        P.OpenEdit();
+        P.Last();
+        P.Close();
+        P.OpenEdit();
+        Error('OBS reopened(edit) at NoCtl=' + P.NoCtl.Value());
+    end;
+
+    [Test]
+    procedure Probe_Reopen_Position_CA_MoveCloseReopen()
+    var
+        P: TestPage "PRB AGR Card";
+        T: Text;
+        I: Integer;
+        B: Boolean;
+        Row: Record "PRB Row";
+    begin
+        SeedPlain();
+        P.OpenView();
+        P.GoToKey('C');
+        P.Close();
+        P.OpenView();
+        Error('OBS reopened at NoCtl=' + P.NoCtl.Value());
+    end;
+
+    [Test]
+    procedure Probe_Reopen_Position_CA_MoveCloseReopenEdit()
+    var
+        P: TestPage "PRB AGR Card";
+        T: Text;
+        I: Integer;
+        B: Boolean;
+        Row: Record "PRB Row";
+    begin
+        SeedPlain();
+        P.OpenEdit();
+        P.GoToKey('C');
+        P.Close();
+        P.OpenEdit();
+        Error('OBS reopened(edit) at NoCtl=' + P.NoCtl.Value());
     end;
 
     [ModalPageHandler]
