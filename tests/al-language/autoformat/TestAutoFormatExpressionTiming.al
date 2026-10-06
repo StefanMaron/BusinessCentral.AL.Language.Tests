@@ -1,4 +1,4 @@
-// PROBE REVISION 3: every test records what it observed and ends in Error(<observations>).
+// PROBE REVISION 4: every test records what it observed and ends in Error(<observations>).
 // Written by agent stma-auto-7, an automated implementation agent acting on the account holder's
 // behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4920.
 
@@ -1165,6 +1165,125 @@ codeunit 69600 "AFT Probe Tests"
         Seed();
         P.OpenView();
         Obs += 'OpenView=OK No=[' + P.NoCtl.Value() + '] Seen=[' + P.SeenCtl.Value() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V03_RowList_120Rows_FailAt3_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 3);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V05_RowList_120Rows_FailAt5_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 5);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V08_RowList_120Rows_FailAt8_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 8);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V10_RowList_120Rows_FailAt10_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 10);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V15_RowList_120Rows_FailAt15_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 15);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V20_RowList_120Rows_FailAt20_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 20);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V25_RowList_120Rows_FailAt25_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 25);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V30_RowList_120Rows_FailAt120_LastAsserterror()
+    var
+        P: TestPage "AFT Row List";
+        Moved: Boolean;
+        V: Text;
+        Obs: Text;
+    begin
+        SeedMany(120, 120);
+        P.OpenView();
+        Obs += 'OpenView=OK ';
+        asserterror Moved := P.Last();
+        Obs += 'Last.err=[' + GetLastErrorText() + '] ';
+        Obs += Res('No', TryRowListNoCtl(P, V), V);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure V31_RowList_FailingRowAmongRows_NextAsserterror()
+    var
+        P: TestPage "AFT Row List";
+        Row: Record "AFT Row";
+        V: Text;
+        Obs: Text;
+    begin
+        SeedMany(120, 40);
+        P.OpenView();
+        Obs += 'OpenView=OK ';
+        Obs += Res('No', TryRowListNoCtl(P, V), V);
+        asserterror P.GoToKey('R1040');
+        Obs += 'GoToKey40.err=[' + GetLastErrorText() + '] ';
+        Obs += Res('No', TryRowListNoCtl(P, V), V);
         Error(Obs);
     end;
 }
