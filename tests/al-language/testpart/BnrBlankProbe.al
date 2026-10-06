@@ -1,0 +1,173 @@
+// PROBE revision (AlRunner#5358): what a page reads when its code positions Rec after the page showed no row.
+codeunit 69947 "BNR Blank Probe"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Initialize()
+    var
+        Header: Record "BNR Header";
+        Line: Record "BNR Line";
+    begin
+        Line.DeleteAll();
+        Header.DeleteAll();
+        Line.Init();
+        Line."Header No." := 'H1';
+        Line."Line No." := 10;
+        Line.QTxt := 'stored';
+        Line.QInt := 42;
+        Line.Insert();
+    end;
+
+    local procedure ObsTemp(var Card: TestPage "BNR Temp List"): Text
+    begin
+        exit('hdr=[' + Card.HeaderNo.Value + '] line=[' + Card.LineNo.Value + '] txt=[' + Card.QTxt.Value + '] int=[' + Card.QInt.Value + '] asint=[' + Format(Card.QInt.AsInteger()) + ']');
+    end;
+
+    local procedure ObsOpen(var Card: TestPage "BNR Temp Open List"): Text
+    begin
+        exit('hdr=[' + Card.HeaderNo.Value + '] line=[' + Card.LineNo.Value + '] txt=[' + Card.QTxt.Value + '] int=[' + Card.QInt.Value + '] asint=[' + Format(Card.QInt.AsInteger()) + ']');
+    end;
+
+    local procedure ObsGet(var Card: TestPage "BNR Get List"): Text
+    begin
+        exit('hdr=[' + Card.HeaderNo.Value + '] line=[' + Card.LineNo.Value + '] txt=[' + Card.QTxt.Value + '] int=[' + Card.QInt.Value + '] asint=[' + Format(Card.QInt.AsInteger()) + ']');
+    end;
+
+    local procedure ObsCard(var Card: TestPage "BNR Line Card"): Text
+    begin
+        exit('hdr=[' + Card.HeaderNo.Value + '] line=[' + Card.LineNo.Value + '] txt=[' + Card.QTxt.Value + '] int=[' + Card.QInt.Value + '] asint=[' + Format(Card.QInt.AsInteger()) + ']');
+    end;
+
+    [Test]
+    procedure A1_TempList_InsertFind()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.InsertFind.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A2_TempList_InsertFindUpdate()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.InsertFindUpdate.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A3_TempList_InsertOnly()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.InsertOnly.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A4_TempList_FieldsOnly()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.FieldsOnly.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A5_TempList_InsertFind_ThenFirst()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.InsertFind.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Card.First();
+        R += ' | afterFirst: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A6_TempOpenList_InsertsInOnOpenPage()
+    var
+        Card: TestPage "BNR Temp Open List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(ObsOpen(Card));
+    end;
+
+    [Test]
+    procedure A7_GetList_ActionGetsAStoredRow()
+    var
+        Card: TestPage "BNR Get List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsGet(Card);
+        Card.GetRow.Invoke();
+        R += ' | after: ' + ObsGet(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure B1_Card_OpenEdit_EmptyTable()
+    var
+        Card: TestPage "BNR Line Card";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenEdit();
+        Error(ObsCard(Card));
+    end;
+
+    [Test]
+    procedure B2_Card_OpenNew_EmptyTable()
+    var
+        Card: TestPage "BNR Line Card";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenNew();
+        Error(ObsCard(Card));
+    end;
+
+    [Test]
+    procedure B3_Card_OpenView_EmptyTable()
+    var
+        Card: TestPage "BNR Line Card";
+        Line: Record "BNR Line";
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenView();
+        Error(ObsCard(Card));
+    end;
+}
