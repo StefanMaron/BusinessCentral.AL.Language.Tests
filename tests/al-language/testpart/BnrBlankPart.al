@@ -50,65 +50,9 @@ codeunit 69940 "BNR Blank Part Tests"
         Line.Insert();
     end;
 
-    // ---- Part ----
-    [TryFunction]
-    local procedure TryPartQInt(var Card: TestPage "BNR Card"; var Result: Text)
-    var
-        V: Integer;
-    begin
-        V := Card.Lines.QInt.AsInteger();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryPartQDec(var Card: TestPage "BNR Card"; var Result: Text)
-    var
-        V: Decimal;
-    begin
-        V := Card.Lines.QDec.AsDecimal();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryPartQBool(var Card: TestPage "BNR Card"; var Result: Text)
-    var
-        V: Boolean;
-    begin
-        V := Card.Lines.QBool.AsBoolean();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryPartQDt(var Card: TestPage "BNR Card"; var Result: Text)
-    var
-        V: Date;
-    begin
-        V := Card.Lines.QDt.AsDate();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryPartQTm(var Card: TestPage "BNR Card"; var Result: Text)
-    var
-        V: Time;
-    begin
-        V := Card.Lines.QTm.AsTime();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryPartQDtTm(var Card: TestPage "BNR Card"; var Result: Text)
-    var
-        V: DateTime;
-    begin
-        V := Card.Lines.QDtTm.AsDateTime();
-        Result := Format(V);
-    end;
-
     local procedure ObsPart(var Card: TestPage "BNR Card"): Text
     var
         Obs: Text;
-        Typed: Text;
     begin
         Obs += 'HeaderNo=[' + Card.Lines.HeaderNo.Value + '] ';
         Obs += 'LineNo=[' + Card.Lines.LineNo.Value + '] ';
@@ -128,80 +72,12 @@ codeunit 69940 "BNR Blank Part Tests"
         Obs += 'QIntInit=[' + Card.Lines.QIntInit.Value + '] ';
         Obs += 'QDecInit=[' + Card.Lines.QDecInit.Value + '] ';
         Obs += 'QBoolInit=[' + Card.Lines.QBoolInit.Value + '] ';
-        Typed := 'ERR'; if not TryPartQInt(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsInteger(QInt)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryPartQDec(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDecimal(QDec)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryPartQBool(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsBoolean(QBool)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryPartQDt(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDate(QDt)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryPartQTm(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsTime(QTm)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryPartQDtTm(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDateTime(QDtTm)=[' + Typed + '] ';
         exit(Obs);
-    end;
-
-    // ---- List ----
-    [TryFunction]
-    local procedure TryListQInt(var Card: TestPage "BNR Lines List"; var Result: Text)
-    var
-        V: Integer;
-    begin
-        V := Card.QInt.AsInteger();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryListQDec(var Card: TestPage "BNR Lines List"; var Result: Text)
-    var
-        V: Decimal;
-    begin
-        V := Card.QDec.AsDecimal();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryListQBool(var Card: TestPage "BNR Lines List"; var Result: Text)
-    var
-        V: Boolean;
-    begin
-        V := Card.QBool.AsBoolean();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryListQDt(var Card: TestPage "BNR Lines List"; var Result: Text)
-    var
-        V: Date;
-    begin
-        V := Card.QDt.AsDate();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryListQTm(var Card: TestPage "BNR Lines List"; var Result: Text)
-    var
-        V: Time;
-    begin
-        V := Card.QTm.AsTime();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryListQDtTm(var Card: TestPage "BNR Lines List"; var Result: Text)
-    var
-        V: DateTime;
-    begin
-        V := Card.QDtTm.AsDateTime();
-        Result := Format(V);
     end;
 
     local procedure ObsList(var Card: TestPage "BNR Lines List"): Text
     var
         Obs: Text;
-        Typed: Text;
     begin
         Obs += 'HeaderNo=[' + Card.HeaderNo.Value + '] ';
         Obs += 'LineNo=[' + Card.LineNo.Value + '] ';
@@ -221,80 +97,12 @@ codeunit 69940 "BNR Blank Part Tests"
         Obs += 'QIntInit=[' + Card.QIntInit.Value + '] ';
         Obs += 'QDecInit=[' + Card.QDecInit.Value + '] ';
         Obs += 'QBoolInit=[' + Card.QBoolInit.Value + '] ';
-        Typed := 'ERR'; if not TryListQInt(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsInteger(QInt)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryListQDec(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDecimal(QDec)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryListQBool(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsBoolean(QBool)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryListQDt(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDate(QDt)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryListQTm(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsTime(QTm)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryListQDtTm(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDateTime(QDtTm)=[' + Typed + '] ';
         exit(Obs);
-    end;
-
-    // ---- LCard ----
-    [TryFunction]
-    local procedure TryLCardQInt(var Card: TestPage "BNR Line Card"; var Result: Text)
-    var
-        V: Integer;
-    begin
-        V := Card.QInt.AsInteger();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryLCardQDec(var Card: TestPage "BNR Line Card"; var Result: Text)
-    var
-        V: Decimal;
-    begin
-        V := Card.QDec.AsDecimal();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryLCardQBool(var Card: TestPage "BNR Line Card"; var Result: Text)
-    var
-        V: Boolean;
-    begin
-        V := Card.QBool.AsBoolean();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryLCardQDt(var Card: TestPage "BNR Line Card"; var Result: Text)
-    var
-        V: Date;
-    begin
-        V := Card.QDt.AsDate();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryLCardQTm(var Card: TestPage "BNR Line Card"; var Result: Text)
-    var
-        V: Time;
-    begin
-        V := Card.QTm.AsTime();
-        Result := Format(V);
-    end;
-
-    [TryFunction]
-    local procedure TryLCardQDtTm(var Card: TestPage "BNR Line Card"; var Result: Text)
-    var
-        V: DateTime;
-    begin
-        V := Card.QDtTm.AsDateTime();
-        Result := Format(V);
     end;
 
     local procedure ObsLCard(var Card: TestPage "BNR Line Card"): Text
     var
         Obs: Text;
-        Typed: Text;
     begin
         Obs += 'HeaderNo=[' + Card.HeaderNo.Value + '] ';
         Obs += 'LineNo=[' + Card.LineNo.Value + '] ';
@@ -314,18 +122,6 @@ codeunit 69940 "BNR Blank Part Tests"
         Obs += 'QIntInit=[' + Card.QIntInit.Value + '] ';
         Obs += 'QDecInit=[' + Card.QDecInit.Value + '] ';
         Obs += 'QBoolInit=[' + Card.QBoolInit.Value + '] ';
-        Typed := 'ERR'; if not TryLCardQInt(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsInteger(QInt)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryLCardQDec(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDecimal(QDec)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryLCardQBool(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsBoolean(QBool)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryLCardQDt(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDate(QDt)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryLCardQTm(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsTime(QTm)=[' + Typed + '] ';
-        Typed := 'ERR'; if not TryLCardQDtTm(Card, Typed) then Typed := 'ERR:' + CopyStr(GetLastErrorText(), 1, 60);
-        Obs += 'AsDateTime(QDtTm)=[' + Typed + '] ';
         exit(Obs);
     end;
 
@@ -424,4 +220,137 @@ codeunit 69940 "BNR Blank Part Tests"
         Card.Filter.SetFilter("Header No.", 'ZZZ');
         Error(ObsList(Card));
     end;
+
+    [Test]
+    procedure T_Part_AsInteger()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QInt.AsInteger()));
+    end;
+
+    [Test]
+    procedure T_Part_AsDecimal()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QDec.AsDecimal()));
+    end;
+
+    [Test]
+    procedure T_Part_AsBoolean()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QBool.AsBoolean()));
+    end;
+
+    [Test]
+    procedure T_Part_AsDate()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QDt.AsDate()));
+    end;
+
+    [Test]
+    procedure T_Part_AsTime()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QTm.AsTime()));
+    end;
+
+    [Test]
+    procedure T_Part_AsDateTime()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QDtTm.AsDateTime()));
+    end;
+
+    [Test]
+    procedure T_List_AsInteger()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(Format(Card.QInt.AsInteger()));
+    end;
+
+    [Test]
+    procedure T_List_AsDecimal()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(Format(Card.QDec.AsDecimal()));
+    end;
+
+    [Test]
+    procedure T_List_AsBoolean()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(Format(Card.QBool.AsBoolean()));
+    end;
+
+    [Test]
+    procedure T_List_AsDate()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(Format(Card.QDt.AsDate()));
+    end;
+
+    [Test]
+    procedure T_List_AsTime()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(Format(Card.QTm.AsTime()));
+    end;
+
+    [Test]
+    procedure T_List_AsDateTime()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenView();
+        Error(Format(Card.QDtTm.AsDateTime()));
+    end;
+
 }
