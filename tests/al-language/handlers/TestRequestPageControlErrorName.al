@@ -93,104 +93,248 @@ codeunit 68660 "RPN Request Page Control Probe"
 
     var
         Observed: Text;
+        CaseNo: Integer;
 
-    local procedure Capture(Label: Text)
+    local procedure Record_(Label: Text)
     begin
-        Observed += '[' + Label + '] ' + GetLastErrorText() + ' || ';
+        Observed := '[' + Label + '] ' + GetLastErrorText();
+        ClearLastError();
     end;
 
-    [Test]
-    [HandlerFunctions('SourceHandler')]
-    procedure Probe_SourceReport()
+    local procedure RunSource(No: Integer)
     begin
-        Observed := '';
+        CaseNo := No;
+        Observed := 'NOTHING RAN';
         Report.Run(Report::"RPN Report");
-        Error('PROBE source: ' + Observed);
+        Error('P%1 %2', No, Observed);
     end;
 
-    [Test]
-    [HandlerFunctions('ExportHandler')]
-    procedure Probe_PrecompiledReport91()
+    local procedure RunExport(No: Integer)
     begin
-        Observed := '';
+        CaseNo := No;
+        Observed := 'NOTHING RAN';
         Report.Run(Report::"Export Consolidation");
-        Error('PROBE report91: ' + Observed);
+        Error('P%1 %2', No, Observed);
     end;
 
-    [Test]
-    [HandlerFunctions('ExtHandler')]
-    procedure Probe_PrecompiledReportExtension5803()
+    local procedure RunExt5803(No: Integer)
     var
         PreviousAreas: Text;
         Parameters: Text;
     begin
-        Observed := '';
+        CaseNo := No;
+        Observed := 'NOTHING RAN';
         PreviousAreas := ApplicationArea();
         ApplicationArea('#Basic,#Suite,#Manufacturing');
         Parameters := Report.RunRequestPage(Report::"Reset Cost Is Adjusted");
         ApplicationArea(PreviousAreas);
-        Error('PROBE ext5803: ' + Observed);
+        Error('P%1 %2', No, Observed);
+    end;
+
+    [Test]
+    [HandlerFunctions('SourceHandler')]
+    procedure P01_Source_TextWrong()
+    begin
+        RunSource(1);
+    end;
+
+    [Test]
+    [HandlerFunctions('SourceHandler')]
+    procedure P02_Source_TextMatch()
+    begin
+        RunSource(2);
+    end;
+
+    [Test]
+    [HandlerFunctions('SourceHandler')]
+    procedure P03_Source_FlagWrong()
+    begin
+        RunSource(3);
+    end;
+
+    [Test]
+    [HandlerFunctions('SourceHandler')]
+    procedure P04_Source_FlagSetMaybe()
+    begin
+        RunSource(4);
+    end;
+
+    [Test]
+    [HandlerFunctions('SourceHandler')]
+    procedure P05_Source_ExtWrong()
+    begin
+        RunSource(5);
+    end;
+
+    [Test]
+    [HandlerFunctions('ExportHandler')]
+    procedure P11_Report91_NameWrong()
+    begin
+        RunExport(11);
+    end;
+
+    [Test]
+    [HandlerFunctions('ExportHandler')]
+    procedure P12_Report91_FormatWrong()
+    begin
+        RunExport(12);
+    end;
+
+    [Test]
+    [HandlerFunctions('ExportHandler')]
+    procedure P13_Report91_FormatSetBad()
+    begin
+        RunExport(13);
+    end;
+
+    [Test]
+    [HandlerFunctions('ExportHandler')]
+    procedure P14_Report91_Match()
+    begin
+        RunExport(14);
+    end;
+
+    [Test]
+    [HandlerFunctions('ExportHandler')]
+    procedure P15_Report91_SourceExtWrong()
+    begin
+        RunExport(15);
+    end;
+
+    [Test]
+    [HandlerFunctions('ExportHandler')]
+    procedure P16_Report91_SourceExtMatch()
+    begin
+        RunExport(16);
+    end;
+
+    [Test]
+    [HandlerFunctions('Ext5803Handler')]
+    procedure P21_Ext5803_FlagWrong()
+    begin
+        RunExt5803(21);
+    end;
+
+    [Test]
+    [HandlerFunctions('Ext5803Handler')]
+    procedure P22_Ext5803_NoWrong()
+    begin
+        RunExt5803(22);
+    end;
+
+    [Test]
+    [HandlerFunctions('Ext5803Handler')]
+    procedure P23_Ext5803_FlagSetMaybe()
+    begin
+        RunExt5803(23);
+    end;
+
+    [Test]
+    [HandlerFunctions('Ext5803Handler')]
+    procedure P24_Ext5803_Match()
+    begin
+        RunExt5803(24);
     end;
 
     [RequestPageHandler]
     procedure SourceHandler(var RequestPage: TestRequestPage "RPN Report")
     begin
-        asserterror RequestPage.RpnTextCtl.AssertEquals('Wrong');
-        Capture('text-wrong');
-        Observed += '[text-value] ' + RequestPage.RpnTextCtl.Value() + ' || ';
-        ClearLastError();
-        RequestPage.RpnTextCtl.AssertEquals('Delta');
-        Observed += '[text-match] raised nothing || ';
-        asserterror RequestPage.RpnFlagCtl.AssertEquals('Yes');
-        Capture('flag-wrong');
-        asserterror RequestPage.RpnFlagCtl.SetValue('Maybe');
-        Capture('flag-setvalue-maybe');
-        asserterror RequestPage.RpnExtCtl.AssertEquals('Wrong');
-        Capture('ext-wrong');
-        RequestPage.RpnExtCtl.SetValue('Eps');
-        RequestPage.RpnExtCtl.AssertEquals('Eps');
-        Observed += '[ext-match] raised nothing || ';
+        case CaseNo of
+            1:
+                begin
+                    asserterror RequestPage.RpnTextCtl.AssertEquals('Wrong');
+                    Record_('text-wrong');
+                end;
+            2:
+                begin
+                    RequestPage.RpnTextCtl.AssertEquals('Delta');
+                    Observed := '[text-match] raised nothing, value ' + RequestPage.RpnTextCtl.Value();
+                end;
+            3:
+                begin
+                    asserterror RequestPage.RpnFlagCtl.AssertEquals('Yes');
+                    Record_('flag-wrong');
+                end;
+            4:
+                begin
+                    asserterror RequestPage.RpnFlagCtl.SetValue('Maybe');
+                    Record_('flag-set-maybe');
+                end;
+            5:
+                begin
+                    asserterror RequestPage.RpnExtCtl.AssertEquals('Wrong');
+                    Record_('ext-wrong');
+                end;
+        end;
         RequestPage.Cancel().Invoke();
     end;
 
     [RequestPageHandler]
     procedure ExportHandler(var RequestPage: TestRequestPage "Export Consolidation")
     begin
-        Observed += '[name-value] ' + RequestPage.ClientFileNameControl.Value() + ' || ';
-        Observed += '[format-value] ' + RequestPage.FileFormat.Value() + ' || ';
-        asserterror RequestPage.ClientFileNameControl.AssertEquals('Wrong');
-        Capture('name-wrong');
-        asserterror RequestPage.FileFormat.AssertEquals('Wrong');
-        Capture('format-wrong');
-        asserterror RequestPage.FileFormat.SetValue('Not A Format');
-        Capture('format-setvalue-bad');
-        ClearLastError();
-        RequestPage.ClientFileNameControl.AssertEquals(RequestPage.ClientFileNameControl.Value());
-        RequestPage.FileFormat.AssertEquals(RequestPage.FileFormat.Value());
-        Observed += '[match] raised nothing || ';
-        asserterror RequestPage.RpnExportExtCtl.AssertEquals('Wrong');
-        Capture('src-ext-wrong');
-        RequestPage.RpnExportExtCtl.SetValue('Zeta');
-        RequestPage.RpnExportExtCtl.AssertEquals('Zeta');
-        Observed += '[src-ext-match] raised nothing || ';
+        case CaseNo of
+            11:
+                begin
+                    asserterror RequestPage.ClientFileNameControl.AssertEquals('Wrong');
+                    Record_('name-wrong');
+                end;
+            12:
+                begin
+                    asserterror RequestPage.FileFormat.AssertEquals('Wrong');
+                    Record_('format-wrong');
+                end;
+            13:
+                begin
+                    asserterror RequestPage.FileFormat.SetValue('Not A Format');
+                    Record_('format-set-bad');
+                end;
+            14:
+                begin
+                    RequestPage.ClientFileNameControl.AssertEquals('');
+                    RequestPage.FileFormat.AssertEquals(RequestPage.FileFormat.Value());
+                    Observed := '[match] raised nothing, format ' + RequestPage.FileFormat.Value();
+                end;
+            15:
+                begin
+                    asserterror RequestPage.RpnExportExtCtl.AssertEquals('Wrong');
+                    Record_('src-ext-wrong');
+                end;
+            16:
+                begin
+                    RequestPage.RpnExportExtCtl.SetValue('Zeta');
+                    RequestPage.RpnExportExtCtl.AssertEquals('Zeta');
+                    Observed := '[src-ext-match] raised nothing';
+                end;
+        end;
         RequestPage.Cancel().Invoke();
     end;
 
     [RequestPageHandler]
-    procedure ExtHandler(var RequestPage: TestRequestPage "Reset Cost Is Adjusted")
+    procedure Ext5803Handler(var RequestPage: TestRequestPage "Reset Cost Is Adjusted")
     begin
-        Observed += '[flag-value] ' + RequestPage."Reset Prod. Order Costing".Value() + ' || ';
-        Observed += '[no-value] ' + RequestPage."Prod. Order No.".Value() + ' || ';
-        asserterror RequestPage."Reset Prod. Order Costing".AssertEquals('Wrong');
-        Capture('flag-wrong');
-        asserterror RequestPage."Prod. Order No.".AssertEquals('Wrong');
-        Capture('no-wrong');
-        asserterror RequestPage."Reset Prod. Order Costing".SetValue('Maybe');
-        Capture('flag-setvalue-maybe');
-        ClearLastError();
-        RequestPage."Reset Prod. Order Costing".AssertEquals(RequestPage."Reset Prod. Order Costing".Value());
-        RequestPage."Prod. Order No.".AssertEquals(RequestPage."Prod. Order No.".Value());
-        Observed += '[match] raised nothing || ';
+        case CaseNo of
+            21:
+                begin
+                    asserterror RequestPage."Reset Prod. Order Costing".AssertEquals('Wrong');
+                    Record_('flag-wrong');
+                end;
+            22:
+                begin
+                    asserterror RequestPage."Prod. Order No.".AssertEquals('Wrong');
+                    Record_('no-wrong');
+                end;
+            23:
+                begin
+                    asserterror RequestPage."Reset Prod. Order Costing".SetValue('Maybe');
+                    Record_('flag-set-maybe');
+                end;
+            24:
+                begin
+                    RequestPage."Reset Prod. Order Costing".AssertEquals('No');
+                    RequestPage."Prod. Order No.".AssertEquals('');
+                    Observed := '[match] raised nothing';
+                end;
+        end;
         RequestPage.Cancel().Invoke();
     end;
 }
