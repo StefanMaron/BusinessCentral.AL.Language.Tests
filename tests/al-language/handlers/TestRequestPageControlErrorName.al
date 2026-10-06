@@ -44,6 +44,48 @@ report 68660 "RPN Report"
         RpnFlag: Boolean;
 }
 
+reportextension 68660 "RPN Report Ext" extends "RPN Report"
+{
+    requestpage
+    {
+        layout
+        {
+            addlast(Content)
+            {
+                field(RpnExtCtl; RpnExtVar)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Rpn Ext Caption';
+                }
+            }
+        }
+    }
+
+    var
+        RpnExtVar: Text[30];
+}
+
+reportextension 68661 "RPN Export Ext" extends "Export Consolidation"
+{
+    requestpage
+    {
+        layout
+        {
+            addlast(Content)
+            {
+                field(RpnExportExtCtl; RpnExportExtVar)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Rpn Export Ext Caption';
+                }
+            }
+        }
+    }
+
+    var
+        RpnExportExtVar: Text[30];
+}
+
 codeunit 68660 "RPN Request Page Control Probe"
 {
     Subtype = Test;
@@ -103,6 +145,11 @@ codeunit 68660 "RPN Request Page Control Probe"
         Capture('flag-wrong');
         asserterror RequestPage.RpnFlagCtl.SetValue('Maybe');
         Capture('flag-setvalue-maybe');
+        asserterror RequestPage.RpnExtCtl.AssertEquals('Wrong');
+        Capture('ext-wrong');
+        RequestPage.RpnExtCtl.SetValue('Eps');
+        RequestPage.RpnExtCtl.AssertEquals('Eps');
+        Observed += '[ext-match] raised nothing || ';
         RequestPage.Cancel().Invoke();
     end;
 
@@ -121,6 +168,11 @@ codeunit 68660 "RPN Request Page Control Probe"
         RequestPage.ClientFileNameControl.AssertEquals(RequestPage.ClientFileNameControl.Value());
         RequestPage.FileFormat.AssertEquals(RequestPage.FileFormat.Value());
         Observed += '[match] raised nothing || ';
+        asserterror RequestPage.RpnExportExtCtl.AssertEquals('Wrong');
+        Capture('src-ext-wrong');
+        RequestPage.RpnExportExtCtl.SetValue('Zeta');
+        RequestPage.RpnExportExtCtl.AssertEquals('Zeta');
+        Observed += '[src-ext-match] raised nothing || ';
         RequestPage.Cancel().Invoke();
     end;
 
