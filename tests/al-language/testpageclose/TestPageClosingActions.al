@@ -1,7 +1,38 @@
-// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testpage-overview
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpage-data-type
 // Scope: in-scope
-// PROBE (record-only): every test ends in Error(<observations>) so a service tier's answers are readable
-// from the run log. Written by agent stma-auto-7 for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#5400.
+// Fixtures used: Assert (60021), and the table, pages, report and codeunits declared below.
+//
+// WHAT A TESTPAGE VARIABLE IS AFTER ITS BUILT-IN CLOSING ACTION. Measured as record-only probes
+// (corpus PR 555), identical on every cloud leg, and agreeing with the Windows nightly.
+//
+// The built-in OK and Cancel actions CLOSE the page, on the variable the test opened and on the page
+// BC hands a [ModalPageHandler], [PageHandler] or [RequestPageHandler] alike. Closing raises
+// OnQueryClosePage with the action's result and then OnClosePage, once each, and from then on EVERY
+// call on that variable raises "The TestPage is not open.": a control read, a SetValue, an action,
+// the page-level calls, a second OK or Cancel, Close. An Open* call on the variable opens it again
+// and shows a fresh page on the FIRST row of the view.
+//
+// A value typed on the page is saved by OK, and the typed row of an OpenNew is inserted by it. A
+// page that declares SaveValues shows what OK stored when it opens again, and shows nothing after
+// Cancel. A card or a list offers no Cancel action, so Cancel().Invoke() raises "The built-in action
+// = Cancel is not found on the page." and the variable stays open: opening it again raises "The
+// TestPage is already open." A StandardDialog offers Cancel, and it closes the page like OK does.
+//
+// An OK that does NOT close the page leaves the variable open and usable:
+//   * OnQueryClosePage returning false refuses the close; a later OK attempts it again.
+//   * a save the table refuses (a duplicate key on a DelayedInsert page, an OnInsert error) raises
+//     nothing at OK(), counts one validation error, raises no close trigger, and keeps the row the
+//     page shows readable.
+//
+// The page a handler receives closes the same way. RunModal then reports the result the action chose:
+// LookupOK / LookupCancel for a card and for a list run with LookupMode, OK for a plain list, and the
+// close trigger sees the same value. A plain list offers no Cancel.
+//
+// A request page closes at its first OK or Cancel: a second one raises "not open" and cannot change
+// what RunRequestPage returns.
+//
+// Written by agent stma-auto-7, an automated implementation agent acting on the account holder's
+// behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#5400.
 
 table 69650 "TPC Row"
 {
@@ -24,14 +55,9 @@ table 69650 "TPC Row"
         if Note = 'FAIL' then
             Error('TPC insert refused');
     end;
-
-    trigger OnModify()
-    begin
-        if Note = 'FAIL' then
-            Error('TPC modify refused');
-    end;
 }
 
+// Records what the close triggers did, in order, so a test reads the sequence rather than a count.
 codeunit 69650 "TPC Log"
 {
     SingleInstance = true;
@@ -178,6 +204,7 @@ page 69651 "TPC List"
     end;
 }
 
+// A dialog over no table, whose fields are page variables.
 page 69652 "TPC Dialog"
 {
     PageType = StandardDialog;
@@ -190,30 +217,12 @@ page 69652 "TPC Dialog"
         {
             field(NoCtl; NoVar) { ApplicationArea = All; }
             field(QtyCtl; QtyVar) { ApplicationArea = All; }
-            field(NoteCtl; NoteVar) { ApplicationArea = All; }
-        }
-    }
-
-    actions
-    {
-        area(Processing)
-        {
-            action(Act)
-            {
-                ApplicationArea = All;
-
-                trigger OnAction()
-                begin
-                    TPCLog.Add('act');
-                end;
-            }
         }
     }
 
     var
         NoVar: Code[20];
         QtyVar: Integer;
-        NoteVar: Text[50];
         TPCLog: Codeunit "TPC Log";
 
     trigger OnOpenPage()
@@ -229,7 +238,7 @@ page 69652 "TPC Dialog"
     trigger OnQueryClosePage(CloseAction: Action): Boolean
     begin
         TPCLog.Add('qcp:' + Format(CloseAction));
-        exit(not TPCLog.Veto());
+        exit(true);
     end;
 }
 
@@ -309,7 +318,7 @@ report 69650 "TPC Report"
         trigger OnQueryClosePage(CloseAction: Action): Boolean
         begin
             TPCLog.Add('qcp:' + Format(CloseAction));
-            exit(not TPCLog.Veto());
+            exit(true);
         end;
     }
 
@@ -318,17 +327,24 @@ report 69650 "TPC Report"
         TPCLog: Codeunit "TPC Log";
 }
 
-codeunit 69651 "TPC Closing Action Probes"
+codeunit 69651 "TPC Closing Action Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     var
+        Assert: Codeunit Assert;
         TPCLog: Codeunit "TPC Log";
-        Obs: Text;
-        HandlerCloser: Text;
-        HandlerOp: Text;
+        NotOpenTxt: Label 'The TestPage is not open.', Locked = true;
+        AlreadyOpenTxt: Label 'The TestPage is already open.', Locked = true;
+        CancelNotFoundTxt: Label 'The built-in action = Cancel is not found on the page.', Locked = true;
+        HandlerResult: Text;
+        HandlerReadError: Text;
+        HandlerSecondCloseError: Text;
+        HandlerCancelError: Text;
+        HandlerValue: Text;
 
+    // A, B, C. Committed, so that what an asserterror rolls back does not touch them.
     local procedure Seed()
     var
         Row: Record "TPC Row";
@@ -338,1046 +354,613 @@ codeunit 69651 "TPC Closing Action Probes"
         Row.Init(); Row."No." := 'B'; Row.Qty := 2; Row.Insert();
         Row.Init(); Row."No." := 'C'; Row.Qty := 3; Row.Insert();
         Commit();
+        TPCLog.Reset();
     end;
 
-    local procedure Short(Txt: Text): Text
+    local procedure AssertContains(Actual: Text; Expected: Text; Msg: Text)
     begin
-        if StrPos(Txt, 'The TestPage is not open') > 0 then
-            exit('NOTOPEN');
-        if StrPos(Txt, 'The TestPage is already open') > 0 then
-            exit('ALREADYOPEN');
-        if StrPos(Txt, 'is not found on the page') > 0 then
-            exit('NOTFOUND');
-        exit(Txt);
+        Assert.IsTrue(StrPos(Actual, Expected) > 0, StrSubstNo('%1 (got "%2")', Msg, Actual));
     end;
 
-    local procedure Note(Label: Text; Value: Text)
-    begin
-        Obs += Label + '=' + Value + ' | ';
-    end;
+    // ---- Card the test opened ----
 
-    local procedure NoteTry(Label: Text; Ok: Boolean; Res: Text)
-    begin
-        if Ok then
-            Note(Label, Res)
-        else
-            Note(Label, 'ERR:' + Short(GetLastErrorText()));
-    end;
-
-    local procedure TableState(): Text
+    local procedure AssertEveryCallRaisesNotOpenCard(var P: TestPage "TPC Card")
     var
+        T: Text;
+        I: Integer;
+        B: Boolean;
+    begin
+        asserterror T := P.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror I := P.QtyCtl.AsInteger();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror T := P.Caption();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Editable();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.QtyCtl.Editable();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.First();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Last();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Next();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Previous();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.GoToKey('B');
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror I := P.ValidationErrorCount();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.QtyCtl.SetValue(77);
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.NoCtl.AssertEquals('A');
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Act.Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Act.Enabled();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Close();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.OK().Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Cancel().Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+    end;
+
+    [Test]
+    procedure Card_OK_RaisesTheCloseTriggersOnce()
+    var
+        P: TestPage "TPC Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        P.OK().Invoke();
+
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OK closes the page: OnQueryClosePage with OK, then OnClosePage, once each');
+    end;
+
+    [Test]
+    procedure Card_OK_EveryLaterCallRaisesNotOpen()
+    var
+        P: TestPage "TPC Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        P.OK().Invoke();
+
+        AssertEveryCallRaisesNotOpenCard(P);
+    end;
+
+    [Test]
+    procedure Card_OK_ThenEveryOpenModeOpensTheVariableAgain()
+    var
+        Edit: TestPage "TPC Card";
+        View: TestPage "TPC Card";
+        NewRow: TestPage "TPC Card";
+    begin
+        Seed();
+        Edit.OpenEdit();
+        Edit.GoToKey('B');
+        Edit.OK().Invoke();
+        Edit.OpenEdit();
+        Assert.AreEqual('A', Edit.NoCtl.Value(), 'a reopened variable shows a fresh page, on the first row and not where the closed one stood');
+        Assert.AreEqual(1, Edit.QtyCtl.AsInteger(), 'the first row is shown whole');
+        asserterror Edit.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+
+        View.OpenEdit();
+        View.OK().Invoke();
+        View.OpenView();
+        Assert.AreEqual('A', View.NoCtl.Value(), 'OpenView opens the variable again after OK');
+
+        NewRow.OpenEdit();
+        NewRow.OK().Invoke();
+        NewRow.OpenNew();
+        Assert.AreEqual('', NewRow.NoCtl.Value(), 'OpenNew opens the variable again after OK, on a blank row');
+    end;
+
+    [Test]
+    procedure Card_OK_SavesTheTypedValue_AndTheReopenedPageShowsIt()
+    var
+        P: TestPage "TPC Card";
         Row: Record "TPC Row";
-        Txt: Text;
     begin
-        if Row.FindSet() then
-            repeat
-                Txt += Row."No." + ':' + Format(Row.Qty) + ',';
-            until Row.Next() = 0;
-        exit(Txt);
+        Seed();
+        P.OpenEdit();
+        P.QtyCtl.SetValue(5);
+        P.OK().Invoke();
+
+        Row.Get('A');
+        Assert.AreEqual(5, Row.Qty, 'OK saves the value typed on the page');
+        P.OpenEdit();
+        Assert.AreEqual(5, P.QtyCtl.AsInteger(), 'the reopened page shows the saved value');
     end;
 
-    local procedure AllOps() Ops: List of [Text]
-    begin
-        Ops.Add('value');
-        Ops.Add('asinteger');
-        Ops.Add('caption');
-        Ops.Add('editable');
-        Ops.Add('fieldeditable');
-        Ops.Add('first');
-        Ops.Add('last');
-        Ops.Add('next');
-        Ops.Add('prev');
-        Ops.Add('gotokey');
-        Ops.Add('valerrcount');
-        Ops.Add('setvalue');
-        Ops.Add('assertequals');
-        Ops.Add('action');
-        Ops.Add('actionenabled');
-        Ops.Add('close');
-        Ops.Add('ok');
-        Ops.Add('cancel');
-        Ops.Add('reopenedit');
-        Ops.Add('reopenview');
-        Ops.Add('reopennew');
-        Ops.Add('new');
-    end;
-
-    local procedure OpsChunk(Chunk: Integer; Size: Integer) Ops: List of [Text]
+    [Test]
+    procedure Card_OpenNew_OK_InsertsTheRow_AndTheReopenedNewPageIsBlank()
     var
-        Every: List of [Text];
+        P: TestPage "TPC Card";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenNew();
+        P.NoCtl.SetValue('N1');
+        P.QtyCtl.SetValue(9);
+        P.OK().Invoke();
+
+        Row.Get('N1');
+        Assert.AreEqual(9, Row.Qty, 'OK inserts the row the page started');
+        Assert.AreEqual(4, Row.Count(), 'exactly one row was added');
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OK closes the page that started the row');
+        P.OpenNew();
+        Assert.AreEqual('', P.NoCtl.Value(), 'the reopened new page does not carry the row the closed one inserted');
+    end;
+
+    [Test]
+    procedure Card_NotClosed_OpenAgainRaisesAlreadyOpen()
+    var
+        P: TestPage "TPC Card";
+    begin
+        Seed();
+        P.OpenEdit();
+
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+        Assert.AreEqual('A', P.NoCtl.Value(), 'a page that was not closed stays usable');
+    end;
+
+    [Test]
+    procedure Card_Cancel_IsNotOffered_AndTheVariableStaysOpen()
+    var
+        P: TestPage "TPC Card";
+    begin
+        Seed();
+        P.OpenEdit();
+
+        asserterror P.Cancel().Invoke();
+        Assert.ExpectedError(CancelNotFoundTxt);
+        Assert.AreEqual('open,', TPCLog.Text(), 'no close trigger ran');
+        Assert.AreEqual('A', P.NoCtl.Value(), 'the page is still open and shows its row');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+    end;
+
+    [Test]
+    procedure Card_OK_RefusedByOnQueryClosePage_KeepsThePageOpen_AndASecondOKClosesIt()
+    var
+        P: TestPage "TPC Card";
+        T: Text;
+    begin
+        Seed();
+        TPCLog.SetVeto(true);
+        P.OpenEdit();
+        P.OK().Invoke();
+
+        Assert.AreEqual('open,qcp:OK,', TPCLog.Text(), 'the close was attempted and refused, so no OnClosePage');
+        Assert.AreEqual('A', P.NoCtl.Value(), 'a refused close leaves the variable usable');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+
+        TPCLog.SetVeto(false);
+        P.OK().Invoke();
+        Assert.AreEqual('open,qcp:OK,qcp:OK,close,', TPCLog.Text(), 'the second OK attempts the close again and succeeds');
+        asserterror T := P.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        P.OpenEdit();
+        Assert.AreEqual('A', P.NoCtl.Value(), 'the closed variable opens again');
+    end;
+
+    [Test]
+    procedure Card_TwoVariablesOfOnePageType_CloseIndependently()
+    var
+        First: TestPage "TPC Card";
+        Second: TestPage "TPC Card";
+        T: Text;
+    begin
+        Seed();
+        First.OpenEdit();
+        Second.OpenEdit();
+        First.OK().Invoke();
+
+        Assert.AreEqual('A', Second.NoCtl.Value(), 'the other variable is still open');
+        asserterror T := First.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        First.OpenEdit();
+        Second.OK().Invoke();
+        Assert.AreEqual('A', First.NoCtl.Value(), 'closing the second leaves the reopened first open');
+        asserterror T := Second.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+    end;
+
+    [Test]
+    procedure Card_OK_AfterATableRefusedDuplicateKey_RaisesNothing_AndKeepsThePageOpen()
+    var
+        P: TestPage "TPC Card";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenNew();
+        P.NoCtl.SetValue('A');
+        P.QtyCtl.SetValue(9);
+        P.OK().Invoke();
+
+        Assert.AreEqual(1, P.ValidationErrorCount(), 'the refused save is the page''s one validation error, and OK raised nothing');
+        Assert.AreEqual('A', P.NoCtl.Value(), 'the page is still open and shows the row it could not save');
+        Assert.AreEqual('open,', TPCLog.Text(), 'a refused save raises no close trigger');
+        Row.Get('A');
+        Assert.AreEqual(1, Row.Qty, 'the existing row is untouched');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+    end;
+
+    [Test]
+    procedure Card_OK_AfterAnOnInsertError_RaisesNothing_AndKeepsThePageOpen()
+    var
+        P: TestPage "TPC Card";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenNew();
+        P.NoCtl.SetValue('N2');
+        P.NoteCtl.SetValue('FAIL');
+        P.OK().Invoke();
+
+        Assert.AreEqual(1, P.ValidationErrorCount(), 'the table''s OnInsert refusal is the page''s one validation error, and OK raised nothing');
+        Assert.AreEqual('N2', P.NoCtl.Value(), 'the page is still open and shows the row it could not save');
+        Assert.AreEqual('open,', TPCLog.Text(), 'a refused save raises no close trigger');
+        Assert.IsFalse(Row.Get('N2'), 'the refused row was not inserted');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+    end;
+
+    // ---- List the test opened ----
+
+    local procedure AssertEveryCallRaisesNotOpenList(var P: TestPage "TPC List")
+    var
+        T: Text;
+        I: Integer;
+        B: Boolean;
+    begin
+        asserterror T := P.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror I := P.QtyCtl.AsInteger();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror T := P.Caption();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Editable();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.QtyCtl.Editable();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.First();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Last();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Next();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Previous();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.GoToKey('B');
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror I := P.ValidationErrorCount();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.QtyCtl.SetValue(77);
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.NoCtl.AssertEquals('A');
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Act.Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror B := P.Act.Enabled();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Close();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.OK().Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Cancel().Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+    end;
+
+    [Test]
+    procedure List_OK_RaisesTheCloseTriggersOnce()
+    var
+        P: TestPage "TPC List";
+    begin
+        Seed();
+        P.OpenEdit();
+        P.OK().Invoke();
+
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OK closes the page: OnQueryClosePage with OK, then OnClosePage, once each');
+    end;
+
+    [Test]
+    procedure List_OK_EveryLaterCallRaisesNotOpen()
+    var
+        P: TestPage "TPC List";
+    begin
+        Seed();
+        P.OpenEdit();
+        P.OK().Invoke();
+
+        AssertEveryCallRaisesNotOpenList(P);
+    end;
+
+    [Test]
+    procedure List_OK_ThenEveryOpenModeOpensTheVariableAgain()
+    var
+        Edit: TestPage "TPC List";
+        View: TestPage "TPC List";
+        NewRow: TestPage "TPC List";
+    begin
+        Seed();
+        Edit.OpenEdit();
+        Edit.GoToKey('B');
+        Edit.OK().Invoke();
+        Edit.OpenEdit();
+        Assert.AreEqual('A', Edit.NoCtl.Value(), 'a reopened variable shows a fresh page, on the first row and not where the closed one stood');
+        Assert.AreEqual(1, Edit.QtyCtl.AsInteger(), 'the first row is shown whole');
+        asserterror Edit.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+
+        View.OpenEdit();
+        View.OK().Invoke();
+        View.OpenView();
+        Assert.AreEqual('A', View.NoCtl.Value(), 'OpenView opens the variable again after OK');
+
+        NewRow.OpenEdit();
+        NewRow.OK().Invoke();
+        NewRow.OpenNew();
+        Assert.AreEqual('', NewRow.NoCtl.Value(), 'OpenNew opens the variable again after OK, on a blank row');
+    end;
+
+    [Test]
+    procedure List_OK_SavesTheTypedValue_AndTheReopenedPageShowsIt()
+    var
+        P: TestPage "TPC List";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenEdit();
+        P.QtyCtl.SetValue(5);
+        P.OK().Invoke();
+
+        Row.Get('A');
+        Assert.AreEqual(5, Row.Qty, 'OK saves the value typed on the page');
+        P.OpenEdit();
+        Assert.AreEqual(5, P.QtyCtl.AsInteger(), 'the reopened page shows the saved value');
+    end;
+
+    [Test]
+    procedure List_OpenNew_OK_InsertsTheRow_AndTheReopenedNewPageIsBlank()
+    var
+        P: TestPage "TPC List";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenNew();
+        P.NoCtl.SetValue('N1');
+        P.QtyCtl.SetValue(9);
+        P.OK().Invoke();
+
+        Row.Get('N1');
+        Assert.AreEqual(9, Row.Qty, 'OK inserts the row the page started');
+        Assert.AreEqual(4, Row.Count(), 'exactly one row was added');
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OK closes the page that started the row');
+        P.OpenNew();
+        Assert.AreEqual('', P.NoCtl.Value(), 'the reopened new page does not carry the row the closed one inserted');
+    end;
+
+    [Test]
+    procedure List_NotClosed_OpenAgainRaisesAlreadyOpen()
+    var
+        P: TestPage "TPC List";
+    begin
+        Seed();
+        P.OpenEdit();
+
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+        Assert.AreEqual('A', P.NoCtl.Value(), 'a page that was not closed stays usable');
+    end;
+
+    [Test]
+    procedure List_Cancel_IsNotOffered_AndTheVariableStaysOpen()
+    var
+        P: TestPage "TPC List";
+    begin
+        Seed();
+        P.OpenEdit();
+
+        asserterror P.Cancel().Invoke();
+        Assert.ExpectedError(CancelNotFoundTxt);
+        Assert.AreEqual('open,', TPCLog.Text(), 'no close trigger ran');
+        Assert.AreEqual('A', P.NoCtl.Value(), 'the page is still open and shows its row');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+    end;
+
+    [Test]
+    procedure List_OK_RefusedByOnQueryClosePage_KeepsThePageOpen_AndASecondOKClosesIt()
+    var
+        P: TestPage "TPC List";
+        T: Text;
+    begin
+        Seed();
+        TPCLog.SetVeto(true);
+        P.OpenEdit();
+        P.OK().Invoke();
+
+        Assert.AreEqual('open,qcp:OK,', TPCLog.Text(), 'the close was attempted and refused, so no OnClosePage');
+        Assert.AreEqual('A', P.NoCtl.Value(), 'a refused close leaves the variable usable');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+
+        TPCLog.SetVeto(false);
+        P.OK().Invoke();
+        Assert.AreEqual('open,qcp:OK,qcp:OK,close,', TPCLog.Text(), 'the second OK attempts the close again and succeeds');
+        asserterror T := P.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        P.OpenEdit();
+        Assert.AreEqual('A', P.NoCtl.Value(), 'the closed variable opens again');
+    end;
+
+    [Test]
+    procedure List_TwoVariablesOfOnePageType_CloseIndependently()
+    var
+        First: TestPage "TPC List";
+        Second: TestPage "TPC List";
+        T: Text;
+    begin
+        Seed();
+        First.OpenEdit();
+        Second.OpenEdit();
+        First.OK().Invoke();
+
+        Assert.AreEqual('A', Second.NoCtl.Value(), 'the other variable is still open');
+        asserterror T := First.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        First.OpenEdit();
+        Second.OK().Invoke();
+        Assert.AreEqual('A', First.NoCtl.Value(), 'closing the second leaves the reopened first open');
+        asserterror T := Second.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+    end;
+
+    [Test]
+    procedure List_OK_AfterATableRefusedDuplicateKey_RaisesNothing_AndKeepsThePageOpen()
+    var
+        P: TestPage "TPC List";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenNew();
+        P.NoCtl.SetValue('A');
+        P.QtyCtl.SetValue(9);
+        P.OK().Invoke();
+
+        Assert.AreEqual(1, P.ValidationErrorCount(), 'the refused save is the page''s one validation error, and OK raised nothing');
+        Assert.AreEqual('A', P.NoCtl.Value(), 'the page is still open and shows the row it could not save');
+        Assert.AreEqual('open,', TPCLog.Text(), 'a refused save raises no close trigger');
+        Row.Get('A');
+        Assert.AreEqual(1, Row.Qty, 'the existing row is untouched');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+    end;
+
+    [Test]
+    procedure List_OK_AfterAnOnInsertError_RaisesNothing_AndKeepsThePageOpen()
+    var
+        P: TestPage "TPC List";
+        Row: Record "TPC Row";
+    begin
+        Seed();
+        P.OpenNew();
+        P.NoCtl.SetValue('N2');
+        P.NoteCtl.SetValue('FAIL');
+        P.OK().Invoke();
+
+        Assert.AreEqual(1, P.ValidationErrorCount(), 'the table''s OnInsert refusal is the page''s one validation error, and OK raised nothing');
+        Assert.AreEqual('N2', P.NoCtl.Value(), 'the page is still open and shows the row it could not save');
+        Assert.AreEqual('open,', TPCLog.Text(), 'a refused save raises no close trigger');
+        Assert.IsFalse(Row.Get('N2'), 'the refused row was not inserted');
+        asserterror P.OpenEdit();
+        Assert.ExpectedError(AlreadyOpenTxt);
+    end;
+
+    // ---- a StandardDialog the test opened: it offers Cancel, and Cancel closes it like OK ----
+
+    local procedure AssertEveryCallRaisesNotOpenDialog(var P: TestPage "TPC Dialog")
+    var
+        T: Text;
         I: Integer;
     begin
-        Every := AllOps();
-        for I := 1 to Every.Count() do
-            if ((I - 1) div Size) = Chunk then
-                Ops.Add(Every.Get(I));
-    end;
-
-    // ---- Card ----
-
-    [TryFunction]
-    local procedure TryCardCloser(var P: TestPage "TPC Card"; Closer: Text; var Res: Text)
-    begin
-        case Closer of
-            'ok': P.OK().Invoke();
-            'cancel': P.Cancel().Invoke();
-            'close': P.Close();
-            'none': ;
-        end;
-        Res := 'done';
-    end;
-
-    [TryFunction]
-    local procedure TryCardOp(var P: TestPage "TPC Card"; Op: Text; var Res: Text)
-    begin
-        case Op of
-            'value': Res := P.NoCtl.Value();
-            'asinteger': Res := Format(P.QtyCtl.AsInteger());
-            'caption': Res := P.Caption();
-            'editable': Res := Format(P.Editable());
-            'fieldeditable': Res := Format(P.QtyCtl.Editable());
-            'first': Res := Format(P.First());
-            'last': Res := Format(P.Last());
-            'next': Res := Format(P.Next());
-            'prev': Res := Format(P.Previous());
-            'gotokey': Res := Format(P.GoToKey('B'));
-            'valerrcount': Res := Format(P.ValidationErrorCount());
-            'setvalue': begin P.QtyCtl.SetValue(77); Res := 'set'; end;
-            'assertequals': begin P.NoCtl.AssertEquals('A'); Res := 'equal'; end;
-            'action': begin P.Act.Invoke(); Res := 'invoked'; end;
-            'actionenabled': Res := Format(P.Act.Enabled());
-            'close': begin P.Close(); Res := 'closed'; end;
-            'ok': begin P.OK().Invoke(); Res := 'ok-invoked'; end;
-            'cancel': begin P.Cancel().Invoke(); Res := 'cancel-invoked'; end;
-            'reopenedit': begin P.OpenEdit(); Res := P.NoCtl.Value() + '/' + Format(P.QtyCtl.AsInteger()); end;
-            'reopenview': begin P.OpenView(); Res := P.NoCtl.Value() + '/' + Format(P.QtyCtl.AsInteger()); end;
-            'reopennew': begin P.OpenNew(); Res := '[' + P.NoCtl.Value() + ']'; end;
-        end;
-    end;
-
-    local procedure ProbeCard(Closer: Text; Op: Text)
-    var
-        P: TestPage "TPC Card";
-        Res: Text;
-        AfterCloser: Text;
-    begin
-        Seed();
-        TPCLog.Reset();
-        P.OpenEdit();
-        NoteTry(Closer + '.closer', TryCardCloser(P, Closer, Res), Res);
-        AfterCloser := TPCLog.Text();
-        if Op = AllOps().Get(1) then
-            Note(Closer + '.log', AfterCloser);
-        NoteTry(Op, TryCardOp(P, Op, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(Op + '.log', TPCLog.Text());
-    end;
-
-    local procedure RunCard(Closer: Text; Chunk: Integer)
-    var
-        Op: Text;
-    begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 8) do
-            ProbeCard(Closer, Op);
-        Error(Obs);
+        asserterror T := P.NoCtl.Value();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror I := P.QtyCtl.AsInteger();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror T := P.Caption();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.QtyCtl.SetValue(77);
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Close();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.OK().Invoke();
+        Assert.ExpectedError(NotOpenTxt);
+        asserterror P.Cancel().Invoke();
+        Assert.ExpectedError(NotOpenTxt);
     end;
 
     [Test]
-    procedure Probe_Card_Ok_0()
-    begin
-        RunCard('ok', 0);
-    end;
-
-    [Test]
-    procedure Probe_Card_Ok_1()
-    begin
-        RunCard('ok', 1);
-    end;
-
-    [Test]
-    procedure Probe_Card_Ok_2()
-    begin
-        RunCard('ok', 2);
-    end;
-
-    [Test]
-    procedure Probe_Card_Cancel_0()
-    begin
-        RunCard('cancel', 0);
-    end;
-
-    [Test]
-    procedure Probe_Card_Cancel_1()
-    begin
-        RunCard('cancel', 1);
-    end;
-
-    [Test]
-    procedure Probe_Card_Cancel_2()
-    begin
-        RunCard('cancel', 2);
-    end;
-
-    [Test]
-    procedure Probe_Card_Close_0()
-    begin
-        RunCard('close', 0);
-    end;
-
-    [Test]
-    procedure Probe_Card_Close_1()
-    begin
-        RunCard('close', 1);
-    end;
-
-    [Test]
-    procedure Probe_Card_Close_2()
-    begin
-        RunCard('close', 2);
-    end;
-
-    [Test]
-    procedure Probe_Card_None_0()
-    begin
-        RunCard('none', 0);
-    end;
-
-    [Test]
-    procedure Probe_Card_None_1()
-    begin
-        RunCard('none', 1);
-    end;
-
-    [Test]
-    procedure Probe_Card_None_2()
-    begin
-        RunCard('none', 2);
-    end;
-
-    local procedure WriteCard(Closer: Text)
-    var
-        P: TestPage "TPC Card";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        P.OpenEdit();
-        P.QtyCtl.SetValue(5);
-        NoteTry('closer', TryCardCloser(P, Closer, Res), Res);
-        Note('table', TableState());
-        Note('log', TPCLog.Text());
-        NoteTry('reopen', TryCardOp(P, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure NewRowCard(Closer: Text)
-    var
-        P: TestPage "TPC Card";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        P.OpenNew();
-        P.NoCtl.SetValue('N1');
-        P.QtyCtl.SetValue(9);
-        NoteTry('closer', TryCardCloser(P, Closer, Res), Res);
-        Note('table', TableState());
-        Note('log', TPCLog.Text());
-        NoteTry('reopennew', TryCardOp(P, 'reopennew', Res), Res);
-        NoteTry('value', TryCardOp(P, 'value', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure VetoCard(Closer: Text)
-    var
-        P: TestPage "TPC Card";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        TPCLog.SetVeto(true);
-        P.OpenEdit();
-        NoteTry('vetoed.' + Closer, TryCardCloser(P, Closer, Res), Res);
-        Note('log', TPCLog.Text());
-        NoteTry('value-after-veto', TryCardOp(P, 'value', Res), Res);
-        NoteTry('reopen-after-veto', TryCardOp(P, 'reopenedit', Res), Res);
-        TPCLog.SetVeto(false);
-        NoteTry('allowed.' + Closer, TryCardCloser(P, Closer, Res), Res);
-        Note('log2', TPCLog.Text());
-        NoteTry('value-after-allowed', TryCardOp(P, 'value', Res), Res);
-        NoteTry('reopen-after-allowed', TryCardOp(P, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure TwoCard()
-    var
-        P1: TestPage "TPC Card";
-        P2: TestPage "TPC Card";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        P1.OpenEdit();
-        P2.OpenEdit();
-        NoteTry('p1.ok', TryCardCloser(P1, 'ok', Res), Res);
-        NoteTry('p2.value', TryCardOp(P2, 'value', Res), Res);
-        NoteTry('p1.value', TryCardOp(P1, 'value', Res), Res);
-        NoteTry('p1.reopen', TryCardOp(P1, 'reopenedit', Res), Res);
-        NoteTry('p2.ok', TryCardCloser(P2, 'ok', Res), Res);
-        NoteTry('p1.value2', TryCardOp(P1, 'value', Res), Res);
-        NoteTry('p2.reopen', TryCardOp(P2, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure Probe_Card_Write_OK()
-    begin
-        WriteCard('ok');
-    end;
-
-    [Test]
-    procedure Probe_Card_Write_Cancel()
-    begin
-        WriteCard('cancel');
-    end;
-
-    [Test]
-    procedure Probe_Card_Write_Close()
-    begin
-        WriteCard('close');
-    end;
-
-    [Test]
-    procedure Probe_Card_NewRow_OK()
-    begin
-        NewRowCard('ok');
-    end;
-
-    [Test]
-    procedure Probe_Card_Veto_OK()
-    begin
-        VetoCard('ok');
-    end;
-
-    [Test]
-    procedure Probe_Card_Veto_Close()
-    begin
-        VetoCard('close');
-    end;
-
-    [Test]
-    procedure Probe_Card_Two()
-    begin
-        TwoCard();
-    end;
-
-    [TryFunction]
-    local procedure TrySetupCard(var P: TestPage "TPC Card"; Mode: Text)
-    begin
-        case Mode of
-            'dup':
-                begin
-                    P.OpenNew();
-                    P.NoCtl.SetValue('A');
-                    P.QtyCtl.SetValue(9);
-                end;
-            'insert':
-                begin
-                    P.OpenNew();
-                    P.NoCtl.SetValue('N2');
-                    P.NoteCtl.SetValue('FAIL');
-                end;
-            'modify':
-                begin
-                    P.OpenEdit();
-                    P.NoteCtl.SetValue('FAIL');
-                end;
-        end;
-    end;
-
-    local procedure RefuseCard(Mode: Text; Closer: Text)
-    var
-        P: TestPage "TPC Card";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        NoteTry('setup', TrySetupCard(P, Mode), 'done');
-        NoteTry(Closer + '.closer', TryCardCloser(P, Closer, Res), Res);
-        NoteTry('valerr', TryCardOp(P, 'valerrcount', Res), Res);
-        NoteTry('value', TryCardOp(P, 'value', Res), Res);
-        Note('log', TPCLog.Text());
-        Note('table', TableState());
-        NoteTry('reopen1', TryCardOp(P, 'reopenedit', Res), Res);
-        NoteTry('close', TryCardOp(P, 'close', Res), Res);
-        NoteTry('reopen2', TryCardOp(P, 'reopenedit', Res), Res);
-        Note('table2', TableState());
-        Note('log2', TPCLog.Text());
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure Probe_Card_RefuseDup_Ok()
-    begin
-        RefuseCard('dup', 'ok');
-    end;
-
-    [Test]
-    procedure Probe_Card_RefuseDup_Close()
-    begin
-        RefuseCard('dup', 'close');
-    end;
-
-    [Test]
-    procedure Probe_Card_RefuseInsert_Ok()
-    begin
-        RefuseCard('insert', 'ok');
-    end;
-
-    [Test]
-    procedure Probe_Card_RefuseInsert_Close()
-    begin
-        RefuseCard('insert', 'close');
-    end;
-
-    [Test]
-    procedure Probe_Card_RefuseModify_Ok()
-    begin
-        RefuseCard('modify', 'ok');
-    end;
-
-    [Test]
-    procedure Probe_Card_RefuseModify_Close()
-    begin
-        RefuseCard('modify', 'close');
-    end;
-
-    // ---- List ----
-
-    [TryFunction]
-    local procedure TryListCloser(var P: TestPage "TPC List"; Closer: Text; var Res: Text)
-    begin
-        case Closer of
-            'ok': P.OK().Invoke();
-            'cancel': P.Cancel().Invoke();
-            'close': P.Close();
-            'none': ;
-        end;
-        Res := 'done';
-    end;
-
-    [TryFunction]
-    local procedure TryListOp(var P: TestPage "TPC List"; Op: Text; var Res: Text)
-    begin
-        case Op of
-            'value': Res := P.NoCtl.Value();
-            'asinteger': Res := Format(P.QtyCtl.AsInteger());
-            'caption': Res := P.Caption();
-            'editable': Res := Format(P.Editable());
-            'fieldeditable': Res := Format(P.QtyCtl.Editable());
-            'first': Res := Format(P.First());
-            'last': Res := Format(P.Last());
-            'next': Res := Format(P.Next());
-            'prev': Res := Format(P.Previous());
-            'gotokey': Res := Format(P.GoToKey('B'));
-            'valerrcount': Res := Format(P.ValidationErrorCount());
-            'setvalue': begin P.QtyCtl.SetValue(77); Res := 'set'; end;
-            'assertequals': begin P.NoCtl.AssertEquals('A'); Res := 'equal'; end;
-            'action': begin P.Act.Invoke(); Res := 'invoked'; end;
-            'actionenabled': Res := Format(P.Act.Enabled());
-            'close': begin P.Close(); Res := 'closed'; end;
-            'ok': begin P.OK().Invoke(); Res := 'ok-invoked'; end;
-            'cancel': begin P.Cancel().Invoke(); Res := 'cancel-invoked'; end;
-            'reopenedit': begin P.OpenEdit(); Res := P.NoCtl.Value() + '/' + Format(P.QtyCtl.AsInteger()); end;
-            'reopenview': begin P.OpenView(); Res := P.NoCtl.Value() + '/' + Format(P.QtyCtl.AsInteger()); end;
-            'reopennew': begin P.OpenNew(); Res := '[' + P.NoCtl.Value() + ']'; end;
-            'new': begin P.New(); Res := 'new-row'; end;
-        end;
-    end;
-
-    local procedure ProbeList(Closer: Text; Op: Text)
-    var
-        P: TestPage "TPC List";
-        Res: Text;
-        AfterCloser: Text;
-    begin
-        Seed();
-        TPCLog.Reset();
-        P.OpenEdit();
-        NoteTry(Closer + '.closer', TryListCloser(P, Closer, Res), Res);
-        AfterCloser := TPCLog.Text();
-        if Op = AllOps().Get(1) then
-            Note(Closer + '.log', AfterCloser);
-        NoteTry(Op, TryListOp(P, Op, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(Op + '.log', TPCLog.Text());
-    end;
-
-    local procedure RunList(Closer: Text; Chunk: Integer)
-    var
-        Op: Text;
-    begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 8) do
-            ProbeList(Closer, Op);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure Probe_List_Ok_0()
-    begin
-        RunList('ok', 0);
-    end;
-
-    [Test]
-    procedure Probe_List_Ok_1()
-    begin
-        RunList('ok', 1);
-    end;
-
-    [Test]
-    procedure Probe_List_Ok_2()
-    begin
-        RunList('ok', 2);
-    end;
-
-    [Test]
-    procedure Probe_List_Cancel_0()
-    begin
-        RunList('cancel', 0);
-    end;
-
-    [Test]
-    procedure Probe_List_Cancel_1()
-    begin
-        RunList('cancel', 1);
-    end;
-
-    [Test]
-    procedure Probe_List_Cancel_2()
-    begin
-        RunList('cancel', 2);
-    end;
-
-    [Test]
-    procedure Probe_List_Close_0()
-    begin
-        RunList('close', 0);
-    end;
-
-    [Test]
-    procedure Probe_List_Close_1()
-    begin
-        RunList('close', 1);
-    end;
-
-    [Test]
-    procedure Probe_List_Close_2()
-    begin
-        RunList('close', 2);
-    end;
-
-    [Test]
-    procedure Probe_List_None_0()
-    begin
-        RunList('none', 0);
-    end;
-
-    [Test]
-    procedure Probe_List_None_1()
-    begin
-        RunList('none', 1);
-    end;
-
-    [Test]
-    procedure Probe_List_None_2()
-    begin
-        RunList('none', 2);
-    end;
-
-    local procedure WriteList(Closer: Text)
-    var
-        P: TestPage "TPC List";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        P.OpenEdit();
-        P.QtyCtl.SetValue(5);
-        NoteTry('closer', TryListCloser(P, Closer, Res), Res);
-        Note('table', TableState());
-        Note('log', TPCLog.Text());
-        NoteTry('reopen', TryListOp(P, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure NewRowList(Closer: Text)
-    var
-        P: TestPage "TPC List";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        P.OpenNew();
-        P.NoCtl.SetValue('N1');
-        P.QtyCtl.SetValue(9);
-        NoteTry('closer', TryListCloser(P, Closer, Res), Res);
-        Note('table', TableState());
-        Note('log', TPCLog.Text());
-        NoteTry('reopennew', TryListOp(P, 'reopennew', Res), Res);
-        NoteTry('value', TryListOp(P, 'value', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure VetoList(Closer: Text)
-    var
-        P: TestPage "TPC List";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        TPCLog.SetVeto(true);
-        P.OpenEdit();
-        NoteTry('vetoed.' + Closer, TryListCloser(P, Closer, Res), Res);
-        Note('log', TPCLog.Text());
-        NoteTry('value-after-veto', TryListOp(P, 'value', Res), Res);
-        NoteTry('reopen-after-veto', TryListOp(P, 'reopenedit', Res), Res);
-        TPCLog.SetVeto(false);
-        NoteTry('allowed.' + Closer, TryListCloser(P, Closer, Res), Res);
-        Note('log2', TPCLog.Text());
-        NoteTry('value-after-allowed', TryListOp(P, 'value', Res), Res);
-        NoteTry('reopen-after-allowed', TryListOp(P, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure TwoList()
-    var
-        P1: TestPage "TPC List";
-        P2: TestPage "TPC List";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        P1.OpenEdit();
-        P2.OpenEdit();
-        NoteTry('p1.ok', TryListCloser(P1, 'ok', Res), Res);
-        NoteTry('p2.value', TryListOp(P2, 'value', Res), Res);
-        NoteTry('p1.value', TryListOp(P1, 'value', Res), Res);
-        NoteTry('p1.reopen', TryListOp(P1, 'reopenedit', Res), Res);
-        NoteTry('p2.ok', TryListCloser(P2, 'ok', Res), Res);
-        NoteTry('p1.value2', TryListOp(P1, 'value', Res), Res);
-        NoteTry('p2.reopen', TryListOp(P2, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure Probe_List_Write_OK()
-    begin
-        WriteList('ok');
-    end;
-
-    [Test]
-    procedure Probe_List_Write_Cancel()
-    begin
-        WriteList('cancel');
-    end;
-
-    [Test]
-    procedure Probe_List_Write_Close()
-    begin
-        WriteList('close');
-    end;
-
-    [Test]
-    procedure Probe_List_NewRow_OK()
-    begin
-        NewRowList('ok');
-    end;
-
-    [Test]
-    procedure Probe_List_Veto_OK()
-    begin
-        VetoList('ok');
-    end;
-
-    [Test]
-    procedure Probe_List_Veto_Close()
-    begin
-        VetoList('close');
-    end;
-
-    [Test]
-    procedure Probe_List_Two()
-    begin
-        TwoList();
-    end;
-
-    [TryFunction]
-    local procedure TrySetupList(var P: TestPage "TPC List"; Mode: Text)
-    begin
-        case Mode of
-            'dup':
-                begin
-                    P.OpenNew();
-                    P.NoCtl.SetValue('A');
-                    P.QtyCtl.SetValue(9);
-                end;
-            'insert':
-                begin
-                    P.OpenNew();
-                    P.NoCtl.SetValue('N2');
-                    P.NoteCtl.SetValue('FAIL');
-                end;
-            'modify':
-                begin
-                    P.OpenEdit();
-                    P.NoteCtl.SetValue('FAIL');
-                end;
-        end;
-    end;
-
-    local procedure RefuseList(Mode: Text; Closer: Text)
-    var
-        P: TestPage "TPC List";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        NoteTry('setup', TrySetupList(P, Mode), 'done');
-        NoteTry(Closer + '.closer', TryListCloser(P, Closer, Res), Res);
-        NoteTry('valerr', TryListOp(P, 'valerrcount', Res), Res);
-        NoteTry('value', TryListOp(P, 'value', Res), Res);
-        Note('log', TPCLog.Text());
-        Note('table', TableState());
-        NoteTry('reopen1', TryListOp(P, 'reopenedit', Res), Res);
-        NoteTry('close', TryListOp(P, 'close', Res), Res);
-        NoteTry('reopen2', TryListOp(P, 'reopenedit', Res), Res);
-        Note('table2', TableState());
-        Note('log2', TPCLog.Text());
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure Probe_List_RefuseDup_Ok()
-    begin
-        RefuseList('dup', 'ok');
-    end;
-
-    [Test]
-    procedure Probe_List_RefuseDup_Close()
-    begin
-        RefuseList('dup', 'close');
-    end;
-
-    [Test]
-    procedure Probe_List_RefuseInsert_Ok()
-    begin
-        RefuseList('insert', 'ok');
-    end;
-
-    [Test]
-    procedure Probe_List_RefuseInsert_Close()
-    begin
-        RefuseList('insert', 'close');
-    end;
-
-    [Test]
-    procedure Probe_List_RefuseModify_Ok()
-    begin
-        RefuseList('modify', 'ok');
-    end;
-
-    [Test]
-    procedure Probe_List_RefuseModify_Close()
-    begin
-        RefuseList('modify', 'close');
-    end;
-
-    // ---- Dialog ----
-
-    [TryFunction]
-    local procedure TryDialogCloser(var P: TestPage "TPC Dialog"; Closer: Text; var Res: Text)
-    begin
-        case Closer of
-            'ok': P.OK().Invoke();
-            'cancel': P.Cancel().Invoke();
-            'close': P.Close();
-            'none': ;
-        end;
-        Res := 'done';
-    end;
-
-    [TryFunction]
-    local procedure TryDialogOp(var P: TestPage "TPC Dialog"; Op: Text; var Res: Text)
-    begin
-        case Op of
-            'value': Res := P.NoCtl.Value();
-            'asinteger': Res := Format(P.QtyCtl.AsInteger());
-            'caption': Res := P.Caption();
-            'editable': Res := Format(P.Editable());
-            'fieldeditable': Res := Format(P.QtyCtl.Editable());
-            'first': Res := Format(P.First());
-            'last': Res := Format(P.Last());
-            'next': Res := Format(P.Next());
-            'prev': Res := Format(P.Previous());
-            'gotokey': Res := Format(P.GoToKey('B'));
-            'valerrcount': Res := Format(P.ValidationErrorCount());
-            'setvalue': begin P.QtyCtl.SetValue(77); Res := 'set'; end;
-            'assertequals': begin P.NoCtl.AssertEquals('A'); Res := 'equal'; end;
-            'action': begin P.Act.Invoke(); Res := 'invoked'; end;
-            'actionenabled': Res := Format(P.Act.Enabled());
-            'close': begin P.Close(); Res := 'closed'; end;
-            'ok': begin P.OK().Invoke(); Res := 'ok-invoked'; end;
-            'cancel': begin P.Cancel().Invoke(); Res := 'cancel-invoked'; end;
-            'reopenedit': begin P.OpenEdit(); Res := P.NoCtl.Value() + '/' + Format(P.QtyCtl.AsInteger()); end;
-            'reopenview': begin P.OpenView(); Res := P.NoCtl.Value() + '/' + Format(P.QtyCtl.AsInteger()); end;
-            'reopennew': begin P.OpenNew(); Res := '[' + P.NoCtl.Value() + ']'; end;
-        end;
-    end;
-
-    local procedure ProbeDialog(Closer: Text; Op: Text)
+    procedure Dialog_OK_ClosesThePage_AndTheVariableOpensAgain()
     var
         P: TestPage "TPC Dialog";
-        Res: Text;
-        AfterCloser: Text;
     begin
-        Seed();
         TPCLog.Reset();
         P.OpenEdit();
-        NoteTry(Closer + '.closer', TryDialogCloser(P, Closer, Res), Res);
-        AfterCloser := TPCLog.Text();
-        if Op = AllOps().Get(1) then
-            Note(Closer + '.log', AfterCloser);
-        NoteTry(Op, TryDialogOp(P, Op, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(Op + '.log', TPCLog.Text());
-    end;
+        P.OK().Invoke();
 
-    local procedure RunDialog(Closer: Text; Chunk: Integer)
-    var
-        Op: Text;
-    begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 8) do
-            ProbeDialog(Closer, Op);
-        Error(Obs);
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OK closes the dialog');
+        AssertEveryCallRaisesNotOpenDialog(P);
+        P.OpenEdit();
+        Assert.AreEqual(0, P.QtyCtl.AsInteger(), 'the variable opens again');
     end;
 
     [Test]
-    procedure Probe_Dialog_Ok_0()
-    begin
-        RunDialog('ok', 0);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Ok_1()
-    begin
-        RunDialog('ok', 1);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Ok_2()
-    begin
-        RunDialog('ok', 2);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Cancel_0()
-    begin
-        RunDialog('cancel', 0);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Cancel_1()
-    begin
-        RunDialog('cancel', 1);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Cancel_2()
-    begin
-        RunDialog('cancel', 2);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Close_0()
-    begin
-        RunDialog('close', 0);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Close_1()
-    begin
-        RunDialog('close', 1);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Close_2()
-    begin
-        RunDialog('close', 2);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_None_0()
-    begin
-        RunDialog('none', 0);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_None_1()
-    begin
-        RunDialog('none', 1);
-    end;
-
-    [Test]
-    procedure Probe_Dialog_None_2()
-    begin
-        RunDialog('none', 2);
-    end;
-
-    local procedure WriteDialog(Closer: Text)
+    procedure Dialog_Cancel_ClosesThePage_AndTheVariableOpensAgain()
     var
         P: TestPage "TPC Dialog";
-        Res: Text;
     begin
-        Seed();
-        Obs := '';
         TPCLog.Reset();
         P.OpenEdit();
-        P.QtyCtl.SetValue(5);
-        NoteTry('closer', TryDialogCloser(P, Closer, Res), Res);
-        Note('table', TableState());
-        Note('log', TPCLog.Text());
-        NoteTry('reopen', TryDialogOp(P, 'reopenedit', Res), Res);
-        Error(Obs);
-    end;
+        P.Cancel().Invoke();
 
-    local procedure NewRowDialog(Closer: Text)
-    var
-        P: TestPage "TPC Dialog";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        P.OpenNew();
-        P.NoCtl.SetValue('N1');
-        P.QtyCtl.SetValue(9);
-        NoteTry('closer', TryDialogCloser(P, Closer, Res), Res);
-        Note('table', TableState());
-        Note('log', TPCLog.Text());
-        NoteTry('reopennew', TryDialogOp(P, 'reopennew', Res), Res);
-        NoteTry('value', TryDialogOp(P, 'value', Res), Res);
-        Error(Obs);
-    end;
-
-    local procedure VetoDialog(Closer: Text)
-    var
-        P: TestPage "TPC Dialog";
-        Res: Text;
-    begin
-        Seed();
-        Obs := '';
-        TPCLog.Reset();
-        TPCLog.SetVeto(true);
+        Assert.AreEqual('open,qcp:Cancel,close,', TPCLog.Text(), 'Cancel closes the dialog, and OnQueryClosePage sees Cancel');
+        AssertEveryCallRaisesNotOpenDialog(P);
         P.OpenEdit();
-        NoteTry('vetoed.' + Closer, TryDialogCloser(P, Closer, Res), Res);
-        Note('log', TPCLog.Text());
-        NoteTry('value-after-veto', TryDialogOp(P, 'value', Res), Res);
-        NoteTry('reopen-after-veto', TryDialogOp(P, 'reopenedit', Res), Res);
-        TPCLog.SetVeto(false);
-        NoteTry('allowed.' + Closer, TryDialogCloser(P, Closer, Res), Res);
-        Note('log2', TPCLog.Text());
-        NoteTry('value-after-allowed', TryDialogOp(P, 'value', Res), Res);
-        NoteTry('reopen-after-allowed', TryDialogOp(P, 'reopenedit', Res), Res);
-        Error(Obs);
+        Assert.AreEqual(0, P.QtyCtl.AsInteger(), 'the variable opens again');
     end;
 
-    local procedure TwoDialog()
+    [Test]
+    procedure SaveValuesDialog_OK_StoresWhatWasTyped_AndTheReopenedPageShowsIt()
     var
-        P1: TestPage "TPC Dialog";
-        P2: TestPage "TPC Dialog";
-        Res: Text;
+        P: TestPage "TPC Saved Dialog";
     begin
-        Seed();
-        Obs := '';
-        P1.OpenEdit();
-        P2.OpenEdit();
-        NoteTry('p1.ok', TryDialogCloser(P1, 'ok', Res), Res);
-        NoteTry('p2.value', TryDialogOp(P2, 'value', Res), Res);
-        NoteTry('p1.value', TryDialogOp(P1, 'value', Res), Res);
-        NoteTry('p1.reopen', TryDialogOp(P1, 'reopenedit', Res), Res);
-        NoteTry('p2.ok', TryDialogCloser(P2, 'ok', Res), Res);
-        NoteTry('p1.value2', TryDialogOp(P1, 'value', Res), Res);
-        NoteTry('p2.reopen', TryDialogOp(P2, 'reopenedit', Res), Res);
-        Error(Obs);
+        P.OpenEdit();
+        P.Remembered.SetValue('dialog-ok');
+        P.OK().Invoke();
+
+        P.OpenEdit();
+        Assert.AreEqual('dialog-ok', P.Remembered.Value(), 'OK stores the value a SaveValues page shows when it opens again');
     end;
 
+    // The store belongs to the user, not to the test, so the value another test stored may still be
+    // shown: what Cancel must not do is store what was typed.
     [Test]
-    procedure Probe_Dialog_Write_OK()
-    begin
-        WriteDialog('ok');
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Write_Cancel()
-    begin
-        WriteDialog('cancel');
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Write_Close()
-    begin
-        WriteDialog('close');
-    end;
-
-    [Test]
-    procedure Probe_Dialog_NewRow_OK()
-    begin
-        NewRowDialog('ok');
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Veto_OK()
-    begin
-        VetoDialog('ok');
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Veto_Close()
-    begin
-        VetoDialog('close');
-    end;
-
-    [Test]
-    procedure Probe_Dialog_Two()
-    begin
-        TwoDialog();
-    end;
-
-    // ---- handler: Card ----
-
-    [ModalPageHandler]
-    procedure CardHandler(var P: TestPage "TPC Card")
+    procedure SaveValuesDialog_Cancel_StoresNothing()
     var
-        Res: Text;
-        AfterCloser: Text;
+        P: TestPage "TPC Saved Dialog";
     begin
-        NoteTry(HandlerCloser + '.closer', TryCardCloser(P, HandlerCloser, Res), Res);
-        AfterCloser := TPCLog.Text();
-        NoteTry(HandlerOp, TryCardOp(P, HandlerOp, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(HandlerOp + '.log', TPCLog.Text());
+        P.OpenEdit();
+        P.Remembered.SetValue('dialog-cancel');
+        P.Cancel().Invoke();
+
+        P.OpenEdit();
+        Assert.AreNotEqual('dialog-cancel', P.Remembered.Value(), 'Cancel stores nothing');
     end;
+
+    [Test]
+    procedure SaveValuesCard_OK_StoresWhatWasTyped_AndTheReopenedPageShowsIt()
+    var
+        P: TestPage "TPC Saved Card";
+    begin
+        P.OpenEdit();
+        P.Remembered.SetValue('card-ok');
+        P.OK().Invoke();
+
+        P.OpenEdit();
+        Assert.AreEqual('card-ok', P.Remembered.Value(), 'OK stores the value a SaveValues page shows when it opens again');
+    end;
+
+    // ---- the Card page a handler receives ----
 
     [TryFunction]
     local procedure TryRunCard(var Result: Action)
@@ -1388,205 +971,66 @@ codeunit 69651 "TPC Closing Action Probes"
         Result := Page.RunModal(Page::"TPC Card", Row);
     end;
 
-    local procedure RunHandlerCard(Closer: Text; Chunk: Integer)
+    [ModalPageHandler]
+    procedure CardOkHandler(var P: TestPage "TPC Card")
+    var
+        T: Text;
+        B: Boolean;
+    begin
+        P.OK().Invoke();
+        asserterror T := P.NoCtl.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror B := P.First();
+        HandlerSecondCloseError := GetLastErrorText();
+    end;
+
+    [Test]
+    [HandlerFunctions('CardOkHandler')]
+    procedure HandlerCard_OK_ClosesThePage_AndRunModalReportsTheResult()
     var
         Result: Action;
-        Op: Text;
     begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 4) do begin
-            Seed();
-            TPCLog.Reset();
-            HandlerCloser := Closer;
-            HandlerOp := Op;
-            NoteTry('RunModal', TryRunCard(Result), Format(Result));
-            Note('log-end', TPCLog.Text());
-        end;
-        Error(Obs);
-    end;
+        Seed();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Assert.IsTrue(TryRunCard(Result), 'RunModal returns');
 
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Ok_0()
-    begin
-        RunHandlerCard('ok', 0);
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after OK raises not open inside the handler');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'so does a move');
+        Assert.AreEqual('LookupOK', Format(Result), 'RunModal reports the action the handler chose');
+        Assert.AreEqual('open,qcp:LookupOK,close,', TPCLog.Text(), 'OnQueryClosePage sees the same value, and the triggers ran once each');
     end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Ok_1()
-    begin
-        RunHandlerCard('ok', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Ok_2()
-    begin
-        RunHandlerCard('ok', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Ok_3()
-    begin
-        RunHandlerCard('ok', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Ok_4()
-    begin
-        RunHandlerCard('ok', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Ok_5()
-    begin
-        RunHandlerCard('ok', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Cancel_0()
-    begin
-        RunHandlerCard('cancel', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Cancel_1()
-    begin
-        RunHandlerCard('cancel', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Cancel_2()
-    begin
-        RunHandlerCard('cancel', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Cancel_3()
-    begin
-        RunHandlerCard('cancel', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Cancel_4()
-    begin
-        RunHandlerCard('cancel', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Cancel_5()
-    begin
-        RunHandlerCard('cancel', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Close_0()
-    begin
-        RunHandlerCard('close', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Close_1()
-    begin
-        RunHandlerCard('close', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Close_2()
-    begin
-        RunHandlerCard('close', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Close_3()
-    begin
-        RunHandlerCard('close', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Close_4()
-    begin
-        RunHandlerCard('close', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_Close_5()
-    begin
-        RunHandlerCard('close', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_None_0()
-    begin
-        RunHandlerCard('none', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_None_1()
-    begin
-        RunHandlerCard('none', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_None_2()
-    begin
-        RunHandlerCard('none', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_None_3()
-    begin
-        RunHandlerCard('none', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_None_4()
-    begin
-        RunHandlerCard('none', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('CardHandler')]
-    procedure Probe_HandlerCard_None_5()
-    begin
-        RunHandlerCard('none', 5);
-    end;
-
-    // ---- handler: List ----
 
     [ModalPageHandler]
-    procedure ListHandler(var P: TestPage "TPC List")
+    procedure CardCancelHandler(var P: TestPage "TPC Card")
     var
-        Res: Text;
-        AfterCloser: Text;
+        T: Text;
     begin
-        NoteTry(HandlerCloser + '.closer', TryListCloser(P, HandlerCloser, Res), Res);
-        AfterCloser := TPCLog.Text();
-        NoteTry(HandlerOp, TryListOp(P, HandlerOp, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(HandlerOp + '.log', TPCLog.Text());
+        P.Cancel().Invoke();
+        asserterror T := P.NoCtl.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror P.OK().Invoke();
+        HandlerSecondCloseError := GetLastErrorText();
     end;
+
+    [Test]
+    [HandlerFunctions('CardCancelHandler')]
+    procedure HandlerCard_Cancel_ClosesThePage_AndRunModalReportsTheResult()
+    var
+        Result: Action;
+    begin
+        Seed();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Assert.IsTrue(TryRunCard(Result), 'RunModal returns');
+
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after Cancel raises not open inside the handler');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'a second closing action raises not open too');
+        Assert.AreEqual('LookupCancel', Format(Result), 'RunModal reports Cancel, and the second action cannot change it');
+        Assert.AreEqual('open,qcp:LookupCancel,close,', TPCLog.Text(), 'OnQueryClosePage sees the same value, and the triggers ran once each');
+    end;
+
+    // ---- the List page a handler receives ----
 
     [TryFunction]
     local procedure TryRunList(var Result: Action)
@@ -1596,205 +1040,62 @@ codeunit 69651 "TPC Closing Action Probes"
         Result := ListPage.RunModal();
     end;
 
-    local procedure RunHandlerList(Closer: Text; Chunk: Integer)
+    [ModalPageHandler]
+    procedure ListOkHandler(var P: TestPage "TPC List")
+    var
+        T: Text;
+        B: Boolean;
+    begin
+        P.OK().Invoke();
+        asserterror T := P.NoCtl.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror B := P.First();
+        HandlerSecondCloseError := GetLastErrorText();
+    end;
+
+    [Test]
+    [HandlerFunctions('ListOkHandler')]
+    procedure HandlerList_OK_ClosesThePage_AndRunModalReportsTheResult()
     var
         Result: Action;
-        Op: Text;
     begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 4) do begin
-            Seed();
-            TPCLog.Reset();
-            HandlerCloser := Closer;
-            HandlerOp := Op;
-            NoteTry('RunModal', TryRunList(Result), Format(Result));
-            Note('log-end', TPCLog.Text());
-        end;
-        Error(Obs);
-    end;
+        Seed();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Assert.IsTrue(TryRunList(Result), 'RunModal returns');
 
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Ok_0()
-    begin
-        RunHandlerList('ok', 0);
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after OK raises not open inside the handler');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'so does a move');
+        Assert.AreEqual('OK', Format(Result), 'RunModal reports the action the handler chose');
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OnQueryClosePage sees the same value, and the triggers ran once each');
     end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Ok_1()
-    begin
-        RunHandlerList('ok', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Ok_2()
-    begin
-        RunHandlerList('ok', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Ok_3()
-    begin
-        RunHandlerList('ok', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Ok_4()
-    begin
-        RunHandlerList('ok', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Ok_5()
-    begin
-        RunHandlerList('ok', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Cancel_0()
-    begin
-        RunHandlerList('cancel', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Cancel_1()
-    begin
-        RunHandlerList('cancel', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Cancel_2()
-    begin
-        RunHandlerList('cancel', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Cancel_3()
-    begin
-        RunHandlerList('cancel', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Cancel_4()
-    begin
-        RunHandlerList('cancel', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Cancel_5()
-    begin
-        RunHandlerList('cancel', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Close_0()
-    begin
-        RunHandlerList('close', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Close_1()
-    begin
-        RunHandlerList('close', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Close_2()
-    begin
-        RunHandlerList('close', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Close_3()
-    begin
-        RunHandlerList('close', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Close_4()
-    begin
-        RunHandlerList('close', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_Close_5()
-    begin
-        RunHandlerList('close', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_None_0()
-    begin
-        RunHandlerList('none', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_None_1()
-    begin
-        RunHandlerList('none', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_None_2()
-    begin
-        RunHandlerList('none', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_None_3()
-    begin
-        RunHandlerList('none', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_None_4()
-    begin
-        RunHandlerList('none', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('ListHandler')]
-    procedure Probe_HandlerList_None_5()
-    begin
-        RunHandlerList('none', 5);
-    end;
-
-    // ---- handler: Lookup ----
 
     [ModalPageHandler]
-    procedure LookupHandler(var P: TestPage "TPC List")
-    var
-        Res: Text;
-        AfterCloser: Text;
+    procedure ListCancelHandler(var P: TestPage "TPC List")
     begin
-        NoteTry(HandlerCloser + '.closer', TryListCloser(P, HandlerCloser, Res), Res);
-        AfterCloser := TPCLog.Text();
-        NoteTry(HandlerOp, TryListOp(P, HandlerOp, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(HandlerOp + '.log', TPCLog.Text());
+        asserterror P.Cancel().Invoke();
+        HandlerCancelError := GetLastErrorText();
+        HandlerValue := P.NoCtl.Value();
     end;
+
+    [Test]
+    [HandlerFunctions('ListCancelHandler')]
+    procedure HandlerList_Cancel_IsNotOffered_AndTheHandlerReturnWithoutClosingAnswersOK()
+    var
+        Result: Action;
+    begin
+        Seed();
+        HandlerCancelError := '';
+        HandlerValue := '';
+        Assert.IsTrue(TryRunList(Result), 'RunModal returns');
+
+        AssertContains(HandlerCancelError, CancelNotFoundTxt, 'a plain list offers no Cancel');
+        Assert.AreEqual('A', HandlerValue, 'the page is still open after the refused Cancel');
+        Assert.AreEqual('OK', Format(Result), 'a handler that closes nothing answers OK for a plain list');
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'the round trip closed the page');
+    end;
+
+    // ---- the Lookup page a handler receives ----
 
     [TryFunction]
     local procedure TryRunLookup(var Result: Action)
@@ -1805,597 +1106,122 @@ codeunit 69651 "TPC Closing Action Probes"
         Result := ListPage.RunModal();
     end;
 
-    local procedure RunHandlerLookup(Closer: Text; Chunk: Integer)
+    [ModalPageHandler]
+    procedure LookupOkHandler(var P: TestPage "TPC List")
+    var
+        T: Text;
+        B: Boolean;
+    begin
+        P.OK().Invoke();
+        asserterror T := P.NoCtl.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror B := P.First();
+        HandlerSecondCloseError := GetLastErrorText();
+    end;
+
+    [Test]
+    [HandlerFunctions('LookupOkHandler')]
+    procedure HandlerLookup_OK_ClosesThePage_AndRunModalReportsTheResult()
     var
         Result: Action;
-        Op: Text;
     begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 4) do begin
-            Seed();
-            TPCLog.Reset();
-            HandlerCloser := Closer;
-            HandlerOp := Op;
-            NoteTry('RunModal', TryRunLookup(Result), Format(Result));
-            Note('log-end', TPCLog.Text());
-        end;
-        Error(Obs);
-    end;
+        Seed();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Assert.IsTrue(TryRunLookup(Result), 'RunModal returns');
 
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Ok_0()
-    begin
-        RunHandlerLookup('ok', 0);
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after OK raises not open inside the handler');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'so does a move');
+        Assert.AreEqual('LookupOK', Format(Result), 'RunModal reports the action the handler chose');
+        Assert.AreEqual('open,qcp:LookupOK,close,', TPCLog.Text(), 'OnQueryClosePage sees the same value, and the triggers ran once each');
     end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Ok_1()
-    begin
-        RunHandlerLookup('ok', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Ok_2()
-    begin
-        RunHandlerLookup('ok', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Ok_3()
-    begin
-        RunHandlerLookup('ok', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Ok_4()
-    begin
-        RunHandlerLookup('ok', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Ok_5()
-    begin
-        RunHandlerLookup('ok', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Cancel_0()
-    begin
-        RunHandlerLookup('cancel', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Cancel_1()
-    begin
-        RunHandlerLookup('cancel', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Cancel_2()
-    begin
-        RunHandlerLookup('cancel', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Cancel_3()
-    begin
-        RunHandlerLookup('cancel', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Cancel_4()
-    begin
-        RunHandlerLookup('cancel', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Cancel_5()
-    begin
-        RunHandlerLookup('cancel', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Close_0()
-    begin
-        RunHandlerLookup('close', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Close_1()
-    begin
-        RunHandlerLookup('close', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Close_2()
-    begin
-        RunHandlerLookup('close', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Close_3()
-    begin
-        RunHandlerLookup('close', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Close_4()
-    begin
-        RunHandlerLookup('close', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_Close_5()
-    begin
-        RunHandlerLookup('close', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_None_0()
-    begin
-        RunHandlerLookup('none', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_None_1()
-    begin
-        RunHandlerLookup('none', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_None_2()
-    begin
-        RunHandlerLookup('none', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_None_3()
-    begin
-        RunHandlerLookup('none', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_None_4()
-    begin
-        RunHandlerLookup('none', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('LookupHandler')]
-    procedure Probe_HandlerLookup_None_5()
-    begin
-        RunHandlerLookup('none', 5);
-    end;
-
-    // ---- handler: Dialog ----
 
     [ModalPageHandler]
-    procedure DialogHandler(var P: TestPage "TPC Dialog")
+    procedure LookupCancelHandler(var P: TestPage "TPC List")
     var
-        Res: Text;
-        AfterCloser: Text;
+        T: Text;
     begin
-        NoteTry(HandlerCloser + '.closer', TryDialogCloser(P, HandlerCloser, Res), Res);
-        AfterCloser := TPCLog.Text();
-        NoteTry(HandlerOp, TryDialogOp(P, HandlerOp, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(HandlerOp + '.log', TPCLog.Text());
+        P.Cancel().Invoke();
+        asserterror T := P.NoCtl.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror P.OK().Invoke();
+        HandlerSecondCloseError := GetLastErrorText();
     end;
 
-    [TryFunction]
-    local procedure TryRunDialog(var Result: Action)
-    begin
-        Result := Page.RunModal(Page::"TPC Dialog");
-    end;
-
-    local procedure RunHandlerDialog(Closer: Text; Chunk: Integer)
+    [Test]
+    [HandlerFunctions('LookupCancelHandler')]
+    procedure HandlerLookup_Cancel_ClosesThePage_AndRunModalReportsTheResult()
     var
         Result: Action;
-        Op: Text;
     begin
-        Obs := '';
-        foreach Op in OpsChunk(Chunk, 4) do begin
-            Seed();
-            TPCLog.Reset();
-            HandlerCloser := Closer;
-            HandlerOp := Op;
-            NoteTry('RunModal', TryRunDialog(Result), Format(Result));
-            Note('log-end', TPCLog.Text());
-        end;
-        Error(Obs);
-    end;
+        Seed();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Assert.IsTrue(TryRunLookup(Result), 'RunModal returns');
 
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Ok_0()
-    begin
-        RunHandlerDialog('ok', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Ok_1()
-    begin
-        RunHandlerDialog('ok', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Ok_2()
-    begin
-        RunHandlerDialog('ok', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Ok_3()
-    begin
-        RunHandlerDialog('ok', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Ok_4()
-    begin
-        RunHandlerDialog('ok', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Ok_5()
-    begin
-        RunHandlerDialog('ok', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Cancel_0()
-    begin
-        RunHandlerDialog('cancel', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Cancel_1()
-    begin
-        RunHandlerDialog('cancel', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Cancel_2()
-    begin
-        RunHandlerDialog('cancel', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Cancel_3()
-    begin
-        RunHandlerDialog('cancel', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Cancel_4()
-    begin
-        RunHandlerDialog('cancel', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Cancel_5()
-    begin
-        RunHandlerDialog('cancel', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Close_0()
-    begin
-        RunHandlerDialog('close', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Close_1()
-    begin
-        RunHandlerDialog('close', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Close_2()
-    begin
-        RunHandlerDialog('close', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Close_3()
-    begin
-        RunHandlerDialog('close', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Close_4()
-    begin
-        RunHandlerDialog('close', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_Close_5()
-    begin
-        RunHandlerDialog('close', 5);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_None_0()
-    begin
-        RunHandlerDialog('none', 0);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_None_1()
-    begin
-        RunHandlerDialog('none', 1);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_None_2()
-    begin
-        RunHandlerDialog('none', 2);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_None_3()
-    begin
-        RunHandlerDialog('none', 3);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_None_4()
-    begin
-        RunHandlerDialog('none', 4);
-    end;
-
-    [Test]
-    [HandlerFunctions('DialogHandler')]
-    procedure Probe_HandlerDialog_None_5()
-    begin
-        RunHandlerDialog('none', 5);
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after Cancel raises not open inside the handler');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'a second closing action raises not open too');
+        Assert.AreEqual('LookupCancel', Format(Result), 'RunModal reports Cancel, and the second action cannot change it');
+        Assert.AreEqual('open,qcp:LookupCancel,close,', TPCLog.Text(), 'OnQueryClosePage sees the same value, and the triggers ran once each');
     end;
 
     // ---- a request page ----
 
-    [TryFunction]
-    local procedure TryReqCloser(var R: TestRequestPage "TPC Report"; Closer: Text; var Res: Text)
+    [RequestPageHandler]
+    procedure RequestOkHandler(var R: TestRequestPage "TPC Report")
+    var
+        T: Text;
     begin
-        case Closer of
-            'ok': R.OK().Invoke();
-            'cancel': R.Cancel().Invoke();
-            'none': ;
-        end;
-        Res := 'done';
-    end;
-
-    [TryFunction]
-    local procedure TryReqOp(var R: TestRequestPage "TPC Report"; Op: Text; var Res: Text)
-    begin
-        case Op of
-            'value': Res := R.QtyOpt.Value();
-            'setvalue': begin R.QtyOpt.SetValue(5); Res := 'set'; end;
-            'ok': begin R.OK().Invoke(); Res := 'ok-invoked'; end;
-            'cancel': begin R.Cancel().Invoke(); Res := 'cancel-invoked'; end;
-            'caption': Res := R.Caption();
-        end;
+        R.OK().Invoke();
+        asserterror T := R.QtyOpt.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror R.Cancel().Invoke();
+        HandlerSecondCloseError := GetLastErrorText();
     end;
 
     [RequestPageHandler]
-    procedure ReqHandler(var R: TestRequestPage "TPC Report")
+    procedure RequestCancelHandler(var R: TestRequestPage "TPC Report")
     var
-        Res: Text;
-        AfterCloser: Text;
+        T: Text;
     begin
-        NoteTry(HandlerCloser + '.closer', TryReqCloser(R, HandlerCloser, Res), Res);
-        AfterCloser := TPCLog.Text();
-        NoteTry(HandlerOp, TryReqOp(R, HandlerOp, Res), Res);
-        if TPCLog.Text() <> AfterCloser then
-            Note(HandlerOp + '.log', TPCLog.Text());
+        R.Cancel().Invoke();
+        asserterror T := R.QtyOpt.Value();
+        HandlerReadError := GetLastErrorText();
+        asserterror R.OK().Invoke();
+        HandlerSecondCloseError := GetLastErrorText();
     end;
 
-    [TryFunction]
-    local procedure TryRunRequest(var Params: Text)
-    begin
-        Params := Report.RunRequestPage(Report::"TPC Report");
-    end;
-
-    local procedure RunRequest(Closer: Text)
+    [Test]
+    [HandlerFunctions('RequestOkHandler')]
+    procedure RequestPage_OK_ClosesThePage_AndASecondActionCannotChangeTheResult()
     var
-        Op: Text;
         Params: Text;
     begin
-        Obs := '';
-        foreach Op in ReqOps() do begin
-            TPCLog.Reset();
-            HandlerCloser := Closer;
-            HandlerOp := Op;
-            NoteTry('RunRequestPage', TryRunRequest(Params), Format(StrLen(Params) > 0));
-            Note('log-end', TPCLog.Text());
-        end;
-        Error(Obs);
-    end;
+        TPCLog.Reset();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Params := Report.RunRequestPage(Report::"TPC Report");
 
-    local procedure ReqOps() Ops: List of [Text]
-    begin
-        Ops.Add('value');
-        Ops.Add('setvalue');
-        Ops.Add('ok');
-        Ops.Add('cancel');
-        Ops.Add('caption');
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after OK raises not open');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'a Cancel after OK raises not open');
+        Assert.IsTrue(StrLen(Params) > 0, 'the request page was confirmed, so the parameters come back');
+        Assert.AreEqual('open,qcp:OK,close,', TPCLog.Text(), 'OnQueryClosePage sees OK, once');
     end;
 
     [Test]
-    [HandlerFunctions('ReqHandler')]
-    procedure Probe_Request_Ok()
-    begin
-        RunRequest('ok');
-    end;
-
-    [Test]
-    [HandlerFunctions('ReqHandler')]
-    procedure Probe_Request_Cancel()
-    begin
-        RunRequest('cancel');
-    end;
-
-    [Test]
-    [HandlerFunctions('ReqHandler')]
-    procedure Probe_Request_None()
-    begin
-        RunRequest('none');
-    end;
-
-    // ---- SaveValues: what a reopen shows after each closing action ----
-
-    local procedure SavedDialogProbe(Closer: Text)
+    [HandlerFunctions('RequestCancelHandler')]
+    procedure RequestPage_Cancel_ClosesThePage_AndASecondActionCannotChangeTheResult()
     var
-        P: TestPage "TPC Saved Dialog";
-        Res: Text;
-        Ok: Boolean;
+        Params: Text;
     begin
-        Obs := '';
-        P.OpenEdit();
-        P.Remembered.SetValue('typed');
-        case Closer of
-            'ok': Ok := TrySavedDialogOK(P);
-            'cancel': Ok := TrySavedDialogCancel(P);
-            'close': Ok := TrySavedDialogClose(P);
-        end;
-        NoteTry('closer', Ok, 'done');
-        NoteTry('reopen', TrySavedDialogReopen(P, Res), Res);
-        Error(Obs);
-    end;
+        TPCLog.Reset();
+        HandlerReadError := '';
+        HandlerSecondCloseError := '';
+        Params := Report.RunRequestPage(Report::"TPC Report");
 
-    [TryFunction]
-    local procedure TrySavedDialogOK(var P: TestPage "TPC Saved Dialog")
-    begin
-        P.OK().Invoke();
-    end;
-
-    [TryFunction]
-    local procedure TrySavedDialogCancel(var P: TestPage "TPC Saved Dialog")
-    begin
-        P.Cancel().Invoke();
-    end;
-
-    [TryFunction]
-    local procedure TrySavedDialogClose(var P: TestPage "TPC Saved Dialog")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TrySavedDialogReopen(var P: TestPage "TPC Saved Dialog"; var Res: Text)
-    begin
-        P.OpenEdit();
-        Res := P.Remembered.Value();
-    end;
-
-    local procedure SavedCardProbe(Closer: Text)
-    var
-        P: TestPage "TPC Saved Card";
-        Res: Text;
-        Ok: Boolean;
-    begin
-        Obs := '';
-        P.OpenEdit();
-        P.Remembered.SetValue('typed');
-        case Closer of
-            'ok': Ok := TrySavedCardOK(P);
-            'close': Ok := TrySavedCardClose(P);
-        end;
-        NoteTry('closer', Ok, 'done');
-        NoteTry('reopen', TrySavedCardReopen(P, Res), Res);
-        Error(Obs);
-    end;
-
-    [TryFunction]
-    local procedure TrySavedCardOK(var P: TestPage "TPC Saved Card")
-    begin
-        P.OK().Invoke();
-    end;
-
-    [TryFunction]
-    local procedure TrySavedCardClose(var P: TestPage "TPC Saved Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TrySavedCardReopen(var P: TestPage "TPC Saved Card"; var Res: Text)
-    begin
-        P.OpenEdit();
-        Res := P.Remembered.Value();
-    end;
-
-    [Test]
-    procedure Probe_SavedDialog_Ok()
-    begin
-        SavedDialogProbe('ok');
-    end;
-
-    [Test]
-    procedure Probe_SavedDialog_Cancel()
-    begin
-        SavedDialogProbe('cancel');
-    end;
-
-    [Test]
-    procedure Probe_SavedDialog_Close()
-    begin
-        SavedDialogProbe('close');
-    end;
-
-    [Test]
-    procedure Probe_SavedCard_Ok()
-    begin
-        SavedCardProbe('ok');
-    end;
-
-    [Test]
-    procedure Probe_SavedCard_Close()
-    begin
-        SavedCardProbe('close');
+        AssertContains(HandlerReadError, NotOpenTxt, 'a read after Cancel raises not open');
+        AssertContains(HandlerSecondCloseError, NotOpenTxt, 'an OK after Cancel raises not open');
+        Assert.AreEqual('', Params, 'the request page was cancelled, so no parameters come back');
+        Assert.AreEqual('open,qcp:Cancel,close,', TPCLog.Text(), 'OnQueryClosePage sees Cancel, once');
     end;
 }
