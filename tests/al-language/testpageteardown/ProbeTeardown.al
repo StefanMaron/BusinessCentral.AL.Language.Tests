@@ -203,6 +203,13 @@ codeunit 69640 "PRB Teardown Probe"
         end;
     end;
 
+    local procedure RowCount(): Integer
+    var
+        Row: Record "PRB Row";
+    begin
+        exit(Row.Count());
+    end;
+
     local procedure SeedPlain()
     var
         Row: Record "PRB Row";
@@ -211,6 +218,19 @@ codeunit 69640 "PRB Teardown Probe"
         Row.Init(); Row."No." := 'A'; Row.Qty := 1; Row.Insert();
         Row.Init(); Row."No." := 'B'; Row.Qty := 2; Row.Insert();
         Row.Init(); Row."No." := 'C'; Row.Qty := 3; Row.Insert();
+    end;
+
+    local procedure SeedBoomLast()
+    var
+        Row: Record "PRB Row";
+    begin
+        Seed();
+        Row.Get('B');
+        Row.Boom := false;
+        Row.Modify();
+        Row.Get('C');
+        Row.Boom := true;
+        Row.Modify();
     end;
 
     local procedure SeedBoomFirst()
@@ -2566,6 +2586,807 @@ codeunit 69640 "PRB Teardown Probe"
         Error('OBS reopened(edit) at NoCtl=' + P.NoCtl.Value());
     end;
 
+    [Test]
+    procedure Probe2_CE_TearThenReopen_Untouched()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + '] Qty=[' + P.QtyCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenReopen_AfterModify()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Row.FindFirst();
+        Row.Amount := 5;
+        Row.Modify();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenReopen_AfterCommit()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Commit();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenReopen_AfterDeleteBoom()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Row.SetRange(Boom, true);
+        Row.DeleteAll();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenSecondVariable()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P2.OpenView();
+        Error('OBS second variable NoCtl=[' + P2.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenReopen_ThenFirst()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        P.First();
+        Error('OBS after First NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenReopen_ThenGoToKeyA()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        P.GoToKey('A');
+        Error('OBS after GoToKey(A) NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_TearThenReopen_CloseReopen()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        P.Close();
+        P.OpenView();
+        Error('OBS third open NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_Untouched()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + '] Qty=[' + P.QtyCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_AfterModify()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Row.FindFirst();
+        Row.Amount := 5;
+        Row.Modify();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_AfterCommit()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Commit();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_AfterDeleteBoom()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Row.SetRange(Boom, true);
+        Row.DeleteAll();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenSecondVariable()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P2.OpenView();
+        Error('OBS second variable NoCtl=[' + P2.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_ThenFirst()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        P.First();
+        Error('OBS after First NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_ThenGoToKeyA()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        P.GoToKey('A');
+        Error('OBS after GoToKey(A) NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_TearThenReopen_CloseReopen()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        P.OpenView();
+        P.Close();
+        P.OpenView();
+        Error('OBS third open NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_Untouched()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + '] Qty=[' + P.QtyCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_AfterModify()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        Row.FindFirst();
+        Row.Amount := 5;
+        Row.Modify();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_AfterCommit()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        Commit();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_AfterDeleteBoom()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        Row.SetRange(Boom, true);
+        Row.DeleteAll();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenSecondVariable()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        P2.OpenView();
+        Error('OBS second variable NoCtl=[' + P2.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_ThenFirst()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        P.OpenView();
+        P.First();
+        Error('OBS after First NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_ThenGoToKeyA()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        P.OpenView();
+        P.GoToKey('A');
+        Error('OBS after GoToKey(A) NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_LE_TearThenReopen_CloseReopen()
+    var
+        P: TestPage "PRB Fmt List";
+        P2: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        P.OpenView();
+        P.Close();
+        P.OpenView();
+        Error('OBS third open NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_BoomLast_TearThenReopen()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedBoomLast(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('C');
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CA_BoomLast_TearThenReopen()
+    var
+        P: TestPage "PRB AGR Card";
+        P2: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedBoomLast(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('C');
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_FailedOpen_ThenSecondVariable()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedBoomFirst(); Commit();
+        asserterror P.OpenView();
+        P2.OpenView();
+        Error('OBS second variable NoCtl=[' + P2.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_FailedOpen_ReopenUntouchedThenFix()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedBoomFirst(); Commit();
+        asserterror P.OpenView();
+        P.OpenView();
+        T := P.NoCtl.Value();
+        P.Close();
+        FixData();
+        P.OpenView();
+        Error('OBS first reopen NoCtl=[' + T + '] after fix and close and open: NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_FailedOpen_FixThenReopen()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedBoomFirst(); Commit();
+        asserterror P.OpenView();
+        FixData();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_FailedOpen_DeleteBoomOnlyThenReopen()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedBoomFirst(); Commit();
+        asserterror P.OpenView();
+        Row.Get('B');
+        Row.Delete();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe2_CE_PlainClose_ThenReopen_AfterDelete()
+    var
+        P: TestPage "PRB Fmt Card";
+        P2: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+        T: Text;
+        B: Boolean;
+
+    begin
+        SeedPlain(); Commit();
+        P.OpenView();
+        P.GoToKey('C');
+        P.Close();
+        Row.Get('A');
+        Row.Delete();
+        P.OpenView();
+        Error('OBS NoCtl=[' + P.NoCtl.Value() + ']');
+    end;
+
+    [Test]
+    procedure Probe3_Plain_AsserterrorThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed();
+        asserterror Error('plain');
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CE_TearThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CE_CommittedSeed_TearThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CE_ModifyAfterOpen_TearThenRead()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed(); Commit();
+        P.OpenView();
+        Row.FindFirst();
+        Row.Qty := 77;
+        Row.Modify();
+        asserterror P.GoToKey('B');
+        Row.FindFirst();
+        Error('OBS first row qty=%1', Row.Qty);
+    end;
+
+    [Test]
+    procedure Probe3_CA_TearThenCount()
+    var
+        P: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CA_CommittedSeed_TearThenCount()
+    var
+        P: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed(); Commit();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CA_ModifyAfterOpen_TearThenRead()
+    var
+        P: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed(); Commit();
+        P.OpenView();
+        Row.FindFirst();
+        Row.Qty := 77;
+        Row.Modify();
+        asserterror P.GoToKey('B');
+        Row.FindFirst();
+        Error('OBS first row qty=%1', Row.Qty);
+    end;
+
+    [Test]
+    procedure Probe3_LE_TearThenCount()
+    var
+        P: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        SeedMany(120, 120);
+        P.OpenView();
+        asserterror P.Last();
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_LE_CommittedSeed_TearThenCount()
+    var
+        P: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        asserterror P.Last();
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_LE_ModifyAfterOpen_TearThenRead()
+    var
+        P: TestPage "PRB Fmt List";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        SeedMany(120, 120); Commit();
+        P.OpenView();
+        Row.FindFirst();
+        Row.Qty := 77;
+        Row.Modify();
+        asserterror P.Last();
+        Row.FindFirst();
+        Error('OBS first row qty=%1', Row.Qty);
+    end;
+
+    [Test]
+    procedure Probe3_CE_FailedOpen_ThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        SeedBoomFirst();
+        asserterror P.OpenView();
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CA_FailedOpen_ThenCount()
+    var
+        P: TestPage "PRB AGR Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        SeedBoomFirst();
+        asserterror P.OpenView();
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CE_FailedOpen_CommittedSeed_ThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        SeedBoomFirst(); Commit();
+        asserterror P.OpenView();
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CE_ActionError_ThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed();
+        P.OpenView();
+        asserterror P.Act.Invoke();
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [Test]
+    procedure Probe3_CE_ValidateError_ThenCount()
+    var
+        P: TestPage "PRB Fmt Card";
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue('abc');
+        Error('OBS rows=%1', Row.Count());
+    end;
+
+    [ModalPageHandler]
+    procedure HCount(var P: TestPage "PRB Fmt Card")
+    begin
+        asserterror P.GoToKey('B');
+        Error('OBS rows=%1', RowCount());
+    end;
+
+    [Test]
+    [HandlerFunctions('HCount')]
+    procedure Probe3_Modal_TearInHandler_ThenCount()
+    var
+        Row: Record "PRB Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        Seed();
+        Row.Get('A');
+        Page.RunModal(Page::"PRB Fmt Card", Row);
+    end;
+
     [ModalPageHandler]
     procedure HFmt(var P: TestPage "PRB Fmt Card")
     var
@@ -2583,6 +3404,7 @@ codeunit 69640 "PRB Teardown Probe"
             'PageCaption': Error('OBS ' + P.Caption());
             'Next': Error('OBS next=%1', P.Next());
             'Act': begin P.Act.Invoke(); Error('OBS act invoked'); end;
+            'Count': Error('OBS rows=%1 NoCtlRead=[%2]', RowCount(), 'n/a');
         end;
     end;
 
@@ -2785,6 +3607,7 @@ codeunit 69640 "PRB Teardown Probe"
             'PageCaption': Error('OBS ' + P.Caption());
             'Next': Error('OBS next=%1', P.Next());
             'Act': begin P.Act.Invoke(); Error('OBS act invoked'); end;
+            'Count': Error('OBS rows=%1 NoCtlRead=[%2]', RowCount(), 'n/a');
         end;
     end;
 
