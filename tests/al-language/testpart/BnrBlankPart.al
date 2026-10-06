@@ -396,4 +396,40 @@ codeunit 69940 "BNR Blank Part Tests"
         Card.GoToKey('H0');
         Error(Format(Card.Lines.QInt.AsInteger()));
     end;
+
+    [Test]
+    procedure T_Part_AsInteger_InitValueField()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QIntInit.AsInteger()));
+    end;
+
+    [Test]
+    procedure T_Part_AsDecimal_InitValueField()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QDecInit.AsDecimal()));
+    end;
+
+    [Test]
+    procedure T_Part_AsBoolean_InitValueField()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenView();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QBoolInit.AsBoolean()));
+    end;
 }
