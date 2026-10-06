@@ -353,4 +353,47 @@ codeunit 69940 "BNR Blank Part Tests"
         Error(Format(Card.QDtTm.AsDateTime()));
     end;
 
+    [Test]
+    procedure P8_EditableListOpenedOnEmptyTable()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenEdit();
+        Error(ObsList(Card));
+    end;
+
+    [Test]
+    procedure P9_PartUnderEditableHostRowWithNoLines()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenEdit();
+        Card.GoToKey('H0');
+        Error(ObsPart(Card));
+    end;
+
+    [Test]
+    procedure T_EditableList_AsInteger()
+    var
+        Card: TestPage "BNR Lines List";
+    begin
+        Initialize();
+        Card.OpenEdit();
+        Error(Format(Card.QInt.AsInteger()));
+    end;
+
+    [Test]
+    procedure T_EditablePart_AsInteger()
+    var
+        Card: TestPage "BNR Card";
+    begin
+        Initialize();
+        InsertFullLine('H1', 10);
+        Card.OpenEdit();
+        Card.GoToKey('H0');
+        Error(Format(Card.Lines.QInt.AsInteger()));
+    end;
 }
