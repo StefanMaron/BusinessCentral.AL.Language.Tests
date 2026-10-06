@@ -1,4 +1,29 @@
-// PROBE REVISION 4: every test records what it observed and ends in Error(<observations>).
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-autoformatexpression-property
+//                    https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-captionclass-property
+// Scope: in-scope
+// Fixtures used: Assert (60021), and the table, pages and codeunit declared below.
+//
+// WHEN does an error raised by a control's AutoFormatExpression or CaptionClass expression reach the
+// test? Codeunit 67644 (autoformat/TestAutoFormatExpressionError.al) opens the page and reads the control
+// inside ONE asserterror, so it cannot say. Measured here, identical on every cloud leg (and the Windows
+// nightly): the page FAILS TO OPEN. The expression is evaluated when a row is populated, after the page's
+// OnOpenPage and before its OnAfterGetRecord, for every control whatever its Visible, and for an empty
+// view and a new record as well. So no read of any other control is ever reached, and the TestPage the
+// failed open leaves behind answers "The TestPage is not open." to every call.
+//
+// A row-dependent expression raises when the row it fails for is populated: at open when that is the
+// first row, and when the cursor moves onto it otherwise, where the move reads as "The TestPage is not
+// open." and not as the expression's own error. On a LIST the page populates a window of rows at open
+// (a failing row 20 of 120 fails the open, row 25 does not), and a later move that populates a new window
+// raises the expression's own error. The list-window arms are the ones the runner does not model yet.
+//
+// A control that declares an AutoFormatType and no expression has nothing to raise, and reads.
+//
+// What is NOT pinned: how a TryFunction reports these. A CaptionClass failure and a row-dependent one
+// surface as a Microsoft.Dynamics.Framework.UI.FormAbortException that a TryFunction does not catch,
+// while an always-failing AutoFormatExpression is an ordinary AL error that it does. Asserting the
+// exception type is not this file's claim; every arm here goes through asserterror.
+//
 // Written by agent stma-auto-7, an automated implementation agent acting on the account holder's
 // behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4920.
 
@@ -383,14 +408,40 @@ page 69611 "AFT Hidden Caption Card"
     end;
 }
 
-codeunit 69600 "AFT Probe Tests"
+page 69612 "AFT Working Caption Card"
+{
+    PageType = Card;
+    SourceTable = "AFT Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(NoCtl; Rec."No.") { ApplicationArea = All; }
+            field(OkCaptionCtl; Rec.Amount)
+            {
+                ApplicationArea = All;
+                CaptionClass = OkCaption();
+            }
+        }
+    }
+
+    local procedure OkCaption(): Text
+    begin
+        exit('3,Ok Caption');
+    end;
+}
+
+codeunit 69600 "AFT Expression Timing Tests"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     var
+        Assert: Codeunit Assert;
         HandlerRan: Boolean;
-        HandlerObs: Text;
 
     local procedure Seed()
     var
@@ -412,567 +463,6 @@ codeunit 69600 "AFT Probe Tests"
         Row.Insert();
     end;
 
-    local procedure Res(Label: Text; Ok: Boolean; Shown: Text): Text
-    begin
-        if Ok then
-            exit(Label + '=OK[' + Shown + '] ');
-        exit(Label + '=ERR[' + GetLastErrorText() + '] ');
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysOpenView(var P: TestPage "AFT Always Card")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysOpenEdit(var P: TestPage "AFT Always Card")
-    begin
-        P.OpenEdit();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysOpenNew(var P: TestPage "AFT Always Card")
-    begin
-        P.OpenNew();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysNoCtl(var P: TestPage "AFT Always Card"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysOkCtl(var P: TestPage "AFT Always Card"; var V: Text)
-    begin
-        V := P.OkCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysFailingCtl(var P: TestPage "AFT Always Card"; var V: Text)
-    begin
-        V := P.FailingCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysClose(var P: TestPage "AFT Always Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryTypeOnlyOpenView(var P: TestPage "AFT TypeOnly Card")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryTypeOnlyNoCtl(var P: TestPage "AFT TypeOnly Card"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryTypeOnlyTypeOnlyCtl(var P: TestPage "AFT TypeOnly Card"; var V: Text)
-    begin
-        V := P.TypeOnlyCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryTypeOnlyOkCtl(var P: TestPage "AFT TypeOnly Card"; var V: Text)
-    begin
-        V := P.OkCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryTypeOnlyClose(var P: TestPage "AFT TypeOnly Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryHiddenOpenView(var P: TestPage "AFT Hidden Card")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryHiddenNoCtl(var P: TestPage "AFT Hidden Card"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryHiddenOkCtl(var P: TestPage "AFT Hidden Card"; var V: Text)
-    begin
-        V := P.OkCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryHiddenHiddenFailingCtl(var P: TestPage "AFT Hidden Card"; var V: Text)
-    begin
-        V := P.HiddenFailingCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryHiddenClose(var P: TestPage "AFT Hidden Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryRowCardOpenView(var P: TestPage "AFT Row Card")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryRowCardNoCtl(var P: TestPage "AFT Row Card"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryRowCardRowCtl(var P: TestPage "AFT Row Card"; var V: Text)
-    begin
-        V := P.RowCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryRowCardClose(var P: TestPage "AFT Row Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryRowCardGoTo(var P: TestPage "AFT Row Card"; KeyValue: Code[20])
-    begin
-        P.GoToKey(KeyValue);
-    end;
-
-    [TryFunction]
-    local procedure TryRowListOpenView(var P: TestPage "AFT Row List")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryRowListNoCtl(var P: TestPage "AFT Row List"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryRowListRowCtl(var P: TestPage "AFT Row List"; var V: Text)
-    begin
-        V := P.RowCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryRowListClose(var P: TestPage "AFT Row List")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryRowListNext(var P: TestPage "AFT Row List"; var Moved: Boolean)
-    begin
-        Moved := P.Next();
-    end;
-
-    [TryFunction]
-    local procedure TryRowListFirst(var P: TestPage "AFT Row List"; var Moved: Boolean)
-    begin
-        Moved := P.First();
-    end;
-
-    [TryFunction]
-    local procedure TryRowListLast(var P: TestPage "AFT Row List"; var Moved: Boolean)
-    begin
-        Moved := P.Last();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListOpenView(var P: TestPage "AFT Always List")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListNoCtl(var P: TestPage "AFT Always List"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListAlwaysCtl(var P: TestPage "AFT Always List"; var V: Text)
-    begin
-        V := P.AlwaysCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListClose(var P: TestPage "AFT Always List")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListNext(var P: TestPage "AFT Always List"; var Moved: Boolean)
-    begin
-        Moved := P.Next();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListFirst(var P: TestPage "AFT Always List"; var Moved: Boolean)
-    begin
-        Moved := P.First();
-    end;
-
-    [TryFunction]
-    local procedure TryAlwaysListLast(var P: TestPage "AFT Always List"; var Moved: Boolean)
-    begin
-        Moved := P.Last();
-    end;
-
-    [TryFunction]
-    local procedure TryType1OpenView(var P: TestPage "AFT Type1 Card")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryType1NoCtl(var P: TestPage "AFT Type1 Card"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryType1Type1Ctl(var P: TestPage "AFT Type1 Card"; var V: Text)
-    begin
-        V := P.Type1Ctl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryType1Close(var P: TestPage "AFT Type1 Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryCaptionOpenView(var P: TestPage "AFT Caption Card")
-    begin
-        P.OpenView();
-    end;
-
-    [TryFunction]
-    local procedure TryCaptionNoCtl(var P: TestPage "AFT Caption Card"; var V: Text)
-    begin
-        V := P.NoCtl.Value();
-    end;
-
-    [TryFunction]
-    local procedure TryCaptionClose(var P: TestPage "AFT Caption Card")
-    begin
-        P.Close();
-    end;
-
-    [TryFunction]
-    local procedure TryCaptionOkCaption(var P: TestPage "AFT Caption Card"; var V: Text)
-    begin
-        V := P.OkCaptionCtl.Caption();
-    end;
-
-    [TryFunction]
-    local procedure TryCaptionFailingCaption(var P: TestPage "AFT Caption Card"; var V: Text)
-    begin
-        V := P.FailingCaptionCtl.Caption();
-    end;
-
-    [ModalPageHandler]
-    procedure AlwaysHandler(var P: TestPage "AFT Always Card")
-    var
-        V: Text;
-        Ok: Boolean;
-    begin
-        HandlerRan := true;
-        Ok := TryAlwaysNoCtl(P, V);
-        HandlerObs += Res('inHandler.No', Ok, V);
-        Ok := TryAlwaysFailingCtl(P, V);
-        HandlerObs += Res('inHandler.Failing', Ok, V);
-    end;
-
-    local procedure ObsAlways(var P: TestPage "AFT Always Card"; Prefix: Text): Text
-    var
-        V: Text;
-        Obs: Text;
-        Ok: Boolean;
-    begin
-        Ok := TryAlwaysNoCtl(P, V);
-        Obs += Res(Prefix + 'No', Ok, V);
-        Ok := TryAlwaysOkCtl(P, V);
-        Obs += Res(Prefix + 'Ok', Ok, V);
-        Ok := TryAlwaysFailingCtl(P, V);
-        Obs += Res(Prefix + 'Failing', Ok, V);
-        exit(Obs);
-    end;
-
-    [Test]
-    procedure T01_Always_OpenView_Try()
-    var
-        P: TestPage "AFT Always Card";
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView', TryAlwaysOpenView(P), '');
-        Obs += ObsAlways(P, 'r.');
-        Obs += Res('Close', TryAlwaysClose(P), '');
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T02_Always_OpenView_Asserterror()
-    var
-        P: TestPage "AFT Always Card";
-        Obs: Text;
-    begin
-        Seed();
-        asserterror P.OpenView();
-        Obs += 'asserterror.OpenView.err=[' + GetLastErrorText() + '] ';
-        Obs += ObsAlways(P, 'r.');
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T03_Always_OpenEdit_And_OpenNew()
-    var
-        P: TestPage "AFT Always Card";
-        P2: TestPage "AFT Always Card";
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenEdit', TryAlwaysOpenEdit(P), '');
-        Obs += Res('OpenNew', TryAlwaysOpenNew(P2), '');
-        Obs += ObsAlways(P2, 'new.');
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T04_Always_OpenView_EmptyTable()
-    var
-        P: TestPage "AFT Always Card";
-        Row: Record "AFT Row";
-        Obs: Text;
-    begin
-        Row.DeleteAll();
-        Obs += Res('OpenView(empty)', TryAlwaysOpenView(P), '');
-        Obs += ObsAlways(P, 'r.');
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T05_TypeOnly_NoExpression()
-    var
-        P: TestPage "AFT TypeOnly Card";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView', TryTypeOnlyOpenView(P), '');
-        Obs += Res('No', TryTypeOnlyNoCtl(P, V), V);
-        Obs += Res('TypeOnly', TryTypeOnlyTypeOnlyCtl(P, V), V);
-        Obs += Res('Ok', TryTypeOnlyOkCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T06_Hidden_RaisingExpression()
-    var
-        P: TestPage "AFT Hidden Card";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView', TryHiddenOpenView(P), '');
-        Obs += Res('No', TryHiddenNoCtl(P, V), V);
-        Obs += Res('Ok', TryHiddenOkCtl(P, V), V);
-        Obs += Res('HiddenFailing', TryHiddenHiddenFailingCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T07_RowCard_OpenAtOkRow_ThenMove()
-    var
-        P: TestPage "AFT Row Card";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView(A)', TryRowCardOpenView(P), '');
-        Obs += Res('RowA', TryRowCardRowCtl(P, V), V);
-        Obs += Res('GoToKeyB', TryRowCardGoTo(P, 'B'), '');
-        Obs += Res('NoAtB', TryRowCardNoCtl(P, V), V);
-        Obs += Res('RowAtB', TryRowCardRowCtl(P, V), V);
-        Obs += Res('GoToKeyC', TryRowCardGoTo(P, 'C'), '');
-        Obs += Res('NoAtC', TryRowCardNoCtl(P, V), V);
-        Obs += Res('RowAtC', TryRowCardRowCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T08_RowCard_OpenAtFailingRow()
-    var
-        P: TestPage "AFT Row Card";
-        Row: Record "AFT Row";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Row.Get('A');
-        Row.Delete();
-        Obs += Res('OpenView(first=B)', TryRowCardOpenView(P), '');
-        Obs += Res('NoAtB', TryRowCardNoCtl(P, V), V);
-        Obs += Res('RowAtB', TryRowCardRowCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    local procedure ObsRowList(var P: TestPage "AFT Row List"; Prefix: Text): Text
-    var
-        V: Text;
-        Obs: Text;
-    begin
-        Obs += Res(Prefix + 'No', TryRowListNoCtl(P, V), V);
-        Obs += Res(Prefix + 'Row', TryRowListRowCtl(P, V), V);
-        exit(Obs);
-    end;
-
-    [Test]
-    procedure T09_RowList_WalkRows()
-    var
-        P: TestPage "AFT Row List";
-        Moved: Boolean;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView', TryRowListOpenView(P), '');
-        Obs += ObsRowList(P, 'A.');
-        Obs += Res('Next->B', TryRowListNext(P, Moved), Format(Moved));
-        Obs += ObsRowList(P, 'B.');
-        Obs += Res('Next->C', TryRowListNext(P, Moved), Format(Moved));
-        Obs += ObsRowList(P, 'C.');
-        Obs += Res('Last', TryRowListLast(P, Moved), Format(Moved));
-        Obs += ObsRowList(P, 'L.');
-        Obs += Res('First', TryRowListFirst(P, Moved), Format(Moved));
-        Obs += ObsRowList(P, 'F.');
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T10_RowList_OnlyFailingRow()
-    var
-        P: TestPage "AFT Row List";
-        Row: Record "AFT Row";
-        Obs: Text;
-    begin
-        Seed();
-        Row.Get('A');
-        Row.Delete();
-        Row.Get('C');
-        Row.Delete();
-        Obs += Res('OpenView(only B)', TryRowListOpenView(P), '');
-        Obs += ObsRowList(P, 'B.');
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T11_AlwaysList_WithRows_And_Empty()
-    var
-        P: TestPage "AFT Always List";
-        P2: TestPage "AFT Always List";
-        Row: Record "AFT Row";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView(rows)', TryAlwaysListOpenView(P), '');
-        Obs += Res('No', TryAlwaysListNoCtl(P, V), V);
-        Row.DeleteAll();
-        Obs += Res('OpenView(empty)', TryAlwaysListOpenView(P2), '');
-        Obs += Res('NoEmpty', TryAlwaysListNoCtl(P2, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T12_Type1_RaisingExpression()
-    var
-        P: TestPage "AFT Type1 Card";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView', TryType1OpenView(P), '');
-        Obs += Res('No', TryType1NoCtl(P, V), V);
-        Obs += Res('Type1', TryType1Type1Ctl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    [HandlerFunctions('AlwaysHandler')]
-    procedure T13_Always_RunModal_Handler()
-    var
-        Row: Record "AFT Row";
-        Obs: Text;
-    begin
-        Seed();
-        HandlerRan := false;
-        HandlerObs := '';
-        Row.Get('A');
-        Page.RunModal(Page::"AFT Always Card", Row);
-        Obs := 'RunModal returned; handlerRan=' + Format(HandlerRan) + ' ' + HandlerObs;
-        Error(Obs);
-    end;
-
-    [Test]
-    [HandlerFunctions('AlwaysHandler')]
-    procedure T14_Always_RunModal_Asserterror()
-    var
-        Row: Record "AFT Row";
-        Obs: Text;
-    begin
-        Seed();
-        HandlerRan := false;
-        HandlerObs := '';
-        Row.Get('A');
-        asserterror Page.RunModal(Page::"AFT Always Card", Row);
-        Obs := 'RunModal asserterror err=[' + GetLastErrorText() + '] handlerRan=' + Format(HandlerRan) + ' ' + HandlerObs;
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T15_Caption_Try()
-    var
-        P: TestPage "AFT Caption Card";
-        V: Text;
-        Obs: Text;
-    begin
-        Seed();
-        Obs += Res('OpenView', TryCaptionOpenView(P), '');
-        Obs += Res('No', TryCaptionNoCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure T16_Caption_Asserterror()
-    var
-        P: TestPage "AFT Caption Card";
-        Obs: Text;
-    begin
-        Seed();
-        asserterror P.OpenView();
-        Obs += 'asserterror.OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
     local procedure SeedMany(Count: Integer; FailAt: Integer)
     var
         Row: Record "AFT Row";
@@ -988,66 +478,224 @@ codeunit 69600 "AFT Probe Tests"
         end;
     end;
 
-    local procedure ObsAfterFailedOpenRow(var P: TestPage "AFT Row Card"): Text
-    var
-        V: Text;
-        Obs: Text;
+    local procedure ReadNo(var P: TestPage "AFT Always Card"): Text
     begin
-        Obs += Res('No', TryRowCardNoCtl(P, V), V);
-        Obs += Res('Row', TryRowCardRowCtl(P, V), V);
-        exit(Obs);
+        exit(P.NoCtl.Value());
+    end;
+
+    // ---- an always-failing AutoFormatExpression fails the open, whatever the page shows ----
+
+    [Test]
+    procedure FailingFormat_OpenViewRaisesTheExpressionError()
+    var
+        P: TestPage "AFT Always Card";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
     end;
 
     [Test]
-    procedure U01_RowCard_GoToFailingRow_Asserterror()
+    procedure FailingFormat_OpenEditRaisesTheExpressionError()
     var
-        P: TestPage "AFT Row Card";
-        Obs: Text;
+        P: TestPage "AFT Always Card";
+    begin
+        Seed();
+        asserterror P.OpenEdit();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_OpenNewRaisesTheExpressionError()
+    var
+        P: TestPage "AFT Always Card";
+    begin
+        Seed();
+        asserterror P.OpenNew();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_EmptyTable_StillRaisesAtOpen()
+    var
+        P: TestPage "AFT Always Card";
+        Row: Record "AFT Row";
+    begin
+        Row.DeleteAll();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_HiddenControl_StillRaisesAtOpen()
+    var
+        P: TestPage "AFT Hidden Card";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_AutoFormatType1_RaisesAtOpen()
+    var
+        P: TestPage "AFT Type1 Card";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_ListWithRows_RaisesAtOpen()
+    var
+        P: TestPage "AFT Always List";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_EmptyList_RaisesAtOpen()
+    var
+        P: TestPage "AFT Always List";
+        Row: Record "AFT Row";
+    begin
+        Row.DeleteAll();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
+    end;
+
+    [Test]
+    procedure FailingFormat_FailedOpen_LeavesThePageNotOpen()
+    var
+        P: TestPage "AFT Always Card";
+        Shown: Text;
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT format expression failed');
+        asserterror Shown := ReadNo(P);
+        Assert.ExpectedError('The TestPage is not open.');
+        asserterror P.Close();
+        Assert.ExpectedError('The TestPage is not open.');
+    end;
+
+    [ModalPageHandler]
+    procedure NeverRunHandler(var P: TestPage "AFT Always Card")
+    begin
+        HandlerRan := true;
+    end;
+
+    [Test]
+    [HandlerFunctions('NeverRunHandler')]
+    procedure FailingFormat_RunModal_RaisesBeforeAnyHandler()
+    var
+        Row: Record "AFT Row";
+    begin
+        Seed();
+        Row.Get('A');
+        HandlerRan := false;
+        asserterror Page.RunModal(Page::"AFT Always Card", Row);
+        Assert.ExpectedError('AFT format expression failed');
+        Assert.IsFalse(HandlerRan, 'the page failed to open, so the handler is never handed it');
+    end;
+
+    // ---- the controls that have nothing to raise ----
+
+    [Test]
+    procedure AutoFormatType_WithoutAnExpression_OpensAndReads()
+    var
+        P: TestPage "AFT TypeOnly Card";
+        TypeOnlyShown: Text;
+        WithExpressionShown: Text;
     begin
         Seed();
         P.OpenView();
-        asserterror P.GoToKey('B');
-        Obs += 'GoToKeyB.err=[' + GetLastErrorText() + '] ';
-        Obs += ObsAfterFailedOpenRow(P);
-        Error(Obs);
+        TypeOnlyShown := P.TypeOnlyCtl.Value();
+        WithExpressionShown := P.OkCtl.Value();
+        P.Close();
+        Assert.AreEqual('7.00', TypeOnlyShown, 'a type with no expression reads the default two decimals');
+        Assert.AreEqual('7.000', WithExpressionShown, 'a working expression is still honoured');
+    end;
+
+    // ---- when in the open the expression runs ----
+
+    [Test]
+    procedure FormatExpression_RunsAfterOnOpenPage()
+    var
+        P: TestPage "AFT Ready Card";
+        Shown: Text;
+    begin
+        Seed();
+        P.OpenView();
+        Shown := P.ReadyCtl.Value();
+        P.Close();
+        Assert.AreEqual('7.000', Shown, 'a global OnOpenPage sets is already set when the expression runs');
     end;
 
     [Test]
-    procedure U02_RowCard_OpenAtFailingRow_Asserterror()
+    procedure FormatExpression_RunsBeforeOnAfterGetRecord()
+    var
+        P: TestPage "AFT Seen Card";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT row not seen: OnAfterGetRecord has not run');
+    end;
+
+    // ---- a row-dependent expression raises when its row is populated ----
+
+    [Test]
+    procedure RowFormat_OpenAtTheFailingRow_RaisesAndLeavesThePageNotOpen()
     var
         P: TestPage "AFT Row Card";
         Row: Record "AFT Row";
-        Obs: Text;
+        Shown: Text;
     begin
         Seed();
         Row.Get('A');
         Row.Delete();
         asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Obs += ObsAfterFailedOpenRow(P);
-        Error(Obs);
+        Assert.ExpectedError('AFT row format failed for B');
+        asserterror Shown := P.NoCtl.Value();
+        Assert.ExpectedError('The TestPage is not open.');
     end;
 
     [Test]
-    procedure U03_RowList_FailingRowAmongRows_Asserterror()
+    procedure RowFormat_MovingOntoTheFailingRow_ReadsAsTheTestPageNotOpen()
     var
-        P: TestPage "AFT Row List";
-        Obs: Text;
-        V: Text;
+        P: TestPage "AFT Row Card";
+        Shown: Text;
     begin
         Seed();
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Obs += Res('No', TryRowListNoCtl(P, V), V);
-        Error(Obs);
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Assert.ExpectedError('The TestPage is not open.');
+        asserterror Shown := P.NoCtl.Value();
+        Assert.ExpectedError('The TestPage is not open.');
     end;
 
     [Test]
-    procedure U04_RowList_OnlyFailingRow_Asserterror()
+    procedure RowFormat_MovingOntoARowThatDoesNotFail_Reads()
+    var
+        P: TestPage "AFT Row Card";
+        Shown: Text;
+    begin
+        Seed();
+        P.OpenView();
+        P.GoToKey('C');
+        Shown := P.RowCtl.Value();
+        P.Close();
+        Assert.AreEqual('9.000', Shown, 'the row that does not fail reads in the format its expression answers');
+    end;
+
+    [Test]
+    procedure RowFormat_List_OnlyRowFails_RaisesAtOpen()
     var
         P: TestPage "AFT Row List";
         Row: Record "AFT Row";
-        Obs: Text;
     begin
         Seed();
         Row.Get('A');
@@ -1055,235 +703,117 @@ codeunit 69600 "AFT Probe Tests"
         Row.Get('C');
         Row.Delete();
         asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
+        Assert.ExpectedError('AFT row format failed for B');
     end;
 
     [Test]
-    procedure U05_RowList_120Rows_FailAt30_Asserterror()
+    procedure RowFormat_List_NoFailingRow_OpensAndReads()
     var
         P: TestPage "AFT Row List";
-        Obs: Text;
-    begin
-        SeedMany(120, 30);
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure U06_RowList_120Rows_FailAt120()
-    var
-        P: TestPage "AFT Row List";
-        Moved: Boolean;
-        V: Text;
-        Obs: Text;
-    begin
-        SeedMany(120, 120);
-        P.OpenView();
-        Obs += 'OpenView=OK ';
-        Obs += Res('No', TryRowListNoCtl(P, V), V);
-        Obs += Res('Row', TryRowListRowCtl(P, V), V);
-        Obs += Res('Last', TryRowListLast(P, Moved), Format(Moved));
-        Obs += Res('NoAtLast', TryRowListNoCtl(P, V), V);
-        Obs += Res('RowAtLast', TryRowListRowCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure U07_RowList_120Rows_FailAt60()
-    var
-        P: TestPage "AFT Row List";
-        Moved: Boolean;
-        V: Text;
-        Obs: Text;
-    begin
-        SeedMany(120, 60);
-        P.OpenView();
-        Obs += 'OpenView=OK ';
-        Obs += Res('No', TryRowListNoCtl(P, V), V);
-        Obs += Res('Last', TryRowListLast(P, Moved), Format(Moved));
-        Obs += Res('NoAtLast', TryRowListNoCtl(P, V), V);
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure U08_Caption_RaisingExpression_WithRows_Asserterror()
-    var
-        P: TestPage "AFT Caption Card";
-        Obs: Text;
-    begin
-        Seed();
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure U09_Caption_RaisingExpression_EmptyTable_Asserterror()
-    var
-        P: TestPage "AFT Caption Card";
         Row: Record "AFT Row";
-        Obs: Text;
-    begin
-        Row.DeleteAll();
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure U10_HiddenCaption_RaisingExpression_Asserterror()
-    var
-        P: TestPage "AFT Hidden Caption Card";
-        Obs: Text;
+        Shown: Text;
     begin
         Seed();
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure U11_Ready_ExpressionDependsOnOnOpenPage()
-    var
-        P: TestPage "AFT Ready Card";
-        Obs: Text;
-    begin
-        Seed();
+        Row.Get('B');
+        Row.Delete();
         P.OpenView();
-        Obs += 'OpenView=OK No=[' + P.NoCtl.Value() + '] Ready=[' + P.ReadyCtl.Value() + '] ';
-        Error(Obs);
+        Shown := P.RowCtl.Value();
+        P.Close();
+        Assert.AreEqual('7.000', Shown, 'a list whose rows do not fail opens and reads in the expression format');
     end;
 
+    // ---- the list window: BC populates a window of rows at open, the runner only the current one ----
+
     [Test]
-    procedure U12_Seen_ExpressionDependsOnOnAfterGetRecord()
+    procedure RowFormat_List_FailingSecondRow_RaisesAtOpen()
     var
-        P: TestPage "AFT Seen Card";
-        Obs: Text;
+        P: TestPage "AFT Row List";
     begin
         Seed();
-        P.OpenView();
-        Obs += 'OpenView=OK No=[' + P.NoCtl.Value() + '] Seen=[' + P.SeenCtl.Value() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure V03_RowList_120Rows_FailAt3_Asserterror()
-    var
-        P: TestPage "AFT Row List";
-        Obs: Text;
-    begin
-        SeedMany(120, 3);
         asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
+        Assert.ExpectedError('AFT row format failed for B');
     end;
 
     [Test]
-    procedure V05_RowList_120Rows_FailAt5_Asserterror()
+    procedure RowFormat_List_FailingRow20Of120_RaisesAtOpen()
     var
         P: TestPage "AFT Row List";
-        Obs: Text;
-    begin
-        SeedMany(120, 5);
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure V08_RowList_120Rows_FailAt8_Asserterror()
-    var
-        P: TestPage "AFT Row List";
-        Obs: Text;
-    begin
-        SeedMany(120, 8);
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure V10_RowList_120Rows_FailAt10_Asserterror()
-    var
-        P: TestPage "AFT Row List";
-        Obs: Text;
-    begin
-        SeedMany(120, 10);
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure V15_RowList_120Rows_FailAt15_Asserterror()
-    var
-        P: TestPage "AFT Row List";
-        Obs: Text;
-    begin
-        SeedMany(120, 15);
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
-    end;
-
-    [Test]
-    procedure V20_RowList_120Rows_FailAt20_Asserterror()
-    var
-        P: TestPage "AFT Row List";
-        Obs: Text;
     begin
         SeedMany(120, 20);
         asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
+        Assert.ExpectedError('AFT row format failed for R1020');
     end;
 
     [Test]
-    procedure V25_RowList_120Rows_FailAt25_Asserterror()
+    procedure RowFormat_List_FailingRow30Of120_OpensAndReadsTheFirstRow()
     var
         P: TestPage "AFT Row List";
-        Obs: Text;
+        Shown: Text;
     begin
-        SeedMany(120, 25);
-        asserterror P.OpenView();
-        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
-        Error(Obs);
+        SeedMany(120, 30);
+        P.OpenView();
+        Shown := P.RowCtl.Value();
+        P.Close();
+        Assert.AreEqual('1.000', Shown, 'a failing row beyond the opening window does not fail the open');
     end;
 
     [Test]
-    procedure V30_RowList_120Rows_FailAt120_LastAsserterror()
+    procedure RowFormat_List_LastOntoAFailingRowBeyondTheWindow_RaisesItsOwnError()
     var
         P: TestPage "AFT Row List";
-        Moved: Boolean;
-        V: Text;
-        Obs: Text;
+        Shown: Text;
     begin
         SeedMany(120, 120);
         P.OpenView();
-        Obs += 'OpenView=OK ';
-        asserterror Moved := P.Last();
-        Obs += 'Last.err=[' + GetLastErrorText() + '] ';
-        Obs += Res('No', TryRowListNoCtl(P, V), V);
-        Error(Obs);
+        asserterror P.Last();
+        Assert.ExpectedError('AFT row format failed for R1120');
+        asserterror Shown := P.NoCtl.Value();
+        Assert.ExpectedError('The TestPage is not open.');
+    end;
+
+    // ---- CaptionClass ----
+
+    [Test]
+    procedure FailingCaptionClass_OpenRaisesTheExpressionError()
+    var
+        P: TestPage "AFT Caption Card";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT caption class expression failed');
     end;
 
     [Test]
-    procedure V31_RowList_FailingRowAmongRows_NextAsserterror()
+    procedure FailingCaptionClass_EmptyTable_StillRaisesAtOpen()
     var
-        P: TestPage "AFT Row List";
+        P: TestPage "AFT Caption Card";
         Row: Record "AFT Row";
-        V: Text;
-        Obs: Text;
     begin
-        SeedMany(120, 40);
+        Row.DeleteAll();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT caption class expression failed');
+    end;
+
+    [Test]
+    procedure FailingCaptionClass_HiddenControl_StillRaisesAtOpen()
+    var
+        P: TestPage "AFT Hidden Caption Card";
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Assert.ExpectedError('AFT hidden caption class expression failed');
+    end;
+
+    [Test]
+    procedure WorkingCaptionClass_OpensAndReadsItsCaption()
+    var
+        P: TestPage "AFT Working Caption Card";
+        Shown: Text;
+    begin
+        Seed();
         P.OpenView();
-        Obs += 'OpenView=OK ';
-        Obs += Res('No', TryRowListNoCtl(P, V), V);
-        asserterror P.GoToKey('R1040');
-        Obs += 'GoToKey40.err=[' + GetLastErrorText() + '] ';
-        Obs += Res('No', TryRowListNoCtl(P, V), V);
-        Error(Obs);
+        Shown := P.OkCaptionCtl.Caption();
+        P.Close();
+        Assert.AreEqual('Ok Caption', Shown, 'a CaptionClass expression that answers reads its resolved caption');
     end;
 }
