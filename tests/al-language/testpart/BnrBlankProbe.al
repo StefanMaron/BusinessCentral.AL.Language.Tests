@@ -19,6 +19,18 @@ codeunit 69947 "BNR Blank Probe"
         Line.Insert();
     end;
 
+    local procedure DeleteLines()
+    var
+        Line: Record "BNR Line";
+    begin
+        Line.DeleteAll();
+    end;
+
+    local procedure ObsReal(var Card: TestPage "BNR Real List"): Text
+    begin
+        exit('hdr=[' + Card.HeaderNo.Value + '] line=[' + Card.LineNo.Value + '] txt=[' + Card.QTxt.Value + '] int=[' + Card.QInt.Value + '] asint=[' + Format(Card.QInt.AsInteger()) + ']');
+    end;
+
     local procedure ObsTemp(var Card: TestPage "BNR Temp List"): Text
     begin
         exit('hdr=[' + Card.HeaderNo.Value + '] line=[' + Card.LineNo.Value + '] txt=[' + Card.QTxt.Value + '] int=[' + Card.QInt.Value + '] asint=[' + Format(Card.QInt.AsInteger()) + ']');
@@ -169,5 +181,86 @@ codeunit 69947 "BNR Blank Probe"
         Line.DeleteAll();
         Card.OpenView();
         Error(ObsCard(Card));
+    end;
+    [Test]
+    procedure A8_TempList_KeyOnlyNoInsert()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.KeyOnly.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A9_TempList_TwoInsertsFindLast()
+    var
+        Card: TestPage "BNR Temp List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsTemp(Card);
+        Card.InsertTwoFindLast.Invoke();
+        R += ' | after: ' + ObsTemp(Card);
+        Card.First();
+        R += ' | afterFirst: ' + ObsTemp(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A10_RealList_InsertFind()
+    var
+        Card: TestPage "BNR Real List";
+        R: Text;
+    begin
+        Initialize();
+        DeleteLines();
+        Card.OpenView();
+        R := 'before: ' + ObsReal(Card);
+        Card.InsertFind.Invoke();
+        R += ' | after: ' + ObsReal(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A11_GetList_InsertMatching()
+    var
+        Card: TestPage "BNR Get List";
+        R: Text;
+    begin
+        Initialize();
+        Card.OpenView();
+        R := 'before: ' + ObsGet(Card);
+        Card.InsertMatching.Invoke();
+        R += ' | after: ' + ObsGet(Card);
+        Error(R);
+    end;
+
+    [Test]
+    procedure A12_List_RowInsertedByTestCodeAfterOpen()
+    var
+        Card: TestPage "BNR Real List";
+        Line: Record "BNR Line";
+        R: Text;
+    begin
+        Initialize();
+        Line.DeleteAll();
+        Card.OpenView();
+        R := 'before: ' + ObsReal(Card);
+        Line.Init();
+        Line."Header No." := 'R';
+        Line."Line No." := 9;
+        Line.QTxt := 'late';
+        Line.QInt := 6;
+        Line.Insert();
+        R += ' | afterInsert: ' + ObsReal(Card);
+        Card.First();
+        R += ' | afterFirst: ' + ObsReal(Card);
+        Error(R);
     end;
 }
