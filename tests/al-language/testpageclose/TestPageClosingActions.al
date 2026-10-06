@@ -18,6 +18,18 @@ table 69650 "TPC Row"
     {
         key(PK; "No.") { Clustered = true; }
     }
+
+    trigger OnInsert()
+    begin
+        if Note = 'FAIL' then
+            Error('TPC insert refused');
+    end;
+
+    trigger OnModify()
+    begin
+        if Note = 'FAIL' then
+            Error('TPC modify refused');
+    end;
 }
 
 codeunit 69650 "TPC Log"
@@ -59,6 +71,7 @@ page 69650 "TPC Card"
 {
     PageType = Card;
     SourceTable = "TPC Row";
+    DelayedInsert = true;
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -112,6 +125,7 @@ page 69651 "TPC List"
 {
     PageType = List;
     SourceTable = "TPC Row";
+    DelayedInsert = true;
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -661,6 +675,88 @@ codeunit 69651 "TPC Closing Action Probes"
         TwoCard();
     end;
 
+    [TryFunction]
+    local procedure TrySetupCard(var P: TestPage "TPC Card"; Mode: Text)
+    begin
+        case Mode of
+            'dup':
+                begin
+                    P.OpenNew();
+                    P.NoCtl.SetValue('A');
+                    P.QtyCtl.SetValue(9);
+                end;
+            'insert':
+                begin
+                    P.OpenNew();
+                    P.NoCtl.SetValue('N2');
+                    P.NoteCtl.SetValue('FAIL');
+                end;
+            'modify':
+                begin
+                    P.OpenEdit();
+                    P.NoteCtl.SetValue('FAIL');
+                end;
+        end;
+    end;
+
+    local procedure RefuseCard(Mode: Text; Closer: Text)
+    var
+        P: TestPage "TPC Card";
+        Res: Text;
+    begin
+        Seed();
+        Obs := '';
+        TPCLog.Reset();
+        NoteTry('setup', TrySetupCard(P, Mode), 'done');
+        NoteTry(Closer + '.closer', TryCardCloser(P, Closer, Res), Res);
+        NoteTry('valerr', TryCardOp(P, 'valerrcount', Res), Res);
+        NoteTry('value', TryCardOp(P, 'value', Res), Res);
+        Note('log', TPCLog.Text());
+        Note('table', TableState());
+        NoteTry('reopen1', TryCardOp(P, 'reopenedit', Res), Res);
+        NoteTry('close', TryCardOp(P, 'close', Res), Res);
+        NoteTry('reopen2', TryCardOp(P, 'reopenedit', Res), Res);
+        Note('table2', TableState());
+        Note('log2', TPCLog.Text());
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_Card_RefuseDup_Ok()
+    begin
+        RefuseCard('dup', 'ok');
+    end;
+
+    [Test]
+    procedure Probe_Card_RefuseDup_Close()
+    begin
+        RefuseCard('dup', 'close');
+    end;
+
+    [Test]
+    procedure Probe_Card_RefuseInsert_Ok()
+    begin
+        RefuseCard('insert', 'ok');
+    end;
+
+    [Test]
+    procedure Probe_Card_RefuseInsert_Close()
+    begin
+        RefuseCard('insert', 'close');
+    end;
+
+    [Test]
+    procedure Probe_Card_RefuseModify_Ok()
+    begin
+        RefuseCard('modify', 'ok');
+    end;
+
+    [Test]
+    procedure Probe_Card_RefuseModify_Close()
+    begin
+        RefuseCard('modify', 'close');
+    end;
+
     // ---- List ----
 
     [TryFunction]
@@ -922,6 +1018,88 @@ codeunit 69651 "TPC Closing Action Probes"
     procedure Probe_List_Two()
     begin
         TwoList();
+    end;
+
+    [TryFunction]
+    local procedure TrySetupList(var P: TestPage "TPC List"; Mode: Text)
+    begin
+        case Mode of
+            'dup':
+                begin
+                    P.OpenNew();
+                    P.NoCtl.SetValue('A');
+                    P.QtyCtl.SetValue(9);
+                end;
+            'insert':
+                begin
+                    P.OpenNew();
+                    P.NoCtl.SetValue('N2');
+                    P.NoteCtl.SetValue('FAIL');
+                end;
+            'modify':
+                begin
+                    P.OpenEdit();
+                    P.NoteCtl.SetValue('FAIL');
+                end;
+        end;
+    end;
+
+    local procedure RefuseList(Mode: Text; Closer: Text)
+    var
+        P: TestPage "TPC List";
+        Res: Text;
+    begin
+        Seed();
+        Obs := '';
+        TPCLog.Reset();
+        NoteTry('setup', TrySetupList(P, Mode), 'done');
+        NoteTry(Closer + '.closer', TryListCloser(P, Closer, Res), Res);
+        NoteTry('valerr', TryListOp(P, 'valerrcount', Res), Res);
+        NoteTry('value', TryListOp(P, 'value', Res), Res);
+        Note('log', TPCLog.Text());
+        Note('table', TableState());
+        NoteTry('reopen1', TryListOp(P, 'reopenedit', Res), Res);
+        NoteTry('close', TryListOp(P, 'close', Res), Res);
+        NoteTry('reopen2', TryListOp(P, 'reopenedit', Res), Res);
+        Note('table2', TableState());
+        Note('log2', TPCLog.Text());
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure Probe_List_RefuseDup_Ok()
+    begin
+        RefuseList('dup', 'ok');
+    end;
+
+    [Test]
+    procedure Probe_List_RefuseDup_Close()
+    begin
+        RefuseList('dup', 'close');
+    end;
+
+    [Test]
+    procedure Probe_List_RefuseInsert_Ok()
+    begin
+        RefuseList('insert', 'ok');
+    end;
+
+    [Test]
+    procedure Probe_List_RefuseInsert_Close()
+    begin
+        RefuseList('insert', 'close');
+    end;
+
+    [Test]
+    procedure Probe_List_RefuseModify_Ok()
+    begin
+        RefuseList('modify', 'ok');
+    end;
+
+    [Test]
+    procedure Probe_List_RefuseModify_Close()
+    begin
+        RefuseList('modify', 'close');
     end;
 
     // ---- Dialog ----
