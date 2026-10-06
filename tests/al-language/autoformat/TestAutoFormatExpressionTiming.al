@@ -1,4 +1,4 @@
-// PROBE REVISION 2: every test records what it observed and ends in Error(<observations>).
+// PROBE REVISION 3: every test records what it observed and ends in Error(<observations>).
 // Written by agent stma-auto-7, an automated implementation agent acting on the account holder's
 // behalf, for AL Runner issue StefanMaron/BusinessCentral.AL.Runner#4920.
 
@@ -279,6 +279,107 @@ page 69607 "AFT Caption Card"
     local procedure FailingCaption(): Text
     begin
         Error('AFT caption class expression failed');
+    end;
+}
+
+page 69608 "AFT Ready Card"
+{
+    PageType = Card;
+    SourceTable = "AFT Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(NoCtl; Rec."No.") { ApplicationArea = All; }
+            field(ReadyCtl; Rec.Amount)
+            {
+                ApplicationArea = All;
+                AutoFormatType = 10;
+                AutoFormatExpression = ReadyFormat();
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        Ready := true;
+    end;
+
+    local procedure ReadyFormat(): Text
+    begin
+        if not Ready then
+            Error('AFT page not ready: OnOpenPage has not run');
+        exit('<Precision,3:3><Standard Format,0>');
+    end;
+
+    var
+        Ready: Boolean;
+}
+
+page 69609 "AFT Seen Card"
+{
+    PageType = Card;
+    SourceTable = "AFT Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(NoCtl; Rec."No.") { ApplicationArea = All; }
+            field(SeenCtl; Rec.Amount)
+            {
+                ApplicationArea = All;
+                AutoFormatType = 10;
+                AutoFormatExpression = SeenFormat();
+            }
+        }
+    }
+
+    trigger OnAfterGetRecord()
+    begin
+        RowSeen := true;
+    end;
+
+    local procedure SeenFormat(): Text
+    begin
+        if not RowSeen then
+            Error('AFT row not seen: OnAfterGetRecord has not run');
+        exit('<Precision,3:3><Standard Format,0>');
+    end;
+
+    var
+        RowSeen: Boolean;
+}
+
+page 69611 "AFT Hidden Caption Card"
+{
+    PageType = Card;
+    SourceTable = "AFT Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(NoCtl; Rec."No.") { ApplicationArea = All; }
+            field(HiddenCaptionCtl; Rec.Amount)
+            {
+                ApplicationArea = All;
+                Visible = false;
+                CaptionClass = FailingCaption();
+            }
+        }
+    }
+
+    local procedure FailingCaption(): Text
+    begin
+        Error('AFT hidden caption class expression failed');
     end;
 }
 
@@ -869,6 +970,201 @@ codeunit 69600 "AFT Probe Tests"
         Seed();
         asserterror P.OpenView();
         Obs += 'asserterror.OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    local procedure SeedMany(Count: Integer; FailAt: Integer)
+    var
+        Row: Record "AFT Row";
+        i: Integer;
+    begin
+        Row.DeleteAll();
+        for i := 1 to Count do begin
+            Row.Init();
+            Row."No." := 'R' + Format(1000 + i);
+            Row.Amount := i;
+            Row.Boom := i = FailAt;
+            Row.Insert();
+        end;
+    end;
+
+    local procedure ObsAfterFailedOpenRow(var P: TestPage "AFT Row Card"): Text
+    var
+        V: Text;
+        Obs: Text;
+    begin
+        Obs += Res('No', TryRowCardNoCtl(P, V), V);
+        Obs += Res('Row', TryRowCardRowCtl(P, V), V);
+        exit(Obs);
+    end;
+
+    [Test]
+    procedure U01_RowCard_GoToFailingRow_Asserterror()
+    var
+        P: TestPage "AFT Row Card";
+        Obs: Text;
+    begin
+        Seed();
+        P.OpenView();
+        asserterror P.GoToKey('B');
+        Obs += 'GoToKeyB.err=[' + GetLastErrorText() + '] ';
+        Obs += ObsAfterFailedOpenRow(P);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U02_RowCard_OpenAtFailingRow_Asserterror()
+    var
+        P: TestPage "AFT Row Card";
+        Row: Record "AFT Row";
+        Obs: Text;
+    begin
+        Seed();
+        Row.Get('A');
+        Row.Delete();
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Obs += ObsAfterFailedOpenRow(P);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U03_RowList_FailingRowAmongRows_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+        V: Text;
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Obs += Res('No', TryRowListNoCtl(P, V), V);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U04_RowList_OnlyFailingRow_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Row: Record "AFT Row";
+        Obs: Text;
+    begin
+        Seed();
+        Row.Get('A');
+        Row.Delete();
+        Row.Get('C');
+        Row.Delete();
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U05_RowList_120Rows_FailAt30_Asserterror()
+    var
+        P: TestPage "AFT Row List";
+        Obs: Text;
+    begin
+        SeedMany(120, 30);
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U06_RowList_120Rows_FailAt120()
+    var
+        P: TestPage "AFT Row List";
+        Moved: Boolean;
+        V: Text;
+        Obs: Text;
+    begin
+        SeedMany(120, 120);
+        P.OpenView();
+        Obs += 'OpenView=OK ';
+        Obs += Res('No', TryRowListNoCtl(P, V), V);
+        Obs += Res('Row', TryRowListRowCtl(P, V), V);
+        Obs += Res('Last', TryRowListLast(P, Moved), Format(Moved));
+        Obs += Res('NoAtLast', TryRowListNoCtl(P, V), V);
+        Obs += Res('RowAtLast', TryRowListRowCtl(P, V), V);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U07_RowList_120Rows_FailAt60()
+    var
+        P: TestPage "AFT Row List";
+        Moved: Boolean;
+        V: Text;
+        Obs: Text;
+    begin
+        SeedMany(120, 60);
+        P.OpenView();
+        Obs += 'OpenView=OK ';
+        Obs += Res('No', TryRowListNoCtl(P, V), V);
+        Obs += Res('Last', TryRowListLast(P, Moved), Format(Moved));
+        Obs += Res('NoAtLast', TryRowListNoCtl(P, V), V);
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U08_Caption_RaisingExpression_WithRows_Asserterror()
+    var
+        P: TestPage "AFT Caption Card";
+        Obs: Text;
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U09_Caption_RaisingExpression_EmptyTable_Asserterror()
+    var
+        P: TestPage "AFT Caption Card";
+        Row: Record "AFT Row";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U10_HiddenCaption_RaisingExpression_Asserterror()
+    var
+        P: TestPage "AFT Hidden Caption Card";
+        Obs: Text;
+    begin
+        Seed();
+        asserterror P.OpenView();
+        Obs += 'OpenView.err=[' + GetLastErrorText() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U11_Ready_ExpressionDependsOnOnOpenPage()
+    var
+        P: TestPage "AFT Ready Card";
+        Obs: Text;
+    begin
+        Seed();
+        P.OpenView();
+        Obs += 'OpenView=OK No=[' + P.NoCtl.Value() + '] Ready=[' + P.ReadyCtl.Value() + '] ';
+        Error(Obs);
+    end;
+
+    [Test]
+    procedure U12_Seen_ExpressionDependsOnOnAfterGetRecord()
+    var
+        P: TestPage "AFT Seen Card";
+        Obs: Text;
+    begin
+        Seed();
+        P.OpenView();
+        Obs += 'OpenView=OK No=[' + P.NoCtl.Value() + '] Seen=[' + P.SeenCtl.Value() + '] ';
         Error(Obs);
     end;
 }
