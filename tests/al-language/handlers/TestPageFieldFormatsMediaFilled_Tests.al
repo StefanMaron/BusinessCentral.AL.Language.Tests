@@ -44,6 +44,35 @@ codeunit 69934 "TPF Media Filled Tests"
         Card.Close();
     end;
 
+    [Test]
+    procedure Probe_MediaSetIds()
+    var
+        Row: Record "TPF Media Row";
+        Card: TestPage "TPF Media Card";
+        TempBlob: Codeunit "Temp Blob";
+        Base64Convert: Codeunit "Base64 Convert";
+        InStr: InStream;
+        OutStr: OutStream;
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        TempBlob.CreateOutStream(OutStr);
+        Base64Convert.FromBase64(ValidPngBase64, OutStr);
+        TempBlob.CreateInStream(InStr);
+        Row.Pic.ImportStream(InStr, 'pic');
+        Row.Modify();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Obs := 'Value=[' + Card.Pic.Value() + '] MediaId=[' + IdText(Row.Pic.MediaId()) + '] Count=[' + Format(Row.Pic.Count()) + ']';
+        if Row.Pic.Count() > 0 then
+            Obs += ' Item1=[' + IdText(Row.Pic.Item(1)) + ']';
+        Card.Close();
+        Error('%1', Obs);
+    end;
+
     local procedure IdText(Id: Guid): Text
     begin
         exit(LowerCase(DelChr(Format(Id), '=', '{}')));
