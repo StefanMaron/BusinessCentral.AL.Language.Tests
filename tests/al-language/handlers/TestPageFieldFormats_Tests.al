@@ -692,6 +692,48 @@ codeunit 69932 "TPF Tests"
 
 
     [Test]
+    procedure Eq_Dec2_Negative()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+    begin
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Dec2 := -1234567.89;
+        Open(Row, Card);
+        Card.Dec2.AssertEquals(-1234567.89);
+        Card.Close();
+    end;
+
+    [Test]
+    procedure Eq_Dec2_StringFormatted()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+    begin
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Dec2 := 1234567.89;
+        Open(Row, Card);
+        Card.Dec2.AssertEquals('1,234,567.89');
+        Card.Close();
+    end;
+
+    [Test]
+    procedure Eq_Dec2_Integer()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+    begin
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Dec2 := 1234567;
+        Open(Row, Card);
+        Card.Dec2.AssertEquals(1234567);
+        Card.Close();
+    end;
+
+    [Test]
     procedure Eq_Num_1234567()
     var
         Row: Record "TPF Row";
@@ -1516,6 +1558,41 @@ codeunit 69932 "TPF Tests"
     end;
 
     [Test]
+    procedure Probe_Eq_Dec2_StringPlain()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Dec2 := 1234567.89;
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        asserterror Card.Dec2.AssertEquals('1234567.89');
+        Card.Close();
+        Error('%1', GetLastErrorText());
+    end;
+
+    [Test]
+    procedure Eq_MediaEmpty()
+    var
+        Row: Record "TPF Media Row";
+        Card: TestPage "TPF Media Card";
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Pic.AssertEquals('');
+        Card.One.AssertEquals('');
+        Card.Close();
+    end;
+
+    [Test]
     procedure Eq_GlobDec_1234567()
     var
         Row: Record "TPF Row";
@@ -1571,5 +1648,365 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         Card.GlobDur.AssertEquals(D);
         Card.Close();
+    end;
+
+
+    [Test]
+    procedure Probe_Set_Dec2_0()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Dec2.SetValue(1234567.89);
+        Obs := 'V=[' + Card.Dec2.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Dec2) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_DecDef_1()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.DecDef.SetValue(1234.5);
+        Obs := 'V=[' + Card.DecDef.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.DecDef) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Num_2()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Num.SetValue(1234567);
+        Obs := 'V=[' + Card.Num.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Num) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Dt_3()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Dt.SetValue(20240302D);
+        Obs := 'V=[' + Card.Dt.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Dt) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Tm_4()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Tm.SetValue(123456T);
+        Obs := 'V=[' + Card.Tm.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Tm) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_DtTm_5()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.DtTm.SetValue(CreateDateTime(20240302D, 123456T));
+        Obs := 'V=[' + Card.DtTm.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.DtTm) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Dur_6()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        D: Duration;
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        D := 3723000;
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Dur.SetValue(D);
+        Obs := 'V=[' + Card.Dur.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Dur) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Dec2_7()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Dec2.SetValue('');
+        Obs := 'V=[' + Card.Dec2.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Dec2) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Num_8()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Num.SetValue('');
+        Obs := 'V=[' + Card.Num.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Num) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_DecBZ_9()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.DecBZ.SetValue('0');
+        Obs := 'V=[' + Card.DecBZ.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.DecBZ) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_DecBZ_10()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.DecBZ.SetValue('');
+        Obs := 'V=[' + Card.DecBZ.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.DecBZ) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Dur_11()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Dur.SetValue('5 seconds');
+        Obs := 'V=[' + Card.Dur.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Dur) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Dur_12()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Dur.SetValue('');
+        Obs := 'V=[' + Card.Dur.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Dur) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Opt_13()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Opt.SetValue(Row.Opt::Gamma);
+        Obs := 'V=[' + Card.Opt.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Opt) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Enm_14()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Enm.SetValue("TPF Enum"::Three);
+        Obs := 'V=[' + Card.Enm.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Enm) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_Flag_15()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.Flag.SetValue(true);
+        Obs := 'V=[' + Card.Flag.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.Flag) + ']';
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Set_DecBZ_16()
+    var
+        Row: Record "TPF Row";
+        Card: TestPage "TPF Card";
+        Obs: Text;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.PK := 'R1';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToKey('R1');
+        Card.DecBZ.SetValue(0);
+        Obs := 'V=[' + Card.DecBZ.Value() + '] ';
+        Card.Close();
+        Row.Get('R1');
+        Obs += 'R=[' + Format(Row.DecBZ) + ']';
+        Error('%1', Obs);
     end;
 }
