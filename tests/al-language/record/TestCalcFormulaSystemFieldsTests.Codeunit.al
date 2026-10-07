@@ -295,12 +295,27 @@ codeunit 60818 "CFSF Tests"
         CfsfHeader: Record "CFSF Header";
         CfsfLine1: Record "CFSF Line";
         CfsfLine3: Record "CFSF Line";
+#if not BC29PLUS
         NoRowVersion: BigInteger;
+#endif
     begin
         Initialize(CfsfHeader);
         CfsfLine1.Get(1);
         CfsfLine3.Get(3);
 
+#if BC29PLUS
+        // BC 29 refuses max()/min() over SystemRowVersion: the aggregate comes back from SQL
+        // as a `timestamp`, and BC rejects it for the BigInteger FlowField. The field type
+        // cannot follow it -- AL has no timestamp type, SystemRowVersion is BigInteger, and
+        // min()/max() into any other type is AL0427 -- so on 29 the refusal itself is what
+        // is pinned. lookup() of the same field still calculates on 29
+        // (Record_CalcFields_LooksUpSystemRowVersion), so this is the aggregate path only.
+        asserterror CfsfHeader.CalcFields("Last Line Row Version", "First Line Row Version");
+        Assert.ExpectedError('Table content in the CFSF Header table on SQL Server contains a value that is not compatible with the corresponding data type');
+        Assert.ExpectedMessage('Field: Last Line Row Version', GetLastErrorText());
+        Assert.ExpectedMessage('Type: BigInteger', GetLastErrorText());
+        Assert.ExpectedMessage('SQL type: timestamp', GetLastErrorText());
+#else
         CfsfHeader.CalcFields("Last Line Row Version", "First Line Row Version");
 
         // NoRowVersion rather than a bare 0: an Integer 0 never equals a BigInteger, so
@@ -315,6 +330,7 @@ codeunit 60818 "CFSF Tests"
         Assert.IsTrue(
           CfsfHeader."Last Line Row Version" > CfsfHeader."First Line Row Version",
           'the three lines were inserted in order, so max() must exceed min()');
+#endif
     end;
 
     /// where("Header Sys Id" = field(SystemId)) narrowing a SystemRowVersion aggregate.
@@ -334,6 +350,15 @@ codeunit 60818 "CFSF Tests"
         CfsfLine2.Get(2);
         CfsfLine3.Get(3);
 
+#if BC29PLUS
+        // BC 29 refuses a max() over SystemRowVersion whatever the where-arm -- see
+        // Record_CalcFields_AggregatesSystemRowVersion. On 29 this test therefore cannot say
+        // whether the SystemId where-arm narrows the set; it pins the refusal instead.
+        asserterror CfsfHeader.CalcFields("Row Version By Sys Id");
+        Assert.ExpectedError('Table content in the CFSF Header table on SQL Server contains a value that is not compatible with the corresponding data type');
+        Assert.ExpectedMessage('Field: Row Version By Sys Id', GetLastErrorText());
+        Assert.ExpectedMessage('SQL type: timestamp', GetLastErrorText());
+#else
         CfsfHeader.CalcFields("Row Version By Sys Id");
 
         Assert.AreEqual(
@@ -345,6 +370,7 @@ codeunit 60818 "CFSF Tests"
         Assert.IsTrue(
           CfsfLine3.SystemRowVersion > CfsfHeader."Row Version By Sys Id",
           'line 3 is outside the arm and was inserted last, so its rowversion is the larger one');
+#endif
     end;
 
     /// lookup() of SystemRowVersion, selected by an ordinary where-arm.
