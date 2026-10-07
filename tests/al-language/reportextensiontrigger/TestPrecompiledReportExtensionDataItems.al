@@ -12,7 +12,8 @@
 //     DemandType is All or Assembly Components, and the base report's SalesOrderLine breaks unless
 //     it is All or Sales Orders, so the demand types give different answers;
 //   * what the added data item collects is read back through the extension's GetAssemblyLines,
-//     beside the base report's GetSalesOrderLines, on the same report instance.
+//     beside the base report's GetSalesOrderLines, on the same report instance. Counts are of this
+//     test's own documents: the demo company holds sales order lines the base data item returns too.
 //
 // The report is run with RunModal and not Run: Run frees the variable's report instance when it
 // ends, so a getter called after it reads a new, unrun one. That is how Base Application's own
@@ -40,12 +41,8 @@ codeunit 68760 "RXP Precompiled DataItems"
 
         RunGetDemandToReserve("Reservation Demand Type"::All, TempAssemblyLine, TempSalesLine);
 
-        Assert.AreEqual(1, TempAssemblyLine.Count(), 'the extension data item returns the assembly line');
-        TempAssemblyLine.FindFirst();
-        Assert.AreEqual('RXPASM', TempAssemblyLine."Document No.", 'the assembly line returned is the inserted one');
-        Assert.AreEqual(1, TempSalesLine.Count(), 'the base data item still returns the sales line');
-        TempSalesLine.FindFirst();
-        Assert.AreEqual('RXPSO', TempSalesLine."Document No.", 'the sales line returned is the inserted one');
+        Assert.AreEqual(1, AssemblyLinesOf(TempAssemblyLine), 'the extension data item returns the assembly line');
+        Assert.AreEqual(1, SalesLinesOf(TempSalesLine), 'the base data item still returns the sales line');
     end;
 
     [Test]
@@ -59,8 +56,8 @@ codeunit 68760 "RXP Precompiled DataItems"
 
         RunGetDemandToReserve("Reservation Demand Type"::"Sales Orders", TempAssemblyLine, TempSalesLine);
 
-        Assert.AreEqual(0, TempAssemblyLine.Count(), 'the extension OnPreDataItem breaks for Sales Orders');
-        Assert.AreEqual(1, TempSalesLine.Count(), 'the sales line is still returned for Sales Orders');
+        Assert.AreEqual(0, AssemblyLinesOf(TempAssemblyLine), 'the extension OnPreDataItem breaks for Sales Orders');
+        Assert.AreEqual(1, SalesLinesOf(TempSalesLine), 'the sales line is still returned for Sales Orders');
     end;
 
     [Test]
@@ -74,8 +71,8 @@ codeunit 68760 "RXP Precompiled DataItems"
 
         RunGetDemandToReserve("Reservation Demand Type"::"Assembly Components", TempAssemblyLine, TempSalesLine);
 
-        Assert.AreEqual(1, TempAssemblyLine.Count(), 'the assembly line is returned for Assembly Components');
-        Assert.AreEqual(0, TempSalesLine.Count(), 'the base SalesOrderLine breaks for Assembly Components');
+        Assert.AreEqual(1, AssemblyLinesOf(TempAssemblyLine), 'the assembly line is returned for Assembly Components');
+        Assert.AreEqual(0, SalesLinesOf(TempSalesLine), 'the base SalesOrderLine breaks for Assembly Components');
     end;
 
     [Test]
@@ -89,8 +86,22 @@ codeunit 68760 "RXP Precompiled DataItems"
 
         RunGetDemandToReserve("Reservation Demand Type"::All, TempAssemblyLine, TempSalesLine);
 
-        Assert.AreEqual(0, TempAssemblyLine.Count(), 'a line with no remaining quantity is outside the data item view');
-        Assert.AreEqual(1, TempSalesLine.Count(), 'the sales line, which has quantity, is returned');
+        Assert.AreEqual(0, AssemblyLinesOf(TempAssemblyLine), 'a line with no remaining quantity is outside the data item view');
+        Assert.AreEqual(1, SalesLinesOf(TempSalesLine), 'the sales line, which has quantity, is returned');
+    end;
+
+    // The CRONUS demo data holds sales order lines the base data item returns too, so each count is
+    // of this test's own document only.
+    local procedure AssemblyLinesOf(var TempAssemblyLine: Record "Assembly Line" temporary): Integer
+    begin
+        TempAssemblyLine.SetRange("Document No.", 'RXPASM');
+        exit(TempAssemblyLine.Count());
+    end;
+
+    local procedure SalesLinesOf(var TempSalesLine: Record "Sales Line" temporary): Integer
+    begin
+        TempSalesLine.SetRange("Document No.", 'RXPSO');
+        exit(TempSalesLine.Count());
     end;
 
     local procedure InsertDemand(AssemblyRemainingQtyBase: Decimal; SalesOutstandingQtyBase: Decimal)
