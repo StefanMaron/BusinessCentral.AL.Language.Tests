@@ -3,9 +3,11 @@
 // Fixtures used: TPF Media Row (69933), TPF Media Card (69933), Assert (60021)
 // BC versions: 27.0+
 //
-// CLAIM UNDER TEST: a Media control and a MediaSet control with a media imported show the media's
-// id, in lowercase with hyphens and no braces. Measured on a probe revision as one GUID per
-// control. The id is random per run, so the expectation is the id the record itself reports.
+// CLAIM UNDER TEST: a Media control with a media imported shows the media's id, and a MediaSet
+// control shows the id of the FIRST media in the set, not the set's own id (MediaId()); both are
+// lowercase with hyphens and no braces. Measured on a probe revision on every cloud leg, 27.0 to
+// 29.0 (a set of one media). The ids are random per run, so the expectation is what the record
+// itself reports.
 
 codeunit 69934 "TPF Media Filled Tests"
 {
@@ -40,37 +42,9 @@ codeunit 69934 "TPF Media Filled Tests"
         Card.OpenEdit();
         Card.GoToKey('R1');
         Assert.AreEqual(IdText(Row.One.MediaId()), Card.One.Value(), 'Media');
-        Assert.AreEqual(IdText(Row.Pic.MediaId()), Card.Pic.Value(), 'MediaSet');
+        Assert.AreEqual(IdText(Row.Pic.Item(1)), Card.Pic.Value(), 'MediaSet');
+        Assert.AreNotEqual(IdText(Row.Pic.MediaId()), Card.Pic.Value(), 'the MediaSet text is not the set id');
         Card.Close();
-    end;
-
-    [Test]
-    procedure Probe_MediaSetIds()
-    var
-        Row: Record "TPF Media Row";
-        Card: TestPage "TPF Media Card";
-        TempBlob: Codeunit "Temp Blob";
-        Base64Convert: Codeunit "Base64 Convert";
-        InStr: InStream;
-        OutStr: OutStream;
-        Obs: Text;
-    begin
-        Row.DeleteAll();
-        Row.Init();
-        Row.PK := 'R1';
-        Row.Insert();
-        TempBlob.CreateOutStream(OutStr);
-        Base64Convert.FromBase64(ValidPngBase64, OutStr);
-        TempBlob.CreateInStream(InStr);
-        Row.Pic.ImportStream(InStr, 'pic');
-        Row.Modify();
-        Card.OpenEdit();
-        Card.GoToKey('R1');
-        Obs := 'Value=[' + Card.Pic.Value() + '] MediaId=[' + IdText(Row.Pic.MediaId()) + '] Count=[' + Format(Row.Pic.Count()) + ']';
-        if Row.Pic.Count() > 0 then
-            Obs += ' Item1=[' + IdText(Row.Pic.Item(1)) + ']';
-        Card.Close();
-        Error('%1', Obs);
     end;
 
     local procedure IdText(Id: Guid): Text
