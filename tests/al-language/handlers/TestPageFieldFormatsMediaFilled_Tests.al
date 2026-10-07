@@ -1,7 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefield-value-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: TPF Media Row (69933), TPF Media Card (69933)
+// Fixtures used: TPF Media Row (69933), TPF Media Card (69933), Assert (60021)
 // BC versions: 27.0+
+//
+// CLAIM UNDER TEST: a Media control and a MediaSet control with a media imported show the media's
+// id, in lowercase with hyphens and no braces. Measured on a probe revision as one GUID per
+// control. The id is random per run, so the expectation is the id the record itself reports.
 
 codeunit 69934 "TPF Media Filled Tests"
 {
@@ -9,10 +13,11 @@ codeunit 69934 "TPF Media Filled Tests"
     TestPermissions = Disabled;
 
     var
+        Assert: Codeunit Assert;
         ValidPngBase64: Label 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', Locked = true;
 
     [Test]
-    procedure Probe_Value_MediaFilled()
+    procedure Value_Media_ShowsTheMediaId()
     var
         Row: Record "TPF Media Row";
         Card: TestPage "TPF Media Card";
@@ -20,7 +25,6 @@ codeunit 69934 "TPF Media Filled Tests"
         Base64Convert: Codeunit "Base64 Convert";
         InStr: InStream;
         OutStr: OutStream;
-        Obs: Text;
     begin
         Row.DeleteAll();
         Row.Init();
@@ -35,8 +39,13 @@ codeunit 69934 "TPF Media Filled Tests"
         Row.Modify();
         Card.OpenEdit();
         Card.GoToKey('R1');
-        Obs := 'Pic=[' + Card.Pic.Value() + '] One=[' + Card.One.Value() + ']';
+        Assert.AreEqual(IdText(Row.One.MediaId()), Card.One.Value(), 'Media');
+        Assert.AreEqual(IdText(Row.Pic.MediaId()), Card.Pic.Value(), 'MediaSet');
         Card.Close();
-        Error('%1', Obs);
+    end;
+
+    local procedure IdText(Id: Guid): Text
+    begin
+        exit(LowerCase(DelChr(Format(Id), '=', '{}')));
     end;
 }
