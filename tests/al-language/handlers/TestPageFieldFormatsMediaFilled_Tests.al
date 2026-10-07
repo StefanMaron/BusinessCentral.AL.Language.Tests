@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefield-value-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: TPF Media Row (69933), TPF Media Card (69933), TPF Row (69932), TPF Card (69932), Assert (60021)
+// Fixtures used: TPF Media Row (69933), TPF Media Card (69933), Assert (60021)
 // BC versions: 27.0+
 //
 // CLAIM UNDER TEST: a Media control with a media imported shows the media's id, and a MediaSet
@@ -45,41 +45,6 @@ codeunit 69934 "TPF Media Filled Tests"
         Assert.AreEqual(IdText(Row.Pic.Item(1)), Card.Pic.Value(), 'MediaSet');
         Assert.AreNotEqual(IdText(Row.Pic.MediaId()), Card.Pic.Value(), 'the MediaSet text is not the set id');
         Card.Close();
-    end;
-
-
-    [Test]
-    procedure Probe_DateWrites()
-    var
-        Obs: Text;
-    begin
-        Obs += W(20240101D) + W(20240102D) + W(20240111D) + W(20240112D) + W(20240201D) + W(20240215D);
-        Obs += W(20241101D) + W(20241231D) + W(20260101D) + W(20250115D) + W(20231201D) + W(20291212D);
-        Obs += W(20240615D) + W(20240301D) + W(20240401D) + W(20250202D) + W(20240110D) + W(20240210D);
-        Error('%1', Obs);
-    end;
-
-    local procedure W(D: Date): Text
-    var
-        Row: Record "TPF Row";
-        Card: TestPage "TPF Card";
-        Ok: Boolean;
-    begin
-        Row.DeleteAll();
-        Row.Init();
-        Row.PK := 'R1';
-        Row.Insert();
-        Card.OpenEdit();
-        Card.GoToKey('R1');
-        Ok := TryWrite(Card, D);
-        Card.Close();
-        exit(Format(D, 0, '<Year4><Month,2><Day,2>') + '=' + Format(Ok) + ' ');
-    end;
-
-    [TryFunction]
-    local procedure TryWrite(var Card: TestPage "TPF Card"; D: Date)
-    begin
-        Card.Dt.SetValue(D);
     end;
 
     local procedure IdText(Id: Guid): Text

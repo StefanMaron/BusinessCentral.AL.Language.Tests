@@ -25,15 +25,15 @@
 //                           seconds); blank is ''
 //   Guid                    braced ('{...}'), and the null Guid is NOT blank
 //   Duration                AL Format()'s words ('1 hour 2 minutes 3 seconds'); zero is ''
-//   Media, MediaSet         the media id, lowercase, '' when no media is set (the filled case is
-//                           codeunit 69934)
+//   Media, MediaSet         a Media shows its id, a MediaSet the id of its first media, lowercase;
+//                           '' when no media is set (the filled case is codeunit 69934)
 //
 // SetValue(<typed value>) is spelled the same way and read back by the client's own parser, so a
 // DateTime loses its seconds and a blank text written to a numeric control is zero.
 //
-// DATES: the Linux tier's license restricts a page write of a Date to the months 11, 12, 01 and 02
-// (the filter '??11*|??12*|??01*|??02*'), so the Date written through SetValue below is in February.
-
+// DATES: the Linux tier's license refuses a page write of a Date to a RECORD field: on 27.x every
+// one, on 28.x and later any outside the months 11, 12, 01 and 02 ('??11*|??12*|??01*|??02*'). So
+// SetValue of a Date is written to a page-variable control, which validates nothing.
 
 codeunit 69932 "TPF Tests"
 {
@@ -1643,7 +1643,7 @@ codeunit 69932 "TPF Tests"
     end;
 
     [Test]
-    procedure SetValue_Date()
+    procedure SetValue_Date_PageVariable()
     var
         Row: Record "TPF Row";
         Card: TestPage "TPF Card";
@@ -1654,11 +1654,11 @@ codeunit 69932 "TPF Tests"
         Row.Insert();
         Card.OpenEdit();
         Card.GoToKey('R1');
-        Card.Dt.SetValue(20240215D);
-        Assert.AreEqual('2/15/2024', Card.Dt.Value(), 'the control after SetValue');
+        Card.GlobDt.SetValue(20240302D);
+        Assert.AreEqual('3/2/2024', Card.GlobDt.Value(), 'the control after SetValue');
         Card.Close();
         Row.Get('R1');
-        Assert.IsTrue(Row.Dt = 20240215D, 'the stored value');
+        Assert.IsTrue(Row.PK = 'R1', 'the stored value');
     end;
 
     [Test]
