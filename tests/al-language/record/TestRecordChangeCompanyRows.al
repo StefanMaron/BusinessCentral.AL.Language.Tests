@@ -287,10 +287,11 @@ codeunit 69975 "Test ChangeCompany RecordRef"
     [Test]
     procedure RecordRef_ChangeCompany_ReadsAndWritesTheOtherCompanysRows()
     // CLAIM: RecordRef.ChangeCompany moves the reference to the other company's rows the way
-    // Record.ChangeCompany does.
+    // Record.ChangeCompany does, and RecordRef.Open with a company name opens on that company's rows.
     var
         Home: Record "ALT Universal";
         RecRef: RecordRef;
+        Opened: RecordRef;
     begin
         Lib.Cleanup();
         Home."Entry No." := 1;
@@ -312,6 +313,14 @@ codeunit 69975 "Test ChangeCompany RecordRef"
         Home.Get(1);
         Assert.AreEqual(11, Home."Integer Field", 'the session company keeps its own row');
         Assert.AreEqual(1, Home.Count(), 'and only that row');
+
+        // RecordRef.Open takes the company as its third argument: it opens on that company's rows.
+        Opened.Open(Database::"ALT Universal", false, Lib.CompanyNameUnderTest());
+        Assert.AreEqual(Lib.CompanyNameUnderTest(), Opened.CurrentCompany(), 'the reference reports the company it was opened on');
+        Assert.AreEqual(1, Opened.Count(), 'it sees the row the other company holds');
+        Opened.FindFirst();
+        Assert.AreEqual(77, Opened.Field(Home.FieldNo("Integer Field")).Value, 'and its value, not the session company''s');
+        Opened.Close();
 
         Lib.Cleanup();
     end;
