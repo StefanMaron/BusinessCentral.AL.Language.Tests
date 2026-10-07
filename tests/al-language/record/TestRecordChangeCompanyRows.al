@@ -11,9 +11,10 @@
 // Each arm that creates a company is a codeunit of its own: creating a company creates all of its
 // tables, which takes minutes on the Linux tier, and the test harness stops a codeunit after ten
 // minutes (see TestPermissionSetupVersionCompany.al). 69972 holds the shared steps.
-//   69970  the rows of the two companies are apart; a table that is not per company is shared
+//   69970  the rows of the two companies are apart; a table that is not per company is shared;
+//          a TableRelation is validated against the record's own company
 //   69971  the answer follows the Company table
-//   69973  an error rolls back an uncommitted write in the other company, and only that
+//   69973  an error rolls back the uncommitted writes in the other company, and only those
 //   69974  a FlowField on a record in the other company counts that company's rows
 //   69975  RecordRef.ChangeCompany reads and writes the other company's rows
 
@@ -26,6 +27,27 @@ table 69970 "ALT ChgCo Tenant"
     fields
     {
         field(1; "Entry No."; Integer) { DataClassification = SystemMetadata; }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.") { Clustered = true; }
+    }
+}
+
+table 69971 "ALT ChgCo Rel"
+{
+    // A per-company table whose field is related to another per-company table.
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Entry No."; Integer) { DataClassification = SystemMetadata; }
+        field(2; "Universal No."; Integer)
+        {
+            DataClassification = SystemMetadata;
+            TableRelation = "ALT Universal"."Entry No.";
+        }
     }
 
     keys
@@ -55,6 +77,7 @@ codeunit 69970 "Test ChangeCompany Rows"
         Back: Record "ALT Universal";
         Tenant: Record "ALT ChgCo Tenant";
         TenantOther: Record "ALT ChgCo Tenant";
+        Rel: Record "ALT ChgCo Rel";
     begin
         Lib.Cleanup();
         Tenant.DeleteAll();
@@ -101,6 +124,18 @@ codeunit 69970 "Test ChangeCompany Rows"
         Assert.AreEqual(1, TenantOther.Count(), 'the row of a table that is not per company is seen from the other company');
         Assert.IsTrue(TenantOther.Get(7), 'and found by its key');
 
+        // A TableRelation is validated against the rows of the company the record is on: the
+        // session company holds Entry No. 1 and the other company, emptied above, does not.
+        Assert.IsTrue(Rel.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany for the related record');
+        Rel."Entry No." := 1;
+        asserterror Rel.Validate("Universal No.", 1);
+        Assert.ExpectedError('cannot be found in the related table');
+        Other.Init();
+        Other."Entry No." := 1;
+        Other.Insert();
+        Rel.Validate("Universal No.", 1);
+        Assert.AreEqual(1, Rel."Universal No.", 'the relation is found once the other company holds the row');
+
         Tenant.DeleteAll();
         Lib.Cleanup();
     end;
@@ -145,13 +180,22 @@ codeunit 69973 "Test ChangeCompany Rollback"
     [Test]
     procedure ChangeCompany_ErrorRollsBackAnUncommittedWriteInTheOtherCompany()
     // CLAIM: an error rolls the other company's rows back to the last Commit, like the session
-    // company's: the committed row stays, the row written after it is gone.
+    // company's: the first write into the company, made before any Commit, is undone; and once a
+    // row is committed it stays while the row written after it is gone.
     var
         Other: Record "ALT Universal";
     begin
         Lib.Cleanup();
         Lib.InsertCompany();
         Assert.IsTrue(Other.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany to the inserted company');
+
+        Other.Init();
+        Other."Entry No." := 4;
+        Other."Integer Field" := 40;
+        Other.Insert();
+        Assert.AreEqual(1, Other.Count(), 'the first write into the company is there before the error');
+        asserterror Error('roll back the first write');
+        Assert.AreEqual(0, Other.Count(), 'the first write into the company is rolled back');
 
         Other.Init();
         Other."Entry No." := 5;
