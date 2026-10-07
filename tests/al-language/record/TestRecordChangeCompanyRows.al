@@ -11,6 +11,28 @@
 // Each arm that creates a company is a codeunit of its own: creating a company creates all of its
 // tables, which takes minutes on the Linux tier, and the test harness stops a codeunit after ten
 // minutes (see TestPermissionSetupVersionCompany.al). 69972 holds the shared steps.
+//   69970  the rows of the two companies are apart; a table that is not per company is shared
+//   69971  the answer follows the Company table
+//   69973  an error rolls back an uncommitted write in the other company, and only that
+//   69974  a FlowField on a record in the other company counts that company's rows
+//   69975  RecordRef.ChangeCompany reads and writes the other company's rows
+
+table 69970 "ALT ChgCo Tenant"
+{
+    // A table that is NOT per company: ChangeCompany has no company to move it to.
+    DataPerCompany = false;
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Entry No."; Integer) { DataClassification = SystemMetadata; }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.") { Clustered = true; }
+    }
+}
 
 codeunit 69970 "Test ChangeCompany Rows"
 {
@@ -31,8 +53,11 @@ codeunit 69970 "Test ChangeCompany Rows"
         Home: Record "ALT Universal";
         Other: Record "ALT Universal";
         Back: Record "ALT Universal";
+        Tenant: Record "ALT ChgCo Tenant";
+        TenantOther: Record "ALT ChgCo Tenant";
     begin
         Lib.Cleanup();
+        Tenant.DeleteAll();
         Home.Init();
         Home."Entry No." := 1;
         Home."Integer Field" := 11;
@@ -69,6 +94,14 @@ codeunit 69970 "Test ChangeCompany Rows"
         Back.Get(1);
         Assert.AreEqual(11, Back."Integer Field", 'and its value');
 
+        // A table that is not per company has one set of rows, whichever company a record names.
+        Tenant."Entry No." := 7;
+        Tenant.Insert();
+        Assert.IsTrue(TenantOther.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany on a table that is not per company');
+        Assert.AreEqual(1, TenantOther.Count(), 'the row of a table that is not per company is seen from the other company');
+        Assert.IsTrue(TenantOther.Get(7), 'and found by its key');
+
+        Tenant.DeleteAll();
         Lib.Cleanup();
     end;
 }
@@ -100,9 +133,149 @@ codeunit 69971 "Test ChangeCompany Deleted"
     end;
 }
 
+codeunit 69973 "Test ChangeCompany Rollback"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+        Lib: Codeunit "ALT ChangeCompany Lib";
+
+    [Test]
+    procedure ChangeCompany_ErrorRollsBackAnUncommittedWriteInTheOtherCompany()
+    // CLAIM: an error rolls the other company's rows back to the last Commit, like the session
+    // company's: the committed row stays, the row written after it is gone.
+    var
+        Other: Record "ALT Universal";
+    begin
+        Lib.Cleanup();
+        Lib.InsertCompany();
+        Assert.IsTrue(Other.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany to the inserted company');
+
+        Other.Init();
+        Other."Entry No." := 5;
+        Other."Integer Field" := 50;
+        Other.Insert();
+        Commit();
+
+        Other.Init();
+        Other."Entry No." := 6;
+        Other."Integer Field" := 60;
+        Other.Insert();
+        Assert.AreEqual(2, Other.Count(), 'both rows are there before the error');
+
+        asserterror Error('roll back');
+
+        Assert.AreEqual(1, Other.Count(), 'only the committed row survives the rollback');
+        Assert.IsTrue(Other.Get(5), 'the committed row');
+        Assert.IsFalse(Other.Get(6), 'the row written after the Commit is gone');
+
+        Other.DeleteAll();
+        Commit();
+        Lib.Cleanup();
+    end;
+}
+
+codeunit 69974 "Test ChangeCompany FlowField"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+        Lib: Codeunit "ALT ChangeCompany Lib";
+
+    [Test]
+    procedure ChangeCompany_FlowFieldOnARecordInTheOtherCompany_CountsThatCompanysRows()
+    // CLAIM: a FlowField is calculated over the rows of the company its record is on. The parent
+    // has the same key in both companies; each company has its own children.
+    var
+        HomeParent: Record "ALT Parent";
+        HomeChild: Record "ALT Child";
+        OtherParent: Record "ALT Parent";
+        OtherChild: Record "ALT Child";
+    begin
+        Lib.CleanupParents();
+        HomeParent."Entry No." := 1;
+        HomeParent.Insert();
+        HomeChild."Entry No." := 1;
+        HomeChild."Parent Entry No." := 1;
+        HomeChild.Amount := 3;
+        HomeChild.Insert();
+        Lib.InsertCompany();
+
+        Assert.IsTrue(OtherParent.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany for the parent');
+        Assert.IsTrue(OtherChild.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany for the children');
+        OtherParent."Entry No." := 1;
+        OtherParent.Insert();
+        OtherChild."Entry No." := 1;
+        OtherChild."Parent Entry No." := 1;
+        OtherChild.Amount := 10;
+        OtherChild.Insert();
+        OtherChild."Entry No." := 2;
+        OtherChild.Amount := 20;
+        OtherChild.Insert();
+
+        OtherParent.Get(1);
+        OtherParent.CalcFields("Child Count", "Child Amount");
+        Assert.AreEqual(2, OtherParent."Child Count", 'the other company counts its own two children');
+        Assert.AreEqual(30, OtherParent."Child Amount", 'and sums their amounts');
+
+        HomeParent.Get(1);
+        HomeParent.CalcFields("Child Count", "Child Amount");
+        Assert.AreEqual(1, HomeParent."Child Count", 'the session company counts its one child');
+        Assert.AreEqual(3, HomeParent."Child Amount", 'and sums its amount');
+
+        Lib.CleanupParents();
+    end;
+}
+
+codeunit 69975 "Test ChangeCompany RecordRef"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+        Lib: Codeunit "ALT ChangeCompany Lib";
+
+    [Test]
+    procedure RecordRef_ChangeCompany_ReadsAndWritesTheOtherCompanysRows()
+    // CLAIM: RecordRef.ChangeCompany moves the reference to the other company's rows the way
+    // Record.ChangeCompany does.
+    var
+        Home: Record "ALT Universal";
+        RecRef: RecordRef;
+    begin
+        Lib.Cleanup();
+        Home."Entry No." := 1;
+        Home."Integer Field" := 11;
+        Home.Insert();
+        Lib.InsertCompany();
+
+        RecRef.Open(Database::"ALT Universal");
+        Assert.IsTrue(RecRef.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany on the reference');
+        Assert.AreEqual(0, RecRef.Count(), 'the other company starts empty');
+
+        RecRef.Init();
+        RecRef.Field(Home.FieldNo("Entry No.")).Value := 1;
+        RecRef.Field(Home.FieldNo("Integer Field")).Value := 77;
+        RecRef.Insert();
+        Assert.AreEqual(1, RecRef.Count(), 'the other company holds the one row inserted through the reference');
+        RecRef.Close();
+
+        Home.Get(1);
+        Assert.AreEqual(11, Home."Integer Field", 'the session company keeps its own row');
+        Assert.AreEqual(1, Home.Count(), 'and only that row');
+
+        Lib.Cleanup();
+    end;
+}
+
 codeunit 69972 "ALT ChangeCompany Lib"
 {
-    // The shared steps of 69970 and 69971.
+    // The shared steps of 69970, 69971 and 69973 to 69975.
     var
         CompanyTok: Label 'ALT CHGCO ROWS', Locked = true;
 
@@ -135,6 +308,16 @@ codeunit 69972 "ALT ChangeCompany Lib"
         Home: Record "ALT Universal";
     begin
         Home.DeleteAll();
+        DeleteCompany();
+    end;
+
+    procedure CleanupParents()
+    var
+        Parent: Record "ALT Parent";
+        Child: Record "ALT Child";
+    begin
+        Parent.DeleteAll();
+        Child.DeleteAll();
         DeleteCompany();
     end;
 }
