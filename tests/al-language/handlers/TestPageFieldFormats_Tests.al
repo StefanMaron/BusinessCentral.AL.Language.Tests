@@ -35,7 +35,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Num.Value();
         Card.Close();
-        exit('Num(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Big(v: Text): Text
@@ -51,7 +51,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Big.Value();
         Card.Close();
-        exit('Big(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Dec2(v: Decimal): Text
@@ -67,7 +67,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Dec2.Value();
         Card.Close();
-        exit('Dec2(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Dec1(v: Decimal): Text
@@ -83,7 +83,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Dec1.Value();
         Card.Close();
-        exit('Dec1(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Dec5(v: Decimal): Text
@@ -99,7 +99,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Dec5.Value();
         Card.Close();
-        exit('Dec5(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecDef(v: Decimal): Text
@@ -115,7 +115,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecDef.Value();
         Card.Close();
-        exit('DecDef(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecRng(v: Decimal): Text
@@ -131,7 +131,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecRng.Value();
         Card.Close();
-        exit('DecRng(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecBZ(v: Decimal): Text
@@ -147,7 +147,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecBZ.Value();
         Card.Close();
-        exit('DecBZ(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecBZT(v: Decimal): Text
@@ -163,7 +163,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecBZT.Value();
         Card.Close();
-        exit('DecBZT(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecBNP(v: Decimal): Text
@@ -179,7 +179,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecBNP.Value();
         Card.Close();
-        exit('DecBNP(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecBNN(v: Decimal): Text
@@ -195,7 +195,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecBNN.Value();
         Card.Close();
-        exit('DecBNN(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DecAF(v: Decimal): Text
@@ -211,7 +211,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DecAF.Value();
         Card.Close();
-        exit('DecAF(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_NumBZ(v: Integer): Text
@@ -227,7 +227,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.NumBZ.Value();
         Card.Close();
-        exit('NumBZ(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Flag(v: Boolean): Text
@@ -243,7 +243,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Flag.Value();
         Card.Close();
-        exit('Flag(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Opt(v: Integer): Text
@@ -259,7 +259,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Opt.Value();
         Card.Close();
-        exit('Opt(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Enm(v: Integer): Text
@@ -275,7 +275,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Enm.Value();
         Card.Close();
-        exit('Enm(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Dt(v: Date): Text
@@ -291,7 +291,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Dt.Value();
         Card.Close();
-        exit('Dt(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Tm(v: Time): Text
@@ -307,7 +307,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Tm.Value();
         Card.Close();
-        exit('Tm(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_DtTm(v: DateTime): Text
@@ -323,7 +323,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.DtTm.Value();
         Card.Close();
-        exit('DtTm(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Cd(v: Code[20]): Text
@@ -339,7 +339,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Cd.Value();
         Card.Close();
-        exit('Cd(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Txt(v: Text[50]): Text
@@ -355,7 +355,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Txt.Value();
         Card.Close();
-        exit('Txt(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Gd(v: Text): Text
@@ -371,7 +371,7 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Gd.Value();
         Card.Close();
-        exit('Gd(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     local procedure V_Dur(v: Integer): Text
@@ -387,11 +387,11 @@ codeunit 69932 "TPF Tests"
         Open(Row, Card);
         T := Card.Dur.Value();
         Card.Close();
-        exit('Dur(' + Format(v) + ')=[' + T + '] ');
+        exit('(' + Format(v) + ')=[' + T + '] ');
     end;
 
     [Test]
-    procedure Probe_Value_Integers()
+    procedure Probe_Value_Num()
     var
         Obs: Text;
     begin
@@ -400,17 +400,22 @@ codeunit 69932 "TPF Tests"
         Obs += V_Num(1000);
         Obs += V_Num(1234567);
         Obs += V_Num(-1234567);
-        Obs += V_Big('9000000000');
-        Obs += V_Big('1234567890123');
-        Obs += V_Big('-5000');
-        Obs += V_NumBZ(0);
-        Obs += V_NumBZ(7);
-        Obs += V_NumBZ(1000);
         Error('%1', Obs);
     end;
 
     [Test]
-    procedure Probe_Value_Decimals()
+    procedure Probe_Value_Big()
+    var
+        Obs: Text;
+    begin
+        Obs += V_Big('9000000000');
+        Obs += V_Big('1234567890123');
+        Obs += V_Big('-5000');
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Dec2()
     var
         Obs: Text;
     begin
@@ -422,9 +427,25 @@ codeunit 69932 "TPF Tests"
         Obs += V_Dec2(0.005);
         Obs += V_Dec2(0.015);
         Obs += V_Dec2(99999999999999.99);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Dec1()
+    var
+        Obs: Text;
+    begin
         Obs += V_Dec1(3.25);
         Obs += V_Dec1(1234.56);
         Obs += V_Dec1(0);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Dec5()
+    var
+        Obs: Text;
+    begin
         Obs += V_Dec5(1.5);
         Obs += V_Dec5(1234.12345);
         Obs += V_Dec5(0);
@@ -432,7 +453,7 @@ codeunit 69932 "TPF Tests"
     end;
 
     [Test]
-    procedure Probe_Value_DecimalsMore()
+    procedure Probe_Value_DecDef()
     var
         Obs: Text;
     begin
@@ -441,28 +462,58 @@ codeunit 69932 "TPF Tests"
         Obs += V_DecDef(1234.5);
         Obs += V_DecDef(1234567.891);
         Obs += V_DecDef(1000);
-        Obs += V_DecRng(1000);
-        Obs += V_DecRng(1234.5);
-        Obs += V_DecRng(1.123456);
-        Obs += V_DecRng(0);
-        Obs += V_DecAF(1234.5);
-        Obs += V_DecAF(0);
         Error('%1', Obs);
     end;
 
     [Test]
-    procedure Probe_Value_Blanking()
+    procedure Probe_Value_DecRng()
+    var
+        Obs: Text;
+    begin
+        Obs += V_DecRng(1000);
+        Obs += V_DecRng(1234.5);
+        Obs += V_DecRng(1.123456);
+        Obs += V_DecRng(0);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_DecBZ()
     var
         Obs: Text;
     begin
         Obs += V_DecBZ(0);
         Obs += V_DecBZ(5);
         Obs += V_DecBZ(1000);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_DecBZT()
+    var
+        Obs: Text;
+    begin
         Obs += V_DecBZT(0);
         Obs += V_DecBZT(5);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_DecBNP()
+    var
+        Obs: Text;
+    begin
         Obs += V_DecBNP(-5);
         Obs += V_DecBNP(0);
         Obs += V_DecBNP(5);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_DecBNN()
+    var
+        Obs: Text;
+    begin
         Obs += V_DecBNN(-5);
         Obs += V_DecBNN(0);
         Obs += V_DecBNN(5);
@@ -470,35 +521,86 @@ codeunit 69932 "TPF Tests"
     end;
 
     [Test]
-    procedure Probe_Value_Scalars()
+    procedure Probe_Value_DecAF()
+    var
+        Obs: Text;
+    begin
+        Obs += V_DecAF(1234.5);
+        Obs += V_DecAF(0);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_NumBZ()
+    var
+        Obs: Text;
+    begin
+        Obs += V_NumBZ(0);
+        Obs += V_NumBZ(7);
+        Obs += V_NumBZ(1000);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Flag()
     var
         Obs: Text;
     begin
         Obs += V_Flag(true);
         Obs += V_Flag(false);
-        Obs += V_Opt(0);
-        Obs += V_Opt(1);
-        Obs += V_Opt(2);
-        Obs += V_Enm(0);
-        Obs += V_Enm(1);
-        Obs += V_Enm(2);
-        Obs += V_Cd('ABC');
-        Obs += V_Txt('text');
         Error('%1', Obs);
     end;
 
     [Test]
-    procedure Probe_Value_Temporal()
+    procedure Probe_Value_Opt()
+    var
+        Obs: Text;
+    begin
+        Obs += V_Opt(0);
+        Obs += V_Opt(1);
+        Obs += V_Opt(2);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Enm()
+    var
+        Obs: Text;
+    begin
+        Obs += V_Enm(0);
+        Obs += V_Enm(1);
+        Obs += V_Enm(2);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Dt()
     var
         Obs: Text;
     begin
         Obs += V_Dt(20240302D);
         Obs += V_Dt(0D);
         Obs += V_Dt(20241231D);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Tm()
+    var
+        Obs: Text;
+    begin
         Obs += V_Tm(123456T);
         Obs += V_Tm(0T);
         Obs += V_Tm(235959T);
         Obs += V_Tm(000001T);
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_DtTm()
+    var
+        Obs: Text;
+    begin
         Obs += V_DtTm(CreateDateTime(20240302D, 123456T));
         Obs += V_DtTm(0DT);
         Obs += V_DtTm(CreateDateTime(20240302D, 0T));
@@ -507,12 +609,38 @@ codeunit 69932 "TPF Tests"
     end;
 
     [Test]
-    procedure Probe_Value_GuidDuration()
+    procedure Probe_Value_Cd()
+    var
+        Obs: Text;
+    begin
+        Obs += V_Cd('ABC');
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Txt()
+    var
+        Obs: Text;
+    begin
+        Obs += V_Txt('text');
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Gd()
     var
         Obs: Text;
     begin
         Obs += V_Gd('{11111111-2222-3333-4444-555555555555}');
         Obs += V_Gd('{00000000-0000-0000-0000-000000000000}');
+        Error('%1', Obs);
+    end;
+
+    [Test]
+    procedure Probe_Value_Dur()
+    var
+        Obs: Text;
+    begin
         Obs += V_Dur(0);
         Obs += V_Dur(5000);
         Obs += V_Dur(3723000);
@@ -539,7 +667,7 @@ codeunit 69932 "TPF Tests"
         Row.Insert();
         Card.OpenEdit();
         Card.GoToKey('R1');
-        Obs := 'GlobDec=[' + Card.GlobDec.Value() + '] GlobNum=[' + Card.GlobNum.Value() + '] GlobDt=[' + Card.GlobDt.Value() + '] GlobDur=[' + Card.GlobDur.Value() + '] GlobFlag=[' + Card.GlobFlag.Value() + ']';
+        Obs := 'D=[' + Card.GlobDec.Value() + '] N=[' + Card.GlobNum.Value() + '] Dt=[' + Card.GlobDt.Value() + '] Dur=[' + Card.GlobDur.Value() + '] F=[' + Card.GlobFlag.Value() + ']';
         Card.Close();
         Error('%1', Obs);
     end;
