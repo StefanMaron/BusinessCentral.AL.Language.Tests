@@ -17,6 +17,12 @@
 //
 // Every test below asserts under 1,000 as well as over, so a rule that is right for one spelling
 // only cannot pass.
+//
+// OVERLAP WITH codeunit 69932 (TPF Tests): that suite already pins the control text of a 2:2
+// decimal (Value_Decimal_TwoPlaces and its siblings), typed AssertEquals of -1234567.89 and 1234567, the
+// string forms, and the page-variable-bound decimal. What it has no counterpart for, and what is
+// asserted here: a typed AssertEquals of 1234567.89, 1000 and 999.5 on a RECORD-bound 2:2 control,
+// and a typed wrong value of a thousand or more still failing.
 
 codeunit 69931 "TPD Dec Tests"
 {
@@ -37,16 +43,6 @@ codeunit 69931 "TPD Dec Tests"
         Row.Insert();
         Card.OpenEdit();
         Card.GoToKey('R1');
-    end;
-
-    [Test]
-    procedure TestPageField_Value_DecimalOfSevenDigits_ShowsThousandsSeparators()
-    var
-        Card: TestPage "TPD Dec Card";
-    begin
-        OpenOn(1234567.89, Card);
-        Assert.AreEqual('1,234,567.89', Card.Amount.Value(), 'the control text for 1234567.89');
-        Card.Close();
     end;
 
     [Test]
