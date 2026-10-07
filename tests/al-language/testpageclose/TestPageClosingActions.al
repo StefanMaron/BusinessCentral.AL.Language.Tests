@@ -905,6 +905,21 @@ codeunit 69651 "TPC Closing Action Tests"
     end;
 
     [Test]
+    procedure Dialog_OK_ThenReopen_ThenClose_ReportsCancelAsOnAFreshPage()
+    var
+        P: TestPage "TPC Dialog";
+    begin
+        P.OpenEdit();
+        P.OK().Invoke();
+        TPCLog.Reset();
+
+        P.OpenEdit();
+        P.Close();
+
+        Assert.AreEqual('open,qcp:Cancel,close,', TPCLog.Text(), 'the reopened dialog is a fresh page, so closing it reports Cancel and nothing remembers the earlier OK');
+    end;
+
+    [Test]
     procedure Dialog_Cancel_ClosesThePage_AndTheVariableOpensAgain()
     var
         P: TestPage "TPC Dialog";
