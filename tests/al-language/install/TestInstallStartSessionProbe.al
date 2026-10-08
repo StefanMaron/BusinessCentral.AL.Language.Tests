@@ -20,6 +20,10 @@ codeunit 60445 "Install StartSession Probe"
         Observation: Record "Install StartSession Obs";
         SessionId: Integer;
     begin
+        // Reinstall writes a fresh observation: drop the row a previous install left behind.
+        if Observation.Get('STARTSESSION') then
+            Observation.Delete();
+
         Observation.Init();
         Observation."Code" := 'STARTSESSION';
 

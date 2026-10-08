@@ -9,6 +9,10 @@ codeunit 60894 "BEI Installer"
     var
         BeiSetup: Record "BEI Setup";
     begin
+        // Reinstall re-runs the repro insert: drop the blank-key row a previous install left behind.
+        if BeiSetup.Get('') then
+            BeiSetup.Delete();
+
         BeiSetup.Init();
         BeiSetup.Insert(false);
     end;

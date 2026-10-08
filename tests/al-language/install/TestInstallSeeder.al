@@ -18,6 +18,10 @@ codeunit 60618 "Install Seeder"
     var
         Seed: Record "Install Seed Database";
     begin
+        // Reinstall writes fresh rows: drop what a previous install left behind.
+        if Seed.Get('DATABASE') then
+            Seed.Delete();
+
         Seed.Init();
         Seed."Code" := 'DATABASE';
         Seed."Value" := 99;
@@ -32,6 +36,12 @@ codeunit 60618 "Install Seeder"
         EventPublisher: Codeunit "Install Event Publisher";
     begin
         RecordWhatTheInstallTriggerCouldSee();
+
+        // Reinstall writes fresh rows: drop what a previous install left behind.
+        if Seed.Get('COMPANY1') then
+            Seed.Delete();
+        if Seed.Get('COMPANY2') then
+            Seed.Delete();
 
         Seed.Init();
         Seed."Code" := 'COMPANY1';
@@ -60,6 +70,10 @@ codeunit 60618 "Install Seeder"
         Comp: Record Company;
         UserPermissions: Codeunit "User Permissions";
     begin
+        // Reinstall writes a fresh observation: drop the row a previous install left behind.
+        if Observation.Get('ENV') then
+            Observation.Delete();
+
         Observation.Init();
         Observation."Code" := 'ENV';
         Observation."Observed Company Name" := CopyStr(CompanyName(), 1, MaxStrLen(Observation."Observed Company Name"));
