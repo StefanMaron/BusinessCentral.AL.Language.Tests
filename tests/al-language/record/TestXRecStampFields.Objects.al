@@ -82,30 +82,8 @@ codeunit 67811 "xRec Stamp Recorder"
         Seen.Set(TriggerName + '|' + What, Value);
     end;
 
-    procedure Has(TriggerName: Text; What: Text): Boolean
-    begin
-        exit(Seen.ContainsKey(TriggerName + '|' + What));
-    end;
-
     procedure Read(TriggerName: Text; What: Text): Text
     begin
         exit(Seen.Get(TriggerName + '|' + What));
-    end;
-
-    // One letter per observation, so a probe message stays inside Error()'s length limit:
-    // 0 = the type's default, P = the value stored before the operation, Q = the value stored after it,
-    // ? = anything else.
-    procedure Classify(TriggerName: Text; What: Text; Pre: Text; Post: Text): Text
-    var
-        V: Text;
-    begin
-        V := Read(TriggerName, What);
-        if (V = '') or (V = '{00000000-0000-0000-0000-000000000000}') then
-            exit('0');
-        if (Pre <> '') and (V = Pre) then
-            exit('P');
-        if V = Post then
-            exit('Q');
-        exit('?');
     end;
 }
