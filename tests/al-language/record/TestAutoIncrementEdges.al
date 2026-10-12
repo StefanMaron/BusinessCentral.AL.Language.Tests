@@ -321,12 +321,12 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Note('exp.key', Format(I."Entry No.", 0, 9));
         Clear(I);
         I.Payload := 'z2';
-        Note('z2.ok', Format(TryInsertA(I)));
+        asserterror begin I.Insert(true); Error('INSERT-OK'); end;
         Note('z2.err', GetLastErrorText());
         Note('z2.key', Format(I."Entry No.", 0, 9));
         Clear(I);
         I.Payload := 'z3';
-        Note('z3.ok', Format(TryInsertA(I)));
+        asserterror begin I.Insert(true); Error('INSERT-OK'); end;
         Note('z3.err', GetLastErrorText());
         Note('z3.key', Format(I."Entry No.", 0, 9));
         Done('H2', Format(I.Count()));
@@ -346,7 +346,7 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Note('exp.key', Format(I."Entry No.", 0, 9));
         Clear(I);
         I.Payload := 'z2';
-        Note('z2.ok', Format(TryInsertB(I)));
+        asserterror begin I.Insert(true); Error('INSERT-OK'); end;
         Note('z2.err', GetLastErrorText());
         Note('z2.key', Format(I."Entry No.", 0, 9));
         Done('H3', Format(I.Count()));
@@ -385,7 +385,7 @@ codeunit 67826 "Test AutoInc Counter Edge"
         K := C."Entry No.";
         Note('ins.key', Format(K, 0, 9));
         C.Get(K, 'A');
-        Note('rename.ok', Format(TryRename(C, K, 'B')));
+        asserterror begin C.Rename(K, 'B'); Error('RENAME-OK'); end;
         Note('rename.err', GetLastErrorText());
         Note('rec.key', Format(C."Entry No.", 0, 9) + '/' + C.Code);
         Done('R1', Format(C.Count()));
@@ -404,26 +404,8 @@ codeunit 67826 "Test AutoInc Counter Edge"
         C.Insert(true);
         K := C."Entry No.";
         C.Get(K, 'A');
-        Note('rename.ok', Format(TryRename(C, K + 50, 'A')));
+        asserterror begin C.Rename(K + 50, 'A'); Error('RENAME-OK'); end;
         Note('rename.err', GetLastErrorText());
         Done('R2', Format(C.Count()));
-    end;
-
-    [TryFunction]
-    local procedure TryInsertA(var I: Record "AutoInc Edge IntMax A")
-    begin
-        I.Insert(true);
-    end;
-
-    [TryFunction]
-    local procedure TryInsertB(var I: Record "AutoInc Edge IntMax B")
-    begin
-        I.Insert(true);
-    end;
-
-    [TryFunction]
-    local procedure TryRename(var C: Record "AutoInc Edge Composite"; EntryNo: Integer; NewCode: Code[10])
-    begin
-        C.Rename(EntryNo, NewCode);
     end;
 }
