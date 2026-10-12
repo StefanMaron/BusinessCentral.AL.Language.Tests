@@ -20,10 +20,11 @@
 //     but its rollback restores the counter in the same way.
 //   - A BigInteger AutoIncrement key past Int32 follows the counter. (An Integer key past Int32 does not wrap: the
 //     Insert ends the transaction, and the test fails. No passing test can pin that, so it is not here.)
+//   - A Rename is refused when it changes the AutoIncrement value and accepted when it leaves it alone (composite key).
 //   - A FindSet after Truncate(true), Insert, Insert lists every row, whichever test ran before (a Count/FindSet
 //     disagreement in a test following a passing one is a defect on any tier).
 //
-// Written for StefanMaron/BusinessCentral.AL.Runner#5522, #5521 and #5516.
+// Written for StefanMaron/BusinessCentral.AL.Runner#5522, #5521, #5516 and #5517.
 
 codeunit 67826 "Test AutoInc Counter Edge"
 {
@@ -250,6 +251,47 @@ codeunit 67826 "Test AutoInc Counter Edge"
         asserterror U.Insert(true);
         Assert.ExpectedError('There is already a record in table AutoInc Unique Probe that has the same values in a unique index');
         Assert.AreEqual(0, U."Entry No.", 'the key taken for the refused Insert must not stay on the record');
+    end;
+
+    [Test]
+    procedure AutoInc_Rename_OfAKeyFieldOtherThanTheAutoIncrementOne_IsAccepted()
+    // CLAIM: in a composite key whose first field is the AutoIncrement one, a Rename that leaves that field's value
+    //        alone is accepted: only a changed AutoIncrement value is refused.
+    var
+        C: Record "AutoInc Edge Composite";
+        K: Integer;
+    begin
+        C.DeleteAll();
+        C.Code := 'A';
+        C.Insert(true);
+        K := C."Entry No.";
+        C.Get(K, 'A');
+        C.Rename(K, 'B');
+        Assert.AreEqual('B', C.Code, 'the record variable must carry the new key');
+        Assert.AreEqual(K, C."Entry No.", 'the AutoIncrement value must be untouched');
+        Assert.IsTrue(C.Get(K, 'B'), 'the row must be stored under the new key');
+        Assert.IsFalse(C.Get(K, 'A'), 'and no longer under the old one');
+    end;
+
+    [Test]
+    procedure AutoInc_Rename_ThatChangesTheAutoIncrementValue_IsRefused()
+    // CLAIM: a Rename that changes the AutoIncrement value of a composite key raises the AutoIncrement error, and
+    //        the row keeps its key.
+    var
+        C: Record "AutoInc Edge Composite";
+        K: Integer;
+    begin
+        C.DeleteAll();
+        C.Code := 'A';
+        C.Insert(true);
+        K := C."Entry No.";
+        C.Get(K, 'A');
+        Commit();
+        asserterror C.Rename(K + 50, 'A');
+        Assert.ExpectedError('You cannot change the value of an AutoIncrement field.');
+        Assert.ExpectedError('Field: Entry No.');
+        Assert.ExpectedError('Table: AutoInc Edge Composite');
+        Assert.IsTrue(C.Get(K, 'A'), 'the committed row must keep its key');
     end;
 
     local procedure ZeroA(): Integer

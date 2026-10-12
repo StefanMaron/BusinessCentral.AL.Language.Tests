@@ -1,4 +1,4 @@
-// Fixtures for TestAutoIncrementEdges.al (codeunit 67826) and TestAutoIncrementRenameProbe.al (codeunit 67837). Their own objects, with no SingleInstance control
+// Fixtures for TestAutoIncrementEdges.al (codeunit 67826). Their own objects, with no SingleInstance control
 // codeunit: a row asks its own OnInsert to refuse through its Payload.
 
 table 67825 "AutoInc Edge A"
