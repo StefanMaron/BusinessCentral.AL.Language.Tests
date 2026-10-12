@@ -1,5 +1,6 @@
-// Fixtures for TestAutoIncrementGuardedRun.al (codeunit 67840): a guarded Codeunit.Run that fails after it truncated
-// a table with an AutoIncrement key. One table and one failing codeunit per shape, so no shape shares a counter.
+// Fixtures for TestAutoIncrementGuardedRun.al (codeunit 67840): a guarded Codeunit.Run that fails after it wrote to a
+// table with an AutoIncrement key. One table and one failing codeunit per shape, so no shape shares a counter, and
+// each table is first used by its own test, so the counter starts at 1.
 
 table 67840 "GuardRun Probe A"
 {
@@ -80,32 +81,6 @@ table 67842 "GuardRun Probe C"
 }
 
 table 67843 "GuardRun Probe D"
-{
-    DataClassification = SystemMetadata;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            AutoIncrement = true;
-            DataClassification = SystemMetadata;
-        }
-        field(2; Payload; Text[30])
-        {
-            DataClassification = SystemMetadata;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 67844 "GuardRun Probe E"
 {
     DataClassification = SystemMetadata;
 
@@ -235,59 +210,7 @@ table 67848 "GuardRun Probe I"
     }
 }
 
-table 67849 "GuardRun Probe J"
-{
-    DataClassification = SystemMetadata;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            AutoIncrement = true;
-            DataClassification = SystemMetadata;
-        }
-        field(2; Payload; Text[30])
-        {
-            DataClassification = SystemMetadata;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
 table 67850 "GuardRun Probe K"
-{
-    DataClassification = SystemMetadata;
-
-    fields
-    {
-        field(1; "Entry No."; Integer)
-        {
-            AutoIncrement = true;
-            DataClassification = SystemMetadata;
-        }
-        field(2; Payload; Text[30])
-        {
-            DataClassification = SystemMetadata;
-        }
-    }
-
-    keys
-    {
-        key(PK; "Entry No.")
-        {
-            Clustered = true;
-        }
-    }
-}
-
-table 67851 "GuardRun Probe L"
 {
     DataClassification = SystemMetadata;
 
@@ -364,19 +287,6 @@ codeunit 67844 "GuardRun Inner D"
     end;
 }
 
-codeunit 67845 "GuardRun Inner E"
-{
-    trigger OnRun()
-    var
-        R: Record "GuardRun Probe E";
-    begin
-        R.Truncate(true);
-        R.Payload := 'inner';
-        R.Insert(true);
-        Error('inner error, key %1', R."Entry No.");
-    end;
-}
-
 codeunit 67846 "GuardRun Inner F"
 {
     trigger OnRun()
@@ -429,18 +339,6 @@ codeunit 67849 "GuardRun Inner I"
     end;
 }
 
-codeunit 67850 "GuardRun Inner J"
-{
-    trigger OnRun()
-    var
-        R: Record "GuardRun Probe J";
-    begin
-        R.Payload := 'inner';
-        R.Insert(true);
-        Error('inner error, key %1', R."Entry No.");
-    end;
-}
-
 codeunit 67851 "GuardRun Inner K"
 {
     trigger OnRun()
@@ -454,20 +352,7 @@ codeunit 67851 "GuardRun Inner K"
     end;
 }
 
-codeunit 67852 "GuardRun Inner L"
-{
-    trigger OnRun()
-    var
-        R: Record "GuardRun Probe L";
-    begin
-        R.DeleteAll();
-        R.Payload := 'inner';
-        R.Insert(true);
-        Error('inner error, key %1', R."Entry No.");
-    end;
-}
-
-// Shape H: an outer run that swallows a failed inner run and then writes and succeeds.
+// Shape H: an outer run that swallows a failed inner run, writes, and succeeds.
 codeunit 67853 "GuardRun Outer H"
 {
     trigger OnRun()
