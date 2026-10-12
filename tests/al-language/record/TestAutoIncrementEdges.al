@@ -321,12 +321,12 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Note('exp.key', Format(I."Entry No.", 0, 9));
         Clear(I);
         I.Payload := 'z2';
-        asserterror I.Insert(true);
+        Note('z2.ok', Format(TryInsertA(I)));
         Note('z2.err', GetLastErrorText());
         Note('z2.key', Format(I."Entry No.", 0, 9));
         Clear(I);
         I.Payload := 'z3';
-        asserterror I.Insert(true);
+        Note('z3.ok', Format(TryInsertA(I)));
         Note('z3.err', GetLastErrorText());
         Note('z3.key', Format(I."Entry No.", 0, 9));
         Done('H2', Format(I.Count()));
@@ -346,7 +346,7 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Note('exp.key', Format(I."Entry No.", 0, 9));
         Clear(I);
         I.Payload := 'z2';
-        asserterror I.Insert(true);
+        Note('z2.ok', Format(TryInsertB(I)));
         Note('z2.err', GetLastErrorText());
         Note('z2.key', Format(I."Entry No.", 0, 9));
         Done('H3', Format(I.Count()));
@@ -385,7 +385,7 @@ codeunit 67826 "Test AutoInc Counter Edge"
         K := C."Entry No.";
         Note('ins.key', Format(K, 0, 9));
         C.Get(K, 'A');
-        asserterror C.Rename(K, 'B');
+        Note('rename.ok', Format(TryRename(C, K, 'B')));
         Note('rename.err', GetLastErrorText());
         Note('rec.key', Format(C."Entry No.", 0, 9) + '/' + C.Code);
         Done('R1', Format(C.Count()));
@@ -404,8 +404,26 @@ codeunit 67826 "Test AutoInc Counter Edge"
         C.Insert(true);
         K := C."Entry No.";
         C.Get(K, 'A');
-        asserterror C.Rename(K + 50, 'A');
+        Note('rename.ok', Format(TryRename(C, K + 50, 'A')));
         Note('rename.err', GetLastErrorText());
         Done('R2', Format(C.Count()));
+    end;
+
+    [TryFunction]
+    local procedure TryInsertA(var I: Record "AutoInc Edge IntMax A")
+    begin
+        I.Insert(true);
+    end;
+
+    [TryFunction]
+    local procedure TryInsertB(var I: Record "AutoInc Edge IntMax B")
+    begin
+        I.Insert(true);
+    end;
+
+    [TryFunction]
+    local procedure TryRename(var C: Record "AutoInc Edge Composite"; EntryNo: Integer; NewCode: Code[10])
+    begin
+        C.Rename(EntryNo, NewCode);
     end;
 }
