@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-autoincrement-property
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: AutoInc Edge A to G (67825, 67829 to 67832, 67835, 67836), AutoInc Edge Big (67827),
+// Fixtures used: AutoInc Edge A to H (67825, 67829 to 67832, 67835 to 67837), AutoInc Edge Big (67827),
 //                AutoInc Unique Probe (67823, from TestAutoIncrementExplicitKey.Objects.al)
 //                -- declared in TestAutoIncrementEdges.Objects.al
 // BC versions: 27.0+ (measured on every cloud leg of the corpus matrix)
@@ -13,11 +13,11 @@
 //   - A counter value is consumed for good: an Insert refused by an error in OnInsert, then rolled back by asserterror,
 //     does not give its key back (DeleteAll shape, and Truncate with a Commit after it). Its row IS rolled back with
 //     everything written since the last Commit.
-//   - Truncate restarts the counter INSIDE the transaction, so a rollback to the last Commit undoes the restart, and
-//     the rows the Truncate removed come back: the counter is where it stood before the Truncate, whatever was taken
-//     after it. With Truncate(true) that is "the key of the rolled-back Insert is handed out again" when the table
-//     had never been used, and "the value after the committed rows" when it had. Truncate(false) does not reseed,
-//     but its rollback restores the counter in the same way.
+//   - After a Truncate, a rollback to the last Commit brings the rows the Truncate removed back and leaves the counter
+//     where it stood before the Truncate, whatever was taken after it. With Truncate(true) that is "the key of the
+//     rolled-back Insert is handed out again" when the table had never been used, and "the value after the highest
+//     key the counter had reached" when it had. Truncate(false) does not reseed, but its rollback gives the same.
+//     Only the shapes are measured here, not the mechanism behind them.
 //   - A BigInteger AutoIncrement key past Int32 follows the counter. (An Integer key past Int32 does not wrap: the
 //     Insert ends the transaction, and the test fails. No passing test can pin that, so it is not here.)
 //   - A Rename is refused when it changes the AutoIncrement value and accepted when it leaves it alone (composite key).
@@ -160,6 +160,36 @@ codeunit 67826 "Test AutoInc Counter Edge"
         W3 := ZeroF();
         Assert.AreEqual(C2 + 1, W1, 'Truncate(false) does not restart the counter');
         Assert.AreEqual(W1, W3, 'the value taken after the Truncate is handed out again once the transaction rolls back');
+        Assert.AreEqual(3, P.Count(), 'the two committed rows come back, next to the new one');
+        Assert.IsTrue(P.Get(C1) and P.Get(C2) and P.Get(W3), 'every expected key must be stored');
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateTrue_DeletedLastRow_RollbackRestoresTheCounterNotTheRowsHighWaterMark()
+    // CLAIM: the counter after the rollback is the value it had before the Truncate, not one derived from the rows the
+    //        rollback brought back: with the highest key's row deleted before the Truncate, the next key is still the
+    //        one after the deleted row's.
+    var
+        P: Record "AutoInc Edge H";
+        C1: Integer;
+        C2: Integer;
+        C3: Integer;
+        W1: Integer;
+        W3: Integer;
+    begin
+        P.Truncate(true);
+        C1 := ZeroH();
+        C2 := ZeroH();
+        C3 := ZeroH();
+        P.Get(C3);
+        P.Delete();
+        Commit();
+        P.Truncate(true);
+        W1 := ZeroH();
+        RefuseH();
+        W3 := ZeroH();
+        Assert.AreEqual(1, W1, 'Truncate(true) restarts the counter at 1');
+        Assert.AreEqual(C3 + 1, W3, 'the counter must be where it stood before the Truncate, which is past the deleted row');
         Assert.AreEqual(3, P.Count(), 'the two committed rows come back, next to the new one');
         Assert.IsTrue(P.Get(C1) and P.Get(C2) and P.Get(W3), 'every expected key must be stored');
     end;
@@ -424,9 +454,19 @@ codeunit 67826 "Test AutoInc Counter Edge"
         exit(P."Entry No.");
     end;
 
-    local procedure RefuseG()
+    local procedure ZeroH(): Integer
     var
-        P: Record "AutoInc Edge G";
+        P: Record "AutoInc Edge H";
+    begin
+        P."Entry No." := 0;
+        P.Payload := 'zero';
+        P.Insert(true);
+        exit(P."Entry No.");
+    end;
+
+    local procedure RefuseH()
+    var
+        P: Record "AutoInc Edge H";
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);

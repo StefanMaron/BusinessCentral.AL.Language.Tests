@@ -225,6 +225,38 @@ table 67836 "AutoInc Edge G"
     end;
 }
 
+table 67837 "AutoInc Edge H"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            AutoIncrement = true;
+            DataClassification = SystemMetadata;
+        }
+        field(2; Payload; Text[30])
+        {
+            DataClassification = SystemMetadata;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+
+    trigger OnInsert()
+    begin
+        if Rec.Payload = 'refuse' then
+            Error('AutoInc edge: OnInsert refused the row');
+    end;
+}
+
 table 67827 "AutoInc Edge Big"
 {
     DataClassification = SystemMetadata;

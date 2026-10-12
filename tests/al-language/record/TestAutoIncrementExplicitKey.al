@@ -21,8 +21,8 @@
 //   - An Insert refused by an error in OnInsert and caught by asserterror leaves the counter where it was: the
 //     data rolls back (every row written since the last Commit), the counter does not. A Truncate in the same
 //     transaction is the exception, see TestAutoIncrementEdges.al (codeunit 67826).
-// BC's AutoIncrement is a SQL IDENTITY column written with IDENTITY_INSERT for explicit keys (the platform's own
-// duplicate-key message for the mismatch case names it), which is the behaviour above.
+// The platform's own duplicate-key message for an AutoIncrement table names IDENTITY_INSERT; what is pinned here is the
+// observable behaviour above, not the mechanism behind it.
 //
 // Every key is asserted RELATIVE to a key the test just received, never as an absolute number: the counter of a
 // table survives DeleteAll and the tests run in one database, so the starting value depends on what ran before.
@@ -267,6 +267,7 @@ codeunit 67822 "Test AutoInc Explicit Key"
         K1: Integer;
     begin
         Initialize();
+        Commit();   // the asserterror rolls back to here, not to a state before this test's DeleteAll
         K1 := InsertZero();
         Control.FailInOnInsert();
         P.Payload := 'refused';
