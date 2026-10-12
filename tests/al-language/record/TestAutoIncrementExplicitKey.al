@@ -1,5 +1,5 @@
 // PROBE -- records what a real service tier answers; replaced by assertions once measured.
-codeunit 67822 "Test AutoIncrement Explicit Key"
+codeunit 67822 "Test AutoInc Explicit Key"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -26,7 +26,7 @@ codeunit 67822 "Test AutoIncrement Explicit Key"
     begin
         P."Entry No." := 0;
         P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(false);
+        Ok := P.Insert(true);
         Note(Name + '.ok', Format(Ok));
         Note(Name + '.key', Format(P."Entry No.", 0, 9));
         exit(P."Entry No.");
@@ -39,7 +39,7 @@ codeunit 67822 "Test AutoIncrement Explicit Key"
     begin
         P."Entry No." := KeyValue;
         P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(false);
+        Ok := P.Insert(true);
         Note(Name + '.ok', Format(Ok));
         Note(Name + '.key', Format(P."Entry No.", 0, 9));
         exit(Ok);
@@ -216,13 +216,13 @@ codeunit 67822 "Test AutoIncrement Explicit Key"
         Initialize();
         Zero('z1');
         P.Payload := 'again';
-        Ok := P.Insert(false);
+        Ok := P.Insert(true);
         Note('again.ok', Format(Ok));
         Note('again.key', Format(P."Entry No.", 0, 9));
         P.Init();
         P."Entry No." := 0;
         P.Payload := 'zeroed';
-        Ok := P.Insert(false);
+        Ok := P.Insert(true);
         Note('zeroed.ok', Format(Ok));
         Note('zeroed.key', Format(P."Entry No.", 0, 9));
         Done('D');
@@ -286,17 +286,17 @@ codeunit 67822 "Test AutoIncrement Explicit Key"
     begin
         Initialize();
         U.Code := 'X';
-        Ok := U.Insert(false);
+        Ok := U.Insert(true);
         Note('u1.ok', Format(Ok));
         Note('u1.key', Format(U."Entry No.", 0, 9));
         Clear(U);
         U.Code := 'X';
-        Ok := U.Insert(false);
+        Ok := U.Insert(true);
         Note('u2.ok', Format(Ok));
         Note('u2.key', Format(U."Entry No.", 0, 9));
         Clear(U);
         U.Code := 'Y';
-        Ok := U.Insert(false);
+        Ok := U.Insert(true);
         Note('u3.ok', Format(Ok));
         Note('u3.key', Format(U."Entry No.", 0, 9));
         Done('F2');
