@@ -7,7 +7,7 @@
 // WHAT THIS PINS. TestAutoIncrementContracts (60201) covers only zero-key inserts, Init and Truncate. This codeunit
 // asks what the AutoIncrement COUNTER does when the AL code puts a value into the AutoIncrement field itself:
 // the caller before Insert, the table's own OnInsert, an OnBeforeInsertEvent subscriber, a Rename; and what a failed
-// Insert, a delete or a rolled-back transaction does to the counter.
+// Insert, a delete or an asserterror rollback does to the counter.
 //
 // The answers were MEASURED by a probe on the cloud legs before these assertions were written. What a real
 // service tier does:
@@ -18,8 +18,8 @@
 //   - Rename on a table whose key is the AutoIncrement field is refused.
 //   - An Insert that fails on a unique secondary key has already taken its counter value, and the key it took is
 //     not left on the record variable.
-//   - An Insert refused by an error in OnInsert, caught by asserterror, is rolled back with the transaction, the
-//     counter included.
+//   - An Insert refused by an error in OnInsert and caught by asserterror leaves the counter where it was: the
+//     data rolls back, the counter does not.
 // BC's AutoIncrement is a SQL IDENTITY column written with IDENTITY_INSERT for explicit keys (the platform's own
 // duplicate-key message for the mismatch case names it), which is the behaviour above.
 //
@@ -258,9 +258,9 @@ codeunit 67822 "Test AutoInc Explicit Key"
     end;
 
     [Test]
-    procedure AutoInc_InsertRefusedByOnInsert_RollsBackTheCounter()
-    // CLAIM: an Insert refused by an error in OnInsert and caught by asserterror is rolled back with the
-    //        transaction: the row inserted before it is gone and its key is handed out again.
+    procedure AutoInc_InsertRefusedByOnInsert_ThenAsserterror_DoesNotRollTheCounterBack()
+    // CLAIM: an Insert refused by an error in OnInsert and caught by asserterror leaves the counter where it was --
+    //        the key the earlier Insert took is not handed out again, as with a SQL identity.
     var
         P: Record "AutoInc Explicit Probe";
         K1: Integer;
@@ -272,7 +272,7 @@ codeunit 67822 "Test AutoInc Explicit Key"
         asserterror P.Insert(true);
         Assert.ExpectedError('AutoInc probe: OnInsert refused the row');
         Control.Reset();
-        Assert.AreEqual(K1, InsertZero(), 'the counter must have been rolled back with the transaction');
+        Assert.AreEqual(K1 + 1, InsertZero(), 'the counter must not have been rolled back with the data');
     end;
 
     [Test]
