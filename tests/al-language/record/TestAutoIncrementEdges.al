@@ -1,32 +1,264 @@
-// PROBE -- records what a real service tier answers; replaced by assertions once measured.
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-autoincrement-property
+// Scope: in-scope (Cloud-compatible)
+// Fixtures used: AutoInc Edge A to G (67825, 67829 to 67832, 67835, 67836), AutoInc Edge Big (67827),
+//                AutoInc Unique Probe (67823, from TestAutoIncrementExplicitKey.Objects.al)
+//                -- declared in TestAutoIncrementEdges.Objects.al
+// BC versions: 27.0+ (measured on every cloud leg of the corpus matrix)
+//
+// WHAT THIS PINS. TestAutoIncrementExplicitKey (67822) covers what an AL-assigned key does to the AutoIncrement counter.
+// This codeunit covers what a TRANSACTION does to it, and the limits of its type.
+//
+// The answers were MEASURED by a probe version of this file on the ten cloud legs (identical on all of them) before
+// any assertion was written:
+//   - A counter value is consumed for good: an Insert refused by an error in OnInsert, then rolled back by asserterror,
+//     does not give its key back (DeleteAll shape, and Truncate with a Commit after it). Its row IS rolled back with
+//     everything written since the last Commit.
+//   - Truncate restarts the counter INSIDE the transaction, so a rollback to the last Commit undoes the restart, and
+//     the rows the Truncate removed come back: the counter is where it stood before the Truncate, whatever was taken
+//     after it. With Truncate(true) that is "the key of the rolled-back Insert is handed out again" when the table
+//     had never been used, and "the value after the committed rows" when it had. Truncate(false) does not reseed,
+//     but its rollback restores the counter in the same way.
+//   - A BigInteger AutoIncrement key past Int32 follows the counter. (An Integer key past Int32 does not wrap: the
+//     Insert ends the transaction, and the test fails. No passing test can pin that, so it is not here.)
+//   - A FindSet after Truncate(true), Insert, Insert lists every row, whichever test ran before (a Count/FindSet
+//     disagreement in a test following a passing one is a defect on any tier).
+//
+// Written for StefanMaron/BusinessCentral.AL.Runner#5522, #5521 and #5516.
+
 codeunit 67826 "Test AutoInc Counter Edge"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     var
-        Trace: TextBuilder;
+        Assert: Codeunit Assert;
 
-    local procedure Note(What: Text; Value: Text)
-    begin
-        Trace.Append(What + '=' + Value + '; ');
-    end;
-
-    local procedure Done(CaseName: Text; RowsText: Text)
-    begin
-        Error('PROBE %1 :: %2 rows=[%3]', CaseName, Trace.ToText(), RowsText);
-    end;
-
-    local procedure ZeroA(Name: Text): Integer
+    [Test]
+    procedure AutoInc_TruncateTrue_RefusedInsertRolledBack_NextInsertGetsTheKeyAgain()
+    // CLAIM: after Truncate(true), a first Insert and an Insert refused by OnInsert (caught by asserterror), the next
+    //        Insert gets the key the first one had: the restart is rolled back with the transaction.
     var
         P: Record "AutoInc Edge A";
-        Ok: Boolean;
+        K1: Integer;
+        K3: Integer;
+    begin
+        P.Truncate(true);
+        Commit();
+        P.Truncate(true);
+        K1 := ZeroA();
+        RefuseA();
+        K3 := ZeroA();
+        Assert.AreEqual(1, K1, 'Truncate(true) restarts the counter at 1');
+        Assert.AreEqual(K1, K3, 'the key of the rolled-back Insert must be handed out again');
+        Assert.AreEqual(1, P.Count(), 'only the second Insert survives: the first one is rolled back with the refused one');
+        Assert.IsTrue(P.Get(K3), 'the surviving row must be the one with the re-issued key');
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateTrue_TwoInsertsThenRefusedInsert_RestartIsRolledBackWholesale()
+    // CLAIM: the same with two successful Inserts before the refused one: the restart is undone as a whole, not by one.
+    var
+        P: Record "AutoInc Edge B";
+        K1: Integer;
+        K2: Integer;
+        K4: Integer;
+    begin
+        P.Truncate(true);
+        Commit();
+        P.Truncate(true);
+        K1 := ZeroB();
+        K2 := ZeroB();
+        RefuseB();
+        K4 := ZeroB();
+        Assert.AreEqual(1, K1, 'Truncate(true) restarts the counter at 1');
+        Assert.AreEqual(K1 + 1, K2, 'the counter advances between the two Inserts');
+        Assert.AreEqual(K1, K4, 'both consumed values are handed out again, starting from the first');
+        Assert.AreEqual(1, P.Count(), 'only the last Insert survives');
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateTrue_CommittedRows_RefusedInsertRolledBack_RestoresRowsAndCounter()
+    // CLAIM: Truncate(true) of committed rows, an Insert, and a refused Insert caught by asserterror: the rollback
+    //        brings the committed rows back and the counter is where it stood before the Truncate.
+    var
+        P: Record "AutoInc Edge C";
+        C1: Integer;
+        C2: Integer;
+        C3: Integer;
+        W1: Integer;
+        W3: Integer;
+    begin
+        P.Truncate(true);
+        C1 := ZeroC();
+        C2 := ZeroC();
+        C3 := ZeroC();
+        Commit();
+        P.Truncate(true);
+        W1 := ZeroC();
+        RefuseC();
+        W3 := ZeroC();
+        Assert.AreEqual(1, W1, 'Truncate(true) restarts the counter at 1');
+        Assert.AreEqual(C3 + 1, W3, 'the counter must be back where it stood before the Truncate, not at the restart');
+        Assert.AreEqual(4, P.Count(), 'the three committed rows come back, next to the new one');
+        Assert.IsTrue(P.Get(C1) and P.Get(C2) and P.Get(C3) and P.Get(W3), 'every expected key must be stored');
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateTrue_CommitAfterTheTruncate_RefusedInsertConsumesItsValue()
+    // CLAIM: with a Commit between the Truncate(true) and the Inserts, the restart is durable, and the refused
+    //        Insert's value is consumed like any other.
+    var
+        P: Record "AutoInc Edge D";
+        K1: Integer;
+        K3: Integer;
+    begin
+        P.Truncate(true);
+        Commit();
+        K1 := ZeroD();
+        RefuseD();
+        K3 := ZeroD();
+        Assert.AreEqual(K1 + 1, K3, 'the value taken by the first Insert is not handed out again');
+        Assert.AreEqual(1, P.Count(), 'only the last Insert survives');
+        Assert.IsFalse(P.Get(K1), 'the first Insert is rolled back with the refused one');
+    end;
+
+    [Test]
+    procedure AutoInc_DeleteAll_RefusedInsertRolledBack_ConsumesItsValueAndRollsBackTheRow()
+    // CLAIM: without a Truncate, the Insert before the refused one is rolled back too, and its key is not reused.
+    var
+        P: Record "AutoInc Edge E";
+        K1: Integer;
+        K3: Integer;
+    begin
+        P.DeleteAll();
+        K1 := ZeroE();
+        RefuseE();
+        K3 := ZeroE();
+        Assert.AreEqual(K1 + 1, K3, 'the counter must not have been rolled back with the data');
+        Assert.AreEqual(1, P.Count(), 'only the last Insert survives');
+        Assert.IsFalse(P.Get(K1), 'the first Insert is rolled back with the refused one');
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateFalse_CommittedRows_RefusedInsertRolledBack_RestoresRowsAndCounter()
+    // CLAIM: Truncate(false) does not reseed, but its rollback restores the rows and the counter as well.
+    var
+        P: Record "AutoInc Edge F";
+        C1: Integer;
+        C2: Integer;
+        W1: Integer;
+        W3: Integer;
+    begin
+        P.DeleteAll();
+        C1 := ZeroF();
+        C2 := ZeroF();
+        Commit();
+        P.Truncate(false);
+        W1 := ZeroF();
+        RefuseF();
+        W3 := ZeroF();
+        Assert.AreEqual(C2 + 1, W1, 'Truncate(false) does not restart the counter');
+        Assert.AreEqual(W1, W3, 'the value taken after the Truncate is handed out again once the transaction rolls back');
+        Assert.AreEqual(3, P.Count(), 'the two committed rows come back, next to the new one');
+        Assert.IsTrue(P.Get(C1) and P.Get(C2) and P.Get(W3), 'every expected key must be stored');
+    end;
+
+    [Test]
+    procedure AutoInc_BigIntegerKey_ExplicitAboveInt32_NextZeroKeysFollowIt()
+    // CLAIM: an explicit BigInteger key above Int32.MaxValue raises the counter, and the zero-key Inserts after it
+    //        get Big + 1 and Big + 2 (not a key truncated to 32 bits).
+    var
+        B: Record "AutoInc Edge Big";
+        Big: BigInteger;
+        Z3: BigInteger;
+        Z4: BigInteger;
+    begin
+        B.DeleteAll();
+        Big := 500000000;
+        Big := Big * 10;
+        B.Payload := 'z1';
+        B.Insert(true);
+        Clear(B);
+        B."Entry No." := Big;
+        B.Payload := 'explicit';
+        B.Insert(true);
+        Clear(B);
+        B.Payload := 'z3';
+        B.Insert(true);
+        Z3 := B."Entry No.";
+        Clear(B);
+        B.Payload := 'z4';
+        B.Insert(true);
+        Z4 := B."Entry No.";
+        Assert.AreEqual(Big + 1, Z3, 'the next key must follow the explicit BigInteger key');
+        Assert.AreEqual(Big + 2, Z4, 'and the counter keeps advancing from there');
+        Assert.AreEqual(4, B.Count(), 'all four rows must be stored');
+        Assert.IsTrue(B.Get(Big), 'the explicit key must be stored as given');
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateTrue_ReadInsertRead_ListsEveryRow_FirstTest()
+    begin
+        TruncateInsertReadInsertRead();
+    end;
+
+    [Test]
+    procedure AutoInc_TruncateTrue_ReadInsertRead_ListsEveryRow_FollowingTest()
+    // CLAIM: the same shape in a test that follows a passing one lists every row too: Count and a FindSet loop agree.
+    begin
+        TruncateInsertReadInsertRead();
+    end;
+
+    local procedure TruncateInsertReadInsertRead()
+    var
+        P: Record "AutoInc Edge G";
+    begin
+        P.Truncate(true);
+        ZeroG();
+        ZeroG();
+        ZeroG();
+        AssertListedRowsEqual(3);
+        ZeroG();
+        AssertListedRowsEqual(4);
+    end;
+
+    local procedure AssertListedRowsEqual(Expected: Integer)
+    var
+        P: Record "AutoInc Edge G";
+        Listed: Integer;
+    begin
+        Assert.AreEqual(Expected, P.Count(), 'Count must see every row');
+        if P.FindSet() then
+            repeat
+                Listed += 1;
+            until P.Next() = 0;
+        Assert.AreEqual(Expected, Listed, 'a FindSet loop must list every row Count sees');
+    end;
+
+    [Test]
+    procedure AutoInc_UniqueKeyRefusedInsert_UnderAsserterror_LeavesTheKeyZeroOnTheRecord()
+    // CLAIM: a zero-key Insert refused on a unique secondary key and NOT trapped by a Boolean receiver leaves the
+    //        AutoIncrement field at 0 on the record variable, as the Boolean-receiver form does (codeunit 67822).
+    var
+        U: Record "AutoInc Unique Probe";
+    begin
+        U.DeleteAll();
+        U.Code := 'X';
+        U.Insert(true);
+        Clear(U);
+        U.Code := 'X';
+        asserterror U.Insert(true);
+        Assert.ExpectedError('There is already a record in table AutoInc Unique Probe that has the same values in a unique index');
+        Assert.AreEqual(0, U."Entry No.", 'the key taken for the refused Insert must not stay on the record');
+    end;
+
+    local procedure ZeroA(): Integer
+    var
+        P: Record "AutoInc Edge A";
     begin
         P."Entry No." := 0;
-        P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(true);
-        Note(Name + '.ok', Format(Ok));
-        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        P.Payload := 'zero';
+        P.Insert(true);
         exit(P."Entry No.");
     end;
 
@@ -36,33 +268,17 @@ codeunit 67826 "Test AutoInc Counter Edge"
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);
-        Note('refused.err', GetLastErrorText());
-        Note('refused.key', Format(P."Entry No.", 0, 9));
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 
-    local procedure RowsA(): Text
-    var
-        P: Record "AutoInc Edge A";
-        R: Text;
-    begin
-        R := 'cnt=' + Format(P.Count()) + ':';
-        if P.FindSet() then
-            repeat
-                R += Format(P."Entry No.", 0, 9) + ',';
-            until P.Next() = 0;
-        exit(R);
-    end;
-
-    local procedure ZeroB(Name: Text): Integer
+    local procedure ZeroB(): Integer
     var
         P: Record "AutoInc Edge B";
-        Ok: Boolean;
     begin
         P."Entry No." := 0;
-        P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(true);
-        Note(Name + '.ok', Format(Ok));
-        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        P.Payload := 'zero';
+        P.Insert(true);
         exit(P."Entry No.");
     end;
 
@@ -72,33 +288,17 @@ codeunit 67826 "Test AutoInc Counter Edge"
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);
-        Note('refused.err', GetLastErrorText());
-        Note('refused.key', Format(P."Entry No.", 0, 9));
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 
-    local procedure RowsB(): Text
-    var
-        P: Record "AutoInc Edge B";
-        R: Text;
-    begin
-        R := 'cnt=' + Format(P.Count()) + ':';
-        if P.FindSet() then
-            repeat
-                R += Format(P."Entry No.", 0, 9) + ',';
-            until P.Next() = 0;
-        exit(R);
-    end;
-
-    local procedure ZeroC(Name: Text): Integer
+    local procedure ZeroC(): Integer
     var
         P: Record "AutoInc Edge C";
-        Ok: Boolean;
     begin
         P."Entry No." := 0;
-        P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(true);
-        Note(Name + '.ok', Format(Ok));
-        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        P.Payload := 'zero';
+        P.Insert(true);
         exit(P."Entry No.");
     end;
 
@@ -108,33 +308,17 @@ codeunit 67826 "Test AutoInc Counter Edge"
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);
-        Note('refused.err', GetLastErrorText());
-        Note('refused.key', Format(P."Entry No.", 0, 9));
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 
-    local procedure RowsC(): Text
-    var
-        P: Record "AutoInc Edge C";
-        R: Text;
-    begin
-        R := 'cnt=' + Format(P.Count()) + ':';
-        if P.FindSet() then
-            repeat
-                R += Format(P."Entry No.", 0, 9) + ',';
-            until P.Next() = 0;
-        exit(R);
-    end;
-
-    local procedure ZeroD(Name: Text): Integer
+    local procedure ZeroD(): Integer
     var
         P: Record "AutoInc Edge D";
-        Ok: Boolean;
     begin
         P."Entry No." := 0;
-        P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(true);
-        Note(Name + '.ok', Format(Ok));
-        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        P.Payload := 'zero';
+        P.Insert(true);
         exit(P."Entry No.");
     end;
 
@@ -144,33 +328,17 @@ codeunit 67826 "Test AutoInc Counter Edge"
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);
-        Note('refused.err', GetLastErrorText());
-        Note('refused.key', Format(P."Entry No.", 0, 9));
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 
-    local procedure RowsD(): Text
-    var
-        P: Record "AutoInc Edge D";
-        R: Text;
-    begin
-        R := 'cnt=' + Format(P.Count()) + ':';
-        if P.FindSet() then
-            repeat
-                R += Format(P."Entry No.", 0, 9) + ',';
-            until P.Next() = 0;
-        exit(R);
-    end;
-
-    local procedure ZeroE(Name: Text): Integer
+    local procedure ZeroE(): Integer
     var
         P: Record "AutoInc Edge E";
-        Ok: Boolean;
     begin
         P."Entry No." := 0;
-        P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(true);
-        Note(Name + '.ok', Format(Ok));
-        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        P.Payload := 'zero';
+        P.Insert(true);
         exit(P."Entry No.");
     end;
 
@@ -180,33 +348,17 @@ codeunit 67826 "Test AutoInc Counter Edge"
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);
-        Note('refused.err', GetLastErrorText());
-        Note('refused.key', Format(P."Entry No.", 0, 9));
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 
-    local procedure RowsE(): Text
-    var
-        P: Record "AutoInc Edge E";
-        R: Text;
-    begin
-        R := 'cnt=' + Format(P.Count()) + ':';
-        if P.FindSet() then
-            repeat
-                R += Format(P."Entry No.", 0, 9) + ',';
-            until P.Next() = 0;
-        exit(R);
-    end;
-
-    local procedure ZeroF(Name: Text): Integer
+    local procedure ZeroF(): Integer
     var
         P: Record "AutoInc Edge F";
-        Ok: Boolean;
     begin
         P."Entry No." := 0;
-        P.Payload := CopyStr(Name, 1, 30);
-        Ok := P.Insert(true);
-        Note(Name + '.ok', Format(Ok));
-        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        P.Payload := 'zero';
+        P.Insert(true);
         exit(P."Entry No.");
     end;
 
@@ -216,251 +368,27 @@ codeunit 67826 "Test AutoInc Counter Edge"
     begin
         P.Payload := 'refuse';
         asserterror P.Insert(true);
-        Note('refused.err', GetLastErrorText());
-        Note('refused.key', Format(P."Entry No.", 0, 9));
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 
-    local procedure RowsF(): Text
+    local procedure ZeroG(): Integer
     var
-        P: Record "AutoInc Edge F";
-        R: Text;
+        P: Record "AutoInc Edge G";
     begin
-        R := 'cnt=' + Format(P.Count()) + ':';
-        if P.FindSet() then
-            repeat
-                R += Format(P."Entry No.", 0, 9) + ',';
-            until P.Next() = 0;
-        exit(R);
+        P."Entry No." := 0;
+        P.Payload := 'zero';
+        P.Insert(true);
+        exit(P."Entry No.");
     end;
 
-
-    // F1: Truncate(true), one zero-key Insert, an Insert refused by OnInsert, another zero-key Insert.
-    [Test]
-    procedure Probe_G1_TruncateOneRefuseOne()
+    local procedure RefuseG()
     var
-        P: Record "AutoInc Edge A";
+        P: Record "AutoInc Edge G";
     begin
-        Clear(Trace);
-        P.Truncate(true);
-        ZeroA('z1');
-        RefuseA();
-        ZeroA('z3');
-        Done('G1', RowsA());
-    end;
-
-    // G2: the same with two rows before the refused Insert.
-    [Test]
-    procedure Probe_G2_TruncateTwoRefuseOne()
-    var
-        P: Record "AutoInc Edge B";
-    begin
-        Clear(Trace);
-        P.Truncate(true);
-        ZeroB('z1');
-        ZeroB('z2');
-        RefuseB();
-        ZeroB('z4');
-        Done('G2', RowsB());
-    end;
-
-    // G3: counter used and committed, then a second Truncate(true) in a fresh transaction.
-    [Test]
-    procedure Probe_G3_CommittedUseThenTruncateRefuse()
-    var
-        P: Record "AutoInc Edge C";
-    begin
-        Clear(Trace);
-        P.Truncate(true);
-        ZeroC('c1');
-        ZeroC('c2');
-        ZeroC('c3');
-        Commit();
-        P.Truncate(true);
-        ZeroC('w1');
-        RefuseC();
-        ZeroC('w3');
-        Done('G3', RowsC());
-    end;
-
-    // G4: Truncate(true) committed before the first Insert.
-    [Test]
-    procedure Probe_G4_TruncateCommitThenOneRefuseOne()
-    var
-        P: Record "AutoInc Edge D";
-    begin
-        Clear(Trace);
-        P.Truncate(true);
-        Commit();
-        ZeroD('z1');
-        RefuseD();
-        ZeroD('z3');
-        Done('G4', RowsD());
-    end;
-
-    // G5: the DeleteAll twin of G1 (no Truncate at all), with the rows read.
-    [Test]
-    procedure Probe_G5_DeleteAllOneRefuseOne()
-    var
-        P: Record "AutoInc Edge E";
-    begin
-        Clear(Trace);
-        P.DeleteAll();
-        ZeroE('z1');
-        RefuseE();
-        ZeroE('z3');
-        Done('G5', RowsE());
-    end;
-
-    // G6: Truncate(false) (rows only, no reseed) of committed rows, then an Insert refused by OnInsert.
-    [Test]
-    procedure Probe_G6_TruncateKeepIdentityCommittedRowsThenRefuse()
-    var
-        P: Record "AutoInc Edge F";
-    begin
-        Clear(Trace);
-        P.DeleteAll();
-        ZeroF('c1');
-        ZeroF('c2');
-        Commit();
-        P.Truncate(false);
-        ZeroF('w1');
-        RefuseF();
-        ZeroF('w3');
-        Done('G6', RowsF());
-    end;
-
-    // H1: BigInteger key: an explicit key above Int32, then zero-key Inserts.
-    [Test]
-    procedure Probe_H1_BigIntegerExplicitAboveInt32()
-    var
-        B: Record "AutoInc Edge Big";
-        Big: BigInteger;
-        Ok: Boolean;
-    begin
-        Clear(Trace);
-        B.DeleteAll();
-        Big := 500000000;
-        Big := Big * 10;
-        B.Payload := 'z1';
-        B.Insert(true);
-        Note('z1.key', Format(B."Entry No.", 0, 9));
-        Clear(B);
-        B."Entry No." := Big;
-        B.Payload := 'exp';
-        Ok := B.Insert(true);
-        Note('exp.ok', Format(Ok));
-        Note('exp.key', Format(B."Entry No.", 0, 9));
-        Clear(B);
-        B.Payload := 'z3';
-        Ok := B.Insert(true);
-        Note('z3.ok', Format(Ok));
-        Note('z3.key', Format(B."Entry No.", 0, 9));
-        Clear(B);
-        B.Payload := 'z4';
-        B.Insert(true);
-        Note('z4.key', Format(B."Entry No.", 0, 9));
-        Done('H1', Format(B.Count()));
-    end;
-
-    // H2: Integer key: an explicit key one below Int32.MaxValue, then two zero-key Inserts.
-    [Test]
-    procedure Probe_H2_IntegerExplicitJustBelowMax()
-    var
-        I: Record "AutoInc Edge IntMax A";
-    begin
-        Clear(Trace);
-        I.DeleteAll();
-        I."Entry No." := 2147483646;
-        I.Payload := 'exp';
-        I.Insert(true);
-        Note('exp.key', Format(I."Entry No.", 0, 9));
-        Clear(I);
-        I.Payload := 'z2';
-        asserterror begin I.Insert(true); Error('INSERT-OK'); end;
-        Note('z2.err', GetLastErrorText());
-        Note('z2.key', Format(I."Entry No.", 0, 9));
-        Clear(I);
-        I.Payload := 'z3';
-        asserterror begin I.Insert(true); Error('INSERT-OK'); end;
-        Note('z3.err', GetLastErrorText());
-        Note('z3.key', Format(I."Entry No.", 0, 9));
-        Done('H2', Format(I.Count()));
-    end;
-
-    // H3: Integer key: an explicit key of Int32.MaxValue, then a zero-key Insert.
-    [Test]
-    procedure Probe_H3_IntegerExplicitAtMax()
-    var
-        I: Record "AutoInc Edge IntMax B";
-    begin
-        Clear(Trace);
-        I.DeleteAll();
-        I."Entry No." := 2147483647;
-        I.Payload := 'exp';
-        I.Insert(true);
-        Note('exp.key', Format(I."Entry No.", 0, 9));
-        Clear(I);
-        I.Payload := 'z2';
-        asserterror begin I.Insert(true); Error('INSERT-OK'); end;
-        Note('z2.err', GetLastErrorText());
-        Note('z2.key', Format(I."Entry No.", 0, 9));
-        Done('H3', Format(I.Count()));
-    end;
-
-    // K1: a zero-key Insert refused on a unique secondary key, with NO Boolean receiver (asserterror).
-    [Test]
-    procedure Probe_K1_UniqueKeyRefusedUnderAsserterror()
-    var
-        U: Record "AutoInc Unique Probe";
-    begin
-        Clear(Trace);
-        U.DeleteAll();
-        U.Code := 'X';
-        U.Insert(true);
-        Note('first.key', Format(U."Entry No.", 0, 9));
-        Clear(U);
-        U.Code := 'X';
-        asserterror U.Insert(true);
-        Note('err', GetLastErrorText());
-        Note('refused.key', Format(U."Entry No.", 0, 9));
-        Done('K1', Format(U.Count()));
-    end;
-
-    // R1: Rename of a composite key that leaves the AutoIncrement field alone.
-    [Test]
-    procedure Probe_R1_RenameCodeOnly()
-    var
-        C: Record "AutoInc Edge Composite";
-        K: Integer;
-    begin
-        Clear(Trace);
-        C.DeleteAll();
-        C.Code := 'A';
-        C.Insert(true);
-        K := C."Entry No.";
-        Note('ins.key', Format(K, 0, 9));
-        C.Get(K, 'A');
-        asserterror begin C.Rename(K, 'B'); Error('RENAME-OK'); end;
-        Note('rename.err', GetLastErrorText());
-        Note('rec.key', Format(C."Entry No.", 0, 9) + '/' + C.Code);
-        Done('R1', Format(C.Count()));
-    end;
-
-    // R2: Rename that changes the AutoIncrement field of a composite key.
-    [Test]
-    procedure Probe_R2_RenameEntryNo()
-    var
-        C: Record "AutoInc Edge Composite";
-        K: Integer;
-    begin
-        Clear(Trace);
-        C.DeleteAll();
-        C.Code := 'A';
-        C.Insert(true);
-        K := C."Entry No.";
-        C.Get(K, 'A');
-        asserterror begin C.Rename(K + 50, 'A'); Error('RENAME-OK'); end;
-        Note('rename.err', GetLastErrorText());
-        Done('R2', Format(C.Count()));
+        P.Payload := 'refuse';
+        asserterror P.Insert(true);
+        Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
+        Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
 }

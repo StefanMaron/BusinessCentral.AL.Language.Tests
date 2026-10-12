@@ -19,7 +19,8 @@
 //   - An Insert that fails on a unique secondary key has already taken its counter value, and the key it took is
 //     not left on the record variable.
 //   - An Insert refused by an error in OnInsert and caught by asserterror leaves the counter where it was: the
-//     data rolls back, the counter does not.
+//     data rolls back (every row written since the last Commit), the counter does not. A Truncate in the same
+//     transaction is the exception, see TestAutoIncrementEdges.al (codeunit 67826).
 // BC's AutoIncrement is a SQL IDENTITY column written with IDENTITY_INSERT for explicit keys (the platform's own
 // duplicate-key message for the mismatch case names it), which is the behaviour above.
 //
@@ -273,6 +274,10 @@ codeunit 67822 "Test AutoInc Explicit Key"
         Assert.ExpectedError('AutoInc probe: OnInsert refused the row');
         Control.Reset();
         Assert.AreEqual(K1 + 1, InsertZero(), 'the counter must not have been rolled back with the data');
+        // The data DID roll back: the row the first Insert wrote is gone with the refused one. Without these two
+        // assertions the test could not tell a transactional counter from a non-transactional one.
+        Assert.AreEqual(1, P.Count(), 'only the last Insert may be stored');
+        Assert.IsFalse(P.Get(K1), 'the first Insert is rolled back with the refused one');
     end;
 
     [Test]
