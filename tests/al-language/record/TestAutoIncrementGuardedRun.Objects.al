@@ -380,3 +380,56 @@ codeunit 67854 "GuardRun Outer I"
         Error('outer error, key %1', R."Entry No.");
     end;
 }
+
+table 67855 "GuardRun Probe M"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            AutoIncrement = true;
+            DataClassification = SystemMetadata;
+        }
+        field(2; Payload; Text[30])
+        {
+            DataClassification = SystemMetadata;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+}
+
+// Shape M: an inner run that SUCCEEDS after a Truncate(true) and an Insert, inside an outer run that then fails.
+codeunit 67855 "GuardRun Inner M"
+{
+    trigger OnRun()
+    var
+        R: Record "GuardRun Probe M";
+    begin
+        R.Truncate(true);
+        R.Payload := 'inner';
+        R.Insert(true);
+    end;
+}
+
+codeunit 67856 "GuardRun Outer M"
+{
+    trigger OnRun()
+    var
+        R: Record "GuardRun Probe M";
+        Ok: Boolean;
+    begin
+        Ok := Codeunit.Run(Codeunit::"GuardRun Inner M");
+        R.Payload := 'outer';
+        R.Insert(true);
+        Error('outer error, key %1', R."Entry No.");
+    end;
+}

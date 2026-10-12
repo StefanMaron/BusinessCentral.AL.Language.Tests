@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-run-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: GuardRun Probe A to D, F to I and K (67840 to 67843, 67845 to 67848, 67850) and the failing
-//                codeunits GuardRun Inner A to D, F to I, K and GuardRun Outer H, I -- declared in
+// Fixtures used: GuardRun Probe A to D, F to I, K and M (67840 to 67843, 67845 to 67848, 67850, 67855) and the
+//                failing codeunits GuardRun Inner A to D, F to I, K, M and GuardRun Outer H, I, M -- declared in
 //                TestAutoIncrementGuardedRun.Objects.al
 // BC versions: 27.0+ (measured on every cloud leg of the corpus matrix and on the Windows nightly)
 //
@@ -20,6 +20,9 @@
 //     caller's next Insert gets 5.
 //   - Nested: an inner failing run that truncated is restored the same way before the outer run continues, and a
 //     value the outer run takes afterwards is consumed like any other if the outer run fails too.
+//   - An inner run that SUCCEEDS (Truncate(true), Insert) is as durable as a Commit: when the outer run then fails, the
+//     inner run's row stays, the outer run's own Insert goes, and the value the outer run took is consumed (corpus PR
+//     568's probe M, ten cloud legs).
 //
 // Not here: a guarded run started while the caller still has an uncommitted write (a Truncate included) is refused
 // by BC with "An error occurred and the transaction is stopped"; that is the write-transaction check, not the counter.
@@ -229,6 +232,30 @@ codeunit 67840 "Test AutoInc Guarded Run"
     end;
 
     [Test]
+    procedure AutoInc_GuardedRun_NestedInnerSucceeds_OuterFails_TheInnerRunIsDurable()
+    // CLAIM: an outer run that first runs a guarded inner run that truncates and Inserts (and succeeds), then Inserts and fails: the inner run's result stays, only the outer's own Insert goes, and the value the outer took is consumed.
+    var
+        R: Record "GuardRun Probe M";
+        Ok: Boolean;
+        Next: Integer;
+    begin
+        R.Truncate(true);
+        ZeroM();
+        ZeroM();
+        ZeroM();
+        Commit();
+        Ok := Codeunit.Run(Codeunit::"GuardRun Outer M");
+        Assert.AreEqual(false, Ok, 'the outer run must report failure');
+        Next := ZeroNextM();
+        Assert.AreEqual(3, Next, 'the inner run restarted the counter and took 1, the outer run took 2, which is consumed');
+        Assert.AreEqual(2, R.Count(), 'the inner run''s row and the callers own');
+        Assert.IsTrue(R.Get(1), 'the inner run''s row stays');
+        Assert.AreEqual('inner', R.Payload, 'row 1 is the inner run''s, the caller''s old row 1 is gone');
+        Assert.IsFalse(R.Get(2), 'the outer run''s Insert is rolled back');
+        Assert.IsTrue(R.Get(Next), 'the callers own Insert is stored');
+    end;
+
+    [Test]
     procedure AutoInc_GuardedRun_TruncateTrueThenError_CallerNeverTruncates_RowsAndCounterComeBack()
     // CLAIM: control for the caller's Truncate(true): the caller primes with DeleteAll, and the same shape as the first test gives the same answer.
     var
@@ -405,6 +432,26 @@ codeunit 67840 "Test AutoInc Guarded Run"
     local procedure ZeroNextI(): Integer
     var
         R: Record "GuardRun Probe I";
+    begin
+        R."Entry No." := 0;
+        R.Payload := 'next';
+        Assert.IsTrue(R.Insert(true), 'the caller''s next Insert must be accepted');
+        exit(R."Entry No.");
+    end;
+
+    local procedure ZeroM(): Integer
+    var
+        R: Record "GuardRun Probe M";
+    begin
+        R."Entry No." := 0;
+        R.Payload := 'zero';
+        R.Insert(true);
+        exit(R."Entry No.");
+    end;
+
+    local procedure ZeroNextM(): Integer
+    var
+        R: Record "GuardRun Probe M";
     begin
         R."Entry No." := 0;
         R.Payload := 'next';
