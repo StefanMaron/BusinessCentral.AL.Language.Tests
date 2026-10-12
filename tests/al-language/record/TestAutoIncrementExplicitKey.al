@@ -302,6 +302,68 @@ codeunit 67822 "Test AutoInc Explicit Key"
         Done('F2');
     end;
 
+    [Test]
+    procedure Probe_F3_UniqueViolationOnAnExplicitKey()
+    var
+        U: Record "AutoInc Unique Probe";
+        Ok: Boolean;
+    begin
+        Initialize();
+        U.Code := 'X';
+        Ok := U.Insert(true);
+        Note('u1.ok', Format(Ok));
+        Note('u1.key', Format(U."Entry No.", 0, 9));
+        Clear(U);
+        U."Entry No." := 50;
+        U.Code := 'X';
+        Ok := U.Insert(true);
+        Note('u2.ok', Format(Ok));
+        Note('u2.key', Format(U."Entry No.", 0, 9));
+        Clear(U);
+        U.Code := 'Y';
+        Ok := U.Insert(true);
+        Note('u3.ok', Format(Ok));
+        Note('u3.key', Format(U."Entry No.", 0, 9));
+        Done('F3');
+    end;
+
+    [Test]
+    procedure Probe_L1_NegativeCallerKeyOnFreshCounter()
+    begin
+        Initialize();
+        Explicit('neg', -5);
+        Zero('z2');
+        Zero('z3');
+        Done('L1');
+    end;
+
+    [Test]
+    procedure Probe_L2_NegativeCallerKeyAfterPositive()
+    begin
+        Initialize();
+        Zero('z1');
+        Explicit('neg', -5);
+        Zero('z3');
+        Done('L2');
+    end;
+
+    [Test]
+    procedure Probe_M1_ExplicitKeyAboveCounterThenOnInsertErrorThenZero()
+    var
+        P: Record "AutoInc Explicit Probe";
+    begin
+        Initialize();
+        Zero('z1');
+        Commit();
+        Control.FailInOnInsert();
+        P."Entry No." := 40;
+        P.Payload := 'refused';
+        asserterror P.Insert(true);
+        Control.Reset();
+        Zero('z3');
+        Done('M1');
+    end;
+
     local procedure DeleteKey(KeyValue: Integer)
     var
         P: Record "AutoInc Explicit Probe";
