@@ -197,6 +197,43 @@ codeunit 67826 "Test AutoInc Counter Edge"
         exit(R);
     end;
 
+    local procedure ZeroF(Name: Text): Integer
+    var
+        P: Record "AutoInc Edge F";
+        Ok: Boolean;
+    begin
+        P."Entry No." := 0;
+        P.Payload := CopyStr(Name, 1, 30);
+        Ok := P.Insert(true);
+        Note(Name + '.ok', Format(Ok));
+        Note(Name + '.key', Format(P."Entry No.", 0, 9));
+        exit(P."Entry No.");
+    end;
+
+    local procedure RefuseF()
+    var
+        P: Record "AutoInc Edge F";
+    begin
+        P.Payload := 'refuse';
+        asserterror P.Insert(true);
+        Note('refused.err', GetLastErrorText());
+        Note('refused.key', Format(P."Entry No.", 0, 9));
+    end;
+
+    local procedure RowsF(): Text
+    var
+        P: Record "AutoInc Edge F";
+        R: Text;
+    begin
+        R := 'cnt=' + Format(P.Count()) + ':';
+        if P.FindSet() then
+            repeat
+                R += Format(P."Entry No.", 0, 9) + ',';
+            until P.Next() = 0;
+        exit(R);
+    end;
+
+
     // F1: Truncate(true), one zero-key Insert, an Insert refused by OnInsert, another zero-key Insert.
     [Test]
     procedure Probe_G1_TruncateOneRefuseOne()
@@ -272,6 +309,24 @@ codeunit 67826 "Test AutoInc Counter Edge"
         RefuseE();
         ZeroE('z3');
         Done('G5', RowsE());
+    end;
+
+    // G6: Truncate(false) (rows only, no reseed) of committed rows, then an Insert refused by OnInsert.
+    [Test]
+    procedure Probe_G6_TruncateKeepIdentityCommittedRowsThenRefuse()
+    var
+        P: Record "AutoInc Edge F";
+    begin
+        Clear(Trace);
+        P.DeleteAll();
+        ZeroF('c1');
+        ZeroF('c2');
+        Commit();
+        P.Truncate(false);
+        ZeroF('w1');
+        RefuseF();
+        ZeroF('w3');
+        Done('G6', RowsF());
     end;
 
     // H1: BigInteger key: an explicit key above Int32, then zero-key Inserts.
