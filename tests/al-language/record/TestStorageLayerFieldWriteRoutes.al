@@ -1,6 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-overview
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: xRec Stamp Probe (67810), xRec Stamp Recorder (67811) -- declared in TestXRecStampFields.Objects.al
+// Fixtures used: Storage Write Probe (67815), Storage Write Recorder (67816) -- declared below. Deliberately NOT the
+// xRec Stamp fixtures of codeunit 67812: a SingleInstance fixture shared between two test codeunits is refused by
+// the repo's own guard (issue #261).
 // BC versions: 27.0+
 //
 // WHAT THIS PINS. TestXRecStampFields (67812) pins, for a code-driven Insert(true) / Modify(true), that the
@@ -17,6 +19,77 @@
 // Written for StefanMaron/BusinessCentral.AL.Runner#5509. All DateTime/Guid comparisons go through
 // Format(_, 0, 9): Assert compares DateTimes at minute resolution (AlRunner#4439).
 
+table 67815 "Storage Write Probe"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Entry No."; Integer)
+        {
+            AutoIncrement = true;
+            DataClassification = SystemMetadata;
+        }
+        field(2; Payload; Text[30])
+        {
+            DataClassification = SystemMetadata;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Entry No.")
+        {
+            Clustered = true;
+        }
+    }
+
+    trigger OnInsert()
+    begin
+        Capture('OnInsert');
+    end;
+
+    trigger OnModify()
+    begin
+        Capture('OnModify');
+    end;
+
+    local procedure Capture(TriggerName: Text)
+    var
+        Recorder: Codeunit "Storage Write Recorder";
+    begin
+        Recorder.Put(TriggerName, 'Rec.EntryNo', Format(Rec."Entry No.", 0, 9));
+        Recorder.Put(TriggerName, 'Rec.SystemCreatedAt', Format(Rec.SystemCreatedAt, 0, 9));
+        Recorder.Put(TriggerName, 'Rec.SystemModifiedAt', Format(Rec.SystemModifiedAt, 0, 9));
+        Recorder.Put(TriggerName, 'Rec.SystemCreatedBy', Format(Rec.SystemCreatedBy, 0, 9));
+        Recorder.Put(TriggerName, 'Rec.Payload', Rec.Payload);
+    end;
+}
+
+// SingleInstance so what a trigger or subscriber saw survives the call that ran it.
+codeunit 67816 "Storage Write Recorder"
+{
+    SingleInstance = true;
+
+    var
+        Seen: Dictionary of [Text, Text];
+
+    procedure Wipe()
+    begin
+        Clear(Seen);
+    end;
+
+    procedure Put(TriggerName: Text; What: Text; Value: Text)
+    begin
+        Seen.Set(TriggerName + '|' + What, Value);
+    end;
+
+    procedure Read(TriggerName: Text; What: Text): Text
+    begin
+        exit(Seen.Get(TriggerName + '|' + What));
+    end;
+}
+
 codeunit 67813 "Test Storage Write Routes"
 {
     Subtype = Test;
@@ -24,7 +97,7 @@ codeunit 67813 "Test Storage Write Routes"
 
     var
         Assert: Codeunit Assert;
-        Recorder: Codeunit "xRec Stamp Recorder";
+        Recorder: Codeunit "Storage Write Recorder";
         NullGuidTxt: Label '{00000000-0000-0000-0000-000000000000}', Locked = true;
 
     [Test]
@@ -33,7 +106,7 @@ codeunit 67813 "Test Storage Write Routes"
     //        runs after the storage write, so it sees the assigned key and both Created/Modified stamps.
     var
         Subscriber: Codeunit "Storage Write Subscriber";
-        P: Record "xRec Stamp Probe";
+        P: Record "Storage Write Probe";
     begin
         Initialize();
         BindSubscription(Subscriber);
@@ -59,7 +132,7 @@ codeunit 67813 "Test Storage Write Routes"
     //        record; the event subscribers still see "nothing written" before and "written" after.
     var
         Subscriber: Codeunit "Storage Write Subscriber";
-        P: Record "xRec Stamp Probe";
+        P: Record "Storage Write Probe";
     begin
         Initialize();
         BindSubscription(Subscriber);
@@ -83,12 +156,12 @@ codeunit 67813 "Test Storage Write Routes"
     //        default stamps inside OnInsert; both are present on the record once Insert has returned.
     var
         RR: RecordRef;
-        P: Record "xRec Stamp Probe";
+        P: Record "Storage Write Probe";
         AssignedKey: Integer;
     begin
         Initialize();
 
-        RR.Open(Database::"xRec Stamp Probe");
+        RR.Open(Database::"Storage Write Probe");
         RR.Field(P.FieldNo(Payload)).Value := 'one';
         RR.Insert(true);
         AssignedKey := RR.Field(P.FieldNo("Entry No.")).Value;
@@ -109,7 +182,7 @@ codeunit 67813 "Test Storage Write Routes"
     //        stored value; OnAfterModifyEvent runs after the storage write, so it sees the new stamp.
     var
         Subscriber: Codeunit "Storage Write Subscriber";
-        P: Record "xRec Stamp Probe";
+        P: Record "Storage Write Probe";
         StoredModifiedAt: Text;
     begin
         Initialize();
@@ -136,7 +209,7 @@ codeunit 67813 "Test Storage Write Routes"
     // CLAIM: ModifyAll(Field, Value, true) runs OnModify per row, and Rec.SystemModifiedAt inside it is still the
     //        value stored before the ModifyAll; the row carries a newer stamp afterwards.
     var
-        P: Record "xRec Stamp Probe";
+        P: Record "Storage Write Probe";
         RowKey: Integer;
         StoredModifiedAt: Text;
     begin
@@ -163,7 +236,7 @@ codeunit 67813 "Test Storage Write Routes"
 
     local procedure Initialize()
     var
-        P: Record "xRec Stamp Probe";
+        P: Record "Storage Write Probe";
     begin
         P.DeleteAll();
         Recorder.Wipe();
@@ -175,33 +248,33 @@ codeunit 67814 "Storage Write Subscriber"
 {
     EventSubscriberInstance = Manual;
 
-    [EventSubscriber(ObjectType::Table, Database::"xRec Stamp Probe", 'OnBeforeInsertEvent', '', false, false)]
-    local procedure OnBeforeInsert(var Rec: Record "xRec Stamp Probe")
+    [EventSubscriber(ObjectType::Table, Database::"Storage Write Probe", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure OnBeforeInsert(var Rec: Record "Storage Write Probe")
     begin
         Capture('EvBeforeInsert', Rec);
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"xRec Stamp Probe", 'OnAfterInsertEvent', '', false, false)]
-    local procedure OnAfterInsert(var Rec: Record "xRec Stamp Probe")
+    [EventSubscriber(ObjectType::Table, Database::"Storage Write Probe", 'OnAfterInsertEvent', '', false, false)]
+    local procedure OnAfterInsert(var Rec: Record "Storage Write Probe")
     begin
         Capture('EvAfterInsert', Rec);
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"xRec Stamp Probe", 'OnBeforeModifyEvent', '', false, false)]
-    local procedure OnBeforeModify(var Rec: Record "xRec Stamp Probe")
+    [EventSubscriber(ObjectType::Table, Database::"Storage Write Probe", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure OnBeforeModify(var Rec: Record "Storage Write Probe")
     begin
         Capture('EvBeforeModify', Rec);
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"xRec Stamp Probe", 'OnAfterModifyEvent', '', false, false)]
-    local procedure OnAfterModify(var Rec: Record "xRec Stamp Probe")
+    [EventSubscriber(ObjectType::Table, Database::"Storage Write Probe", 'OnAfterModifyEvent', '', false, false)]
+    local procedure OnAfterModify(var Rec: Record "Storage Write Probe")
     begin
         Capture('EvAfterModify', Rec);
     end;
 
-    local procedure Capture(EventName: Text; var Rec: Record "xRec Stamp Probe")
+    local procedure Capture(EventName: Text; var Rec: Record "Storage Write Probe")
     var
-        Recorder: Codeunit "xRec Stamp Recorder";
+        Recorder: Codeunit "Storage Write Recorder";
     begin
         Recorder.Put(EventName, 'Rec.EntryNo', Format(Rec."Entry No.", 0, 9));
         Recorder.Put(EventName, 'Rec.SystemCreatedAt', Format(Rec.SystemCreatedAt, 0, 9));
