@@ -313,4 +313,48 @@ codeunit 68164 "Probe TestPage Contracts"
         Assert.AreEqual('TestRowNotFound', GetLastErrorCode(), 'code');
         Card.Close();
     end;
+
+    local procedure Rows(Entries: Text): Text
+    var
+        Parts: List of [Text];
+        Part: Text;
+        Result: Text;
+    begin
+        Parts := Entries.Split(';');
+        foreach Part in Parts do
+            if Part <> '' then
+                Result += Part.Replace('AGR(', '').Replace(')', '') + ' ';
+        exit(Result);
+    end;
+
+    [Test]
+    procedure TestPage_List_Window_IsRepopulatedAroundAGoToKeyOutsideIt()
+    // CLAIM: opening reads rows 1-20 and then the current row again; a GoToKey inside the window reads nothing; one outside reads a new window of about 22 rows starting 11 before the target; rows already read are not read again.
+    var
+        List: TestPage "Probe TP List";
+    begin
+        Initialize();
+        PageLog.Take();
+
+        List.OpenView();
+        Assert.AreEqual('1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 1 ', Rows(PageLog.Take()), 'open');
+
+        List.GoToKey(3);
+        Assert.AreEqual('', Rows(PageLog.Take()), 'inside the window');
+
+        List.GoToKey(30);
+        Assert.AreEqual('19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 ', Rows(PageLog.Take()), 'row 30');
+
+        List.GoToKey(60);
+        Assert.AreEqual('39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 59 60 ', Rows(PageLog.Take()), 'row 60 (the last row, read twice at the end)');
+
+        List.GoToKey(2);
+        Assert.AreEqual('', Rows(PageLog.Take()), 'going back to a row that was read');
+        List.Last();
+        List.First();
+        Assert.AreEqual('', Rows(PageLog.Take()), 'Last and First');
+        Assert.IsFalse(List.GoToKey(999), 'a miss');
+        Assert.AreEqual('', Rows(PageLog.Take()), 'a miss reads nothing');
+        List.Close();
+    end;
 }
