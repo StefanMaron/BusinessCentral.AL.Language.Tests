@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: ALT Universal (60000), ALTFixtureCleanup (60019), TP Field Visible Card (page),
 //                ASK Card (60920), ASK Header (60915), ASK Line (60916), shared Assert (60021);
-//                self-contained page 68165 and codeunit 68164; "Probe Page Log" (68134) from testpart/TestPartTriggerOrderAndRefresh.al
+//                self-contained page 68165 and codeunit 68164; its own log codeunit 68166 "Probe TestPage Log"
 // Probe: written against a real BC 27.5 service tier (en-US, UTC); every literal below is what that
 // tier produced. Other BC versions were not measured.
 //
@@ -12,6 +12,28 @@
 // New(), and the full texts and codes of the TestPage errors (field or part not on the page, key
 // arity, row not found, GetValidationError with index 0).
 // BC versions: 27.5
+
+codeunit 68166 "Probe TestPage Log"
+{
+    SingleInstance = true;
+
+    var
+        Log: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Log += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Log;
+        Log := '';
+        exit(Result);
+    end;
+}
 
 page 68165 "Probe TP List"
 {
@@ -50,7 +72,7 @@ page 68165 "Probe TP List"
     }
 
     var
-        PageLog: Codeunit "Probe Page Log";
+        PageLog: Codeunit "Probe TestPage Log";
 
     trigger OnAfterGetRecord()
     begin
@@ -72,7 +94,7 @@ codeunit 68164 "Probe TestPage Contracts"
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;
-        PageLog: Codeunit "Probe Page Log";
+        PageLog: Codeunit "Probe TestPage Log";
 
     local procedure Initialize()
     var

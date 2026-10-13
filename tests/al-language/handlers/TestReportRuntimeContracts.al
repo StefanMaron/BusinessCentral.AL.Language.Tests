@@ -2,7 +2,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-data-type
 // Scope: in-scope
 // Fixtures used: ALT Parent (60004), ALT Child (60005), ALT Universal (60000), ALTFixtureCleanup (60019),
-//                shared Assert (60021); "Probe Page Log" (68134, testpart/TestPartTriggerOrderAndRefresh.al);
+//                shared Assert (60021); its own log codeunit 68177 "Probe Report Log";
 //                self-contained reports 68170..68175 and codeunit 68176
 // Probe: written against a real BC 27.5 service tier; every literal below is what that tier
 // produced. Other BC versions were not measured.
@@ -12,6 +12,28 @@
 // set in OnPreDataItem works, what SetTableView does, how a report variable behaves after Run, RunModal
 // and Execute, when the request page opens, and how a report takes part in the caller's transaction.
 // BC versions: 27.5
+
+codeunit 68177 "Probe Report Log"
+{
+    SingleInstance = true;
+
+    var
+        Log: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Log += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Log;
+        Log := '';
+        exit(Result);
+    end;
+}
 
 report 68170 "Probe Rep Order"
 {
@@ -87,7 +109,7 @@ report 68170 "Probe Rep Order"
     }
 
     var
-        PageLog: Codeunit "Probe Page Log";
+        PageLog: Codeunit "Probe Report Log";
         Mode: Text;
         Marker: Text;
 
@@ -173,7 +195,7 @@ report 68173 "Probe Rep Narrow"
     }
 
     var
-        PageLog: Codeunit "Probe Page Log";
+        PageLog: Codeunit "Probe Report Log";
         Where: Text;
 
     procedure SetWhere(NewWhere: Text)
@@ -243,7 +265,7 @@ codeunit 68176 "Probe Report Contracts"
     var
         Assert: Codeunit Assert;
         Cleanup: Codeunit ALTFixtureCleanup;
-        PageLog: Codeunit "Probe Page Log";
+        PageLog: Codeunit "Probe Report Log";
 
     local procedure Initialize()
     var
