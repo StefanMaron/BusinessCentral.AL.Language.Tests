@@ -5,7 +5,8 @@
 // runner); every literal below is what that tier produced. Other BC versions and hosts were not measured.
 //
 // Pins the "Active Session" row of the running session (Get(ServiceInstanceId(), SessionId())): it exists, "Server Instance
-// Name" and "Server Computer Name" are not blank, "Client Computer Name" is blank on this runner, and "User ID" is the session user.
+// Name" and "Server Computer Name" are not blank, and "User ID" is the session user.
+// "Client Computer Name" is the runner's: blank on the websocket runner of 27.5, VSCodeTestClient on the 28.5 altool runner, so it is not pinned.
 // The values of the first two are the host's (this tier: instance BC, computer name = the container host name), so only their
 // shape is pinned.
 // BC versions: 27.5
@@ -27,7 +28,6 @@ codeunit 68955 "Probe Active Session Host"
 
         Assert.AreNotEqual('', ActiveSessionRec."Server Instance Name", 'Server Instance Name');
         Assert.AreNotEqual('', ActiveSessionRec."Server Computer Name", 'Server Computer Name');
-        Assert.AreEqual('', ActiveSessionRec."Client Computer Name", 'Client Computer Name');
         Assert.AreEqual(UserId(), ActiveSessionRec."User ID", 'User ID');
     end;
 }

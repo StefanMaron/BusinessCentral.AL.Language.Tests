@@ -8,7 +8,9 @@
 // Pins SessionInformation.Callstack and the separator of GetLastErrorCallStack:
 //  - The frames are separated by a backslash and the text ENDS with a backslash (no line feed, no carriage return);
 //    the innermost frame (the procedure that reads Callstack) is first; below the test procedure come the test
-//    runner's frames ("Test Runner - Mgt"(CodeUnit 130454).RunTests ... down to the "Command Line Test Tool" page).
+//    test runner's frames, IF the runner shows any: the websocket runner of the 27.5 CI and the local container does ("Test Runner - Mgt"
+//    (CodeUnit 130454).RunTests ... down to the "Command Line Test Tool" page), the VSCodeTestClient / altool runner of 28.5 ends the
+//    stack at the test procedure. The tests assert the frames from the innermost up to the test procedure and nothing below it.
 //  - A frame is <"object name">(<Type> <id>).<procedure> line <n> - <app name> by <publisher> version <version>, where n is
 //    the line inside the procedure or trigger counted from its header (the line of the header is 0, so a statement in the first line after begin is line 2) and, for the caller, the line of
 //    the call. A trigger is "<table>"(Table n)."<field> - OnValidate"(Trigger) and ...OnInsert(Trigger) and
@@ -18,7 +20,7 @@
 //  - Inside a procedure that is called from an asserterror the stack is the plain stack; GetLastErrorCallStack after
 //    the error has the same form and separator (the failing procedure's frame has the line of the Error call); after the
 //    asserterror the stack no longer has the failing frames.
-//  - The text is not cut: 300 nested procedures give 308 frames, 25746 characters.
+//  - The text is not cut: 300 nested procedures give 301 frames of the procedure plus the test procedure (more than 20000 characters).
 // BC versions: 27.5
 
 table 68930 "Probe CS Table"
@@ -83,7 +85,7 @@ codeunit 68931 "Probe CS Log"
     begin
         Position := StrPos(Stack, '"Test Runner - Mgt"');
         if Position > 0 then
-            exit(CopyStr(Stack, 1, Position - 1) + '<runner>');
+            exit(CopyStr(Stack, 1, Position - 1));
         exit(Stack);
     end;
 }
@@ -163,7 +165,7 @@ codeunit 68935 "Probe Session Callstack"
     end;
 
     [Test]
-    procedure Callstack_Frames_BackslashSeparated_InnermostFirst_RunnerFramesBelow()
+    procedure Callstack_Frames_BackslashSeparated_InnermostFirst()
     var
         Stack: Text;
         Suffix: Text;
@@ -175,9 +177,8 @@ codeunit 68935 "Probe Session Callstack"
         Assert.IsTrue(
             CsLog.CutRunner(Stack) = '"Probe Session Callstack"(CodeUnit 68935).Inner line 2' + Suffix +
             '"Probe Session Callstack"(CodeUnit 68935).Middle line 2' + Suffix +
-            '"Probe Session Callstack"(CodeUnit 68935).Callstack_Frames_BackslashSeparated_InnermostFirst_RunnerFramesBelow line 7' + Suffix + '<runner>',
+            '"Probe Session Callstack"(CodeUnit 68935).Callstack_Frames_BackslashSeparated_InnermostFirst line 7' + Suffix,
             'frames of the test: ' + CsLog.CutRunner(Stack));
-        Assert.IsTrue(Stack.Contains('\"Test Runner - Mgt"(CodeUnit 130454).RunTests line '), 'the runner is below the test');
         Assert.IsTrue(Stack.EndsWith('\'), 'ends with a backslash');
         Assert.IsFalse(Stack.Contains(Format(CharAt(10))), 'no line feed');
         Assert.IsFalse(Stack.Contains(Format(CharAt(13))), 'no carriage return');
@@ -210,12 +211,12 @@ codeunit 68935 "Probe Session Callstack"
         CsPublisher.Fire();
 
         Assert.AreEqual(
-            'OnValidate: "Probe CS Table"(Table 68930)."Val - OnValidate"(Trigger) line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 11' + Suffix + '<runner>|' +
-            'OnInsert: "Probe CS Table"(Table 68930).OnInsert(Trigger) line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 12' + Suffix + '<runner>|' +
-            'OnRun: "Probe CS Runner"(CodeUnit 68932).OnRun(Trigger) line 4' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 13' + Suffix + '<runner>|' +
-            'OnRun: "Probe CS Runner"(CodeUnit 68932).OnRun(Trigger) line 4' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 14' + Suffix + '<runner>|' +
+            'OnValidate: "Probe CS Table"(Table 68930)."Val - OnValidate"(Trigger) line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 11' + Suffix + '|' +
+            'OnInsert: "Probe CS Table"(Table 68930).OnInsert(Trigger) line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 12' + Suffix + '|' +
+            'OnRun: "Probe CS Runner"(CodeUnit 68932).OnRun(Trigger) line 4' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 13' + Suffix + '|' +
+            'OnRun: "Probe CS Runner"(CodeUnit 68932).OnRun(Trigger) line 4' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 14' + Suffix + '|' +
             'Subscriber: "Probe CS Subscriber"(CodeUnit 68934).Handle line 4' + Suffix + '"Probe CS Publisher"(CodeUnit 68933).OnEvent(Event) line 2' + Suffix +
-            '"Probe CS Publisher"(CodeUnit 68933).Fire line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 15' + Suffix + '<runner>|',
+            '"Probe CS Publisher"(CodeUnit 68933).Fire line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InTriggersCodeunitRunsAndSubscribers line 15' + Suffix + '|',
             CsLog.Take(), 'log');
     end;
 
@@ -232,14 +233,14 @@ codeunit 68935 "Probe Session Callstack"
         Last := GetLastErrorCallStack();
 
         Assert.AreEqual(
-            'in asserterror: "Probe Session Callstack"(CodeUnit 68935).Failing line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InAsserterror_AndGetLastErrorCallStack_UseTheSameForm line 8' + Suffix + '<runner>|',
+            'in asserterror: "Probe Session Callstack"(CodeUnit 68935).Failing line 2' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InAsserterror_AndGetLastErrorCallStack_UseTheSameForm line 8' + Suffix + '|',
             CsLog.Take(), 'inside');
         Assert.AreEqual(
-            '"Probe Session Callstack"(CodeUnit 68935).Failing line 3' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InAsserterror_AndGetLastErrorCallStack_UseTheSameForm line 8' + Suffix + '<runner>',
+            '"Probe Session Callstack"(CodeUnit 68935).Failing line 3' + Suffix + '"Probe Session Callstack"(CodeUnit 68935).Callstack_InAsserterror_AndGetLastErrorCallStack_UseTheSameForm line 8' + Suffix,
             CsLog.CutRunner(Last), 'GetLastErrorCallStack');
         Assert.IsFalse(Last.Contains('Failing line 2'), 'the error is at the Error call');
         Assert.AreEqual(
-            '"Probe Session Callstack"(CodeUnit 68935).Callstack_InAsserterror_AndGetLastErrorCallStack_UseTheSameForm line 18' + Suffix + '<runner>',
+            '"Probe Session Callstack"(CodeUnit 68935).Callstack_InAsserterror_AndGetLastErrorCallStack_UseTheSameForm line 18' + Suffix,
             CsLog.CutRunner(SessionInformation.Callstack), 'after the asserterror');
     end;
 
@@ -247,16 +248,18 @@ codeunit 68935 "Probe Session Callstack"
     procedure Callstack_IsNotCut_OfNestedProcedures()
     var
         Stack: Text;
+        Own: Text;
         Backslashes: Integer;
         Index: Integer;
     begin
         Stack := Deep(300);
-        for Index := 1 to StrLen(Stack) do
-            if Stack[Index] = '\' then
+        Own := CsLog.CutRunner(Stack);
+        for Index := 1 to StrLen(Own) do
+            if Own[Index] = '\' then
                 Backslashes += 1;
 
-        Assert.AreEqual(308, Backslashes, '301 nested frames, the test and the 6 runner frames');
-        Assert.IsTrue(StrLen(Stack) > 20000, 'not cut');
+        Assert.AreEqual(302, Backslashes, '301 nested frames and the test procedure, whatever the runner adds below');
+        Assert.IsTrue(StrLen(Own) > 20000, 'not cut');
         Assert.IsTrue(Stack.EndsWith('\'), 'ends with a backslash');
     end;
 }
