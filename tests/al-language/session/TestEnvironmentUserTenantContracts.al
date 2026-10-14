@@ -53,6 +53,21 @@ table 68314 "Probe GT Changelog Table"
     }
 }
 
+table 68316 "Probe GT Temp Table"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
 table 68315 "Probe GT Own Table"
 {
     DataClassification = SystemMetadata;
@@ -100,7 +115,7 @@ codeunit 68313 "Probe GT Subscriber"
         if not Watched(TableId) then
             exit;
         GtLog.Add('Setup(' + Format(TableId) + ' ins=' + Format(OnDatabaseInsert) + ' mod=' + Format(OnDatabaseModify) + ' del=' + Format(OnDatabaseDelete) + ' ren=' + Format(OnDatabaseRename) + ')');
-        if TableId = Database::"Probe GT Own Table" then
+        if TableId in [Database::"Probe GT Own Table", Database::"Probe GT Temp Table"] then
             OnDatabaseInsert := true;
     end;
 
@@ -136,7 +151,7 @@ codeunit 68313 "Probe GT Subscriber"
 
     local procedure Watched(TableId: Integer): Boolean
     begin
-        exit(TableId in [Database::"Probe GT Table", Database::"Probe GT Changelog Table", Database::"Probe GT Own Table"]);
+        exit(TableId in [Database::"Probe GT Table", Database::"Probe GT Changelog Table", Database::"Probe GT Own Table", Database::"Probe GT Temp Table"]);
     end;
 }
 
@@ -394,5 +409,37 @@ codeunit 68310 "Probe Environment Contracts"
         GtTable.Id := 2;
         GtTable.Insert(false);
         Assert.AreEqual('OnDatabaseInsert(68315);', GtLog.Take(), 'Insert(false)');
+    end;
+
+    [Test]
+    procedure GlobalTriggers_TemporaryRecord_RaisesNoDatabaseEventAndAsksNoSetup()
+    // CLAIM: writes to a temporary record neither ask for the table's trigger setup nor raise OnDatabaseInsert, also after a write to the real table has asked for the setup and a subscriber enabled the insert flag.
+    var
+        GtLog: Codeunit "Probe GT Log";
+        TempTable: Record "Probe GT Temp Table" temporary;
+        RealTable: Record "Probe GT Temp Table";
+        Flag: Text;
+    begin
+        GtLog.Take();
+
+        TempTable.DeleteAll();
+        TempTable.Id := 1;
+        TempTable.Insert(true);
+        Assert.AreEqual('', GtLog.Take(), 'a temporary record asks nothing and raises nothing');
+
+        Flag := YesNo(TestLibrariesInstalled());
+        RealTable.DeleteAll();
+        Commit();
+        Assert.AreEqual('Mask(68316 mask=0);Setup(68316 ins=' + Flag + ' mod=' + Flag + ' del=' + Flag + ' ren=' + Flag + ');', GtLog.Take(), 'the real table asks once');
+
+        TempTable.Id := 2;
+        TempTable.Insert(true);
+        TempTable.Id := 3;
+        TempTable.Insert(false);
+        Assert.AreEqual('', GtLog.Take(), 'no event for a temporary record although the insert flag is set');
+
+        RealTable.Id := 1;
+        RealTable.Insert();
+        Assert.AreEqual('OnDatabaseInsert(68316);', GtLog.Take(), 'the real table does raise it');
     end;
 }
