@@ -17,7 +17,9 @@
 // with an empty stream and the error text "RDLC report rendering is not implemented on Linux BC ...",
 // which is a limit of the container and not BC behaviour. "Report_SaveAs_Pdf_ReturnValueAgreesWithTheBytesInTheStream"
 // (handlers/TestReportSaveAsPdfContent.al) accepts both outcomes.
-// BC versions: 27.5
+// BC 28.5 adds ` tableId="<table id>" systemId="<guid>"` to every DataItem element (27.5 does not). The exact-text
+// test removes that pair before comparing; one test checks the pair's shape where it is present.
+// BC versions: 27.5, 28.5
 
 table 68300 "Probe Rep Parent"
 {
@@ -176,6 +178,31 @@ codeunit 68303 "Probe Report SaveAs Dataset"
         exit(Saved);
     end;
 
+    local procedure StripIdentity(Block: Text; var Identities: List of [Text]): Text
+    var
+        StartAt: Integer;
+        EndAt: Integer;
+        Marker: Text;
+        Rest: Text;
+        Result: Text;
+    begin
+        // BC 28.5 writes ` tableId="<table id>" systemId="<guid>"` after name="..." on every
+        // DataItem element; BC 27.5 does not. The GUID differs per record, so the exact-text test removes
+        // the pair (remembering it) and a separate test checks what the pair says.
+        Marker := ' tableId="';
+        Rest := Block;
+        while Rest.Contains(Marker) do begin
+            StartAt := Rest.IndexOf(Marker);
+            EndAt := Rest.IndexOf('" systemId="');
+            EndAt := EndAt + StrLen('" systemId="');
+            EndAt := EndAt + Rest.Substring(EndAt).IndexOf('"') - 1;
+            Identities.Add(Rest.Substring(StartAt + 1, EndAt - StartAt));
+            Result += Rest.Substring(1, StartAt - 1);
+            Rest := Rest.Substring(EndAt + 1);
+        end;
+        exit(Result + Rest);
+    end;
+
     local procedure TailFrom(Lines: List of [Text]; Marker: Text): Text
     var
         Line: Text;
@@ -218,6 +245,49 @@ codeunit 68303 "Probe Report SaveAs Dataset"
     end;
 
     [Test]
+    procedure SaveAs_Xml_DataItemIdentity_IsAbsentOrAPairOfTableIdAndGuid()
+    // CLAIM: where the dataset carries tableId and systemId on a DataItem (the 28.5 run does, the 27.5 run does not), all five data items have the pair, in document order parent, child, child, parent, child; the tableId is the id of the table and the systemId is a 36 character GUID in lower case, different for every item. Whether it equals the SystemId of the record is NOT pinned (not measured).
+    var
+        Lines: List of [Text];
+        Identities: List of [Text];
+        HasBom: Boolean;
+        Identity: Text;
+        Seen: Text;
+        TableIds: Text;
+        Guid: Text;
+    begin
+        Initialize();
+
+        DatasetLines('', Lines, HasBom);
+        StripIdentity(TailFrom(Lines, '<DataItems>'), Identities);
+
+        if Identities.Count() = 0 then
+            exit;
+        Assert.AreEqual(5, Identities.Count(), 'two parents and three children');
+        foreach Identity in Identities do begin
+            Assert.IsTrue(Identity.StartsWith('tableId="'), 'starts with the table id');
+            Guid := Identity.Substring(Identity.IndexOf('systemId="') + StrLen('systemId="'));
+            Guid := CopyStr(Guid, 1, StrLen(Guid) - 1);
+            Assert.AreEqual(36, StrLen(Guid), 'GUID length');
+            Assert.AreEqual(LowerCase(Guid), Guid, 'lower case');
+            Assert.IsFalse(Seen.Contains(Guid), 'different per item');
+            Seen += Guid + ';';
+            TableIds += Identity.Substring(10, 5) + ';';
+        end;
+        Assert.AreEqual('68300;68301;68301;68300;68301;', TableIds, 'table ids in document order');
+    end;
+
+    [Test]
+    procedure SaveAs_Xml_StripIdentity_RemovesThePairAndKeepsTheRest()
+    var
+        Identities: List of [Text];
+    begin
+        Assert.AreEqual('<DataItem name="P"><DataItem name="C">|', StripIdentity('<DataItem name="P" tableId="68300" systemId="8ce4b684-f247-43d2-dbc5-d26d1287b536"><DataItem name="C" tableId="68301" systemId="989abfd4-0121-21b3-4c6d-ae779cc56594">|', Identities), 'text');
+        Assert.AreEqual(2, Identities.Count(), 'count');
+        Assert.AreEqual('tableId="68301" systemId="989abfd4-0121-21b3-4c6d-ae779cc56594"', Identities.Get(2), 'second pair');
+    end;
+
+    [Test]
     procedure SaveAs_Xml_DataItemsBlock_ExactText()
     var
         Lines: List of [Text];
@@ -225,12 +295,13 @@ codeunit 68303 "Probe Report SaveAs Dataset"
         Block: Text;
         Part1Text: Text;
         Part2Text: Text;
+        Identities: List of [Text];
     begin
         Initialize();
 
         DatasetLines('', Lines, HasBom);
 
-        Block := TailFrom(Lines, '<DataItems>');
+        Block := StripIdentity(TailFrom(Lines, '<DataItems>'), Identities);
         Part1Text := '  <DataItems>|' +
             '    <DataItem language="en-US" formatRegion="en-US" name="P">|' +
             '      <Columns>|' +

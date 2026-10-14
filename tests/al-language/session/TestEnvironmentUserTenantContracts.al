@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-userid-function
 // Scope: in-scope
-// Fixtures used: shared Assert (60021); self-contained table 68311, codeunits 68310 (tests), 68312 (log),
+// Fixtures used: shared Assert (60021); self-contained tables 68311, 68314, 68315, codeunits 68310 (tests), 68312 (log),
 //                68313 (subscriber)
 // Probe: written against a real BC 27.5 service tier started by bc-linux (sandbox, W1 localization,
 // user BCRUNNER, tenant "default"); every literal below is what that tier produced. Other BC versions
@@ -15,9 +15,44 @@
 //
 // The members of "Server Setting" and "Environment Information".GetEnvironmentSetting are scoped
 // OnPrem and are pinned in the OnPrem app (tests/al-language-onprem/session).
-// BC versions: 27.5
+// Global Triggers: what the flags hold depends on the apps installed. Where the Microsoft app Tests-TestLibraries
+// is installed (a full local bc-linux container), its codeunit "Backup Management" sets all four flags for the tables
+// of this app; where it is not (CI), only Base Application's own rules apply (Change Log setup, Dataverse
+// mapping, API webhook subscription, data synchronization). The tests below read that app's presence and expect
+// either answer, and pin the Change Log rule and the platform's reaction to a flag.
+// BC versions: 27.5, 28.5
 
 table 68311 "Probe GT Table"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+table 68314 "Probe GT Changelog Table"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+table 68315 "Probe GT Own Table"
 {
     DataClassification = SystemMetadata;
 
@@ -64,6 +99,8 @@ codeunit 68313 "Probe GT Subscriber"
         if not Watched(TableId) then
             exit;
         GtLog.Add('Setup(' + Format(TableId) + ' ins=' + Format(OnDatabaseInsert) + ' mod=' + Format(OnDatabaseModify) + ' del=' + Format(OnDatabaseDelete) + ' ren=' + Format(OnDatabaseRename) + ')');
+        if TableId = Database::"Probe GT Own Table" then
+            OnDatabaseInsert := true;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Global Triggers", 'GetGlobalTableTriggerMask', '', false, false)]
@@ -98,7 +135,7 @@ codeunit 68313 "Probe GT Subscriber"
 
     local procedure Watched(TableId: Integer): Boolean
     begin
-        exit(TableId in [Database::"Probe GT Table"]);
+        exit(TableId in [Database::"Probe GT Table", Database::"Probe GT Changelog Table", Database::"Probe GT Own Table"]);
     end;
 }
 
@@ -181,23 +218,119 @@ codeunit 68310 "Probe Environment Contracts"
         Assert.AreEqual('AL Language', ModuleInfo.Publisher(), 'module publisher');
     end;
 
+    local procedure TestLibrariesInstalled(): Boolean
+    var
+        InstalledApp: Record "NAV App Installed App";
+    begin
+        // "Tests-TestLibraries" (Microsoft, app id below) holds the codeunit "Backup Management" (130011).
+        // It is subscribed to GlobalTriggerManagement.OnAfterGetDatabaseTableTriggerSetup and sets all
+        // four flags to true for every table with an id in 1..99999 and 150000..1999999999 (so for the
+        // tables of this app) whenever a company is open. A full local bc-linux container has the app; a
+        // container with a selective app set (the CI one) does not.
+        exit(InstalledApp.Get('{5D86850B-0D76-4ECA-BD7B-951AD998E997}'));
+    end;
+
+    local procedure YesNo(Value: Boolean): Text
+    begin
+        if Value then
+            exit('Yes');
+        exit('No');
+    end;
+
     [Test]
-    procedure GlobalTriggers_BaseApplication_EnablesTheDatabaseEventsForAnyTable_AndNoGlobalEvents()
-    // CLAIM: when a subscriber of GetDatabaseTableTriggerSetup runs, the four flags already hold true for a table of this app (Base Application set them); GetGlobalTableTriggerMask holds 0. OnDatabaseInsert is raised for Insert(true) and Insert(false); OnGlobalInsert is not.
+    procedure GlobalTriggers_PlainTable_FlagsAreSetOnlyBySubscribersOfTheOnAfterEvent()
+    // CLAIM: Base Application's own subscribers set no flag for a table that nothing configures (no change log, no Dataverse mapping, no API webhook subscription, no data synchronization). The only subscriber that does is Backup Management of the Tests-TestLibraries app, where that app is installed. GetGlobalTableTriggerMask holds 0. OnDatabaseInsert is raised only when a flag is set, and OnGlobalInsert never.
     var
         GtLog: Codeunit "Probe GT Log";
         GtTable: Record "Probe GT Table";
+        Flag: Text;
+        InsertEvent: Text;
     begin
+        Flag := YesNo(TestLibrariesInstalled());
+        InsertEvent := '';
+        if TestLibrariesInstalled() then
+            InsertEvent := 'OnDatabaseInsert(68311);';
+
         GtTable.DeleteAll();
         Commit();
-        Assert.AreEqual('Mask(68311 mask=0);Setup(68311 ins=Yes mod=Yes del=Yes ren=Yes);', GtLog.Take(), 'the first write to the table asks for the setup once');
+        Assert.AreEqual('Mask(68311 mask=0);Setup(68311 ins=' + Flag + ' mod=' + Flag + ' del=' + Flag + ' ren=' + Flag + ');', GtLog.Take(), 'the first write to the table asks for the setup once');
 
         GtTable.Id := 1;
         GtTable.Insert(true);
-        Assert.AreEqual('OnDatabaseInsert(68311);', GtLog.Take(), 'Insert(true)');
+        Assert.AreEqual(InsertEvent, GtLog.Take(), 'Insert(true)');
 
         GtTable.Id := 2;
         GtTable.Insert(false);
-        Assert.AreEqual('OnDatabaseInsert(68311);', GtLog.Take(), 'Insert(false)');
+        Assert.AreEqual(InsertEvent, GtLog.Take(), 'Insert(false)');
+    end;
+
+    [Test]
+    procedure GlobalTriggers_ChangeLogSetup_DecidesInsertDeleteAndRenameFlagsOfAConfiguredTable()
+    // CLAIM: the deciding subscriber is GlobalTriggerManagement.GetDatabaseTableTriggerSetup, which calls "Change Log Management".GetDatabaseTableTriggerSetup after the OnAfter event, in the Normal execution context. With "Change Log Setup"."Change Log Activated" and a "Change Log Setup (Table)" row, a flag is true when its log column is not blank: Log Insertion gives the insert flag, Log Modification the modify AND the rename flag, Log Deletion the delete flag. Without the setup the same table gets no flag (see the plain table test).
+    var
+        GtLog: Codeunit "Probe GT Log";
+        GtTable: Record "Probe GT Changelog Table";
+        ChangeLogSetup: Record "Change Log Setup";
+        ChangeLogSetupTable: Record "Change Log Setup (Table)";
+        ChangeLogEntry: Record "Change Log Entry";
+        Other: Text;
+    begin
+        // Setup and the first write happen with the original change log setup restored at the end.
+        Other := YesNo(TestLibrariesInstalled());
+        if not ChangeLogSetup.Get() then begin
+            ChangeLogSetup.Init();
+            ChangeLogSetup.Insert();
+        end;
+        ChangeLogSetup."Change Log Activated" := true;
+        ChangeLogSetup.Modify();
+        ChangeLogSetupTable.Init();
+        ChangeLogSetupTable."Table No." := Database::"Probe GT Changelog Table";
+        ChangeLogSetupTable."Log Insertion" := ChangeLogSetupTable."Log Insertion"::"All Fields";
+        ChangeLogSetupTable."Log Deletion" := ChangeLogSetupTable."Log Deletion"::"All Fields";
+        ChangeLogSetupTable.Insert();
+        Commit();
+        GtLog.Take();
+
+        GtTable.DeleteAll();
+        Commit();
+        Assert.AreEqual('Mask(68314 mask=0);Setup(68314 ins=Yes mod=' + Other + ' del=Yes ren=' + Other + ');', GtLog.Take(), 'flags with a change log setup for insert and delete');
+
+        GtTable.Id := 1;
+        GtTable.Insert(true);
+        Assert.AreEqual('OnDatabaseInsert(68314);', GtLog.Take(), 'Insert raises OnDatabaseInsert');
+
+        // Put the change log back the way it was.
+        GtTable.DeleteAll();
+        ChangeLogEntry.SetRange("Table No.", Database::"Probe GT Changelog Table");
+        ChangeLogEntry.DeleteAll();
+        ChangeLogSetupTable.Get(Database::"Probe GT Changelog Table");
+        ChangeLogSetupTable.Delete();
+        ChangeLogSetup.Get();
+        ChangeLogSetup."Change Log Activated" := false;
+        ChangeLogSetup.Modify();
+        Commit();
+    end;
+
+    [Test]
+    procedure GlobalTriggers_SubscriberSetsInsertFlag_RaisesOnDatabaseInsertForBothInsertForms()
+    // CLAIM: a subscriber of Codeunit "Global Triggers".GetDatabaseTableTriggerSetup that sets OnDatabaseInsert makes the platform raise OnDatabaseInsert for Insert(true) and Insert(false). The flags it was handed are the ones the other subscribers left (see the plain table test).
+    var
+        GtLog: Codeunit "Probe GT Log";
+        GtTable: Record "Probe GT Own Table";
+        Flag: Text;
+    begin
+        Flag := YesNo(TestLibrariesInstalled());
+
+        GtTable.DeleteAll();
+        Commit();
+        Assert.AreEqual('Mask(68315 mask=0);Setup(68315 ins=' + Flag + ' mod=' + Flag + ' del=' + Flag + ' ren=' + Flag + ');', GtLog.Take(), 'flags handed to the subscriber');
+
+        GtTable.Id := 1;
+        GtTable.Insert(true);
+        Assert.AreEqual('OnDatabaseInsert(68315);', GtLog.Take(), 'Insert(true)');
+
+        GtTable.Id := 2;
+        GtTable.Insert(false);
+        Assert.AreEqual('OnDatabaseInsert(68315);', GtLog.Take(), 'Insert(false)');
     end;
 }
