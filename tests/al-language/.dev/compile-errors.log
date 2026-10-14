@@ -12,70 +12,41 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/codeunit/EBEEventCategory.EnumExt.al",
-              "region": {
-                "startLine": 3,
-                "startColumn": 1,
-                "endLine": 3,
-                "endColumn": 26
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "Using directives are ignored if a namespace is not specified.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0789",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/install/TestRetenPolAllowedTables_Tests.al",
-              "region": {
-                "startLine": 31,
-                "startColumn": 1,
-                "endLine": 31,
-                "endColumn": 33
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "Using directives are ignored if a namespace is not specified.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0789",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
               "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/pageextensiontrigger/TestPageExtQualifiedExtends_ExtQualified.al",
               "region": {
                 "startLine": 10,
                 "startColumn": 1,
                 "endLine": 10,
                 "endColumn": 37
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Using directives are ignored if a namespace is not specified.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0789",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageControlOnValidateError_Tests.al",
+              "region": {
+                "startLine": 35,
+                "startColumn": 1,
+                "endLine": 35,
+                "endColumn": 40
               }
             }
           ]
@@ -123,6 +94,122 @@
       }
     },
     {
+      "ruleId": "AL0640",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/testpart/TestTestPart.al",
+              "region": {
+                "startLine": 187,
+                "startColumn": 7,
+                "endLine": 187,
+                "endColumn": 14
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'n'.'",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0789",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/codeunit/EBEEventCategory.EnumExt.al",
+              "region": {
+                "startLine": 3,
+                "startColumn": 1,
+                "endLine": 3,
+                "endColumn": 26
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Using directives are ignored if a namespace is not specified.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0640",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageFailedInsert_Tests.al",
+              "region": {
+                "startLine": 14,
+                "startColumn": 63,
+                "endLine": 14,
+                "endColumn": 63
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0789",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/install/TestRetenPolAllowedTables_Tests.al",
+              "region": {
+                "startLine": 31,
+                "startColumn": 1,
+                "endLine": 31,
+                "endColumn": 33
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Using directives are ignored if a namespace is not specified.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
       "ruleId": "AL0789",
       "locations": [
         {
@@ -152,29 +239,58 @@
       }
     },
     {
-      "ruleId": "AL0789",
+      "ruleId": "AL0640",
       "locations": [
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/tableextensiontrigger/TestTableExtTargetNamespace_ExtQualified.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
               "region": {
-                "startLine": 12,
-                "startColumn": 1,
-                "endLine": 12,
-                "endColumn": 37
+                "startLine": 37,
+                "startColumn": 36,
+                "endLine": 37,
+                "endColumn": 36
               }
             }
           ]
         }
       ],
-      "fullMessage": "Using directives are ignored if a namespace is not specified.",
+      "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
         "defaultSeverity": "Warning",
         "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0640",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageActionRunPageMode.al",
+              "region": {
+                "startLine": 43,
+                "startColumn": 7,
+                "endLine": 43,
+                "endColumn": 14
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'key'.'",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
@@ -186,12 +302,12 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageControlOnValidateError_Tests.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/tableextensiontrigger/TestTableExtTargetNamespace_ExtQualified.al",
               "region": {
-                "startLine": 35,
+                "startLine": 12,
                 "startColumn": 1,
-                "endLine": 35,
-                "endColumn": 40
+                "endLine": 12,
+                "endColumn": 37
               }
             }
           ]
@@ -244,35 +360,6 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/testpart/TestTestPart.al",
-              "region": {
-                "startLine": 187,
-                "startColumn": 7,
-                "endLine": 187,
-                "endColumn": 14
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'n'.'",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
               "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestRecordTruncateEventAndFilterGuards.al",
               "region": {
                 "startLine": 31,
@@ -302,18 +389,18 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageActionRunPageMode.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/testpart/TestTestPart.al",
               "region": {
-                "startLine": 43,
-                "startColumn": 7,
-                "endLine": 43,
-                "endColumn": 14
+                "startLine": 188,
+                "startColumn": 1,
+                "endLine": 188,
+                "endColumn": 1
               }
             }
           ]
         }
       ],
-      "fullMessage": "XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag 'key'.'",
+      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'n'.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -331,18 +418,18 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageFailedInsert_Tests.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/testpart/TestTestPart.al",
               "region": {
-                "startLine": 14,
-                "startColumn": 63,
-                "endLine": 14,
-                "endColumn": 63
+                "startLine": 188,
+                "startColumn": 1,
+                "endLine": 188,
+                "endColumn": 1
               }
             }
           ]
         }
       ],
-      "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
+      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -389,35 +476,6 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
-              "region": {
-                "startLine": 37,
-                "startColumn": 36,
-                "endLine": 37,
-                "endColumn": 36
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
               "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageFailedInsert_Tests.al",
               "region": {
                 "startLine": 14,
@@ -430,35 +488,6 @@
         }
       ],
       "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
-              "region": {
-                "startLine": 39,
-                "startColumn": 1,
-                "endLine": 39,
-                "endColumn": 1
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'FlowFilter'.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -565,16 +594,16 @@
             {
               "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
               "region": {
-                "startLine": 46,
-                "startColumn": 47,
-                "endLine": 46,
-                "endColumn": 47
+                "startLine": 39,
+                "startColumn": 1,
+                "endLine": 39,
+                "endColumn": 1
               }
             }
           ]
         }
       ],
-      "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
+      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'FlowFilter'.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -621,47 +650,18 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/testpart/TestTestPart.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageActionRunPageMode.al",
               "region": {
-                "startLine": 188,
+                "startLine": 44,
                 "startColumn": 1,
-                "endLine": 188,
+                "endLine": 44,
                 "endColumn": 1
               }
             }
           ]
         }
       ],
-      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'n'.'",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
-              "region": {
-                "startLine": 48,
-                "startColumn": 1,
-                "endLine": 48,
-                "endColumn": 1
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'FlowFilter'.'",
+      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -708,18 +708,18 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/testpart/TestTestPart.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
               "region": {
-                "startLine": 188,
-                "startColumn": 1,
-                "endLine": 188,
-                "endColumn": 1
+                "startLine": 46,
+                "startColumn": 47,
+                "endLine": 46,
+                "endColumn": 47
               }
             }
           ]
         }
       ],
-      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'",
+      "fullMessage": "XML comment has badly formed XML -- 'Missing equals sign between attribute and attribute value.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -737,18 +737,18 @@
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPageActionRunPageMode.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaFlowFiltersHeader.Table.al",
               "region": {
-                "startLine": 44,
+                "startLine": 48,
                 "startColumn": 1,
-                "endLine": 44,
+                "endLine": 48,
                 "endColumn": 1
               }
             }
           ]
         }
       ],
-      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'",
+      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'FlowFilter'.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -819,6 +819,35 @@
       }
     },
     {
+      "ruleId": "AL0789",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/codeunit/EBEPublisher.Codeunit.al",
+              "region": {
+                "startLine": 4,
+                "startColumn": 1,
+                "endLine": 4,
+                "endColumn": 26
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Using directives are ignored if a namespace is not specified.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
       "ruleId": "AL0640",
       "locations": [
         {
@@ -829,93 +858,6 @@
                 "startLine": 43,
                 "startColumn": 1,
                 "endLine": 43,
-                "endColumn": 1
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/errorinfo/TestErrorInfoType.al",
-              "region": {
-                "startLine": 143,
-                "startColumn": 14,
-                "endLine": 143,
-                "endColumn": 15
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- '('",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/errorinfo/TestErrorInfoType.al",
-              "region": {
-                "startLine": 187,
-                "startColumn": 7,
-                "endLine": 187,
-                "endColumn": 14
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag ''.'",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0640",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/errorinfo/TestErrorInfoType.al",
-              "region": {
-                "startLine": 188,
-                "startColumn": 1,
-                "endLine": 188,
                 "endColumn": 1
               }
             }
@@ -981,6 +923,35 @@
         }
       ],
       "fullMessage": "XML comment has badly formed XML -- 'The character(s) ''' cannot be used at this location.'",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0640",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/errorinfo/TestErrorInfoType.al",
+              "region": {
+                "startLine": 143,
+                "startColumn": 14,
+                "endLine": 143,
+                "endColumn": 15
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "XML comment has badly formed XML -- '('",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
@@ -1167,29 +1138,145 @@
       }
     },
     {
-      "ruleId": "AL0789",
+      "ruleId": "AL0640",
       "locations": [
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/codeunit/EBEPublisher.Codeunit.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/errorinfo/TestErrorInfoType.al",
               "region": {
-                "startLine": 4,
-                "startColumn": 1,
-                "endLine": 4,
-                "endColumn": 26
+                "startLine": 187,
+                "startColumn": 7,
+                "endLine": 187,
+                "endColumn": 14
               }
             }
           ]
         }
       ],
-      "fullMessage": "Using directives are ignored if a namespace is not specified.",
+      "fullMessage": "XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag ''.'",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
         "defaultSeverity": "Warning",
         "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al789?wt.mc_id=d365bc_inproduct_alextension",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0640",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/errorinfo/TestErrorInfoType.al",
+              "region": {
+                "startLine": 188,
+                "startColumn": 1,
+                "endLine": 188,
+                "endColumn": 1
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al640?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0432",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetGrants.al",
+              "region": {
+                "startLine": 39,
+                "startColumn": 28,
+                "endLine": 39,
+                "endColumn": 38
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Table 'Permission' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in an upcoming major release. The 'Expanded Permission' table should be used in its place..",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0432",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetGrants.al",
+              "region": {
+                "startLine": 58,
+                "startColumn": 28,
+                "endLine": 58,
+                "endColumn": 38
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Table 'Permission' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in an upcoming major release. The 'Expanded Permission' table should be used in its place..",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0432",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetGrants.al",
+              "region": {
+                "startLine": 83,
+                "startColumn": 28,
+                "endLine": 83,
+                "endColumn": 38
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Table 'Permission' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in an upcoming major release. The 'Expanded Permission' table should be used in its place..",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
@@ -1486,64 +1573,6 @@
       }
     },
     {
-      "ruleId": "AL0524",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/SvmTrace.Table.al",
-              "region": {
-                "startLine": 23,
-                "startColumn": 15,
-                "endLine": 23,
-                "endColumn": 20
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The base type already defines a method called 'Reset' with the same parameter types. This warning will become an error in a future release.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al524?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0524",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/SvmTrace.Table.al",
-              "region": {
-                "startLine": 48,
-                "startColumn": 15,
-                "endLine": 48,
-                "endColumn": 20
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The base type already defines a method called 'Count' with the same parameter types. This warning will become an error in a future release.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al524?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
       "ruleId": "AL0299",
       "locations": [
         {
@@ -1631,232 +1660,58 @@
       }
     },
     {
-      "ruleId": "AL0432",
+      "ruleId": "AL0524",
       "locations": [
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetGrants.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/SvmTrace.Table.al",
               "region": {
-                "startLine": 39,
-                "startColumn": 28,
-                "endLine": 39,
-                "endColumn": 38
+                "startLine": 23,
+                "startColumn": 15,
+                "endLine": 23,
+                "endColumn": 20
               }
             }
           ]
         }
       ],
-      "fullMessage": "Table 'Permission' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in an upcoming major release. The 'Expanded Permission' table should be used in its place..",
+      "fullMessage": "The base type already defines a method called 'Reset' with the same parameter types. This warning will become an error in a future release.",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
         "defaultSeverity": "Warning",
         "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al524?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
       }
     },
     {
-      "ruleId": "AL0432",
+      "ruleId": "AL0524",
       "locations": [
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetGrants.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/SvmTrace.Table.al",
               "region": {
-                "startLine": 58,
-                "startColumn": 28,
-                "endLine": 58,
-                "endColumn": 38
+                "startLine": 48,
+                "startColumn": 15,
+                "endLine": 48,
+                "endColumn": 20
               }
             }
           ]
         }
       ],
-      "fullMessage": "Table 'Permission' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in an upcoming major release. The 'Expanded Permission' table should be used in its place..",
+      "fullMessage": "The base type already defines a method called 'Count' with the same parameter types. This warning will become an error in a future release.",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
         "defaultSeverity": "Warning",
         "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0432",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetGrants.al",
-              "region": {
-                "startLine": 83,
-                "startColumn": 28,
-                "endLine": 83,
-                "endColumn": 38
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "Table 'Permission' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in an upcoming major release. The 'Expanded Permission' table should be used in its place..",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0667",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPrecompiledReportLayouts.al",
-              "region": {
-                "startLine": 38,
-                "startColumn": 40,
-                "endLine": 38,
-                "endColumn": 96
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "'DefaultLayout' is being deprecated in the versions: '14.0' or greater. Replace with layout selection and 'Report Layout List' lookup. See https://go.microsoft.com/fwlink/?linkid=2284102&clcid=0x409 for more information. This warning will become an error in a future release.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0667",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPrecompiledReportLayouts.al",
-              "region": {
-                "startLine": 45,
-                "startColumn": 40,
-                "endLine": 45,
-                "endColumn": 90
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "'DefaultLayout' is being deprecated in the versions: '14.0' or greater. Replace with layout selection and 'Report Layout List' lookup. See https://go.microsoft.com/fwlink/?linkid=2284102&clcid=0x409 for more information. This warning will become an error in a future release.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0432",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetTable.al",
-              "region": {
-                "startLine": 124,
-                "startColumn": 50,
-                "endLine": 124,
-                "endColumn": 66
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "Table 'Permission Set' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in next major release..",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "True",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0667",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/autoformat/TestAutoFormat.al",
-              "region": {
-                "startLine": 135,
-                "startColumn": 32,
-                "endLine": 135,
-                "endColumn": 66
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "'GetField' is being deprecated in the versions: '3.0' or greater.  This warning will become an error in a future release.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0717",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaMinMaxAvgHeader.Table.al",
-              "region": {
-                "startLine": 225,
-                "startColumn": 19,
-                "endLine": 225,
-                "endColumn": 40
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The property 'CalcFormula' is required for the field 'Unformulated Amount' in Table 'CFM Header' because the field's property 'FieldClass' is set to 'FlowField'.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al717?wt.mc_id=d365bc_inproduct_alextension",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al524?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
@@ -1915,6 +1770,93 @@
         "defaultSeverity": "Warning",
         "category": "Compiler",
         "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0667",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/autoformat/TestAutoFormat.al",
+              "region": {
+                "startLine": 135,
+                "startColumn": 32,
+                "endLine": 135,
+                "endColumn": 66
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "'GetField' is being deprecated in the versions: '3.0' or greater.  This warning will become an error in a future release.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0432",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/permissions/TestPermissionSetTable.al",
+              "region": {
+                "startLine": 124,
+                "startColumn": 50,
+                "endLine": 124,
+                "endColumn": 66
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "Table 'Permission Set' is marked for removal. Reason: Internal table which will be moved to the OnPrem scope in next major release..",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al432?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "True",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0717",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestCalcFormulaMinMaxAvgHeader.Table.al",
+              "region": {
+                "startLine": 225,
+                "startColumn": 19,
+                "endLine": 225,
+                "endColumn": 40
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "The property 'CalcFormula' is required for the field 'Unformulated Amount' in Table 'CFM Header' because the field's property 'FieldClass' is set to 'FlowField'.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al717?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
@@ -2071,6 +2013,93 @@
         {
           "analysisTarget": [
             {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestBCPlatformContracts.al",
+              "region": {
+                "startLine": 40,
+                "startColumn": 13,
+                "endLine": 40,
+                "endColumn": 28
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "'IsServiceTier' is being deprecated in the versions: '1.0' or greater.  This warning will become an error in a future release.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0667",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPrecompiledReportLayouts.al",
+              "region": {
+                "startLine": 38,
+                "startColumn": 40,
+                "endLine": 38,
+                "endColumn": 96
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "'DefaultLayout' is being deprecated in the versions: '14.0' or greater. Replace with layout selection and 'Report Layout List' lookup. See https://go.microsoft.com/fwlink/?linkid=2284102&clcid=0x409 for more information. This warning will become an error in a future release.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0667",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/handlers/TestPrecompiledReportLayouts.al",
+              "region": {
+                "startLine": 45,
+                "startColumn": 40,
+                "endLine": 45,
+                "endColumn": 90
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "'DefaultLayout' is being deprecated in the versions: '14.0' or greater. Replace with layout selection and 'Report Layout List' lookup. See https://go.microsoft.com/fwlink/?linkid=2284102&clcid=0x409 for more information. This warning will become an error in a future release.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0667",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
               "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/record/TestRecordFind.al",
               "region": {
                 "startLine": 179,
@@ -2089,6 +2118,35 @@
         "defaultSeverity": "Warning",
         "category": "Compiler",
         "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0836",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/_fixtures/tables/ALTKeyedExt.TableExt.al",
+              "region": {
+                "startLine": 33,
+                "startColumn": 13,
+                "endLine": 33,
+                "endColumn": 21
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "The Key 'ExtMixed' contains a reference to the field 'Ext Rank' which is defined in another object from the same app. If you are preparing to move this object to another extension in the future, this reference will be an issue.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al836?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
@@ -2153,29 +2211,87 @@
       }
     },
     {
-      "ruleId": "AL0667",
+      "ruleId": "AL0821",
       "locations": [
         {
           "analysisTarget": [
             {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestBCPlatformContracts.al",
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestSystemExtended.al",
               "region": {
-                "startLine": 40,
-                "startColumn": 13,
-                "endLine": 40,
-                "endColumn": 28
+                "startLine": 559,
+                "startColumn": 40,
+                "endLine": 559,
+                "endColumn": 52
               }
             }
           ]
         }
       ],
-      "fullMessage": "'IsServiceTier' is being deprecated in the versions: '1.0' or greater.  This warning will become an error in a future release.",
+      "fullMessage": "The method 'Initialize' is missing or does not have exactly one parameter of type Notification.",
       "properties": {
         "severity": "Warning",
         "warningLevel": "4",
         "defaultSeverity": "Warning",
         "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al667?wt.mc_id=d365bc_inproduct_alextension",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al821?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0821",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestSystemExtended.al",
+              "region": {
+                "startLine": 570,
+                "startColumn": 39,
+                "endLine": 570,
+                "endColumn": 51
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "The method 'Initialize' is missing or does not have exactly one parameter of type Notification.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al821?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry"
+      }
+    },
+    {
+      "ruleId": "AL0821",
+      "locations": [
+        {
+          "analysisTarget": [
+            {
+              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestSystemExtended.al",
+              "region": {
+                "startLine": 571,
+                "startColumn": 39,
+                "endLine": 571,
+                "endColumn": 51
+              }
+            }
+          ]
+        }
+      ],
+      "fullMessage": "The method 'Initialize' is missing or does not have exactly one parameter of type Notification.",
+      "properties": {
+        "severity": "Warning",
+        "warningLevel": "4",
+        "defaultSeverity": "Warning",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al821?wt.mc_id=d365bc_inproduct_alextension",
         "isEnabledByDefault": "True",
         "isSuppressedInSource": "False",
         "customTags": "Compiler;Telemetry"
@@ -2425,122 +2541,6 @@
                 "startColumn": 40,
                 "endLine": 114,
                 "endColumn": 52
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The method 'Initialize' is missing or does not have exactly one parameter of type Notification.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al821?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0836",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/_fixtures/tables/ALTKeyedExt.TableExt.al",
-              "region": {
-                "startLine": 33,
-                "startColumn": 13,
-                "endLine": 33,
-                "endColumn": 21
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The Key 'ExtMixed' contains a reference to the field 'Ext Rank' which is defined in another object from the same app. If you are preparing to move this object to another extension in the future, this reference will be an issue.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al836?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0821",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestSystemExtended.al",
-              "region": {
-                "startLine": 559,
-                "startColumn": 40,
-                "endLine": 559,
-                "endColumn": 52
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The method 'Initialize' is missing or does not have exactly one parameter of type Notification.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al821?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0821",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestSystemExtended.al",
-              "region": {
-                "startLine": 570,
-                "startColumn": 39,
-                "endLine": 570,
-                "endColumn": 51
-              }
-            }
-          ]
-        }
-      ],
-      "fullMessage": "The method 'Initialize' is missing or does not have exactly one parameter of type Notification.",
-      "properties": {
-        "severity": "Warning",
-        "warningLevel": "4",
-        "defaultSeverity": "Warning",
-        "category": "Compiler",
-        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al821?wt.mc_id=d365bc_inproduct_alextension",
-        "isEnabledByDefault": "True",
-        "isSuppressedInSource": "False",
-        "customTags": "Compiler;Telemetry"
-      }
-    },
-    {
-      "ruleId": "AL0821",
-      "locations": [
-        {
-          "analysisTarget": [
-            {
-              "uri": "/home/stefan/Documents/Repos/community/corpus-probes/tests/al-language/session/TestSystemExtended.al",
-              "region": {
-                "startLine": 571,
-                "startColumn": 39,
-                "endLine": 571,
-                "endColumn": 51
               }
             }
           ]
