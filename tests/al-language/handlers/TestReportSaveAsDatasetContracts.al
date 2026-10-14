@@ -284,6 +284,26 @@ codeunit 68303 "Probe Report SaveAs Dataset"
     end;
 
     [Test]
+    procedure SaveAs_Xml_DataItemIdentity_PresenceFollowsTheVersion()
+    // CLAIM: the tableId/systemId pair is on every DataItem (five here) where BC28PLUS is defined and on none below. Measured: absent on 27.5, present on 28.5 and 29.0; 28.0 to 28.4 were not measured, so a failure there says where the change came in.
+    var
+        Lines: List of [Text];
+        Identities: List of [Text];
+        HasBom: Boolean;
+    begin
+        Initialize();
+
+        DatasetLines('', Lines, HasBom);
+        StripIdentity(TailFrom(Lines, '<DataItems>'), Identities);
+
+#if BC28PLUS
+        Assert.AreEqual(5, Identities.Count(), 'a pair on each of the five data items');
+#else
+        Assert.AreEqual(0, Identities.Count(), 'no pair before BC 28');
+#endif
+    end;
+
+    [Test]
     procedure SaveAs_Xml_StripIdentity_RemovesThePairAndKeepsTheRest()
     var
         Identities: List of [Text];
