@@ -14,6 +14,8 @@
 //    its rows;
 //  - Copy and SetTable from a record or RecordRef of another company do not move the target to that company;
 //    a RecordRef.GetTable does;
+//  - Delete(false) of a company that holds rows removes the Company row (ChangeCompany answers false) and a company inserted again under
+//    the name starts empty (codeunit 68394);
 //  - a company that is renamed takes its data with it and the old name answers false; a company that is
 //    deleted (with triggers) takes its data with it, and a new company of the same name starts empty;
 //  - ChangeCompany to a company that does not exist: false when the result is used (the record stays
@@ -254,5 +256,53 @@ codeunit 68393 "Probe Chg Company Missing"
 
         Assert.AreEqual('The company "NoSuchCompany" does not exist.', GetLastErrorText(), 'text');
         Assert.AreEqual('DB:RecordNotFound', GetLastErrorCode(), 'code');
+    end;
+}
+
+codeunit 68394 "Probe Chg Company Delete False"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+
+    [Test]
+    procedure DeleteWithoutTriggers_OfACompanyWithRows_RemovesTheCompany_AndANewOneStartsEmpty()
+    // CLAIM: Delete(false) of a company that holds rows removes the Company row; ChangeCompany to it answers false; a company inserted again
+    // under the same name starts empty.
+    var
+        Company: Record Company;
+        Data: Record "Probe Chg Table";
+        Later: Record "Probe Chg Table";
+    begin
+        if Company.Get('PRB CHGCO DEL') then
+            Company.Delete(true);
+        Company.Init();
+        Company.Name := 'PRB CHGCO DEL';
+        Company.Insert();
+        Commit();
+        Data.ChangeCompany('PRB CHGCO DEL');
+        Data.Id := 1;
+        Data.Insert();
+        Commit();
+
+        Company.Get('PRB CHGCO DEL');
+        Company.Delete(false);
+        Commit();
+
+        Assert.IsFalse(Company.Get('PRB CHGCO DEL'), 'the Company row is gone');
+        Assert.IsFalse(Later.ChangeCompany('PRB CHGCO DEL'), 'ChangeCompany');
+
+        Company.Init();
+        Company.Name := 'PRB CHGCO DEL';
+        Company.Insert();
+        Commit();
+        Assert.IsTrue(Later.ChangeCompany('PRB CHGCO DEL'), 'inserted again');
+        Assert.AreEqual(0, Later.Count(), 'starts empty');
+
+        Company.Get('PRB CHGCO DEL');
+        Company.Delete(true);
+        Commit();
     end;
 }
