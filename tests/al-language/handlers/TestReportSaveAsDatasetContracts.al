@@ -17,9 +17,10 @@
 // with an empty stream and the error text "RDLC report rendering is not implemented on Linux BC ...",
 // which is a limit of the container and not BC behaviour. "Report_SaveAs_Pdf_ReturnValueAgreesWithTheBytesInTheStream"
 // (handlers/TestReportSaveAsPdfContent.al) accepts both outcomes.
+// BC 29.0 adds ReportCaption and a company information block to the header (see the header test).
 // BC 28.5 adds ` tableId="<table id>" systemId="<guid>"` to every DataItem element (27.5 does not). The exact-text
 // test removes that pair before comparing; one test checks the pair's shape where it is present.
-// BC versions: 27.5, 28.5
+// BC versions: 27.5, 28.5, 29.0
 
 table 68300 "Probe Rep Parent"
 {
@@ -239,7 +240,12 @@ codeunit 68303 "Probe Report SaveAs Dataset"
             if Line.Trim().StartsWith('<') and not Line.Trim().StartsWith('</') and Line.Contains('</') then
                 Tags += Line.Trim().Substring(2, Line.Trim().IndexOf('>') - 2) + ' ';
         end;
+#if BC29PLUS
+        // BC 29.0 adds ReportCaption after ReportName and, after Minute, the whole company information block.
+        Assert.AreEqual('ExtensionId ExtensionName ExtensionPublisher ExtensionVersion ReportId ReportName ReportCaption AboutThisReportTitle AboutThisReportText ReportHelpLink TenantEntraId EnvironmentName EnvironmentType CompanyName CompanyDisplayName CompanyId UserName DateAndTime Language FormatRegion Year MonthNumber DayNumber Hour Minute CompanyName CompanyDisplayName CompanyAddressLine1 CompanyAddressLine2 CompanyAddressLine3 CompanyAddressLine4 CompanyAddressLine5 CompanyAddressLine6 CompanyAddressLine7 CompanyAddressLine8 CompanyPhone CompanyPhoneCaption CompanyFaxNo CompanyFaxNoCaption CompanyEmail CompanyEmailCaption CompanyHomePage CompanyHomePageCaption CompanyLogo CompanyVATRegistrationNo CompanyVATRegistrationNoCaption CompanyRegistrationNo CompanyRegistrationNoCaption CompanyBankName CompanyBankNameCaption CompanyBankAccountNo CompanyBankAccountNoCaption CompanyBankBranchNo CompanyBankBranchNoCaption CompanyIBAN CompanyIBANCaption CompanyBankSWIFT CompanyBankSWIFTCaption CompanyGiroNo CompanyGiroNoCaption ', Tags, 'header elements in order');
+#else
         Assert.AreEqual('ExtensionId ExtensionName ExtensionPublisher ExtensionVersion ReportId ReportName AboutThisReportTitle AboutThisReportText ReportHelpLink TenantEntraId EnvironmentName EnvironmentType CompanyName CompanyDisplayName CompanyId UserName DateAndTime Language FormatRegion Year MonthNumber DayNumber Hour Minute ', Tags, 'header elements in order');
+#endif
         Assert.IsTrue(TailFrom(Lines, '<ReportName>Probe SaveAs Report</ReportName>') <> '', 'report name element');
         Assert.IsTrue(TailFrom(Lines, '<CompanyName>' + CompanyName() + '</CompanyName>') <> '', 'company name element');
     end;

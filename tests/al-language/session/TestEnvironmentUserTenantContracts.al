@@ -20,7 +20,7 @@
 // of this app; where it is not (CI), only Base Application's own rules apply (Change Log setup, Dataverse
 // mapping, API webhook subscription, data synchronization). The tests below read that app's presence and expect
 // either answer, and pin the Change Log rule and the platform's reaction to a flag.
-// BC versions: 27.5, 28.5
+// BC versions: 27.5, 28.5, 29.0 (IsSaaSInfrastructure is false on 29.0; see its test)
 
 table 68311 "Probe GT Table"
 {
@@ -44,6 +44,7 @@ table 68314 "Probe GT Changelog Table"
     fields
     {
         field(1; Id; Integer) { }
+        field(2; Txt; Text[20]) { }
     }
 
     keys
@@ -151,18 +152,51 @@ codeunit 68310 "Probe Environment Contracts"
     procedure EnvironmentInformation_Answers()
     var
         EnvironmentInformation: Codeunit "Environment Information";
-        NoGuid: Guid;
     begin
         Assert.IsTrue(EnvironmentInformation.IsSandbox(), 'IsSandbox');
         Assert.IsFalse(EnvironmentInformation.IsProduction(), 'IsProduction');
         Assert.IsTrue(EnvironmentInformation.IsSaaS(), 'IsSaaS');
         Assert.IsTrue(EnvironmentInformation.IsOnPrem(), 'IsOnPrem is true at the same time as IsSaaS');
         Assert.IsFalse(EnvironmentInformation.IsFinancials(), 'IsFinancials');
+    end;
+
+    [Test]
+    procedure EnvironmentInformation_IsSaaSInfrastructure_DiffersBetween28And29()
+    // Measured: true on the 27.5 and 28.5 runs, false on the 29.0 run (same container setup, bc-linux).
+    var
+        EnvironmentInformation: Codeunit "Environment Information";
+    begin
+#if BC29PLUS
+        Assert.IsFalse(EnvironmentInformation.IsSaaSInfrastructure(), 'IsSaaSInfrastructure');
+#else
         Assert.IsTrue(EnvironmentInformation.IsSaaSInfrastructure(), 'IsSaaSInfrastructure');
+#endif
+    end;
+
+    [Test]
+    procedure EnvironmentInformation_Name_AndApplicationFamily()
+    var
+        EnvironmentInformation: Codeunit "Environment Information";
+    begin
         Assert.AreEqual('Sandbox', EnvironmentInformation.GetEnvironmentName(), 'GetEnvironmentName');
         Assert.AreEqual('W1', EnvironmentInformation.GetApplicationFamily(), 'GetApplicationFamily');
+    end;
+
+    [Test]
+    procedure EnvironmentInformation_CanStartSession_AndPowerPlatformEnvironment()
+    var
+        EnvironmentInformation: Codeunit "Environment Information";
+    begin
         Assert.IsFalse(EnvironmentInformation.CanStartSession(), 'CanStartSession');
         Assert.AreEqual('', EnvironmentInformation.GetLinkedPowerPlatformEnvironmentId(), 'GetLinkedPowerPlatformEnvironmentId');
+    end;
+
+    [Test]
+    procedure EnvironmentInformation_VersionInstalled_OfTheNullAppId()
+    var
+        EnvironmentInformation: Codeunit "Environment Information";
+        NoGuid: Guid;
+    begin
         Assert.IsTrue(EnvironmentInformation.VersionInstalled(NoGuid) >= 27, 'VersionInstalled of the null app id is the installed application major version');
     end;
 
@@ -264,19 +298,34 @@ codeunit 68310 "Probe Environment Contracts"
         Assert.AreEqual(InsertEvent, GtLog.Take(), 'Insert(false)');
     end;
 
-    [Test]
-    procedure GlobalTriggers_ChangeLogSetup_DecidesInsertDeleteAndRenameFlagsOfAConfiguredTable()
-    // CLAIM: the deciding subscriber is GlobalTriggerManagement.GetDatabaseTableTriggerSetup, which calls "Change Log Management".GetDatabaseTableTriggerSetup after the OnAfter event, in the Normal execution context. With "Change Log Setup"."Change Log Activated" and a "Change Log Setup (Table)" row, a flag is true when its log column is not blank: Log Insertion gives the insert flag, Log Modification the modify AND the rename flag, Log Deletion the delete flag. Without the setup the same table gets no flag (see the plain table test).
+    local procedure ChangeLogSummary(): Text
     var
-        GtLog: Codeunit "Probe GT Log";
+        ChangeLogEntry: Record "Change Log Entry";
+        Result: Text;
+    begin
+        ChangeLogEntry.SetRange("Table No.", Database::"Probe GT Changelog Table");
+        if ChangeLogEntry.FindSet() then
+            repeat
+                Result += Format(ChangeLogEntry."Type of Change") + ' field ' + Format(ChangeLogEntry."Field No.") + ' [' + ChangeLogEntry."Old Value" + '>' + ChangeLogEntry."New Value" + '];';
+            until ChangeLogEntry.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure GlobalTriggers_ChangeLogSetup_LogsOnlyTheKindsOfChangeTheTableIsSetUpFor()
+    // CLAIM: Base Application's GlobalTriggerManagement.GetDatabaseTableTriggerSetup calls "Change Log Management".GetDatabaseTableTriggerSetup in the Normal execution context. With "Change Log Setup"."Change Log Activated" and a "Change Log Setup (Table)" row, that call turns on the database event for each kind of change whose log column is not blank, and the change log then writes entries only for those kinds: here Log Insertion and Log Deletion are All Fields and Log Modification is blank, so an insert and a delete write entries and a modify writes none. "Change Log Management" is SingleInstance and caches the setup for the session, so the test calls InitChangeLog after changing it (without that call no entry is written). The flags a Global Triggers subscriber is handed are NOT pinned for this table: the CI run handed No on every flag even with the setup in place, which fits the cache above (the platform asks once per table and the cached setup was still the inactive one), and the local run handed Yes only because Tests-TestLibraries sets every flag there. The entries do not depend on either.
+    var
         GtTable: Record "Probe GT Changelog Table";
         ChangeLogSetup: Record "Change Log Setup";
         ChangeLogSetupTable: Record "Change Log Setup (Table)";
         ChangeLogEntry: Record "Change Log Entry";
-        Other: Text;
+        ChangeLogMgt: Codeunit "Change Log Management";
+        GtLog: Codeunit "Probe GT Log";
+        AfterInsert: Text;
+        AfterModify: Text;
+        AfterDelete: Text;
     begin
-        // Setup and the first write happen with the original change log setup restored at the end.
-        Other := YesNo(TestLibrariesInstalled());
+        // The original change log setup is put back at the end.
         if not ChangeLogSetup.Get() then begin
             ChangeLogSetup.Init();
             ChangeLogSetup.Insert();
@@ -289,19 +338,26 @@ codeunit 68310 "Probe Environment Contracts"
         ChangeLogSetupTable."Log Deletion" := ChangeLogSetupTable."Log Deletion"::"All Fields";
         ChangeLogSetupTable.Insert();
         Commit();
-        GtLog.Take();
+        // "Change Log Management" is SingleInstance and keeps the setup it read first for the whole session;
+        // InitChangeLog drops that cache (the Change Log Setup pages call it after a change).
+        ChangeLogMgt.InitChangeLog();
 
+        ChangeLogEntry.SetRange("Table No.", Database::"Probe GT Changelog Table");
+        ChangeLogEntry.DeleteAll();
         GtTable.DeleteAll();
         Commit();
-        Assert.AreEqual('Mask(68314 mask=0);Setup(68314 ins=Yes mod=' + Other + ' del=Yes ren=' + Other + ');', GtLog.Take(), 'flags with a change log setup for insert and delete');
 
         GtTable.Id := 1;
+        GtTable.Txt := 'a';
         GtTable.Insert(true);
-        Assert.AreEqual('OnDatabaseInsert(68314);', GtLog.Take(), 'Insert raises OnDatabaseInsert');
+        AfterInsert := ChangeLogSummary();
+        GtTable.Txt := 'b';
+        GtTable.Modify(true);
+        AfterModify := ChangeLogSummary();
+        GtTable.Delete(true);
+        AfterDelete := ChangeLogSummary();
 
         // Put the change log back the way it was.
-        GtTable.DeleteAll();
-        ChangeLogEntry.SetRange("Table No.", Database::"Probe GT Changelog Table");
         ChangeLogEntry.DeleteAll();
         ChangeLogSetupTable.Get(Database::"Probe GT Changelog Table");
         ChangeLogSetupTable.Delete();
@@ -309,6 +365,12 @@ codeunit 68310 "Probe Environment Contracts"
         ChangeLogSetup."Change Log Activated" := false;
         ChangeLogSetup.Modify();
         Commit();
+        ChangeLogMgt.InitChangeLog();
+        GtLog.Take();
+
+        Assert.AreEqual('Insertion field 1 [>1];Insertion field 2 [>a];', AfterInsert, 'after the insert');
+        Assert.AreEqual(AfterInsert, AfterModify, 'a modify adds no entry');
+        Assert.AreEqual('Insertion field 1 [>1];Insertion field 2 [>a];Deletion field 1 [1>];Deletion field 2 [b>];', AfterDelete, 'after the delete');
     end;
 
     [Test]
