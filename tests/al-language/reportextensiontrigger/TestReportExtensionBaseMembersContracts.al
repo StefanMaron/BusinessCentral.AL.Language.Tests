@@ -12,6 +12,8 @@
 //    extension writes in a trigger the base reads later (counter 20 in the extension's OnAfterPreDataItem, record
 //    id 88 and decimal 3 in OnAfterAfterGetRecord, all seen by the base's OnPostReport), and a protected procedure
 //    changes the shared counter. A Dialog variable of the base opens and updates from the extension.
+//  - A public procedure of the base (PubProc) and a protected List variable (Names, filled by the base and the extension, count 2)
+//    work from the extension the same way.
 //  - A variable of the base that is not protected is a compile error in the extension (AL0161 "'Hidden' is
 //    inaccessible due to its protection level"); a test cannot show that.
 //  - Order: for every trigger the base runs first, then the extensions in OBJECT ID order, not in name order
@@ -95,6 +97,7 @@ report 68892 "Probe BM Base"
         Dec: Decimal;
         Other: Record "Probe BM Table";
         Win: Dialog;
+        Names: List of [Text];
 
     var
         Hidden: Integer;
@@ -106,12 +109,19 @@ report 68892 "Probe BM Base"
         Dec := 1.5;
         Other.Id := 77;
         Hidden := 5;
+        Names.Add('base');
         BmLog.Add('base PreReport');
     end;
 
     trigger OnPostReport()
     begin
-        BmLog.Add('base PostReport counter=' + Format(Counter) + ' dec=' + Format(Dec) + ' other=' + Format(Other.Id) + ' bump=' + Format(Bump()));
+        BmLog.Add('base PostReport counter=' + Format(Counter) + ' dec=' + Format(Dec) + ' other=' + Format(Other.Id) + ' bump=' + Format(Bump()) + ' names=' + Format(Names.Count()));
+    end;
+
+    procedure PubProc(Add: Integer): Integer
+    begin
+        Counter += Add;
+        exit(Counter);
     end;
 
     protected procedure Bump(): Integer
@@ -131,6 +141,8 @@ reportextension 68893 "Probe BM Ext" extends "Probe BM Base"
             begin
                 BmLog.Add('ext PreDataItem counter=' + Format(Counter) + ' dec=' + Format(Dec) + ' other=' + Format(Other.Id));
                 Counter := 20;
+                Names.Add('ext');
+                BmLog.Add('ext PubProc=' + Format(PubProc(1)) + ' names=' + Format(Names.Count()));
                 Win.Open('#1###');
                 Win.Update(1, 5);
                 Win.Close();
@@ -262,9 +274,10 @@ codeunit 68896 "Probe Report Ext Base Members"
 
         Assert.AreEqual(
             'base PreReport;ext PreReport counter=10 bump=110;Zeta PreReport counter=110;Alpha PreReport counter=1110;' +
-            'base PreDataItem counter=3110;ext PreDataItem counter=3110 dec=1.5 other=77;Zeta PreDataItem counter=20;Alpha PreDataItem counter=21;' +
-            'base Row counter=23;ext Row counter=23;ext after Bump counter=123;Zeta Row counter=123;Alpha Row counter=123;' +
-            'base PostReport counter=123 dec=3 other=88 bump=223;Zeta PostReport counter=223;Alpha PostReport counter=223;',
+            'base PreDataItem counter=3110;ext PreDataItem counter=3110 dec=1.5 other=77;ext PubProc=21 names=2;' +
+            'Zeta PreDataItem counter=21;Alpha PreDataItem counter=22;' +
+            'base Row counter=24;ext Row counter=24;ext after Bump counter=124;Zeta Row counter=124;Alpha Row counter=124;' +
+            'base PostReport counter=124 dec=3 other=88 bump=224 names=2;Zeta PostReport counter=224;Alpha PostReport counter=224;',
             BmLog.Take(), 'trigger log');
 
         TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
