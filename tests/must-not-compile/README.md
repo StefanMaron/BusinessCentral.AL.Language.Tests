@@ -49,6 +49,10 @@ is only a reference.
 | 0007 | AL0124 | `assemblyProbingPaths` in app.json at runtime 16.0 |
 | 0008 | AL0175 | `=` between two DotNet class objects (OnPrem, AL 18+) |
 | 0009 | AL0365 | `DataItemLink` on a query data item with `SqlJoinType = CrossJoin` |
+| 0010 to 0013 | AL0132 | `ExecutionMode::Install`, `Uninstall`, `Upgrade` and `Report` do not exist (only Standard and Debug) |
+| 0014 | AL0296 | Cloud app names the Scope = OnPrem table `API Webhook Entity` |
+| 0015 | AL0385 | `IncludeCaption` on a report column whose source is an expression |
+| 0016 | AL0197 | two codeunits of the same name (one diagnostic per declaration) |
 
 ## CI
 
