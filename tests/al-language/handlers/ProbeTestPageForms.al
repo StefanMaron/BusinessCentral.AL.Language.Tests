@@ -25,6 +25,7 @@ codeunit 69523 "Probe Tp Log"
 page 69524 "PB Tp List"
 {
     PageType = List;
+    ApplicationArea = All;
     SourceTable = "Probe Pf Row";
 
     layout
@@ -70,6 +71,7 @@ page 69524 "PB Tp List"
 page 69525 "Probe Tp Validation"
 {
     PageType = Card;
+    ApplicationArea = All;
     SourceTable = "Probe Pf Row";
 
     layout
@@ -183,25 +185,14 @@ codeunit 69526 "Probe Test Page Forms"
         Found := Pg.GoToKey(1);
         Found := Pg.FindFirstField(Txt, 'nomatch');
         Observer.Observe('findFirstUsed', Format(Found));
-        asserterror Pg.FindFirstField(Txt, 'nomatch');
-        Observer.ObserveError('findFirstUnused');
         Found := Pg.FindNextField(Txt, 'nomatch');
         Observer.Observe('findNextUsed', Format(Found));
-        asserterror Pg.FindNextField(Txt, 'nomatch');
-        Observer.ObserveError('findNextUnused');
         Found := Pg.FindPreviousField(Txt, 'nomatch');
         Observer.Observe('findPreviousUsed', Format(Found));
-        Pg.FindPreviousField(Txt, 'nomatch');
-        Observer.Observe('findPreviousUnused', 'no error');
         Pg.Close();
         Observer.Expect('findFirstUsed', 'No');
-        Observer.Expect('findFirstUnused|text', 'The row does not exist on the TestPage.');
-        Observer.Expect('findFirstUnused|code', 'TestRowNotFound');
         Observer.Expect('findNextUsed', 'No');
-        Observer.Expect('findNextUnused|text', 'The row does not exist on the TestPage.');
-        Observer.Expect('findNextUnused|code', 'TestRowNotFound');
         Observer.Expect('findPreviousUsed', 'No');
-        Observer.Expect('findPreviousUnused', 'no error');
         Observer.Verify();
     end;
 

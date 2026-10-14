@@ -30,7 +30,27 @@ codeunit 69160 "Probe Observer"
         Lf[1] := 10;
         Tab[1] := 9;
         Escaped := Scrub(ObservedValue).Replace(Rs, '?').Replace(Us, '?').Replace(Cr, '\r').Replace(Lf, '\n').Replace(Tab, '\t');
+        Escaped := EscapeControl(Escaped);
         Pairs += ObservedName + Us + Escaped + Rs;
+    end;
+
+    // Control characters (and the non characters U+FFFE / U+FFFF) are not valid in the junit XML the runner writes: show them as \uXXXX.
+    local procedure EscapeControl(Value: Text): Text
+    var
+        i: Integer;
+        Code: Integer;
+        Result: Text;
+        Hex: Text;
+    begin
+        Hex := '0123456789ABCDEF';
+        for i := 1 to StrLen(Value) do begin
+            Code := Value[i];
+            if (Code < 32) or (Code = 65534) or (Code = 65535) or ((Code >= 55296) and (Code <= 57343)) then
+                Result += '\u' + CopyStr(Hex, (Code div 4096) + 1, 1) + CopyStr(Hex, ((Code div 256) mod 16) + 1, 1) + CopyStr(Hex, ((Code div 16) mod 16) + 1, 1) + CopyStr(Hex, (Code mod 16) + 1, 1)
+            else
+                Result += CopyStr(Value, i, 1);
+        end;
+        exit(Result);
     end;
 
     // Replaces what changes from run to run (the app version, the run time, the company id, the runner) by a fixed placeholder, so an
