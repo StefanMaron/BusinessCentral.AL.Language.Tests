@@ -1,6 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-get-started-call-dotnet-from-al
-// Scope: in-scope, but ONLY for a Target = OnPrem app (DotNet)
-// Fixtures used: Assert (60021), from the AL Language Coverage Tests app; self-contained codeunit 61250
+// Scope: in-scope, but ONLY for a Target = OnPrem app (DotNet), and only with an AL compiler of version 18.0 or newer: AL 16.x and 17.x (what
+// the CI picks for BC 27 and 28) fail with AL0451 "An assembly named 'mscorlib, PublicKeyToken=null' could not be found in the assembly probing
+// paths ''" for the dotnet block below. The app is therefore not in the CI test_app_dirs (see its app.json); run it with a newer compiler.
+// Fixtures used: Assert (60021), from the AL Language Coverage Tests app; self-contained codeunit 61300
 // Probe: written against a real BC 27.5 service tier started by bc-linux; every literal below is what that tier
 // produced. Other BC versions and other hosts were not measured.
 //
@@ -56,7 +58,7 @@ dotnet
     }
 }
 
-codeunit 61250 "Test DotNet Value Kinds"
+codeunit 61300 "Test DotNet Value Kinds"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -123,7 +125,7 @@ codeunit 61250 "Test DotNet Value Kinds"
         Assert.AreEqual('Boolean', Kind(Value), 'bool');
         Value := Conv.ToString(5);
         Assert.AreEqual('Text', Kind(Value), 'string');
-        Value := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61250');
+        Value := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61300');
         Assert.AreEqual('none', Kind(Value), 'null string');
 
         When := When.Now;
@@ -174,14 +176,14 @@ codeunit 61250 "Test DotNet Value Kinds"
         Text: Text;
         Value: Variant;
     begin
-        Assert.IsTrue(Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61250') = '', '= empty');
-        Text := Format(Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61250'));
+        Assert.IsTrue(Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61300') = '', '= empty');
+        Text := Format(Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61300'));
         Assert.AreEqual('', Text, 'Format');
-        Text := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61250') + 'x';
+        Text := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61300') + 'x';
         Assert.AreEqual('x', Text, '+ x');
-        Text := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61250');
+        Text := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61300');
         Assert.AreEqual(0, StrLen(Text), 'assigned to Text');
-        Value := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61250');
+        Value := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61300');
         Assert.IsFalse(Value.IsText(), 'Variant is not Text');
         Assert.IsFalse(Value.IsDotNet(), 'Variant is not DotNet');
     end;
