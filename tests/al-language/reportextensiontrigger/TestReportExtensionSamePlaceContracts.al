@@ -11,8 +11,10 @@
 //  - addfirst(Parent): the items of the later extension come first; the items of one extension keep their declaration
 //    order (G1, then F1, F2);
 //  - addbefore(ChildA): the later extension's item stands closest to ChildA (X1, X2, Y1, ChildA);
-//  - addafter(ChildA): the later extension's item stands closest to ChildA (ChildA, Z2, Z1).
-// The run order and the order of the columns in the dataset are the same: Parent;G1;F1;F2;X1;X2;Y1;ChildA;Z2;Z1.
+//  - addafter(ChildA): the later extension's item stands closest to ChildA (ChildA, Z2, Z1); two items of one extension keep their
+//    declaration order (Z1, Z1b);
+//  - addlast(Parent): the items are appended in application order, so the later extension is last (L1, L2, M1).
+// The run order and the order of the columns in the dataset are the same: Parent;G1;F1;F2;X1;X2;Y1;ChildA;Z2;Z1;Z1b;L1;L2;M1.
 // An anchor on a data item another extension added is not probed.
 // BC versions: 27.5
 
@@ -180,6 +182,42 @@ reportextension 69013 "Probe SP Ext1" extends "Probe SP Base"
                     SpLog.Add('Z1');
                 end;
             }
+            dataitem(Z1b; "Probe SP Child")
+            {
+                DataItemLink = ParentId = field(Id);
+
+                column(Z1bId; Id) { }
+
+                trigger OnAfterGetRecord()
+                begin
+                    SpLog.Add('Z1b');
+                end;
+            }
+        }
+        addlast(Parent)
+        {
+            dataitem(L1; "Probe SP Child")
+            {
+                DataItemLink = ParentId = field(Id);
+
+                column(L1Id; Id) { }
+
+                trigger OnAfterGetRecord()
+                begin
+                    SpLog.Add('L1');
+                end;
+            }
+            dataitem(L2; "Probe SP Child")
+            {
+                DataItemLink = ParentId = field(Id);
+
+                column(L2Id; Id) { }
+
+                trigger OnAfterGetRecord()
+                begin
+                    SpLog.Add('L2');
+                end;
+            }
         }
     }
 
@@ -216,6 +254,20 @@ reportextension 69014 "Probe SP Ext2" extends "Probe SP Base"
                 trigger OnAfterGetRecord()
                 begin
                     SpLog.Add('G1');
+                end;
+            }
+        }
+        addlast(Parent)
+        {
+            dataitem(M1; "Probe SP Child")
+            {
+                DataItemLink = ParentId = field(Id);
+
+                column(M1Id; Id) { }
+
+                trigger OnAfterGetRecord()
+                begin
+                    SpLog.Add('M1');
                 end;
             }
         }
@@ -272,7 +324,7 @@ codeunit 69016 "Probe Report Ext Same Place"
         TempBlob.CreateOutStream(OutStr);
         Assert.IsTrue(Report.SaveAs(Report::"Probe SP Base", '', ReportFormat::Xml, OutStr), 'SaveAs');
 
-        Assert.AreEqual('Parent;G1;F1;F2;X1;X2;Y1;ChildA;Z2;Z1;', SpLog.Take(), 'run order');
+        Assert.AreEqual('Parent;G1;F1;F2;X1;X2;Y1;ChildA;Z2;Z1;Z1b;L1;L2;M1;', SpLog.Take(), 'run order');
 
         TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
         while not InStr.EOS() do begin
@@ -281,6 +333,6 @@ codeunit 69016 "Probe Report Ext Same Place"
             if Line.StartsWith('<Column name="') then
                 Columns += Line.Substring(15, Line.IndexOf('"', 15) - 15) + ' ';
         end;
-        Assert.AreEqual('PId G1Id F1Id F2Id X1Id X2Id Y1Id AId Z2Id Z1Id ', Columns, 'columns in the dataset');
+        Assert.AreEqual('PId G1Id F1Id F2Id X1Id X2Id Y1Id AId Z2Id Z1Id Z1bId L1Id L2Id M1Id ', Columns, 'columns in the dataset');
     end;
 }
