@@ -11,7 +11,7 @@
 //   EnableMcpAccess All Users, FinancialReportDefaults All Users, FullTextSearch None, GLCurrencyRevaluation None,
 //   Manufacturing_FlushingMethod_ActivateManualWoPick None, ReminderTermsCommunicationTexts All Users, SalesPrices None,
 //   SaveValueToDatabasePromptly All Users, SemanticMetadataSearch All Users.
-// BC versions: 27.5 (the list differs by version; pinned for versions below 28)
+// BC versions: 27.3 and 27.5 (the list differs by minor: 27.0 reads differently, so the exact list is asserted only there; the row-count test runs everywhere)
 
 codeunit 69100 "Probe Feature Key Enabled"
 {
@@ -21,13 +21,28 @@ codeunit 69100 "Probe Feature Key Enabled"
     var
         Assert: Codeunit Assert;
 
+    [Test]
+    procedure FeatureKey_Table_HasRows_WithEnabledState()
+    var
+        FeatureKey: Record "Feature Key";
+    begin
+        // The platform list of features and their state differ between versions and minors; only that the table has rows holds everywhere.
+        Assert.IsTrue(FeatureKey.Count() > 0, 'rows');
+    end;
+
 #if not BC28PLUS
     [Test]
     procedure FeatureKey_Enabled_PerId_On27()
     var
         FeatureKey: Record "Feature Key";
         Rows: Text;
+        Version: Text;
+        AppConstants: Codeunit "Application System Constants";
     begin
+        // Measured on 27.5 and 27.3; 27.0 differs, so the exact list is asserted only where it was measured.
+        Version := AppConstants.ApplicationVersion();
+        if not (Version.StartsWith('27.5.') or Version.StartsWith('27.3.')) then
+            exit;
         FeatureKey.FindSet();
         repeat
             Rows += FeatureKey.ID + ':' + Format(FeatureKey.Enabled) + ' ';

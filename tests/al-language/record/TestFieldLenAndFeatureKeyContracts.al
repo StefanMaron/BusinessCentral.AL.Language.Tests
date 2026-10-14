@@ -80,7 +80,9 @@ codeunit 68882 "Probe Field Len Feature Key"
         FieldRec.SetRange(TableNo, Database::"Probe Len Table");
         FieldRec.FindSet();
         repeat
-            Lens += FieldRec.FieldName + ':' + Format(FieldRec.Type) + ':' + Format(FieldRec.Len) + ' ';
+            // BC 29 adds the system fields SystemCreatedByUserName / FullName and SystemModifiedByUserName / FullName; they are not part of this contract.
+            if not (FieldRec.FieldName.EndsWith('UserName') or FieldRec.FieldName.EndsWith('FullName')) then
+                Lens += FieldRec.FieldName + ':' + Format(FieldRec.Type) + ':' + Format(FieldRec.Len) + ' ';
         until FieldRec.Next() = 0;
 
         Assert.AreEqual(
