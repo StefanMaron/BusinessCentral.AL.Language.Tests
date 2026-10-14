@@ -47,5 +47,10 @@
   ],
   "features": [],
   "runtime": "16.0",
-  "target": "OnPrem"
+  "target": "OnPrem",
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  }
 }
