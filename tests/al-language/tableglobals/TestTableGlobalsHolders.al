@@ -275,4 +275,24 @@ codeunit 69679 "TGL Page Tests"
         Card.Close();
         Assert.AreEqual('1', Seen, 'counter after bump on a reopened page');
     end;
+
+    [Test]
+    procedure TableGlobals_PageFieldValidate_WhatTheTriggerSeesOfThePageRecGlobals()
+    // CLAIM: the OnValidate a page field runs starts with fresh globals; it does not see what an earlier action set on the page's Rec.
+    var
+        Card: TestPage "TGL Row Card";
+        LogRec: Record "TGL Log";
+    begin
+        Initialize();
+        MakeRows();
+        Card.OpenEdit();
+        Card.GoToKey('A');
+        Card.BumpRec.Invoke();
+        Card.BumpRec.Invoke();
+        Card.Probe2.SetValue(1);
+        Card.Close();
+        LogRec.SetFilter(Note, 'P2:*');
+        LogRec.FindFirst();
+        Assert.AreEqual('P2:0|', LogRec.Note, 'counter and tag the trigger saw');
+    end;
 }

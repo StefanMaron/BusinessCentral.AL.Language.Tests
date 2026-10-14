@@ -34,8 +34,8 @@
 //   * A temporary record behaves like a persistent one.
 //   * Pages (headless TestPage): the page's Rec keeps its globals across actions and across rows, and a
 //     new page instance starts fresh. A field validation done through the page runs the table triggers
-//     on a different instance: OnInsert / OnModify afterwards see initial globals, and the page's Rec
-//     globals are reset by the validation.
+//     on a different instance with initial globals (not the page Rec's): OnInsert / OnModify afterwards
+//     see initial globals too, and the page's Rec globals are reset by the validation.
 
 codeunit 69677 "TGL Record Variable Tests"
 {

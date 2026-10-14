@@ -37,6 +37,16 @@ table 69670 "TGL Row"
         }
         field(6; RecSeen; Text[100]) { }
         field(7; ModSeq; Integer) { }
+        field(8; Probe2; Integer)
+        {
+            trigger OnValidate()
+            var
+                LogRec: Record "TGL Log";
+            begin
+                LogRec.Add(StrSubstNo('P2:%1|%2', Counter, Tag));
+                Counter += 1;
+            end;
+        }
     }
 
     keys
@@ -337,6 +347,7 @@ page 69673 "TGL Row Card"
             {
                 field("No."; Rec."No.") { ApplicationArea = All; }
                 field(Payload; Rec.Payload) { ApplicationArea = All; }
+                field(Probe2; Rec.Probe2) { ApplicationArea = All; }
                 field(LastCount; LastCount) { ApplicationArea = All; }
                 field(AfterGetCount; AfterGetCount) { ApplicationArea = All; }
                 field(Seen; Rec.Seen) { ApplicationArea = All; }
