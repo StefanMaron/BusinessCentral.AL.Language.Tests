@@ -177,7 +177,7 @@ jobs:
           if [ -n "$OVERRIDE" ]; then
             MAJOR=$(echo "$OVERRIDE" | cut -d. -f1)
             SYMS=""
-            for v in 27 28; do
+            for v in 27 28 29; do
               [ "$v" -le "$MAJOR" ] || break
               SYMS="${SYMS:+$SYMS,}BC${v}PLUS"
             done
