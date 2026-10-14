@@ -156,7 +156,6 @@ codeunit 69766 "PW Report SaveAs Columns Probe"
         InStr: InStream;
         Line: Text;
         Result: Text;
-        PastHeader: Boolean;
     begin
         TempBlob.CreateOutStream(OutStr);
         ClearLastError();
@@ -164,20 +163,72 @@ codeunit 69766 "PW Report SaveAs Columns Probe"
         TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
         while not InStr.EOS() do begin
             InStr.ReadText(Line);
-            // The metadata and request header (BCReportInformation) differs between builds and is not part of what is asserted: keep the labels and the data items.
-            if PastHeader then
-                Result += Line + '|';
-            if Line.Contains('</BCReportInformation>') then
-                PastHeader := true;
+            // Only the columns, labels and data item markers are kept: the header and the attributes of the data items differ between builds.
+            Line := Line.Trim();
+            if Line.StartsWith('<Column ') or Line.StartsWith('<Label ') then
+                Result += Line + '|'
+            else
+                if Line.StartsWith('<DataItem ') then
+                    Result += '<DataItem>|'
+                else
+                    if Line.StartsWith('<DataItems') then
+                        Result += '<DataItems>|';
         end;
         exit(Result);
+    end;
+
+    [Test]
+    procedure Undefined_TimeDateTime_SingleDigitHour_GuidWithHexLetters()
+    var
+        Saved: Boolean;
+        Text: Text;
+    begin
+        Rows(true);
+        Text := Dataset(Report::"PW Col Undefined Report", Saved);
+        Observer.Observe('saved', Format(Saved));
+        Observer.Observe('dataset', Text);
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('dataset', '<DataItems>|<DataItem>|<Column name="IdC">1</Column>|<Column name="TmC"></Column>|<Column name="DtmC"></Column>|<Column name="GdC">00000000-0000-0000-0000-000000000000</Column>|<Column name="Tm2C"></Column>|<Column name="DecC" decimalformatter="#,##0.00">0</Column>|<DataItem>|<Column name="IdC">2</Column>|<Column name="TmC">9:00:00 AM</Column>|<Column name="DtmC">3/5/2024 9:00:00 AM</Column>|<Column name="GdC">abcdef01-2345-6789-abcd-ef0123456789</Column>|<Column name="Tm2C">12:34:56 PM</Column>|<Column name="DecC" decimalformatter="#,##0.00">12.3</Column>|');
+        Observer.Verify();
     end;
 
 
 
 
+    [Test]
+    procedure DecimalPlaces_SingleNumberRangeAndZero()
+    var
+        Saved: Boolean;
+        Text: Text;
+    begin
+        Rows(true);
+        Text := Dataset(Report::"PW Col Decimal Places Report", Saved);
+        Observer.Observe('saved', Format(Saved));
+        Observer.Observe('error', GetLastErrorText());
+        Observer.Observe('dataset', Text);
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('error', '');
+        Observer.Expect('dataset', '<DataItems>|<DataItem>|<Column name="IdC">1</Column>|<Column name="DecPlain" decimalformatter="#,##0.00">0</Column>|<Column name="DecOne" decimalformatter="#,##0.0">0</Column>|<Column name="DecRange" decimalformatter="#,##0.00##">0</Column>|<Column name="DecZero" decimalformatter="#,##0">0</Column>|<Column name="DecZeroOne" decimalformatter="#,##0.##">0</Column>|<Column name="DecStored" decimalformatter="#,##0.00">0</Column>|<DataItem>|<Column name="IdC">2</Column>|<Column name="DecPlain" decimalformatter="#,##0.00">12.3</Column>|<Column name="DecOne" decimalformatter="#,##0.0">18.45</Column>|<Column name="DecRange" decimalformatter="#,##0.00##">18.45</Column>|<Column name="DecZero" decimalformatter="#,##0">18.45</Column>|<Column name="DecZeroOne" decimalformatter="#,##0.##">18.45</Column>|<Column name="DecStored" decimalformatter="#,##0.00">12.3</Column>|');
+        Observer.Verify();
+    end;
 
 
+
+
+    [Test]
+    procedure Labels_RowReachesTheColumn()
+    var
+        Saved: Boolean;
+        Text: Text;
+    begin
+        Rows(true);
+        Text := Dataset(Report::"PW Col Labels Report", Saved);
+        Observer.Observe('saved', Format(Saved));
+        Observer.Observe('dataset', Text);
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('dataset', '<Label name="IdCCaption">Id caption</Label>|<Label name="TxtCCaption">Txt</Label>|<DataItems>|<DataItem>|<Column name="IdC">1</Column>|<Column name="TxtC"></Column>|<DataItem>|<Column name="IdC">2</Column>|<Column name="TxtC">text</Column>|');
+        Observer.Verify();
+    end;
 
 
 
@@ -193,7 +244,7 @@ codeunit 69766 "PW Report SaveAs Columns Probe"
         Observer.Observe('saved', Format(Saved));
         Observer.Observe('dataset', Text);
         Observer.Expect('saved', 'Yes');
-        Observer.Expect('dataset', '  <Labels>|    <Label name="IdCCaption">Id caption</Label>|    <Label name="TxtCCaption">Txt</Label>|  </Labels>|  <DataItems />|</ReportDataSet>|');
+        Observer.Expect('dataset', '<Label name="IdCCaption">Id caption</Label>|<Label name="TxtCCaption">Txt</Label>|<DataItems>|');
         Observer.Verify();
     end;
 
