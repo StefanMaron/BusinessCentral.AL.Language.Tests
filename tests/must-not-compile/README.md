@@ -53,6 +53,35 @@ is only a reference.
 | 0014 | AL0296 | Cloud app names the Scope = OnPrem table `API Webhook Entity` |
 | 0015 | AL0385 | `IncludeCaption` on a report column whose source is an expression |
 | 0016 | AL0197 | two codeunits of the same name (one diagnostic per declaration) |
+| 0017, 0018 | AL0162 | `OnFindRecord` and `OnNextRecord` in a page extension (every other page trigger, 12 of them, compiles in an extension: see tests/al-language/pageext/POPageExtTriggers.al) |
+| 0019 | AL0132 | `ExecutionMode::Profile` does not exist |
+| 0020 to 0024 | AL0296 (and AL0433 for removed tables) | all 123 platform tables of System.app with Scope = OnPrem named from a Cloud app, 30 per case; symbols of BC 27.0 only (`@from 27`, `@until 27`) |
+| 0030 to 0033 | AL0118 | an unknown bare procedure name inside a table, a page, a report and a page extension |
+| 0034, 0035 | AL0197 | two page extensions / two tables of the same name |
+| 0036 | AL0264 | two codeunits with the same id |
+| 0040 to 0042 | AL0161, AL0161, AL0440 | report extension forms of cases 0001 to 0003 |
+| 0043 | AL0440 | two procedures with the same parameter types in one codeunit |
+| 0044 | AL0121 | a variable declared twice |
+| 0045, 0046 | AL0155, AL0231 | an enum with a duplicate value name / ordinal |
+| 0047 | AL0280 | an event subscriber for an event the publisher does not have |
+| 0048 | AL0139 | `exit(1)` in a procedure without a return value |
+| 0049 | AL0499 | `HandlerFunctions` naming a procedure that does not exist |
+| 0050 | AL0582 | a codeunit implements an interface and lacks a member |
+| 0051 | AL0130 | a literal passed for a `var` parameter |
+| 0053 | AL0111 | a statement without its semicolon |
+| 0054, 0055 | AL0297, AL0305 | object id outside the `idRanges` of app.json / object name longer than 30 characters |
+| 0056 | AL0152 | an Option variable that repeats a member |
+| 0057 | AL0247 | a page extension of a page that does not exist |
+| 0058 | AL0345, AL0353 | a query column over a field the table lacks |
+| 0059 | AL0118 | `Rec` in a codeunit without `TableNo` |
+| 0060, 0061 | AL0132 | a field / a method that a Record does not have |
+| 0062, 0063, 0064 | AL0155, AL0206, AL0155 | a report column / table field id / table field name declared twice |
+| 0065, 0068 | AL0244 | a `[Test]` procedure or a `[TryFunction]` with a return value |
+| 0066, 0067 | AL0135, AL0126 | too few / too many arguments |
+| 0069, 0070 | AL0122 | Integer to Text and Text to Integer assignment |
+| 0071 to 0073 | AL0124 | `assemblyProbingPaths` at runtime 15.0, 16.1 and 17.0 (16.1 and 17.0 need AL 17 or newer) |
+
+Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
 ## CI
 
