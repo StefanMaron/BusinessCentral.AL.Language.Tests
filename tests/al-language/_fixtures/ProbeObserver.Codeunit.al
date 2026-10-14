@@ -12,6 +12,7 @@ codeunit 69160 "Probe Observer"
     var
         Pairs: Text;
         Expected: Text;
+        Ignored: List of [Text];
         Remaining: Text;
 
     procedure Observe(ObservedName: Text; ObservedValue: Text)
@@ -52,6 +53,12 @@ codeunit 69160 "Probe Observer"
         Value := ReplaceBetween(Value, '<CompanyName>', '</CompanyName>', 'x');
         Value := ReplaceBetween(Value, '<CompanyDisplayName>', '</CompanyDisplayName>', 'x');
         Value := ReplaceBetween(Value, 'AL Language Coverage Tests by AL Language version ', '\', 'x');
+        Value := ReplaceBetween(Value, '<BCReportInformation>', '</BCReportInformation>', 'x');
+        Value := ReplaceBetween(Value, 'App Package ID={', '}', 'x');
+        Value := ReplaceBetween(Value, 'App Runtime Package ID={', '}', 'x');
+        Value := ReplaceBetween(Value, 'Originating Package ID={', '}', 'x');
+        Value := ReplaceBetween(Value, 'Link ID=', ' |', 'x');
+        Value := ReplaceBetween(Value, 'Created=', ' |', 'x');
         exit(Value);
     end;
 
@@ -100,6 +107,23 @@ codeunit 69160 "Probe Observer"
         Expected += ExpectedName + Us + ExpectedValue + Rs;
     end;
 
+    local procedure KeepAsserted(All: List of [Text]) Kept: List of [Text]
+    var
+        Pair: Text;
+        Us: Text[1];
+    begin
+        Us[1] := 9247;
+        foreach Pair in All do
+            if not Ignored.Contains(CopyStr(Pair, 1, StrPos(Pair + Us, Us) - 1)) then
+                Kept.Add(Pair);
+    end;
+
+    // Names of observations that are computed but not asserted (a dump, environment data).
+    procedure Ignore(IgnoredName: Text)
+    begin
+        Ignored.Add(IgnoredName);
+    end;
+
     procedure Verify()
     var
         Rs: Text[1];
@@ -118,9 +142,10 @@ codeunit 69160 "Probe Observer"
         Want := Expected;
         Pairs := '';
         Expected := '';
-        if Got = Want then
+        if (Ignored.Count() = 0) and (Got = Want) then
             exit;
-        GotList := Got.Split(Rs);
+        GotList := KeepAsserted(Got.Split(Rs));
+        Clear(Ignored);
         WantList := Want.Split(Rs);
         for Index := 1 to WantList.Count() do begin
             WantPair := WantList.Get(Index);
@@ -128,14 +153,36 @@ codeunit 69160 "Probe Observer"
                 Error('observation %1 missing: expected [%2]', Index, WantPair.Replace(Us, ' = '));
             GotPair := GotList.Get(Index);
             if GotPair <> WantPair then
-                Error('observation %1: expected [%2] but was [%3]', Index, WantPair.Replace(Us, ' = '), GotPair.Replace(Us, ' = '));
+                Error('observation %1: expected [%2] but was [%3]', Index, Around(WantPair.Replace(Us, ' = '), GotPair.Replace(Us, ' = ')), Around(GotPair.Replace(Us, ' = '), WantPair.Replace(Us, ' = ')));
         end;
-        Error('%1 more observation(s) than expected, the first [%2]', GotList.Count() - WantList.Count(), GotList.Get(WantList.Count() + 1).Replace(Us, ' = '));
+        if GotList.Count() > WantList.Count() then
+            Error('%1 more observation(s) than expected, the first [%2]', GotList.Count() - WantList.Count(), GotList.Get(WantList.Count() + 1).Replace(Us, ' = '));
+    end;
+
+    // The part of Value around the first character that differs from Other (a long observation would be cut by the message limit).
+    local procedure Around(Value: Text; Other: Text): Text
+    var
+        At: Integer;
+    begin
+        if (StrLen(Value) <= 300) and (StrLen(Other) <= 300) then
+            exit(Value);
+        At := 1;
+        while (At <= StrLen(Value)) and (At <= StrLen(Other)) and (Value[At] = Other[At]) do
+            At += 1;
+        exit('(at ' + Format(At) + ') ' + CopyStr(Value, Maximum(1, At - 100), 300));
+    end;
+
+    local procedure Maximum(A: Integer; B: Integer): Integer
+    begin
+        if A > B then
+            exit(A);
+        exit(B);
     end;
 
     // For a test whose values depend on the tier (they are recorded, not asserted).
     procedure Discard()
     begin
+        Clear(Ignored);
         Pairs := '';
         Expected := '';
     end;

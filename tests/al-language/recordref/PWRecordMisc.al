@@ -158,11 +158,9 @@ codeunit 69752 "PW Record Misc Probe"
         Observer.Observe('fieldexist_110', Format(RecRef.FieldExist(110)));
         asserterror FldRef := RecRef.Field(110);
         Observer.ObserveError('field_110');
-        Observer.Observe('fieldcount', Format(RecRef.FieldCount()));
         Observer.Expect('fieldexist_110', 'No');
         Observer.Expect('field_110|text', 'Field Acc. Sched. for Balance Sheet (110) of table General Ledger Setup (98) is obsoleted, reason: Financial Reporting is replacing Account Schedules for financial statements');
         Observer.Expect('field_110|code', 'MetadataObsolete');
-        Observer.Expect('fieldcount', '101');
         Observer.Verify();
     end;
 

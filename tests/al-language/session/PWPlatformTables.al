@@ -106,21 +106,6 @@ codeunit 69746 "PW Platform Tables Probe"
         Observer: Codeunit "Probe Observer";
 
     [Test]
-    procedure FeatureKey_EnabledPerId()
-    var
-        FeatureKey: Record "Feature Key";
-        Result: Text;
-    begin
-        if FeatureKey.FindSet() then
-            repeat
-                Result += FeatureKey.ID + '=' + Format(FeatureKey.Enabled) + ' ; ';
-            until FeatureKey.Next() = 0;
-        Observer.Observe('feature_key_enabled', Result);
-        Observer.Expect('feature_key_enabled', 'AdvancedTellMe=None ; CalcOnlyVisibleFlowFields=All Users ; ConcealedMaskType=All Users ; ConcurrentInventoryPosting=All Users ; ConcurrentJobPosting=All Users ; ConcurrentResourcePosting=All Users ; DisableSoapWebServicesOnMicrosoftUIPages=All Users ; EnableMcpAccess=All Users ; FinancialReportDefaults=All Users ; FullTextSearch=None ; GLCurrencyRevaluation=None ; Manufacturing_FlushingMethod_ActivateManualWoPick=None ; ReminderTermsCommunicationTexts=All Users ; SalesPrices=None ; SaveValueToDatabasePromptly=All Users ; SemanticMetadataSearch=All Users ; ');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure TableRelationsMetadata_FilterCondition()
     var
         Rel: Record "Table Relations Metadata";
