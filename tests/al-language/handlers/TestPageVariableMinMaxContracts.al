@@ -11,6 +11,8 @@
 //  - Integer above MaxValue: "The value must be less than or equal to 10. Value: 11."; below MinValue: "The value must be
 //    greater than or equal to 1. Value: 0."; the control keeps its old value; the bounds themselves are accepted;
 //  - Decimal: the same texts with the decimal bound as written (2.5, 0.5) and the value with two decimals (Value: 2.60, 0.40);
+//  - a Decimal with more than two decimals is shown with two, rounded half up and without a thousands separator (3.14159 reads 3.14,
+//    2.505 reads 2.51, -1234567.891 reads -1234567.89);
 //  - a table field with MinValue / MaxValue gives the same text followed by " (Select Refresh to discard errors)";
 //  - a Text[5] variable given 7 characters: "The length of the string is 7, but it must be less than or equal to 5
 //    characters. Value: toolong".
@@ -125,6 +127,24 @@ codeunit 69022 "Probe Page Variable MinMax"
         Assert.AreEqual('Validation error for Field: DecVar,  Message = ''The value must be less than or equal to 2.5. Value: 2.60.''', GetLastErrorText(), 'above');
         asserterror MmPage.DecVar.SetValue(0.4);
         Assert.AreEqual('Validation error for Field: DecVar,  Message = ''The value must be greater than or equal to 0.5. Value: 0.40.''', GetLastErrorText(), 'below');
+        MmPage.Close();
+    end;
+
+    [Test]
+    procedure DecimalVariable_WithMoreThanTwoDecimals_ShowsTheValueRoundedToTwoDecimals()
+    var
+        MmPage: TestPage "Probe MinMax Page";
+    begin
+        OpenPage(MmPage);
+
+        asserterror MmPage.DecVar.SetValue(3.14159);
+        Assert.AreEqual('Validation error for Field: DecVar,  Message = ''The value must be less than or equal to 2.5. Value: 3.14.''', GetLastErrorText(), '3.14159');
+        asserterror MmPage.DecVar.SetValue(0.123456);
+        Assert.AreEqual('Validation error for Field: DecVar,  Message = ''The value must be greater than or equal to 0.5. Value: 0.12.''', GetLastErrorText(), '0.123456');
+        asserterror MmPage.DecVar.SetValue(2.505);
+        Assert.AreEqual('Validation error for Field: DecVar,  Message = ''The value must be less than or equal to 2.5. Value: 2.51.''', GetLastErrorText(), '2.505 rounds half up');
+        asserterror MmPage.DecVar.SetValue(-1234567.891);
+        Assert.AreEqual('Validation error for Field: DecVar,  Message = ''The value must be greater than or equal to 0.5. Value: -1234567.89.''', GetLastErrorText(), 'no thousands separator');
         MmPage.Close();
     end;
 
