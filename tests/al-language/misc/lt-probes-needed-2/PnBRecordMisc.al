@@ -624,6 +624,8 @@ codeunit 70548 "LT PnB Clear Dialog"
         Obs.Verify();
     end;
 
+#if BC29PLUS
+#endif
 }
 
 codeunit 70549 "LT PnB Counter"
