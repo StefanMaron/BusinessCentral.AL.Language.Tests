@@ -28,8 +28,10 @@ table 68041 "W4 CF Head"
         field(12; BigToInt; Integer) { FieldClass = FlowField; CalcFormula = sum("W4 CF Line".Big where(Doc = field("No."))); Editable = false; }
         field(13; AvgIntToBig; BigInteger) { FieldClass = FlowField; CalcFormula = average("W4 CF Line".Qty where(Doc = field("No."))); Editable = false; }
         field(14; SumIntToBig; BigInteger) { FieldClass = FlowField; CalcFormula = sum("W4 CF Line".Qty where(Doc = field("No."))); Editable = false; }
+#if BC29PLUS
         field(15; MaxBigToInt; Integer) { FieldClass = FlowField; CalcFormula = max("W4 CF Line".Big where(Doc = field("No."))); Editable = false; }
         field(16; LookupBigToInt; Integer) { FieldClass = FlowField; CalcFormula = lookup("W4 CF Line".Big where(Id = const(1))); Editable = false; }
+#endif
         field(20; TwoFilters; Integer) { FieldClass = FlowField; CalcFormula = sum("W4 CF Line".Qty where(Doc = field("No."), Tag = filter('<>A'), Tag = filter('<>B'))); Editable = false; }
         field(21; TwoConsts; Integer) { FieldClass = FlowField; CalcFormula = sum("W4 CF Line".Qty where(Doc = field("No."), Tag = const('A'), Tag = const('B'))); Editable = false; }
         field(22; FieldThenConst; Integer) { FieldClass = FlowField; CalcFormula = sum("W4 CF Line".Qty where(Doc = field("No."), Doc = const('D2'))); Editable = false; }
