@@ -7,8 +7,7 @@
 // each as base then extension):
 // - Open of a card: AGR, AGCR. Open of a list of 3 rows: 5 times AGR, then AGCR (the TestPage list reads more rows than the table has: its look-ahead is not a contract).
 // - An action (no change, Rec.Modify() or only an in-memory change of Rec) is followed by the same reads, whatever the action did: a card AGR before the action runs, then after it
-//   AGR, AGR, AGCR; a list AGR before it, then 6 times AGR and AGCR. The row is re-read from the database (an in-memory change is lost: Name reads 'memory' only because the value
-//   stays on the page buffer; see name_after_memory_change).
+//   AGR, AGR, AGCR; a list AGR before it, then 6 times AGR and AGCR. After the in-memory change the TestPage still reads Name 'memory', after Modify() 'modified'.
 // - Moving the cursor (Next / Last / First) reads the rows it passes and ends with AGCR once.
 // - A page with OnFindRecord / OnNextRecord: open calls OnFindRecord('=><'), walks the rows with OnNextRecord(1) until it answers 0, steps back with OnNextRecord(-1), then
 //   OnFindRecord('=') and AGR / AGCR of the current row; every move is "AGR of the new row, OnFindRecord('='), AGR, AGCR".
