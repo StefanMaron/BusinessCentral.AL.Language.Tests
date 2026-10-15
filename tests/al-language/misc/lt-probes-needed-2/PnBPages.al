@@ -294,6 +294,7 @@ codeunit 70555 "LT PnB Page Ext"
         Obs.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure DateControl_IsoAndShorthands()
     var
@@ -331,6 +332,7 @@ codeunit 70555 "LT PnB Page Ext"
         Obs.Expect('empty', 'ok:');
         Obs.Verify();
     end;
+#endif
 
 
 

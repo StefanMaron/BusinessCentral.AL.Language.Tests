@@ -84,6 +84,7 @@ table 70108 "LT PnA CF Hdr"
     }
 }
 
+#if BC28PLUS
 codeunit 70109 "LT PnA CF Tests"
 {
     Subtype = Test;
@@ -206,6 +207,7 @@ codeunit 70109 "LT PnA CF Tests"
         Observer.ObserveError(Name);
     end;
 
+#if BC28PLUS
     [Test]
     procedure SystemRowVersion_Aggregates_FullText()
     var
@@ -242,11 +244,13 @@ codeunit 70109 "LT PnA CF Tests"
         Observer.Expect('max-then-sumqty-D1|code', 'NDBCS:IncompatibleSqlType');
         Observer.Verify();
     end;
+#endif
 
 
 
 
 
+#if BC28PLUS
     [Test]
     procedure TypeMismatch_BigIntegerAndInteger()
     var
@@ -303,4 +307,6 @@ codeunit 70109 "LT PnA CF Tests"
         Observer.Expect('max-big-D1|code', '');
         Observer.Verify();
     end;
+#endif
 }
+#endif

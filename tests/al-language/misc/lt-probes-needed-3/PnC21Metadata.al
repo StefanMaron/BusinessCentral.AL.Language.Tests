@@ -252,6 +252,7 @@ codeunit 71138 "LT PnC Meta Report"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure ReportMetadata_Defaults()
     var
@@ -291,7 +292,9 @@ codeunit 71138 "LT PnC Meta Report"
         Observer.Expect('items.ProcessingOnly', 'Yes');
         Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure QueryMetadata_NonApi()
     var
@@ -327,6 +330,7 @@ codeunit 71138 "LT PnC Meta Report"
         Observer.Expect('agg.EntitySetName', '');
         Observer.Verify();
     end;
+#endif
 }
 
 codeunit 71139 "LT PnC Meta Page Key"
@@ -378,6 +382,7 @@ codeunit 71139 "LT PnC Meta Page Key"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Key_Rows_Of_Own_Table()
     var
@@ -417,7 +422,9 @@ codeunit 71139 "LT PnC Meta Page Key"
         Observer.Expect('key4.Clustered', 'No');
         Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure Field_Rows_Of_Own_Table()
     var
@@ -456,7 +463,9 @@ codeunit 71139 "LT PnC Meta Page Key"
         Observer.Expect('field3.Class', 'Normal');
         Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure XmlPortMetadata_Encoding()
     var
@@ -492,4 +501,5 @@ codeunit 71139 "LT PnC Meta Page Key"
         Observer.Expect('xp71098.Encoding', 'UTF16');
         Observer.Verify();
     end;
+#endif
 }

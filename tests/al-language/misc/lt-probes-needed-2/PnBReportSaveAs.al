@@ -100,6 +100,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         exit(N);
     end;
 
+#if BC28PLUS
     [Test]
     procedure Header_RawBytes()
     var
@@ -137,7 +138,9 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('lines', '113');
         Obs.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure Header_Lines()
     var
@@ -177,7 +180,9 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Ignore('line3'); // a dump or environment data: observed, not asserted
         Obs.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure Rows_BlockAfterHeader()
     var
@@ -227,6 +232,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('r24', '        <Column name="ColSpaced">2</Column>');
         Obs.Verify();
     end;
+#endif
 
     [Test]
     procedure Rows_SkipAndBreak()
@@ -282,6 +288,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Names_SpacesAndParentheses()
     var
@@ -306,6 +313,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('n5', '        <Column name="ColSpaced">3</Column>');
         Obs.Verify();
     end;
+#endif
 
     [Test]
     procedure TemporaryDataItem()
@@ -406,6 +414,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure SecondSaveAs_OnOneVariable()
     var
@@ -427,6 +436,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('secondResult', 'No');
         Obs.Verify();
     end;
+#endif
 
     [Test]
     procedure StaticSaveAs_WithParametersString()

@@ -20,6 +20,7 @@ table 72552 "LT PnE Media Rec"
     }
 }
 
+#if BC28PLUS
 codeunit 72551 "LT PnE Media Import"
 {
     Subtype = Test;
@@ -61,6 +62,7 @@ codeunit 72551 "LT PnE Media Import"
         exit('FileName=' + TM."File Name" + '|Description=' + TM.Description + '|Mime=' + TM."Mime Type");
     end;
 
+#if BC28PLUS
     [Test]
     procedure ImportStream_ThreeArguments_ForComparison()
     var
@@ -81,4 +83,6 @@ codeunit 72551 "LT PnE Media Import"
         Observer.Expect('tenantMedia', 'no row');
         Observer.Verify();
     end;
+#endif
 }
+#endif
