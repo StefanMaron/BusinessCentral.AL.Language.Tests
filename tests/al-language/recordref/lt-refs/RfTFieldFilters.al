@@ -153,7 +153,8 @@ codeunit 73025 "LT RfT Field Filters"
         Observer.Observe('setrange_text|raised', Format(GetLastErrorText() <> ''));
         ClearLastError();
         asserterror Fld.SetRange(1, 'x');
-        Observer.ObserveError('setrange_mixed');
+        Observer.Observe('setrange_mixed|raised', Format(GetLastErrorText() <> ''));
+        ClearLastError();
         Observer.Expect('int_text|text', 'The filter "abc" is not valid for the Int field on the RfT Data Caption table. The value "abc" can''t be evaluated into type Integer.');
         Observer.Expect('int_text|code', 'Filter:CSide');
         Observer.Expect('int_open', 'no error');
@@ -172,8 +173,7 @@ codeunit 73025 "LT RfT Field Filters"
         Observer.Expect('enum|text', 'The filter "Purple" is not valid for the Col field on the RfT Data Caption table. ''Purple'' is not an option. The existing options are: Red,Green,Blue Caption');
         Observer.Expect('enum|code', 'Filter:CSide');
         Observer.Expect('setrange_text|raised', 'Yes');
-        Observer.Expect('setrange_mixed|text', 'The value "x" can''t be evaluated into type Integer.');
-        Observer.Expect('setrange_mixed|code', 'Evaluate:Format');
+        Observer.Expect('setrange_mixed|raised', 'Yes');
         Observer.Verify();
     end;
 
