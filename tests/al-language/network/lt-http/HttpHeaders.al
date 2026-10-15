@@ -302,10 +302,8 @@ codeunit 72022 "LT HtT Headers Errors"
         Observer.Expect('blankName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
 #if BC29PLUS
         Observer.Expect('blankName|code', 'InvalidHeader:Format');
-#elif BC28PLUS
-        Observer.Expect('blankName|code', 'InvalidHeader:Argument');
 #else
-        Observer.Expect('blankName|code', 'InvalidHeader:Format');
+        Observer.Expect('blankName|code', 'InvalidHeader:Argument');
 #endif
         Observer.Expect('spaceInName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
         Observer.Expect('spaceInName|code', 'InvalidHeader:Format');
