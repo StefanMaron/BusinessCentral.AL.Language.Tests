@@ -11,7 +11,7 @@
 //    the mocked status is not used.
 //  - A request with no handler raises "Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to 'AllowOutboundFromHandler'. Please ensure that an HTTP client
 //    handler is configured." (code TestCodeunitUnhandledHttpRequest); PZHttpBlock.al has the same for BlockOutboundRequests.
-// BC versions: 29.0
+// BC versions: 29.0. On 27.0 to 28.5 (CI) a request is not given to the handler at all: the tests that need the handler are compiled out there, and PZHttpBlock.al pins the unhandled-request error for a request that has a handler.
 codeunit 61297 "PZ Http Handler"
 {
     Subtype = Test;
@@ -93,6 +93,7 @@ codeunit 61297 "PZ Http Handler"
             Error('get returned false');
     end;
 
+#if BC29PLUS
     [Test]
     [HandlerFunctions('Handler')]
     procedure EveryMethod_ReachesTheHandler_WithItsRequestMembers()
@@ -132,7 +133,9 @@ codeunit 61297 "PZ Http Handler"
         Observer.Expect('seen_6', 'Head [https://example.invalid/head] params=[q= a&] secret=No');
         Observer.Verify();
     end;
+#endif
 
+#if BC29PLUS
     [Test]
     [HandlerFunctions('EmptyHandler')]
     procedure EmptyHandler_AnswersADefaultResponse()
@@ -150,7 +153,9 @@ codeunit 61297 "PZ Http Handler"
         Observer.Expect('calls', '1');
         Observer.Verify();
     end;
+#endif
 
+#if BC29PLUS
     [Test]
     [HandlerFunctions('FallThroughHandler')]
     procedure HandlerAnsweringTrue_SendsTheRealRequest()
@@ -169,6 +174,7 @@ codeunit 61297 "PZ Http Handler"
         Observer.Expect('status_not_the_mocked_one', 'Yes');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure NoHandler_UnderAllowOutboundFromHandler()

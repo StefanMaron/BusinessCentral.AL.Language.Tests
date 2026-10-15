@@ -49,7 +49,11 @@ codeunit 61298 "PZ Http Block"
     begin
         Ok := TryGet('https://example.invalid/handled');
         Observer.Observe('handled', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+#if BC29PLUS
         Observer.Expect('handled', 'Yes |');
+#else
+        Observer.Expect('handled', 'No Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''BlockOutboundRequests''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest');
+#endif
         Observer.Verify();
     end;
 }
