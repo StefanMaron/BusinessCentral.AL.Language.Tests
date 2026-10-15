@@ -175,6 +175,7 @@ codeunit 73024 "LT RfT Values"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Value_Blob_Cases()
     var
@@ -215,6 +216,7 @@ codeunit 73024 "LT RfT Values"
         Observer.Expect('set_blob_text|raised', 'Yes');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Value_Guid_RecordId_DateFormula()

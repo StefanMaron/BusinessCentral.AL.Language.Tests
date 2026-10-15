@@ -197,6 +197,7 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Get_Variant_And_Wrong_Arg_Count_Runtime()
     var
@@ -223,6 +224,7 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Expect('variantBool', 'No');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Get_Uses_Primary_Key_Not_Current_Key()

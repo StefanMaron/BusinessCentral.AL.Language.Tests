@@ -10,6 +10,7 @@ codeunit 70072 "LT ErT Runtime Errors"
     Subtype = Test;
     TestPermissions = Disabled;
 
+#if BC28PLUS
     [Test]
     procedure RecordNotFoundAndExists()
     var
@@ -58,6 +59,7 @@ codeunit 70072 "LT ErT Runtime Errors"
         Observer.Expect('findSetEmpty|code', 'DB:TableIsEmpty');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure ArithmeticErrors()

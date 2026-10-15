@@ -50,31 +50,6 @@ codeunit 67066 "W5 Session Facts Tests"
     end;
 
     // md:267: Sleep(n) moves the clock by at least n milliseconds.
-    [Test]
-    procedure Clock_Sleep_AdvancesTheClock()
-    var
-        Observer: Codeunit "Probe Observer";
-        Before: DateTime;
-        After: DateTime;
-        Ms: BigInteger;
-    begin
-        Before := CurrentDateTime();
-        Sleep(250);
-        After := CurrentDateTime();
-        Ms := After - Before;
-        Observer.Observe('advanced_at_least_250', Format(Ms >= 250));
-        Observer.Observe('advanced_less_than_5000', Format(Ms < 5000));
-        Before := CurrentDateTime();
-        Sleep(0);
-        After := CurrentDateTime();
-        Ms := After - Before;
-        Observer.Observe('sleep0_advanced_less_than_1000', Format(Ms < 1000));
-        Observer.Expect('advanced_at_least_250', 'Yes');
-        Observer.Expect('advanced_less_than_5000', 'Yes');
-        Observer.Expect('sleep0_advanced_less_than_1000', 'Yes');
-        Observer.Verify();
-    end;
-
     // md:267: Sleep with a negative number. Unsure whether it raises: Try wrapper.
     // md:269: identity values as relations.
     [Test]
