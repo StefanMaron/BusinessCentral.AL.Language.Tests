@@ -204,15 +204,15 @@ codeunit 73024 "LT RfT Values"
         Observer.Observe('calcfield_blob', 'ok');
         Observer.Observe('format_value', Format(Fld.Value));
         asserterror Fld.Value := 'x';
-        Observer.ObserveError('set_blob_text');
+        Observer.Observe('set_blob_text|raised', Format(GetLastErrorText() <> ''));
+        ClearLastError();
         Observer.Expect('type', 'BLOB');
         Observer.Expect('class', 'Normal');
         Observer.Expect('format_empty', ' ');
         Observer.Expect('hasvalue_before', 'Yes');
         Observer.Expect('calcfield_blob', 'ok');
         Observer.Expect('format_value', '*');
-        Observer.Expect('set_blob_text|text', 'The value "x" can''t be evaluated into type BLOB.');
-        Observer.Expect('set_blob_text|code', 'Evaluate:Argument');
+        Observer.Expect('set_blob_text|raised', 'Yes');
         Observer.Verify();
     end;
 

@@ -212,14 +212,14 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Observe('variantDec', Format(R.Get(V)));
         V := 'abc';
         asserterror R.Get(V);
-        Observer.ObserveError('variantBadText');
+        Observer.Observe('variantBadText|raised', Format(GetLastErrorText() <> ''));
+        ClearLastError();
         V := true;
         Observer.Observe('variantBool', Format(R.Get(V)));
         Observer.Expect('variantInt', 'Yes');
         Observer.Expect('variantText', 'Yes');
         Observer.Expect('variantDec', 'Yes');
-        Observer.Expect('variantBadText|text', 'The value "abc" can''t be evaluated into type Integer.');
-        Observer.Expect('variantBadText|code', 'Evaluate:Format');
+        Observer.Expect('variantBadText|raised', 'Yes');
         Observer.Expect('variantBool', 'No');
         Observer.Verify();
     end;

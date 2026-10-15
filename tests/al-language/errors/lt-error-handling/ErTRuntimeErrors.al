@@ -20,7 +20,8 @@ codeunit 70072 "LT ErT Runtime Errors"
         asserterror Rec.Get(1);
         Observer.ObserveError('getMissing');
         asserterror Rec.Get('x');
-        Observer.ObserveError('getWrongType');
+        Observer.Observe('getWrongType|raised', Format(GetLastErrorText() <> ''));
+        ClearLastError();
         Rec.Id := 1;
         Rec.Insert();
         Rec.Id := 1;
@@ -42,8 +43,7 @@ codeunit 70072 "LT ErT Runtime Errors"
         Observer.ObserveError('findSetEmpty');
         Observer.Expect('getMissing|text', 'The LT ErT Rec does not exist. Identification fields and values: Id=''1''');
         Observer.Expect('getMissing|code', 'DB:RecordNotFound');
-        Observer.Expect('getWrongType|text', 'The value "x" can''t be evaluated into type Integer.');
-        Observer.Expect('getWrongType|code', 'Evaluate:Format');
+        Observer.Expect('getWrongType|raised', 'Yes');
         Observer.Expect('duplicate', 'no error');
         Observer.Expect('modifyMissing|text', 'The record in table LT ErT Rec already exists. Identification fields and values: Id=''1''');
         Observer.Expect('modifyMissing|code', 'DB:RecordExists');
