@@ -82,6 +82,19 @@ is only a reference.
 | 0071 to 0073 | AL0124 | `assemblyProbingPaths` at runtime 15.0, 16.1 and 17.0 (16.1 and 17.0 need AL 17 or newer) |
 | 0074, 0075 | AL0122 | an enum assigned to an enum of another type whose TARGET lacks `AssignmentCompatibility` (the source's flag does not help) |
 | 0076 | AL0126 | `Media.ImportStream` with a file name as a fourth argument (BC 27 has three) |
+| 0100 | AL0390 | A DateFormula field whose InitValue is not a date formula. |
+| 0101 | AL0342 | A query with two dataitems nested under the same parent dataitem (siblings). |
+| 0102 | AL0353 | A query column with Method = Count that names a source field. |
+| 0103 | AL0124 | OrderBy written on a query dataitem (it belongs to the query object). |
+| 0105 | AL0167 | TextEncoding on an xmlport whose Format is Xml (it needs VariableText or FixedText). |
+| 0106 | AL0169 | Encoding = MSDOS on an xmlport (Encoding takes UTF8 or UTF16). |
+| 0107 | AL0132 | Text has no Length method (StrLen is the function). |
+| 0108 | AL0347 | A query column with Method = Sum over a Text field. |
+| 0109 | AL0347 | A query column with Method = Average over a Date field. |
+| 0110 | AL0296 | GetLastErrorObject has scope OnPrem; a Cloud app names it. |
+| 0111 | AL0130 | this passed to a var parameter of another codeunit. |
+| 0112 | AL0296 | SecretText.Unwrap named from a Cloud app (the method has scope OnPrem). |
+| 0113 | AL0296 | A variable of the File data type in a Cloud app. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
