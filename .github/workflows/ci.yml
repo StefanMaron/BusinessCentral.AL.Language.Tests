@@ -133,6 +133,10 @@ jobs:
       # This tree against master, and against itself.
       - run: python3 .github/scripts/check-object-ids.py .
 
+      # An install/upgrade trigger that raises breaks the publish of the corpus app on every BC version.
+      - run: python3 .github/scripts/test-install-triggers.py
+      - run: python3 .github/scripts/check-install-triggers.py .
+
       # This PR against every OTHER open PR. Blocking: two PRs that each add the
       # same id both pass the step above, and break master on the second merge.
       - name: Cross-PR object id collisions
