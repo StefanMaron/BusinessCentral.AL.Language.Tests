@@ -142,6 +142,7 @@ codeunit 69339 "PV Base64 Probe"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure FromBase64_Invalid_Text()
     var
@@ -166,6 +167,7 @@ codeunit 69339 "PV Base64 Probe"
         Observer.Expect('inner_space', 'Yes [Hello] |');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Base64_Streams()

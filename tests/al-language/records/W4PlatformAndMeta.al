@@ -253,11 +253,27 @@ codeunit 68056 "W4 Platform Tests"
         Observer.Observe('set_empty', Outcome(TrySetTableFilter(RR, ''), ''));
         ClearLastError();
         Observer.Observe('after_empty', '[' + Format(RR.Field(2).Value()) + ']');
+#if BC28PLUS
+#if BC28PLUS
         Observer.Expect('set_where_const', 'error:The value "WHERE(Id=CONST(1))" can''t be evaluated into type TableFilter.|Evaluate:Argument');
+#else
+        Observer.Expect('set_where_const', 'error:The supplied value is not valid.|Argument');
+#endif
+#else
+        Observer.Expect('set_where_const', 'error:The supplied value is not valid.|Argument');
+#endif
         Observer.Expect('after_where_const', '[]');
+#if BC28PLUS
         Observer.Expect('set_plain_text', 'error:The value "Id: 1" can''t be evaluated into type TableFilter.|Evaluate:Argument');
+#else
+        Observer.Expect('set_plain_text', 'error:The supplied value is not valid.|Argument');
+#endif
         Observer.Expect('after_plain_text', '[]');
+#if BC28PLUS
         Observer.Expect('set_empty', 'error:The value "" can''t be evaluated into type TableFilter.|Evaluate:Argument');
+#else
+        Observer.Expect('set_empty', 'error:The supplied value is not valid.|Argument');
+#endif
         Observer.Expect('after_empty', '[]');
         Observer.Verify();
     end;

@@ -161,7 +161,11 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Observe('ReportCaption', Dataset.HeaderValue(Xml, 'ReportCaption'));
         Observer.Expect('saved', 'Yes');
         Observer.Expect('ReportName', 'W3 Hdr Caption');
+#if BC29PLUS
         Observer.Expect('ReportCaption', 'W3 Header Caption');
+#else
+        Observer.Expect('ReportCaption', '<absent>');
+#endif
         Observer.Verify();
     end;
 
@@ -202,7 +206,11 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Expect('CompanyName is the session company', 'Yes');
         Observer.Expect('CompanyName is the information name', 'No');
         Observer.Expect('CompanyDisplayName is the information name', 'No');
+#if BC29PLUS
         Observer.Expect('CompanyAddressLine1', 'W3 Probe Company');
+#else
+        Observer.Expect('CompanyAddressLine1', '<absent>');
+#endif
         Observer.Verify();
     end;
 
@@ -283,7 +291,11 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Observe('attributes', Dataset.ItemAttributes(Xml));
         Observer.Expect('saved', 'Yes');
         Observer.Expect('structure', 'DIs DI c:ParentId DIs /DI DI c:ParentId DIs /DI /DIs');
+#if BC28PLUS
         Observer.Expect('attributes', '[language,formatRegion,name,tableId,systemId] [language,formatRegion,name,tableId,systemId]');
+#else
+        Observer.Expect('attributes', '[language,formatRegion,name] [language,formatRegion,name]');
+#endif
         Observer.Verify();
     end;
 
@@ -299,7 +311,11 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Observe('attributes', Dataset.ItemAttributes(Xml));
         Observer.Expect('saved', 'Yes');
         Observer.Expect('structure', 'DIs DI c:ParentId DIs DI c:ChildAId /DI DI c:ChildAId /DI /DIs /DI DI c:ParentId DIs /DI DI c:SiblingId /DI DI c:SiblingId /DI /DIs');
+#if BC28PLUS
         Observer.Expect('attributes', '[language,formatRegion,name,tableId,systemId] [name,tableId,systemId] [name,tableId,systemId] [language,formatRegion,name,tableId,systemId] [language,formatRegion,name,tableId,systemId] [language,formatRegion,name,tableId,systemId]');
+#else
+        Observer.Expect('attributes', '[language,formatRegion,name] [name] [name] [language,formatRegion,name] [language,formatRegion,name] [language,formatRegion,name]');
+#endif
         Observer.Verify();
     end;
 
@@ -320,7 +336,11 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Observe('attributes', Dataset.ItemAttributes(Xml));
         Observer.Expect('saved', 'Yes');
         Observer.Expect('structure', 'DIs DI c:SiblingId /DI /DIs');
+#if BC28PLUS
         Observer.Expect('attributes', '[language,formatRegion,name,tableId,systemId]');
+#else
+        Observer.Expect('attributes', '[language,formatRegion,name]');
+#endif
         Observer.Verify();
     end;
 
@@ -396,12 +416,36 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Observe('item 2 GUID is the SystemId of child 1', Format(Dataset.ItemAttribute(Xml, 2, 'systemId') = Guid2));
         Observer.Observe('item 3 GUID is the SystemId of child 2', Format(Dataset.ItemAttribute(Xml, 3, 'systemId') = Guid3));
         Observer.Observe('item 4 GUID is the SystemId of row 2', Format(Dataset.ItemAttribute(Xml, 4, 'systemId') = Guid4));
+#if BC28PLUS
         Observer.Expect('attributes', '[language,formatRegion,name,tableId,systemId] [name,tableId,systemId] [name,tableId,systemId] [language,formatRegion,name,tableId,systemId] [language,formatRegion,name,tableId,systemId] [language,formatRegion,name,tableId,systemId]');
+#else
+        Observer.Expect('attributes', '[language,formatRegion,name] [name] [name] [language,formatRegion,name] [language,formatRegion,name] [language,formatRegion,name]');
+#endif
+#if BC28PLUS
         Observer.Expect('item 1 tableId is the table', 'Yes');
+#else
+        Observer.Expect('item 1 tableId is the table', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 1 GUID is the SystemId of row 1', 'Yes');
+#else
+        Observer.Expect('item 1 GUID is the SystemId of row 1', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 2 GUID is the SystemId of child 1', 'Yes');
+#else
+        Observer.Expect('item 2 GUID is the SystemId of child 1', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 3 GUID is the SystemId of child 2', 'Yes');
+#else
+        Observer.Expect('item 3 GUID is the SystemId of child 2', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 4 GUID is the SystemId of row 2', 'Yes');
+#else
+        Observer.Expect('item 4 GUID is the SystemId of row 2', 'No');
+#endif
         Observer.Verify();
     end;
 }
