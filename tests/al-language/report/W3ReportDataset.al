@@ -421,11 +421,31 @@ codeunit 67755 "W3 Dataset Probe"
 #else
         Observer.Expect('attributes', '[language,formatRegion,name] [name] [name] [language,formatRegion,name] [language,formatRegion,name] [language,formatRegion,name]');
 #endif
+#if BC28PLUS
         Observer.Expect('item 1 tableId is the table', 'Yes');
+#else
+        Observer.Expect('item 1 tableId is the table', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 1 GUID is the SystemId of row 1', 'Yes');
+#else
+        Observer.Expect('item 1 GUID is the SystemId of row 1', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 2 GUID is the SystemId of child 1', 'Yes');
+#else
+        Observer.Expect('item 2 GUID is the SystemId of child 1', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 3 GUID is the SystemId of child 2', 'Yes');
+#else
+        Observer.Expect('item 3 GUID is the SystemId of child 2', 'No');
+#endif
+#if BC28PLUS
         Observer.Expect('item 4 GUID is the SystemId of row 2', 'Yes');
+#else
+        Observer.Expect('item 4 GUID is the SystemId of row 2', 'No');
+#endif
         Observer.Verify();
     end;
 }

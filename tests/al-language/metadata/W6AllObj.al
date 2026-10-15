@@ -209,7 +209,11 @@ codeunit 67322 "W6 AllObj Probe"
 #else
         Observer.Expect('allobj_columns', '1=Object Type;3=Object ID;4=Object Name;60=App Package ID;61=App Runtime Package ID;62=AL Namespace;');
 #endif
+#if BC29PLUS
         Observer.Expect('allobjwithcaption_columns', '1=Object Type;3=Object ID;4=Object Name;5=Name;20=Object Caption;30=Object Subtype;60=App Package ID;61=App Runtime Package ID;62=App ID;63=AL Namespace;');
+#else
+        Observer.Expect('allobjwithcaption_columns', '1=Object Type;3=Object ID;4=Object Name;20=Object Caption;30=Object Subtype;60=App Package ID;61=App Runtime Package ID;62=App ID;63=AL Namespace;');
+#endif
         Observer.Verify();
     end;
 }

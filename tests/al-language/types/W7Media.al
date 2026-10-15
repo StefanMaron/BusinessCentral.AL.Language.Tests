@@ -131,7 +131,9 @@ codeunit 68571 "W7 Media Probes"
         Observer.Observe('source length', Format(Source.Length()));
         Observer.Observe('exported length', Format(Exported.Length()));
         Observer.Observe('exported bytes = imported bytes', Format(Util.Hex(Exported) = Util.Hex(Source)));
+#if BC29PLUS
         Observer.Observe('exported first bytes', CopyStr(Util.Hex(Exported), 1, 40));
+#endif
         Observer.Expect('export ok', 'Yes');
         Observer.Expect('export|text', '');
         Observer.Expect('export|code', '');
@@ -141,8 +143,12 @@ codeunit 68571 "W7 Media Probes"
 #else
         Observer.Expect('exported length', '93');
 #endif
+#if BC29PLUS
         Observer.Expect('exported bytes = imported bytes', 'Yes');
         Observer.Expect('exported first bytes', '89 50 4E 47 0D 0A 1A 0A 00 00 00 0D 49 4');
+#else
+        Observer.Expect('exported bytes = imported bytes', 'No');
+#endif
         Observer.Verify();
     end;
 
