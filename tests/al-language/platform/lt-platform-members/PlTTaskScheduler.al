@@ -10,6 +10,18 @@ codeunit 74214 "LT PlT TaskScheduler"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    local procedure ScrubCaller(Value: Text): Text
+    var
+        StartPos: Integer;
+        EndPos: Integer;
+    begin
+        StartPos := StrPos(Value, ' from the object ');
+        EndPos := StrPos(Value, '. An object with that ID');
+        if (StartPos = 0) or (EndPos < StartPos) then
+            exit(Value);
+        exit(CopyStr(Value, 1, StartPos - 1) + ' from the object <caller>' + CopyStr(Value, EndPos));
+    end;
+
     [Test]
     procedure CanCreateTask_Twice()
     var
@@ -140,8 +152,10 @@ codeunit 74214 "LT PlT TaskScheduler"
         Observer: Codeunit "Probe Observer";
     begin
         asserterror TaskScheduler.CreateTask(99999999, 0, false);
-        Observer.ObserveError('unknown_codeunit');
-        Observer.Expect('unknown_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Observe('unknown_codeunit|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('unknown_codeunit|code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Expect('unknown_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('unknown_codeunit|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
@@ -163,8 +177,10 @@ codeunit 74214 "LT PlT TaskScheduler"
         Observer: Codeunit "Probe Observer";
     begin
         asserterror TaskScheduler.CreateTask(Codeunit::"LT PlT Task Target", 99999999, false);
-        Observer.ObserveError('unknown_failure_codeunit');
-        Observer.Expect('unknown_failure_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Observe('unknown_failure_codeunit|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('unknown_failure_codeunit|code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Expect('unknown_failure_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('unknown_failure_codeunit|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;

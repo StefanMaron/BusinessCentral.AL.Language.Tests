@@ -63,6 +63,18 @@ codeunit 72518 "LT SyT Run Commit"
         exit(Row.Count());
     end;
 
+    local procedure ScrubCaller(Value: Text): Text
+    var
+        StartPos: Integer;
+        EndPos: Integer;
+    begin
+        StartPos := StrPos(Value, ' from the object ');
+        EndPos := StrPos(Value, '. An object with that ID');
+        if (StartPos = 0) or (EndPos < StartPos) then
+            exit(Value);
+        exit(CopyStr(Value, 1, StartPos - 1) + ' from the object <caller>' + CopyStr(Value, EndPos));
+    end;
+
     [Test]
     procedure CodeunitRun_Success()
     var
@@ -157,12 +169,16 @@ codeunit 72518 "LT SyT Run Commit"
         Ok: Boolean;
     begin
         asserterror Ok := Codeunit.Run(2147483647);
-        Observer.ObserveError('unknown id');
+        Observer.Observe('unknown id|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('unknown id|code', GetLastErrorCode());
+        ClearLastError();
         asserterror Ok := Codeunit.Run(0);
-        Observer.ObserveError('id 0');
-        Observer.Expect('unknown id|text', 'You tried to invoke the CodeUnit object with the ID 2147483647 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Observe('id 0|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('id 0|code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Expect('unknown id|text', 'You tried to invoke the CodeUnit object with the ID 2147483647 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('unknown id|code', 'AL:MetadataNotFound');
-        Observer.Expect('id 0|text', 'You tried to invoke the CodeUnit object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('id 0|text', 'You tried to invoke the CodeUnit object with the ID 0 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('id 0|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
