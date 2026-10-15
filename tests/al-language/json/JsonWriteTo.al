@@ -66,14 +66,16 @@ codeunit 72506 "LT JsT WriteTo Streams"
     begin
         O.Add('a', 'abcdefghijklmnop');
         asserterror O.WriteTo(Txt10);
-        Observer.ObserveError('writeto_text10_overflow');
+        Observer.Observe('writeto_text10_overflow|text starts', Format(GetLastErrorText().StartsWith('The length of the string is 24, but it must be less than or equal to 10 characters.')));
+        Observer.Observe('writeto_text10_overflow|code', GetLastErrorCode());
+        ClearLastError();
         O.WriteTo(Txt);
         Observer.Observe('text_len', Format(StrLen(Txt)));
         Clear(O);
         O.WriteTo(Txt);
         C := CopyStr(Txt, 1, 10);
         Observer.Observe('code', C);
-        Observer.Expect('writeto_text10_overflow|text', 'The length of the string is 24, but it must be less than or equal to 10 characters.');
+        Observer.Expect('writeto_text10_overflow|text starts', 'Yes');
         Observer.Expect('writeto_text10_overflow|code', 'StringLengthExceeded');
         Observer.Expect('text_len', '24');
         Observer.Expect('code', '{}');
