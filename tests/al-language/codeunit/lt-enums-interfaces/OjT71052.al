@@ -41,6 +41,7 @@ codeunit 71053 "LT OjT Impl Derived" implements "LT OjT IDerived"
     end;
 }
 
+#if not BC28PLUS or BC29PLUS
 codeunit 71054 "LT OjT Interface Coll"
 {
     Subtype = Test;

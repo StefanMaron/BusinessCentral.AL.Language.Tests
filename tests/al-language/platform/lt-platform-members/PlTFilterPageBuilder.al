@@ -43,6 +43,18 @@ codeunit 74212 "LT PlT FilterPageBuilder"
         exit(true);
     end;
 
+    local procedure ScrubCaller(Value: Text): Text
+    var
+        StartPos: Integer;
+        EndPos: Integer;
+    begin
+        StartPos := StrPos(Value, ' from the object ');
+        EndPos := StrPos(Value, '. An object with that ID');
+        if (StartPos = 0) or (EndPos < StartPos) then
+            exit(Value);
+        exit(CopyStr(Value, 1, StartPos - 1) + ' from the object <caller>' + CopyStr(Value, EndPos));
+    end;
+
     [Test]
     procedure AddTable_CountAndNames()
     var
@@ -87,12 +99,14 @@ codeunit 74212 "LT PlT FilterPageBuilder"
         Fpb: FilterPageBuilder;
     begin
         asserterror Fpb.AddTable('Rows', 99999999);
-        Observer.ObserveError('unknown_table');
+        Observer.Observe('unknown_table|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('unknown_table|code', GetLastErrorCode());
+        ClearLastError();
         Fpb.AddTable('Rows', Database::"LT PlT Row");
         Fpb.AddTable('Rows', Database::"LT PlT Row");
         Observer.Observe('duplicate_name', 'no error');
         Observer.Observe('count_after', Format(Fpb.Count()));
-        Observer.Expect('unknown_table|text', 'You tried to invoke the Table object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('unknown_table|text', 'You tried to invoke the Table object with the ID 99999999 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('unknown_table|code', 'AL:MetadataNotFound');
         Observer.Expect('duplicate_name', 'no error');
         Observer.Expect('count_after', '1');

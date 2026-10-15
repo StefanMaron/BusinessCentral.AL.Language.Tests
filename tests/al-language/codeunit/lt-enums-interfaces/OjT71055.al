@@ -100,6 +100,18 @@ codeunit 71059 "LT OjT Codeunit Run"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    local procedure ScrubCaller(Value: Text): Text
+    var
+        StartPos: Integer;
+        EndPos: Integer;
+    begin
+        StartPos := StrPos(Value, ' from the object ');
+        EndPos := StrPos(Value, '. An object with that ID');
+        if (StartPos = 0) or (EndPos < StartPos) then
+            exit(Value);
+        exit(CopyStr(Value, 1, StartPos - 1) + ' from the object <caller>' + CopyStr(Value, EndPos));
+    end;
+
     [Test]
     procedure Run_ErrorRollsBackAndReturnsFalse()
     var
@@ -209,6 +221,21 @@ codeunit 71059 "LT OjT Codeunit Run"
         Observer.Expect('lastError', '');
         Observer.Expect('no', '5');
         Observer.Expect('txt', 'fail');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Run_ByIdOfUnknownCodeunit()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        asserterror Ok := Codeunit.Run(71499);
+        Observer.Observe('unknownId|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('unknownId|code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Expect('unknownId|text', 'You tried to invoke the CodeUnit object with the ID 71499 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('unknownId|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
 

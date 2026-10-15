@@ -10,6 +10,18 @@ codeunit 73020 "LT RfT Open"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    local procedure ScrubCaller(Value: Text): Text
+    var
+        StartPos: Integer;
+        EndPos: Integer;
+    begin
+        StartPos := StrPos(Value, ' from the object ');
+        EndPos := StrPos(Value, '. An object with that ID');
+        if (StartPos = 0) or (EndPos < StartPos) then
+            exit(Value);
+        exit(CopyStr(Value, 1, StartPos - 1) + ' from the object <caller>' + CopyStr(Value, EndPos));
+    end;
+
     [Test]
     procedure Open_Basics()
     var
@@ -115,6 +127,42 @@ codeunit 73020 "LT RfT Open"
         Observer.Expect('unknown_company|text', 'The company "No Such Company XYZ" does not exist.');
         Observer.Expect('unknown_company|code', 'DB:RecordNotFound');
         Observer.Expect('blank_company', 'no error');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Open_InvalidTableNumbers()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(0);
+        Observer.Observe('zero', 'no error');
+        asserterror RecRef.Open(-1);
+        Observer.Observe('negative|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('negative|code', GetLastErrorCode());
+        ClearLastError();
+        asserterror RecRef.Open(73999);
+        Observer.Observe('missing|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('missing|code', GetLastErrorCode());
+        ClearLastError();
+        asserterror RecRef.Open(2147483647);
+        Observer.Observe('maxint|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('maxint|code', GetLastErrorCode());
+        ClearLastError();
+        asserterror RecRef.Open(Codeunit::"Probe Observer");
+        Observer.Observe('codeunit_id|text', ScrubCaller(GetLastErrorText()));
+        Observer.Observe('codeunit_id|code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Expect('zero', 'no error');
+        Observer.Expect('negative|text', 'You tried to invoke the Table object with the ID -1 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('negative|code', 'AL:MetadataNotFound');
+        Observer.Expect('missing|text', 'You tried to invoke the Table object with the ID 73999 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('missing|code', 'AL:MetadataNotFound');
+        Observer.Expect('maxint|text', 'You tried to invoke the Table object with the ID 2147483647 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('maxint|code', 'AL:MetadataNotFound');
+        Observer.Expect('codeunit_id|text', 'You tried to invoke the Table object with the ID 69160 from the object <caller>. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('codeunit_id|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
 
