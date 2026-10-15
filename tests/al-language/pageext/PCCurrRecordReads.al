@@ -11,6 +11,10 @@
 // - Moving the cursor (Next / Last / First) reads the rows it passes and ends with AGCR once.
 // - A page with OnFindRecord / OnNextRecord: open calls OnFindRecord('=><'), walks the rows with OnNextRecord(1) until it answers 0, steps back with OnNextRecord(-1), then
 //   OnFindRecord('=') and AGR / AGCR of the current row; every move is "AGR of the new row, OnFindRecord('='), AGR, AGCR".
+// DIRTY page (a field changed through the TestPage with SetValue before the action; tests Card_DirtyPage_... and List_DirtyPage_...): SetValue itself runs none of the base or
+// extension read triggers. Each action (no change, Rec.Modify(), in-memory change) then reads exactly as on a clean page: a card AGR before the action body, then AGR, AGR, AGCR
+// after it; a list AGR before it, then 6 times AGR and AGCR; Next after a dirty SetValue reads like a clean Next (card AGR, AGCR; list AGR, AGR, AGCR). The edited value survives
+// the action (Name reads the dirty value, 'modified' after the action's Modify(), 'memory' after its in-memory change).
 // BC versions: 27.5
 
 table 69182 "PC Row"
@@ -398,6 +402,92 @@ codeunit 69183 "PC Reads Probe"
         Observer.Expect('previous', 'OnAfterGetRecord(2);OnFindRecord(=);OnAfterGetRecord(2);OnAfterGetCurrRecord(2);');
         Observer.Expect('first', 'OnAfterGetRecord(1);OnFindRecord(=);OnAfterGetRecord(1);OnAfterGetCurrRecord(1);');
         Observer.Expect('gotokey_2', 'OnAfterGetRecord(2);OnFindRecord(=);OnAfterGetRecord(2);OnAfterGetCurrRecord(2);');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Card_DirtyPage_ReadsAfterEachAction()
+    var
+        Pg: TestPage "PC Card";
+        Log: Codeunit "PC Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed(2);
+        Pg.OpenEdit();
+        Log.Take();
+        Pg.Name.SetValue('dirty');
+        Observer.Observe('set_value', Log.Take());
+        Pg.NoChange.Invoke();
+        Observer.Observe('action_no_change_dirty', Log.Take());
+        Observer.Observe('name_after_no_change', Pg.Name.Value());
+        Pg.Name.SetValue('dirty2');
+        Log.Take();
+        Pg.ModifyRec.Invoke();
+        Observer.Observe('action_modify_dirty', Log.Take());
+        Observer.Observe('name_after_modify', Pg.Name.Value());
+        Pg.Name.SetValue('dirty3');
+        Log.Take();
+        Pg.ChangeInMemory.Invoke();
+        Observer.Observe('action_change_in_memory_dirty', Log.Take());
+        Observer.Observe('name_after_memory_change', Pg.Name.Value());
+        Pg.Name.SetValue('dirty4');
+        Log.Take();
+        Pg.Next();
+        Observer.Observe('next_dirty', Log.Take());
+        Pg.Close();
+        Observer.Observe('close', Log.Take());
+        Observer.Expect('set_value', '');
+        Observer.Expect('action_no_change_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:action NoChange;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('name_after_no_change', 'dirty');
+        Observer.Expect('action_modify_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:action ModifyRec;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('name_after_modify', 'modified');
+        Observer.Expect('action_change_in_memory_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:action ChangeInMemory;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('name_after_memory_change', 'memory');
+        Observer.Expect('next_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure List_DirtyPage_ReadsAfterEachAction()
+    var
+        Pg: TestPage "PC List";
+        Log: Codeunit "PC Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed(3);
+        Pg.OpenEdit();
+        Log.Take();
+        Pg.Name.SetValue('dirty');
+        Observer.Observe('set_value', Log.Take());
+        Pg.NoChange.Invoke();
+        Observer.Observe('action_no_change_dirty', Log.Take());
+        Observer.Observe('name_after_no_change', Pg.Name.Value());
+        Pg.Name.SetValue('dirty2');
+        Log.Take();
+        Pg.ModifyRec.Invoke();
+        Observer.Observe('action_modify_dirty', Log.Take());
+        Observer.Observe('name_after_modify', Pg.Name.Value());
+        Pg.Name.SetValue('dirty3');
+        Log.Take();
+        Pg.ChangeInMemory.Invoke();
+        Observer.Observe('action_change_in_memory_dirty', Log.Take());
+        Observer.Observe('name_after_memory_change', Pg.Name.Value());
+        Pg.Name.SetValue('dirty4');
+        Log.Take();
+        Pg.Next();
+        Observer.Observe('next_dirty', Log.Take());
+        Pg.Close();
+        Observer.Observe('close', Log.Take());
+        Observer.Expect('set_value', '');
+        Observer.Expect('action_no_change_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:action NoChange;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('name_after_no_change', 'dirty');
+        Observer.Expect('action_modify_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:action ModifyRec;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('name_after_modify', 'modified');
+        Observer.Expect('action_change_in_memory_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:action ChangeInMemory;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
+        Observer.Expect('name_after_memory_change', 'memory');
+        Observer.Expect('next_dirty', 'base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetRecord;ext:OnAfterGetRecord;base:OnAfterGetCurrRecord;ext:OnAfterGetCurrRecord;');
         Observer.Expect('close', '');
         Observer.Verify();
     end;
