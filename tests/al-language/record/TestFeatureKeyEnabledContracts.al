@@ -5,13 +5,13 @@
 // produced. The Enabled state of a feature is stored per tenant, so a database that differs (another image, a changed feature
 // management setup) can read differently: this test is the way to see what the CI image shows. Other BC versions were not measured.
 //
-// Pins "Feature Key".Enabled for every row of the 27.5 platform list (ID: state):
+// (The exact list was moved to PFFeatureKeyColumns.al, per version.) The 27.5 list was (ID: state):
 //   AdvancedTellMe None, CalcOnlyVisibleFlowFields All Users, ConcealedMaskType All Users, ConcurrentInventoryPosting All Users,
 //   ConcurrentJobPosting All Users, ConcurrentResourcePosting All Users, DisableSoapWebServicesOnMicrosoftUIPages All Users,
 //   EnableMcpAccess All Users, FinancialReportDefaults All Users, FullTextSearch None, GLCurrencyRevaluation None,
 //   Manufacturing_FlushingMethod_ActivateManualWoPick None, ReminderTermsCommunicationTexts All Users, SalesPrices None,
 //   SaveValueToDatabasePromptly All Users, SemanticMetadataSearch All Users.
-// BC versions: 27.3 and 27.5 (the list differs by minor: 27.0 reads differently, so the exact list is asserted only there; the row-count test runs everywhere)
+// BC versions: all. The per-version rows (Enabled, Mandatory By, ...) are pinned in PFFeatureKeyColumns.al.
 
 codeunit 69100 "Probe Feature Key Enabled"
 {
@@ -30,31 +30,4 @@ codeunit 69100 "Probe Feature Key Enabled"
         Assert.IsTrue(FeatureKey.Count() > 0, 'rows');
     end;
 
-#if not BC28PLUS
-    [Test]
-    procedure FeatureKey_Enabled_PerId_On27()
-    var
-        FeatureKey: Record "Feature Key";
-        Rows: Text;
-        Version: Text;
-        AppConstants: Codeunit "Application System Constants";
-    begin
-        // Measured on 27.5 and 27.3; 27.0 differs, so the exact list is asserted only where it was measured.
-        Version := AppConstants.ApplicationVersion();
-        if not (Version.StartsWith('27.5.') or Version.StartsWith('27.3.')) then
-            exit;
-        FeatureKey.FindSet();
-        repeat
-            Rows += FeatureKey.ID + ':' + Format(FeatureKey.Enabled) + ' ';
-        until FeatureKey.Next() = 0;
-
-        Assert.AreEqual(
-            'AdvancedTellMe:None CalcOnlyVisibleFlowFields:All Users ConcealedMaskType:All Users ConcurrentInventoryPosting:All Users ' +
-            'ConcurrentJobPosting:All Users ConcurrentResourcePosting:All Users DisableSoapWebServicesOnMicrosoftUIPages:All Users ' +
-            'EnableMcpAccess:All Users FinancialReportDefaults:All Users FullTextSearch:None GLCurrencyRevaluation:None ' +
-            'Manufacturing_FlushingMethod_ActivateManualWoPick:None ReminderTermsCommunicationTexts:All Users SalesPrices:None ' +
-            'SaveValueToDatabasePromptly:All Users SemanticMetadataSearch:All Users ',
-            Rows, 'Enabled per ID');
-    end;
-#endif
 }

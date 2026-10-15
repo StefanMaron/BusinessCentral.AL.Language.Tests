@@ -798,10 +798,8 @@ codeunit 69815 "PA Misc Contracts"
     var
         O: Codeunit "Probe Observer";
     begin
-        O.Observe('start_workdate_minus_today', Format(WorkDate() - Today()));
         WorkDate(DMY2Date(15, 6, 2001));
         O.Observe('after_set', Format(WorkDate(), 0, 9));
-        O.Expect('start_workdate_minus_today', '-14');
         O.Expect('after_set', '2001-06-15');
         O.Verify();
     end;

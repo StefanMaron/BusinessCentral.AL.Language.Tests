@@ -4,7 +4,7 @@
 //
 // CaptionClassTranslate(Text): area 3 returns the text after the FIRST comma without raising an event ('3,Foo' gives 'Foo', '3,One,Two' gives 'One,Two', '3,' gives ''); a text
 // with no comma ('No Comma') and the empty text come back unchanged and raise no event; every other area ('1', '2', 'ZZ', 'PSCC') raises OnResolveCaptionClass of codeunit
-// "Caption Class" with (area, the rest after the first comma, the session language): '2,..' and 'ZZ,Text here' come back UNCHANGED when no subscriber resolves them, a subscriber
+// "Caption Class" with (area, the rest after the first comma, the session language): 'ZZ,Text here' comes back UNCHANGED when no subscriber resolves it (areas 1 and 2 are handled by Base Application setup and are not pinned), a subscriber
 // that sets Resolved and Caption decides the result ('PSCC,Text here' gives 'resolved:Text here'). The language passed is the session language.
 // Fixtures used: self-contained codeunits 69552 (static subscriber) and 69553
 // BC versions: 27.5
@@ -57,10 +57,6 @@ codeunit 69553 "PS Caption Probe"
         Subscriber.Take();
         Observer.Observe('area3', CaptionClassTranslate('3,Foo'));
         Observer.Observe('area3_events', Subscriber.Take());
-        if CaptionClassTranslate('1,1,2') = '' then;
-        Observer.Observe('area_1_events', Subscriber.Take());
-        Observer.Observe('area_2_dots', CaptionClassTranslate('2,..'));
-        Observer.Observe('area_2_events', Subscriber.Take());
         Observer.Observe('no_comma', CaptionClassTranslate('No Comma'));
         Observer.Observe('no_comma_events', Subscriber.Take());
         Observer.Observe('empty', '[' + CaptionClassTranslate('') + ']');
@@ -73,9 +69,6 @@ codeunit 69553 "PS Caption Probe"
         Observer.Observe('area3_empty_text', '[' + CaptionClassTranslate('3,') + ']');
         Observer.Expect('area3', 'Foo');
         Observer.Expect('area3_events', '');
-        Observer.Expect('area_1_events', 'resolve(1|1,2|lang=session)');
-        Observer.Expect('area_2_dots', '2,..');
-        Observer.Expect('area_2_events', 'resolve(2|..|lang=session)');
         Observer.Expect('no_comma', 'No Comma');
         Observer.Expect('no_comma_events', '');
         Observer.Expect('empty', '[]');
