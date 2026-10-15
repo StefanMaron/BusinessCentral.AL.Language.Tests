@@ -5,6 +5,7 @@
 // Facts: Interface in List and Dictionary, is/as operators, interface extends, default interface implementation
 // BC versions: 29 (27 and 28 by CI)
 
+#if BC29PLUS
 interface "LT OjT IBase"
 {
     procedure Id(): Text;
@@ -171,3 +172,4 @@ codeunit 71054 "LT OjT Interface Coll"
         Observer.Verify();
     end;
 }
+#endif

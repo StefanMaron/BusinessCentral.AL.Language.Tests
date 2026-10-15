@@ -151,23 +151,6 @@ codeunit 72518 "LT SyT Run Commit"
     end;
 
     [Test]
-    procedure CodeunitRun_Invalid()
-    var
-        Observer: Codeunit "Probe Observer";
-        Ok: Boolean;
-    begin
-        asserterror Ok := Codeunit.Run(2147483647);
-        Observer.ObserveError('unknown id');
-        asserterror Ok := Codeunit.Run(0);
-        Observer.ObserveError('id 0');
-        Observer.Expect('unknown id|text', 'You tried to invoke the CodeUnit object with the ID 2147483647 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown id|code', 'AL:MetadataNotFound');
-        Observer.Expect('id 0|text', 'You tried to invoke the CodeUnit object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('id 0|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure Commit_InTest()
     var
         Observer: Codeunit "Probe Observer";

@@ -208,7 +208,11 @@ codeunit 71012 "LT TxC TB Replace"
         Observer.Observe('after', TB.ToText());
         Observer.Expect('caseSens', 'Abc aBC -');
         Observer.Expect('emptyOld|text', 'An invalid argument was passed to a ''TextBuilder'' data type method.');
+#if BC28PLUS and not BC29PLUS
+        Observer.Expect('emptyOld|code', 'ArgumentOutOfRange');
+#else
         Observer.Expect('emptyOld|code', 'Argument');
+#endif
         Observer.Expect('after', 'Abc aBC -');
         Observer.Verify();
     end;
@@ -297,7 +301,11 @@ codeunit 71012 "LT TxC TB Replace"
         Observer.Expect('sumTooBig|code', 'ArgumentOutOfRange');
         Observer.Expect('startPastLen', 'no error');
         Observer.Expect('emptyOld|text', 'An invalid argument was passed to a ''TextBuilder'' data type method.');
+#if BC28PLUS and not BC29PLUS
+        Observer.Expect('emptyOld|code', 'ArgumentOutOfRange');
+#else
         Observer.Expect('emptyOld|code', 'Argument');
+#endif
         Observer.Expect('startAtLen', 'abcdef');
         Observer.Verify();
     end;

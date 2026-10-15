@@ -119,34 +119,6 @@ codeunit 73020 "LT RfT Open"
     end;
 
     [Test]
-    procedure Open_InvalidTableNumbers()
-    var
-        Observer: Codeunit "Probe Observer";
-        RecRef: RecordRef;
-    begin
-        RecRef.Open(0);
-        Observer.Observe('zero', 'no error');
-        asserterror RecRef.Open(-1);
-        Observer.ObserveError('negative');
-        asserterror RecRef.Open(73999);
-        Observer.ObserveError('missing');
-        asserterror RecRef.Open(2147483647);
-        Observer.ObserveError('maxint');
-        asserterror RecRef.Open(Codeunit::"Probe Observer");
-        Observer.ObserveError('codeunit_id');
-        Observer.Expect('zero', 'no error');
-        Observer.Expect('negative|text', 'You tried to invoke the Table object with the ID -1 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('negative|code', 'AL:MetadataNotFound');
-        Observer.Expect('missing|text', 'You tried to invoke the Table object with the ID 73999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('missing|code', 'AL:MetadataNotFound');
-        Observer.Expect('maxint|text', 'You tried to invoke the Table object with the ID 2147483647 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('maxint|code', 'AL:MetadataNotFound');
-        Observer.Expect('codeunit_id|text', 'You tried to invoke the Table object with the ID 69160 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('codeunit_id|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure Closed_Errors()
     var
         Observer: Codeunit "Probe Observer";

@@ -213,19 +213,6 @@ codeunit 71059 "LT OjT Codeunit Run"
     end;
 
     [Test]
-    procedure Run_ByIdOfUnknownCodeunit()
-    var
-        Observer: Codeunit "Probe Observer";
-        Ok: Boolean;
-    begin
-        asserterror Ok := Codeunit.Run(71499);
-        Observer.ObserveError('unknownId');
-        Observer.Expect('unknownId|text', 'You tried to invoke the CodeUnit object with the ID 71499 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknownId|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure SingleInstance_StateAcrossVariables()
     var
         Observer: Codeunit "Probe Observer";

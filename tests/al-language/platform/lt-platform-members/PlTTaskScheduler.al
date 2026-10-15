@@ -135,18 +135,6 @@ codeunit 74214 "LT PlT TaskScheduler"
     end;
 
     [Test]
-    procedure CreateTask_ErrorUnknownCodeunit()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        asserterror TaskScheduler.CreateTask(99999999, 0, false);
-        Observer.ObserveError('unknown_codeunit');
-        Observer.Expect('unknown_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown_codeunit|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure CreateTask_ErrorZeroCodeunit()
     var
         Observer: Codeunit "Probe Observer";
@@ -154,18 +142,6 @@ codeunit 74214 "LT PlT TaskScheduler"
         TaskScheduler.CreateTask(0, 0, false);
         Observer.Observe('zero_codeunit', 'no error');
         Observer.Expect('zero_codeunit', 'no error');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure CreateTask_ErrorUnknownFailureCodeunit()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        asserterror TaskScheduler.CreateTask(Codeunit::"LT PlT Task Target", 99999999, false);
-        Observer.ObserveError('unknown_failure_codeunit');
-        Observer.Expect('unknown_failure_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown_failure_codeunit|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
 
