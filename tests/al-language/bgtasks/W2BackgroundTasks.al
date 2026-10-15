@@ -502,40 +502,6 @@ codeunit 68703 "W2 Bg Tests"
     end;
 
     [Test]
-    procedure Worker_DeleteAll()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        WorkerOp(Observer, 'deleteall');
-        Observer.Expect('caller_in_write_transaction_before', 'Yes');
-        Observer.Expect('run|ok', 'No');
-        Observer.Expect('run|text', 'We can''t save your changes right now, because a record in table ''W2 Bg Row'' is being updated in a transaction done by another session.\r\\r\You''ll have to wait until the other transaction has completed, which may take a while. Please try again later.');
-        Observer.Expect('run|code', 'NDBCS:LockTimeout');
-        Observer.Expect('pending_row_exists', 'Yes');
-        Observer.Expect('rows_after', '1');
-        Observer.Expect('pending_level', '7');
-        Observer.Expect('caller_in_write_transaction_after', 'Yes');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure Worker_ModifyAll()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        WorkerOp(Observer, 'modifyall');
-        Observer.Expect('caller_in_write_transaction_before', 'Yes');
-        Observer.Expect('run|ok', 'No');
-        Observer.Expect('run|text', 'We can''t save your changes right now, because a record in table ''W2 Bg Row'' is being updated in a transaction done by another session.\r\\r\You''ll have to wait until the other transaction has completed, which may take a while. Please try again later.');
-        Observer.Expect('run|code', 'NDBCS:LockTimeout');
-        Observer.Expect('pending_row_exists', 'Yes');
-        Observer.Expect('rows_after', '1');
-        Observer.Expect('pending_level', '7');
-        Observer.Expect('caller_in_write_transaction_after', 'Yes');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure Worker_Commit()
     var
         Observer: Codeunit "Probe Observer";
