@@ -80,6 +80,8 @@ is only a reference.
 | 0066, 0067 | AL0135, AL0126 | too few / too many arguments |
 | 0069, 0070 | AL0122 | Integer to Text and Text to Integer assignment |
 | 0071 to 0073 | AL0124 | `assemblyProbingPaths` at runtime 15.0, 16.1 and 17.0 (16.1 and 17.0 need AL 17 or newer) |
+| 0074, 0075 | AL0122 | an enum assigned to an enum of another type whose TARGET lacks `AssignmentCompatibility` (the source's flag does not help) |
+| 0076 | AL0126 | `Media.ImportStream` with a file name as a fourth argument (BC 27 has three) |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
