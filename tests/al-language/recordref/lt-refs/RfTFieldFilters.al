@@ -115,6 +115,7 @@ codeunit 73025 "LT RfT Field Filters"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure SetFilter_Errors()
     var
@@ -176,6 +177,7 @@ codeunit 73025 "LT RfT Field Filters"
         Observer.Expect('setrange_mixed|code', 'Evaluate:Format');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure GetRangeMinMax()

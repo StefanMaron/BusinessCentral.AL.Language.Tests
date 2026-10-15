@@ -279,6 +279,7 @@ codeunit 72022 "LT HtT Headers Errors"
         Req.GetHeaders(Headers);
     end;
 
+#if BC28PLUS
     [Test]
     procedure InvalidNames()
     var
@@ -317,6 +318,7 @@ codeunit 72022 "LT HtT Headers Errors"
         Observer.Expect('parenName|code', 'InvalidHeader:Format');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure InvalidValues()
