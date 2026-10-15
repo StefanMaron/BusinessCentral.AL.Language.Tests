@@ -148,8 +148,8 @@ codeunit 69475 "Probe Platform Tables"
         Observer.Observe('sessionCompany', CompanyName());
         Row.DeleteLinks();
         Observer.Observe('linksAfterDeleteLinks', Format(Link.Count()));
-        Observer.Expect('companyOfLink', 'CRONUS International Ltd.');
-        Observer.Expect('sessionCompany', 'CRONUS International Ltd.');
+        Observer.Expect('companyOfLink', '<Company>');
+        Observer.Expect('sessionCompany', '<Company>');
         Observer.Expect('linksAfterDeleteLinks', '0');
         Observer.Ignore('linkRow'); // a dump or environment data: observed, not asserted
         Observer.Verify();

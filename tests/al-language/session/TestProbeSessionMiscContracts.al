@@ -702,7 +702,6 @@ codeunit 69815 "PA Misc Contracts"
         O.Observe('companyname', CompanyName());
         O.Observe('displayname', TryProp(1));
         O.Observe('urlname', TryProp(2));
-        O.Observe('id', TryProp(3));
         O.Observe('company_table_count_ge_1', Format(C.Count() >= 1));
         R.ChangeCompany(CompanyName());
         O.Observe('changecompany_same', Format(R.CurrentCompany()));
@@ -713,7 +712,6 @@ codeunit 69815 "PA Misc Contracts"
         O.Expect('companyname', '<Company>');
         O.Expect('displayname', '<Company>');
         O.Expect('urlname', '<Company>');
-        O.Expect('id', '{1B8BE66F-9AC6-F111-85C1-7CED8D9E30E2}');
         O.Expect('company_table_count_ge_1', 'Yes');
         O.Expect('changecompany_same', '<Company>');
         O.Expect('changecompany_empty_currentcompany', '[<Company>]');

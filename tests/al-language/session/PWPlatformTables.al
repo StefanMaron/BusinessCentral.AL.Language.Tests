@@ -216,7 +216,7 @@ codeunit 69746 "PW Platform Tables Probe"
         Observer.Observe('time_zone', UserPers."Time Zone");
         Observer.Expect('get', 'Yes');
         Observer.Expect('profile_id', 'BUSINESS MANAGER');
-        Observer.Expect('company', 'CRONUS International Ltd.');
+        Observer.Expect('company', '<Company>');
         Observer.Expect('time_zone', 'UTC');
         Observer.Verify();
     end;

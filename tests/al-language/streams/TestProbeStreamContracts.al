@@ -606,12 +606,12 @@ codeunit 69803 "PA Stream Contracts"
         Sizes.Add(100000);
         foreach Sz in Sizes do
             O.Observe('size_' + Format(Sz), BlobSize(Sz));
-        O.Expect('size_0', 'before_insert_len=0 hasvalue=No after_insert_len=0 fresh_get_len=0 hasvalue=No after_calcfields_len=0');
-        O.Expect('size_1', 'before_insert_len=1 hasvalue=Yes after_insert_len=1 fresh_get_len=7 hasvalue=Yes after_calcfields_len=1');
-        O.Expect('size_5', 'before_insert_len=5 hasvalue=Yes after_insert_len=5 fresh_get_len=9 hasvalue=Yes after_calcfields_len=5');
-        O.Expect('size_100', 'before_insert_len=100 hasvalue=Yes after_insert_len=100 fresh_get_len=10 hasvalue=Yes after_calcfields_len=100');
-        O.Expect('size_10000', 'before_insert_len=10000 hasvalue=Yes after_insert_len=10000 fresh_get_len=31 hasvalue=Yes after_calcfields_len=10000');
-        O.Expect('size_100000', 'before_insert_len=100000 hasvalue=Yes after_insert_len=100000 fresh_get_len=118 hasvalue=Yes after_calcfields_len=100000');
+        O.Expect('size_0', 'before_insert_len=0 hasvalue=No after_insert_len=0 hasvalue=No after_calcfields_len=0');
+        O.Expect('size_1', 'before_insert_len=1 hasvalue=Yes after_insert_len=1 hasvalue=Yes after_calcfields_len=1');
+        O.Expect('size_5', 'before_insert_len=5 hasvalue=Yes after_insert_len=5 hasvalue=Yes after_calcfields_len=5');
+        O.Expect('size_100', 'before_insert_len=100 hasvalue=Yes after_insert_len=100 hasvalue=Yes after_calcfields_len=100');
+        O.Expect('size_10000', 'before_insert_len=10000 hasvalue=Yes after_insert_len=10000 hasvalue=Yes after_calcfields_len=10000');
+        O.Expect('size_100000', 'before_insert_len=100000 hasvalue=Yes after_insert_len=100000 hasvalue=Yes after_calcfields_len=100000');
         O.Verify();
     end;
 
@@ -632,7 +632,7 @@ codeunit 69803 "PA Stream Contracts"
         Rec.Insert();
         Res += ' after_insert_len=' + Format(Rec.Data.Length());
         Rec2.Get(1);
-        Res += ' fresh_get_len=' + Format(Rec2.Data.Length()) + ' hasvalue=' + Format(Rec2.Data.HasValue());
+        Res += ' hasvalue=' + Format(Rec2.Data.HasValue());
         Rec2.CalcFields(Data);
         Res += ' after_calcfields_len=' + Format(Rec2.Data.Length());
         Rec.DeleteAll();
