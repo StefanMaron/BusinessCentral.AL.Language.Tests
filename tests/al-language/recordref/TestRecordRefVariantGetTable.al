@@ -9,12 +9,16 @@
 // GetTable into a fresh output Record, which reads the reference rather than filling it.) The
 // table identity survives SetTable -> Variant -> GetTable.
 //
-// Verified on native BC 27.0: the boxed row's values ARE present in the reference before any Find.
+// The copy is of the boxed record's buffer, not a read of the stored row: a value assigned but
+// never Modified is what the reference returns.
+//
+// Measured on W1 sandboxes BC 27.0 (27.0.38460.56409), 28.5 (28.5.54151.56408) and 29.0
+// (29.0.54011.55816): every assertion holds unchanged on all three, so no version guard.
 //
 // This pins the Variant overload of GetTable that the test harness itself relies on
 // (Assert.RecordIsEmpty(Variant) does RecRef.GetTable(RecVariant)).
 
-codeunit 60298 "Test RecRef Variant GetTable"
+codeunit 69501 "Test RecRef Variant GetTable"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -51,7 +55,7 @@ codeunit 60298 "Test RecRef Variant GetTable"
     [Test]
     procedure GetTableFromVariant_CopiesPositionedRow()
     // CLAIM: GetTable(Variant) copies the boxed record's current field values — Field().Value()
-    //        returns them with no Find. Verified on native BC 27.0.
+    //        returns them with no Find.
     var
         Rec: Record "ALT Universal";
         RecRef: RecordRef;
@@ -68,6 +72,31 @@ codeunit 60298 "Test RecRef Variant GetTable"
 
         Assert.AreEqual(99, RecRef.Field(3).Value(), 'GetTable(Variant) copies the boxed row — Field(3) returns 99 with no Find');
         RecRef.Close();
+    end;
+
+    [Test]
+    procedure GetTableFromVariant_CopiesUnsavedBufferValue()
+    // CLAIM: what GetTable(Variant) copies is the boxed record's buffer, not the stored row — a
+    //        value assigned after the Insert and never Modified is what Field().Value() returns.
+    var
+        Rec: Record "ALT Universal";
+        Stored: Record "ALT Universal";
+        RecRef: RecordRef;
+        V: Variant;
+    begin
+        Initialize();
+        Rec."Entry No." := 4;
+        Rec."Integer Field" := 99;
+        Rec.Insert();
+        Rec."Integer Field" := 123;
+
+        V := Rec;
+        RecRef.GetTable(V);
+
+        Assert.AreEqual(123, RecRef.Field(3).Value(), 'GetTable(Variant) copies the unsaved buffer value, not the stored 99');
+        RecRef.Close();
+        Stored.Get(4);
+        Assert.AreEqual(99, Stored."Integer Field", 'control: the stored row still holds 99');
     end;
 
     [Test]

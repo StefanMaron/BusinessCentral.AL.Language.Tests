@@ -5,21 +5,27 @@
 // BC versions: 27.0+
 //
 // CLAIM UNDER TEST: the company a record is pointed at by ChangeCompany is NOT carried through a
-// Variant. Boxing the record into a Variant and taking it back out — as a RecordRef via GetTable
-// or as a typed Record via assignment — drops the ChangeCompany target back to the session
-// company. Passing the record itself by var keeps the company, which is the control that proves
-// the loss is the Variant hop and not the call. The working pattern the harness uses — GetTable
-// from the Variant and then ChangeCompany again on the reference — reads the other company's rows.
+// Variant.
+//   * RecordRef: GetTable(Variant) yields a reference on the session company, while GetTable on
+//     the record itself keeps the other company. The loss is the Variant hop.
+//   * Typed Record: assignment never moves a record variable to another company, with or without
+//     a Variant. A fresh target assigned from the boxed record is on the session company, a direct
+//     assignment gives the same answer, and a target already pointed at the other company stays
+//     there when it is assigned from a session-company record. The company belongs to the
+//     variable, not to the value.
+//   * Passing the record itself by var keeps the company; passing the Variant by value into a
+//     procedure loses it there too.
+// The working pattern the harness uses — GetTable from the Variant and then ChangeCompany again on
+// the reference — reads the other company's rows.
 //
 // The other company is provisioned ONCE for the whole codeunit (provisioning a company creates
 // all of its tables and the harness stops a codeunit after ten minutes), so every claim is proven
-// in a single test rather than one-company-per-codeunit. The same provisioning also covers the
-// by-value case: passing the Variant by value into a procedure loses the company in the callee too.
+// in a single test rather than one-company-per-codeunit.
 //
-// The typed-Record arm is the uncertain one. If a native BC run shows a Variant carries the
-// company onto a typed Record, flip that assertion and annotate the real behaviour here.
+// Measured on W1 sandboxes BC 27.0 (27.0.38460.56409), 28.5 (28.5.54151.56408) and 29.0
+// (29.0.54011.55816): every assertion holds unchanged on all three, so no version guard.
 
-codeunit 69976 "Test RecVariant Company"
+codeunit 69503 "Test RecVariant Company"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -33,11 +39,16 @@ codeunit 69976 "Test RecVariant Company"
     var
         Home: Record "ALT Universal";
         Rec2: Record "ALT Universal";
+        Direct: Record "ALT Universal";
+        OnOther: Record "ALT Universal";
+        SessionRec: Record "ALT Universal";
         SessionRow: Record "ALT Universal";
         OtherRow: Record "ALT Universal";
         RecRef: RecordRef;
+        DirectRef: RecordRef;
         ReadRef: RecordRef;
         V: Variant;
+        SessionV: Variant;
     begin
         Lib.Cleanup();
         Lib.InsertCompany();    // provision the other company once for this codeunit
@@ -53,12 +64,28 @@ codeunit 69976 "Test RecVariant Company"
         Assert.AreEqual(CompanyName(), RecRef.CurrentCompany(), 'the company must NOT cross Variant + GetTable — the reference is on the session company');
         RecRef.Close();
 
+        // CONTROL: GetTable on the record itself keeps the other company, so the loss above is the
+        // Variant hop and not GetTable
+        DirectRef.GetTable(Home);
+        Assert.AreEqual(Lib.CompanyNameUnderTest(), DirectRef.CurrentCompany(), 'GetTable(Record) keeps the other company');
+        DirectRef.Close();
+
         // WHEN boxed and taken back as a typed Record, THEN it is on the session company too
         Rec2 := V;
         Assert.AreEqual(CompanyName(), Rec2.CurrentCompany(), 'the company must NOT cross the Variant round trip onto a typed Record — it is on the session company');
 
-        // CONTROL: passing the record itself by var keeps the other company, so the loss above is
-        // the Variant hop and not the call
+        // AND a direct assignment gives the same answer: for a typed Record the company is the
+        // variable's, so the Variant adds no loss of its own
+        Direct := Home;
+        Assert.AreEqual(CompanyName(), Direct.CurrentCompany(), 'a direct assignment does not move the target to the other company either');
+
+        // AND a target already on the other company stays there when assigned from a session-company record
+        Assert.IsTrue(OnOther.ChangeCompany(Lib.CompanyNameUnderTest()), 'ChangeCompany for the target');
+        SessionV := SessionRec;
+        OnOther := SessionV;
+        Assert.AreEqual(Lib.CompanyNameUnderTest(), OnOther.CurrentCompany(), 'assignment from a Variant leaves the target on the company it was pointed at');
+
+        // CONTROL: passing the record itself by var keeps the other company
         Assert.AreEqual(Lib.CompanyNameUnderTest(), CompanyOfByRef(Home), 'passing the record by var keeps the other company');
 
         // AND passing the Variant by value into a procedure loses the company there too — GetTable

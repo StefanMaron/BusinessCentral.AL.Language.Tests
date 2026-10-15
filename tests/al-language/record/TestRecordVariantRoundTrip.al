@@ -8,12 +8,13 @@
 // Record assignment copies field values only — filters and the current key are left behind,
 // exactly as they are on a direct `Rec2 := Rec1` assignment. The Variant round trip adds no
 // state of its own: a Variant passed by value isolates the caller, one passed by var does not.
+// The filter and key tests carry the direct assignment as a control, so they show the Variant
+// hop drops nothing that the assignment itself keeps.
 //
-// These assertions encode the most probable behaviour. The filter/key arms are the uncertain
-// ones: if a native BC run shows a Variant preserves filters or the current key, flip the
-// assertion and annotate the real behaviour here.
+// Measured on W1 sandboxes BC 27.0 (27.0.38460.56409), 28.5 (28.5.54151.56408) and 29.0
+// (29.0.54011.55816): every assertion holds unchanged on all three, so no version guard.
 
-codeunit 60297 "Test Record Variant RoundTrip"
+codeunit 69500 "Test Record Variant RoundTrip"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -49,6 +50,7 @@ codeunit 60297 "Test Record Variant RoundTrip"
     var
         Rec: Record "ALT Universal";
         Rec2: Record "ALT Universal";
+        Direct: Record "ALT Universal";
         V: Variant;
     begin
         Initialize();
@@ -58,8 +60,10 @@ codeunit 60297 "Test Record Variant RoundTrip"
 
         V := Rec;
         Rec2 := V;
+        Direct := Rec;
 
         Assert.AreEqual('', Rec2.GetFilters(), 'filters must NOT cross the Variant round trip — assignment copies the record, not the view');
+        Assert.AreEqual('', Direct.GetFilters(), 'control: a direct assignment does not copy the filters either');
     end;
 
     [Test]
@@ -69,6 +73,7 @@ codeunit 60297 "Test Record Variant RoundTrip"
         Rec: Record "ALT Keyed";
         Rec2: Record "ALT Keyed";
         Fresh: Record "ALT Keyed";
+        Direct: Record "ALT Keyed";
         V: Variant;
     begin
         Initialize();
@@ -77,8 +82,10 @@ codeunit 60297 "Test Record Variant RoundTrip"
 
         V := Rec;
         Rec2 := V;
+        Direct := Rec;
 
         Assert.AreEqual(Fresh.CurrentKey(), Rec2.CurrentKey(), 'the current key must NOT cross the Variant round trip — the target is on its default key');
+        Assert.AreEqual(Fresh.CurrentKey(), Direct.CurrentKey(), 'control: a direct assignment does not copy the current key either');
     end;
 
     [Test]

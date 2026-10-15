@@ -10,15 +10,14 @@
 // the flag from the Variant: GetTable from a Variant that holds a temporary record yields a
 // TEMPORARY RecordRef.
 //
-// Verified on native BC 27.0: GetTable from a Variant that holds a temporary record yields a
-// TEMPORARY RecordRef. The non-temp-target arm remains as asserted (a non-temporary-declared
-// target stays persistent through the round trip).
-//
 // Passing the Variant BY VALUE into a procedure adds nothing: the callee's GetTable still yields a
 // temporary RecordRef. The contrast is a temporary RECORD passed by value into a non-temporary
 // parameter, which is not temporary in the callee because the parameter's declaration wins.
+//
+// Measured on W1 sandboxes BC 27.0 (27.0.38460.56409), 28.5 (28.5.54151.56408) and 29.0
+// (29.0.54011.55816): every assertion holds unchanged on all three, so no version guard.
 
-codeunit 60299 "Test RecVariant IsTemporary"
+codeunit 69502 "Test RecVariant IsTemporary"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -66,7 +65,7 @@ codeunit 60299 "Test RecVariant IsTemporary"
     [Test]
     procedure Temp_Via_Variant_GetTable_RecordRefIsTemporary()
     // CLAIM: GetTable from a Variant holding a temporary record yields a TEMPORARY RecordRef —
-    //        the temporary flag is carried inside the Variant. Verified on native BC 27.0.
+    //        the temporary flag is carried inside the Variant.
     var
         TempSrc: Record "ALT Universal" temporary;
         RecRef: RecordRef;
