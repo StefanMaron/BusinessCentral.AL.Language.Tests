@@ -154,18 +154,6 @@ xmlport 68550 "W7 CS XmlPort"
     end;
 }
 
-codeunit 68551 "W7 Callstack Probes"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    local procedure ObserveStack(var Observer: Codeunit "Probe Observer"; Name: Text)
-    begin
-        Observer.Observe(Name + '|stack', GetLastErrorCallStack());
-        Observer.ObserveError(Name);
-    end;
-
-}
 
 codeunit 68552 "W7 ErrorInfo Callstack"
 {

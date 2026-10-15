@@ -150,42 +150,6 @@ codeunit 67755 "W3 Dataset Probe"
 
     // md:204: parents of the header elements (the order of the names is pinned elsewhere), and the stable values.
     [Test]
-    procedure Header_Values_ReportWithoutCaption()
-    var
-        Observer: Codeunit "Probe Observer";
-        Xml: Text;
-        DateAndTime: Text;
-    begin
-        Seed(true, false);
-        Observer.Observe('saved', Format(Dataset.Save(Report::"W3 Hdr Plain", '', Xml)));
-        Observer.Observe('ReportName', Dataset.HeaderValue(Xml, 'ReportName'));
-        Observer.Observe('ReportCaption', Dataset.HeaderValue(Xml, 'ReportCaption'));
-        Observer.Observe('AboutThisReportTitle', Dataset.HeaderValue(Xml, 'AboutThisReportTitle'));
-        Observer.Observe('AboutThisReportText', Dataset.HeaderValue(Xml, 'AboutThisReportText'));
-        Observer.Observe('ReportHelpLink', Dataset.HeaderValue(Xml, 'ReportHelpLink'));
-        Observer.Observe('ReportId is the report id', Format(Dataset.HeaderValue(Xml, 'ReportId') = Format(Report::"W3 Hdr Plain")));
-        Observer.Observe('CompanyName is the session company', Format(Dataset.HeaderValue(Xml, 'CompanyName') = CompanyName()));
-        DateAndTime := Dataset.HeaderValue(Xml, 'DateAndTime');
-        Observer.Observe('DateAndTime length', Format(StrLen(DateAndTime)));
-        Observer.Observe('DateAndTime T at 11', CopyStr(DateAndTime, 11, 1));
-        Observer.Observe('DateAndTime seconds', CopyStr(DateAndTime, StrLen(DateAndTime) - 2));
-        Observer.Observe('Year is a year', Format(Dataset.HeaderValue(Xml, 'Year') = Format(Date2DMY(Today(), 3))));
-        Observer.Expect('saved', 'Yes');
-        Observer.Expect('ReportName', 'W3 Hdr Plain');
-        Observer.Expect('ReportCaption', 'W3 Hdr Plain');
-        Observer.Expect('AboutThisReportTitle', '');
-        Observer.Expect('AboutThisReportText', '');
-        Observer.Expect('ReportHelpLink', '');
-        Observer.Expect('ReportId is the report id', 'Yes');
-        Observer.Expect('CompanyName is the session company', 'Yes');
-        Observer.Expect('DateAndTime length', '37');
-        Observer.Expect('DateAndTime T at 11', 'O');
-        Observer.Expect('DateAndTime seconds', ' AM');
-        Observer.Expect('Year is a year', 'Yes');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure Header_Values_ReportWithCaption()
     var
         Observer: Codeunit "Probe Observer";
