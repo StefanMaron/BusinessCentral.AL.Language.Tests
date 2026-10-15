@@ -31,13 +31,13 @@ codeunit 67054 "W5 DataTransfer Tests"
         Observer.Expect('same_table|text', '');
         Observer.Expect('same_table|code', '');
         Observer.Expect('unknown_destination_ok', 'No');
-        Observer.Expect('unknown_destination|text', 'You tried to invoke the Table object with the ID 99999999 from the object W5 DataTransfer Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('unknown_destination|text', 'You tried to invoke the Table object with the ID 99999999 from the object W5 DataTransfer Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('unknown_destination|code', 'AL:MetadataNotFound');
         Observer.Expect('unknown_source_ok', 'No');
-        Observer.Expect('unknown_source|text', 'You tried to invoke the Table object with the ID 99999999 from the object W5 DataTransfer Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('unknown_source|text', 'You tried to invoke the Table object with the ID 99999999 from the object W5 DataTransfer Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('unknown_source|code', 'AL:MetadataNotFound');
         Observer.Expect('zero_ok', 'No');
-        Observer.Expect('zero|text', 'You tried to invoke the Table object with the ID 0 from the object W5 DataTransfer Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('zero|text', 'You tried to invoke the Table object with the ID 0 from the object W5 DataTransfer Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('zero|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;

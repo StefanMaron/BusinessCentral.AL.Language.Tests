@@ -23,7 +23,7 @@ codeunit 67056 "W5 Missing Object Tests"
         MissingId := 99999999;
         asserterror Codeunit.Run(MissingId);
         Observer.ObserveError('run_missing_codeunit');
-        Observer.Expect('run_missing_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('run_missing_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('run_missing_codeunit|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
@@ -37,7 +37,7 @@ codeunit 67056 "W5 Missing Object Tests"
     begin
         asserterror Caller.RunMissingCodeunit(99999999);
         Observer.ObserveError('run_missing_codeunit_via_helper');
-        Observer.Expect('run_missing_codeunit_via_helper|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('run_missing_codeunit_via_helper|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('run_missing_codeunit_via_helper|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
@@ -60,13 +60,13 @@ codeunit 67056 "W5 Missing Object Tests"
         Observer.Observe('xmlport_ok', Format(Ok));
         Observer.ObserveError('run_missing_xmlport');
         Observer.Expect('report_ok', 'No');
-        Observer.Expect('run_missing_report|text', 'You tried to invoke the Report object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('run_missing_report|text', 'You tried to invoke the Report object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('run_missing_report|code', 'AL:MetadataNotFound');
         Observer.Expect('page_ok', 'No');
-        Observer.Expect('run_missing_page|text', 'You tried to invoke the Page object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('run_missing_page|text', 'You tried to invoke the Page object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('run_missing_page|code', 'AL:MetadataNotFound');
         Observer.Expect('xmlport_ok', 'No');
-        Observer.Expect('run_missing_xmlport|text', 'You tried to invoke the XmlPort object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version 29022.');
+        Observer.Expect('run_missing_xmlport|text', 'You tried to invoke the XmlPort object with the ID 99999999 from the object W5 Missing Object Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('run_missing_xmlport|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
