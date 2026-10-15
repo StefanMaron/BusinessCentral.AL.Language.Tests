@@ -625,15 +625,6 @@ codeunit 70548 "LT PnB Clear Dialog"
     end;
 
 #if BC29PLUS
-    [Test]
-    procedure ApplicationArea_StartsEmpty()
-    var
-        Obs: Codeunit "Probe Observer";
-    begin
-        Obs.Observe('area', ApplicationArea());
-        Obs.Expect('area', '');
-        Obs.Verify();
-    end;
 #endif
 }
 

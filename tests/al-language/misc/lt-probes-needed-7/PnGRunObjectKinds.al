@@ -3,7 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160); LT PnG RunObj Host (70162), run-object targets LT PnG Card (70134), LT PnG List (70135), LT PnG Worksheet (70154), LT PnG ListPlus (70155), LT PnG Navigate (70156), LT PnG Confirm (70157), LT PnG Prompt (70158), LT PnG Dlg (70159), LT PnG No Type (70160), LT PnG Item (70130), LT PnG Log (70133)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles probes-needed.md row 87 (RunObject): which kind of handler answers an action with RunObject, by the PageType of the target
-// Facts: for every PageType the handler that ran when both a [PageHandler] and a [ModalPageHandler] were declared (the handler that did not run is reported by BC as not executed; the test's own Observe error is raised first)
+// Facts: for every PageType which kind of handler answers an action with RunObject; the test declares only the handler that ran (a declared handler that does not run fails the test as 'not executed')
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 70187 "LT PnG RunObject Kinds"
@@ -26,7 +26,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhCard,MhCard')]
+    [HandlerFunctions('PhCard')]
     procedure RunCardPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -41,7 +41,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhList,MhList')]
+    [HandlerFunctions('PhList')]
     procedure RunListPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -56,7 +56,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhWorksheet,MhWorksheet')]
+    [HandlerFunctions('PhWorksheet')]
     procedure RunWorksheetPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -71,7 +71,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhListPlus,MhListPlus')]
+    [HandlerFunctions('PhListPlus')]
     procedure RunListPlusPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -86,7 +86,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhNavigate,MhNavigate')]
+    [HandlerFunctions('MhNavigate')]
     procedure RunNavigatePageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -101,7 +101,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhConfirm,MhConfirm')]
+    [HandlerFunctions('PhConfirm')]
     procedure RunConfirmationDialogPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -116,7 +116,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhPrompt,MhPrompt')]
+    [HandlerFunctions('PhPrompt')]
     procedure RunPromptDialogPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -131,7 +131,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhDlg,MhDlg')]
+    [HandlerFunctions('MhDlg')]
     procedure RunStandardDialogPageType()
     var
         Observer: Codeunit "Probe Observer";
@@ -146,7 +146,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('PhNoType,MhNoType')]
+    [HandlerFunctions('PhNoType')]
     procedure RunUndeclaredPageType()
     var
         Observer: Codeunit "Probe Observer";
