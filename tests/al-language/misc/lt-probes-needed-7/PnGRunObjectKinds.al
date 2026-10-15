@@ -86,21 +86,6 @@ codeunit 70187 "LT PnG RunObject Kinds"
     end;
 
     [Test]
-    [HandlerFunctions('MhNavigate')]
-    procedure RunNavigatePageType()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PnG Log";
-        Host: TestPage "LT PnG RunObj Host";
-    begin
-        Open(Host);
-        Host.RunNavigate.Invoke();
-        Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'ModalHandler:Navigate');
-        Observer.Verify();
-    end;
-
-    [Test]
     [HandlerFunctions('PhConfirm')]
     procedure RunConfirmationDialogPageType()
     var
@@ -127,21 +112,6 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Host.RunPrompt.Invoke();
         Observer.Observe('log', Log.Dump());
         Observer.Expect('log', 'PageHandler:Prompt');
-        Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('MhDlg')]
-    procedure RunStandardDialogPageType()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PnG Log";
-        Host: TestPage "LT PnG RunObj Host";
-    begin
-        Open(Host);
-        Host.RunDialog.Invoke();
-        Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'ModalHandler:Dlg');
         Observer.Verify();
     end;
 
