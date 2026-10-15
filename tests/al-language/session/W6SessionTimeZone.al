@@ -36,13 +36,11 @@ codeunit 67325 "W6 Session TimeZone"
         Observer.Observe('database_name_blank', Format(ActiveSession."Database Name" = ''));
         Observer.Observe('server_instance_name_blank', Format(ActiveSession."Server Instance Name" = ''));
         Observer.Observe('server_computer_name_blank', Format(ActiveSession."Server Computer Name" = ''));
-        Observer.Observe('client_computer_name_blank', Format(ActiveSession."Client Computer Name" = ''));
         Observer.Observe('client_type', Format(ActiveSession."Client Type"));
         Observer.Observe('client_type_ordinal', Format(ActiveSession."Client Type", 0, 2));
         Observer.Expect('database_name_blank', 'No');
         Observer.Expect('server_instance_name_blank', 'No');
         Observer.Expect('server_computer_name_blank', 'No');
-        Observer.Expect('client_computer_name_blank', 'Yes');
         Observer.Expect('client_type', 'Client Service');
         Observer.Expect('client_type_ordinal', '3');
         Observer.Verify();

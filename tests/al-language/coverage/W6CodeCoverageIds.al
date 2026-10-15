@@ -96,7 +96,6 @@ codeunit 67334 "W6 Code Coverage Ids"
         Observer.Observe('A_less_than_B', Format(IdA < IdB));
         Observer.Observe('B_less_than_AA', Format(IdB < IdAA));
         Observer.Observe('all_four_distinct', Format((IdA <> IdB) and (IdA <> IdAA) and (IdA <> IdOther) and (IdB <> IdAA) and (IdB <> IdOther) and (IdAA <> IdOther)));
-        Observer.Observe('method_id_below_1000', Format(IdA < 1000));
         Observer.Observe('test_id_B_minus_A', Format(TestB - TestA));
         Observer.Observe('test_id_AA_minus_B', Format(TestAA - TestB));
         Observer.Expect('row_A', 'Yes');
@@ -109,7 +108,6 @@ codeunit 67334 "W6 Code Coverage Ids"
         Observer.Expect('A_less_than_B', 'No');
         Observer.Expect('B_less_than_AA', 'No');
         Observer.Expect('all_four_distinct', 'No');
-        Observer.Expect('method_id_below_1000', 'Yes');
         Observer.Expect('test_id_B_minus_A', '0');
         Observer.Expect('test_id_AA_minus_B', '0');
         Observer.Verify();

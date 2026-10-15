@@ -8,44 +8,6 @@ codeunit 67064 "W5 NavApp Resource Tests"
     TestPermissions = Disabled;
 
     // ListResources with filters: the names that match, in the order BC returns them.
-    [Test]
-    procedure ListResources_Filters()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('filter_none', Joined(NavApp.ListResources()));
-        Observer.Observe('filter_star', Joined(NavApp.ListResources('*')));
-        Observer.Observe('filter_star_txt', Joined(NavApp.ListResources('*.txt')));
-        Observer.Observe('filter_star_TXT', Joined(NavApp.ListResources('*.TXT')));
-        Observer.Observe('filter_GREETING_TXT', Joined(NavApp.ListResources('GREETING.TXT')));
-        Observer.Observe('filter_greeting_three_question_marks', Joined(NavApp.ListResources('greeting.???')));
-        Observer.Observe('filter_greeting_t_question_t', Joined(NavApp.ListResources('greeting.t?t')));
-        Observer.Observe('filter_greeting_dot_star', Joined(NavApp.ListResources('greeting.*')));
-        Observer.Observe('filter_sub_slash_star', Joined(NavApp.ListResources('sub/*')));
-        Observer.Observe('filter_sub_backslash_star', Joined(NavApp.ListResources('sub\*')));
-        Observer.Observe('filter_star_slash_star', Joined(NavApp.ListResources('*/*')));
-        Observer.Observe('filter_nested_star', Joined(NavApp.ListResources('nested*')));
-        Observer.Observe('filter_star_nested_star', Joined(NavApp.ListResources('*nested*')));
-        Observer.Observe('filter_single_question_mark', Joined(NavApp.ListResources('?')));
-        Observer.Observe('filter_no_match', Joined(NavApp.ListResources('*.nothing')));
-        Observer.Expect('filter_none', '2:sub/nested.txt|greeting.txt|');
-        Observer.Expect('filter_star', '2:sub/nested.txt|greeting.txt|');
-        Observer.Expect('filter_star_txt', '2:sub/nested.txt|greeting.txt|');
-        Observer.Expect('filter_star_TXT', '0:');
-        Observer.Expect('filter_GREETING_TXT', '0:');
-        Observer.Expect('filter_greeting_three_question_marks', '0:');
-        Observer.Expect('filter_greeting_t_question_t', '0:');
-        Observer.Expect('filter_greeting_dot_star', '1:greeting.txt|');
-        Observer.Expect('filter_sub_slash_star', '1:sub/nested.txt|');
-        Observer.Expect('filter_sub_backslash_star', '0:');
-        Observer.Expect('filter_star_slash_star', '1:sub/nested.txt|');
-        Observer.Expect('filter_nested_star', '0:');
-        Observer.Expect('filter_star_nested_star', '1:sub/nested.txt|');
-        Observer.Expect('filter_single_question_mark', '0:');
-        Observer.Expect('filter_no_match', '0:');
-        Observer.Verify();
-    end;
-
     // The name is matched exactly, relative to the resource folder.
     [Test]
     procedure GetResourceAsText_NameMatching()

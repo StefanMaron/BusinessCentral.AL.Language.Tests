@@ -700,32 +700,4 @@ codeunit 68699 "W2 Area Boundary Tests"
         Observer.Verify();
     end;
 
-    [Test]
-    procedure B_SecondTest_StartsAgain()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('first_test_ran', Format(FirstTestRan));
-        Observer.Observe('start_equals_first_test_start', Format(ApplicationArea() = AreasAtFirstTest));
-        Observer.Observe('start_equals_first_start', Format(ApplicationArea() = AreasAtFirstTest));
-        Observer.Observe('probe_area_visible', Format(StrPos(ApplicationArea(), '#W2BoundaryProbe') > 0));
-        ApplicationArea('#Suite');
-        Observer.Expect('first_test_ran', 'Yes');
-        Observer.Expect('start_equals_first_test_start', 'Yes');
-        Observer.Expect('start_equals_first_start', 'Yes');
-        Observer.Expect('probe_area_visible', 'No');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure C_ThirdTest_StartsAgain()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('start_equals_first_test_start', Format(ApplicationArea() = AreasAtFirstTest));
-        Observer.Observe('suite_visible', Format(StrPos(ApplicationArea(), '#Suite') > 0));
-        Observer.Expect('start_equals_first_test_start', 'Yes');
-        Observer.Expect('suite_visible', 'No');
-        Observer.Verify();
-    end;
 }

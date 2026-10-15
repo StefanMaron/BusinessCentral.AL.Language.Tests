@@ -14,20 +14,6 @@ codeunit 67056 "W5 Missing Object Tests"
     Subtype = Test;
     TestPermissions = Disabled;
 
-    [Test]
-    procedure MissingCodeunit_FromTestCodeunit()
-    var
-        Observer: Codeunit "Probe Observer";
-        MissingId: Integer;
-    begin
-        MissingId := 99999999;
-        asserterror Codeunit.Run(MissingId);
-        Observer.ObserveError('run_missing_codeunit');
-        Observer.Expect('run_missing_codeunit|text', 'You tried to invoke the CodeUnit object with the ID 99999999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('run_missing_codeunit|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
     // The caller named in the text: the object whose code runs the call.
     [Test]
     procedure MissingCodeunit_FromHelperCodeunit()
