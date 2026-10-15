@@ -31,7 +31,7 @@ codeunit 70093 "LT PnA Blob Length"
         Rec.DeleteAll();
     end;
 
-#if BC28PLUS
+#if BC29PLUS
     [Test]
     procedure Length_ByStoredSize()
     var

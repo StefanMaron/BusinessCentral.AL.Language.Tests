@@ -252,7 +252,7 @@ codeunit 71138 "LT PnC Meta Report"
         Observer.Verify();
     end;
 
-#if BC28PLUS
+#if BC29PLUS
     [Test]
     procedure ReportMetadata_Defaults()
     var
@@ -424,7 +424,7 @@ codeunit 71139 "LT PnC Meta Page Key"
     end;
 #endif
 
-#if BC28PLUS
+#if BC29PLUS
     [Test]
     procedure Field_Rows_Of_Own_Table()
     var

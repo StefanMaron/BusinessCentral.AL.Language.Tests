@@ -20,7 +20,7 @@ table 72552 "LT PnE Media Rec"
     }
 }
 
-#if BC28PLUS
+#if BC29PLUS
 codeunit 72551 "LT PnE Media Import"
 {
     Subtype = Test;

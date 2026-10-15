@@ -84,7 +84,7 @@ table 70108 "LT PnA CF Hdr"
     }
 }
 
-#if BC28PLUS
+#if BC29PLUS
 codeunit 70109 "LT PnA CF Tests"
 {
     Subtype = Test;

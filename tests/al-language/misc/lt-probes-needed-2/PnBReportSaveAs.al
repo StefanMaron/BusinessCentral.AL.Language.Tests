@@ -100,7 +100,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         exit(N);
     end;
 
-#if BC28PLUS
+#if BC29PLUS
     [Test]
     procedure Header_RawBytes()
     var
@@ -140,7 +140,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
     end;
 #endif
 
-#if BC28PLUS
+#if BC29PLUS
     [Test]
     procedure Header_Lines()
     var
@@ -414,7 +414,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Verify();
     end;
 
-#if BC28PLUS
+#if BC29PLUS
     [Test]
     procedure SecondSaveAs_OnOneVariable()
     var
