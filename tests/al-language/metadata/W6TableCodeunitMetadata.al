@@ -255,7 +255,11 @@ codeunit 67316 "W6 Table Codeunit Meta"
         Observer.Observe('table_metadata_columns', ColumnList(Database::"Table Metadata"));
         Observer.Observe('codeunit_metadata_columns', ColumnList(Database::"CodeUnit Metadata"));
         Observer.Expect('table_metadata_columns', '1=ID;2=Name;3=Caption;4=DataPerCompany;5=LookupPageID;6=DrillDownPageId;7=DataCaptionFields;8=PasteIsValid;9=LinkedObject;10=DataIsExternal;11=TableType;12=ExternalName;13=ObsoleteState;14=ObsoleteReason;15=DataClassification;16=ReplicateData;17=CompressionType;18=App ID;19=InherentPermissions;20=InherentEntitlements;21=Scope;22=Access;23=AL Namespace;');
+#if BC29PLUS
         Observer.Expect('codeunit_metadata_columns', '1=ID;2=Name;3=TableNo;4=SingleInstance;5=SubType;6=App ID;7=InherentPermissions;8=InherentEntitlements;9=TestType;10=RequiredTestIsolation;11=AL Namespace;12=Has Test Data Source;');
+#else
+        Observer.Expect('codeunit_metadata_columns', '1=ID;2=Name;3=TableNo;4=SingleInstance;5=SubType;6=App ID;7=InherentPermissions;8=InherentEntitlements;9=TestType;10=RequiredTestIsolation;11=AL Namespace;');
+#endif
         Observer.Verify();
     end;
 }

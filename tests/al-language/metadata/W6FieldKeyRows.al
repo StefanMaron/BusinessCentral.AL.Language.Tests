@@ -164,7 +164,11 @@ codeunit 67310 "W6 Field Key Rows"
         Observer.Expect('guid_ordinal_of_member_GUID', '37119');
         Observer.Expect('count_of_blob_fields', '1');
         Observer.Expect('count_of_integer_fields', '3');
+#if BC29PLUS
         Observer.Expect('count_of_text_fields', '7');
+#else
+        Observer.Expect('count_of_text_fields', '3');
+#endif
         Observer.Verify();
     end;
 
@@ -255,8 +259,16 @@ codeunit 67310 "W6 Field Key Rows"
                 Keys += Format(KeyRec."No.") + ':' + KeyRec.Key + ';';
             until KeyRec.Next() = 0;
         Observer.Observe('keys', Keys);
+#if BC29PLUS
         Observer.Expect('field_row_count', '12');
+#else
+        Observer.Expect('field_row_count', '8');
+#endif
+#if BC29PLUS
         Observer.Expect('field_names', 'First;Second;Third;$systemId;SystemCreatedAt;SystemCreatedBy;SystemModifiedAt;SystemModifiedBy;SystemCreatedByUserName;SystemCreatedByFullName;SystemModifiedByUserName;SystemModifiedByFullName;');
+#else
+        Observer.Expect('field_names', 'First;Second;Third;$systemId;SystemCreatedAt;SystemCreatedBy;SystemModifiedAt;SystemModifiedBy;');
+#endif
         Observer.Expect('key_row_count', '3');
         Observer.Expect('keys', '1:First;2:Second,Third;3:$systemId;');
         Observer.Verify();

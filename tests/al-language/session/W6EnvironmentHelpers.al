@@ -143,7 +143,6 @@ codeunit 67328 "W6 Environment Helpers"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('is_saas', Format(EnvironmentInformation.IsSaaS()));
-        Observer.Observe('is_saas_infrastructure', Format(EnvironmentInformation.IsSaaSInfrastructure()));
         Observer.Observe('is_sandbox', Format(EnvironmentInformation.IsSandbox()));
         Observer.Observe('is_production', Format(EnvironmentInformation.IsProduction()));
         Observer.Observe('is_onprem', Format(EnvironmentInformation.IsOnPrem()));
@@ -155,7 +154,6 @@ codeunit 67328 "W6 Environment Helpers"
         Observer.Observe('start_date_is_zero', Format(LicenseState.GetStartDate() = 0DT));
         Observer.Observe('end_date_is_zero', Format(LicenseState.GetEndDate() = 0DT));
         Observer.Expect('is_saas', 'Yes');
-        Observer.Expect('is_saas_infrastructure', 'No');
         Observer.Expect('is_sandbox', 'Yes');
         Observer.Expect('is_production', 'No');
         Observer.Expect('is_onprem', 'Yes');

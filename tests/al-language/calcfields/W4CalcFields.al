@@ -102,6 +102,7 @@ codeunit 68042 "W4 CalcFields Tests"
         exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
+#if BC29PLUS
     [Test]
     procedure SystemRowVersion_MinMax()
     var
@@ -134,7 +135,9 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Expect('max_outcome', 'error:Table content in the W4 CF Head table on SQL Server contains a value that is not compatible with the corresponding data type that is defined for the table.\r\\r\Field: SrvMax\r\Type: BigInteger\r\SQL type: timestamp\r\\r\The table design may have been changed outside Business Central.|NDBCS:IncompatibleSqlType');
         Observer.Verify();
     end;
+#endif
 
+#if BC29PLUS
     [Test]
     procedure BigIntegerSource_IntoIntegerFlowField()
     var
@@ -154,7 +157,9 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Expect('lookup_big_into_int', 'ok:[10]');
         Observer.Verify();
     end;
+#endif
 
+#if BC29PLUS
     [Test]
     procedure IntegerSource_IntoBigIntegerFlowField()
     var
@@ -171,6 +176,7 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Expect('average_int_into_bigint', 'ok:[4]');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure TwoConditionsOnOneSourceField()

@@ -119,7 +119,11 @@ codeunit 67343 "W6 Permission Columns"
         Observer.Expect('column_14', 'Security Filter|TableFilter|504');
         Observer.Expect('column_3', 'Role Name|Text|30');
         Observer.Expect('column_13', 'Assignable|Boolean|4');
+#if BC29PLUS
         Observer.Expect('column_15', 'AL Object Name|Text|100');
+#else
+        Observer.Expect('column_15', 'AL Object Name|Text|30');
+#endif
         Observer.Expect('own_row_count', '4');
         Observer.Expect('own_rows_type_and_rights', 'Table Data YesYesYes  ; Table     Yes; Codeunit     Yes; Page     Yes; ');
         Observer.Verify();

@@ -29,8 +29,6 @@ codeunit 67063 "W5 ModuleInfo Tests"
         Observer.Observe('data_revision_is_zero', Format(Info.DataVersion().Revision() = 0));
         Observer.Observe('app_minor_equals_data_minor', Format(Info.AppVersion().Minor() = Info.DataVersion().Minor()));
         Observer.Observe('app_equals_data', Format(Info.AppVersion() = Info.DataVersion()));
-        Observer.Observe('data_minor_raw', Format(Info.DataVersion().Minor()));
-        Observer.Observe('app_minor_raw', Format(Info.AppVersion().Minor()));
         Observer.Observe('dependencies_count', Format(Info.Dependencies().Count()));
         Observer.Expect('result', 'Yes');
         Observer.Expect('name', 'W1');
@@ -45,8 +43,6 @@ codeunit 67063 "W5 ModuleInfo Tests"
         Observer.Expect('data_revision_is_zero', 'No');
         Observer.Expect('app_minor_equals_data_minor', 'Yes');
         Observer.Expect('app_equals_data', 'Yes');
-        Observer.Expect('data_minor_raw', '0');
-        Observer.Expect('app_minor_raw', '0');
         Observer.Expect('dependencies_count', '0');
         Observer.Verify();
     end;

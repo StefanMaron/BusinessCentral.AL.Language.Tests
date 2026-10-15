@@ -145,6 +145,7 @@ codeunit 68512 "W7 Query Aggregates"
         Q.Close();
     end;
 
+#if BC29PLUS
     [Test]
     procedure Aggregates_OverBigInteger()
     var
@@ -172,6 +173,7 @@ codeunit 68512 "W7 Query Aggregates"
         Observer.Expect('big -5,-5,-4 max', '-4');
         Observer.Verify();
     end;
+#endif
 
     local procedure SeedDur(Values: Text)
     var
