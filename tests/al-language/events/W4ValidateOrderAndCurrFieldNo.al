@@ -4,6 +4,28 @@
 // Object ids 68059 - 68071. Both log codeunits are SingleInstance and each belongs to exactly one test codeunit.
 
 // ---------------------------------------------------------------- CurrFieldNo
+// ---------------------------------------------------------------- table extension validate order
+table 68063 "W4 TE Base"
+{
+    DataClassification = SystemMetadata;
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Val; Integer)
+        {
+            trigger OnValidate()
+            begin
+                Log.Add('base.onvalidate');
+            end;
+        }
+    }
+    keys { key(PK; Id) { Clustered = true; } }
+
+    var
+        Log: Codeunit "W4 TE Log";
+}
+
+
 table 68059 "W4 CFN Row"
 {
     DataClassification = SystemMetadata;
@@ -181,27 +203,6 @@ codeunit 68062 "W4 CFN Tests"
         Observer.Expect('row_exists', 'Yes');
         Observer.Verify();
     end;
-}
-
-// ---------------------------------------------------------------- table extension validate order
-table 68063 "W4 TE Base"
-{
-    DataClassification = SystemMetadata;
-    fields
-    {
-        field(1; Id; Integer) { }
-        field(2; Val; Integer)
-        {
-            trigger OnValidate()
-            begin
-                Log.Add('base.onvalidate');
-            end;
-        }
-    }
-    keys { key(PK; Id) { Clustered = true; } }
-
-    var
-        Log: Codeunit "W4 TE Log";
 }
 
 codeunit 68064 "W4 TE Log"
