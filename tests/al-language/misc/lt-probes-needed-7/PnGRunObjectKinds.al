@@ -85,6 +85,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     [HandlerFunctions('MhNavigate')]
     procedure RunNavigatePageType()
@@ -99,6 +100,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Observer.Expect('log', 'ModalHandler:Navigate');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     [HandlerFunctions('PhConfirm')]
@@ -130,6 +132,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     [HandlerFunctions('MhDlg')]
     procedure RunStandardDialogPageType()
@@ -144,6 +147,7 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Observer.Expect('log', 'ModalHandler:Dlg');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     [HandlerFunctions('PhNoType')]
