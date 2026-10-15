@@ -156,6 +156,7 @@ codeunit 72611 "LT PnE Enum Convert"
         Observer.Verify();
     end;
 
+#if BC29PLUS
     [Test]
     procedure BigInteger_IntoEnum()
     var
@@ -173,6 +174,7 @@ codeunit 72611 "LT PnE Enum Convert"
         Observer.Expect('lacking', '5|5');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Get_KeyedByAnotherEnumOrInteger_NotFound()
