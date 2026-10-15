@@ -85,7 +85,6 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Observer.Verify();
     end;
 
-
     [Test]
     [HandlerFunctions('PhConfirm')]
     procedure RunConfirmationDialogPageType()
@@ -115,7 +114,6 @@ codeunit 70187 "LT PnG RunObject Kinds"
         Observer.Expect('log', 'PageHandler:Prompt');
         Observer.Verify();
     end;
-
 
     [Test]
     [HandlerFunctions('PhNoType')]
