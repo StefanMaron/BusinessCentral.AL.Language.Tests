@@ -75,6 +75,7 @@ codeunit 69160 "Probe Observer"
         Value := ReplaceBetween(Value, 'AL Language Coverage Tests by AL Language version ', '\', 'x');
         Value := ReplaceBetween(Value, '<BCReportInformation>', '</BCReportInformation>', 'x');
         Value := ReplaceBetween(Value, 'Correlation ID: ', '\', 'x');
+        Value := ReplaceBetween(Value, 'with ID = ', ' ', 'n');
         if CompanyName() <> '' then begin
             Value := Value.Replace(CompanyName(), '<Company>');
             Value := Value.Replace(CompanyName().Replace(' ', '%20'), '<Company>');
