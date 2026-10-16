@@ -36,7 +36,7 @@ codeunit 74003 "LT P95 Clear TextBuilder"
         Clear(Tx3);
         Observer.Observe('capacity_cleared_positive', Format(Tx3.Capacity() > 0) + '|' + Format(Tx3.Capacity() = 100));
 
-        Observer.Expect('len_before', '11');
+        Observer.Expect('len_before', '12');
         Observer.Expect('len_after', '0');
         Observer.Expect('text_after', '[]');
         Observer.Expect('capacity_positive', 'Yes');

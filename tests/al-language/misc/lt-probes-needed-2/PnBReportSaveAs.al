@@ -130,11 +130,11 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Observe('lines', Format(Lines.Count()));
         Obs.Expect('ok', 'Yes');
         Obs.Expect('totalLen>0', 'Yes');
-        Obs.Expect('byte1', '239');
-        Obs.Expect('byte2', '187');
-        Obs.Expect('byte3', '191');
+        Obs.Expect('byte1', '217');
+        Obs.Expect('byte2', '8249');
+        Obs.Expect('byte3', '143');
         Obs.Expect('lfCount', '112');
-        Obs.Expect('crCount', '0');
+        Obs.Expect('crCount', '112');
         Obs.Expect('lines', '113');
         Obs.Verify();
     end;

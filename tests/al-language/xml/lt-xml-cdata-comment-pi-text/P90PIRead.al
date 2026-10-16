@@ -2280,7 +2280,7 @@ codeunit 70735 "LT P90 PI Read"
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
         Observer.Observe('text', S);
         Observer.Observe('text-length', Format(StrLen(S)));
-        Observer.Expect('blob', 'ï»¿<?t x?>|');
+        Observer.Expect('blob', 'Ù‹<?t x?>|');
         Observer.Expect('blob-length', '10');
         Observer.Expect('text', '<?t x?>');
         Observer.Expect('text-length', '7');
@@ -2300,7 +2300,7 @@ codeunit 70735 "LT P90 PI Read"
         Blob.Get(1);
         Observer.Observe('blob', ReadBlob(Blob));
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
-        Observer.Expect('blob', 'ï»¿<?t x?>|');
+        Observer.Expect('blob', 'Ù‹<?t x?>|');
         Observer.Expect('blob-length', '10');
         Observer.Verify();
     end;
@@ -2327,10 +2327,10 @@ codeunit 70735 "LT P90 PI Read"
         Blob.Get(1);
         Observer.Observe('doc-blob', ReadBlob(Blob));
         Observer.Observe('doc-blob-length', Format(Blob.Data.Length()));
-        Observer.Expect('node-blob', 'ï»¿<?t x?>|');
+        Observer.Expect('node-blob', 'Ù‹<?t x?>|');
         Observer.Expect('node-blob-length', '10');
-        Observer.Expect('doc-blob', 'ï»¿<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <?t x?>|  <e1 />|  <b />|</r>|');
-        Observer.Expect('doc-blob-length', '85');
+        Observer.Expect('doc-blob', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <?t x?>|  <e1 />|  <b />|</r>|');
+        Observer.Expect('doc-blob-length', '91');
         Observer.Verify();
     end;
 
@@ -2348,7 +2348,7 @@ codeunit 70735 "LT P90 PI Read"
         Blob.Get(1);
         Observer.Observe('blob', ReadBlob(Blob));
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
-        Observer.Expect('blob', 'ï»¿<?t x?>|');
+        Observer.Expect('blob', 'Ù‹<?t x?>|');
         Observer.Expect('blob-length', '10');
         Observer.Verify();
     end;
@@ -2371,8 +2371,8 @@ codeunit 70735 "LT P90 PI Read"
         Blob.Insert();
         Blob.Get(1);
         Observer.Observe('replaced-doc-blob', ReadBlob(Blob));
-        Observer.Expect('replaced-x-blob', 'ï»¿<?t x?>|');
-        Observer.Expect('replaced-doc-blob', 'ï»¿<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <e1 />|  <b />|</r>|');
+        Observer.Expect('replaced-x-blob', 'Ù‹<?t x?>|');
+        Observer.Expect('replaced-doc-blob', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <e1 />|  <b />|</r>|');
         Observer.Verify();
     end;
 

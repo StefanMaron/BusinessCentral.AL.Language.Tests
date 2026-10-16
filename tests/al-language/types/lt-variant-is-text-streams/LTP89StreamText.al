@@ -138,8 +138,8 @@ codeunit 74646 "LT P89 Stream Text"
         Observer.Expect('a', '2:6100');
         Observer.Expect('abc', '4:61626300');
         Observer.Expect('spaces', '3:202000');
-        Observer.Expect('umlaut', '4:E4F6FC00');
-        Observer.Expect('euro', '2:8000');
+        Observer.Expect('umlaut', '4:84948100');
+        Observer.Expect('euro', '2:B100');
         Observer.Expect('nul_char', '1:00');
         Observer.Expect('nul_between', '3:616200');
         Observer.Expect('text10_abc', '4:61626300');

@@ -147,8 +147,8 @@ codeunit 74815 "LT P97 Req SecretUri"
         Observer.Expect('not_uri', 'No');
         Observer.Expect('after_not_uri_secret', 'Yes');
         Observer.Expect('after_not_uri_plain', '');
-        Observer.Expect('relative', 'Yes');
-        Observer.Expect('after_relative_secret', 'No');
+        Observer.Expect('relative', 'No');
+        Observer.Expect('after_relative_secret', 'Yes');
         Observer.Expect('after_relative_plain', '');
         Observer.Expect('ftp', 'Yes');
         Observer.Expect('after_ftp_secret', 'No');

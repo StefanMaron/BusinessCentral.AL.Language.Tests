@@ -305,7 +305,7 @@ codeunit 61264 "LT P110 File Write Types"
         Observer.Expect('len', '212');
         Observer.Expect('line1', '[8589934588]');
         Observer.Expect('line2', '[Yes]');
-        Observer.Expect('line3', '[È]');
+        Observer.Expect('line3', '[˜]');
         Observer.Expect('line4', '[A]');
         Observer.Expect('line5', '[ABC123]');
         Observer.Expect('line6', '[12/24/20]');

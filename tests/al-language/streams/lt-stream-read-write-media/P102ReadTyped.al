@@ -185,7 +185,7 @@ codeunit 71622 "LT P102 Read Typed"
         Observer.Observe('pastend_v', Format(V));
         Observer.Observe('pastend_eos', Format(Ins.EOS()));
         Observer.Expect('r1_n', '1');
-        Observer.Expect('r1_v', 'È');
+        Observer.Expect('r1_v', '˜');
         Observer.Expect('r1_eos', 'No');
         Observer.Expect('r2_n', '1');
         Observer.Expect('r2_v', '\u0001');

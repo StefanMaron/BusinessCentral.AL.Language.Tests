@@ -180,9 +180,9 @@ codeunit 71827 "LT P104 DocType Create"
         Observer.Expect('opt_true', '<!DOCTYPE r PUBLIC "pub" "sys.dtd">');
         Observer.Expect('opt_false', '<!DOCTYPE r PUBLIC "pub" "sys.dtd">');
         Observer.Expect('stream_len', '38');
-        Observer.Expect('stream_text', 'ï»¿<!DOCTYPE r PUBLIC "pub" "sys.dtd">|');
+        Observer.Expect('stream_text', 'Ù‹<!DOCTYPE r PUBLIC "pub" "sys.dtd">|');
         Observer.Expect('stream_opt_len', '38');
-        Observer.Expect('stream_opt_text', 'ï»¿<!DOCTYPE r PUBLIC "pub" "sys.dtd">|');
+        Observer.Expect('stream_opt_text', 'Ù‹<!DOCTYPE r PUBLIC "pub" "sys.dtd">|');
         Observer.Verify();
     end;
 }

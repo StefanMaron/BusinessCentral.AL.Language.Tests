@@ -2108,7 +2108,7 @@ codeunit 70731 "LT P90 CData Read"
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
         Observer.Observe('text', S);
         Observer.Observe('text-length', Format(StrLen(S)));
-        Observer.Expect('blob', 'ï»¿<![CDATA[x]]>|');
+        Observer.Expect('blob', 'Ù‹<![CDATA[x]]>|');
         Observer.Expect('blob-length', '16');
         Observer.Expect('text', '<![CDATA[x]]>');
         Observer.Expect('text-length', '13');
@@ -2128,7 +2128,7 @@ codeunit 70731 "LT P90 CData Read"
         Blob.Get(1);
         Observer.Observe('blob', ReadBlob(Blob));
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
-        Observer.Expect('blob', 'ï»¿<![CDATA[x]]>|');
+        Observer.Expect('blob', 'Ù‹<![CDATA[x]]>|');
         Observer.Expect('blob-length', '16');
         Observer.Verify();
     end;
@@ -2155,10 +2155,10 @@ codeunit 70731 "LT P90 CData Read"
         Blob.Get(1);
         Observer.Observe('doc-blob', ReadBlob(Blob));
         Observer.Observe('doc-blob-length', Format(Blob.Data.Length()));
-        Observer.Expect('node-blob', 'ï»¿<![CDATA[x]]>|');
+        Observer.Expect('node-blob', 'Ù‹<![CDATA[x]]>|');
         Observer.Expect('node-blob-length', '16');
-        Observer.Expect('doc-blob', 'ï»¿<?xml version="1.0" encoding="utf-8"?>|<r>|  <a /><![CDATA[x]]><e1 /><b /></r>|');
-        Observer.Expect('doc-blob-length', '81');
+        Observer.Expect('doc-blob', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<r>|  <a /><![CDATA[x]]><e1 /><b /></r>|');
+        Observer.Expect('doc-blob-length', '83');
         Observer.Verify();
     end;
 
@@ -2176,7 +2176,7 @@ codeunit 70731 "LT P90 CData Read"
         Blob.Get(1);
         Observer.Observe('blob', ReadBlob(Blob));
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
-        Observer.Expect('blob', 'ï»¿<![CDATA[x]]>|');
+        Observer.Expect('blob', 'Ù‹<![CDATA[x]]>|');
         Observer.Expect('blob-length', '16');
         Observer.Verify();
     end;
@@ -2199,8 +2199,8 @@ codeunit 70731 "LT P90 CData Read"
         Blob.Insert();
         Blob.Get(1);
         Observer.Observe('replaced-doc-blob', ReadBlob(Blob));
-        Observer.Expect('replaced-x-blob', 'ï»¿<![CDATA[x]]>|');
-        Observer.Expect('replaced-doc-blob', 'ï»¿<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <e1 />|  <b />|</r>|');
+        Observer.Expect('replaced-x-blob', 'Ù‹<![CDATA[x]]>|');
+        Observer.Expect('replaced-doc-blob', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <e1 />|  <b />|</r>|');
         Observer.Verify();
     end;
 

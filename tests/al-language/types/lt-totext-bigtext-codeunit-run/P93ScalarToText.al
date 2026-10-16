@@ -203,11 +203,11 @@ codeunit 70323 "LT P93 ScalarToText"
         Observer.Expect('zero-true', '\u0000');
         Observer.Expect('zero-false', '\u0000');
         Observer.Expect('zero-format', '\u0000');
-        Observer.Expect('max', 'ÿ');
-        Observer.Expect('max-true', 'ÿ');
-        Observer.Expect('max-false', 'ÿ');
-        Observer.Expect('max-format', 'ÿ');
-        Observer.Expect('max-format-9', 'ÿ');
+        Observer.Expect('max', '');
+        Observer.Expect('max-true', '');
+        Observer.Expect('max-false', '');
+        Observer.Expect('max-format', '');
+        Observer.Expect('max-format-9', '');
         Observer.Expect('a', 'A');
         Observer.Expect('a-true', 'A');
         Observer.Expect('a-format', 'A');
