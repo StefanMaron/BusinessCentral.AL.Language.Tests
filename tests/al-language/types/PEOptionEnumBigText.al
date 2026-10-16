@@ -399,7 +399,7 @@ codeunit 69171 "PE BigText Probe"
         Observer.Observe('text_codes', Codes(Sub));
         Observer.Expect('return', 'Yes');
         Observer.Expect('length', '6');
-        Observer.Expect('text_codes', '104 195 169 226 8218 172 ');
+        Observer.Expect('text_codes', '104 8220 20 203 233 188 ');
         Observer.Verify();
     end;
 
