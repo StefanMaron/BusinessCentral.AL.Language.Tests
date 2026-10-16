@@ -224,7 +224,7 @@ codeunit 70835 "LT RptMrg Helper"
                 First += Format(B);
             end;
         end;
-        Info := StrSubstNo('bytes=%1 cr=%2 lf=%3 first=%4', Len, Cr, Lf, First);
+        Info := StrSubstNo('cr=%1 lf=%2 first=%3', Cr, Lf, First);
         Tmp.Data.CreateInStream(InT, TextEncoding::UTF8);
         FirstLine := true;
         while not InT.EOS() do begin

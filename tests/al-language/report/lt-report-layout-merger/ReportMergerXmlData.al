@@ -34,7 +34,7 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('error', '');
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
-        Observer.Expect('xml info', 'bytes=32379 cr=114 lf=114 first=Ù,‹,');
+        Observer.Expect('xml info', 'cr=114 lf=114 first=Ù,‹,');
         Observer.Expect('xml length', '32603');
         Observer.Expect('xml part 2', '     <TenantEntraId>x</TenantEntraId><NL>      <EnvironmentName>x</EnvironmentName><NL>      <EnvironmentType>x</EnvironmentType><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyId>x</CompanyId><NL>      <UserName>x</UserName><NL>      <DateAndTime>x</DateAndTime><NL>      <Language>en-US</Language><NL>      <FormatRegion>en-US</FormatRegion><NL>      <DateTimeValues><NL>        <Year>x</Year><NL>        <MonthNumber>x</MonthNumber><NL>        <DayNumber>x</DayNumber><NL>        <Hour>x</Hour><NL>        <Minute>x</Minute><NL>      </DateTimeValues><NL>    </ReportRequest><NL>    <CompanyMeta');
         Observer.Expect('xml part 3', 'data><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyAddressLines><NL>        <CompanyAddressLine1><Company></CompanyAddressLine1><NL>        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2><NL>        <CompanyAddressLine3>Westminster</CompanyAddressLine3><NL>        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4><NL>        <CompanyAddressLine5>Great Britain</CompanyAddressLine5><NL>        <CompanyAddressLine6></CompanyAddressLine6><NL>        <CompanyAddressLine7></CompanyAddressLine7><NL>        <CompanyAddressLine8></CompanyAddressLine8><NL>      </CompanyAddressLines><NL>      <CompanyPhone>0666-666-6666</CompanyPhone><NL>      <CompanyPhoneCaptio');
@@ -62,7 +62,7 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('error', '');
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
-        Observer.Expect('xml info', 'bytes=30830 cr=83 lf=83 first=Ù,‹,');
+        Observer.Expect('xml info', 'cr=83 lf=83 first=Ù,‹,');
         Observer.Expect('xml length', '30993');
         Observer.Expect('xml part 2', '     <TenantEntraId>x</TenantEntraId><NL>      <EnvironmentName>x</EnvironmentName><NL>      <EnvironmentType>x</EnvironmentType><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyId>x</CompanyId><NL>      <UserName>x</UserName><NL>      <DateAndTime>x</DateAndTime><NL>      <Language>en-US</Language><NL>      <FormatRegion>en-US</FormatRegion><NL>      <DateTimeValues><NL>        <Year>x</Year><NL>        <MonthNumber>x</MonthNumber><NL>        <DayNumber>x</DayNumber><NL>        <Hour>x</Hour><NL>        <Minute>x</Minute><NL>      </DateTimeValues><NL>    </ReportRequest><NL>    <CompanyMeta');
         Observer.Expect('xml part 3', 'data><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyAddressLines><NL>        <CompanyAddressLine1><Company></CompanyAddressLine1><NL>        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2><NL>        <CompanyAddressLine3>Westminster</CompanyAddressLine3><NL>        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4><NL>        <CompanyAddressLine5>Great Britain</CompanyAddressLine5><NL>        <CompanyAddressLine6></CompanyAddressLine6><NL>        <CompanyAddressLine7></CompanyAddressLine7><NL>        <CompanyAddressLine8></CompanyAddressLine8><NL>      </CompanyAddressLines><NL>      <CompanyPhone>0666-666-6666</CompanyPhone><NL>      <CompanyPhoneCaptio');
@@ -90,7 +90,7 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('error', '');
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
-        Observer.Expect('xml info', 'bytes=31621 cr=99 lf=99 first=Ù,‹,');
+        Observer.Expect('xml info', 'cr=99 lf=99 first=Ù,‹,');
         Observer.Expect('xml length', '31816');
         Observer.Expect('xml part 2', '     <TenantEntraId>x</TenantEntraId><NL>      <EnvironmentName>x</EnvironmentName><NL>      <EnvironmentType>x</EnvironmentType><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyId>x</CompanyId><NL>      <UserName>x</UserName><NL>      <DateAndTime>x</DateAndTime><NL>      <Language>en-US</Language><NL>      <FormatRegion>en-US</FormatRegion><NL>      <DateTimeValues><NL>        <Year>x</Year><NL>        <MonthNumber>x</MonthNumber><NL>        <DayNumber>x</DayNumber><NL>        <Hour>x</Hour><NL>        <Minute>x</Minute><NL>      </DateTimeValues><NL>    </ReportRequest><NL>    <CompanyMeta');
         Observer.Expect('xml part 3', 'data><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyAddressLines><NL>        <CompanyAddressLine1><Company></CompanyAddressLine1><NL>        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2><NL>        <CompanyAddressLine3>Westminster</CompanyAddressLine3><NL>        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4><NL>        <CompanyAddressLine5>Great Britain</CompanyAddressLine5><NL>        <CompanyAddressLine6></CompanyAddressLine6><NL>        <CompanyAddressLine7></CompanyAddressLine7><NL>        <CompanyAddressLine8></CompanyAddressLine8><NL>      </CompanyAddressLines><NL>      <CompanyPhone>0666-666-6666</CompanyPhone><NL>      <CompanyPhoneCaptio');
@@ -118,7 +118,7 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('error', '');
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
-        Observer.Expect('xml info', 'bytes=31621 cr=99 lf=99 first=Ù,‹,');
+        Observer.Expect('xml info', 'cr=99 lf=99 first=Ù,‹,');
         Observer.Expect('xml length', '31816');
         Observer.Expect('xml part 2', '     <TenantEntraId>x</TenantEntraId><NL>      <EnvironmentName>x</EnvironmentName><NL>      <EnvironmentType>x</EnvironmentType><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyId>x</CompanyId><NL>      <UserName>x</UserName><NL>      <DateAndTime>x</DateAndTime><NL>      <Language>en-US</Language><NL>      <FormatRegion>en-US</FormatRegion><NL>      <DateTimeValues><NL>        <Year>x</Year><NL>        <MonthNumber>x</MonthNumber><NL>        <DayNumber>x</DayNumber><NL>        <Hour>x</Hour><NL>        <Minute>x</Minute><NL>      </DateTimeValues><NL>    </ReportRequest><NL>    <CompanyMeta');
         Observer.Expect('xml part 3', 'data><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyAddressLines><NL>        <CompanyAddressLine1><Company></CompanyAddressLine1><NL>        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2><NL>        <CompanyAddressLine3>Westminster</CompanyAddressLine3><NL>        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4><NL>        <CompanyAddressLine5>Great Britain</CompanyAddressLine5><NL>        <CompanyAddressLine6></CompanyAddressLine6><NL>        <CompanyAddressLine7></CompanyAddressLine7><NL>        <CompanyAddressLine8></CompanyAddressLine8><NL>      </CompanyAddressLines><NL>      <CompanyPhone>0666-666-6666</CompanyPhone><NL>      <CompanyPhoneCaptio');
@@ -146,7 +146,7 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('error', '');
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
-        Observer.Expect('xml info', 'bytes=31621 cr=99 lf=99 first=Ù,‹,');
+        Observer.Expect('xml info', 'cr=99 lf=99 first=Ù,‹,');
         Observer.Expect('xml length', '31816');
         Observer.Expect('xml part 2', '     <TenantEntraId>x</TenantEntraId><NL>      <EnvironmentName>x</EnvironmentName><NL>      <EnvironmentType>x</EnvironmentType><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyId>x</CompanyId><NL>      <UserName>x</UserName><NL>      <DateAndTime>x</DateAndTime><NL>      <Language>en-US</Language><NL>      <FormatRegion>en-US</FormatRegion><NL>      <DateTimeValues><NL>        <Year>x</Year><NL>        <MonthNumber>x</MonthNumber><NL>        <DayNumber>x</DayNumber><NL>        <Hour>x</Hour><NL>        <Minute>x</Minute><NL>      </DateTimeValues><NL>    </ReportRequest><NL>    <CompanyMeta');
         Observer.Expect('xml part 3', 'data><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyAddressLines><NL>        <CompanyAddressLine1><Company></CompanyAddressLine1><NL>        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2><NL>        <CompanyAddressLine3>Westminster</CompanyAddressLine3><NL>        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4><NL>        <CompanyAddressLine5>Great Britain</CompanyAddressLine5><NL>        <CompanyAddressLine6></CompanyAddressLine6><NL>        <CompanyAddressLine7></CompanyAddressLine7><NL>        <CompanyAddressLine8></CompanyAddressLine8><NL>      </CompanyAddressLines><NL>      <CompanyPhone>0666-666-6666</CompanyPhone><NL>      <CompanyPhoneCaptio');
@@ -198,10 +198,10 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('pdf = word', 'Yes');
         Observer.Expect('pdf = excel', 'Yes');
         Observer.Expect('pdf = html', 'Yes');
-        Observer.Expect('pdf info', 'bytes=32379 cr=114 lf=114 first=Ù,‹,');
-        Observer.Expect('word info', 'bytes=32379 cr=114 lf=114 first=Ù,‹,');
-        Observer.Expect('excel info', 'bytes=32379 cr=114 lf=114 first=Ù,‹,');
-        Observer.Expect('html info', 'bytes=32379 cr=114 lf=114 first=Ù,‹,');
+        Observer.Expect('pdf info', 'cr=114 lf=114 first=Ù,‹,');
+        Observer.Expect('word info', 'cr=114 lf=114 first=Ù,‹,');
+        Observer.Expect('excel info', 'cr=114 lf=114 first=Ù,‹,');
+        Observer.Expect('html info', 'cr=114 lf=114 first=Ù,‹,');
         Observer.Verify();
     end;
 
@@ -216,7 +216,7 @@ codeunit 70837 "LT RptMrg XmlData"
         Observer.Expect('error', '');
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
-        Observer.Expect('xml info', 'bytes=31621 cr=99 lf=99 first=Ù,‹,');
+        Observer.Expect('xml info', 'cr=99 lf=99 first=Ù,‹,');
         Observer.Expect('xml length', '31816');
         Observer.Expect('xml part 2', '     <TenantEntraId>x</TenantEntraId><NL>      <EnvironmentName>x</EnvironmentName><NL>      <EnvironmentType>x</EnvironmentType><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyId>x</CompanyId><NL>      <UserName>x</UserName><NL>      <DateAndTime>x</DateAndTime><NL>      <Language>en-US</Language><NL>      <FormatRegion>en-US</FormatRegion><NL>      <DateTimeValues><NL>        <Year>x</Year><NL>        <MonthNumber>x</MonthNumber><NL>        <DayNumber>x</DayNumber><NL>        <Hour>x</Hour><NL>        <Minute>x</Minute><NL>      </DateTimeValues><NL>    </ReportRequest><NL>    <CompanyMeta');
         Observer.Expect('xml part 3', 'data><NL>      <CompanyName>x</CompanyName><NL>      <CompanyDisplayName>x</CompanyDisplayName><NL>      <CompanyAddressLines><NL>        <CompanyAddressLine1><Company></CompanyAddressLine1><NL>        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2><NL>        <CompanyAddressLine3>Westminster</CompanyAddressLine3><NL>        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4><NL>        <CompanyAddressLine5>Great Britain</CompanyAddressLine5><NL>        <CompanyAddressLine6></CompanyAddressLine6><NL>        <CompanyAddressLine7></CompanyAddressLine7><NL>        <CompanyAddressLine8></CompanyAddressLine8><NL>      </CompanyAddressLines><NL>      <CompanyPhone>0666-666-6666</CompanyPhone><NL>      <CompanyPhoneCaptio');

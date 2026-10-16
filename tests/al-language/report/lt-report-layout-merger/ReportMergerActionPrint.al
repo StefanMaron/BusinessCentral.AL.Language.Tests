@@ -6,6 +6,8 @@
 // Risky: Report.Print (may not compile on the Cloud app, may need a printer); the whole file is one unit.
 // BC versions: 29 (the final facts get added later)
 
+// BC 27 raises an unexpected CLR NullReferenceException for Report.Run / RunModal / Print of this report (CI run 38975045264), so the test codeunit is compiled from BC 28 on.
+#if BC28PLUS
 codeunit 70840 "LT RptMrg Action Print"
 {
     Subtype = Test;
@@ -47,3 +49,4 @@ codeunit 70840 "LT RptMrg Action Print"
         Observer.Verify();
     end;
 }
+#endif
