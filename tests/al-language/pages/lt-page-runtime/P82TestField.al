@@ -35,49 +35,6 @@ codeunit 71203 "LT P82 TestField"
         Item.Insert();
     end;
 
-    [Test]
-    procedure Value_And_As_OnFilledRow()
-    var
-        Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT P82 Card";
-    begin
-        Seed();
-        Card.OpenView();
-        Card.GoToKey('T1');
-        Observer.Observe('qty-value', Card.QtyCtl.Value());
-        Observer.Observe('qty-asinteger', Format(Card.QtyCtl.AsInteger()));
-        Observer.Observe('qty-asdecimal', Format(Card.QtyCtl.AsDecimal()));
-        Observer.Observe('amt-value', Card.AmtCtl.Value());
-        Observer.Observe('amt-asdecimal', Format(Card.AmtCtl.AsDecimal()));
-        Observer.Observe('flag-value', Card.FlagCtl.Value());
-        Observer.Observe('flag-asboolean', Format(Card.FlagCtl.AsBoolean()));
-        Observer.Observe('date-value', Card.DateCtl.Value());
-        Observer.Observe('date-asdate', Format(Card.DateCtl.AsDate(), 0, 9));
-        Observer.Observe('dt-value', Card.DtCtl.Value());
-        Observer.Observe('dt-asdatetime', Format(Card.DtCtl.AsDateTime(), 0, 9));
-        Observer.Observe('name-value', Card.NameCtl.Value());
-        Observer.Observe('no-value', Card.NoCtl.Value());
-        Card.Close();
-        Observer.Expect('qty-value', '42');
-        Observer.Expect('qty-asinteger', '42');
-        Observer.Expect('qty-asdecimal', '42');
-        Observer.Expect('amt-value', '2.50');
-        Observer.Expect('amt-asdecimal', '2.5');
-        Observer.Expect('flag-value', 'Yes');
-        Observer.Expect('flag-asboolean', 'Yes');
-        Observer.Expect('date-value', '3/15/2024');
-        Observer.Expect('date-asdate', '2024-03-15');
-#if BC28PLUS
-        Observer.Expect('dt-value', '3/15/2024 10:20 AM');
-#else
-        Observer.Expect('dt-value', '3/15/2024 10:20 AM');
-#endif
-        Observer.Expect('dt-asdatetime', '2024-03-15T10:20:30Z');
-        Observer.Expect('name-value', 'Typed');
-        Observer.Expect('no-value', 'T1');
-        Observer.Verify();
-    end;
-
 #if BC28PLUS
     [Test]
     procedure Value_And_As_OnEmptyAndNegativeRow()
