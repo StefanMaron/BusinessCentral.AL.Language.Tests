@@ -318,8 +318,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Expect('t8', 'No||No');
         Observer.Expect('t9', 'No||No');
         Observer.Expect('t10', 'No||No');
-        Observer.Expect('t11', 'Yes|2026-10-16|Yes');
-        Observer.Expect('t12', 'Yes|2026-10-16|Yes');
+        Observer.Expect('t11', 'Yes|' + Format(Today(), 0, 9) + '|Yes');
+        Observer.Expect('t12', 'Yes|' + Format(Today(), 0, 9) + '|Yes');
         Observer.Verify();
     end;
 
@@ -370,8 +370,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Expect('t8', 'No||No');
         Observer.Expect('t9', 'No||No');
         Observer.Expect('t10', 'No||No');
-        Observer.Expect('t11', 'Yes|2026-10-16|Yes');
-        Observer.Expect('t12', 'Yes|2026-10-16|Yes');
+        Observer.Expect('t11', 'Yes|' + Format(Today(), 0, 9) + '|Yes');
+        Observer.Expect('t12', 'Yes|' + Format(Today(), 0, 9) + '|Yes');
         Observer.Verify();
     end;
 
@@ -951,7 +951,7 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Expect('t3', 'Yes|2024-01-15T10:20:30.123Z');
         Observer.Expect('t4', 'Yes|2024-01-15T10:20:30Z');
         Observer.Expect('t5', 'Yes|2024-01-15T00:00:00Z');
-        Observer.Expect('t6', 'Yes|2026-10-20T00:00:00Z');
+        Observer.Expect('t6', 'Yes|' + Format(DMY2Date(20, 10, Date2DMY(Today(), 3)), 0, 9) + 'T00:00:00Z');
         Observer.Expect('t7', 'Yes|2024-01-15T10:20:30Z');
         Observer.Expect('t8', 'No|');
         Observer.Expect('t9', 'No|');
@@ -983,7 +983,7 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Expect('t3', 'ok|2024-01-15T10:20:30.123Z');
         Observer.Expect('t4', 'ok|2024-01-15T10:20:30Z');
         Observer.Expect('t5', 'ok|2024-01-15T00:00:00Z');
-        Observer.Expect('t6', 'ok|2026-10-20T00:00:00Z');
+        Observer.Expect('t6', 'ok|' + Format(DMY2Date(20, 10, Date2DMY(Today(), 3)), 0, 9) + 'T00:00:00Z');
         Observer.Expect('t7', 'ok|2024-01-15T10:20:30Z');
         Observer.Expect('t8', 'err:The value "15.01.2024 10:20" can''t be evaluated into type DateTime.|Evaluate|');
         Observer.Expect('t9', 'err:The value "0DT" can''t be evaluated into type DateTime.|Evaluate|');
@@ -1075,7 +1075,7 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Expect('t3', 'Yes|2024-01-15T10:20:30.123Z');
         Observer.Expect('t4', 'Yes|2024-01-15T10:20:30Z');
         Observer.Expect('t5', 'Yes|2024-01-15T00:00:00Z');
-        Observer.Expect('t6', 'Yes|2026-10-20T00:00:00Z');
+        Observer.Expect('t6', 'Yes|' + Format(DMY2Date(20, 10, Date2DMY(Today(), 3)), 0, 9) + 'T00:00:00Z');
         Observer.Expect('t7', 'Yes|2024-01-15T10:20:30Z');
         Observer.Expect('t8', 'No|');
         Observer.Expect('t9', 'No|');
@@ -1107,7 +1107,7 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Expect('t3', 'ok|2024-01-15T10:20:30.123Z');
         Observer.Expect('t4', 'ok|2024-01-15T10:20:30Z');
         Observer.Expect('t5', 'ok|2024-01-15T00:00:00Z');
-        Observer.Expect('t6', 'ok|2026-10-20T00:00:00Z');
+        Observer.Expect('t6', 'ok|' + Format(DMY2Date(20, 10, Date2DMY(Today(), 3)), 0, 9) + 'T00:00:00Z');
         Observer.Expect('t7', 'ok|2024-01-15T10:20:30Z');
         Observer.Expect('t8', 'err:The value "15.01.2024 10:20" can''t be evaluated into type DateTime.|Evaluate|');
         Observer.Expect('t9', 'err:The value "0DT" can''t be evaluated into type DateTime.|Evaluate|');
