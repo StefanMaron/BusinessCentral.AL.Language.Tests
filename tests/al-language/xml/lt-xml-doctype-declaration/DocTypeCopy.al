@@ -126,9 +126,9 @@ codeunit 72085 "LT P83 DocType Copy"
         Observer.Observe('original-name', GName(A));
         Doc.WriteTo(T);
         Observer.Observe('after-rename', T);
-        Observer.Expect('after-set', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "later.dtd"[]>\n<a />');
+        Observer.Expect('after-set', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" "later.dtd"[]>\r\n<a />');
         Observer.Expect('original-name', 'b');
-        Observer.Expect('after-rename', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE b PUBLIC "" "later.dtd"[]>\n<a />');
+        Observer.Expect('after-rename', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE b PUBLIC "" "later.dtd"[]>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -153,8 +153,8 @@ codeunit 72085 "LT P83 DocType Copy"
         Got.SetName('viaNode');
         Doc.WriteTo(T);
         Observer.Observe('via-node', T);
-        Observer.Expect('assigned-copy', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE shared PUBLIC "" ""[]>\n<a />');
-        Observer.Expect('via-node', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE viaNode PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('assigned-copy', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE shared PUBLIC "" ""[]>\r\n<a />');
+        Observer.Expect('via-node', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE viaNode PUBLIC "" ""[]>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -233,7 +233,7 @@ codeunit 72085 "LT P83 DocType Copy"
         Got.Version('1.1');
         Observer.Observe('original-version', A.Version());
         Observer.Expect('assigned', 'no');
-        Observer.Expect('doc-after-change', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
+        Observer.Expect('doc-after-change', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\r\n<a />');
         Observer.Expect('original-version', '1.1');
         Observer.Verify();
     end;

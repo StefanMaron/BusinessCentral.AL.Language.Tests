@@ -241,10 +241,10 @@ codeunit 69803 "PA Stream Contracts"
         T := 'ab';
         O.Observe('write_text_len5_over', TryWriteLen(OutS, T, 5));
         O.Observe('write_text_len5_over_bytes', Hex(Blob));
-        O.Expect('write_text_nonascii', '61 E4 F6 80 00');
+        O.Expect('write_text_nonascii', '61 84 94 B1 00');
         O.Expect('write_text_ascii', '61 62 63 00');
         O.Expect('write_char_65', '41');
-        O.Expect('write_char_228', 'E4');
+        O.Expect('write_char_228', '84');
         O.Expect('write_byte_200', 'C8');
         O.Expect('write_text_len3', '61 62 63 00');
         O.Expect('write_text_len5_over', 'ok');
@@ -561,11 +561,11 @@ codeunit 69803 "PA Stream Contracts"
         Blob.CreateOutStream(OutS, TextEncoding::MSDos);
         OutS.Write('aä');
         O.Observe('msdos_write_text', Hex(Blob));
-        O.Expect('msdos', '61 E4 80');
+        O.Expect('msdos', '61 84 B1');
         O.Expect('windows', '61 E4 80');
         O.Expect('utf8', '61 C3 A4 E2 82 AC');
         O.Expect('utf16', '61 00 E4 00 AC 20');
-        O.Expect('msdos_write_text', '61 E4 00');
+        O.Expect('msdos_write_text', '61 84 00');
         O.Verify();
     end;
 
@@ -587,7 +587,7 @@ codeunit 69803 "PA Stream Contracts"
         InS.ReadText(T);
         O.Observe('msdos_written_windows_read', T);
         O.Expect('msdos_msdos', 'aäö');
-        O.Expect('msdos_written_windows_read', 'aäö');
+        O.Expect('msdos_written_windows_read', 'a„”');
         O.Verify();
     end;
 

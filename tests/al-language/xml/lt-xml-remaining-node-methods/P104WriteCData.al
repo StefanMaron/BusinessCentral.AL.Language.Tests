@@ -296,11 +296,11 @@ codeunit 71802 "LT P104 Write CData"
         RunText(Observer, Nd, 'removed_opt', 2);
         Doc.WriteTo(Before);
         Observer.Observe('doc_after', Before);
-        Observer.Expect('doc_before', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a /><![CDATA[plain]]><b /></r>');
+        Observer.Expect('doc_before', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a /><![CDATA[plain]]><b /></r>');
         Observer.Expect('node_before', '[<![CDATA[plain]]>]');
         Observer.Expect('removed', '[<![CDATA[plain]]>]');
         Observer.Expect('removed_opt', '[<![CDATA[plain]]>]');
-        Observer.Expect('doc_after', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc_after', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 

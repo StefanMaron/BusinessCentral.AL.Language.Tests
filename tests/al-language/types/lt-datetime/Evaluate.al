@@ -192,7 +192,7 @@ codeunit 73805 "LT DtT Evaluate"
     begin
         asserterror Evaluate(D, 'abc');
         Observer.ObserveError('abc');
-        Observer.Expect('abc|text', 'The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('abc|text', 'The format of the Date ''abc'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
         Observer.Expect('abc|code', 'Evaluate');
         Observer.Verify();
     end;

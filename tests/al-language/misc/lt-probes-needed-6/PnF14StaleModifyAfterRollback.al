@@ -207,7 +207,7 @@ codeunit 73895 "LT PnF Stale Modify"
         Observer.ObserveError('modify_older_buffer');
         Observer.Observe('stored', Stored());
         Cleanup();
-        Observer.Expect('modify_older_buffer|text', 'The changes to the LT PnF Stale Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\r\\r\Identification fields and values:\r\\r\Id=''1''');
+        Observer.Expect('modify_older_buffer|text', 'The changes to the LT PnF Stale Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
         Observer.Expect('modify_older_buffer|code', 'DB:RecordChanged');
         Observer.Expect('stored', 'start|5');
         Observer.Verify();

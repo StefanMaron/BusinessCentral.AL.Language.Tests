@@ -407,11 +407,11 @@ codeunit 73020 "LT RfT Open"
         Observer.Expect('find_le', 'YesD4');
         Observer.Expect('find_gt', 'YesD5');
         Observer.Expect('find_lt', 'YesD4');
-        Observer.Expect('find_x|text', 'There is an invalid character in the Find expression ''x''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
+        Observer.Expect('find_x|text', 'There is an invalid character in the Find expression ''x''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
         Observer.Expect('find_x|code', 'DB:BadSearchMethod');
-        Observer.Expect('find_empty|text', 'There is an invalid character in the Find expression ''''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
+        Observer.Expect('find_empty|text', 'There is an invalid character in the Find expression ''''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
         Observer.Expect('find_empty|code', 'DB:BadSearchMethod');
-        Observer.Expect('find_two|text', 'There is an invalid character in the Find expression ''--''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
+        Observer.Expect('find_two|text', 'There is an invalid character in the Find expression ''--''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
         Observer.Expect('find_two|code', 'DB:BadSearchMethod');
         Observer.Verify();
     end;

@@ -554,8 +554,8 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Doc.Add(E);
         Doc.WriteTo(Txt);
         Observer.Observe('doc_out', Txt);
-        Observer.Expect('out', '<a xmlns="urn:d">\n  <b />\n  <c xmlns="urn:e" />\n  <d xmlns="" />\n</a>');
-        Observer.Expect('doc_out', '<?xml version="1.0" encoding="utf-16"?>\n<a xmlns="urn:d">\n  <b />\n  <c xmlns="urn:e" />\n  <d xmlns="" />\n</a>');
+        Observer.Expect('out', '<a xmlns="urn:d">\r\n  <b />\r\n  <c xmlns="urn:e" />\r\n  <d xmlns="" />\r\n</a>');
+        Observer.Expect('doc_out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a xmlns="urn:d">\r\n  <b />\r\n  <c xmlns="urn:e" />\r\n  <d xmlns="" />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -568,7 +568,7 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Load('<p:a xmlns:p="urn:p"><p:b/><c xmlns="urn:q"/></p:a>', Doc);
         Doc.WriteTo(Txt);
         Observer.Observe('out', Txt);
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<p:a xmlns:p="urn:p">\n  <p:b />\n  <c xmlns="urn:q" />\n</p:a>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<p:a xmlns:p="urn:p">\r\n  <p:b />\r\n  <c xmlns="urn:q" />\r\n</p:a>');
         Observer.Verify();
     end;
 

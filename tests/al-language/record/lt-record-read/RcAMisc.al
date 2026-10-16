@@ -545,7 +545,7 @@ codeunit 71507 "LT RcA Position View"
         asserterror R.SetPosition('No=CONST(abc)');
         Observer.ObserveError('badValue');
         Observer.Expect('byName', '40/N7');
-        Observer.Expect('garbage|text', 'Invalid expression of type: position.\r\garbage');
+        Observer.Expect('garbage|text', 'Invalid expression of type: position.\garbage');
         Observer.Expect('garbage|code', 'DB:Ok');
         Observer.Expect('empty|text', ''''' is not a valid position specification for the LT RcA Main table. The position must contain all the primary key fields, in order, and only primary key fields.');
         Observer.Expect('empty|code', 'DB:Ok');

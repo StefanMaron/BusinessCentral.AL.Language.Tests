@@ -65,7 +65,7 @@ codeunit 67069 "W5 WorkDate Tests"
         Observer.Expect('t', 'today');
         Observer.Expect('today', 'today');
         Observer.Expect('workdate', 'workdate');
-        Observer.Expect('td', 'error: Validation error for Field: GDate,  Message = ''Your entry of ''td'' is not an acceptable value for ''GDate''. The format of the Date ''td'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
+        Observer.Expect('td', 'error: Validation error for Field: GDate,  Message = ''Your entry of ''td'' is not an acceptable value for ''GDate''. The format of the Date ''td'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
         Observer.Expect('workdate_restored', 'Yes');
         Observer.Verify();
     end;

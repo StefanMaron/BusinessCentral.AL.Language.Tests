@@ -303,7 +303,7 @@ codeunit 71203 "LT P82 TestField"
         Observer.Expect('amt-xy|code', 'TestValidation');
         Observer.Expect('flag-maybe|text', 'Validation error for Field: FlagCtl,  Message = ''Your entry of ''maybe'' is not an acceptable value for ''Flag''. (Select Refresh to discard errors)''');
         Observer.Expect('flag-maybe|code', 'TestValidation');
-        Observer.Expect('date-text|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''not a date'' is not an acceptable value for ''DateF''. The format of the Date ''not a date'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
+        Observer.Expect('date-text|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''not a date'' is not an acceptable value for ''DateF''. The format of the Date ''not a date'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
         Observer.Expect('date-text|code', 'TestValidation');
         Observer.Expect('dt-text|text', 'Validation error for Field: DtCtl,  Message = ''Your entry of ''not a datetime'' is not an acceptable value for ''DT''. The value "not a datetime" can''t be evaluated into type DateTime. (Select Refresh to discard errors)''');
         Observer.Expect('dt-text|code', 'TestValidation');

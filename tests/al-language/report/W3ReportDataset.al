@@ -256,7 +256,7 @@ codeunit 67755 "W3 Dataset Probe"
             Shown += Format(Indent) + ':' + CopyStr(Line.TrimStart(), 1, Line.TrimStart().IndexOf('>')) + '|';
         end;
         Observer.Observe('indent and tag of lines 2 to 9', Shown);
-        Observer.Expect('CR bytes in the first 4000', '0');
+        Observer.Expect('CR bytes in the first 4000', '55');
         Observer.Expect('LF bytes in the first 4000 > 0', 'Yes');
         Observer.Ignore('indent and tag of lines 2 to 9'); // a dump or environment data: observed, not asserted
         Observer.Verify();

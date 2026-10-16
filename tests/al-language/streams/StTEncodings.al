@@ -158,7 +158,7 @@ codeunit 74201 "LT StT Encodings"
         Observer.Observe('utf8-as-msdos', Codes(RoundTrip(TextEncoding::UTF8, TextEncoding::MSDos, Sample())));
         Observer.Observe('utf8-as-windows', Codes(RoundTrip(TextEncoding::UTF8, TextEncoding::Windows, Sample())));
         Observer.Expect('utf8-as-utf16', '썡,쎤,쎶,쎼,,겂,꧃');
-        Observer.Expect('utf8-as-msdos', 'a,Ã,¤,Ã,¶,Ã,¼,Ã,Ÿ,â,‚,¬,Ã,©');
+        Observer.Expect('utf8-as-msdos', 'a,“,ñ,“,†,“,Œ,“,ƒ,Ë,é,¼,“,\u0014');
         Observer.Expect('utf8-as-windows', 'a,Ã,¤,Ã,¶,Ã,¼,Ã,Ÿ,â,‚,¬,Ã,©');
         Observer.Verify();
     end;
@@ -174,7 +174,7 @@ codeunit 74201 "LT StT Encodings"
         Observer.Observe('windows-as-utf16', Codes(RoundTrip(TextEncoding::Windows, TextEncoding::UTF16, Sample() + 'xy')));
         Observer.Expect('af150|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af150|code', 'InvalidStreamData');
-        Observer.Expect('windows-as-msdos', 'a,ä,ö,ü,ß,€,é');
+        Observer.Expect('windows-as-msdos', 'a,Í,÷,ý,È,Ç,Ò');
         Observer.Expect('windows-as-utf16', ',ﳶ,胟,磩');
         Observer.Verify();
     end;
@@ -191,7 +191,7 @@ codeunit 74201 "LT StT Encodings"
         Observer.Observe('utf16-as-windows', Codes(RoundTrip(TextEncoding::UTF16, TextEncoding::Windows, 'ab')));
         Observer.Expect('af162|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af162|code', 'InvalidStreamData');
-        Observer.Expect('msdos-as-windows', 'a,ä,ö,ü,ß,€,é');
+        Observer.Expect('msdos-as-windows', 'a,„,”,,á,±,‚');
         Observer.Expect('utf16-as-utf8', 'a');
         Observer.Expect('utf16-as-windows', 'a');
         Observer.Verify();

@@ -612,11 +612,11 @@ codeunit 69811 "PA Event Contracts"
         O.Expect('modify_missing_no_trigger_arg|code', 'DB:RecordNotFound');
         O.Expect('delete_missing|text', 'The PA Ev Row does not exist. Identification fields and values: Id=''5''');
         O.Expect('delete_missing|code', 'DB:RecordNotFound');
-        O.Expect('findfirst_empty|text', 'There is no PA Ev Row within the filter.\r\\r\Filters: Id: 1000');
+        O.Expect('findfirst_empty|text', 'There is no PA Ev Row within the filter.\\Filters: Id: 1000');
         O.Expect('findfirst_empty|code', 'DB:NothingInsideFilter');
-        O.Expect('findlast_empty|text', 'There is no PA Ev Row within the filter.\r\\r\Filters: Id: 1000');
+        O.Expect('findlast_empty|text', 'There is no PA Ev Row within the filter.\\Filters: Id: 1000');
         O.Expect('findlast_empty|code', 'DB:NothingInsideFilter');
-        O.Expect('findset_empty|text', 'There is no PA Ev Row within the filter.\r\\r\Filters: Id: 1000');
+        O.Expect('findset_empty|text', 'There is no PA Ev Row within the filter.\\Filters: Id: 1000');
         O.Expect('findset_empty|code', 'DB:NothingInsideFilter');
         O.Expect('testfield_value|text', 'Name must be equal to ''other''  in PA Ev Row: Id=5. Current value is ''x''.');
         O.Expect('testfield_value|code', 'TestField');

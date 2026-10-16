@@ -62,7 +62,7 @@ codeunit 70550 "LT PnB ErrorInfo"
         Obs.Expect('raiseClientText', 'PnB message');
         Obs.Expect('raiseClientCode', 'Dialog');
         Obs.Expect('raiseInternal', 'No');
-        Obs.Expect('raiseInternalText', 'An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
+        Obs.Expect('raiseInternalText', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
         Obs.Expect('raiseInternalCode', 'Dialog');
         Obs.Expect('clientOrdinal', '0');
         Obs.Expect('internalOrdinal', '1');

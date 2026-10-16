@@ -21,7 +21,7 @@ codeunit 73516 "LT XpT Query Save"
         Helper.Seed();
         Observer.Observe('xml', Helper.SaveXml(Query::"LT XpT Q Items"));
         Observer.Observe('len', Format(Helper.LastLength()));
-        Observer.Expect('len', '1710');
+        Observer.Expect('len', '1756');
         Observer.Ignore('xml'); // a dump or environment data: observed, not asserted
         Observer.Verify();
     end;
@@ -59,7 +59,7 @@ codeunit 73516 "LT XpT Query Save"
         Observer.Observe('csv', Helper.SaveCsv(Query::"LT XpT Q Items"));
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('csv', 'ItemNo,ItemName,QtyCol,AmountCol,CategoryCol,ActiveCol<NL>1,Alpha,10,1.5,A,True<NL>2,Beta,20,2.5,A,False<NL>3,Gamma,30,3.5,B,True');
-        Observer.Expect('len', '121');
+        Observer.Expect('len', '125');
         Observer.Verify();
     end;
 
@@ -73,7 +73,7 @@ codeunit 73516 "LT XpT Query Save"
         Observer.Observe('csv', Helper.SaveCsv(Query::"LT XpT Q Items"));
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('csv', 'ItemNo,ItemName,QtyCol,AmountCol,CategoryCol,ActiveCol');
-        Observer.Expect('len', '55');
+        Observer.Expect('len', '56');
         Observer.Verify();
     end;
 

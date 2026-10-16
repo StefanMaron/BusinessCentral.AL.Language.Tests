@@ -139,10 +139,10 @@ codeunit 71001 "LT TxC TB AppendLine"
         TB.AppendLine();
         Observer.Observe('len2', Format(TB.Length()));
         Observer.Observe('t2', Show(TB.ToText()));
-        Observer.Expect('len1', '1');
-        Observer.Expect('t1', '\n');
-        Observer.Expect('len2', '2');
-        Observer.Expect('t2', '\n\n');
+        Observer.Expect('len1', '2');
+        Observer.Expect('t1', '\r\n');
+        Observer.Expect('len2', '4');
+        Observer.Expect('t2', '\r\n\r\n');
         Observer.Verify();
     end;
 
@@ -162,12 +162,12 @@ codeunit 71001 "LT TxC TB AppendLine"
         Observer.Observe('t3', Show(TB.ToText()));
         TB.AppendLine(Format(42));
         Observer.Observe('t4', Show(TB.ToText()));
-        Observer.Expect('len1', '4');
-        Observer.Expect('t1', 'abc\n');
-        Observer.Expect('len2', '5');
-        Observer.Expect('t2', 'abc\n\n');
-        Observer.Expect('t3', 'abc\n\ndef\n');
-        Observer.Expect('t4', 'abc\n\ndef\n42\n');
+        Observer.Expect('len1', '5');
+        Observer.Expect('t1', 'abc\r\n');
+        Observer.Expect('len2', '7');
+        Observer.Expect('t2', 'abc\r\n\r\n');
+        Observer.Expect('t3', 'abc\r\n\r\ndef\r\n');
+        Observer.Expect('t4', 'abc\r\n\r\ndef\r\n42\r\n');
         Observer.Verify();
     end;
 
@@ -188,8 +188,8 @@ codeunit 71001 "LT TxC TB AppendLine"
         Observer.Observe('hasCRLF', Format(TB.ToText().Contains(CRLF)));
         Lines := TB.ToText().Split(Format(10));
         Observer.Observe('splitLF', Format(Lines.Count()));
-        Observer.Expect('t', 'ab\nc');
-        Observer.Expect('len', '4');
+        Observer.Expect('t', 'ab\r\nc');
+        Observer.Expect('len', '5');
         Observer.Expect('hasCRLF', 'No');
         Observer.Expect('splitLF', '1');
         Observer.Verify();

@@ -86,11 +86,11 @@ codeunit 73401 "LT XmT Element"
         E := XmlElement.Create('a', '', XmlProcessingInstruction.Create('pi', 'data'));
         Observer.Observe('pi', Str(E));
         Observer.Expect('text', '<a>text</a>');
-        Observer.Expect('child', '<a xmlns="urn:x">\n  <b xmlns="" />\n</a>');
+        Observer.Expect('child', '<a xmlns="urn:x">\r\n  <b xmlns="" />\r\n</a>');
         Observer.Expect('attr', '<a k="v" />');
         Observer.Expect('mixed', '<a k="v">t<!--c--></a>');
         Observer.Expect('cdata', '<a><![CDATA[<x>]]></a>');
-        Observer.Expect('pi', '<a>\n  <?pi data?>\n</a>');
+        Observer.Expect('pi', '<a>\r\n  <?pi data?>\r\n</a>');
         Observer.Verify();
     end;
 
@@ -208,7 +208,7 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('a_inner', E.InnerXml());
         Observer.Observe('a_out', Str(E));
         Observer.Expect('a_inner', '<b x="1" xmlns:p="urn:p" xmlns="urn:d"><p:c /></b>');
-        Observer.Expect('a_out', '<a xmlns="urn:d">\n  <b x="1" xmlns:p="urn:p">\n    <p:c />\n  </b>\n</a>');
+        Observer.Expect('a_out', '<a xmlns="urn:d">\r\n  <b x="1" xmlns:p="urn:p">\r\n    <p:c />\r\n  </b>\r\n</a>');
         Observer.Verify();
     end;
 
@@ -358,7 +358,7 @@ codeunit 73401 "LT XmT Element"
         Observer.Expect('a_name', 'a');
         Observer.Expect('root_parent', 'No');
         Observer.Expect('c_doc', 'Yes');
-        Observer.Expect('c_doc_out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b>\n    <c />\n  </b>\n</a>');
+        Observer.Expect('c_doc_out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b>\r\n    <c />\r\n  </b>\r\n</a>');
         Observer.Expect('lone_parent', 'No');
         Observer.Expect('lone_doc', 'No');
         Observer.Verify();
@@ -384,14 +384,14 @@ codeunit 73401 "LT XmT Element"
         asserterror E.AddFirst(XmlAttribute.Create('k2', 'v2'));
         Observer.ObserveError('af296');
         Observer.Observe('addfirstattr', Str(E));
-        Observer.Expect('add', '<a>\n  <b />\n  <c />\n</a>');
-        Observer.Expect('addfirst', '<a>\n  <first />\n  <b />\n  <c />\n</a>');
-        Observer.Expect('addtext', '<a>\n  <first />\n  <b />\n  <c />tail</a>');
-        Observer.Expect('addcomment', '<a>\n  <first />\n  <b />\n  <c />tail<!--cm--></a>');
-        Observer.Expect('addattr', '<a k="v">\n  <first />\n  <b />\n  <c />tail<!--cm--></a>');
+        Observer.Expect('add', '<a>\r\n  <b />\r\n  <c />\r\n</a>');
+        Observer.Expect('addfirst', '<a>\r\n  <first />\r\n  <b />\r\n  <c />\r\n</a>');
+        Observer.Expect('addtext', '<a>\r\n  <first />\r\n  <b />\r\n  <c />tail</a>');
+        Observer.Expect('addcomment', '<a>\r\n  <first />\r\n  <b />\r\n  <c />tail<!--cm--></a>');
+        Observer.Expect('addattr', '<a k="v">\r\n  <first />\r\n  <b />\r\n  <c />tail<!--cm--></a>');
         Observer.Expect('af296|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('af296|code', 'Argument');
-        Observer.Expect('addfirstattr', '<a k="v">\n  <first />\n  <b />\n  <c />tail<!--cm--></a>');
+        Observer.Expect('addfirstattr', '<a k="v">\r\n  <first />\r\n  <b />\r\n  <c />tail<!--cm--></a>');
         Observer.Verify();
     end;
 
@@ -407,9 +407,9 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('first_multi', Str(E));
         E.Add('plain text');
         Observer.Observe('text_overload', Str(E));
-        Observer.Expect('multi', '<a>\n  <b />\n  <c />t</a>');
-        Observer.Expect('first_multi', '<a>\n  <x />\n  <y />\n  <b />\n  <c />t</a>');
-        Observer.Expect('text_overload', '<a>\n  <x />\n  <y />\n  <b />\n  <c />tplain text</a>');
+        Observer.Expect('multi', '<a>\r\n  <b />\r\n  <c />t</a>');
+        Observer.Expect('first_multi', '<a>\r\n  <x />\r\n  <y />\r\n  <b />\r\n  <c />t</a>');
+        Observer.Expect('text_overload', '<a>\r\n  <x />\r\n  <y />\r\n  <b />\r\n  <c />tplain text</a>');
         Observer.Verify();
     end;
 
@@ -446,8 +446,8 @@ codeunit 73401 "LT XmT Element"
         B.Add(C);
         Observer.Observe('b', Str(B));
         Observer.Observe('a_after', Str(A));
-        Observer.Expect('b', '<b>\n  <c />\n</b>');
-        Observer.Expect('a_after', '<a>\n  <c />\n</a>');
+        Observer.Expect('b', '<b>\r\n  <c />\r\n</b>');
+        Observer.Expect('a_after', '<a>\r\n  <c />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -461,7 +461,7 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('self', 'no error');
         Observer.Observe('out', Str(E));
         Observer.Expect('self', 'no error');
-        Observer.Expect('out', '<a>\n  <a />\n</a>');
+        Observer.Expect('out', '<a>\r\n  <a />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -508,12 +508,12 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('after_multi', Str(E));
         B.AddBeforeSelf(XmlElement.Create('n1'), XmlElement.Create('n2'));
         Observer.Observe('before_multi', Str(E));
-        Observer.Expect('after', '<a>\n  <b />\n  <after />\n  <c />\n</a>');
-        Observer.Expect('before', '<a>\n  <before />\n  <b />\n  <after />\n  <c />\n</a>');
-        Observer.Expect('after_text', '<a>\n  <before />\n  <b />t<after /><c /></a>');
-        Observer.Expect('before_comment', '<a>\n  <before />\n  <!--c-->\n  <b />t<after /><c /></a>');
-        Observer.Expect('after_multi', '<a>\n  <before />\n  <!--c-->\n  <b />\n  <m1 />\n  <m2 />t<after /><c /></a>');
-        Observer.Expect('before_multi', '<a>\n  <before />\n  <!--c-->\n  <n1 />\n  <n2 />\n  <b />\n  <m1 />\n  <m2 />t<after /><c /></a>');
+        Observer.Expect('after', '<a>\r\n  <b />\r\n  <after />\r\n  <c />\r\n</a>');
+        Observer.Expect('before', '<a>\r\n  <before />\r\n  <b />\r\n  <after />\r\n  <c />\r\n</a>');
+        Observer.Expect('after_text', '<a>\r\n  <before />\r\n  <b />t<after /><c /></a>');
+        Observer.Expect('before_comment', '<a>\r\n  <before />\r\n  <!--c-->\r\n  <b />t<after /><c /></a>');
+        Observer.Expect('after_multi', '<a>\r\n  <before />\r\n  <!--c-->\r\n  <b />\r\n  <m1 />\r\n  <m2 />t<after /><c /></a>');
+        Observer.Expect('before_multi', '<a>\r\n  <before />\r\n  <!--c-->\r\n  <n1 />\r\n  <n2 />\r\n  <b />\r\n  <m1 />\r\n  <m2 />t<after /><c /></a>');
         Observer.Verify();
     end;
 
@@ -565,7 +565,7 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('replace_elem', Str(E));
         Observer.Observe('b_still_name', B.Name());
         Observer.Observe('b_parent', Format(B.GetParent(B)));
-        Observer.Expect('replace_elem', '<a>\n  <x />\n  <c />\n</a>');
+        Observer.Expect('replace_elem', '<a>\r\n  <x />\r\n  <c />\r\n</a>');
         Observer.Expect('b_still_name', 'b');
         Observer.Expect('b_parent', 'No');
         Observer.Verify();
@@ -633,10 +633,10 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('removed_name', B.Name());
         E.Add(B);
         Observer.Observe('readd', Str(E));
-        Observer.Expect('after_remove', '<a>\n  <c />\n</a>');
+        Observer.Expect('after_remove', '<a>\r\n  <c />\r\n</a>');
         Observer.Expect('removed_parent', 'No');
         Observer.Expect('removed_name', 'b');
-        Observer.Expect('readd', '<a>\n  <c />\n  <b />\n</a>');
+        Observer.Expect('readd', '<a>\r\n  <c />\r\n  <b />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -726,9 +726,9 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('replace_text', Str(E));
         E.ReplaceNodes(XmlElement.Create('p'), XmlElement.Create('q'));
         Observer.Observe('replace_two', Str(E));
-        Observer.Expect('replace_nodes', '<a x="1">\n  <n />\n</a>');
+        Observer.Expect('replace_nodes', '<a x="1">\r\n  <n />\r\n</a>');
         Observer.Expect('replace_text', '<a x="1">t</a>');
-        Observer.Expect('replace_two', '<a x="1">\n  <p />\n  <q />\n</a>');
+        Observer.Expect('replace_two', '<a x="1">\r\n  <p />\r\n  <q />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -748,9 +748,9 @@ codeunit 73401 "LT XmT Element"
         Load('<a xmlns="urn:d"><b/></a>', E);
         E.WriteTo(Txt);
         Observer.Observe('ns', Txt);
-        Observer.Expect('plain', '<a>\n  <b>1</b>\n</a>');
+        Observer.Expect('plain', '<a>\r\n  <b>1</b>\r\n</a>');
         Observer.Expect('opt', '<a><b>1</b></a>');
-        Observer.Expect('ns', '<a xmlns="urn:d">\n  <b />\n</a>');
+        Observer.Expect('ns', '<a xmlns="urn:d">\r\n  <b />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -769,7 +769,7 @@ codeunit 73401 "LT XmT Element"
         TempBlob.CreateInStream(InS);
         InS.ReadText(Txt);
         Observer.Observe('out', Txt);
-        Observer.Expect('out', 'ï»¿<a>');
+        Observer.Expect('out', 'Ù‹<a>');
         Observer.Verify();
     end;
 
@@ -786,9 +786,9 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('b', Str(B));
         Clear(B);
         Observer.Observe('a_after_clear', Str(A));
-        Observer.Expect('a_sees_change', '<a>\n  <b />\n  <c />\n</a>');
-        Observer.Expect('b', '<a>\n  <b />\n  <c />\n</a>');
-        Observer.Expect('a_after_clear', '<a>\n  <b />\n  <c />\n</a>');
+        Observer.Expect('a_sees_change', '<a>\r\n  <b />\r\n  <c />\r\n</a>');
+        Observer.Expect('b', '<a>\r\n  <b />\r\n  <c />\r\n</a>');
+        Observer.Expect('a_after_clear', '<a>\r\n  <b />\r\n  <c />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -807,7 +807,7 @@ codeunit 73401 "LT XmT Element"
         B.Add(XmlText.Create('t'));
         Observer.Observe('shared', Str(A));
         Observer.Expect('node_out', 'Yes');
-        Observer.Expect('shared', '<a>\n  <b />t</a>');
+        Observer.Expect('shared', '<a>\r\n  <b />t</a>');
         Observer.Verify();
     end;
 

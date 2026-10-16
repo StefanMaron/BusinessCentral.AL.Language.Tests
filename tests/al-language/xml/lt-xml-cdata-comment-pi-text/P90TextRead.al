@@ -593,7 +593,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('node-parent-ok', 'Yes');
         Observer.Expect('typed-parent-ok', 'Yes');
         Observer.Expect('parent-names-equal', 'Yes');
-        Observer.Expect('doc-after-node-add', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<viaNode /><b /></r>');
+        Observer.Expect('doc-after-node-add', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x<viaNode /><b /></r>');
         Observer.Expect('set-value', 'Yes');
         Observer.Expect('node-sees-change', 'changed');
         Observer.Expect('n2-sees-change', 'changed');
@@ -615,8 +615,8 @@ codeunit 70737 "LT P90 Text Read"
         E.SetAttribute('viaD', '1');
         Observer.Observe('original-sees-change', SerDoc());
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
-        Observer.Expect('original-sees-change', '<?xml version="1.0" encoding="utf-16"?>\n<r viaD="1">\n  <a />x<b /></r>');
+        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x<b /></r>');
+        Observer.Expect('original-sees-change', '<?xml version="1.0" encoding="utf-16"?>\r\n<r viaD="1">\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -642,7 +642,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('preset-doc', SerDocOf(D));
         Observer.Expect('uninitialised-ok', 'No');
         Observer.Expect('preset-ok', 'No');
-        Observer.Expect('preset-doc', '<?xml version="1.0" encoding="utf-16"?>\n<pre />');
+        Observer.Expect('preset-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<pre />');
         Observer.Verify();
     end;
 
@@ -672,7 +672,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('after-remove', 'No');
         Observer.Expect('in-free-tree', 'No');
         Observer.Expect('free-tree-now-in-doc', 'Yes');
-        Observer.Expect('doc-then', '<?xml version="1.0" encoding="utf-16"?>\n<free>y</free>');
+        Observer.Expect('doc-then', '<?xml version="1.0" encoding="utf-16"?>\r\n<free>y</free>');
         Observer.Expect('via-node', 'Yes');
         Observer.Verify();
     end;
@@ -807,8 +807,8 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('p3', 'Yes');
         Observer.Expect('p3-name', 'r');
         Observer.Expect('p3-via-node', 'Yes');
-        Observer.Expect('parent-xml', '<r>\n  <a />x<b /></r>');
-        Observer.Expect('doc-after-parent-change', '<?xml version="1.0" encoding="utf-16"?>\n<r viaP="1">\n  <a />x<b /></r>');
+        Observer.Expect('parent-xml', '<r>\r\n  <a />x<b /></r>');
+        Observer.Expect('doc-after-parent-change', '<?xml version="1.0" encoding="utf-16"?>\r\n<r viaP="1">\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -884,7 +884,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x3-err|text', '');
         Observer.Expect('x3-err|code', '');
         Observer.Expect('x3-n', '1');
-        Observer.Expect('x3-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x3-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x4', 'Yes');
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
@@ -928,12 +928,12 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
         Observer.Expect('x4-n', '1');
-        Observer.Expect('x4-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x5', 'Yes');
         Observer.Expect('x5-err|text', '');
         Observer.Expect('x5-err|code', '');
         Observer.Expect('x5-n', '1');
-        Observer.Expect('x5-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -1030,7 +1030,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x1-err|text', '');
         Observer.Expect('x1-err|code', '');
         Observer.Expect('x1-n', '1');
-        Observer.Expect('x1-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x1-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x2', 'Yes');
         Observer.Expect('x2-err|text', '');
         Observer.Expect('x2-err|code', '');
@@ -1050,7 +1050,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x5-err|text', '');
         Observer.Expect('x5-err|code', '');
         Observer.Expect('x5-n', '4');
-        Observer.Expect('x5-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -1084,7 +1084,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
         Observer.Expect('x4-n', '1');
-        Observer.Expect('x4-first', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4-first', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x5', 'Yes');
         Observer.Expect('x5-err|text', '');
         Observer.Expect('x5-err|code', '');
@@ -1108,7 +1108,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x1-err|text', '');
         Observer.Expect('x1-err|code', '');
         Observer.Expect('x1-n', '1');
-        Observer.Expect('x1-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x1-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x2', 'Yes');
         Observer.Expect('x2-err|text', '');
         Observer.Expect('x2-err|code', '');
@@ -1118,7 +1118,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x3-err|text', '');
         Observer.Expect('x3-err|code', '');
         Observer.Expect('x3-n', '2');
-        Observer.Expect('x3-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x3-first', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x4', 'Yes');
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
@@ -1407,7 +1407,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x3', 'Yes');
         Observer.Expect('x3-err|text', '');
         Observer.Expect('x3-err|code', '');
-        Observer.Expect('x3-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x3-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x4', 'Yes');
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
@@ -1445,11 +1445,11 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x4', 'Yes');
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
-        Observer.Expect('x4-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x5', 'Yes');
         Observer.Expect('x5-err|text', '');
         Observer.Expect('x5-err|code', '');
-        Observer.Expect('x5-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -1530,7 +1530,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x1', 'Yes');
         Observer.Expect('x1-err|text', '');
         Observer.Expect('x1-err|code', '');
-        Observer.Expect('x1-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x1-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x2', 'Yes');
         Observer.Expect('x2-err|text', '');
         Observer.Expect('x2-err|code', '');
@@ -1546,7 +1546,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x5', 'Yes');
         Observer.Expect('x5-err|text', '');
         Observer.Expect('x5-err|code', '');
-        Observer.Expect('x5-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -1574,7 +1574,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x4', 'Yes');
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
-        Observer.Expect('x4-node', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4-node', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x5', 'Yes');
         Observer.Expect('x5-err|text', '');
         Observer.Expect('x5-err|code', '');
@@ -1596,7 +1596,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x1', 'Yes');
         Observer.Expect('x1-err|text', '');
         Observer.Expect('x1-err|code', '');
-        Observer.Expect('x1-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x1-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x2', 'Yes');
         Observer.Expect('x2-err|text', '');
         Observer.Expect('x2-err|code', '');
@@ -1604,7 +1604,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('x3', 'Yes');
         Observer.Expect('x3-err|text', '');
         Observer.Expect('x3-err|code', '');
-        Observer.Expect('x3-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x3-node', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('x4', 'Yes');
         Observer.Expect('x4-err|text', '');
         Observer.Expect('x4-err|code', '');
@@ -1851,9 +1851,9 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('via-node-nodes', 'Yes');
         Observer.Expect('via-node-count', '2');
         Observer.Expect('via-node-single', 'Yes');
-        Observer.Expect('via-node-single-text', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('via-node-single-text', '<r>\r\n  <a />x<b /></r>');
         Observer.Expect('via-node-single-nomatch', 'No');
-        Observer.Expect('found-after-nomatch', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('found-after-nomatch', '<r>\r\n  <a />x<b /></r>');
         Observer.Verify();
     end;
 
@@ -1921,7 +1921,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('newline', 'Yes');
         Observer.Expect('newline-err|text', '');
         Observer.Expect('newline-err|code', '');
-        Observer.Expect('newline-x', 'x\ny');
+        Observer.Expect('newline-x', 'x\r\ny');
         Observer.Expect('unicode', 'Yes');
         Observer.Expect('unicode-err|text', '');
         Observer.Expect('unicode-err|code', '');
@@ -1955,7 +1955,7 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('length', Format(StrLen(S)));
         Observer.Expect('attached', 'x');
         Observer.Expect('attached-via-node', 'x');
-        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x<b /></r>');
         Observer.Expect('detached', 'x');
         Observer.Expect('length', '1');
         Observer.Verify();
@@ -1980,12 +1980,12 @@ codeunit 70737 "LT P90 Text Read"
         Build(true, 'x');
         Ok := TryRemove();
         Observer.Observe('after-remove', SerDoc());
-        Observer.Expect('initial', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
-        Observer.Expect('after-set-value', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />changed<b /></r>');
-        Observer.Expect('after-add-after', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />changed<e1 /><b /></r>');
-        Observer.Expect('after-add-before', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->changed<e1 /><b /></r>');
-        Observer.Expect('after-replace', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->t2<e1 /><b /></r>');
-        Observer.Expect('after-remove', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('initial', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x<b /></r>');
+        Observer.Expect('after-set-value', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />changed<b /></r>');
+        Observer.Expect('after-add-after', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />changed<e1 /><b /></r>');
+        Observer.Expect('after-add-before', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <!--c3-->changed<e1 /><b /></r>');
+        Observer.Expect('after-replace', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <!--c3-->t2<e1 /><b /></r>');
+        Observer.Expect('after-remove', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -2014,16 +2014,16 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('empty', 'Yes');
         Observer.Expect('empty-err|text', '');
         Observer.Expect('empty-err|code', '');
-        Observer.Expect('empty-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a /><b /></r>');
+        Observer.Expect('empty-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a /><b /></r>');
         Observer.Expect('markup', 'Yes');
         Observer.Expect('markup-err|text', '');
         Observer.Expect('markup-err|code', '');
-        Observer.Expect('markup-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />&lt;&amp;&gt;<b /></r>');
+        Observer.Expect('markup-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />&lt;&amp;&gt;<b /></r>');
         Observer.Expect('markup-get', '<&>');
         Observer.Expect('cdata-end', 'Yes');
         Observer.Expect('cdata-end-err|text', '');
         Observer.Expect('cdata-end-err|code', '');
-        Observer.Expect('cdata-end-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />]]&gt;<b /></r>');
+        Observer.Expect('cdata-end-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />]]&gt;<b /></r>');
         Observer.Verify();
     end;
 
@@ -2050,15 +2050,15 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Expect('double-dash', 'Yes');
         Observer.Expect('double-dash-err|text', '');
         Observer.Expect('double-dash-err|code', '');
-        Observer.Expect('double-dash-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />--<b /></r>');
+        Observer.Expect('double-dash-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />--<b /></r>');
         Observer.Expect('pi-end', 'Yes');
         Observer.Expect('pi-end-err|text', '');
         Observer.Expect('pi-end-err|code', '');
-        Observer.Expect('pi-end-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />?&gt;<b /></r>');
+        Observer.Expect('pi-end-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />?&gt;<b /></r>');
         Observer.Expect('newline', 'Yes');
         Observer.Expect('newline-err|text', '');
         Observer.Expect('newline-err|code', '');
-        Observer.Expect('newline-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x\ny<b /></r>');
+        Observer.Expect('newline-doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />x\r\ny<b /></r>');
         Observer.Expect('newline-get', 'x\ny');
         Observer.Verify();
     end;

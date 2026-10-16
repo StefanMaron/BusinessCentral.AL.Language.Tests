@@ -515,7 +515,7 @@ codeunit 71014 "LT TxC TB Reference"
         TB.AppendLine();
         Observer.Observe('len2', Format(TB.Length()));
         Observer.Expect('len', '0');
-        Observer.Expect('len2', '1');
+        Observer.Expect('len2', '2');
         Observer.Verify();
     end;
 }

@@ -80,17 +80,17 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('simple-read|text', '');
         Observer.Expect('simple-read|code', '');
         Observer.Expect('simple-type', 'none');
-        Observer.Expect('simple-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('simple-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('system-read', 'Yes');
         Observer.Expect('system-read|text', '');
         Observer.Expect('system-read|code', '');
         Observer.Expect('system-type', 'none');
-        Observer.Expect('system-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('system-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('system-apos-read', 'Yes');
         Observer.Expect('system-apos-read|text', '');
         Observer.Expect('system-apos-read|code', '');
         Observer.Expect('system-apos-type', 'none');
-        Observer.Expect('system-apos-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('system-apos-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -105,12 +105,12 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('public-read|text', '');
         Observer.Expect('public-read|code', '');
         Observer.Expect('public-type', 'none');
-        Observer.Expect('public-written', '<?xml version="1.0" encoding="utf-16"?>\n<html />');
+        Observer.Expect('public-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<html />');
         Observer.Expect('public-short-read', 'Yes');
         Observer.Expect('public-short-read|text', '');
         Observer.Expect('public-short-read|code', '');
         Observer.Expect('public-short-type', 'none');
-        Observer.Expect('public-short-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('public-short-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -127,22 +127,22 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('subset-element-read|text', '');
         Observer.Expect('subset-element-read|code', '');
         Observer.Expect('subset-element-type', 'none');
-        Observer.Expect('subset-element-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('subset-element-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('subset-entity-read', 'Yes');
         Observer.Expect('subset-entity-read|text', '');
         Observer.Expect('subset-entity-read|code', '');
         Observer.Expect('subset-entity-type', 'none');
-        Observer.Expect('subset-entity-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('subset-entity-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('subset-attlist-read', 'Yes');
         Observer.Expect('subset-attlist-read|text', '');
         Observer.Expect('subset-attlist-read|code', '');
         Observer.Expect('subset-attlist-type', 'none');
-        Observer.Expect('subset-attlist-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('subset-attlist-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('subset-empty-read', 'Yes');
         Observer.Expect('subset-empty-read|text', '');
         Observer.Expect('subset-empty-read|code', '');
         Observer.Expect('subset-empty-type', 'none');
-        Observer.Expect('subset-empty-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('subset-empty-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -157,12 +157,12 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('system-subset-read|text', '');
         Observer.Expect('system-subset-read|code', '');
         Observer.Expect('system-subset-type', 'none');
-        Observer.Expect('system-subset-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('system-subset-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('public-subset-read', 'Yes');
         Observer.Expect('public-subset-read|text', '');
         Observer.Expect('public-subset-read|code', '');
         Observer.Expect('public-subset-type', 'none');
-        Observer.Expect('public-subset-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('public-subset-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -180,17 +180,17 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('declaration-read|text', '');
         Observer.Expect('declaration-read|code', '');
         Observer.Expect('declaration-type', 'none');
-        Observer.Expect('declaration-written', '<?xml version="1.0" encoding="utf-8"?>\n<a />');
+        Observer.Expect('declaration-written', '<?xml version="1.0" encoding="utf-8"?>\r\n<a />');
         Observer.Expect('comment-before-read', 'Yes');
         Observer.Expect('comment-before-read|text', '');
         Observer.Expect('comment-before-read|code', '');
         Observer.Expect('comment-before-type', 'none');
-        Observer.Expect('comment-before-written', '<?xml version="1.0" encoding="utf-16"?>\n<!--c-->\n<a />');
+        Observer.Expect('comment-before-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--c-->\r\n<a />');
         Observer.Expect('comment-after-read', 'Yes');
         Observer.Expect('comment-after-read|text', '');
         Observer.Expect('comment-after-read|code', '');
         Observer.Expect('comment-after-type', 'none');
-        Observer.Expect('comment-after-written', '<?xml version="1.0" encoding="utf-16"?>\n<!--c-->\n<a />');
+        Observer.Expect('comment-after-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--c-->\r\n<a />');
         Observer.Expect('whitespace-read', 'Yes');
         Observer.Expect('whitespace-read|text', '');
         Observer.Expect('whitespace-read|code', '');
@@ -200,7 +200,7 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('pi-read|text', '');
         Observer.Expect('pi-read|code', '');
         Observer.Expect('pi-type', 'none');
-        Observer.Expect('pi-written', '<?xml version="1.0" encoding="utf-16"?>\n<?pi x?>\n<a />');
+        Observer.Expect('pi-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<?pi x?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -260,7 +260,7 @@ codeunit 72082 "LT P83 DocType Read"
         Observer.Expect('mismatch-read|text', '');
         Observer.Expect('mismatch-read|code', '');
         Observer.Expect('mismatch-type', 'none');
-        Observer.Expect('mismatch-written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('mismatch-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('undeclared-entity-use-read', 'No');
         Observer.Expect('undeclared-entity-use-read|text', 'The following exception was encountered when processing XML data: ''Reference to undeclared entity ''e''. Line 1, position 17.'' at line 1 and position 17.');
         Observer.Expect('undeclared-entity-use-read|code', 'Xml:Xml');

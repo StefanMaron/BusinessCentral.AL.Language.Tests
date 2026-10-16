@@ -351,7 +351,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('k4|code', 'Argument');
         Observer.Expect('k5|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('k5|code', 'Argument');
-        Observer.Expect('k6', '<r p="1" x="2" a6="1" q="3">\n  <c />\n</r>');
+        Observer.Expect('k6', '<r p="1" x="2" a6="1" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('k7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('k7|code', 'Argument');
         Observer.Expect('k8|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -370,9 +370,9 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('k14|code', 'NotInitialized');
         Observer.Expect('k15|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('k15|code', 'InvalidOperation');
-        Observer.Expect('k16', '<r p="1" x="2" xmlns:n16="urn:n16" q="3">\n  <c />\n</r>');
-        Observer.Expect('k17', '<r p="1" x="2" p1:a17="v" q="3" xmlns:p1="urn:a17">\n  <c />\n</r>');
-        Observer.Expect('k18', '<r p="1" x="2" a18="" q="3">\n  <c />\n</r>');
+        Observer.Expect('k16', '<r p="1" x="2" xmlns:n16="urn:n16" q="3">\r\n  <c />\r\n</r>');
+        Observer.Expect('k17', '<r p="1" x="2" p1:a17="v" q="3" xmlns:p1="urn:a17">\r\n  <c />\r\n</r>');
+        Observer.Expect('k18', '<r p="1" x="2" a18="" q="3">\r\n  <c />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -396,7 +396,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('t4|code', 'Argument');
         Observer.Expect('t5|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t5|code', 'Argument');
-        Observer.Expect('t6', '<r p="1" x="2" ta="1" q="3">\n  <c />\n</r>');
+        Observer.Expect('t6', '<r p="1" x="2" ta="1" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('t7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t7|code', 'Argument');
         Observer.Expect('t8|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -405,7 +405,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('t9|code', 'Argument');
         Observer.Expect('t10|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t10|code', 'Argument');
-        Observer.Expect('t11', '<r p="1" x="2" ta="1" tb="2" q="3">\n  <c />\n</r>');
+        Observer.Expect('t11', '<r p="1" x="2" ta="1" tb="2" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('t12|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t12|code', 'Argument');
         Observer.Verify();
@@ -505,7 +505,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('k4|code', 'Argument');
         Observer.Expect('k5|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('k5|code', 'Argument');
-        Observer.Expect('k6', '<r p="1" a6="1" x="2" q="3">\n  <c />\n</r>');
+        Observer.Expect('k6', '<r p="1" a6="1" x="2" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('k7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('k7|code', 'Argument');
         Observer.Expect('k8|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -524,9 +524,9 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('k14|code', 'NotInitialized');
         Observer.Expect('k15|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('k15|code', 'InvalidOperation');
-        Observer.Expect('k16', '<r p="1" xmlns:n16="urn:n16" x="2" q="3">\n  <c />\n</r>');
-        Observer.Expect('k17', '<r p="1" p1:a17="v" x="2" q="3" xmlns:p1="urn:a17">\n  <c />\n</r>');
-        Observer.Expect('k18', '<r p="1" a18="" x="2" q="3">\n  <c />\n</r>');
+        Observer.Expect('k16', '<r p="1" xmlns:n16="urn:n16" x="2" q="3">\r\n  <c />\r\n</r>');
+        Observer.Expect('k17', '<r p="1" p1:a17="v" x="2" q="3" xmlns:p1="urn:a17">\r\n  <c />\r\n</r>');
+        Observer.Expect('k18', '<r p="1" a18="" x="2" q="3">\r\n  <c />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -550,7 +550,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('t4|code', 'Argument');
         Observer.Expect('t5|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t5|code', 'Argument');
-        Observer.Expect('t6', '<r p="1" ta="1" x="2" q="3">\n  <c />\n</r>');
+        Observer.Expect('t6', '<r p="1" ta="1" x="2" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('t7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t7|code', 'Argument');
         Observer.Expect('t8|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -559,7 +559,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('t9|code', 'Argument');
         Observer.Expect('t10|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t10|code', 'Argument');
-        Observer.Expect('t11', '<r p="1" ta="1" tb="2" x="2" q="3">\n  <c />\n</r>');
+        Observer.Expect('t11', '<r p="1" ta="1" tb="2" x="2" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('t12|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t12|code', 'Argument');
         Observer.Verify();
@@ -659,7 +659,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('k4|code', 'Argument');
         Observer.Expect('k5|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('k5|code', 'Argument');
-        Observer.Expect('k6', '<r p="1" a6="1" q="3">\n  <c />\n</r>');
+        Observer.Expect('k6', '<r p="1" a6="1" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('k7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('k7|code', 'Argument');
         Observer.Expect('k8|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -678,9 +678,9 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('k14|code', 'NotInitialized');
         Observer.Expect('k15|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('k15|code', 'InvalidOperation');
-        Observer.Expect('k16', '<r p="1" xmlns:n16="urn:n16" q="3">\n  <c />\n</r>');
-        Observer.Expect('k17', '<r p="1" p1:a17="v" q="3" xmlns:p1="urn:a17">\n  <c />\n</r>');
-        Observer.Expect('k18', '<r p="1" a18="" q="3">\n  <c />\n</r>');
+        Observer.Expect('k16', '<r p="1" xmlns:n16="urn:n16" q="3">\r\n  <c />\r\n</r>');
+        Observer.Expect('k17', '<r p="1" p1:a17="v" q="3" xmlns:p1="urn:a17">\r\n  <c />\r\n</r>');
+        Observer.Expect('k18', '<r p="1" a18="" q="3">\r\n  <c />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -704,7 +704,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('t4|code', 'Argument');
         Observer.Expect('t5|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t5|code', 'Argument');
-        Observer.Expect('t6', '<r p="1" ta="1" q="3">\n  <c />\n</r>');
+        Observer.Expect('t6', '<r p="1" ta="1" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('t7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t7|code', 'Argument');
         Observer.Expect('t8|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -713,7 +713,7 @@ codeunit 74801 "LT P97 Attr Edit"
         Observer.Expect('t9|code', 'Argument');
         Observer.Expect('t10|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t10|code', 'Argument');
-        Observer.Expect('t11', '<r p="1" ta="1" tb="2" q="3">\n  <c />\n</r>');
+        Observer.Expect('t11', '<r p="1" ta="1" tb="2" q="3">\r\n  <c />\r\n</r>');
         Observer.Expect('t12|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('t12|code', 'Argument');
         Observer.Verify();

@@ -192,11 +192,11 @@ codeunit 72523 "LT PnE Filter Percent1"
         Observer.Expect('empty', '1|''''');
         Observer.Expect('notEmpty', '3|<>''''');
         Observer.Expect('1M', '1|1M');
-        Observer.Expect('af156|text', 'The filter "<1M>" is not valid for the Formula field on the LT PnE Filter Rec table. An error occurred while interpreting the filter: Did not expect ''>''.\r\\r\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.');
+        Observer.Expect('af156|text', 'The filter "<1M>" is not valid for the Formula field on the LT PnE Filter Rec table. An error occurred while interpreting the filter: Did not expect ''>''.\\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.');
         Observer.Expect('af156|code', 'Filter:CSide');
         Observer.Expect('<1M>', '0|1M');
         Observer.Expect('CM', '0|CM');
-        Observer.Expect('af161|text', 'The filter "<1M+1D>" is not valid for the Formula field on the LT PnE Filter Rec table. An error occurred while interpreting the filter: Did not expect ''>''.\r\\r\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.');
+        Observer.Expect('af161|text', 'The filter "<1M+1D>" is not valid for the Formula field on the LT PnE Filter Rec table. An error occurred while interpreting the filter: Did not expect ''>''.\\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.');
         Observer.Expect('af161|code', 'Filter:CSide');
         Observer.Expect('1M+1D', '0|CM');
         Observer.Expect('1M|CM', '0|1M|CM');
@@ -218,7 +218,7 @@ codeunit 72523 "LT PnE Filter Percent1"
         Rec.SetFilter(Formula, '>1M');
         Observer.Observe('greater', 'no error');
         Rec.DeleteAll();
-        Observer.Expect('xyz|text', 'The filter "xyz" is not valid for the Formula field on the LT PnE Filter Rec table. The date formula ''XYZ'' should include a time unit.\r\\r\Time units can be: D,WD,W,M,Q, or Y.\r\C, meaning current time unit based on date, can be specified as a prefix to the time unit.');
+        Observer.Expect('xyz|text', 'The filter "xyz" is not valid for the Formula field on the LT PnE Filter Rec table. The date formula ''XYZ'' should include a time unit.\\Time units can be: D,WD,W,M,Q, or Y.\C, meaning current time unit based on date, can be specified as a prefix to the time unit.');
         Observer.Expect('xyz|code', 'Filter:CSide');
         Observer.Expect('range', 'no error');
         Observer.Expect('greater', 'no error');

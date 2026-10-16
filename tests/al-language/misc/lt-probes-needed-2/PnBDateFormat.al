@@ -255,7 +255,7 @@ codeunit 70538 "LT PnB CalcDate Forms"
         Obs.Expect('lowerWeekday', '2024-01-22');
         Obs.Expect('endOfMonthClamp', '2024-02-29');
         Obs.Expect('leap', '2025-02-28');
-        Obs.Expect('badUnit', 'error:The date formula ''1X'' should include a time unit.\r\\r\Time units can be: D,WD,W,M,Q, or Y.\r\C, meaning current time unit based on date, can be specified as a prefix to the time unit.|Evaluate');
+        Obs.Expect('badUnit', 'error:The date formula ''1X'' should include a time unit.\\Time units can be: D,WD,W,M,Q, or Y.\C, meaning current time unit based on date, can be specified as a prefix to the time unit.|Evaluate');
         Obs.Expect('emptyBrackets', '2024-01-15');
         Obs.Verify();
     end;

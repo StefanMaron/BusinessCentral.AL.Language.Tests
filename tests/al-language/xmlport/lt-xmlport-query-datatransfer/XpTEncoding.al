@@ -23,7 +23,7 @@ codeunit 73505 "LT XpT Encoding"
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('af21|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af21|code', 'InvalidStreamData');
-        Observer.Expect('len', '492');
+        Observer.Expect('len', '514');
         Observer.Verify();
     end;
 
@@ -38,7 +38,7 @@ codeunit 73505 "LT XpT Encoding"
         Observer.Observe('xml', Helper.ExportTextEnc(73420, TextEncoding::UTF16));
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><NL><Root><NL>  <Item><NL>    <Id>1</Id><NL>    <Name>Müller € ß</Name><NL>  </Item><NL></Root>');
-        Observer.Expect('len', '266');
+        Observer.Expect('len', '278');
         Observer.Verify();
     end;
 
@@ -67,7 +67,7 @@ codeunit 73505 "LT XpT Encoding"
         Observer.Observe('xml', Helper.ExportTextEnc(73420, TextEncoding::UTF16));
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><NL><Root><NL>  <Item><NL>    <Id>0</Id><NL>    <Name /><NL>  </Item><NL></Root>');
-        Observer.Expect('len', '236');
+        Observer.Expect('len', '248');
         Observer.Verify();
     end;
 
@@ -287,7 +287,7 @@ codeunit 73505 "LT XpT Encoding"
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('af248|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af248|code', 'InvalidStreamData');
-        Observer.Expect('len', '480');
+        Observer.Expect('len', '502');
         Observer.Verify();
     end;
 

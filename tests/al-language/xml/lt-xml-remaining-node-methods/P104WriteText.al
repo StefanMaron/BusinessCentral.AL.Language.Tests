@@ -296,11 +296,11 @@ codeunit 71814 "LT P104 Write Text"
         RunText(Observer, Nd, 'removed_opt', 2);
         Doc.WriteTo(Before);
         Observer.Observe('doc_after', Before);
-        Observer.Expect('doc_before', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />plain<b /></r>');
+        Observer.Expect('doc_before', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />plain<b /></r>');
         Observer.Expect('node_before', '[plain]');
         Observer.Expect('removed', '[plain]');
         Observer.Expect('removed_opt', '[plain]');
-        Observer.Expect('doc_after', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc_after', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 

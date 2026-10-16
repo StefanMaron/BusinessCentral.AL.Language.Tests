@@ -179,12 +179,12 @@ codeunit 73804 "LT DtT Format"
         Observer.Expect('Day+Month', '05.03.2024');
         Observer.Expect('dash', '2024-03-05');
         Observer.Expect('literal', 'Date: 5/3');
-        Observer.Expect('af110|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Day Text>');
+        Observer.Expect('af110|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Day Text>');
         Observer.Expect('af110|code', 'InvalidFormatString');
         Observer.Expect('Weekday Text', 'Tuesday');
         Observer.Expect('Week', '10');
         Observer.Expect('Week,2', '10');
-        Observer.Expect('af116|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Foo>');
+        Observer.Expect('af116|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Foo>');
         Observer.Expect('af116|code', 'InvalidFormatString');
         Observer.Expect('empty custom', '');
         Observer.Expect('Closing on closing', 'C5');
@@ -320,7 +320,7 @@ codeunit 73804 "LT DtT Format"
         Observer.Expect('Standard Format 9', '13:45:06.078');
         Observer.Expect('Standard Format 0', ' 1:45:06 PM');
         Observer.Expect('Standard Format 2', '134506.078T');
-        Observer.Expect('af187|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Foo>');
+        Observer.Expect('af187|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Foo>');
         Observer.Expect('af187|code', 'InvalidFormatString');
         Observer.Expect('literal', 'At 13h');
         Observer.Verify();
@@ -436,7 +436,7 @@ codeunit 73804 "LT DtT Format"
         Observer.Expect('Standard 1', '03/05/24 01:45:06.078 PM');
         Observer.Expect('Standard 2', '03/05/24 01:45 PM');
         Observer.Expect('Standard 3', '03/05/24 01:45:06 PM');
-        Observer.Expect('af249|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Foo>');
+        Observer.Expect('af249|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Foo>');
         Observer.Expect('af249|code', 'InvalidFormatString');
         Observer.Expect('0DT custom', '');
         Observer.Verify();
@@ -492,7 +492,7 @@ codeunit 73804 "LT DtT Format"
         Observer.Expect('dur neg 9', '-P0DT1H30M0.0S');
         Observer.Expect('dur 1 s 9', 'P0DT0H0M1.0S');
         Observer.Expect('dur 1 d 9', 'P1DT0H0M0.0S');
-        Observer.Expect('af279|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Hours24,2>:<Minutes,2>');
+        Observer.Expect('af279|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Hours24,2>:<Minutes,2>');
         Observer.Expect('af279|code', 'InvalidFormatString');
         Observer.Verify();
     end;

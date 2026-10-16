@@ -197,9 +197,9 @@ codeunit 72561 "LT PnE Record Misc"
         Observer.Expect('findPlus|code', 'DB:TableIsEmpty');
         Observer.Expect('findEqual|text', 'The LT PnE Misc Rec does not exist. Identification fields and values: Id=''0''');
         Observer.Expect('findEqual|code', 'DB:RecordNotFound');
-        Observer.Expect('findFirstFiltered|text', 'There is no LT PnE Misc Rec within the filter.\r\\r\Filters: Name: nothing');
+        Observer.Expect('findFirstFiltered|text', 'There is no LT PnE Misc Rec within the filter.\\Filters: Name: nothing');
         Observer.Expect('findFirstFiltered|code', 'DB:NothingInsideFilter');
-        Observer.Expect('findSetForUpdate|text', 'There is no LT PnE Misc Rec within the filter.\r\\r\Filters: Name: nothing');
+        Observer.Expect('findSetForUpdate|text', 'There is no LT PnE Misc Rec within the filter.\\Filters: Name: nothing');
         Observer.Expect('findSetForUpdate|code', 'DB:NothingInsideFilter');
         Observer.Expect('get|text', 'The LT PnE Misc Rec does not exist. Identification fields and values: Id=''5''');
         Observer.Expect('get|code', 'DB:RecordNotFound');

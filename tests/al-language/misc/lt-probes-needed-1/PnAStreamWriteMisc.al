@@ -169,7 +169,7 @@ codeunit 70090 "LT PnA Stream WriteMisc"
         Observer.Expect('op2', 'Yes|00 62 63 00');
         Observer.Expect('op2|text', '');
         Observer.Expect('op2|code', '');
-        Observer.Expect('op3', 'Yes|E9 80 00 00');
+        Observer.Expect('op3', 'Yes|82 B1 00 00');
         Observer.Expect('op3|text', '');
         Observer.Expect('op3|code', '');
         Observer.Expect('op4', 'Yes|61 62 00 00');
@@ -181,7 +181,7 @@ codeunit 70090 "LT PnA Stream WriteMisc"
         Observer.Expect('op6', 'Yes|41 62 63 00');
         Observer.Expect('op6|text', '');
         Observer.Expect('op6|code', '');
-        Observer.Expect('op7', 'Yes|E9 62 63 00');
+        Observer.Expect('op7', 'Yes|82 62 63 00');
         Observer.Expect('op7|text', '');
         Observer.Expect('op7|code', '');
         Observer.Expect('op8', 'Yes|FF 62 63 00');

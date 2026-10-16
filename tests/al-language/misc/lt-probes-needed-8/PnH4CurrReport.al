@@ -247,7 +247,7 @@ codeunit 70613 "LT PnH CurrRpt Tests"
         Observer.Expect('fr-FR', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[fr-FR];after dec=1 234,5 date=05/03/24 bool=Yes;get dec=1 234,5 date=05/03/24 bool=Yes;post dec=1 234,5 bool=Yes;');
         Observer.Expect('af227', 'no error');
         Observer.Expect('af227', 'no error');
-        Observer.Expect('da-DK', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[da-DK];after dec=1.234,5 date=05.03.24 bool=Yes;get dec=1.234,5 date=05.03.24 bool=Yes;post dec=1.234,5 bool=Yes;');
+        Observer.Expect('da-DK', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[da-DK];after dec=1.234,5 date=05-03-24 bool=Yes;get dec=1.234,5 date=05-03-24 bool=Yes;post dec=1.234,5 bool=Yes;');
         Observer.Expect('after', '1,234.5|03/05/24');
         Observer.Verify();
     end;

@@ -39,13 +39,13 @@ codeunit 72038 "LT PnD SetRequestUri"
         Observer.Observe('relQuery', TrySet('?a=1'));
         Observer.Observe('relFragment', TrySet('#top'));
         Observer.Observe('relSlash', TrySet('/'));
-        Observer.Expect('relPath', 'result=Yes uri=[file:///api/v1/items]');
+        Observer.Expect('relPath', 'result=No uri=[]');
         Observer.Expect('relNoSlash', 'result=No uri=[]');
         Observer.Expect('relDot', 'result=No uri=[]');
         Observer.Expect('relParent', 'result=No uri=[]');
         Observer.Expect('relQuery', 'result=No uri=[]');
         Observer.Expect('relFragment', 'result=No uri=[]');
-        Observer.Expect('relSlash', 'result=Yes uri=[file:///]');
+        Observer.Expect('relSlash', 'result=No uri=[]');
         Observer.Verify();
     end;
 
@@ -131,8 +131,8 @@ codeunit 72038 "LT PnD SetRequestUri"
         Observer.Observe('third', Format(Request.SetRequestUri('http://two.example/b')));
         Observer.Observe('uriAfterThird', Request.GetRequestUri());
         Observer.Expect('first', 'Yes');
-        Observer.Expect('second', 'Yes');
-        Observer.Expect('uriAfterRelative', 'file:///relative');
+        Observer.Expect('second', 'No');
+        Observer.Expect('uriAfterRelative', 'http://one.example/a');
         Observer.Expect('third', 'Yes');
         Observer.Expect('uriAfterThird', 'http://two.example/b');
         Observer.Verify();

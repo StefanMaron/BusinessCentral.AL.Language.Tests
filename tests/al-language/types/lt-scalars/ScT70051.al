@@ -135,7 +135,7 @@ codeunit 70051 "LT ScT Fmt Decimal Str"
         Observer.Observe('two_int', Format(D, 0, '<Integer>-<Integer>'));
         Observer.Observe('neg_dec', Format(-0.5, 0, '<Sign><Integer><Decimals>'));
         Observer.Observe('neg_zero_dec', Format(-0.001, 0, '<Precision,2:2><Standard Format,0>'));
-        Observer.Expect('af111|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer Thousand><Decimal Separator><Decimals>');
+        Observer.Expect('af111|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Decimal Separator><Decimals>');
         Observer.Expect('af111|code', 'InvalidFormatString');
         Observer.Expect('custom_th', '***.891');
         Observer.Expect('text_only', 'abc');
@@ -167,11 +167,11 @@ codeunit 70051 "LT ScT Fmt Decimal Str"
         Observer.ObserveError('num10');
         asserterror Result := Format(D, 0, -1);
         Observer.ObserveError('numneg');
-        Observer.Expect('unknown|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Unknown>');
+        Observer.Expect('unknown|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Unknown>');
         Observer.Expect('unknown|code', 'InvalidFormatString');
-        Observer.Expect('unclosed|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer');
+        Observer.Expect('unclosed|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer');
         Observer.Expect('unclosed|code', 'InvalidFormatString');
-        Observer.Expect('badprec|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,x:y>');
+        Observer.Expect('badprec|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,x:y>');
         Observer.Expect('badprec|code', 'InvalidFormatString');
         Observer.Expect('badstd|text', 'Standard format number 99 does not exist for the type ''Decimal''.');
         Observer.Expect('badstd|code', 'InvalidStandardFormat');

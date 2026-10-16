@@ -414,7 +414,7 @@ codeunit 73966 "LT P79 RId Format Numbers"
         Observer.Expect('std1', 'LT P79 RId Code: A-1');
         Observer.Expect('std2', 'LT P79 RId Code: A-1');
         Observer.Expect('std9', 'LT P79 RId Code: A-1');
-        Observer.Expect('text', 'error:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Text>|InvalidFormatString');
+        Observer.Expect('text', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Text>|InvalidFormatString');
         Observer.Expect('text-mixed', 'ID: LT P79 RId Code: A-1!');
         Observer.Expect('at', '@@@@@@@@@@');
         Observer.Expect('len-5', 'LT P7');

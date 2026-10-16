@@ -247,9 +247,9 @@ codeunit 72083 "LT P83 Declaration"
         Observer.Expect('get-before', 'No');
         Observer.Expect('get-after', 'Yes');
         Observer.Expect('got', '[1.0|utf-8|yes]');
-        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<a />');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<a />');
         Observer.Expect('replaced', '[1.0|utf-16|no]');
-        Observer.Expect('replaced-written', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
+        Observer.Expect('replaced-written', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\r\n<a />');
         Observer.Expect('child-count', '1');
         Observer.Verify();
     end;
@@ -330,10 +330,10 @@ codeunit 72083 "LT P83 Declaration"
         Doc.Add(XmlElement.Create('a'));
         Doc.WriteTo(T);
         Observer.Observe('version-1.1', T);
-        Observer.Expect('utf16', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
-        Observer.Expect('utf8-no-standalone', '<?xml version="1.0" encoding="utf-8" standalone=""?>\n<a />');
-        Observer.Expect('no-encoding', '<?xml version="1.0" encoding="" standalone="yes"?>\n<a />');
-        Observer.Expect('version-1.1', '<?xml version="1.1" encoding="utf-8" standalone="yes"?>\n<a />');
+        Observer.Expect('utf16', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\r\n<a />');
+        Observer.Expect('utf8-no-standalone', '<?xml version="1.0" encoding="utf-8" standalone=""?>\r\n<a />');
+        Observer.Expect('no-encoding', '<?xml version="1.0" encoding="" standalone="yes"?>\r\n<a />');
+        Observer.Expect('version-1.1', '<?xml version="1.1" encoding="utf-8" standalone="yes"?>\r\n<a />');
         Observer.Verify();
     end;
 }

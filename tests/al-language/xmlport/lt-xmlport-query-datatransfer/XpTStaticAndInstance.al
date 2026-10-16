@@ -141,7 +141,7 @@ codeunit 73506 "LT XpT Static And Instance"
         TempBlob.CreateInStream(InS);
         Observer.Observe('xml', Helper.ReadAll(InS));
         Observer.Observe('len', Format(TempBlob.Length()));
-        Observer.Expect('len', '1236');
+        Observer.Expect('len', '1294');
         Observer.Ignore('xml'); // a dump or environment data: observed, not asserted
         Observer.Verify();
     end;

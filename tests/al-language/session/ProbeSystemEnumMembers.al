@@ -132,7 +132,7 @@ codeunit 69456 "Probe System Enum Members"
         Observer.Expect('setReportAfterInsert|code', '');
         Observer.Expect('afterFailedSetRead', 'UpdateNoLocks');
         Observer.Expect('setUpdateAfterInsert', 'No');
-        Observer.Expect('setUpdateAfterInsert|text', 'The transaction type cannot be changed after a transaction has started.\r\\r\A transaction starts when the first database operation, such as FIND, NEXT, INSERT, DELETE, MODIFY, SUM, or COUNT, is run.\r\\r\The error occurred because the transaction type was changed from UpdateNoLocks to Update.');
+        Observer.Expect('setUpdateAfterInsert|text', 'The transaction type cannot be changed after a transaction has started.\\A transaction starts when the first database operation, such as FIND, NEXT, INSERT, DELETE, MODIFY, SUM, or COUNT, is run.\\The error occurred because the transaction type was changed from UpdateNoLocks to Update.');
         Observer.Expect('setUpdateAfterInsert|code', 'DB:CannotChangeTransactionType');
         Observer.Expect('afterSetUpdateRead', 'UpdateNoLocks');
         Observer.Verify();

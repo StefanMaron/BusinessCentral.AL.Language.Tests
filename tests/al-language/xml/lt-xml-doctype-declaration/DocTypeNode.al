@@ -224,8 +224,8 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('children', Format(Doc.GetChildNodes().Count()));
         Observer.Observe('remove-twice', Format(TryRemoveGot(Got)));
         Observer.ObserveError('remove-twice');
-        Observer.Expect('before', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<a />');
-        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('before', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\r\n<a />');
+        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('has-type', 'No');
         Observer.Expect('children', '1');
         Observer.Expect('remove-twice', 'No');
@@ -269,8 +269,8 @@ codeunit 72084 "LT P83 DocType Node"
         Doc.Add(XmlElement.Create('a'));
         Observer.Observe('re-added', Written());
         Observer.Observe('name', GName(Dt));
-        Observer.Expect('removed', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
-        Observer.Expect('re-added', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<a />');
+        Observer.Expect('removed', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
+        Observer.Expect('re-added', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\r\n<a />');
         Observer.Expect('name', 'a');
         Observer.Verify();
     end;
@@ -288,7 +288,7 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Expect('replace', 'Yes');
         Observer.Expect('replace|text', '');
         Observer.Expect('replace|code', '');
-        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE b PUBLIC "p" ""[]>\n<a />');
+        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE b PUBLIC "p" ""[]>\r\n<a />');
         Observer.Expect('old-name', 'a');
         Observer.Verify();
     end;
@@ -306,7 +306,7 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Expect('replace', 'No');
         Observer.Expect('replace|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('replace|code', 'InvalidOperation');
-        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('children', '1');
         Observer.Verify();
     end;
@@ -342,11 +342,11 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Expect('after-comment', 'Yes');
         Observer.Expect('after-comment|text', '');
         Observer.Expect('after-comment|code', '');
-        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<!--c-->\n<a />');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\r\n<!--c-->\r\n<a />');
         Observer.Expect('before-comment', 'Yes');
         Observer.Expect('before-comment|text', '');
         Observer.Expect('before-comment|code', '');
-        Observer.Expect('written2', '<?xml version="1.0" encoding="utf-16"?>\n<!--d-->\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<!--c-->\n<a />');
+        Observer.Expect('written2', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--d-->\r\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\r\n<!--c-->\r\n<a />');
         Observer.Expect('before-doctype', 'No');
         Observer.Expect('before-doctype|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('before-doctype|code', 'InvalidOperation');

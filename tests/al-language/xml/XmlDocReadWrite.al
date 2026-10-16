@@ -43,7 +43,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Expect('ok', 'Yes');
         Observer.Expect('root', 'Yes');
         Observer.Expect('rootname', 'a');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b>x</b>\n</a>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b>x</b>\r\n</a>');
         Observer.Verify();
     end;
 
@@ -66,7 +66,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Expect('version', '1.0');
         Observer.Expect('encoding', 'utf-8');
         Observer.Expect('standalone', '');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-8"?>\n<a />');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-8"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -82,7 +82,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc.WriteTo(Txt);
         Observer.Observe('out', Txt);
         Observer.Expect('hasdecl', 'No');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -198,7 +198,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
     begin
         XmlDocument.ReadFrom('<a>' + NL() + '  <b/>' + NL() + '</a>', Doc);
         Observer.Observe('out', Out(Doc));
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -229,9 +229,9 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Expect('default_preserve', 'No');
         Observer.Expect('set_preserve', 'Yes');
         Observer.Expect('preserve_children', '3');
-        Observer.Expect('preserve_out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
+        Observer.Expect('preserve_out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
         Observer.Expect('nopreserve_children', '3');
-        Observer.Expect('nopreserve_out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
+        Observer.Expect('nopreserve_out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -262,7 +262,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Expect('nopreserve_inner', '[  x  ]');
         Observer.Expect('blank_default', '[   ]');
         Observer.Expect('blank_preserve', '[   ]');
-        Observer.Expect('xmlspace', '<?xml version="1.0" encoding="utf-16"?>\n<a xml:space="preserve">  <b />  </a>');
+        Observer.Expect('xmlspace', '<?xml version="1.0" encoding="utf-16"?>\r\n<a xml:space="preserve">  <b />  </a>');
         Observer.Verify();
     end;
 
@@ -282,7 +282,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc.WriteTo(Txt);
         Observer.Observe('out', Txt);
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b>1</b>\n</a>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b>1</b>\r\n</a>');
         Observer.Verify();
     end;
 
@@ -302,7 +302,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Observe('ok', Format(XmlDocument.ReadFrom(InS, Opt, Doc)));
         Observer.Observe('out', Out(Doc));
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n <b /></a>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n <b /></a>');
         Observer.Verify();
     end;
 
@@ -361,9 +361,9 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         TempBlob.CreateInStream(InS);
         Observer.Observe('reread', Format(XmlDocument.ReadFrom(InS, Doc2)));
         Observer.Observe('reread_out', Out(Doc2));
-        Observer.Expect('text', 'ï»¿<?xml version="1.0" encoding="utf-8"?>');
+        Observer.Expect('text', 'Ù‹<?xml version="1.0" encoding="utf-8"?>');
         Observer.Expect('reread', 'Yes');
-        Observer.Expect('reread_out', '<?xml version="1.0" encoding="utf-8"?>\n\n<a x="1">\n  <b>t</b>\n</a>');
+        Observer.Expect('reread_out', '<?xml version="1.0" encoding="utf-8"?>\r\n\r\n<a x="1">\r\n  <b>t</b>\r\n</a>');
         Observer.Verify();
     end;
 
@@ -383,8 +383,8 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         TempBlob.CreateInStream(InS);
         InS.ReadText(Txt);
         Observer.Observe('text', Txt);
-        Observer.Expect('size', '58');
-        Observer.Expect('text', 'ï»¿<?xml version="1.0" encoding="utf-8"?>');
+        Observer.Expect('size', '59');
+        Observer.Expect('text', 'Ù‹<?xml version="1.0" encoding="utf-8"?>');
         Observer.Verify();
     end;
 
@@ -407,10 +407,10 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc.WriteTo(Opt, Txt);
         Observer.Observe('preserve_false', Txt);
         Observer.Expect('default_prefix_indent', 'No');
-        Observer.Expect('default', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b>1</b>\n  <c />\n</a>');
+        Observer.Expect('default', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b>1</b>\r\n  <c />\r\n</a>');
         Observer.Expect('set', 'Yes');
         Observer.Expect('preserve_true', '<?xml version="1.0" encoding="utf-16"?><a><b>1</b><c /></a>');
-        Observer.Expect('preserve_false', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b>1</b>\n  <c />\n</a>');
+        Observer.Expect('preserve_false', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b>1</b>\r\n  <c />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -432,9 +432,9 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Observe('preserve_false', Txt);
         Doc.WriteTo(Txt);
         Observer.Observe('plain', Txt);
-        Observer.Expect('preserve_true', '<?xml version="1.0" encoding="utf-16"?><a>\n  <b />\n</a>');
-        Observer.Expect('preserve_false', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
-        Observer.Expect('plain', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
+        Observer.Expect('preserve_true', '<?xml version="1.0" encoding="utf-16"?><a>\r\n  <b />\r\n</a>');
+        Observer.Expect('preserve_false', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
+        Observer.Expect('plain', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -455,7 +455,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         TempBlob.CreateInStream(InS);
         InS.ReadText(Txt);
         Observer.Observe('text', Txt);
-        Observer.Expect('text', 'ï»¿<?xml version="1.0" encoding="utf-8"?><a><b /></a>');
+        Observer.Expect('text', 'Ù‹<?xml version="1.0" encoding="utf-8"?><a><b /></a>');
         Observer.Verify();
     end;
 
@@ -495,7 +495,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Observe('out', Txt);
         Observer.Expect('hasroot', 'Yes');
         Observer.Expect('name', 'root');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<root />');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<root />');
         Observer.Verify();
     end;
 
@@ -512,7 +512,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Observe('out', Txt);
         Observer.Observe('hasdecl', Format(Doc.GetDeclaration(Decl)));
         Observer.Observe('standalone', Decl.Standalone());
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<r />');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<r />');
         Observer.Expect('hasdecl', 'Yes');
         Observer.Expect('standalone', 'yes');
         Observer.Verify();
@@ -527,7 +527,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc := XmlDocument.Create(XmlElement.Create('r', '', XmlText.Create('hi')));
         Doc.WriteTo(Txt);
         Observer.Observe('out', Txt);
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<r>hi</r>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>hi</r>');
         Observer.Verify();
     end;
 
@@ -585,8 +585,8 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc.Add(XmlComment.Create('last'));
         Observer.Observe('add', Out(Doc));
         Observer.Observe('children', Format(Doc.GetChildNodes().Count()));
-        Observer.Expect('addfirst', '<?xml version="1.0" encoding="utf-16"?>\n<!--first-->\n<a />');
-        Observer.Expect('add', '<?xml version="1.0" encoding="utf-16"?>\n<!--first-->\n<a />\n<!--last-->');
+        Observer.Expect('addfirst', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--first-->\r\n<a />');
+        Observer.Expect('add', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--first-->\r\n<a />\r\n<!--last-->');
         Observer.Expect('children', '3');
         Observer.Verify();
     end;
@@ -628,13 +628,13 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc.SetDeclaration(Decl);
         Doc.WriteTo(Txt);
         Observer.Observe('out2', Txt);
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\r\n<a />');
         Observer.Expect('enc', 'utf-16');
         Observer.Expect('standalone', 'no');
         Observer.Expect('enc_set', 'utf-8');
         Observer.Expect('standalone_set', 'yes');
         Observer.Expect('version_set', '1.0');
-        Observer.Expect('out2', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<a />');
+        Observer.Expect('out2', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -696,7 +696,7 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Observe('out', Out(Doc));
         Observer.Observe('innerxml', Root.InnerXml());
         Observer.Expect('inner', '<>&"''AB€');
-        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\n<a>&lt;&gt;&amp;"''AB€</a>');
+        Observer.Expect('out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>&lt;&gt;&amp;"''AB€</a>');
         Observer.Expect('innerxml', '&lt;&gt;&amp;"''AB€');
         Observer.Verify();
     end;

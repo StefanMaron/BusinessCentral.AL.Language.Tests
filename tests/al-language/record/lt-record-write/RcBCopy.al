@@ -292,7 +292,7 @@ codeunit 72006 "LT RcB Copy Test"
         Observer.Expect('self copy', '[]');
         Observer.Expect('Id', '2..4');
         Observer.Expect('Grp not copied', '[]');
-        Observer.Expect('af252|text', 'The type of the constant must be compatible with that of the Txt field, and the length of the constant must not exceed the length of the field.\r\\r\Type: Text <-- Code\r\Field: Txt <-- Grp\r\Table: LT RcB Copy');
+        Observer.Expect('af252|text', 'The type of the constant must be compatible with that of the Txt field, and the length of the constant must not exceed the length of the field.\\Type: Text <-- Code\Field: Txt <-- Grp\Table: LT RcB Copy');
         Observer.Expect('af252|code', 'NCLCSRTS:TableEqualValue');
         Observer.Expect('other field', '');
         Observer.Expect('unfiltered source clears', '[]');

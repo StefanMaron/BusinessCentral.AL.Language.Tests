@@ -67,12 +67,12 @@ codeunit 70086 "LT PnA Xml Doctype"
         Observer.ObserveError('public-read');
         Observer.Expect('simple-read', 'Yes');
         Observer.Expect('simple-type', 'No');
-        Observer.Expect('simple-writeto', '<?xml version="1.0" encoding="utf-16"?>\n<r />');
+        Observer.Expect('simple-writeto', '<?xml version="1.0" encoding="utf-16"?>\r\n<r />');
         Observer.Expect('entity-read', 'No');
         Observer.Expect('entity-read|text', 'The following exception was encountered when processing XML data: ''Reference to undeclared entity ''e''. Line 1, position 35.'' at line 1 and position 35.');
         Observer.Expect('entity-read|code', 'Xml:Xml');
         Observer.Expect('entity-innertext', '');
-        Observer.Expect('entity-writeto', '<?xml version="1.0" encoding="utf-16"?>\n<r />');
+        Observer.Expect('entity-writeto', '<?xml version="1.0" encoding="utf-16"?>\r\n<r />');
         Observer.Expect('entity-type', 'No');
         Observer.Expect('system-read', 'Yes');
         Observer.Expect('system-read|text', '');

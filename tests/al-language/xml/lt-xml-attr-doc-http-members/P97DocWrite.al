@@ -110,12 +110,12 @@ codeunit 74808 "LT P97 Doc WriteTo"
         end;
         Observer.Expect('v1|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v1|code', 'InvalidOperation');
-        Observer.Expect('v2', '<?xml version="1.0" encoding="utf-16"?>\n<r />');
-        Observer.Expect('v3', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<!--lead-->\n<?pi data?>\n<r>\n  <c>v</c>\n</r>');
-        Observer.Expect('v4', '<?xml version="1.0" encoding="utf-16"?>\n<r>  a  b  <c /> tail </r>');
+        Observer.Expect('v2', '<?xml version="1.0" encoding="utf-16"?>\r\n<r />');
+        Observer.Expect('v3', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<!--lead-->\r\n<?pi data?>\r\n<r>\r\n  <c>v</c>\r\n</r>');
+        Observer.Expect('v4', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>  a  b  <c /> tail </r>');
         Observer.Expect('v5|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v5|code', 'InvalidOperation');
-        Observer.Expect('v6', '<?xml version="1.0" encoding="" standalone="yes"?>\n<r />');
+        Observer.Expect('v6', '<?xml version="1.0" encoding="" standalone="yes"?>\r\n<r />');
         Observer.Verify();
     end;
 

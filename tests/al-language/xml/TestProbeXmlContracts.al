@@ -52,10 +52,10 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('declaration_utf16_no_standalone', Written(Doc));
         Doc.SetDeclaration(XmlDeclaration.Create('1.0', '', 'no'));
         O.Observe('declaration_no_encoding', Written(Doc));
-        O.Expect('no_declaration', '<?xml version="1.0" encoding="utf-16"?><LF><root><LF>  <child><LF>    <grand /><LF>  </child><LF>  <empty /><LF></root>');
-        O.Expect('declaration_utf8_yes', '<?xml version="1.0" encoding="utf-8" standalone="yes"?><LF><root><LF>  <child><LF>    <grand /><LF>  </child><LF>  <empty /><LF></root>');
-        O.Expect('declaration_utf16_no_standalone', '<?xml version="1.0" encoding="utf-16" standalone=""?><LF><root><LF>  <child><LF>    <grand /><LF>  </child><LF>  <empty /><LF></root>');
-        O.Expect('declaration_no_encoding', '<?xml version="1.0" encoding="" standalone="no"?><LF><root><LF>  <child><LF>    <grand /><LF>  </child><LF>  <empty /><LF></root>');
+        O.Expect('no_declaration', '<?xml version="1.0" encoding="utf-16"?><CR><LF><root><CR><LF>  <child><CR><LF>    <grand /><CR><LF>  </child><CR><LF>  <empty /><CR><LF></root>');
+        O.Expect('declaration_utf8_yes', '<?xml version="1.0" encoding="utf-8" standalone="yes"?><CR><LF><root><CR><LF>  <child><CR><LF>    <grand /><CR><LF>  </child><CR><LF>  <empty /><CR><LF></root>');
+        O.Expect('declaration_utf16_no_standalone', '<?xml version="1.0" encoding="utf-16" standalone=""?><CR><LF><root><CR><LF>  <child><CR><LF>    <grand /><CR><LF>  </child><CR><LF>  <empty /><CR><LF></root>');
+        O.Expect('declaration_no_encoding', '<?xml version="1.0" encoding="" standalone="no"?><CR><LF><root><CR><LF>  <child><CR><LF>    <grand /><CR><LF>  </child><CR><LF>  <empty /><CR><LF></root>');
         O.Verify();
     end;
 
@@ -110,9 +110,9 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('escaped', Written(Doc));
         O.Observe('innerxml', Vis(Root.InnerXml()));
         O.Observe('outerxml_via_writeto', Written(Doc));
-        O.Expect('escaped', '<?xml version="1.0" encoding="utf-16"?><LF><root q="a&quot;b&lt;c&gt;d&amp;e''f" ctl="x&#x9;y&#xA;z" empty="">t&lt;&gt;&amp;"''<TAB><LF>end</root>');
+        O.Expect('escaped', '<?xml version="1.0" encoding="utf-16"?><CR><LF><root q="a&quot;b&lt;c&gt;d&amp;e''f" ctl="x&#x9;y&#xA;z" empty="">t&lt;&gt;&amp;"''<TAB><CR><LF>end</root>');
         O.Expect('innerxml', 't&lt;&gt;&amp;"''<TAB><LF>end');
-        O.Expect('outerxml_via_writeto', '<?xml version="1.0" encoding="utf-16"?><LF><root q="a&quot;b&lt;c&gt;d&amp;e''f" ctl="x&#x9;y&#xA;z" empty="">t&lt;&gt;&amp;"''<TAB><LF>end</root>');
+        O.Expect('outerxml_via_writeto', '<?xml version="1.0" encoding="utf-16"?><CR><LF><root q="a&quot;b&lt;c&gt;d&amp;e''f" ctl="x&#x9;y&#xA;z" empty="">t&lt;&gt;&amp;"''<TAB><CR><LF>end</root>');
         O.Verify();
     end;
 
@@ -128,9 +128,9 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('parsed_a_selfclose', Written(Doc));
         XmlDocument.ReadFrom('<a><b></b><c/><d> </d></a>', Doc);
         O.Observe('parsed_nested_empty_forms', Written(Doc));
-        O.Expect('parsed_a_open_close', '<?xml version="1.0" encoding="utf-16"?><LF><a></a>');
-        O.Expect('parsed_a_selfclose', '<?xml version="1.0" encoding="utf-16"?><LF><a />');
-        O.Expect('parsed_nested_empty_forms', '<?xml version="1.0" encoding="utf-16"?><LF><a><LF>  <b></b><LF>  <c /><LF>  <d> </d><LF></a>');
+        O.Expect('parsed_a_open_close', '<?xml version="1.0" encoding="utf-16"?><CR><LF><a></a>');
+        O.Expect('parsed_a_selfclose', '<?xml version="1.0" encoding="utf-16"?><CR><LF><a />');
+        O.Expect('parsed_nested_empty_forms', '<?xml version="1.0" encoding="utf-16"?><CR><LF><a><CR><LF>  <b></b><CR><LF>  <c /><CR><LF>  <d> </d><CR><LF></a>');
         O.Verify();
     end;
 
@@ -153,7 +153,7 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('root_childnodes_count', Format(Nodes.Count()));
         O.Observe('root_innerxml', Vis(Root.InnerXml()));
         O.Observe('root_innertext', Vis(Root.InnerText()));
-        O.Expect('written', '<?xml version="1.0" encoding="utf-16"?><LF>  <r><LF>    <a>x</a><LF>  </r><LF>');
+        O.Expect('written', '<?xml version="1.0" encoding="utf-16"?><CR><LF>  <r><CR><LF>    <a>x</a><CR><LF>  </r><CR><LF>');
         O.Expect('doc_childnodes_count', '3');
         O.Expect('root_childnodes_count', '3');
         O.Expect('root_innerxml', '<LF>    <a>x</a><LF>  ');
@@ -177,7 +177,7 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('written', Written(Doc));
         O.Observe('innertext', Root.InnerText());
         O.Expect('children_count', '2');
-        O.Expect('written', '<?xml version="1.0" encoding="utf-16"?><LF><r>abc</r>');
+        O.Expect('written', '<?xml version="1.0" encoding="utf-16"?><CR><LF><r>abc</r>');
         O.Expect('innertext', 'abc');
         O.Verify();
     end;
@@ -209,11 +209,11 @@ codeunit 69802 "PA Xml Contracts"
         N.AsXmlElement().SetAttribute('viaparent', '1');
         O.Observe('d1_after_parent_side_change', Written(D1));
         O.Observe('d2_after_parent_side_change', Written(D2));
-        O.Expect('d1_after_second_add', '<?xml version="1.0" encoding="utf-16"?><LF><r1><LF>  <c late="1" /><LF></r1>');
-        O.Expect('d2_after_second_add', '<?xml version="1.0" encoding="utf-16"?><LF><r2><LF>  <c /><LF></r2>');
+        O.Expect('d1_after_second_add', '<?xml version="1.0" encoding="utf-16"?><CR><LF><r1><CR><LF>  <c late="1" /><CR><LF></r1>');
+        O.Expect('d2_after_second_add', '<?xml version="1.0" encoding="utf-16"?><CR><LF><r2><CR><LF>  <c /><CR><LF></r2>');
         O.Expect('r1_children', '1');
-        O.Expect('d1_after_parent_side_change', '<?xml version="1.0" encoding="utf-16"?><LF><r1><LF>  <c late="1" viaparent="1" /><LF></r1>');
-        O.Expect('d2_after_parent_side_change', '<?xml version="1.0" encoding="utf-16"?><LF><r2><LF>  <c /><LF></r2>');
+        O.Expect('d1_after_parent_side_change', '<?xml version="1.0" encoding="utf-16"?><CR><LF><r1><CR><LF>  <c late="1" viaparent="1" /><CR><LF></r1>');
+        O.Expect('d2_after_parent_side_change', '<?xml version="1.0" encoding="utf-16"?><CR><LF><r2><CR><LF>  <c /><CR><LF></r2>');
         O.Verify();
     end;
 
@@ -713,7 +713,7 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('readfrom_with_simple_doctype_bool', Format(Ok));
         O.Expect('readfrom_with_doctype_bool', 'Yes');
         O.Expect('getdocumenttype_bool', 'No');
-        O.Expect('written', '<?xml version="1.0" encoding="utf-16"?><LF><a />');
+        O.Expect('written', '<?xml version="1.0" encoding="utf-16"?><CR><LF><a />');
         O.Expect('readfrom_with_simple_doctype_bool', 'Yes');
         O.Verify();
     end;

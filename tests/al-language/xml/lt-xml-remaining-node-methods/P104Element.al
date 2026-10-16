@@ -73,14 +73,14 @@ codeunit 71828 "LT P104 Element"
         for V := 1 to 16 do
             RunCreate(Observer, 'c' + Format(V), V);
         Observer.Expect('c1', '<e>t</e>');
-        Observer.Expect('c2', '<e>\n  <c />\n</e>');
+        Observer.Expect('c2', '<e>\r\n  <c />\r\n</e>');
         Observer.Expect('c3', '<e a="v" />');
-        Observer.Expect('c4', '<e>\n  <!--c-->\n</e>');
+        Observer.Expect('c4', '<e>\r\n  <!--c-->\r\n</e>');
         Observer.Expect('c5', '<e><![CDATA[d]]></e>');
-        Observer.Expect('c6', '<e>\n  <?p d?>\n</e>');
-        Observer.Expect('c7', '<e>\n  <c1 />\n  <c2 />\n</e>');
+        Observer.Expect('c6', '<e>\r\n  <?p d?>\r\n</e>');
+        Observer.Expect('c7', '<e>\r\n  <c1 />\r\n  <c2 />\r\n</e>');
         Observer.Expect('c8', '<e>t<c /><!--x--></e>');
-        Observer.Expect('c9', '<e a="v">\n  <c />\n</e>');
+        Observer.Expect('c9', '<e a="v">\r\n  <c />\r\n</e>');
         Observer.Expect('c10', '<e>42</e>');
         Observer.Expect('c11|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c11|code', 'Argument');
@@ -157,8 +157,8 @@ codeunit 71828 "LT P104 Element"
         Observer.Observe('second_owner', S);
         C.WriteTo(S);
         Observer.Observe('child', S);
-        Observer.Expect('first_owner', '<e1>\n  <c />\n</e1>');
-        Observer.Expect('second_owner', '<e2>\n  <c />\n</e2>');
+        Observer.Expect('first_owner', '<e1>\r\n  <c />\r\n</e1>');
+        Observer.Expect('second_owner', '<e2>\r\n  <c />\r\n</e2>');
         Observer.Expect('child', '<c />');
         Observer.Verify();
     end;

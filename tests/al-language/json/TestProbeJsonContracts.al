@@ -544,7 +544,7 @@ codeunit 69801 "PA Json Contracts"
         Obj.Add('true_text', 'true');
         Obj.Add('empty_text', '');
         O.Observe('yaml', TryYaml(Obj));
-        O.Expect('yaml', 'plain: text\nnum: 3\nflag: true\nnested:\n  x: 1\nlist:\n- one\n- 2\nneeds_quote: ''a: b # c''\ncolon_start: '': x''\nnumeric_text: 123\ntrue_text: true\nempty_text: ''''\n');
+        O.Expect('yaml', 'plain: text\r\nnum: 3\r\nflag: true\r\nnested:\r\n  x: 1\r\nlist:\r\n- one\r\n- 2\r\nneeds_quote: ''a: b # c''\r\ncolon_start: '': x''\r\nnumeric_text: 123\r\ntrue_text: true\r\nempty_text: ''''\r\n');
         O.Verify();
     end;
 

@@ -394,13 +394,13 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Observe('eqgt', TryFind(R, '=>'));
         Observer.Observe('space', TryFind(R, ' '));
         Observer.Observe('minusPlus', TryFind(R, '-+'));
-        Observer.Expect('x', 'There is an invalid character in the Find expression ''x''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('doubleEq', 'There is an invalid character in the Find expression ''==''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('empty', 'There is an invalid character in the Find expression ''''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('gtgt', 'There is an invalid character in the Find expression ''>>''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('x', 'There is an invalid character in the Find expression ''x''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('doubleEq', 'There is an invalid character in the Find expression ''==''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('empty', 'There is an invalid character in the Find expression ''''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('gtgt', 'There is an invalid character in the Find expression ''>>''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
         Observer.Expect('eqgt', 'ok');
-        Observer.Expect('space', 'There is an invalid character in the Find expression '' ''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('minusPlus', 'There is an invalid character in the Find expression ''-+''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('space', 'There is an invalid character in the Find expression '' ''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('minusPlus', 'There is an invalid character in the Find expression ''-+''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
         Observer.Verify();
     end;
 

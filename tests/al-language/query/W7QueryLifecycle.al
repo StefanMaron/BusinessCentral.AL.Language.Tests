@@ -275,8 +275,8 @@ codeunit 68511 "W7 Query Lifecycle"
         Observer.Observe('bytes', CopyStr(Util.Hex(TempBlob), 1, 60));
         Observer.Observe('text utf8', Util.Lines(TempBlob, TextEncoding::UTF8));
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('length', '26');
-        Observer.Expect('bytes', '45 6E 74 72 79 2C 49 6E 74 46 0A 31 2C 31 30 0A 32 2C 32 30 ');
+        Observer.Expect('length', '30');
+        Observer.Expect('bytes', '45 6E 74 72 79 2C 49 6E 74 46 0D 0A 31 2C 31 30 0D 0A 32 2C');
         Observer.Expect('text utf8', 'Entry,IntF|1,10|2,20|3,30|');
         Observer.Verify();
     end;
@@ -299,7 +299,7 @@ codeunit 68511 "W7 Query Lifecycle"
         Observer.Observe('bytes', CopyStr(Util.Hex(TempBlob), 1, 60));
         Observer.Observe('text utf8', Util.Lines(TempBlob, TextEncoding::UTF8));
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('length', '1281');
+        Observer.Expect('length', '1317');
         Observer.Expect('bytes', 'EF BB BF 3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E ');
         Observer.Ignore('text utf8'); // a dump or environment data: observed, not asserted
         Observer.Verify();
@@ -323,7 +323,7 @@ codeunit 68511 "W7 Query Lifecycle"
         Observer.Observe('bytes', CopyStr(Util.Hex(TempBlob), 1, 60));
         Observer.Observe('text utf8', Util.Lines(TempBlob, TextEncoding::UTF8));
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('length', '989');
+        Observer.Expect('length', '1019');
         Observer.Expect('bytes', 'EF BB BF 3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E ');
         Observer.Ignore('text utf8'); // a dump or environment data: observed, not asserted
         Observer.Verify();

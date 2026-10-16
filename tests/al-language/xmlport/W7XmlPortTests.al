@@ -362,11 +362,11 @@ codeunit 68520 "W7 XmlPort Probes"
         Observer.Observe('variable text, none declared', ExportHead(Xmlport::"W7 XP Enc Vt None"));
         Observer.Expect('xml, Encoding = UTF8', '3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 55 54 46 2D 38 22 20 73 74 61 6E 64 61 6C 6F 6E 65 3D 22 6E ');
         Observer.Expect('xml, Encoding = UTF16', 'FF FE 3C 00 3F 00 78 00 6D 00 6C 00 20 00 76 00 65 00 72 00 73 00 69 00 6F 00 6E 00 3D 00 22 00 31 00 2E 00 30 00 22 00 20 00 65 00 6E 00 63 00 6F 00 ');
-        Observer.Expect('variable text, MSDOS', '22 31 22 2C 22 78 E9 22');
+        Observer.Expect('variable text, MSDOS', '22 31 22 2C 22 78 82 22');
         Observer.Expect('variable text, Windows', '22 31 22 2C 22 78 E9 22');
         Observer.Expect('variable text, UTF8', 'EF BB BF 22 31 22 2C 22 78 C3 A9 22');
         Observer.Expect('variable text, UTF16', 'FF FE 22 00 31 00 22 00 2C 00 22 00 78 00 E9 00 22 00');
-        Observer.Expect('variable text, none declared', '22 31 22 2C 22 78 E9 22');
+        Observer.Expect('variable text, none declared', '22 31 22 2C 22 78 82 22');
         Observer.Verify();
     end;
 

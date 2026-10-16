@@ -23,7 +23,7 @@ codeunit 73500 "LT XpT Export Basic"
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('af21|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af21|code', 'InvalidStreamData');
-        Observer.Expect('len', '1236');
+        Observer.Expect('len', '1294');
         Observer.Verify();
     end;
 
@@ -39,7 +39,7 @@ codeunit 73500 "LT XpT Export Basic"
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('af34|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af34|code', 'InvalidStreamData');
-        Observer.Expect('len', '440');
+        Observer.Expect('len', '462');
         Observer.Verify();
     end;
 

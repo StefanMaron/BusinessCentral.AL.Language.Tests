@@ -279,8 +279,8 @@ codeunit 71133 "LT PnC XmlPort Format"
             Xml += Line;
         end;
         Observer.Observe('legacyEvaluate', Xml);
-        Observer.Expect('xmlEvaluate', 'ÿþ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Row>    <No>1</No>    <D>2024-03-05</D>    <Dec>1234.50</Dec>    <B>true</B>  </Row></Root>');
-        Observer.Expect('legacyEvaluate', 'ÿþ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Row>    <No>1</No>    <D>03/05/24</D>    <Dec>1,234.50</Dec>    <B>Yes</B>  </Row></Root>t>');
+        Observer.Expect('xmlEvaluate', ' þ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Row>    <No>1</No>    <D>2024-03-05</D>    <Dec>1234.50</Dec>    <B>true</B>  </Row></Root>');
+        Observer.Expect('legacyEvaluate', ' þ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Row>    <No>1</No>    <D>03/05/24</D>    <Dec>1,234.50</Dec>    <B>Yes</B>  </Row></Root>t>');
         Observer.Verify();
     end;
 
@@ -516,7 +516,7 @@ codeunit 71134 "LT PnC XmlPort Triggers"
         Log.Reset();
         RunPort(1, '<?xml version="1.0" encoding="UTF-8"?><Root><Container><Leaf>abc</Leaf></Container></Root>');
         Observer.Observe('import.log', Log.Joined());
-        Observer.Expect('export.xml', 'ÿþ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Container>    <Leaf>leaf-set</Leaf>set-in-trigger</Container></Root>');
+        Observer.Expect('export.xml', ' þ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Container>    <Leaf>leaf-set</Leaf>set-in-trigger</Container></Root>');
         Observer.Expect('export.log', 'BeforePass:[]|LeafBeforePass:[]');
         Observer.Expect('import.log', 'LeafAfterAssign:[abc]|AfterAssign:[]');
         Observer.Verify();
@@ -588,7 +588,7 @@ codeunit 71134 "LT PnC XmlPort Triggers"
             Xml += Line;
         end;
         Observer.Observe('export.xml', Xml);
-        Observer.Expect('export.xml', 'ÿþ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Req />  <Opt />  <Many /></Root>');
+        Observer.Expect('export.xml', ' þ<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Req />  <Opt />  <Many /></Root>');
         Observer.Verify();
     end;
 }

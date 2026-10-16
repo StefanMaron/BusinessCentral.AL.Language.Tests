@@ -227,13 +227,13 @@ codeunit 72212 "LT P92 Position"
         Observer.Observe('too_long_code', SetPosOutcome(RecRef, 'Grp=CONST(ABCDEFGHIJKLMNOP),Seq=CONST(1)'));
         RecRef.Close();
         Observer.Expect('empty', 'error|'''' is not a valid position specification for the LT P92 Pair table. The position must contain all the primary key fields, in order, and only primary key fields.|DB:Ok');
-        Observer.Expect('garbage', 'error|Invalid expression of type: position.\r\garbage|DB:Ok');
+        Observer.Expect('garbage', 'error|Invalid expression of type: position.\garbage|DB:Ok');
         Observer.Expect('unknown_field', 'error|''Nope=CONST(1)'' is not a valid position specification for the LT P92 Pair table. The position must contain all the primary key fields, in order, and only primary key fields.|DB:Ok');
-        Observer.Expect('unclosed', 'error|Invalid expression of type: position.\r\Grp=CONST(G1|DB:Ok');
+        Observer.Expect('unclosed', 'error|Invalid expression of type: position.\Grp=CONST(G1|DB:Ok');
         Observer.Expect('wrong_type', 'error|The value "abc" can''t be evaluated into type Integer.|Evaluate');
         Observer.Expect('only_first_key_field', 'error|''Grp=CONST(G1)'' is not a valid position specification for the LT P92 Pair table. The position must contain all the primary key fields, in order, and only primary key fields.|DB:Ok');
-        Observer.Expect('too_many_values', 'error|Invalid expression of type: position.\r\G1,1,extra|DB:Ok');
-        Observer.Expect('one_value_nonames', 'error|Invalid expression of type: position.\r\G1|DB:Ok');
+        Observer.Expect('too_many_values', 'error|Invalid expression of type: position.\G1,1,extra|DB:Ok');
+        Observer.Expect('one_value_nonames', 'error|Invalid expression of type: position.\G1|DB:Ok');
         Observer.Expect('too_long_code', 'error|The length of the string is 16, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKLMNOP|StringLengthExceeded');
         Observer.Verify();
     end;

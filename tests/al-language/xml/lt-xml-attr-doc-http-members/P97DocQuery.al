@@ -259,11 +259,11 @@ codeunit 74807 "LT P97 Doc Query"
         Sel(Observer, 'empty', Doc, '');
         Sel(Observer, 'bad', Doc, '[[');
         Sel(Observer, 'prefix_unknown', Doc, '/b:r');
-        Observer.Expect('root_star', 'Yes|1|<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>|single=Yes:<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>');
-        Observer.Expect('root_local', 'Yes|1|<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>|single=Yes:<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>');
+        Observer.Expect('root_star', 'Yes|1|<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>|single=Yes:<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>');
+        Observer.Expect('root_local', 'Yes|1|<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>|single=Yes:<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>');
         Observer.Expect('root_named', 'Yes|0||single=No:');
-        Observer.Expect('dot', 'Yes|1|<?xml version="1.0" encoding="utf-16"?>\n<!--lead-->\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>|single=Yes:<?xml version="1.0" encoding="utf-16"?>\n<!--lead-->\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>');
-        Observer.Expect('slash', 'Yes|1|<?xml version="1.0" encoding="utf-16"?>\n<!--lead-->\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>|single=Yes:<?xml version="1.0" encoding="utf-16"?>\n<!--lead-->\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>');
+        Observer.Expect('dot', 'Yes|1|<?xml version="1.0" encoding="utf-16"?>\r\n<!--lead-->\r\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>|single=Yes:<?xml version="1.0" encoding="utf-16"?>\r\n<!--lead-->\r\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>');
+        Observer.Expect('slash', 'Yes|1|<?xml version="1.0" encoding="utf-16"?>\r\n<!--lead-->\r\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>|single=Yes:<?xml version="1.0" encoding="utf-16"?>\r\n<!--lead-->\r\n<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>');
         Observer.Expect('dotdot', 'Yes|0||single=No:');
         Observer.Expect('comment', 'Yes|1|<!--lead-->|single=Yes:<!--lead-->');
         Observer.Expect('comment_abs', 'Yes|1|<!--lead-->|single=Yes:<!--lead-->');
@@ -326,7 +326,7 @@ codeunit 74807 "LT P97 Doc Query"
             Observer.Observe('empty', R)
         else
             Observer.ObserveError('empty');
-        Observer.Expect('root', 'Yes|1|single=Yes:<r xmlns="urn:a" xmlns:b="urn:b" id="7">\n  <a />\n  <b:a />\n  <a xmlns="urn:c" />\n  <x>\n    <a />\n    <b:a>\n      <a />\n    </b:a>\n  </x>text<?pi data?></r>');
+        Observer.Expect('root', 'Yes|1|single=Yes:<r xmlns="urn:a" xmlns:b="urn:b" id="7">\r\n  <a />\r\n  <b:a />\r\n  <a xmlns="urn:c" />\r\n  <x>\r\n    <a />\r\n    <b:a>\r\n      <a />\r\n    </b:a>\r\n  </x>text<?pi data?></r>');
         Observer.Expect('a_a', 'Yes|3|single=Yes:<a xmlns="urn:a" />');
         Observer.Expect('b_a', 'Yes|2|single=Yes:<b:a xmlns:b="urn:b" />');
         Observer.Expect('c_a', 'Yes|1|single=Yes:<a xmlns="urn:c" />');

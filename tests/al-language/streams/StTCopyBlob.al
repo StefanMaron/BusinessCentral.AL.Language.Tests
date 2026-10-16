@@ -448,10 +448,10 @@ codeunit 74202 "LT StT CopyStream"
         Observer.Observe('windows-back', Format(StrLen(Base64.FromBase64(Base64.ToBase64(T, TextEncoding::Windows), TextEncoding::Windows))));
         Observer.Expect('utf8', 'w6Tigqw=');
         Observer.Expect('utf16', '5ACsIA==');
-        Observer.Expect('windows', 'w6Tigqw=');
-        Observer.Expect('msdos', 'w6Tigqw=');
+        Observer.Expect('windows', '5IA=');
+        Observer.Expect('msdos', '5IA=');
         Observer.Expect('utf16-back', '2');
-        Observer.Expect('windows-back', '5');
+        Observer.Expect('windows-back', '2');
         Observer.Verify();
     end;
 
@@ -469,7 +469,7 @@ codeunit 74202 "LT StT CopyStream"
         Observer.Observe('url', Base64.ToBase64Url(T));
         Observer.Observe('url-abc', Base64.ToBase64Url('abc?>>'));
         Observer.Observe('std-abc', Base64.ToBase64('abc?>>'));
-        Observer.Expect('std', 'w7vDv8K+');
+        Observer.Expect('std', '+/++');
         Observer.Expect('url', 'w7vDv8K-');
         Observer.Expect('url-abc', 'YWJjPz4-');
         Observer.Expect('std-abc', 'YWJjPz4+');

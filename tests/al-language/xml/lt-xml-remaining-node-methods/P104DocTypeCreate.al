@@ -116,10 +116,10 @@ codeunit 71827 "LT P104 DocType Create"
             Doc.WriteTo(S);
             Observer.Observe('doc' + Format(V), S);
         end;
-        Observer.Expect('doc1', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<r />');
-        Observer.Expect('doc2', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "">\n<r />');
-        Observer.Expect('doc3', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\n<r />');
-        Observer.Expect('doc4', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "" ""[<!ELEMENT r EMPTY>]>\n<r />');
+        Observer.Expect('doc1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<r />');
+        Observer.Expect('doc2', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "">\r\n<r />');
+        Observer.Expect('doc3', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\r\n<r />');
+        Observer.Expect('doc4', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "" ""[<!ELEMENT r EMPTY>]>\r\n<r />');
         Observer.Verify();
     end;
 
