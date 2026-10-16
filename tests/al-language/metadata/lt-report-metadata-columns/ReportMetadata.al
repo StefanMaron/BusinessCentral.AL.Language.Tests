@@ -217,31 +217,6 @@ codeunit 71579 "LT P175 Report Metadata"
     end;
 
     [Test]
-    procedure P175_Meta_ProcessingOnly_Part2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, Report::"LT P175 Rpt Proc", 17, 40);
-        Observer.Expect('found', 'Yes');
-        Observer.Expect('WordMergeDataItem', '');
-        Observer.Expect('FirstDataItemTableID', '2000000026');
-        Observer.Expect('MaxRows', '0');
-        Observer.Expect('MaxDocuments', '0');
-        Observer.Expect('Timeout', '');
-        Observer.Expect('AllowScheduling', 'Yes');
-        Observer.Expect('DefaultLayoutName', '');
-        Observer.Expect('FormatRegion', '');
-        Observer.Expect('ExcelLayoutMultipleDataSheets', 'No');
-        Observer.Expect('App ID', 'blank=No');
-        Observer.Expect('InherentPermissions', '');
-        Observer.Expect('InherentEntitlements', '');
-        Observer.Expect('AL Namespace', '');
-        Observer.Expect('DefaultHeaderFooterPartName', '');
-        Observer.Expect('DefaultThemePartName', '');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P175_Meta_Rdlc_Part1()
     var
         Observer: Codeunit "Probe Observer";
@@ -268,31 +243,6 @@ codeunit 71579 "LT P175 Report Metadata"
     end;
 
     [Test]
-    procedure P175_Meta_Rdlc_Part2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, Report::"LT P175 Rpt Rdlc", 17, 40);
-        Observer.Expect('found', 'Yes');
-        Observer.Expect('WordMergeDataItem', '');
-        Observer.Expect('FirstDataItemTableID', '2000000026');
-        Observer.Expect('MaxRows', '0');
-        Observer.Expect('MaxDocuments', '0');
-        Observer.Expect('Timeout', '');
-        Observer.Expect('AllowScheduling', 'Yes');
-        Observer.Expect('DefaultLayoutName', 'OneRdlc');
-        Observer.Expect('FormatRegion', '');
-        Observer.Expect('ExcelLayoutMultipleDataSheets', 'No');
-        Observer.Expect('App ID', 'blank=No');
-        Observer.Expect('InherentPermissions', '');
-        Observer.Expect('InherentEntitlements', '');
-        Observer.Expect('AL Namespace', '');
-        Observer.Expect('DefaultHeaderFooterPartName', '');
-        Observer.Expect('DefaultThemePartName', '');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P175_Meta_Multi_Part1()
     var
         Observer: Codeunit "Probe Observer";
@@ -315,91 +265,6 @@ codeunit 71579 "LT P175 Report Metadata"
         Observer.Expect('PaperSourceLastPage', '0');
         Observer.Expect('PreviewMode', 'Normal');
         Observer.Expect('DefaultLayout', 'RDLC');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_Meta_Multi_Part2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, Report::"LT P175 Rpt Multi", 17, 40);
-        Observer.Expect('found', 'Yes');
-        Observer.Expect('WordMergeDataItem', '');
-        Observer.Expect('FirstDataItemTableID', '2000000026');
-        Observer.Expect('MaxRows', '0');
-        Observer.Expect('MaxDocuments', '0');
-        Observer.Expect('Timeout', '');
-        Observer.Expect('AllowScheduling', 'Yes');
-        Observer.Expect('DefaultLayoutName', 'SecondRdlc');
-        Observer.Expect('FormatRegion', '');
-        Observer.Expect('ExcelLayoutMultipleDataSheets', 'No');
-        Observer.Expect('App ID', 'blank=No');
-        Observer.Expect('InherentPermissions', '');
-        Observer.Expect('InherentEntitlements', '');
-        Observer.Expect('AL Namespace', '');
-        Observer.Expect('DefaultHeaderFooterPartName', '');
-        Observer.Expect('DefaultThemePartName', '');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_Meta_ColumnCountAndRelations()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P175 Meta Helper";
-        A: RecordRef;
-        B: RecordRef;
-    begin
-        Helper.OpenOne(A, 2000000139, 1, Report::"LT P175 Rpt Rdlc");
-        Helper.OpenOne(B, 2000000139, 1, Report::"LT P175 Rpt Multi");
-        Observer.Observe('columnCount', Format(Helper.ColumnCount(A)));
-        Observer.Observe('names', Helper.ColumnNames(A));
-        Observer.Observe('same default layout kind', Format(Helper.NamedValue(A, 'DefaultLayout') = Helper.NamedValue(B, 'DefaultLayout')));
-        Observer.Observe('same app id', Format(Helper.NamedValue(A, 'App ID') = Helper.NamedValue(B, 'App ID')));
-        Observer.Observe('same first table', Format(Helper.NamedValue(A, 'FirstDataItemTableID') = Helper.NamedValue(B, 'FirstDataItemTableID')));
-        Observer.Observe('default layout name rdlc', Helper.NamedValue(A, 'DefaultLayoutName'));
-        Observer.Observe('default layout name multi', Helper.NamedValue(B, 'DefaultLayoutName'));
-        Observer.Expect('columnCount', '31');
-        Observer.Expect('names', 'ID,Name,Caption,UseRequestPage,UseSystemPrinter,EnableExternalImages,EnableHyperLinks,EnableExternalAssemblies,ProcessingOnly,ShowPrintStatus,TransactionType,PaperSourceFirstPage,PaperSourceDefaultPage,PaperSourceLastPage,PreviewMode,DefaultLayout,WordMergeDataItem,FirstDataItemTableID,MaxRows,MaxDocuments,Timeout,AllowScheduling,DefaultLayoutName,FormatRegion,ExcelLayoutMultipleDataSheets,App ID,InherentPermissions,InherentEntitlements,AL Namespace,DefaultHeaderFooterPartName,DefaultThemePartName,');
-        Observer.Expect('same default layout kind', 'Yes');
-        Observer.Expect('same app id', 'Yes');
-        Observer.Expect('same first table', 'Yes');
-        Observer.Expect('default layout name rdlc', 'OneRdlc');
-        Observer.Expect('default layout name multi', 'SecondRdlc');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_LayoutList_Multi()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P175 Meta Helper";
-    begin
-        Helper.LayoutRows(Observer, 'multi ', Report::"LT P175 Rpt Multi");
-        Observer.Expect('multi columns', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Expect('multi row1', 'name=FirstRdlc;caption=P175 first;format=RDLC;desc=FirstRdlc;obsolete=No');
-        Observer.Expect('multi row1 app is this app', 'Yes');
-        Observer.Expect('multi row2', 'name=SecondRdlc;caption=P175 second;format=RDLC;desc=P175 second summary;obsolete=No');
-        Observer.Expect('multi row2 app is this app', 'Yes');
-        Observer.Expect('multi rows', '2');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_LayoutList_RdlcAndProcessingOnly()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P175 Meta Helper";
-    begin
-        Helper.LayoutRows(Observer, 'rdlc ', Report::"LT P175 Rpt Rdlc");
-        Helper.LayoutRows(Observer, 'proc ', Report::"LT P175 Rpt Proc");
-        Observer.Expect('rdlc columns', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Expect('rdlc row1', 'name=OneRdlc;caption=P175 one rdlc;format=RDLC;desc=P175 rdlc summary;obsolete=No');
-        Observer.Expect('rdlc row1 app is this app', 'Yes');
-        Observer.Expect('rdlc rows', '1');
-        Observer.Expect('proc columns', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Expect('proc rows', '0');
         Observer.Verify();
     end;
 

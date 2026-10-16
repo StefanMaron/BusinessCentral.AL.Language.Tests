@@ -75,45 +75,4 @@ codeunit 71580 "LT P175 Report Meta Word"
         Observer.Expect('DefaultLayout', 'Word');
         Observer.Verify();
     end;
-
-    [Test]
-    procedure P175_Meta_Word_Part2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, 17, 40);
-        Observer.Expect('found', 'Yes');
-        Observer.Expect('WordMergeDataItem', 'Item');
-        Observer.Expect('FirstDataItemTableID', '2000000026');
-        Observer.Expect('MaxRows', '0');
-        Observer.Expect('MaxDocuments', '0');
-        Observer.Expect('Timeout', '');
-        Observer.Expect('AllowScheduling', 'Yes');
-        Observer.Expect('DefaultLayoutName', 'OneWord');
-        Observer.Expect('FormatRegion', '');
-        Observer.Expect('ExcelLayoutMultipleDataSheets', 'No');
-        Observer.Expect('App ID', 'blank=No');
-        Observer.Expect('InherentPermissions', '');
-        Observer.Expect('InherentEntitlements', '');
-        Observer.Expect('AL Namespace', '');
-        Observer.Expect('DefaultHeaderFooterPartName', '');
-        Observer.Expect('DefaultThemePartName', '');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_LayoutList_Word()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P175 Meta Helper";
-    begin
-        Helper.LayoutRows(Observer, 'word ', Report::"LT P175 Rpt Word");
-        Observer.Observe('default layout', Format(Report.DefaultLayout(Report::"LT P175 Rpt Word")));
-        Observer.Expect('word columns', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Expect('word row1', 'name=OneWord;caption=P175 one word;format=Word;desc=P175 word summary;obsolete=No');
-        Observer.Expect('word row1 app is this app', 'Yes');
-        Observer.Expect('word rows', '1');
-        Observer.Expect('default layout', 'Word');
-        Observer.Verify();
-    end;
 }

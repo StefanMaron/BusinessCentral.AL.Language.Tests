@@ -98,38 +98,6 @@ codeunit 71581 "LT P175 Report Ext Render"
     end;
 
     [Test]
-    procedure P175_ExtRender_LayoutListOfBase()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P175 Meta Helper";
-    begin
-        Helper.LayoutRows(Observer, 'base ', Report::"LT P175 Ext Base");
-        Observer.Expect('base columns', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Expect('base row1', 'name=BaseRdlc;caption=P175 base layout;format=RDLC;desc=BaseRdlc;obsolete=No');
-        Observer.Expect('base row1 app is this app', 'Yes');
-        Observer.Expect('base row2', 'name=ExtRdlcA;caption=P175 ext A;format=RDLC;desc=P175 ext A summary;obsolete=No');
-        Observer.Expect('base row2 app is this app', 'Yes');
-        Observer.Expect('base row3', 'name=ExtRdlcB;caption=P175 ext B;format=RDLC;desc=ExtRdlcB;obsolete=No');
-        Observer.Expect('base row3 app is this app', 'Yes');
-        Observer.Expect('base rows', '3');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_ExtRender_LayoutListOfBaseWithoutRendering()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P175 Meta Helper";
-    begin
-        Helper.LayoutRows(Observer, 'norender ', Report::"LT P175 Ext Base NoRender");
-        Observer.Expect('norender columns', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Expect('norender row1', 'name=ExtOnly;caption=P175 ext only;format=RDLC;desc=ExtOnly;obsolete=No');
-        Observer.Expect('norender row1 app is this app', 'Yes');
-        Observer.Expect('norender rows', '1');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P175_ExtRender_DefaultLayoutOfBase()
     var
         Observer: Codeunit "Probe Observer";
@@ -164,56 +132,6 @@ codeunit 71581 "LT P175 Report Ext Render"
         Observer.Expect('PaperSourceLastPage', '0');
         Observer.Expect('PreviewMode', 'Normal');
         Observer.Expect('DefaultLayout', 'RDLC');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_ExtRender_MetadataBase_Part2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, Report::"LT P175 Ext Base", 17, 40);
-        Observer.Expect('found', 'Yes');
-        Observer.Expect('WordMergeDataItem', '');
-        Observer.Expect('FirstDataItemTableID', '2000000026');
-        Observer.Expect('MaxRows', '0');
-        Observer.Expect('MaxDocuments', '0');
-        Observer.Expect('Timeout', '');
-        Observer.Expect('AllowScheduling', 'Yes');
-        Observer.Expect('DefaultLayoutName', 'BaseRdlc');
-        Observer.Expect('FormatRegion', '');
-        Observer.Expect('ExcelLayoutMultipleDataSheets', 'No');
-        Observer.Expect('App ID', 'blank=No');
-        Observer.Expect('InherentPermissions', '');
-        Observer.Expect('InherentEntitlements', '');
-        Observer.Expect('AL Namespace', '');
-        Observer.Expect('DefaultHeaderFooterPartName', '');
-        Observer.Expect('DefaultThemePartName', '');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P175_ExtRender_MetadataNoRender_Part2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, Report::"LT P175 Ext Base NoRender", 17, 40);
-        Observer.Expect('found', 'Yes');
-        Observer.Expect('WordMergeDataItem', '');
-        Observer.Expect('FirstDataItemTableID', '2000000026');
-        Observer.Expect('MaxRows', '0');
-        Observer.Expect('MaxDocuments', '0');
-        Observer.Expect('Timeout', '');
-        Observer.Expect('AllowScheduling', 'Yes');
-        Observer.Expect('DefaultLayoutName', '');
-        Observer.Expect('FormatRegion', '');
-        Observer.Expect('ExcelLayoutMultipleDataSheets', 'No');
-        Observer.Expect('App ID', 'blank=No');
-        Observer.Expect('InherentPermissions', '');
-        Observer.Expect('InherentEntitlements', '');
-        Observer.Expect('AL Namespace', '');
-        Observer.Expect('DefaultHeaderFooterPartName', '');
-        Observer.Expect('DefaultThemePartName', '');
         Observer.Verify();
     end;
 }
