@@ -227,6 +227,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Run 38851717694 (BC 29.0, workflow_dispatch) found the docker CLI but no daemon:
+      # every `docker` call failed on npipe:////./pipe/docker_engine, so no test ran.
+      # Start the service if it is stopped, then wait for the engine to answer. Failing
+      # here says "the daemon never came up", not a downstream parse error.
+      - name: Wait for the docker daemon
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $svc = Get-Service -Name docker -ErrorAction SilentlyContinue
+          if ($null -eq $svc) {
+            Write-Host "::warning::no 'docker' service is registered on this runner"
+          } elseif ($svc.Status -ne 'Running') {
+            Write-Host "docker service is '$($svc.Status)'; starting it"
+            Start-Service -Name docker -ErrorAction Continue
+          }
+          $deadline = (Get-Date).AddMinutes(3)
+          $ready = $false
+          while ((Get-Date) -lt $deadline) {
+            $os = (docker info --format '{{.OSType}}' 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $os) { $ready = $true; break }
+            Start-Sleep -Seconds 5
+          }
+          if (-not $ready) {
+            Get-Service -Name docker -ErrorAction SilentlyContinue | Format-List Name, Status, StartType
+            Write-Host "::error::the docker daemon did not answer within 3 minutes; no verdict is possible on this runner"
+            exit 1
+          }
+          Write-Host "docker daemon is up (OSType: $os)"
+
       # ---------------------------------------------------------------------------------
       # Measurement first. If a GitHub-hosted Windows runner cannot carry a BC container,
       # this is where that shows up, with numbers attached rather than as a vague timeout.
