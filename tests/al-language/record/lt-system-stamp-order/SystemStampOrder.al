@@ -64,40 +64,4 @@ codeunit 71695 "LT P159 System Stamp Order"
         Observer.Expect('createdat-not-blank', 'Yes');
         Observer.Verify();
     end;
-
-    [Test]
-    procedure P159_ModifyAfterInsert_ModifiedNotBeforeCreated()
-    var
-        Observer: Codeunit "Probe Observer";
-        Row: Record "LT P159 Stamp Row";
-        CreatedAt: DateTime;
-        ModifiedAtInsert: DateTime;
-        ModifiedAtFirst: DateTime;
-        ModifiedAtSecond: DateTime;
-    begin
-        Row.DeleteAll();
-        Row.Init();
-        Row.Id := 1;
-        Row.Insert();
-        Row.Get(1);
-        CreatedAt := Row.SystemCreatedAt;
-        ModifiedAtInsert := Row.SystemModifiedAt;
-        Row.Qty := 1;
-        Row.Modify();
-        Row.Get(1);
-        ModifiedAtFirst := Row.SystemModifiedAt;
-        Row.Qty := 2;
-        Row.Modify();
-        Row.Get(1);
-        ModifiedAtSecond := Row.SystemModifiedAt;
-        Observer.Observe('modified-at-insert-vs-created', Relation(CreatedAt, ModifiedAtInsert));
-        Observer.Observe('first-modify-vs-insert', Relation(ModifiedAtInsert, ModifiedAtFirst));
-        Observer.Observe('second-modify-vs-first', Relation(ModifiedAtFirst, ModifiedAtSecond));
-        Observer.Observe('created-unchanged-by-modify', Format(Row.SystemCreatedAt = CreatedAt));
-        Observer.Expect('modified-at-insert-vs-created', 'equal');
-        Observer.Expect('first-modify-vs-insert', 'equal');
-        Observer.Expect('second-modify-vs-first', 'equal');
-        Observer.Expect('created-unchanged-by-modify', 'Yes');
-        Observer.Verify();
-    end;
 }

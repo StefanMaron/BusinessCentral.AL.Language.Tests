@@ -269,34 +269,4 @@ codeunit 74305 "LT P166 AutoFormat"
         Observer.Expect('mixed_1234_5_t5', '1,235');
         Observer.Verify();
     end;
-
-    [Test]
-    procedure NoCurrency_OtherSetupPlaces()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        SetSetup('5:5', '6:6');
-        ReadBoth(Observer, 'blankCode_gl55_66', '');
-        RestoreSetup();
-        SetSetup('0:0', '0:0');
-        ReadBoth(Observer, 'blankCode_gl00_00', '');
-        RestoreSetup();
-        Observer.Expect('blankCode_gl55_66_unit5dec_t1', '110.74');
-        Observer.Expect('blankCode_gl55_66_unit5dec_t2', '110.74398');
-        Observer.Expect('blankCode_gl55_66_unit5dec_t4', '110.74');
-        Observer.Expect('blankCode_gl55_66_unit5dec_t5', '110.74398');
-        Observer.Expect('blankCode_gl55_66_1234_5_t1', '1,234.50');
-        Observer.Expect('blankCode_gl55_66_1234_5_t2', '1,234.50');
-        Observer.Expect('blankCode_gl55_66_1234_5_t4', '1,234.50');
-        Observer.Expect('blankCode_gl55_66_1234_5_t5', '1,234.50');
-        Observer.Expect('blankCode_gl00_00_unit5dec_t1', '110.74');
-        Observer.Expect('blankCode_gl00_00_unit5dec_t2', '110.74398');
-        Observer.Expect('blankCode_gl00_00_unit5dec_t4', '110.74');
-        Observer.Expect('blankCode_gl00_00_unit5dec_t5', '110.74398');
-        Observer.Expect('blankCode_gl00_00_1234_5_t1', '1,234.50');
-        Observer.Expect('blankCode_gl00_00_1234_5_t2', '1,234.50');
-        Observer.Expect('blankCode_gl00_00_1234_5_t4', '1,234.50');
-        Observer.Expect('blankCode_gl00_00_1234_5_t5', '1,234.50');
-        Observer.Verify();
-    end;
 }

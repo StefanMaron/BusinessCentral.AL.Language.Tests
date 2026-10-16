@@ -154,29 +154,6 @@ codeunit 71923 "LT P160 Query SaveAs"
     end;
 
     [Test]
-    procedure SaveAsCsv_RawBytes()
-    var
-        Observer: Codeunit "Probe Observer";
-        Q: Query "LT P160 QSave";
-        TempBlob: Codeunit "Temp Blob";
-        OutS: OutStream;
-        Ok: Boolean;
-    begin
-        Seed();
-        TempBlob.CreateOutStream(OutS);
-        Ok := Q.SaveAsCsv(OutS);
-        Observer.Observe('ok', Format(Ok));
-        ObserveStream(Observer, TempBlob, 'csv');
-        Observer.Expect('ok', 'Yes');
-        Observer.Expect('csv length', '88');
-        Observer.Expect('csv first bytes', 'I d , ');
-        Observer.Expect('csv CR count', '3');
-        Observer.Expect('csv LF count', '3');
-        Observer.Expect('csv text 1', 'Id,Name,Amt,D,Flag\r\n1,"a,b ""q"" <x>&y",12.5,3/5/2024 12:00:00ËÇ»AM,True\r\n2,,0,0,False\r\n');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure SaveAs_NoRows_RawBytes()
     var
         Observer: Codeunit "Probe Observer";

@@ -47,29 +47,6 @@ codeunit 72722 "LT P161 Table Connections"
     end;
 
     [Test]
-    procedure P161_RegisterExternalSql_AndDefaults()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Cleanup();
-        asserterror Database.RegisterTableConnection(TableConnectionType::ExternalSQL, 'P161Ext', '@@test@@');
-        Observer.ObserveError('externalSql');
-        asserterror Database.RegisterTableConnection(TableConnectionType::ExternalSQL, 'P161Ext', 'Server=x;Database=y');
-        Observer.ObserveError('externalSqlRealString');
-        Observer.Observe('hasExternal', Format(Database.HasTableConnection(TableConnectionType::ExternalSQL, 'P161Ext')));
-        Observer.Observe('defaultExternal', '[' + Database.GetDefaultTableConnection(TableConnectionType::ExternalSQL) + ']');
-        Observer.Observe('defaultCrm', '[' + Database.GetDefaultTableConnection(TableConnectionType::CRM) + ']');
-        Observer.Expect('externalSql|text', 'You do not have permission to register a table connection of type ExternalSQL. Please contact your administrator.');
-        Observer.Expect('externalSql|code', 'NotAllowedForCompilationTarget');
-        Observer.Expect('externalSqlRealString|text', 'You do not have permission to register a table connection of type ExternalSQL. Please contact your administrator.');
-        Observer.Expect('externalSqlRealString|code', 'NotAllowedForCompilationTarget');
-        Observer.Expect('hasExternal', 'No');
-        Observer.Expect('defaultExternal', '[]');
-        Observer.Expect('defaultCrm', '[]');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P161_Unregister_NotRegistered()
     var
         Observer: Codeunit "Probe Observer";

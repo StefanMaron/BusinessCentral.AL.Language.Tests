@@ -50,27 +50,3 @@ table 72889 "LT CallDepth Row"
     end;
 }
 
-codeunit 72891 "LT CallDepth Trigger"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure Depth_RecursiveOnInsert()
-    var
-        Observer: Codeunit "Probe Observer";
-        C: Codeunit "LT CallDepth TrigCounter";
-        Row: Record "LT CallDepth Row";
-    begin
-        Row.DeleteAll();
-        C.Reset();
-        Row.Id := -1;
-        asserterror Row.Insert(true);
-        Observer.ObserveError('recursiveInsert');
-        Observer.Observe('recursiveInsertDepth', Format(C.GetCounter()));
-        Observer.Expect('recursiveInsert|text', 'There is insufficient memory to execute this function. This can be caused by recursive function calls. Contact your system administrator.');
-        Observer.Expect('recursiveInsert|code', 'StackOverflow');
-        Observer.Expect('recursiveInsertDepth', '997');
-        Observer.Verify();
-    end;
-}

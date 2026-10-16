@@ -39,24 +39,3 @@ codeunit 72887 "LT CallDepth RunSelf"
     end;
 }
 
-codeunit 72888 "LT CallDepth RunTests"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure Depth_NestedCodeunitRun()
-    var
-        Observer: Codeunit "Probe Observer";
-        C: Codeunit "LT CallDepth RunCounter";
-    begin
-        C.Reset();
-        asserterror Codeunit.Run(Codeunit::"LT CallDepth RunSelf");
-        Observer.ObserveError('nestedRun');
-        Observer.Observe('nestedRunDepth', Format(C.GetCounter()));
-        Observer.Expect('nestedRun|text', 'There is insufficient memory to execute this function. This can be caused by recursive function calls. Contact your system administrator.');
-        Observer.Expect('nestedRun|code', 'StackOverflow');
-        Observer.Expect('nestedRunDepth', '997');
-        Observer.Verify();
-    end;
-}

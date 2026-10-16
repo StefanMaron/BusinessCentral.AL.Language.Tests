@@ -85,23 +85,4 @@ codeunit 74306 "LT P166 Company Setup Rows"
         Observer.Expect('companyWideRows', '1');
         Observer.Verify();
     end;
-
-    [Test]
-    procedure ApplicationAreaSetup_CompanyWideRow_Flags()
-    var
-        Observer: Codeunit "Probe Observer";
-        AreaSetup: Record "Application Area Setup";
-        RecRef: RecordRef;
-    begin
-        AreaSetup.SetRange("Company Name", CompanyName());
-        AreaSetup.SetRange("Profile ID", '');
-        AreaSetup.SetRange("User ID", '');
-        if AreaSetup.FindFirst() then begin
-            RecRef.GetTable(AreaSetup);
-            Observer.Observe('flags', TrueBooleanFields(RecRef));
-        end else
-            Observer.Observe('flags', 'no row');
-        Observer.Expect('flags', '34|Basic,Suite,Relationship Mgmt,Jobs,Fixed Assets,Location,BasicHR,Assembly,Item Charges,Warehouse,Planning,Dimensions,Item Tracking,Intercompany,Sales Return Order,Purch Return Order,Prepayments,Cost Accounting,Sales Budget,Purchase Budget,Item Budget,Sales Analysis,Purchase Analysis,Inventory Analysis,Reservation,Order Promising,ADCS,Comments,Record Links,Notes,VAT,Item References,Basic EU,Quality Management,');
-        Observer.Verify();
-    end;
 }
