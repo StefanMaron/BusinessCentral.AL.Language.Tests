@@ -89,21 +89,3 @@ page 74123 "LT P134 MinMax Free Card"
     }
 }
 
-codeunit 74124 "LT P134 MinMax Tests"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    local procedure Seed(var Row: Record "LT P134 MinMax")
-    begin
-        Row.DeleteAll();
-        Row.Init();
-        Row."Code" := 'R1';
-        Row.Dec := 50;
-        Row.DecNeg := 1;
-        Row.DecPl := 5;
-        Row.DecPl0 := 5;
-        Row.DecFree := 5;
-        Row.Insert();
-    end;
-}

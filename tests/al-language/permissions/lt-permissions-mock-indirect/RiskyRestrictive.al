@@ -13,14 +13,4 @@ table 70468 "LT P116 Rs Open"
     keys { key(PK; "Entry No.") { Clustered = true; } }
 }
 
-codeunit 70469 "LT P116 Restrictive"
-{
-    Subtype = Test;
-    TestPermissions = Restrictive;
-}
 
-codeunit 70470 "LT P116 NonRestrictive"
-{
-    Subtype = Test;
-    TestPermissions = NonRestrictive;
-}
