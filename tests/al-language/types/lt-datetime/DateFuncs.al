@@ -226,8 +226,8 @@ codeunit 73801 "LT DtT DateFuncs"
         Observer.Expect('leap day', '2024-02-29');
         Observer.Expect('min', '');
         Observer.Expect('max', '9999-12-31');
-        Observer.Expect('only day', '2026-10-15');
-        Observer.Expect('day month', '2026-03-15');
+        Observer.Expect('only day', Format(DMY2Date(15, Date2DMY(Today(), 2), Date2DMY(Today(), 3)), 0, 9));
+        Observer.Expect('day month', Format(DMY2Date(15, 3, Date2DMY(Today(), 3)), 0, 9));
         Observer.Expect('af153|text', 'The value of DMY2Date parameter 2 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 12.');
         Observer.Expect('af153|code', 'OutsidePermittedRange');
         Observer.Expect('two digit year 24', '0024-01-01');
@@ -336,8 +336,8 @@ codeunit 73801 "LT DtT DateFuncs"
         Observer.Expect('sun w53 2020', '2021-01-03');
         Observer.Expect('w52 2024', '2024-12-23');
         Observer.Expect('sun w52 2024', '2024-12-29');
-        Observer.Expect('only day', '2026-10-14');
-        Observer.Expect('day week', '2026-03-04');
+        Observer.Expect('only day', Format(DWY2Date(3, Date2DWY(Today(), 2), Date2DWY(Today(), 3)), 0, 9));
+        Observer.Expect('day week', Format(DWY2Date(3, 10, Date2DWY(Today(), 3)), 0, 9));
         Observer.Expect('w1 1', '');
         Observer.Expect('w53 2015', '2015-12-31');
         Observer.Expect('w1 9999', '9999-01-04');
