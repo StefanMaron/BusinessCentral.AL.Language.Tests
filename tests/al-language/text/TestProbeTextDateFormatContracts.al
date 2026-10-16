@@ -839,9 +839,9 @@ codeunit 69804 "PA Text Date Format"
         O.Observe('omitted_base_is_today_diff', Format(CalcDate('<0D>') - Today()));
         O.Observe('omitted_base_is_workdate_diff', Format(CalcDate('<0D>') - WorkDate()));
         WorkDate(Saved);
-        O.Expect('omitted_base_plus_0D_vs_workdate_2000', '10/15/26');
+        O.Expect('omitted_base_plus_0D_vs_workdate_2000', Format(Today()));
         O.Expect('omitted_base_is_today_diff', '0');
-        O.Expect('omitted_base_is_workdate_diff', '9770');
+        O.Expect('omitted_base_is_workdate_diff', Format(Today() - DMY2Date(15, 1, 2000)));
         O.Verify();
     end;
 

@@ -323,7 +323,7 @@ codeunit 73805 "LT DtT Evaluate"
         Observer.Expect('offset -05', 'Yes|2024-03-05T18:45:06Z');
         Observer.Expect('date only', 'Yes|2024-03-05T00:00:00Z');
         Observer.Expect('date only Z', 'Yes|2024-03-05T00:00:00Z');
-        Observer.Expect('time only', 'Yes|2026-10-15T13:45:06Z');
+        Observer.Expect('time only', 'Yes|' + Format(Today(), 0, 9) + 'T13:45:06Z');
         Observer.Expect('space separator', 'No|');
         Observer.Expect('min', 'Yes|');
         Observer.Expect('max', 'Yes|9999-12-31T23:59:59.999Z');

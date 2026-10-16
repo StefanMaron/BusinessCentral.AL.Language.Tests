@@ -811,7 +811,7 @@ codeunit 69815 "PA Misc Contracts"
     begin
         O.Observe('workdate_minus_today_in_next_test', Format(WorkDate() - Today()));
         O.Observe('workdate_when_set_in_prior_test_of_same_codeunit', Format(WorkDate(), 0, 9));
-        O.Expect('workdate_minus_today_in_next_test', '-9253');
+        O.Expect('workdate_minus_today_in_next_test', Format(DMY2Date(15, 6, 2001) - Today()));
         O.Expect('workdate_when_set_in_prior_test_of_same_codeunit', '2001-06-15');
         O.Verify();
     end;

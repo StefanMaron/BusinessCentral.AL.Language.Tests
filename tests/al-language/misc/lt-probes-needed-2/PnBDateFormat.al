@@ -277,7 +277,7 @@ codeunit 70538 "LT PnB CalcDate Forms"
         WorkDate(Orig);
         Obs.Expect('closingBase', '2024-02-01');
         Obs.Expect('closingBaseCM', '2024-01-31');
-        Obs.Expect('omittedBase', '2026-10-16');
+        Obs.Expect('omittedBase', Format(Today() + 1, 0, 9));
         Obs.Expect('base0D', 'error:You cannot base a date calculation on an undefined date.\r\\r\Date: 0D\r\Formula: 1D.|Argument');
         Obs.Verify();
     end;

@@ -674,7 +674,7 @@ jobs:
           # Same symbols ci.yml computes, from the same rule.
           $major = [int]($env:BC_VERSION -split '\.')[0]
           $symbols = @()
-          foreach ($v in 27, 28) { if ($v -le $major) { $symbols += "BC${v}PLUS" } }
+          foreach ($v in 27, 28, 29) { if ($v -le $major) { $symbols += "BC${v}PLUS" } }
           Write-Host ("preprocessor symbols: {0}" -f ($symbols -join ','))
 
           # Order matters: the fixture is a dependency of al-language, which is in turn a
