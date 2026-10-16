@@ -36,7 +36,7 @@ codeunit 70845 "LT RptMrg Layout"
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
         Observer.Expect('layout data', '');
-        Observer.Expect('layout info', 'bytes=0 cr=0 lf=0 first=');
+        Observer.Expect('layout info', 'cr=0 lf=0 first=');
         Observer.Expect('payload length', '414');
         Observer.Expect('payload part 1', 'filterviews=[] ; version=1 ; objectname="LT Merger Main" ; objectid=70883 ; documenttype="application/pdf" ; invokedby=<guid> ; invokeddatetime=<datetime> ; companyname=<masked> ; printername="" ; duplex=false ; color=false ; defaultcopies=1 ; papertray=null ; intent="Save" ; layoutmodel="Custom" ; layoutname="CustomA" ; layoutmimetype="application/x-lmc-layout" ; layoutapplicationid=<guid> ; reportrunid=<guid>');
         Observer.Verify();
@@ -54,7 +54,7 @@ codeunit 70845 "LT RptMrg Layout"
         Observer.Expect('output', 'RLB-RENDEREDLMC-OUT');
         Observer.Expect('calls', '1');
         Observer.Expect('layout data', '');
-        Observer.Expect('layout info', 'bytes=0 cr=0 lf=0 first=');
+        Observer.Expect('layout info', 'cr=0 lf=0 first=');
         Observer.Expect('payload length', '470');
         Observer.Expect('payload part 1', 'filterviews=[] ; version=1 ; objectname="LT Merger Main" ; objectid=70883 ; documenttype="application/vnd.openxmlformats-officedocument.wordprocessingml.document" ; invokedby=<guid> ; invokeddatetime=<datetime> ; companyname=<masked> ; printername="" ; duplex=false ; color=false ; defaultcopies=1 ; papertray=null ; intent="Save" ; layoutmodel="Custom" ; layoutname="CustomA" ; layoutmimetype="application/x-lmc-layout" ; layoutapplicationid=<guid> ; reportrunid=<guid>');
         Observer.Verify();
@@ -87,7 +87,7 @@ codeunit 70845 "LT RptMrg Layout"
         Observer.Expect('error', '');
         Observer.Expect('calls', '1');
         Observer.Expect('layout data', '');
-        Observer.Expect('layout info', 'bytes=0 cr=0 lf=0 first=');
+        Observer.Expect('layout info', 'cr=0 lf=0 first=');
         Observer.Expect('payload length', '422');
         Observer.Expect('payload part 1', 'filterviews=[] ; version=1 ; objectname="LT Merger No Default" ; objectid=70884 ; documenttype="application/pdf" ; invokedby=<guid> ; invokeddatetime=<datetime> ; companyname=<masked> ; printername="" ; duplex=false ; color=false ; defaultcopies=1 ; papertray=null ; intent="Save" ; layoutmodel="Custom" ; layoutname="CustomB" ; layoutmimetype="application/x-lmc-layout-b" ; layoutapplicationid=<guid> ; reportrunid=<guid>');
         Observer.Verify();
@@ -115,7 +115,7 @@ codeunit 70845 "LT RptMrg Layout"
         Observer.Expect('calls', '2');
         Observer.Expect('layout 1', '');
         Observer.Expect('layout 2', '');
-        Observer.Expect('layout info 2', 'bytes=0 cr=0 lf=0 first=');
+        Observer.Expect('layout info 2', 'cr=0 lf=0 first=');
         Observer.Expect('payload equal', 'Yes');
         Observer.Verify();
     end;
