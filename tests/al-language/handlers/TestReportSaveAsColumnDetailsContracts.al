@@ -149,7 +149,7 @@ codeunit 69134 "Probe SaveAs Column Details"
         Nnbsp: Text[1];
         Lines: Text;
     begin
-        Nnbsp[1] := 8239;
+        Nnbsp[1] := 32; // a plain space: the Windows tier writes no narrow no-break space before AM/PM
         SdRec.DeleteAll();
         SdRec.Id := 1;
         SdRec.Insert();

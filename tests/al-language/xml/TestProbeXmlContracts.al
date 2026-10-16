@@ -85,8 +85,8 @@ codeunit 69802 "PA Xml Contracts"
         O.Observe('mixed', Written(Doc));
         E1.Add(XmlElement.Create('inner'));
         O.Observe('text_then_element_child', Written(Doc));
-        O.Expect('mixed', '<?xml version="1.0" encoding="utf-16"?><LF><root><LF>  <withtext>hello</withtext><LF>  <withcdata><![CDATA[<raw>&]]></withcdata><LF>  <withws>  </withws><LF>  <!--note--><LF>  <?pi data?><LF></root>');
-        O.Expect('text_then_element_child', '<?xml version="1.0" encoding="utf-16"?><LF><root><LF>  <withtext>hello<inner /></withtext><LF>  <withcdata><![CDATA[<raw>&]]></withcdata><LF>  <withws>  </withws><LF>  <!--note--><LF>  <?pi data?><LF></root>');
+        O.Expect('mixed', '<?xml version="1.0" encoding="utf-16"?><CR><LF><root><CR><LF>  <withtext>hello</withtext><CR><LF>  <withcdata><![CDATA[<raw>&]]></withcdata><CR><LF>  <withws>  </withws><CR><LF>  <!--note--><CR><LF>  <?pi data?><CR><LF></root>');
+        O.Expect('text_then_element_child', '<?xml version="1.0" encoding="utf-16"?><CR><LF><root><CR><LF>  <withtext>hello<inner /></withtext><CR><LF>  <withcdata><![CDATA[<raw>&]]></withcdata><CR><LF>  <withws>  </withws><CR><LF>  <!--note--><CR><LF>  <?pi data?><CR><LF></root>');
         O.Verify();
     end;
 

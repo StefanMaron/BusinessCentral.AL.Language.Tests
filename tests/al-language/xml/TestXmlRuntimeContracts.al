@@ -29,11 +29,14 @@ codeunit 68128 "Probe Xml Contracts"
     [Test]
     procedure XmlDocument_WriteTo_HasDeclarationAndTwoSpaceIndentation()
     var
+        NewLine: Text[2];
         Doc: XmlDocument;
         Root: XmlElement;
         Child: XmlElement;
         Result: Text;
     begin
+        NewLine[1] := 13;
+        NewLine[2] := 10;
         Initialize();
         Doc := XmlDocument.Create();
         Root := XmlElement.Create('root');
@@ -47,20 +50,23 @@ codeunit 68128 "Probe Xml Contracts"
 
         Doc.WriteTo(Result);
 
-        Assert.AreEqual('<?xml version="1.0" encoding="utf-16"?>' + LineFeed +
-            '<root a="v&quot;&lt;&amp;&gt;">' + LineFeed +
-            '  <child>t&lt;&amp;&gt;"</child>' + LineFeed +
-            '  <empty />' + LineFeed +
-            '  <!--c-->' + LineFeed +
+        Assert.AreEqual('<?xml version="1.0" encoding="utf-16"?>' + NewLine +
+            '<root a="v&quot;&lt;&amp;&gt;">' + NewLine +
+            '  <child>t&lt;&amp;&gt;"</child>' + NewLine +
+            '  <empty />' + NewLine +
+            '  <!--c-->' + NewLine +
             '</root>', Result, 'document text: attributes escape quote, <, & and >; text escapes <, & and >');
     end;
 
     [Test]
     procedure XmlDocument_WriteTo_DeclarationOnTheDocumentIsWrittenWithItsOwnValues()
     var
+        NewLine: Text[2];
         Doc: XmlDocument;
         Result: Text;
     begin
+        NewLine[1] := 13;
+        NewLine[2] := 10;
         Initialize();
         Doc := XmlDocument.Create();
         Doc.SetDeclaration(XmlDeclaration.Create('1.0', 'utf-8', 'yes'));
@@ -68,7 +74,7 @@ codeunit 68128 "Probe Xml Contracts"
 
         Doc.WriteTo(Result);
 
-        Assert.AreEqual('<?xml version="1.0" encoding="utf-8" standalone="yes"?>' + LineFeed + '<root />', Result, 'declaration');
+        Assert.AreEqual('<?xml version="1.0" encoding="utf-8" standalone="yes"?>' + NewLine + '<root />', Result, 'declaration');
     end;
 
     [Test]
@@ -90,22 +96,25 @@ codeunit 68128 "Probe Xml Contracts"
     [Test]
     procedure XmlDocument_ReadFrom_KeepsWhiteSpaceInsideAndOutsideTheRoot()
     var
+        NewLine: Text[2];
         Doc: XmlDocument;
         Root: XmlElement;
         Result: Text;
     begin
+        NewLine[1] := 13;
+        NewLine[2] := 10;
         Initialize();
 
         Assert.IsTrue(XmlDocument.ReadFrom('<root>  <a/>  </root>', Doc), 'read');
         Doc.WriteTo(Result);
-        Assert.AreEqual('<?xml version="1.0" encoding="utf-16"?>' + LineFeed + '<root>  <a />  </root>', Result, 'white space inside the root is kept');
+        Assert.AreEqual('<?xml version="1.0" encoding="utf-16"?>' + NewLine + '<root>  <a />  </root>', Result, 'white space inside the root is kept');
         Doc.GetRoot(Root);
         Root.WriteTo(Result);
         Assert.AreEqual('<root>  <a />  </root>', Result, 'the element alone');
 
         Assert.IsTrue(XmlDocument.ReadFrom('  <root><a/></root>  ', Doc), 'read with white space around the root');
         Doc.WriteTo(Result);
-        Assert.AreEqual('<?xml version="1.0" encoding="utf-16"?>  <root>' + LineFeed + '  <a />' + LineFeed + '</root>  ', Result, 'white space outside the root is kept too');
+        Assert.AreEqual('<?xml version="1.0" encoding="utf-16"?>  <root>' + NewLine + '  <a />' + NewLine + '</root>  ', Result, 'white space outside the root is kept too');
     end;
 
     [Test]
@@ -126,12 +135,15 @@ codeunit 68128 "Probe Xml Contracts"
     [Test]
     procedure XmlElement_Add_SameNodeTwice_AndNodeWithAParent_AreCopied_FreeNodeIsShared()
     var
+        NewLine: Text[2];
         Doc: XmlDocument;
         Root: XmlElement;
         Child: XmlElement;
         Other: XmlElement;
         Result: Text;
     begin
+        NewLine[1] := 13;
+        NewLine[2] := 10;
         Initialize();
         XmlDocument.ReadFrom('<root><a/></root>', Doc);
         Doc.GetRoot(Root);
@@ -140,15 +152,15 @@ codeunit 68128 "Probe Xml Contracts"
         Root.Add(Child);
         Child.SetAttribute('x', '1');
         Root.WriteTo(Result);
-        Assert.AreEqual('<root>' + LineFeed + '  <a />' + LineFeed + '  <b x="1" />' + LineFeed + '</root>', Result, 'a free node is shared with its parent');
+        Assert.AreEqual('<root>' + NewLine + '  <a />' + NewLine + '  <b x="1" />' + NewLine + '</root>', Result, 'a free node is shared with its parent');
 
         Other := XmlElement.Create('other');
         Other.Add(Child);
         Child.SetAttribute('y', '2');
         Other.WriteTo(Result);
-        Assert.AreEqual('<other>' + LineFeed + '  <b x="1" />' + LineFeed + '</other>', Result, 'a node that already has a parent is copied into the second parent');
+        Assert.AreEqual('<other>' + NewLine + '  <b x="1" />' + NewLine + '</other>', Result, 'a node that already has a parent is copied into the second parent');
         Root.WriteTo(Result);
-        Assert.AreEqual('<root>' + LineFeed + '  <a />' + LineFeed + '  <b x="1" y="2" />' + LineFeed + '</root>', Result, 'the first parent holds the original');
+        Assert.AreEqual('<root>' + NewLine + '  <a />' + NewLine + '  <b x="1" y="2" />' + NewLine + '</root>', Result, 'the first parent holds the original');
     end;
 
     [Test]

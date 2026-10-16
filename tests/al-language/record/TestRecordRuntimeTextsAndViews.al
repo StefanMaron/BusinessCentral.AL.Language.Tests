@@ -154,11 +154,9 @@ codeunit 68137 "Probe Record Texts"
     var
         ALTUniversal: Record "ALT Universal";
         Newer: Record "ALT Universal";
-        Cr: Text[1];
         Expected: Text;
     begin
         Initialize();
-        Cr[1] := 13;
         ALTUniversal.Init();
         ALTUniversal."Entry No." := 1;
         ALTUniversal.Insert();
@@ -173,7 +171,7 @@ codeunit 68137 "Probe Record Texts"
         asserterror ALTUniversal.Modify();
 
         Expected := 'The changes to the ALT Universal record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.' +
-            Cr + '\' + Cr + '\' + 'Identification fields and values:' + Cr + '\' + Cr + '\' + 'Entry No.=''1''';
+            '\' + '\' + 'Identification fields and values:' + '\' + '\' + 'Entry No.=''1''';
         Assert.AreEqual(Expected, GetLastErrorText(), 'text');
         Assert.AreEqual('DB:RecordChanged', GetLastErrorCode(), 'code');
     end;

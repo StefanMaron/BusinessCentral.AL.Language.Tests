@@ -237,7 +237,7 @@ codeunit 61243 "Probe RP SaveAsXml"
         Report.Run(Report::"Probe RP Save Report");
 
         Content := FileText(DataFile, HadBom);
-        Assert.IsTrue(HadBom, 'byte order mark');
+        Assert.IsFalse(HadBom, 'no byte order mark on the Windows tier');
         Assert.AreEqual(
             '<?xml version="1.0" standalone="yes"?>|' +
             '<DataSet>|' +
@@ -281,7 +281,7 @@ codeunit 61243 "Probe RP SaveAsXml"
         Report.Run(Report::"Probe RP Save Report");
 
         Text := FileText(ParametersFile, HadBom);
-        Assert.IsTrue(HadBom, 'byte order mark');
+        Assert.IsFalse(HadBom, 'no byte order mark on the Windows tier');
         Assert.IsTrue(Text.StartsWith('<?xml version="1.0" encoding="utf-8"?>|<ArrayOfReportParameter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">|  <ReportParameter>|    <Name>NavUserId'), 'start');
         Assert.IsTrue(Text.Contains('    <Values>|      <string>' + UserId() + '</string>|    </Values>|    <Visible>true</Visible>|  </ReportParameter>|  <ReportParameter>|    <Name>ExecutionTime'), 'user id value, then the execution time');
         Assert.IsTrue(Text.EndsWith('</string>|    </Values>|    <Visible>true</Visible>|  </ReportParameter>|</ArrayOfReportParameter>|'), 'end');
@@ -322,7 +322,7 @@ codeunit 61243 "Probe RP SaveAsXml"
         Report.Run(Report::"Probe RP Save Report");
 
         Raw := RawText(ParametersFile);
-        Assert.IsFalse(Raw.Contains(Cr), 'lines end with a line feed only');
+        Assert.IsTrue(Raw.Contains(Cr), 'lines end with a carriage return and a line feed');
         Assert.IsTrue(Raw.EndsWith('</ArrayOfReportParameter>'), 'no line feed after the last element');
         Assert.IsTrue(Raw.Contains('    <Name>NavUserIdAE6AEB42076449B78A3E78A5EE366751</Name>'), 'user id parameter name');
         Assert.IsTrue(Raw.Contains('    <Name>ExecutionTime7587CE19257C4965B7E6066BDFF21EE3</Name>'), 'execution time parameter name');

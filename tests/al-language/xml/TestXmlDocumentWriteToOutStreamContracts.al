@@ -73,7 +73,7 @@ codeunit 68990 "Probe XmlDoc WriteTo OutStream"
         Utf16Blob.CreateOutStream(Utf16Out, TextEncoding::UTF16);
         Doc.WriteTo(Utf16Out);
 
-        Assert.AreEqual('BOM size=75', LeadingBytes(TempBlob), 'bytes');
+        Assert.AreEqual('no BOM size=77', LeadingBytes(TempBlob), 'bytes');
         Assert.AreEqual(LeadingBytes(TempBlob), LeadingBytes(Utf16Blob), 'UTF-16 stream gives the same bytes');
         Assert.AreEqual('<?xml version="1.0" encoding="utf-8"?>|<Root>|  <A>1</A> <B>x</B></Root>|', Lines(TempBlob), 'text');
     end;

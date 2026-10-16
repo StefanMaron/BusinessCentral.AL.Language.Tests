@@ -244,14 +244,15 @@ codeunit 68127 "Probe Json Contracts"
     var
         Root: JsonObject;
         Yaml: Text;
-        LineFeed: Text[1];
+        NewLine: Text[2];
     begin
         Initialize();
-        LineFeed[1] := 10;
+        NewLine[1] := 13;
+        NewLine[2] := 10;
         Root.ReadFrom('{"a":1}');
 
         Root.WriteToYaml(Yaml);
-        Assert.AreEqual('a: 1' + LineFeed, Yaml, 'yaml text');
+        Assert.AreEqual('a: 1' + NewLine, Yaml, 'yaml text');
         Root.ReadFromYaml('a: 1');
     end;
 

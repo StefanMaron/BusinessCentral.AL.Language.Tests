@@ -108,15 +108,13 @@ codeunit 68161 "Probe Date Round Format"
     [Test]
     procedure CalcDate_UndefinedDate_Throws()
     var
-        Cr: Text[1];
         Result: Date;
     begin
         Initialize();
-        Cr[1] := 13;
 
         asserterror Result := CalcDate('<1D>', 0D);
 
-        Assert.AreEqual('You cannot base a date calculation on an undefined date.' + Cr + '\' + Cr + '\' + 'Date: 0D' + Cr + '\' + 'Formula: 1D.', GetLastErrorText(), 'text');
+        Assert.AreEqual('You cannot base a date calculation on an undefined date.' + '\' + '\' + 'Date: 0D' + '\' + 'Formula: 1D.', GetLastErrorText(), 'text');
         Assert.AreEqual('Argument', GetLastErrorCode(), 'code');
     end;
 
