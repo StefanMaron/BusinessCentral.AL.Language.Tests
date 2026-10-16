@@ -34,11 +34,7 @@ codeunit 72417 "LT P106 TestField AsDateTime"
         L.Close();
         Observer.Expect('goto_a', 'Yes');
         Observer.Expect('a', '2020-03-02T10:15:00Z');
-#if BC28PLUS
-        Observer.Expect('a_text', '3/2/2020 10:15 AM');
-#else
         Observer.Expect('a_text', '3/2/2020 10:15 AM');
-#endif
         Observer.Expect('goto_b', 'Yes');
         Observer.Expect('b', '2021-06-05T23:59:59Z');
         Observer.Expect('goto_d', 'Yes');

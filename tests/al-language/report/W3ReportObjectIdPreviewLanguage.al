@@ -445,7 +445,7 @@ codeunit 67761 "W3 ObjId Probe"
     begin
         LangRun('', Observer);
         Observer.Expect('log', 'language before set equals GlobalLanguage=Yes region=[];');
-        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="DateC">12/25/2024</Column>|<Column name="DtC">12/25/2024 2:30:05 PM</Column>|<Column name="BoolC">True</Column>|');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="DateC">12/25/2024</Column>|<Column name="DtC">12/25/2024 2:30:05 PM</Column>|<Column name="BoolC">True</Column>|');
         Observer.Expect('item language', 'en-US');
         Observer.Expect('item formatRegion', 'en-US');
         Observer.Verify();
@@ -458,7 +458,7 @@ codeunit 67761 "W3 ObjId Probe"
     begin
         LangRun('lang', Observer);
         Observer.Expect('log', 'language before set equals GlobalLanguage=Yes region=[];language after set=1031 Format changed=Ja;');
-        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="DateC">12/25/2024</Column>|<Column name="DtC">12/25/2024 2:30:05 PM</Column>|<Column name="BoolC">True</Column>|');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="DateC">12/25/2024</Column>|<Column name="DtC">12/25/2024 2:30:05 PM</Column>|<Column name="BoolC">True</Column>|');
         Observer.Expect('item language', 'de-DE');
         Observer.Expect('item formatRegion', 'en-US');
         Observer.Verify();
@@ -497,7 +497,7 @@ codeunit 67761 "W3 ObjId Probe"
     begin
         LangRun('rejects', Observer);
         Observer.Expect('log', 'language before set equals GlobalLanguage=Yes region=[];Language 0 error=Invalid language ID supplied: 0. code=Argument;Language -1 accepted, reads 1033;Language 65536 error=An unsupported language was selected (''65536'' - ''Requested culture is not supported by the current platform''). code=ReportLanguageNotFound;Language 1 error=An unsupported language was selected (''1'' - ''Requested culture is not supported by the current platform''). code=ReportLanguageNotFound;language after the rejects=1033;');
-        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="DateC">12/25/2024</Column>|<Column name="DtC">12/25/2024 2:30:05 PM</Column>|<Column name="BoolC">True</Column>|');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="DateC">12/25/2024</Column>|<Column name="DtC">12/25/2024 2:30:05 PM</Column>|<Column name="BoolC">True</Column>|');
         Observer.Expect('item language', 'en-US');
         Observer.Expect('item formatRegion', 'en-US');
         Observer.Verify();

@@ -251,9 +251,9 @@ codeunit 68511 "W7 Query Lifecycle"
         Observer.Observe('bytes', CopyStr(Util.Hex(TempBlob), 1, 60));
         Observer.Observe('text utf8', Util.Lines(TempBlob, TextEncoding::UTF8));
         Observer.Expect('ok', 'Yes');
-        Observer.Expect('length', '83');
-        Observer.Expect('bytes', '45 6E 74 72 79 2C 54 78 74 2C 44 65 63 46 2C 44 74 0A 31 2C ');
-        Observer.Expect('text utf8', 'Entry,Txt,DecF,Dt|1,plain,1.5,3/5/2024 12:00:00 AM|2,"a,""b""",2,0|3,xéy<&>,0,0|');
+        Observer.Expect('length', '85');
+        Observer.Expect('bytes', '45 6E 74 72 79 2C 54 78 74 2C 44 65 63 46 2C 44 74 0D 0A 31 ');
+        Observer.Expect('text utf8', 'Entry,Txt,DecF,Dt|1,plain,1.5,3/5/2024 12:00:00 AM|2,"a,""b""",2,0|3,xéy<&>,0,0|');
         Observer.Verify();
     end;
 

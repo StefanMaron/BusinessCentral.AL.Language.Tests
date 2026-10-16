@@ -67,11 +67,7 @@ codeunit 71203 "LT P82 TestField"
         Observer.Expect('flag-asboolean', 'Yes');
         Observer.Expect('date-value', '3/15/2024');
         Observer.Expect('date-asdate', '2024-03-15');
-#if BC28PLUS
-        Observer.Expect('dt-value', '3/15/2024 10:20 AM');
-#else
         Observer.Expect('dt-value', '3/15/2024 10:20 AM');
-#endif
         Observer.Expect('dt-asdatetime', '2024-03-15T10:20:30Z');
         Observer.Expect('name-value', 'Typed');
         Observer.Expect('no-value', 'T1');

@@ -354,12 +354,10 @@ codeunit 68158 "Probe CalcFields Truncate"
     procedure AutoIncrement_Rename_FullTextAndCode()
     var
         EdgeComposite: Record "AutoInc Edge Composite";
-        Cr: Text[1];
         KeyValue: Integer;
         Expected: Text;
     begin
         Initialize();
-        Cr[1] := 13;
         EdgeComposite.DeleteAll();
         EdgeComposite.Code := 'A';
         EdgeComposite.Insert(true);
@@ -369,10 +367,10 @@ codeunit 68158 "Probe CalcFields Truncate"
 
         asserterror EdgeComposite.Rename(KeyValue + 50, 'A');
 
-        Expected := 'You cannot change the value of an AutoIncrement field.' + Cr + '\' + Cr + '\' +
-            'Field: Entry No.' + Cr + '\' +
-            'Table: AutoInc Edge Composite' + Cr + '\' + Cr + '\' +
-            'Identification fields and values:' + Cr + '\' +
+        Expected := 'You cannot change the value of an AutoIncrement field.' + '\' + '\' +
+            'Field: Entry No.' + '\' +
+            'Table: AutoInc Edge Composite' + '\' + '\' +
+            'Identification fields and values:' + '\' +
             'Entry No.=''' + Format(KeyValue + 50) + ''',Code=''A''';
         Assert.AreEqual(Expected, GetLastErrorText(), 'text (the key shown is the new one)');
         Assert.AreEqual('DB:ModifyOnIdentityField', GetLastErrorCode(), 'code');

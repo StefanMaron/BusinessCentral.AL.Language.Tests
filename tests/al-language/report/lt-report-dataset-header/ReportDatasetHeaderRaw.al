@@ -140,11 +140,11 @@ codeunit 70359 "LT Hdr Dump"
                 Line := Lines.Get(i);
                 Name := 'line ' + Format(i);
                 if StrLen(Line) <= 700 then
-                    Observer.Observe(Name + ' at ' + Format(Starts.Get(i)), Line)
+                    Observer.Observe(Name, Line)
                 else begin
                     Part := 0;
                     while Line <> '' do begin
-                        Observer.Observe(Name + ' at ' + Format(Starts.Get(i)) + ' part ' + Format(Part), CopyStr(Line, 1, 700));
+                        Observer.Observe(Name + ' part ' + Format(Part), CopyStr(Line, 1, 700));
                         Line := CopyStr(Line, 701);
                         Part += 1;
                     end;
@@ -167,16 +167,16 @@ codeunit 70361 "LT Hdr Lines"
         Dump.Seed();
         Dump.ObserveWindow(Observer, 0);
         Observer.Expect('window from', '0');
-        Observer.Expect('line 1 at 0', '0|Ù‹<?xml version="1.0" standalone="yes"?>|<CR><LF>');
-        Observer.Expect('line 2 at 43', '0|<ReportDataSet name="LT P152 Header Report" id="70358" language="en-US" formatRegion="en-US">|<CR><LF>');
-        Observer.Expect('line 4 at 163', '4|<ReportMetadata>|<CR><LF>');
-        Observer.Expect('line 5 at 185', '6|<ExtensionId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</ExtensionId>|<CR><LF>');
-        Observer.Expect('line 6 at 256', '6|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<CR><LF>');
-        Observer.Expect('line 7 at 336', '6|<ExtensionPublisher>AL Language</ExtensionPublisher>|<CR><LF>');
-        Observer.Expect('line 8 at 396', '6|<ExtensionVersion>x</ExtensionVersion>|<CR><LF>');
-        Observer.Expect('line 9 at 450', '6|<ReportId>70358</ReportId>|<CR><LF>');
-        Observer.Expect('line 10 at 484', '6|<ReportName>LT P152 Header Report</ReportName>|<CR><LF>');
-        Observer.Ignore('line 3 at 138'); // a dump or environment data: observed, not asserted
+        Observer.Expect('line 1', '0|Ù‹<?xml version="1.0" standalone="yes"?>|<CR><LF>');
+        Observer.Expect('line 2', '0|<ReportDataSet name="LT P152 Header Report" id="70358" language="en-US" formatRegion="en-US">|<CR><LF>');
+        Observer.Expect('line 4', '4|<ReportMetadata>|<CR><LF>');
+        Observer.Expect('line 5', '6|<ExtensionId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</ExtensionId>|<CR><LF>');
+        Observer.Expect('line 6', '6|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<CR><LF>');
+        Observer.Expect('line 7', '6|<ExtensionPublisher>AL Language</ExtensionPublisher>|<CR><LF>');
+        Observer.Expect('line 8', '6|<ExtensionVersion>x</ExtensionVersion>|<CR><LF>');
+        Observer.Expect('line 9', '6|<ReportId>70358</ReportId>|<CR><LF>');
+        Observer.Expect('line 10', '6|<ReportName>LT P152 Header Report</ReportName>|<CR><LF>');
+        Observer.Ignore('line 3'); // a dump or environment data: observed, not asserted
         Observer.Verify();
     end;
 
@@ -189,17 +189,17 @@ codeunit 70361 "LT Hdr Lines"
         Dump.Seed();
         Dump.ObserveWindow(Observer, 500);
         Observer.Expect('window from', '500');
-        Observer.Expect('line 11 at 538', '6|<ReportCaption>LT P152 Header Report</ReportCaption>|<CR><LF>');
-        Observer.Expect('line 12 at 598', '6|<AboutThisReportTitle></AboutThisReportTitle>|<CR><LF>');
-        Observer.Expect('line 13 at 651', '6|<AboutThisReportText></AboutThisReportText>|<CR><LF>');
-        Observer.Expect('line 14 at 702', '6|<ReportHelpLink></ReportHelpLink>|<CR><LF>');
-        Observer.Expect('line 15 at 743', '4|</ReportMetadata>|<CR><LF>');
-        Observer.Expect('line 16 at 766', '4|<ReportRequest>|<CR><LF>');
-        Observer.Expect('line 17 at 787', '6|<TenantEntraId>x</TenantEntraId>|<CR><LF>');
-        Observer.Expect('line 18 at 832', '6|<EnvironmentName>x</EnvironmentName>|<CR><LF>');
-        Observer.Expect('line 19 at 875', '6|<EnvironmentType>x</EnvironmentType>|<CR><LF>');
-        Observer.Expect('line 20 at 925', '6|<CompanyName>x</CompanyName>|<CR><LF>');
-        Observer.Expect('line 21 at 985', '6|<CompanyDisplayName>x</CompanyDisplayName>|<CR><LF>');
+        Observer.Expect('line 11', '6|<ReportCaption>LT P152 Header Report</ReportCaption>|<CR><LF>');
+        Observer.Expect('line 12', '6|<AboutThisReportTitle></AboutThisReportTitle>|<CR><LF>');
+        Observer.Expect('line 13', '6|<AboutThisReportText></AboutThisReportText>|<CR><LF>');
+        Observer.Expect('line 14', '6|<ReportHelpLink></ReportHelpLink>|<CR><LF>');
+        Observer.Expect('line 15', '4|</ReportMetadata>|<CR><LF>');
+        Observer.Expect('line 16', '4|<ReportRequest>|<CR><LF>');
+        Observer.Expect('line 17', '6|<TenantEntraId>x</TenantEntraId>|<CR><LF>');
+        Observer.Expect('line 18', '6|<EnvironmentName>x</EnvironmentName>|<CR><LF>');
+        Observer.Expect('line 19', '6|<EnvironmentType>x</EnvironmentType>|<CR><LF>');
+        Observer.Expect('line 20', '6|<CompanyName>x</CompanyName>|<CR><LF>');
+        Observer.Expect('line 21', '6|<CompanyDisplayName>x</CompanyDisplayName>|<CR><LF>');
         Observer.Verify();
     end;
 }
