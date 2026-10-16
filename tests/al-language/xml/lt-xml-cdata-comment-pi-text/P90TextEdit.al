@@ -1,0 +1,925 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/XmlText/xmltext-data-type
+// Scope: in-scope
+// Fixtures used: Probe Observer (codeunit 69160)
+// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Facts: XmlText AddAfterSelf, AddBeforeSelf, ReplaceWith, Remove with every node kind, attached and detached, and the serialized document after each change
+// BC versions: 29 (27 and 28 by CI)
+
+codeunit 70736 "LT P90 Text Edit"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Doc: XmlDocument;
+        Root: XmlElement;
+        X: XmlText;
+        U: XmlText;
+        UN: XmlNode;
+        Res: Text;
+        Lst: XmlNodeList;
+        OutS: OutStream;
+
+    local procedure MakeX(Tag: Text): XmlText
+    var
+        R: XmlText;
+    begin
+        R := XmlText.Create(Tag);
+        exit(R);
+    end;
+
+    // Pos: 0 = only child of r, 1 = first, 2 = middle (default), 3 = last child of r (siblings a and b)
+    local procedure BuildAt(Attached: Boolean; Pos: Integer; Tag: Text)
+    var
+        N: XmlNode;
+        Fresh: XmlText;
+        Idx: Integer;
+    begin
+        Fresh := MakeX(Tag);
+        if not Attached then begin
+            X := Fresh;
+            exit;
+        end;
+        Doc := XmlDocument.Create();
+        Root := XmlElement.Create('r');
+        if Pos = 0 then
+            Root.Add(Fresh)
+        else begin
+            if Pos = 1 then
+                Root.Add(Fresh);
+            Root.Add(XmlElement.Create('a'));
+            if Pos = 2 then
+                Root.Add(Fresh);
+            Root.Add(XmlElement.Create('b'));
+            if Pos = 3 then
+                Root.Add(Fresh);
+        end;
+        Doc.Add(Root);
+        Doc.GetRoot(Root);
+        Idx := Pos;
+        if Pos = 0 then
+            Idx := 1;
+        Root.GetChildNodes().Get(Idx, N);
+        X := N.AsXmlText();
+    end;
+
+    local procedure Build(Attached: Boolean; Tag: Text)
+    begin
+        BuildAt(Attached, 2, Tag);
+    end;
+
+    local procedure SerDoc(): Text
+    var
+        S: Text;
+    begin
+        Doc.WriteTo(S);
+        exit(S);
+    end;
+
+    local procedure SerX(): Text
+    var
+        S: Text;
+    begin
+        X.WriteTo(S);
+        exit(S);
+    end;
+
+    local procedure SerNode(N: XmlNode): Text
+    var
+        S: Text;
+    begin
+        N.WriteTo(S);
+        exit(S);
+    end;
+
+    // Kinds: 1 element, 2 text, 3 comment, 4 cdata, 5 processing instruction, 6 attribute, 7 declaration, 8 document,
+    // 9 document type, 10 sibling element a of X (has a parent), 11 X itself, 12 the root r (ancestor of X),
+    // 13 root element of another document, 14 uninitialised XmlNode, 101..103 elements m1..m3
+    local procedure MakeArg(Kind: Integer): XmlNode
+    var
+        E: XmlElement;
+        T: XmlText;
+        C: XmlComment;
+        D: XmlCData;
+        P: XmlProcessingInstruction;
+        A: XmlAttribute;
+        Decl: XmlDeclaration;
+        Doc2: XmlDocument;
+        DT: XmlDocumentType;
+        N: XmlNode;
+    begin
+        case Kind of
+            1:
+                begin
+                    E := XmlElement.Create('e1');
+                    exit(E.AsXmlNode());
+                end;
+            2:
+                begin
+                    T := XmlText.Create('t2');
+                    exit(T.AsXmlNode());
+                end;
+            3:
+                begin
+                    C := XmlComment.Create('c3');
+                    exit(C.AsXmlNode());
+                end;
+            4:
+                begin
+                    D := XmlCData.Create('d4');
+                    exit(D.AsXmlNode());
+                end;
+            5:
+                begin
+                    P := XmlProcessingInstruction.Create('p5', 'q5');
+                    exit(P.AsXmlNode());
+                end;
+            6:
+                begin
+                    A := XmlAttribute.Create('a6', '1');
+                    exit(A.AsXmlNode());
+                end;
+            7:
+                begin
+                    Decl := XmlDeclaration.Create('1.0', 'utf-8', 'yes');
+                    exit(Decl.AsXmlNode());
+                end;
+            8:
+                begin
+                    Doc2 := XmlDocument.Create();
+                    exit(Doc2.AsXmlNode());
+                end;
+            9:
+                begin
+                    DT := XmlDocumentType.Create('dt9');
+                    exit(DT.AsXmlNode());
+                end;
+            10:
+                begin
+                    Root.SelectSingleNode('a', N);
+                    exit(N);
+                end;
+            11:
+                exit(X.AsXmlNode());
+            12:
+                exit(Root.AsXmlNode());
+            13:
+                begin
+                    Doc2 := XmlDocument.Create();
+                    Doc2.Add(XmlElement.Create('f13'));
+                    Doc2.GetRoot(E);
+                    exit(E.AsXmlNode());
+                end;
+            14:
+                exit(UN);
+            101, 102, 103:
+                begin
+                    E := XmlElement.Create('m' + Format(Kind - 100));
+                    exit(E.AsXmlNode());
+                end;
+        end;
+    end;
+
+    [TryFunction]
+    local procedure TryAfter(Kind: Integer)
+    begin
+        X.AddAfterSelf(MakeArg(Kind));
+    end;
+
+    [TryFunction]
+    local procedure TryBefore(Kind: Integer)
+    begin
+        X.AddBeforeSelf(MakeArg(Kind));
+    end;
+
+    [TryFunction]
+    local procedure TryReplace(Kind: Integer)
+    begin
+        X.ReplaceWith(MakeArg(Kind));
+    end;
+
+    [TryFunction]
+    local procedure TryRemove()
+    begin
+        X.Remove();
+    end;
+
+    [TryFunction]
+    local procedure TryAfter3(A: Integer; B: Integer; C: Integer)
+    begin
+        X.AddAfterSelf(MakeArg(A), MakeArg(B), MakeArg(C));
+    end;
+
+    [TryFunction]
+    local procedure TryBefore3(A: Integer; B: Integer; C: Integer)
+    begin
+        X.AddBeforeSelf(MakeArg(A), MakeArg(B), MakeArg(C));
+    end;
+
+    [TryFunction]
+    local procedure TryReplace3(A: Integer; B: Integer; C: Integer)
+    begin
+        X.ReplaceWith(MakeArg(A), MakeArg(B), MakeArg(C));
+    end;
+
+    [Test]
+    procedure AfterSelf_Attached_ValidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 1 to 5 do begin
+            Build(true, 'x');
+            Ok := TryAfter(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_Attached_InvalidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 6 to 9 do begin
+            Build(true, 'x');
+            Ok := TryAfter(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_Attached_ExistingNodes()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 10 to 13 do begin
+            Build(true, 'x');
+            Ok := TryAfter(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_Detached_ValidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 1 to 5 do begin
+            Build(false, 'x');
+            Ok := TryAfter(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_Detached_InvalidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 6 to 9 do begin
+            Build(false, 'x');
+            Ok := TryAfter(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_UninitialisedArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        j: Integer;
+        Ok: Boolean;
+    begin
+        for j := 0 to 1 do begin
+            Build(j = 0, 'x');
+            Ok := TryAfter(14);
+            Observer.Observe('j' + Format(j), Format(Ok));
+            Observer.ObserveError('j' + Format(j) + '-err');
+            if j = 0 then
+                Observer.Observe('j0-doc', SerDoc())
+            else
+                Observer.Observe('j1-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_Attached_ValidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 1 to 5 do begin
+            Build(true, 'x');
+            Ok := TryBefore(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_Attached_InvalidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 6 to 9 do begin
+            Build(true, 'x');
+            Ok := TryBefore(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_Attached_ExistingNodes()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 10 to 13 do begin
+            Build(true, 'x');
+            Ok := TryBefore(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_Detached_ValidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 1 to 5 do begin
+            Build(false, 'x');
+            Ok := TryBefore(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_Detached_InvalidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 6 to 9 do begin
+            Build(false, 'x');
+            Ok := TryBefore(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_UninitialisedArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        j: Integer;
+        Ok: Boolean;
+    begin
+        for j := 0 to 1 do begin
+            Build(j = 0, 'x');
+            Ok := TryBefore(14);
+            Observer.Observe('j' + Format(j), Format(Ok));
+            Observer.ObserveError('j' + Format(j) + '-err');
+            if j = 0 then
+                Observer.Observe('j0-doc', SerDoc())
+            else
+                Observer.Observe('j1-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_Attached_ValidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 1 to 5 do begin
+            Build(true, 'x');
+            Ok := TryReplace(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+            Observer.Observe('k' + Format(i) + '-x-has-parent', Format(X.GetParent(P)));
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_Attached_InvalidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 6 to 9 do begin
+            Build(true, 'x');
+            Ok := TryReplace(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+            Observer.Observe('k' + Format(i) + '-x-has-parent', Format(X.GetParent(P)));
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_Attached_ExistingNodes()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 10 to 13 do begin
+            Build(true, 'x');
+            Ok := TryReplace(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-doc', SerDoc());
+            Observer.Observe('k' + Format(i) + '-x-has-parent', Format(X.GetParent(P)));
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_Detached_ValidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 1 to 5 do begin
+            Build(false, 'x');
+            Ok := TryReplace(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_Detached_InvalidKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        for i := 6 to 9 do begin
+            Build(false, 'x');
+            Ok := TryReplace(i);
+            Observer.Observe('k' + Format(i), Format(Ok));
+            Observer.ObserveError('k' + Format(i) + '-err');
+            Observer.Observe('k' + Format(i) + '-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_UninitialisedArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        j: Integer;
+        Ok: Boolean;
+    begin
+        for j := 0 to 1 do begin
+            Build(j = 0, 'x');
+            Ok := TryReplace(14);
+            Observer.Observe('j' + Format(j), Format(Ok));
+            Observer.ObserveError('j' + Format(j) + '-err');
+            if j = 0 then
+                Observer.Observe('j0-doc', SerDoc())
+            else
+                Observer.Observe('j1-x', SerX());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_ThreeNodesOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryAfter3(101, 102, 103);
+        Observer.Observe('t101_102_103', Format(Ok));
+        Observer.ObserveError('t101_102_103-err');
+        Observer.Observe('t101_102_103-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryAfter3(103, 101, 102);
+        Observer.Observe('t103_101_102', Format(Ok));
+        Observer.ObserveError('t103_101_102-err');
+        Observer.Observe('t103_101_102-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_ThreeNodes_OneInvalid()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryAfter3(1, 6, 3);
+        Observer.Observe('t1_6_3', Format(Ok));
+        Observer.ObserveError('t1_6_3-err');
+        Observer.Observe('t1_6_3-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryAfter3(6, 1, 3);
+        Observer.Observe('t6_1_3', Format(Ok));
+        Observer.ObserveError('t6_1_3-err');
+        Observer.Observe('t6_1_3-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryAfter3(1, 3, 6);
+        Observer.Observe('t1_3_6', Format(Ok));
+        Observer.ObserveError('t1_3_6-err');
+        Observer.Observe('t1_3_6-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryAfter3(2, 2, 2);
+        Observer.Observe('t2_2_2', Format(Ok));
+        Observer.ObserveError('t2_2_2-err');
+        Observer.Observe('t2_2_2-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_ThreeNodesOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryBefore3(101, 102, 103);
+        Observer.Observe('t101_102_103', Format(Ok));
+        Observer.ObserveError('t101_102_103-err');
+        Observer.Observe('t101_102_103-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryBefore3(103, 101, 102);
+        Observer.Observe('t103_101_102', Format(Ok));
+        Observer.ObserveError('t103_101_102-err');
+        Observer.Observe('t103_101_102-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BeforeSelf_ThreeNodes_OneInvalid()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryBefore3(1, 6, 3);
+        Observer.Observe('t1_6_3', Format(Ok));
+        Observer.ObserveError('t1_6_3-err');
+        Observer.Observe('t1_6_3-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryBefore3(6, 1, 3);
+        Observer.Observe('t6_1_3', Format(Ok));
+        Observer.ObserveError('t6_1_3-err');
+        Observer.Observe('t6_1_3-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryBefore3(1, 3, 6);
+        Observer.Observe('t1_3_6', Format(Ok));
+        Observer.ObserveError('t1_3_6-err');
+        Observer.Observe('t1_3_6-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryBefore3(2, 2, 2);
+        Observer.Observe('t2_2_2', Format(Ok));
+        Observer.ObserveError('t2_2_2-err');
+        Observer.Observe('t2_2_2-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_ThreeNodesOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryReplace3(101, 102, 103);
+        Observer.Observe('t101_102_103', Format(Ok));
+        Observer.ObserveError('t101_102_103-err');
+        Observer.Observe('t101_102_103-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryReplace3(103, 101, 102);
+        Observer.Observe('t103_101_102', Format(Ok));
+        Observer.ObserveError('t103_101_102-err');
+        Observer.Observe('t103_101_102-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_ThreeNodes_OneInvalid()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryReplace3(1, 6, 3);
+        Observer.Observe('t1_6_3', Format(Ok));
+        Observer.ObserveError('t1_6_3-err');
+        Observer.Observe('t1_6_3-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryReplace3(6, 1, 3);
+        Observer.Observe('t6_1_3', Format(Ok));
+        Observer.ObserveError('t6_1_3-err');
+        Observer.Observe('t6_1_3-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryReplace3(1, 3, 6);
+        Observer.Observe('t1_3_6', Format(Ok));
+        Observer.ObserveError('t1_3_6-err');
+        Observer.Observe('t1_3_6-doc', SerDoc());
+        Build(true, 'x');
+        Ok := TryReplace3(2, 2, 2);
+        Observer.Observe('t2_2_2', Format(Ok));
+        Observer.ObserveError('t2_2_2-err');
+        Observer.Observe('t2_2_2-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_ThreeNodes_Detached()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(false, 'x');
+        Ok := TryAfter3(101, 102, 103);
+        Observer.Observe('t101_102_103', Format(Ok));
+        Observer.ObserveError('t101_102_103-err');
+        Observer.Observe('t101_102_103-x', SerX());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_ThreeNodes_Detached()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(false, 'x');
+        Ok := TryReplace3(101, 102, 103);
+        Observer.Observe('t101_102_103', Format(Ok));
+        Observer.ObserveError('t101_102_103-err');
+        Observer.Observe('t101_102_103-x', SerX());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Positions_AfterBeforeReplaceRemove()
+    var
+        Observer: Codeunit "Probe Observer";
+        Pos: Integer;
+        Ok: Boolean;
+    begin
+        for Pos := 0 to 3 do begin
+            BuildAt(true, Pos, 'x');
+            Ok := TryAfter(1);
+            Observer.Observe('p' + Format(Pos) + '-after', Format(Ok) + ' ' + SerDoc());
+            BuildAt(true, Pos, 'x');
+            Ok := TryBefore(1);
+            Observer.Observe('p' + Format(Pos) + '-before', Format(Ok) + ' ' + SerDoc());
+            BuildAt(true, Pos, 'x');
+            Ok := TryReplace(1);
+            Observer.Observe('p' + Format(Pos) + '-replace', Format(Ok) + ' ' + SerDoc());
+            BuildAt(true, Pos, 'x');
+            Ok := TryRemove();
+            Observer.Observe('p' + Format(Pos) + '-remove', Format(Ok) + ' ' + SerDoc());
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterBeforeSelf_NoCrossTalk_TextNeighbours()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        // text and cdata added next to the node: do they merge or stay separate nodes
+        Build(true, 'x');
+        Ok := TryAfter(2);
+        Ok := TryBefore(2);
+        Observer.Observe('doc-text-both-sides', SerDoc());
+        Observer.Observe('root-child-count', Format(Root.GetChildNodes().Count()));
+        Build(true, 'x');
+        Ok := TryAfter(4);
+        Ok := TryBefore(4);
+        Observer.Observe('doc-cdata-both-sides', SerDoc());
+        Observer.Observe('root-child-count-cdata', Format(Root.GetChildNodes().Count()));
+        Build(true, 'x');
+        Ok := TryAfter(3);
+        Ok := TryAfter(5);
+        Ok := TryBefore(3);
+        Ok := TryBefore(5);
+        Observer.Observe('doc-comment-pi-both-sides', SerDoc());
+        Observer.Observe('root-child-count-mixed', Format(Root.GetChildNodes().Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AfterSelf_ExistingNode_CopiedOrMoved()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: XmlNode;
+        E: XmlElement;
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryAfter(10);
+        Observer.Observe('add-sibling-a-after-x', SerDoc());
+        Observer.Observe('child-count', Format(Root.GetChildNodes().Count()));
+        Root.SelectSingleNode('a', N);
+        E := N.AsXmlElement();
+        E.SetAttribute('changed', '1');
+        Observer.Observe('after-changing-first-a', SerDoc());
+        Build(true, 'x');
+        Ok := TryBefore(10);
+        Observer.Observe('add-sibling-a-before-x', SerDoc());
+        Observer.Observe('child-count-before', Format(Root.GetChildNodes().Count()));
+        Build(true, 'x');
+        Ok := TryAfter(13);
+        Observer.Observe('add-foreign-root-after-x', SerDoc());
+        Observer.Observe('child-count-foreign', Format(Root.GetChildNodes().Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Remove_Attached_Twice()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        D: XmlDocument;
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryRemove();
+        Observer.Observe('remove1', Format(Ok));
+        Observer.ObserveError('remove1-err');
+        Observer.Observe('remove1-doc', SerDoc());
+        Observer.Observe('remove1-has-parent', Format(X.GetParent(P)));
+        Observer.Observe('remove1-has-document', Format(X.GetDocument(D)));
+        Observer.Observe('remove1-x', SerX());
+        Ok := TryRemove();
+        Observer.Observe('remove2', Format(Ok));
+        Observer.ObserveError('remove2-err');
+        Observer.Observe('remove2-doc', SerDoc());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Remove_Detached_Twice()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Build(false, 'x');
+        Ok := TryRemove();
+        Observer.Observe('remove1', Format(Ok));
+        Observer.ObserveError('remove1-err');
+        Observer.Observe('remove1-x', SerX());
+        Ok := TryRemove();
+        Observer.Observe('remove2', Format(Ok));
+        Observer.ObserveError('remove2-err');
+        Observer.Observe('remove2-x', SerX());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Remove_ViaXmlNode_AndCopiedVariable()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: XmlNode;
+        Y: XmlText;
+        P: XmlElement;
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        N := X.AsXmlNode();
+        Y := X;
+        N.Remove();
+        Observer.Observe('doc-after-node-remove', SerDoc());
+        Observer.Observe('x-has-parent', Format(X.GetParent(P)));
+        Observer.Observe('y-has-parent', Format(Y.GetParent(P)));
+        Ok := TryRemove();
+        Observer.Observe('remove-via-typed-again', Format(Ok));
+        Observer.ObserveError('remove-via-typed-again-err');
+        Observer.Observe('y-x-same-text', Format(SerNode(Y.AsXmlNode()) = SerX()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Remove_ThenAddAgain()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: XmlElement;
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        X.Remove();
+        Root.Add(X);
+        Observer.Observe('readded-doc', SerDoc());
+        Observer.Observe('readded-has-parent', Format(X.GetParent(P)));
+        Root.Add(X);
+        Observer.Observe('added-twice-doc', SerDoc());
+        Observer.Observe('added-twice-count', Format(Root.GetChildNodes().Count()));
+        Build(true, 'x');
+        X.Remove();
+        Ok := TryAfter(1);
+        Observer.Observe('after-self-on-removed', Format(Ok));
+        Observer.ObserveError('after-self-on-removed-err');
+        Ok := TryReplace(1);
+        Observer.Observe('replace-on-removed', Format(Ok));
+        Observer.ObserveError('replace-on-removed-err');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReplaceWith_Twice_And_ReplacementChain()
+    var
+        Observer: Codeunit "Probe Observer";
+        E: XmlElement;
+        N: XmlNode;
+        Ok: Boolean;
+    begin
+        Build(true, 'x');
+        Ok := TryReplace(1);
+        Observer.Observe('replace1', Format(Ok));
+        Observer.Observe('replace1-doc', SerDoc());
+        Ok := TryReplace(3);
+        Observer.Observe('replace2-on-replaced', Format(Ok));
+        Observer.ObserveError('replace2-err');
+        Observer.Observe('replace2-doc', SerDoc());
+        Build(true, 'x');
+        E := XmlElement.Create('rep');
+        X.ReplaceWith(E);
+        Observer.Observe('free-element-replace-doc', SerDoc());
+        E.SetAttribute('later', '1');
+        Observer.Observe('after-changing-e', SerDoc());
+        Root.GetChildNodes().Get(2, N);
+        Observer.Observe('node-at-2', SerNode(N));
+        Observer.Finish();
+    end;
+
+}
