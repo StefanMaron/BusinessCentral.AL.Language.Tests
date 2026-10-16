@@ -80,8 +80,16 @@ codeunit 69339 "PV Base64 Probe"
         Observer.Observe('without_line_breaks_short', Base64.ToBase64('Hello', false));
         Observer.Expect('utf8', 'w6TDtsO8');
         Observer.Expect('utf16', '5AD2APwA');
+#if BC28PLUS
         Observer.Expect('windows', '5Pb8');
+#else
+        Observer.Expect('windows', 'w6TDtsO8');
+#endif
+#if BC28PLUS
         Observer.Expect('msdos', '5Pb8');
+#else
+        Observer.Expect('msdos', 'w6TDtsO8');
+#endif
         Observer.Expect('codepage_1252', '5Pb8');
         Observer.Expect('codepage_28591', '5Pb8');
         Observer.Expect('codepage_65001', 'w6TDtsO8');
@@ -220,7 +228,11 @@ codeunit 69339 "PV Base64 Probe"
         Observer.Expect('url_plus_slash', 'Pj4-Pz8_');
         Observer.Expect('standard_plus_slash', 'Pj4+Pz8/');
         Observer.Expect('url_padding', 'YQ');
+#if BC28PLUS
         Observer.Expect('url_umlauts_windows', '5Pb8');
+#else
+        Observer.Expect('url_umlauts_windows', 'w6TDtsO8');
+#endif
         Observer.Verify();
     end;
 }

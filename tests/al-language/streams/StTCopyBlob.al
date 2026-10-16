@@ -448,10 +448,22 @@ codeunit 74202 "LT StT CopyStream"
         Observer.Observe('windows-back', Format(StrLen(Base64.FromBase64(Base64.ToBase64(T, TextEncoding::Windows), TextEncoding::Windows))));
         Observer.Expect('utf8', 'w6Tigqw=');
         Observer.Expect('utf16', '5ACsIA==');
+#if BC28PLUS
         Observer.Expect('windows', '5IA=');
+#else
+        Observer.Expect('windows', 'w6Tigqw=');
+#endif
+#if BC28PLUS
         Observer.Expect('msdos', '5IA=');
+#else
+        Observer.Expect('msdos', 'w6Tigqw=');
+#endif
         Observer.Expect('utf16-back', '2');
+#if BC28PLUS
         Observer.Expect('windows-back', '2');
+#else
+        Observer.Expect('windows-back', '5');
+#endif
         Observer.Verify();
     end;
 
@@ -469,7 +481,11 @@ codeunit 74202 "LT StT CopyStream"
         Observer.Observe('url', Base64.ToBase64Url(T));
         Observer.Observe('url-abc', Base64.ToBase64Url('abc?>>'));
         Observer.Observe('std-abc', Base64.ToBase64('abc?>>'));
+#if BC28PLUS
         Observer.Expect('std', '+/++');
+#else
+        Observer.Expect('std', 'w7vDv8K+');
+#endif
         Observer.Expect('url', 'w7vDv8K-');
         Observer.Expect('url-abc', 'YWJjPz4-');
         Observer.Expect('std-abc', 'YWJjPz4+');

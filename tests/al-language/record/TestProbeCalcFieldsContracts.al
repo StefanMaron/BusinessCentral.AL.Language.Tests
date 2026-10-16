@@ -120,12 +120,12 @@ codeunit 69812 "PA CalcFields Contracts"
 #if BC29PLUS
         O.Expect('sum_big_into_int', 'ERR:Arithmetic operation resulted in an overflow./AL:Overflow');
 #else
-        O.Expect('sum_big_into_int', 'ERR:The following fields must have the same type:\r\\r\Field: SumBigIntoInt <-- Big\r\Table: PA Cf Head <-- PA Cf Src\r\Type: Integer <-- BigInteger/DB:TypeMisMatch');
+        O.Expect('sum_big_into_int', 'ERR:The following fields must have the same type:\\Field: SumBigIntoInt <-- Big\Table: PA Cf Head <-- PA Cf Src\Type: Integer <-- BigInteger/DB:TypeMisMatch');
 #endif
 #if BC29PLUS
         O.Expect('avg_int_into_big', '5');
 #else
-        O.Expect('avg_int_into_big', 'ERR:The following fields must have the same type:\r\\r\Field: AvgIntIntoBig <-- IntAmt\r\Table: PA Cf Head <-- PA Cf Src\r\Type: BigInteger <-- Integer/DB:TypeMisMatch');
+        O.Expect('avg_int_into_big', 'ERR:The following fields must have the same type:\\Field: AvgIntIntoBig <-- IntAmt\Table: PA Cf Head <-- PA Cf Src\Type: BigInteger <-- Integer/DB:TypeMisMatch');
 #endif
         O.Expect('min_big', '7');
         O.Verify();
