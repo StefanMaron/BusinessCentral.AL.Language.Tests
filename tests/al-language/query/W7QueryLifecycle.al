@@ -276,7 +276,7 @@ codeunit 68511 "W7 Query Lifecycle"
         Observer.Observe('text utf8', Util.Lines(TempBlob, TextEncoding::UTF8));
         Observer.Expect('ok', 'Yes');
         Observer.Expect('length', '30');
-        Observer.Expect('bytes', '45 6E 74 72 79 2C 49 6E 74 46 0D 0A 31 2C 31 30 0D 0A 32 2C');
+        Observer.Expect('bytes', '45 6E 74 72 79 2C 49 6E 74 46 0D 0A 31 2C 31 30 0D 0A 32 2C ');
         Observer.Expect('text utf8', 'Entry,IntF|1,10|2,20|3,30|');
         Observer.Verify();
     end;

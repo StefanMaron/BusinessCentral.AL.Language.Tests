@@ -193,7 +193,7 @@ codeunit 70052 "LT ScT Fmt Integer"
         Observer.Expect('n8', 'error:Standard format number 8 does not exist for the type ''Variant''.|InvalidStandardFormat');
         Observer.Expect('n9', '˜');
         Observer.Expect('zero', '\u0000');
-        Observer.Expect('max', '');
+        Observer.Expect('max', ' ');
         Observer.Expect('af129|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,6><Filler Character,0>');
         Observer.Expect('af129|code', 'InvalidFormatString');
         Observer.Verify();

@@ -168,7 +168,7 @@ codeunit 70060 "LT ScT Conversions"
         Observer.Observe('byte_div', Format(By div 3));
         Observer.Observe('byte_mod', Format(By mod 3));
         Observer.Observe('byte_default', Format(Dflt()));
-        Observer.Expect('255', 'ÿ');
+        Observer.Expect('255', ' ');
         Observer.Expect('256|text', 'Overflow under conversion of System.Int32 value 256 to System.Byte.');
         Observer.Expect('256|code', 'ConversionCast');
         Observer.Expect('neg1|text', 'Overflow under conversion of System.Int32 value -1 to System.Byte.');

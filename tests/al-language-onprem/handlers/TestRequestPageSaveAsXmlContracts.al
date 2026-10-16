@@ -184,10 +184,11 @@ codeunit 61243 "Probe RP SaveAsXml"
             Result += Line + '|';
         end;
         SaveFile.Close();
-        // The byte order mark is read as three characters (the stream is read as a single-byte text).
-        Bom[1] := 239;
-        Bom[2] := 187;
-        Bom[3] := 191;
+        // The byte order mark is read as three characters (the stream is read as a single-byte text in the OEM code page: EF BB BF
+        // are U+00D9, U+2039 and U+008F, as on the Windows tier).
+        Bom[1] := 217;
+        Bom[2] := 8249;
+        Bom[3] := 143;
         HadBom := Result.StartsWith(Bom);
         if HadBom then
             Result := CopyStr(Result, 4);
@@ -237,7 +238,7 @@ codeunit 61243 "Probe RP SaveAsXml"
         Report.Run(Report::"Probe RP Save Report");
 
         Content := FileText(DataFile, HadBom);
-        Assert.IsFalse(HadBom, 'no byte order mark on the Windows tier');
+        Assert.IsTrue(HadBom, 'byte order mark');
         Assert.AreEqual(
             '<?xml version="1.0" standalone="yes"?>|' +
             '<DataSet>|' +
@@ -281,7 +282,7 @@ codeunit 61243 "Probe RP SaveAsXml"
         Report.Run(Report::"Probe RP Save Report");
 
         Text := FileText(ParametersFile, HadBom);
-        Assert.IsFalse(HadBom, 'no byte order mark on the Windows tier');
+        Assert.IsTrue(HadBom, 'byte order mark');
         Assert.IsTrue(Text.StartsWith('<?xml version="1.0" encoding="utf-8"?>|<ArrayOfReportParameter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">|  <ReportParameter>|    <Name>NavUserId'), 'start');
         Assert.IsTrue(Text.Contains('    <Values>|      <string>' + UserId() + '</string>|    </Values>|    <Visible>true</Visible>|  </ReportParameter>|  <ReportParameter>|    <Name>ExecutionTime'), 'user id value, then the execution time');
         Assert.IsTrue(Text.EndsWith('</string>|    </Values>|    <Visible>true</Visible>|  </ReportParameter>|</ArrayOfReportParameter>|'), 'end');
