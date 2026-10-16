@@ -36,7 +36,8 @@ codeunit 73083 "LT P94 NavApp Archive"
             Observer.Observe('version', '[' + Version + ']')
         else
             Observer.Observe('version', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('version', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -50,7 +51,9 @@ codeunit 73083 "LT P94 NavApp Archive"
             Observer.Observe('isOpen', Format(RecRef.Number() <> 0));
         end else
             Observer.Observe('ok', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('isOpen', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,7 +74,10 @@ codeunit 73083 "LT P94 NavApp Archive"
             Observer.Observe('negative', Format(Ok))
         else
             Observer.Observe('negative', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('zero', 'No');
+        Observer.Expect('unknown', 'No');
+        Observer.Expect('negative', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -80,7 +86,8 @@ codeunit 73083 "LT P94 NavApp Archive"
         Helper.Wipe();
         NavApp.DeleteArchiveData(Database::"LT P94 Item");
         Observer.Observe('delete', 'no error');
-        Observer.Finish();
+        Observer.Expect('delete', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +95,8 @@ codeunit 73083 "LT P94 NavApp Archive"
     begin
         NavApp.DeleteArchiveData(0);
         Observer.Observe('delete0', 'no error');
-        Observer.Finish();
+        Observer.Expect('delete0', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +104,8 @@ codeunit 73083 "LT P94 NavApp Archive"
     begin
         NavApp.DeleteArchiveData(73999);
         Observer.Observe('deleteUnknown', 'no error');
-        Observer.Finish();
+        Observer.Expect('deleteUnknown', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +114,8 @@ codeunit 73083 "LT P94 NavApp Archive"
         Helper.Wipe();
         NavApp.RestoreArchiveData(Database::"LT P94 Item");
         Observer.Observe('restore', 'no error');
-        Observer.Finish();
+        Observer.Expect('restore', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +124,8 @@ codeunit 73083 "LT P94 NavApp Archive"
         Helper.Wipe();
         NavApp.RestoreArchiveData(Database::"LT P94 Item", true);
         Observer.Observe('restoreTrue', 'no error');
-        Observer.Finish();
+        Observer.Expect('restoreTrue', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +134,8 @@ codeunit 73083 "LT P94 NavApp Archive"
         Helper.Wipe();
         NavApp.RestoreArchiveData(Database::"LT P94 Item", false);
         Observer.Observe('restoreFalse', 'no error');
-        Observer.Finish();
+        Observer.Expect('restoreFalse', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,7 +143,8 @@ codeunit 73083 "LT P94 NavApp Archive"
     begin
         NavApp.RestoreArchiveData(0);
         Observer.Observe('restore0', 'no error');
-        Observer.Finish();
+        Observer.Expect('restore0', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +152,8 @@ codeunit 73083 "LT P94 NavApp Archive"
     begin
         NavApp.RestoreArchiveData(73999);
         Observer.Observe('restoreUnknown', 'no error');
-        Observer.Finish();
+        Observer.Expect('restoreUnknown', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +162,8 @@ codeunit 73083 "LT P94 NavApp Archive"
         Helper.Wipe();
         NavApp.LoadPackageData(Database::"LT P94 Item");
         Observer.Observe('load', 'no error');
-        Observer.Finish();
+        Observer.Expect('load', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +171,8 @@ codeunit 73083 "LT P94 NavApp Archive"
     begin
         NavApp.LoadPackageData(0);
         Observer.Observe('load0', 'no error');
-        Observer.Finish();
+        Observer.Expect('load0', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,7 +180,8 @@ codeunit 73083 "LT P94 NavApp Archive"
     begin
         NavApp.LoadPackageData(73999);
         Observer.Observe('loadUnknown', 'no error');
-        Observer.Finish();
+        Observer.Expect('loadUnknown', 'no error');
+        Observer.Verify();
     end;
 }
 
@@ -187,7 +204,8 @@ codeunit 73084 "LT P94 NavApp Info"
     procedure IsUnlicensed_NoArgument()
     begin
         Observer.Observe('unlicensed', Format(NavApp.IsUnlicensed()));
-        Observer.Finish();
+        Observer.Expect('unlicensed', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +220,9 @@ codeunit 73084 "LT P94 NavApp Info"
         else
             Observer.Observe('own', Helper.ErrText());
         Observer.Observe('sameAsNoArgument', Format(Result = NavApp.IsUnlicensed()));
-        Observer.Finish();
+        Observer.Expect('own', 'No');
+        Observer.Expect('sameAsNoArgument', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -215,7 +235,8 @@ codeunit 73084 "LT P94 NavApp Info"
             Observer.Observe('null', Format(Result))
         else
             Observer.Observe('null', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('null', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,7 +248,8 @@ codeunit 73084 "LT P94 NavApp Info"
             Observer.Observe('unknown', Format(Result))
         else
             Observer.Observe('unknown', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('unknown', 'No');
+        Observer.Verify();
     end;
 
 }

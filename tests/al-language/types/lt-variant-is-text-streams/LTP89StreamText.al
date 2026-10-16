@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/outstream/outstream-write-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), LT P89 Helper (74627)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74646 "LT P89 Stream Text"
 {
@@ -134,7 +134,19 @@ codeunit 74646 "LT P89 Stream Text"
         Observer.Observe('text10_empty', DumpText10(''));
         Observer.Observe('code_abc', DumpCode('abc'));
         Observer.Observe('code_empty', DumpCode(''));
-        Observer.Finish();
+        Observer.Expect('empty', '1:00');
+        Observer.Expect('a', '2:6100');
+        Observer.Expect('abc', '4:61626300');
+        Observer.Expect('spaces', '3:202000');
+        Observer.Expect('umlaut', '4:E4F6FC00');
+        Observer.Expect('euro', '2:8000');
+        Observer.Expect('nul_char', '1:00');
+        Observer.Expect('nul_between', '3:616200');
+        Observer.Expect('text10_abc', '4:61626300');
+        Observer.Expect('text10_empty', '1:00');
+        Observer.Expect('code_abc', '4:41424300');
+        Observer.Expect('code_empty', '1:00');
+        Observer.Verify();
     end;
 
     [Test]
@@ -165,7 +177,19 @@ codeunit 74646 "LT P89 Stream Text"
             Observer.Observe('len' + Format(Len), Res);
             Observer.Observe('len' + Format(Len) + '_bytes', Helper.Dump(Rec));
         end;
-        Observer.Finish();
+        Observer.Expect('len0', 'ok');
+        Observer.Expect('len0_bytes', '1:00');
+        Observer.Expect('len1', 'ok');
+        Observer.Expect('len1_bytes', '2:6100');
+        Observer.Expect('len3', 'ok');
+        Observer.Expect('len3_bytes', '4:61626300');
+        Observer.Expect('len5', 'ok');
+        Observer.Expect('len5_bytes', '6:616263646500');
+        Observer.Expect('len10', 'ok');
+        Observer.Expect('len10_bytes', '6:616263646500');
+        Observer.Expect('len-1', 'ok');
+        Observer.Expect('len-1_bytes', '6:616263646500');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +226,18 @@ codeunit 74646 "LT P89 Stream Text"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadText(EmptyIns, R3));
         Observer.Observe('value_empty', R3);
-        Observer.Finish();
+        Observer.Expect('length', '7');
+        Observer.Expect('read1', 'ok n=4');
+        Observer.Expect('value1', 'abc');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=3');
+        Observer.Expect('value2', 'de');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -234,7 +269,20 @@ codeunit 74646 "LT P89 Stream Text"
         Observer.Observe('read_len1_past_end', ReadTextLen(Ins, R, 1));
         Observer.Observe('value_len1_past_end', R);
         Observer.Observe('read_len_minus1', ReadTextLen(Ins, R, -1));
-        Observer.Finish();
+        Observer.Expect('read_len3', 'ok n=3');
+        Observer.Expect('value_len3', 'abc');
+        Observer.Expect('pos_after_len3', '4');
+        Observer.Expect('read_len0', 'ok n=0');
+        Observer.Expect('value_len0', '');
+        Observer.Expect('read_len2', 'ok n=2');
+        Observer.Expect('value_len2', 'de');
+        Observer.Expect('read_len100', 'ok n=4');
+        Observer.Expect('value_len100', 'fgh');
+        Observer.Expect('eos', 'Yes');
+        Observer.Expect('read_len1_past_end', 'ok n=0');
+        Observer.Expect('value_len1_past_end', '');
+        Observer.Expect('read_len_minus1', 'ok n=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +307,11 @@ codeunit 74646 "LT P89 Stream Text"
         Rec.Data.CreateInStream(Ins);
         Observer.Observe('read_code10', ReadCode(Ins, C10));
         Observer.Observe('value_code10', C10);
-        Observer.Finish();
+        Observer.Expect('read_text10', 'ok n=10');
+        Observer.Expect('value_text10', 'abcdefghij');
+        Observer.Expect('read_code10', 'ok n=10');
+        Observer.Expect('value_code10', 'ABCDEFGHIJ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -291,6 +343,10 @@ codeunit 74646 "LT P89 Stream Text"
         Out.WriteText('');
         Rec.Modify();
         Observer.Observe('writetext_empty', Helper.Dump(Rec));
-        Observer.Finish();
+        Observer.Expect('writetext', '3:616263');
+        Observer.Expect('write', '4:61626300');
+        Observer.Expect('writetext_then_newline', '5:6162630D0A');
+        Observer.Expect('writetext_empty', '0:');
+        Observer.Verify();
     end;
 }

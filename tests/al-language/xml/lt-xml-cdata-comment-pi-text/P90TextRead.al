@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/XmlText/xmltext-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), own table LT P90 Blob (table 70729)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (local service tier); the observed values become the assertions. Other BC versions are checked by the corpus CI matrix.
 // Facts: XmlText AsXmlNode, GetDocument, GetParent, SelectNodes, SelectSingleNode, WriteTo (Text and OutStream), content edge cases, uninitialised variables
 // BC versions: 29 (27 and 28 by CI)
 
@@ -393,7 +393,17 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('is-document', Format(N.IsXmlDocument()));
         Observer.Observe('is-documenttype', Format(N.IsXmlDocumentType()));
         Observer.Observe('node-text', SerNode(N));
-        Observer.Finish();
+        Observer.Expect('is-element', 'No');
+        Observer.Expect('is-text', 'Yes');
+        Observer.Expect('is-comment', 'No');
+        Observer.Expect('is-cdata', 'No');
+        Observer.Expect('is-pi', 'No');
+        Observer.Expect('is-attribute', 'No');
+        Observer.Expect('is-declaration', 'No');
+        Observer.Expect('is-document', 'No');
+        Observer.Expect('is-documenttype', 'No');
+        Observer.Expect('node-text', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -414,7 +424,17 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('is-document', Format(N.IsXmlDocument()));
         Observer.Observe('is-documenttype', Format(N.IsXmlDocumentType()));
         Observer.Observe('node-text', SerNode(N));
-        Observer.Finish();
+        Observer.Expect('is-element', 'No');
+        Observer.Expect('is-text', 'Yes');
+        Observer.Expect('is-comment', 'No');
+        Observer.Expect('is-cdata', 'No');
+        Observer.Expect('is-pi', 'No');
+        Observer.Expect('is-attribute', 'No');
+        Observer.Expect('is-declaration', 'No');
+        Observer.Expect('is-document', 'No');
+        Observer.Expect('is-documenttype', 'No');
+        Observer.Expect('node-text', 'x');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -466,7 +486,27 @@ codeunit 70737 "LT P90 Text Read"
     begin
         Build(true, 'x');
         CastRange(Observer, 1, 5);
-        Observer.Finish();
+        Observer.Expect('cast1', 'No');
+        Observer.Expect('cast1-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlElement.');
+        Observer.Expect('cast1-err|code', 'Conversion');
+        Observer.Expect('cast1-res', '');
+        Observer.Expect('cast2', 'Yes');
+        Observer.Expect('cast2-err|text', '');
+        Observer.Expect('cast2-err|code', '');
+        Observer.Expect('cast2-res', 'x');
+        Observer.Expect('cast3', 'No');
+        Observer.Expect('cast3-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlComment.');
+        Observer.Expect('cast3-err|code', 'Conversion');
+        Observer.Expect('cast3-res', '');
+        Observer.Expect('cast4', 'No');
+        Observer.Expect('cast4-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlCData.');
+        Observer.Expect('cast4-err|code', 'Conversion');
+        Observer.Expect('cast4-res', '');
+        Observer.Expect('cast5', 'No');
+        Observer.Expect('cast5-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlProcessingInstruction.');
+        Observer.Expect('cast5-err|code', 'Conversion');
+        Observer.Expect('cast5-res', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -476,7 +516,23 @@ codeunit 70737 "LT P90 Text Read"
     begin
         Build(true, 'x');
         CastRange(Observer, 6, 9);
-        Observer.Finish();
+        Observer.Expect('cast6', 'No');
+        Observer.Expect('cast6-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlAttribute.');
+        Observer.Expect('cast6-err|code', 'Conversion');
+        Observer.Expect('cast6-res', '');
+        Observer.Expect('cast7', 'No');
+        Observer.Expect('cast7-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlDeclaration.');
+        Observer.Expect('cast7-err|code', 'Conversion');
+        Observer.Expect('cast7-res', '');
+        Observer.Expect('cast8', 'No');
+        Observer.Expect('cast8-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlDocument.');
+        Observer.Expect('cast8-err|code', 'Conversion');
+        Observer.Expect('cast8-res', '');
+        Observer.Expect('cast9', 'No');
+        Observer.Expect('cast9-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType.');
+        Observer.Expect('cast9-err|code', 'Conversion');
+        Observer.Expect('cast9-res', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -486,7 +542,27 @@ codeunit 70737 "LT P90 Text Read"
     begin
         Build(false, 'x');
         CastRange(Observer, 1, 5);
-        Observer.Finish();
+        Observer.Expect('cast1', 'No');
+        Observer.Expect('cast1-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlElement.');
+        Observer.Expect('cast1-err|code', 'Conversion');
+        Observer.Expect('cast1-res', '');
+        Observer.Expect('cast2', 'Yes');
+        Observer.Expect('cast2-err|text', '');
+        Observer.Expect('cast2-err|code', '');
+        Observer.Expect('cast2-res', 'x');
+        Observer.Expect('cast3', 'No');
+        Observer.Expect('cast3-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlComment.');
+        Observer.Expect('cast3-err|code', 'Conversion');
+        Observer.Expect('cast3-res', '');
+        Observer.Expect('cast4', 'No');
+        Observer.Expect('cast4-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlCData.');
+        Observer.Expect('cast4-err|code', 'Conversion');
+        Observer.Expect('cast4-res', '');
+        Observer.Expect('cast5', 'No');
+        Observer.Expect('cast5-err|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlProcessingInstruction.');
+        Observer.Expect('cast5-err|code', 'Conversion');
+        Observer.Expect('cast5-res', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -513,7 +589,16 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('node-sees-change', SerNode(N));
         Observer.Observe('n2-sees-change', SerNode(N2));
         Observer.Observe('get-v', GetV(X));
-        Observer.Finish();
+        Observer.Expect('same-text', 'Yes');
+        Observer.Expect('node-parent-ok', 'Yes');
+        Observer.Expect('typed-parent-ok', 'Yes');
+        Observer.Expect('parent-names-equal', 'Yes');
+        Observer.Expect('doc-after-node-add', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<viaNode /><b /></r>');
+        Observer.Expect('set-value', 'Yes');
+        Observer.Expect('node-sees-change', 'changed');
+        Observer.Expect('n2-sees-change', 'changed');
+        Observer.Expect('get-v', 'changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -529,7 +614,10 @@ codeunit 70737 "LT P90 Text Read"
         D.GetRoot(E);
         E.SetAttribute('viaD', '1');
         Observer.Observe('original-sees-change', SerDoc());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('original-sees-change', '<?xml version="1.0" encoding="utf-16"?>\n<r viaD="1">\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     local procedure SerDocOf(D: XmlDocument): Text
@@ -552,7 +640,10 @@ codeunit 70737 "LT P90 Text Read"
         D.Add(XmlElement.Create('pre'));
         Observer.Observe('preset-ok', Format(X.GetDocument(D)));
         Observer.Observe('preset-doc', SerDocOf(D));
-        Observer.Finish();
+        Observer.Expect('uninitialised-ok', 'No');
+        Observer.Expect('preset-ok', 'No');
+        Observer.Expect('preset-doc', '<?xml version="1.0" encoding="utf-16"?>\n<pre />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -578,7 +669,12 @@ codeunit 70737 "LT P90 Text Read"
         Build(true, 'x');
         N := X.AsXmlNode();
         Observer.Observe('via-node', Format(N.GetDocument(D)));
-        Observer.Finish();
+        Observer.Expect('after-remove', 'No');
+        Observer.Expect('in-free-tree', 'No');
+        Observer.Expect('free-tree-now-in-doc', 'Yes');
+        Observer.Expect('doc-then', '<?xml version="1.0" encoding="utf-16"?>\n<free>y</free>');
+        Observer.Expect('via-node', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -610,7 +706,12 @@ codeunit 70737 "LT P90 Text Read"
             Observer.ObserveError('remove-at-doc-level-err');
             Observer.Observe('doc-after-remove', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('add-to-doc', 'No');
+        Observer.Expect('add-to-doc-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('add-to-doc-err|code', 'Argument');
+        Observer.Expect('af603|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('af603|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -634,7 +735,12 @@ codeunit 70737 "LT P90 Text Read"
             else
                 Observer.Observe('k' + Format(i), 'x not addable to document');
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'x not addable to document');
+        Observer.Expect('k2', 'x not addable to document');
+        Observer.Expect('k3', 'x not addable to document');
+        Observer.Expect('k4', 'x not addable to document');
+        Observer.Expect('k5', 'x not addable to document');
+        Observer.Verify();
     end;
 
     [Test]
@@ -662,7 +768,12 @@ codeunit 70737 "LT P90 Text Read"
             else
                 Observer.Observe('k' + Format(i), 'x not addable to document');
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'x not addable to document');
+        Observer.Expect('k2', 'x not addable to document');
+        Observer.Expect('k3', 'x not addable to document');
+        Observer.Expect('k4', 'x not addable to document');
+        Observer.Expect('k5', 'x not addable to document');
+        Observer.Verify();
     end;
 
     [Test]
@@ -684,7 +795,21 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('parent-xml', SerNode(P.AsXmlNode()));
         P.SetAttribute('viaP', '1');
         Observer.Observe('doc-after-parent-change', SerDoc());
-        Observer.Finish();
+        Observer.Expect('p0', 'Yes');
+        Observer.Expect('p0-name', 'r');
+        Observer.Expect('p0-via-node', 'Yes');
+        Observer.Expect('p1', 'Yes');
+        Observer.Expect('p1-name', 'r');
+        Observer.Expect('p1-via-node', 'Yes');
+        Observer.Expect('p2', 'Yes');
+        Observer.Expect('p2-name', 'r');
+        Observer.Expect('p2-via-node', 'Yes');
+        Observer.Expect('p3', 'Yes');
+        Observer.Expect('p3-name', 'r');
+        Observer.Expect('p3-via-node', 'Yes');
+        Observer.Expect('parent-xml', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('doc-after-parent-change', '<?xml version="1.0" encoding="utf-16"?>\n<r viaP="1">\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -699,7 +824,11 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('preset-ok', Format(X.GetParent(P)));
         Observer.Observe('preset-name', P.Name());
         Observer.Observe('via-node', Format(X.AsXmlNode().GetParent(P)));
-        Observer.Finish();
+        Observer.Expect('uninitialised-ok', 'No');
+        Observer.Expect('preset-ok', 'No');
+        Observer.Expect('preset-name', 'pre');
+        Observer.Expect('via-node', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -722,7 +851,12 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('in-free-tree-name', P.Name());
         R2.Add(Fresh);
         Observer.Observe('added-twice-child-count', Format(R2.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('after-remove', 'No');
+        Observer.Expect('after-remove-name', 'pre');
+        Observer.Expect('in-free-tree', 'Yes');
+        Observer.Expect('in-free-tree-name', 'free');
+        Observer.Expect('added-twice-child-count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -736,7 +870,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '..');
         SelN(Observer, 'x4', 'following-sibling::*');
         SelN(Observer, 'x5', 'preceding-sibling::*');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', 'x');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '1');
+        Observer.Expect('x2-first', 'x');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '1');
+        Observer.Expect('x3-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '1');
+        Observer.Expect('x4-first', '<b />');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '1');
+        Observer.Expect('x5-first', '<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -750,7 +909,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '../node()');
         SelN(Observer, 'x4', 'parent::r');
         SelN(Observer, 'x5', 'ancestor::*');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', '<b />');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '2');
+        Observer.Expect('x2-first', '<a />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '3');
+        Observer.Expect('x3-first', '<a />');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '1');
+        Observer.Expect('x4-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '1');
+        Observer.Expect('x5-first', '<r>\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -764,7 +948,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'self::processing-instruction()');
         SelN(Observer, 'x4', 'text()');
         SelN(Observer, 'x5', 'child::node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', 'x');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '0');
+        Observer.Expect('x3-first', '');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '0');
+        Observer.Expect('x4-first', '');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '0');
+        Observer.Expect('x5-first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -778,7 +987,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'preceding-sibling::a');
         SelN(Observer, 'x4', '../a');
         SelN(Observer, 'x5', 'descendant-or-self::node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '0');
+        Observer.Expect('x1-first', '');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '1');
+        Observer.Expect('x2-first', '<b />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '1');
+        Observer.Expect('x3-first', '<a />');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '1');
+        Observer.Expect('x4-first', '<a />');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '1');
+        Observer.Expect('x5-first', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -792,7 +1026,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '/r/node()');
         SelN(Observer, 'x4', '//a');
         SelN(Observer, 'x5', '//node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '1');
+        Observer.Expect('x2-first', '<a />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '3');
+        Observer.Expect('x3-first', '<a />');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '1');
+        Observer.Expect('x4-first', '<a />');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '4');
+        Observer.Expect('x5-first', '<r>\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -806,7 +1065,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '/r/processing-instruction()');
         SelN(Observer, 'x4', '/');
         SelN(Observer, 'x5', '/r/node()[2]');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', 'x');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '0');
+        Observer.Expect('x3-first', '');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '1');
+        Observer.Expect('x4-first', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '1');
+        Observer.Expect('x5-first', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -820,7 +1104,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '//*[1]');
         SelN(Observer, 'x4', '/r/a/following-sibling::node()');
         SelN(Observer, 'x5', '/r/b/preceding-sibling::node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '2');
+        Observer.Expect('x2-first', '<a />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '2');
+        Observer.Expect('x3-first', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '2');
+        Observer.Expect('x4-first', 'x');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '2');
+        Observer.Expect('x5-first', '<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -834,7 +1143,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'self::nomatch');
         SelN(Observer, 'x4', '../zzz');
         SelN(Observer, 'x5', '//zzz');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '0');
+        Observer.Expect('x1-first', '');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '0');
+        Observer.Expect('x3-first', '');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '0');
+        Observer.Expect('x4-first', '');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '0');
+        Observer.Expect('x5-first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -848,7 +1182,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'text()[2]');
         SelN(Observer, 'x4', 'following-sibling::zzz');
         SelN(Observer, 'x5', 'ancestor::zzz');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '0');
+        Observer.Expect('x1-first', '');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '0');
+        Observer.Expect('x3-first', '');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '0');
+        Observer.Expect('x4-first', '');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '0');
+        Observer.Expect('x5-first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -862,7 +1221,24 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '[');
         SelN(Observer, 'x4', 'count(.)');
         SelN(Observer, 'x5', '$v');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x1-err|code', 'Xml:XPath');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x2-err|code', 'Xml:XPath');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x3-err|code', 'Xml:XPath');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '0');
+        Observer.Expect('x4-first', '');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'Namespace Manager or XsltContext needed. This query has a prefix, variable, or user-defined function.');
+        Observer.Expect('x5-err|code', 'Xml:XPath');
+        Observer.Verify();
     end;
 
     [Test]
@@ -876,7 +1252,28 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'a b');
         SelN(Observer, 'x4', '/r/a[');
         SelN(Observer, 'x5', 'name()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '0');
+        Observer.Expect('x1-first', '');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', '''a b'' has an invalid token.');
+        Observer.Expect('x3-err|code', 'Xml:XPath');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x4-err|code', 'Xml:XPath');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '0');
+        Observer.Expect('x5-first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -890,7 +1287,24 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', '@@');
         SelN(Observer, 'x4', 'x:y');
         SelN(Observer, 'x5', 'self::');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '0');
+        Observer.Expect('x1-first', '');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x2-err|code', 'Xml:XPath');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x3-err|code', 'Xml:XPath');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'Namespace Manager or XsltContext needed. This query has a prefix, variable, or user-defined function.');
+        Observer.Expect('x4-err|code', 'Xml:XPath');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x5-err|code', 'Xml:XPath');
+        Observer.Verify();
     end;
 
     [Test]
@@ -904,7 +1318,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'self::node()');
         SelN(Observer, 'x4', '/');
         SelN(Observer, 'x5', '/r');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '1');
+        Observer.Expect('x1-first', 'x');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '1');
+        Observer.Expect('x3-first', 'x');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '1');
+        Observer.Expect('x4-first', 'x');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '0');
+        Observer.Expect('x5-first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -918,7 +1357,32 @@ codeunit 70737 "LT P90 Text Read"
         SelN(Observer, 'x3', 'parent::node()');
         SelN(Observer, 'x4', 'preceding-sibling::node()');
         SelN(Observer, 'x5', '//*');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-n', '0');
+        Observer.Expect('x1-first', '');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-n', '0');
+        Observer.Expect('x2-first', '');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-n', '0');
+        Observer.Expect('x3-first', '');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-n', '0');
+        Observer.Expect('x4-first', '');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-n', '0');
+        Observer.Expect('x5-first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -932,7 +1396,27 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '..');
         SelS(Observer, 'x4', 'following-sibling::*');
         SelS(Observer, 'x5', 'preceding-sibling::*');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', 'x');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-node', 'x');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', '<b />');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-node', '<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -946,7 +1430,27 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '../node()');
         SelS(Observer, 'x4', 'parent::r');
         SelS(Observer, 'x5', 'ancestor::*');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', '<b />');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-node', '<a />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-node', '<a />');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-node', '<r>\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -960,7 +1464,23 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'self::processing-instruction()');
         SelS(Observer, 'x4', 'text()');
         SelS(Observer, 'x5', 'child::node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', 'x');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''self::comment()'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'The XPath query ''self::processing-instruction()'' does not match any nodes.');
+        Observer.Expect('x3-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'The XPath query ''text()'' does not match any nodes.');
+        Observer.Expect('x4-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'The XPath query ''child::node()'' does not match any nodes.');
+        Observer.Expect('x5-err|code', 'InvalidXPathSelection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -974,7 +1494,26 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'preceding-sibling::a');
         SelS(Observer, 'x4', '../a');
         SelS(Observer, 'x5', 'descendant-or-self::node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'The XPath query ''@*'' does not match any nodes.');
+        Observer.Expect('x1-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-node', '<b />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-node', '<a />');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', '<a />');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-node', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -988,7 +1527,27 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '/r/node()');
         SelS(Observer, 'x4', '//a');
         SelS(Observer, 'x5', '//node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-node', '<a />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-node', '<a />');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', '<a />');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-node', '<r>\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1002,7 +1561,25 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '/r/processing-instruction()');
         SelS(Observer, 'x4', '/');
         SelS(Observer, 'x5', '/r/node()[2]');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', 'x');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''/r/comment()'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'The XPath query ''/r/processing-instruction()'' does not match any nodes.');
+        Observer.Expect('x3-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-node', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1016,7 +1593,27 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '//*[1]');
         SelS(Observer, 'x4', '/r/a/following-sibling::node()');
         SelS(Observer, 'x5', '/r/b/preceding-sibling::node()');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x2', 'Yes');
+        Observer.Expect('x2-err|text', '');
+        Observer.Expect('x2-err|code', '');
+        Observer.Expect('x2-node', '<a />');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-node', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', 'x');
+        Observer.Expect('x5', 'Yes');
+        Observer.Expect('x5-err|text', '');
+        Observer.Expect('x5-err|code', '');
+        Observer.Expect('x5-node', '<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1030,7 +1627,22 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'self::nomatch');
         SelS(Observer, 'x4', '../zzz');
         SelS(Observer, 'x5', '//zzz');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'The XPath query ''nomatch'' does not match any nodes.');
+        Observer.Expect('x1-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''/nomatch'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'The XPath query ''self::nomatch'' does not match any nodes.');
+        Observer.Expect('x3-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'The XPath query ''../zzz'' does not match any nodes.');
+        Observer.Expect('x4-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'The XPath query ''//zzz'' does not match any nodes.');
+        Observer.Expect('x5-err|code', 'InvalidXPathSelection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1044,7 +1656,22 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'text()[2]');
         SelS(Observer, 'x4', 'following-sibling::zzz');
         SelS(Observer, 'x5', 'ancestor::zzz');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'The XPath query ''/r/a/b'' does not match any nodes.');
+        Observer.Expect('x1-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''/r/node()[9]'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'The XPath query ''text()[2]'' does not match any nodes.');
+        Observer.Expect('x3-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'The XPath query ''following-sibling::zzz'' does not match any nodes.');
+        Observer.Expect('x4-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'The XPath query ''ancestor::zzz'' does not match any nodes.');
+        Observer.Expect('x5-err|code', 'InvalidXPathSelection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1058,7 +1685,22 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '[');
         SelS(Observer, 'x4', 'count(.)');
         SelS(Observer, 'x5', '$v');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x1-err|code', 'Xml:XPath');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x2-err|code', 'Xml:XPath');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x3-err|code', 'Xml:XPath');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'The XPath query ''count(.)'' does not match any nodes.');
+        Observer.Expect('x4-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'Namespace Manager or XsltContext needed. This query has a prefix, variable, or user-defined function.');
+        Observer.Expect('x5-err|code', 'Xml:XPath');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1072,7 +1714,22 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'a b');
         SelS(Observer, 'x4', '/r/a[');
         SelS(Observer, 'x5', 'name()');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'The XPath query ''1 + 1'' does not match any nodes.');
+        Observer.Expect('x1-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''"str"'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', '''a b'' has an invalid token.');
+        Observer.Expect('x3-err|code', 'Xml:XPath');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x4-err|code', 'Xml:XPath');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'The XPath query ''name()'' does not match any nodes.');
+        Observer.Expect('x5-err|code', 'InvalidXPathSelection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1086,7 +1743,22 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', '@@');
         SelS(Observer, 'x4', 'x:y');
         SelS(Observer, 'x5', 'self::');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'The XPath query ''true()'' does not match any nodes.');
+        Observer.Expect('x1-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x2-err|code', 'Xml:XPath');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x3-err|code', 'Xml:XPath');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'Namespace Manager or XsltContext needed. This query has a prefix, variable, or user-defined function.');
+        Observer.Expect('x4-err|code', 'Xml:XPath');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'Expression must evaluate to a node-set.');
+        Observer.Expect('x5-err|code', 'Xml:XPath');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1100,7 +1772,25 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'self::node()');
         SelS(Observer, 'x4', '/');
         SelS(Observer, 'x5', '/r');
-        Observer.Finish();
+        Observer.Expect('x1', 'Yes');
+        Observer.Expect('x1-err|text', '');
+        Observer.Expect('x1-err|code', '');
+        Observer.Expect('x1-node', 'x');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''..'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'Yes');
+        Observer.Expect('x3-err|text', '');
+        Observer.Expect('x3-err|code', '');
+        Observer.Expect('x3-node', 'x');
+        Observer.Expect('x4', 'Yes');
+        Observer.Expect('x4-err|text', '');
+        Observer.Expect('x4-err|code', '');
+        Observer.Expect('x4-node', 'x');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'The XPath query ''/r'' does not match any nodes.');
+        Observer.Expect('x5-err|code', 'InvalidXPathSelection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1114,7 +1804,22 @@ codeunit 70737 "LT P90 Text Read"
         SelS(Observer, 'x3', 'parent::node()');
         SelS(Observer, 'x4', 'preceding-sibling::node()');
         SelS(Observer, 'x5', '//*');
-        Observer.Finish();
+        Observer.Expect('x1', 'No');
+        Observer.Expect('x1-err|text', 'The XPath query ''following-sibling::*'' does not match any nodes.');
+        Observer.Expect('x1-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x2', 'No');
+        Observer.Expect('x2-err|text', 'The XPath query ''ancestor::node()'' does not match any nodes.');
+        Observer.Expect('x2-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x3', 'No');
+        Observer.Expect('x3-err|text', 'The XPath query ''parent::node()'' does not match any nodes.');
+        Observer.Expect('x3-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x4', 'No');
+        Observer.Expect('x4-err|text', 'The XPath query ''preceding-sibling::node()'' does not match any nodes.');
+        Observer.Expect('x4-err|code', 'InvalidXPathSelection');
+        Observer.Expect('x5', 'No');
+        Observer.Expect('x5-err|text', 'The XPath query ''//*'' does not match any nodes.');
+        Observer.Expect('x5-err|code', 'InvalidXPathSelection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1139,7 +1844,17 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('via-node-single-text', SerNode(Found));
         Observer.Observe('via-node-single-nomatch', Format(N.SelectSingleNode('nomatch', Found)));
         Observer.Observe('found-after-nomatch', SerNode(Found));
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first-count', '2');
+        Observer.Expect('second-nomatch', 'Yes');
+        Observer.Expect('count-after-nomatch', '0');
+        Observer.Expect('via-node-nodes', 'Yes');
+        Observer.Expect('via-node-count', '2');
+        Observer.Expect('via-node-single', 'Yes');
+        Observer.Expect('via-node-single-text', '<r>\n  <a />x<b /></r>');
+        Observer.Expect('via-node-single-nomatch', 'No');
+        Observer.Expect('found-after-nomatch', '<r>\n  <a />x<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1153,7 +1868,31 @@ codeunit 70737 "LT P90 Text Read"
         ProbeContent(Observer, 'markup', '<&>');
         ProbeContent(Observer, 'cdata-end', ']]>');
         ProbeContent(Observer, 'double-dash', '--');
-        Observer.Finish();
+        Observer.Expect('empty', 'Yes');
+        Observer.Expect('empty-err|text', '');
+        Observer.Expect('empty-err|code', '');
+        Observer.Expect('empty-x', '');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-err|text', '');
+        Observer.Expect('space-err|code', '');
+        Observer.Expect('space-x', ' ');
+        Observer.Expect('plain', 'Yes');
+        Observer.Expect('plain-err|text', '');
+        Observer.Expect('plain-err|code', '');
+        Observer.Expect('plain-x', 'a b');
+        Observer.Expect('markup', 'Yes');
+        Observer.Expect('markup-err|text', '');
+        Observer.Expect('markup-err|code', '');
+        Observer.Expect('markup-x', '&lt;&amp;&gt;');
+        Observer.Expect('cdata-end', 'Yes');
+        Observer.Expect('cdata-end-err|text', '');
+        Observer.Expect('cdata-end-err|code', '');
+        Observer.Expect('cdata-end-x', ']]&gt;');
+        Observer.Expect('double-dash', 'Yes');
+        Observer.Expect('double-dash-err|text', '');
+        Observer.Expect('double-dash-err|code', '');
+        Observer.Expect('double-dash-x', '--');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1167,7 +1906,31 @@ codeunit 70737 "LT P90 Text Read"
         ProbeContent(Observer, 'newline', 'x' + Lf() + 'y');
         ProbeContent(Observer, 'unicode', 'aü€');
         ProbeContent(Observer, 'padded', '  p  ');
-        Observer.Finish();
+        Observer.Expect('trailing-dash', 'Yes');
+        Observer.Expect('trailing-dash-err|text', '');
+        Observer.Expect('trailing-dash-err|code', '');
+        Observer.Expect('trailing-dash-x', 'a-');
+        Observer.Expect('leading-dash', 'Yes');
+        Observer.Expect('leading-dash-err|text', '');
+        Observer.Expect('leading-dash-err|code', '');
+        Observer.Expect('leading-dash-x', '-a');
+        Observer.Expect('pi-end', 'Yes');
+        Observer.Expect('pi-end-err|text', '');
+        Observer.Expect('pi-end-err|code', '');
+        Observer.Expect('pi-end-x', '?&gt;');
+        Observer.Expect('newline', 'Yes');
+        Observer.Expect('newline-err|text', '');
+        Observer.Expect('newline-err|code', '');
+        Observer.Expect('newline-x', 'x\ny');
+        Observer.Expect('unicode', 'Yes');
+        Observer.Expect('unicode-err|text', '');
+        Observer.Expect('unicode-err|code', '');
+        Observer.Expect('unicode-x', 'aü€');
+        Observer.Expect('padded', 'Yes');
+        Observer.Expect('padded-err|text', '');
+        Observer.Expect('padded-err|code', '');
+        Observer.Expect('padded-x', '  p  ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1190,7 +1953,12 @@ codeunit 70737 "LT P90 Text Read"
         X.WriteTo(S);
         Observer.Observe('detached', S);
         Observer.Observe('length', Format(StrLen(S)));
-        Observer.Finish();
+        Observer.Expect('attached', 'x');
+        Observer.Expect('attached-via-node', 'x');
+        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('detached', 'x');
+        Observer.Expect('length', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1212,7 +1980,13 @@ codeunit 70737 "LT P90 Text Read"
         Build(true, 'x');
         Ok := TryRemove();
         Observer.Observe('after-remove', SerDoc());
-        Observer.Finish();
+        Observer.Expect('initial', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x<b /></r>');
+        Observer.Expect('after-set-value', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />changed<b /></r>');
+        Observer.Expect('after-add-after', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />changed<e1 /><b /></r>');
+        Observer.Expect('after-add-before', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->changed<e1 /><b /></r>');
+        Observer.Expect('after-replace', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->t2<e1 /><b /></r>');
+        Observer.Expect('after-remove', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1236,7 +2010,21 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('cdata-end', Format(Ok));
         Observer.ObserveError('cdata-end-err');
         Observer.Observe('cdata-end-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('initial', 'x');
+        Observer.Expect('empty', 'Yes');
+        Observer.Expect('empty-err|text', '');
+        Observer.Expect('empty-err|code', '');
+        Observer.Expect('empty-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a /><b /></r>');
+        Observer.Expect('markup', 'Yes');
+        Observer.Expect('markup-err|text', '');
+        Observer.Expect('markup-err|code', '');
+        Observer.Expect('markup-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />&lt;&amp;&gt;<b /></r>');
+        Observer.Expect('markup-get', '<&>');
+        Observer.Expect('cdata-end', 'Yes');
+        Observer.Expect('cdata-end-err|text', '');
+        Observer.Expect('cdata-end-err|code', '');
+        Observer.Expect('cdata-end-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />]]&gt;<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1259,7 +2047,20 @@ codeunit 70737 "LT P90 Text Read"
         Observer.ObserveError('newline-err');
         Observer.Observe('newline-doc', SerDoc());
         Observer.Observe('newline-get', GetV(X));
-        Observer.Finish();
+        Observer.Expect('double-dash', 'Yes');
+        Observer.Expect('double-dash-err|text', '');
+        Observer.Expect('double-dash-err|code', '');
+        Observer.Expect('double-dash-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />--<b /></r>');
+        Observer.Expect('pi-end', 'Yes');
+        Observer.Expect('pi-end-err|text', '');
+        Observer.Expect('pi-end-err|code', '');
+        Observer.Expect('pi-end-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />?&gt;<b /></r>');
+        Observer.Expect('newline', 'Yes');
+        Observer.Expect('newline-err|text', '');
+        Observer.Expect('newline-err|code', '');
+        Observer.Expect('newline-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />x\ny<b /></r>');
+        Observer.Expect('newline-get', 'x\ny');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1274,7 +2075,12 @@ codeunit 70737 "LT P90 Text Read"
         Observer.ObserveError('set-err');
         Observer.Observe('x', SerX());
         Observer.Observe('get', GetV(X));
-        Observer.Finish();
+        Observer.Expect('set', 'Yes');
+        Observer.Expect('set-err|text', '');
+        Observer.Expect('set-err|code', '');
+        Observer.Expect('x', 'new');
+        Observer.Expect('get', 'new');
+        Observer.Verify();
     end;
 
     local procedure Prepare(var Blob: Record "LT P90 Blob")
@@ -1302,7 +2108,11 @@ codeunit 70737 "LT P90 Text Read"
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
         Observer.Observe('text', S);
         Observer.Observe('text-length', Format(StrLen(S)));
-        Observer.Finish();
+        Observer.Expect('blob', 'ï»¿x|');
+        Observer.Expect('blob-length', '4');
+        Observer.Expect('text', 'x');
+        Observer.Expect('text-length', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1318,7 +2128,9 @@ codeunit 70737 "LT P90 Text Read"
         Blob.Get(1);
         Observer.Observe('blob', ReadBlob(Blob));
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
-        Observer.Finish();
+        Observer.Expect('blob', 'ï»¿x|');
+        Observer.Expect('blob-length', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1343,7 +2155,11 @@ codeunit 70737 "LT P90 Text Read"
         Blob.Get(1);
         Observer.Observe('doc-blob', ReadBlob(Blob));
         Observer.Observe('doc-blob-length', Format(Blob.Data.Length()));
-        Observer.Finish();
+        Observer.Expect('node-blob', 'ï»¿x|');
+        Observer.Expect('node-blob-length', '4');
+        Observer.Expect('doc-blob', 'ï»¿<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />x<e1 /><b /></r>|');
+        Observer.Expect('doc-blob-length', '69');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1360,7 +2176,9 @@ codeunit 70737 "LT P90 Text Read"
         Blob.Get(1);
         Observer.Observe('blob', ReadBlob(Blob));
         Observer.Observe('blob-length', Format(Blob.Data.Length()));
-        Observer.Finish();
+        Observer.Expect('blob', 'ï»¿x|');
+        Observer.Expect('blob-length', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1381,7 +2199,9 @@ codeunit 70737 "LT P90 Text Read"
         Blob.Insert();
         Blob.Get(1);
         Observer.Observe('replaced-doc-blob', ReadBlob(Blob));
-        Observer.Finish();
+        Observer.Expect('replaced-x-blob', 'ï»¿x|');
+        Observer.Expect('replaced-doc-blob', 'ï»¿<?xml version="1.0" encoding="utf-8"?>|<r>|  <a />|  <e1 />|  <b />|</r>|');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -1402,7 +2222,10 @@ codeunit 70737 "LT P90 Text Read"
         Ok := TryWriteUninitStream();
         Observer.Observe('uninitialised-stream', Format(Ok));
         Observer.ObserveError('uninitialised-stream-err');
-        Observer.Finish();
+        Observer.Expect('uninitialised-stream', 'No');
+        Observer.Expect('uninitialised-stream-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('uninitialised-stream-err|code', 'Argument');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1418,7 +2241,27 @@ codeunit 70737 "LT P90 Text Read"
             Observer.ObserveError('op' + Format(i) + '-err');
             Observer.Observe('op' + Format(i) + '-res', Res);
         end;
-        Observer.Finish();
+        Observer.Expect('op1', 'No');
+        Observer.Expect('op1-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op1-err|code', 'NotInitialized');
+        Observer.Expect('op1-res', '');
+        Observer.Expect('op2', 'No');
+        Observer.Expect('op2-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op2-err|code', 'NotInitialized');
+        Observer.Expect('op2-res', '');
+        Observer.Expect('op3', 'No');
+        Observer.Expect('op3-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op3-err|code', 'NotInitialized');
+        Observer.Expect('op3-res', '');
+        Observer.Expect('op4', 'No');
+        Observer.Expect('op4-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op4-err|code', 'NotInitialized');
+        Observer.Expect('op4-res', '');
+        Observer.Expect('op5', 'No');
+        Observer.Expect('op5-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op5-err|code', 'NotInitialized');
+        Observer.Expect('op5-res', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1434,7 +2277,27 @@ codeunit 70737 "LT P90 Text Read"
             Observer.ObserveError('op' + Format(i) + '-err');
             Observer.Observe('op' + Format(i) + '-res', Res);
         end;
-        Observer.Finish();
+        Observer.Expect('op6', 'No');
+        Observer.Expect('op6-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op6-err|code', 'NotInitialized');
+        Observer.Expect('op6-res', '');
+        Observer.Expect('op7', 'No');
+        Observer.Expect('op7-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op7-err|code', 'NotInitialized');
+        Observer.Expect('op7-res', '');
+        Observer.Expect('op8', 'No');
+        Observer.Expect('op8-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op8-err|code', 'NotInitialized');
+        Observer.Expect('op8-res', '');
+        Observer.Expect('op9', 'No');
+        Observer.Expect('op9-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op9-err|code', 'NotInitialized');
+        Observer.Expect('op9-res', '');
+        Observer.Expect('op10', 'No');
+        Observer.Expect('op10-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op10-err|code', 'NotInitialized');
+        Observer.Expect('op10-res', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1450,7 +2313,19 @@ codeunit 70737 "LT P90 Text Read"
             Observer.ObserveError('op' + Format(i) + '-err');
             Observer.Observe('op' + Format(i) + '-res', Res);
         end;
-        Observer.Finish();
+        Observer.Expect('op11', 'No');
+        Observer.Expect('op11-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('op11-err|code', 'NotInitialized');
+        Observer.Expect('op11-res', '');
+        Observer.Expect('op12', 'No');
+        Observer.Expect('op12-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlText variable not initialized.');
+        Observer.Expect('op12-err|code', 'NotInitialized');
+        Observer.Expect('op12-res', '');
+        Observer.Expect('op13', 'No');
+        Observer.Expect('op13-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlText variable not initialized.');
+        Observer.Expect('op13-err|code', 'NotInitialized');
+        Observer.Expect('op13-res', '');
+        Observer.Verify();
     end;
 
 }

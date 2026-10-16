@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-codecoverageload-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74026
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: CodeCoverageInclude with AllObj rows: matching, no match, filter state
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74026 "LT P95 CodeCoverage Include"
@@ -44,7 +44,10 @@ codeunit 74026 "LT P95 CodeCoverage Include"
             Observer.Observe('no_match', Err());
         Observer.Observe('filters_kept', AO.GetFilters());
 
-        Observer.Finish();
+        Observer.Expect('codeunit_1', 'ok');
+        Observer.Expect('no_match', 'ok');
+        Observer.Expect('filters_kept', 'Object Type: Codeunit, Object ID: 2147483647');
+        Observer.Verify();
     end;
 
 }

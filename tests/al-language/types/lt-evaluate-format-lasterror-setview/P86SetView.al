@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setview-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained objects
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P86); the final facts are measured on a local BC 29 tier and added later.
 // Facts: Record.SetView with sorting/filter text naming fields that need an integer or do not exist, Record.SetAscending on a field that is not the only field of the current key: errors and the GetView/GetAscending state afterwards
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 73534 "LT P86 View Rec"
 {
@@ -129,7 +129,19 @@ codeunit 73535 "LT P86 SetView"
         Observer.Observe('v11', SV(R, 'WHERE("No."=FILTER(1|2|3))'));
         R.Reset();
         Observer.Observe('v12', SV(R, 'WHERE("No."=FILTER(a|b))'));
-        Observer.Finish();
+        Observer.Expect('v1', 'ok|VERSION(1) SORTING(Field1) WHERE(Field1=1(5))|VERSION(1) SORTING(No.) WHERE(No.=FILTER(5))|No.');
+        Observer.Expect('v2', 'err:The value "abc" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v3', 'err:The value "x" can''t be evaluated into type Integer.|InvalidFilterExpression:Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v4', 'err:The value "1.5" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v5', 'ok|VERSION(1) SORTING(Field1) WHERE(Field2=1(5))|VERSION(1) SORTING(No.) WHERE(Name=FILTER(5))|No.');
+        Observer.Expect('v6', 'err:The value "abc" can''t be evaluated into type Decimal.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v7', 'err:The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v8', 'err:The value "" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v9', 'err:The value "99999999999" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v10', 'ok|VERSION(1) SORTING(Field1) WHERE(Field1=1(<>0))|VERSION(1) SORTING(No.) WHERE(No.=FILTER(<>0))|No.');
+        Observer.Expect('v11', 'ok|VERSION(1) SORTING(Field1) WHERE(Field1=1(1|2|3))|VERSION(1) SORTING(No.) WHERE(No.=FILTER(1|2|3))|No.');
+        Observer.Expect('v12', 'err:The value "a" can''t be evaluated into type Integer.|InvalidFilterExpression:Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +174,19 @@ codeunit 73535 "LT P86 SetView"
         Observer.Observe('v11', SV(R, 'SORTING(Amount)'));
         R.Reset();
         Observer.Observe('v12', SV(R, 'SORTING(Name,Amount,"No.")'));
-        Observer.Finish();
+        Observer.Expect('v1', 'ok|VERSION(1) SORTING(Field2,Field3)|VERSION(1) SORTING(Name,Amount)|Name,Amount');
+        Observer.Expect('v2', 'ok|VERSION(1) SORTING(Field2,Field3)|VERSION(1) SORTING(Name,Amount)|Name,Amount');
+        Observer.Expect('v3', 'ok|VERSION(1) SORTING(Field3,Field4,Field5)|VERSION(1) SORTING(Amount,Code,Posted)|Amount,Code,Posted');
+        Observer.Expect('v4', 'ok|VERSION(1) SORTING(Field4)|VERSION(1) SORTING(Code)|Code');
+        Observer.Expect('v5', 'ok|VERSION(1) SORTING(Field5)|VERSION(1) SORTING(Posted)|Posted');
+        Observer.Expect('v6', 'ok|VERSION(1) SORTING(Field2,Field3) ORDER(1)|VERSION(1) SORTING(Name,Amount) ORDER(Descending)|Name,Amount');
+        Observer.Expect('v7', 'ok|VERSION(1) SORTING(Field2,Field3) ORDER(1)|VERSION(1) SORTING(Name,Amount) ORDER(Descending)|Name,Amount');
+        Observer.Expect('v8', 'ok|VERSION(1) SORTING(Field1)|VERSION(1) SORTING(No.)|No.');
+        Observer.Expect('v9', 'ok|VERSION(1) SORTING(Field1)|VERSION(1) SORTING(No.)|No.');
+        Observer.Expect('v10', 'ok|VERSION(1) SORTING(Field2,Field1)|VERSION(1) SORTING(Name,No.)|Name,No.');
+        Observer.Expect('v11', 'ok|VERSION(1) SORTING(Field3,Field4,Field5)|VERSION(1) SORTING(Amount,Code,Posted)|Amount,Code,Posted');
+        Observer.Expect('v12', 'ok|VERSION(1) SORTING(Field2,Field3)|VERSION(1) SORTING(Name,Amount)|Name,Amount');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +217,18 @@ codeunit 73535 "LT P86 SetView"
         Observer.Observe('v10', SV(R, '  SORTING(Name)  '));
         R.Reset();
         Observer.Observe('v11', SV(R, 'sorting(name) order(descending) where("no."=const(1))'));
-        Observer.Finish();
+        Observer.Expect('v1', 'ok|VERSION(1) SORTING(Field1)|VERSION(1) SORTING(No.)|No.');
+        Observer.Expect('v2', 'err:Invalid expression of type: table view.\r\SORTING(|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v3', 'ok|VERSION(1) SORTING(Field1)|VERSION(1) SORTING(No.)|No.');
+        Observer.Expect('v4', 'err:Invalid expression of type: table view.\r\WHERE("No."=)|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v5', 'err:Invalid expression of type: table view.\r\garbage|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v6', 'ok|VERSION(1) SORTING(Field1) ORDER(1)|VERSION(1) SORTING(No.) ORDER(Descending)|No.');
+        Observer.Expect('v7', 'err:Invalid expression of type: table view.\r\ORDER(Sideways)|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v8', 'ok|VERSION(1) SORTING(Field2,Field3) ORDER(1) WHERE(Field1=1(1))|VERSION(1) SORTING(Name,Amount) ORDER(Descending) WHERE(No.=FILTER(1))|Name,Amount');
+        Observer.Expect('v9', 'ok|VERSION(1) SORTING(Field2,Field3) WHERE(Field1=1(1))|VERSION(1) SORTING(Name,Amount) WHERE(No.=FILTER(1))|Name,Amount');
+        Observer.Expect('v10', 'ok|VERSION(1) SORTING(Field2,Field3)|VERSION(1) SORTING(Name,Amount)|Name,Amount');
+        Observer.Expect('v11', 'ok|VERSION(1) SORTING(Field2,Field3) ORDER(1) WHERE(Field1=1(1))|VERSION(1) SORTING(Name,Amount) ORDER(Descending) WHERE(No.=FILTER(1))|Name,Amount');
+        Observer.Verify();
     end;
 }
 

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74014
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on by-value and var parameters, and on a global variable from another procedure
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74014 "LT P95 Clear Parameters"
@@ -70,7 +70,13 @@ codeunit 74014 "LT P95 Clear Parameters"
         Observer.Observe('global', '[' + G + ']');
         Observer.Observe('function_result', ResultCleared());
 
-        Observer.Finish();
+        Observer.Expect('byvalue_caller', 'orig');
+        Observer.Expect('byvar_caller', '[]');
+        Observer.Expect('list_byvalue_caller', '1');
+        Observer.Expect('list_byvar_caller', '0');
+        Observer.Expect('global', '[]');
+        Observer.Expect('function_result', 'end');
+        Observer.Verify();
     end;
 
 }

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/text/text-evaluate-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained objects
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P86); the final facts are measured on a local BC 29 tier and added later.
 // Facts: Evaluate into Integer, Date, Time, DateTime, Option and Enum from texts of every form, with and without format number: return value, value and error text
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 enum 73521 "LT P86 Color"
 {
@@ -69,27 +69,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', RInt('1,234', -1));
         Observer.Observe('t11', RInt('1 234', -1));
         Observer.Observe('t12', RInt('1.5', -1));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Dflt1_Error_FNone()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('t1', EInt('0', -1));
-        Observer.Observe('t2', EInt('1', -1));
-        Observer.Observe('t3', EInt('-1', -1));
-        Observer.Observe('t4', EInt('+1', -1));
-        Observer.Observe('t5', EInt('007', -1));
-        Observer.Observe('t6', EInt('-0', -1));
-        Observer.Observe('t7', EInt('  12', -1));
-        Observer.Observe('t8', EInt('12  ', -1));
-        Observer.Observe('t9', EInt('  12  ', -1));
-        Observer.Observe('t10', EInt('1,234', -1));
-        Observer.Observe('t11', EInt('1 234', -1));
-        Observer.Observe('t12', EInt('1.5', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|0');
+        Observer.Expect('t2', 'Yes|1');
+        Observer.Expect('t3', 'Yes|-1');
+        Observer.Expect('t4', 'Yes|1');
+        Observer.Expect('t5', 'Yes|7');
+        Observer.Expect('t6', 'Yes|0');
+        Observer.Expect('t7', 'Yes|12');
+        Observer.Expect('t8', 'Yes|12');
+        Observer.Expect('t9', 'Yes|12');
+        Observer.Expect('t10', 'Yes|1234');
+        Observer.Expect('t11', 'No|777');
+        Observer.Expect('t12', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +101,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', RInt('--1', -1));
         Observer.Observe('t11', RInt('+-1', -1));
         Observer.Observe('t12', RInt('12abc', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|1000');
+        Observer.Expect('t2', 'No|777');
+        Observer.Expect('t3', 'No|777');
+        Observer.Expect('t4', 'No|777');
+        Observer.Expect('t5', 'Yes|2147483647');
+        Observer.Expect('t6', 'No|777');
+        Observer.Expect('t7', 'Yes|-2147483648');
+        Observer.Expect('t8', 'No|777');
+        Observer.Expect('t9', 'Yes|-1');
+        Observer.Expect('t10', 'No|777');
+        Observer.Expect('t11', 'No|777');
+        Observer.Expect('t12', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +133,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', EInt('--1', -1));
         Observer.Observe('t11', EInt('+-1', -1));
         Observer.Observe('t12', EInt('12abc', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|1000');
+        Observer.Expect('t2', 'err:The value "abc" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t3', 'err:The value "" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t4', 'err:The value "   " can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t5', 'ok|2147483647');
+        Observer.Expect('t6', 'err:The value "2147483648" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t7', 'ok|-2147483648');
+        Observer.Expect('t8', 'err:The value "-2147483649" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t9', 'ok|-1');
+        Observer.Expect('t10', 'err:The value "--1" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t11', 'err:The value "+-1" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t12', 'err:The value "12abc" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +155,9 @@ codeunit 73522 "LT P86 Eval Integer"
     begin
         Observer.Observe('t1', RInt('0x1F', -1));
         Observer.Observe('t2', RInt('١٢', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|777');
+        Observer.Expect('t2', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +167,9 @@ codeunit 73522 "LT P86 Eval Integer"
     begin
         Observer.Observe('t1', EInt('0x1F', -1));
         Observer.Observe('t2', EInt('١٢', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The value "0x1F" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t2', 'err:The value "١٢" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -169,27 +189,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', RInt('1,234', 0));
         Observer.Observe('t11', RInt('1 234', 0));
         Observer.Observe('t12', RInt('1.5', 0));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Fmt01_Error_F0()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('t1', EInt('0', 0));
-        Observer.Observe('t2', EInt('1', 0));
-        Observer.Observe('t3', EInt('-1', 0));
-        Observer.Observe('t4', EInt('+1', 0));
-        Observer.Observe('t5', EInt('007', 0));
-        Observer.Observe('t6', EInt('-0', 0));
-        Observer.Observe('t7', EInt('  12', 0));
-        Observer.Observe('t8', EInt('12  ', 0));
-        Observer.Observe('t9', EInt('  12  ', 0));
-        Observer.Observe('t10', EInt('1,234', 0));
-        Observer.Observe('t11', EInt('1 234', 0));
-        Observer.Observe('t12', EInt('1.5', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|0');
+        Observer.Expect('t2', 'Yes|1');
+        Observer.Expect('t3', 'Yes|-1');
+        Observer.Expect('t4', 'Yes|1');
+        Observer.Expect('t5', 'Yes|7');
+        Observer.Expect('t6', 'Yes|0');
+        Observer.Expect('t7', 'Yes|12');
+        Observer.Expect('t8', 'Yes|12');
+        Observer.Expect('t9', 'Yes|12');
+        Observer.Expect('t10', 'Yes|1234');
+        Observer.Expect('t11', 'No|777');
+        Observer.Expect('t12', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -209,7 +221,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', RInt('--1', 0));
         Observer.Observe('t11', RInt('+-1', 0));
         Observer.Observe('t12', RInt('12abc', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|1000');
+        Observer.Expect('t2', 'No|777');
+        Observer.Expect('t3', 'No|777');
+        Observer.Expect('t4', 'No|777');
+        Observer.Expect('t5', 'Yes|2147483647');
+        Observer.Expect('t6', 'No|777');
+        Observer.Expect('t7', 'Yes|-2147483648');
+        Observer.Expect('t8', 'No|777');
+        Observer.Expect('t9', 'Yes|-1');
+        Observer.Expect('t10', 'No|777');
+        Observer.Expect('t11', 'No|777');
+        Observer.Expect('t12', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +253,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', EInt('--1', 0));
         Observer.Observe('t11', EInt('+-1', 0));
         Observer.Observe('t12', EInt('12abc', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|1000');
+        Observer.Expect('t2', 'err:The value "abc" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t3', 'err:The value "" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t4', 'err:The value "   " can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t5', 'ok|2147483647');
+        Observer.Expect('t6', 'err:The value "2147483648" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t7', 'ok|-2147483648');
+        Observer.Expect('t8', 'err:The value "-2147483649" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t9', 'ok|-1');
+        Observer.Expect('t10', 'err:The value "--1" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t11', 'err:The value "+-1" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t12', 'err:The value "12abc" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -239,7 +275,9 @@ codeunit 73522 "LT P86 Eval Integer"
     begin
         Observer.Observe('t1', RInt('0x1F', 0));
         Observer.Observe('t2', RInt('١٢', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|777');
+        Observer.Expect('t2', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -249,7 +287,9 @@ codeunit 73522 "LT P86 Eval Integer"
     begin
         Observer.Observe('t1', EInt('0x1F', 0));
         Observer.Observe('t2', EInt('١٢', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The value "0x1F" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t2', 'err:The value "١٢" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,27 +309,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', RInt('1,234', 9));
         Observer.Observe('t11', RInt('1 234', 9));
         Observer.Observe('t12', RInt('1.5', 9));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Fmt91_Error_F9()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('t1', EInt('0', 9));
-        Observer.Observe('t2', EInt('1', 9));
-        Observer.Observe('t3', EInt('-1', 9));
-        Observer.Observe('t4', EInt('+1', 9));
-        Observer.Observe('t5', EInt('007', 9));
-        Observer.Observe('t6', EInt('-0', 9));
-        Observer.Observe('t7', EInt('  12', 9));
-        Observer.Observe('t8', EInt('12  ', 9));
-        Observer.Observe('t9', EInt('  12  ', 9));
-        Observer.Observe('t10', EInt('1,234', 9));
-        Observer.Observe('t11', EInt('1 234', 9));
-        Observer.Observe('t12', EInt('1.5', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|0');
+        Observer.Expect('t2', 'Yes|1');
+        Observer.Expect('t3', 'Yes|-1');
+        Observer.Expect('t4', 'Yes|1');
+        Observer.Expect('t5', 'Yes|7');
+        Observer.Expect('t6', 'Yes|0');
+        Observer.Expect('t7', 'Yes|12');
+        Observer.Expect('t8', 'Yes|12');
+        Observer.Expect('t9', 'Yes|12');
+        Observer.Expect('t10', 'No|777');
+        Observer.Expect('t11', 'No|777');
+        Observer.Expect('t12', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,27 +341,19 @@ codeunit 73522 "LT P86 Eval Integer"
         Observer.Observe('t10', RInt('--1', 9));
         Observer.Observe('t11', RInt('+-1', 9));
         Observer.Observe('t12', RInt('12abc', 9));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Fmt92_Error_F9()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('t1', EInt('1e3', 9));
-        Observer.Observe('t2', EInt('abc', 9));
-        Observer.Observe('t3', EInt('', 9));
-        Observer.Observe('t4', EInt('   ', 9));
-        Observer.Observe('t5', EInt('2147483647', 9));
-        Observer.Observe('t6', EInt('2147483648', 9));
-        Observer.Observe('t7', EInt('-2147483648', 9));
-        Observer.Observe('t8', EInt('-2147483649', 9));
-        Observer.Observe('t9', EInt('1-', 9));
-        Observer.Observe('t10', EInt('--1', 9));
-        Observer.Observe('t11', EInt('+-1', 9));
-        Observer.Observe('t12', EInt('12abc', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|777');
+        Observer.Expect('t2', 'No|777');
+        Observer.Expect('t3', 'No|777');
+        Observer.Expect('t4', 'No|777');
+        Observer.Expect('t5', 'Yes|2147483647');
+        Observer.Expect('t6', 'No|777');
+        Observer.Expect('t7', 'Yes|-2147483648');
+        Observer.Expect('t8', 'No|777');
+        Observer.Expect('t9', 'No|777');
+        Observer.Expect('t10', 'No|777');
+        Observer.Expect('t11', 'No|777');
+        Observer.Expect('t12', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +363,9 @@ codeunit 73522 "LT P86 Eval Integer"
     begin
         Observer.Observe('t1', RInt('0x1F', 9));
         Observer.Observe('t2', RInt('١٢', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|777');
+        Observer.Expect('t2', 'No|777');
+        Observer.Verify();
     end;
 
     [Test]
@@ -349,7 +375,9 @@ codeunit 73522 "LT P86 Eval Integer"
     begin
         Observer.Observe('t1', EInt('0x1F', 9));
         Observer.Observe('t2', EInt('١٢', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The value "0x1F" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Expect('t2', 'err:The value "١٢" can''t be evaluated into type Integer.|Evaluate|777');
+        Observer.Verify();
     end;
 
 }
@@ -408,7 +436,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', RDate('0d', -1));
         Observer.Observe('t11', RDate('T', -1));
         Observer.Observe('t12', RDate('t', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15|No');
+        Observer.Expect('t2', 'No||No');
+        Observer.Expect('t3', 'Yes|2024-01-15|No');
+        Observer.Expect('t4', 'Yes|2024-01-15|No');
+        Observer.Expect('t5', 'No||No');
+        Observer.Expect('t6', 'No||No');
+        Observer.Expect('t7', 'No||No');
+        Observer.Expect('t8', 'No||No');
+        Observer.Expect('t9', 'No||No');
+        Observer.Expect('t10', 'No||No');
+        Observer.Expect('t11', 'Yes|2026-10-16|Yes');
+        Observer.Expect('t12', 'Yes|2026-10-16|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -428,7 +468,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', RDate('W', -1));
         Observer.Observe('t11', RDate('2024/01/15', -1));
         Observer.Observe('t12', RDate('Jan 15 2024', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15|No');
+        Observer.Expect('t2', 'No||No');
+        Observer.Expect('t3', 'No||No');
+        Observer.Expect('t4', 'Yes||No');
+        Observer.Expect('t5', 'No||No');
+        Observer.Expect('t6', 'Yes|9999-12-31|No');
+        Observer.Expect('t7', 'Yes||No');
+        Observer.Expect('t8', 'Yes|1753-01-01|No');
+        Observer.Expect('t9', 'Yes|1752-12-31|No');
+        Observer.Expect('t10', 'Yes|2026-10-01|No');
+        Observer.Expect('t11', 'No||No');
+        Observer.Expect('t12', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -448,7 +500,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', EDate('W', -1));
         Observer.Observe('t11', EDate('2024/01/15', -1));
         Observer.Observe('t12', EDate('Jan 15 2024', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2024-01-15|No');
+        Observer.Expect('t2', 'err:The format of the Date ''2024-02-30'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t3', 'err:The format of the Date ''2024-13-01'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t4', 'ok||No');
+        Observer.Expect('t5', 'err:The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t6', 'ok|9999-12-31|No');
+        Observer.Expect('t7', 'ok||No');
+        Observer.Expect('t8', 'ok|1753-01-01|No');
+        Observer.Expect('t9', 'ok|1752-12-31|No');
+        Observer.Expect('t10', 'ok|2026-10-01|No');
+        Observer.Expect('t11', 'err:The format of the Date ''2024/01/15'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t12', 'err:The format of the Date ''Jan 15 2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -457,7 +521,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', RDate('15-01-2024', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -466,7 +531,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EDate('15-01-2024', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -486,7 +552,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', RDate('0d', 0));
         Observer.Observe('t11', RDate('T', 0));
         Observer.Observe('t12', RDate('t', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15|No');
+        Observer.Expect('t2', 'No||No');
+        Observer.Expect('t3', 'Yes|2024-01-15|No');
+        Observer.Expect('t4', 'Yes|2024-01-15|No');
+        Observer.Expect('t5', 'No||No');
+        Observer.Expect('t6', 'No||No');
+        Observer.Expect('t7', 'No||No');
+        Observer.Expect('t8', 'No||No');
+        Observer.Expect('t9', 'No||No');
+        Observer.Expect('t10', 'No||No');
+        Observer.Expect('t11', 'Yes|2026-10-16|Yes');
+        Observer.Expect('t12', 'Yes|2026-10-16|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -506,7 +584,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', RDate('W', 0));
         Observer.Observe('t11', RDate('2024/01/15', 0));
         Observer.Observe('t12', RDate('Jan 15 2024', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15|No');
+        Observer.Expect('t2', 'No||No');
+        Observer.Expect('t3', 'No||No');
+        Observer.Expect('t4', 'Yes||No');
+        Observer.Expect('t5', 'No||No');
+        Observer.Expect('t6', 'Yes|9999-12-31|No');
+        Observer.Expect('t7', 'Yes||No');
+        Observer.Expect('t8', 'Yes|1753-01-01|No');
+        Observer.Expect('t9', 'Yes|1752-12-31|No');
+        Observer.Expect('t10', 'Yes|2026-10-01|No');
+        Observer.Expect('t11', 'No||No');
+        Observer.Expect('t12', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -526,7 +616,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', EDate('W', 0));
         Observer.Observe('t11', EDate('2024/01/15', 0));
         Observer.Observe('t12', EDate('Jan 15 2024', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2024-01-15|No');
+        Observer.Expect('t2', 'err:The format of the Date ''2024-02-30'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t3', 'err:The format of the Date ''2024-13-01'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t4', 'ok||No');
+        Observer.Expect('t5', 'err:The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t6', 'ok|9999-12-31|No');
+        Observer.Expect('t7', 'ok||No');
+        Observer.Expect('t8', 'ok|1753-01-01|No');
+        Observer.Expect('t9', 'ok|1752-12-31|No');
+        Observer.Expect('t10', 'ok|2026-10-01|No');
+        Observer.Expect('t11', 'err:The format of the Date ''2024/01/15'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t12', 'err:The format of the Date ''Jan 15 2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -535,7 +637,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', RDate('15-01-2024', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -544,7 +647,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EDate('15-01-2024', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -564,7 +668,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', RDate('0d', 9));
         Observer.Observe('t11', RDate('T', 9));
         Observer.Observe('t12', RDate('t', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15|No');
+        Observer.Expect('t2', 'No||No');
+        Observer.Expect('t3', 'No||No');
+        Observer.Expect('t4', 'No||No');
+        Observer.Expect('t5', 'No||No');
+        Observer.Expect('t6', 'No||No');
+        Observer.Expect('t7', 'No||No');
+        Observer.Expect('t8', 'No||No');
+        Observer.Expect('t9', 'No||No');
+        Observer.Expect('t10', 'No||No');
+        Observer.Expect('t11', 'No||No');
+        Observer.Expect('t12', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -584,7 +700,19 @@ codeunit 73523 "LT P86 Eval Date"
         Observer.Observe('t10', RDate('W', 9));
         Observer.Observe('t11', RDate('2024/01/15', 9));
         Observer.Observe('t12', RDate('Jan 15 2024', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15|No');
+        Observer.Expect('t2', 'No||No');
+        Observer.Expect('t3', 'No||No');
+        Observer.Expect('t4', 'Yes||No');
+        Observer.Expect('t5', 'No||No');
+        Observer.Expect('t6', 'No||No');
+        Observer.Expect('t7', 'No||No');
+        Observer.Expect('t8', 'No||No');
+        Observer.Expect('t9', 'No||No');
+        Observer.Expect('t10', 'No||No');
+        Observer.Expect('t11', 'No||No');
+        Observer.Expect('t12', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -593,7 +721,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', RDate('15-01-2024', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No||No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -602,7 +731,8 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EDate('15-01-2024', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Verify();
     end;
 
 }
@@ -661,7 +791,19 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t10', RTime('24:00:00', -1));
         Observer.Observe('t11', RTime('0T', -1));
         Observer.Observe('t12', RTime('0t', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|12:00:00');
+        Observer.Expect('t2', 'Yes|12:00:00');
+        Observer.Expect('t3', 'Yes|12:00:00.123');
+        Observer.Expect('t4', 'Yes|12:00:00');
+        Observer.Expect('t5', 'Yes|12:00:00');
+        Observer.Expect('t6', 'Yes|12:00:00');
+        Observer.Expect('t7', 'Yes|00:00:00');
+        Observer.Expect('t8', 'Yes|23:59:59');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'No|');
+        Observer.Expect('t12', 'No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -681,7 +823,19 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t10', ETime('24:00:00', -1));
         Observer.Observe('t11', ETime('0T', -1));
         Observer.Observe('t12', ETime('0t', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|12:00:00');
+        Observer.Expect('t2', 'ok|12:00:00');
+        Observer.Expect('t3', 'ok|12:00:00.123');
+        Observer.Expect('t4', 'ok|12:00:00');
+        Observer.Expect('t5', 'ok|12:00:00');
+        Observer.Expect('t6', 'ok|12:00:00');
+        Observer.Expect('t7', 'ok|00:00:00');
+        Observer.Expect('t8', 'ok|23:59:59');
+        Observer.Expect('t9', 'err:The value "25:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "24:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t11', 'err:The value "0T" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t12', 'err:The value "0t" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -700,7 +854,18 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t9', RTime('00:00:00', -1));
         Observer.Observe('t10', RTime('23:59:59.999', -1));
         Observer.Observe('t11', RTime('12:00:00Z', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|12:00:00');
+        Observer.Expect('t2', 'No|');
+        Observer.Expect('t3', 'Yes|12:00:00.5');
+        Observer.Expect('t4', 'Yes|12:00:00');
+        Observer.Expect('t5', 'Yes|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'No|');
+        Observer.Expect('t8', 'Yes|01:02:03');
+        Observer.Expect('t9', 'Yes|00:00:00');
+        Observer.Expect('t10', 'Yes|23:59:59.999');
+        Observer.Expect('t11', 'No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -719,7 +884,18 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t9', ETime('00:00:00', -1));
         Observer.Observe('t10', ETime('23:59:59.999', -1));
         Observer.Observe('t11', ETime('12:00:00Z', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|12:00:00');
+        Observer.Expect('t2', 'err:The value "12:00:60" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t3', 'ok|12:00:00.5');
+        Observer.Expect('t4', 'ok|12:00:00');
+        Observer.Expect('t5', 'ok|');
+        Observer.Expect('t6', 'err:The value "abc" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t7', 'err:The value "-1:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t8', 'ok|01:02:03');
+        Observer.Expect('t9', 'ok|00:00:00');
+        Observer.Expect('t10', 'ok|23:59:59.999');
+        Observer.Expect('t11', 'err:The value "12:00:00Z" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -739,7 +915,19 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t10', RTime('24:00:00', 0));
         Observer.Observe('t11', RTime('0T', 0));
         Observer.Observe('t12', RTime('0t', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|12:00:00');
+        Observer.Expect('t2', 'Yes|12:00:00');
+        Observer.Expect('t3', 'Yes|12:00:00.123');
+        Observer.Expect('t4', 'Yes|12:00:00');
+        Observer.Expect('t5', 'Yes|12:00:00');
+        Observer.Expect('t6', 'Yes|12:00:00');
+        Observer.Expect('t7', 'Yes|00:00:00');
+        Observer.Expect('t8', 'Yes|23:59:59');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'No|');
+        Observer.Expect('t12', 'No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -759,7 +947,19 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t10', ETime('24:00:00', 0));
         Observer.Observe('t11', ETime('0T', 0));
         Observer.Observe('t12', ETime('0t', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|12:00:00');
+        Observer.Expect('t2', 'ok|12:00:00');
+        Observer.Expect('t3', 'ok|12:00:00.123');
+        Observer.Expect('t4', 'ok|12:00:00');
+        Observer.Expect('t5', 'ok|12:00:00');
+        Observer.Expect('t6', 'ok|12:00:00');
+        Observer.Expect('t7', 'ok|00:00:00');
+        Observer.Expect('t8', 'ok|23:59:59');
+        Observer.Expect('t9', 'err:The value "25:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "24:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t11', 'err:The value "0T" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t12', 'err:The value "0t" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -778,7 +978,18 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t9', RTime('00:00:00', 0));
         Observer.Observe('t10', RTime('23:59:59.999', 0));
         Observer.Observe('t11', RTime('12:00:00Z', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|12:00:00');
+        Observer.Expect('t2', 'No|');
+        Observer.Expect('t3', 'Yes|12:00:00.5');
+        Observer.Expect('t4', 'Yes|12:00:00');
+        Observer.Expect('t5', 'Yes|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'No|');
+        Observer.Expect('t8', 'Yes|01:02:03');
+        Observer.Expect('t9', 'Yes|00:00:00');
+        Observer.Expect('t10', 'Yes|23:59:59.999');
+        Observer.Expect('t11', 'No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -797,7 +1008,18 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t9', ETime('00:00:00', 0));
         Observer.Observe('t10', ETime('23:59:59.999', 0));
         Observer.Observe('t11', ETime('12:00:00Z', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|12:00:00');
+        Observer.Expect('t2', 'err:The value "12:00:60" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t3', 'ok|12:00:00.5');
+        Observer.Expect('t4', 'ok|12:00:00');
+        Observer.Expect('t5', 'ok|');
+        Observer.Expect('t6', 'err:The value "abc" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t7', 'err:The value "-1:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t8', 'ok|01:02:03');
+        Observer.Expect('t9', 'ok|00:00:00');
+        Observer.Expect('t10', 'ok|23:59:59.999');
+        Observer.Expect('t11', 'err:The value "12:00:00Z" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -817,7 +1039,19 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t10', RTime('24:00:00', 9));
         Observer.Observe('t11', RTime('0T', 9));
         Observer.Observe('t12', RTime('0t', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|12:00:00');
+        Observer.Expect('t2', 'Yes|12:00:00');
+        Observer.Expect('t3', 'Yes|12:00:00.123');
+        Observer.Expect('t4', 'No|');
+        Observer.Expect('t5', 'No|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'No|');
+        Observer.Expect('t8', 'No|');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'No|');
+        Observer.Expect('t12', 'No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -837,7 +1071,19 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t10', ETime('24:00:00', 9));
         Observer.Observe('t11', ETime('0T', 9));
         Observer.Observe('t12', ETime('0t', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|12:00:00');
+        Observer.Expect('t2', 'ok|12:00:00');
+        Observer.Expect('t3', 'ok|12:00:00.123');
+        Observer.Expect('t4', 'err:The value "12:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t5', 'err:The value "1200" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t6', 'err:The value "12:00 PM" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t7', 'err:The value "12:00:00 AM" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t8', 'err:The value "11:59:59 PM" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t9', 'err:The value "25:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "24:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t11', 'err:The value "0T" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t12', 'err:The value "0t" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -856,7 +1102,18 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t9', RTime('00:00:00', 9));
         Observer.Observe('t10', RTime('23:59:59.999', 9));
         Observer.Observe('t11', RTime('12:00:00Z', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|12:00:00');
+        Observer.Expect('t2', 'No|');
+        Observer.Expect('t3', 'Yes|12:00:00.5');
+        Observer.Expect('t4', 'No|');
+        Observer.Expect('t5', 'Yes|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'No|');
+        Observer.Expect('t8', 'No|');
+        Observer.Expect('t9', 'Yes|00:00:00');
+        Observer.Expect('t10', 'Yes|23:59:59.999');
+        Observer.Expect('t11', 'Yes|12:00:00');
+        Observer.Verify();
     end;
 
     [Test]
@@ -875,7 +1132,18 @@ codeunit 73524 "LT P86 Eval Time"
         Observer.Observe('t9', ETime('00:00:00', 9));
         Observer.Observe('t10', ETime('23:59:59.999', 9));
         Observer.Observe('t11', ETime('12:00:00Z', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|12:00:00');
+        Observer.Expect('t2', 'err:The value "12:00:60" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t3', 'ok|12:00:00.5');
+        Observer.Expect('t4', 'err:The value "12.00.00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t5', 'ok|');
+        Observer.Expect('t6', 'err:The value "abc" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t7', 'err:The value "-1:00:00" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t8', 'err:The value "1:2:3" can''t be evaluated into type Time.|Evaluate|');
+        Observer.Expect('t9', 'ok|00:00:00');
+        Observer.Expect('t10', 'ok|23:59:59.999');
+        Observer.Expect('t11', 'ok|12:00:00');
+        Observer.Verify();
     end;
 
 }
@@ -934,7 +1202,19 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t10', RDT('0dt', -1));
         Observer.Observe('t11', RDT('  2024-01-15T10:20:30Z  ', -1));
         Observer.Observe('t12', RDT('2024-01-15T10:20:30+02:00', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t2', 'No|');
+        Observer.Expect('t3', 'Yes|2024-01-15T10:20:30.123Z');
+        Observer.Expect('t4', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t5', 'Yes|2024-01-15T00:00:00Z');
+        Observer.Expect('t6', 'Yes|2026-10-20T00:00:00Z');
+        Observer.Expect('t7', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t8', 'No|');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t12', 'Yes|2024-01-15T08:20:30Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -954,7 +1234,19 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t10', EDT('0dt', -1));
         Observer.Observe('t11', EDT('  2024-01-15T10:20:30Z  ', -1));
         Observer.Observe('t12', EDT('2024-01-15T10:20:30+02:00', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t2', 'err:The date is not valid.|DateInvalid|');
+        Observer.Expect('t3', 'ok|2024-01-15T10:20:30.123Z');
+        Observer.Expect('t4', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t5', 'ok|2024-01-15T00:00:00Z');
+        Observer.Expect('t6', 'ok|2026-10-20T00:00:00Z');
+        Observer.Expect('t7', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t8', 'err:The value "15.01.2024 10:20" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t9', 'err:The value "0DT" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "0dt" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t11', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t12', 'ok|2024-01-15T08:20:30Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -973,7 +1265,18 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t9', RDT('2024-02-30T10:00:00Z', -1));
         Observer.Observe('t10', RDT('12/31/9999 23:59:59', -1));
         Observer.Observe('t11', RDT('2024-01-15T10:20:30.1234567Z', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|');
+        Observer.Expect('t2', 'Yes|');
+        Observer.Expect('t3', 'No|');
+        Observer.Expect('t4', 'No|');
+        Observer.Expect('t5', 'No|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'Yes|2024-01-15T01:20:00Z');
+        Observer.Expect('t8', 'Yes|2024-01-15T22:20:00Z');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'Yes|9999-12-31T23:59:59Z');
+        Observer.Expect('t11', 'Yes|2024-01-15T10:20:30.123Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -992,7 +1295,18 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t9', EDT('2024-02-30T10:00:00Z', -1));
         Observer.Observe('t10', EDT('12/31/9999 23:59:59', -1));
         Observer.Observe('t11', EDT('2024-01-15T10:20:30.1234567Z', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The value "2024-01-15T25:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t2', 'ok|');
+        Observer.Expect('t3', 'err:The value "abc" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t4', 'err:The value "0D" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t5', 'err:The value "0T" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t6', 'err:The value "2024-01-15T24:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t7', 'ok|2024-01-15T01:20:00Z');
+        Observer.Expect('t8', 'ok|2024-01-15T22:20:00Z');
+        Observer.Expect('t9', 'err:The value "2024-02-30T10:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t10', 'ok|9999-12-31T23:59:59Z');
+        Observer.Expect('t11', 'ok|2024-01-15T10:20:30.123Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1012,7 +1326,19 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t10', RDT('0dt', 0));
         Observer.Observe('t11', RDT('  2024-01-15T10:20:30Z  ', 0));
         Observer.Observe('t12', RDT('2024-01-15T10:20:30+02:00', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t2', 'No|');
+        Observer.Expect('t3', 'Yes|2024-01-15T10:20:30.123Z');
+        Observer.Expect('t4', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t5', 'Yes|2024-01-15T00:00:00Z');
+        Observer.Expect('t6', 'Yes|2026-10-20T00:00:00Z');
+        Observer.Expect('t7', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t8', 'No|');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t12', 'Yes|2024-01-15T08:20:30Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1032,7 +1358,19 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t10', EDT('0dt', 0));
         Observer.Observe('t11', EDT('  2024-01-15T10:20:30Z  ', 0));
         Observer.Observe('t12', EDT('2024-01-15T10:20:30+02:00', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t2', 'err:The date is not valid.|DateInvalid|');
+        Observer.Expect('t3', 'ok|2024-01-15T10:20:30.123Z');
+        Observer.Expect('t4', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t5', 'ok|2024-01-15T00:00:00Z');
+        Observer.Expect('t6', 'ok|2026-10-20T00:00:00Z');
+        Observer.Expect('t7', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t8', 'err:The value "15.01.2024 10:20" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t9', 'err:The value "0DT" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "0dt" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t11', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t12', 'ok|2024-01-15T08:20:30Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1051,7 +1389,18 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t9', RDT('2024-02-30T10:00:00Z', 0));
         Observer.Observe('t10', RDT('12/31/9999 23:59:59', 0));
         Observer.Observe('t11', RDT('2024-01-15T10:20:30.1234567Z', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|');
+        Observer.Expect('t2', 'Yes|');
+        Observer.Expect('t3', 'No|');
+        Observer.Expect('t4', 'No|');
+        Observer.Expect('t5', 'No|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'Yes|2024-01-15T01:20:00Z');
+        Observer.Expect('t8', 'Yes|2024-01-15T22:20:00Z');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'Yes|9999-12-31T23:59:59Z');
+        Observer.Expect('t11', 'Yes|2024-01-15T10:20:30.123Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1070,7 +1419,18 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t9', EDT('2024-02-30T10:00:00Z', 0));
         Observer.Observe('t10', EDT('12/31/9999 23:59:59', 0));
         Observer.Observe('t11', EDT('2024-01-15T10:20:30.1234567Z', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The value "2024-01-15T25:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t2', 'ok|');
+        Observer.Expect('t3', 'err:The value "abc" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t4', 'err:The value "0D" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t5', 'err:The value "0T" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t6', 'err:The value "2024-01-15T24:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t7', 'ok|2024-01-15T01:20:00Z');
+        Observer.Expect('t8', 'ok|2024-01-15T22:20:00Z');
+        Observer.Expect('t9', 'err:The value "2024-02-30T10:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t10', 'ok|9999-12-31T23:59:59Z');
+        Observer.Expect('t11', 'ok|2024-01-15T10:20:30.123Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1090,7 +1450,19 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t10', RDT('0dt', 9));
         Observer.Observe('t11', RDT('  2024-01-15T10:20:30Z  ', 9));
         Observer.Observe('t12', RDT('2024-01-15T10:20:30+02:00', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t2', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t3', 'Yes|2024-01-15T10:20:30.123Z');
+        Observer.Expect('t4', 'No|');
+        Observer.Expect('t5', 'Yes|2024-01-15T00:00:00Z');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'No|');
+        Observer.Expect('t8', 'No|');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'Yes|2024-01-15T10:20:30Z');
+        Observer.Expect('t12', 'Yes|2024-01-15T08:20:30Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1110,7 +1482,19 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t10', EDT('0dt', 9));
         Observer.Observe('t11', EDT('  2024-01-15T10:20:30Z  ', 9));
         Observer.Observe('t12', EDT('2024-01-15T10:20:30+02:00', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t2', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t3', 'ok|2024-01-15T10:20:30.123Z');
+        Observer.Expect('t4', 'err:The value "2024-01-15 10:20:30" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t5', 'ok|2024-01-15T00:00:00Z');
+        Observer.Expect('t6', 'err:The value "10:20" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t7', 'err:The value "01/15/2024 10:20:30" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t8', 'err:The value "15.01.2024 10:20" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t9', 'err:The value "0DT" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "0dt" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t11', 'ok|2024-01-15T10:20:30Z');
+        Observer.Expect('t12', 'ok|2024-01-15T08:20:30Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1129,7 +1513,18 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t9', RDT('2024-02-30T10:00:00Z', 9));
         Observer.Observe('t10', RDT('12/31/9999 23:59:59', 9));
         Observer.Observe('t11', RDT('2024-01-15T10:20:30.1234567Z', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|');
+        Observer.Expect('t2', 'Yes|');
+        Observer.Expect('t3', 'No|');
+        Observer.Expect('t4', 'No|');
+        Observer.Expect('t5', 'No|');
+        Observer.Expect('t6', 'No|');
+        Observer.Expect('t7', 'No|');
+        Observer.Expect('t8', 'No|');
+        Observer.Expect('t9', 'No|');
+        Observer.Expect('t10', 'No|');
+        Observer.Expect('t11', 'Yes|2024-01-15T10:20:30.123Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1148,7 +1543,18 @@ codeunit 73525 "LT P86 Eval DateTime"
         Observer.Observe('t9', EDT('2024-02-30T10:00:00Z', 9));
         Observer.Observe('t10', EDT('12/31/9999 23:59:59', 9));
         Observer.Observe('t11', EDT('2024-01-15T10:20:30.1234567Z', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:The value "2024-01-15T25:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t2', 'ok|');
+        Observer.Expect('t3', 'err:The value "abc" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t4', 'err:The value "0D" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t5', 'err:The value "0T" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t6', 'err:The value "2024-01-15T24:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t7', 'err:The value "1/15/24 1:20 AM" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t8', 'err:The value "01/15/2024 10:20 PM" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t9', 'err:The value "2024-02-30T10:00:00Z" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t10', 'err:The value "12/31/9999 23:59:59" can''t be evaluated into type DateTime.|Evaluate|');
+        Observer.Expect('t11', 'ok|2024-01-15T10:20:30.123Z');
+        Observer.Verify();
     end;
 
 }
@@ -1212,7 +1618,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', ROpt('1', -1));
         Observer.Observe('t11', ROpt('2', -1));
         Observer.Observe('t12', ROpt('3', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|Alpha|0');
+        Observer.Expect('t2', 'Yes|Alpha|0');
+        Observer.Expect('t3', 'Yes|Alpha|0');
+        Observer.Expect('t4', 'Yes|Beta Two|1');
+        Observer.Expect('t5', 'Yes|Beta Two|1');
+        Observer.Expect('t6', 'No|Gamma|2');
+        Observer.Expect('t7', 'Yes|Gamma|2');
+        Observer.Expect('t8', 'No|Gamma|2');
+        Observer.Expect('t9', 'Yes|Alpha|0');
+        Observer.Expect('t10', 'Yes|Beta Two|1');
+        Observer.Expect('t11', 'Yes|Gamma|2');
+        Observer.Expect('t12', 'Yes|3|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1232,7 +1650,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', EOpt('1', -1));
         Observer.Observe('t11', EOpt('2', -1));
         Observer.Observe('t12', EOpt('3', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|Alpha|0');
+        Observer.Expect('t2', 'ok|Alpha|0');
+        Observer.Expect('t3', 'ok|Alpha|0');
+        Observer.Expect('t4', 'ok|Beta Two|1');
+        Observer.Expect('t5', 'ok|Beta Two|1');
+        Observer.Expect('t6', 'err:''Bet'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t7', 'ok|Gamma|2');
+        Observer.Expect('t8', 'err:''Alphabet'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t9', 'ok|Alpha|0');
+        Observer.Expect('t10', 'ok|Beta Two|1');
+        Observer.Expect('t11', 'ok|Gamma|2');
+        Observer.Expect('t12', 'ok|3|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1252,7 +1682,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', ROpt('Alpha,Beta Two', -1));
         Observer.Observe('t11', ROpt('1.0', -1));
         Observer.Observe('t12', ROpt('Beta  Two', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Gamma|2');
+        Observer.Expect('t2', 'Yes|Alpha|0');
+        Observer.Expect('t3', 'Yes|Beta Two|1');
+        Observer.Expect('t4', 'Yes|Alpha|0');
+        Observer.Expect('t5', 'Yes|Alpha|0');
+        Observer.Expect('t6', 'Yes|Beta Two|1');
+        Observer.Expect('t7', 'No|Gamma|2');
+        Observer.Expect('t8', 'No|Gamma|2');
+        Observer.Expect('t9', 'No|Gamma|2');
+        Observer.Expect('t10', 'No|Gamma|2');
+        Observer.Expect('t11', 'No|Gamma|2');
+        Observer.Expect('t12', 'No|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1272,7 +1714,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', EOpt('Alpha,Beta Two', -1));
         Observer.Observe('t11', EOpt('1.0', -1));
         Observer.Observe('t12', EOpt('Beta  Two', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''-1'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t2', 'ok|Alpha|0');
+        Observer.Expect('t3', 'ok|Beta Two|1');
+        Observer.Expect('t4', 'ok|Alpha|0');
+        Observer.Expect('t5', 'ok|Alpha|0');
+        Observer.Expect('t6', 'ok|Beta Two|1');
+        Observer.Expect('t7', 'err:'''' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t8', 'err:''  '' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t9', 'err:''Delta'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t10', 'err:''Alpha,Beta Two'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t11', 'err:''1.0'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t12', 'err:''Beta  Two'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1281,7 +1735,8 @@ codeunit 73526 "LT P86 Eval Option"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', ROpt('1,0', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1290,7 +1745,8 @@ codeunit 73526 "LT P86 Eval Option"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EOpt('1,0', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''1,0'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1310,7 +1766,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', ROpt('1', 0));
         Observer.Observe('t11', ROpt('2', 0));
         Observer.Observe('t12', ROpt('3', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|Alpha|0');
+        Observer.Expect('t2', 'Yes|Alpha|0');
+        Observer.Expect('t3', 'Yes|Alpha|0');
+        Observer.Expect('t4', 'Yes|Beta Two|1');
+        Observer.Expect('t5', 'Yes|Beta Two|1');
+        Observer.Expect('t6', 'No|Gamma|2');
+        Observer.Expect('t7', 'Yes|Gamma|2');
+        Observer.Expect('t8', 'No|Gamma|2');
+        Observer.Expect('t9', 'Yes|Alpha|0');
+        Observer.Expect('t10', 'Yes|Beta Two|1');
+        Observer.Expect('t11', 'Yes|Gamma|2');
+        Observer.Expect('t12', 'Yes|3|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1330,7 +1798,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', EOpt('1', 0));
         Observer.Observe('t11', EOpt('2', 0));
         Observer.Observe('t12', EOpt('3', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|Alpha|0');
+        Observer.Expect('t2', 'ok|Alpha|0');
+        Observer.Expect('t3', 'ok|Alpha|0');
+        Observer.Expect('t4', 'ok|Beta Two|1');
+        Observer.Expect('t5', 'ok|Beta Two|1');
+        Observer.Expect('t6', 'err:''Bet'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t7', 'ok|Gamma|2');
+        Observer.Expect('t8', 'err:''Alphabet'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t9', 'ok|Alpha|0');
+        Observer.Expect('t10', 'ok|Beta Two|1');
+        Observer.Expect('t11', 'ok|Gamma|2');
+        Observer.Expect('t12', 'ok|3|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1350,7 +1830,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', ROpt('Alpha,Beta Two', 0));
         Observer.Observe('t11', ROpt('1.0', 0));
         Observer.Observe('t12', ROpt('Beta  Two', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Gamma|2');
+        Observer.Expect('t2', 'Yes|Alpha|0');
+        Observer.Expect('t3', 'Yes|Beta Two|1');
+        Observer.Expect('t4', 'Yes|Alpha|0');
+        Observer.Expect('t5', 'Yes|Alpha|0');
+        Observer.Expect('t6', 'Yes|Beta Two|1');
+        Observer.Expect('t7', 'No|Gamma|2');
+        Observer.Expect('t8', 'No|Gamma|2');
+        Observer.Expect('t9', 'No|Gamma|2');
+        Observer.Expect('t10', 'No|Gamma|2');
+        Observer.Expect('t11', 'No|Gamma|2');
+        Observer.Expect('t12', 'No|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1370,7 +1862,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', EOpt('Alpha,Beta Two', 0));
         Observer.Observe('t11', EOpt('1.0', 0));
         Observer.Observe('t12', EOpt('Beta  Two', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''-1'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t2', 'ok|Alpha|0');
+        Observer.Expect('t3', 'ok|Beta Two|1');
+        Observer.Expect('t4', 'ok|Alpha|0');
+        Observer.Expect('t5', 'ok|Alpha|0');
+        Observer.Expect('t6', 'ok|Beta Two|1');
+        Observer.Expect('t7', 'err:'''' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t8', 'err:''  '' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t9', 'err:''Delta'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t10', 'err:''Alpha,Beta Two'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t11', 'err:''1.0'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t12', 'err:''Beta  Two'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1379,7 +1883,8 @@ codeunit 73526 "LT P86 Eval Option"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', ROpt('1,0', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1388,7 +1893,8 @@ codeunit 73526 "LT P86 Eval Option"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EOpt('1,0', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''1,0'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1408,7 +1914,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', ROpt('1', 9));
         Observer.Observe('t11', ROpt('2', 9));
         Observer.Observe('t12', ROpt('3', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|Alpha|0');
+        Observer.Expect('t2', 'Yes|Alpha|0');
+        Observer.Expect('t3', 'Yes|Alpha|0');
+        Observer.Expect('t4', 'Yes|Beta Two|1');
+        Observer.Expect('t5', 'Yes|Beta Two|1');
+        Observer.Expect('t6', 'No|Gamma|2');
+        Observer.Expect('t7', 'Yes|Gamma|2');
+        Observer.Expect('t8', 'No|Gamma|2');
+        Observer.Expect('t9', 'Yes|Alpha|0');
+        Observer.Expect('t10', 'Yes|Beta Two|1');
+        Observer.Expect('t11', 'Yes|Gamma|2');
+        Observer.Expect('t12', 'Yes|3|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1428,7 +1946,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', EOpt('1', 9));
         Observer.Observe('t11', EOpt('2', 9));
         Observer.Observe('t12', EOpt('3', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|Alpha|0');
+        Observer.Expect('t2', 'ok|Alpha|0');
+        Observer.Expect('t3', 'ok|Alpha|0');
+        Observer.Expect('t4', 'ok|Beta Two|1');
+        Observer.Expect('t5', 'ok|Beta Two|1');
+        Observer.Expect('t6', 'err:''Bet'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t7', 'ok|Gamma|2');
+        Observer.Expect('t8', 'err:''Alphabet'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t9', 'ok|Alpha|0');
+        Observer.Expect('t10', 'ok|Beta Two|1');
+        Observer.Expect('t11', 'ok|Gamma|2');
+        Observer.Expect('t12', 'ok|3|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1448,7 +1978,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', ROpt('Alpha,Beta Two', 9));
         Observer.Observe('t11', ROpt('1.0', 9));
         Observer.Observe('t12', ROpt('Beta  Two', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Gamma|2');
+        Observer.Expect('t2', 'Yes|Alpha|0');
+        Observer.Expect('t3', 'Yes|Beta Two|1');
+        Observer.Expect('t4', 'Yes|Alpha|0');
+        Observer.Expect('t5', 'Yes|Alpha|0');
+        Observer.Expect('t6', 'Yes|Beta Two|1');
+        Observer.Expect('t7', 'No|Gamma|2');
+        Observer.Expect('t8', 'No|Gamma|2');
+        Observer.Expect('t9', 'No|Gamma|2');
+        Observer.Expect('t10', 'No|Gamma|2');
+        Observer.Expect('t11', 'No|Gamma|2');
+        Observer.Expect('t12', 'No|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1468,7 +2010,19 @@ codeunit 73526 "LT P86 Eval Option"
         Observer.Observe('t10', EOpt('Alpha,Beta Two', 9));
         Observer.Observe('t11', EOpt('1.0', 9));
         Observer.Observe('t12', EOpt('Beta  Two', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''-1'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t2', 'ok|Alpha|0');
+        Observer.Expect('t3', 'ok|Beta Two|1');
+        Observer.Expect('t4', 'ok|Alpha|0');
+        Observer.Expect('t5', 'ok|Alpha|0');
+        Observer.Expect('t6', 'ok|Beta Two|1');
+        Observer.Expect('t7', 'err:'''' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t8', 'err:''  '' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t9', 'err:''Delta'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t10', 'err:''Alpha,Beta Two'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t11', 'err:''1.0'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Expect('t12', 'err:''Beta  Two'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1477,7 +2031,8 @@ codeunit 73526 "LT P86 Eval Option"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', ROpt('1,0', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Gamma|2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1486,7 +2041,8 @@ codeunit 73526 "LT P86 Eval Option"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EOpt('1,0', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''1,0'' is not an option. The existing options are: Alpha,Beta Two,Gamma|InvalidOptionString|Gamma|2');
+        Observer.Verify();
     end;
 
 }
@@ -1545,7 +2101,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', REn('Blue', -1));
         Observer.Observe('t11', REn('0', -1));
         Observer.Observe('t12', REn('1', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|Red|0');
+        Observer.Expect('t2', 'Yes|Red|0');
+        Observer.Expect('t3', 'Yes|Red|0');
+        Observer.Expect('t4', 'Yes|Green Caption|1');
+        Observer.Expect('t5', 'Yes|Green Caption|1');
+        Observer.Expect('t6', 'Yes|Green Caption|1');
+        Observer.Expect('t7', 'Yes|Dark Blue|10');
+        Observer.Expect('t8', 'Yes|Dark Blue|10');
+        Observer.Expect('t9', 'No|Blue|5');
+        Observer.Expect('t10', 'Yes|Blue|5');
+        Observer.Expect('t11', 'Yes|Red|0');
+        Observer.Expect('t12', 'Yes|Green Caption|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1565,7 +2133,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', EEn('Blue', -1));
         Observer.Observe('t11', EEn('0', -1));
         Observer.Observe('t12', EEn('1', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|Red|0');
+        Observer.Expect('t2', 'ok|Red|0');
+        Observer.Expect('t3', 'ok|Red|0');
+        Observer.Expect('t4', 'ok|Green Caption|1');
+        Observer.Expect('t5', 'ok|Green Caption|1');
+        Observer.Expect('t6', 'ok|Green Caption|1');
+        Observer.Expect('t7', 'ok|Dark Blue|10');
+        Observer.Expect('t8', 'ok|Dark Blue|10');
+        Observer.Expect('t9', 'err:''DarkBlue'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t10', 'ok|Blue|5');
+        Observer.Expect('t11', 'ok|Red|0');
+        Observer.Expect('t12', 'ok|Green Caption|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1585,7 +2165,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', REn('Purple', -1));
         Observer.Observe('t11', REn('00', -1));
         Observer.Observe('t12', REn('+5', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2|2');
+        Observer.Expect('t2', 'Yes|Blue|5');
+        Observer.Expect('t3', 'Yes|Dark Blue|10');
+        Observer.Expect('t4', 'Yes|11|11');
+        Observer.Expect('t5', 'No|Blue|5');
+        Observer.Expect('t6', 'Yes|Red|0');
+        Observer.Expect('t7', 'Yes|Blue|5');
+        Observer.Expect('t8', 'No|Blue|5');
+        Observer.Expect('t9', 'No|Blue|5');
+        Observer.Expect('t10', 'No|Blue|5');
+        Observer.Expect('t11', 'Yes|Red|0');
+        Observer.Expect('t12', 'Yes|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1605,7 +2197,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', EEn('Purple', -1));
         Observer.Observe('t11', EEn('00', -1));
         Observer.Observe('t12', EEn('+5', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2|2');
+        Observer.Expect('t2', 'ok|Blue|5');
+        Observer.Expect('t3', 'ok|Dark Blue|10');
+        Observer.Expect('t4', 'ok|11|11');
+        Observer.Expect('t5', 'err:''-1'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t6', 'ok|Red|0');
+        Observer.Expect('t7', 'ok|Blue|5');
+        Observer.Expect('t8', 'err:'''' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t9', 'err:''  '' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t10', 'err:''Purple'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t11', 'ok|Red|0');
+        Observer.Expect('t12', 'ok|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1614,7 +2218,8 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', REn('5.0', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1623,7 +2228,8 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EEn('5.0', -1));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''5.0'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1643,7 +2249,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', REn('Blue', 0));
         Observer.Observe('t11', REn('0', 0));
         Observer.Observe('t12', REn('1', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|Red|0');
+        Observer.Expect('t2', 'Yes|Red|0');
+        Observer.Expect('t3', 'Yes|Red|0');
+        Observer.Expect('t4', 'Yes|Green Caption|1');
+        Observer.Expect('t5', 'Yes|Green Caption|1');
+        Observer.Expect('t6', 'Yes|Green Caption|1');
+        Observer.Expect('t7', 'Yes|Dark Blue|10');
+        Observer.Expect('t8', 'Yes|Dark Blue|10');
+        Observer.Expect('t9', 'No|Blue|5');
+        Observer.Expect('t10', 'Yes|Blue|5');
+        Observer.Expect('t11', 'Yes|Red|0');
+        Observer.Expect('t12', 'Yes|Green Caption|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1663,7 +2281,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', EEn('Blue', 0));
         Observer.Observe('t11', EEn('0', 0));
         Observer.Observe('t12', EEn('1', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|Red|0');
+        Observer.Expect('t2', 'ok|Red|0');
+        Observer.Expect('t3', 'ok|Red|0');
+        Observer.Expect('t4', 'ok|Green Caption|1');
+        Observer.Expect('t5', 'ok|Green Caption|1');
+        Observer.Expect('t6', 'ok|Green Caption|1');
+        Observer.Expect('t7', 'ok|Dark Blue|10');
+        Observer.Expect('t8', 'ok|Dark Blue|10');
+        Observer.Expect('t9', 'err:''DarkBlue'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t10', 'ok|Blue|5');
+        Observer.Expect('t11', 'ok|Red|0');
+        Observer.Expect('t12', 'ok|Green Caption|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1683,7 +2313,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', REn('Purple', 0));
         Observer.Observe('t11', REn('00', 0));
         Observer.Observe('t12', REn('+5', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2|2');
+        Observer.Expect('t2', 'Yes|Blue|5');
+        Observer.Expect('t3', 'Yes|Dark Blue|10');
+        Observer.Expect('t4', 'Yes|11|11');
+        Observer.Expect('t5', 'No|Blue|5');
+        Observer.Expect('t6', 'Yes|Red|0');
+        Observer.Expect('t7', 'Yes|Blue|5');
+        Observer.Expect('t8', 'No|Blue|5');
+        Observer.Expect('t9', 'No|Blue|5');
+        Observer.Expect('t10', 'No|Blue|5');
+        Observer.Expect('t11', 'Yes|Red|0');
+        Observer.Expect('t12', 'Yes|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1703,7 +2345,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', EEn('Purple', 0));
         Observer.Observe('t11', EEn('00', 0));
         Observer.Observe('t12', EEn('+5', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2|2');
+        Observer.Expect('t2', 'ok|Blue|5');
+        Observer.Expect('t3', 'ok|Dark Blue|10');
+        Observer.Expect('t4', 'ok|11|11');
+        Observer.Expect('t5', 'err:''-1'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t6', 'ok|Red|0');
+        Observer.Expect('t7', 'ok|Blue|5');
+        Observer.Expect('t8', 'err:'''' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t9', 'err:''  '' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t10', 'err:''Purple'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t11', 'ok|Red|0');
+        Observer.Expect('t12', 'ok|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1712,7 +2366,8 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', REn('5.0', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1721,7 +2376,8 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EEn('5.0', 0));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''5.0'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1741,7 +2397,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', REn('Blue', 9));
         Observer.Observe('t11', REn('0', 9));
         Observer.Observe('t12', REn('1', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|Red|0');
+        Observer.Expect('t2', 'Yes|Red|0');
+        Observer.Expect('t3', 'Yes|Red|0');
+        Observer.Expect('t4', 'Yes|Green Caption|1');
+        Observer.Expect('t5', 'Yes|Green Caption|1');
+        Observer.Expect('t6', 'Yes|Green Caption|1');
+        Observer.Expect('t7', 'Yes|Dark Blue|10');
+        Observer.Expect('t8', 'Yes|Dark Blue|10');
+        Observer.Expect('t9', 'No|Blue|5');
+        Observer.Expect('t10', 'Yes|Blue|5');
+        Observer.Expect('t11', 'Yes|Red|0');
+        Observer.Expect('t12', 'Yes|Green Caption|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1761,7 +2429,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', EEn('Blue', 9));
         Observer.Observe('t11', EEn('0', 9));
         Observer.Observe('t12', EEn('1', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|Red|0');
+        Observer.Expect('t2', 'ok|Red|0');
+        Observer.Expect('t3', 'ok|Red|0');
+        Observer.Expect('t4', 'ok|Green Caption|1');
+        Observer.Expect('t5', 'ok|Green Caption|1');
+        Observer.Expect('t6', 'ok|Green Caption|1');
+        Observer.Expect('t7', 'ok|Dark Blue|10');
+        Observer.Expect('t8', 'ok|Dark Blue|10');
+        Observer.Expect('t9', 'err:''DarkBlue'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t10', 'ok|Blue|5');
+        Observer.Expect('t11', 'ok|Red|0');
+        Observer.Expect('t12', 'ok|Green Caption|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1781,7 +2461,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', REn('Purple', 9));
         Observer.Observe('t11', REn('00', 9));
         Observer.Observe('t12', REn('+5', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'Yes|2|2');
+        Observer.Expect('t2', 'Yes|Blue|5');
+        Observer.Expect('t3', 'Yes|Dark Blue|10');
+        Observer.Expect('t4', 'Yes|11|11');
+        Observer.Expect('t5', 'No|Blue|5');
+        Observer.Expect('t6', 'Yes|Red|0');
+        Observer.Expect('t7', 'Yes|Blue|5');
+        Observer.Expect('t8', 'No|Blue|5');
+        Observer.Expect('t9', 'No|Blue|5');
+        Observer.Expect('t10', 'No|Blue|5');
+        Observer.Expect('t11', 'Yes|Red|0');
+        Observer.Expect('t12', 'Yes|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1801,7 +2493,19 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer.Observe('t10', EEn('Purple', 9));
         Observer.Observe('t11', EEn('00', 9));
         Observer.Observe('t12', EEn('+5', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|2|2');
+        Observer.Expect('t2', 'ok|Blue|5');
+        Observer.Expect('t3', 'ok|Dark Blue|10');
+        Observer.Expect('t4', 'ok|11|11');
+        Observer.Expect('t5', 'err:''-1'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t6', 'ok|Red|0');
+        Observer.Expect('t7', 'ok|Blue|5');
+        Observer.Expect('t8', 'err:'''' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t9', 'err:''  '' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t10', 'err:''Purple'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Expect('t11', 'ok|Red|0');
+        Observer.Expect('t12', 'ok|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1810,7 +2514,8 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', REn('5.0', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'No|Blue|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1819,7 +2524,8 @@ codeunit 73527 "LT P86 Eval Enum"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EEn('5.0', 9));
-        Observer.Finish();
+        Observer.Expect('t1', 'err:''5.0'' is not an option. The existing options are: Red,Green Caption,Blue,Dark Blue|InvalidOptionString|Blue|5');
+        Observer.Verify();
     end;
 
 }

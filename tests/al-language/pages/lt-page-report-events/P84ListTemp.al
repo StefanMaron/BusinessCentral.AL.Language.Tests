@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-runmodal-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 73036, list pages 73054-73055, test codeunit 73056
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 ...; observed values are added by the lead after measuring (tag P84, GitHub issue #84)
 // Facts: list page opened over a temporary record (Page.RunModal / Page.Run) or a real record: is there a blank new-row line after the last row (Next count, last row values)
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 page 73054 "LT P84 Row List"
 {
@@ -159,7 +159,13 @@ codeunit 73056 "LT P84 List Tests"
         SeedTemp(Temp, 3);
         Tag := 'temp3';
         Page.RunModal(Page::"LT P84 Row List", Temp);
-        Observer.Finish();
+        Observer.Expect('temp3_count', '4');
+        Observer.Expect('temp3_ids', '10,20,30,0,');
+        Observer.Expect('temp3_names', 'Row1,Row2,Row3,,');
+        Observer.Expect('temp3_next_after_end', 'No');
+        Observer.Expect('temp3_last_id', '0');
+        Observer.Expect('temp3_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -171,7 +177,13 @@ codeunit 73056 "LT P84 List Tests"
         SeedTemp(Temp, 1);
         Tag := 'temp1';
         Page.RunModal(Page::"LT P84 Row List", Temp);
-        Observer.Finish();
+        Observer.Expect('temp1_count', '2');
+        Observer.Expect('temp1_ids', '10,0,');
+        Observer.Expect('temp1_names', 'Row1,,');
+        Observer.Expect('temp1_next_after_end', 'No');
+        Observer.Expect('temp1_last_id', '0');
+        Observer.Expect('temp1_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -183,7 +195,13 @@ codeunit 73056 "LT P84 List Tests"
         SeedTemp(Temp, 0);
         Tag := 'temp0';
         Page.RunModal(Page::"LT P84 Row List", Temp);
-        Observer.Finish();
+        Observer.Expect('temp0_count', '0');
+        Observer.Expect('temp0_ids', '');
+        Observer.Expect('temp0_names', '');
+        Observer.Expect('temp0_next_after_end', 'No');
+        Observer.Expect('temp0_last_id', '0');
+        Observer.Expect('temp0_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -195,7 +213,13 @@ codeunit 73056 "LT P84 List Tests"
         Seed(3);
         Tag := 'real3';
         Page.RunModal(Page::"LT P84 Row List", Row);
-        Observer.Finish();
+        Observer.Expect('real3_count', '4');
+        Observer.Expect('real3_ids', '10,20,30,0,');
+        Observer.Expect('real3_names', 'Row1,Row2,Row3,,');
+        Observer.Expect('real3_next_after_end', 'No');
+        Observer.Expect('real3_last_id', '0');
+        Observer.Expect('real3_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -207,7 +231,13 @@ codeunit 73056 "LT P84 List Tests"
         Seed(1);
         Tag := 'real1';
         Page.RunModal(Page::"LT P84 Row List", Row);
-        Observer.Finish();
+        Observer.Expect('real1_count', '2');
+        Observer.Expect('real1_ids', '10,0,');
+        Observer.Expect('real1_names', 'Row1,,');
+        Observer.Expect('real1_next_after_end', 'No');
+        Observer.Expect('real1_last_id', '0');
+        Observer.Expect('real1_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -219,7 +249,13 @@ codeunit 73056 "LT P84 List Tests"
         Seed(0);
         Tag := 'real0';
         Page.RunModal(Page::"LT P84 Row List", Row);
-        Observer.Finish();
+        Observer.Expect('real0_count', '0');
+        Observer.Expect('real0_ids', '');
+        Observer.Expect('real0_names', '');
+        Observer.Expect('real0_next_after_end', 'No');
+        Observer.Expect('real0_last_id', '0');
+        Observer.Expect('real0_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -231,7 +267,11 @@ codeunit 73056 "LT P84 List Tests"
         SeedTemp(Temp, 3);
         Tag := 'ro_temp3';
         Page.RunModal(Page::"LT P84 Row List RO", Temp);
-        Observer.Finish();
+        Observer.Expect('ro_temp3_count', '3');
+        Observer.Expect('ro_temp3_ids', '10,20,30,');
+        Observer.Expect('ro_temp3_next_after_end', 'No');
+        Observer.Expect('ro_temp3_last_id', '30');
+        Observer.Verify();
     end;
 
     [Test]
@@ -243,7 +283,11 @@ codeunit 73056 "LT P84 List Tests"
         Seed(3);
         Tag := 'ro_real3';
         Page.RunModal(Page::"LT P84 Row List RO", Row);
-        Observer.Finish();
+        Observer.Expect('ro_real3_count', '3');
+        Observer.Expect('ro_real3_ids', '10,20,30,');
+        Observer.Expect('ro_real3_next_after_end', 'No');
+        Observer.Expect('ro_real3_last_id', '30');
+        Observer.Verify();
     end;
 
     [Test]
@@ -255,7 +299,13 @@ codeunit 73056 "LT P84 List Tests"
         SeedTemp(Temp, 3);
         Tag := 'run_temp3';
         Page.Run(Page::"LT P84 Row List", Temp);
-        Observer.Finish();
+        Observer.Expect('run_temp3_count', '4');
+        Observer.Expect('run_temp3_ids', '10,20,30,0,');
+        Observer.Expect('run_temp3_names', 'Row1,Row2,Row3,,');
+        Observer.Expect('run_temp3_next_after_end', 'No');
+        Observer.Expect('run_temp3_last_id', '0');
+        Observer.Expect('run_temp3_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +317,13 @@ codeunit 73056 "LT P84 List Tests"
         Seed(3);
         Tag := 'run_real3';
         Page.Run(Page::"LT P84 Row List", Row);
-        Observer.Finish();
+        Observer.Expect('run_real3_count', '4');
+        Observer.Expect('run_real3_ids', '10,20,30,0,');
+        Observer.Expect('run_real3_names', 'Row1,Row2,Row3,,');
+        Observer.Expect('run_real3_next_after_end', 'No');
+        Observer.Expect('run_real3_last_id', '0');
+        Observer.Expect('run_real3_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -280,7 +336,13 @@ codeunit 73056 "LT P84 List Tests"
         Temp.SetFilter(Id, '>=20');
         Tag := 'temp_filtered';
         Page.RunModal(Page::"LT P84 Row List", Temp);
-        Observer.Finish();
+        Observer.Expect('temp_filtered_count', '3');
+        Observer.Expect('temp_filtered_ids', '20,30,0,');
+        Observer.Expect('temp_filtered_names', 'Row2,Row3,,');
+        Observer.Expect('temp_filtered_next_after_end', 'No');
+        Observer.Expect('temp_filtered_last_id', '0');
+        Observer.Expect('temp_filtered_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -293,7 +355,13 @@ codeunit 73056 "LT P84 List Tests"
         P.OpenView();
         Walk(P);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('tp_view3_count', '3');
+        Observer.Expect('tp_view3_ids', '10,20,30,');
+        Observer.Expect('tp_view3_names', 'Row1,Row2,Row3,');
+        Observer.Expect('tp_view3_next_after_end', 'No');
+        Observer.Expect('tp_view3_last_id', '30');
+        Observer.Expect('tp_view3_last_name', 'Row3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -306,7 +374,13 @@ codeunit 73056 "LT P84 List Tests"
         P.OpenEdit();
         Walk(P);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('tp_edit3_count', '4');
+        Observer.Expect('tp_edit3_ids', '10,20,30,0,');
+        Observer.Expect('tp_edit3_names', 'Row1,Row2,Row3,,');
+        Observer.Expect('tp_edit3_next_after_end', 'No');
+        Observer.Expect('tp_edit3_last_id', '0');
+        Observer.Expect('tp_edit3_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -319,7 +393,13 @@ codeunit 73056 "LT P84 List Tests"
         P.OpenNew();
         Walk(P);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('tp_new3_count', '0');
+        Observer.Expect('tp_new3_ids', '');
+        Observer.Expect('tp_new3_names', '');
+        Observer.Expect('tp_new3_next_after_end', 'No');
+        Observer.Expect('tp_new3_last_id', '0');
+        Observer.Expect('tp_new3_last_name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -332,6 +412,12 @@ codeunit 73056 "LT P84 List Tests"
         P.OpenEdit();
         Walk(P);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('tp_edit0_count', '0');
+        Observer.Expect('tp_edit0_ids', '');
+        Observer.Expect('tp_edit0_names', '');
+        Observer.Expect('tp_edit0_next_after_end', 'No');
+        Observer.Expect('tp_edit0_last_id', '0');
+        Observer.Expect('tp_edit0_last_name', '');
+        Observer.Verify();
     end;
 }

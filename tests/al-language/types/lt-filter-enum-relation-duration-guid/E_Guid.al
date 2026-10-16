@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), test codeunit 72693 (P85); a fixed Guid literal is used, no CreateGuid
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P85); the facts are measured later on a local BC 29 service tier.
 // Facts: Guid assigned to Text[40], Text, Code[40], Dictionary of [Text, Text], List of [Text], Evaluate(T, G) forms
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 72693 "LT P85 Guid To Text"
 {
@@ -56,7 +56,20 @@ codeunit 72693 "LT P85 Guid To Text"
         Observer.Observe('c40_eq_format', Format(C40 = Format(G)));
         Observer.Observe('c40_eq_upper_format', Format(C40 = UpperCase(Format(G))));
         Observer.Observe('t40_eq_lower_format', Format(T40 = LowerCase(Format(G))));
-        Observer.Finish();
+        Observer.Expect('t40', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('t40_len', '38');
+        Observer.Expect('text', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('text_len', '38');
+        Observer.Expect('c40', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('c40_len', '38');
+        Observer.Expect('t50', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('c50', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('t40_eq_format', 'Yes');
+        Observer.Expect('text_eq_format', 'Yes');
+        Observer.Expect('c40_eq_format', 'Yes');
+        Observer.Expect('c40_eq_upper_format', 'Yes');
+        Observer.Expect('t40_eq_lower_format', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,7 +89,12 @@ codeunit 72693 "LT P85 Guid To Text"
         Observer.Observe('c40', C40);
         Observer.Observe('t40_len', Format(StrLen(T40)));
         Observer.Observe('c40_len', Format(StrLen(C40)));
-        Observer.Finish();
+        Observer.Expect('t40', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('text', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('c40', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('t40_len', '38');
+        Observer.Expect('c40_len', '38');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +122,12 @@ codeunit 72693 "LT P85 Guid To Text"
         T40 := 'AB12CD34EF564A789B0123456789ABCD';
         G2 := T40;
         Observer.Observe('nodashes_equal', Format(G = G2));
-        Observer.Finish();
+        Observer.Expect('t40_roundtrip_equal', 'Yes');
+        Observer.Expect('c40_roundtrip_equal', 'Yes');
+        Observer.Expect('lowercase_equal', 'Yes');
+        Observer.Expect('nobraces_equal', 'Yes');
+        Observer.Expect('nodashes_equal', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,7 +147,14 @@ codeunit 72693 "LT P85 Guid To Text"
         T40 := '{AB12CD34-EF56-4A78-9B01-23456789ABC}';
         asserterror G := T40;
         Observer.ObserveError('short');
-        Observer.Finish();
+        Observer.Expect('bad_text|text', 'Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('bad_text|code', 'InvalidGuidFormat');
+        Observer.Expect('af121|text', 'Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('af121|code', 'InvalidGuidFormat');
+        Observer.Expect('empty_text_is_null', 'Yes');
+        Observer.Expect('short|text', 'Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('short|code', 'InvalidGuidFormat');
+        Observer.Verify();
     end;
 
     [Test]
@@ -147,7 +177,14 @@ codeunit 72693 "LT P85 Guid To Text"
         Observer.Observe('null_value', Dict.Get('null'));
         Dict.Get('k', T);
         Observer.Observe('get_out', T);
-        Observer.Finish();
+        Observer.Expect('count', '1');
+        Observer.Expect('value', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('len', '38');
+        Observer.Expect('contains', 'Yes');
+        Observer.Expect('set_value', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('null_value', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('get_out', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Verify();
     end;
 
     local procedure CreateNullGuid(): Guid
@@ -175,7 +212,12 @@ codeunit 72693 "LT P85 Guid To Text"
         LG.Add(G);
         Observer.Observe('list_guid', Format(LG.Get(1)));
         Observer.Observe('list_guid_contains', Format(LG.Contains(G)));
-        Observer.Finish();
+        Observer.Expect('list_text', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('list_contains_format', 'Yes');
+        Observer.Expect('dict_guid_value', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('list_guid', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('list_guid_contains', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -205,7 +247,15 @@ codeunit 72693 "LT P85 Guid To Text"
         Observer.Observe('text_format3', Format(Ok) + '|' + T);
         Ok := Evaluate(T, Format(G, 0, 4));
         Observer.Observe('text_format4', Format(Ok) + '|' + T);
-        Observer.Finish();
+        Observer.Expect('text_ok', 'Yes|{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('t40_ok', 'Yes|{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('c40_ok', 'Yes|{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('text_format_ok', 'Yes|{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('text_format1', 'Yes|{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('text_format2', 'Yes|{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Expect('text_format3', 'Yes|AB12CD34EF564A789B0123456789ABCD');
+        Observer.Expect('text_format4', 'Yes|AB12CD34-EF56-4A78-9B01-23456789ABCD');
+        Observer.Verify();
     end;
 
     [Test]
@@ -234,7 +284,14 @@ codeunit 72693 "LT P85 Guid To Text"
         Observer.Observe('guid_arg', Format(Ok) + '|' + Format(G = Ref));
         Ok := Evaluate(G, '{00000000-0000-0000-0000-000000000000}');
         Observer.Observe('null_text', Format(Ok) + '|' + Format(IsNullGuid(G)));
-        Observer.Finish();
+        Observer.Expect('braced', 'Yes|Yes');
+        Observer.Expect('format4', 'Yes|Yes');
+        Observer.Expect('format2', 'Yes|Yes');
+        Observer.Expect('garbage', 'No|Yes');
+        Observer.Expect('empty', 'No|Yes');
+        Observer.Expect('guid_arg', 'Yes|Yes');
+        Observer.Expect('null_text', 'Yes|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -249,6 +306,7 @@ codeunit 72693 "LT P85 Guid To Text"
             Observer.Observe('try_ok', T)
         else
             Observer.Observe('try_error', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('try_ok', '{AB12CD34-EF56-4A78-9B01-23456789ABCD}');
+        Observer.Verify();
     end;
 }

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonobject/jsonobject-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74414
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: UNSURE the members exist: JsonObject.GetChar, JsonObject.Values
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74414 "LT P88 Object GetChar Values"
 {
@@ -29,7 +29,13 @@ codeunit 74414 "LT P88 Object GetChar Values"
         Observer.Observe('char_from_int', 'no error');
         asserterror Observer.Observe('char_missing', Format(O.GetChar('zzz')));
         Observer.ObserveError('char_missing');
-        Observer.Finish();
+        Observer.Expect('char', 'A');
+        Observer.Expect('char_from_text', 'B');
+        Observer.Expect('char_from_int', '\u0007');
+        Observer.Expect('char_from_int', 'no error');
+        Observer.Expect('char_missing|text', 'There is no property with the ''zzz'' key on the JSON object.');
+        Observer.Expect('char_missing|code', 'JsonPropertyNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -53,6 +59,9 @@ codeunit 74414 "LT P88 Object GetChar Values"
             R += Txt + ';';
         end;
         Observer.Observe('values', R);
-        Observer.Finish();
+        Observer.Expect('values_empty_count', '0');
+        Observer.Expect('values_count', '3');
+        Observer.Expect('values', '1;"two";true;');
+        Observer.Verify();
     end;
 }

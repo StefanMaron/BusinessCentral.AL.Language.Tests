@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); LT P82 List (71188), LT P82 Card (71187), LT P82 Item (71184), LT P82 Log (71186) from P82Fixtures.al
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: members of a Page variable (Update, Close, Activate, SaveRecord, SetSelectionFilter, ObjectId, Caption, Editable, LookupMode, GetRecord) called before the page runs, while its modal page is open (from the handler through the variable) and after it closed
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 71207 "LT P82 Page Var"
 {
@@ -90,7 +90,24 @@ codeunit 71207 "LT P82 Page Var"
         Observer.Observe('getrecord-no', Item."No.");
         Observer.Observe('editable', Format(Pg.Editable()));
         Observer.Observe('lookupmode', Format(Pg.LookupMode()));
-        Observer.Finish();
+        Observer.Expect('update-false', 'Yes');
+        Observer.Expect('update-false-error', '');
+        Observer.Expect('update-true', 'Yes');
+        Observer.Expect('update-true-error', '');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close-error', '');
+        Observer.Expect('activate', 'Yes');
+        Observer.Expect('activate-error', '');
+        Observer.Expect('saverecord', 'Yes');
+        Observer.Expect('saverecord-error', '');
+        Observer.Expect('selectionfilter', 'Yes');
+        Observer.Expect('selectionfilter-error', '');
+        Observer.Expect('getrecord', 'Yes');
+        Observer.Expect('getrecord-error', '');
+        Observer.Expect('getrecord-no', '');
+        Observer.Expect('editable', 'Yes');
+        Observer.Expect('lookupmode', 'No');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -124,7 +141,19 @@ codeunit 71207 "LT P82 Page Var"
         Observer.Observe('activate-error', GetLastErrorText());
         Observer.Observe('saverecord', Format(TrySaveRecord(Pg)));
         Observer.Observe('saverecord-error', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('action', 'OK');
+        Observer.Expect('getrecord', 'Yes');
+        Observer.Expect('getrecord-error', '');
+        Observer.Expect('getrecord-no', 'V2');
+        Observer.Expect('update', 'Yes');
+        Observer.Expect('update-error', '');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close-error', '');
+        Observer.Expect('activate', 'Yes');
+        Observer.Expect('activate-error', '');
+        Observer.Expect('saverecord', 'Yes');
+        Observer.Expect('saverecord-error', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +171,13 @@ codeunit 71207 "LT P82 Page Var"
         Observer.Observe('first', Format(Result));
         Result := Pg.RunModal();
         Observer.Observe('second', Format(Result));
-        Observer.Finish();
+        Observer.Expect('first', 'OK');
+        Observer.Expect('second', 'OK');
+        Observer.Verify();
     end;
 
+    local procedure Finish()
+    begin
+        Observer.Finish();
+    end;
 }

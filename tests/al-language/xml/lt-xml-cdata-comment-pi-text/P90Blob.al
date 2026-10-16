@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/xmltext/xmltext-data-type
 // Scope: in-scope
 // Fixtures used: none
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (local service tier). Own blob table for the WriteTo(OutStream) probes of the P90 codeunits.
 // Facts: fixture table
 // BC versions: 29 (27 and 28 by CI)
 

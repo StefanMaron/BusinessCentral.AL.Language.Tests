@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-tablerelation-property
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), own tables 72684 to 72688, test codeunit 72689 (P85)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P85); the facts are measured later on a local BC 29 service tier.
 // Facts: TableRelation with conditional arms on Zone = filter('') / filter(<> ''), a value in neither arm, and where(Field = const / field / filter) conditions: Validate outcome and error text
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 72684 "LT P85 Loc"
 {
@@ -135,7 +135,12 @@ codeunit 72689 "LT P85 Relation Arms"
         Observer.Observe('blank_bin1', PlaceOutcome('', 'BIN1'));
         Observer.Observe('blank_empty_value', PlaceOutcome('', ''));
         Observer.Observe('blank_unknown', PlaceOutcome('', 'NOPE'));
-        Observer.Finish();
+        Observer.Expect('blank_loc1', 'ok');
+        Observer.Expect('blank_shared', 'ok');
+        Observer.Expect('blank_bin1', 'error:The field Place of table LT P85 Rel contains a value (BIN1) that cannot be found in the related table (LT P85 Loc).|DB:PrimRecordNotFound');
+        Observer.Expect('blank_empty_value', 'ok');
+        Observer.Expect('blank_unknown', 'error:The field Place of table LT P85 Rel contains a value (NOPE) that cannot be found in the related table (LT P85 Loc).|DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +157,15 @@ codeunit 72689 "LT P85 Relation Arms"
         Observer.Observe('z1_loc1', PlaceOutcome('Z1', 'LOC1'));
         Observer.Observe('z1_empty_value', PlaceOutcome('Z1', ''));
         Observer.Observe('z9_unknown_zone', PlaceOutcome('Z9', 'BIN1'));
-        Observer.Finish();
+        Observer.Expect('z1_bin1', 'ok');
+        Observer.Expect('z1_shared', 'ok');
+        Observer.Expect('z1_bin2_other_zone', 'error:The field Place of table LT P85 Rel contains a value (BIN2) that cannot be found in the related table (LT P85 Bin).|DB:RecordNotFound');
+        Observer.Expect('z2_bin2', 'ok');
+        Observer.Expect('z2_shared_other_zone', 'error:The field Place of table LT P85 Rel contains a value (SHARED) that cannot be found in the related table (LT P85 Bin).|DB:RecordNotFound');
+        Observer.Expect('z1_loc1', 'error:The field Place of table LT P85 Rel contains a value (LOC1) that cannot be found in the related table (LT P85 Bin).|DB:RecordNotFound');
+        Observer.Expect('z1_empty_value', 'ok');
+        Observer.Expect('z9_unknown_zone', 'error:The field Place of table LT P85 Rel contains a value (BIN1) that cannot be found in the related table (LT P85 Bin).|DB:RecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +186,15 @@ codeunit 72689 "LT P85 Relation Arms"
         R.Zone := '';
         asserterror R.Validate(Place, 'BIN1');
         Observer.ObserveError('blank_bin1');
-        Observer.Finish();
+        Observer.Expect('blank_zone_nope|text', 'The field Place of table LT P85 Rel contains a value (NOPE) that cannot be found in the related table (LT P85 Loc).');
+        Observer.Expect('blank_zone_nope|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('z1_nope|text', 'The field Place of table LT P85 Rel contains a value (NOPE) that cannot be found in the related table (LT P85 Bin).');
+        Observer.Expect('z1_nope|code', 'DB:RecordNotFound');
+        Observer.Expect('z1_bin2|text', 'The field Place of table LT P85 Rel contains a value (BIN2) that cannot be found in the related table (LT P85 Bin).');
+        Observer.Expect('z1_bin2|code', 'DB:RecordNotFound');
+        Observer.Expect('blank_bin1|text', 'The field Place of table LT P85 Rel contains a value (BIN1) that cannot be found in the related table (LT P85 Loc).');
+        Observer.Expect('blank_bin1|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -192,7 +213,13 @@ codeunit 72689 "LT P85 Relation Arms"
         Observer.ObserveError('nope');
         R.Validate(ItemConst, '');
         Observer.Observe('blank_ok', R.ItemConst);
-        Observer.Finish();
+        Observer.Expect('i1', 'I1');
+        Observer.Expect('i2_other_group|text', 'The field ItemConst of table LT P85 Rel contains a value (I2) that cannot be found in the related table (LT P85 Item).');
+        Observer.Expect('i2_other_group|code', 'DB:NothingInsideFilter');
+        Observer.Expect('nope|text', 'The field ItemConst of table LT P85 Rel contains a value (NOPE) that cannot be found in the related table (LT P85 Item).');
+        Observer.Expect('nope|code', 'DB:NothingInsideFilter');
+        Observer.Expect('blank_ok', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +243,15 @@ codeunit 72689 "LT P85 Relation Arms"
         R.Grp := 'G9';
         asserterror R.Validate(ItemField, 'I3');
         Observer.ObserveError('g9_i3');
-        Observer.Finish();
+        Observer.Expect('g2_i2', 'I2');
+        Observer.Expect('g2_i1|text', 'The field ItemField of table LT P85 Rel contains a value (I1) that cannot be found in the related table (LT P85 Item).');
+        Observer.Expect('g2_i1|code', 'DB:NothingInsideFilter');
+        Observer.Expect('blank_group_i1|text', 'The field ItemField of table LT P85 Rel contains a value (I1) that cannot be found in the related table (LT P85 Item).');
+        Observer.Expect('blank_group_i1|code', 'DB:NothingInsideFilter');
+        Observer.Expect('blank_group_blank_value', '');
+        Observer.Expect('g9_i3|text', 'The field ItemField of table LT P85 Rel contains a value (I3) that cannot be found in the related table (LT P85 Item).');
+        Observer.Expect('g9_i3|code', 'DB:NothingInsideFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -231,6 +266,8 @@ codeunit 72689 "LT P85 Relation Arms"
         Observer.Observe('nope_accepted', R.ItemNoCheck);
         R.Validate(ItemNoCheck, 'I2');
         Observer.Observe('other_group_accepted', R.ItemNoCheck);
-        Observer.Finish();
+        Observer.Expect('nope_accepted', 'NOPE');
+        Observer.Expect('other_group_accepted', 'I2');
+        Observer.Verify();
     end;
 }

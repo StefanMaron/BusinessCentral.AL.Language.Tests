@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74000
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on JsonObject, JsonArray, JsonToken, JsonValue
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74000 "LT P95 Clear Json"
@@ -45,7 +45,16 @@ codeunit 74000 "LT P95 Clear Json"
         Clear(O);
         Observer.Observe('text_after_clear', Format(O.AsToken().AsObject().Keys().Count()));
 
-        Observer.Finish();
+        Observer.Expect('before', '2|2|Yes|5');
+        Observer.Expect('object_after', '0|No');
+        Observer.Expect('array_after', '0');
+        Observer.Expect('token_after', 'No|No|Yes');
+        Observer.Expect('value_after', 'Yes|No');
+        Observer.Expect('object_reuse', '1');
+        Observer.Expect('array_reuse', '1');
+        Observer.Expect('object_readfrom', '1');
+        Observer.Expect('text_after_clear', '0');
+        Observer.Verify();
     end;
 
 }

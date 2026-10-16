@@ -51,7 +51,8 @@ codeunit 73079 "LT P94 Page Run"
         Seen := '';
         Page.Run(Page::"LT P94 Card");
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'id=1;name=Alpha;qty=10');
+        Observer.Verify();
     end;
 
     [Test]
@@ -66,7 +67,8 @@ codeunit 73079 "LT P94 Page Run"
         Item.Get(2);
         Page.Run(Page::"LT P94 Card", Item);
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'id=2;name=Beta;qty=20');
+        Observer.Verify();
     end;
 
     [Test]
@@ -83,7 +85,9 @@ codeunit 73079 "LT P94 Page Run"
         Page.Run(Page::"LT P94 Card", Item);
         Observer.Observe('seen', Seen);
         Observer.Observe('items', Format(Helper.CountItems()));
-        Observer.Finish();
+        Observer.Expect('seen', 'id=3;name=Gamma;qty=30');
+        Observer.Expect('items', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +102,8 @@ codeunit 73079 "LT P94 Page Run"
         Item.Get(3);
         Page.Run(Page::"LT P94 Card", Item, Item.FieldNo(Name));
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'id=3;name=Gamma;qty=30');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +118,8 @@ codeunit 73079 "LT P94 Page Run"
         Item.Get(3);
         Page.Run(Page::"LT P94 Card", Item, Item.Name);
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'id=3;name=Gamma;qty=30');
+        Observer.Verify();
     end;
 
     [Test]
@@ -125,7 +131,8 @@ codeunit 73079 "LT P94 Page Run"
         Seen := '';
         Page.Run(Page::"LT P94 List");
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'first:id=1;name=Alpha|second:id=2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +147,8 @@ codeunit 73079 "LT P94 Page Run"
         Item.SetFilter(Id, '>=2');
         Page.Run(Page::"LT P94 List", Item);
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'first:id=2;name=Beta|second:id=3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -155,7 +163,8 @@ codeunit 73079 "LT P94 Page Run"
         Item.Get(2);
         Page.Run(Page::"LT P94 List", Item, Item.FieldNo(Qty));
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'first:id=2;name=Beta|second:id=3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -178,7 +187,10 @@ codeunit 73079 "LT P94 Page Run"
             Observer.Observe('negative', 'ok')
         else
             Observer.Observe('negative', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('zero', 'error:Unhandled UI: Page 73069|MissingUIHandler');
+        Observer.Expect('unknown', 'error:The supplied field number ''999'' cannot be found in the ''LT P94 Item'' table.|FieldNotFound');
+        Observer.Expect('negative', 'error:Unhandled UI: Page 73069|MissingUIHandler');
+        Observer.Verify();
     end;
 
     [Test]
@@ -196,7 +208,10 @@ codeunit 73079 "LT P94 Page Run"
             Observer.Observe('negative', 'ok')
         else
             Observer.Observe('negative', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('missing', 'error:You tried to invoke the Page object with the ID 73999 from the object LT P94 Page Run. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('zero', 'error:You tried to invoke the Page object with the ID 0 from the object LT P94 Page Run. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('negative', 'error:You tried to invoke the Page object with the ID -5 from the object LT P94 Page Run. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -204,7 +219,9 @@ codeunit 73079 "LT P94 Page Run"
     begin
         asserterror Page.Run(73999);
         Observer.ObserveError('missing');
-        Observer.Finish();
+        Observer.Expect('missing|text', 'You tried to invoke the Page object with the ID 73999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('missing|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,7 +231,8 @@ codeunit 73079 "LT P94 Page Run"
     begin
         P.Activate();
         Observer.Observe('activate', 'no error');
-        Observer.Finish();
+        Observer.Expect('activate', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -224,6 +242,7 @@ codeunit 73079 "LT P94 Page Run"
     begin
         P.Activate(true);
         Observer.Observe('activateRefresh', 'no error');
-        Observer.Finish();
+        Observer.Expect('activateRefresh', 'no error');
+        Observer.Verify();
     end;
 }

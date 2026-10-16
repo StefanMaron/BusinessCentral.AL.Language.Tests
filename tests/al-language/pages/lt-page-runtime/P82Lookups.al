@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testfield/testfield-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); LT P82 Card (71187), LT P82 Group List (71193), LT P82 Item (71184), LT P82 Group (71192), LT P82 Log (71186) from P82Fixtures.al
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: TestField.Lookup / Drilldown / AssistEdit run the OnLookup / OnDrillDown / OnAssistEdit trigger of the control (value, log, view and edit mode); Lookup on a field with a table relation opens the lookup page of the related table (modal handler, OK and Cancel); the same calls on fields without such a trigger
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 71205 "LT P82 Lookups"
 {
@@ -117,7 +117,12 @@ codeunit 71205 "LT P82 Lookups"
         Observer.Observe('log-with-typed-value', Log.Dump());
         Observer.Observe('value-after-second', Card.LookupCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('value-before', '');
+        Observer.Expect('value-after', 'looked');
+        Observer.Expect('log', 'OnLookup()');
+        Observer.Expect('log-with-typed-value', 'OnLookup(typed)');
+        Observer.Expect('value-after-second', 'looked');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +139,10 @@ codeunit 71205 "LT P82 Lookups"
         Observer.Observe('lookup-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('lookup-ok', 'Yes');
+        Observer.Expect('lookup-error', '');
+        Observer.Expect('log', 'OnLookup()');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +164,9 @@ codeunit 71205 "LT P82 Lookups"
         Card.DrillCtl.Drilldown();
         Observer.Observe('log-view', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'OnDrillDown');
+        Observer.Expect('log-view', 'OnDrillDown');
+        Observer.Verify();
     end;
 
     [Test]
@@ -180,7 +190,12 @@ codeunit 71205 "LT P82 Lookups"
         Observer.Observe('view-error', GetLastErrorText());
         Observer.Observe('log-view', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('value-after', 'assisted');
+        Observer.Expect('log', 'OnAssistEdit;OnAfterGetRecord(L1)');
+        Observer.Expect('view-ok', 'Yes');
+        Observer.Expect('view-error', '');
+        Observer.Expect('log-view', 'OnAssistEdit;OnAfterGetRecord(L1)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -209,7 +224,22 @@ codeunit 71205 "LT P82 Lookups"
         Observer.Observe('lookup-on-drillctl-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('drill-on-name', 'No');
+        Observer.Expect('drill-on-name-error', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('assist-on-name', 'No');
+        Observer.Expect('assist-on-name-error', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('lookup-on-name', 'Yes');
+        Observer.Expect('lookup-on-name-error', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('lookup-on-qty', 'Yes');
+        Observer.Expect('lookup-on-qty-error', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('drill-on-lookupctl', 'No');
+        Observer.Expect('drill-on-lookupctl-error', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('assist-on-lookupctl', 'No');
+        Observer.Expect('assist-on-lookupctl-error', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('lookup-on-drillctl', 'Yes');
+        Observer.Expect('lookup-on-drillctl-error', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +258,11 @@ codeunit 71205 "LT P82 Lookups"
         Card.Close();
         Item.Get('L1');
         Observer.Observe('grp-stored', Item.Grp);
-        Observer.Finish();
+        Observer.Expect('grp-before', 'G1');
+        Observer.Expect('handler-first', 'G1');
+        Observer.Expect('grp-after', 'G2');
+        Observer.Expect('grp-stored', 'G2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -246,7 +280,9 @@ codeunit 71205 "LT P82 Lookups"
         Card.Close();
         Item.Get('L1');
         Observer.Observe('grp-stored', Item.Grp);
-        Observer.Finish();
+        Observer.Expect('grp-after-cancel', 'G1');
+        Observer.Expect('grp-stored', 'G1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -261,6 +297,9 @@ codeunit 71205 "LT P82 Lookups"
         Observer.ObserveError('lookup-no-handler');
         Observer.Observe('grp-after', Card.GrpCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('lookup-no-handler|text', 'Unhandled UI: ModalPage 71193');
+        Observer.Expect('lookup-no-handler|code', 'TestWrapped:MissingUIHandler');
+        Observer.Expect('grp-after', 'G1');
+        Observer.Verify();
     end;
 }

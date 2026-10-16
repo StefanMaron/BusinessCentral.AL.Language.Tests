@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setloadfields-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained tables 70301, 70302 and codeunit 70303
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (tag P81, GitHub issue 81); every literal asserted later is what a local BC 29 tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: SetLoadFields / AddLoadFields with a FlowField, a FlowFilter field, a Blob, a Media and the system fields; AreFieldsLoaded, the values read, CalcFields on them, Modify afterwards
 // BC versions: 29 (27 and 28 by CI)
 
@@ -181,7 +181,23 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('name', Row.Name);
         Observer.Observe('qty', Format(Row.Qty));
         Observer.Observe('code', Row.Code);
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'Yes');
+        Observer.Expect('a_loaded_Qty', 'No');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'No');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('qty', '7');
+        Observer.Expect('code', 'A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -199,7 +215,24 @@ codeunit 70303 "LT P81 LoadFields"
         Row.CalcFields(Cnt);
         Observer.Observe('cnt_after', Format(Row.Cnt));
         Observer.Observe('loaded_cnt_after', Loaded(Row, 6));
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'No');
+        Observer.Expect('a_loaded_Qty', 'No');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'No');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('cnt_before', '0');
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('cnt_after', '2');
+        Observer.Expect('loaded_cnt_after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -217,7 +250,23 @@ codeunit 70303 "LT P81 LoadFields"
         Row.CalcFields("Sum Amount");
         Observer.Observe('sum_after', Format(Row."Sum Amount"));
         Observer.Observe('name', Row.Name);
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'No');
+        Observer.Expect('a_loaded_Qty', 'No');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'No');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('sum_before', '0');
+        Observer.Expect('sum_after', '30');
+        Observer.Expect('name', 'alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -235,7 +284,23 @@ codeunit 70303 "LT P81 LoadFields"
         Row.CalcFields(Cnt);
         Observer.Observe('cnt_x', Format(Row.Cnt));
         Observer.Observe('loaded_cnt_after', Loaded(Row, 6));
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'No');
+        Observer.Expect('a_loaded_Qty', 'No');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'No');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('filter', 'X');
+        Observer.Expect('cnt_x', '1');
+        Observer.Expect('loaded_cnt_after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +324,13 @@ codeunit 70303 "LT P81 LoadFields"
         Row.SetRange("Kind Filter");
         Row.CalcFields(Cnt);
         Observer.Observe('cnt_all', Format(Row.Cnt));
-        Observer.Finish();
+        Observer.Expect('loaded_cnt', 'Yes');
+        Observer.Expect('loaded_kindfilter', 'Yes');
+        Observer.Expect('loaded_name', 'No');
+        Observer.Expect('cnt_y', '1');
+        Observer.Expect('cnt_z', '0');
+        Observer.Expect('cnt_all', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -277,7 +348,24 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('hasvalue_after', Format(Row.Notes.HasValue()));
         Observer.Observe('text', GetNotes(Row));
         Observer.Observe('name', Row.Name);
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'No');
+        Observer.Expect('a_loaded_Qty', 'No');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'No');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('hasvalue_before', 'Yes');
+        Observer.Expect('hasvalue_after', 'Yes');
+        Observer.Expect('text', 'blob-a');
+        Observer.Expect('name', 'alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -295,7 +383,12 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('loaded_notes_after', Loaded(Row, 4));
         Observer.Observe('hasvalue_after', Format(Row.Notes.HasValue()));
         Observer.Observe('text', GetNotes(Row));
-        Observer.Finish();
+        Observer.Expect('loaded_notes_before', 'Yes');
+        Observer.Expect('hasvalue_before', 'Yes');
+        Observer.Expect('loaded_notes_after', 'Yes');
+        Observer.Expect('hasvalue_after', 'Yes');
+        Observer.Expect('text', 'blob-a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -311,7 +404,23 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('pic_hasvalue', Format(Row.Pic.HasValue()));
         Observer.Observe('pic_mediaid_null', Format(IsNullGuid(Row.Pic.MediaId())));
         Observer.Observe('name', Row.Name);
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'No');
+        Observer.Expect('a_loaded_Qty', 'No');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'Yes');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('pic_hasvalue', 'No');
+        Observer.Expect('pic_mediaid_null', 'Yes');
+        Observer.Expect('name', 'alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,7 +438,13 @@ codeunit 70303 "LT P81 LoadFields"
         asserterror Row.CalcFields(Pic);
         Observer.ObserveError('af329');
         Observer.Observe('loaded_pic_after_calc', Loaded(Row, 5));
-        Observer.Finish();
+        Observer.Expect('loaded_pic', 'No');
+        Observer.Expect('pic_hasvalue', 'No');
+        Observer.Expect('pic_mediaid_null', 'Yes');
+        Observer.Expect('af329|text', 'The Pic field in the LT P81 LF Row table must be a FlowField.');
+        Observer.Expect('af329|code', 'DB:Ok');
+        Observer.Expect('loaded_pic_after_calc', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -347,7 +462,23 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('systemid_null', Format(IsNullGuid(Row.SystemId)));
         Observer.Observe('systemid_equals_full', Format(Row.SystemId = Full.SystemId));
         Observer.Observe('name', Row.Name);
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'Yes');
+        Observer.Expect('a_loaded_Qty', 'Yes');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'Yes');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('systemid_null', 'No');
+        Observer.Expect('systemid_equals_full', 'Yes');
+        Observer.Expect('name', 'alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -366,7 +497,24 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('modifiedat_ge_createdat', Format(Row.SystemModifiedAt >= Row.SystemCreatedAt));
         Observer.Observe('createdat_equals_full', Format(Row.SystemCreatedAt = Full.SystemCreatedAt));
         Observer.Observe('createdby_null', Format(IsNullGuid(Row.SystemCreatedBy)));
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'Yes');
+        Observer.Expect('a_loaded_Qty', 'Yes');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'Yes');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('createdat_zero', 'No');
+        Observer.Expect('modifiedat_ge_createdat', 'Yes');
+        Observer.Expect('createdat_equals_full', 'Yes');
+        Observer.Expect('createdby_null', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -384,7 +532,23 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('createdby_equals_full', Format(Row.SystemCreatedBy = Full.SystemCreatedBy));
         Observer.Observe('modifiedby_equals_full', Format(Row.SystemModifiedBy = Full.SystemModifiedBy));
         Observer.Observe('systemid_null', Format(IsNullGuid(Row.SystemId)));
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'Yes');
+        Observer.Expect('a_loaded_Qty', 'Yes');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'Yes');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('createdby_equals_full', 'Yes');
+        Observer.Expect('modifiedby_equals_full', 'Yes');
+        Observer.Expect('systemid_null', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -399,7 +563,22 @@ codeunit 70303 "LT P81 LoadFields"
         ObserveLoaded(Observer, Row, 'a');
         Observer.Observe('name', Row.Name);
         Observer.Observe('qty', Format(Row.Qty));
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'Yes');
+        Observer.Expect('a_loaded_Qty', 'Yes');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'Yes');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('qty', '7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -413,7 +592,20 @@ codeunit 70303 "LT P81 LoadFields"
         Row.SetLoadFields();
         Row.Get('A');
         ObserveLoaded(Observer, Row, 'a');
-        Observer.Finish();
+        Observer.Expect('a_loaded_Code', 'Yes');
+        Observer.Expect('a_loaded_Name', 'Yes');
+        Observer.Expect('a_loaded_Qty', 'Yes');
+        Observer.Expect('a_loaded_Notes', 'Yes');
+        Observer.Expect('a_loaded_Pic', 'Yes');
+        Observer.Expect('a_loaded_Cnt', 'Yes');
+        Observer.Expect('a_loaded_KindFilter', 'Yes');
+        Observer.Expect('a_loaded_SumAmount', 'Yes');
+        Observer.Expect('a_loaded_SystemId', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('a_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('a_loaded_SystemModifiedBy', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -432,7 +624,13 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('b_qty', Format(Row.Qty));
         Observer.Observe('b_loaded_qty', Loaded(Row, 3));
         Observer.Observe('b_loaded_name', Loaded(Row, 2));
-        Observer.Finish();
+        Observer.Expect('full_loaded_qty', 'Yes');
+        Observer.Expect('after_set_loaded_qty', 'Yes');
+        Observer.Expect('b_name', 'bravo');
+        Observer.Expect('b_qty', '8');
+        Observer.Expect('b_loaded_qty', 'Yes');
+        Observer.Expect('b_loaded_name', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -453,7 +651,14 @@ codeunit 70303 "LT P81 LoadFields"
                 Observer.Observe('row' + Format(n) + '_cnt', Format(Row.Cnt));
             until Row.Next() = 0;
         Observer.Observe('rows', Format(n));
-        Observer.Finish();
+        Observer.Expect('row1_name', 'alpha');
+        Observer.Expect('row1_qty', '7');
+        Observer.Expect('row1_cnt', '2');
+        Observer.Expect('row2_name', 'bravo');
+        Observer.Expect('row2_qty', '8');
+        Observer.Expect('row2_cnt', '0');
+        Observer.Expect('rows', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -473,7 +678,14 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('loaded_sum', Loaded(Row, 8));
         Observer.Observe('loaded_notes', Loaded(Row, 4));
         Observer.Observe('loaded_qty', Loaded(Row, 3));
-        Observer.Finish();
+        Observer.Expect('cnt', '2');
+        Observer.Expect('sum', '30');
+        Observer.Expect('notes', 'blob-a');
+        Observer.Expect('loaded_cnt', 'Yes');
+        Observer.Expect('loaded_sum', 'Yes');
+        Observer.Expect('loaded_notes', 'Yes');
+        Observer.Expect('loaded_qty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -494,7 +706,11 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('qty', Format(Full.Qty));
         Observer.Observe('notes', GetNotes(Full));
         Observer.Observe('cnt', Format(Full.Cnt));
-        Observer.Finish();
+        Observer.Expect('name', 'beta');
+        Observer.Expect('qty', '7');
+        Observer.Expect('notes', 'blob-a');
+        Observer.Expect('cnt', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -513,7 +729,10 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('name', Full.Name);
         Observer.Observe('qty', Format(Full.Qty));
         Observer.Observe('row_name_in_buffer', Row.Name);
-        Observer.Finish();
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('qty', '7');
+        Observer.Expect('row_name_in_buffer', 'alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -534,7 +753,10 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('notes', GetNotes(Full));
         Observer.Observe('name', Full.Name);
         Observer.Observe('qty', Format(Full.Qty));
-        Observer.Finish();
+        Observer.Expect('notes', 'blob-new');
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('qty', '7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -552,7 +774,9 @@ codeunit 70303 "LT P81 LoadFields"
         Full.Get('A');
         Observer.Observe('name', Full.Name);
         Observer.Observe('qty', Format(Full.Qty));
-        Observer.Finish();
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('qty', '99');
+        Observer.Verify();
     end;
 
     [Test]
@@ -575,6 +799,10 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('created_unchanged', Format(Full.SystemCreatedAt = CreatedBefore));
         Observer.Observe('modified_ge_created', Format(Full.SystemModifiedAt >= Full.SystemCreatedAt));
         Observer.Observe('systemid_same', Format(Row.SystemId = Full.SystemId));
-        Observer.Finish();
+        Observer.Expect('name', 'gamma');
+        Observer.Expect('created_unchanged', 'Yes');
+        Observer.Expect('modified_ge_created', 'Yes');
+        Observer.Expect('systemid_same', 'Yes');
+        Observer.Verify();
     end;
 }

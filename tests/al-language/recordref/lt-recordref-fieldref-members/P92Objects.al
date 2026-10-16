@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-data-type
 // Scope: in-scope
 // Fixtures used: self-contained (tables 72200-72202, codeunit 72209); used by the P92 test codeunits
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: own tables and a seeding helper for the RecordRef / FieldRef probes of issue #92
 // BC versions: 29 (27 and 28 by CI)
 

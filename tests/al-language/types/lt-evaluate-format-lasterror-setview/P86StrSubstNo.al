@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-strsubstno-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained objects
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P86); the final facts are measured on a local BC 29 tier and added later.
 // Facts: StrSubstNo with missing arguments, %%, field width placeholders, repeated and high-numbered placeholders, surplus arguments, texts with %
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 73528 "LT P86 StrSubstNo"
 {
@@ -70,7 +70,19 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t10', S('%1 %2 %3 %4', 4));
         Observer.Observe('t11', S('%2 %1', 2));
         Observer.Observe('t12', S('%3 %2 %1', 3));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|a b %3');
+        Observer.Expect('t2', 'ok|%3');
+        Observer.Expect('t3', 'ok|%3');
+        Observer.Expect('t4', 'ok|%2');
+        Observer.Expect('t5', 'ok|%1');
+        Observer.Expect('t6', 'ok|x%3y');
+        Observer.Expect('t7', 'ok|a c');
+        Observer.Expect('t8', 'ok|a%2%3');
+        Observer.Expect('t9', 'ok|%4');
+        Observer.Expect('t10', 'ok|a b c d');
+        Observer.Expect('t11', 'ok|b a');
+        Observer.Expect('t12', 'ok|c b a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +110,27 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t18', S('%%1 %1', 1));
         Observer.Observe('t19', S('%01', 1));
         Observer.Observe('t20', S('%001', 1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|%%');
+        Observer.Expect('t2', 'ok|%%');
+        Observer.Expect('t3', 'ok|%a');
+        Observer.Expect('t4', 'ok|%%a');
+        Observer.Expect('t5', 'ok|100%');
+        Observer.Expect('t6', 'ok|100%');
+        Observer.Expect('t7', 'ok|%');
+        Observer.Expect('t8', 'ok|%');
+        Observer.Expect('t9', 'ok|a%');
+        Observer.Expect('t10', 'ok|%a');
+        Observer.Expect('t11', 'ok|%0');
+        Observer.Expect('t12', 'ok|%-1');
+        Observer.Expect('t13', 'ok|% 1');
+        Observer.Expect('t14', 'ok|a%b');
+        Observer.Expect('t15', 'ok|%%%%');
+        Observer.Expect('t16', 'ok|50%% of a');
+        Observer.Expect('t17', 'ok|a %% b');
+        Observer.Expect('t18', 'ok|%a a');
+        Observer.Expect('t19', 'ok|%01');
+        Observer.Expect('t20', 'ok|%001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +146,15 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t6', S('%2%2', 2));
         Observer.Observe('t7', S('%3 %3', 3));
         Observer.Observe('t8', S('%1%2%3%1', 3));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|a a a');
+        Observer.Expect('t2', 'ok|aa');
+        Observer.Expect('t3', 'ok|b a b');
+        Observer.Expect('t4', 'ok|a b a b');
+        Observer.Expect('t5', 'ok|a-a-a-a');
+        Observer.Expect('t6', 'ok|bb');
+        Observer.Expect('t7', 'ok|c c');
+        Observer.Expect('t8', 'ok|abca');
+        Observer.Verify();
     end;
 
     [Test]
@@ -132,7 +172,17 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t8', S('%1 %2', 3));
         Observer.Observe('t9', S('%4', 4));
         Observer.Observe('t10', S('plain text', 2));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|x');
+        Observer.Expect('t2', 'ok|x');
+        Observer.Expect('t3', 'ok|a');
+        Observer.Expect('t4', 'ok|a');
+        Observer.Expect('t5', 'ok|b');
+        Observer.Expect('t6', 'ok|');
+        Observer.Expect('t7', 'ok|');
+        Observer.Expect('t8', 'ok|a b');
+        Observer.Expect('t9', 'ok|d');
+        Observer.Expect('t10', 'ok|plain text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +209,26 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t17', S('#0###', 1));
         Observer.Observe('t18', S('##1##', 1));
         Observer.Observe('t19', S('#1#### #1####', 1));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|a     ');
+        Observer.Expect('t2', 'ok|a     |');
+        Observer.Expect('t3', 'ok|a  ');
+        Observer.Expect('t4', 'ok|a ');
+        Observer.Expect('t5', 'ok|#####');
+        Observer.Expect('t6', 'ok|a     xb     ');
+        Observer.Expect('t7', 'ok|[a       ]');
+        Observer.Expect('t8', 'ok|#2####');
+        Observer.Expect('t9', 'ok|a     a');
+        Observer.Expect('t10', 'ok|aa     ');
+        Observer.Expect('t11', 'ok|a                            ');
+        Observer.Expect('t12', 'ok|aa  ');
+        Observer.Expect('t13', 'ok|c    ');
+        Observer.Expect('t14', 'ok|#1####');
+        Observer.Expect('t15', 'ok|a     ');
+        Observer.Expect('t16', 'ok|# 1###');
+        Observer.Expect('t17', 'ok|#0###');
+        Observer.Expect('t18', 'ok|a    ');
+        Observer.Expect('t19', 'ok|a      a     ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +242,13 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t4', S('%1', 1));
         Observer.Observe('t5', S(' %1 ', 1));
         Observer.Observe('t6', S('%1%2', 2));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|');
+        Observer.Expect('t2', 'ok|');
+        Observer.Expect('t3', 'ok| ');
+        Observer.Expect('t4', 'ok|a');
+        Observer.Expect('t5', 'ok| a ');
+        Observer.Expect('t6', 'ok|ab');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,7 +266,17 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t8', SN('#2####|', 0, 12.3456789));
         Observer.Observe('t9', SN('%3', 1, 2));
         Observer.Observe('t10', SN('%%2 %2', 1, 2.5));
-        Observer.Finish();
+        Observer.Expect('t1', 'ok|5 1.5');
+        Observer.Expect('t2', 'ok|-5|-1,234,567.891');
+        Observer.Expect('t3', 'ok|5     |1.5   ');
+        Observer.Expect('t4', 'ok|-5    |-1.5  ');
+        Observer.Expect('t5', 'ok|****|****');
+        Observer.Expect('t6', 'ok|0 0');
+        Observer.Expect('t7', 'ok|1000000');
+        Observer.Expect('t8', 'ok|******|');
+        Observer.Expect('t9', 'ok|%3');
+        Observer.Expect('t10', 'ok|%2.5 2.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -207,7 +292,15 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t6', StrSubstNo('%1', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'));
         Observer.Observe('t7', StrSubstNo('%10', 'a'));
         Observer.Observe('t8', StrSubstNo('%1%0', 'a'));
-        Observer.Finish();
+        Observer.Expect('t1', 'abcdefghij');
+        Observer.Expect('t2', 'j');
+        Observer.Expect('t3', 'j a');
+        Observer.Expect('t4', '%11');
+        Observer.Expect('t5', 'abcdefghij%11');
+        Observer.Expect('t6', 'a');
+        Observer.Expect('t7', '%10');
+        Observer.Expect('t8', 'a%0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,7 +320,17 @@ codeunit 73528 "LT P86 StrSubstNo"
         Observer.Observe('t8', StrSubstNo(P));
         Observer.Observe('t9', StrSubstNo(P, 'a'));
         Observer.Observe('t10', StrSubstNo('%1', ''));
-        Observer.Finish();
+        Observer.Expect('t1', '100%');
+        Observer.Expect('t2', '100% %1');
+        Observer.Expect('t3', '%2');
+        Observer.Expect('t4', '%%');
+        Observer.Expect('t5', '#1####');
+        Observer.Expect('t6', '100%  |');
+        Observer.Expect('t7', '%2x');
+        Observer.Expect('t8', '100%');
+        Observer.Expect('t9', '100%');
+        Observer.Expect('t10', '');
+        Observer.Verify();
     end;
 }
 

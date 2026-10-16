@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/database/database-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74031
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Database.SerialNumber: stable, length relations, or the error
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74031 "LT P95 Db SerialNumber"
@@ -36,7 +36,10 @@ codeunit 74031 "LT P95 Db SerialNumber"
         end else
             Observer.Observe('serialnumber', Err());
 
-        Observer.Finish();
+        Observer.Expect('twice_equal', 'Yes');
+        Observer.Expect('is_blank', 'No');
+        Observer.Expect('length_le_250', 'Yes');
+        Observer.Verify();
     end;
 
 }

@@ -68,7 +68,12 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('record', '[' + Xp.RecordSeparator() + ']');
         Observer.Observe('table', '[' + Xp.TableSeparator() + ']');
         Observer.Observe('encoding', Format(Xp.TextEncoding()));
-        Observer.Finish();
+        Observer.Expect('delimiter', '["]');
+        Observer.Expect('separator', '[,]');
+        Observer.Expect('record', '[\r\n]');
+        Observer.Expect('table', '[\r\n\r\n]');
+        Observer.Expect('encoding', 'MSDos');
+        Observer.Verify();
     end;
 
     [Test]
@@ -81,7 +86,12 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('record', '[' + Xp.RecordSeparator() + ']');
         Observer.Observe('table', '[' + Xp.TableSeparator() + ']');
         Observer.Observe('encoding', Format(Xp.TextEncoding()));
-        Observer.Finish();
+        Observer.Expect('delimiter', '[~]');
+        Observer.Expect('separator', '[|]');
+        Observer.Expect('record', '[\r\n]');
+        Observer.Expect('table', '[]');
+        Observer.Expect('encoding', 'UTF8');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +103,11 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('separator', '[' + Xp.FieldSeparator() + ']');
         Observer.Observe('record', '[' + Xp.RecordSeparator() + ']');
         Observer.Observe('table', '[' + Xp.TableSeparator() + ']');
-        Observer.Finish();
+        Observer.Expect('delimiter', '[]');
+        Observer.Expect('separator', '[;]');
+        Observer.Expect('record', '[\n]');
+        Observer.Expect('table', '[#]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +124,12 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.TableSeparator('<Space>');
         Observer.Observe('table', '[' + Xp.TableSeparator() + ']');
         Observer.Observe('delimiterStill', '[' + Xp.FieldDelimiter() + ']');
-        Observer.Finish();
+        Observer.Expect('delimiter', '[~]');
+        Observer.Expect('separator', '[;]');
+        Observer.Expect('record', '[<LF>]');
+        Observer.Expect('table', '[<Space>]');
+        Observer.Expect('delimiterStill', '[~]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,7 +145,11 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('separator', '[' + Xp.FieldSeparator() + ']');
         Observer.Observe('record', '[' + Xp.RecordSeparator() + ']');
         Observer.Observe('table', '[' + Xp.TableSeparator() + ']');
-        Observer.Finish();
+        Observer.Expect('delimiter', '["]');
+        Observer.Expect('separator', '[,]');
+        Observer.Expect('record', '[<LF>]');
+        Observer.Expect('table', '[<NewLine>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +165,11 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('bAfterAssign', '[' + B.FieldSeparator() + ']');
         Clear(A);
         Observer.Observe('aAfterClear', '[' + A.FieldSeparator() + ']');
-        Observer.Finish();
+        Observer.Expect('a', '[;]');
+        Observer.Expect('b', '[,]');
+        Observer.Expect('bAfterAssign', '[;]');
+        Observer.Expect('aAfterClear', '[,]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +194,15 @@ codeunit 73073 "LT P94 Xp Delim"
             Xp.FieldDelimiter(V);
             Observer.Observe('v' + Format(i), '[' + Xp.FieldDelimiter() + ']');
         end;
-        Observer.Finish();
+        Observer.Expect('v1', '[]');
+        Observer.Expect('v2', '[<None>]');
+        Observer.Expect('v3', '["]');
+        Observer.Expect('v4', '['']');
+        Observer.Expect('v5', '[ab]');
+        Observer.Expect('v6', '[<Comma>]');
+        Observer.Expect('v7', '[<Tab>]');
+        Observer.Expect('v8', '[<NewLine>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +228,16 @@ codeunit 73073 "LT P94 Xp Delim"
             Xp.FieldSeparator(V);
             Observer.Observe('v' + Format(i), '[' + Xp.FieldSeparator() + ']');
         end;
-        Observer.Finish();
+        Observer.Expect('v1', '[]');
+        Observer.Expect('v2', '[<None>]');
+        Observer.Expect('v3', '[;]');
+        Observer.Expect('v4', '[<Comma>]');
+        Observer.Expect('v5', '[<Semicolon>]');
+        Observer.Expect('v6', '[<Tab>]');
+        Observer.Expect('v7', '[<Space>]');
+        Observer.Expect('v8', '[<NewLine>]');
+        Observer.Expect('v9', '[ab]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -218,7 +262,15 @@ codeunit 73073 "LT P94 Xp Delim"
             Xp.RecordSeparator(V);
             Observer.Observe('v' + Format(i), '[' + Xp.RecordSeparator() + ']');
         end;
-        Observer.Finish();
+        Observer.Expect('v1', '[]');
+        Observer.Expect('v2', '[<None>]');
+        Observer.Expect('v3', '[<NewLine>]');
+        Observer.Expect('v4', '[<CR>]');
+        Observer.Expect('v5', '[<LF>]');
+        Observer.Expect('v6', '[<CR/LF>]');
+        Observer.Expect('v7', '[<Tab>]');
+        Observer.Expect('v8', '[xyz]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -243,7 +295,15 @@ codeunit 73073 "LT P94 Xp Delim"
             Xp.TableSeparator(V);
             Observer.Observe('v' + Format(i), '[' + Xp.TableSeparator() + ']');
         end;
-        Observer.Finish();
+        Observer.Expect('v1', '[]');
+        Observer.Expect('v2', '[<None>]');
+        Observer.Expect('v3', '[<NewLine>]');
+        Observer.Expect('v4', '[<CR>]');
+        Observer.Expect('v5', '[<LF>]');
+        Observer.Expect('v6', '[<CR/LF>]');
+        Observer.Expect('v7', '[<Tab>]');
+        Observer.Expect('v8', '[#]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +314,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Wipe();
         Helper.Seed();
         Observer.Observe('csv', ExportPlain(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +326,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Wipe();
         Helper.Seed();
         Observer.Observe('csv', ExportDeclared(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -277,7 +339,9 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Wipe();
         Observer.Observe('plain', '[' + ExportPlain(PlainXp) + ']');
         Observer.Observe('declared', '[' + ExportDeclared(DeclXp) + ']');
-        Observer.Finish();
+        Observer.Expect('plain', '[]');
+        Observer.Expect('declared', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -289,7 +353,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Seed();
         Xp.FieldSeparator(';');
         Observer.Observe('csv', ExportPlain(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -301,7 +366,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Seed();
         Xp.FieldDelimiter('<None>');
         Observer.Observe('csv', ExportPlain(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +379,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Seed();
         Xp.FieldDelimiter('''');
         Observer.Observe('csv', ExportPlain(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -334,7 +401,11 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('crlf', ExportPlain(Xp3));
         Xp4.RecordSeparator('<NewLine>');
         Observer.Observe('newline', ExportPlain(Xp4));
-        Observer.Finish();
+        Observer.Expect('cr', '');
+        Observer.Expect('lf', '');
+        Observer.Expect('crlf', '');
+        Observer.Expect('newline', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -346,7 +417,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Seed();
         Xp.RecordSeparator('xyz');
         Observer.Observe('csv', ExportPlain(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -360,7 +432,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.FieldDelimiter('');
         Xp.RecordSeparator('');
         Observer.Observe('csv', ExportPlain(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -374,7 +447,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.FieldSeparator(',');
         Xp.RecordSeparator('<LF>');
         Observer.Observe('csv', ExportDeclared(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -387,7 +461,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.AddItem(2, 'c~d', 2);
         Helper.AddItem(3, 'e' + Helper.Chr(10) + 'f', 3);
         Observer.Observe('csv', ExportDeclared(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -398,7 +473,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Wipe();
         Helper.Seed();
         Observer.Observe('csv', ExportTwo(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -409,7 +485,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.Wipe();
         Helper.Seed();
         Observer.Observe('csv', ExportTwoDecl(Xp));
-        Observer.Finish();
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -430,7 +507,11 @@ codeunit 73073 "LT P94 Xp Delim"
         Observer.Observe('crlf', ExportTwo(Xp3));
         Xp4.TableSeparator('--');
         Observer.Observe('text', ExportTwo(Xp4));
-        Observer.Finish();
+        Observer.Expect('none', '');
+        Observer.Expect('newline', '');
+        Observer.Expect('crlf', '');
+        Observer.Expect('text', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -445,7 +526,9 @@ codeunit 73073 "LT P94 Xp Delim"
         Helper.AddLine(1, 'L1');
         Clear(Xp);
         Observer.Observe('itemEmpty', ExportTwoDecl(Xp));
-        Observer.Finish();
+        Observer.Expect('lineEmpty', '');
+        Observer.Expect('itemEmpty', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -462,7 +545,9 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('csv', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'delim=[~];sep=[|];rec=[\n];table=[];enc=UTF8;after=[||~|\n|UTF8]');
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -481,7 +566,9 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('csv', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'delim=[<None>];sep=[,];rec=[\n];table=[];enc=UTF8;after=[,|<None>|\n|UTF8]');
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -499,7 +586,9 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('csv', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'delim=[~];sep=[|];rec=[\n];table=[];enc=UTF8;after=[;|~|\n|UTF8]');
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -517,7 +606,9 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('csv', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'delim=[~];sep=[|];rec=[\n];table=[];enc=UTF8;after=[||"|\n|UTF8]');
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -535,6 +626,8 @@ codeunit 73073 "LT P94 Xp Delim"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('csv', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'delim=[~];sep=[|];rec=[\n];table=[];enc=UTF8;after=[||~|<CR/LF>|UTF8]');
+        Observer.Expect('csv', '');
+        Observer.Verify();
     end;
 }

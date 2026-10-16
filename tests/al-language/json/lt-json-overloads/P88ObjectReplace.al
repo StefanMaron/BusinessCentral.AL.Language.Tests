@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonobject/jsonobject-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74405
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonObject.Replace(existing key, value) per value type
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74405 "LT P88 Object Replace"
 {
@@ -221,7 +221,23 @@ codeunit 74405 "LT P88 Object Replace"
         Ok := DoDecimal(O);
         O.WriteTo(Txt);
         Rec('ReplaceO_Decimal', Ok, Txt);
-        Observer.Finish();
+        Observer.Expect('ReplaceO_Boolean_ok', 'Yes');
+        Observer.Expect('ReplaceO_Boolean_text', '{"a":1,"b":true}');
+        Observer.Expect('ReplaceO_Byte_ok', 'Yes');
+        Observer.Expect('ReplaceO_Byte_text', '{"a":1,"b":200}');
+        Observer.Expect('ReplaceO_Char_ok', 'Yes');
+        Observer.Expect('ReplaceO_Char_text', '{"a":1,"b":65}');
+        Observer.Expect('ReplaceO_Date_ok', 'Yes');
+        Observer.Expect('ReplaceO_Date_text', '{"a":1,"b":"2024-03-15"}');
+        Observer.Expect('ReplaceO_Time_ok', 'Yes');
+        Observer.Expect('ReplaceO_Time_text', '{"a":1,"b":"14:30:15"}');
+        Observer.Expect('ReplaceO_DateTime_ok', 'Yes');
+        Observer.Expect('ReplaceO_DateTime_text', '{"a":1,"b":"2024-03-15T14:30:15.0000000Z"}');
+        Observer.Expect('ReplaceO_Duration_ok', 'Yes');
+        Observer.Expect('ReplaceO_Duration_text', '{"a":1,"b":90061001}');
+        Observer.Expect('ReplaceO_Decimal_ok', 'Yes');
+        Observer.Expect('ReplaceO_Decimal_text', '{"a":1,"b":12.345}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -279,6 +295,22 @@ codeunit 74405 "LT P88 Object Replace"
         Ok := DoJsonValue(O);
         O.WriteTo(Txt);
         Rec('ReplaceO_JsonValue', Ok, Txt);
-        Observer.Finish();
+        Observer.Expect('ReplaceO_Integer_ok', 'Yes');
+        Observer.Expect('ReplaceO_Integer_text', '{"a":1,"b":42}');
+        Observer.Expect('ReplaceO_BigInteger_ok', 'Yes');
+        Observer.Expect('ReplaceO_BigInteger_text', '{"a":1,"b":6442450941}');
+        Observer.Expect('ReplaceO_Option_ok', 'Yes');
+        Observer.Expect('ReplaceO_Option_text', '{"a":1,"b":1}');
+        Observer.Expect('ReplaceO_Text_ok', 'Yes');
+        Observer.Expect('ReplaceO_Text_text', '{"a":1,"b":"he said \"hi\" \\ / end"}');
+        Observer.Expect('ReplaceO_JsonToken_ok', 'Yes');
+        Observer.Expect('ReplaceO_JsonToken_text', '{"a":1,"b":{"k":[1,2]}}');
+        Observer.Expect('ReplaceO_JsonArray_ok', 'Yes');
+        Observer.Expect('ReplaceO_JsonArray_text', '{"a":1,"b":[1,"two"]}');
+        Observer.Expect('ReplaceO_JsonObject_ok', 'Yes');
+        Observer.Expect('ReplaceO_JsonObject_text', '{"a":1,"b":{"k":"v"}}');
+        Observer.Expect('ReplaceO_JsonValue_ok', 'Yes');
+        Observer.Expect('ReplaceO_JsonValue_text', '{"a":1,"b":7}');
+        Observer.Verify();
     end;
 }

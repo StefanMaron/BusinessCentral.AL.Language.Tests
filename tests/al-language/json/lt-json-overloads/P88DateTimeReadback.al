@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonvalue/jsonvalue-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74412
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: how Date, Time, DateTime, Duration, BigInteger, Option, Char, Byte read back from JSON as text and as typed values
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74412 "LT P88 DateTime Readback"
 {
@@ -87,7 +87,35 @@ codeunit 74412 "LT P88 DateTime Readback"
         Back('date_max', V);
         V.SetValue(0D);
         Back('date_blank', V);
-        Observer.Finish();
+        Observer.Expect('date_json', '"2024-03-15"');
+        Observer.Expect('date_astext', '2024-03-15');
+        Observer.Expect('date_asdate', '2024-03-15');
+        Observer.Expect('date_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('date_astime|code', 'Conversion');
+        Observer.Expect('date_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('date_asdatetime|code', 'Conversion');
+        Observer.Expect('date_min_json', '"1753-01-01"');
+        Observer.Expect('date_min_astext', '1753-01-01');
+        Observer.Expect('date_min_asdate', '1753-01-01');
+        Observer.Expect('date_min_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('date_min_astime|code', 'Conversion');
+        Observer.Expect('date_min_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('date_min_asdatetime|code', 'Conversion');
+        Observer.Expect('date_max_json', '"9999-12-31"');
+        Observer.Expect('date_max_astext', '9999-12-31');
+        Observer.Expect('date_max_asdate', '9999-12-31');
+        Observer.Expect('date_max_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('date_max_astime|code', 'Conversion');
+        Observer.Expect('date_max_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('date_max_asdatetime|code', 'Conversion');
+        Observer.Expect('date_blank_json', '"0001-01-01"');
+        Observer.Expect('date_blank_astext', '0001-01-01');
+        Observer.Expect('date_blank_asdate', '');
+        Observer.Expect('date_blank_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('date_blank_astime|code', 'Conversion');
+        Observer.Expect('date_blank_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('date_blank_asdatetime|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +131,35 @@ codeunit 74412 "LT P88 DateTime Readback"
         Back('time_midnight', V);
         V.SetValue(TimeMs(235959T, 999));
         Back('time_max', V);
-        Observer.Finish();
+        Observer.Expect('time_json', '"14:30:15.123"');
+        Observer.Expect('time_astext', '14:30:15.123');
+        Observer.Expect('time_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('time_asdate|code', 'Conversion');
+        Observer.Expect('time_astime', '14:30:15.123');
+        Observer.Expect('time_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('time_asdatetime|code', 'Conversion');
+        Observer.Expect('time_blank_json', '"00:00:00"');
+        Observer.Expect('time_blank_astext', '00:00:00');
+        Observer.Expect('time_blank_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('time_blank_asdate|code', 'Conversion');
+        Observer.Expect('time_blank_astime', '00:00:00');
+        Observer.Expect('time_blank_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('time_blank_asdatetime|code', 'Conversion');
+        Observer.Expect('time_midnight_json', '"00:00:00"');
+        Observer.Expect('time_midnight_astext', '00:00:00');
+        Observer.Expect('time_midnight_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('time_midnight_asdate|code', 'Conversion');
+        Observer.Expect('time_midnight_astime', '00:00:00');
+        Observer.Expect('time_midnight_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('time_midnight_asdatetime|code', 'Conversion');
+        Observer.Expect('time_max_json', '"23:59:59.999"');
+        Observer.Expect('time_max_astext', '23:59:59.999');
+        Observer.Expect('time_max_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('time_max_asdate|code', 'Conversion');
+        Observer.Expect('time_max_astime', '23:59:59.999');
+        Observer.Expect('time_max_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('time_max_asdatetime|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,8 +175,40 @@ codeunit 74412 "LT P88 DateTime Readback"
         Back('datetime_blank', V);
         V.SetValue(CreateDateTime(DMY2Date(1, 1, 1753), 000001T));
         Back('datetime_min', V);
-        Observer.Finish();
+        Observer.Expect('datetime_json', '"2024-03-15T14:30:15.1230000Z"');
+        Observer.Expect('datetime_astext', '2024-03-15T14:30:15.1230000Z');
+        Observer.Expect('datetime_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('datetime_asdate|code', 'Conversion');
+        Observer.Expect('datetime_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('datetime_astime|code', 'Conversion');
+        Observer.Expect('datetime_asdatetime', '2024-03-15T14:30:15.123Z');
+        Observer.Expect('datetime_midnight_json', '"2024-03-15T00:00:00.0000000Z"');
+        Observer.Expect('datetime_midnight_astext', '2024-03-15T00:00:00.0000000Z');
+        Observer.Expect('datetime_midnight_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('datetime_midnight_asdate|code', 'Conversion');
+        Observer.Expect('datetime_midnight_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('datetime_midnight_astime|code', 'Conversion');
+        Observer.Expect('datetime_midnight_asdatetime', '2024-03-15T00:00:00Z');
+        Observer.Expect('datetime_blank_json', '"0001-01-01T00:00:00.0000000"');
+        Observer.Expect('datetime_blank_astext', '0001-01-01T00:00:00.0000000');
+        Observer.Expect('datetime_blank_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('datetime_blank_asdate|code', 'Conversion');
+        Observer.Expect('datetime_blank_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('datetime_blank_astime|code', 'Conversion');
+        Observer.Expect('datetime_blank_asdatetime', '');
+        Observer.Expect('datetime_min_json', '"1753-01-01T00:00:01.0000000Z"');
+        Observer.Expect('datetime_min_astext', '1753-01-01T00:00:01.0000000Z');
+        Observer.Expect('datetime_min_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('datetime_min_asdate|code', 'Conversion');
+        Observer.Expect('datetime_min_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('datetime_min_astime|code', 'Conversion');
+        Observer.Expect('datetime_min_asdatetime', '1753-01-01T00:00:01Z');
+        Observer.Verify();
     end;
+
+
+
+
 
     [Test]
     procedure TextToTyped()
@@ -141,7 +229,20 @@ codeunit 74412 "LT P88 DateTime Readback"
         Res('text_garbage_asdate', TryAsDate(V, R), R);
         Res('text_garbage_astime', TryAsTime(V, R), R);
         Res('text_garbage_asdatetime', TryAsDateTime(V, R), R);
-        Observer.Finish();
+        Observer.Expect('text_date_asdate', '2024-03-15');
+        Observer.Expect('text_iso_asdatetime', '2024-03-15T14:30:15Z');
+        Observer.Expect('text_iso_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('text_iso_asdate|code', 'Conversion');
+        Observer.Expect('text_time_astime', '14:30:15');
+        Observer.Expect('text_localdate_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('text_localdate_asdate|code', 'Conversion');
+        Observer.Expect('text_garbage_asdate|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.');
+        Observer.Expect('text_garbage_asdate|code', 'Conversion');
+        Observer.Expect('text_garbage_astime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('text_garbage_astime|code', 'Conversion');
+        Observer.Expect('text_garbage_asdatetime|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDateTime.');
+        Observer.Expect('text_garbage_asdatetime|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -169,7 +270,16 @@ codeunit 74412 "LT P88 DateTime Readback"
         Bi := -Bi;
         V.SetValue(Bi);
         Observer.Observe('negbigint_astext', V.AsText());
-        Observer.Finish();
+        Observer.Expect('duration_json', '90061001');
+        Observer.Expect('duration_astext', '90061001');
+        Observer.Expect('duration_asduration', 'P1DT1H1M1.001S');
+        Observer.Expect('duration_asbigint', '90061001');
+        Observer.Expect('bigint_json', '6442450941');
+        Observer.Expect('bigint_astext', '6442450941');
+        Observer.Expect('bigint_asbigint', '6442450941');
+        Observer.Expect('bigint_asdecimal', '6442450941');
+        Observer.Expect('negbigint_astext', '-6442450941');
+        Observer.Verify();
     end;
 
     [Test]
@@ -200,6 +310,15 @@ codeunit 74412 "LT P88 DateTime Readback"
         V.SetValue(true);
         Observer.Observe('bool_astext', V.AsText());
         Observer.Observe('bool_asboolean', Format(V.AsBoolean()));
-        Observer.Finish();
+        Observer.Expect('char_json', '65');
+        Observer.Expect('char_astext', '65');
+        Observer.Expect('byte_json', '200');
+        Observer.Expect('byte_asinteger', '200');
+        Observer.Expect('option_json', '2');
+        Observer.Expect('option_astext', '2');
+        Observer.Expect('option_asinteger', '2');
+        Observer.Expect('bool_astext', 'true');
+        Observer.Expect('bool_asboolean', 'Yes');
+        Observer.Verify();
     end;
 }

@@ -20,7 +20,8 @@ codeunit 73075 "LT P94 Xp Filename"
         Xp: XmlPort "LT P94 Xml Filename";
     begin
         Observer.Observe('name', '[' + Xp.Filename() + ']');
-        Observer.Finish();
+        Observer.Expect('name', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -40,7 +41,13 @@ codeunit 73075 "LT P94 Xp Filename"
         Observer.Observe('longLen', Format(StrLen(Xp.Filename())));
         Xp.Filename('Ä€.xml');
         Observer.Observe('unicode', '[' + Xp.Filename() + ']');
-        Observer.Finish();
+        Observer.Expect('plain', '[items.xml]');
+        Observer.Expect('empty', '[]');
+        Observer.Expect('space', '[a b.xml]');
+        Observer.Expect('slashes', '[dir/sub\name.xml]');
+        Observer.Expect('longLen', '300');
+        Observer.Expect('unicode', '[Ä€.xml]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -52,7 +59,9 @@ codeunit 73075 "LT P94 Xp Filename"
         A.Filename('a.xml');
         Observer.Observe('a', '[' + A.Filename() + ']');
         Observer.Observe('b', '[' + B.Filename() + ']');
-        Observer.Finish();
+        Observer.Expect('a', '[a.xml]');
+        Observer.Expect('b', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +78,9 @@ codeunit 73075 "LT P94 Xp Filename"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('after', '[' + Xp.Filename() + ']');
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];post=[];');
+        Observer.Expect('after', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +99,10 @@ codeunit 73075 "LT P94 Xp Filename"
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('after', '[' + Xp.Filename() + ']');
         Observer.Observe('xml', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[out.xml];post=[out.xml];');
+        Observer.Expect('after', '[out.xml]');
+        Observer.Expect('xml', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -107,7 +121,9 @@ codeunit 73075 "LT P94 Xp Filename"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('items', Format(Helper.CountItems()));
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];post=[];');
+        Observer.Expect('items', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,6 +143,8 @@ codeunit 73075 "LT P94 Xp Filename"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('items', Format(Helper.CountItems()));
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[in.xml];post=[in.xml];');
+        Observer.Expect('items', '1');
+        Observer.Verify();
     end;
 }

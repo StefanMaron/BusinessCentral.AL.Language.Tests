@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonvalue/jsonvalue-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74411
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonValue.SetValue per value type and how it reads back
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74411 "LT P88 Value SetValue"
 {
@@ -159,7 +159,25 @@ codeunit 74411 "LT P88 Value SetValue"
         Clear(V);
         Ok := DoDateTime(V);
         Rec('set_DateTime', Ok, V);
-        Observer.Finish();
+        Observer.Expect('set_Boolean_ok', 'Yes');
+        Observer.Expect('set_Boolean_json', 'true');
+        Observer.Expect('set_Boolean_astext', 'true');
+        Observer.Expect('set_Byte_ok', 'Yes');
+        Observer.Expect('set_Byte_json', '200');
+        Observer.Expect('set_Byte_astext', '200');
+        Observer.Expect('set_Char_ok', 'Yes');
+        Observer.Expect('set_Char_json', '65');
+        Observer.Expect('set_Char_astext', '65');
+        Observer.Expect('set_Date_ok', 'Yes');
+        Observer.Expect('set_Date_json', '"2024-03-15"');
+        Observer.Expect('set_Date_astext', '2024-03-15');
+        Observer.Expect('set_Time_ok', 'Yes');
+        Observer.Expect('set_Time_json', '"14:30:15"');
+        Observer.Expect('set_Time_astext', '14:30:15');
+        Observer.Expect('set_DateTime_ok', 'Yes');
+        Observer.Expect('set_DateTime_json', '"2024-03-15T14:30:15.0000000Z"');
+        Observer.Expect('set_DateTime_astext', '2024-03-15T14:30:15.0000000Z');
+        Observer.Verify();
     end;
 
     [Test]
@@ -186,7 +204,25 @@ codeunit 74411 "LT P88 Value SetValue"
         Clear(V);
         Ok := DoText(V);
         Rec('set_Text', Ok, V);
-        Observer.Finish();
+        Observer.Expect('set_Duration_ok', 'Yes');
+        Observer.Expect('set_Duration_json', '90061001');
+        Observer.Expect('set_Duration_astext', '90061001');
+        Observer.Expect('set_Decimal_ok', 'Yes');
+        Observer.Expect('set_Decimal_json', '12.345');
+        Observer.Expect('set_Decimal_astext', '12.345');
+        Observer.Expect('set_Integer_ok', 'Yes');
+        Observer.Expect('set_Integer_json', '42');
+        Observer.Expect('set_Integer_astext', '42');
+        Observer.Expect('set_BigInteger_ok', 'Yes');
+        Observer.Expect('set_BigInteger_json', '6442450941');
+        Observer.Expect('set_BigInteger_astext', '6442450941');
+        Observer.Expect('set_Option_ok', 'Yes');
+        Observer.Expect('set_Option_json', '1');
+        Observer.Expect('set_Option_astext', '1');
+        Observer.Expect('set_Text_ok', 'Yes');
+        Observer.Expect('set_Text_json', '"he said \"hi\" \\ / end"');
+        Observer.Expect('set_Text_astext', 'he said "hi" \ / end');
+        Observer.Verify();
     end;
 
     [Test]
@@ -207,6 +243,11 @@ codeunit 74411 "LT P88 Value SetValue"
         V.SetValue(2);
         Observer.Observe('null_then_int_isnull', Format(V.IsNull()));
         Observer.Observe('null_then_int_asint', Format(V.AsInteger()));
-        Observer.Finish();
+        Observer.Expect('int_then_text', '"now text"');
+        Observer.Expect('then_bool', 'true');
+        Observer.Expect('then_null_isnull', 'Yes');
+        Observer.Expect('null_then_int_isnull', 'No');
+        Observer.Expect('null_then_int_asint', '2');
+        Observer.Verify();
     end;
 }

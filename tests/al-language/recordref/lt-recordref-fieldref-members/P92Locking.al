@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-recordlevellocking-method
 // Scope: in-scope
 // Fixtures used: tables 72200-72201, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: RecordRef.RecordLevelLocking, ReadConsistency, SecurityFiltering get and set (RecordRef and Record side by side)
 // BC versions: 29 (27 and 28 by CI)
 
@@ -27,7 +27,11 @@ codeunit 72217 "LT P92 Locking"
         RecRef.Open(72200, true);
         Observer.Observe('item_temp', Format(RecRef.RecordLevelLocking()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('item', 'Yes');
+        Observer.Expect('item_record', 'Yes');
+        Observer.Expect('pair', 'Yes');
+        Observer.Expect('item_temp', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -39,7 +43,9 @@ codeunit 72217 "LT P92 Locking"
     begin
         asserterror B := RecRef.RecordLevelLocking();
         Observer.ObserveError('unopened');
-        Observer.Finish();
+        Observer.Expect('unopened|text', 'The record is not open.');
+        Observer.Expect('unopened|code', 'RecordNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -56,7 +62,10 @@ codeunit 72217 "LT P92 Locking"
         RecRef.Open(72200, true);
         Observer.Observe('item_temp', Format(RecRef.ReadConsistency()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('item', 'No');
+        Observer.Expect('item_record', 'No');
+        Observer.Expect('item_temp', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,6 +85,11 @@ codeunit 72217 "LT P92 Locking"
         RecRef.SecurityFiltering(SecurityFilter::Validated);
         Observer.Observe('recref_validated', Format(RecRef.SecurityFiltering()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('recref_default', 'Validated');
+        Observer.Expect('record_default', 'Validated');
+        Observer.Expect('recref_filtered', 'Filtered');
+        Observer.Expect('recref_ignored', 'Ignored');
+        Observer.Expect('recref_validated', 'Validated');
+        Observer.Verify();
     end;
 }

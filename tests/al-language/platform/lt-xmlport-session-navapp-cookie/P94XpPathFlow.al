@@ -47,7 +47,9 @@ codeunit 73076 "LT P94 Xp Path"
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('xml', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];itemPre=[/Root/Item];itemGet=[/Root/Item];attrBeforePass=[/Root/Item[@Qty]];idBeforePass=[/Root/Item/Id];post=[];');
+        Observer.Expect('xml', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -64,7 +66,8 @@ codeunit 73076 "LT P94 Xp Path"
         Xp.SetDestination(OutS);
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];itemPre=[/Root/Item];itemGet=[/Root/Item];attrBeforePass=[/Root/Item[@Qty]];idBeforePass=[/Root/Item/Id];itemGet=[/Root/Item];attrBeforePass=[/Root/Item[@Qty]];idBeforePass=[/Root/Item/Id];post=[];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,7 +82,8 @@ codeunit 73076 "LT P94 Xp Path"
         Xp.SetDestination(OutS);
         Xp.Export();
         Observer.Observe('log', Xp.GetLog());
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];itemPre=[/Root/Item];attrBeforePass=[/Root/Item[@Qty]];idBeforePass=[/Root/Item/Id];post=[];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +95,9 @@ codeunit 73076 "LT P94 Xp Path"
         ImportXml(Xp, '<?xml version="1.0" encoding="utf-8"?><Root><Item Qty="5"><Id>1</Id><Name>Alpha</Name></Item></Root>');
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('items', Helper.ItemNames());
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];attrAfterAssign=[];idAfterAssign=[];itemBeforeInsert=[];itemAfterInsert=[];post=[];');
+        Observer.Expect('items', '1=Alpha;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +109,9 @@ codeunit 73076 "LT P94 Xp Path"
         ImportXml(Xp, '<?xml version="1.0" encoding="utf-8"?><Root><Item Qty="5"><Id>1</Id><Name>Alpha</Name></Item><Item Qty="6"><Id>2</Id><Name>Beta</Name></Item></Root>');
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('items', Helper.ItemNames());
-        Observer.Finish();
+        Observer.Expect('log', 'pre=[];attrAfterAssign=[];idAfterAssign=[];itemBeforeInsert=[];itemAfterInsert=[];attrAfterAssign=[];idAfterAssign=[];itemBeforeInsert=[];itemAfterInsert=[];post=[];');
+        Observer.Expect('items', '1=Alpha;2=Beta;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +125,8 @@ codeunit 73076 "LT P94 Xp Path"
             Observer.Observe('path', '[' + Result + ']')
         else
             Observer.Observe('path', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('path', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +147,8 @@ codeunit 73076 "LT P94 Xp Path"
             Observer.Observe('path', '[' + Result + ']')
         else
             Observer.Observe('path', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('path', '[]');
+        Observer.Verify();
     end;
 }
 
@@ -196,7 +206,10 @@ codeunit 73077 "LT P94 Xp Flow"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('log', Log);
         Observer.Observe('xml', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre;hit1;after1;hit2;after2;hit3;after3;post;');
+        Observer.Expect('xml', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -212,7 +225,10 @@ codeunit 73077 "LT P94 Xp Flow"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('log', Log);
         Observer.Observe('xml', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre;hit1;after1;hit2;post;');
+        Observer.Expect('xml', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +244,10 @@ codeunit 73077 "LT P94 Xp Flow"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('log', Log);
         Observer.Observe('xml', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre;hit1;after1;hit2;hit3;after3;post;');
+        Observer.Expect('xml', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -244,7 +263,10 @@ codeunit 73077 "LT P94 Xp Flow"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('log', Log);
         Observer.Observe('xml', Helper.ReadBlob(Row, TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre;hit1;after1;hit2;');
+        Observer.Expect('xml', '');
+        Observer.Verify();
     end;
 
 }
@@ -285,7 +307,8 @@ codeunit 73078 "LT P94 Xp Run"
             Observer.Observe('run', 'ok')
         else
             Observer.Observe('run', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('run', 'error:The XMLPort ''LT P94 Xml Marker'' is designed for export only.|XmlPortExportDirection');
+        Observer.Verify();
     end;
 
     [Test]
@@ -303,6 +326,9 @@ codeunit 73078 "LT P94 Xp Run"
             Observer.Observe('missing', 'ok')
         else
             Observer.Observe('missing', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('zero', 'error:You tried to invoke the XmlPort object with the ID 0 from the object LT P94 Xp Run. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('minusOne', 'error:You tried to invoke the XmlPort object with the ID -1 from the object LT P94 Xp Run. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('missing', 'error:You tried to invoke the XmlPort object with the ID 73999 from the object LT P94 Xp Run. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 }

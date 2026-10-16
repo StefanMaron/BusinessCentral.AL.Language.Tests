@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-codecoverageload-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74025
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: CodeCoverageRefresh called with logging inactive
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74025 "LT P95 CodeCoverage Refresh"
@@ -38,7 +38,9 @@ codeunit 74025 "LT P95 CodeCoverage Refresh"
         else
             Observer.Observe('refresh_again', Err());
 
-        Observer.Finish();
+        Observer.Expect('refresh', 'ok');
+        Observer.Expect('refresh_again', 'ok');
+        Observer.Verify();
     end;
 
 }

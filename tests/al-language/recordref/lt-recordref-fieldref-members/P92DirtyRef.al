@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-data-type
 // Scope: in-scope
 // Fixtures used: tables 72200, 72202, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: IsDirty of a RecordRef (unsure the member exists: drop this file when it does not compile)
 // BC versions: 29 (27 and 28 by CI)
 
@@ -34,7 +34,14 @@ codeunit 72220 "LT P92 Dirty Ref"
         RecRef.FindFirst();
         Observer.Observe('after_refind', Format(RecRef.IsDirty()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('fresh', 'No');
+        Observer.Expect('after_find', 'No');
+        Observer.Expect('same_value', 'No');
+        Observer.Expect('changed_value', 'Yes');
+        Observer.Expect('after_modify', 'No');
+        Observer.Expect('changed_qty', 'Yes');
+        Observer.Expect('after_refind', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -57,6 +64,11 @@ codeunit 72220 "LT P92 Dirty Ref"
         RecRef.Field(4).Validate(0);
         Observer.Observe('validate_same_default', Format(RecRef.IsDirty()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('after_insert', 'No');
+        Observer.Expect('after_validate', 'Yes');
+        Observer.Expect('name_set_by_trigger', 'v5');
+        Observer.Expect('after_modify', 'No');
+        Observer.Expect('validate_same_default', 'No');
+        Observer.Verify();
     end;
 }

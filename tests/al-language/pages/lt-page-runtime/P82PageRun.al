@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-run-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); LT P82 Card (71187), LT P82 List (71188), LT P82 Item (71184), LT P82 Log (71186) from P82Fixtures.al
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: Page.Run / Page.RunModal overloads (number; number and record; number, record and field), the Action returned by RunModal, SetRecord, SetTableView, GetRecord, LookupMode of a Page variable
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 71200 "LT P82 Page Run"
 {
@@ -123,7 +123,13 @@ codeunit 71200 "LT P82 Page Run"
         Result := Page.RunModal(Page::"LT P82 Card");
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('card-no', 'A');
+        Observer.Expect('card-name', 'Alpha');
+        Observer.Expect('card-editable', 'Yes');
+        Observer.Expect('card-caption', 'LT P82 Card Caption - A');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnQueryClosePage(LookupOK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +144,13 @@ codeunit 71200 "LT P82 Page Run"
         Result := Page.RunModal(Page::"LT P82 Card", Item);
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('card-no', 'B');
+        Observer.Expect('card-name', 'Beta');
+        Observer.Expect('card-editable', 'Yes');
+        Observer.Expect('card-caption', 'LT P82 Card Caption - B');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(B);OnQueryClosePage(LookupOK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +165,10 @@ codeunit 71200 "LT P82 Page Run"
         Result := Page.RunModal(Page::"LT P82 Card", Item);
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('card-no', 'C');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(C);OnAfterGetRecord(C);OnQueryClosePage(LookupCancel);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -168,7 +183,10 @@ codeunit 71200 "LT P82 Page Run"
         Result := Page.RunModal(Page::"LT P82 Card", Item);
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('card-no', 'A');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);OnQueryClosePage(LookupCancel);OnClosePage;OnAfterGetRecord(A)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -181,7 +199,9 @@ codeunit 71200 "LT P82 Page Run"
         Result := Page.RunModal(Page::"LT P82 List");
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('log', 'List OnOpenPage filter=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -196,7 +216,11 @@ codeunit 71200 "LT P82 Page Run"
         Result := Page.RunModal(Page::"LT P82 List", Item, Item.FieldNo(Name));
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('list-no', 'B');
+        Observer.Expect('list-caption', 'LT P82 List Caption');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('log', 'List OnOpenPage filter=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +234,10 @@ codeunit 71200 "LT P82 Page Run"
         Item.Get('C');
         Result := Page.RunModal(Page::"LT P82 List", Item, 0);
         Observer.Observe('action', Format(Result));
-        Observer.Finish();
+        Observer.Expect('list-no', 'C');
+        Observer.Expect('list-caption', 'LT P82 List Caption');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,7 +249,11 @@ codeunit 71200 "LT P82 Page Run"
         Seed();
         Result := Page.RunModal(Page::"LT P82 List");
         Observer.Observe('action', Format(Result));
-        Observer.Finish();
+        Observer.Expect('row1', 'A');
+        Observer.Expect('row2', 'B');
+        Observer.Expect('row3', 'C');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -237,7 +268,10 @@ codeunit 71200 "LT P82 Page Run"
         Item.FindFirst();
         Result := Page.RunModal(Page::"LT P82 List", Item);
         Observer.Observe('action', Format(Result));
-        Observer.Finish();
+        Observer.Expect('row1', 'B');
+        Observer.Expect('row2', 'C');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +288,12 @@ codeunit 71200 "LT P82 Page Run"
         Result := Pg.RunModal();
         Observer.Observe('action', Format(Result));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('row1', 'B');
+        Observer.Expect('row2', 'C');
+        Observer.Expect('row3', '');
+        Observer.Expect('action', 'OK');
+        Observer.Expect('log', 'List OnOpenPage filter=Qty: >=2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +308,11 @@ codeunit 71200 "LT P82 Page Run"
         Item.Ascending(false);
         Pg.SetTableView(Item);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('row1', 'C');
+        Observer.Expect('row2', 'B');
+        Observer.Expect('row3', 'A');
+        Observer.Expect('row4', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -284,7 +327,10 @@ codeunit 71200 "LT P82 Page Run"
         Pg.SetRecord(Item);
         Pg.RunModal();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('list-no', 'C');
+        Observer.Expect('list-caption', 'LT P82 List Caption');
+        Observer.Expect('log', 'List OnOpenPage filter=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -308,7 +354,13 @@ codeunit 71200 "LT P82 Page Run"
         Observer.Observe('picked', Picked."No.");
         Observer.Observe('picked-name', Picked.Name);
         Observer.Observe('lookupmode-after', Format(Pg.LookupMode()));
-        Observer.Finish();
+        Observer.Expect('lookupmode-default', 'No');
+        Observer.Expect('lookupmode-set', 'Yes');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('picked', 'C');
+        Observer.Expect('picked-name', 'Gamma');
+        Observer.Expect('lookupmode-after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -322,7 +374,8 @@ codeunit 71200 "LT P82 Page Run"
         Pg.LookupMode(true);
         Result := Pg.RunModal();
         Observer.Observe('action', Format(Result));
-        Observer.Finish();
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -335,7 +388,8 @@ codeunit 71200 "LT P82 Page Run"
         Seed();
         Result := Pg.RunModal();
         Observer.Observe('action', Format(Result));
-        Observer.Finish();
+        Observer.Expect('action', 'OK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -348,7 +402,11 @@ codeunit 71200 "LT P82 Page Run"
         Item.Get('B');
         Page.Run(Page::"LT P82 Card", Item);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('plain-no', 'B');
+        Observer.Expect('plain-name', 'Beta');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(B);OnQueryClosePage(OK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -358,7 +416,11 @@ codeunit 71200 "LT P82 Page Run"
         Seed();
         Page.Run(Page::"LT P82 Card");
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('plain-no', 'A');
+        Observer.Expect('plain-name', 'Alpha');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnQueryClosePage(OK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -371,7 +433,10 @@ codeunit 71200 "LT P82 Page Run"
         Item.Get('C');
         Page.Run(Page::"LT P82 List", Item, Item.FieldNo(Qty));
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('plain-no', 'C');
+        Observer.Expect('plain-rows', 'Yes');
+        Observer.Expect('log', 'List OnOpenPage filter=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +451,11 @@ codeunit 71200 "LT P82 Page Run"
         Pg.SetRecord(Item);
         Pg.Run();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('plain-no', 'A');
+        Observer.Expect('plain-name', 'Alpha');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnQueryClosePage(OK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -403,7 +472,12 @@ codeunit 71200 "LT P82 Page Run"
         Pg.Editable(false);
         Observer.Observe('editable-after-set', Format(Pg.Editable()));
         Pg.Run();
-        Observer.Finish();
+        Observer.Expect('editable-default', 'Yes');
+        Observer.Expect('editable-after-set', 'No');
+        Observer.Expect('plain-no', 'A');
+        Observer.Expect('plain-name', 'Alpha');
+        Observer.Expect('plain-editable', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -417,7 +491,15 @@ codeunit 71200 "LT P82 Page Run"
         Observer.ObserveError('modal-zero');
         asserterror Page.Run(-1);
         Observer.ObserveError('run-negative');
-        Observer.Finish();
+        Observer.Expect('modal-unknown|text', 'You tried to invoke the Page object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('modal-unknown|code', 'AL:MetadataNotFound');
+        Observer.Expect('run-unknown|text', 'You tried to invoke the Page object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run-unknown|code', 'AL:MetadataNotFound');
+        Observer.Expect('modal-zero|text', 'You tried to invoke the Page object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('modal-zero|code', 'AL:MetadataNotFound');
+        Observer.Expect('run-negative|text', 'You tried to invoke the Page object with the ID -1 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run-negative|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -430,6 +512,10 @@ codeunit 71200 "LT P82 Page Run"
         Observer.ObserveError('modal-no-handler');
         asserterror Page.Run(Page::"LT P82 Card");
         Observer.ObserveError('run-no-handler');
-        Observer.Finish();
+        Observer.Expect('modal-no-handler|text', 'Unhandled UI: ModalPage 71188');
+        Observer.Expect('modal-no-handler|code', 'MissingUIHandler');
+        Observer.Expect('run-no-handler|text', 'Unhandled UI: Page 71187');
+        Observer.Expect('run-no-handler|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 }

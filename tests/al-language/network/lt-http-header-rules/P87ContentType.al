@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpcontent/httpcontent-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), LT P87 Helper (codeunit 74228), table 74221
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); every value is observed through Probe Observer and measured later on real BC 29. No request is ever sent.
 // Facts: Content-Type set by header and by WriteFrom: which one wins and what ReadAs gives back
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74227 "LT P87 Content Type"
 {
@@ -51,7 +51,13 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('typeAfterWrite', Type(H2));
         Observer.Observe('oldRefType', Type(H));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('freshType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('replace', 'added');
+        Observer.Expect('typeBefore', 'Yes/n=1/1=application/json/2=');
+        Observer.Expect('typeAfterWrite', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('oldRefType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/{"a":1}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -70,7 +76,12 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('typeNew', Type(H2));
         Observer.Observe('typeOld', Type(H));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('typeAfterWrite', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('replace', 'added');
+        Observer.Expect('typeNew', 'Yes/n=1/1=application/json/2=');
+        Observer.Expect('typeOld', 'Yes/n=1/1=application/json/2=');
+        Observer.Expect('read', 'Yes/{"a":1}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +99,13 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('raw', Helper.DoRaw(H, 'Content-Type', 'text/html'));
         Observer.Observe('typeRaw', Type(H));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('addJson', 'E[Invalid HTTP header. Please, make sure t|InvalidHeader:Format]');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('keys', '1:Content-Type,');
+        Observer.Expect('raw', 'Yes');
+        Observer.Expect('typeRaw', 'Yes/n=2/1=text/plain; charset=utf-8/2=text/html');
+        Observer.Expect('read', 'Yes/abc');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +126,11 @@ codeunit 74227 "LT P87 Content Type"
         C.WriteFrom('third');
         C.GetHeaders(H2);
         Observer.Observe('typeAfterThird', Type(H2));
-        Observer.Finish();
+        Observer.Expect('replace', 'added');
+        Observer.Expect('typeAfterSecondWrite', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/<a/>');
+        Observer.Expect('typeAfterThird', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +151,12 @@ codeunit 74227 "LT P87 Content Type"
         C.WriteFrom('second');
         C.GetHeaders(H2);
         Observer.Observe('typeAfterWrite', Type(H2));
-        Observer.Finish();
+        Observer.Expect('remove', 'Yes');
+        Observer.Expect('keysNow', '0:');
+        Observer.Expect('keysNew', '0:');
+        Observer.Expect('read', 'Yes/first');
+        Observer.Expect('typeAfterWrite', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +178,17 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('readOctet', Read(C));
         Observer.Observe('replace4', ReplaceType(H, 'image/png'));
         Observer.Observe('readPng', Read(C));
-        Observer.Finish();
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('readUtf8', 'Yes/äöü€');
+        Observer.Expect('replace', 'added');
+        Observer.Expect('readLatin1', 'Yes/Ã¤Ã¶Ã¼â¬');
+        Observer.Expect('replace2', 'added');
+        Observer.Expect('readUtf16', 'Yes/꓃뛃볃苢�');
+        Observer.Expect('replace3', 'added');
+        Observer.Expect('readOctet', 'Yes/äöü€');
+        Observer.Expect('replace4', 'added');
+        Observer.Expect('readPng', 'Yes/äöü€');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +211,18 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('bareType', ReplaceType(H, 'application/vnd.api+json'));
         Observer.Observe('bareTypeValue', Type(H));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('upper', 'added');
+        Observer.Expect('upperType', 'Yes/n=1/1=TEXT/PLAIN; CHARSET=UTF-8/2=');
+        Observer.Expect('noSpace', 'added');
+        Observer.Expect('noSpaceType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('quotedCharset', 'added');
+        Observer.Expect('quotedType', 'Yes/n=1/1=text/plain; charset="utf-8"/2=');
+        Observer.Expect('extraParam', 'added');
+        Observer.Expect('extraType', 'Yes/n=1/1=text/plain; charset=utf-8; format=flowed/2=');
+        Observer.Expect('bareType', 'added');
+        Observer.Expect('bareTypeValue', 'Yes/n=1/1=application/vnd.api+json/2=');
+        Observer.Expect('read', 'Yes/x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -197,7 +244,11 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('reqKeys', Helper.Keys(H2));
         C2 := Req.Content;
         Observer.Observe('reqRead', Read(C2));
-        Observer.Finish();
+        Observer.Expect('replace', 'added');
+        Observer.Expect('reqType', 'Yes/n=1/1=application/json/2=');
+        Observer.Expect('reqKeys', '1:Content-Type,');
+        Observer.Expect('reqRead', 'Yes/{}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,6 +267,11 @@ codeunit 74227 "LT P87 Content Type"
         Observer.Observe('respTypeAdd', Helper.DoAdd(H2, 'Content-Type', 'application/json'));
         Observer.Observe('respKeys', Helper.Keys(H2));
         Observer.Observe('contentKeys', Helper.Keys(H));
-        Observer.Finish();
+        Observer.Expect('contentType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('respTypeHas', 'E[Invalid HTTP header. Please, make sure t|InvalidHeader:InvalidOperation]');
+        Observer.Expect('respTypeAdd', 'E[The requested operation cannot be perfor|InvalidOperation]');
+        Observer.Expect('respKeys', '0:');
+        Observer.Expect('contentKeys', '1:Content-Type,');
+        Observer.Verify();
     end;
 }

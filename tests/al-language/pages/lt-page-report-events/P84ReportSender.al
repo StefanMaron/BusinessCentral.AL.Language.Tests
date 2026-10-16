@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-event-types
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 73036, report 73041, log codeunit 73042 (used only by test codeunit 73044), manual subscriber 73043
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 ...; observed values are added by the lead after measuring (tag P84, GitHub issue #84)
 // Facts: IncludeSender = true on an event published by a report: what Sender is, whether the subscriber can call the report procedures and see its state
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 report 73041 "LT P84 Sender Rpt"
 {
@@ -171,7 +171,13 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('log2', SenderLog.Take());
         Observer.Observe('seen2', Rpt.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'init|marker=init|hits=1;p|marker=m1|hits=2;');
+        Observer.Expect('marker_after', 'sub-p');
+        Observer.Expect('hits_after', '2');
+        Observer.Expect('seen', 'init=sub-init;p=sub-p;');
+        Observer.Expect('log2', 'p2|marker=sub-p|hits=3;');
+        Observer.Expect('seen2', 'init=sub-init;p=sub-p;p2=sub-p2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -186,7 +192,10 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('log', SenderLog.Take());
         Observer.Observe('marker_after', Rpt.GetMarker());
         Observer.Observe('hits_after', Format(Rpt.GetHits()));
-        Observer.Finish();
+        Observer.Expect('log', '');
+        Observer.Expect('marker_after', 'm1');
+        Observer.Expect('hits_after', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,7 +222,15 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('marker1_after', Rpt1.GetMarker());
         Observer.Observe('marker2_after', Rpt2.GetMarker());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log_second', 'init|marker=init|hits=1;init|marker=init|hits=1;x|marker=second|hits=2;');
+        Observer.Expect('marker1', 'first');
+        Observer.Expect('marker2', 'sub-x');
+        Observer.Expect('hits1', '1');
+        Observer.Expect('hits2', '2');
+        Observer.Expect('log_first', 'y|marker=first|hits=2;');
+        Observer.Expect('marker1_after', 'sub-y');
+        Observer.Expect('marker2_after', 'sub-x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +249,10 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('hits', Format(Rpt.GetHits()));
         Observer.Observe('seen', Rpt.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'init|marker=init|hits=1;nest|marker=m|hits=2;inner|marker=m|hits=3;');
+        Observer.Expect('hits', '3');
+        Observer.Expect('seen', 'init=init;inner=m;nest=m;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -251,7 +271,11 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('hits_after', Format(Rpt.GetHits()));
         Observer.Observe('seen', Rpt.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'init|marker=init|hits=1;pre|marker=pre|hits=2;get|marker=get1|hits=3;get|marker=get2|hits=4;post|marker=post|hits=5;');
+        Observer.Expect('marker_after', 'init');
+        Observer.Expect('hits_after', '1');
+        Observer.Expect('seen', 'init=init;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,7 +295,11 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('hits_after', Format(Rpt.GetHits()));
         Observer.Observe('seen', Rpt.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'init|marker=init|hits=1;pre|marker=pre|hits=2;get|marker=get1|hits=3;get|marker=get2|hits=4;post|marker=post|hits=5;');
+        Observer.Expect('marker_after', 'sub-init');
+        Observer.Expect('hits_after', '1');
+        Observer.Expect('seen', 'init=sub-init;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -287,7 +315,8 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Report.Run(Report::"LT P84 Sender Rpt");
         Observer.Observe('log', SenderLog.Take());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'init|marker=init|hits=1;pre|marker=pre|hits=2;get|marker=get1|hits=3;get|marker=get2|hits=4;post|marker=post|hits=5;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +334,9 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('log', SenderLog.Take());
         Observer.Observe('seen', Rpt.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'init|marker=init|hits=1;pre|marker=pre|hits=2;post|marker=post|hits=3;');
+        Observer.Expect('seen', 'init=init;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -323,6 +354,9 @@ codeunit 73044 "LT P84 RptSnd Tests"
         Observer.Observe('log', SenderLog.Take());
         Observer.Observe('seen', Rpt.GetSeen());
         Observer.Observe('hits', Format(Rpt.GetHits()));
-        Observer.Finish();
+        Observer.Expect('log', '');
+        Observer.Expect('seen', 'init=init;');
+        Observer.Expect('hits', '1');
+        Observer.Verify();
     end;
 }

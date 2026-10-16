@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), enum LT P89 Color (74626)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74628 "LT P89 Is Enums A"
 {
@@ -89,7 +89,27 @@ codeunit 74628 "LT P89 Is Enums A"
         Observer.Observe('no_text', Flags(V));
         V := Action::OK;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'Action,');
+        Observer.Expect('ok', 'Action,');
+        Observer.Expect('ok_format', 'OK');
+        Observer.Expect('ok_text', 'Text,');
+        Observer.Expect('cancel', 'Action,');
+        Observer.Expect('cancel_format', 'Cancel');
+        Observer.Expect('cancel_text', 'Text,');
+        Observer.Expect('lookupok', 'Action,');
+        Observer.Expect('lookupok_format', 'LookupOK');
+        Observer.Expect('lookupok_text', 'Text,');
+        Observer.Expect('lookupcancel', 'Action,');
+        Observer.Expect('lookupcancel_format', 'LookupCancel');
+        Observer.Expect('lookupcancel_text', 'Text,');
+        Observer.Expect('yes', 'Action,');
+        Observer.Expect('yes_format', 'Yes');
+        Observer.Expect('yes_text', 'Text,');
+        Observer.Expect('no', 'Action,');
+        Observer.Expect('no_format', 'No');
+        Observer.Expect('no_text', 'Text,');
+        Observer.Expect('literal', 'Action,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,7 +141,18 @@ codeunit 74628 "LT P89 Is Enums A"
         Observer.Observe('default_text', Flags(V));
         V := ClientType::Web;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'ClientType,');
+        Observer.Expect('web', 'ClientType,');
+        Observer.Expect('web_format', 'Web');
+        Observer.Expect('web_text', 'Text,');
+        Observer.Expect('background', 'ClientType,');
+        Observer.Expect('background_format', 'Background');
+        Observer.Expect('background_text', 'Text,');
+        Observer.Expect('default', 'ClientType,');
+        Observer.Expect('default_format', 'Default');
+        Observer.Expect('default_text', 'Text,');
+        Observer.Expect('literal', 'ClientType,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +184,18 @@ codeunit 74628 "LT P89 Is Enums A"
         Observer.Observe('tobeclassified_text', Flags(V));
         V := DataClassification::CustomerContent;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'DataClassification,');
+        Observer.Expect('customercontent', 'DataClassification,');
+        Observer.Expect('customercontent_format', 'CustomerContent');
+        Observer.Expect('customercontent_text', 'Text,');
+        Observer.Expect('systemmetadata', 'DataClassification,');
+        Observer.Expect('systemmetadata_format', 'SystemMetadata');
+        Observer.Expect('systemmetadata_text', 'Text,');
+        Observer.Expect('tobeclassified', 'DataClassification,');
+        Observer.Expect('tobeclassified_format', 'ToBeClassified');
+        Observer.Expect('tobeclassified_text', 'Text,');
+        Observer.Expect('literal', 'DataClassification,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -179,7 +221,15 @@ codeunit 74628 "LT P89 Is Enums A"
         Observer.Observe('word_text', Flags(V));
         V := DefaultLayout::RDLC;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'DefaultLayout,');
+        Observer.Expect('rdlc', 'DefaultLayout,');
+        Observer.Expect('rdlc_format', 'RDLC');
+        Observer.Expect('rdlc_text', 'Text,');
+        Observer.Expect('word', 'DefaultLayout,');
+        Observer.Expect('word_format', 'Word');
+        Observer.Expect('word_text', 'Text,');
+        Observer.Expect('literal', 'DefaultLayout,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -205,7 +255,15 @@ codeunit 74628 "LT P89 Is Enums A"
         Observer.Observe('standard_text', Flags(V));
         V := ExecutionMode::Debug;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'ExecutionMode,');
+        Observer.Expect('debug', 'ExecutionMode,');
+        Observer.Expect('debug_format', 'Debug');
+        Observer.Expect('debug_text', 'Text,');
+        Observer.Expect('standard', 'ExecutionMode,');
+        Observer.Expect('standard_format', 'Standard');
+        Observer.Expect('standard_text', 'Text,');
+        Observer.Expect('literal', 'ExecutionMode,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,6 +285,13 @@ codeunit 74628 "LT P89 Is Enums A"
         T := 'x'; V := T; Observer.Observe('text', Flags(V));
         C := 'X'; V := C; Observer.Observe('code', Flags(V));
         V := true; Observer.Observe('boolean', Flags(V));
-        Observer.Finish();
+        Observer.Expect('option', 'Option,');
+        Observer.Expect('enum', 'Option,');
+        Observer.Expect('integer', 'Integer,');
+        Observer.Expect('biginteger', 'BigInteger,');
+        Observer.Expect('text', 'Text,');
+        Observer.Expect('code', 'Code,');
+        Observer.Expect('boolean', 'Boolean,');
+        Observer.Verify();
     end;
 }

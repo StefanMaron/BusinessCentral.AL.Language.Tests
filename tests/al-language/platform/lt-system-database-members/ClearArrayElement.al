@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74008
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on a single array element leaves the others
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74008 "LT P95 Clear Array Element"
@@ -30,7 +30,13 @@ codeunit 74008 "LT P95 Clear Array Element"
         asserterror Clear(Ai[0]);
         Observer.ObserveError('zero_index');
 
-        Observer.Finish();
+        Observer.Expect('elements', '1|0|3');
+        Observer.Expect('text_elements', '[][b]');
+        Observer.Expect('out_of_range|text', 'Index out of bounds.');
+        Observer.Expect('out_of_range|code', 'IndexOutOfBounds');
+        Observer.Expect('zero_index|text', 'Index out of bounds.');
+        Observer.Expect('zero_index|code', 'IndexOutOfBounds');
+        Observer.Verify();
     end;
 
 }

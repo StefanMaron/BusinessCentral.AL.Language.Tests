@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/codeunit/codeunit-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), own table 70325, codeunit 70327
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P93); the lead measures the facts on a local BC 29 and turns them into assertions.
 // Facts: Codeunit.Run(Number, var Record) with an own table and TableNo (Run(Text, Record) needs runtime 17: skipped)
 // BC versions: 29 (27 and 28 by CI)
 
@@ -56,7 +56,15 @@ codeunit 70327 "LT P93 CodeunitRun"
         Ok := Codeunit.Run(Codeunit::"LT P93 Runner", Rec);
         Observer.Observe('ret-again', Format(Ok));
         Observer.Observe('txt-again', Rec.Txt);
-        Observer.Finish();
+        Observer.Expect('af50|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('af50|code', 'DB:Ok');
+        Observer.Expect('ret', 'No');
+        Observer.Expect('txt', 'a');
+        Observer.Expect('id', '1');
+        Observer.Expect('stored', '0');
+        Observer.Expect('ret-again', 'Yes');
+        Observer.Expect('txt-again', 'run:a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -75,7 +83,13 @@ codeunit 70327 "LT P93 CodeunitRun"
         Observer.Observe('err', GetLastErrorText());
         Observer.Observe('code', GetLastErrorCode());
         Observer.Observe('txt', Rec.Txt);
-        Observer.Finish();
+        Observer.Expect('af72|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('af72|code', 'DB:Ok');
+        Observer.Expect('ret', 'No');
+        Observer.Expect('err', '');
+        Observer.Expect('code', '');
+        Observer.Expect('txt', 'a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -90,7 +104,10 @@ codeunit 70327 "LT P93 CodeunitRun"
         asserterror Codeunit.Run(Codeunit::"LT P93 Runner", Rec);
         Observer.ObserveError('run-error');
         Observer.Observe('txt', Rec.Txt);
-        Observer.Finish();
+        Observer.Expect('run-error|text', 'negative id');
+        Observer.Expect('run-error|code', 'Dialog');
+        Observer.Expect('txt', 'run:a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -112,7 +129,14 @@ codeunit 70327 "LT P93 CodeunitRun"
         asserterror Check.Get(999);
         Observer.ObserveError('af112');
         Observer.Observe('db-txt', Check.Txt);
-        Observer.Finish();
+        Observer.Expect('af108|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('af108|code', 'DB:Ok');
+        Observer.Expect('ret', 'No');
+        Observer.Expect('mem-txt', 'a');
+        Observer.Expect('af112|text', 'The LT P93 Rec does not exist. Identification fields and values: Id=''999''');
+        Observer.Expect('af112|code', 'DB:RecordNotFound');
+        Observer.Expect('db-txt', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,6 +148,8 @@ codeunit 70327 "LT P93 CodeunitRun"
         Ok := Codeunit.Run(Codeunit::"LT P93 Runner");
         Observer.Observe('ret', Format(Ok));
         Observer.Observe('err', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ret', 'Yes');
+        Observer.Expect('err', '');
+        Observer.Verify();
     end;
 }

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpage-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); LT P82 List (71188), LT P82 Card (71187), LT P82 Tree (71189), LT P82 Host (71191), LT P82 Sub (71190), LT P82 Item (71184), LT P82 Group (71192), LT P82 Log (71186) from P82Fixtures.al
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: TestPage navigation (First / Next / Previous / Last / GoToKey / GoToRecord with misses and several key values), Filter.SetFilter on fields and views, Caption, Expand / IsExpanded on a tree, TestPart Visible / Enabled / Editable and rows
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 71204 "LT P82 TestPage"
 {
@@ -58,7 +58,19 @@ codeunit 71204 "LT P82 TestPage"
         Observer.Observe('previous', Format(List.Previous()));
         Observer.Observe('previous-no', List.NoCtl.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first-no', 'N1');
+        Observer.Expect('previous-at-first', 'No');
+        Observer.Expect('no-after-failed-previous', 'N1');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next-no', 'N2');
+        Observer.Expect('last', 'Yes');
+        Observer.Expect('last-no', 'N5');
+        Observer.Expect('next-at-last', 'No');
+        Observer.Expect('no-after-failed-next', 'N5');
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('previous-no', 'N4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -84,7 +96,21 @@ codeunit 71204 "LT P82 TestPage"
         asserterror List.GoToKey(1);
         Observer.ObserveError('wrong-type');
         List.Close();
-        Observer.Finish();
+        Observer.Expect('hit', 'Yes');
+        Observer.Expect('hit-no', 'N3');
+        Observer.Expect('miss', 'No');
+        Observer.Expect('no-after-miss', 'N3');
+        Observer.Expect('empty-key', 'No');
+        Observer.Expect('no-after-empty', 'N3');
+        Observer.Expect('lowercase', 'No');
+        Observer.Expect('lowercase-no', 'N3');
+        Observer.Expect('backwards', 'Yes');
+        Observer.Expect('backwards-no', 'N1');
+        Observer.Expect('too-many-key-values|text', 'The number of arguments does not match the number of primary key fields.');
+        Observer.Expect('too-many-key-values|code', 'TestInvalidNumberOfKeyFieldValues');
+        Observer.Expect('wrong-type|text', 'The row does not exist on the TestPage.');
+        Observer.Expect('wrong-type|code', 'TestRowNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +135,14 @@ codeunit 71204 "LT P82 TestPage"
         Observer.Observe('key-only-match', Format(List.GoToRecord(Item)));
         Observer.Observe('key-only-no', List.NoCtl.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('hit', 'Yes');
+        Observer.Expect('hit-no', 'N4');
+        Observer.Expect('miss', 'No');
+        Observer.Expect('no-after-miss', 'N4');
+        Observer.Expect('cleared-record', 'No');
+        Observer.Expect('key-only-match', 'Yes');
+        Observer.Expect('key-only-no', 'N2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +172,17 @@ codeunit 71204 "LT P82 TestPage"
         asserterror List.Filter.SetFilter(Qty, 'abc');
         Observer.ObserveError('invalid-integer-filter');
         List.Close();
-        Observer.Finish();
+        Observer.Expect('range-row1', 'N2');
+        Observer.Expect('range-row2', 'N3');
+        Observer.Expect('range-row3', 'N4');
+        Observer.Expect('count-after-clear', '5');
+        Observer.Expect('count-name-or', '2');
+        Observer.Expect('count-name-exact', '1');
+        Observer.Expect('count-none', '0');
+        Observer.Expect('first-none', 'No');
+        Observer.Expect('invalid-integer-filter|text', 'The filter "abc" is not valid for the Qty field on the LT P82 Item table. The value "abc" can''t be evaluated into type Integer.');
+        Observer.Expect('invalid-integer-filter|code', 'Filter:CSide');
+        Observer.Verify();
     end;
 
     local procedure CountRows(var List: TestPage "LT P82 List"): Integer
@@ -171,7 +214,13 @@ codeunit 71204 "LT P82 TestPage"
             until not List.Next();
         Observer.Observe('ascending', Format(List.Filter.Ascending()));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('desc-row1', 'N5');
+        Observer.Expect('desc-row2', 'N4');
+        Observer.Expect('desc-row3', 'N3');
+        Observer.Expect('desc-row4', 'N2');
+        Observer.Expect('desc-row5', 'N1');
+        Observer.Expect('ascending', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +234,8 @@ codeunit 71204 "LT P82 TestPage"
         Page.Run(Page::"LT P82 List");
         Observer.Observe('count-after-trap', Format(CountRows(List)));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('count-after-trap', '6');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,7 +253,10 @@ codeunit 71204 "LT P82 TestPage"
         Host.OpenView();
         Observer.Observe('host-caption', Host.Caption());
         Host.Close();
-        Observer.Finish();
+        Observer.Expect('group-caption', 'LT P82 Group List Caption');
+        Observer.Expect('code-caption', 'Code');
+        Observer.Expect('host-caption', 'LT P82 Host - G1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -248,7 +301,21 @@ codeunit 71204 "LT P82 TestPage"
         Tree.GoToKey('N5');
         Observer.Observe('n5-expanded-leaf', Format(Tree.IsExpanded()));
         Tree.Close();
-        Observer.Finish();
+        Observer.Expect('n1-expanded-initial', 'No');
+        Observer.Expect('n1-expanded-after-true', 'Yes');
+        Observer.Expect('n1-expanded-after-second-true', 'Yes');
+        Observer.Expect('n1-expanded-after-false', 'No');
+        Observer.Expect('n1-expanded-after-second-false', 'No');
+        Observer.Expect('af238|text', 'The row does not exist on the TestPage.');
+        Observer.Expect('af238|code', 'TestRowNotFound');
+        Observer.Expect('n2-expanded-initial', 'No');
+        Observer.Expect('n2-expanded-after-true', 'Yes');
+        Observer.Expect('af243|text', 'The row does not exist on the TestPage.');
+        Observer.Expect('af243|code', 'TestRowNotFound');
+        Observer.Expect('n3-expanded-leaf', 'Yes');
+        Observer.Expect('n3-expanded-leaf-after-true', 'Yes');
+        Observer.Expect('n5-expanded-leaf', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -284,7 +351,16 @@ codeunit 71204 "LT P82 TestPage"
                 Observer.Observe('expanded-row' + Format(N), Tree.NoCtl.Value());
             until not Tree.Next();
         Tree.Close();
-        Observer.Finish();
+        Observer.Expect('collapsed-row1', 'N1');
+        Observer.Expect('collapsed-row2', 'N4');
+        Observer.Expect('collapsed-row3', 'N5');
+        Observer.Expect('goto-child-collapsed', 'No');
+        Observer.Expect('expanded-row1', 'N1');
+        Observer.Expect('expanded-row2', 'N2');
+        Observer.Expect('expanded-row3', 'N3');
+        Observer.Expect('expanded-row4', 'N4');
+        Observer.Expect('expanded-row5', 'N5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -301,7 +377,11 @@ codeunit 71204 "LT P82 TestPage"
         Observer.Observe('disabled-first', Format(Host.DisabledPart.First()));
         Observer.Observe('disabled-first', 'no error');
         Host.Close();
-        Observer.Finish();
+        Observer.Expect('hidden-first|text', 'The part with ID = n was not found on the page.');
+        Observer.Expect('hidden-first|code', 'TestPartNotFound');
+        Observer.Expect('disabled-first', 'Yes');
+        Observer.Expect('disabled-first', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -323,7 +403,15 @@ codeunit 71204 "LT P82 TestPage"
         Observer.ObserveError('editable-closed');
         asserterror Observer.Observe('caption-closed', Card.Caption());
         Observer.ObserveError('caption-closed');
-        Observer.Finish();
+        Observer.Expect('view-editable', 'No');
+        Observer.Expect('edit-editable', 'Yes');
+        Observer.Expect('close-twice|text', 'The TestPage is not open.');
+        Observer.Expect('close-twice|code', 'TestPageNotOpened');
+        Observer.Expect('editable-closed|text', 'The TestPage is not open.');
+        Observer.Expect('editable-closed|code', 'TestPageNotOpened');
+        Observer.Expect('caption-closed|text', 'The TestPage is not open.');
+        Observer.Expect('caption-closed|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -338,6 +426,9 @@ codeunit 71204 "LT P82 TestPage"
         Observer.Observe('goto-existing', Format(Card.GoToKey('N2')));
         Observer.Observe('goto-existing-name', Card.NameCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('new-no', '');
+        Observer.Expect('goto-existing', 'Yes');
+        Observer.Expect('goto-existing-name', 'Name 2');
+        Observer.Verify();
     end;
 }

@@ -98,7 +98,20 @@ codeunit 72080 "LT P83 DocType Setters"
         Observer.Observe('set-space', Format(TrySetName('a b')));
         Observer.ObserveError('set-space');
         Observer.Observe('after-space', Members());
-        Observer.Finish();
+        Observer.Expect('set-ok', 'Yes');
+        Observer.Expect('set-ok|text', '');
+        Observer.Expect('set-ok|code', '');
+        Observer.Expect('after', '[b|p|s|i]');
+        Observer.Expect('set-same', 'Yes');
+        Observer.Expect('set-empty', 'No');
+        Observer.Expect('set-empty|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('set-empty|code', 'Argument');
+        Observer.Expect('after-empty', '[b|p|s|i]');
+        Observer.Expect('set-space', 'No');
+        Observer.Expect('set-space|text', 'The following exception was encountered when processing XML data: ''The '' '' character, hexadecimal value 0x20, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('set-space|code', 'Xml:Xml');
+        Observer.Expect('after-space', '[b|p|s|i]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -122,7 +135,27 @@ codeunit 72080 "LT P83 DocType Setters"
         Observer.Observe('set-markup', Format(TrySetPublic('<x>')));
         Observer.ObserveError('set-markup');
         Observer.Observe('after-markup', Members());
-        Observer.Finish();
+        Observer.Expect('set-ok', 'Yes');
+        Observer.Expect('set-ok|text', '');
+        Observer.Expect('set-ok|code', '');
+        Observer.Expect('after', '[a|q|s|i]');
+        Observer.Expect('set-empty', 'Yes');
+        Observer.Expect('set-empty|text', '');
+        Observer.Expect('set-empty|code', '');
+        Observer.Expect('after-empty', '[a||s|i]');
+        Observer.Expect('set-quote', 'Yes');
+        Observer.Expect('set-quote|text', '');
+        Observer.Expect('set-quote|code', '');
+        Observer.Expect('after-quote', '[a|a"b|s|i]');
+        Observer.Expect('set-apos', 'Yes');
+        Observer.Expect('set-apos|text', '');
+        Observer.Expect('set-apos|code', '');
+        Observer.Expect('after-apos', '[a|a''b|s|i]');
+        Observer.Expect('set-markup', 'Yes');
+        Observer.Expect('set-markup|text', '');
+        Observer.Expect('set-markup|code', '');
+        Observer.Expect('after-markup', '[a|<x>|s|i]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +176,23 @@ codeunit 72080 "LT P83 DocType Setters"
         Observer.Observe('set-url', Format(TrySetSystem('http://example.com/a.dtd')));
         Observer.ObserveError('set-url');
         Observer.Observe('after-url', Members());
-        Observer.Finish();
+        Observer.Expect('set-ok', 'Yes');
+        Observer.Expect('set-ok|text', '');
+        Observer.Expect('set-ok|code', '');
+        Observer.Expect('after', '[a|p|t|i]');
+        Observer.Expect('set-empty', 'Yes');
+        Observer.Expect('set-empty|text', '');
+        Observer.Expect('set-empty|code', '');
+        Observer.Expect('after-empty', '[a|p||i]');
+        Observer.Expect('set-quote', 'Yes');
+        Observer.Expect('set-quote|text', '');
+        Observer.Expect('set-quote|code', '');
+        Observer.Expect('after-quote', '[a|p|a"b|i]');
+        Observer.Expect('set-url', 'Yes');
+        Observer.Expect('set-url|text', '');
+        Observer.Expect('set-url|code', '');
+        Observer.Expect('after-url', '[a|p|http://example.com/a.dtd|i]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,7 +213,23 @@ codeunit 72080 "LT P83 DocType Setters"
         Observer.Observe('set-brackets', Format(TrySetSubset(']>')));
         Observer.ObserveError('set-brackets');
         Observer.Observe('after-brackets', Members());
-        Observer.Finish();
+        Observer.Expect('set-ok', 'Yes');
+        Observer.Expect('set-ok|text', '');
+        Observer.Expect('set-ok|code', '');
+        Observer.Expect('after', '[a|p|s|<!ELEMENT a EMPTY>]');
+        Observer.Expect('set-empty', 'Yes');
+        Observer.Expect('set-empty|text', '');
+        Observer.Expect('set-empty|code', '');
+        Observer.Expect('after-empty', '[a|p|s|]');
+        Observer.Expect('set-text', 'Yes');
+        Observer.Expect('set-text|text', '');
+        Observer.Expect('set-text|code', '');
+        Observer.Expect('after-text', '[a|p|s|anything at all]');
+        Observer.Expect('set-brackets', 'Yes');
+        Observer.Expect('set-brackets|text', '');
+        Observer.Expect('set-brackets|code', '');
+        Observer.Expect('after-brackets', '[a|p|s|]>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +253,15 @@ codeunit 72080 "LT P83 DocType Setters"
         Observer.Observe('system-cleared', Written());
         Dt.SetInternalSubset('');
         Observer.Observe('subset-cleared', Written());
-        Observer.Finish();
+        Observer.Expect('start', '<!DOCTYPE a PUBLIC "" ""[]>');
+        Observer.Expect('name', '<!DOCTYPE b PUBLIC "" ""[]>');
+        Observer.Expect('system', '<!DOCTYPE b PUBLIC "" "s.dtd"[]>');
+        Observer.Expect('public', '<!DOCTYPE b PUBLIC "-//P//EN" "s.dtd"[]>');
+        Observer.Expect('subset', '<!DOCTYPE b PUBLIC "-//P//EN" "s.dtd"[<!ENTITY e "v">]>');
+        Observer.Expect('public-cleared', '<!DOCTYPE b PUBLIC "" "s.dtd"[<!ENTITY e "v">]>');
+        Observer.Expect('system-cleared', '<!DOCTYPE b PUBLIC "" ""[<!ENTITY e "v">]>');
+        Observer.Expect('subset-cleared', '<!DOCTYPE b PUBLIC "" ""[]>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,6 +286,15 @@ codeunit 72080 "LT P83 DocType Setters"
         Dt := XmlDocumentType.Create('html', 'p"q', 's"t', '');
         asserterror Observer.Observe('quotes', Written());
         Observer.ObserveError('af214');
-        Observer.Finish();
+        Observer.Expect('name-only', '<!DOCTYPE html PUBLIC "" ""[]>');
+        Observer.Expect('system', '<!DOCTYPE html PUBLIC "" "x.dtd"[]>');
+        Observer.Expect('public', '<!DOCTYPE html PUBLIC "pub" ""[]>');
+        Observer.Expect('public-system', '<!DOCTYPE html PUBLIC "pub" "x.dtd"[]>');
+        Observer.Expect('subset', '<!DOCTYPE html PUBLIC "" ""[<!ELEMENT html EMPTY>]>');
+        Observer.Expect('all', '<!DOCTYPE html PUBLIC "pub" "x.dtd"[<!ELEMENT html EMPTY>]>');
+        Observer.Expect('blank-subset', '<!DOCTYPE html PUBLIC "" ""[ ]>');
+        Observer.Expect('af214|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('af214|code', 'Argument');
+        Observer.Verify();
     end;
 }

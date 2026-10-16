@@ -108,7 +108,16 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('is-comment', Format(N.IsXmlComment()));
         Observer.Observe('is-cdata', Format(N.IsXmlCData()));
         Observer.Observe('is-pi', Format(N.IsXmlProcessingInstruction()));
-        Observer.Finish();
+        Observer.Expect('is-doctype', 'Yes');
+        Observer.Expect('is-declaration', 'No');
+        Observer.Expect('is-element', 'No');
+        Observer.Expect('is-document', 'No');
+        Observer.Expect('is-attribute', 'No');
+        Observer.Expect('is-text', 'No');
+        Observer.Expect('is-comment', 'No');
+        Observer.Expect('is-cdata', 'No');
+        Observer.Expect('is-pi', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +138,13 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('attribute', Format(N.IsXmlDocumentType()));
         N := XmlDeclaration.Create('1.0', '', '').AsXmlNode();
         Observer.Observe('declaration', Format(N.IsXmlDocumentType()));
-        Observer.Finish();
+        Observer.Expect('element', 'No');
+        Observer.Expect('text', 'No');
+        Observer.Expect('comment', 'No');
+        Observer.Expect('document', 'No');
+        Observer.Expect('attribute', 'No');
+        Observer.Expect('declaration', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +168,20 @@ codeunit 72084 "LT P83 DocType Node"
         N := XmlDeclaration.Create('1.0', '', '').AsXmlNode();
         Observer.Observe('from-declaration', Format(TryAsDocType(N)));
         Observer.ObserveError('from-declaration');
-        Observer.Finish();
+        Observer.Expect('convert', 'Yes');
+        Observer.Expect('convert|text', '');
+        Observer.Expect('convert|code', '');
+        Observer.Expect('members', 'a|p|s|i');
+        Observer.Expect('from-element', 'No');
+        Observer.Expect('from-element|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlElement to Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType.');
+        Observer.Expect('from-element|code', 'Conversion');
+        Observer.Expect('from-text', 'No');
+        Observer.Expect('from-text|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlText to Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType.');
+        Observer.Expect('from-text|code', 'Conversion');
+        Observer.Expect('from-declaration', 'No');
+        Observer.Expect('from-declaration|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavXmlDeclaration to Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType.');
+        Observer.Expect('from-declaration|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +201,12 @@ codeunit 72084 "LT P83 DocType Node"
             Observer.Observe('child' + Format(i) + '-element', Format(N.IsXmlElement()));
         end;
         Observer.Observe('count', Format(i));
-        Observer.Finish();
+        Observer.Expect('child1-doctype', 'Yes');
+        Observer.Expect('child1-element', 'No');
+        Observer.Expect('child2-doctype', 'No');
+        Observer.Expect('child2-element', 'Yes');
+        Observer.Expect('count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,7 +224,14 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('children', Format(Doc.GetChildNodes().Count()));
         Observer.Observe('remove-twice', Format(TryRemoveGot(Got)));
         Observer.ObserveError('remove-twice');
-        Observer.Finish();
+        Observer.Expect('before', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<a />');
+        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('has-type', 'No');
+        Observer.Expect('children', '1');
+        Observer.Expect('remove-twice', 'No');
+        Observer.Expect('remove-twice|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('remove-twice|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -209,7 +249,11 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('remove', Format(TryRemove()));
         Observer.ObserveError('remove');
         Observer.Observe('name', GName(Dt));
-        Observer.Finish();
+        Observer.Expect('remove', 'No');
+        Observer.Expect('remove|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('remove|code', 'InvalidOperation');
+        Observer.Expect('name', 'a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,7 +269,10 @@ codeunit 72084 "LT P83 DocType Node"
         Doc.Add(XmlElement.Create('a'));
         Observer.Observe('re-added', Written());
         Observer.Observe('name', GName(Dt));
-        Observer.Finish();
+        Observer.Expect('removed', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('re-added', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<a />');
+        Observer.Expect('name', 'a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,7 +285,12 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.ObserveError('replace');
         Observer.Observe('after', Written());
         Observer.Observe('old-name', GName(Dt));
-        Observer.Finish();
+        Observer.Expect('replace', 'Yes');
+        Observer.Expect('replace|text', '');
+        Observer.Expect('replace|code', '');
+        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE b PUBLIC "p" ""[]>\n<a />');
+        Observer.Expect('old-name', 'a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -251,7 +303,12 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.ObserveError('replace');
         Observer.Observe('after', Written());
         Observer.Observe('children', Format(Doc.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('replace', 'No');
+        Observer.Expect('replace|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('replace|code', 'InvalidOperation');
+        Observer.Expect('after', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('children', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,7 +319,10 @@ codeunit 72084 "LT P83 DocType Node"
         Dt := XmlDocumentType.Create('a', '', '', '');
         Observer.Observe('replace', Format(TryReplaceWithDocType(XmlDocumentType.Create('b', '', '', ''))));
         Observer.ObserveError('replace');
-        Observer.Finish();
+        Observer.Expect('replace', 'No');
+        Observer.Expect('replace|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('replace|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -279,7 +339,18 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('written2', Written());
         Observer.Observe('before-doctype', Format(TryAddBeforeDt(XmlDocumentType.Create('b', '', '', ''))));
         Observer.ObserveError('before-doctype');
-        Observer.Finish();
+        Observer.Expect('after-comment', 'Yes');
+        Observer.Expect('after-comment|text', '');
+        Observer.Expect('after-comment|code', '');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<!--c-->\n<a />');
+        Observer.Expect('before-comment', 'Yes');
+        Observer.Expect('before-comment|text', '');
+        Observer.Expect('before-comment|code', '');
+        Observer.Expect('written2', '<?xml version="1.0" encoding="utf-16"?>\n<!--d-->\n<!DOCTYPE a PUBLIC "" "a.dtd"[]>\n<!--c-->\n<a />');
+        Observer.Expect('before-doctype', 'No');
+        Observer.Expect('before-doctype|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('before-doctype|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -317,7 +388,16 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('detached-parent', Format(TryGetParent(P)));
         Observer.ObserveError('detached-parent');
         Observer.Observe('detached-document', Format(Dt.GetDocument(D2)));
-        Observer.Finish();
+        Observer.Expect('parent', 'No');
+        Observer.Expect('parent|text', 'The XML node is not set.');
+        Observer.Expect('parent|code', 'XmlNodeNotFound');
+        Observer.Expect('get-document', 'Yes');
+        Observer.Expect('document-children', '2');
+        Observer.Expect('detached-parent', 'No');
+        Observer.Expect('detached-parent|text', 'The XML node is not set.');
+        Observer.Expect('detached-parent|code', 'XmlNodeNotFound');
+        Observer.Expect('detached-document', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -331,6 +411,9 @@ codeunit 72084 "LT P83 DocType Node"
         Observer.Observe('select', Format(Dt.SelectNodes('*', Nodes)));
         Observer.Observe('count', Format(Nodes.Count()));
         Observer.Observe('single', Format(Dt.SelectSingleNode('*', N)));
-        Observer.Finish();
+        Observer.Expect('select', 'No');
+        Observer.Expect('count', '0');
+        Observer.Expect('single', 'No');
+        Observer.Verify();
     end;
 }

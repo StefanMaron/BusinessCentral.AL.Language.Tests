@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74013
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on a field of a record: zero or InitValue; Clear of whole record with InitValue; filters and the Rec of a temp record
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 table 74012 "LT P95 CRow74012"
@@ -56,7 +56,11 @@ codeunit 74013 "LT P95 Clear Record Field"
         Clear(Tmp);
         Observer.Observe('temp_after_clear_count', Format(Tmp.Count()) + '|' + Tmp.GetFilters());
 
-        Observer.Finish();
+        Observer.Expect('init_values', 'Init|5|Yes');
+        Observer.Expect('after_field_clear', '[]|0|No|0|[]');
+        Observer.Expect('after_record_clear', '[Init]|5|Yes|');
+        Observer.Expect('temp_after_clear_count', '1|');
+        Observer.Verify();
     end;
 
 }

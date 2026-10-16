@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-geturl-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73980
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: GetUrl company argument variants (blank, unknown, case, special chars, long)
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 73980 "LT P95 GetUrl Company"
@@ -64,7 +64,18 @@ codeunit 73980 "LT P95 GetUrl Company"
         One(Observer, 'quote', 'It''s');
         One(Observer, 'hash_question', 'A#B?C');
         One(Observer, 'long', PadStr('', 120, 'x'));
-        Observer.Finish();
+        Observer.Expect('blank', 'Yes|Yes|Yes|No|No|No|No|?company=%20');
+        Observer.Expect('nonexistent', 'Yes|Yes|Yes|No|No|No|No|?company=No%20Such%20Company%20P95');
+        Observer.Expect('lower_current', 'Yes|Yes|Yes|No|No|No|No|?company=cronus%20international%20ltd.');
+        Observer.Expect('upper_current', 'Yes|Yes|Yes|No|No|No|No|?company=CRONUS%20INTERNATIONAL%20LTD.');
+        Observer.Expect('ampersand', 'Yes|Yes|Yes|No|No|No|No|?company=A%26B');
+        Observer.Expect('space_slash', 'Yes|Yes|Yes|No|No|No|No|?company=A%20B%2FC');
+        Observer.Expect('percent', 'Yes|Yes|Yes|No|No|No|No|?company=100%25');
+        Observer.Expect('unicode', 'Yes|Yes|Yes|No|No|No|No|?company=Geschaeft%20%C3%9C%E2%82%AC');
+        Observer.Expect('quote', 'Yes|Yes|Yes|No|No|No|No|?company=It%27s');
+        Observer.Expect('hash_question', 'Yes|Yes|Yes|No|No|No|No|?company=A%23B%3FC');
+        Observer.Expect('long', 'Yes|Yes|Yes|No|No|No|No|?company=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        Observer.Verify();
     end;
 
 }

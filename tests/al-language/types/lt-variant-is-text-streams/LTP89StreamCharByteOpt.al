@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/outstream/outstream-write-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), LT P89 Helper (74627)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74645 "LT P89 Stream CharByteOpt"
 {
@@ -53,7 +53,12 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('v4_256', DumpChar(V));
         V := 8364;
         Observer.Observe('v5_euro', DumpChar(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '1:00');
+        Observer.Expect('v2_A', '1:41');
+        Observer.Expect('v3_255', '1:FF');
+        Observer.Expect('v4_256', '1:41');
+        Observer.Expect('v5_euro', '1:80');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +100,21 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadChar(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '2');
+        Observer.Expect('read1', 'ok n=1');
+        Observer.Expect('value1', 'A');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=1');
+        Observer.Expect('value2', 'A');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '\u0000');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '\u0000');
+        Observer.Verify();
     end;
 
     local procedure DumpByte(V: Byte): Text
@@ -140,7 +159,11 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('v3_200', DumpByte(V));
         V := 255;
         Observer.Observe('v4_max', DumpByte(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '1:00');
+        Observer.Expect('v2_one', '1:01');
+        Observer.Expect('v3_200', '1:C8');
+        Observer.Expect('v4_max', '1:FF');
+        Observer.Verify();
     end;
 
     [Test]
@@ -182,7 +205,21 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadByte(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '2');
+        Observer.Expect('read1', 'ok n=1');
+        Observer.Expect('value1', '\u0001');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=1');
+        Observer.Expect('value2', '\u0001');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '\u0000');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '\u0000');
+        Observer.Verify();
     end;
 
     local procedure DumpOption(V: Option A,B,C): Text
@@ -225,7 +262,10 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('v2_B', DumpOption(V));
         V := V::C;
         Observer.Observe('v3_C', DumpOption(V));
-        Observer.Finish();
+        Observer.Expect('v1_A', '4:00000000');
+        Observer.Expect('v2_B', '4:01000000');
+        Observer.Expect('v3_C', '4:02000000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +307,21 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadOption(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '8');
+        Observer.Expect('read1', 'ok n=4');
+        Observer.Expect('value1', 'B');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=4');
+        Observer.Expect('value2', 'B');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', 'A');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', 'A');
+        Observer.Verify();
     end;
 
 }

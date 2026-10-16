@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-geturl-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73975
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: GetUrl for client type SOAP, OData, ODataV4, Api with company, without, with empty company
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 73975 "LT P95 GetUrl CT Service"
@@ -66,7 +66,12 @@ codeunit 73975 "LT P95 GetUrl CT Service"
             Observer.Observe('SOAP_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('SOAP_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('SOAP_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('SOAP_tail', 'noquery');
+        Observer.Expect('SOAP_nocompany_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('SOAP_nocompany_tail', 'noquery');
+        Observer.Expect('SOAP_emptycompany_shape', 'Yes|Yes|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -103,7 +108,12 @@ codeunit 73975 "LT P95 GetUrl CT Service"
             Observer.Observe('OData_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('OData_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('OData_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('OData_tail', 'noquery');
+        Observer.Expect('OData_nocompany_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('OData_nocompany_tail', 'noquery');
+        Observer.Expect('OData_emptycompany_shape', 'Yes|Yes|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -140,7 +150,12 @@ codeunit 73975 "LT P95 GetUrl CT Service"
             Observer.Observe('ODataV4_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('ODataV4_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('ODataV4_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('ODataV4_tail', 'noquery');
+        Observer.Expect('ODataV4_nocompany_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('ODataV4_nocompany_tail', 'noquery');
+        Observer.Expect('ODataV4_emptycompany_shape', 'Yes|Yes|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -177,7 +192,12 @@ codeunit 73975 "LT P95 GetUrl CT Service"
             Observer.Observe('Api_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('Api_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('Api_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('Api_tail', 'noquery');
+        Observer.Expect('Api_nocompany_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('Api_nocompany_tail', 'noquery');
+        Observer.Expect('Api_emptycompany_shape', 'Yes|Yes|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
 }

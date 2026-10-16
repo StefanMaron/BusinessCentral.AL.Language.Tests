@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), enum LT P89 Color (74626)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74629 "LT P89 Is Enums B"
 {
@@ -71,7 +71,18 @@ codeunit 74629 "LT P89 Is Enums B"
         Observer.Observe('page_text', Flags(V));
         V := ObjectType::Table;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'ObjectType,');
+        Observer.Expect('table', 'ObjectType,');
+        Observer.Expect('table_format', 'Table');
+        Observer.Expect('table_text', 'Text,');
+        Observer.Expect('codeunit', 'ObjectType,');
+        Observer.Expect('codeunit_format', 'Codeunit');
+        Observer.Expect('codeunit_text', 'Text,');
+        Observer.Expect('page', 'ObjectType,');
+        Observer.Expect('page_format', 'Page');
+        Observer.Expect('page_text', 'Text,');
+        Observer.Expect('literal', 'ObjectType,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +114,18 @@ codeunit 74629 "LT P89 Is Enums B"
         Observer.Observe('excel_text', Flags(V));
         V := ReportFormat::Pdf;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'ReportFormat,');
+        Observer.Expect('pdf', 'ReportFormat,');
+        Observer.Expect('pdf_format', 'Pdf');
+        Observer.Expect('pdf_text', 'Text,');
+        Observer.Expect('word', 'ReportFormat,');
+        Observer.Expect('word_format', 'Word');
+        Observer.Expect('word_text', 'Text,');
+        Observer.Expect('excel', 'ReportFormat,');
+        Observer.Expect('excel_format', 'Excel');
+        Observer.Expect('excel_text', 'Text,');
+        Observer.Expect('literal', 'ReportFormat,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +151,15 @@ codeunit 74629 "LT P89 Is Enums B"
         Observer.Observe('externalsql_text', Flags(V));
         V := TableConnectionType::CRM;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'TableConnectionType,');
+        Observer.Expect('crm', 'TableConnectionType,');
+        Observer.Expect('crm_format', 'CRM');
+        Observer.Expect('crm_text', 'Text,');
+        Observer.Expect('externalsql', 'TableConnectionType,');
+        Observer.Expect('externalsql_format', 'ExternalSQL');
+        Observer.Expect('externalsql_text', 'Text,');
+        Observer.Expect('literal', 'TableConnectionType,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +197,21 @@ codeunit 74629 "LT P89 Is Enums B"
         Observer.Observe('inheritfromtestcodeunit_text', Flags(V));
         V := TestPermissions::Disabled;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'TestPermissions,');
+        Observer.Expect('disabled', 'TestPermissions,');
+        Observer.Expect('disabled_format', 'Disabled');
+        Observer.Expect('disabled_text', 'Text,');
+        Observer.Expect('restrictive', 'TestPermissions,');
+        Observer.Expect('restrictive_format', 'Restrictive');
+        Observer.Expect('restrictive_text', 'Text,');
+        Observer.Expect('nonrestrictive', 'TestPermissions,');
+        Observer.Expect('nonrestrictive_format', 'NonRestrictive');
+        Observer.Expect('nonrestrictive_text', 'Text,');
+        Observer.Expect('inheritfromtestcodeunit', 'TestPermissions,');
+        Observer.Expect('inheritfromtestcodeunit_format', 'InheritFromTestCodeunit');
+        Observer.Expect('inheritfromtestcodeunit_text', 'Text,');
+        Observer.Expect('literal', 'TestPermissions,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -205,7 +249,21 @@ codeunit 74629 "LT P89 Is Enums B"
         Observer.Observe('windows_text', Flags(V));
         V := TextEncoding::UTF8;
         Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'TextEncoding,');
+        Observer.Expect('utf8', 'TextEncoding,');
+        Observer.Expect('utf8_format', 'UTF8');
+        Observer.Expect('utf8_text', 'Text,');
+        Observer.Expect('utf16', 'TextEncoding,');
+        Observer.Expect('utf16_format', 'UTF16');
+        Observer.Expect('utf16_text', 'Text,');
+        Observer.Expect('msdos', 'TextEncoding,');
+        Observer.Expect('msdos_format', 'MSDos');
+        Observer.Expect('msdos_text', 'Text,');
+        Observer.Expect('windows', 'TextEncoding,');
+        Observer.Expect('windows_format', 'Windows');
+        Observer.Expect('windows_text', 'Text,');
+        Observer.Expect('literal', 'TextEncoding,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,6 +285,13 @@ codeunit 74629 "LT P89 Is Enums B"
         T := 'x'; V := T; Observer.Observe('text', Flags(V));
         C := 'X'; V := C; Observer.Observe('code', Flags(V));
         V := true; Observer.Observe('boolean', Flags(V));
-        Observer.Finish();
+        Observer.Expect('option', 'Option,');
+        Observer.Expect('enum', 'Option,');
+        Observer.Expect('integer', 'Integer,');
+        Observer.Expect('biginteger', 'BigInteger,');
+        Observer.Expect('text', 'Text,');
+        Observer.Expect('code', 'Code,');
+        Observer.Expect('boolean', 'Boolean,');
+        Observer.Verify();
     end;
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/datetime/datetime-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P93); the lead measures the facts on a local BC 29 and turns them into assertions.
 // Facts: DateTime.Date, Time, ToText for 0DT and a value with milliseconds, Time.ToText and Duration.ToText
 // BC versions: 29 (27 and 28 by CI)
 
@@ -102,7 +102,19 @@ codeunit 70321 "LT P93 DateTime"
         Observer.Observe('lit-date', DT(0DT, 0));
         Observer.Observe('lit-time', DT(0DT, 1));
         Observer.Observe('lit-tt', DT(0DT, 2));
-        Observer.Finish();
+        Observer.Expect('date', '');
+        Observer.Expect('time', '');
+        Observer.Expect('tt', '');
+        Observer.Expect('tt-true', '');
+        Observer.Expect('tt-false', '');
+        Observer.Expect('date-9', '');
+        Observer.Expect('time-9', '');
+        Observer.Expect('format', '');
+        Observer.Expect('format-9', '');
+        Observer.Expect('lit-date', '');
+        Observer.Expect('lit-time', '');
+        Observer.Expect('lit-tt', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,7 +136,19 @@ codeunit 70321 "LT P93 DateTime"
         Observer.Observe('format-0', Format(V, 0, 0));
         Observer.Observe('format-1', Format(V, 0, 1));
         Observer.Observe('format-custom', Format(V, 0, '<Year4>-<Month,2>-<Day,2> <Hours24,2>:<Minutes,2>:<Seconds,2>.<Thousands,3>'));
-        Observer.Finish();
+        Observer.Expect('date', '03/15/24');
+        Observer.Expect('time', '12:34:56 PM');
+        Observer.Expect('tt', '03/15/24 12:34 PM');
+        Observer.Expect('tt-true', '2024-03-15T12:34:56.789Z');
+        Observer.Expect('tt-false', '03/15/24 12:34 PM');
+        Observer.Expect('date-9', '2024-03-15');
+        Observer.Expect('time-9', '12:34:56.789');
+        Observer.Expect('format', '03/15/24 12:34 PM');
+        Observer.Expect('format-9', '2024-03-15T12:34:56.789Z');
+        Observer.Expect('format-0', '03/15/24 12:34 PM');
+        Observer.Expect('format-1', '03/15/24 12:34:56.789 PM');
+        Observer.Expect('format-custom', '2024-03-15 12:34:56.789');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,7 +174,21 @@ codeunit 70321 "LT P93 DateTime"
         Observer.Observe('dateonly', DT(CreateDateTime(20240315D, 0T), 1));
         asserterror Observer.Observe('timeonly', DT(CreateDateTime(0D, 123456T), 0));
         Observer.ObserveError('af151');
-        Observer.Finish();
+        Observer.Expect('feb29-date', '02/29/24');
+        Observer.Expect('feb29-time', '12:00:00 PM');
+        Observer.Expect('feb29-tt', '02/29/24 12:00 PM');
+        Observer.Expect('feb29-tt-true', '2024-02-29T12:00:00Z');
+        Observer.Expect('feb29-format-9', '2024-02-29T12:00:00Z');
+        Observer.Expect('dec31-date', '12/31/23');
+        Observer.Expect('dec31-time', '12:00:00 PM');
+        Observer.Expect('dec31-tt', '12/31/23 12:00 PM');
+        Observer.Expect('dec31-tt-true', '2023-12-31T12:00:00Z');
+        Observer.Expect('dec31-format-9', '2023-12-31T12:00:00Z');
+        Observer.Expect('closing-date', '01/01/24');
+        Observer.Expect('dateonly', '12:00:00 AM');
+        Observer.Expect('af151|text', 'The date is not valid.');
+        Observer.Expect('af151|code', 'DateInvalid');
+        Observer.Verify();
     end;
 
     [Test]
@@ -181,7 +219,25 @@ codeunit 70321 "LT P93 DateTime"
         T := 120000T;
         Observer.Observe('noon', TM(T, 0));
         Observer.Observe('noon-true', TM(T, 1));
-        Observer.Finish();
+        Observer.Expect('zero', '');
+        Observer.Expect('zero-true', '');
+        Observer.Expect('zero-false', '');
+        Observer.Expect('zero-format', '');
+        Observer.Expect('zero-format-9', '');
+        Observer.Expect('t', '12:34:56 PM');
+        Observer.Expect('t-true', '12:34:56');
+        Observer.Expect('t-false', '12:34:56 PM');
+        Observer.Expect('t-format', '12:34:56 PM');
+        Observer.Expect('t-format-9', '12:34:56');
+        Observer.Expect('late', '11:59:59 PM');
+        Observer.Expect('late-true', '23:59:59');
+        Observer.Expect('ms', '12:00:00 AM');
+        Observer.Expect('ms-true', '00:00:00.123');
+        Observer.Expect('ms-format', '12:00:00 AM');
+        Observer.Expect('ms-format-9', '00:00:00.123');
+        Observer.Expect('noon', '12:00:00 PM');
+        Observer.Expect('noon-true', '12:00:00');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,6 +270,25 @@ codeunit 70321 "LT P93 DateTime"
         D := 1;
         Observer.Observe('1ms', DU(D, 0));
         Observer.Observe('1ms-true', DU(D, 1));
-        Observer.Finish();
+        Observer.Expect('zero', '');
+        Observer.Expect('zero-true', 'P0DT0H0M0.0S');
+        Observer.Expect('zero-false', '');
+        Observer.Expect('zero-format', '');
+        Observer.Expect('1s', '1 second');
+        Observer.Expect('1s-true', 'P0DT0H0M1.0S');
+        Observer.Expect('1s-format', '1 second');
+        Observer.Expect('1s-format-9', 'P0DT0H0M1.0S');
+        Observer.Expect('1h1m1s', '1 hour 1 minute 1 second');
+        Observer.Expect('1h1m1s-true', 'P0DT1H1M1.0S');
+        Observer.Expect('1h1m1s-format-9', 'P0DT1H1M1.0S');
+        Observer.Expect('2d', '2 days');
+        Observer.Expect('2d-true', 'P2DT0H0M0.0S');
+        Observer.Expect('2d-format-9', 'P2DT0H0M0.0S');
+        Observer.Expect('neg', '-5 seconds');
+        Observer.Expect('neg-true', '-P0DT0H0M5.0S');
+        Observer.Expect('neg-format-9', '-P0DT0H0M5.0S');
+        Observer.Expect('1ms', '1 millisecond');
+        Observer.Expect('1ms-true', 'P0DT0H0M0.001S');
+        Observer.Verify();
     end;
 }

@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), enum LT P89 Color (74626)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74632 "LT P89 Is PromptMode"
 {
@@ -36,6 +36,10 @@ codeunit 74632 "LT P89 Is PromptMode"
         V := X; Observer.Observe('prompt', Flags(V));
         Observer.Observe('prompt_format', Format(X));
         V := PromptMode::Prompt; Observer.Observe('literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('default', 'PromptMode,');
+        Observer.Expect('prompt', 'PromptMode,');
+        Observer.Expect('prompt_format', 'Prompt');
+        Observer.Expect('literal', 'PromptMode,');
+        Observer.Verify();
     end;
 }

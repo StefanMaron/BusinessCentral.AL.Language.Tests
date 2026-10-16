@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/fieldref/fieldref-fielderror-method
 // Scope: in-scope
 // Fixtures used: tables 72200, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: FieldRef.FieldError with and without text compared with Record.FieldError: text and code
 // BC versions: 29 (27 and 28 by CI)
 
@@ -103,7 +103,22 @@ codeunit 72223 "LT P92 FieldError"
         end;
         Observer.Observe('rec_2', RecT(Item, 2, '', false));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('ref_1', 'Code Cap must not be A1 in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_1', 'Yes');
+        Observer.Expect('ref_2', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_2', 'Yes');
+        Observer.Expect('ref_3', 'Qty must not be 10 in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_3', 'Yes');
+        Observer.Expect('ref_4', 'Amt must not be 1.5 in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_4', 'Yes');
+        Observer.Expect('ref_5', 'Flag must not be Yes in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_5', 'Yes');
+        Observer.Expect('ref_6', 'Dt must not be 03/02/20 in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_6', 'Yes');
+        Observer.Expect('ref_7', 'Kind must not be Beta in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_7', 'Yes');
+        Observer.Expect('rec_2', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +143,22 @@ codeunit 72223 "LT P92 FieldError"
         end;
         Observer.Observe('rec_2', RecT(Item, 2, 'custom text', true));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('ref_1', 'Code Cap custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_1', 'Yes');
+        Observer.Expect('ref_2', 'Name Cap custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_2', 'Yes');
+        Observer.Expect('ref_3', 'Qty custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_3', 'Yes');
+        Observer.Expect('ref_4', 'Amt custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_4', 'Yes');
+        Observer.Expect('ref_5', 'Flag custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_5', 'Yes');
+        Observer.Expect('ref_6', 'Dt custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_6', 'Yes');
+        Observer.Expect('ref_7', 'Kind custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('same_7', 'Yes');
+        Observer.Expect('rec_2', 'Name Cap custom text in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +182,16 @@ codeunit 72223 "LT P92 FieldError"
         Observer.Observe('ref_unicode', Ref(RecRef, 2, 'Gr' + Format(CopyStr('ü', 1, 1)) + 'n', true));
         Observer.Observe('ref_long', Ref(RecRef, 2, PadStr('', 300, 'L'), true));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('ref_empty_text', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('rec_empty_text', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_space_text', 'Name Cap   in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_percent', 'Name Cap 100% %1 done in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('rec_percent', 'Name Cap 100% %1 done in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_period_end', 'Name Cap ends with period. in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_newline', 'Name Cap line1\line2 in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_unicode', 'Name Cap Grün in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_long', 'Name Cap LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL in P92 Item Caption Code Cap=''A1''.|NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -171,7 +210,11 @@ codeunit 72223 "LT P92 FieldError"
         Observer.Observe('empty_current_ref', Ref(RecRef, 2, '', false));
         Observer.Observe('empty_current_ref_text', Ref(RecRef, 2, 'x', true));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('temp_ref', 'You must specify Name Cap in P92 Item Caption Code Cap=''TMP''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('temp_ref_text', 'Name Cap tmp text in P92 Item Caption Code Cap=''TMP''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('empty_current_ref', 'You must specify Name Cap in P92 Item Caption Code Cap=''''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('empty_current_ref_text', 'Name Cap x in P92 Item Caption Code Cap=''''.|NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -190,7 +233,9 @@ codeunit 72223 "LT P92 FieldError"
         RecRef.FindFirst();
         Observer.Observe('paren_key', RefPair(RecRef, 3));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('composite_key', 'Txt bad in LT P92 Pair Grp=''A,B'',Seq=''3''.|NCLCSRTS:TableErrorStr');
+        Observer.Expect('paren_key', 'Txt bad in LT P92 Pair Grp=''X(1)'',Seq=''4''.|NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -231,6 +276,14 @@ codeunit 72223 "LT P92 FieldError"
         asserterror Item.FieldError(Name, 'with text');
         Observer.ObserveError('rec_text');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('ref_none|text', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('ref_none|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('ref_text|text', 'Name Cap with text in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('ref_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('rec_none|text', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('rec_none|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('rec_text|text', 'Name Cap with text in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('rec_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 }

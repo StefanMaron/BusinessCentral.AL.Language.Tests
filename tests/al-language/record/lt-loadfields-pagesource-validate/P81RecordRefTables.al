@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-settable-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained tables 70304, 70305 and codeunit 70306
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (tag P81, GitHub issue 81); every literal asserted later is what a local BC 29 tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: RecordRef.SetTable(Rec) / GetTable(Rec) when the RecordRef holds another table; temporary and non temporary records in each direction; error start and code; whether buffer and filters move
 // BC versions: 29 (27 and 28 by CI)
 
@@ -101,7 +101,12 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('text_has_table_b', Format(GetLastErrorText().Contains('LT P81 RR B')));
         Observer.Observe('b_code_after', B.Code);
         Observer.Observe('recref_number_ok', Format(RecRef.Number = Database::"LT P81 RR A"));
-        Observer.Finish();
+        Observer.Expect('settable_b', 'The table IDs do not match.|TableIdMismatch');
+        Observer.Expect('text_has_table_a', 'No');
+        Observer.Expect('text_has_table_b', 'No');
+        Observer.Expect('b_code_after', '');
+        Observer.Expect('recref_number_ok', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,7 +126,11 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('number_b', Format(RecRef.Number = Database::"LT P81 RR B"));
         Observer.Observe('name_field', Format(RecRef.Field(2).Value));
         Observer.Observe('code_field', Format(RecRef.Field(1).Value));
-        Observer.Finish();
+        Observer.Expect('number_a', 'Yes');
+        Observer.Expect('number_b', 'Yes');
+        Observer.Expect('name_field', 'b-one');
+        Observer.Expect('code_field', 'B1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,7 +145,8 @@ codeunit 70306 "LT P81 RecordRef Tables"
             Observer.Observe('settable_closed', 'no error')
         else
             Observer.Observe('settable_closed', ErrStart());
-        Observer.Finish();
+        Observer.Expect('settable_closed', 'The record is not open.|RecordNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +162,8 @@ codeunit 70306 "LT P81 RecordRef Tables"
             Observer.Observe('settable_a', 'no error')
         else
             Observer.Observe('settable_a', ErrStart());
-        Observer.Finish();
+        Observer.Expect('settable_a', 'The table IDs do not match.|TableIdMismatch');
+        Observer.Verify();
     end;
 
     [Test]
@@ -184,7 +195,15 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('t2_filters', T2.GetFilters());
         Observer.Observe('t2_name', T2.Name);
         Observer.Observe('t2_code', T2.Code);
-        Observer.Finish();
+        Observer.Expect('recref_temp', 'Yes');
+        Observer.Expect('recref_count', '1');
+        Observer.Expect('recref_filters', 'Qty: 6..9');
+        Observer.Expect('t2_temp', 'Yes');
+        Observer.Expect('t2_count', '0');
+        Observer.Expect('t2_filters', 'Qty: 6..9');
+        Observer.Expect('t2_name', 'temp-two');
+        Observer.Expect('t2_code', 'T2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -204,7 +223,11 @@ codeunit 70306 "LT P81 RecordRef Tables"
         RecRef.GetTable(T1);
         Observer.Observe('after_gettable_temp', Format(RecRef.IsTemporary()));
         Observer.Observe('after_gettable_count', Format(RecRef.Count()));
-        Observer.Finish();
+        Observer.Expect('opened_temp', 'No');
+        Observer.Expect('opened_count', '2');
+        Observer.Expect('after_gettable_temp', 'Yes');
+        Observer.Expect('after_gettable_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,7 +245,11 @@ codeunit 70306 "LT P81 RecordRef Tables"
         RecRef.GetTable(A);
         Observer.Observe('after_gettable_temp', Format(RecRef.IsTemporary()));
         Observer.Observe('after_gettable_count', Format(RecRef.Count()));
-        Observer.Finish();
+        Observer.Expect('opened_temp', 'Yes');
+        Observer.Expect('opened_count', '0');
+        Observer.Expect('after_gettable_temp', 'No');
+        Observer.Expect('after_gettable_count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -244,7 +271,11 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('a_temp', Format(A.IsTemporary()));
         Observer.Observe('a_count', Format(A.Count()));
         Observer.Observe('a_name', A.Name);
-        Observer.Finish();
+        Observer.Expect('settable', 'no error');
+        Observer.Expect('a_temp', 'No');
+        Observer.Expect('a_count', '2');
+        Observer.Expect('a_name', 'ref-temp');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +296,11 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('t_temp', Format(T.IsTemporary()));
         Observer.Observe('t_count', Format(T.Count()));
         Observer.Observe('t_name', T.Name);
-        Observer.Finish();
+        Observer.Expect('settable', 'no error');
+        Observer.Expect('t_temp', 'Yes');
+        Observer.Expect('t_count', '0');
+        Observer.Expect('t_name', 'a-one');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,7 +323,14 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('a2_code', A2.Code);
         Observer.Observe('a2_name', A2.Name);
         Observer.Observe('a2_temp', Format(A2.IsTemporary()));
-        Observer.Finish();
+        Observer.Expect('recref_filters', 'Qty: 2..3');
+        Observer.Expect('recref_count', '1');
+        Observer.Expect('a2_filters', 'Qty: 2..3');
+        Observer.Expect('a2_count', '1');
+        Observer.Expect('a2_code', 'A2');
+        Observer.Expect('a2_name', 'a-two');
+        Observer.Expect('a2_temp', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +355,14 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('a2_qty', Format(A2.Qty));
         Observer.Observe('a_qty_still', Format(A.Qty));
         Observer.Observe('db_has_new', Format(A.Get('NEW')));
-        Observer.Finish();
+        Observer.Expect('field_name', 'not inserted');
+        Observer.Expect('field_qty', '77');
+        Observer.Expect('a2_code', 'NEW');
+        Observer.Expect('a2_name', 'not inserted');
+        Observer.Expect('a2_qty', '78');
+        Observer.Expect('a_qty_still', '77');
+        Observer.Expect('db_has_new', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +388,12 @@ codeunit 70306 "LT P81 RecordRef Tables"
         RecRef.SetTable(T2);
         Observer.Observe('t2_count', Format(T2.Count()));
         Observer.Observe('t2_filters', T2.GetFilters());
-        Observer.Finish();
+        Observer.Expect('recref_count', '1');
+        Observer.Expect('recref_count_after_reset', '2');
+        Observer.Expect('t_filters_after_recref_reset', 'Qty: >1');
+        Observer.Expect('t2_count', '0');
+        Observer.Expect('t2_filters', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -359,7 +413,10 @@ codeunit 70306 "LT P81 RecordRef Tables"
         Observer.Observe('t_count', Format(T.Count()));
         Observer.Observe('recref_count', Format(RecRef.Count()));
         Observer.Observe('t_has_x9', Format(T.Get('X9')));
-        Observer.Finish();
+        Observer.Expect('t_count', '2');
+        Observer.Expect('recref_count', '2');
+        Observer.Expect('t_has_x9', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure RecRefCountDb(): Integer
@@ -387,7 +444,9 @@ codeunit 70306 "LT P81 RecordRef Tables"
             Observer.Observe('settable_b', 'no error')
         else
             Observer.Observe('settable_b', ErrStart());
-        Observer.Finish();
+        Observer.Expect('number_ok', 'Yes');
+        Observer.Expect('settable_b', 'The table IDs do not match.|TableIdMismatch');
+        Observer.Verify();
     end;
 
     [Test]
@@ -409,6 +468,10 @@ codeunit 70306 "LT P81 RecordRef Tables"
         RecRef.GetTable(A2);
         Observer.Observe('after_filtered_gettable', RecRef.GetFilters());
         Observer.Observe('count', Format(RecRef.Count()));
-        Observer.Finish();
+        Observer.Expect('before', 'Qty: 1');
+        Observer.Expect('after_unfiltered_gettable', '');
+        Observer.Expect('after_filtered_gettable', 'Qty: 2');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 }

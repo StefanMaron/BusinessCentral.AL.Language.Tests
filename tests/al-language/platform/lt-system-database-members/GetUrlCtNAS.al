@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-geturl-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73978
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: GetUrl for client type NAS with company, without, with empty company
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 73978 "LT P95 GetUrl CT NAS"
@@ -66,7 +66,12 @@ codeunit 73978 "LT P95 GetUrl CT NAS"
             Observer.Observe('NAS_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('NAS_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('NAS_shape', 'No|No|No|No|No|No|No');
+        Observer.Expect('NAS_tail', 'noquery');
+        Observer.Expect('NAS_nocompany_shape', 'No|No|No|No|No|No|No');
+        Observer.Expect('NAS_nocompany_tail', 'noquery');
+        Observer.Expect('NAS_emptycompany_shape', 'No|No|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
 }

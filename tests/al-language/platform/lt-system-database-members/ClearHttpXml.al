@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74019
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on HttpRequestMessage, HttpContent, XmlDocument, FilterPageBuilder
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74019 "LT P95 Clear Http Xml"
@@ -39,7 +39,11 @@ codeunit 74019 "LT P95 Clear Http Xml"
         Clear(FP);
         Observer.Observe('filterpage_count', Format(FP.Count()));
 
-        Observer.Finish();
+        Observer.Expect('request', '[GET][]');
+        Observer.Expect('content', '[]');
+        Observer.Expect('xml_has_root', 'No');
+        Observer.Expect('filterpage_count', '0');
+        Observer.Verify();
     end;
 
 }

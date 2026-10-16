@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74002
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on List, Dictionary, nested collections and the errors after a Clear
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74002 "LT P95 Clear Collections 2"
@@ -50,7 +50,21 @@ codeunit 74002 "LT P95 Clear Collections 2"
         Clear(LL);
         Observer.Observe('empty_clear', Format(LL.Count()));
 
-        Observer.Finish();
+        Observer.Expect('list_count', '0');
+        Observer.Expect('dict_count', '0');
+        Observer.Expect('dict_contains', 'No');
+        Observer.Expect('dict_keys', '0');
+        Observer.Expect('list_get|text', 'An invalid argument was passed to a ''List'' data type method.');
+        Observer.Expect('list_get|code', 'ArgumentOutOfRange');
+        Observer.Expect('dict_get|text', 'The given key was not present in the dictionary.');
+        Observer.Expect('dict_get|code', 'KeyNotFound');
+        Observer.Expect('list_reuse', 'c');
+        Observer.Expect('dict_reuse', 'z');
+        Observer.Expect('nested_count', '0');
+        Observer.Expect('inner_untouched', '1');
+        Observer.Expect('inner_after', '0');
+        Observer.Expect('empty_clear', '0');
+        Observer.Verify();
     end;
 
 }

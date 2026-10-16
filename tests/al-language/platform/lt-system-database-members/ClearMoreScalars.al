@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74006
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on DateFormula, RecordId, Version, Code[N], Text[N], Byte, Char, Boolean, BigInteger and others not yet pinned
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74006 "LT P95 Clear More Scalars"
@@ -49,7 +49,18 @@ codeunit 74006 "LT P95 Clear More Scalars"
         Observer.Observe('recordid', '[' + Format(Rid) + ']');
         Observer.Observe('recordid_table', Format(Rid.TableNo()));
 
-        Observer.Finish();
+        Observer.Expect('before', '1M|ABC|hello|È|1.2.3.4');
+        Observer.Expect('dateformula', '[]');
+        Observer.Expect('code', '[]0');
+        Observer.Expect('text', '[]0');
+        Observer.Expect('byte', '\u0000');
+        Observer.Expect('char', '\u0000');
+        Observer.Expect('char_int', '\u0000');
+        Observer.Expect('version', '0.0.0.0');
+        Observer.Expect('version_major', '0');
+        Observer.Expect('recordid', '[]');
+        Observer.Expect('recordid_table', '0');
+        Observer.Verify();
     end;
 
 }

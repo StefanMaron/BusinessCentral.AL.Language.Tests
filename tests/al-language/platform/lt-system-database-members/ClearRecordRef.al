@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74011
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on RecordRef and FieldRef: state afterwards and errors on use
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74011 "LT P95 Clear RecordRef"
@@ -78,7 +78,13 @@ codeunit 74011 "LT P95 Clear RecordRef"
         Clear(RR);
         Observer.Observe('double_clear_try', TryNumber(RR));
 
-        Observer.Finish();
+        Observer.Expect('opened', '2000000038');
+        Observer.Expect('after_clear_try', 'ok|0');
+        Observer.Expect('after_clear_isempty_try', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('field_before', '1');
+        Observer.Expect('field_after_try', 'error:Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.|NotInitialized');
+        Observer.Expect('double_clear_try', 'ok|0');
+        Observer.Verify();
     end;
 
 }

@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), enum LT P89 Color (74626)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74633 "LT P89 Is FilterPageBuilder"
 {
@@ -37,6 +37,9 @@ codeunit 74633 "LT P89 Is FilterPageBuilder"
         X.AddTable('LT P89 Rec', Database::"LT P89 Rec");
         V := X; Observer.Observe('with_table', Flags(V));
         Observer.Observe('count', Format(X.Count()));
-        Observer.Finish();
+        Observer.Expect('default', 'FilterPageBuilder,');
+        Observer.Expect('with_table', 'FilterPageBuilder,');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 }

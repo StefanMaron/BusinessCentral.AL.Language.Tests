@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/fieldref/fieldref-testfield-method
 // Scope: in-scope
 // Fixtures used: tables 72200, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: TestField / FieldError with ErrorInfo (Record side certain, FieldRef side unsure: drop the FieldRef tests when they do not compile)
 // BC versions: 29 (27 and 28 by CI)
 
@@ -30,7 +30,15 @@ codeunit 72224 "LT P92 ErrorInfo"
         Observer.ObserveError('rec_blank_info_emptymsg');
         asserterror Item.TestField(Name);
         Observer.ObserveError('rec_blank_plain');
-        Observer.Finish();
+        Observer.Expect('rec_blank_info|text', 'Name Cap must have a value in P92 Item Caption: Code Cap=B1. It cannot be zero or empty.');
+        Observer.Expect('rec_blank_info|code', 'TestField');
+        Observer.Expect('rec_value_info|text', 'Qty must be equal to ''5''  in P92 Item Caption: Code Cap=B1. Current value is ''0''.');
+        Observer.Expect('rec_value_info|code', 'TestField');
+        Observer.Expect('rec_blank_info_emptymsg|text', 'Name Cap must have a value in P92 Item Caption: Code Cap=B1. It cannot be zero or empty.');
+        Observer.Expect('rec_blank_info_emptymsg|code', 'TestField');
+        Observer.Expect('rec_blank_plain|text', 'Name Cap must have a value in P92 Item Caption: Code Cap=B1. It cannot be zero or empty.');
+        Observer.Expect('rec_blank_plain|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -49,7 +57,11 @@ codeunit 72224 "LT P92 ErrorInfo"
         Info.Message := '';
         asserterror Item.FieldError(Name, Info);
         Observer.ObserveError('rec_fielderror_info_emptymsg');
-        Observer.Finish();
+        Observer.Expect('rec_fielderror_info|text', 'Name Cap info message in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('rec_fielderror_info|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('rec_fielderror_info_emptymsg|text', 'Name Cap must not be Alpha in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('rec_fielderror_info_emptymsg|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -73,7 +85,11 @@ codeunit 72224 "LT P92 ErrorInfo"
         asserterror Fld.TestField(5, Info);
         Observer.ObserveError('ref_value_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('ref_blank_info|text', 'Name Cap must have a value in P92 Item Caption: Code Cap=B1. It cannot be zero or empty.');
+        Observer.Expect('ref_blank_info|code', 'TestField');
+        Observer.Expect('ref_value_info|text', 'Qty must be equal to ''5''  in P92 Item Caption: Code Cap=B1. Current value is ''0''.');
+        Observer.Expect('ref_value_info|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -94,6 +110,8 @@ codeunit 72224 "LT P92 ErrorInfo"
         asserterror Fld.FieldError(Info);
         Observer.ObserveError('ref_fielderror_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('ref_fielderror_info|text', 'Name Cap info message in P92 Item Caption Code Cap=''A1''.');
+        Observer.Expect('ref_fielderror_info|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 }

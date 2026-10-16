@@ -33,7 +33,9 @@ codeunit 73074 "LT P94 Xp Encoding"
     begin
         Observer.Observe('plain', Format(Plain.TextEncoding()));
         Observer.Observe('declared', Format(Declared.TextEncoding()));
-        Observer.Finish();
+        Observer.Expect('plain', 'MSDos');
+        Observer.Expect('declared', 'UTF8');
+        Observer.Verify();
     end;
 
     [Test]
@@ -49,7 +51,11 @@ codeunit 73074 "LT P94 Xp Encoding"
         Observer.Observe('msdos', Format(Xp.TextEncoding()));
         Xp.TextEncoding(TextEncoding::UTF8);
         Observer.Observe('utf8', Format(Xp.TextEncoding()));
-        Observer.Finish();
+        Observer.Expect('utf16', 'UTF16');
+        Observer.Expect('windows', 'Windows');
+        Observer.Expect('msdos', 'MSDos');
+        Observer.Expect('utf8', 'UTF8');
+        Observer.Verify();
     end;
 
     [Test]
@@ -78,7 +84,15 @@ codeunit 73074 "LT P94 Xp Encoding"
         Observer.Observe('utf16Text', Helper.ReadBlob(Row2, TextEncoding::UTF16));
         Observer.Observe('windowsText', Helper.ReadBlob(Row3, TextEncoding::Windows));
         Observer.Observe('msdosText', Helper.ReadBlob(Row4, TextEncoding::MSDos));
-        Observer.Finish();
+        Observer.Expect('utf8Len', '0');
+        Observer.Expect('utf16Len', '0');
+        Observer.Expect('windowsLen', '0');
+        Observer.Expect('msdosLen', '0');
+        Observer.Expect('utf8Text', '');
+        Observer.Expect('utf16Text', '');
+        Observer.Expect('windowsText', '');
+        Observer.Expect('msdosText', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +124,16 @@ codeunit 73074 "LT P94 Xp Encoding"
         Observer.Observe('windowsSame', Format(Helper.ReadBlob(Row3, TextEncoding::Windows).Contains(Name)));
         Observer.Observe('msdosSame', Format(Helper.ReadBlob(Row4, TextEncoding::MSDos).Contains(Name)));
         Observer.Observe('utf8AsWindowsSame', Format(Helper.ReadBlob(Row1, TextEncoding::Windows).Contains(Name)));
-        Observer.Finish();
+        Observer.Expect('utf8Len', '0');
+        Observer.Expect('utf16Len', '0');
+        Observer.Expect('windowsLen', '0');
+        Observer.Expect('msdosLen', '0');
+        Observer.Expect('utf8Same', 'No');
+        Observer.Expect('utf16Same', 'No');
+        Observer.Expect('windowsSame', 'No');
+        Observer.Expect('msdosSame', 'No');
+        Observer.Expect('utf8AsWindowsSame', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,7 +159,13 @@ codeunit 73074 "LT P94 Xp Encoding"
         Observer.Observe('utf8Same', Format(Helper.ReadBlob(Row1, TextEncoding::UTF8).Contains(Name)));
         Observer.Observe('windowsSame', Format(Helper.ReadBlob(Row2, TextEncoding::Windows).Contains(Name)));
         Observer.Observe('msdosSame', Format(Helper.ReadBlob(Row3, TextEncoding::MSDos).Contains(Name)));
-        Observer.Finish();
+        Observer.Expect('utf8Len', '0');
+        Observer.Expect('windowsLen', '0');
+        Observer.Expect('msdosLen', '0');
+        Observer.Expect('utf8Same', 'No');
+        Observer.Expect('windowsSame', 'No');
+        Observer.Expect('msdosSame', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -166,7 +195,10 @@ codeunit 73074 "LT P94 Xp Encoding"
         Observer.Observe('utf8Len', Format(LenUtf8));
         Observer.Observe('utf16Len', Format(LenUtf16));
         Observer.Observe('utf16Larger', Format(LenUtf16 > LenUtf8));
-        Observer.Finish();
+        Observer.Expect('utf8Len', '0');
+        Observer.Expect('utf16Len', '0');
+        Observer.Expect('utf16Larger', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,6 +219,10 @@ codeunit 73074 "LT P94 Xp Encoding"
         Observer.Observe('len', Format(Row.Data.Length()));
         Observer.Observe('utf8Read', Helper.ReadBlob(Row, TextEncoding::UTF8));
         Observer.Observe('utf16Read', Helper.ReadBlob(Row, TextEncoding::UTF16));
-        Observer.Finish();
+        Observer.Expect('log', 'delim=[~];sep=[|];rec=[\n];table=[];enc=UTF8;after=[||~|\n|UTF16]');
+        Observer.Expect('len', '0');
+        Observer.Expect('utf8Read', '');
+        Observer.Expect('utf16Read', '');
+        Observer.Verify();
     end;
 }

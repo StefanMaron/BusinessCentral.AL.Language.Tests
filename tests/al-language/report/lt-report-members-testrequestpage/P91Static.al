@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; the literals are measured later). Tag P91 (GitHub issue 91).
+// BC versions: 29
 // Fixtures used: tables and helper of P91Fix.al; self-contained reports 71597, 71598 and codeunit 71611
 // Facts (stream SaveAs overloads are OnPrem only and not used): static Report layout members (DefaultLayout, RdlcLayout, WordLayout, ExcelLayout, WordXmlPart) on reports without a layout file, a ProcessingOnly report, 0 and an unknown id;
 // stream overloads SaveAsPdf / SaveAsWord / SaveAsExcel / SaveAsHtml / SaveAsXml into an OutStream
@@ -108,7 +108,12 @@ codeunit 71611 "LT P91 Static Tests"
         Observer.Observe('zero', DefaultLayoutOf(0));
         Observer.Observe('unknown', DefaultLayoutOf(71999));
         Observer.Observe('negative', DefaultLayoutOf(-1));
-        Observer.Finish();
+        Observer.Expect('nolayout', 'RDLC');
+        Observer.Expect('proconly', 'None');
+        Observer.Expect('zero', 'error:You tried to invoke the Report object with the ID 0 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('unknown', 'error:You tried to invoke the Report object with the ID 71999 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('negative', 'error:You tried to invoke the Report object with the ID -1 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,7 +123,9 @@ codeunit 71611 "LT P91 Static Tests"
     begin
         asserterror Lay := Report.DefaultLayout(71999);
         Observer.ObserveError('unknown');
-        Observer.Finish();
+        Observer.Expect('unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('unknown|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +135,11 @@ codeunit 71611 "LT P91 Static Tests"
         Observer.Observe('proconly', LayoutStreamOf(1, Report::"LT P91 ProcOnly"));
         Observer.Observe('zero', LayoutStreamOf(1, 0));
         Observer.Observe('unknown', LayoutStreamOf(1, 71999));
-        Observer.Finish();
+        Observer.Expect('nolayout', 'eos=Yes');
+        Observer.Expect('proconly', 'error:Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLReportNoLayoutException'' was thrown.|ReportNoLayout');
+        Observer.Expect('zero', 'error:You tried to invoke the Report object with the ID 0 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('unknown', 'error:You tried to invoke the Report object with the ID 71999 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +149,11 @@ codeunit 71611 "LT P91 Static Tests"
         Observer.Observe('proconly', LayoutStreamOf(2, Report::"LT P91 ProcOnly"));
         Observer.Observe('zero', LayoutStreamOf(2, 0));
         Observer.Observe('unknown', LayoutStreamOf(2, 71999));
-        Observer.Finish();
+        Observer.Expect('nolayout', 'error:Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLReportNoLayoutException'' was thrown.|ReportNoLayout');
+        Observer.Expect('proconly', 'error:Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLReportNoLayoutException'' was thrown.|ReportNoLayout');
+        Observer.Expect('zero', 'error:You tried to invoke the Report object with the ID 0 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('unknown', 'error:You tried to invoke the Report object with the ID 71999 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +163,11 @@ codeunit 71611 "LT P91 Static Tests"
         Observer.Observe('proconly', LayoutStreamOf(3, Report::"LT P91 ProcOnly"));
         Observer.Observe('zero', LayoutStreamOf(3, 0));
         Observer.Observe('unknown', LayoutStreamOf(3, 71999));
-        Observer.Finish();
+        Observer.Expect('nolayout', 'error:Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLReportNoLayoutException'' was thrown.|ReportNoLayout');
+        Observer.Expect('proconly', 'error:Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLReportNoLayoutException'' was thrown.|ReportNoLayout');
+        Observer.Expect('zero', 'error:You tried to invoke the Report object with the ID 0 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('unknown', 'error:You tried to invoke the Report object with the ID 71999 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +177,11 @@ codeunit 71611 "LT P91 Static Tests"
         Observer.Observe('proconly', WordXmlPartOf(Report::"LT P91 ProcOnly"));
         Observer.Observe('zero', WordXmlPartOf(0));
         Observer.Observe('unknown', WordXmlPartOf(71999));
-        Observer.Finish();
+        Observer.Expect('nolayout', 'len>0=Yes');
+        Observer.Expect('proconly', 'len>0=Yes');
+        Observer.Expect('zero', 'error:You tried to invoke the Report object with the ID 0 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('unknown', 'error:You tried to invoke the Report object with the ID 71999 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -168,6 +191,8 @@ codeunit 71611 "LT P91 Static Tests"
     begin
         asserterror Txt := Report.WordXmlPart(71999);
         Observer.ObserveError('unknown');
-        Observer.Finish();
+        Observer.Expect('unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('unknown|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 }

@@ -89,7 +89,15 @@ codeunit 72079 "LT P83 DocType Create"
         Observer.Observe('public-subset', Members());
         Dt := XmlDocumentType.Create('a', '', 's', 'x');
         Observer.Observe('system-subset', Members());
-        Observer.Finish();
+        Observer.Expect('all', '[html|-//W3C//DTD XHTML 1.0 Strict//EN|http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd|<!ENTITY e "v">]');
+        Observer.Expect('empty', '[a|||]');
+        Observer.Expect('public-only', '[a|p||]');
+        Observer.Expect('system-only', '[a||s|]');
+        Observer.Expect('subset-only', '[a|||x]');
+        Observer.Expect('public-system', '[a|p|s|]');
+        Observer.Expect('public-subset', '[a|p||x]');
+        Observer.Expect('system-subset', '[a||s|x]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +112,15 @@ codeunit 72079 "LT P83 DocType Create"
             Observer.ObserveError('af103');
         Observer.Observe('create1-empty', Format(TryCreate1('')));
         Observer.ObserveError('create1-empty');
-        Observer.Finish();
+        Observer.Expect('create1', 'Yes');
+        Observer.Expect('create1|text', '');
+        Observer.Expect('create1|code', '');
+        Observer.Expect('af103|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLMemberNotInitializedException'' was thrown.');
+        Observer.Expect('af103|code', 'MemberNotInitialized');
+        Observer.Expect('create1-empty', 'No');
+        Observer.Expect('create1-empty|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('create1-empty|code', 'Argument');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +133,12 @@ codeunit 72079 "LT P83 DocType Create"
         if Format(TryCreate3('html', 'p', 's')) = 'Yes' then
             asserterror Observer.Observe('members3', Members());
             Observer.ObserveError('af118');
-        Observer.Finish();
+        Observer.Expect('create3', 'Yes');
+        Observer.Expect('create3|text', '');
+        Observer.Expect('create3|code', '');
+        Observer.Expect('af118|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLMemberNotInitializedException'' was thrown.');
+        Observer.Expect('af118|code', 'MemberNotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +164,31 @@ codeunit 72079 "LT P83 DocType Create"
                 Observer.Observe('name' + Format(i), GName(Dt));
             Clear(Dt);
         end;
-        Observer.Finish();
+        Observer.Expect('ok1', 'Yes');
+        Observer.Expect('ok1|text', '');
+        Observer.Expect('ok1|code', '');
+        Observer.Expect('name1', 'a');
+        Observer.Expect('ok2', 'Yes');
+        Observer.Expect('ok2|text', '');
+        Observer.Expect('ok2|code', '');
+        Observer.Expect('name2', 'a-b');
+        Observer.Expect('ok3', 'Yes');
+        Observer.Expect('ok3|text', '');
+        Observer.Expect('ok3|code', '');
+        Observer.Expect('name3', 'a.b');
+        Observer.Expect('ok4', 'Yes');
+        Observer.Expect('ok4|text', '');
+        Observer.Expect('ok4|code', '');
+        Observer.Expect('name4', '_a');
+        Observer.Expect('ok5', 'Yes');
+        Observer.Expect('ok5|text', '');
+        Observer.Expect('ok5|code', '');
+        Observer.Expect('name5', 'a:b');
+        Observer.Expect('ok6', 'Yes');
+        Observer.Expect('ok6|text', '');
+        Observer.Expect('ok6|code', '');
+        Observer.Expect('name6', 'äöü');
+        Observer.Verify();
     end;
 
     [Test]
@@ -168,7 +213,23 @@ codeunit 72079 "LT P83 DocType Create"
         Observer.Observe('long-system', Format(TryCreate('a', '', Long, '')));
         Observer.ObserveError('long-system');
         Observer.Observe('long-system-length', Format(StrLen(GSys(Dt))));
-        Observer.Finish();
+        Observer.Expect('long-name', 'Yes');
+        Observer.Expect('long-name|text', '');
+        Observer.Expect('long-name|code', '');
+        Observer.Expect('long-name-length', '2000');
+        Observer.Expect('long-subset', 'Yes');
+        Observer.Expect('long-subset|text', '');
+        Observer.Expect('long-subset|code', '');
+        Observer.Expect('long-subset-length', '2000');
+        Observer.Expect('long-public', 'Yes');
+        Observer.Expect('long-public|text', '');
+        Observer.Expect('long-public|code', '');
+        Observer.Expect('long-public-length', '2000');
+        Observer.Expect('long-system', 'Yes');
+        Observer.Expect('long-system|text', '');
+        Observer.Expect('long-system|code', '');
+        Observer.Expect('long-system-length', '2000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,7 +252,27 @@ codeunit 72079 "LT P83 DocType Create"
         Observer.Observe('whitespace', Format(TryCreate('a', ' p ', ' s ', ' x ')));
         Observer.ObserveError('whitespace');
         Observer.Observe('whitespace-members', Members());
-        Observer.Finish();
+        Observer.Expect('unicode', 'Yes');
+        Observer.Expect('unicode|text', '');
+        Observer.Expect('unicode|code', '');
+        Observer.Expect('unicode-members', '[a|Grüße €|Straße ü|ä]');
+        Observer.Expect('quotes', 'Yes');
+        Observer.Expect('quotes|text', '');
+        Observer.Expect('quotes|code', '');
+        Observer.Expect('quotes-members', '[a|p"q|s"t|]');
+        Observer.Expect('apostrophes', 'Yes');
+        Observer.Expect('apostrophes|text', '');
+        Observer.Expect('apostrophes|code', '');
+        Observer.Expect('apostrophes-members', '[a|p''q|s''t|]');
+        Observer.Expect('markup', 'Yes');
+        Observer.Expect('markup|text', '');
+        Observer.Expect('markup|code', '');
+        Observer.Expect('markup-members', '[a|<p>|<s>|<!ELEMENT a (#PCDATA)>]');
+        Observer.Expect('whitespace', 'Yes');
+        Observer.Expect('whitespace|text', '');
+        Observer.Expect('whitespace|code', '');
+        Observer.Expect('whitespace-members', '[a| p | s | x ]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -206,6 +287,9 @@ codeunit 72079 "LT P83 DocType Create"
         Dt.SetName('changed');
         Observer.Observe('second-name', GName(Dt2));
         Observer.Observe('first-name', GName(Dt));
-        Observer.Finish();
+        Observer.Expect('first', '[a|p|s|i]');
+        Observer.Expect('second-name', 'b');
+        Observer.Expect('first-name', 'changed');
+        Observer.Verify();
     end;
 }

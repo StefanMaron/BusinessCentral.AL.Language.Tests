@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-runmodal-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained table 70307, pages 70308 and 70309, codeunit 70310
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (tag P81, GitHub issue 81); every literal asserted later is what a local BC 29 tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: running a page with a temporary record as source (Page.RunModal(Id, TempRec), Page.Run(Id, TempRec), SetTableView, SetRecord): which rows the page shows and what it writes back to the temporary record and to the table
 // BC versions: 29 (27 and 28 by CI)
 
@@ -180,7 +180,15 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Result));
         Observer.Observe('temp_count', Format(Temp.Count()));
         ObserveDb('a');
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('a_db_count', '2');
+        Observer.Expect('a_db_has_t1', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -199,7 +207,20 @@ codeunit 70310 "LT P81 Page Temp Source"
         Row.Get('D1');
         Observer.Observe('db_d1_name', Row.Name);
         ObserveDb('a');
-        Observer.Finish();
+        Observer.Expect('page_first_before', 'T1|temp-one');
+        Observer.Expect('page_row1', 'T1|edited|42');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_row4', '||0');
+        Observer.Expect('page_rows', '4');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('temp_t1_found', 'Yes');
+        Observer.Expect('temp_t1_name', 'edited');
+        Observer.Expect('temp_t1_qty', '42');
+        Observer.Expect('db_d1_name', 'db-one');
+        Observer.Expect('a_db_count', '2');
+        Observer.Expect('a_db_has_t1', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,7 +235,18 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('temp_n1_found', Format(Temp.Get('N1')));
         Observer.Observe('temp_n1_name', Temp.Name);
         ObserveDb('a');
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'N1|new-row|5');
+        Observer.Expect('page_row3', 'T2|temp-two|2');
+        Observer.Expect('page_row4', 'T3|temp-three|3');
+        Observer.Expect('page_row5', '||0');
+        Observer.Expect('page_rows', '5');
+        Observer.Expect('temp_count', '4');
+        Observer.Expect('temp_n1_found', 'Yes');
+        Observer.Expect('temp_n1_name', 'new-row');
+        Observer.Expect('a_db_count', '2');
+        Observer.Expect('a_db_has_t1', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +261,10 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Result));
         Observer.Observe('temp_t1_found', Format(Temp.Get('T1')));
         Observer.Observe('temp_t1_name', Temp.Name);
-        Observer.Finish();
+        Observer.Expect('result', 'LookupCancel');
+        Observer.Expect('temp_t1_found', 'Yes');
+        Observer.Expect('temp_t1_name', 'edited-cancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -243,7 +278,13 @@ codeunit 70310 "LT P81 Page Temp Source"
         Page.RunModal(Page::"LT P81 PG List", Temp);
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('temp_filters', Temp.GetFilters());
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T2|temp-two|2');
+        Observer.Expect('page_row2', 'T3|temp-three|3');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('temp_count', '2');
+        Observer.Expect('temp_filters', 'Qty: >=2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -257,7 +298,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Row.FindFirst();
         Page.RunModal(Page::"LT P81 PG List", Row);
         Observer.Observe('row_code', Row.Code);
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('row_code', 'D1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +319,11 @@ codeunit 70310 "LT P81 Page Temp Source"
         Pg.RunModal();
         Observer.Observe('temp_count', Format(Temp.Count()));
         ObserveDb('a');
-        Observer.Finish();
+        Observer.Expect('page_rows', '0');
+        Observer.Expect('temp_count', '2');
+        Observer.Expect('a_db_count', '2');
+        Observer.Expect('a_db_has_t1', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,7 +338,10 @@ codeunit 70310 "LT P81 Page Temp Source"
         Row.SetRange(Qty, 20);
         Pg.SetTableView(Row);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D2|db-two|20');
+        Observer.Expect('page_row2', '||0');
+        Observer.Expect('page_rows', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -302,7 +355,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Temp.Get('T2');
         Pg.SetRecord(Temp);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('page_current', 'D2|db-two');
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -317,7 +375,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Row.Get('D2');
         Pg.SetRecord(Row);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('page_current', 'D2|db-two');
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -333,7 +396,9 @@ codeunit 70310 "LT P81 Page Temp Source"
         Temp.SetFilter(Qty, '<=2');
         Pg.SetTableView(Temp);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('page_current', '|');
+        Observer.Expect('page_rows', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -345,7 +410,13 @@ codeunit 70310 "LT P81 Page Temp Source"
         Seed(Temp);
         Page.Run(Page::"LT P81 PG List", Temp);
         Observer.Observe('temp_count', Format(Temp.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_row4', '||0');
+        Observer.Expect('page_rows', '4');
+        Observer.Expect('temp_count', '3');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -379,7 +450,8 @@ codeunit 70310 "LT P81 Page Temp Source"
     begin
         Seed(Temp);
         Page.RunModal(Page::"LT P81 PG TempList");
-        Observer.Finish();
+        Observer.Expect('page_rows', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -391,7 +463,13 @@ codeunit 70310 "LT P81 Page Temp Source"
         Seed(Temp);
         Page.RunModal(Page::"LT P81 PG TempList", Temp);
         Observer.Observe('temp_count', Format(Temp.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one');
+        Observer.Expect('page_row2', 'T2|temp-two');
+        Observer.Expect('page_row3', 'T3|temp-three');
+        Observer.Expect('page_row4', '|');
+        Observer.Expect('page_rows', '4');
+        Observer.Expect('temp_count', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -406,6 +484,9 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('db_count', Format(Row.Count()));
         Observer.Observe('db_has_pn', Format(Row.Get('PN')));
         Observer.Observe('temp_has_pn', Format(Temp.Get('PN')));
-        Observer.Finish();
+        Observer.Expect('db_count', '2');
+        Observer.Expect('db_has_pn', 'No');
+        Observer.Expect('temp_has_pn', 'No');
+        Observer.Verify();
     end;
 }

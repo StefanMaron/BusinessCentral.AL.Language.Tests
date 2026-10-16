@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/currpage/currpage
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); LT P82 Card (71187), LT P82 List (71188), LT P82 Item (71184), LT P82 Log (71186) from P82Fixtures.al
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: CurrPage.Update(false/true/default), Close, Editable, SaveRecord, SetSelectionFilter, ObjectId(true/false), Caption (read and assigned) called from page actions, with the trigger log and the stored rows
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 71202 "LT P82 CurrPage"
 {
@@ -55,7 +55,13 @@ codeunit 71202 "LT P82 CurrPage"
         Card.Close();
         Item.Get('A');
         Observer.Observe('name-stored-after-close', Item.Name);
-        Observer.Finish();
+        Observer.Expect('log-open', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A)');
+        Observer.Expect('log-after-setvalue', '');
+        Observer.Expect('log-after-update-false', 'OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A)');
+        Observer.Expect('name-on-page', 'Edited');
+        Observer.Expect('name-stored', 'Edited');
+        Observer.Expect('name-stored-after-close', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,7 +82,9 @@ codeunit 71202 "LT P82 CurrPage"
         Item.Get('B');
         Observer.Observe('name-stored', Item.Name);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log-after-update-true', 'OnAfterGetRecord(B);OnAfterGetRecord(B);OnAfterGetRecord(B)');
+        Observer.Expect('name-stored', 'Edited B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -97,7 +105,9 @@ codeunit 71202 "LT P82 CurrPage"
         Item.Get('B');
         Observer.Observe('name-stored', Item.Name);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log-after-update', 'OnAfterGetRecord(B);OnAfterGetRecord(B);OnAfterGetRecord(B)');
+        Observer.Expect('name-stored', 'Edited default');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,7 +129,10 @@ codeunit 71202 "LT P82 CurrPage"
         Card.ActUpdate.Invoke();
         Observer.Observe('name-after-update', Card.NameCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('name-before', 'Gamma');
+        Observer.Expect('name-before-update', 'Gamma');
+        Observer.Expect('name-after-update', 'Changed behind');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +148,8 @@ codeunit 71202 "LT P82 CurrPage"
         Log.Reset();
         Card.ActClose.Invoke();
         Observer.Observe('log-after-currpage-close', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log-after-currpage-close', 'OnAfterGetRecord(A);OnQueryClosePage(OK);OnClosePage;OnAfterGetRecord(A)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,7 +164,8 @@ codeunit 71202 "LT P82 CurrPage"
         Log.Reset();
         Card.Close();
         Observer.Observe('log-after-testpage-close', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log-after-testpage-close', 'OnQueryClosePage(OK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -168,7 +183,13 @@ codeunit 71202 "LT P82 CurrPage"
         Observer.ObserveError('invoke-after-currpage-close');
         asserterror Card.Close();
         Observer.ObserveError('close-after-currpage-close');
-        Observer.Finish();
+        Observer.Expect('value-after-currpage-close|text', 'The TestPage is not open.');
+        Observer.Expect('value-after-currpage-close|code', 'TestPageNotOpened');
+        Observer.Expect('invoke-after-currpage-close|text', 'The TestPage is not open.');
+        Observer.Expect('invoke-after-currpage-close|code', 'TestPageNotOpened');
+        Observer.Expect('close-after-currpage-close|text', 'The TestPage is not open.');
+        Observer.Expect('close-after-currpage-close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -194,7 +215,9 @@ codeunit 71202 "LT P82 CurrPage"
         Card.ActEditRead.Invoke();
         Card.Close();
         Observer.Observe('log-view', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);Editable=Yes;OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);Editable=Yes;OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);Editable=Yes;OnAfterGetRecord(A);OnAfterGetRecord(A);OnQueryClosePage(OK);OnClosePage');
+        Observer.Expect('log-view', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);Editable=No;OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);Editable=No;OnAfterGetRecord(A);OnAfterGetRecord(A);OnQueryClosePage(OK);OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +239,10 @@ codeunit 71202 "LT P82 CurrPage"
         Observer.Observe('stored-after', Item.Name);
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('stored-before', 'Alpha');
+        Observer.Expect('stored-after', 'Saved by action');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);saved;OnAfterGetRecord(A)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -231,7 +257,8 @@ codeunit 71202 "LT P82 CurrPage"
         Card.ActSave.Invoke();
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);saved;OnAfterGetRecord(A)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,7 +274,9 @@ codeunit 71202 "LT P82 CurrPage"
         Card.ActSave.Invoke();
         Observer.Observe('save-without-key', 'no error');
         Observer.Observe('count', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('save-without-key', 'no error');
+        Observer.Expect('count', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +298,9 @@ codeunit 71202 "LT P82 CurrPage"
         List.ActSelFilter.Invoke();
         Observer.Observe('log', Log.Dump());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('log-open', 'List OnOpenPage filter=');
+        Observer.Expect('log', 'sel=1 filter=A;sel=1 filter=B;sel=1 filter=C');
+        Observer.Verify();
     end;
 
     [Test]
@@ -286,7 +317,8 @@ codeunit 71202 "LT P82 CurrPage"
         List.ActSelFilter.Invoke();
         Observer.Observe('log', Log.Dump());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'List OnOpenPage filter=;sel=1 filter=B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -303,7 +335,8 @@ codeunit 71202 "LT P82 CurrPage"
         List.ActSelFilter.Invoke();
         Observer.Observe('log', Log.Dump());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'List OnOpenPage filter=;sel=0 filter=''''');
+        Observer.Verify();
     end;
 
     [Test]
@@ -318,7 +351,8 @@ codeunit 71202 "LT P82 CurrPage"
         Card.ActObjId.Invoke();
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);id1=Page LT P82 Card Caption;id0=Page 71187;OnAfterGetRecord(A);OnAfterGetRecord(A)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +373,11 @@ codeunit 71202 "LT P82 CurrPage"
         Card.OpenView();
         Observer.Observe('testpage-caption-reopened', Card.Caption());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('testpage-caption-before', 'LT P82 Card Caption - A');
+        Observer.Expect('testpage-caption-after', 'Changed caption - A');
+        Observer.Expect('log', 'OnOpenPage;OnAfterGetRecord(A);OnAfterGetRecord(A);caption=LT P82 Card Caption;OnAfterGetRecord(A);OnAfterGetRecord(A);OnAfterGetRecord(A);caption=Changed caption;OnAfterGetRecord(A);OnAfterGetRecord(A)');
+        Observer.Expect('testpage-caption-reopened', 'LT P82 Card Caption - A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -355,7 +393,9 @@ codeunit 71202 "LT P82 CurrPage"
         List.OpenEdit();
         Observer.Observe('list-caption-edit', List.Caption());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('list-caption', 'LT P82 List Caption');
+        Observer.Expect('list-caption-edit', 'LT P82 List Caption');
+        Observer.Verify();
     end;
 
     [Test]
@@ -370,7 +410,8 @@ codeunit 71202 "LT P82 CurrPage"
         List.ActLookupMode.Invoke();
         List.Close();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'List OnOpenPage filter=;LookupMode=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +427,10 @@ codeunit 71202 "LT P82 CurrPage"
         Observer.ObserveError('action-error');
         Observer.Observe('no-after', Card.NoCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('action-error|text', 'P82 action error B');
+        Observer.Expect('action-error|code', 'TestWrapped:Dialog');
+        Observer.Expect('no-after', 'B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -405,6 +449,8 @@ codeunit 71202 "LT P82 CurrPage"
         Card.NoCtl.SetValue('QC1');
         Card.Close();
         Observer.Observe('log-new', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log-edit', 'OnOpenPage;OnAfterGetRecord(A);OnQueryClosePage(OK);OnClosePage');
+        Observer.Expect('log-new', 'OnOpenPage;OnQueryClosePage(OK);OnClosePage');
+        Observer.Verify();
     end;
 }

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-event-types
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 73036, page 73050, log codeunit 73051 (used only by test codeunit 73053), manual subscriber 73052
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 ...; observed values are added by the lead after measuring (tag P84, GitHub issue #84)
 // Facts: IncludeSender = true on an event published by a page (procedure, OnOpenPage, OnNewRecord, OnAfterGetRecord, OnQueryClosePage, OnClosePage): what Sender is and whether the subscriber can call the page procedures
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 page 73050 "LT P84 Sender Card"
 {
@@ -187,7 +187,13 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Observer.Observe('log2', SenderLog.Take());
         Observer.Observe('seen2', Pg.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'p|marker=m1|hits=1;');
+        Observer.Expect('marker_after', 'sub-p');
+        Observer.Expect('hits_after', '1');
+        Observer.Expect('seen', 'p=sub-p;');
+        Observer.Expect('log2', 'p2|marker=sub-p|hits=2;');
+        Observer.Expect('seen2', 'p=sub-p;p2=sub-p2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +216,12 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Observer.Observe('hits1', Format(Pg1.GetHits()));
         Observer.Observe('hits2', Format(Pg2.GetHits()));
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log_second', 'x|marker=second|hits=1;');
+        Observer.Expect('marker1', 'first');
+        Observer.Expect('marker2', 'sub-x');
+        Observer.Expect('hits1', '0');
+        Observer.Expect('hits2', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +240,10 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Observer.Observe('hits', Format(Pg.GetHits()));
         Observer.Observe('seen', Pg.GetSeen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'nest|marker=m|hits=1;inner|marker=m|hits=2;');
+        Observer.Expect('hits', '2');
+        Observer.Expect('seen', 'inner=m;nest=m;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -242,7 +256,9 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Pg.RaiseFromProc('p');
         Observer.Observe('log', SenderLog.Take());
         Observer.Observe('hits', Format(Pg.GetHits()));
-        Observer.Finish();
+        Observer.Expect('log', '');
+        Observer.Expect('hits', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -261,7 +277,9 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Page.Close();
         Observer.Observe('log_close', SenderLog.Take());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log_open', 'open|marker=open|hits=1;new|marker=new|hits=2;');
+        Observer.Expect('log_close', 'query|marker=sub-new|hits=3;close|marker=sub-query|hits=4;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -281,7 +299,10 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Page.Close();
         Observer.Observe('log_close', SenderLog.Take());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log_open', 'open|marker=open|hits=1;get|marker=get1|hits=2;');
+        Observer.Expect('log_next', 'get|marker=get2|hits=3;');
+        Observer.Expect('log_close', 'query|marker=get2|hits=4;close|marker=get2|hits=5;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -299,7 +320,8 @@ codeunit 73053 "LT P84 PgSnd Tests"
         Page.RunModal(Page::"LT P84 Sender Card", Row);
         Observer.Observe('log', SenderLog.Take());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('log', 'open|marker=open|hits=1;get|marker=get1|hits=2;query|marker=get1|hits=3;close|marker=get1|hits=4;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]

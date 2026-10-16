@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonobject/jsonobject-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74404
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonObject.Add(key, value) per value type
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74404 "LT P88 Object Add"
 {
@@ -205,7 +205,23 @@ codeunit 74404 "LT P88 Object Add"
         Ok := DoDecimal(O);
         O.WriteTo(Txt);
         Rec('AddO_Decimal', Ok, Txt);
-        Observer.Finish();
+        Observer.Expect('AddO_Boolean_ok', 'Yes');
+        Observer.Expect('AddO_Boolean_text', '{"k":true}');
+        Observer.Expect('AddO_Byte_ok', 'Yes');
+        Observer.Expect('AddO_Byte_text', '{"k":200}');
+        Observer.Expect('AddO_Char_ok', 'Yes');
+        Observer.Expect('AddO_Char_text', '{"k":65}');
+        Observer.Expect('AddO_Date_ok', 'Yes');
+        Observer.Expect('AddO_Date_text', '{"k":"2024-03-15"}');
+        Observer.Expect('AddO_Time_ok', 'Yes');
+        Observer.Expect('AddO_Time_text', '{"k":"14:30:15"}');
+        Observer.Expect('AddO_DateTime_ok', 'Yes');
+        Observer.Expect('AddO_DateTime_text', '{"k":"2024-03-15T14:30:15.0000000Z"}');
+        Observer.Expect('AddO_Duration_ok', 'Yes');
+        Observer.Expect('AddO_Duration_text', '{"k":90061001}');
+        Observer.Expect('AddO_Decimal_ok', 'Yes');
+        Observer.Expect('AddO_Decimal_text', '{"k":12.345}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,6 +263,22 @@ codeunit 74404 "LT P88 Object Add"
         Ok := DoJsonValue(O);
         O.WriteTo(Txt);
         Rec('AddO_JsonValue', Ok, Txt);
-        Observer.Finish();
+        Observer.Expect('AddO_Integer_ok', 'Yes');
+        Observer.Expect('AddO_Integer_text', '{"k":42}');
+        Observer.Expect('AddO_BigInteger_ok', 'Yes');
+        Observer.Expect('AddO_BigInteger_text', '{"k":6442450941}');
+        Observer.Expect('AddO_Option_ok', 'Yes');
+        Observer.Expect('AddO_Option_text', '{"k":1}');
+        Observer.Expect('AddO_Text_ok', 'Yes');
+        Observer.Expect('AddO_Text_text', '{"k":"he said \"hi\" \\ / end"}');
+        Observer.Expect('AddO_JsonToken_ok', 'Yes');
+        Observer.Expect('AddO_JsonToken_text', '{"k":{"k":[1,2]}}');
+        Observer.Expect('AddO_JsonArray_ok', 'Yes');
+        Observer.Expect('AddO_JsonArray_text', '{"k":[1,"two"]}');
+        Observer.Expect('AddO_JsonObject_ok', 'Yes');
+        Observer.Expect('AddO_JsonObject_text', '{"k":{"k":"v"}}');
+        Observer.Expect('AddO_JsonValue_ok', 'Yes');
+        Observer.Expect('AddO_JsonValue_text', '{"k":7}');
+        Observer.Verify();
     end;
 }

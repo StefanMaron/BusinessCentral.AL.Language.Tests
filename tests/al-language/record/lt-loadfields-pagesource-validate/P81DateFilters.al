@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setfilter-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained table 70316 and codeunit 70317
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (tag P81, GitHub issue 81); every literal asserted later is what a local BC 29 tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: Record.SetFilter on a Date field with text values ('01012026', '010126', 'T', 'W', ranges, '..' forms, 0D, invalid dates) and with %1 / %2 placeholders: which forms work, the filter text BC keeps (GetFilter), the rows found, the exact error texts and codes
 // BC versions: 29 (27 and 28 by CI)
 
@@ -138,7 +138,19 @@ codeunit 70317 "LT P81 Date Filters"
         Texts.Add('0101');
         Texts.Add('1');
         ObserveList(Observer, Texts, 'n');
-        Observer.Finish();
+        Observer.Expect('n1[01012026]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n2[010126]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n3[1/1/2026]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n4[01/01/2026]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n5[2026-01-01]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n6[20260101]', 'error:The filter "20260101" is not valid for the D field on the LT P81 DF table. The format of the Date ''20260101'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('n7[1.1.2026]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n8[1.1.26]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n9[311225]', 'error:The filter "311225" is not valid for the D field on the LT P81 DF table. The format of the Date ''311225'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('n10[31122025]', 'error:The filter "31122025" is not valid for the D field on the LT P81 DF table. The format of the Date ''31122025'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('n11[0101]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('n12[1]', 'ok|filter=<workdate>|rows=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -165,7 +177,23 @@ codeunit 70317 "LT P81 Date Filters"
         Texts.Add('010126..010126');
         Texts.Add('311225..010126|010226');
         ObserveList(Observer, Texts, 'r');
-        Observer.Finish();
+        Observer.Expect('r1[010126..020126]', 'ok|filter=01/01/26..02/01/26|rows=E2,E3,E4,');
+        Observer.Expect('r2[01012026..02012026]', 'ok|filter=01/01/26..02/01/26|rows=E2,E3,E4,');
+        Observer.Expect('r3[01012026..]', 'ok|filter=01/01/26..|rows=E2,E3,E4,');
+        Observer.Expect('r4[..01012026]', 'ok|filter=..01/01/26|rows=E0,E1,E2,');
+        Observer.Expect('r5[..]', 'error:The filter ".." is not valid for the D field on the LT P81 DF table. Both sides of the range (''..'') cannot be empty.|Filter:CSide');
+        Observer.Expect('r6[010126|020126]', 'ok|filter=01/01/26|02/01/26|rows=E2,E4,');
+        Observer.Expect('r7[<>010126]', 'ok|filter=<>01/01/26|rows=E0,E1,E3,E4,');
+        Observer.Expect('r8[<010126]', 'ok|filter=<01/01/26|rows=E0,E1,');
+        Observer.Expect('r9[>010126]', 'ok|filter=>01/01/26|rows=E3,E4,');
+        Observer.Expect('r10[>=010126]', 'ok|filter=>=01/01/26|rows=E2,E3,E4,');
+        Observer.Expect('r11[<=010126]', 'ok|filter=<=01/01/26|rows=E0,E1,E2,');
+        Observer.Expect('r12[>010126&<010226]', 'ok|filter=>01/01/26&<01/02/26|rows=');
+        Observer.Expect('r13[020126..010126]', 'ok|filter=02/01/26..01/01/26|rows=');
+        Observer.Expect('r14[<010126|>020126]', 'ok|filter=<01/01/26|>02/01/26|rows=E0,E1,');
+        Observer.Expect('r15[010126..010126]', 'ok|filter=01/01/26..01/01/26|rows=E2,');
+        Observer.Expect('r16[311225..010126|010226]', 'error:The filter "311225..010126|010226" is not valid for the D field on the LT P81 DF table. The format of the Date ''311225'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Verify();
     end;
 
     [Test]
@@ -189,7 +217,20 @@ codeunit 70317 "LT P81 Date Filters"
         Texts.Add('000000');
         Texts.Add('0D|010126');
         ObserveList(Observer, Texts, 'z');
-        Observer.Finish();
+        Observer.Expect('z1[]', 'ok|filter=|rows=E0,E1,E2,E3,E4,');
+        Observer.Expect('z2[ ]', 'ok|filter=|rows=E0,E1,E2,E3,E4,');
+        Observer.Expect('z3[0D]', 'ok|filter=<today>|rows=');
+        Observer.Expect('z4[0D..]', 'ok|filter=<today>..|rows=');
+        Observer.Expect('z5[..0D]', 'ok|filter=..<today>|rows=E0,E1,E2,E3,E4,');
+        Observer.Expect('z6[<>0D]', 'ok|filter=<><today>|rows=E0,E1,E2,E3,E4,');
+        Observer.Expect('z7[>0D]', 'ok|filter=><today>|rows=');
+        Observer.Expect('z8[0D..010126]', 'ok|filter=<today>..01/01/26|rows=');
+        Observer.Expect('z9['''']', 'ok|filter=''''|rows=E0,');
+        Observer.Expect('z10[<>'''']', 'ok|filter=<>''''|rows=E1,E2,E3,E4,');
+        Observer.Expect('z11[0]', 'error:The filter "0" is not valid for the D field on the LT P81 DF table. The format of the Date ''0'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('z12[000000]', 'error:The filter "000000" is not valid for the D field on the LT P81 DF table. The format of the Date ''000000'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('z13[0D|010126]', 'ok|filter=<today>|01/01/26|rows=E2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -218,7 +259,21 @@ codeunit 70317 "LT P81 Date Filters"
         Texts.Add('T..W');
         ObserveList(Observer, Texts, 'k');
         WorkDate(SavedWorkDate);
-        Observer.Finish();
+        Observer.Expect('k1[T]', 'ok|filter=<today>|rows=');
+        Observer.Expect('k2[t]', 'ok|filter=<today>|rows=');
+        Observer.Expect('k3[W]', 'ok|filter=<workdate>|rows=E2,');
+        Observer.Expect('k4[w]', 'ok|filter=<workdate>|rows=E2,');
+        Observer.Expect('k5[T..]', 'ok|filter=<today>..|rows=');
+        Observer.Expect('k6[..T]', 'ok|filter=..<today>|rows=E0,E1,E2,E3,E4,');
+        Observer.Expect('k7[W..]', 'ok|filter=<workdate>..|rows=E2,E3,E4,');
+        Observer.Expect('k8[..W]', 'ok|filter=..<workdate>|rows=E0,E1,E2,');
+        Observer.Expect('k9[T|W]', 'ok|filter=<today>|<workdate>|rows=E2,');
+        Observer.Expect('k10[<>W]', 'ok|filter=<><workdate>|rows=E0,E1,E3,E4,');
+        Observer.Expect('k11[>W]', 'ok|filter=><workdate>|rows=E3,E4,');
+        Observer.Expect('k12[<=W]', 'ok|filter=<=<workdate>|rows=E0,E1,E2,');
+        Observer.Expect('k13[W..T]', 'ok|filter=<workdate>..<today>|rows=E2,E3,E4,');
+        Observer.Expect('k14[T..W]', 'ok|filter=<today>..<workdate>|rows=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -246,7 +301,20 @@ codeunit 70317 "LT P81 Date Filters"
         Texts.Add('1D');
         ObserveList(Observer, Texts, 'o');
         WorkDate(SavedWorkDate);
-        Observer.Finish();
+        Observer.Expect('o1[TODAY]', 'ok|filter=<today>|rows=');
+        Observer.Expect('o2[Today]', 'ok|filter=<today>|rows=');
+        Observer.Expect('o3[WORKDATE]', 'ok|filter=<workdate>|rows=E2,');
+        Observer.Expect('o4[M]', 'ok|filter=12/29/25|rows=');
+        Observer.Expect('o5[Y]', 'ok|filter=<workdate>..12/31/26|rows=E2,E3,E4,');
+        Observer.Expect('o6[D]', 'ok|filter=<workdate>|rows=E2,');
+        Observer.Expect('o7[CM]', 'ok|filter=10/31/26|rows=');
+        Observer.Expect('o8[CY]', 'ok|filter=12/31/26|rows=');
+        Observer.Expect('o9[CW]', 'ok|filter=10/18/26|rows=');
+        Observer.Expect('o10[-1D]', 'ok|filter=10/15/26|rows=');
+        Observer.Expect('o11[+1D]', 'ok|filter=10/17/26|rows=');
+        Observer.Expect('o12[T-1D]', 'ok|filter=12/30/25|rows=');
+        Observer.Expect('o13[1D]', 'ok|filter=<workdate>|rows=E2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +337,21 @@ codeunit 70317 "LT P81 Date Filters"
         Observer.Observe('no_placeholder_extra_args', Apply2('010126', 20260102D, 20260201D));
         Observer.Observe('not_equal', Apply2('<>%1&<>%2', 20260101D, 20260102D));
         Observer.Observe('repeated', Apply2('%1|%1', 20260101D, 20260102D));
-        Observer.Finish();
+        Observer.Expect('range', 'ok|filter=01/01/26..01/02/26|rows=E2,E3,');
+        Observer.Expect('range_reversed', 'ok|filter=01/02/26..01/01/26|rows=');
+        Observer.Expect('range_same', 'ok|filter=01/01/26..01/01/26|rows=E2,');
+        Observer.Expect('range_zero_first', 'ok|filter=''''..01/01/26|rows=E0,E1,E2,');
+        Observer.Expect('range_zero_second', 'ok|filter=01/01/26..''''|rows=');
+        Observer.Expect('range_both_zero', 'ok|filter=''''..''''|rows=E0,');
+        Observer.Expect('or', 'ok|filter=12/31/25|02/01/26|rows=E1,E4,');
+        Observer.Expect('and', 'ok|filter=>12/31/25&<02/01/26|rows=E2,E3,');
+        Observer.Expect('swapped_placeholders', 'ok|filter=01/02/26..01/01/26|rows=');
+        Observer.Expect('only_second', 'ok|filter=01/02/26|rows=E3,');
+        Observer.Expect('only_first_extra_arg', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('no_placeholder_extra_args', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('not_equal', 'ok|filter=<>01/01/26&<>01/02/26|rows=E0,E1,E4,');
+        Observer.Expect('repeated', 'ok|filter=01/01/26|01/01/26|rows=E2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,7 +376,23 @@ codeunit 70317 "LT P81 Date Filters"
         Observer.Observe('undefined_date', Apply1('%1', 99991231D));
         Observer.Observe('closing_date', Apply1('%1', ClosingDate(20260101D)));
         Observer.Observe('normal_of_closing', Apply1('%1', NormalDate(ClosingDate(20260101D))));
-        Observer.Finish();
+        Observer.Expect('eq', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('ge', 'ok|filter=01/01/26..|rows=E2,E3,E4,');
+        Observer.Expect('le', 'ok|filter=..01/01/26|rows=E0,E1,E2,');
+        Observer.Expect('lt', 'ok|filter=<01/01/26|rows=E0,E1,');
+        Observer.Expect('gt', 'ok|filter=>01/01/26|rows=E3,E4,');
+        Observer.Expect('ne', 'ok|filter=<>01/01/26|rows=E0,E1,E3,E4,');
+        Observer.Expect('zero', 'ok|filter=''''|rows=E0,');
+        Observer.Expect('ge_zero', 'ok|filter=''''..|rows=E0,E1,E2,E3,E4,');
+        Observer.Expect('ne_zero', 'ok|filter=<>''''|rows=E1,E2,E3,E4,');
+        Observer.Expect('missing_second_arg', 'ok|filter=01/01/26..10/02/26|rows=E2,E3,E4,');
+        Observer.Expect('placeholder_3', 'ok|filter=10/03/26|rows=');
+        Observer.Expect('placeholder_0', 'error:The filter "%0" is not valid for the D field on the LT P81 DF table. The variable "%0" was not understood.|Filter:CSide');
+        Observer.Expect('percent_alone', 'ok|filter=<today>|rows=');
+        Observer.Expect('undefined_date', 'ok|filter=12/31/9999|rows=');
+        Observer.Expect('closing_date', 'ok|filter=C01/01/26|rows=');
+        Observer.Expect('normal_of_closing', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,8 +423,32 @@ codeunit 70317 "LT P81 Date Filters"
         Texts.Add('0101202');
         Texts.Add('010126...020126');
         ObserveList(Observer, Texts, 'i');
-        Observer.Finish();
+        Observer.Expect('i1[abc]', 'error:The filter "abc" is not valid for the D field on the LT P81 DF table. The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i2[13132026]', 'error:The filter "13132026" is not valid for the D field on the LT P81 DF table. The format of the Date ''13132026'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i3[32012026]', 'error:The filter "32012026" is not valid for the D field on the LT P81 DF table. The format of the Date ''32012026'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i4[00012026]', 'error:The filter "00012026" is not valid for the D field on the LT P81 DF table. The format of the Date ''00012026'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i5[31022026]', 'error:The filter "31022026" is not valid for the D field on the LT P81 DF table. The format of the Date ''31022026'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i6[01012026..abc]', 'error:The filter "01012026..abc" is not valid for the D field on the LT P81 DF table. The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i7[abc..01012026]', 'error:The filter "abc..01012026" is not valid for the D field on the LT P81 DF table. The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i8[..abc]', 'error:The filter "..abc" is not valid for the D field on the LT P81 DF table. The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i9[|]', 'error:The filter "|" is not valid for the D field on the LT P81 DF table. The left side of ''|'' operators cannot be empty.|Filter:CSide');
+        Observer.Expect('i10[&]', 'error:The filter "&" is not valid for the D field on the LT P81 DF table. The left side of ''&'' operators cannot be empty.|Filter:CSide');
+        Observer.Expect('i11[01012026||020126]', 'error:The filter "01012026||020126" is not valid for the D field on the LT P81 DF table. The right side of ''|'' operators cannot be empty.|Filter:CSide');
+        Observer.Expect('i12[(01012026)]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('i13[99999999]', 'error:The filter "99999999" is not valid for the D field on the LT P81 DF table. The format of the Date ''99999999'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i14[01-01-2026]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('i15[A..B]', 'error:The filter "A..B" is not valid for the D field on the LT P81 DF table. The format of the Date ''A'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('i16[*]', 'ok|filter=<today>|rows=');
+        Observer.Expect('i17[01012026 ]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('i18[ 01012026]', 'ok|filter=01/01/26|rows=E2,');
+        Observer.Expect('i19[0101202]', 'ok|filter=01/01/0202|rows=');
+        Observer.Expect('i20[010126...020126]', 'ok|filter=01/01/26..02/01/26|rows=E2,E3,E4,');
+        Observer.Verify();
     end;
+
+
+
+
 
     [Test]
     procedure SetFilter_Date_InvalidKeepsOldFilter()
@@ -346,7 +468,13 @@ codeunit 70317 "LT P81 Date Filters"
         Row.SetFilter(D, '');
         Observer.Observe('after_empty', Row.GetFilter(D));
         Observer.Observe('has_filter_after_empty', Format(Row.GetFilter(D) <> ''));
-        Observer.Finish();
+        Observer.Expect('before', '01/01/26..02/01/26');
+        Observer.Expect('apply_abc', 'error:The filter "abc" is not valid for the D field on the LT P81 DF table. The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('after_invalid', '01/01/26..02/01/26');
+        Observer.Expect('count_after_invalid', '3');
+        Observer.Expect('after_empty', '');
+        Observer.Expect('has_filter_after_empty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -376,6 +504,20 @@ codeunit 70317 "LT P81 Date Filters"
         Row.SetRange(D, 20260102D, 20260101D);
         Observer.Observe('setrange_reversed_filter', Row.GetFilter(D));
         Observer.Observe('setrange_reversed_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('range_min', '01/01/26');
+        Observer.Expect('range_max', '02/01/26');
+        Observer.Expect('filter', '01/01/26..02/01/26');
+        Observer.Expect('filters', 'D: 01/01/26..02/01/26');
+        Observer.Expect('or_filter', '01/01/26|02/01/26');
+        Observer.Expect('single_filter', '01/01/26');
+        Observer.Expect('single_min', '01/01/26');
+        Observer.Expect('single_max', '01/01/26');
+        Observer.Expect('single_count', '1');
+        Observer.Expect('setrange_filter', '01/01/26..01/02/26');
+        Observer.Expect('setrange_zero_filter', '''''');
+        Observer.Expect('setrange_zero_count', '1');
+        Observer.Expect('setrange_reversed_filter', '01/02/26..01/01/26');
+        Observer.Expect('setrange_reversed_count', '0');
+        Observer.Verify();
     end;
 }

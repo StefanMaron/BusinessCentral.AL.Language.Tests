@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74003
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on TextBuilder: length, capacity, reuse
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74003 "LT P95 Clear TextBuilder"
@@ -36,7 +36,14 @@ codeunit 74003 "LT P95 Clear TextBuilder"
         Clear(Tx3);
         Observer.Observe('capacity_cleared_positive', Format(Tx3.Capacity() > 0) + '|' + Format(Tx3.Capacity() = 100));
 
-        Observer.Finish();
+        Observer.Expect('len_before', '11');
+        Observer.Expect('len_after', '0');
+        Observer.Expect('text_after', '[]');
+        Observer.Expect('capacity_positive', 'Yes');
+        Observer.Expect('reuse', 'again');
+        Observer.Expect('copy_after_clear', '5|0');
+        Observer.Expect('capacity_cleared_positive', 'Yes|No');
+        Observer.Verify();
     end;
 
 }

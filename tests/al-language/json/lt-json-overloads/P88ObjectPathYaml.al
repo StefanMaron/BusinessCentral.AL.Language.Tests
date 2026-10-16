@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonobject/jsonobject-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74409
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonObject Path, SelectTokens, WriteToYaml, ReadFromYaml
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74409 "LT P88 Object Path Yaml"
 {
@@ -81,7 +81,15 @@ codeunit 74409 "LT P88 Object Path Yaml"
         Inner.AsArray().Get(1, T);
         Observer.Observe('path_c_e_1_null', T.Path());
         Observer.Observe('path_empty_object', Format(T.IsValue()));
-        Observer.Finish();
+        Observer.Expect('path_root', '');
+        Observer.Expect('path_a', 'a');
+        Observer.Expect('path_a_2', 'a[2]');
+        Observer.Expect('path_a_2_b', 'a[2].b');
+        Observer.Expect('path_c', 'c');
+        Observer.Expect('path_c_e', 'c.e');
+        Observer.Expect('path_c_e_1_null', 'c.e[1]');
+        Observer.Expect('path_empty_object', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +113,12 @@ codeunit 74409 "LT P88 Object Path Yaml"
         Observer.Observe('path_bracket_key', T.Path());
         O.Get('', T);
         Observer.Observe('path_empty_key', T.Path());
-        Observer.Finish();
+        Observer.Expect('path_dot_key', '[''a.b'']');
+        Observer.Expect('path_space_key', '[''with space'']');
+        Observer.Expect('path_apostrophe_key', '[''it\''s'']');
+        Observer.Expect('path_bracket_key', '[''[0]'']');
+        Observer.Expect('path_empty_key', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,7 +137,9 @@ codeunit 74409 "LT P88 Object Path Yaml"
         O.Add('time', 143015T);
         O.Add('datetime', CreateDateTime(DMY2Date(15, 3, 2024), 143015T));
         Observer.Observe('yaml_scalars', Yaml(O));
-        Observer.Finish();
+        Observer.Expect('yaml_empty_object', '{}\n');
+        Observer.Expect('yaml_scalars', 's: text\ni: 42\nd: 1.5\nb: true\nn: 0\nneg: -7\ndate: 2024-03-15\ntime: 14:30:15\ndatetime: 2024-03-15T14:30:15.0000000Z\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +161,8 @@ codeunit 74409 "LT P88 Object Path Yaml"
         O.Add('emptyobj', Empty);
         O.Add('emptylist', EmptyArr);
         Observer.Observe('yaml_nested', Yaml(O));
-        Observer.Finish();
+        Observer.Expect('yaml_nested', 'child:\n  x: 1\n  y: two\nlist:\n- 1\n- b\n- x: 1\n  y: two\nemptyobj: {}\nemptylist: []\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -168,7 +184,8 @@ codeunit 74409 "LT P88 Object Path Yaml"
         O.Add('apos', 'it''s');
         O.Add('unicode', 'ünï ✓');
         Observer.Observe('yaml_special', Yaml(O));
-        Observer.Finish();
+        Observer.Expect('yaml_special', 'empty: ''''\nspace: '' ''\ntrailing: ''a ''\nyes: yes\nnull_text: null\ntilde: ~\nmultiline: >-\n  a\n\n  b\nhash: ''#c''\ndash: ''- x''\ncolon: a:b\nquote: say "hi"\napos: it''s\nunicode: ünï ✓\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -183,7 +200,8 @@ codeunit 74409 "LT P88 Object Path Yaml"
         Arr.Add(Jv);
         O.Add('list', Arr);
         Observer.Observe('yaml_null', Yaml(O));
-        Observer.Finish();
+        Observer.Expect('yaml_null', 'nothing: \nlist:\n- \n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -204,6 +222,21 @@ codeunit 74409 "LT P88 Object Path Yaml"
         Observer.Observe('read_null', ReadY('a: null'));
         Observer.Observe('read_bad', ReadY('a: [1, 2'));
         Observer.Observe('read_tab_indent', ReadY('a:' + NL() + '<TAB>b: 1'));
-        Observer.Finish();
+        Observer.Expect('read_empty', 'ERR:JSON tokens of type ''Null'' are not supported by this implementation.|InvalidJsonType');
+        Observer.Expect('read_one_line_flow', '{"a":"1","b":"x"}');
+        Observer.Expect('read_json_text', '{"a":"1"}');
+        Observer.Expect('read_list_top', 'ERR:JSON tokens of type ''Array'' are not supported by this implementation.|InvalidJsonType');
+        Observer.Expect('read_scalar_top', 'ERR:JSON tokens of type ''String'' are not supported by this implementation.|InvalidJsonType');
+        Observer.Expect('read_key_value', '{"a":"1"}');
+        Observer.Expect('read_key_value_nl', '{"a":"1"}');
+        Observer.Expect('read_two_keys', '{"a":"1","b":"2"}');
+        Observer.Expect('read_nested', '{"a":{"b":"1"}}');
+        Observer.Expect('read_list_in_key', '{"a":["1","2"]}');
+        Observer.Expect('read_quoted', '{"a":"1"}');
+        Observer.Expect('read_bool', '{"a":"true"}');
+        Observer.Expect('read_null', '{"a":null}');
+        Observer.Expect('read_bad', 'ERR:The data does not represent valid YAML.|YamlBadFormat');
+        Observer.Expect('read_tab_indent', '{"a":null,"<TAB>b":"1"}');
+        Observer.Verify();
     end;
 }

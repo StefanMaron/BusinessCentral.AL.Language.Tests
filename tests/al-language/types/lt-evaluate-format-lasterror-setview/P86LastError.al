@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-getlasterrortext-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained objects
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P86); the final facts are measured on a local BC 29 tier and added later.
 // Facts: GetLastErrorText(true) / GetLastErrorText(false), GetLastErrorCode and the start of GetLastErrorCallStack after Error with ErrorInfo, TestField, FieldError and a record-not-found runtime error
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 73530 "LT P86 Err Rec"
 {
@@ -50,7 +50,15 @@ codeunit 73531 "LT P86 Last Error"
         Observer.ObserveError('after');
         Observer.Observe('cleared_full', GetLastErrorText(false));
         Observer.Observe('cleared_excl', GetLastErrorText(true));
-        Observer.Finish();
+        Observer.Expect('full', 'secret customer text');
+        Observer.Expect('excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('code', 'Dialog');
+        Observer.Expect('hasError', 'Yes');
+        Observer.Expect('after|text', 'secret customer text');
+        Observer.Expect('after|code', 'Dialog');
+        Observer.Expect('cleared_full', '');
+        Observer.Expect('cleared_excl', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -77,7 +85,26 @@ codeunit 73531 "LT P86 Last Error"
         asserterror RaiseInfo('tobe text', DataClassification::ToBeClassified);
         Observer.Observe('tbc_excl', GetLastErrorText(true));
         Observer.ObserveError('tbc');
-        Observer.Finish();
+        Observer.Expect('sys_excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('sys_full', 'system text');
+        Observer.Expect('sys|text', 'system text');
+        Observer.Expect('sys|code', 'Dialog');
+        Observer.Expect('oii_excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('oii|text', 'org text');
+        Observer.Expect('oii|code', 'Dialog');
+        Observer.Expect('eui_excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('eui|text', 'eui text');
+        Observer.Expect('eui|code', 'Dialog');
+        Observer.Expect('eup_excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('eup|text', 'pseudo text');
+        Observer.Expect('eup|code', 'Dialog');
+        Observer.Expect('acc_excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('acc|text', 'acc text');
+        Observer.Expect('acc|code', 'Dialog');
+        Observer.Expect('tbc_excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('tbc|text', 'tobe text');
+        Observer.Expect('tbc|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +118,11 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('excl', GetLastErrorText(true));
         Observer.ObserveError('default');
         Observer.Observe('dc', Format(ErrInfo.DataClassification));
-        Observer.Finish();
+        Observer.Expect('excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('default|text', 'no classification set');
+        Observer.Expect('default|code', 'Dialog');
+        Observer.Expect('dc', 'CustomerContent');
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +141,12 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('excl', GetLastErrorText(true));
         Observer.ObserveError('dims');
         Observer.Observe('count', Format(ErrInfo.CustomDimensions.Count()));
-        Observer.Finish();
+        Observer.Expect('full', 'with dimensions');
+        Observer.Expect('excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('dims|text', 'with dimensions');
+        Observer.Expect('dims|code', 'Dialog');
+        Observer.Expect('count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +165,12 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('excl', GetLastErrorText(true));
         Observer.Observe('default_arg', GetLastErrorText());
         Observer.ObserveError('both');
-        Observer.Finish();
+        Observer.Expect('full', 'dims and customer content');
+        Observer.Expect('excl', 'This message had personal data removed. The original may still be in transient telemetry. Find it using the transientTelemetryId.');
+        Observer.Expect('default_arg', 'dims and customer content');
+        Observer.Expect('both|text', 'dims and customer content');
+        Observer.Expect('both|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +185,14 @@ codeunit 73531 "LT P86 Last Error"
         asserterror Error('');
         Observer.Observe('empty_excl', GetLastErrorText(true));
         Observer.ObserveError('empty');
-        Observer.Finish();
+        Observer.Expect('full', 'plain argument');
+        Observer.Expect('excl', 'Use ERROR with a text constant to improve telemetry details');
+        Observer.Expect('plain|text', 'plain argument');
+        Observer.Expect('plain|code', 'Dialog');
+        Observer.Expect('empty_excl', '');
+        Observer.Expect('empty|text', '');
+        Observer.Expect('empty|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +221,22 @@ codeunit 73531 "LT P86 Last Error"
         asserterror Rec.TestField(Amount);
         Observer.Observe('excl4', GetLastErrorText(true));
         Observer.ObserveError('amount');
-        Observer.Finish();
+        Observer.Expect('full', 'Name must have a value in LT P86 Err Rec: Entry No.=1. It cannot be zero or empty.');
+        Observer.Expect('excl', 'Name must have a value in LT P86 Err Rec: <redacted>. It cannot be zero or empty.');
+        Observer.Expect('empty_cc|text', 'Name must have a value in LT P86 Err Rec: Entry No.=1. It cannot be zero or empty.');
+        Observer.Expect('empty_cc|code', 'TestField');
+        Observer.Expect('full2', 'Info must be equal to ''y''  in LT P86 Err Rec: Entry No.=1. Current value is ''x''.');
+        Observer.Expect('excl2', 'Info must be equal to ''<redacted>''  in LT P86 Err Rec: <redacted>. Current value is ''<redacted>''.');
+        Observer.Expect('value_sys|text', 'Info must be equal to ''y''  in LT P86 Err Rec: Entry No.=1. Current value is ''x''.');
+        Observer.Expect('value_sys|code', 'TestField');
+        Observer.Expect('full3', 'Name must be equal to ''John''  in LT P86 Err Rec: Entry No.=1. Current value is ''Jane''.');
+        Observer.Expect('excl3', 'Name must be equal to ''<redacted>''  in LT P86 Err Rec: <redacted>. Current value is ''<redacted>''.');
+        Observer.Expect('value_cc|text', 'Name must be equal to ''John''  in LT P86 Err Rec: Entry No.=1. Current value is ''Jane''.');
+        Observer.Expect('value_cc|code', 'TestField');
+        Observer.Expect('excl4', 'Amount must have a value in LT P86 Err Rec: <redacted>. It cannot be zero or empty.');
+        Observer.Expect('amount|text', 'Amount must have a value in LT P86 Err Rec: Entry No.=1. It cannot be zero or empty.');
+        Observer.Expect('amount|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,7 +266,23 @@ codeunit 73531 "LT P86 Last Error"
         asserterror Rec.FieldError(Amount);
         Observer.Observe('excl5', GetLastErrorText(true));
         Observer.ObserveError('amount');
-        Observer.Finish();
+        Observer.Expect('full', 'Name must not be Jane in LT P86 Err Rec Entry No.=''1''.');
+        Observer.Expect('excl', 'FieldError for incorrect value of LT P86 Err Rec.Name');
+        Observer.Expect('plain_cc|text', 'Name must not be Jane in LT P86 Err Rec Entry No.=''1''.');
+        Observer.Expect('plain_cc|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('excl2', 'FieldError on field LT P86 Err Rec.Name, message: Use FIELDERROR with a text constant to improve Telemetry details.');
+        Observer.Expect('custom_cc|text', 'Name custom message in LT P86 Err Rec Entry No.=''1''.');
+        Observer.Expect('custom_cc|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('excl3', 'FieldError for incorrect value of LT P86 Err Rec.Info');
+        Observer.Expect('plain_sys|text', 'Info must not be x in LT P86 Err Rec Entry No.=''1''.');
+        Observer.Expect('plain_sys|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('excl4', 'FieldError on field LT P86 Err Rec.Info, message: Use FIELDERROR with a text constant to improve Telemetry details.');
+        Observer.Expect('custom_sys|text', 'Info custom sys in LT P86 Err Rec Entry No.=''1''.');
+        Observer.Expect('custom_sys|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('excl5', 'FieldError for incorrect value of LT P86 Err Rec.Amount');
+        Observer.Expect('amount|text', 'Amount must not be 0 in LT P86 Err Rec Entry No.=''1''.');
+        Observer.Expect('amount|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,7 +306,20 @@ codeunit 73531 "LT P86 Last Error"
         asserterror Rec.Modify(true);
         Observer.Observe('modify_excl', GetLastErrorText(true));
         Observer.ObserveError('modify');
-        Observer.Finish();
+        Observer.Expect('full', 'The LT P86 Err Rec does not exist. Identification fields and values: Entry No.=''99''');
+        Observer.Expect('excl', 'The LT P86 Err Rec does not exist. Identification fields and values: <redacted>');
+        Observer.Expect('get|text', 'The LT P86 Err Rec does not exist. Identification fields and values: Entry No.=''99''');
+        Observer.Expect('get|code', 'DB:RecordNotFound');
+        Observer.Expect('same_excl', 'No');
+        Observer.Expect('get2|text', 'The LT P86 Err Rec does not exist. Identification fields and values: Entry No.=''99''');
+        Observer.Expect('get2|code', 'DB:RecordNotFound');
+        Observer.Expect('delete_excl', 'The LT P86 Err Rec does not exist. Identification fields and values: <redacted>');
+        Observer.Expect('delete|text', 'The LT P86 Err Rec does not exist. Identification fields and values: Entry No.=''5''');
+        Observer.Expect('delete|code', 'DB:RecordNotFound');
+        Observer.Expect('modify_excl', 'The LT P86 Err Rec does not exist. Identification fields and values: <redacted>');
+        Observer.Expect('modify|text', 'The LT P86 Err Rec does not exist. Identification fields and values: Entry No.=''5''');
+        Observer.Expect('modify|code', 'DB:RecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -250,7 +342,16 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('findlast_excl', GetLastErrorText(true));
         Observer.ObserveError('findlast');
         Rec."Entry No." := 1;
-        Observer.Finish();
+        Observer.Expect('div_excl', 'Attempted to divide by zero.');
+        Observer.Expect('div|text', 'Attempted to divide by zero.');
+        Observer.Expect('div|code', 'AL:DivideByZero');
+        Observer.Expect('find_excl', 'The LT P86 Err Rec table is empty.');
+        Observer.Expect('find|text', 'The LT P86 Err Rec table is empty.');
+        Observer.Expect('find|code', 'DB:TableIsEmpty');
+        Observer.Expect('findlast_excl', 'The LT P86 Err Rec table is empty.');
+        Observer.Expect('findlast|text', 'The LT P86 Err Rec table is empty.');
+        Observer.Expect('findlast|code', 'DB:TableIsEmpty');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +368,14 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('mentions_codeunit', Format(StrPos(Stack, 'LT P86 Last Error') > 0));
         Observer.ObserveError('err');
         Observer.Observe('stack_after_clear', GetLastErrorCallStack());
-        Observer.Finish();
+        Observer.Expect('has_stack', 'Yes');
+        Observer.Expect('start', '"LT P86 Last Error"(');
+        Observer.Expect('mentions_proc', 'Yes');
+        Observer.Expect('mentions_codeunit', 'Yes');
+        Observer.Expect('err|text', 'stack probe');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('stack_after_clear', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -283,7 +391,13 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('mentions_test', Format(StrPos(Stack, 'CallStack_RaisedDeeper') > 0));
         Observer.Observe('raise_before_test', Format(StrPos(Stack, 'RaiseInfo') < StrPos(Stack, 'CallStack_RaisedDeeper')));
         Observer.ObserveError('err');
-        Observer.Finish();
+        Observer.Expect('start', '"LT P86 Last Error"(');
+        Observer.Expect('mentions_raise', 'Yes');
+        Observer.Expect('mentions_test', 'Yes');
+        Observer.Expect('raise_before_test', 'Yes');
+        Observer.Expect('err|text', 'deeper');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -296,7 +410,11 @@ codeunit 73531 "LT P86 Last Error"
         Observer.Observe('text_excl', GetLastErrorText(true));
         Observer.Observe('code', GetLastErrorCode());
         Observer.Observe('stack', GetLastErrorCallStack());
-        Observer.Finish();
+        Observer.Expect('text', '');
+        Observer.Expect('text_excl', '');
+        Observer.Expect('code', '');
+        Observer.Expect('stack', '');
+        Observer.Verify();
     end;
 }
 

@@ -67,7 +67,14 @@ codeunit 73081 "LT P94 Session Start"
         Observer.Observe('idPositive', Format(SessionId > 0));
         Observer.Observe('active', Format(Session.IsSessionActive(SessionId)));
         Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af63|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af63|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('idChanged', 'No');
+        Observer.Expect('idPositive', 'Yes');
+        Observer.Expect('active', 'No');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -83,7 +90,14 @@ codeunit 73081 "LT P94 Session Start"
         Observer.Observe('differ', Format(A <> B));
         Observer.Observe('stopA', Format(Session.StopSession(A)));
         Observer.Observe('stopB', Format(Session.StopSession(B)));
-        Observer.Finish();
+        Observer.Expect('af79|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af79|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('af81|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af81|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('differ', 'No');
+        Observer.Expect('stopA', 'No');
+        Observer.Expect('stopB', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +109,11 @@ codeunit 73081 "LT P94 Session Start"
         Observer.ObserveError('af93');
         Observer.Observe('idPositive', Format(SessionId > 0));
         Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af93|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af93|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('idPositive', 'No');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +128,8 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('stop', StopText(SessionId));
         end else
             Observer.Observe('ok', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('ok', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +148,9 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('ok', Helper.ErrText());
             Observer.Observe('idUnchanged', Format(SessionId = 777));
         end;
-        Observer.Finish();
+        Observer.Expect('ok', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Expect('idUnchanged', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +165,11 @@ codeunit 73081 "LT P94 Session Start"
         Observer.ObserveError('af142');
         Observer.Observe('idPositive', Format(SessionId > 0));
         Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af142|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af142|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('idPositive', 'No');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +184,11 @@ codeunit 73081 "LT P94 Session Start"
         Observer.ObserveError('af157');
         Observer.Observe('idPositive', Format(SessionId > 0));
         Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af157|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af157|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('idPositive', 'No');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +202,11 @@ codeunit 73081 "LT P94 Session Start"
         Observer.ObserveError('af171');
         Observer.Observe('idPositive', Format(SessionId > 0));
         Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af171|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af171|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('idPositive', 'No');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +220,11 @@ codeunit 73081 "LT P94 Session Start"
         Observer.ObserveError('af185');
         Observer.Observe('idPositive', Format(SessionId > 0));
         Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af185|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af185|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('idPositive', 'No');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +247,9 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('negativeStop', StopText(SessionId));
         end else
             Observer.Observe('negative', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('zero', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Expect('negative', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +268,9 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('ok', Helper.ErrText());
             Observer.Observe('idUnchanged', Format(SessionId = 777));
         end;
-        Observer.Finish();
+        Observer.Expect('ok', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Expect('idUnchanged', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +293,9 @@ codeunit 73081 "LT P94 Session Start"
                 Observer.Observe('negativeStop', StopText(SessionId));
         end else
             Observer.Observe('negative', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('zero', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Expect('negative', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +312,8 @@ codeunit 73081 "LT P94 Session Start"
                 Observer.Observe('stop', StopText(SessionId));
         end else
             Observer.Observe('ok', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('ok', 'error:Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.|TestStartSessionNotAllowed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -278,7 +322,10 @@ codeunit 73081 "LT P94 Session Start"
         Observer.Observe('zero', StopText(0));
         Observer.Observe('negative', StopText(-1));
         Observer.Observe('max', StopText(2147483647));
-        Observer.Finish();
+        Observer.Expect('zero', 'No');
+        Observer.Expect('negative', 'No');
+        Observer.Expect('max', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -290,7 +337,11 @@ codeunit 73081 "LT P94 Session Start"
         Observer.ObserveError('af288');
         Observer.Observe('first', StopText(SessionId));
         Observer.Observe('second', StopText(SessionId));
-        Observer.Finish();
+        Observer.Expect('af288|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af288|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('first', 'No');
+        Observer.Expect('second', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +356,10 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('stop', Format(Ok))
         else
             Observer.Observe('stop', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('af301|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af301|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -320,7 +374,10 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('stop', Format(Ok))
         else
             Observer.Observe('stop', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('af316|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af316|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -335,7 +392,10 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('stop', Format(Ok))
         else
             Observer.Observe('stop', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('af331|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af331|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -347,7 +407,8 @@ codeunit 73081 "LT P94 Session Start"
             Observer.Observe('stop', Format(Ok))
         else
             Observer.Observe('stop', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('stop', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -360,6 +421,9 @@ codeunit 73081 "LT P94 Session Start"
         Session.StopSession(SessionId);
         Sleep(500);
         Observer.Observe('activeAfterStop', Format(Session.IsSessionActive(SessionId)));
-        Observer.Finish();
+        Observer.Expect('af357|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('af357|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('activeAfterStop', 'No');
+        Observer.Verify();
     end;
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/decimal/decimal-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P93); the lead measures the facts on a local BC 29 and turns them into assertions.
 // Facts: Decimal, Boolean, Byte, Integer, BigInteger ToText with each argument form against Format
 // BC versions: 29 (27 and 28 by CI)
 
@@ -58,7 +58,23 @@ codeunit 70323 "LT P93 ScalarToText"
         Observer.Observe('thousand', Dc(D, 0));
         Observer.Observe('thousand-true', Dc(D, 1));
         Observer.Observe('thousand-format', Format(D));
-        Observer.Finish();
+        Observer.Expect('tt', '1,234,567.891');
+        Observer.Expect('tt-true', '1234567.891');
+        Observer.Expect('tt-false', '1,234,567.891');
+        Observer.Expect('format', '1,234,567.891');
+        Observer.Expect('format-9', '1234567.891');
+        Observer.Expect('format-0', '1,234,567.891');
+        Observer.Expect('zero', '0');
+        Observer.Expect('zero-true', '0');
+        Observer.Expect('zero-false', '0');
+        Observer.Expect('zero-format', '0');
+        Observer.Expect('neg', '-0.5');
+        Observer.Expect('neg-true', '-0.5');
+        Observer.Expect('neg-format-9', '-0.5');
+        Observer.Expect('thousand', '1,000');
+        Observer.Expect('thousand-true', '1000');
+        Observer.Expect('thousand-format', '1,000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +111,25 @@ codeunit 70323 "LT P93 ScalarToText"
         D := 0.1 + 0.2;
         Observer.Observe('sum', Dc(D, 0));
         Observer.Observe('sum-eq-point3', Format(D = 0.3));
-        Observer.Finish();
+        Observer.Expect('small', '0.00001');
+        Observer.Expect('small-true', '0.00001');
+        Observer.Expect('small-format-9', '0.00001');
+        Observer.Expect('third', '0.333333333333333333');
+        Observer.Expect('third-true', '0.333333333333333333');
+        Observer.Expect('third-format-9', '0.333333333333333333');
+        Observer.Expect('big', 'error:The value of Decimal parameter  is outside of the permitted range. The current value is: 1,000,000,000,000,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.|OutsidePermittedRange');
+        Observer.Expect('big-true', 'error:The value of Decimal parameter  is outside of the permitted range. The current value is: 1,000,000,000,000,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.|OutsidePermittedRange');
+        Observer.Expect('af84|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 1,000,000,000,000,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('af84|code', 'OutsidePermittedRange');
+        Observer.Expect('trailing', '12.5');
+        Observer.Expect('trailing-true', '12.5');
+        Observer.Expect('1e14', '100,000,000,000,000');
+        Observer.Expect('1e14-true', '100000000000000');
+        Observer.Expect('neg-big', '-1,234.5');
+        Observer.Expect('neg-big-true', '-1234.5');
+        Observer.Expect('sum', '0.3');
+        Observer.Expect('sum-eq-point3', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -122,7 +156,24 @@ codeunit 70323 "LT P93 ScalarToText"
         Observer.Observe('true-format-1', Format(B, 0, 1));
         Observer.Observe('true-format-2', Format(B, 0, 2));
         Observer.Observe('expr', (1 = 1).ToText());
-        Observer.Finish();
+        Observer.Expect('false', 'No');
+        Observer.Expect('false-true', 'false');
+        Observer.Expect('false-false', 'No');
+        Observer.Expect('false-format', 'No');
+        Observer.Expect('false-format-9', 'false');
+        Observer.Expect('false-format-0', 'No');
+        Observer.Expect('false-format-1', 'No');
+        Observer.Expect('false-format-2', '0');
+        Observer.Expect('true', 'Yes');
+        Observer.Expect('true-true', 'true');
+        Observer.Expect('true-false', 'Yes');
+        Observer.Expect('true-format', 'Yes');
+        Observer.Expect('true-format-9', 'true');
+        Observer.Expect('true-format-0', 'Yes');
+        Observer.Expect('true-format-1', 'Yes');
+        Observer.Expect('true-format-2', '1');
+        Observer.Expect('expr', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +199,21 @@ codeunit 70323 "LT P93 ScalarToText"
         B := 10;
         Observer.Observe('lf', B.ToText());
         Observer.Observe('lf-format-9', Format(B, 0, 9));
-        Observer.Finish();
+        Observer.Expect('zero', '\u0000');
+        Observer.Expect('zero-true', '\u0000');
+        Observer.Expect('zero-false', '\u0000');
+        Observer.Expect('zero-format', '\u0000');
+        Observer.Expect('max', 'ÿ');
+        Observer.Expect('max-true', 'ÿ');
+        Observer.Expect('max-false', 'ÿ');
+        Observer.Expect('max-format', 'ÿ');
+        Observer.Expect('max-format-9', 'ÿ');
+        Observer.Expect('a', 'A');
+        Observer.Expect('a-true', 'A');
+        Observer.Expect('a-format', 'A');
+        Observer.Expect('lf', '\n');
+        Observer.Expect('lf-format-9', '\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -174,7 +239,19 @@ codeunit 70323 "LT P93 ScalarToText"
         Observer.Observe('thousand', I.ToText());
         Observer.Observe('thousand-format', Format(I));
         Observer.Observe('expr', (7 * 6).ToText());
-        Observer.Finish();
+        Observer.Expect('zero', '0');
+        Observer.Expect('zero-format', '0');
+        Observer.Expect('max', '2147483647');
+        Observer.Expect('max-format', '2147483647');
+        Observer.Expect('max-format-9', '2147483647');
+        Observer.Expect('min', '-2147483648');
+        Observer.Expect('min-format', '-2147483648');
+        Observer.Expect('neg', '-42');
+        Observer.Expect('neg-format-9', '-42');
+        Observer.Expect('thousand', '1000');
+        Observer.Expect('thousand-format', '1000');
+        Observer.Expect('expr', '42');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,6 +280,19 @@ codeunit 70323 "LT P93 ScalarToText"
         B := B - 1;
         Observer.Observe('min', B.ToText());
         Observer.Observe('min-format', Format(B));
-        Observer.Finish();
+        Observer.Expect('zero', '0');
+        Observer.Expect('zero-format', '0');
+        Observer.Expect('big', '9223372032559808512');
+        Observer.Expect('big-format', '9223372032559808512');
+        Observer.Expect('big-format-9', '9223372032559808512');
+        Observer.Expect('neg-big', '-9223372032559808512');
+        Observer.Expect('neg-big-format-9', '-9223372032559808512');
+        Observer.Expect('thousand', '1000');
+        Observer.Expect('thousand-format', '1000');
+        Observer.Expect('max', '9223372036854775807');
+        Observer.Expect('max-format', '9223372036854775807');
+        Observer.Expect('min', '-9223372036854775808');
+        Observer.Expect('min-format', '-9223372036854775808');
+        Observer.Verify();
     end;
 }

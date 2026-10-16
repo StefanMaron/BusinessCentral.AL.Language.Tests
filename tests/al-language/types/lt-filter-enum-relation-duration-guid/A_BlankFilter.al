@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setfilter-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), own table 72678, test codeunit 72679 (P85)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P85); the facts are measured later on a local BC 29 service tier.
 // Facts: SetFilter(F, '') after SetRange / SetFilter on the same field, in filter group 0 and 2, FilterGroup restored: GetFilters, GetFilter, Count, HasFilter; format argument and FieldRef forms
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 72678 "LT P85 Flt"
 {
@@ -66,7 +66,17 @@ codeunit 72679 "LT P85 Blank Filter"
         Observer.Observe('range_again', Snap(R));
         R.SetFilter(Id, '');
         Observer.Observe('blank_again', Snap(R));
-        Observer.Finish();
+        Observer.Expect('before', 'Id: 1|1|1|Yes');
+        Observer.Expect('after', '||4|No');
+        Observer.Expect('getfilters', '');
+        Observer.Expect('getfilter', '');
+        Observer.Expect('count', '4');
+        Observer.Expect('hasfilter', 'No');
+        Observer.Expect('getview', 'VERSION(1) SORTING(Id)');
+        Observer.Expect('again', '||4|No');
+        Observer.Expect('range_again', 'Id: 2|2|1|Yes');
+        Observer.Expect('blank_again', '||4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -90,7 +100,14 @@ codeunit 72679 "LT P85 Blank Filter"
         Observer.Observe('range', Snap(R));
         R.SetFilter(Id, '');
         Observer.Observe('blank2', Snap(R));
-        Observer.Finish();
+        Observer.Expect('before', 'Id: >1|>1|3|Yes');
+        Observer.Expect('after', '||4|No');
+        Observer.Expect('getview', 'VERSION(1) SORTING(Id)');
+        Observer.Expect('replaced', 'Id: <>0|<>0|4|Yes');
+        Observer.Expect('blank', '||4|No');
+        Observer.Expect('range', 'Id: 2..3|2..3|2|Yes');
+        Observer.Expect('blank2', '||4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,7 +128,14 @@ codeunit 72679 "LT P85 Blank Filter"
         Observer.Observe('g0', Snap(R));
         Observer.Observe('g0_hasfilter', Format(R.HasFilter()));
         Observer.Observe('group_now', Format(R.FilterGroup()));
-        Observer.Finish();
+        Observer.Expect('g2_before', 'Id: 1|1|1|Yes');
+        Observer.Expect('g2_after', '||4|No');
+        Observer.Expect('g2_getfilter', '');
+        Observer.Expect('g2_count', '4');
+        Observer.Expect('g0', '||4|No');
+        Observer.Expect('g0_hasfilter', 'No');
+        Observer.Expect('group_now', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +154,11 @@ codeunit 72679 "LT P85 Blank Filter"
         Observer.Observe('g0', Snap(R));
         R.FilterGroup(2);
         Observer.Observe('g2_back', Snap(R));
-        Observer.Finish();
+        Observer.Expect('g2_before', 'Id: >1|>1|3|Yes');
+        Observer.Expect('g2_after', '||4|No');
+        Observer.Expect('g0', '||4|No');
+        Observer.Expect('g2_back', '||4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +187,15 @@ codeunit 72679 "LT P85 Blank Filter"
         R.FilterGroup(2);
         Observer.Observe('g2_stays', Snap(R));
         R.FilterGroup(0);
-        Observer.Finish();
+        Observer.Expect('old_group', '2');
+        Observer.Expect('g2_blank', '||1|No');
+        Observer.Expect('g0_after', '||1|No');
+        Observer.Expect('g0_getfilters', '');
+        Observer.Expect('g2_set', 'Id: >2|>2|0|Yes');
+        Observer.Expect('g0_and', 'Id: 1|1|0|Yes');
+        Observer.Expect('g0_blank', '||2|No');
+        Observer.Expect('g2_stays', 'Id: >2|>2|2|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +223,15 @@ codeunit 72679 "LT P85 Blank Filter"
         R.FilterGroup(2);
         Observer.Observe('reset_g2', Snap(R));
         R.FilterGroup(0);
-        Observer.Finish();
+        Observer.Expect('returns_old', '2');
+        Observer.Expect('now', '2');
+        Observer.Expect('restored', '2');
+        Observer.Expect('g0_blank_g2_kept', '||4|No');
+        Observer.Expect('g2_view', 'VERSION(1) SORTING(Id)');
+        Observer.Expect('g0_view', 'VERSION(1) SORTING(Id)');
+        Observer.Expect('reset', '||4|No');
+        Observer.Expect('reset_g2', '||4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -206,7 +250,12 @@ codeunit 72679 "LT P85 Blank Filter"
         R.SetFilter(Num, '');
         Observer.Observe('both_blank', Snap(R));
         Observer.Observe('hasfilter', Format(R.HasFilter()));
-        Observer.Finish();
+        Observer.Expect('after', 'Num: 20||1|Yes');
+        Observer.Expect('getfilter_num', '20');
+        Observer.Expect('getfilters', 'Num: 20');
+        Observer.Expect('both_blank', '||4|No');
+        Observer.Expect('hasfilter', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +281,12 @@ codeunit 72679 "LT P85 Blank Filter"
         R.SetRange(Num, 10);
         R.SetFilter(Num, '');
         Observer.Observe('num_after_range', R.GetFilter(Num) + '|' + Format(R.Count()) + '|' + Format(R.HasFilter()));
-        Observer.Finish();
+        Observer.Expect('text_after_range', '|4|No');
+        Observer.Expect('text_after_filter', '|4|No');
+        Observer.Expect('dec_after_range', '|4|No');
+        Observer.Expect('dec_after_filter', '|4|No');
+        Observer.Expect('num_after_range', '|4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +312,12 @@ codeunit 72679 "LT P85 Blank Filter"
         Observer.Observe('name_empty_or', R.GetFilter(Name) + '|' + Format(R.Count()));
         R.SetFilter(Name, ' ');
         Observer.Observe('name_space', R.GetFilter(Name) + '|' + Format(R.Count()) + '|' + Format(R.HasFilter()));
-        Observer.Finish();
+        Observer.Expect('empty_text_arg', 'Id: 1, Name: ''''|1|0|Yes');
+        Observer.Expect('zero_arg', 'Id: 0, Name: ''''|0|0|Yes');
+        Observer.Expect('name_empty_arg', '''''|0|Yes');
+        Observer.Expect('name_empty_or', '''''|N3|1');
+        Observer.Expect('name_space', '|4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -277,7 +336,10 @@ codeunit 72679 "LT P85 Blank Filter"
         R.SetFilter(Id, '>1');
         R.SetFilter(Id, '');
         Observer.Observe('setfilter_blank', Snap(R));
-        Observer.Finish();
+        Observer.Expect('setrange_noargs', '||4|No');
+        Observer.Expect('setrange_noargs_after_filter', '||4|No');
+        Observer.Expect('setfilter_blank', '||4|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,6 +371,13 @@ codeunit 72679 "LT P85 Blank Filter"
         RRef.FilterGroup(0);
         Observer.Observe('g0_count', Format(RRef.Count()) + '|' + Format(RRef.HasFilter()));
         RRef.Close();
-        Observer.Finish();
+        Observer.Expect('range', '1|1|Yes');
+        Observer.Expect('blank', '4||No');
+        Observer.Expect('gt', '3|>1|Yes');
+        Observer.Expect('blank_gt', '4||No');
+        Observer.Expect('g2_set_g0_count', '1');
+        Observer.Expect('g2_blank_count', '4|No');
+        Observer.Expect('g0_count', '4|No');
+        Observer.Verify();
     end;
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; the literals are measured later). Tag P91 (GitHub issue 91).
+// BC versions: 29
 // Fixtures used: Probe Observer (codeunit 69160); this file holds the tables 71591, 71592 and the helper codeunit 71593 (not a test codeunit)
 
 table 71591 "LT P91 Row"

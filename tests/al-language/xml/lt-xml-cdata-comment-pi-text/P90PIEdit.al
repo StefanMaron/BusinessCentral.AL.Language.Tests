@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/XmlProcessingInstruction/xmlprocessinginstruction-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (local service tier); the observed values become the assertions. Other BC versions are checked by the corpus CI matrix.
 // Facts: XmlProcessingInstruction AddAfterSelf, AddBeforeSelf, ReplaceWith, Remove with every node kind, attached and detached, and the serialized document after each change
 // BC versions: 29 (27 and 28 by CI)
 
@@ -237,7 +237,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'Yes');
+        Observer.Expect('k1-err|text', '');
+        Observer.Expect('k1-err|code', '');
+        Observer.Expect('k1-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('k2', 'Yes');
+        Observer.Expect('k2-err|text', '');
+        Observer.Expect('k2-err|code', '');
+        Observer.Expect('k2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>t2<b /></r>');
+        Observer.Expect('k3', 'Yes');
+        Observer.Expect('k3-err|text', '');
+        Observer.Expect('k3-err|code', '');
+        Observer.Expect('k3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <!--c3-->\n  <b />\n</r>');
+        Observer.Expect('k4', 'Yes');
+        Observer.Expect('k4-err|text', '');
+        Observer.Expect('k4-err|code', '');
+        Observer.Expect('k4-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?><![CDATA[d4]]><b /></r>');
+        Observer.Expect('k5', 'Yes');
+        Observer.Expect('k5-err|text', '');
+        Observer.Expect('k5-err|code', '');
+        Observer.Expect('k5-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <?p5 q5?>\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -255,7 +275,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('k6', 'No');
+        Observer.Expect('k6-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k6-err|code', 'Argument');
+        Observer.Expect('k6-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k7', 'Yes');
+        Observer.Expect('k7-err|text', '');
+        Observer.Expect('k7-err|code', '');
+        Observer.Expect('k7-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>&lt;?xml version="1.0" encoding="utf-8" standalone="yes"?&gt;<b /></r>');
+        Observer.Expect('k8', 'No');
+        Observer.Expect('k8-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k8-err|code', 'Argument');
+        Observer.Expect('k8-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k9', 'No');
+        Observer.Expect('k9-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k9-err|code', 'Argument');
+        Observer.Expect('k9-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +309,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('k10', 'Yes');
+        Observer.Expect('k10-err|text', '');
+        Observer.Expect('k10-err|code', '');
+        Observer.Expect('k10-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('k11', 'Yes');
+        Observer.Expect('k11-err|text', '');
+        Observer.Expect('k11-err|code', '');
+        Observer.Expect('k11-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k12', 'Yes');
+        Observer.Expect('k12-err|text', '');
+        Observer.Expect('k12-err|code', '');
+        Observer.Expect('k12-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <r>\n    <a />\n    <?t x?>\n    <b />\n  </r>\n  <b />\n</r>');
+        Observer.Expect('k13', 'Yes');
+        Observer.Expect('k13-err|text', '');
+        Observer.Expect('k13-err|code', '');
+        Observer.Expect('k13-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <f13 />\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -291,7 +343,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'No');
+        Observer.Expect('k1-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k1-err|code', 'InvalidOperation');
+        Observer.Expect('k1-x', '<?t x?>');
+        Observer.Expect('k2', 'No');
+        Observer.Expect('k2-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k2-err|code', 'InvalidOperation');
+        Observer.Expect('k2-x', '<?t x?>');
+        Observer.Expect('k3', 'No');
+        Observer.Expect('k3-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k3-err|code', 'InvalidOperation');
+        Observer.Expect('k3-x', '<?t x?>');
+        Observer.Expect('k4', 'No');
+        Observer.Expect('k4-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k4-err|code', 'InvalidOperation');
+        Observer.Expect('k4-x', '<?t x?>');
+        Observer.Expect('k5', 'No');
+        Observer.Expect('k5-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k5-err|code', 'InvalidOperation');
+        Observer.Expect('k5-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,7 +381,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('k6', 'No');
+        Observer.Expect('k6-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k6-err|code', 'InvalidOperation');
+        Observer.Expect('k6-x', '<?t x?>');
+        Observer.Expect('k7', 'No');
+        Observer.Expect('k7-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k7-err|code', 'InvalidOperation');
+        Observer.Expect('k7-x', '<?t x?>');
+        Observer.Expect('k8', 'No');
+        Observer.Expect('k8-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k8-err|code', 'InvalidOperation');
+        Observer.Expect('k8-x', '<?t x?>');
+        Observer.Expect('k9', 'No');
+        Observer.Expect('k9-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k9-err|code', 'InvalidOperation');
+        Observer.Expect('k9-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,7 +417,15 @@ codeunit 70734 "LT P90 PI Edit"
             else
                 Observer.Observe('j1-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('j0', 'No');
+        Observer.Expect('j0-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('j0-err|code', 'NotInitialized');
+        Observer.Expect('j0-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('j1', 'No');
+        Observer.Expect('j1-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('j1-err|code', 'NotInitialized');
+        Observer.Expect('j1-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -347,7 +443,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'Yes');
+        Observer.Expect('k1-err|text', '');
+        Observer.Expect('k1-err|code', '');
+        Observer.Expect('k1-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k2', 'Yes');
+        Observer.Expect('k2-err|text', '');
+        Observer.Expect('k2-err|code', '');
+        Observer.Expect('k2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />t2<?t x?><b /></r>');
+        Observer.Expect('k3', 'Yes');
+        Observer.Expect('k3-err|text', '');
+        Observer.Expect('k3-err|code', '');
+        Observer.Expect('k3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k4', 'Yes');
+        Observer.Expect('k4-err|text', '');
+        Observer.Expect('k4-err|code', '');
+        Observer.Expect('k4-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a /><![CDATA[d4]]><?t x?><b /></r>');
+        Observer.Expect('k5', 'Yes');
+        Observer.Expect('k5-err|text', '');
+        Observer.Expect('k5-err|code', '');
+        Observer.Expect('k5-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?p5 q5?>\n  <?t x?>\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -365,7 +481,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('k6', 'No');
+        Observer.Expect('k6-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k6-err|code', 'Argument');
+        Observer.Expect('k6-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k7', 'Yes');
+        Observer.Expect('k7-err|text', '');
+        Observer.Expect('k7-err|code', '');
+        Observer.Expect('k7-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />&lt;?xml version="1.0" encoding="utf-8" standalone="yes"?&gt;<?t x?><b /></r>');
+        Observer.Expect('k8', 'No');
+        Observer.Expect('k8-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k8-err|code', 'Argument');
+        Observer.Expect('k8-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k9', 'No');
+        Observer.Expect('k9-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k9-err|code', 'Argument');
+        Observer.Expect('k9-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -383,7 +515,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('k10', 'Yes');
+        Observer.Expect('k10-err|text', '');
+        Observer.Expect('k10-err|code', '');
+        Observer.Expect('k10-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k11', 'Yes');
+        Observer.Expect('k11-err|text', '');
+        Observer.Expect('k11-err|code', '');
+        Observer.Expect('k11-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k12', 'Yes');
+        Observer.Expect('k12-err|text', '');
+        Observer.Expect('k12-err|code', '');
+        Observer.Expect('k12-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <r>\n    <a />\n    <?t x?>\n    <b />\n  </r>\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k13', 'Yes');
+        Observer.Expect('k13-err|text', '');
+        Observer.Expect('k13-err|code', '');
+        Observer.Expect('k13-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <f13 />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -401,7 +549,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'No');
+        Observer.Expect('k1-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k1-err|code', 'InvalidOperation');
+        Observer.Expect('k1-x', '<?t x?>');
+        Observer.Expect('k2', 'No');
+        Observer.Expect('k2-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k2-err|code', 'InvalidOperation');
+        Observer.Expect('k2-x', '<?t x?>');
+        Observer.Expect('k3', 'No');
+        Observer.Expect('k3-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k3-err|code', 'InvalidOperation');
+        Observer.Expect('k3-x', '<?t x?>');
+        Observer.Expect('k4', 'No');
+        Observer.Expect('k4-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k4-err|code', 'InvalidOperation');
+        Observer.Expect('k4-x', '<?t x?>');
+        Observer.Expect('k5', 'No');
+        Observer.Expect('k5-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k5-err|code', 'InvalidOperation');
+        Observer.Expect('k5-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -419,7 +587,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('k6', 'No');
+        Observer.Expect('k6-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k6-err|code', 'InvalidOperation');
+        Observer.Expect('k6-x', '<?t x?>');
+        Observer.Expect('k7', 'No');
+        Observer.Expect('k7-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k7-err|code', 'InvalidOperation');
+        Observer.Expect('k7-x', '<?t x?>');
+        Observer.Expect('k8', 'No');
+        Observer.Expect('k8-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k8-err|code', 'InvalidOperation');
+        Observer.Expect('k8-x', '<?t x?>');
+        Observer.Expect('k9', 'No');
+        Observer.Expect('k9-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k9-err|code', 'InvalidOperation');
+        Observer.Expect('k9-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -439,7 +623,15 @@ codeunit 70734 "LT P90 PI Edit"
             else
                 Observer.Observe('j1-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('j0', 'No');
+        Observer.Expect('j0-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('j0-err|code', 'NotInitialized');
+        Observer.Expect('j0-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('j1', 'No');
+        Observer.Expect('j1-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('j1-err|code', 'NotInitialized');
+        Observer.Expect('j1-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -458,7 +650,32 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
             Observer.Observe('k' + Format(i) + '-x-has-parent', Format(X.GetParent(P)));
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'Yes');
+        Observer.Expect('k1-err|text', '');
+        Observer.Expect('k1-err|code', '');
+        Observer.Expect('k1-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('k1-x-has-parent', 'No');
+        Observer.Expect('k2', 'Yes');
+        Observer.Expect('k2-err|text', '');
+        Observer.Expect('k2-err|code', '');
+        Observer.Expect('k2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />t2<b /></r>');
+        Observer.Expect('k2-x-has-parent', 'No');
+        Observer.Expect('k3', 'Yes');
+        Observer.Expect('k3-err|text', '');
+        Observer.Expect('k3-err|code', '');
+        Observer.Expect('k3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->\n  <b />\n</r>');
+        Observer.Expect('k3-x-has-parent', 'No');
+        Observer.Expect('k4', 'Yes');
+        Observer.Expect('k4-err|text', '');
+        Observer.Expect('k4-err|code', '');
+        Observer.Expect('k4-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a /><![CDATA[d4]]><b /></r>');
+        Observer.Expect('k4-x-has-parent', 'No');
+        Observer.Expect('k5', 'Yes');
+        Observer.Expect('k5-err|text', '');
+        Observer.Expect('k5-err|code', '');
+        Observer.Expect('k5-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?p5 q5?>\n  <b />\n</r>');
+        Observer.Expect('k5-x-has-parent', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -477,7 +694,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
             Observer.Observe('k' + Format(i) + '-x-has-parent', Format(X.GetParent(P)));
         end;
-        Observer.Finish();
+        Observer.Expect('k6', 'No');
+        Observer.Expect('k6-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k6-err|code', 'Argument');
+        Observer.Expect('k6-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('k6-x-has-parent', 'No');
+        Observer.Expect('k7', 'Yes');
+        Observer.Expect('k7-err|text', '');
+        Observer.Expect('k7-err|code', '');
+        Observer.Expect('k7-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />&lt;?xml version="1.0" encoding="utf-8" standalone="yes"?&gt;<b /></r>');
+        Observer.Expect('k7-x-has-parent', 'No');
+        Observer.Expect('k8', 'No');
+        Observer.Expect('k8-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k8-err|code', 'Argument');
+        Observer.Expect('k8-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('k8-x-has-parent', 'No');
+        Observer.Expect('k9', 'No');
+        Observer.Expect('k9-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('k9-err|code', 'Argument');
+        Observer.Expect('k9-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('k9-x-has-parent', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -496,7 +733,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.Observe('k' + Format(i) + '-doc', SerDoc());
             Observer.Observe('k' + Format(i) + '-x-has-parent', Format(X.GetParent(P)));
         end;
-        Observer.Finish();
+        Observer.Expect('k10', 'Yes');
+        Observer.Expect('k10-err|text', '');
+        Observer.Expect('k10-err|code', '');
+        Observer.Expect('k10-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <a />\n  <b />\n</r>');
+        Observer.Expect('k10-x-has-parent', 'No');
+        Observer.Expect('k11', 'Yes');
+        Observer.Expect('k11-err|text', '');
+        Observer.Expect('k11-err|code', '');
+        Observer.Expect('k11-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('k11-x-has-parent', 'Yes');
+        Observer.Expect('k12', 'Yes');
+        Observer.Expect('k12-err|text', '');
+        Observer.Expect('k12-err|code', '');
+        Observer.Expect('k12-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <r>\n    <a />\n    <b />\n  </r>\n  <b />\n</r>');
+        Observer.Expect('k12-x-has-parent', 'No');
+        Observer.Expect('k13', 'Yes');
+        Observer.Expect('k13-err|text', '');
+        Observer.Expect('k13-err|code', '');
+        Observer.Expect('k13-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <f13 />\n  <b />\n</r>');
+        Observer.Expect('k13-x-has-parent', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -514,7 +771,27 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('k1', 'No');
+        Observer.Expect('k1-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k1-err|code', 'InvalidOperation');
+        Observer.Expect('k1-x', '<?t x?>');
+        Observer.Expect('k2', 'No');
+        Observer.Expect('k2-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k2-err|code', 'InvalidOperation');
+        Observer.Expect('k2-x', '<?t x?>');
+        Observer.Expect('k3', 'No');
+        Observer.Expect('k3-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k3-err|code', 'InvalidOperation');
+        Observer.Expect('k3-x', '<?t x?>');
+        Observer.Expect('k4', 'No');
+        Observer.Expect('k4-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k4-err|code', 'InvalidOperation');
+        Observer.Expect('k4-x', '<?t x?>');
+        Observer.Expect('k5', 'No');
+        Observer.Expect('k5-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k5-err|code', 'InvalidOperation');
+        Observer.Expect('k5-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -532,7 +809,23 @@ codeunit 70734 "LT P90 PI Edit"
             Observer.ObserveError('k' + Format(i) + '-err');
             Observer.Observe('k' + Format(i) + '-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('k6', 'No');
+        Observer.Expect('k6-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k6-err|code', 'InvalidOperation');
+        Observer.Expect('k6-x', '<?t x?>');
+        Observer.Expect('k7', 'No');
+        Observer.Expect('k7-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k7-err|code', 'InvalidOperation');
+        Observer.Expect('k7-x', '<?t x?>');
+        Observer.Expect('k8', 'No');
+        Observer.Expect('k8-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k8-err|code', 'InvalidOperation');
+        Observer.Expect('k8-x', '<?t x?>');
+        Observer.Expect('k9', 'No');
+        Observer.Expect('k9-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('k9-err|code', 'InvalidOperation');
+        Observer.Expect('k9-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -552,7 +845,15 @@ codeunit 70734 "LT P90 PI Edit"
             else
                 Observer.Observe('j1-x', SerX());
         end;
-        Observer.Finish();
+        Observer.Expect('j0', 'No');
+        Observer.Expect('j0-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('j0-err|code', 'NotInitialized');
+        Observer.Expect('j0-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('j1', 'No');
+        Observer.Expect('j1-err|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('j1-err|code', 'NotInitialized');
+        Observer.Expect('j1-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -571,7 +872,15 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t103_101_102', Format(Ok));
         Observer.ObserveError('t103_101_102-err');
         Observer.Observe('t103_101_102-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('t101_102_103', 'Yes');
+        Observer.Expect('t101_102_103-err|text', '');
+        Observer.Expect('t101_102_103-err|code', '');
+        Observer.Expect('t101_102_103-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <m1 />\n  <m2 />\n  <m3 />\n  <b />\n</r>');
+        Observer.Expect('t103_101_102', 'Yes');
+        Observer.Expect('t103_101_102-err|text', '');
+        Observer.Expect('t103_101_102-err|code', '');
+        Observer.Expect('t103_101_102-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <m3 />\n  <m1 />\n  <m2 />\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -600,7 +909,23 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t2_2_2', Format(Ok));
         Observer.ObserveError('t2_2_2-err');
         Observer.Observe('t2_2_2-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('t1_6_3', 'No');
+        Observer.Expect('t1_6_3-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t1_6_3-err|code', 'Argument');
+        Observer.Expect('t1_6_3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('t6_1_3', 'No');
+        Observer.Expect('t6_1_3-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t6_1_3-err|code', 'Argument');
+        Observer.Expect('t6_1_3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('t1_3_6', 'No');
+        Observer.Expect('t1_3_6-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t1_3_6-err|code', 'Argument');
+        Observer.Expect('t1_3_6-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <e1 />\n  <!--c3-->\n  <b />\n</r>');
+        Observer.Expect('t2_2_2', 'Yes');
+        Observer.Expect('t2_2_2-err|text', '');
+        Observer.Expect('t2_2_2-err|code', '');
+        Observer.Expect('t2_2_2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>t2t2t2<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -619,7 +944,15 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t103_101_102', Format(Ok));
         Observer.ObserveError('t103_101_102-err');
         Observer.Observe('t103_101_102-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('t101_102_103', 'Yes');
+        Observer.Expect('t101_102_103-err|text', '');
+        Observer.Expect('t101_102_103-err|code', '');
+        Observer.Expect('t101_102_103-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <m1 />\n  <m2 />\n  <m3 />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('t103_101_102', 'Yes');
+        Observer.Expect('t103_101_102-err|text', '');
+        Observer.Expect('t103_101_102-err|code', '');
+        Observer.Expect('t103_101_102-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <m3 />\n  <m1 />\n  <m2 />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -648,7 +981,23 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t2_2_2', Format(Ok));
         Observer.ObserveError('t2_2_2-err');
         Observer.Observe('t2_2_2-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('t1_6_3', 'No');
+        Observer.Expect('t1_6_3-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t1_6_3-err|code', 'Argument');
+        Observer.Expect('t1_6_3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('t6_1_3', 'No');
+        Observer.Expect('t6_1_3-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t6_1_3-err|code', 'Argument');
+        Observer.Expect('t6_1_3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('t1_3_6', 'No');
+        Observer.Expect('t1_3_6-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t1_3_6-err|code', 'Argument');
+        Observer.Expect('t1_3_6-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <!--c3-->\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('t2_2_2', 'Yes');
+        Observer.Expect('t2_2_2-err|text', '');
+        Observer.Expect('t2_2_2-err|code', '');
+        Observer.Expect('t2_2_2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />t2t2t2<?t x?><b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -667,7 +1016,15 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t103_101_102', Format(Ok));
         Observer.ObserveError('t103_101_102-err');
         Observer.Observe('t103_101_102-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('t101_102_103', 'Yes');
+        Observer.Expect('t101_102_103-err|text', '');
+        Observer.Expect('t101_102_103-err|code', '');
+        Observer.Expect('t101_102_103-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <m1 />\n  <m2 />\n  <m3 />\n  <b />\n</r>');
+        Observer.Expect('t103_101_102', 'Yes');
+        Observer.Expect('t103_101_102-err|text', '');
+        Observer.Expect('t103_101_102-err|code', '');
+        Observer.Expect('t103_101_102-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <m3 />\n  <m1 />\n  <m2 />\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -696,7 +1053,23 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t2_2_2', Format(Ok));
         Observer.ObserveError('t2_2_2-err');
         Observer.Observe('t2_2_2-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('t1_6_3', 'No');
+        Observer.Expect('t1_6_3-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t1_6_3-err|code', 'Argument');
+        Observer.Expect('t1_6_3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('t6_1_3', 'No');
+        Observer.Expect('t6_1_3-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t6_1_3-err|code', 'Argument');
+        Observer.Expect('t6_1_3-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('t1_3_6', 'No');
+        Observer.Expect('t1_3_6-err|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('t1_3_6-err|code', 'Argument');
+        Observer.Expect('t1_3_6-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <!--c3-->\n  <b />\n</r>');
+        Observer.Expect('t2_2_2', 'Yes');
+        Observer.Expect('t2_2_2-err|text', '');
+        Observer.Expect('t2_2_2-err|code', '');
+        Observer.Expect('t2_2_2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />t2t2t2<b /></r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -710,7 +1083,11 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t101_102_103', Format(Ok));
         Observer.ObserveError('t101_102_103-err');
         Observer.Observe('t101_102_103-x', SerX());
-        Observer.Finish();
+        Observer.Expect('t101_102_103', 'No');
+        Observer.Expect('t101_102_103-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('t101_102_103-err|code', 'InvalidOperation');
+        Observer.Expect('t101_102_103-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -724,7 +1101,11 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('t101_102_103', Format(Ok));
         Observer.ObserveError('t101_102_103-err');
         Observer.Observe('t101_102_103-x', SerX());
-        Observer.Finish();
+        Observer.Expect('t101_102_103', 'No');
+        Observer.Expect('t101_102_103-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('t101_102_103-err|code', 'InvalidOperation');
+        Observer.Expect('t101_102_103-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -748,7 +1129,23 @@ codeunit 70734 "LT P90 PI Edit"
             Ok := TryRemove();
             Observer.Observe('p' + Format(Pos) + '-remove', Format(Ok) + ' ' + SerDoc());
         end;
-        Observer.Finish();
+        Observer.Expect('p0-after', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <?t x?>\n  <e1 />\n</r>');
+        Observer.Expect('p0-before', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <e1 />\n  <?t x?>\n</r>');
+        Observer.Expect('p0-replace', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <e1 />\n</r>');
+        Observer.Expect('p0-remove', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r />');
+        Observer.Expect('p1-after', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <?t x?>\n  <e1 />\n  <a />\n  <b />\n</r>');
+        Observer.Expect('p1-before', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <e1 />\n  <?t x?>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('p1-replace', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <e1 />\n  <a />\n  <b />\n</r>');
+        Observer.Expect('p1-remove', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('p2-after', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('p2-before', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('p2-replace', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('p2-remove', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('p3-after', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n  <?t x?>\n  <e1 />\n</r>');
+        Observer.Expect('p3-before', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n  <e1 />\n  <?t x?>\n</r>');
+        Observer.Expect('p3-replace', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n  <e1 />\n</r>');
+        Observer.Expect('p3-remove', 'Yes <?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -775,7 +1172,13 @@ codeunit 70734 "LT P90 PI Edit"
         Ok := TryBefore(5);
         Observer.Observe('doc-comment-pi-both-sides', SerDoc());
         Observer.Observe('root-child-count-mixed', Format(Root.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('doc-text-both-sides', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />t2<?t x?>t2<b /></r>');
+        Observer.Expect('root-child-count', '5');
+        Observer.Expect('doc-cdata-both-sides', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a /><![CDATA[d4]]><?t x?><![CDATA[d4]]><b /></r>');
+        Observer.Expect('root-child-count-cdata', '5');
+        Observer.Expect('doc-comment-pi-both-sides', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <!--c3-->\n  <?p5 q5?>\n  <?t x?>\n  <?p5 q5?>\n  <!--c3-->\n  <b />\n</r>');
+        Observer.Expect('root-child-count-mixed', '7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -802,7 +1205,14 @@ codeunit 70734 "LT P90 PI Edit"
         Ok := TryAfter(13);
         Observer.Observe('add-foreign-root-after-x', SerDoc());
         Observer.Observe('child-count-foreign', Format(Root.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('add-sibling-a-after-x', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('child-count', '4');
+        Observer.Expect('after-changing-first-a', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a changed="1" />\n  <?t x?>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('add-sibling-a-before-x', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <a />\n  <?t x?>\n  <b />\n</r>');
+        Observer.Expect('child-count-before', '4');
+        Observer.Expect('add-foreign-root-after-x', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <?t x?>\n  <f13 />\n  <b />\n</r>');
+        Observer.Expect('child-count-foreign', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -825,7 +1235,18 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('remove2', Format(Ok));
         Observer.ObserveError('remove2-err');
         Observer.Observe('remove2-doc', SerDoc());
-        Observer.Finish();
+        Observer.Expect('remove1', 'Yes');
+        Observer.Expect('remove1-err|text', '');
+        Observer.Expect('remove1-err|code', '');
+        Observer.Expect('remove1-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('remove1-has-parent', 'No');
+        Observer.Expect('remove1-has-document', 'No');
+        Observer.Expect('remove1-x', '<?t x?>');
+        Observer.Expect('remove2', 'No');
+        Observer.Expect('remove2-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('remove2-err|code', 'InvalidOperation');
+        Observer.Expect('remove2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -843,7 +1264,15 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('remove2', Format(Ok));
         Observer.ObserveError('remove2-err');
         Observer.Observe('remove2-x', SerX());
-        Observer.Finish();
+        Observer.Expect('remove1', 'No');
+        Observer.Expect('remove1-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('remove1-err|code', 'InvalidOperation');
+        Observer.Expect('remove1-x', '<?t x?>');
+        Observer.Expect('remove2', 'No');
+        Observer.Expect('remove2-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('remove2-err|code', 'InvalidOperation');
+        Observer.Expect('remove2-x', '<?t x?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -866,7 +1295,14 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('remove-via-typed-again', Format(Ok));
         Observer.ObserveError('remove-via-typed-again-err');
         Observer.Observe('y-x-same-text', Format(SerNode(Y.AsXmlNode()) = SerX()));
-        Observer.Finish();
+        Observer.Expect('doc-after-node-remove', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('x-has-parent', 'No');
+        Observer.Expect('y-has-parent', 'No');
+        Observer.Expect('remove-via-typed-again', 'No');
+        Observer.Expect('remove-via-typed-again-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('remove-via-typed-again-err|code', 'InvalidOperation');
+        Observer.Expect('y-x-same-text', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -892,7 +1328,17 @@ codeunit 70734 "LT P90 PI Edit"
         Ok := TryReplace(1);
         Observer.Observe('replace-on-removed', Format(Ok));
         Observer.ObserveError('replace-on-removed-err');
-        Observer.Finish();
+        Observer.Expect('readded-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n  <?t x?>\n</r>');
+        Observer.Expect('readded-has-parent', 'Yes');
+        Observer.Expect('added-twice-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n  <?t x?>\n  <?t x?>\n</r>');
+        Observer.Expect('added-twice-count', '4');
+        Observer.Expect('after-self-on-removed', 'No');
+        Observer.Expect('after-self-on-removed-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('after-self-on-removed-err|code', 'InvalidOperation');
+        Observer.Expect('replace-on-removed', 'No');
+        Observer.Expect('replace-on-removed-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('replace-on-removed-err|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -919,7 +1365,16 @@ codeunit 70734 "LT P90 PI Edit"
         Observer.Observe('after-changing-e', SerDoc());
         Root.GetChildNodes().Get(2, N);
         Observer.Observe('node-at-2', SerNode(N));
-        Observer.Finish();
+        Observer.Expect('replace1', 'Yes');
+        Observer.Expect('replace1-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('replace2-on-replaced', 'No');
+        Observer.Expect('replace2-err|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('replace2-err|code', 'InvalidOperation');
+        Observer.Expect('replace2-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <e1 />\n  <b />\n</r>');
+        Observer.Expect('free-element-replace-doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <rep />\n  <b />\n</r>');
+        Observer.Expect('after-changing-e', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <rep later="1" />\n  <b />\n</r>');
+        Observer.Expect('node-at-2', '<rep later="1" />');
+        Observer.Verify();
     end;
 
 }

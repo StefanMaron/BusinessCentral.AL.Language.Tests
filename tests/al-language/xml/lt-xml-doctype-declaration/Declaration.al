@@ -67,7 +67,20 @@ codeunit 72083 "LT P83 Declaration"
         Observer.ObserveError('set-empty');
         Observer.Observe('after-empty', Members());
         Observer.Observe('written', Written());
-        Observer.Finish();
+        Observer.Expect('set-1.1', 'Yes');
+        Observer.Expect('set-1.1|text', '');
+        Observer.Expect('set-1.1|code', '');
+        Observer.Expect('after-1.1', '[1.1|utf-8|yes]');
+        Observer.Expect('set-2.0', 'Yes');
+        Observer.Expect('set-2.0|text', '');
+        Observer.Expect('set-2.0|code', '');
+        Observer.Expect('after-2.0', '[2.0|utf-8|yes]');
+        Observer.Expect('set-empty', 'Yes');
+        Observer.Expect('set-empty|text', '');
+        Observer.Expect('set-empty|code', '');
+        Observer.Expect('after-empty', '[|utf-8|yes]');
+        Observer.Expect('written', '<?xml version="" encoding="utf-8" standalone="yes"?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -89,7 +102,24 @@ codeunit 72083 "LT P83 Declaration"
         Observer.ObserveError('set-empty');
         Observer.Observe('after-empty', Members());
         Observer.Observe('written', Written());
-        Observer.Finish();
+        Observer.Expect('set-utf16', 'Yes');
+        Observer.Expect('set-utf16|text', '');
+        Observer.Expect('set-utf16|code', '');
+        Observer.Expect('after-utf16', '[1.0|utf-16|yes]');
+        Observer.Expect('set-latin1', 'Yes');
+        Observer.Expect('set-latin1|text', '');
+        Observer.Expect('set-latin1|code', '');
+        Observer.Expect('after-latin1', '[1.0|iso-8859-1|yes]');
+        Observer.Expect('set-bogus', 'Yes');
+        Observer.Expect('set-bogus|text', '');
+        Observer.Expect('set-bogus|code', '');
+        Observer.Expect('after-bogus', '[1.0|bogus|yes]');
+        Observer.Expect('set-empty', 'Yes');
+        Observer.Expect('set-empty|text', '');
+        Observer.Expect('set-empty|code', '');
+        Observer.Expect('after-empty', '[1.0||yes]');
+        Observer.Expect('written', '<?xml version="1.0" encoding="" standalone="yes"?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,7 +141,24 @@ codeunit 72083 "LT P83 Declaration"
         Observer.ObserveError('set-empty');
         Observer.Observe('after-empty', Members());
         Observer.Observe('written', Written());
-        Observer.Finish();
+        Observer.Expect('set-no', 'Yes');
+        Observer.Expect('set-no|text', '');
+        Observer.Expect('set-no|code', '');
+        Observer.Expect('after-no', '[1.0|utf-8|no]');
+        Observer.Expect('set-maybe', 'Yes');
+        Observer.Expect('set-maybe|text', '');
+        Observer.Expect('set-maybe|code', '');
+        Observer.Expect('after-maybe', '[1.0|utf-8|maybe]');
+        Observer.Expect('set-upper', 'Yes');
+        Observer.Expect('set-upper|text', '');
+        Observer.Expect('set-upper|code', '');
+        Observer.Expect('after-upper', '[1.0|utf-8|YES]');
+        Observer.Expect('set-empty', 'Yes');
+        Observer.Expect('set-empty|text', '');
+        Observer.Expect('set-empty|code', '');
+        Observer.Expect('after-empty', '[1.0|utf-8|]');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone=""?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,7 +178,13 @@ codeunit 72083 "LT P83 Declaration"
         Observer.Observe('encoding-cleared', Written());
         Decl.Standalone('');
         Observer.Observe('standalone-cleared', Written());
-        Observer.Finish();
+        Observer.Expect('start', '<?xml version="1.0" encoding="" standalone=""?>');
+        Observer.Expect('encoding', '<?xml version="1.0" encoding="utf-8" standalone=""?>');
+        Observer.Expect('standalone', '<?xml version="1.0" encoding="utf-8" standalone="no"?>');
+        Observer.Expect('version', '<?xml version="1.1" encoding="utf-8" standalone="no"?>');
+        Observer.Expect('encoding-cleared', '<?xml version="1.1" encoding="" standalone="no"?>');
+        Observer.Expect('standalone-cleared', '<?xml version="1.1" encoding="" standalone=""?>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -151,7 +204,23 @@ codeunit 72083 "LT P83 Declaration"
         Observer.Observe('upper', Format(TryCreate('1.0', 'UTF-8', 'YES')));
         Observer.ObserveError('upper');
         Observer.Observe('members-upper', Members());
-        Observer.Finish();
+        Observer.Expect('empty-version', 'Yes');
+        Observer.Expect('empty-version|text', '');
+        Observer.Expect('empty-version|code', '');
+        Observer.Expect('members-empty-version', '[|utf-8|yes]');
+        Observer.Expect('text-version', 'Yes');
+        Observer.Expect('text-version|text', '');
+        Observer.Expect('text-version|code', '');
+        Observer.Expect('members-text-version', '[abc|utf-8|yes]');
+        Observer.Expect('spaces', 'Yes');
+        Observer.Expect('spaces|text', '');
+        Observer.Expect('spaces|code', '');
+        Observer.Expect('members-spaces', '[ 1.0 | utf-8 | yes ]');
+        Observer.Expect('upper', 'Yes');
+        Observer.Expect('upper|text', '');
+        Observer.Expect('upper|code', '');
+        Observer.Expect('members-upper', '[1.0|UTF-8|YES]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +244,14 @@ codeunit 72083 "LT P83 Declaration"
         Doc.WriteTo(T);
         Observer.Observe('replaced-written', T);
         Observer.Observe('child-count', Format(Doc.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('get-before', 'No');
+        Observer.Expect('get-after', 'Yes');
+        Observer.Expect('got', '[1.0|utf-8|yes]');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<a />');
+        Observer.Expect('replaced', '[1.0|utf-16|no]');
+        Observer.Expect('replaced-written', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
+        Observer.Expect('child-count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -195,7 +271,14 @@ codeunit 72083 "LT P83 Declaration"
         XmlDocument.ReadFrom('<?xml version="1.0" standalone="no"?><!DOCTYPE a><a/>', Doc);
         Observer.Observe('standalone-no', Format(Doc.GetDeclaration(Got)));
         Observer.Observe('standalone-no-members', '[' + Got.Version() + '|' + Got.Encoding() + '|' + Got.Standalone() + ']');
-        Observer.Finish();
+        Observer.Expect('full', 'Yes');
+        Observer.Expect('full-members', '[1.0|utf-8|yes]');
+        Observer.Expect('version-only', 'Yes');
+        Observer.Expect('version-only-members', '[1.0||]');
+        Observer.Expect('none', 'No');
+        Observer.Expect('standalone-no', 'Yes');
+        Observer.Expect('standalone-no-members', '[1.0||no]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -215,7 +298,14 @@ codeunit 72083 "LT P83 Declaration"
         Observer.Observe('is-text', Format(N.IsXmlText()));
         Back := N.AsXmlDeclaration();
         Observer.Observe('back', '[' + Back.Version() + '|' + Back.Encoding() + '|' + Back.Standalone() + ']');
-        Observer.Finish();
+        Observer.Expect('is-decl', 'Yes');
+        Observer.Expect('is-element', 'No');
+        Observer.Expect('is-doctype', 'No');
+        Observer.Expect('is-document', 'No');
+        Observer.Expect('is-attribute', 'No');
+        Observer.Expect('is-text', 'No');
+        Observer.Expect('back', '[1.0|utf-8|yes]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -240,6 +330,10 @@ codeunit 72083 "LT P83 Declaration"
         Doc.Add(XmlElement.Create('a'));
         Doc.WriteTo(T);
         Observer.Observe('version-1.1', T);
-        Observer.Finish();
+        Observer.Expect('utf16', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
+        Observer.Expect('utf8-no-standalone', '<?xml version="1.0" encoding="utf-8" standalone=""?>\n<a />');
+        Observer.Expect('no-encoding', '<?xml version="1.0" encoding="" standalone="yes"?>\n<a />');
+        Observer.Expect('version-1.1', '<?xml version="1.1" encoding="utf-8" standalone="yes"?>\n<a />');
+        Observer.Verify();
     end;
 }

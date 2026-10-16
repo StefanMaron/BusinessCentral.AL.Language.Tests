@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpcontent/httpcontent-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), LT P87 Helper (codeunit 74228), table 74221
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); every value is observed through Probe Observer and measured later on real BC 29. No request is ever sent.
 // Facts: WriteFrom of an InStream (Blob field of an own temporary table, OutStream written into a Blob) and the headers around it
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74226 "LT P87 Content Stream"
 {
@@ -64,7 +64,14 @@ codeunit 74226 "LT P87 Content Stream"
         Observer.Observe('newKeys', Helper.Keys(H2));
         Observer.Observe('newType', Type(H2));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('add', 'added');
+        Observer.Expect('oldHasA', 'Yes');
+        Observer.Expect('oldType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('newHasA', 'Yes');
+        Observer.Expect('newKeys', '2:Content-Type,X-A,');
+        Observer.Expect('newType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/blob text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -90,7 +97,13 @@ codeunit 74226 "LT P87 Content Stream"
         Observer.Observe('hasA', Helper.DoContains(H2, 'X-A'));
         Observer.Observe('read', Read(C));
         Observer.Observe('readAgain', Read(C));
-        Observer.Finish();
+        Observer.Expect('keys', '1:Content-Type,');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('add', 'added');
+        Observer.Expect('hasA', 'Yes');
+        Observer.Expect('read', 'Yes/blob text');
+        Observer.Expect('readAgain', 'Yes/blob text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +127,10 @@ codeunit 74226 "LT P87 Content Stream"
         Observer.Observe('keys', Helper.Keys(H));
         Observer.Observe('type', Type(H));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('keys', '1:Content-Type,');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,7 +157,11 @@ codeunit 74226 "LT P87 Content Stream"
         Observer.Observe('keys', Helper.Keys(H2));
         Observer.Observe('type', Type(H2));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('hasA', 'No');
+        Observer.Expect('keys', '1:Content-Type,');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +187,11 @@ codeunit 74226 "LT P87 Content Stream"
         Observer.Observe('contentAsStream', Format(C.ReadAs(InS2)));
         InS2.ReadText(T);
         Observer.Observe('streamText', T);
-        Observer.Finish();
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('blobText', 'line1');
+        Observer.Expect('contentAsStream', 'Yes');
+        Observer.Expect('streamText', 'from content');
+        Observer.Verify();
     end;
 
     [Test]
@@ -190,6 +214,9 @@ codeunit 74226 "LT P87 Content Stream"
         C.GetHeaders(H);
         Observer.Observe('type', Type(H));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('part', 'abc');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/defghij');
+        Observer.Verify();
     end;
 }

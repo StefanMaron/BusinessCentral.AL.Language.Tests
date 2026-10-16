@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74634 "LT P89 Is Xml Types"
 {
@@ -63,7 +63,10 @@ codeunit 74634 "LT P89 Is Xml Types"
         V := XEl; Observer.Observe('element', Flags(V));
         XAttr := XmlAttribute.Create('n', 'v');
         V := XAttr; Observer.Observe('attribute', Flags(V));
-        Observer.Finish();
+        Observer.Expect('document', 'XmlDocument,');
+        Observer.Expect('element', 'XmlElement,');
+        Observer.Expect('attribute', 'XmlAttribute,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -81,7 +84,10 @@ codeunit 74634 "LT P89 Is Xml Types"
         V := XCd; Observer.Observe('cdata', Flags(V));
         XTx := XmlText.Create('txt');
         V := XTx; Observer.Observe('text', Flags(V));
-        Observer.Finish();
+        Observer.Expect('comment', 'XmlComment,');
+        Observer.Expect('cdata', 'XmlCData,');
+        Observer.Expect('text', 'XmlText,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -99,7 +105,10 @@ codeunit 74634 "LT P89 Is Xml Types"
         V := XDt; Observer.Observe('doctype', Flags(V));
         XPi := XmlProcessingInstruction.Create('target', 'data');
         V := XPi; Observer.Observe('pi', Flags(V));
-        Observer.Finish();
+        Observer.Expect('declaration', 'XmlDeclaration,');
+        Observer.Expect('doctype', 'XmlDocumentType,');
+        Observer.Expect('pi', 'XmlProcessingInstruction,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,7 +125,11 @@ codeunit 74634 "LT P89 Is Xml Types"
         V := XR; Observer.Observe('read_options', Flags(V));
         XR.PreserveWhitespace(true);
         V := XR; Observer.Observe('read_options_set', Flags(V));
-        Observer.Finish();
+        Observer.Expect('write_options', 'XmlWriteOptions,');
+        Observer.Expect('write_options_set', 'XmlWriteOptions,');
+        Observer.Expect('read_options', 'XmlReadOptions,');
+        Observer.Expect('read_options_set', 'XmlReadOptions,');
+        Observer.Verify();
     end;
 
 }

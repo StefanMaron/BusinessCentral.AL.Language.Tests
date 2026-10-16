@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-settable-method
 // Scope: in-scope
 // Fixtures used: tables 72200-72201, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: RecordRef.SetTable into the same and a different table, filters and temporary state carried over, GetTable
 // BC versions: 29 (27 and 28 by CI)
 
@@ -43,7 +43,14 @@ codeunit 72213 "LT P92 SetTable"
         Observer.Observe('filter_qty', Item.GetFilter(Qty));
         Observer.Observe('istemp', Format(Item.IsTemporary()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('code', 'A2');
+        Observer.Expect('name', 'Beta');
+        Observer.Expect('qty', '20');
+        Observer.Expect('hasfilter', 'Yes');
+        Observer.Expect('count_filtered', '2');
+        Observer.Expect('filter_qty', '>=20');
+        Observer.Expect('istemp', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -66,7 +73,11 @@ codeunit 72213 "LT P92 SetTable"
         Observer.Observe('old_filter_kept', Format(Item.HasFilter()));
         Observer.Observe('old_filter_text', Item.GetFilter(Code));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('code', 'A1');
+        Observer.Expect('name', 'Alpha');
+        Observer.Expect('old_filter_kept', 'No');
+        Observer.Expect('old_filter_text', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,7 +93,11 @@ codeunit 72213 "LT P92 SetTable"
         RecRef.Close();
         asserterror RecRef.SetTable(Item);
         Observer.ObserveError('closed');
-        Observer.Finish();
+        Observer.Expect('unopened|text', 'The record is not open.');
+        Observer.Expect('unopened|code', 'RecordNotOpened');
+        Observer.Expect('closed|text', 'The record is not open.');
+        Observer.Expect('closed|code', 'RecordNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +125,13 @@ codeunit 72213 "LT P92 SetTable"
         Observer.Observe('temp_into_real_code', Real.Code);
         Observer.Observe('temp_into_real_count', Format(Real.Count()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('real_into_temp_istemp', 'Yes');
+        Observer.Expect('real_into_temp_code', 'A1');
+        Observer.Expect('real_into_temp_count', '0');
+        Observer.Expect('temp_into_real_istemp', 'No');
+        Observer.Expect('temp_into_real_code', 'TT');
+        Observer.Expect('temp_into_real_count', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +156,11 @@ codeunit 72213 "LT P92 SetTable"
         RecRef.GetTable(Item);
         Observer.Observe('recref_number', Format(RecRef.Number()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('item_before_settable', 'Alpha');
+        Observer.Expect('item_after_settable', 'ViaRef');
+        Observer.Expect('stored', 'ViaRef');
+        Observer.Expect('recref_number', '72200');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,6 +186,11 @@ codeunit 72213 "LT P92 SetTable"
         Observer.Observe('filter_carried', Format(RecRef.HasFilter()));
         Observer.Observe('filter_count', Format(RecRef.Count()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('first_name', 'LT P92 Item');
+        Observer.Expect('second_name', 'LT P92 Pair');
+        Observer.Expect('second_pos', 'Grp=CONST(A,B),Seq=CONST(3)');
+        Observer.Expect('filter_carried', 'Yes');
+        Observer.Expect('filter_count', '1');
+        Observer.Verify();
     end;
 }

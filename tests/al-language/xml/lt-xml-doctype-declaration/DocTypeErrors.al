@@ -182,7 +182,31 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('hyphen-first');
         Observer.Observe('quote', Format(TryCreate('a"b')));
         Observer.ObserveError('quote');
-        Observer.Finish();
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('empty|code', 'Argument');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space|text', 'The following exception was encountered when processing XML data: ''Name cannot begin with the '' '' character, hexadecimal value 0x20.'' at line 0 and position 1.');
+        Observer.Expect('space|code', 'Xml:Xml');
+        Observer.Expect('inner-space', 'No');
+        Observer.Expect('inner-space|text', 'The following exception was encountered when processing XML data: ''The '' '' character, hexadecimal value 0x20, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('inner-space|code', 'Xml:Xml');
+        Observer.Expect('digit-first', 'No');
+        Observer.Expect('digit-first|text', 'The following exception was encountered when processing XML data: ''Name cannot begin with the ''1'' character, hexadecimal value 0x31.'' at line 0 and position 1.');
+        Observer.Expect('digit-first|code', 'Xml:Xml');
+        Observer.Expect('angle', 'No');
+        Observer.Expect('angle|text', 'The following exception was encountered when processing XML data: ''Name cannot begin with the ''<'' character, hexadecimal value 0x3C.'' at line 0 and position 1.');
+        Observer.Expect('angle|code', 'Xml:Xml');
+        Observer.Expect('slash', 'No');
+        Observer.Expect('slash|text', 'The following exception was encountered when processing XML data: ''The ''/'' character, hexadecimal value 0x2F, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('slash|code', 'Xml:Xml');
+        Observer.Expect('hyphen-first', 'No');
+        Observer.Expect('hyphen-first|text', 'The following exception was encountered when processing XML data: ''Name cannot begin with the ''-'' character, hexadecimal value 0x2D.'' at line 0 and position 1.');
+        Observer.Expect('hyphen-first|code', 'Xml:Xml');
+        Observer.Expect('quote', 'No');
+        Observer.Expect('quote|text', 'The following exception was encountered when processing XML data: ''The ''"'' character, hexadecimal value 0x22, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('quote|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -196,7 +220,13 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('inner-space');
         asserterror Dt := XmlDocumentType.Create('1', '', '', '');
         Observer.ObserveError('digit');
-        Observer.Finish();
+        Observer.Expect('empty|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('empty|code', 'Argument');
+        Observer.Expect('inner-space|text', 'The following exception was encountered when processing XML data: ''The '' '' character, hexadecimal value 0x20, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('inner-space|code', 'Xml:Xml');
+        Observer.Expect('digit|text', 'The following exception was encountered when processing XML data: ''Name cannot begin with the ''1'' character, hexadecimal value 0x31.'' at line 0 and position 1.');
+        Observer.Expect('digit|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,7 +243,19 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('system');
         Observer.Observe('subset', Format(TrySubset()));
         Observer.ObserveError('subset');
-        Observer.Finish();
+        Observer.Expect('name', 'No');
+        Observer.Expect('name|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('name|code', 'NotInitialized');
+        Observer.Expect('public', 'No');
+        Observer.Expect('public|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('public|code', 'NotInitialized');
+        Observer.Expect('system', 'No');
+        Observer.Expect('system|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('system|code', 'NotInitialized');
+        Observer.Expect('subset', 'No');
+        Observer.Expect('subset|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('subset|code', 'NotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +274,22 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('remove');
         Observer.Observe('as-node', Format(TryAsNode()));
         Observer.ObserveError('as-node');
-        Observer.Finish();
+        Observer.Expect('set-name', 'No');
+        Observer.Expect('set-name|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('set-name|code', 'NotInitialized');
+        Observer.Expect('set-subset', 'No');
+        Observer.Expect('set-subset|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('set-subset|code', 'NotInitialized');
+        Observer.Expect('write-to', 'No');
+        Observer.Expect('write-to|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('write-to|code', 'NotInitialized');
+        Observer.Expect('remove', 'No');
+        Observer.Expect('remove|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('remove|code', 'NotInitialized');
+        Observer.Expect('as-node', 'Yes');
+        Observer.Expect('as-node|text', '');
+        Observer.Expect('as-node|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -245,7 +302,13 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('doc-create');
         Observer.Observe('doc-add', Format(TryDocAdd()));
         Observer.ObserveError('doc-add');
-        Observer.Finish();
+        Observer.Expect('doc-create', 'No');
+        Observer.Expect('doc-create|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('doc-create|code', 'NotInitialized');
+        Observer.Expect('doc-add', 'No');
+        Observer.Expect('doc-add|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('doc-add|code', 'NotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,7 +325,19 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('write-to');
         Observer.Observe('doc-set-declaration', Format(TryDocSetDecl()));
         Observer.ObserveError('doc-set-declaration');
-        Observer.Finish();
+        Observer.Expect('version', 'No');
+        Observer.Expect('version|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDeclaration variable not initialized.');
+        Observer.Expect('version|code', 'NotInitialized');
+        Observer.Expect('set-encoding', 'No');
+        Observer.Expect('set-encoding|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDeclaration variable not initialized.');
+        Observer.Expect('set-encoding|code', 'NotInitialized');
+        Observer.Expect('write-to', 'No');
+        Observer.Expect('write-to|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('write-to|code', 'NotInitialized');
+        Observer.Expect('doc-set-declaration', 'No');
+        Observer.Expect('doc-set-declaration|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDeclaration variable not initialized.');
+        Observer.Expect('doc-set-declaration|code', 'NotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -277,7 +352,13 @@ codeunit 72086 "LT P83 DocType Errors"
         Observer.ObserveError('get-type');
         Observer.Observe('get-declaration', Format(TryGetDecl(GotDecl)));
         Observer.ObserveError('get-declaration');
-        Observer.Finish();
+        Observer.Expect('get-type', 'No');
+        Observer.Expect('get-type|text', 'The XML node is not set.');
+        Observer.Expect('get-type|code', 'XmlNodeNotFound');
+        Observer.Expect('get-declaration', 'No');
+        Observer.Expect('get-declaration|text', 'The XML node is not set.');
+        Observer.Expect('get-declaration|code', 'XmlNodeNotFound');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -304,6 +385,10 @@ codeunit 72086 "LT P83 DocType Errors"
         Dt := XmlDocumentType.Create('a', 'p', 's', 'i');
         Observer.Observe('format-init', Format(Dt));
         Observer.Observe('format-decl', Format(XmlDeclaration.Create('1.0', 'utf-8', 'yes')));
-        Observer.Finish();
+        Observer.Expect('af302|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('af302|code', 'NotInitialized');
+        Observer.Expect('format-init', '<!DOCTYPE a PUBLIC "p" "s"[i]>');
+        Observer.Expect('format-decl', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>');
+        Observer.Verify();
     end;
 }

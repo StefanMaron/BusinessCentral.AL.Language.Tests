@@ -80,7 +80,11 @@ codeunit 72085 "LT P83 DocType Copy"
         A := XmlDocumentType.Create('fresh', '', '', '');
         Observer.Observe('a-reassigned', Describe(A));
         Observer.Observe('b-kept', Describe(B));
-        Observer.Finish();
+        Observer.Expect('a', '[changed|pp|ss|ii]');
+        Observer.Expect('b', '[changed|pp|ss|ii]');
+        Observer.Expect('a-reassigned', '[fresh|||]');
+        Observer.Expect('b-kept', '[changed|pp|ss|ii]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +100,10 @@ codeunit 72085 "LT P83 DocType Copy"
         Observer.Observe('by-var', Describe(A));
         ReplaceByVar(A);
         Observer.Observe('replaced-by-var', Describe(A));
-        Observer.Finish();
+        Observer.Expect('by-value', '[byvalue|||]');
+        Observer.Expect('by-var', '[byvar|||]');
+        Observer.Expect('replaced-by-var', '[replaced|||]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,7 +126,10 @@ codeunit 72085 "LT P83 DocType Copy"
         Observer.Observe('original-name', GName(A));
         Doc.WriteTo(T);
         Observer.Observe('after-rename', T);
-        Observer.Finish();
+        Observer.Expect('after-set', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" "later.dtd"[]>\n<a />');
+        Observer.Expect('original-name', 'b');
+        Observer.Expect('after-rename', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE b PUBLIC "" "later.dtd"[]>\n<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +153,9 @@ codeunit 72085 "LT P83 DocType Copy"
         Got.SetName('viaNode');
         Doc.WriteTo(T);
         Observer.Observe('via-node', T);
-        Observer.Finish();
+        Observer.Expect('assigned-copy', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE shared PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('via-node', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE viaNode PUBLIC "" ""[]>\n<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +171,11 @@ codeunit 72085 "LT P83 DocType Copy"
         Observer.Observe('second', Format(Doc.GetDocumentType(Got)));
         asserterror Observer.Observe('kept-name', GName(Got));
         Observer.ObserveError('af160');
-        Observer.Finish();
+        Observer.Expect('first', 'No');
+        Observer.Expect('second', 'No');
+        Observer.Expect('af160|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlDocumentType variable not initialized.');
+        Observer.Expect('af160|code', 'NotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -180,7 +196,12 @@ codeunit 72085 "LT P83 DocType Copy"
         Doc := XmlDocument.Create();
         Observer.Observe('add-again', Format(TryAdd(Doc, A)));
         Observer.ObserveError('add-again');
-        Observer.Finish();
+        Observer.Expect('after-clear', '[a|p|s|i]');
+        Observer.Expect('written', '<!DOCTYPE a PUBLIC "p" "s"[i]>');
+        Observer.Expect('add-again', 'Yes');
+        Observer.Expect('add-again|text', '');
+        Observer.Expect('add-again|code', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -211,6 +232,9 @@ codeunit 72085 "LT P83 DocType Copy"
         Doc.GetDeclaration(Got);
         Got.Version('1.1');
         Observer.Observe('original-version', A.Version());
-        Observer.Finish();
+        Observer.Expect('assigned', 'no');
+        Observer.Expect('doc-after-change', '<?xml version="1.0" encoding="utf-16" standalone="no"?>\n<a />');
+        Observer.Expect('original-version', '1.1');
+        Observer.Verify();
     end;
 }

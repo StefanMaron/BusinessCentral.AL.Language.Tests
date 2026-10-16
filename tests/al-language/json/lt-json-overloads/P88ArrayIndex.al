@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonarray/jsonarray-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74406
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonArray index errors, RemoveAt, IndexOf per value type
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74406 "LT P88 Array Index"
 {
@@ -50,7 +50,19 @@ codeunit 74406 "LT P88 Array Index"
         Observer.Observe('insert_at_0', Txt(A));
         A.Insert(2, 'mid');
         Observer.Observe('insert_at_2', Txt(A));
-        Observer.Finish();
+        Observer.Expect('insert_minus1|text', 'Index out of bounds.');
+        Observer.Expect('insert_minus1|code', 'IndexOutOfBounds');
+        Observer.Expect('insert_4_of_3|text', 'Index out of bounds.');
+        Observer.Expect('insert_4_of_3|code', 'IndexOutOfBounds');
+        Observer.Expect('insert_intmax|text', 'Index out of bounds.');
+        Observer.Expect('insert_intmax|code', 'IndexOutOfBounds');
+        Observer.Expect('insert_intmin|text', 'Index out of bounds.');
+        Observer.Expect('insert_intmin|code', 'IndexOutOfBounds');
+        Observer.Expect('after_errors', '[1,2,3]');
+        Observer.Expect('insert_at_count', '[1,2,3,5]');
+        Observer.Expect('insert_at_0', '[0,1,2,3,5]');
+        Observer.Expect('insert_at_2', '[0,1,"mid",2,3,5]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -78,7 +90,22 @@ codeunit 74406 "LT P88 Array Index"
         Observer.ObserveError('insert_1_empty');
         A.Insert(0, 1);
         Observer.Observe('insert_0_empty', Txt(A));
-        Observer.Finish();
+        Observer.Expect('set_minus1|text', 'Index out of bounds.');
+        Observer.Expect('set_minus1|code', 'IndexOutOfBounds');
+        Observer.Expect('set_3_of_3|text', 'Index out of bounds.');
+        Observer.Expect('set_3_of_3|code', 'IndexOutOfBounds');
+        Observer.Expect('set_intmax|text', 'Index out of bounds.');
+        Observer.Expect('set_intmax|code', 'IndexOutOfBounds');
+        Observer.Expect('set_intmin|text', 'Index out of bounds.');
+        Observer.Expect('set_intmin|code', 'IndexOutOfBounds');
+        Observer.Expect('after_errors', '[1,2,3]');
+        Observer.Expect('after_sets', '["first",2,false]');
+        Observer.Expect('set_0_empty|text', 'Index out of bounds.');
+        Observer.Expect('set_0_empty|code', 'IndexOutOfBounds');
+        Observer.Expect('insert_1_empty|text', 'Index out of bounds.');
+        Observer.Expect('insert_1_empty|code', 'IndexOutOfBounds');
+        Observer.Expect('insert_0_empty', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +131,21 @@ codeunit 74406 "LT P88 Array Index"
         asserterror A.RemoveAt(0);
         Observer.ObserveError('removeat_0_empty');
         Observer.Observe('count_empty', Format(A.Count()));
-        Observer.Finish();
+        Observer.Expect('get_3_of_3|text', 'Index out of bounds.');
+        Observer.Expect('get_3_of_3|code', 'IndexOutOfBounds');
+        Observer.Expect('get_minus1|text', 'Index out of bounds.');
+        Observer.Expect('get_minus1|code', 'IndexOutOfBounds');
+        Observer.Expect('removeat_3_of_3|text', 'Index out of bounds.');
+        Observer.Expect('removeat_3_of_3|code', 'IndexOutOfBounds');
+        Observer.Expect('removeat_minus1|text', 'Index out of bounds.');
+        Observer.Expect('removeat_minus1|code', 'IndexOutOfBounds');
+        Observer.Expect('removeat_1', 'Yes');
+        Observer.Expect('after_removeat', '[1,3]');
+        Observer.Expect('after_all_removed', '[]');
+        Observer.Expect('removeat_0_empty|text', 'Index out of bounds.');
+        Observer.Expect('removeat_0_empty|code', 'IndexOutOfBounds');
+        Observer.Expect('count_empty', '0');
+        Observer.Verify();
     end;
 
     local procedure Mixed(var A: JsonArray)
@@ -138,7 +179,9 @@ codeunit 74406 "LT P88 Array Index"
         Mixed(A);
         Observer.Observe('mixed_text', Txt(A));
         Observer.Observe('mixed_count', Format(A.Count()));
-        Observer.Finish();
+        Observer.Expect('mixed_text', '[true,42,"hello",12.345,"2024-03-15","14:30:15","2024-03-15T14:30:15.0000000Z",6442450941,90061001]');
+        Observer.Expect('mixed_count', '9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +231,25 @@ codeunit 74406 "LT P88 Array Index"
         Observer.Observe('indexof_int_1', Format(A.IndexOf(Tok(V))));
         V.SetValueToNull();
         Observer.Observe('indexof_null', Format(A.IndexOf(Tok(V))));
-        Observer.Finish();
+        Observer.Expect('indexof_true', '-1');
+        Observer.Expect('indexof_false', '-1');
+        Observer.Expect('indexof_42', '-1');
+        Observer.Expect('indexof_43', '-1');
+        Observer.Expect('indexof_hello', '-1');
+        Observer.Expect('indexof_HELLO', '-1');
+        Observer.Expect('indexof_12_345', '-1');
+        Observer.Expect('indexof_12_3450', '-1');
+        Observer.Expect('indexof_date', '-1');
+        Observer.Expect('indexof_date_other', '-1');
+        Observer.Expect('indexof_time', '-1');
+        Observer.Expect('indexof_datetime', '-1');
+        Observer.Expect('indexof_bigint', '-1');
+        Observer.Expect('indexof_bigint_other', '-1');
+        Observer.Expect('indexof_option_beta', '-1');
+        Observer.Expect('indexof_text_42', '-1');
+        Observer.Expect('indexof_int_1', '-1');
+        Observer.Expect('indexof_null', '-1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,6 +289,14 @@ codeunit 74406 "LT P88 Array Index"
         Clear(A);
         Probe.ReadFrom('7');
         Observer.Observe('indexof_empty_array', Format(A.IndexOf(Probe)));
-        Observer.Finish();
+        Observer.Expect('indexof_first_7', '0');
+        Observer.Expect('indexof_second_7_token', '3');
+        Observer.Expect('indexof_inner_instance', '1');
+        Observer.Expect('indexof_obj_instance', '2');
+        Observer.Expect('indexof_equal_array_other_instance', '-1');
+        Observer.Expect('indexof_equal_object_other_instance', '-1');
+        Observer.Expect('indexof_array_other_order', '-1');
+        Observer.Expect('indexof_empty_array', '-1');
+        Observer.Verify();
     end;
 }

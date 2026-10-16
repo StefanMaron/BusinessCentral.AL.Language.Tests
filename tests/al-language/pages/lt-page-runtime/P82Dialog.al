@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/dialog/dialog-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: Dialog Open / Update / Close in a test (no UI), Confirm / StrMenu / Message with handlers (text the handler receives, returned value) and without handlers, Error with format arguments and ErrorInfo
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 71206 "LT P82 Dialog"
 {
@@ -82,7 +82,15 @@ codeunit 71206 "LT P82 Dialog"
         Observer.Observe('update-date-no-error', 'ok');
         Dlg.Close();
         Observer.Observe('close', 'ok');
-        Observer.Finish();
+        Observer.Expect('open', 'ok');
+        Observer.Expect('update-text', 'ok');
+        Observer.Expect('update-integer', 'ok');
+        Observer.Expect('update-progress', 'ok');
+        Observer.Expect('update-progress-full', 'ok');
+        Observer.Expect('update-decimal', 'ok');
+        Observer.Expect('update-date-no-error', 'ok');
+        Observer.Expect('close', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +118,25 @@ codeunit 71206 "LT P82 Dialog"
         Observer.Observe('open-reopen', Format(TryOpen(Dlg, 'Again #1##')));
         Observer.Observe('open-reopen-error', GetLastErrorText());
         Dlg.Close();
-        Observer.Finish();
+        Observer.Expect('close-unopened', 'No');
+        Observer.Expect('close-unopened-error', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('update-unopened', 'No');
+        Observer.Expect('update-unopened-error', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('open-empty-template', 'Yes');
+        Observer.Expect('open-empty-error', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('update-unknown-field', 'No');
+        Observer.Expect('update-unknown-field-error', 'No parameter with index ''9'' was found in the format string ''''.');
+        Observer.Expect('update-zero-field', 'No');
+        Observer.Expect('update-zero-field-error', 'No parameter with index ''0'' was found in the format string ''''.');
+        Observer.Expect('close-twice-first', 'Yes');
+        Observer.Expect('close-twice-second', 'No');
+        Observer.Expect('close-twice-error', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('open-plain-text', 'Yes');
+        Observer.Expect('update-no-placeholder', 'No');
+        Observer.Expect('update-no-placeholder-error', 'No parameter with index ''1'' was found in the format string ''Just text''.');
+        Observer.Expect('open-reopen', 'Yes');
+        Observer.Expect('open-reopen-error', 'No parameter with index ''1'' was found in the format string ''Just text''.');
+        Observer.Verify();
     end;
 
     [Test]
@@ -122,7 +148,9 @@ codeunit 71206 "LT P82 Dialog"
         ConfirmAnswer := true;
         Result := Confirm('Proceed with %1 and %2?', false, 'one', 2);
         Observer.Observe('result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('question', 'Proceed with %1 and %2?');
+        Observer.Expect('result', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +162,9 @@ codeunit 71206 "LT P82 Dialog"
         ConfirmAnswer := false;
         Result := Confirm('Default true?', true);
         Observer.Observe('result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('question', 'Default true?');
+        Observer.Expect('result', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +176,9 @@ codeunit 71206 "LT P82 Dialog"
         ConfirmAnswer := true;
         Result := Confirm('Plain question');
         Observer.Observe('result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('question', 'Plain question');
+        Observer.Expect('result', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +195,12 @@ codeunit 71206 "LT P82 Dialog"
         asserterror Result := Confirm(Long);
         Observer.ObserveError('af163');
         Observer.Observe('long-result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('question', '');
+        Observer.Expect('empty-result', 'Yes');
+        Observer.Expect('af163|text', 'The length of the string is 1100, but it must be less than or equal to 1024 characters. Value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...');
+        Observer.Expect('af163|code', 'StringLengthExceeded');
+        Observer.Expect('long-result', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +212,11 @@ codeunit 71206 "LT P82 Dialog"
         Observer.ObserveError('confirm');
         asserterror Answer := Confirm('No handler %1', true, 'again');
         Observer.ObserveError('confirm-with-args');
-        Observer.Finish();
+        Observer.Expect('confirm|text', 'Unhandled UI: Confirm No handler question');
+        Observer.Expect('confirm|code', 'MissingUIHandler');
+        Observer.Expect('confirm-with-args|text', 'Unhandled UI: Confirm No handler %1');
+        Observer.Expect('confirm-with-args|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +228,11 @@ codeunit 71206 "LT P82 Dialog"
         MenuAnswer := 2;
         Result := StrMenu('First,Second,Third', 3, 'Pick one');
         Observer.Observe('result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('options', 'First,Second,Third');
+        Observer.Expect('instruction', 'Pick one');
+        Observer.Expect('default-choice', '3');
+        Observer.Expect('result', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -199,7 +244,11 @@ codeunit 71206 "LT P82 Dialog"
         MenuAnswer := 0;
         Result := StrMenu('First,Second', 1);
         Observer.Observe('result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('options', 'First,Second');
+        Observer.Expect('instruction', '');
+        Observer.Expect('default-choice', '1');
+        Observer.Expect('result', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -211,7 +260,11 @@ codeunit 71206 "LT P82 Dialog"
         MenuAnswer := 1;
         Result := StrMenu('Only');
         Observer.Observe('result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('options', 'Only');
+        Observer.Expect('instruction', '');
+        Observer.Expect('default-choice', '1');
+        Observer.Expect('result', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -226,7 +279,15 @@ codeunit 71206 "LT P82 Dialog"
         MenuAnswer := -1;
         Result := StrMenu('A,B', 1, 'x');
         Observer.Observe('result-minus-1', Format(Result));
-        Observer.Finish();
+        Observer.Expect('options', 'A,B');
+        Observer.Expect('instruction', 'x');
+        Observer.Expect('default-choice', '1');
+        Observer.Expect('result-9', '9');
+        Observer.Expect('options', 'A,B');
+        Observer.Expect('instruction', 'x');
+        Observer.Expect('default-choice', '1');
+        Observer.Expect('result-minus-1', '-1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -240,7 +301,15 @@ codeunit 71206 "LT P82 Dialog"
         Observer.Observe('empty-result', Format(Result));
         Result := StrMenu(',,A,,', 2, 'items');
         Observer.Observe('empty-items-result', Format(Result));
-        Observer.Finish();
+        Observer.Expect('options', '');
+        Observer.Expect('instruction', '');
+        Observer.Expect('default-choice', '0');
+        Observer.Expect('empty-result', '1');
+        Observer.Expect('options', ',,A,,');
+        Observer.Expect('instruction', 'items');
+        Observer.Expect('default-choice', '2');
+        Observer.Expect('empty-items-result', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -250,7 +319,9 @@ codeunit 71206 "LT P82 Dialog"
     begin
         asserterror Pick := StrMenu('A,B', 1, 'Instr');
         Observer.ObserveError('strmenu');
-        Observer.Finish();
+        Observer.Expect('strmenu|text', 'Unhandled UI: StrMenu A,B');
+        Observer.Expect('strmenu|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +329,8 @@ codeunit 71206 "LT P82 Dialog"
     procedure Message_WithHandler()
     begin
         Message('Hello %1 and %2', 'world', 5);
-        Observer.Finish();
+        Observer.Expect('message', 'Hello world and 5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +339,9 @@ codeunit 71206 "LT P82 Dialog"
     begin
         Message('first');
         Message('second');
-        Observer.Finish();
+        Observer.Expect('message', 'first');
+        Observer.Expect('message', 'second');
+        Observer.Verify();
     end;
 
     [Test]
@@ -275,7 +349,8 @@ codeunit 71206 "LT P82 Dialog"
     procedure Message_FormatCharacters()
     begin
         Message('100% sure %1', 'x');
-        Observer.Finish();
+        Observer.Expect('message', '100% sure x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +360,11 @@ codeunit 71206 "LT P82 Dialog"
         Observer.ObserveError('message');
         asserterror Message('No handler %1', 'x');
         Observer.ObserveError('message-with-args');
-        Observer.Finish();
+        Observer.Expect('message|text', 'Unhandled UI: Message No handler message');
+        Observer.Expect('message|code', 'MissingUIHandler');
+        Observer.Expect('message-with-args|text', 'Unhandled UI: Message No handler x');
+        Observer.Expect('message-with-args|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     [Test]
@@ -308,7 +387,22 @@ codeunit 71206 "LT P82 Dialog"
         asserterror Error(PadStr('', 3000, 'e'));
         Observer.Observe('long-length', Format(StrLen(GetLastErrorText())));
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('plain|text', 'plain');
+        Observer.Expect('plain|code', 'Dialog');
+        Observer.Expect('args|text', 'with text and 3');
+        Observer.Expect('args|code', 'Dialog');
+        Observer.Expect('missing-arg|text', 'missing one %2');
+        Observer.Expect('missing-arg|code', 'Dialog');
+        Observer.Expect('unused-arg|text', 'extra');
+        Observer.Expect('unused-arg|code', 'Dialog');
+        Observer.Expect('empty|text', '');
+        Observer.Expect('empty|code', 'Dialog');
+        Observer.Expect('percent|text', 'percent 100%');
+        Observer.Expect('percent|code', 'Dialog');
+        Observer.Expect('formatted|text', 'decimal 1.5 date 03/02/24 bool Yes');
+        Observer.Expect('formatted|code', 'Dialog');
+        Observer.Expect('long-length', '3000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -322,7 +416,11 @@ codeunit 71206 "LT P82 Dialog"
         Info.Title := 'a title';
         asserterror Error(Info);
         Observer.ObserveError('set');
-        Observer.Finish();
+        Observer.Expect('create|text', 'info message');
+        Observer.Expect('create|code', 'Dialog');
+        Observer.Expect('set|text', 'set message');
+        Observer.Expect('set|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -333,6 +431,9 @@ codeunit 71206 "LT P82 Dialog"
         ClearLastError();
         Observer.Observe('after-clear', GetLastErrorText());
         Observer.Observe('code-after-clear', GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('has-error', 'Yes');
+        Observer.Expect('after-clear', '');
+        Observer.Expect('code-after-clear', '');
+        Observer.Verify();
     end;
 }

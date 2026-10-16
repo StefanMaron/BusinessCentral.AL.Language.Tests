@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-geturl-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73974
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: GetUrl for client type Web, Phone, Tablet, Desktop, Default with company, without, with empty company
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 73974 "LT P95 GetUrl CT Main"
@@ -66,7 +66,12 @@ codeunit 73974 "LT P95 GetUrl CT Main"
             Observer.Observe('Web_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('Web_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('Web_shape', 'Yes|Yes|Yes|No|No|No|No');
+        Observer.Expect('Web_tail', '?company=<Company>');
+        Observer.Expect('Web_nocompany_shape', 'Yes|Yes|No|No|No|No|No');
+        Observer.Expect('Web_nocompany_tail', 'noquery');
+        Observer.Expect('Web_emptycompany_shape', 'Yes|Yes|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -103,7 +108,12 @@ codeunit 73974 "LT P95 GetUrl CT Main"
             Observer.Observe('Phone_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('Phone_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('Phone_shape', 'Yes|No|Yes|No|No|No|No');
+        Observer.Expect('Phone_tail', '?company=<Company>');
+        Observer.Expect('Phone_nocompany_shape', 'Yes|No|No|No|No|No|No');
+        Observer.Expect('Phone_nocompany_tail', 'noquery');
+        Observer.Expect('Phone_emptycompany_shape', 'Yes|No|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -140,7 +150,12 @@ codeunit 73974 "LT P95 GetUrl CT Main"
             Observer.Observe('Tablet_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('Tablet_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('Tablet_shape', 'Yes|No|Yes|No|No|No|No');
+        Observer.Expect('Tablet_tail', '?company=<Company>');
+        Observer.Expect('Tablet_nocompany_shape', 'Yes|No|No|No|No|No|No');
+        Observer.Expect('Tablet_nocompany_tail', 'noquery');
+        Observer.Expect('Tablet_emptycompany_shape', 'Yes|No|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -177,7 +192,12 @@ codeunit 73974 "LT P95 GetUrl CT Main"
             Observer.Observe('Desktop_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('Desktop_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('Desktop_shape', 'Yes|No|Yes|No|No|No|No');
+        Observer.Expect('Desktop_tail', '?company=<Company>');
+        Observer.Expect('Desktop_nocompany_shape', 'Yes|No|No|No|No|No|No');
+        Observer.Expect('Desktop_nocompany_tail', 'noquery');
+        Observer.Expect('Desktop_emptycompany_shape', 'Yes|No|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -214,7 +234,12 @@ codeunit 73974 "LT P95 GetUrl CT Main"
             Observer.Observe('Default_emptycompany_shape', Shape(R) + '|' + Tail(R))
         else
             Observer.Observe('Default_emptycompany_err', Err());
-        Observer.Finish();
+        Observer.Expect('Default_shape', 'Yes|No|No|No|No|No|No');
+        Observer.Expect('Default_tail', 'noquery');
+        Observer.Expect('Default_nocompany_shape', 'Yes|No|No|No|No|No|No');
+        Observer.Expect('Default_nocompany_tail', 'noquery');
+        Observer.Expect('Default_emptycompany_shape', 'Yes|No|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 
 }

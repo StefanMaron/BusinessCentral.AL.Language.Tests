@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74007
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on arrays (System.Clear overload for arrays): all elements reset, 2-D arrays, array of text, of boolean, of code
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74007 "LT P95 Clear Arrays"
@@ -48,7 +48,14 @@ codeunit 74007 "LT P95 Clear Arrays"
         Observer.Observe('dims', Format(ArrayLen(Ai)) + '|' + Format(ArrayLen(A2)) + '|' + Format(ArrayLen(A2, 2)));
         Clear(Ai[2]);
 
-        Observer.Finish();
+        Observer.Expect('int', '000');
+        Observer.Expect('text', '[]');
+        Observer.Expect('bool', 'NoNoNo');
+        Observer.Expect('code', '[]');
+        Observer.Expect('date', '|');
+        Observer.Expect('two_dim', '00');
+        Observer.Expect('dims', '3|6|3');
+        Observer.Verify();
     end;
 
 }

@@ -90,7 +90,16 @@ codeunit 73080 "LT P94 Page Modal"
             Observer.Observe('r' + Format(i), Format(Result));
         end;
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('r1', 'OK');
+        Observer.Expect('r2', 'Cancel');
+        Observer.Expect('r3', 'LookupOK');
+        Observer.Expect('r4', 'LookupCancel');
+        Observer.Expect('r5', 'Yes');
+        Observer.Expect('r6', 'No');
+        Observer.Expect('r7', 'RunObject');
+        Observer.Expect('r8', 'RunSystem');
+        Observer.Expect('seen', 'record=2;lookup=Yes;before=None');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +123,17 @@ codeunit 73080 "LT P94 Page Modal"
         end;
         Observer.Observe('seen', Seen);
         Observer.Observe('nameAfter', Item.Name);
-        Observer.Finish();
+        Observer.Expect('r1', 'OK');
+        Observer.Expect('r2', 'Cancel');
+        Observer.Expect('r3', 'LookupOK');
+        Observer.Expect('r4', 'LookupCancel');
+        Observer.Expect('r5', 'Yes');
+        Observer.Expect('r6', 'No');
+        Observer.Expect('r7', 'RunObject');
+        Observer.Expect('r8', 'RunSystem');
+        Observer.Expect('seen', 'record=2;lookup=Yes;before=None');
+        Observer.Expect('nameAfter', 'Beta');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +154,12 @@ codeunit 73080 "LT P94 Page Modal"
         Observer.Observe('id', Format(Item.Id));
         Observer.Observe('name', Item.Name);
         Observer.Observe('qty', Format(Item.Qty));
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('seen', 'record=1;lookup=Yes;before=None');
+        Observer.Expect('id', '3');
+        Observer.Expect('name', 'Gamma');
+        Observer.Expect('qty', '30');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,7 +178,10 @@ codeunit 73080 "LT P94 Page Modal"
         Observer.Observe('result', Format(Result));
         Observer.Observe('id', Format(Item.Id));
         Observer.Observe('name', Item.Name);
-        Observer.Finish();
+        Observer.Expect('result', 'LookupCancel');
+        Observer.Expect('id', '3');
+        Observer.Expect('name', 'Gamma');
+        Observer.Verify();
     end;
 
     [Test]
@@ -174,7 +201,11 @@ codeunit 73080 "LT P94 Page Modal"
         Observer.Observe('seen', Seen);
         Observer.Observe('id', Format(Item.Id));
         Observer.Observe('name', Item.Name);
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('seen', 'record=1;lookup=Yes;before=None');
+        Observer.Expect('id', '3');
+        Observer.Expect('name', 'Gamma');
+        Observer.Verify();
     end;
 
     [Test]
@@ -199,7 +230,12 @@ codeunit 73080 "LT P94 Page Modal"
         Observer.Observe('fieldValue', Format(FRef.Value()));
         Observer.Observe('itemName', Item.Name);
         Observer.Observe('itemId', Format(Item.Id));
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('seen', 'record=1;lookup=Yes;before=None');
+        Observer.Expect('fieldValue', 'Alpha');
+        Observer.Expect('itemName', 'Gamma');
+        Observer.Expect('itemId', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,7 +261,15 @@ codeunit 73080 "LT P94 Page Modal"
             Result := Page.RunModal(Page::"LT P94 List", Item, FRef);
             Observer.Observe('r' + Format(i), Format(Result));
         end;
-        Observer.Finish();
+        Observer.Expect('r1', 'OK');
+        Observer.Expect('r2', 'Cancel');
+        Observer.Expect('r3', 'LookupOK');
+        Observer.Expect('r4', 'LookupCancel');
+        Observer.Expect('r5', 'Yes');
+        Observer.Expect('r6', 'No');
+        Observer.Expect('r7', 'RunObject');
+        Observer.Expect('r8', 'RunSystem');
+        Observer.Verify();
     end;
 
     [Test]
@@ -245,7 +289,10 @@ codeunit 73080 "LT P94 Page Modal"
         ResponseToGive := Action::Cancel;
         Result := Page.RunModal(Page::"LT P94 Card", Item, Item.FieldNo(Qty));
         Observer.Observe('resultCancel', Format(Result));
-        Observer.Finish();
+        Observer.Expect('result', 'OK');
+        Observer.Expect('seen', 'record=2;lookup=Yes');
+        Observer.Expect('resultCancel', 'Cancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +314,9 @@ codeunit 73080 "LT P94 Page Modal"
             Observer.Observe('unknown', Format(Result))
         else
             Observer.Observe('unknown', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('zero', 'error:Unhandled UI: ModalPage 73070|MissingUIHandler');
+        Observer.Expect('unknown', 'error:The supplied field number ''999'' cannot be found in the ''LT P94 Item'' table.|FieldNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -280,7 +329,8 @@ codeunit 73080 "LT P94 Page Modal"
             Observer.Observe('missing', Format(Result))
         else
             Observer.Observe('missing', Helper.ErrText());
-        Observer.Finish();
+        Observer.Expect('missing', 'error:You tried to invoke the Page object with the ID 73999 from the object LT P94 Page Modal. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -296,7 +346,9 @@ codeunit 73080 "LT P94 Page Modal"
         Result := Page.RunModal(Page::"LT P94 List");
         Observer.Observe('result', Format(Result));
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('result', 'Cancel');
+        Observer.Expect('seen', 'activate=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -312,6 +364,8 @@ codeunit 73080 "LT P94 Page Modal"
         Result := Page.RunModal(Page::"LT P94 List");
         Observer.Observe('result', Format(Result));
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('result', 'Cancel');
+        Observer.Expect('seen', 'activateRefresh=Yes');
+        Observer.Verify();
     end;
 }

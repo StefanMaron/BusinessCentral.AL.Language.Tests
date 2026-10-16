@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; the literals are measured later). Tag P91 (GitHub issue 91).
+// BC versions: 29
 // Fixtures used: tables and helper of P91Fix.al; self-contained reports 71601, 71602 and codeunit 71613
 // Facts: members whose exact signature is unsure (the lead drops what does not compile): Report.GetSubstituteReportId, Report.ValidateAndPrepareLayout,
 // CurrReport.NewPagePerRecord, CurrReport.PaperSource, and the RequestPage members of a report variable (Activate, Close, Editable, LookupMode, ObjectId, SaveRecord, SetSelectionFilter) outside a run
@@ -82,7 +82,10 @@ codeunit 71613 "LT P91 Unsure Tests"
         Observer.Observe('own', Format(SubstituteOf(Report::"LT P91 Props") = Format(Report::"LT P91 Props")));
         Observer.Observe('zero', SubstituteOf(0));
         Observer.Observe('unknown', SubstituteOf(71999));
-        Observer.Finish();
+        Observer.Expect('own', 'Yes');
+        Observer.Expect('zero', '0');
+        Observer.Expect('unknown', '71999');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,6 +94,7 @@ codeunit 71613 "LT P91 Unsure Tests"
         Rpt: Report "LT P91 Props";
     begin
         Observer.Observe('probe', Rpt.Probe());
-        Observer.Finish();
+        Observer.Expect('probe', 'No');
+        Observer.Verify();
     end;
 }

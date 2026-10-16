@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-setloadfields-method
 // Scope: in-scope
 // Fixtures used: table 72200, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: RecordRef.SetLoadFields / AddLoadFields / AreFieldsLoaded and Record.LoadFields (partial records)
 // BC versions: 29 (27 and 28 by CI)
 
@@ -27,7 +27,12 @@ codeunit 72218 "LT P92 LoadFields"
         Observer.Observe('qty', Format(RecRef.Field(3).Value));
         Observer.Observe('amt', Format(RecRef.Field(4).Value));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('find', 'Yes');
+        Observer.Expect('name_loaded', 'Beta');
+        Observer.Expect('pk_loaded', 'A2');
+        Observer.Expect('qty', '20');
+        Observer.Expect('amt', '2.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -56,7 +61,17 @@ codeunit 72218 "LT P92 LoadFields"
         RecRef.FindFirst();
         Observer.Observe('5_after_clear', Format(RecRef.AreFieldsLoaded(5)));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('default_all', 'No');
+        Observer.Expect('2', 'Yes');
+        Observer.Expect('3', 'Yes');
+        Observer.Expect('2_3', 'Yes');
+        Observer.Expect('4', 'No');
+        Observer.Expect('2_4', 'No');
+        Observer.Expect('pk', 'Yes');
+        Observer.Expect('4_after_add', 'Yes');
+        Observer.Expect('2_after_add', 'Yes');
+        Observer.Expect('5_after_clear', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -75,7 +90,10 @@ codeunit 72218 "LT P92 LoadFields"
         Observer.Observe('3', Format(RecRef.AreFieldsLoaded(3)));
         Observer.Observe('4', Format(RecRef.AreFieldsLoaded(4)));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('2', 'Yes');
+        Observer.Expect('3', 'Yes');
+        Observer.Expect('4', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +116,10 @@ codeunit 72218 "LT P92 LoadFields"
         Observer.Observe('name', Item.Name);
         Observer.Observe('qty_kept', Format(Item.Qty));
         Observer.Observe('amt_kept', Format(Item.Amt));
-        Observer.Finish();
+        Observer.Expect('name', 'Partial');
+        Observer.Expect('qty_kept', '30');
+        Observer.Expect('amt_kept', '3.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +141,14 @@ codeunit 72218 "LT P92 LoadFields"
         Item.FindFirst();
         Observer.Observe('amt_after_set', Format(Item.AreFieldsLoaded(Amt)));
         Observer.Observe('name_after_set', Format(Item.AreFieldsLoaded(Name)));
-        Observer.Finish();
+        Observer.Expect('name', 'Yes');
+        Observer.Expect('qty', 'Yes');
+        Observer.Expect('amt', 'Yes');
+        Observer.Expect('name_qty', 'Yes');
+        Observer.Expect('name_amt', 'Yes');
+        Observer.Expect('amt_after_set', 'Yes');
+        Observer.Expect('name_after_set', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,6 +166,8 @@ codeunit 72218 "LT P92 LoadFields"
         Observer.Observe('name', Format(RecRef.AreFieldsLoaded(2)));
         Observer.Observe('qty', Format(RecRef.AreFieldsLoaded(3)));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('name', 'Yes');
+        Observer.Expect('qty', 'No');
+        Observer.Verify();
     end;
 }

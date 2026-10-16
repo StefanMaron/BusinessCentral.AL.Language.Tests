@@ -86,7 +86,13 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Observe('get-bool', Format(Doc.GetDocumentType(Dt)));
         Observer.Observe('get-name', GName(Dt));
         Observer.Observe('child-count', Format(Doc.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('af82|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('af82|code', 'InvalidOperation');
+        Observer.Expect('with-root', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('get-bool', 'Yes');
+        Observer.Expect('get-name', 'a');
+        Observer.Expect('child-count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +109,11 @@ codeunit 72081 "LT P83 DocType In Doc"
         Doc := XmlDocument.Create(XmlDeclaration.Create('1.0', '', ''));
         Doc.Add(XmlElement.Create('a'));
         Observer.Observe('only-declaration', Written());
-        Observer.Finish();
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<!DOCTYPE a PUBLIC "pub" "sys.dtd"[<!ELEMENT a EMPTY>]>\n<a />');
+        Observer.Expect('get-bool', 'Yes');
+        Observer.Expect('child-count', '2');
+        Observer.Expect('only-declaration', '<?xml version="1.0" encoding="" standalone=""?>\n<a />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,7 +131,18 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Observe('add-second', Format(TryAdd(XmlDocumentType.Create('b', '', '', ''))));
         Observer.ObserveError('add-second');
         Observer.Observe('child-count', Format(Doc.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('add-first', 'Yes');
+        Observer.Expect('add-first|text', '');
+        Observer.Expect('add-first|code', '');
+        Observer.Expect('add-root', 'Yes');
+        Observer.Expect('add-root|text', '');
+        Observer.Expect('add-root|code', '');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('add-second', 'No');
+        Observer.Expect('add-second|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('add-second|code', 'InvalidOperation');
+        Observer.Expect('child-count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +156,12 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.ObserveError('add-after-root');
         Observer.Observe('written', Written());
         Observer.Observe('child-count', Format(Doc.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('add-after-root', 'No');
+        Observer.Expect('add-after-root|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('add-after-root|code', 'InvalidOperation');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('child-count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +175,10 @@ codeunit 72081 "LT P83 DocType In Doc"
         asserterror E.Add(Dt);
         Observer.ObserveError('add-to-element');
         Observer.Observe('element-text', Format(E.HasElements()) + '|' + E.InnerXml());
-        Observer.Finish();
+        Observer.Expect('add-to-element|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('add-to-element|code', 'Argument');
+        Observer.Expect('element-text', 'No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +196,13 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Observe('second-children', Format(Doc2.GetChildNodes().Count()));
         Observer.Observe('first-children', Format(Doc.GetChildNodes().Count()));
         Observer.Observe('first-written', Written());
-        Observer.Finish();
+        Observer.Expect('add-to-second', 'Yes');
+        Observer.Expect('add-to-second|text', '');
+        Observer.Expect('add-to-second|code', '');
+        Observer.Expect('second-children', '1');
+        Observer.Expect('first-children', '2');
+        Observer.Expect('first-written', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" ""[]>\n<a />');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -190,7 +225,12 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Observe('public', GPub(Got));
         Observer.Observe('system', GSys(Got));
         Observer.Observe('subset', GSub(Got));
-        Observer.Finish();
+        Observer.Expect('bool', 'Yes');
+        Observer.Expect('name', 'root');
+        Observer.Expect('public', '-//P//EN');
+        Observer.Expect('system', 'p.dtd');
+        Observer.Expect('subset', '<!ENTITY e "v">');
+        Observer.Verify();
     end;
 
     [Test]
@@ -208,7 +248,16 @@ codeunit 72081 "LT P83 DocType In Doc"
         Clear(Doc);
         Observer.Observe('default-doc', Format(TryGetType()));
         Observer.ObserveError('default-doc');
-        Observer.Finish();
+        Observer.Expect('with', 'Yes');
+        Observer.Expect('with|text', '');
+        Observer.Expect('with|code', '');
+        Observer.Expect('without', 'No');
+        Observer.Expect('without|text', 'The XML node is not set.');
+        Observer.Expect('without|code', 'XmlNodeNotFound');
+        Observer.Expect('default-doc', 'No');
+        Observer.Expect('default-doc|text', 'The XML node is not set.');
+        Observer.Expect('default-doc|code', 'XmlNodeNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,7 +274,12 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Observe('child-type-1', ChildKind(1));
         Observer.Observe('child-type-2', ChildKind(2));
         Observer.Observe('child-type-3', ChildKind(3));
-        Observer.Finish();
+        Observer.Expect('select-all', 'Yes');
+        Observer.Expect('select-count', '1');
+        Observer.Expect('child-type-1', 'doctype');
+        Observer.Expect('child-type-2', 'element');
+        Observer.Expect('child-type-3', 'none');
+        Observer.Verify();
     end;
 
     local procedure ChildKind(Index: Integer): Text

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74005
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear on Enum and Option variables, default value and ordinal
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 enum 74004 "LT P95 Enum 74004"
@@ -46,7 +46,14 @@ codeunit 74005 "LT P95 Clear Enum Option"
         Clear(Bt);
         Observer.Observe('option2_cleared', Format(Bt, 0, 2));
 
-        Observer.Finish();
+        Observer.Expect('enum_before', 'Seven|7');
+        Observer.Expect('option_before', 'Beta|1');
+        Observer.Expect('enum_after', 'Zero|0');
+        Observer.Expect('option_after', 'Alpha|0');
+        Observer.Expect('enum_fresh_default_vs_five', '0');
+        Observer.Expect('enum_five_cleared', '0');
+        Observer.Expect('option2_cleared', '0');
+        Observer.Verify();
     end;
 
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; the literals are measured later). Tag P91 (GitHub issue 91).
+// BC versions: 29
 // Fixtures used: tables and helper of P91Fix.al; SingleInstance log 71594 is used only by test codeunit 71610
 // Facts: report instance members used from report triggers (CreateTotals, TotalsCausedBy, NewPage, ShowOutput, PrintOnlyIfDetail) and Run / RunModal on a report variable
 
@@ -120,7 +120,8 @@ codeunit 71610 "LT P91 Inst Tests"
         L.Take();
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'pre;pre showoutput=No;row 1 tc=0 showoutput=No;row 2 tc=0 showoutput=No;row 3 tc=0 showoutput=No;row 4 tc=0 showoutput=No;post tc=0;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -132,7 +133,8 @@ codeunit 71610 "LT P91 Inst Tests"
         L.Take();
         Rpt.RunModal();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'pre;pre showoutput=No;row 1 tc=0 showoutput=No;row 2 tc=0 showoutput=No;row 3 tc=0 showoutput=No;row 4 tc=0 showoutput=No;post tc=0;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +146,9 @@ codeunit 71610 "LT P91 Inst Tests"
         Observer.Observe('run', L.Take());
         Report.RunModal(Report::"LT P91 Totals");
         Observer.Observe('runmodal', L.Take());
-        Observer.Finish();
+        Observer.Expect('run', 'pre;pre showoutput=No;row 1 tc=0 showoutput=No;row 2 tc=0 showoutput=No;row 3 tc=0 showoutput=No;row 4 tc=0 showoutput=No;post tc=0;post;');
+        Observer.Expect('runmodal', 'pre;pre showoutput=No;row 1 tc=0 showoutput=No;row 2 tc=0 showoutput=No;row 3 tc=0 showoutput=No;row 4 tc=0 showoutput=No;post tc=0;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +161,8 @@ codeunit 71610 "LT P91 Inst Tests"
         L.Take();
         Report.Run(Report::"LT P91 Totals");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'pre;pre showoutput=No;post tc=0;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -172,7 +177,8 @@ codeunit 71610 "LT P91 Inst Tests"
         Rpt.SetTableView(Row);
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'pre;pre showoutput=No;row 3 tc=0 showoutput=No;row 4 tc=0 showoutput=No;post tc=0;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -184,7 +190,8 @@ codeunit 71610 "LT P91 Inst Tests"
         L.Take();
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'showoutput=No;showoutput=No;printonlyifdetail=No;printonlyifdetail=Yes;row 1 pageno=1;row 2 pageno=1;row 3 pageno=1;row 4 pageno=1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,6 +205,8 @@ codeunit 71610 "LT P91 Inst Tests"
         Observer.Observe('first', L.Take());
         Rpt.Run();
         Observer.Observe('second', L.Take());
-        Observer.Finish();
+        Observer.Expect('first', 'showoutput=No;showoutput=No;printonlyifdetail=No;printonlyifdetail=Yes;row 1 pageno=1;row 2 pageno=1;row 3 pageno=1;row 4 pageno=1;');
+        Observer.Expect('second', 'showoutput=No;showoutput=No;printonlyifdetail=No;printonlyifdetail=Yes;row 1 pageno=1;row 2 pageno=1;row 3 pageno=1;row 4 pageno=1;');
+        Observer.Verify();
     end;
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; the literals are measured later). Tag P91 (GitHub issue 91).
+// BC versions: 29
 // Fixtures used: tables and helper of P91Fix.al; SingleInstance log 71599 is used only by test codeunit 71612
 // Facts: Report.Run / RunModal / Execute static and on a variable: ids 0 and unknown, Execute with empty, garbage and XML parameters, Run twice, UseRequestPage
 
@@ -89,7 +89,11 @@ codeunit 71612 "LT P91 Run Tests"
         Observer.Observe('instance run', L.Take());
         Rpt.RunModal();
         Observer.Observe('instance runmodal', L.Take());
-        Observer.Finish();
+        Observer.Expect('static run', 'pre;row pre filter=[];row 1;row 2;row 3;row 4;post;');
+        Observer.Expect('static runmodal', 'pre;row pre filter=[];row 1;row 2;row 3;row 4;post;');
+        Observer.Expect('instance run', 'pre;row pre filter=[];row 1;row 2;row 3;row 4;post;');
+        Observer.Expect('instance runmodal', 'pre;row pre filter=[];row 1;row 2;row 3;row 4;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +108,9 @@ codeunit 71612 "LT P91 Run Tests"
         Observer.Observe('run filtered', L.Take());
         Report.RunModal(Report::"LT P91 RunRep", false, false, Row);
         Observer.Observe('runmodal filtered', L.Take());
-        Observer.Finish();
+        Observer.Expect('run filtered', 'pre;row pre filter=[2..3];row 2;row 3;post;');
+        Observer.Expect('runmodal filtered', 'pre;row pre filter=[2..3];row 2;row 3;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +126,17 @@ codeunit 71612 "LT P91 Run Tests"
         Observer.ObserveError('runmodal 0');
         asserterror Report.RunModal(71999);
         Observer.ObserveError('runmodal unknown');
-        Observer.Finish();
+        Observer.Expect('run 0|text', 'You tried to invoke the Report object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run 0|code', 'AL:MetadataNotFound');
+        Observer.Expect('run unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run unknown|code', 'AL:MetadataNotFound');
+        Observer.Expect('run negative|text', 'You tried to invoke the Report object with the ID -1 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run negative|code', 'AL:MetadataNotFound');
+        Observer.Expect('runmodal 0|text', 'You tried to invoke the Report object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('runmodal 0|code', 'AL:MetadataNotFound');
+        Observer.Expect('runmodal unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('runmodal unknown|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +146,8 @@ codeunit 71612 "LT P91 Run Tests"
         L.Take();
         Report.Execute(Report::"LT P91 RunRep", '');
         Observer.Observe('empty', L.Take());
-        Observer.Finish();
+        Observer.Expect('empty', 'pre;row pre filter=[];row 1;row 2;row 3;row 4;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +157,11 @@ codeunit 71612 "LT P91 Run Tests"
         Observer.ObserveError('execute 0');
         asserterror Report.Execute(71999, '');
         Observer.ObserveError('execute unknown');
-        Observer.Finish();
+        Observer.Expect('execute 0|text', 'You tried to invoke the Report object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('execute 0|code', 'AL:MetadataNotFound');
+        Observer.Expect('execute unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('execute unknown|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +174,8 @@ codeunit 71612 "LT P91 Run Tests"
         L.Take();
         Report.Execute(Report::"LT P91 RunRep", '', Row);
         Observer.Observe('with row', L.Take());
-        Observer.Finish();
+        Observer.Expect('with row', 'pre;row pre filter=[];row 1;row 2;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -166,7 +188,10 @@ codeunit 71612 "LT P91 Run Tests"
         asserterror Params := Rpt.RunRequestPage();
         Observer.ObserveError('af183');
         Observer.Observe('params blank', Format(Params = ''));
-        Observer.Finish();
+        Observer.Expect('af183|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('af183|code', 'DB:Ok');
+        Observer.Expect('params blank', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -179,6 +204,9 @@ codeunit 71612 "LT P91 Run Tests"
         Observer.Observe('set true', Format(Rpt.UseRequestPage()));
         Rpt.UseRequestPage(false);
         Observer.Observe('set false', Format(Rpt.UseRequestPage()));
-        Observer.Finish();
+        Observer.Expect('default', 'No');
+        Observer.Expect('set true', 'Yes');
+        Observer.Expect('set false', 'No');
+        Observer.Verify();
     end;
 }

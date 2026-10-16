@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/outstream/outstream-write-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), LT P89 Helper (74627)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74644 "LT P89 Stream DateGuid"
 {
@@ -53,7 +53,12 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('v4_max', DumpDate(V));
         V := DMY2Date(1, 1, 2000);
         Observer.Observe('v5_y2k', DumpDate(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '4:00000000');
+        Observer.Expect('v2_leap', '4:DD8F1600');
+        Observer.Expect('v3_min', '4:1F8A1300');
+        Observer.Expect('v4_max', '4:91766F00');
+        Observer.Expect('v5_y2k', '4:EB4A1600');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +100,21 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadDate(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '8');
+        Observer.Expect('read1', 'ok n=4');
+        Observer.Expect('value1', '02/29/24');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=4');
+        Observer.Expect('value2', '02/29/24');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '');
+        Observer.Verify();
     end;
 
     local procedure DumpTime(V: Time): Text
@@ -140,7 +159,11 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('v3_last', DumpTime(V));
         V := 000001T;
         Observer.Observe('v4_one_second', DumpTime(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '4:00000000');
+        Observer.Expect('v2_noon', '4:012E9302');
+        Observer.Expect('v3_last', '4:19582605');
+        Observer.Expect('v4_one_second', '4:E9030000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -182,7 +205,21 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadTime(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '8');
+        Observer.Expect('read1', 'ok n=4');
+        Observer.Expect('value1', '12:00:00 PM');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=4');
+        Observer.Expect('value2', '12:00:00 PM');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '');
+        Observer.Verify();
     end;
 
     local procedure DumpDateTime(V: DateTime): Text
@@ -227,7 +264,11 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('v3_leap_last', DumpDateTime(V));
         V := CreateDateTime(DMY2Date(1, 1, 1753), 0T);
         Observer.Observe('v4_min', DumpDateTime(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '8:0000000000000000');
+        Observer.Expect('v2_y2k_noon', '8:013A67DC66390000');
+        Observer.Expect('v3_leap_last', '8:19E05366183A0000');
+        Observer.Expect('v4_min', '8:01640B0E50320000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +310,21 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadDateTime(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '16');
+        Observer.Expect('read1', 'ok n=8');
+        Observer.Expect('value1', '01/01/00 12:00 PM');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=8');
+        Observer.Expect('value2', '01/01/00 12:00 PM');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '');
+        Observer.Verify();
     end;
 
     local procedure DumpDuration(V: Duration): Text
@@ -316,7 +371,12 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('v4_minus1s', DumpDuration(V));
         V := 1;
         Observer.Observe('v5_1ms', DumpDuration(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '8:0000000000000000');
+        Observer.Expect('v2_1s', '8:E803000000000000');
+        Observer.Expect('v3_1d', '8:005C260500000000');
+        Observer.Expect('v4_minus1s', '8:18FCFFFFFFFFFFFF');
+        Observer.Expect('v5_1ms', '8:0100000000000000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -358,7 +418,21 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadDuration(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '16');
+        Observer.Expect('read1', 'ok n=8');
+        Observer.Expect('value1', '1 second');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=8');
+        Observer.Expect('value2', '1 second');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '');
+        Observer.Verify();
     end;
 
     local procedure DumpGuid(V: Guid): Text
@@ -403,7 +477,11 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('v3_ff', DumpGuid(V));
         Evaluate(V, '{00000001-0000-0000-0000-000000000000}');
         Observer.Observe('v4_low', DumpGuid(V));
-        Observer.Finish();
+        Observer.Expect('v1_null', '16:00000000000000000000000000000000');
+        Observer.Expect('v2_pattern', '16:78563412BC9AF0DE123456789ABCDEF0');
+        Observer.Expect('v3_ff', '16:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+        Observer.Expect('v4_low', '16:01000000000000000000000000000000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -445,7 +523,21 @@ codeunit 74644 "LT P89 Stream DateGuid"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadGuid(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '32');
+        Observer.Expect('read1', 'ok n=16');
+        Observer.Expect('value1', '{12345678-9ABC-DEF0-1234-56789ABCDEF0}');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=16');
+        Observer.Expect('value2', '{12345678-9ABC-DEF0-1234-56789ABCDEF0}');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Verify();
     end;
 
 }

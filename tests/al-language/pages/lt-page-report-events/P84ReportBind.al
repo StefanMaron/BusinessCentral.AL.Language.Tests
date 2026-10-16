@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-bindsubscription-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 73036, report 73045, codeunits 73046-73048 (log 73047 used only by test codeunit 73049)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 ...; observed values are added by the lead after measuring (tag P84, GitHub issue #84)
 // Facts: BindSubscription / UnbindSubscription called inside report triggers (OnInitReport, OnPreReport, OnAfterGetRecord, OnPostReport) with a manual subscriber codeunit. BindSubscription(this) with the report itself is not possible (this is a report, BindSubscription takes a codeunit): skipped
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 report 73045 "LT P84 Bind Rpt"
 {
@@ -202,7 +202,25 @@ codeunit 73049 "LT P84 Bind Tests"
         Observer.Observe('af187', 'no error');
         RunWith(Observer, 'unbind_only', 'unbindinit', false);
         RunWith(Observer, 'outside_unbind', 'unbindinit', true);
-        Observer.Finish();
+        Observer.Expect('bind_run', '');
+        Observer.Expect('bind_after', '');
+        Observer.Expect('bind_unbinds', '3');
+        Observer.Expect('bind_cleaned', '');
+        Observer.Expect('af185', 'no error');
+        Observer.Expect('both_run', '');
+        Observer.Expect('both_after', '');
+        Observer.Expect('both_unbinds', '3');
+        Observer.Expect('both_cleaned', '');
+        Observer.Expect('af187', 'no error');
+        Observer.Expect('unbind_only_run', '');
+        Observer.Expect('unbind_only_after', '');
+        Observer.Expect('unbind_only_unbinds', '3');
+        Observer.Expect('unbind_only_cleaned', '');
+        Observer.Expect('outside_unbind_run', 'pre-1;pre-2;pre-3;get1-a;get1-b;get1-c;get2-a;get2-b;get2-c;post-1;post-2;post-3;');
+        Observer.Expect('outside_unbind_after', '');
+        Observer.Expect('outside_unbind_unbinds', '3');
+        Observer.Expect('outside_unbind_cleaned', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +234,25 @@ codeunit 73049 "LT P84 Bind Tests"
         Observer.Observe('af201', 'no error');
         RunWith(Observer, 'unbind_only', 'unbindpre', false);
         RunWith(Observer, 'outside_unbind', 'unbindpre', true);
-        Observer.Finish();
+        Observer.Expect('bind_run', 'pre-2;pre-3;get1-a;get1-b;get1-c;get2-a;get2-b;get2-c;post-1;post-2;post-3;');
+        Observer.Expect('bind_after', '');
+        Observer.Expect('bind_unbinds', '3');
+        Observer.Expect('bind_cleaned', '');
+        Observer.Expect('af198', 'no error');
+        Observer.Expect('both_run', 'pre-2;');
+        Observer.Expect('both_after', '');
+        Observer.Expect('both_unbinds', '3');
+        Observer.Expect('both_cleaned', '');
+        Observer.Expect('af201', 'no error');
+        Observer.Expect('unbind_only_run', '');
+        Observer.Expect('unbind_only_after', '');
+        Observer.Expect('unbind_only_unbinds', '3');
+        Observer.Expect('unbind_only_cleaned', '');
+        Observer.Expect('outside_unbind_run', 'pre-1;pre-2;');
+        Observer.Expect('outside_unbind_after', '');
+        Observer.Expect('outside_unbind_unbinds', '3');
+        Observer.Expect('outside_unbind_cleaned', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -230,7 +266,25 @@ codeunit 73049 "LT P84 Bind Tests"
         Observer.Observe('af215', 'no error');
         RunWith(Observer, 'unbind_only', 'unbindget', false);
         RunWith(Observer, 'outside_unbind', 'unbindget', true);
-        Observer.Finish();
+        Observer.Expect('bind_run', 'get1-b;get1-c;get2-a;bindfail:The binding of codeunit 73048 was unsuccessful. The codeunit has already been bound.;get2-b;get2-c;post-1;post-2;post-3;');
+        Observer.Expect('bind_after', '');
+        Observer.Expect('bind_unbinds', '3');
+        Observer.Expect('bind_cleaned', '');
+        Observer.Expect('af211', 'no error');
+        Observer.Expect('both_run', 'get1-b;get2-b;');
+        Observer.Expect('both_after', '');
+        Observer.Expect('both_unbinds', '3');
+        Observer.Expect('both_cleaned', '');
+        Observer.Expect('af215', 'no error');
+        Observer.Expect('unbind_only_run', '');
+        Observer.Expect('unbind_only_after', '');
+        Observer.Expect('unbind_only_unbinds', '3');
+        Observer.Expect('unbind_only_cleaned', '');
+        Observer.Expect('outside_unbind_run', 'pre-1;pre-2;pre-3;get1-a;get1-b;');
+        Observer.Expect('outside_unbind_after', '');
+        Observer.Expect('outside_unbind_unbinds', '3');
+        Observer.Expect('outside_unbind_cleaned', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -244,7 +298,25 @@ codeunit 73049 "LT P84 Bind Tests"
         Observer.Observe('af229', 'no error');
         RunWith(Observer, 'unbind_only', 'unbindpost', false);
         RunWith(Observer, 'outside_unbind', 'unbindpost', true);
-        Observer.Finish();
+        Observer.Expect('bind_run', 'post-2;post-3;');
+        Observer.Expect('bind_after', '');
+        Observer.Expect('bind_unbinds', '3');
+        Observer.Expect('bind_cleaned', '');
+        Observer.Expect('af224', 'no error');
+        Observer.Expect('both_run', 'post-2;');
+        Observer.Expect('both_after', '');
+        Observer.Expect('both_unbinds', '3');
+        Observer.Expect('both_cleaned', '');
+        Observer.Expect('af229', 'no error');
+        Observer.Expect('unbind_only_run', '');
+        Observer.Expect('unbind_only_after', '');
+        Observer.Expect('unbind_only_unbinds', '3');
+        Observer.Expect('unbind_only_cleaned', '');
+        Observer.Expect('outside_unbind_run', 'pre-1;pre-2;pre-3;get1-a;get1-b;get1-c;get2-a;get2-b;get2-c;post-1;post-2;');
+        Observer.Expect('outside_unbind_after', '');
+        Observer.Expect('outside_unbind_unbinds', '3');
+        Observer.Expect('outside_unbind_cleaned', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -260,7 +332,30 @@ codeunit 73049 "LT P84 Bind Tests"
         RunWith(Observer, 'outside_init', 'bindinit', true);
         RunWith(Observer, 'outside_pre_unbind', 'bindpre,unbindpre', true);
         Observer.Observe('af249', 'no error');
-        Observer.Finish();
+        Observer.Expect('init_pre_run', 'pre-2;pre-3;get1-a;get1-b;get1-c;get2-a;get2-b;get2-c;post-1;post-2;post-3;');
+        Observer.Expect('init_pre_after', '');
+        Observer.Expect('init_pre_unbinds', '3');
+        Observer.Expect('init_pre_cleaned', '');
+        Observer.Expect('af237', 'no error');
+        Observer.Expect('init_pre_unbind_pre_run', 'pre-2;');
+        Observer.Expect('init_pre_unbind_pre_after', '');
+        Observer.Expect('init_pre_unbind_pre_unbinds', '3');
+        Observer.Expect('init_pre_unbind_pre_cleaned', '');
+        Observer.Expect('af243', 'no error');
+        Observer.Expect('init_post_run', 'post-2;post-3;');
+        Observer.Expect('init_post_after', '');
+        Observer.Expect('init_post_unbinds', '3');
+        Observer.Expect('init_post_cleaned', '');
+        Observer.Expect('outside_init_run', 'pre-1;pre-2;pre-3;get1-a;get1-b;get1-c;get2-a;get2-b;get2-c;post-1;post-2;post-3;');
+        Observer.Expect('outside_init_after', '');
+        Observer.Expect('outside_init_unbinds', '3');
+        Observer.Expect('outside_init_cleaned', '');
+        Observer.Expect('outside_pre_unbind_run', 'pre-1;bindfail:The binding of codeunit 73048 was unsuccessful. The codeunit has already been bound.;pre-2;');
+        Observer.Expect('outside_pre_unbind_after', '');
+        Observer.Expect('outside_pre_unbind_unbinds', '3');
+        Observer.Expect('outside_pre_unbind_cleaned', '');
+        Observer.Expect('af249', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -272,6 +367,16 @@ codeunit 73049 "LT P84 Bind Tests"
         Observer.Observe('af251', 'no error');
         RunWith(Observer, 'none', '', false);
         Observer.Observe('af258', 'no error');
-        Observer.Finish();
+        Observer.Expect('outside_plain_run', 'pre-1;pre-2;pre-3;get1-a;get1-b;get1-c;get2-a;get2-b;get2-c;post-1;post-2;post-3;');
+        Observer.Expect('outside_plain_after', '');
+        Observer.Expect('outside_plain_unbinds', '3');
+        Observer.Expect('outside_plain_cleaned', '');
+        Observer.Expect('af251', 'no error');
+        Observer.Expect('none_run', '');
+        Observer.Expect('none_after', '');
+        Observer.Expect('none_unbinds', '3');
+        Observer.Expect('none_cleaned', '');
+        Observer.Expect('af258', 'no error');
+        Observer.Verify();
     end;
 }

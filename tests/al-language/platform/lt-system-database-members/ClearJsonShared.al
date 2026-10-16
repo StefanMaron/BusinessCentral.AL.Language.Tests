@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clear-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74001
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: Clear of a JsonObject variable does not clear another variable assigned from it
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 codeunit 74001 "LT P95 Clear Json Shared"
@@ -34,7 +34,12 @@ codeunit 74001 "LT P95 Clear Json Shared"
         Ar2.Add(2);
         Observer.Observe('array_copy_after_add', Format(Ar2.Count()));
 
-        Observer.Finish();
+        Observer.Expect('copy_keys', '1');
+        Observer.Expect('cleared_keys', '0');
+        Observer.Expect('array_copy', '1');
+        Observer.Expect('array_cleared', '0');
+        Observer.Expect('array_copy_after_add', '2');
+        Observer.Verify();
     end;
 
 }

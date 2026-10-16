@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-events-in-al
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained table 70311, page 70312, log codeunit 70313 (used only by codeunit 70315), subscribers 70314, test codeunit 70315
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (tag P81, GitHub issue 81); every literal asserted later is what a local BC 29 tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: the order of the page field OnBeforeValidate / OnAfterValidate events, the page field OnValidate trigger, the table field OnBeforeValidate / OnAfterValidate events and the table OnValidate trigger when a TestPage sets a field (SetValue), when the value is unchanged, when the table trigger raises, and for Rec.Validate on a record
 // BC versions: 29 (27 and 28 by CI)
 
@@ -191,7 +191,10 @@ codeunit 70315 "LT P81 Page Validate"
         Observer.Observe('name', Card.Name.Value());
         Observer.Observe('qty', Card.Qty.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'T.Name.Before(rec=second,x=first,cur=2) > T.Name.OnValidate(second) > T.Name.After(rec=second,x=first,cur=2) > P.Name.Before(rec=second) > P.Name.OnValidate(second) > P.Name.After(rec=second)');
+        Observer.Expect('name', 'second');
+        Observer.Expect('qty', '6');
+        Observer.Verify();
     end;
 
     [Test]
@@ -209,7 +212,10 @@ codeunit 70315 "LT P81 Page Validate"
         Observer.Observe('log', Log.Joined());
         Observer.Observe('name', Card.Name.Value());
         Observer.Observe('qty', Card.Qty.Value());
-        Observer.Finish();
+        Observer.Expect('log', 'T.Qty.Before(rec=9,x=3,cur=3) > T.Qty.OnValidate(9) > T.Qty.After(rec=9,x=3,cur=3) > P.Qty.Before(rec=9) > P.Qty.OnValidate(9) > P.Qty.After(rec=9)');
+        Observer.Expect('name', 'first');
+        Observer.Expect('qty', '9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +234,9 @@ codeunit 70315 "LT P81 Page Validate"
         Log.ClearAll();
         Card.Qty.SetValue(3);
         Observer.Observe('log_qty_same', Log.Joined());
-        Observer.Finish();
+        Observer.Expect('log_name_same', 'T.Name.Before(rec=first,x=first,cur=2) > T.Name.OnValidate(first) > T.Name.After(rec=first,x=first,cur=2) > P.Name.Before(rec=first) > P.Name.OnValidate(first) > P.Name.After(rec=first)');
+        Observer.Expect('log_qty_same', 'T.Qty.Before(rec=3,x=5,cur=3) > T.Qty.OnValidate(3) > T.Qty.After(rec=3,x=5,cur=3) > P.Qty.Before(rec=3) > P.Qty.OnValidate(3) > P.Qty.After(rec=3)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -246,7 +254,11 @@ codeunit 70315 "LT P81 Page Validate"
         Observer.ObserveError('err');
         Observer.Observe('log', Log.Joined());
         Observer.Observe('qty_after', Card.Qty.Value());
-        Observer.Finish();
+        Observer.Expect('err|text', 'Validation error for Field: Qty,  Message = ''negative quantity (Select Refresh to discard errors)''');
+        Observer.Expect('err|code', 'TestValidation');
+        Observer.Expect('log', 'T.Qty.Before(rec=-1,x=3,cur=3) > T.Qty.OnValidate(-1)');
+        Observer.Expect('qty_after', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -270,7 +282,13 @@ codeunit 70315 "LT P81 Page Validate"
         Observer.Observe('row_found', Format(Row.Get('K2')));
         Observer.Observe('row_name', Row.Name);
         Observer.Observe('row_qty', Format(Row.Qty));
-        Observer.Finish();
+        Observer.Expect('log_code', '');
+        Observer.Expect('log_name', 'T.Name.Before(rec=new-name,x=,cur=2) > T.Name.OnValidate(new-name) > T.Name.After(rec=new-name,x=,cur=2) > P.Name.Before(rec=new-name) > P.Name.OnValidate(new-name) > P.Name.After(rec=new-name)');
+        Observer.Expect('qty', '8');
+        Observer.Expect('row_found', 'Yes');
+        Observer.Expect('row_name', 'new-name');
+        Observer.Expect('row_qty', '8');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,7 +306,9 @@ codeunit 70315 "LT P81 Page Validate"
         Card.Qty.SetValue(50);
         Observer.Observe('log', Log.Joined());
         Observer.Observe('qty', Card.Qty.Value());
-        Observer.Finish();
+        Observer.Expect('log', 'T.Name.Before(rec=abc,x=first,cur=2) > T.Name.OnValidate(abc) > T.Name.After(rec=abc,x=first,cur=2) > P.Name.Before(rec=abc) > P.Name.OnValidate(abc) > P.Name.After(rec=abc) > T.Qty.Before(rec=50,x=3,cur=3) > T.Qty.OnValidate(50) > T.Qty.After(rec=50,x=3,cur=3) > P.Qty.Before(rec=50) > P.Qty.OnValidate(50) > P.Qty.After(rec=50)');
+        Observer.Expect('qty', '50');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +325,9 @@ codeunit 70315 "LT P81 Page Validate"
         Card.Name.SetValue('');
         Observer.Observe('log', Log.Joined());
         Observer.Observe('qty', Card.Qty.Value());
-        Observer.Finish();
+        Observer.Expect('log', 'T.Name.Before(rec=,x=first,cur=2) > T.Name.OnValidate() > T.Name.After(rec=,x=first,cur=2) > P.Name.Before(rec=) > P.Name.OnValidate() > P.Name.After(rec=)');
+        Observer.Expect('qty', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -322,7 +344,10 @@ codeunit 70315 "LT P81 Page Validate"
         asserterror Card.Name.SetValue('0123456789012345678901234567890123456789');
         Observer.ObserveError('err');
         Observer.Observe('log', Log.Joined());
-        Observer.Finish();
+        Observer.Expect('err|text', 'Validation error for Field: Name,  Message = ''The length of the string is 40, but it must be less than or equal to 30 characters. Value: 0123456789012345678901234567890123456789 (Select Refresh to discard errors)''');
+        Observer.Expect('err|code', 'TestValidation');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +364,9 @@ codeunit 70315 "LT P81 Page Validate"
         Observer.Observe('name', Card.Name.Value());
         Card.Name.AssertEquals('first');
         Observer.Observe('log', Log.Joined());
-        Observer.Finish();
+        Observer.Expect('name', 'first');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -360,7 +387,10 @@ codeunit 70315 "LT P81 Page Validate"
         Log.ClearAll();
         Row.Name := 'assigned';
         Observer.Observe('log_assign', Log.Joined());
-        Observer.Finish();
+        Observer.Expect('log_name', 'T.Name.Before(rec=vname,x=first,cur=0) > T.Name.OnValidate(vname) > T.Name.After(rec=vname,x=first,cur=0)');
+        Observer.Expect('log_qty', 'T.Qty.Before(rec=4,x=3,cur=0) > T.Qty.OnValidate(4) > T.Qty.After(rec=4,x=3,cur=0)');
+        Observer.Expect('log_assign', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -381,6 +411,9 @@ codeunit 70315 "LT P81 Page Validate"
         Observer.Observe('row_name', Row.Name);
         Observer.Observe('row_qty', Format(Row.Qty));
         Observer.Observe('log', Log.Joined());
-        Observer.Finish();
+        Observer.Expect('row_name', 'persist');
+        Observer.Expect('row_qty', '7');
+        Observer.Expect('log', 'T.Name.Before(rec=persist,x=first,cur=2) > T.Name.OnValidate(persist) > T.Name.After(rec=persist,x=first,cur=2) > P.Name.Before(rec=persist) > P.Name.OnValidate(persist) > P.Name.After(rec=persist)');
+        Observer.Verify();
     end;
 }

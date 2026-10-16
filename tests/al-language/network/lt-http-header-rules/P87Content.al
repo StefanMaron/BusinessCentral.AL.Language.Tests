@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpcontent/httpcontent-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), LT P87 Helper (codeunit 74228), table 74221
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); every value is observed through Probe Observer and measured later on real BC 29. No request is ever sent.
 // Facts: HttpContent header collections before and after WriteFrom / Clear, GetHeaders called twice, Content-Type value and ReadAs
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74225 "LT P87 Content Headers"
 {
@@ -48,7 +48,16 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('newKeys', Helper.Keys(H2));
         Observer.Observe('newType', Type(H2));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('freshKeys', '1:Content-Type,');
+        Observer.Expect('add', 'added');
+        Observer.Expect('oldHasA', 'Yes');
+        Observer.Expect('oldKeys', '2:Content-Type,X-A,');
+        Observer.Expect('oldType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('newHasA', 'Yes');
+        Observer.Expect('newKeys', '2:Content-Type,X-A,');
+        Observer.Expect('newType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,7 +80,15 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('newKeys', Helper.Keys(H2));
         Observer.Observe('newType', Type(H2));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('keys', '1:Content-Type,');
+        Observer.Expect('add', 'added');
+        Observer.Expect('oldHasA', 'Yes');
+        Observer.Expect('oldKeys', '2:Content-Type,X-A,');
+        Observer.Expect('newHasA', 'Yes');
+        Observer.Expect('newKeys', '2:Content-Type,X-A,');
+        Observer.Expect('newType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/y');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +115,17 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('hasBOld', Helper.DoContains(H, 'X-B'));
         C.GetHeaders(H2);
         Observer.Observe('hasBNew', Helper.DoContains(H2, 'X-B'));
-        Observer.Finish();
+        Observer.Expect('oldHasA', 'Yes');
+        Observer.Expect('oldKeys', '2:Content-Type,X-A,');
+        Observer.Expect('oldType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('newHasA', 'No');
+        Observer.Expect('newKeys', '1:Content-Type,');
+        Observer.Expect('newType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/');
+        Observer.Expect('addAfterClear', 'added');
+        Observer.Expect('hasBOld', 'Yes');
+        Observer.Expect('hasBNew', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,7 +146,12 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('newKeys', Helper.Keys(H2));
         Observer.Observe('newType', Type(H2));
         Observer.Observe('read', Read(C));
-        Observer.Finish();
+        Observer.Expect('oldHasA', 'Yes');
+        Observer.Expect('newHasA', 'No');
+        Observer.Expect('newKeys', '1:Content-Type,');
+        Observer.Expect('newType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,7 +168,11 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('read', Read(C));
         C.Clear();
         Observer.Observe('clearTwice', Read(C));
-        Observer.Finish();
+        Observer.Expect('keys', '1:Content-Type,');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/');
+        Observer.Expect('clearTwice', 'Yes/');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +198,15 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('typeAfterRemoveAndWrite', Type(H2));
         Observer.Observe('keysAfter', Helper.Keys(H2));
         Observer.Observe('read2', Read(C));
-        Observer.Finish();
+        Observer.Expect('hasA', 'Yes');
+        Observer.Expect('keys', '2:Content-Type,X-A,');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('read', 'Yes/longer text');
+        Observer.Expect('removeType', 'Yes');
+        Observer.Expect('typeAfterRemoveAndWrite', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('keysAfter', '3:Content-Type,X-A,Content-Length,');
+        Observer.Expect('read2', 'Yes/third');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,7 +235,13 @@ codeunit 74225 "LT P87 Content Headers"
         Observer.Observe('reqHasB', Helper.DoContains(H3, 'X-B'));
         C2 := Req.Content;
         Observer.Observe('reqRead', Read(C2));
-        Observer.Finish();
+        Observer.Expect('reqHasA', 'Yes');
+        Observer.Expect('reqKeys', '2:Content-Type,X-A,');
+        Observer.Expect('reqType', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('origHasB', 'No');
+        Observer.Expect('reqHasB', 'Yes');
+        Observer.Expect('reqRead', 'Yes/x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,6 +264,13 @@ codeunit 74225 "LT P87 Content Headers"
         H3 := Resp.Headers;
         Observer.Observe('respHeadersKeys', Helper.Keys(H3));
         Observer.Observe('respHasA', Helper.DoContains(H3, 'X-A'));
-        Observer.Finish();
+        Observer.Expect('freshKeys', '0:');
+        Observer.Expect('add', 'added');
+        Observer.Expect('hasA', 'Yes');
+        Observer.Expect('keys', '2:Content-Type,X-A,');
+        Observer.Expect('type', 'Yes/n=1/1=text/plain; charset=utf-8/2=');
+        Observer.Expect('respHeadersKeys', '0:');
+        Observer.Expect('respHasA', 'No');
+        Observer.Verify();
     end;
 }

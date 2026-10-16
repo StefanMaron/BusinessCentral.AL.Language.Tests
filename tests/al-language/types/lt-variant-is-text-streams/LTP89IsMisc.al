@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), enum LT P89 Color (74626)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74630 "LT P89 Is Misc"
 {
@@ -67,7 +67,19 @@ codeunit 74630 "LT P89 Is Misc"
         V := TB; Observer.Observe('textbuilder', Format(V.IsBinary()));
         Clear(V); Observer.Observe('empty', Format(V.IsBinary()));
         Observer.Observe('empty_flags', Flags(V));
-        Observer.Finish();
+        Observer.Expect('integer', 'No');
+        Observer.Expect('text', 'No');
+        Observer.Expect('boolean', 'No');
+        Observer.Expect('biginteger', 'No');
+        Observer.Expect('decimal', 'No');
+        Observer.Expect('record', 'No');
+        Observer.Expect('blobfield_value', 'No');
+        Observer.Expect('instream', 'No');
+        Observer.Expect('outstream', 'No');
+        Observer.Expect('textbuilder', 'No');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty_flags', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +103,11 @@ codeunit 74630 "LT P89 Is Misc"
         V := FRef;
         Observer.Observe('fieldref_binary', Format(V.IsBinary()));
         Observer.Observe('fieldref_flags', Flags(V));
-        Observer.Finish();
+        Observer.Expect('fieldref_value_binary', 'No');
+        Observer.Expect('fieldref_value_flags', '');
+        Observer.Expect('fieldref_binary', 'No');
+        Observer.Expect('fieldref_flags', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,7 +134,19 @@ codeunit 74630 "LT P89 Is Misc"
         V := 'A'; Observer.Observe('literal_A', Flags(V));
         V := 'AB'; Observer.Observe('literal_AB', Flags(V));
         Observer.Observe('wide_char65', Format(V.IsWideChar()));
-        Observer.Finish();
+        Observer.Expect('char0', 'WideChar,Char,');
+        Observer.Expect('char65', 'WideChar,Char,');
+        Observer.Expect('char256', 'WideChar,Char,');
+        Observer.Expect('char65535', 'WideChar,Char,');
+        Observer.Expect('byte65', 'Byte,');
+        Observer.Expect('integer65', 'Integer,');
+        Observer.Expect('biginteger65', 'BigInteger,');
+        Observer.Expect('text_A', 'Text,');
+        Observer.Expect('code_A', 'Code,');
+        Observer.Expect('literal_A', 'WideChar,Char,');
+        Observer.Expect('literal_AB', 'Text,');
+        Observer.Expect('wide_char65', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +185,28 @@ codeunit 74630 "LT P89 Is Misc"
         O := O::B; V := O; Observer.Observe('option', Flags(V));
         E := E::Green; V := E; Observer.Observe('enum', Flags(V));
         V := O::B; Observer.Observe('option_literal', Flags(V));
-        Observer.Finish();
+        Observer.Expect('text', 'Text,');
+        Observer.Expect('text10', 'Text,');
+        Observer.Expect('code10', 'Code,');
+        Observer.Expect('code20', 'Code,');
+        Observer.Expect('format_code', 'Text,');
+        Observer.Expect('copystr_text', 'Text,');
+        Observer.Expect('copystr_code', 'Text,');
+        Observer.Expect('uppercase_code', 'Text,');
+        Observer.Expect('integer', 'Integer,');
+        Observer.Expect('biginteger', 'BigInteger,');
+        Observer.Expect('int_plus_bigint', 'BigInteger,');
+        Observer.Expect('int_times_2', 'Integer,');
+        Observer.Expect('int_div_2', 'Decimal,');
+        Observer.Expect('int_div_keyword', 'Integer,');
+        Observer.Expect('dec_plus_int', 'Decimal,');
+        Observer.Expect('round_literal', 'Decimal,');
+        Observer.Expect('abs_int', 'Integer,');
+        Observer.Expect('abs_bigint', 'BigInteger,');
+        Observer.Expect('option', 'Option,');
+        Observer.Expect('enum', 'Option,');
+        Observer.Expect('option_literal', 'Integer,');
+        Observer.Verify();
     end;
 
 }

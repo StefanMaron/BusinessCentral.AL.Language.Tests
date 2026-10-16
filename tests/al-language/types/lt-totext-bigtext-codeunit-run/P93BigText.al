@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/bigtext/bigtext-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P93); the lead measures the facts on a local BC 29 and turns them into assertions.
 // Facts: BigText.AddText with a position, GetSubText overloads, Length, TextPos
 // BC versions: 29 (27 and 28 by CI)
 
@@ -144,7 +144,22 @@ codeunit 70324 "LT P93 BigText"
         Observer.Observe('repeat-1', Add(Big, 'XY', 3));
         Observer.Observe('repeat-2', Add(Big, 'Z', 3));
         Observer.Observe('repeat-end', Add(Big, 'E', Big.Length() + 1));
-        Observer.Finish();
+        Observer.Expect('start-empty', 'ok len=3 content=abc');
+        Observer.Expect('start', 'ok len=8 content=XYabcdef');
+        Observer.Expect('middle', 'ok len=8 content=abXYcdef');
+        Observer.Expect('end', 'ok len=8 content=abcdefXY');
+        Observer.Expect('last-char', 'ok len=8 content=abcdeXYf');
+        Observer.Expect('beyond', 'ok len=8 content=abcdefXY');
+        Observer.Expect('far-beyond', 'ok len=8 content=abcdefXY');
+        Observer.Expect('zero', 'error:The value of INSSTR parameter 3 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange len=6');
+        Observer.Expect('negative', 'error:The value of INSSTR parameter 3 is outside of the permitted range. The current value is: -1. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange len=6');
+        Observer.Expect('empty-text', 'ok len=6 content=abcdef');
+        Observer.Expect('empty-big-beyond', 'ok len=2 content=XY');
+        Observer.Expect('empty-big-zero', 'error:The value of INSSTR parameter 3 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange len=0');
+        Observer.Expect('repeat-1', 'ok len=8 content=abXYcdef');
+        Observer.Expect('repeat-2', 'ok len=9 content=abZXYcdef');
+        Observer.Expect('repeat-end', 'ok len=10 content=abZXYcdefE');
+        Observer.Verify();
     end;
 
     [Test]
@@ -179,7 +194,16 @@ codeunit 70324 "LT P93 BigText"
         Big.AddText('abcdef');
         Big.AddText(Big, 4);
         Observer.Observe('self-middle', 'len=' + Format(Big.Length()) + ' content=' + Content(Big));
-        Observer.Finish();
+        Observer.Expect('start-empty', 'ok len=3 content=abc');
+        Observer.Expect('start', 'ok len=8 content=XYabcdef');
+        Observer.Expect('middle', 'ok len=8 content=abXYcdef');
+        Observer.Expect('end', 'ok len=8 content=abcdefXY');
+        Observer.Expect('beyond', 'ok len=8 content=abcdefXY');
+        Observer.Expect('zero', 'error:The value of INSSTR parameter 3 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange len=6');
+        Observer.Expect('negative', 'error:The value of INSSTR parameter 3 is outside of the permitted range. The current value is: -1. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange len=6');
+        Observer.Expect('empty-other', 'ok len=6 content=abcdef');
+        Observer.Expect('self-middle', 'len=12 content=abcabcdefdef');
+        Observer.Verify();
     end;
 
     [Test]
@@ -204,7 +228,14 @@ codeunit 70324 "LT P93 BigText"
         Big.AddText('ä€');
         Observer.Observe('unicode-len', Format(Big.Length()));
         Observer.Observe('unicode', Content(Big));
-        Observer.Finish();
+        Observer.Expect('text-append', 'len=6 content=abcdef');
+        Observer.Expect('big-append', 'len=9 content=abcdefghi');
+        Observer.Expect('empty-append', 'len=9');
+        Observer.Expect('pos1', 'len=12 content=jklabcdefghi');
+        Observer.Expect('cleared-len', '0');
+        Observer.Expect('unicode-len', '2');
+        Observer.Expect('unicode', 'ä€');
+        Observer.Verify();
     end;
 
     [Test]
@@ -231,7 +262,24 @@ codeunit 70324 "LT P93 BigText"
         Observer.Observe('len-1', Sub(Big, 1, 1, true));
         Observer.Observe('empty-big', Sub(Mk(''), 1, 0, false));
         Observer.Observe('empty-big-len', Sub(Mk(''), 1, 3, true));
-        Observer.Finish();
+        Observer.Expect('all', 'ret=6 text=[abcdef]');
+        Observer.Expect('from3', 'ret=4 text=[cdef]');
+        Observer.Expect('last', 'ret=1 text=[f]');
+        Observer.Expect('len-mid', 'ret=3 text=[bcd]');
+        Observer.Expect('len-exact', 'ret=3 text=[def]');
+        Observer.Expect('len-too-long', 'ret=3 text=[def]');
+        Observer.Expect('len-zero', 'ret=0 text=[]');
+        Observer.Expect('len-negative', 'error:The value of COPYSTR parameter 3 is outside of the permitted range. The current value is: -1. The permitted range is: from 0 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('pos-after-end', 'ret=0 text=[]');
+        Observer.Expect('pos-after-end-len', 'ret=0 text=[]');
+        Observer.Expect('pos-far', 'ret=0 text=[]');
+        Observer.Expect('pos-zero', 'error:The value of COPYSTR parameter 2 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('pos-zero-len', 'error:The value of COPYSTR parameter 2 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('pos-negative', 'error:The value of COPYSTR parameter 2 is outside of the permitted range. The current value is: -1. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('len-1', 'ret=1 text=[a]');
+        Observer.Expect('empty-big', 'ret=0 text=[]');
+        Observer.Expect('empty-big-len', 'ret=0 text=[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +300,18 @@ codeunit 70324 "LT P93 BigText"
         Observer.Observe('pos-zero', SubB(Big, 0, 0, false));
         Observer.Observe('pos-negative', SubB(Big, -1, 2, true));
         Observer.Observe('empty-big', SubB(Mk(''), 1, 0, false));
-        Observer.Finish();
+        Observer.Expect('all', 'ret=6 text=[abcdef]');
+        Observer.Expect('from3', 'ret=4 text=[cdef]');
+        Observer.Expect('len-mid', 'ret=3 text=[bcd]');
+        Observer.Expect('len-too-long', 'ret=3 text=[def]');
+        Observer.Expect('len-zero', 'ret=0 text=[unset]');
+        Observer.Expect('len-negative', 'error:The value of COPYSTR parameter 3 is outside of the permitted range. The current value is: -1. The permitted range is: from 0 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('pos-after-end', 'ret=0 text=[unset]');
+        Observer.Expect('pos-far', 'ret=0 text=[unset]');
+        Observer.Expect('pos-zero', 'error:The value of COPYSTR parameter 2 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('pos-negative', 'error:The value of COPYSTR parameter 2 is outside of the permitted range. The current value is: -1. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('empty-big', 'ret=0 text=[unset]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -278,7 +337,14 @@ codeunit 70324 "LT P93 BigText"
         Ret := Big.GetSubText(T, 4, 0);
         Observer.Observe('text-len0-ret', Format(Ret));
         Observer.Observe('text-len0', '[' + T + ']');
-        Observer.Finish();
+        Observer.Expect('big-target-ret', '2');
+        Observer.Expect('big-target-len', '2');
+        Observer.Expect('big-target', 'bc');
+        Observer.Expect('text-target-ret', '2');
+        Observer.Expect('text-target', 'bc');
+        Observer.Expect('text-len0-ret', '0');
+        Observer.Expect('text-len0', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -303,6 +369,20 @@ codeunit 70324 "LT P93 BigText"
         Observer.Observe('len-after-insert', Format(Big.Length()));
         Observer.Observe('pos-after-insert', Format(Big.TextPos('Hello')));
         Observer.Observe('pos-inserted', Format(Big.TextPos('XY')));
-        Observer.Finish();
+        Observer.Expect('len-empty', '0');
+        Observer.Expect('len', '17');
+        Observer.Expect('pos-hello', '1');
+        Observer.Expect('pos-world', '7');
+        Observer.Expect('pos-lower', '0');
+        Observer.Expect('pos-missing', '0');
+        Observer.Expect('pos-empty', '0');
+        Observer.Expect('pos-space', '6');
+        Observer.Expect('pos-whole', '1');
+        Observer.Expect('pos-longer', '0');
+        Observer.Expect('pos-last-char', '5');
+        Observer.Expect('len-after-insert', '19');
+        Observer.Expect('pos-after-insert', '3');
+        Observer.Expect('pos-inserted', '1');
+        Observer.Verify();
     end;
 }

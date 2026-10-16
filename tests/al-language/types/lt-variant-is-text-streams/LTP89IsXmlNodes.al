@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74635 "LT P89 Is Xml Nodes"
 {
@@ -84,7 +84,15 @@ codeunit 74635 "LT P89 Is Xml Nodes"
         XN := XPi.AsXmlNode();
         V := XN; Observer.Observe('pi_node', Flags(V));
         V := XN; Observer.Observe('node_default', Flags(V));
-        Observer.Finish();
+        Observer.Expect('document_node', 'XmlDocument,');
+        Observer.Expect('element_node', 'XmlElement,');
+        Observer.Expect('attribute_node', 'XmlAttribute,');
+        Observer.Expect('comment_node', 'XmlComment,');
+        Observer.Expect('text_node', 'XmlText,');
+        Observer.Expect('cdata_node', 'XmlCData,');
+        Observer.Expect('pi_node', 'XmlProcessingInstruction,');
+        Observer.Expect('node_default', 'XmlProcessingInstruction,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,7 +119,13 @@ codeunit 74635 "LT P89 Is Xml Nodes"
         V := XList; Observer.Observe('descendants', Flags(V));
         XList := XEl.GetChildElements();
         V := XList; Observer.Observe('childelements', Flags(V));
-        Observer.Finish();
+        Observer.Expect('childnodes', 'XmlNodeList,');
+        Observer.Expect('childnodes_count', '1');
+        Observer.Expect('attributes', 'XmlAttributeCollection,');
+        Observer.Expect('attributes_count', '1');
+        Observer.Expect('descendants', 'XmlNodeList,');
+        Observer.Expect('childelements', 'XmlNodeList,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +142,9 @@ codeunit 74635 "LT P89 Is Xml Nodes"
         V := XNt; Observer.Observe('nametable', Flags(V));
         XNs.NameTable(XNt);
         V := XNs; Observer.Observe('nsmanager', Flags(V));
-        Observer.Finish();
+        Observer.Expect('nametable', 'XmlNameTable,');
+        Observer.Expect('nsmanager', 'XmlNamespaceManager,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,7 +170,17 @@ codeunit 74635 "LT P89 Is Xml Nodes"
         Observer.Observe('node_is_pi', Format(XN.IsXmlProcessingInstruction()));
         Observer.Observe('node_is_declaration', Format(XN.IsXmlDeclaration()));
         Observer.Observe('node_is_doctype', Format(XN.IsXmlDocumentType()));
-        Observer.Finish();
+        Observer.Expect('as_node', 'XmlElement,');
+        Observer.Expect('node_is_element', 'Yes');
+        Observer.Expect('node_is_text', 'No');
+        Observer.Expect('node_is_document', 'No');
+        Observer.Expect('node_is_attribute', 'No');
+        Observer.Expect('node_is_comment', 'No');
+        Observer.Expect('node_is_cdata', 'No');
+        Observer.Expect('node_is_pi', 'No');
+        Observer.Expect('node_is_declaration', 'No');
+        Observer.Expect('node_is_doctype', 'No');
+        Observer.Verify();
     end;
 
 }

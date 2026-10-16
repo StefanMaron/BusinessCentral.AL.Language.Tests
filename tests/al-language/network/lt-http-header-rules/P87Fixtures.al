@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpheaders/httpheaders-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 74221 and helper codeunit 74228 of this file
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); every value is observed through Probe Observer and measured later on real BC 29. No request is ever sent.
 // Facts: helper objects for the P87 HttpHeaders / HttpContent probes
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 74221 "LT P87 Blob"
 {

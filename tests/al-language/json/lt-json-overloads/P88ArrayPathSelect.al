@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonarray/jsonarray-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74407
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonArray Path and SelectTokens
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74407 "LT P88 Array Path Select"
 {
@@ -42,7 +42,15 @@ codeunit 74407 "LT P88 Array Path Select"
         Observer.Observe('path_0_a_2', T.Path());
         T.AsObject().Get('b', Inner);
         Observer.Observe('path_0_a_2_b', Inner.Path());
-        Observer.Finish();
+        Observer.Expect('path_array_itself', '');
+        Observer.Expect('path_0', '[0]');
+        Observer.Expect('path_1', '[1]');
+        Observer.Expect('path_2', '[2]');
+        Observer.Expect('path_2_1', '[2][1]');
+        Observer.Expect('path_0_a', '[0].a');
+        Observer.Expect('path_0_a_2', '[0].a[2]');
+        Observer.Expect('path_0_a_2_b', '[0].a[2].b');
+        Observer.Verify();
     end;
 
     [Test]
@@ -59,7 +67,10 @@ codeunit 74407 "LT P88 Array Path Select"
         Fresh.Get(0, T);
         Observer.Observe('path_copied_into_other', T.Path());
         Observer.Observe('path_source_unchanged', Fresh.AsToken().Path());
-        Observer.Finish();
+        Observer.Expect('path_empty_array', '');
+        Observer.Expect('path_copied_into_other', '[0]');
+        Observer.Expect('path_source_unchanged', '');
+        Observer.Verify();
     end;
 
 }

@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-captionclass-property
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), own table 73037, page 73038, log codeunit 73039 (used only by test codeunit 73040), test codeunit 73040
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 ...; observed values are added by the lead after measuring (tag P84, GitHub issue #84)
 // Facts: CaptionClass expressions on table fields and page controls, with no subscriber, with a logging subscriber and with a resolving subscriber of codeunit 'Caption Class' (OnResolveCaptionClass)
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 73037 "LT P84 Cap Rec"
 {
@@ -214,7 +214,23 @@ codeunit 73040 "LT P84 Cap Tests"
         Observer.Observe('f12', Rec.FieldCaption(F12));
         Observer.Observe('f13', Rec.FieldCaption(F13));
         Observer.Observe('f14', Rec.FieldCaption(F14));
-        Observer.Finish();
+        Observer.Expect('id', 'Identifier');
+        Observer.Expect('plain', 'Plain Field');
+        Observer.Expect('f01', '1,1,x');
+        Observer.Expect('f02', '1,2,x');
+        Observer.Expect('f03', 'x');
+        Observer.Expect('f04', '2,x');
+        Observer.Expect('f05', '1,1,');
+        Observer.Expect('f06', 'Tbl Caption 06');
+        Observer.Expect('f07', '1,1');
+        Observer.Expect('f08', '1,3,x');
+        Observer.Expect('f09', '1,9,x');
+        Observer.Expect('f10', '2,x,y');
+        Observer.Expect('f11', 'a,b');
+        Observer.Expect('f12', '4,x');
+        Observer.Expect('f13', '0,x');
+        Observer.Expect('f14', ',x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +257,22 @@ codeunit 73040 "LT P84 Cap Tests"
         Observer.Observe('c14', Page.C14.Caption());
         Observer.Observe('plain', Page.CPlain.Caption());
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('c01', '1,1,x');
+        Observer.Expect('c02', '1,2,x');
+        Observer.Expect('c03', 'x');
+        Observer.Expect('c04', '2,x');
+        Observer.Expect('c05', '1,1,');
+        Observer.Expect('c06', 'Ctl Plain');
+        Observer.Expect('c07', '1,1');
+        Observer.Expect('c08', '1,3,x');
+        Observer.Expect('c09', '1,9,x');
+        Observer.Expect('c10', '2,x,y');
+        Observer.Expect('c11', 'a,b');
+        Observer.Expect('c12', '4,x');
+        Observer.Expect('c13', '0,x');
+        Observer.Expect('c14', ',x');
+        Observer.Expect('plain', 'Ctl Plain');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +290,21 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'f06', Rec.FieldCaption(F06));
         Tbl(Observer, 'f07', Rec.FieldCaption(F07));
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('f01', '1,1,x');
+        Observer.Expect('f01_calls', '');
+        Observer.Expect('f02', '1,2,x');
+        Observer.Expect('f02_calls', '');
+        Observer.Expect('f03', 'x');
+        Observer.Expect('f03_calls', '');
+        Observer.Expect('f04', '2,x');
+        Observer.Expect('f04_calls', '');
+        Observer.Expect('f05', '1,1,');
+        Observer.Expect('f05_calls', '');
+        Observer.Expect('f06', 'Tbl Caption 06');
+        Observer.Expect('f06_calls', '');
+        Observer.Expect('f07', '1,1');
+        Observer.Expect('f07_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -280,7 +325,22 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'c07', Page.C07.Caption());
         CapLog.SetMode('');
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('open_calls', '');
+        Observer.Expect('c01', '1,1,x');
+        Observer.Expect('c01_calls', '');
+        Observer.Expect('c02', '1,2,x');
+        Observer.Expect('c02_calls', '');
+        Observer.Expect('c03', 'x');
+        Observer.Expect('c03_calls', '');
+        Observer.Expect('c04', '2,x');
+        Observer.Expect('c04_calls', '');
+        Observer.Expect('c05', '1,1,');
+        Observer.Expect('c05_calls', '');
+        Observer.Expect('c06', 'Ctl Plain');
+        Observer.Expect('c06_calls', '');
+        Observer.Expect('c07', '1,1');
+        Observer.Expect('c07_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -298,7 +358,21 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'f13', Rec.FieldCaption(F13));
         Tbl(Observer, 'f14', Rec.FieldCaption(F14));
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('f08', '1,3,x');
+        Observer.Expect('f08_calls', '');
+        Observer.Expect('f09', '1,9,x');
+        Observer.Expect('f09_calls', '');
+        Observer.Expect('f10', '2,x,y');
+        Observer.Expect('f10_calls', '');
+        Observer.Expect('f11', 'a,b');
+        Observer.Expect('f11_calls', '');
+        Observer.Expect('f12', '4,x');
+        Observer.Expect('f12_calls', '');
+        Observer.Expect('f13', '0,x');
+        Observer.Expect('f13_calls', '');
+        Observer.Expect('f14', ',x');
+        Observer.Expect('f14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -319,7 +393,22 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'c14', Page.C14.Caption());
         CapLog.SetMode('');
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('open_calls', '');
+        Observer.Expect('c08', '1,3,x');
+        Observer.Expect('c08_calls', '');
+        Observer.Expect('c09', '1,9,x');
+        Observer.Expect('c09_calls', '');
+        Observer.Expect('c10', '2,x,y');
+        Observer.Expect('c10_calls', '');
+        Observer.Expect('c11', 'a,b');
+        Observer.Expect('c11_calls', '');
+        Observer.Expect('c12', '4,x');
+        Observer.Expect('c12_calls', '');
+        Observer.Expect('c13', '0,x');
+        Observer.Expect('c13_calls', '');
+        Observer.Expect('c14', ',x');
+        Observer.Expect('c14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -337,7 +426,21 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'f06', Rec.FieldCaption(F06));
         Tbl(Observer, 'f07', Rec.FieldCaption(F07));
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('f01', '1,1,x');
+        Observer.Expect('f01_calls', '');
+        Observer.Expect('f02', '1,2,x');
+        Observer.Expect('f02_calls', '');
+        Observer.Expect('f03', 'x');
+        Observer.Expect('f03_calls', '');
+        Observer.Expect('f04', '2,x');
+        Observer.Expect('f04_calls', '');
+        Observer.Expect('f05', '1,1,');
+        Observer.Expect('f05_calls', '');
+        Observer.Expect('f06', 'Tbl Caption 06');
+        Observer.Expect('f06_calls', '');
+        Observer.Expect('f07', '1,1');
+        Observer.Expect('f07_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -358,7 +461,22 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'c07', Page.C07.Caption());
         CapLog.SetMode('');
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('open_calls', '');
+        Observer.Expect('c01', '1,1,x');
+        Observer.Expect('c01_calls', '');
+        Observer.Expect('c02', '1,2,x');
+        Observer.Expect('c02_calls', '');
+        Observer.Expect('c03', 'x');
+        Observer.Expect('c03_calls', '');
+        Observer.Expect('c04', '2,x');
+        Observer.Expect('c04_calls', '');
+        Observer.Expect('c05', '1,1,');
+        Observer.Expect('c05_calls', '');
+        Observer.Expect('c06', 'Ctl Plain');
+        Observer.Expect('c06_calls', '');
+        Observer.Expect('c07', '1,1');
+        Observer.Expect('c07_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -376,7 +494,21 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'f13', Rec.FieldCaption(F13));
         Tbl(Observer, 'f14', Rec.FieldCaption(F14));
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('f08', '1,3,x');
+        Observer.Expect('f08_calls', '');
+        Observer.Expect('f09', '1,9,x');
+        Observer.Expect('f09_calls', '');
+        Observer.Expect('f10', '2,x,y');
+        Observer.Expect('f10_calls', '');
+        Observer.Expect('f11', 'a,b');
+        Observer.Expect('f11_calls', '');
+        Observer.Expect('f12', '4,x');
+        Observer.Expect('f12_calls', '');
+        Observer.Expect('f13', '0,x');
+        Observer.Expect('f13_calls', '');
+        Observer.Expect('f14', ',x');
+        Observer.Expect('f14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -397,7 +529,22 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'c14', Page.C14.Caption());
         CapLog.SetMode('');
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('open_calls', '');
+        Observer.Expect('c08', '1,3,x');
+        Observer.Expect('c08_calls', '');
+        Observer.Expect('c09', '1,9,x');
+        Observer.Expect('c09_calls', '');
+        Observer.Expect('c10', '2,x,y');
+        Observer.Expect('c10_calls', '');
+        Observer.Expect('c11', 'a,b');
+        Observer.Expect('c11_calls', '');
+        Observer.Expect('c12', '4,x');
+        Observer.Expect('c12_calls', '');
+        Observer.Expect('c13', '0,x');
+        Observer.Expect('c13_calls', '');
+        Observer.Expect('c14', ',x');
+        Observer.Expect('c14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -413,7 +560,17 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'f09', Rec.FieldCaption(F09));
         Tbl(Observer, 'f14', Rec.FieldCaption(F14));
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('f01', '1,1,x');
+        Observer.Expect('f01_calls', '');
+        Observer.Expect('f03', 'x');
+        Observer.Expect('f03_calls', '');
+        Observer.Expect('f06', 'Tbl Caption 06');
+        Observer.Expect('f06_calls', '');
+        Observer.Expect('f09', '1,9,x');
+        Observer.Expect('f09_calls', '');
+        Observer.Expect('f14', ',x');
+        Observer.Expect('f14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -432,7 +589,18 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'c14', Page.C14.Caption());
         CapLog.SetMode('');
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('open_calls', '');
+        Observer.Expect('c01', '1,1,x');
+        Observer.Expect('c01_calls', '');
+        Observer.Expect('c03', 'x');
+        Observer.Expect('c03_calls', '');
+        Observer.Expect('c06', 'Ctl Plain');
+        Observer.Expect('c06_calls', '');
+        Observer.Expect('c09', '1,9,x');
+        Observer.Expect('c09_calls', '');
+        Observer.Expect('c14', ',x');
+        Observer.Expect('c14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -448,7 +616,17 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'f09', Rec.FieldCaption(F09));
         Tbl(Observer, 'f14', Rec.FieldCaption(F14));
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('f01', '1,1,x');
+        Observer.Expect('f01_calls', '');
+        Observer.Expect('f03', 'x');
+        Observer.Expect('f03_calls', '');
+        Observer.Expect('f06', 'Tbl Caption 06');
+        Observer.Expect('f06_calls', '');
+        Observer.Expect('f09', '1,9,x');
+        Observer.Expect('f09_calls', '');
+        Observer.Expect('f14', ',x');
+        Observer.Expect('f14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -467,7 +645,18 @@ codeunit 73040 "LT P84 Cap Tests"
         Tbl(Observer, 'c14', Page.C14.Caption());
         CapLog.SetMode('');
         Page.Close();
-        Observer.Finish();
+        Observer.Expect('open_calls', '');
+        Observer.Expect('c01', '1,1,x');
+        Observer.Expect('c01_calls', '');
+        Observer.Expect('c03', 'x');
+        Observer.Expect('c03_calls', '');
+        Observer.Expect('c06', 'Ctl Plain');
+        Observer.Expect('c06_calls', '');
+        Observer.Expect('c09', '1,9,x');
+        Observer.Expect('c09_calls', '');
+        Observer.Expect('c14', ',x');
+        Observer.Expect('c14_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -485,7 +674,21 @@ codeunit 73040 "LT P84 Cap Tests"
             Observer.Observe('nolog_' + Format(Index), FRef.Caption());
         end;
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('nolog_11', '1,1,x');
+        Observer.Expect('nolog_12', '1,2,x');
+        Observer.Expect('nolog_13', 'x');
+        Observer.Expect('nolog_14', '2,x');
+        Observer.Expect('nolog_15', '1,1,');
+        Observer.Expect('nolog_16', 'Tbl Caption 06');
+        Observer.Expect('nolog_17', '1,1');
+        Observer.Expect('nolog_18', '1,3,x');
+        Observer.Expect('nolog_19', '1,9,x');
+        Observer.Expect('nolog_20', '2,x,y');
+        Observer.Expect('nolog_21', 'a,b');
+        Observer.Expect('nolog_22', '4,x');
+        Observer.Expect('nolog_23', '0,x');
+        Observer.Expect('nolog_24', ',x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -505,7 +708,21 @@ codeunit 73040 "LT P84 Cap Tests"
         end;
         CapLog.SetMode('');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('res_11', '1,1,x');
+        Observer.Expect('res_11_calls', '');
+        Observer.Expect('res_12', '1,2,x');
+        Observer.Expect('res_12_calls', '');
+        Observer.Expect('res_13', 'x');
+        Observer.Expect('res_13_calls', '');
+        Observer.Expect('res_14', '2,x');
+        Observer.Expect('res_14_calls', '');
+        Observer.Expect('res_15', '1,1,');
+        Observer.Expect('res_15_calls', '');
+        Observer.Expect('res_16', 'Tbl Caption 06');
+        Observer.Expect('res_16_calls', '');
+        Observer.Expect('res_17', '1,1');
+        Observer.Expect('res_17_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -522,6 +739,12 @@ codeunit 73040 "LT P84 Cap Tests"
         Observer.Observe('other_record', Rec.FieldCaption(F04));
         Observer.Observe('other_calls', CapLog.Take());
         CapLog.SetMode('');
-        Observer.Finish();
+        Observer.Expect('first', 'x');
+        Observer.Expect('first_calls', '');
+        Observer.Expect('second', 'x');
+        Observer.Expect('second_calls', '');
+        Observer.Expect('other_record', '2,x');
+        Observer.Expect('other_calls', '');
+        Observer.Verify();
     end;
 }

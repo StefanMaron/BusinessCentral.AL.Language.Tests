@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-request-page
 // Scope: in-scope
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; the literals are measured later). Tag P91 (GitHub issue 91).
+// BC versions: 29
 // Fixtures used: tables and helper of P91Fix.al; self-contained report 71603 and codeunit 71614
 // Facts: TestRequestPage navigation and search members on a request page (First, Last, Next, Previous, New, GoToKey, GoToRecord, Expand, IsExpanded, FindFirstField, FindNextField,
 // FindPreviousField, GetValidationError, ValidationErrorCount) and SaveAsPdf / SaveAsWord / SaveAsExcel / SaveAsXml on a layout-less report; each handler runs for sure

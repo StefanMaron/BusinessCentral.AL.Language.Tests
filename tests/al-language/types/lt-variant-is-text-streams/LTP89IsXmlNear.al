@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74636 "LT P89 Is Xml Near"
 {
@@ -72,7 +72,14 @@ codeunit 74636 "LT P89 Is Xml Near"
         V := XEl.Name(); Observer.Observe('element_name', Flags(V));
         XTx := XmlText.Create('x');
         V := XTx.Value(); Observer.Observe('text_value', Flags(V));
-        Observer.Finish();
+        Observer.Expect('text_with_xml', '');
+        Observer.Expect('integer', '');
+        Observer.Expect('empty', '');
+        Observer.Expect('cleared', '');
+        Observer.Expect('doc_written_text', '');
+        Observer.Expect('element_name', '');
+        Observer.Expect('text_value', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -92,7 +99,9 @@ codeunit 74636 "LT P89 Is Xml Near"
         XN := XEl.AsXmlNode();
         XN.GetDocument(XDoc);
         V := XDoc; Observer.Observe('document_of_node', Flags(V));
-        Observer.Finish();
+        Observer.Expect('root_element', 'XmlElement,');
+        Observer.Expect('document_of_node', 'XmlDocument,');
+        Observer.Verify();
     end;
 
 }

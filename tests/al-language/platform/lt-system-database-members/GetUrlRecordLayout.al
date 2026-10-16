@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-geturl-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73990
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: GetUrl overload with Record and Layout text
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 table 73988 "LT P95 U73988"
@@ -100,7 +100,10 @@ codeunit 73990 "LT P95 GetUrl Layout"
             Observer.Observe('empty_equals_plain', Format(R = RPlain))
         else
             Observer.Observe('empty', Err());
-        Observer.Finish();
+        Observer.Expect('layout_differs', 'No');
+        Observer.Expect('layout_in_url', 'No');
+        Observer.Expect('empty_equals_plain', 'Yes');
+        Observer.Verify();
     end;
 
 }

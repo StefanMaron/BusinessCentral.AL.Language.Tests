@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonarray/jsonarray-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74401
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: JsonArray.Add per value type
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74401 "LT P88 Array Add"
 {
@@ -205,7 +205,23 @@ codeunit 74401 "LT P88 Array Add"
         Ok := DoDecimal(A);
         A.WriteTo(Txt);
         Rec('AddA_Decimal', Ok, Txt);
-        Observer.Finish();
+        Observer.Expect('AddA_Boolean_ok', 'Yes');
+        Observer.Expect('AddA_Boolean_text', '[true]');
+        Observer.Expect('AddA_Byte_ok', 'Yes');
+        Observer.Expect('AddA_Byte_text', '[200]');
+        Observer.Expect('AddA_Char_ok', 'Yes');
+        Observer.Expect('AddA_Char_text', '[65]');
+        Observer.Expect('AddA_Date_ok', 'Yes');
+        Observer.Expect('AddA_Date_text', '["2024-03-15"]');
+        Observer.Expect('AddA_Time_ok', 'Yes');
+        Observer.Expect('AddA_Time_text', '["14:30:15"]');
+        Observer.Expect('AddA_DateTime_ok', 'Yes');
+        Observer.Expect('AddA_DateTime_text', '["2024-03-15T14:30:15.0000000Z"]');
+        Observer.Expect('AddA_Duration_ok', 'Yes');
+        Observer.Expect('AddA_Duration_text', '[90061001]');
+        Observer.Expect('AddA_Decimal_ok', 'Yes');
+        Observer.Expect('AddA_Decimal_text', '[12.345]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,6 +263,22 @@ codeunit 74401 "LT P88 Array Add"
         Ok := DoJsonValue(A);
         A.WriteTo(Txt);
         Rec('AddA_JsonValue', Ok, Txt);
-        Observer.Finish();
+        Observer.Expect('AddA_Integer_ok', 'Yes');
+        Observer.Expect('AddA_Integer_text', '[42]');
+        Observer.Expect('AddA_BigInteger_ok', 'Yes');
+        Observer.Expect('AddA_BigInteger_text', '[6442450941]');
+        Observer.Expect('AddA_Option_ok', 'Yes');
+        Observer.Expect('AddA_Option_text', '[1]');
+        Observer.Expect('AddA_Text_ok', 'Yes');
+        Observer.Expect('AddA_Text_text', '["he said \"hi\" \\ / end"]');
+        Observer.Expect('AddA_JsonToken_ok', 'Yes');
+        Observer.Expect('AddA_JsonToken_text', '[{"k":[1,2]}]');
+        Observer.Expect('AddA_JsonArray_ok', 'Yes');
+        Observer.Expect('AddA_JsonArray_text', '[[1,"two"]]');
+        Observer.Expect('AddA_JsonObject_ok', 'Yes');
+        Observer.Expect('AddA_JsonObject_text', '[{"k":"v"}]');
+        Observer.Expect('AddA_JsonValue_ok', 'Yes');
+        Observer.Expect('AddA_JsonValue_text', '[7]');
+        Observer.Verify();
     end;
 }

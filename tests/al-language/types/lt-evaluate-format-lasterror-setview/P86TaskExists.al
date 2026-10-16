@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/taskscheduler/taskscheduler-taskexists-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained objects
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P86); the final facts are measured on a local BC 29 tier and added later.
 // Facts: TaskScheduler.TaskExists for a random guid, an empty guid, a created task, a cancelled task, cancelled twice (tasks are created not ready and far in the future, and always cancelled in the same test)
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 73532 "LT P86 Task Target"
 {
@@ -34,7 +34,11 @@ codeunit 73533 "LT P86 Task Exists"
         Observer.Observe('random_twice', Format(TaskScheduler.TaskExists(G)));
         Observer.Observe('random2', Format(TaskScheduler.TaskExists(CreateGuid())));
         Observer.Observe('empty', Format(TaskScheduler.TaskExists(Empty)));
-        Observer.Finish();
+        Observer.Expect('random', 'No');
+        Observer.Expect('random_twice', 'No');
+        Observer.Expect('random2', 'No');
+        Observer.Expect('empty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -51,7 +55,14 @@ codeunit 73533 "LT P86 Task Exists"
         Observer.Observe('exists_cancelled', Format(TaskScheduler.TaskExists(Id)));
         Observer.Observe('cancel_second', Format(TaskScheduler.CancelTask(Id)));
         Observer.Observe('exists_after_second', Format(TaskScheduler.TaskExists(Id)));
-        Observer.Finish();
+        Observer.Expect('id_not_null', 'Yes');
+        Observer.Expect('exists_created', 'Yes');
+        Observer.Expect('exists_again', 'Yes');
+        Observer.Expect('cancel_first', 'Yes');
+        Observer.Expect('exists_cancelled', 'No');
+        Observer.Expect('cancel_second', 'No');
+        Observer.Expect('exists_after_second', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,7 +82,15 @@ codeunit 73533 "LT P86 Task Exists"
         Observer.Observe('b_after', Format(TaskScheduler.TaskExists(B)));
         Observer.Observe('cancel_b', Format(TaskScheduler.CancelTask(B)));
         Observer.Observe('b_after2', Format(TaskScheduler.TaskExists(B)));
-        Observer.Finish();
+        Observer.Expect('distinct', 'Yes');
+        Observer.Expect('a_exists', 'Yes');
+        Observer.Expect('b_exists', 'Yes');
+        Observer.Expect('cancel_a', 'Yes');
+        Observer.Expect('a_after', 'No');
+        Observer.Expect('b_after', 'Yes');
+        Observer.Expect('cancel_b', 'Yes');
+        Observer.Expect('b_after2', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -89,7 +108,13 @@ codeunit 73533 "LT P86 Task Exists"
         Observer.Observe('cancel_b', Format(TaskScheduler.CancelTask(B)));
         Observer.Observe('a_after', Format(TaskScheduler.TaskExists(A)));
         Observer.Observe('b_after', Format(TaskScheduler.TaskExists(B)));
-        Observer.Finish();
+        Observer.Expect('with_failure_cu', 'Yes');
+        Observer.Expect('ready_far_future', 'Yes');
+        Observer.Expect('cancel_a', 'Yes');
+        Observer.Expect('cancel_b', 'Yes');
+        Observer.Expect('a_after', 'No');
+        Observer.Expect('b_after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +130,11 @@ codeunit 73533 "LT P86 Task Exists"
         Observer.Observe('created_still_exists', Format(TaskScheduler.TaskExists(Id)));
         Observer.Observe('unknown_exists', Format(TaskScheduler.TaskExists(Other)));
         Observer.Observe('cancel_created', Format(TaskScheduler.CancelTask(Id)));
-        Observer.Finish();
+        Observer.Expect('cancel_unknown', 'No');
+        Observer.Expect('created_still_exists', 'Yes');
+        Observer.Expect('unknown_exists', 'No');
+        Observer.Expect('cancel_created', 'Yes');
+        Observer.Verify();
     end;
 }
 

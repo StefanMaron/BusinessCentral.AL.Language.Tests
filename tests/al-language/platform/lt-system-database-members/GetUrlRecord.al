@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-geturl-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73984
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (P95 draft; observation only, the lead measures the facts)
 // Facts: GetUrl with a Record argument: bookmark, filters, UseFilters
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 // Tag: P95
 
 table 73982 "LT P95 U73982"
@@ -114,7 +114,11 @@ codeunit 73984 "LT P95 GetUrl Record"
         Row.FindLast();
         TryR(Row, false, R1);
         Observer.Observe('other_record_differs', Format(R1 <> R2));
-        Observer.Finish();
+        Observer.Expect('nofilters_false', 'Yes|Yes|Yes|Yes|No|No|No|Yes|No');
+        Observer.Expect('nofilters_true', 'Yes|Yes|Yes|Yes|No|No|No|No|No');
+        Observer.Expect('default_equals_false', 'Yes');
+        Observer.Expect('other_record_differs', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +147,13 @@ codeunit 73984 "LT P95 GetUrl Record"
         Row.Reset();
         Row.SetRange(Qty, 99);
         One(Observer, 'filter_matches_nothing_unread', Row, true);
-        Observer.Finish();
+        Observer.Expect('range_nofilters', 'Yes|Yes|Yes|Yes|No|No|No|Yes|No');
+        Observer.Expect('range_filters', 'Yes|Yes|Yes|Yes|No|No|No|No|Yes');
+        Observer.Expect('filters_change_url', 'Yes');
+        Observer.Expect('reset_equals_nofilter_url', 'No');
+        Observer.Expect('name_filter', 'Yes|Yes|Yes|Yes|No|No|No|No|Yes');
+        Observer.Expect('filter_matches_nothing_unread', 'Yes|Yes|Yes|Yes|No|No|No|No|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,7 +171,10 @@ codeunit 73984 "LT P95 GetUrl Record"
         Row2.SetCurrentKey(Name);
         Row2.FindFirst();
         One(Observer, 'secondary_key', Row2, true);
-        Observer.Finish();
+        Observer.Expect('empty_table_init_row', 'Yes|Yes|Yes|Yes|No|No|No|Yes|No');
+        Observer.Expect('init_row', 'Yes|Yes|Yes|Yes|No|No|No|Yes|No');
+        Observer.Expect('secondary_key', 'Yes|Yes|Yes|Yes|No|No|No|No|No');
+        Observer.Verify();
     end;
 
 }

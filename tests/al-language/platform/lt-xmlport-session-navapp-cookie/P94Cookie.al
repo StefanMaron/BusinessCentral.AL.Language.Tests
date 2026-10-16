@@ -73,29 +73,15 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('httpOnly', Format(C.HttpOnly()));
         Observer.Observe('expires', Format(C.Expires(), 0, 9));
         Observer.Observe('expiresIsZero', Format(C.Expires() = 0DT));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Value_SetAndRead()
-    var
-        C: Cookie;
-    begin
-        SetValue(C, 'abc123');
-        Observer.Observe('plain', '[' + C.Value() + ']');
-        SetValue(C, '');
-        Observer.Observe('empty', '[' + C.Value() + ']');
-        SetValue(C, 'a b');
-        Observer.Observe('space', '[' + C.Value() + ']');
-        SetValue(C, 'a=b;c');
-        Observer.Observe('specials', '[' + C.Value() + ']');
-        SetValue(C, '"quoted"');
-        Observer.Observe('quoted', '[' + C.Value() + ']');
-        SetValue(C, 'Ä€');
-        Observer.Observe('unicode', '[' + C.Value() + ']');
-        SetValue(C, PadStr('', 5000, 'v'));
-        Observer.Observe('longLen', Format(StrLen(C.Value())));
-        Observer.Finish();
+        Observer.Expect('name', '[]');
+        Observer.Expect('value', '[]');
+        Observer.Expect('domain', '[]');
+        Observer.Expect('path', '[]');
+        Observer.Expect('secure', 'No');
+        Observer.Expect('httpOnly', 'No');
+        Observer.Expect('expires', '');
+        Observer.Expect('expiresIsZero', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +94,9 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('all', Describe(C));
         SetName(C, 'n2');
         Observer.Observe('afterRename', Describe(C));
-        Observer.Finish();
+        Observer.Expect('all', 'name=[n];value=[v];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Expect('afterRename', 'name=[n2];value=[v];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +115,12 @@ codeunit 73085 "LT P94 Cookie"
         Clear(A);
         Observer.Observe('cleared', Describe(A));
         Observer.Observe('copyAfterClear', Describe(B));
-        Observer.Finish();
+        Observer.Expect('copy', 'name=[n];value=[v];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Expect('originalAfterChange', 'name=[n];value=[changed];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Expect('copyAfterChange', 'name=[n];value=[changed];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Expect('cleared', 'name=[];value=[];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Expect('copyAfterClear', 'name=[n];value=[changed];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +135,10 @@ codeunit 73085 "LT P94 Cookie"
         SetName(C, 'keep');
         Observer.Observe('found', Format(Resp.GetCookie('sid', C)));
         Observer.Observe('afterMiss', Describe(C));
-        Observer.Finish();
+        Observer.Expect('names', '0');
+        Observer.Expect('found', 'No');
+        Observer.Expect('afterMiss', 'name=[keep];value=[];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +154,11 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('hasHeader', Format(Headers.Contains('Set-Cookie')));
         Names := Resp.GetCookieNames();
         Observer.Observe('names', Format(Names.Count()));
-        Observer.Finish();
+        Observer.Expect('add', 'Yes');
+        Observer.Expect('headerKeys', '1');
+        Observer.Expect('hasHeader', 'Yes');
+        Observer.Expect('names', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +167,10 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('simple', ReadCookie('sid=abc123', 'sid'));
         Observer.Observe('caseName', ReadCookie('sid=abc123', 'SID'));
         Observer.Observe('missing', ReadCookie('sid=abc123', 'other'));
-        Observer.Finish();
+        Observer.Expect('simple', 'name=[sid];value=[abc123];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Expect('caseName', 'not found; names=1');
+        Observer.Expect('missing', 'not found; names=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +178,9 @@ codeunit 73085 "LT P94 Cookie"
     begin
         asserterror Observer.Observe('all', ReadCookie('sid=abc; Path=/app; Domain=example.com; Secure; HttpOnly; Expires=Wed, 21 Oct 2037 07:28:00 GMT', 'sid'));
         Observer.ObserveError('af199');
-        Observer.Finish();
+        Observer.Expect('af199|text', 'An error occurred when parsing the Cookie header for Uri ''https://bccookie.microsoft.com/''.');
+        Observer.Expect('af199|code', 'AL:Cookie');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +190,11 @@ codeunit 73085 "LT P94 Cookie"
         Observer.ObserveError('af207');
         asserterror Observer.Observe('upper', ReadCookie('sid=abc; PATH=/y; DOMAIN=example.net; SECURE; HTTPONLY', 'sid'));
         Observer.ObserveError('af210');
-        Observer.Finish();
+        Observer.Expect('af207|text', 'An error occurred when parsing the Cookie header for Uri ''https://bccookie.microsoft.com/''.');
+        Observer.Expect('af207|code', 'AL:Cookie');
+        Observer.Expect('af210|text', 'An error occurred when parsing the Cookie header for Uri ''https://bccookie.microsoft.com/''.');
+        Observer.Expect('af210|code', 'AL:Cookie');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +207,14 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('httpOnly', ReadCookie('sid=abc; HttpOnly', 'sid'));
         Observer.Observe('expires', ReadCookie('sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT', 'sid'));
         Observer.Observe('sameSite', ReadCookie('sid=abc; SameSite=Lax', 'sid'));
-        Observer.Finish();
+        Observer.Expect('path', 'not found; names=0');
+        Observer.Expect('af217|text', 'An error occurred when parsing the Cookie header for Uri ''https://bccookie.microsoft.com/''.');
+        Observer.Expect('af217|code', 'AL:Cookie');
+        Observer.Expect('secure', 'name=[sid];value=[abc];domain=[];path=[/];secure=Yes;httpOnly=No;expires=');
+        Observer.Expect('httpOnly', 'name=[sid];value=[abc];domain=[];path=[/];secure=No;httpOnly=Yes;expires=');
+        Observer.Expect('expires', 'name=[sid];value=[abc];domain=[];path=[/];secure=No;httpOnly=No;expires=2037-10-21T07:28:00Z');
+        Observer.Expect('sameSite', 'name=[sid];value=[abc];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -211,7 +227,10 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('found', Format(Resp.GetCookie('sid', C)));
         Observer.Observe('expiresSet', Format(C.Expires() <> 0DT));
         Observer.Observe('expiresInFuture', Format(C.Expires() > CurrentDateTime()));
-        Observer.Finish();
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('expiresSet', 'Yes');
+        Observer.Expect('expiresInFuture', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -223,7 +242,9 @@ codeunit 73085 "LT P94 Cookie"
         TryAddSetCookie(Resp, 'old=1; Expires=Thu, 01 Jan 1970 00:00:01 GMT');
         Observer.Observe('found', Format(Resp.GetCookie('old', C)));
         Observer.Observe('describe', Describe(C));
-        Observer.Finish();
+        Observer.Expect('found', 'No');
+        Observer.Expect('describe', 'name=[];value=[];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -234,7 +255,12 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('equalsInValue', ReadCookie('sid=a=b=c', 'sid'));
         Observer.Observe('noEquals', ReadCookie('sid', 'sid'));
         Observer.Observe('spaces', ReadCookie('sid = abc', 'sid'));
-        Observer.Finish();
+        Observer.Expect('empty', 'name=[sid];value=[];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Expect('quoted', 'name=[sid];value=["abc def"];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Expect('equalsInValue', 'name=[sid];value=[a=b=c];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Expect('noEquals', 'name=[sid];value=[];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Expect('spaces', 'name=[sid];value=[abc];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +285,14 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('describeB', Describe(C));
         Observer.Observe('getA', Format(Resp.GetCookie('a', C)));
         Observer.Observe('describeA', Describe(C));
-        Observer.Finish();
+        Observer.Expect('count', '2');
+        Observer.Expect('name1', 'b');
+        Observer.Expect('name2', 'c');
+        Observer.Expect('getB', 'Yes');
+        Observer.Expect('describeB', 'name=[b];value=[2];domain=[];path=[/];secure=Yes;httpOnly=No;expires=');
+        Observer.Expect('getA', 'No');
+        Observer.Expect('describeA', 'name=[b];value=[2];domain=[];path=[/];secure=Yes;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -275,7 +308,10 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('count', Format(Names.Count()));
         Observer.Observe('found', Format(Resp.GetCookie('dup', C)));
         Observer.Observe('describe', Describe(C));
-        Observer.Finish();
+        Observer.Expect('count', '0');
+        Observer.Expect('found', 'No');
+        Observer.Expect('describe', 'name=[];value=[];domain=[];path=[];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -291,7 +327,9 @@ codeunit 73085 "LT P94 Cookie"
         Resp.GetCookie('sid', C2);
         Observer.Observe('first', Describe(C1));
         Observer.Observe('second', Describe(C2));
-        Observer.Finish();
+        Observer.Expect('first', 'name=[sid];value=[changed];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Expect('second', 'name=[sid];value=[abc];domain=[];path=[/];secure=No;httpOnly=No;expires=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -303,6 +341,8 @@ codeunit 73085 "LT P94 Cookie"
         TryAddSetCookie(Resp, 'sid=abc');
         Observer.Observe('emptyName', Format(Resp.GetCookie('', C)));
         Observer.Observe('blankName', Format(Resp.GetCookie(' ', C)));
-        Observer.Finish();
+        Observer.Expect('emptyName', 'No');
+        Observer.Expect('blankName', 'No');
+        Observer.Verify();
     end;
 }

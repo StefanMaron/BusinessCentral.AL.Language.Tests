@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/outstream/outstream-write-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT P89 Rec (74625), LT P89 Helper (74627)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// BC versions: 29 (27 and 28 by CI)
+// Probe: written against BC 29 (observation only; facts are measured later). P89
+// BC versions: 29
 
 codeunit 74643 "LT P89 Stream Numbers"
 {
@@ -55,7 +55,13 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('v5_min', DumpInteger(V));
         V := 2147483647;
         Observer.Observe('v6_max', DumpInteger(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '4:00000000');
+        Observer.Expect('v2_0x12345678', '4:78563412');
+        Observer.Expect('v3_minus1', '4:FFFFFFFF');
+        Observer.Expect('v4_256', '4:00010000');
+        Observer.Expect('v5_min', '4:00000080');
+        Observer.Expect('v6_max', '4:FFFFFF7F');
+        Observer.Verify();
     end;
 
     [Test]
@@ -97,7 +103,21 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadInteger(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '8');
+        Observer.Expect('read1', 'ok n=4');
+        Observer.Expect('value1', '305419896');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=4');
+        Observer.Expect('value2', '305419896');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '0');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '0');
+        Observer.Verify();
     end;
 
     local procedure DumpDecimal(V: Decimal): Text
@@ -146,7 +166,13 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('v5_big', DumpDecimal(V));
         V := 1;
         Observer.Observe('v6_one', DumpDecimal(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '12:000000000000000000000000');
+        Observer.Expect('v2_1_5', '12:400000000000000000150000');
+        Observer.Expect('v3_minus1_5', '12:C00000000000000000150000');
+        Observer.Expect('v4_small', '12:3B0000000000000000100000');
+        Observer.Expect('v5_big', '12:488967452391785634120000');
+        Observer.Expect('v6_one', '12:400000000000000000100000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +214,21 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadDecimal(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '24');
+        Observer.Expect('read1', 'ok n=12');
+        Observer.Expect('value1', '1.5');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=12');
+        Observer.Expect('value2', '1.5');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '0');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '0');
+        Observer.Verify();
     end;
 
     local procedure DumpBoolean(V: Boolean): Text
@@ -229,7 +269,9 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('v1_false', DumpBoolean(V));
         V := true;
         Observer.Observe('v2_true', DumpBoolean(V));
-        Observer.Finish();
+        Observer.Expect('v1_false', '4:00000000');
+        Observer.Expect('v2_true', '4:01000000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,7 +313,21 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadBoolean(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '8');
+        Observer.Expect('read1', 'ok n=4');
+        Observer.Expect('value1', 'Yes');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=4');
+        Observer.Expect('value2', 'Yes');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', 'No');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', 'No');
+        Observer.Verify();
     end;
 
     local procedure DumpBigInteger(V: BigInteger): Text
@@ -320,7 +376,13 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('v5_min', DumpBigInteger(V));
         Evaluate(V, '9223372036854775807');
         Observer.Observe('v6_max', DumpBigInteger(V));
-        Observer.Finish();
+        Observer.Expect('v1_zero', '8:0000000000000000');
+        Observer.Expect('v2_one', '8:0100000000000000');
+        Observer.Expect('v3_minus1', '8:FFFFFFFFFFFFFFFF');
+        Observer.Expect('v4_3e9', '8:005ED0B200000000');
+        Observer.Expect('v5_min', '8:0000000000000080');
+        Observer.Expect('v6_max', '8:FFFFFFFFFFFFFF7F');
+        Observer.Verify();
     end;
 
     [Test]
@@ -362,7 +424,21 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('empty_eos', Format(EmptyIns.EOS()));
         Observer.Observe('read_empty', ReadBigInteger(EmptyIns, R3));
         Observer.Observe('value_empty', Format(R3));
-        Observer.Finish();
+        Observer.Expect('length', '16');
+        Observer.Expect('read1', 'ok n=8');
+        Observer.Expect('value1', '1');
+        Observer.Expect('matches', 'Yes');
+        Observer.Expect('eos_after1', 'No');
+        Observer.Expect('read2', 'ok n=8');
+        Observer.Expect('value2', '1');
+        Observer.Expect('eos_after2', 'Yes');
+        Observer.Expect('read_past_end', 'ok n=0');
+        Observer.Expect('value_past_end', '0');
+        Observer.Expect('eos_past_end', 'Yes');
+        Observer.Expect('empty_eos', 'Yes');
+        Observer.Expect('read_empty', 'ok n=0');
+        Observer.Expect('value_empty', '0');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -399,7 +475,19 @@ codeunit 74643 "LT P89 Stream Numbers"
             Observer.Observe('len' + Format(Len) + '_result', Res);
             Observer.Observe('len' + Format(Len) + '_bytes', Helper.Dump(Rec));
         end;
-        Observer.Finish();
+        Observer.Expect('len0_result', 'error:An invalid length 0 was specified in stream function. 4 was expected.|InvalidStreamLength');
+        Observer.Expect('len0_bytes', '0:');
+        Observer.Expect('len1_result', 'error:An invalid length 1 was specified in stream function. 4 was expected.|InvalidStreamLength');
+        Observer.Expect('len1_bytes', '0:');
+        Observer.Expect('len2_result', 'error:An invalid length 2 was specified in stream function. 4 was expected.|InvalidStreamLength');
+        Observer.Expect('len2_bytes', '0:');
+        Observer.Expect('len4_result', 'ok');
+        Observer.Expect('len4_bytes', '4:78563412');
+        Observer.Expect('len8_result', 'error:An invalid length 8 was specified in stream function. 4 was expected.|InvalidStreamLength');
+        Observer.Expect('len8_bytes', '0:');
+        Observer.Expect('len-1_result', 'error:An invalid length -1 was specified in stream function. 4 was expected.|InvalidStreamLength');
+        Observer.Expect('len-1_bytes', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -442,7 +530,13 @@ codeunit 74643 "LT P89 Stream Numbers"
         Observer.Observe('bool', Format(B2));
         Observer.Observe('bigint', Format(Bg2));
         Observer.Observe('eos', Format(Ins.EOS()));
-        Observer.Finish();
+        Observer.Expect('bytes', '28:07000000400000000000000050220000010000006300000000000000');
+        Observer.Expect('int', '7');
+        Observer.Expect('dec', '2.25');
+        Observer.Expect('bool', 'Yes');
+        Observer.Expect('bigint', '99');
+        Observer.Expect('eos', 'Yes');
+        Observer.Verify();
     end;
 
 }

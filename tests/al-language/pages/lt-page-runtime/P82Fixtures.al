@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); declares the shared P82 fixtures (tables 71184, 71185, 71192, log codeunit 71186, pages 71187-71191, 71193)
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); the facts are measured later
 // Facts: fixtures only (a card, a list, a tree list, a list part, a host card with a part, a lookup list); the log is a plain table backed codeunit, not SingleInstance
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 table 71184 "LT P82 Item"
 {

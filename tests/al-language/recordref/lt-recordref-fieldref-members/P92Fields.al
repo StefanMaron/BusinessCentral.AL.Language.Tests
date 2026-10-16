@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-field-method
 // Scope: in-scope
 // Fixtures used: tables 72200-72201, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: RecordRef.Field and FieldExist by number, missing numbers, FieldIndex, system fields, FieldRef copies refer to the same field
 // BC versions: 29 (27 and 28 by CI)
 
@@ -48,7 +48,29 @@ codeunit 72211 "LT P92 Fields"
         Observer.Observe('exist_2000000005', Format(RecRef.FieldExist(2000000005)));
         Observer.Observe('exist_maxint', Format(RecRef.FieldExist(2147483647)));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('exist_0', 'No');
+        Observer.Expect('exist_1', 'Yes');
+        Observer.Expect('exist_2', 'Yes');
+        Observer.Expect('exist_3', 'Yes');
+        Observer.Expect('exist_4', 'Yes');
+        Observer.Expect('exist_5', 'Yes');
+        Observer.Expect('exist_6', 'Yes');
+        Observer.Expect('exist_7', 'Yes');
+        Observer.Expect('exist_8', 'Yes');
+        Observer.Expect('exist_9', 'Yes');
+        Observer.Expect('exist_10', 'Yes');
+        Observer.Expect('exist_11', 'No');
+        Observer.Expect('exist_12', 'No');
+        Observer.Expect('exist_neg1', 'No');
+        Observer.Expect('exist_big', 'No');
+        Observer.Expect('exist_systemid', 'Yes');
+        Observer.Expect('exist_createdat', 'Yes');
+        Observer.Expect('exist_createdby', 'Yes');
+        Observer.Expect('exist_modifiedat', 'Yes');
+        Observer.Expect('exist_modifiedby', 'Yes');
+        Observer.Expect('exist_2000000005', 'Yes');
+        Observer.Expect('exist_maxint', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -65,7 +87,20 @@ codeunit 72211 "LT P92 Fields"
         Observer.Observe('name_createdat', FieldName(RecRef, 2000000001));
         Observer.Observe('name_modifiedat', FieldName(RecRef, 2000000003));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('name_1', 'Code');
+        Observer.Expect('name_2', 'Name');
+        Observer.Expect('name_3', 'Qty');
+        Observer.Expect('name_4', 'Amt');
+        Observer.Expect('name_5', 'Flag');
+        Observer.Expect('name_6', 'Dt');
+        Observer.Expect('name_7', 'Kind');
+        Observer.Expect('name_8', 'Note');
+        Observer.Expect('name_9', 'Pic');
+        Observer.Expect('name_10', 'Cd');
+        Observer.Expect('name_systemid', '$systemId');
+        Observer.Expect('name_createdat', 'SystemCreatedAt');
+        Observer.Expect('name_modifiedat', 'SystemModifiedAt');
+        Observer.Verify();
     end;
 
     [Test]
@@ -92,7 +127,13 @@ codeunit 72211 "LT P92 Fields"
         Observer.Observe('after_find_last_original', Format(Fld.Value));
         Observer.Observe('after_find_last_copy', Format(Fld2.Value));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('copy_number', '2');
+        Observer.Expect('via_original', 'Changed');
+        Observer.Expect('via_recref', 'Changed');
+        Observer.Expect('via_copy', 'Again');
+        Observer.Expect('after_find_last_original', '');
+        Observer.Expect('after_find_last_copy', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +156,19 @@ codeunit 72211 "LT P92 Fields"
         Observer.ObserveError('testfield');
         asserterror Fld.FieldError();
         Observer.ObserveError('fielderror');
-        Observer.Finish();
+        Observer.Expect('name|text', 'Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.');
+        Observer.Expect('name|code', 'NotInitialized');
+        Observer.Expect('number|text', 'Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.');
+        Observer.Expect('number|code', 'NotInitialized');
+        Observer.Expect('value|text', 'Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.');
+        Observer.Expect('value|code', 'NotInitialized');
+        Observer.Expect('caption|text', 'Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.');
+        Observer.Expect('caption|code', 'NotInitialized');
+        Observer.Expect('testfield|text', 'Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.');
+        Observer.Expect('testfield|code', 'NotInitialized');
+        Observer.Expect('fielderror|text', 'Microsoft.Dynamics.Nav.Runtime.NavFieldRef variable not initialized.');
+        Observer.Expect('fielderror|code', 'NotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,6 +184,10 @@ codeunit 72211 "LT P92 Fields"
         RecRef.Close();
         asserterror B := RecRef.FieldExist(1);
         Observer.ObserveError('after_close_fieldexist');
-        Observer.Finish();
+        Observer.Expect('closed_fieldexist|text', 'The record is not open.');
+        Observer.Expect('closed_fieldexist|code', 'RecordNotOpened');
+        Observer.Expect('after_close_fieldexist|text', 'The record is not open.');
+        Observer.Expect('after_close_fieldexist|code', 'RecordNotOpened');
+        Observer.Verify();
     end;
 }

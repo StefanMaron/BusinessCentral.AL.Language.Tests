@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-countapprox-method
 // Scope: in-scope
 // Fixtures used: tables 72200-72201, codeunit 72209 (P92Objects.al), Probe Observer
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (draft, measured later by the lead).
 // Facts: RecordRef.CountApprox against Count (filters, temporary, empty), Truncate with filters and on a temporary record
 // BC versions: 29 (27 and 28 by CI)
 
@@ -29,7 +29,13 @@ codeunit 72215 "LT P92 Counts"
         RecRef.Reset();
         Observer.Observe('approx_after_reset', Format(RecRef.CountApprox()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('count', '4');
+        Observer.Expect('approx', '4');
+        Observer.Expect('count_filtered', '2');
+        Observer.Expect('approx_filtered', '2');
+        Observer.Expect('approx_nomatch', '0');
+        Observer.Expect('approx_after_reset', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -45,7 +51,8 @@ codeunit 72215 "LT P92 Counts"
         RecRef.Open(72200);
         Observer.Observe('approx_empty', Format(RecRef.CountApprox()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('approx_empty', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -67,7 +74,9 @@ codeunit 72215 "LT P92 Counts"
         RecRef.Reset();
         Observer.Observe('approx_after_delete', Format(RecRef.CountApprox()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('approx_after_insert', '5');
+        Observer.Expect('approx_after_delete', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +100,11 @@ codeunit 72215 "LT P92 Counts"
         RecRef.Field(1).SetRange('T2');
         Observer.Observe('filtered', Format(RecRef.CountApprox()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('empty', '0');
+        Observer.Expect('three', '3');
+        Observer.Expect('count_three', '3');
+        Observer.Expect('filtered', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +116,9 @@ codeunit 72215 "LT P92 Counts"
     begin
         asserterror N := RecRef.CountApprox();
         Observer.ObserveError('unopened');
-        Observer.Finish();
+        Observer.Expect('unopened|text', 'The record is not open.');
+        Observer.Expect('unopened|code', 'RecordNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +135,9 @@ codeunit 72215 "LT P92 Counts"
         Observer.Observe('recref_count', Format(RecRef.Count()));
         Observer.Observe('record_count', Format(Item.Count()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('recref_count', '0');
+        Observer.Expect('record_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +159,12 @@ codeunit 72215 "LT P92 Counts"
         Observer.Observe('record_a1_left', Format(Item.Get('A1')));
         Observer.Observe('record_a2_left', Format(Item.Get('A2')));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('count_filtered_after', '0');
+        Observer.Expect('count_after', '2');
+        Observer.Expect('record_count', '2');
+        Observer.Expect('record_a1_left', 'Yes');
+        Observer.Expect('record_a2_left', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +180,9 @@ codeunit 72215 "LT P92 Counts"
         RecRef.Truncate(false);
         Observer.Observe('after_false', Format(RecRef.Count()));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('before', '6');
+        Observer.Expect('after_false', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -169,6 +193,8 @@ codeunit 72215 "LT P92 Counts"
     begin
         asserterror RecRef.Truncate();
         Observer.ObserveError('unopened');
-        Observer.Finish();
+        Observer.Expect('unopened|text', 'The record is not open.');
+        Observer.Expect('unopened|code', 'RecordNotOpened');
+        Observer.Verify();
     end;
 }

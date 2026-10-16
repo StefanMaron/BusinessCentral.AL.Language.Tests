@@ -1,9 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonarray/jsonarray-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 74413
-// Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
+// Probe: written against BC 29 (runtime 16); P88; the values are measured later on a local BC 29 service tier.
 // Facts: UNSURE the members exist: JsonArray.GetChar, JsonArray.GetTime
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29
 
 codeunit 74413 "LT P88 Array GetChar Time"
 {
@@ -39,6 +39,19 @@ codeunit 74413 "LT P88 Array GetChar Time"
         Observer.ObserveError('time_oob');
         asserterror Observer.Observe('time_from_text', Format(A.GetTime(2)));
         Observer.ObserveError('time_from_text');
-        Observer.Finish();
+        Observer.Expect('text', 'A');
+        Observer.Expect('char_from_text', 'B');
+        Observer.Expect('time', '14:30:15');
+        Observer.Expect('char_from_int', '\u0007');
+        Observer.Expect('char_from_int', 'no error');
+        Observer.Expect('char_oob|text', 'Index out of bounds.');
+        Observer.Expect('char_oob|code', 'IndexOutOfBounds');
+        Observer.Expect('char_neg|text', 'Index out of bounds.');
+        Observer.Expect('char_neg|code', 'IndexOutOfBounds');
+        Observer.Expect('time_oob|text', 'Index out of bounds.');
+        Observer.Expect('time_oob|code', 'IndexOutOfBounds');
+        Observer.Expect('time_from_text|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavTime.');
+        Observer.Expect('time_from_text|code', 'Conversion');
+        Observer.Verify();
     end;
 }
