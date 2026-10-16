@@ -189,17 +189,61 @@ codeunit 70361 "LT Hdr Lines"
         Dump.Seed();
         Dump.ObserveWindow(Observer, 500);
         Observer.Expect('window from', '500');
+#if BC29PLUS
         Observer.Expect('line 11', '6|<ReportCaption>LT P152 Header Report</ReportCaption>|<CR><LF>');
+#else
+        Observer.Expect('line 11', '6|<AboutThisReportTitle></AboutThisReportTitle>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 12', '6|<AboutThisReportTitle></AboutThisReportTitle>|<CR><LF>');
+#else
+        Observer.Expect('line 12', '6|<AboutThisReportText></AboutThisReportText>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 13', '6|<AboutThisReportText></AboutThisReportText>|<CR><LF>');
+#else
+        Observer.Expect('line 13', '6|<ReportHelpLink></ReportHelpLink>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 14', '6|<ReportHelpLink></ReportHelpLink>|<CR><LF>');
+#else
+        Observer.Expect('line 14', '4|</ReportMetadata>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 15', '4|</ReportMetadata>|<CR><LF>');
+#else
+        Observer.Expect('line 15', '4|<ReportRequest>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 16', '4|<ReportRequest>|<CR><LF>');
+#else
+        Observer.Expect('line 16', '6|<TenantEntraId>x</TenantEntraId>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 17', '6|<TenantEntraId>x</TenantEntraId>|<CR><LF>');
+#else
+        Observer.Expect('line 17', '6|<EnvironmentName>x</EnvironmentName>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 18', '6|<EnvironmentName>x</EnvironmentName>|<CR><LF>');
+#else
+        Observer.Expect('line 18', '6|<EnvironmentType>x</EnvironmentType>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 19', '6|<EnvironmentType>x</EnvironmentType>|<CR><LF>');
+#else
+        Observer.Expect('line 19', '6|<CompanyName>x</CompanyName>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 20', '6|<CompanyName>x</CompanyName>|<CR><LF>');
+#else
+        Observer.Expect('line 20', '6|<CompanyDisplayName>x</CompanyDisplayName>|<CR><LF>');
+#endif
+#if BC29PLUS
         Observer.Expect('line 21', '6|<CompanyDisplayName>x</CompanyDisplayName>|<CR><LF>');
+#else
+        Observer.Expect('line 21', '6|<CompanyId>x</CompanyId>|<CR><LF>');
+#endif
         Observer.Verify();
     end;
 }
