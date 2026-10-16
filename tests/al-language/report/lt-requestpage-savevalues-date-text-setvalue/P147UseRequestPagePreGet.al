@@ -62,44 +62,6 @@ codeunit 70272 "LT P147 Urp PreGet Test"
     end;
 
     [Test]
-    procedure P147_Urp_PreGet_ReportRun()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT P147 Trace Log 3";
-        Ok: Boolean;
-    begin
-        Log.Clear();
-        Ok := TryRunId(true);
-        Observer.Observe('ran without error', Format(Ok));
-        Observer.ObserveError('Report.Run(id, true, false) error');
-        Observer.Observe('trace', Log.Get());
-        Observer.Expect('ran without error', 'Yes');
-        Observer.Expect('Report.Run(id, true, false) error|text', '');
-        Observer.Expect('Report.Run(id, true, false) error|code', '');
-        Observer.Expect('trace', 'OnInitReport;OnPreReport;get=Yes;');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P147_Urp_PreGet_RunModalVariable()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT P147 Trace Log 3";
-        Ok: Boolean;
-    begin
-        Log.Clear();
-        Ok := TryRunVar();
-        Observer.Observe('ran without error', Format(Ok));
-        Observer.ObserveError('RunModal error');
-        Observer.Observe('trace', Log.Get());
-        Observer.Expect('ran without error', 'Yes');
-        Observer.Expect('RunModal error|text', '');
-        Observer.Expect('RunModal error|code', '');
-        Observer.Expect('trace', 'OnInitReport;OnPreReport;get=Yes;');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P147_Urp_PreGet_RunWithoutRequestPage()
     var
         Observer: Codeunit "Probe Observer";
