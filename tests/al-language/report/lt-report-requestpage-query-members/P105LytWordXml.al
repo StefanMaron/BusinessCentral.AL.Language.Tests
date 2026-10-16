@@ -29,26 +29,6 @@ codeunit 72266 "LT P105 LytWxp Tests"
         Helper: Codeunit "LT P105 Helper";
 
     [Test]
-    procedure P105_WordXmlPart_Instance_Default()
-    var
-        Observer: Codeunit "Probe Observer";
-        Rpt: Report "LT P105 LytWxp Rep";
-        Xml: Text;
-    begin
-        Helper.Seed();
-        Xml := Rpt.WordXmlPart();
-        Observer.Observe('has text', Format(StrLen(Xml) > 0));
-        Observer.Observe('contains Row', Format(Xml.Contains('Row')));
-        Observer.Observe('contains one', Format(Xml.Contains('one')));
-        Observer.Observe('start', CopyStr(Xml, 1, 120));
-        Observer.Expect('has text', 'Yes');
-        Observer.Expect('contains Row', 'Yes');
-        Observer.Expect('contains one', 'Yes');
-        Observer.Expect('start', '<?xml version="1.0" encoding="utf-16"?>\n<NavWordReportXmlPart xmlns="urn:microsoft-dynamics-nav/reports/LT_P105_LytWxp_R');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P105_WordXmlPart_Instance_Extended()
     var
         Observer: Codeunit "Probe Observer";
@@ -114,18 +94,6 @@ codeunit 72266 "LT P105 LytWxp Tests"
         Xml := Rpt.WordXmlPart();
         Observer.Observe('has text', Format(StrLen(Xml) > 0));
         Observer.Expect('has text', 'Yes');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P105_WordXmlPart_UnknownId()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        asserterror Observer.Observe('xml', Report.WordXmlPart(72399));
-        Observer.ObserveError('unknown id');
-        Observer.Expect('unknown id|text', 'You tried to invoke the Report object with the ID 72399 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown id|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
 }

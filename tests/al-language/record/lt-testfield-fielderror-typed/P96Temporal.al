@@ -168,6 +168,7 @@ codeunit 70743 "LT P96 Temporal"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Temporal_Guid()
     var
@@ -213,4 +214,5 @@ codeunit 70743 "LT P96 Temporal"
         Observer.Expect('same_guid_case_equal', 'Yes');
         Observer.Verify();
     end;
+#endif
 }

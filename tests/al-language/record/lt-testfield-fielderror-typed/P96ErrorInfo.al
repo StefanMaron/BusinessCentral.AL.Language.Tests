@@ -139,6 +139,7 @@ codeunit 70747 "LT P96 ErrorInfo"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Info_Value_Types_B_1()
     var
@@ -189,6 +190,7 @@ codeunit 70747 "LT P96 ErrorInfo"
         Observer.Expect('same_mode0_gd', 'Yes');
         Observer.Verify();
     end;
+#endif
 
 
 

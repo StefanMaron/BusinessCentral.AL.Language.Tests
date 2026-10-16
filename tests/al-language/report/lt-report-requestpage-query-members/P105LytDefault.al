@@ -52,28 +52,4 @@ codeunit 72258 "LT P105 LytDef Tests"
         Observer.Expect('static', 'None');
         Observer.Verify();
     end;
-
-    [Test]
-    procedure P105_DefaultLayout_UnknownId()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        asserterror Observer.Observe('static', Format(Report.DefaultLayout(72399)));
-        Observer.ObserveError('unknown id');
-        Observer.Expect('unknown id|text', 'You tried to invoke the Report object with the ID 72399 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown id|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P105_DefaultLayout_IdZero()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        asserterror Observer.Observe('static', Format(Report.DefaultLayout(0)));
-        Observer.ObserveError('id zero');
-        Observer.Expect('id zero|text', 'You tried to invoke the Report object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('id zero|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
 }

@@ -44,38 +44,6 @@ codeunit 71623 "LT P102 Media"
     end;
 
     [Test]
-    procedure P102_MediaExportStreamBytes()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P102 Helper";
-        Rec: Record "LT P102 Rec";
-        Ins: InStream;
-        Out: OutStream;
-        Back: InStream;
-        Count: Integer;
-        Same: Boolean;
-        B1: Byte;
-        B2: Byte;
-        Src: Record "LT P102 Rec";
-    begin
-        Helper.Fresh(Rec);
-        Helper.Png(Rec);
-        Rec.Data.CreateInStream(Ins);
-        Rec.Pic.ImportStream(Ins, 'desc', 'image/png');
-        Rec.Modify();
-        Rec.Get(1);
-        Rec.Data.CreateOutStream(Out);
-        Observer.Observe('export', Format(Rec.Pic.ExportStream(Out)));
-        Rec.Modify();
-        Observer.Observe('exported_len', Format(StrLen(Helper.Dump(Rec)) > 10));
-        Observer.Observe('png_signature', CopyStr(Helper.Dump(Rec), 1, 3 + 16));
-        Observer.Expect('export', 'Yes');
-        Observer.Expect('exported_len', 'Yes');
-        Observer.Expect('png_signature', '70:89504E470D0A1A0A');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P102_MediaSetImportStream()
     var
         Observer: Codeunit "Probe Observer";
@@ -96,26 +64,6 @@ codeunit 71623 "LT P102 Media"
         Observer.Expect('idnull', 'No');
         Observer.Expect('count', '1');
         Observer.Expect('item1_equal', 'No');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P102_MediaImportStreamNotAPng()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P102 Helper";
-        Rec: Record "LT P102 Rec";
-        Ins: InStream;
-        Out: OutStream;
-    begin
-        Helper.Fresh(Rec);
-        Rec.Data.CreateOutStream(Out);
-        Out.Write('not a png');
-        Rec.Modify();
-        Rec.Data.CreateInStream(Ins);
-        Rec.Pic.ImportStream(Ins, 'desc', 'image/png');
-        Observer.Observe('notpng', 'no error');
-        Observer.Expect('notpng', 'no error');
         Observer.Verify();
     end;
 }

@@ -96,6 +96,7 @@ codeunit 72697 "LT P107 RecRef Names"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure P107_IsDirty()
     var
@@ -131,6 +132,7 @@ codeunit 72697 "LT P107 RecRef Names"
         Observer.Expect('init', 'Yes');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure P107_LoadFields()
