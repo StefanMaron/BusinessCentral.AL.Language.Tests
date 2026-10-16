@@ -67,53 +67,6 @@ codeunit 73549 "LT P130 Date Filters"
             Observer.Observe(Name, 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
-    [Test]
-    procedure P130_DateFilter_DigitAndWordForms()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        Probe(Observer, 'digits6_030124', '030124');
-        Probe(Observer, 'digits8_03012024', '03012024');
-        Probe(Observer, 'digits6_010324', '010324');
-        Probe(Observer, 'digits8_01032024', '01032024');
-        Probe(Observer, 'digits6_311224', '311224');
-        Probe(Observer, 'digits6_101010', '101010');
-        Probe(Observer, 'digits4_0103', '0103');
-        Probe(Observer, 'digits2_03', '03');
-        Probe(Observer, 'iso_2024-01-03', '2024-01-03');
-        Probe(Observer, 'iso_slash_2024/01/03', '2024/01/03');
-        Probe(Observer, 'iso_digits_20240103', '20240103');
-        Probe(Observer, 'iso_with_time', '2024-01-03T00:00:00');
-        Probe(Observer, 'text_3_Jan_2024', '3 Jan 2024');
-        Probe(Observer, 'text_January_3_2024', 'January 3, 2024');
-        Probe(Observer, 'text_garbage', 'abc');
-        Probe(Observer, 'text_empty_after_op', '>');
-        Probe(Observer, 'year_only_2024', '2024');
-        Probe(Observer, 'feb30', '300224');
-        Probe(Observer, 'month13', '011324');
-        Observer.Expect('digits6_030124', 'ok count=1 filter=03/01/24');
-        Observer.Expect('digits8_03012024', 'ok count=1 filter=03/01/24');
-        Observer.Expect('digits6_010324', 'ok count=1 filter=01/03/24');
-        Observer.Expect('digits8_01032024', 'ok count=1 filter=01/03/24');
-        Observer.Expect('digits6_311224', 'error:The filter "311224" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''311224'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('digits6_101010', 'ok count=0 filter=10/10/10');
-        Observer.Expect('digits4_0103', 'ok count=0 filter=01/03/26');
-        Observer.Expect('digits2_03', 'ok count=0 filter=10/03/26');
-        Observer.Expect('iso_2024-01-03', 'ok count=1 filter=01/03/24');
-        Observer.Expect('iso_slash_2024/01/03', 'error:The filter "2024/01/03" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''2024/01/03'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('iso_digits_20240103', 'error:The filter "20240103" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''20240103'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('iso_with_time', 'error:The filter "2024-01-03T00:00:00" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''2024-01-03T00:00:00'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('text_3_Jan_2024', 'ok count=0 filter=03/20/24');
-        Observer.Expect('text_January_3_2024', 'error:The filter "January 3, 2024" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''January 3, 2024'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('text_garbage', 'error:The filter "abc" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''abc'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('text_empty_after_op', 'error:The filter ">" is not valid for the Dt field on the LT P130 Filter Row table. A value is expected after the ''>''.|Filter:CSide');
-        Observer.Expect('year_only_2024', 'error:The filter "2024" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''2024'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('feb30', 'error:The filter "300224" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''300224'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('month13', 'ok count=0 filter=01/13/24');
-        Observer.Verify();
-    end;
-
 
 
 

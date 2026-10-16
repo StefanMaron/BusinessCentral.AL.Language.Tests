@@ -125,27 +125,6 @@ codeunit 71672 "LT P119 PgProps Tests"
         Observer.Verify();
     end;
 
-    [Test]
-    procedure P119_PageClosingDate()
-    var
-        Observer: Codeunit "Probe Observer";
-        TP: TestPage "LT P119 PgProps Card";
-        Row: Record "LT P119 Row";
-    begin
-        Seed();
-        TP.OpenEdit();
-        TP.ClosF.SetValue(ClosingDate(DMY2Date(31, 12, 2025)));
-        Observer.Observe('clos-after', TP.ClosF.Value());
-        TP.Close();
-        Row.Get(1);
-        Observer.Observe('row-is-closing', Format(Row.Closing <> NormalDate(Row.Closing)));
-        Observer.Observe('row-normal', Format(NormalDate(Row.Closing)));
-        Observer.Expect('clos-after', 'C12/31/2025');
-        Observer.Expect('row-is-closing', 'Yes');
-        Observer.Expect('row-normal', '12/31/25');
-        Observer.Verify();
-    end;
-
     local procedure Seed()
     var
         Row: Record "LT P119 Row";

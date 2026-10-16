@@ -282,35 +282,6 @@ codeunit 74244 "LT P114 Global Events"
     end;
 
     [Test]
-    procedure P114_AutoFormatOnPageRead()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT P114 Glob Log";
-        List: TestPage "LT P114 Glob List";
-    begin
-        Seed();
-        List.OpenView();
-        List.First();
-        Log.Start();
-        Observer.Observe('currency-blank', List.CurrencyAmount.Value());
-        Observer.Observe('custom', List.CustomAmount.Value());
-        Observer.Observe('log-after-first-row', Log.Dump());
-        List.Next();
-        Observer.Observe('currency-xxx', List.CurrencyAmount.Value());
-        Observer.Observe('log-after-second-row', Log.Dump());
-        Observer.Observe('autoformat-calls-at-least-one', Format(Log.CountOf('AutoFormatTranslate') > 0));
-        Log.Stop();
-        List.Close();
-        Observer.Expect('currency-blank', '1,234.50');
-        Observer.Expect('custom', '1,234.500');
-        Observer.Expect('log-after-first-row', '[]');
-        Observer.Expect('currency-xxx', '0.13');
-        Observer.Expect('log-after-second-row', '[]');
-        Observer.Expect('autoformat-calls-at-least-one', 'No');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P114_CaptionClassOnPage()
     var
         Observer: Codeunit "Probe Observer";

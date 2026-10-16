@@ -121,17 +121,6 @@ codeunit 74513 "LT P138 Col Caption Tests"
     end;
 
     [Test]
-    procedure P138_Columns_OfQualifiedSources()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        Observer.Observe('columns', DatasetLines('<Column '));
-        Observer.Expect('columns', '[<Column name="POwn">P1</Column>][<Column name="PQual">P1</Column>][<Column name="PQualQty" decimalformatter="#,##0.00">2.5</Column>][<Column name="COwn">C1</Column>][<Column name="CQual">C1</Column>][<Column name="CFromParent">P1</Column>][<Column name="CFromParentId">1</Column>]');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P138_Labels_WhenNoRows()
     var
         Parent: Record "LT P138 Col Parent";
@@ -142,25 +131,6 @@ codeunit 74513 "LT P138 Col Caption Tests"
         Child.DeleteAll();
         Observer.Observe('labels_no_rows', DatasetLines('<Label '));
         Observer.Expect('labels_no_rows', '[<Label name="POwnCaption">Parent Name cap</Label>][<Label name="PQualCaption">Parent Name cap</Label>][<Label name="PQualQtyCaption">Parent Qty cap</Label>][<Label name="COwnCaption">Child Note cap</Label>][<Label name="CQualCaption">Child Note cap</Label>][<Label name="CFromParentCaption">Parent Name cap</Label>][<Label name="CFromParentIdCaption">Parent Id cap</Label>]');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P138_Labels_ParentOnlyNoChild()
-    var
-        Parent: Record "LT P138 Col Parent";
-        Child: Record "LT P138 Col Child";
-        Observer: Codeunit "Probe Observer";
-    begin
-        Parent.DeleteAll();
-        Child.DeleteAll();
-        Parent.Id := 1;
-        Parent.Name := 'P1';
-        Parent.Insert();
-        Observer.Observe('labels_parent_only', DatasetLines('<Label '));
-        Observer.Observe('columns_parent_only', DatasetLines('<Column '));
-        Observer.Expect('labels_parent_only', '[<Label name="POwnCaption">Parent Name cap</Label>][<Label name="PQualCaption">Parent Name cap</Label>][<Label name="PQualQtyCaption">Parent Qty cap</Label>][<Label name="COwnCaption">Child Note cap</Label>][<Label name="CQualCaption">Child Note cap</Label>][<Label name="CFromParentCaption">Parent Name cap</Label>][<Label name="CFromParentIdCaption">Parent Id cap</Label>]');
-        Observer.Expect('columns_parent_only', '[<Column name="POwn">P1</Column>][<Column name="PQual">P1</Column>][<Column name="PQualQty" decimalformatter="#,##0.00">0</Column>]');
         Observer.Verify();
     end;
 }

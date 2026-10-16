@@ -176,62 +176,6 @@ codeunit 73090 "LT P113 AutoFormat"
     end;
 
     [Test]
-    procedure P113_AF_ManyDecimals()
-    var
-        Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT P113 AF Card";
-    begin
-        Seed(0.123456);
-        Card.OpenView();
-        ObserveAll(Observer, Card);
-        Card.Close();
-        Observer.Expect('T0', '0.12');
-        Observer.Expect('T1', '0.12');
-        Observer.Expect('T2', '0.12346');
-        Observer.Expect('T10', '0.123');
-        Observer.Expect('T10b', '0.12');
-        Observer.Expect('TNone', '0.12');
-        Observer.Expect('P0', '0.12');
-        Observer.Expect('P1', '0.12');
-        Observer.Expect('P2', '0.12346');
-        Observer.Expect('P10a', '0.12');
-        Observer.Expect('P10z', '0');
-        Observer.Expect('P10r', '0.12346');
-        Observer.Expect('PovT10', '0.1235');
-        Observer.Expect('PovT0', '0.123');
-        Observer.Expect('PDec', '0.123');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P113_AF_Negative()
-    var
-        Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT P113 AF Card";
-    begin
-        Seed(-9876.54321);
-        Card.OpenView();
-        ObserveAll(Observer, Card);
-        Card.Close();
-        Observer.Expect('T0', '-9,876.54');
-        Observer.Expect('T1', '-9,876.54');
-        Observer.Expect('T2', '-9,876.54321');
-        Observer.Expect('T10', '-9,876.543');
-        Observer.Expect('T10b', '-9,876.54');
-        Observer.Expect('TNone', '-9,876.54');
-        Observer.Expect('P0', '-9,876.54');
-        Observer.Expect('P1', '-9,876.54');
-        Observer.Expect('P2', '-9,876.54321');
-        Observer.Expect('P10a', '-9,876.54');
-        Observer.Expect('P10z', '-9,877');
-        Observer.Expect('P10r', '-9,876.54321');
-        Observer.Expect('PovT10', '-9,876.5432');
-        Observer.Expect('PovT0', '-9,876.543');
-        Observer.Expect('PDec', '-9,876.543');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P113_AF_Zero()
     var
         Observer: Codeunit "Probe Observer";

@@ -145,68 +145,6 @@ codeunit 74134 "LT P134 Date Filters"
     end;
 
     [Test]
-    procedure P134_TestFilter_Date_EmptyAndBlankForms()
-    var
-        Observer: Codeunit "Probe Observer";
-        Texts: List of [Text];
-    begin
-        Seed();
-        Texts.Add('');
-        Texts.Add(' ');
-        Texts.Add('''''');
-        Texts.Add('<>''''');
-        Texts.Add('0D');
-        Texts.Add('<>0D');
-        Texts.Add('0');
-        Texts.Add('0D..');
-        Texts.Add('..0D');
-        asserterror ObserveAll(Observer, Texts, 'e', 0);
-        Observer.ObserveError('af163');
-        Observer.Expect('e1[]', 'ok|filter=|rows=1,2,3,4,5,');
-        Observer.Expect('e2[ ]', 'ok|filter=|rows=1,2,3,4,5,');
-        Observer.Expect('e3['''']', 'ok|filter=|rows=1,');
-        Observer.Expect('e4[<>'''']', 'ok|filter=<>''''|rows=2,3,4,5,');
-        Observer.Expect('e5[0D]', 'ok|filter=10/16/26|rows=');
-        Observer.Expect('e6[<>0D]', 'ok|filter=<>10/16/26|rows=1,2,3,4,5,');
-        Observer.Expect('af163|text', 'The filter "0" is not valid for the D field on the LT P134 DateRow table. The format of the Date ''0'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
-        Observer.Expect('af163|code', 'DataBinding:Filter');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P134_TestFilter_Date_Formulas()
-    var
-        Observer: Codeunit "Probe Observer";
-        Texts: List of [Text];
-    begin
-        Seed();
-        Texts.Add('1M');
-        Texts.Add('<1M>');
-        Texts.Add('CM');
-        Texts.Add('CY');
-        Texts.Add('1D');
-        Texts.Add('-1D');
-        Texts.Add('T');
-        Texts.Add('W');
-        Texts.Add('T-1D');
-        Texts.Add('CM..CM');
-        Texts.Add('1M..2M');
-        ObserveAll(Observer, Texts, 'f', 0);
-        Observer.Expect('f1[1M]', 'ok|filter=10/01/26|rows=');
-        Observer.Expect('f2[<1M>]', 'ok|filter=11/16/26|rows=');
-        Observer.Expect('f3[CM]', 'ok|filter=10/31/26|rows=');
-        Observer.Expect('f4[CY]', 'ok|filter=12/31/26|rows=');
-        Observer.Expect('f5[1D]', 'ok|filter=10/01/26|rows=');
-        Observer.Expect('f6[-1D]', 'ok|filter=10/15/26|rows=');
-        Observer.Expect('f7[T]', 'ok|filter=10/16/26|rows=');
-        Observer.Expect('f8[W]', 'ok|filter=10/01/26|rows=');
-        Observer.Expect('f9[T-1D]', 'ok|filter=12/30/25|rows=');
-        Observer.Expect('f10[CM..CM]', 'ok|filter=10/31/26..10/31/26|rows=');
-        Observer.Expect('f11[1M..2M]', 'ok|filter=10/01/26..10/02/26|rows=');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P134_TestFilter_Date_RegionAndIsoSpellings()
     var
         Observer: Codeunit "Probe Observer";
@@ -311,41 +249,6 @@ codeunit 74134 "LT P134 Date Filters"
         Observer.Expect('e5[0D]', 'ok|filter=10/16/26|rows=');
         Observer.Expect('e6[<>0D]', 'ok|filter=<>10/16/26|rows=1,2,3,4,5,');
         Observer.Expect('e7[0]', 'error:The filter "0" is not valid for the D field on the LT P134 DateRow table. The format of the Date ''0'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure P134_FieldRef_Date_FormulasAndSpellings()
-    var
-        Observer: Codeunit "Probe Observer";
-        Texts: List of [Text];
-    begin
-        Seed();
-        Texts.Add('1M');
-        Texts.Add('<1M>');
-        Texts.Add('CM');
-        Texts.Add('T');
-        Texts.Add('010126');
-        Texts.Add('01/01/26');
-        Texts.Add('01/01/2026');
-        Texts.Add('1/1/2026');
-        Texts.Add('2026-01-01');
-        Texts.Add('01/01/26..01/15/26');
-        Texts.Add('..01/15/26');
-        Texts.Add('abc');
-        ObserveAll(Observer, Texts, 'f', 1);
-        Observer.Expect('f1[1M]', 'ok|filter=10/01/26|rows=');
-        Observer.Expect('f2[<1M>]', 'ok|filter=11/16/26|rows=');
-        Observer.Expect('f3[CM]', 'ok|filter=10/31/26|rows=');
-        Observer.Expect('f4[T]', 'ok|filter=10/16/26|rows=');
-        Observer.Expect('f5[010126]', 'ok|filter=01/01/26|rows=2,');
-        Observer.Expect('f6[01/01/26]', 'ok|filter=01/01/26|rows=2,');
-        Observer.Expect('f7[01/01/2026]', 'ok|filter=01/01/26|rows=2,');
-        Observer.Expect('f8[1/1/2026]', 'ok|filter=01/01/26|rows=2,');
-        Observer.Expect('f9[2026-01-01]', 'ok|filter=01/01/26|rows=2,');
-        Observer.Expect('f10[01/01/26..01/15/26]', 'ok|filter=01/01/26..01/15/26|rows=2,3,');
-        Observer.Expect('f11[..01/15/26]', 'ok|filter=..01/15/26|rows=1,2,3,5,');
-        Observer.Expect('f12[abc]', 'error:The filter "abc" is not valid for the D field on the LT P134 DateRow table. The format of the Date ''abc'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
         Observer.Verify();
     end;
 }

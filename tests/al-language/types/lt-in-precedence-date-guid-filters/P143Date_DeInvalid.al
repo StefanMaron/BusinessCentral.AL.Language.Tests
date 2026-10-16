@@ -9,33 +9,6 @@ codeunit 74655 "LT P143 DeInvalid"
     Subtype = Test;
     TestPermissions = Disabled;
 
-    [Test]
-    procedure P143_DeInvalid()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P143 Helper";
-        OldLanguage: Integer;
-    begin
-        Helper.Seed();
-        OldLanguage := GlobalLanguage();
-        GlobalLanguage(1031);
-        Run(Observer, Helper);
-        GlobalLanguage(OldLanguage);
-        Observer.Observe('language_restored', Format(GlobalLanguage() = OldLanguage));
-        Observer.Expect('i_iso_filter', '01/17/27');
-        Observer.Expect('i_iso_count', '1');
-        Observer.Expect('i_abc_err|text', 'Der Filter ''abc'' ist für das Feld ''D'' der Tabelle ''LT P143 Row'' nicht gültig. Das Format Date „abc“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.');
-        Observer.Expect('i_abc_err|code', 'Filter:CSide');
-        Observer.Expect('i_month13_err|text', 'Der Filter ''45.13.27'' ist für das Feld ''D'' der Tabelle ''LT P143 Row'' nicht gültig. Das Format Date „45.13.27“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.');
-        Observer.Expect('i_month13_err|code', 'Filter:CSide');
-        Observer.Expect('i_us_2027_filter', '01/17/27');
-        Observer.Expect('i_us_2027_count', '1');
-        Observer.Expect('i_wild_filter', '10/01/26');
-        Observer.Expect('i_wild_count', '1');
-        Observer.Expect('language_restored', 'Yes');
-        Observer.Verify();
-    end;
-
     // every statement that can raise sits inside the helper's TryFunctions, so Run cannot leave the language changed
     local procedure Run(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper")
     begin

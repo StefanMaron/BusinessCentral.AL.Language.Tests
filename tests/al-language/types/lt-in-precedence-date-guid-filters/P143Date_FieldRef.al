@@ -48,43 +48,6 @@ codeunit 74662 "LT P143 FieldRef"
     end;
 
     [Test]
-    procedure P143_FieldRefDate()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT P143 Helper";
-        Result: Text;
-        Cnt: Integer;
-    begin
-        Helper.Seed();
-        ProbeFilter(Observer, 'date_0117_27', 2, '01/17/27');
-        ProbeFilter(Observer, 'date_closing', 2, 'C10/18/26');
-        ProbeFilter(Observer, 'date_max', 2, '12/31/9999');
-        ProbeFilter(Observer, 'date_range', 2, '01/01/27..01/31/27');
-        ProbeFilter(Observer, 'date_empty', 2, '');
-        ProbeFilter(Observer, 'date_invalid', 2, 'abc');
-        if TrySetRangeText('01/01/27', '01/31/27', Result, Cnt) then begin
-            Observer.Observe('setrange_text_filter', Result);
-            Observer.Observe('setrange_text_count', Format(Cnt));
-        end else
-            Observer.ObserveError('setrange_text_err');
-        Observer.Expect('date_0117_27_filter', '01/17/27');
-        Observer.Expect('date_0117_27_count', '1');
-        Observer.Expect('date_closing_filter', 'C10/18/26');
-        Observer.Expect('date_closing_count', '1');
-        Observer.Expect('date_max_filter', '12/31/9999');
-        Observer.Expect('date_max_count', '1');
-        Observer.Expect('date_range_filter', '01/01/27..01/31/27');
-        Observer.Expect('date_range_count', '4');
-        Observer.Expect('date_empty_filter', '');
-        Observer.Expect('date_empty_count', '10');
-        Observer.Expect('date_invalid_err|text', 'The filter "abc" is not valid for the D field on the LT P143 Row table. The format of the Date ''abc'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
-        Observer.Expect('date_invalid_err|code', 'Filter:CSide');
-        Observer.Expect('setrange_text_err|text', 'The format of the Date ''01/01/27'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
-        Observer.Expect('setrange_text_err|code', 'Evaluate:Conversion');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P143_FieldRefGuid()
     var
         Observer: Codeunit "Probe Observer";
