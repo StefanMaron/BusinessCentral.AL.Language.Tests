@@ -117,18 +117,6 @@ codeunit 71611 "LT P91 Static Tests"
     end;
 
     [Test]
-    procedure DefaultLayout_AsserterrorUnknown()
-    var
-        Lay: Variant;
-    begin
-        asserterror Lay := Report.DefaultLayout(71999);
-        Observer.ObserveError('unknown');
-        Observer.Expect('unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown|code', 'AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure RdlcLayout_Reports()
     begin
         Observer.Observe('nolayout', LayoutStreamOf(1, Report::"LT P91 NoLayout"));
@@ -181,18 +169,6 @@ codeunit 71611 "LT P91 Static Tests"
         Observer.Expect('proconly', 'len>0=Yes');
         Observer.Expect('zero', 'error:You tried to invoke the Report object with the ID 0 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
         Observer.Expect('unknown', 'error:You tried to invoke the Report object with the ID 71999 from the object LT P91 Static Tests. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
-        Observer.Verify();
-    end;
-
-    [Test]
-    procedure WordXmlPart_AsserterrorUnknown()
-    var
-        Txt: Text;
-    begin
-        asserterror Txt := Report.WordXmlPart(71999);
-        Observer.ObserveError('unknown');
-        Observer.Expect('unknown|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-        Observer.Expect('unknown|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
 }

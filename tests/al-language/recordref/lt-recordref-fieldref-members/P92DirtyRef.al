@@ -5,6 +5,7 @@
 // Facts: IsDirty of a RecordRef (unsure the member exists: drop this file when it does not compile)
 // BC versions: 29 (27 and 28 by CI)
 
+#if BC28PLUS
 codeunit 72220 "LT P92 Dirty Ref"
 {
     Subtype = Test;
@@ -72,3 +73,4 @@ codeunit 72220 "LT P92 Dirty Ref"
         Observer.Verify();
     end;
 }
+#endif

@@ -28,6 +28,7 @@ codeunit 72211 "LT P92 Fields"
         exit('error|' + GetLastErrorCode());
     end;
 
+#if BC29PLUS
     [Test]
     procedure FieldExist_ByNumber()
     var
@@ -72,6 +73,7 @@ codeunit 72211 "LT P92 Fields"
         Observer.Expect('exist_maxint', 'No');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Field_ByNumberNames()

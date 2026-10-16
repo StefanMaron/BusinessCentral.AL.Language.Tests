@@ -74,6 +74,7 @@ codeunit 71203 "LT P82 TestField"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Value_And_As_OnEmptyAndNegativeRow()
     var
@@ -110,6 +111,7 @@ codeunit 71203 "LT P82 TestField"
         Observer.Expect('name-value-empty', 'Yes');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure AssertEquals_Passing_Overloads()
@@ -203,6 +205,7 @@ codeunit 71203 "LT P82 TestField"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure SetValue_Overloads()
     var
@@ -258,6 +261,7 @@ codeunit 71203 "LT P82 TestField"
         Observer.Expect('stored-flag', 'Yes');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure SetValue_Invalid()

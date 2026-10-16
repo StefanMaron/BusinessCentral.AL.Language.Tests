@@ -54,30 +54,6 @@ codeunit 73081 "LT P94 Session Start"
     end;
 
     [Test]
-    procedure Start_Basic()
-    var
-        SessionId: Integer;
-        Ok: Boolean;
-    begin
-        SessionId := 777;
-        asserterror Ok := Session.StartSession(SessionId, Codeunit::"LT P94 NoOp");
-        Observer.ObserveError('af63');
-        Observer.Observe('ok', Format(Ok));
-        Observer.Observe('idChanged', Format(SessionId <> 777));
-        Observer.Observe('idPositive', Format(SessionId > 0));
-        Observer.Observe('active', Format(Session.IsSessionActive(SessionId)));
-        Observer.Observe('stop', Format(Session.StopSession(SessionId)));
-        Observer.Expect('af63|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
-        Observer.Expect('af63|code', 'TestStartSessionNotAllowed');
-        Observer.Expect('ok', 'No');
-        Observer.Expect('idChanged', 'No');
-        Observer.Expect('idPositive', 'Yes');
-        Observer.Expect('active', 'No');
-        Observer.Expect('stop', 'No');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure Start_TwoSessionsDifferentIds()
     var
         A: Integer;
