@@ -75,24 +75,43 @@ table 72089 "LT P121 Blob"
     }
 }
 
+table 74989 "LT P121 Log Row"
+{
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Entries; Text[2048]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
 codeunit 72090 "LT P121 Log"
 {
-    SingleInstance = true;
-
-    var
-        Entries: Text;
-
     procedure Add(Entry: Text)
+    var
+        Row: Record "LT P121 Log Row";
     begin
-        Entries += Entry + ';';
+        if not Row.Get(1) then begin
+            Row.Id := 1;
+            Row.Insert();
+        end;
+        Row.Entries := CopyStr(Row.Entries + Entry + ';', 1, MaxStrLen(Row.Entries));
+        Row.Modify();
     end;
 
     procedure Take(): Text
     var
+        Row: Record "LT P121 Log Row";
         Result: Text;
     begin
-        Result := Entries;
-        Entries := '';
+        if not Row.Get(1) then
+            exit('');
+        Result := Row.Entries;
+        Row.Delete();
         exit(Result);
     end;
 }
