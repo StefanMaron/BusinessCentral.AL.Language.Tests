@@ -326,7 +326,7 @@ codeunit 69815 "PA Misc Contracts"
         O.ObserveError('error_with_message_assigned');
         O.Expect('error_client|text', 'client message');
         O.Expect('error_client|code', 'Dialog');
-        O.Expect('error_internal|text', 'An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
+        O.Expect('error_internal|text', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
         O.Expect('error_internal|code', 'Dialog');
         O.Expect('error_with_message_assigned|text', 'with code message');
         O.Expect('error_with_message_assigned|code', 'Dialog');

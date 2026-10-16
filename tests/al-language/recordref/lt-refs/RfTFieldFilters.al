@@ -165,7 +165,7 @@ codeunit 73025 "LT RfT Field Filters"
         Observer.Expect('double_op|code', 'Filter:CSide');
         Observer.Expect('paren|text', 'The filter "(1" is not valid for the Int field on the RfT Data Caption table. A '')'' is missing.');
         Observer.Expect('paren|code', 'Filter:CSide');
-        Observer.Expect('date|text', 'The filter "notadate" is not valid for the Dt field on the RfT Data Caption table. The format of the Date ''notadate'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('date|text', 'The filter "notadate" is not valid for the Dt field on the RfT Data Caption table. The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
         Observer.Expect('date|code', 'Filter:CSide');
         Observer.Expect('bool|text', 'The filter "maybe" is not valid for the Bool field on the RfT Data Caption table. The value "maybe" can''t be evaluated into type Boolean.');
         Observer.Expect('bool|code', 'Filter:CSide');

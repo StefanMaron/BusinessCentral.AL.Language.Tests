@@ -45,11 +45,11 @@ codeunit 71617 "LT P102 Write Numbers"
         Observer.Expect('a_ret', '1');
         Observer.Expect('a_bytes', '1:41');
         Observer.Expect('uni_ret', '1');
-        Observer.Expect('uni_bytes', '1:80');
+        Observer.Expect('uni_bytes', '1:B1');
         Observer.Expect('nul_ret', '1');
         Observer.Expect('nul_bytes', '1:00');
         Observer.Expect('len1_ret', '1');
-        Observer.Expect('len1_bytes', '1:80');
+        Observer.Expect('len1_bytes', '1:B1');
         Observer.Verify();
     end;
 

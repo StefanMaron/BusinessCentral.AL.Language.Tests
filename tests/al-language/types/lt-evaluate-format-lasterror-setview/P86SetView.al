@@ -135,7 +135,7 @@ codeunit 73535 "LT P86 SetView"
         Observer.Expect('v4', 'err:The value "1.5" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
         Observer.Expect('v5', 'ok|VERSION(1) SORTING(Field1) WHERE(Field2=1(5))|VERSION(1) SORTING(No.) WHERE(Name=FILTER(5))|No.');
         Observer.Expect('v6', 'err:The value "abc" can''t be evaluated into type Decimal.|Evaluate|VERSION(1) SORTING(Field1)');
-        Observer.Expect('v7', 'err:The format of the Date ''abc'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v7', 'err:The format of the Date ''abc'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|VERSION(1) SORTING(Field1)');
         Observer.Expect('v8', 'err:The value "" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
         Observer.Expect('v9', 'err:The value "99999999999" can''t be evaluated into type Integer.|Evaluate|VERSION(1) SORTING(Field1)');
         Observer.Expect('v10', 'ok|VERSION(1) SORTING(Field1) WHERE(Field1=1(<>0))|VERSION(1) SORTING(No.) WHERE(No.=FILTER(<>0))|No.');
@@ -218,12 +218,12 @@ codeunit 73535 "LT P86 SetView"
         R.Reset();
         Observer.Observe('v11', SV(R, 'sorting(name) order(descending) where("no."=const(1))'));
         Observer.Expect('v1', 'ok|VERSION(1) SORTING(Field1)|VERSION(1) SORTING(No.)|No.');
-        Observer.Expect('v2', 'err:Invalid expression of type: table view.\r\SORTING(|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v2', 'err:Invalid expression of type: table view.\SORTING(|DB:Ok|VERSION(1) SORTING(Field1)');
         Observer.Expect('v3', 'ok|VERSION(1) SORTING(Field1)|VERSION(1) SORTING(No.)|No.');
-        Observer.Expect('v4', 'err:Invalid expression of type: table view.\r\WHERE("No."=)|DB:Ok|VERSION(1) SORTING(Field1)');
-        Observer.Expect('v5', 'err:Invalid expression of type: table view.\r\garbage|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v4', 'err:Invalid expression of type: table view.\WHERE("No."=)|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v5', 'err:Invalid expression of type: table view.\garbage|DB:Ok|VERSION(1) SORTING(Field1)');
         Observer.Expect('v6', 'ok|VERSION(1) SORTING(Field1) ORDER(1)|VERSION(1) SORTING(No.) ORDER(Descending)|No.');
-        Observer.Expect('v7', 'err:Invalid expression of type: table view.\r\ORDER(Sideways)|DB:Ok|VERSION(1) SORTING(Field1)');
+        Observer.Expect('v7', 'err:Invalid expression of type: table view.\ORDER(Sideways)|DB:Ok|VERSION(1) SORTING(Field1)');
         Observer.Expect('v8', 'ok|VERSION(1) SORTING(Field2,Field3) ORDER(1) WHERE(Field1=1(1))|VERSION(1) SORTING(Name,Amount) ORDER(Descending) WHERE(No.=FILTER(1))|Name,Amount');
         Observer.Expect('v9', 'ok|VERSION(1) SORTING(Field2,Field3) WHERE(Field1=1(1))|VERSION(1) SORTING(Name,Amount) WHERE(No.=FILTER(1))|Name,Amount');
         Observer.Expect('v10', 'ok|VERSION(1) SORTING(Field2,Field3)|VERSION(1) SORTING(Name,Amount)|Name,Amount');

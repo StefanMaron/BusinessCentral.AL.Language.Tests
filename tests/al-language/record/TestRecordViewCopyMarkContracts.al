@@ -130,10 +130,8 @@ codeunit 68211 "Probe Record View Copy Mark"
     procedure SetView_ReplacesTheFilters_KeepsTheDirection_AndRejectsGarbage()
     var
         ALTKeyed: Record "ALT Keyed";
-        Cr: Text[1];
     begin
         Initialize();
-        Cr[1] := 13;
 
         ALTKeyed.SetView('SORTING(Amount) ORDER(Descending) WHERE(Entry No.=FILTER(1..2))');
         Assert.AreEqual('VERSION(1) SORTING(Amount) ORDER(Descending) WHERE(Entry No.=FILTER(1..2))', ALTKeyed.GetView(), 'round trip');
@@ -144,7 +142,7 @@ codeunit 68211 "Probe Record View Copy Mark"
         Assert.AreEqual('VERSION(1) SORTING(Entry No.) ORDER(Descending) WHERE(Amount=FILTER(6))', ALTKeyed.GetView(), 'the key is the primary key again; the descending order stays');
 
         asserterror ALTKeyed.SetView('GARBAGE(');
-        Assert.AreEqual('Invalid expression of type: table view.' + Cr + '\' + 'GARBAGE(', GetLastErrorText(), 'text');
+        Assert.AreEqual('Invalid expression of type: table view.' + '\' + 'GARBAGE(', GetLastErrorText(), 'text');
         Assert.AreEqual('DB:Ok', GetLastErrorCode(), 'code');
     end;
 }

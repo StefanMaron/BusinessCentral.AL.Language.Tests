@@ -34,10 +34,10 @@ codeunit 68071 "W4 Xml Options Tests"
         Observer.Observe('default_options', Read('<root>  <a/>  </root>', true, false, false));
         Observer.Observe('preserve_true', Read('<root>  <a/>  </root>', true, true, true));
         Observer.Observe('preserve_false', Read('<root>  <a/>  </root>', true, false, true));
-        Observer.Expect('no_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>]');
-        Observer.Expect('default_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>]');
-        Observer.Expect('preserve_true', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>]');
-        Observer.Expect('preserve_false', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>]');
+        Observer.Expect('no_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>]');
+        Observer.Expect('default_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>]');
+        Observer.Expect('preserve_true', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>]');
+        Observer.Expect('preserve_false', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>]');
         Observer.Verify();
     end;
 
@@ -66,10 +66,10 @@ codeunit 68071 "W4 Xml Options Tests"
         Observer.Observe('default_options', Read('<root> x <a> y </a>' + '</root>', true, false, false));
         Observer.Observe('preserve_true', Read('<root> x <a> y </a>' + '</root>', true, true, true));
         Observer.Observe('preserve_false', Read('<root> x <a> y </a>' + '</root>', true, false, true));
-        Observer.Expect('no_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root> x <a> y </a></root>]');
-        Observer.Expect('default_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root> x <a> y </a></root>]');
-        Observer.Expect('preserve_true', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root> x <a> y </a></root>]');
-        Observer.Expect('preserve_false', 'read=true [<?xml version="1.0" encoding="utf-16"?>\n<root> x <a> y </a></root>]');
+        Observer.Expect('no_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root> x <a> y </a></root>]');
+        Observer.Expect('default_options', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root> x <a> y </a></root>]');
+        Observer.Expect('preserve_true', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root> x <a> y </a></root>]');
+        Observer.Expect('preserve_false', 'read=true [<?xml version="1.0" encoding="utf-16"?>\r\n<root> x <a> y </a></root>]');
         Observer.Verify();
     end;
 }

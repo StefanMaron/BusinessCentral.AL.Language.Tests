@@ -369,11 +369,11 @@ codeunit 71101 "LT PnC Find Forms"
         Observer.ObserveError('empty');
         asserterror b := R.Find('==');
         Observer.ObserveError('double');
-        Observer.Expect('invalid|text', 'There is an invalid character in the Find expression ''x''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
+        Observer.Expect('invalid|text', 'There is an invalid character in the Find expression ''x''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
         Observer.Expect('invalid|code', 'DB:BadSearchMethod');
-        Observer.Expect('empty|text', 'There is an invalid character in the Find expression ''''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
+        Observer.Expect('empty|text', 'There is an invalid character in the Find expression ''''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
         Observer.Expect('empty|code', 'DB:BadSearchMethod');
-        Observer.Expect('double|text', 'There is an invalid character in the Find expression ''==''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
+        Observer.Expect('double|text', 'There is an invalid character in the Find expression ''==''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.');
         Observer.Expect('double|code', 'DB:BadSearchMethod');
         Observer.Verify();
     end;

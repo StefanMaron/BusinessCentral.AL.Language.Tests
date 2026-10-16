@@ -65,7 +65,7 @@ codeunit 71619 "LT P102 Write TextLike"
         Observer.Expect('empty_ret', '1');
         Observer.Expect('empty_bytes', '1:00');
         Observer.Expect('uni_ret', '4');
-        Observer.Expect('uni_bytes', '4:61E98000');
+        Observer.Expect('uni_bytes', '4:6182B100');
         Observer.Expect('len2_ret', '3');
         Observer.Expect('len2_bytes', '3:616200');
         Observer.Expect('len0_ret', '1');

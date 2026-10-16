@@ -509,7 +509,7 @@ codeunit 73501 "LT XpT Import Basic"
     begin
         Helper.Wipe();
         Observer.Observe('err', Helper.TryImport(73410, '<Root><Item><Id>1</Id><Name>A</Name><Qty>5</Qty><Amount>1.5</Amount><Active>true</Active><Category>C</Category><StampDate>notadate</StampDate></Item></Root>'));
-        Observer.Expect('err', 'error:The format of the Date ''notadate'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate');
+        Observer.Expect('err', 'error:The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate');
         Observer.Verify();
     end;
 
@@ -522,7 +522,7 @@ codeunit 73501 "LT XpT Import Basic"
         Helper.Wipe();
         Observer.Observe('err', Helper.TryImport(73410, '<Root><Item><Id>1</Id><Name>A</Name><Qty>5</Qty><Amount>1.5</Amount><Active>true</Active><Category>C</Category><StampDate>15.01.2024</StampDate></Item></Root>'));
         Observer.Observe('items', Helper.DumpItems());
-        Observer.Expect('err', 'error:The format of the Date ''15.01.2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate');
+        Observer.Expect('err', 'error:The format of the Date ''15.01.2024'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate');
         Observer.Expect('items', '');
         Observer.Verify();
     end;

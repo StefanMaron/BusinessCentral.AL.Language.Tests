@@ -186,7 +186,7 @@ codeunit 72509 "LT SyT Format Basic"
         Observer.Expect('<Sign><Integer>', '1234567');
         Observer.Expect('<Sign,1><Integer>', ' 1234567');
         Observer.Expect('<Integer Thousand>', '1,234,567');
-        Observer.Expect('af148|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,10,0>');
+        Observer.Expect('af148|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,10,0>');
         Observer.Expect('af148|code', 'InvalidFormatString');
         Observer.Expect('<Integer,10><Filler Character,0>', '0001234567');
         Observer.Expect('<Integer,3>', '***');

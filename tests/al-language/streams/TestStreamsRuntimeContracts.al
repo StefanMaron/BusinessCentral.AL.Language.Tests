@@ -45,7 +45,7 @@ codeunit 68136 "Probe Streams Contracts"
 
         TempBlob.CreateOutStream(OutStr);
         OutStr.WriteText('héllo');
-        Assert.AreEqual('68E96C6C6F', HexOf(TempBlob), 'default encoding');
+        Assert.AreEqual('68826C6C6F', HexOf(TempBlob), 'default encoding');
     end;
 
     local procedure HexOf(var TempBlob: Codeunit "Temp Blob"): Text
@@ -89,7 +89,7 @@ codeunit 68136 "Probe Streams Contracts"
         Clear(TempBlob);
         TempBlob.CreateOutStream(OutStr, TextEncoding::MSDos);
         OutStr.WriteText('hé€Ж');
-        Assert.AreEqual('68E9803F', HexOf(TempBlob), 'MSDos gives the same bytes as Windows');
+        Assert.AreEqual('6882B13F', HexOf(TempBlob), 'MSDos is code page 437 on the Windows tier: e acute is 82');
     end;
 
     [Test]

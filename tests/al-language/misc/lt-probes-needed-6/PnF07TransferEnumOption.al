@@ -198,9 +198,9 @@ codeunit 73880 "LT PnF Transfer Enum Opt"
             Observer.Observe('text_to_bool', Format(B.Flag))
         else
             Observer.ObserveError('text_to_bool');
-        Observer.Expect('bool_to_text|text', 'The following fields must have the same type:\r\\r\Field: Flag <-- Flag\r\Table: LT PnF TF Text Row <-- LT PnF TF Bool Row\r\Type: Text <-- Boolean');
+        Observer.Expect('bool_to_text|text', 'The following fields must have the same type:\\Field: Flag <-- Flag\Table: LT PnF TF Text Row <-- LT PnF TF Bool Row\Type: Text <-- Boolean');
         Observer.Expect('bool_to_text|code', 'DB:TypeMisMatch');
-        Observer.Expect('text_to_bool|text', 'The following fields must have the same type:\r\\r\Field: Flag <-- Flag\r\Table: LT PnF TF Bool Row <-- LT PnF TF Text Row\r\Type: Boolean <-- Text');
+        Observer.Expect('text_to_bool|text', 'The following fields must have the same type:\\Field: Flag <-- Flag\Table: LT PnF TF Bool Row <-- LT PnF TF Text Row\Type: Boolean <-- Text');
         Observer.Expect('text_to_bool|code', 'DB:TypeMisMatch');
         Observer.Verify();
     end;

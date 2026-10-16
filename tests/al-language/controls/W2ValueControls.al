@@ -218,15 +218,15 @@ codeunit 68665 "W2 Value Tests"
         Observer.Expect('iso_end_of_year|ok', 'Yes');
         Observer.Expect('iso_end_of_year|iso', '2024-12-31');
         Observer.Expect('iso_single_digits|ok', 'No');
-        Observer.Expect('iso_single_digits|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''2024-1-5'' is not an acceptable value for ''DateCtl''. The format of the Date ''2024-1-5'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
+        Observer.Expect('iso_single_digits|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''2024-1-5'' is not an acceptable value for ''DateCtl''. The format of the Date ''2024-1-5'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
         Observer.Expect('iso_single_digits|code', 'TestValidation');
         Observer.Expect('iso_single_digits|iso', '');
         Observer.Expect('iso_two_digit_year|ok', 'No');
-        Observer.Expect('iso_two_digit_year|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''24-03-04'' is not an acceptable value for ''DateCtl''. The format of the Date ''24-03-04'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
+        Observer.Expect('iso_two_digit_year|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''24-03-04'' is not an acceptable value for ''DateCtl''. The format of the Date ''24-03-04'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
         Observer.Expect('iso_two_digit_year|code', 'TestValidation');
         Observer.Expect('iso_two_digit_year|iso', '');
         Observer.Expect('compact|ok', 'No');
-        Observer.Expect('compact|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''20240102'' is not an acceptable value for ''DateCtl''. The format of the Date ''20240102'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
+        Observer.Expect('compact|text', 'Validation error for Field: DateCtl,  Message = ''Your entry of ''20240102'' is not an acceptable value for ''DateCtl''. The format of the Date ''20240102'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.''');
         Observer.Expect('compact|code', 'TestValidation');
         Observer.Expect('compact|iso', '');
         Observer.Expect('empty|ok', 'Yes');
@@ -337,7 +337,7 @@ codeunit 68665 "W2 Value Tests"
         TryFormula(Observer, 'text_after_bracket', '<1M>junk');
         TryFormula(Observer, 'text_after_term', '1M junk');
         Observer.Expect('garbage|ok', 'No');
-        Observer.Expect('garbage|text', 'Validation error for Field: FormulaCtl,  Message = ''Your entry of ''abc'' is not an acceptable value for ''FormulaCtl''. The date formula ''ABC'' should include a time unit.\r\\r\Time units can be: D,WD,W,M,Q, or Y.\r\C, meaning current time unit based on date, can be specified as a prefix to the time unit.''');
+        Observer.Expect('garbage|text', 'Validation error for Field: FormulaCtl,  Message = ''Your entry of ''abc'' is not an acceptable value for ''FormulaCtl''. The date formula ''ABC'' should include a time unit.\\Time units can be: D,WD,W,M,Q, or Y.\C, meaning current time unit based on date, can be specified as a prefix to the time unit.''');
         Observer.Expect('garbage|code', 'TestValidation');
         Observer.Expect('garbage|value', '');
         Observer.Expect('garbage|xml', '');
@@ -375,7 +375,7 @@ codeunit 68665 "W2 Value Tests"
         Observer.Expect('only_brackets|value', '');
         Observer.Expect('only_brackets|xml', '');
         Observer.Expect('number_only|ok', 'No');
-        Observer.Expect('number_only|text', 'Validation error for Field: FormulaCtl,  Message = ''Your entry of ''5'' is not an acceptable value for ''FormulaCtl''. The date formula ''5'' should include a time unit.\r\\r\Time units can be: D,WD,W,M,Q, or Y.\r\C, meaning current time unit based on date, can be specified as a prefix to the time unit.''');
+        Observer.Expect('number_only|text', 'Validation error for Field: FormulaCtl,  Message = ''Your entry of ''5'' is not an acceptable value for ''FormulaCtl''. The date formula ''5'' should include a time unit.\\Time units can be: D,WD,W,M,Q, or Y.\C, meaning current time unit based on date, can be specified as a prefix to the time unit.''');
         Observer.Expect('number_only|code', 'TestValidation');
         Observer.Expect('number_only|value', '');
         Observer.Expect('number_only|xml', '');

@@ -251,7 +251,7 @@ codeunit 70555 "LT PnB Page Ext"
         Obs.Expect('CM', 'ok:CM');
         Obs.Expect('<-CM>', 'ok:-CM');
         Obs.Expect('lower1d', 'ok:1D');
-        Obs.Expect('1X', 'error:Validation error for Field: DF,  Message = ''Your entry of ''1X'' is not an acceptable value for ''DF''. The date formula ''1X'' should include a time unit.\r\\r\Time units can be: D,WD,W,M,Q, or Y.\r\C, meaning current time unit based on date, can be specified as a prefix to the time unit. (Select Refresh to discard errors)''');
+        Obs.Expect('1X', 'error:Validation error for Field: DF,  Message = ''Your entry of ''1X'' is not an acceptable value for ''DF''. The date formula ''1X'' should include a time unit.\\Time units can be: D,WD,W,M,Q, or Y.\C, meaning current time unit based on date, can be specified as a prefix to the time unit. (Select Refresh to discard errors)''');
         Obs.Expect('1D trailing garbage', 'error:Validation error for Field: DF,  Message = ''Your entry of ''1D xyz'' is not an acceptable value for ''DF''. The date formula ''1D XYZ'' must include plus (+) or minus (-). (Select Refresh to discard errors)''');
         Obs.Expect('empty', 'ok:');
         Obs.Expect('WD1', 'ok:WD1');
@@ -320,15 +320,15 @@ codeunit 70555 "LT PnB Page Ext"
         TP.Close();
         WorkDate(Orig);
         Obs.Expect('iso', 'ok:2/15/2024');
-        Obs.Expect('isoNoPad', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''2024-2-5'' is not an acceptable value for ''Dt''. The format of the Date ''2024-2-5'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
+        Obs.Expect('isoNoPad', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''2024-2-5'' is not an acceptable value for ''Dt''. The format of the Date ''2024-2-5'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
         Obs.Expect('w', 'ok:1/31/2024');
         Obs.Expect('W', 'ok:1/31/2024');
         Obs.Expect('t', 'error:Validation error for Field: Dt,  Message = ''In the current company the date you''ve entered is outside the allowed interval (this is determined by the filter ''??11*|??12*|??01*|??02*'', which is defined by the license file). (Select Refresh to discard errors)''');
         Obs.Expect('today', 'error:Validation error for Field: Dt,  Message = ''In the current company the date you''ve entered is outside the allowed interval (this is determined by the filter ''??11*|??12*|??01*|??02*'', which is defined by the license file). (Select Refresh to discard errors)''');
         Obs.Expect('workdate', 'ok:1/31/2024');
-        Obs.Expect('twoDigit29', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''15.02.29'' is not an acceptable value for ''Dt''. The format of the Date ''15.02.29'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
-        Obs.Expect('twoDigit30', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''15.02.30'' is not an acceptable value for ''Dt''. The format of the Date ''15.02.30'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
-        Obs.Expect('garbage', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''notadate'' is not an acceptable value for ''Dt''. The format of the Date ''notadate'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
+        Obs.Expect('twoDigit29', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''15.02.29'' is not an acceptable value for ''Dt''. The format of the Date ''15.02.29'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
+        Obs.Expect('twoDigit30', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''15.02.30'' is not an acceptable value for ''Dt''. The format of the Date ''15.02.30'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
+        Obs.Expect('garbage', 'error:Validation error for Field: Dt,  Message = ''Your entry of ''notadate'' is not an acceptable value for ''Dt''. The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''. (Select Refresh to discard errors)''');
         Obs.Expect('empty', 'ok:');
         Obs.Verify();
     end;

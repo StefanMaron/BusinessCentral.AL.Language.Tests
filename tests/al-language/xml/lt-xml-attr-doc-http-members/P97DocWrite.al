@@ -110,12 +110,12 @@ codeunit 74808 "LT P97 Doc WriteTo"
         end;
         Observer.Expect('v1|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v1|code', 'InvalidOperation');
-        Observer.Expect('v2', '<?xml version="1.0" encoding="utf-16"?>\n<r />');
-        Observer.Expect('v3', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<!--lead-->\n<?pi data?>\n<r>\n  <c>v</c>\n</r>');
-        Observer.Expect('v4', '<?xml version="1.0" encoding="utf-16"?>\n<r>  a  b  <c /> tail </r>');
+        Observer.Expect('v2', '<?xml version="1.0" encoding="utf-16"?>\r\n<r />');
+        Observer.Expect('v3', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<!--lead-->\r\n<?pi data?>\r\n<r>\r\n  <c>v</c>\r\n</r>');
+        Observer.Expect('v4', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>  a  b  <c /> tail </r>');
         Observer.Expect('v5|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v5|code', 'InvalidOperation');
-        Observer.Expect('v6', '<?xml version="1.0" encoding="" standalone="yes"?>\n<r />');
+        Observer.Expect('v6', '<?xml version="1.0" encoding="" standalone="yes"?>\r\n<r />');
         Observer.Verify();
     end;
 
@@ -181,16 +181,16 @@ codeunit 74808 "LT P97 Doc WriteTo"
         end;
         Observer.Expect('v1|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v1|code', 'InvalidOperation');
-        Observer.Expect('v2_len', '47');
-        Observer.Expect('v2_text', 'ï»¿<?xml version="1.0" encoding="utf-8"?>');
-        Observer.Expect('v3_len', '102');
-        Observer.Expect('v3_text', 'ï»¿<?xml version="1.0" encoding="utf-8" standalone="yes"?>');
-        Observer.Expect('v4_len', '68');
-        Observer.Expect('v4_text', 'ï»¿<?xml version="1.0" encoding="utf-8"?>');
+        Observer.Expect('v2_len', '48');
+        Observer.Expect('v2_text', 'Ù‹<?xml version="1.0" encoding="utf-8"?>');
+        Observer.Expect('v3_len', '107');
+        Observer.Expect('v3_text', 'Ù‹<?xml version="1.0" encoding="utf-8" standalone="yes"?>');
+        Observer.Expect('v4_len', '69');
+        Observer.Expect('v4_text', 'Ù‹<?xml version="1.0" encoding="utf-8"?>');
         Observer.Expect('v5|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v5|code', 'InvalidOperation');
-        Observer.Expect('v6_len', '114');
-        Observer.Expect('v6_text', 'ÿþ<');
+        Observer.Expect('v6_len', '116');
+        Observer.Expect('v6_text', ' þ<');
         Observer.Verify();
     end;
 
@@ -222,17 +222,17 @@ codeunit 74808 "LT P97 Doc WriteTo"
                 Observer.ObserveError('drop' + Format(V));
         end;
         Observer.Expect('keep2_len', '46');
-        Observer.Expect('keep2_text', 'ï»¿<?xml version="1.0" encoding="utf-8"?><r />');
+        Observer.Expect('keep2_text', 'Ù‹<?xml version="1.0" encoding="utf-8"?><r />');
         Observer.Expect('drop2_len', '46');
-        Observer.Expect('drop2_text', 'ï»¿<?xml version="1.0" encoding="utf-8"?><r />');
+        Observer.Expect('drop2_text', 'Ù‹<?xml version="1.0" encoding="utf-8"?><r />');
         Observer.Expect('keep3_len', '95');
-        Observer.Expect('keep3_text', 'ï»¿<?xml version="1.0" encoding="utf-8" standalone="yes"?><!--lead--><?pi data?><r><c>v</c></r>');
+        Observer.Expect('keep3_text', 'Ù‹<?xml version="1.0" encoding="utf-8" standalone="yes"?><!--lead--><?pi data?><r><c>v</c></r>');
         Observer.Expect('drop3_len', '132');
-        Observer.Expect('drop3_text', 'ï»¿<?xml version="1.0" encoding="utf-8" standalone="yes"?><!--lead--><?pi data?><r><c>v</c></r><!--lead--><?pi data?><r><c>v</c></r>');
+        Observer.Expect('drop3_text', 'Ù‹<?xml version="1.0" encoding="utf-8" standalone="yes"?><!--lead--><?pi data?><r><c>v</c></r><!--lead--><?pi data?><r><c>v</c></r>');
         Observer.Expect('keep4_len', '67');
-        Observer.Expect('keep4_text', 'ï»¿<?xml version="1.0" encoding="utf-8"?><r>  a  b  <c /> tail </r>');
+        Observer.Expect('keep4_text', 'Ù‹<?xml version="1.0" encoding="utf-8"?><r>  a  b  <c /> tail </r>');
         Observer.Expect('drop4_len', '67');
-        Observer.Expect('drop4_text', 'ï»¿<?xml version="1.0" encoding="utf-8"?><r>  a  b  <c /> tail </r>');
+        Observer.Expect('drop4_text', 'Ù‹<?xml version="1.0" encoding="utf-8"?><r>  a  b  <c /> tail </r>');
         Observer.Verify();
     end;
 

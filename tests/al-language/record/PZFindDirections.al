@@ -251,10 +251,10 @@ codeunit 69353 "PZ Find Directions"
         Ok := TryRecordRefFind('', 20, Found, AfterId, false);
         Observer.Observe('recordref empty', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Expect('record x', 'No There is an invalid character in the Find expression ''x''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('record empty', 'No There is an invalid character in the Find expression ''''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('recordref x', 'No There is an invalid character in the Find expression ''x''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
-        Observer.Expect('recordref empty', 'No There is an invalid character in the Find expression ''''.\r\\r\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('record x', 'No There is an invalid character in the Find expression ''x''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('record empty', 'No There is an invalid character in the Find expression ''''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('recordref x', 'No There is an invalid character in the Find expression ''x''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
+        Observer.Expect('recordref empty', 'No There is an invalid character in the Find expression ''''.\\In Find expressions, you can use =, >, and < in combinations, where each sign can only appear once, or you can use - or +.|DB:BadSearchMethod');
         Observer.Verify();
     end;
 }

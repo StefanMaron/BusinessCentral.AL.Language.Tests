@@ -350,21 +350,22 @@ codeunit 68121 "Probe Format Eval Text"
     end;
 
     [Test]
-    procedure TextBuilder_AppendLine_EndsWithLineFeedOnly()
+    procedure TextBuilder_AppendLine_EndsWithNewLineOnly()
     var
         Builder: TextBuilder;
-        LineFeed: Text[1];
+        NewLine: Text[2];
     begin
         Initialize();
-        LineFeed[1] := 10;
+        NewLine[1] := 13;
+        NewLine[2] := 10;
 
         Builder.AppendLine('x');
         Builder.Append('y');
-        Assert.AreEqual('x' + LineFeed + 'y', Builder.ToText(), 'AppendLine adds LF');
+        Assert.AreEqual('x' + NewLine + 'y', Builder.ToText(), 'AppendLine adds LF');
 
         Builder.Clear();
         Builder.AppendLine();
-        Assert.AreEqual(LineFeed, Builder.ToText(), 'AppendLine without text');
+        Assert.AreEqual(NewLine, Builder.ToText(), 'AppendLine without text');
     end;
 
     [Test]

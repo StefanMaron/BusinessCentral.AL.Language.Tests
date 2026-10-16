@@ -73,14 +73,14 @@ codeunit 71828 "LT P104 Element"
         for V := 1 to 16 do
             RunCreate(Observer, 'c' + Format(V), V);
         Observer.Expect('c1', '<e>t</e>');
-        Observer.Expect('c2', '<e>\n  <c />\n</e>');
+        Observer.Expect('c2', '<e>\r\n  <c />\r\n</e>');
         Observer.Expect('c3', '<e a="v" />');
-        Observer.Expect('c4', '<e>\n  <!--c-->\n</e>');
+        Observer.Expect('c4', '<e>\r\n  <!--c-->\r\n</e>');
         Observer.Expect('c5', '<e><![CDATA[d]]></e>');
-        Observer.Expect('c6', '<e>\n  <?p d?>\n</e>');
-        Observer.Expect('c7', '<e>\n  <c1 />\n  <c2 />\n</e>');
+        Observer.Expect('c6', '<e>\r\n  <?p d?>\r\n</e>');
+        Observer.Expect('c7', '<e>\r\n  <c1 />\r\n  <c2 />\r\n</e>');
         Observer.Expect('c8', '<e>t<c /><!--x--></e>');
-        Observer.Expect('c9', '<e a="v">\n  <c />\n</e>');
+        Observer.Expect('c9', '<e a="v">\r\n  <c />\r\n</e>');
         Observer.Expect('c10', '<e>42</e>');
         Observer.Expect('c11|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c11|code', 'Argument');
@@ -157,8 +157,8 @@ codeunit 71828 "LT P104 Element"
         Observer.Observe('second_owner', S);
         C.WriteTo(S);
         Observer.Observe('child', S);
-        Observer.Expect('first_owner', '<e1>\n  <c />\n</e1>');
-        Observer.Expect('second_owner', '<e2>\n  <c />\n</e2>');
+        Observer.Expect('first_owner', '<e1>\r\n  <c />\r\n</e1>');
+        Observer.Expect('second_owner', '<e2>\r\n  <c />\r\n</e2>');
         Observer.Expect('child', '<c />');
         Observer.Verify();
     end;
@@ -231,15 +231,15 @@ codeunit 71828 "LT P104 Element"
         end;
         Observer.Observe('opt_false_len', Format(Rec.Data.Length()));
         Observer.Observe('opt_false_text', T);
-        Observer.Expect('text', '<r k="v">\n  <a>1</a> <b>x</b></r>');
+        Observer.Expect('text', '<r k="v">\r\n  <a>1</a> <b>x</b></r>');
         Observer.Expect('opt_true', '<r k="v"><a>1</a> <b>x</b></r>');
-        Observer.Expect('opt_false', '<r k="v">\n  <a>1</a> <b>x</b></r>');
-        Observer.Expect('stream_len', '36');
-        Observer.Expect('stream_text', 'ï»¿<r k="v">|  <a>1</a> <b>x</b></r>|');
-        Observer.Expect('opt_true_len', '36');
-        Observer.Expect('opt_true_text', 'ï»¿<r k="v"><a>1</a> <b>x</b></r>/r>|');
-        Observer.Expect('opt_false_len', '36');
-        Observer.Expect('opt_false_text', 'ï»¿<r k="v">|  <a>1</a> <b>x</b></r>|');
+        Observer.Expect('opt_false', '<r k="v">\r\n  <a>1</a> <b>x</b></r>');
+        Observer.Expect('stream_len', '37');
+        Observer.Expect('stream_text', 'Ù‹<r k="v">|  <a>1</a> <b>x</b></r>|');
+        Observer.Expect('opt_true_len', '37');
+        Observer.Expect('opt_true_text', 'Ù‹<r k="v"><a>1</a> <b>x</b></r></r>|');
+        Observer.Expect('opt_false_len', '37');
+        Observer.Expect('opt_false_text', 'Ù‹<r k="v">|  <a>1</a> <b>x</b></r>|');
         Observer.Verify();
     end;
 
@@ -297,16 +297,16 @@ codeunit 71828 "LT P104 Element"
             E.WriteTo(S);
             Observer.Observe('text' + Format(V), S);
         end;
-        Observer.Expect('stream1', 'ï»¿<r />|');
+        Observer.Expect('stream1', 'Ù‹<r />|');
         Observer.Expect('text1', '<r />');
-        Observer.Expect('stream2', 'ï»¿<r>a&lt;b&gt;&amp;"c"</r>|');
+        Observer.Expect('stream2', 'Ù‹<r>a&lt;b&gt;&amp;"c"</r>|');
         Observer.Expect('text2', '<r>a&lt;b&gt;&amp;"c"</r>');
-        Observer.Expect('stream3', 'ï»¿<r><a /><b xmlns="urn:b" /></r>|');
-        Observer.Expect('text3', '<r>\n  <a />\n  <b xmlns="urn:b" />\n</r>');
+        Observer.Expect('stream3', 'Ù‹<r><a /><b xmlns="urn:b" /></r>|');
+        Observer.Expect('text3', '<r>\r\n  <a />\r\n  <b xmlns="urn:b" />\r\n</r>');
         Observer.Expect('af309|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 6.');
         Observer.Expect('af309|code', 'Xml:Xml');
-        Observer.Expect('stream4', 'ï»¿<r><q xmlns="urn:p" /></r>|');
-        Observer.Expect('text4', '<r>\n  <q xmlns="urn:p" />\n</r>');
+        Observer.Expect('stream4', 'Ù‹<r><q xmlns="urn:p" /></r>|');
+        Observer.Expect('text4', '<r>\r\n  <q xmlns="urn:p" />\r\n</r>');
         Observer.Verify();
     end;
 }

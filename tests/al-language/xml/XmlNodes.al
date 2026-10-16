@@ -115,7 +115,7 @@ codeunit 73403 "LT XmT Nodes"
         T := XmlText.Create(']]>');
         T.WriteTo(Txt);
         Observer.Observe('cdata_end', Txt);
-        Observer.Expect('writeto', '  a\nb  ');
+        Observer.Expect('writeto', '  a\r\nb  ');
         Observer.Expect('len', '7');
         Observer.Expect('quotes', '"quotes" and ''apos''');
         Observer.Expect('cdata_end', ']]&gt;');
@@ -405,10 +405,10 @@ codeunit 73403 "LT XmT Nodes"
         N.Remove();
         E.WriteTo(Txt);
         Observer.Observe('remove', Txt);
-        Observer.Expect('after', '<a>\n  <b />t<!--after--><c /></a>');
-        Observer.Expect('before', '<a>\n  <b />\n  <!--before-->t<!--after--><c /></a>');
-        Observer.Expect('replace', '<a>\n  <b />\n  <!--before-->R<!--after--><c /></a>');
-        Observer.Expect('remove', '<a>\n  <!--before-->R<!--after--><c /></a>');
+        Observer.Expect('after', '<a>\r\n  <b />t<!--after--><c /></a>');
+        Observer.Expect('before', '<a>\r\n  <b />\r\n  <!--before-->t<!--after--><c /></a>');
+        Observer.Expect('replace', '<a>\r\n  <b />\r\n  <!--before-->R<!--after--><c /></a>');
+        Observer.Expect('remove', '<a>\r\n  <!--before-->R<!--after--><c /></a>');
         Observer.Verify();
     end;
 
@@ -563,11 +563,11 @@ codeunit 73403 "LT XmT Nodes"
         Observer.Observe('doc_node_out', NodeStr(N));
         Observer.Expect('root_parent', 'No');
         Observer.Expect('root_doc', 'Yes');
-        Observer.Expect('root_doc_out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
+        Observer.Expect('root_doc_out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
         Observer.Expect('doc_getparent_node', 'n/a');
         Observer.Expect('doc_as_node_kind', 'document');
         Observer.Expect('doc_as_node_parent', 'No');
-        Observer.Expect('doc_node_out', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <b />\n</a>');
+        Observer.Expect('doc_node_out', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <b />\r\n</a>');
         Observer.Verify();
     end;
 
@@ -589,8 +589,8 @@ codeunit 73403 "LT XmT Nodes"
         R.Add(XmlText.Create('t'));
         D2.WriteTo(Txt);
         Observer.Observe('d2_after_d1_change', Txt);
-        Observer.Expect('d1_after_d2_change', '<?xml version="1.0" encoding="utf-16"?>\n<a k="v" />');
-        Observer.Expect('d2_after_d1_change', '<?xml version="1.0" encoding="utf-16"?>\n<a k="v">t</a>');
+        Observer.Expect('d1_after_d2_change', '<?xml version="1.0" encoding="utf-16"?>\r\n<a k="v" />');
+        Observer.Expect('d2_after_d1_change', '<?xml version="1.0" encoding="utf-16"?>\r\n<a k="v">t</a>');
         Observer.Verify();
     end;
 
@@ -616,8 +616,8 @@ codeunit 73403 "LT XmT Nodes"
         Observer.Observe('d1', Txt);
         D2.WriteTo(Txt);
         Observer.Observe('d2', Txt);
-        Observer.Expect('d1', '<?xml version="1.0" encoding="utf-16"?>\n<a>\n  <x>1</x>\n</a>');
-        Observer.Expect('d2', '<?xml version="1.0" encoding="utf-16"?>\n<b>\n  <x>1</x>\n</b>');
+        Observer.Expect('d1', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>\r\n  <x>1</x>\r\n</a>');
+        Observer.Expect('d2', '<?xml version="1.0" encoding="utf-16"?>\r\n<b>\r\n  <x>1</x>\r\n</b>');
         Observer.Verify();
     end;
 
@@ -640,8 +640,8 @@ codeunit 73403 "LT XmT Nodes"
         Observer.Observe('orig', Txt);
         R2.WriteTo(Txt);
         Observer.Observe('copy', Txt);
-        Observer.Expect('orig', '<a>\n  <x>1</x>\n</a>');
-        Observer.Expect('copy', '<a>\n  <x>1</x>\n<y /></a>');
+        Observer.Expect('orig', '<a>\r\n  <x>1</x>\r\n</a>');
+        Observer.Expect('copy', '<a>\r\n  <x>1</x>\r\n<y /></a>');
         Observer.Verify();
     end;
 }

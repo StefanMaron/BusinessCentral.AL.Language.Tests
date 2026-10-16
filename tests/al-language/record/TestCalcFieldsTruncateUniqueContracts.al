@@ -123,19 +123,17 @@ codeunit 68158 "Probe CalcFields Truncate"
     procedure CalcFields_TypeMismatch_FullTextAndCode()
     var
         CfmHeader: Record "CFM Header";
-        Cr: Text[1];
         Expected: Text;
     begin
         Initialize();
-        Cr[1] := 13;
         SeedQuantities(1, 2, 0, 0, 2);
         CfmHeader.Get('P1');
 
         asserterror CfmHeader.CalcFields("Bad Sum Qty Decimal");
 
-        Expected := 'The following fields must have the same type:' + Cr + '\' + Cr + '\' +
-            'Field: Bad Sum Qty Decimal <-- Quantity' + Cr + '\' +
-            'Table: CFM Header <-- CFM Line' + Cr + '\' +
+        Expected := 'The following fields must have the same type:' + '\' + '\' +
+            'Field: Bad Sum Qty Decimal <-- Quantity' + '\' +
+            'Table: CFM Header <-- CFM Line' + '\' +
             'Type: Decimal <-- Integer';
         Assert.AreEqual(Expected, GetLastErrorText(), 'text: each line break is a carriage return followed by a backslash');
         Assert.AreEqual('DB:TypeMisMatch', GetLastErrorCode(), 'code');

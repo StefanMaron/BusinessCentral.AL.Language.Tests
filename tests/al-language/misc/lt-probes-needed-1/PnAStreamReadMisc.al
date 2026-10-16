@@ -286,7 +286,7 @@ codeunit 70091 "LT PnA Stream ReadMisc"
         Observer.Observe('utf8-lines', L1 + '|' + L2);
         Observer.Expect('utf16-bytes', '61 00 62 00 0D 00 0A 00 63 00 64 00');
         Observer.Expect('utf16-lines', 'ab|cd||Yes');
-        Observer.Expect('msdos-bytes', 'E9 0D 0A 78 0D 00 0A 00 63 00 64 00');
+        Observer.Expect('msdos-bytes', '82 0D 0A 78 0D 00 0A 00 63 00 64 00');
         Observer.Expect('msdos-lines', 'é|x');
         Observer.Expect('windows-bytes', 'E9 0D 0A 78 0D 00 0A 00 63 00 64 00');
         Observer.Expect('windows-lines', 'é|x');

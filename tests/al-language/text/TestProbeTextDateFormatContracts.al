@@ -790,10 +790,10 @@ codeunit 69804 "PA Text Date Format"
         O.Expect('1y_from_feb29', '2025-02-28');
         O.Expect('closing_date_base', '2024-01-01');
         O.Expect('closing_date_base_cm', '2023-12-31');
-        O.Expect('undefined_date_base', 'ERR:You cannot base a date calculation on an undefined date.\r\\r\Date: 0D\r\Formula: 1D./Argument');
-        O.Expect('undefined_date_base_cm', 'ERR:You cannot base a date calculation on an undefined date.\r\\r\Date: 0D\r\Formula: CM./Argument');
+        O.Expect('undefined_date_base', 'ERR:You cannot base a date calculation on an undefined date.\\Date: 0D\Formula: 1D./Argument');
+        O.Expect('undefined_date_base_cm', 'ERR:You cannot base a date calculation on an undefined date.\\Date: 0D\Formula: CM./Argument');
         O.Expect('empty_formula', '2024-01-15');
-        O.Expect('wd_with_number_8', 'ERR:The date formula ''WD8'' contains a number that is too large.\r\\r\The number must be in the range 1 - 7./Evaluate');
+        O.Expect('wd_with_number_8', 'ERR:The date formula ''WD8'' contains a number that is too large.\\The number must be in the range 1 - 7./Evaluate');
         O.Verify();
     end;
 
@@ -994,9 +994,9 @@ codeunit 69804 "PA Text Date Format"
         O.Expect('integer_thousand_width_10', ' 1,234,567');
         O.Expect('integer_thousand_width_3', '***');
         O.Expect('integer_width_5', '   42');
-        O.Expect('integer_width_5_fill_0|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5><Filler Character 0>');
+        O.Expect('integer_width_5_fill_0|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5><Filler Character 0>');
         O.Expect('integer_width_5_fill_0|code', 'InvalidFormatString');
-        O.Expect('integer_width_5_fill_x|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5><Filler Character x>');
+        O.Expect('integer_width_5_fill_x|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5><Filler Character x>');
         O.Expect('integer_width_5_fill_x|code', 'InvalidFormatString');
         O.Expect('standard_format_1', '1234567.891');
         O.Expect('standard_format_2', '1234567.891');
@@ -1045,7 +1045,7 @@ codeunit 69804 "PA Text Date Format"
         O.Expect('var_default', 'Green');
         O.Expect('var_f9', '1');
         O.Expect('var_f2', '1');
-        O.Expect('integer_cast_default|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer>');
+        O.Expect('integer_cast_default|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Integer>');
         O.Expect('integer_cast_default|code', 'InvalidFormatString');
         O.Expect('field_caption_via_record_format', '0\tSecond\tYy\t0');
         O.Verify();

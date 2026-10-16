@@ -38,15 +38,15 @@ codeunit 61255 "LT P109 LogInternalError1"
         Observer.Observe('blank_message', Outcome('', DataClassification::SystemMetadata, Verbosity::Normal));
         Observer.Observe('long_message', Outcome(PadStr('', 800, 'x'), DataClassification::SystemMetadata, Verbosity::Normal));
         Observer.Observe('after_last_error_text', GetLastErrorText());
-        Observer.Expect('normal', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('error', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('critical', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('warning', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('verbose', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('customer_content', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('blank_message', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('long_message', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('after_last_error_text', 'An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
+        Observer.Expect('normal', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('error', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('critical', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('warning', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('verbose', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('customer_content', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('blank_message', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('long_message', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('after_last_error_text', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
         Observer.Verify();
     end;
 }

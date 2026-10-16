@@ -131,8 +131,8 @@ codeunit 68042 "W4 CalcFields Tests"
             Observer.Observe('max_outcome', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
             ClearLastError();
         end;
-        Observer.Expect('min_outcome', 'error:Table content in the W4 CF Head table on SQL Server contains a value that is not compatible with the corresponding data type that is defined for the table.\r\\r\Field: SrvMin\r\Type: BigInteger\r\SQL type: timestamp\r\\r\The table design may have been changed outside Business Central.|NDBCS:IncompatibleSqlType');
-        Observer.Expect('max_outcome', 'error:Table content in the W4 CF Head table on SQL Server contains a value that is not compatible with the corresponding data type that is defined for the table.\r\\r\Field: SrvMax\r\Type: BigInteger\r\SQL type: timestamp\r\\r\The table design may have been changed outside Business Central.|NDBCS:IncompatibleSqlType');
+        Observer.Expect('min_outcome', 'error:Table content in the W4 CF Head table on SQL Server contains a value that is not compatible with the corresponding data type that is defined for the table.\\Field: SrvMin\Type: BigInteger\SQL type: timestamp\\The table design may have been changed outside Business Central.|NDBCS:IncompatibleSqlType');
+        Observer.Expect('max_outcome', 'error:Table content in the W4 CF Head table on SQL Server contains a value that is not compatible with the corresponding data type that is defined for the table.\\Field: SrvMax\Type: BigInteger\SQL type: timestamp\\The table design may have been changed outside Business Central.|NDBCS:IncompatibleSqlType');
         Observer.Verify();
     end;
 #endif

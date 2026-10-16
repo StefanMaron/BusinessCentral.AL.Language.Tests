@@ -88,7 +88,7 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Observe('child-count', Format(Doc.GetChildNodes().Count()));
         Observer.Expect('af82|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('af82|code', 'InvalidOperation');
-        Observer.Expect('with-root', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('with-root', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" ""[]>\r\n<a />');
         Observer.Expect('get-bool', 'Yes');
         Observer.Expect('get-name', 'a');
         Observer.Expect('child-count', '2');
@@ -109,10 +109,10 @@ codeunit 72081 "LT P83 DocType In Doc"
         Doc := XmlDocument.Create(XmlDeclaration.Create('1.0', '', ''));
         Doc.Add(XmlElement.Create('a'));
         Observer.Observe('only-declaration', Written());
-        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<!DOCTYPE a PUBLIC "pub" "sys.dtd"[<!ELEMENT a EMPTY>]>\n<a />');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<!DOCTYPE a PUBLIC "pub" "sys.dtd"[<!ELEMENT a EMPTY>]>\r\n<a />');
         Observer.Expect('get-bool', 'Yes');
         Observer.Expect('child-count', '2');
-        Observer.Expect('only-declaration', '<?xml version="1.0" encoding="" standalone=""?>\n<a />');
+        Observer.Expect('only-declaration', '<?xml version="1.0" encoding="" standalone=""?>\r\n<a />');
         Observer.Verify();
     end;
 
@@ -137,7 +137,7 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Expect('add-root', 'Yes');
         Observer.Expect('add-root|text', '');
         Observer.Expect('add-root|code', '');
-        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" ""[]>\r\n<a />');
         Observer.Expect('add-second', 'No');
         Observer.Expect('add-second|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('add-second|code', 'InvalidOperation');
@@ -159,7 +159,7 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Expect('add-after-root', 'No');
         Observer.Expect('add-after-root|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('add-after-root|code', 'InvalidOperation');
-        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<a />');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\r\n<a />');
         Observer.Expect('child-count', '1');
         Observer.Verify();
     end;
@@ -201,7 +201,7 @@ codeunit 72081 "LT P83 DocType In Doc"
         Observer.Expect('add-to-second|code', '');
         Observer.Expect('second-children', '1');
         Observer.Expect('first-children', '2');
-        Observer.Expect('first-written', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE a PUBLIC "" ""[]>\n<a />');
+        Observer.Expect('first-written', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE a PUBLIC "" ""[]>\r\n<a />');
         Observer.Verify();
     end;
 

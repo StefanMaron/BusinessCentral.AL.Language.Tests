@@ -53,10 +53,10 @@ codeunit 70081 "LT PnA Xml Whitespace"
         Observer.Expect('inside-first-is-text', 'Yes');
         Observer.Expect('inside-first-text', 'Yes');
         Observer.Expect('outside-count', '3');
-        Observer.Expect('outside-writeto', '<?xml version="1.0" encoding="utf-16"?>\n<r />\n');
+        Observer.Expect('outside-writeto', '<?xml version="1.0" encoding="utf-16"?>\r\n<r />\r\n');
         Observer.Expect('pretty-count', '3');
         Observer.Expect('pretty-innertext', '\n  \n    x\n  \n');
-        Observer.Expect('pretty-writeto', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a>\n    x\n  </a>\n</r>');
+        Observer.Expect('pretty-writeto', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a>\r\n    x\r\n  </a>\r\n</r>');
         Observer.Verify();
     end;
 
@@ -93,7 +93,7 @@ codeunit 70081 "LT PnA Xml Whitespace"
         Observer.Expect('two-adds-innerxml', 'ab');
         Observer.Expect('three-adds-count', '3');
         Observer.Expect('five-count', '5');
-        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\n<r>abc<x />d</r>');
+        Observer.Expect('written', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>abc<x />d</r>');
         Observer.Expect('reread-count', '3');
         Observer.Verify();
     end;

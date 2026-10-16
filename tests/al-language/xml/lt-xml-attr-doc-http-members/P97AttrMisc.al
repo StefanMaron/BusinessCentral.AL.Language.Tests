@@ -185,7 +185,7 @@ codeunit 74803 "LT P97 Attr Misc"
         Observer.Expect('attached_found', 'Yes');
         Observer.Expect('attached_name', 'r');
         Observer.Expect('attached_found', 'Yes');
-        Observer.Expect('attached_doc', '<?xml version="1.0" encoding="utf-16"?>\n<r p="1" x="2" q="3" />');
+        Observer.Expect('attached_doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r p="1" x="2" q="3" />');
         Observer.Expect('removed_found', 'No');
         Observer.Expect('removed_found', 'No');
         Observer.Expect('detached_found', 'No');

@@ -307,11 +307,11 @@ codeunit 72067 "LT P70 LastErr Flag Rt"
         Observer.Expect('eval_int_var|false', 'The value "Secret999" can''t be evaluated into type Integer.');
         Observer.Expect('eval_int_var|default', 'The value "Secret999" can''t be evaluated into type Integer.');
         Observer.Expect('eval_int_var|code', 'Evaluate');
-        Observer.Expect('eval_date|text', 'The format of the Date ''notadate'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('eval_date|text', 'The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
         Observer.Expect('eval_date|code', 'Evaluate');
-        Observer.Expect('eval_date|true', 'The format of the Date ''<redacted>'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
-        Observer.Expect('eval_date|false', 'The format of the Date ''notadate'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
-        Observer.Expect('eval_date|default', 'The format of the Date ''notadate'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('eval_date|true', 'The format of the Date ''<redacted>'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('eval_date|false', 'The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('eval_date|default', 'The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
         Observer.Expect('eval_date|code', 'Evaluate');
         Observer.Expect('overflow_field|text', 'The length of the string is 26, but it must be less than or equal to 10 characters. Value: This text is much too long');
         Observer.Expect('overflow_field|code', 'StringLengthExceeded');

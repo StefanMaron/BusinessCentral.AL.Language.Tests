@@ -55,9 +55,9 @@ codeunit 74645 "LT P89 Stream CharByteOpt"
         Observer.Observe('v5_euro', DumpChar(V));
         Observer.Expect('v1_zero', '1:00');
         Observer.Expect('v2_A', '1:41');
-        Observer.Expect('v3_255', '1:FF');
+        Observer.Expect('v3_255', '1:98');
         Observer.Expect('v4_256', '1:41');
-        Observer.Expect('v5_euro', '1:80');
+        Observer.Expect('v5_euro', '1:B1');
         Observer.Verify();
     end;
 

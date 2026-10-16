@@ -209,7 +209,7 @@ codeunit 74210 "LT PlT Session"
         Observer.Observe('unknown_area', ApplicationArea());
         ApplicationArea(Old);
         Observer.Expect('last_wins', '#Basic');
-        Observer.Expect('af168|text', '''NoSuchArea'' is not a valid value for the APPLICATIONAREA function parameter.\r\\r\    The value must be a text string that contains one or more application area tags.\r\    A tag must start with # and can be followed by any combination of letters (Aa-Zz) and numbers (0-9).\r\    Use a comma to separate multiple tags. Example: #Basic,#Suite');
+        Observer.Expect('af168|text', '''NoSuchArea'' is not a valid value for the APPLICATIONAREA function parameter.\\    The value must be a text string that contains one or more application area tags.\    A tag must start with # and can be followed by any combination of letters (Aa-Zz) and numbers (0-9).\    Use a comma to separate multiple tags. Example: #Basic,#Suite');
         Observer.Expect('af168|code', 'Argument');
         Observer.Expect('unknown_area', '#Basic');
         Observer.Verify();

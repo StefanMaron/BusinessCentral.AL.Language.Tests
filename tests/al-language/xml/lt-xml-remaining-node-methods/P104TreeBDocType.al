@@ -156,17 +156,17 @@ codeunit 71820 "LT P104 Tree2 DocType"
             Observer.Observe('node' + Format(V), S);
         end;
         Observer.Expect('rm1', 'ok');
-        Observer.Expect('doc1', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc1', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('parent1', 'No:');
         Observer.Expect('document1', 'No:');
         Observer.Expect('node1', '<!DOCTYPE r >');
         Observer.Expect('rm2', 'ok');
-        Observer.Expect('doc2', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc2', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('parent2', 'No:');
         Observer.Expect('document2', 'No:');
         Observer.Expect('node2', '<!DOCTYPE r PUBLIC "pub" "">');
         Observer.Expect('rm3', 'ok');
-        Observer.Expect('doc3', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc3', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('parent3', 'No:');
         Observer.Expect('document3', 'No:');
         Observer.Expect('node3', '<!DOCTYPE r PUBLIC "pub" "sys.dtd">');
@@ -191,7 +191,7 @@ codeunit 71820 "LT P104 Tree2 DocType"
         Observer.Expect('first', 'ok');
         Observer.Expect('second|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('second|code', 'InvalidOperation');
-        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('detached|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('detached|code', 'InvalidOperation');
         Observer.Expect('detached_parent', 'No:');
@@ -236,11 +236,11 @@ codeunit 71820 "LT P104 Tree2 DocType"
         Observer.Expect('detached_parent', 'No:');
         Observer.Expect('detached_doc', 'No:');
         Observer.Expect('parent1', 'No:');
-        Observer.Expect('doc1', 'Yes:<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc1', 'Yes:<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('parent2', 'No:');
-        Observer.Expect('doc2', 'Yes:<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "">\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc2', 'Yes:<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "">\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('parent3', 'No:');
-        Observer.Expect('doc3', 'Yes:<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc3', 'Yes:<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -311,14 +311,14 @@ codeunit 71820 "LT P104 Tree2 DocType"
         RunReplace(Observer, 'c13', 1, 13);
         RunReplace(Observer, 'c14', 1, 14);
         RunReplace(Observer, 'c15', 1, 15);
-        Observer.Expect('c1', '<?xml version="1.0" encoding="utf-16"?>\n<!--new-->\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--new-->\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c2|code', 'Argument');
         Observer.Expect('c3|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('c3|code', 'InvalidOperation');
         Observer.Expect('c4|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c4|code', 'Argument');
-        Observer.Expect('c5', '<?xml version="1.0" encoding="utf-16"?>\n<?pi dat?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c5', '<?xml version="1.0" encoding="utf-16"?>\r\n<?pi dat?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c6|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('c6|code', 'InvalidOperation');
         Observer.Expect('c7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -329,13 +329,13 @@ codeunit 71820 "LT P104 Tree2 DocType"
         Observer.Expect('c9|code', 'Argument');
         Observer.Expect('c10|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c10|code', 'Argument');
-        Observer.Expect('c11', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c11', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c12|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c12|code', 'Argument');
-        Observer.Expect('c13', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE d >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c13', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE d >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c14|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c14|code', 'Argument');
-        Observer.Expect('c15', '<?xml version="1.0" encoding="utf-16"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c15', '<?xml version="1.0" encoding="utf-16"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -354,8 +354,8 @@ codeunit 71820 "LT P104 Tree2 DocType"
         RunReplace(Observer, 'v3c7', 3, 7);
         RunReplace(Observer, 'v2c11', 2, 11);
         RunReplace(Observer, 'v3c11', 3, 11);
-        Observer.Expect('v2c1', '<?xml version="1.0" encoding="utf-16"?>\n<!--new-->\n<r>\n  <a />\n  <b />\n</r>');
-        Observer.Expect('v3c1', '<?xml version="1.0" encoding="utf-16"?>\n<!--new-->\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('v2c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--new-->\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
+        Observer.Expect('v3c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--new-->\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('v2c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('v2c2|code', 'Argument');
         Observer.Expect('v3c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -368,8 +368,8 @@ codeunit 71820 "LT P104 Tree2 DocType"
         Observer.Expect('v2c7|code', 'Argument');
         Observer.Expect('v3c7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('v3c7|code', 'Argument');
-        Observer.Expect('v2c11', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "">\n<r>\n  <a />\n  <b />\n</r>');
-        Observer.Expect('v3c11', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('v2c11', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "">\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
+        Observer.Expect('v3c11', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 

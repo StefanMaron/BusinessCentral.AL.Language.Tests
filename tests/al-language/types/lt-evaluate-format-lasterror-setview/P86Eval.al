@@ -339,7 +339,7 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EDate('15-01-2024', -1));
-        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
         Observer.Verify();
     end;
 
@@ -391,7 +391,7 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EDate('15-01-2024', 0));
-        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
         Observer.Verify();
     end;
 
@@ -475,7 +475,7 @@ codeunit 73523 "LT P86 Eval Date"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('t1', EDate('15-01-2024', 9));
-        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\r\\r\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
+        Observer.Expect('t1', 'err:The format of the Date ''15-01-2024'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate||No');
         Observer.Verify();
     end;
 

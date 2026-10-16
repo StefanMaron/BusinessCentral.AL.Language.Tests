@@ -139,10 +139,10 @@ codeunit 74806 "LT P97 Doc Misc"
             else
                 Observer.ObserveError('v' + Format(V));
         end;
-        Observer.Expect('v1', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<r />|Yes');
+        Observer.Expect('v1', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<r />|Yes');
         Observer.Expect('v2|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v2|code', 'InvalidOperation');
-        Observer.Expect('v3', 'Yes|<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<!--lead-->\n<r>\n  <c />\n</r>|Yes');
+        Observer.Expect('v3', 'Yes|<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<!--lead-->\r\n<r>\r\n  <c />\r\n</r>|Yes');
         Observer.Verify();
     end;
 
@@ -160,8 +160,8 @@ codeunit 74806 "LT P97 Doc Misc"
         Root.SetAttribute('touched', 'yes');
         Observer.Observe('original', Ser(Doc));
         Observer.Observe('copy', Ser(D2));
-        Observer.Expect('original', '<?xml version="1.0" encoding="utf-16"?>\n<r touched="yes" />');
-        Observer.Expect('copy', '<?xml version="1.0" encoding="utf-16"?>\n<r touched="yes" />');
+        Observer.Expect('original', '<?xml version="1.0" encoding="utf-16"?>\r\n<r touched="yes" />');
+        Observer.Expect('copy', '<?xml version="1.0" encoding="utf-16"?>\r\n<r touched="yes" />');
         Observer.Verify();
     end;
 

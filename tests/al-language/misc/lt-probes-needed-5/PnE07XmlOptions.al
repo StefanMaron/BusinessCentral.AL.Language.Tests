@@ -34,10 +34,10 @@ codeunit 72553 "LT PnE Xml Read Options"
         Observer.Observe('preserveTrue', Format(XmlDocument.ReadFrom(Src, Opt, Doc)) + '|' + Written(Doc));
         Opt.PreserveWhitespace(false);
         Observer.Observe('preserveFalse', Format(XmlDocument.ReadFrom(Src, Opt, Doc)) + '|' + Written(Doc));
-        Observer.Expect('noOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>');
-        Observer.Expect('defaultOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>');
-        Observer.Expect('preserveTrue', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>');
-        Observer.Expect('preserveFalse', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>  <a />  </root>');
+        Observer.Expect('noOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>');
+        Observer.Expect('defaultOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>');
+        Observer.Expect('preserveTrue', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>');
+        Observer.Expect('preserveFalse', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>  <a />  </root>');
         Observer.Verify();
     end;
 
@@ -80,10 +80,10 @@ codeunit 72553 "LT PnE Xml Read Options"
         Observer.Observe('preserveTrue', Format(XmlDocument.ReadFrom(Src, Opt, Doc)) + '|' + Written(Doc));
         Opt.PreserveWhitespace(false);
         Observer.Observe('preserveFalse', Format(XmlDocument.ReadFrom(Src, Opt, Doc)) + '|' + Written(Doc));
-        Observer.Expect('noOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>\n\n<a> x </a>\n</root>');
-        Observer.Expect('defaultOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>\n\n<a> x </a>\n</root>');
-        Observer.Expect('preserveTrue', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>\n\n<a> x </a>\n</root>');
-        Observer.Expect('preserveFalse', 'Yes|<?xml version="1.0" encoding="utf-16"?>\n<root>\n\n<a> x </a>\n</root>');
+        Observer.Expect('noOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>\r\n\r\n<a> x </a>\r\n</root>');
+        Observer.Expect('defaultOptions', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>\r\n\r\n<a> x </a>\r\n</root>');
+        Observer.Expect('preserveTrue', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>\r\n\r\n<a> x </a>\r\n</root>');
+        Observer.Expect('preserveFalse', 'Yes|<?xml version="1.0" encoding="utf-16"?>\r\n<root>\r\n\r\n<a> x </a>\r\n</root>');
         Observer.Verify();
     end;
 }

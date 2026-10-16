@@ -116,8 +116,8 @@ codeunit 72024 "LT HtT Request"
     var
         Req: HttpRequestMessage;
     begin
-        Req.SetRequestUri('/relative/path');
-        Observer.Observe('relative', Req.GetRequestUri());
+        asserterror Req.SetRequestUri('/relative/path');
+        Observer.ObserveError('relative');
         asserterror Req.SetRequestUri('');
         Observer.ObserveError('empty');
         asserterror Req.SetRequestUri('http://');
@@ -129,7 +129,8 @@ codeunit 72024 "LT HtT Request"
         asserterror Req.SetRequestUri('https://example.invalid:99999/');
         Observer.ObserveError('portRange');
         Observer.Observe('uriAfterErrors', Req.GetRequestUri());
-        Observer.Expect('relative', 'file:///relative/path');
+        Observer.Expect('relative|text', 'Failed to create the URL for the request. Please, make sure to set a valid URL.');
+        Observer.Expect('relative|code', 'CreateUrl:UriFormat');
         Observer.Expect('empty|text', 'Failed to create the URL for the request. Please, make sure to set a valid URL.');
         Observer.Expect('empty|code', 'CreateUrl:UriFormat');
         Observer.Expect('noHost|text', 'Failed to create the URL for the request. Please, make sure to set a valid URL.');
@@ -140,7 +141,7 @@ codeunit 72024 "LT HtT Request"
         Observer.Expect('spaceInHost|code', 'CreateUrl:UriFormat');
         Observer.Expect('portRange|text', 'Failed to create the URL for the request. Please, make sure to set a valid URL.');
         Observer.Expect('portRange|code', 'CreateUrl:UriFormat');
-        Observer.Expect('uriAfterErrors', 'file:///relative/path');
+        Observer.Expect('uriAfterErrors', '');
         Observer.Verify();
     end;
 

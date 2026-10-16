@@ -229,7 +229,7 @@ codeunit 73026 "LT EnT ErrorInfo Props"
         Observer.Expect('long len', '5000');
         Observer.Expect('long detailed len', '5000');
         Observer.Expect('long title len', '5000');
-        Observer.Expect('af175|text', 'An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Number>');
+        Observer.Expect('af175|text', 'An invalid field or attribute has been specified for the ''Format'' property.\\<Number>');
         Observer.Expect('af175|code', 'InvalidFormatString');
         Observer.Ignore('formatted'); // a dump or environment data: observed, not asserted
         Observer.Verify();

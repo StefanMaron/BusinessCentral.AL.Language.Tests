@@ -23,7 +23,7 @@ codeunit 73500 "LT XpT Export Basic"
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('af21|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af21|code', 'InvalidStreamData');
-        Observer.Expect('len', '1236');
+        Observer.Expect('len', '1294');
         Observer.Verify();
     end;
 
@@ -39,7 +39,7 @@ codeunit 73500 "LT XpT Export Basic"
         Observer.Observe('len', Format(Helper.LastLength()));
         Observer.Expect('af34|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('af34|code', 'InvalidStreamData');
-        Observer.Expect('len', '440');
+        Observer.Expect('len', '462');
         Observer.Verify();
     end;
 
@@ -98,7 +98,7 @@ codeunit 73500 "LT XpT Export Basic"
         Helper.Seed();
         Item.SetRange(Category, 'B');
         Observer.Observe('xml', Helper.ExportWithRec(73410, Item));
-        Observer.Expect('xml', 'ÿþ<<NL>?<NL>x<NL>m<NL>l<NL> <NL>v<NL>e<NL>r<NL>s<NL>i<NL>o<NL>n<NL>=<NL>"<NL>1<NL>.<NL>0<NL>"<NL> <NL>e<NL>n<NL>c<NL>o<NL>d<NL>i<NL>n<NL>g<NL>=<NL>"<NL>U<NL>T<NL>F<NL>-<NL>1<NL>6<NL>"<NL> <NL>s<NL>t<NL>a<NL>n<NL>d<NL>a<NL>l<NL>o<NL>n<NL>e<NL>=<NL>"<NL>n<NL>o<NL>"<NL>?<NL>><NL><NL><NL><<NL>R<NL>o<NL>o<NL>t<NL>><NL><NL><NL> <NL> <NL><<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>I<NL>d<NL>><NL>3<NL><<NL>/<NL>I<NL>d<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>N<NL>a<NL>m<NL>e<NL>><NL>G<NL>a<NL>m<NL>m<NL>a<NL><<NL>/<NL>N<NL>a<NL>m<NL>e<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>Q<NL>t<NL>y<NL>><NL>3<NL>0<NL><<NL>/<NL>Q<NL>t<NL>y<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL>3<NL>.<NL>5<NL>0<NL><<NL>/<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL>Y<NL>e<NL>s<NL><<NL>/<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>C<NL>a<NL>t<NL>e<NL>g<NL>o<NL>r<NL>y<NL>><NL>B<NL><<NL>/<NL>C<NL>a<NL>t<NL>e<NL>g<NL>o<NL>r<NL>y<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>S<NL>t<NL>a<NL>m<NL>p<NL>D<NL>a<NL>t<NL>e<NL> <NL>/<NL>><NL><NL><NL> <NL> <NL><<NL>/<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL><<NL>/<NL>R<NL>o<NL>o<NL>t<NL>>');
+        Observer.Expect('xml', ' þ<<NL>?<NL>x<NL>m<NL>l<NL> <NL>v<NL>e<NL>r<NL>s<NL>i<NL>o<NL>n<NL>=<NL>"<NL>1<NL>.<NL>0<NL>"<NL> <NL>e<NL>n<NL>c<NL>o<NL>d<NL>i<NL>n<NL>g<NL>=<NL>"<NL>U<NL>T<NL>F<NL>-<NL>1<NL>6<NL>"<NL> <NL>s<NL>t<NL>a<NL>n<NL>d<NL>a<NL>l<NL>o<NL>n<NL>e<NL>=<NL>"<NL>n<NL>o<NL>"<NL>?<NL>><NL><NL><NL><NL><<NL>R<NL>o<NL>o<NL>t<NL>><NL><NL><NL><NL> <NL> <NL><<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>I<NL>d<NL>><NL>3<NL><<NL>/<NL>I<NL>d<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>N<NL>a<NL>m<NL>e<NL>><NL>G<NL>a<NL>m<NL>m<NL>a<NL><<NL>/<NL>N<NL>a<NL>m<NL>e<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>Q<NL>t<NL>y<NL>><NL>3<NL>0<NL><<NL>/<NL>Q<NL>t<NL>y<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL>3<NL>.<NL>5<NL>0<NL><<NL>/<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL>Y<NL>e<NL>s<NL><<NL>/<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>C<NL>a<NL>t<NL>e<NL>g<NL>o<NL>r<NL>y<NL>><NL>B<NL><<NL>/<NL>C<NL>a<NL>t<NL>e<NL>g<NL>o<NL>r<NL>y<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>S<NL>t<NL>a<NL>m<NL>p<NL>D<NL>a<NL>t<NL>e<NL> <NL>/<NL>><NL><NL><NL><NL> <NL> <NL><<NL>/<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL><NL><<NL>/<NL>R<NL>o<NL>o<NL>t<NL>>');
         Observer.Verify();
     end;
 
@@ -113,7 +113,7 @@ codeunit 73500 "LT XpT Export Basic"
         Helper.Seed();
         Item.SetRange(Id, 99);
         Observer.Observe('xml', Helper.ExportWithRec(73410, Item));
-        Observer.Expect('xml', 'ÿþ<<NL>?<NL>x<NL>m<NL>l<NL> <NL>v<NL>e<NL>r<NL>s<NL>i<NL>o<NL>n<NL>=<NL>"<NL>1<NL>.<NL>0<NL>"<NL> <NL>e<NL>n<NL>c<NL>o<NL>d<NL>i<NL>n<NL>g<NL>=<NL>"<NL>U<NL>T<NL>F<NL>-<NL>1<NL>6<NL>"<NL> <NL>s<NL>t<NL>a<NL>n<NL>d<NL>a<NL>l<NL>o<NL>n<NL>e<NL>=<NL>"<NL>n<NL>o<NL>"<NL>?<NL>><NL><NL><NL><<NL>R<NL>o<NL>o<NL>t<NL>><NL><NL><NL> <NL> <NL><<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>I<NL>d<NL>><NL>0<NL><<NL>/<NL>I<NL>d<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>N<NL>a<NL>m<NL>e<NL> <NL>/<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>Q<NL>t<NL>y<NL>><NL>0<NL><<NL>/<NL>Q<NL>t<NL>y<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL>0<NL>.<NL>0<NL>0<NL><<NL>/<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL>N<NL>o<NL><<NL>/<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>C<NL>a<NL>t<NL>e<NL>g<NL>o<NL>r<NL>y<NL> <NL>/<NL>><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>S<NL>t<NL>a<NL>m<NL>p<NL>D<NL>a<NL>t<NL>e<NL> <NL>/<NL>><NL><NL><NL> <NL> <NL><<NL>/<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL><<NL>/<NL>R<NL>o<NL>o<NL>t<NL>>');
+        Observer.Expect('xml', ' þ<<NL>?<NL>x<NL>m<NL>l<NL> <NL>v<NL>e<NL>r<NL>s<NL>i<NL>o<NL>n<NL>=<NL>"<NL>1<NL>.<NL>0<NL>"<NL> <NL>e<NL>n<NL>c<NL>o<NL>d<NL>i<NL>n<NL>g<NL>=<NL>"<NL>U<NL>T<NL>F<NL>-<NL>1<NL>6<NL>"<NL> <NL>s<NL>t<NL>a<NL>n<NL>d<NL>a<NL>l<NL>o<NL>n<NL>e<NL>=<NL>"<NL>n<NL>o<NL>"<NL>?<NL>><NL><NL><NL><NL><<NL>R<NL>o<NL>o<NL>t<NL>><NL><NL><NL><NL> <NL> <NL><<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>I<NL>d<NL>><NL>0<NL><<NL>/<NL>I<NL>d<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>N<NL>a<NL>m<NL>e<NL> <NL>/<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>Q<NL>t<NL>y<NL>><NL>0<NL><<NL>/<NL>Q<NL>t<NL>y<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL>0<NL>.<NL>0<NL>0<NL><<NL>/<NL>A<NL>m<NL>o<NL>u<NL>n<NL>t<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL>N<NL>o<NL><<NL>/<NL>A<NL>c<NL>t<NL>i<NL>v<NL>e<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>C<NL>a<NL>t<NL>e<NL>g<NL>o<NL>r<NL>y<NL> <NL>/<NL>><NL><NL><NL><NL> <NL> <NL> <NL> <NL><<NL>S<NL>t<NL>a<NL>m<NL>p<NL>D<NL>a<NL>t<NL>e<NL> <NL>/<NL>><NL><NL><NL><NL> <NL> <NL><<NL>/<NL>I<NL>t<NL>e<NL>m<NL>><NL><NL><NL><NL><<NL>/<NL>R<NL>o<NL>o<NL>t<NL>>');
         Observer.Verify();
     end;
 

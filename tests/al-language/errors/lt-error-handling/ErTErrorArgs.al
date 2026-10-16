@@ -156,7 +156,7 @@ codeunit 70071 "LT ErT Error Args"
         Observer.Expect('apostrophe|code', 'Dialog');
         Observer.Expect('doubleQuote|text', 'double " quote');
         Observer.Expect('doubleQuote|code', 'Dialog');
-        Observer.Expect('newline|text', 'line1\line2');
+        Observer.Expect('newline|text', 'line1\nline2');
         Observer.Expect('newline|code', 'Dialog');
         Observer.Expect('umlaut|text', 'umlaut äöüß €');
         Observer.Expect('umlaut|code', 'Dialog');

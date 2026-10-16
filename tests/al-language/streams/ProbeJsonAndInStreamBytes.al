@@ -194,7 +194,7 @@ codeunit 69521 "Probe Json Stream Bytes"
         Observer.Observe('secondReturn', Format(Ret));
         Observer.Observe('secondText', Txt2);
         Observer.Observe('eosAfter', Format(InS.EOS()));
-        Observer.Expect('bytesWritten', '12 bytes, base64=aGVsbG8Ad/ZybGQA');
+        Observer.Expect('bytesWritten', '12 bytes, base64=aGVsbG8Ad5RybGQA');
         Observer.Expect('firstReturn', '6');
         Observer.Expect('firstText', 'hello');
         Observer.Expect('secondReturn', '6');

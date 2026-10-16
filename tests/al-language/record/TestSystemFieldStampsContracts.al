@@ -155,10 +155,8 @@ codeunit 68213 "Probe System Field Stamps"
         SysFields: Record "Probe Sys Fields";
         Rows: Record "Probe Sys Fields";
         Wanted: Guid;
-        Cr: Text[1];
     begin
         Initialize();
-        Cr[1] := 13;
         Wanted := CreateGuid();
         SysFields.Id := 3;
         SysFields.SystemId := Wanted;
@@ -173,6 +171,6 @@ codeunit 68213 "Probe System Field Stamps"
         Assert.AreEqual('DB:RecordExists', GetLastErrorCode(), 'code');
 
         asserterror Rows.ModifyAll(SystemId, CreateGuid());
-        Assert.AreEqual('You cannot change the value of the SystemId field.' + Cr + '\' + Cr + '\' + 'Table: Probe Sys Fields', GetLastErrorText(), 'ModifyAll of SystemId');
+        Assert.AreEqual('You cannot change the value of the SystemId field.' + '\' + '\' + 'Table: Probe Sys Fields', GetLastErrorText(), 'ModifyAll of SystemId');
     end;
 }

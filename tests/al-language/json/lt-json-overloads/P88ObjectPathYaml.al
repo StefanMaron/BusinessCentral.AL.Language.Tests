@@ -137,8 +137,8 @@ codeunit 74409 "LT P88 Object Path Yaml"
         O.Add('time', 143015T);
         O.Add('datetime', CreateDateTime(DMY2Date(15, 3, 2024), 143015T));
         Observer.Observe('yaml_scalars', Yaml(O));
-        Observer.Expect('yaml_empty_object', '{}\n');
-        Observer.Expect('yaml_scalars', 's: text\ni: 42\nd: 1.5\nb: true\nn: 0\nneg: -7\ndate: 2024-03-15\ntime: 14:30:15\ndatetime: 2024-03-15T14:30:15.0000000Z\n');
+        Observer.Expect('yaml_empty_object', '{}\r\n');
+        Observer.Expect('yaml_scalars', 's: text\r\ni: 42\r\nd: 1.5\r\nb: true\r\nn: 0\r\nneg: -7\r\ndate: 2024-03-15\r\ntime: 14:30:15\r\ndatetime: 2024-03-15T14:30:15.0000000Z\r\n');
         Observer.Verify();
     end;
 
@@ -161,7 +161,7 @@ codeunit 74409 "LT P88 Object Path Yaml"
         O.Add('emptyobj', Empty);
         O.Add('emptylist', EmptyArr);
         Observer.Observe('yaml_nested', Yaml(O));
-        Observer.Expect('yaml_nested', 'child:\n  x: 1\n  y: two\nlist:\n- 1\n- b\n- x: 1\n  y: two\nemptyobj: {}\nemptylist: []\n');
+        Observer.Expect('yaml_nested', 'child:\r\n  x: 1\r\n  y: two\r\nlist:\r\n- 1\r\n- b\r\n- x: 1\r\n  y: two\r\nemptyobj: {}\r\nemptylist: []\r\n');
         Observer.Verify();
     end;
 
@@ -184,7 +184,7 @@ codeunit 74409 "LT P88 Object Path Yaml"
         O.Add('apos', 'it''s');
         O.Add('unicode', 'ünï ✓');
         Observer.Observe('yaml_special', Yaml(O));
-        Observer.Expect('yaml_special', 'empty: ''''\nspace: '' ''\ntrailing: ''a ''\nyes: yes\nnull_text: null\ntilde: ~\nmultiline: >-\n  a\n\n  b\nhash: ''#c''\ndash: ''- x''\ncolon: a:b\nquote: say "hi"\napos: it''s\nunicode: ünï ✓\n');
+        Observer.Expect('yaml_special', 'empty: ''''\r\nspace: '' ''\r\ntrailing: ''a ''\r\nyes: yes\r\nnull_text: null\r\ntilde: ~\r\nmultiline: >-\r\n  a\r\n\r\n  b\r\nhash: ''#c''\r\ndash: ''- x''\r\ncolon: a:b\r\nquote: say "hi"\r\napos: it''s\r\nunicode: ünï ✓\r\n');
         Observer.Verify();
     end;
 
@@ -200,7 +200,7 @@ codeunit 74409 "LT P88 Object Path Yaml"
         Arr.Add(Jv);
         O.Add('list', Arr);
         Observer.Observe('yaml_null', Yaml(O));
-        Observer.Expect('yaml_null', 'nothing: \nlist:\n- \n');
+        Observer.Expect('yaml_null', 'nothing: \r\nlist:\r\n- \r\n');
         Observer.Verify();
     end;
 

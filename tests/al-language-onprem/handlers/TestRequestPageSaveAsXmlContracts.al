@@ -184,10 +184,11 @@ codeunit 61243 "Probe RP SaveAsXml"
             Result += Line + '|';
         end;
         SaveFile.Close();
-        // The byte order mark is read as three characters (the stream is read as a single-byte text).
-        Bom[1] := 239;
-        Bom[2] := 187;
-        Bom[3] := 191;
+        // The byte order mark is read as three characters (the stream is read as a single-byte text in the OEM code page: EF BB BF
+        // are U+00D9, U+2039 and U+008F, as on the Windows tier).
+        Bom[1] := 217;
+        Bom[2] := 8249;
+        Bom[3] := 143;
         HadBom := Result.StartsWith(Bom);
         if HadBom then
             Result := CopyStr(Result, 4);
@@ -322,7 +323,7 @@ codeunit 61243 "Probe RP SaveAsXml"
         Report.Run(Report::"Probe RP Save Report");
 
         Raw := RawText(ParametersFile);
-        Assert.IsFalse(Raw.Contains(Cr), 'lines end with a line feed only');
+        Assert.IsTrue(Raw.Contains(Cr), 'lines end with a carriage return and a line feed');
         Assert.IsTrue(Raw.EndsWith('</ArrayOfReportParameter>'), 'no line feed after the last element');
         Assert.IsTrue(Raw.Contains('    <Name>NavUserIdAE6AEB42076449B78A3E78A5EE366751</Name>'), 'user id parameter name');
         Assert.IsTrue(Raw.Contains('    <Name>ExecutionTime7587CE19257C4965B7E6066BDFF21EE3</Name>'), 'execution time parameter name');

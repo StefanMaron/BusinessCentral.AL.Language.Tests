@@ -49,7 +49,7 @@ codeunit 74006 "LT P95 Clear More Scalars"
         Observer.Observe('recordid', '[' + Format(Rid) + ']');
         Observer.Observe('recordid_table', Format(Rid.TableNo()));
 
-        Observer.Expect('before', '1M|ABC|hello|È|1.2.3.4');
+        Observer.Expect('before', '1M|ABC|hello|˜|1.2.3.4');
         Observer.Expect('dateformula', '[]');
         Observer.Expect('code', '[]0');
         Observer.Expect('text', '[]0');

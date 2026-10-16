@@ -385,7 +385,7 @@ codeunit 69455 "Probe Type Forms"
         Dst.SetFilter(CodeF, 'X');
         Src.CopyFilter(CodeF, Dst.CodeF);
         Observer.Observe('unfilteredSrcClearsDst', '[' + Dst.GetFilter(CodeF) + ']');
-        Observer.Expect('group0CodeToText_error|text', 'The type of the constant must be compatible with that of the TextF field, and the length of the constant must not exceed the length of the field.\r\\r\Type: Text <-- Code\r\Field: TextF <-- CodeF\r\Table: Probe Ty Row');
+        Observer.Expect('group0CodeToText_error|text', 'The type of the constant must be compatible with that of the TextF field, and the length of the constant must not exceed the length of the field.\\Type: Text <-- Code\Field: TextF <-- CodeF\Table: Probe Ty Row');
         Observer.Expect('group0CodeToText_error|code', 'NCLCSRTS:TableEqualValue');
         Observer.Expect('group0CodeToText', 'old');
         Observer.Expect('dstGroup2AfterGroup0Copy', '');

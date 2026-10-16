@@ -255,7 +255,7 @@ codeunit 70538 "LT PnB CalcDate Forms"
         Obs.Expect('lowerWeekday', '2024-01-22');
         Obs.Expect('endOfMonthClamp', '2024-02-29');
         Obs.Expect('leap', '2025-02-28');
-        Obs.Expect('badUnit', 'error:The date formula ''1X'' should include a time unit.\r\\r\Time units can be: D,WD,W,M,Q, or Y.\r\C, meaning current time unit based on date, can be specified as a prefix to the time unit.|Evaluate');
+        Obs.Expect('badUnit', 'error:The date formula ''1X'' should include a time unit.\\Time units can be: D,WD,W,M,Q, or Y.\C, meaning current time unit based on date, can be specified as a prefix to the time unit.|Evaluate');
         Obs.Expect('emptyBrackets', '2024-01-15');
         Obs.Verify();
     end;
@@ -278,7 +278,7 @@ codeunit 70538 "LT PnB CalcDate Forms"
         Obs.Expect('closingBase', '2024-02-01');
         Obs.Expect('closingBaseCM', '2024-01-31');
         Obs.Expect('omittedBase', Format(Today() + 1, 0, 9));
-        Obs.Expect('base0D', 'error:You cannot base a date calculation on an undefined date.\r\\r\Date: 0D\r\Formula: 1D.|Argument');
+        Obs.Expect('base0D', 'error:You cannot base a date calculation on an undefined date.\\Date: 0D\Formula: 1D.|Argument');
         Obs.Verify();
     end;
 }

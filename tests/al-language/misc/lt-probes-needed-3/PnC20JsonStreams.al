@@ -73,10 +73,10 @@ codeunit 71135 "LT PnC Json Streams"
         Observer.Observe('msdos', Bytes(Buffer));
         WriteObject('{"a":"é€"}', TextEncoding::UTF16, Buffer);
         Observer.Observe('utf16', Bytes(Buffer));
-        Observer.Expect('utf8', '{ " a " : " Ã © â ‚ ¬ " } ');
-        Observer.Expect('windows', '{ " a " : " Ã © â ‚ ¬ " } ');
-        Observer.Expect('msdos', '{ " a " : " Ã © â ‚ ¬ " } ');
-        Observer.Expect('utf16', '{ " a " : " Ã © â ‚ ¬ " } ');
+        Observer.Expect('utf8', '{ " a " : " “ \u0014 Ë é ¼ " } ');
+        Observer.Expect('windows', '{ " a " : " “ \u0014 Ë é ¼ " } ');
+        Observer.Expect('msdos', '{ " a " : " “ \u0014 Ë é ¼ " } ');
+        Observer.Expect('utf16', '{ " a " : " “ \u0014 Ë é ¼ " } ');
         Observer.Verify();
     end;
 

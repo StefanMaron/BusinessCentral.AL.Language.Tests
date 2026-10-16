@@ -38,15 +38,15 @@ codeunit 61256 "LT P109 LogInternalError2"
         Observer.Observe('warning', Outcome('LT P109 %1', 'LTP109', DataClassification::SystemMetadata, Verbosity::Warning));
         Observer.Observe('verbose', Outcome('LT P109 %1', 'LTP109', DataClassification::SystemMetadata, Verbosity::Verbose));
         Observer.Observe('long_substitution', Outcome('LT P109 %1', PadStr('', 800, 'x'), DataClassification::SystemMetadata, Verbosity::Normal));
-        Observer.Expect('with_placeholder', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('without_placeholder', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('blank_substitution', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('blank_all', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('two_placeholders', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('critical', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('warning', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('verbose', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
-        Observer.Expect('long_substitution', 'error:An error has occurred. If the error persists, please contact your system administrator.\r\Correlation ID: x');
+        Observer.Expect('with_placeholder', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('without_placeholder', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('blank_substitution', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('blank_all', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('two_placeholders', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('critical', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('warning', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('verbose', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Observer.Expect('long_substitution', 'error:An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
         Observer.Verify();
     end;
 }

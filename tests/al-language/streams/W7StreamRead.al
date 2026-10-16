@@ -237,7 +237,7 @@ codeunit 68554 "W7 Stream Read"
         Observer.Expect('Windows 8 bytes returned', '8');
         Observer.Expect('Windows 8 bytes codes', '65 8364 381 8211 376 160 233 66');
         Observer.Expect('MSDos 8 bytes returned', '8');
-        Observer.Expect('MSDos 8 bytes codes', '65 8364 381 8211 376 160 233 66');
+        Observer.Expect('MSDos 8 bytes codes', '65 199 196 251 402 225 210 66');
         Observer.Expect('UTF8 8 bytes failed', 'true');
         Observer.Expect('UTF8 8 bytes|text', 'Invalid data encountered in stream, unable to read text.');
         Observer.Expect('UTF8 8 bytes|code', 'InvalidStreamData');
@@ -277,7 +277,7 @@ codeunit 68554 "W7 Stream Read"
         Observer.Expect('Windows 7 bytes returned', '7');
         Observer.Expect('Windows 7 bytes codes', '97 195 169 226 8218 172 98');
         Observer.Expect('MSDos 7 bytes returned', '7');
-        Observer.Expect('MSDos 7 bytes codes', '97 195 169 226 8218 172 98');
+        Observer.Expect('MSDos 7 bytes codes', '97 8220 20 203 233 188 98');
         Observer.Verify();
     end;
 

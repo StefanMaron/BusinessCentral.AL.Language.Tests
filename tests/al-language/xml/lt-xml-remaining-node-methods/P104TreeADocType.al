@@ -188,14 +188,14 @@ codeunit 71819 "LT P104 Tree1 DocType"
         RunAddAfterSelf(Observer, 'c13', 1, 13);
         RunAddAfterSelf(Observer, 'c14', 1, 14);
         RunAddAfterSelf(Observer, 'c15', 1, 15);
-        Observer.Expect('c1', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<!--new-->\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<!--new-->\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c2|code', 'Argument');
         Observer.Expect('c3|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('c3|code', 'InvalidOperation');
         Observer.Expect('c4|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c4|code', 'Argument');
-        Observer.Expect('c5', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<?pi dat?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c5', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<?pi dat?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c6|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('c6|code', 'InvalidOperation');
         Observer.Expect('c7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -214,7 +214,7 @@ codeunit 71819 "LT P104 Tree1 DocType"
         Observer.Expect('c13|code', 'InvalidOperation');
         Observer.Expect('c14|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c14|code', 'Argument');
-        Observer.Expect('c15', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c15', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -235,7 +235,7 @@ codeunit 71819 "LT P104 Tree1 DocType"
         RunAddAfterSelf(Observer, 'v3c6', 3, 6);
         RunAddAfterSelf(Observer, 'v3c7', 3, 7);
         RunAddAfterSelf(Observer, 'v3c11', 3, 11);
-        Observer.Expect('v2c1', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "">\n<!--new-->\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('v2c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "">\r\n<!--new-->\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('v2c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('v2c2|code', 'Argument');
         Observer.Expect('v2c3|text', 'The requested operation cannot be performed in this context.');
@@ -246,7 +246,7 @@ codeunit 71819 "LT P104 Tree1 DocType"
         Observer.Expect('v2c7|code', 'Argument');
         Observer.Expect('v2c11|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v2c11|code', 'InvalidOperation');
-        Observer.Expect('v3c1', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\n<!--new-->\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('v3c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\r\n<!--new-->\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('v3c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('v3c2|code', 'Argument');
         Observer.Expect('v3c3|text', 'The requested operation cannot be performed in this context.');
@@ -318,14 +318,14 @@ codeunit 71819 "LT P104 Tree1 DocType"
         RunAddBeforeSelf(Observer, 'c13', 1, 13);
         RunAddBeforeSelf(Observer, 'c14', 1, 14);
         RunAddBeforeSelf(Observer, 'c15', 1, 15);
-        Observer.Expect('c1', '<?xml version="1.0" encoding="utf-16"?>\n<!--new-->\n<!DOCTYPE r >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--new-->\r\n<!DOCTYPE r >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c2|code', 'Argument');
         Observer.Expect('c3|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('c3|code', 'InvalidOperation');
         Observer.Expect('c4|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c4|code', 'Argument');
-        Observer.Expect('c5', '<?xml version="1.0" encoding="utf-16"?>\n<?pi dat?>\n<!DOCTYPE r >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c5', '<?xml version="1.0" encoding="utf-16"?>\r\n<?pi dat?>\r\n<!DOCTYPE r >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('c6|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('c6|code', 'InvalidOperation');
         Observer.Expect('c7|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
@@ -344,7 +344,7 @@ codeunit 71819 "LT P104 Tree1 DocType"
         Observer.Expect('c13|code', 'InvalidOperation');
         Observer.Expect('c14|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('c14|code', 'Argument');
-        Observer.Expect('c15', '<?xml version="1.0" encoding="utf-16"?>\n<!DOCTYPE r >\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('c15', '<?xml version="1.0" encoding="utf-16"?>\r\n<!DOCTYPE r >\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 
@@ -365,7 +365,7 @@ codeunit 71819 "LT P104 Tree1 DocType"
         RunAddBeforeSelf(Observer, 'v3c6', 3, 6);
         RunAddBeforeSelf(Observer, 'v3c7', 3, 7);
         RunAddBeforeSelf(Observer, 'v3c11', 3, 11);
-        Observer.Expect('v2c1', '<?xml version="1.0" encoding="utf-16"?>\n<!--new-->\n<!DOCTYPE r PUBLIC "pub" "">\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('v2c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--new-->\r\n<!DOCTYPE r PUBLIC "pub" "">\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('v2c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('v2c2|code', 'Argument');
         Observer.Expect('v2c3|text', 'The requested operation cannot be performed in this context.');
@@ -376,7 +376,7 @@ codeunit 71819 "LT P104 Tree1 DocType"
         Observer.Expect('v2c7|code', 'Argument');
         Observer.Expect('v2c11|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('v2c11|code', 'InvalidOperation');
-        Observer.Expect('v3c1', '<?xml version="1.0" encoding="utf-16"?>\n<!--new-->\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('v3c1', '<?xml version="1.0" encoding="utf-16"?>\r\n<!--new-->\r\n<!DOCTYPE r PUBLIC "pub" "sys.dtd">\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('v3c2|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
         Observer.Expect('v3c2|code', 'Argument');
         Observer.Expect('v3c3|text', 'The requested operation cannot be performed in this context.');

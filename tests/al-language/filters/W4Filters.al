@@ -274,9 +274,9 @@ codeunit 68058 "W4 Filter Tests"
         Observer.Expect('empty_quotes', 'filter=[''''] ids=1,');
         Observer.Expect('ne_empty_quotes', 'filter=[<>''''] ids=2,3,');
         Observer.Expect('text_1M', 'filter=[1M] ids=2,');
-        Observer.Expect('text_angle_1M', 'error:The filter "<1M>" is not valid for the Df field on the W4 Flt Row table. An error occurred while interpreting the filter: Did not expect ''>''.\r\\r\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.|Filter:CSide');
+        Observer.Expect('text_angle_1M', 'error:The filter "<1M>" is not valid for the Df field on the W4 Flt Row table. An error occurred while interpreting the filter: Did not expect ''>''.\\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.|Filter:CSide');
         Observer.Expect('text_CM', 'filter=[CM] ids=3,');
-        Observer.Expect('text_angle_CM', 'error:The filter "<CM>" is not valid for the Df field on the W4 Flt Row table. An error occurred while interpreting the filter: Did not expect ''>''.\r\\r\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.|Filter:CSide');
+        Observer.Expect('text_angle_CM', 'error:The filter "<CM>" is not valid for the Df field on the W4 Flt Row table. An error occurred while interpreting the filter: Did not expect ''>''.\\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.|Filter:CSide');
         Observer.Expect('text_star', 'filter=[''''] ids=1,');
         Observer.Verify();
     end;
@@ -357,8 +357,8 @@ codeunit 68058 "W4 Filter Tests"
             ClearLastError();
         end;
         Observer.Expect('source_filters', '[Cd: AB*|C]');
-        Observer.Expect('copy_code_to_text', 'error:The type of the constant must be compatible with that of the Txt field, and the length of the constant must not exceed the length of the field.\r\\r\Type: Text <-- Code\r\Field: Txt <-- Cd\r\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
-        Observer.Expect('copy_unfiltered_source', 'error:The type of the constant must be compatible with that of the Txt field, and the length of the constant must not exceed the length of the field.\r\\r\Type: Text <-- Code\r\Field: Txt <-- Cd\r\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
+        Observer.Expect('copy_code_to_text', 'error:The type of the constant must be compatible with that of the Txt field, and the length of the constant must not exceed the length of the field.\\Type: Text <-- Code\Field: Txt <-- Cd\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
+        Observer.Expect('copy_unfiltered_source', 'error:The type of the constant must be compatible with that of the Txt field, and the length of the constant must not exceed the length of the field.\\Type: Text <-- Code\Field: Txt <-- Cd\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
         Observer.Verify();
     end;
 
@@ -384,8 +384,8 @@ codeunit 68058 "W4 Filter Tests"
             Observer.Observe('copy_date_to_code', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
             ClearLastError();
         end;
-        Observer.Expect('copy_code_to_integer', 'error:The type of the constant must be compatible with that of the Num field, and the length of the constant must not exceed the length of the field.\r\\r\Type: Integer <-- Code\r\Field: Num <-- Cd\r\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
-        Observer.Expect('copy_date_to_code', 'error:The type of the constant must be compatible with that of the Cd field, and the length of the constant must not exceed the length of the field.\r\\r\Type: Code <-- Date\r\Field: Cd <-- Dt\r\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
+        Observer.Expect('copy_code_to_integer', 'error:The type of the constant must be compatible with that of the Num field, and the length of the constant must not exceed the length of the field.\\Type: Integer <-- Code\Field: Num <-- Cd\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
+        Observer.Expect('copy_date_to_code', 'error:The type of the constant must be compatible with that of the Cd field, and the length of the constant must not exceed the length of the field.\\Type: Code <-- Date\Field: Cd <-- Dt\Table: W4 Flt Row|NCLCSRTS:TableEqualValue');
         Observer.Verify();
     end;
 

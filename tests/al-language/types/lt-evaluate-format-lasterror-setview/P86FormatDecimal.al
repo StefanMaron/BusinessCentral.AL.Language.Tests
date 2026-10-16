@@ -358,11 +358,11 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s13', '[.5]');
         Observer.Expect('s14', '[.50]');
         Observer.Expect('s15', '[.5]');
-        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
         Observer.Expect('s18', '[1,234.5]');
-        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Thousand Separator>|InvalidFormatString');
+        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Thousand Separator>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -381,7 +381,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s28', FS(1234.5, '<Standard Format,3>'));
         Observer.Observe('s29', FS(1234.5, '<Standard Format,4>'));
         Observer.Observe('s30', FS(1234.5, '<Standard Format,5>'));
-        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Decimal Separator>|InvalidFormatString');
+        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimal Separator>|InvalidFormatString');
         Observer.Expect('s22', '[      1234.50]');
         Observer.Expect('s23', '[0000001234.50]');
         Observer.Expect('s24', '[    1234]');
@@ -414,7 +414,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s33', 'err:Standard format number 8 does not exist for the type ''Decimal''.|InvalidStandardFormat');
         Observer.Expect('s34', '[1234.5]');
         Observer.Expect('s35', 'err:Standard format number 10 does not exist for the type ''Decimal''.|InvalidStandardFormat');
-        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Standard Format>|InvalidFormatString');
+        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Standard Format>|InvalidFormatString');
         Observer.Expect('s37', '[]');
         Observer.Expect('s38', '[]');
         Observer.Expect('s39', '[1,234]');
@@ -439,10 +439,10 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s50', FS(1234.5, 'x<Precision,2:2>y'));
         Observer.Expect('s41', '[ 1,234.5]');
         Observer.Expect('s42', '[  1234.5]');
-        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<1000 Separator>|InvalidFormatString');
-        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Currency Symbol>|InvalidFormatString');
-        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Unknown>|InvalidFormatString');
-        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,2:2|InvalidFormatString');
+        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<1000 Separator>|InvalidFormatString');
+        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Currency Symbol>|InvalidFormatString');
+        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Unknown>|InvalidFormatString');
+        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,2:2|InvalidFormatString');
         Observer.Expect('s47', '[Precision,2:2>]');
         Observer.Expect('s48', '[abc]');
         Observer.Expect('s49', '[]');
@@ -457,8 +457,8 @@ codeunit 73529 "LT P86 Format Decimal"
     begin
         Observer.Observe('s51', FS(1234.5, '<Integer,5,>'));
         Observer.Observe('s52', FS(1234.5, '<Precision,a:b>'));
-        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5,>|InvalidFormatString');
-        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,a:b>|InvalidFormatString');
+        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5,>|InvalidFormatString');
+        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,a:b>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -510,11 +510,11 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s13', '[.678]');
         Observer.Expect('s14', '[***]');
         Observer.Expect('s15', '[.678]');
-        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
         Observer.Expect('s18', '[-123,456,789,012,345.678]');
-        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Thousand Separator>|InvalidFormatString');
+        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Thousand Separator>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -533,7 +533,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s28', FS(-123456789012345.678, '<Standard Format,3>'));
         Observer.Observe('s29', FS(-123456789012345.678, '<Standard Format,4>'));
         Observer.Observe('s30', FS(-123456789012345.678, '<Standard Format,5>'));
-        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Decimal Separator>|InvalidFormatString');
+        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimal Separator>|InvalidFormatString');
         Observer.Expect('s22', '[*************]');
         Observer.Expect('s23', '[*************]');
         Observer.Expect('s24', '[********]');
@@ -566,7 +566,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s33', 'err:Standard format number 8 does not exist for the type ''Decimal''.|InvalidStandardFormat');
         Observer.Expect('s34', '[-123456789012345.678]');
         Observer.Expect('s35', 'err:Standard format number 10 does not exist for the type ''Decimal''.|InvalidStandardFormat');
-        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Standard Format>|InvalidFormatString');
+        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Standard Format>|InvalidFormatString');
         Observer.Expect('s37', '[-]');
         Observer.Expect('s38', '[-]');
         Observer.Expect('s39', '[123,456,789,012,345]');
@@ -591,10 +591,10 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s50', FS(-123456789012345.678, 'x<Precision,2:2>y'));
         Observer.Expect('s41', '[-123,456,789,012,345**]');
         Observer.Expect('s42', '[ -123456789012345.678]');
-        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<1000 Separator>|InvalidFormatString');
-        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Currency Symbol>|InvalidFormatString');
-        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Unknown>|InvalidFormatString');
-        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,2:2|InvalidFormatString');
+        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<1000 Separator>|InvalidFormatString');
+        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Currency Symbol>|InvalidFormatString');
+        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Unknown>|InvalidFormatString');
+        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,2:2|InvalidFormatString');
         Observer.Expect('s47', '[Precision,2:2>]');
         Observer.Expect('s48', '[abc]');
         Observer.Expect('s49', '[]');
@@ -609,8 +609,8 @@ codeunit 73529 "LT P86 Format Decimal"
     begin
         Observer.Observe('s51', FS(-123456789012345.678, '<Integer,5,>'));
         Observer.Observe('s52', FS(-123456789012345.678, '<Precision,a:b>'));
-        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5,>|InvalidFormatString');
-        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,a:b>|InvalidFormatString');
+        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5,>|InvalidFormatString');
+        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,a:b>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -662,11 +662,11 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s13', '[]');
         Observer.Expect('s14', '[.00]');
         Observer.Expect('s15', '[]');
-        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
         Observer.Expect('s18', '[0]');
-        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Thousand Separator>|InvalidFormatString');
+        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Thousand Separator>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -685,7 +685,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s28', FS(0, '<Standard Format,3>'));
         Observer.Observe('s29', FS(0, '<Standard Format,4>'));
         Observer.Observe('s30', FS(0, '<Standard Format,5>'));
-        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Decimal Separator>|InvalidFormatString');
+        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimal Separator>|InvalidFormatString');
         Observer.Expect('s22', '[         0.00]');
         Observer.Expect('s23', '[0000000000.00]');
         Observer.Expect('s24', '[       0]');
@@ -718,7 +718,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s33', 'err:Standard format number 8 does not exist for the type ''Decimal''.|InvalidStandardFormat');
         Observer.Expect('s34', '[0]');
         Observer.Expect('s35', 'err:Standard format number 10 does not exist for the type ''Decimal''.|InvalidStandardFormat');
-        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Standard Format>|InvalidFormatString');
+        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Standard Format>|InvalidFormatString');
         Observer.Expect('s37', '[]');
         Observer.Expect('s38', '[]');
         Observer.Expect('s39', '[0]');
@@ -743,10 +743,10 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s50', FS(0, 'x<Precision,2:2>y'));
         Observer.Expect('s41', '[ 0.0]');
         Observer.Expect('s42', '[  0]');
-        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<1000 Separator>|InvalidFormatString');
-        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Currency Symbol>|InvalidFormatString');
-        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Unknown>|InvalidFormatString');
-        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,2:2|InvalidFormatString');
+        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<1000 Separator>|InvalidFormatString');
+        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Currency Symbol>|InvalidFormatString');
+        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Unknown>|InvalidFormatString');
+        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,2:2|InvalidFormatString');
         Observer.Expect('s47', '[Precision,2:2>]');
         Observer.Expect('s48', '[abc]');
         Observer.Expect('s49', '[]');
@@ -761,8 +761,8 @@ codeunit 73529 "LT P86 Format Decimal"
     begin
         Observer.Observe('s51', FS(0, '<Integer,5,>'));
         Observer.Observe('s52', FS(0, '<Precision,a:b>'));
-        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5,>|InvalidFormatString');
-        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,a:b>|InvalidFormatString');
+        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5,>|InvalidFormatString');
+        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,a:b>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -814,11 +814,11 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s13', '[.00001]');
         Observer.Expect('s14', '[***]');
         Observer.Expect('s15', '[.00001]');
-        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
         Observer.Expect('s18', '[0.00001]');
-        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Thousand Separator>|InvalidFormatString');
+        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Thousand Separator>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -837,7 +837,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s28', FS(0.00001, '<Standard Format,3>'));
         Observer.Observe('s29', FS(0.00001, '<Standard Format,4>'));
         Observer.Observe('s30', FS(0.00001, '<Standard Format,5>'));
-        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Decimal Separator>|InvalidFormatString');
+        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimal Separator>|InvalidFormatString');
         Observer.Expect('s22', '[         0***]');
         Observer.Expect('s23', '[0000000000***]');
         Observer.Expect('s24', '[       0]');
@@ -870,7 +870,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s33', 'err:Standard format number 8 does not exist for the type ''Decimal''.|InvalidStandardFormat');
         Observer.Expect('s34', '[0.00001]');
         Observer.Expect('s35', 'err:Standard format number 10 does not exist for the type ''Decimal''.|InvalidStandardFormat');
-        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Standard Format>|InvalidFormatString');
+        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Standard Format>|InvalidFormatString');
         Observer.Expect('s37', '[]');
         Observer.Expect('s38', '[]');
         Observer.Expect('s39', '[0]');
@@ -895,10 +895,10 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s50', FS(0.00001, 'x<Precision,2:2>y'));
         Observer.Expect('s41', '[ 0**]');
         Observer.Expect('s42', '[  0.00001]');
-        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<1000 Separator>|InvalidFormatString');
-        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Currency Symbol>|InvalidFormatString');
-        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Unknown>|InvalidFormatString');
-        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,2:2|InvalidFormatString');
+        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<1000 Separator>|InvalidFormatString');
+        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Currency Symbol>|InvalidFormatString');
+        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Unknown>|InvalidFormatString');
+        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,2:2|InvalidFormatString');
         Observer.Expect('s47', '[Precision,2:2>]');
         Observer.Expect('s48', '[abc]');
         Observer.Expect('s49', '[]');
@@ -913,8 +913,8 @@ codeunit 73529 "LT P86 Format Decimal"
     begin
         Observer.Observe('s51', FS(0.00001, '<Integer,5,>'));
         Observer.Observe('s52', FS(0.00001, '<Precision,a:b>'));
-        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5,>|InvalidFormatString');
-        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,a:b>|InvalidFormatString');
+        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5,>|InvalidFormatString');
+        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,a:b>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -966,11 +966,11 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s13', '[.5]');
         Observer.Expect('s14', '[.50]');
         Observer.Expect('s15', '[.5]');
-        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s16', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s17', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Decimal Separator><Decimals>|InvalidFormatString');
         Observer.Expect('s18', '[-0.5]');
-        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
-        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Thousand Separator>|InvalidFormatString');
+        Observer.Expect('s19', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('s20', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Thousand Separator>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -989,7 +989,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s28', FS(-0.5, '<Standard Format,3>'));
         Observer.Observe('s29', FS(-0.5, '<Standard Format,4>'));
         Observer.Observe('s30', FS(-0.5, '<Standard Format,5>'));
-        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Decimal Separator>|InvalidFormatString');
+        Observer.Expect('s21', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimal Separator>|InvalidFormatString');
         Observer.Expect('s22', '[         0.50]');
         Observer.Expect('s23', '[0000000000.50]');
         Observer.Expect('s24', '[       0]');
@@ -1022,7 +1022,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('s33', 'err:Standard format number 8 does not exist for the type ''Decimal''.|InvalidStandardFormat');
         Observer.Expect('s34', '[-0.5]');
         Observer.Expect('s35', 'err:Standard format number 10 does not exist for the type ''Decimal''.|InvalidStandardFormat');
-        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Standard Format>|InvalidFormatString');
+        Observer.Expect('s36', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Standard Format>|InvalidFormatString');
         Observer.Expect('s37', '[-]');
         Observer.Expect('s38', '[-]');
         Observer.Expect('s39', '[0]');
@@ -1047,10 +1047,10 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Observe('s50', FS(-0.5, 'x<Precision,2:2>y'));
         Observer.Expect('s41', '[-0.5]');
         Observer.Expect('s42', '[ -0.5]');
-        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<1000 Separator>|InvalidFormatString');
-        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Currency Symbol>|InvalidFormatString');
-        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Unknown>|InvalidFormatString');
-        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,2:2|InvalidFormatString');
+        Observer.Expect('s43', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<1000 Separator>|InvalidFormatString');
+        Observer.Expect('s44', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Currency Symbol>|InvalidFormatString');
+        Observer.Expect('s45', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Unknown>|InvalidFormatString');
+        Observer.Expect('s46', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,2:2|InvalidFormatString');
         Observer.Expect('s47', '[Precision,2:2>]');
         Observer.Expect('s48', '[abc]');
         Observer.Expect('s49', '[]');
@@ -1065,8 +1065,8 @@ codeunit 73529 "LT P86 Format Decimal"
     begin
         Observer.Observe('s51', FS(-0.5, '<Integer,5,>'));
         Observer.Observe('s52', FS(-0.5, '<Precision,a:b>'));
-        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer,5,>|InvalidFormatString');
-        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Precision,a:b>|InvalidFormatString');
+        Observer.Expect('s51', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer,5,>|InvalidFormatString');
+        Observer.Expect('s52', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Precision,a:b>|InvalidFormatString');
         Observer.Verify();
     end;
 
@@ -1094,7 +1094,7 @@ codeunit 73529 "LT P86 Format Decimal"
         Observer.Expect('l7', '[    1234.5]');
         Observer.Expect('l8', '[1234.5]');
         Observer.Expect('l9', '[              1234.5]');
-        Observer.Expect('l10', 'err:An invalid field or attribute has been specified for the ''Format'' property.\r\\r\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
+        Observer.Expect('l10', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Decimal Separator><Decimals>|InvalidFormatString');
         Observer.Verify();
     end;
 }

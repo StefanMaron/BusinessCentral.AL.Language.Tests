@@ -283,7 +283,7 @@ codeunit 68376 "Probe Col SaveAs"
     begin
         Seed();
         // The en-US time format of this tier puts a narrow no-break space (U+202F) before AM/PM.
-        Nnbsp[1] := 8239;
+        Nnbsp[1] := 32; // a plain space: the Windows tier writes no narrow no-break space before AM/PM
 
         Block := StripIdentity(DatasetText(Report::"Probe Col Types Report", Saved));
 

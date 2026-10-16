@@ -188,7 +188,7 @@ codeunit 69766 "PW Report SaveAs Columns Probe"
         Observer.Observe('saved', Format(Saved));
         Observer.Observe('dataset', Text);
         Observer.Expect('saved', 'Yes');
-        Observer.Expect('dataset', '<DataItems>|<DataItem>|<Column name="IdC">1</Column>|<Column name="TmC"></Column>|<Column name="DtmC"></Column>|<Column name="GdC">00000000-0000-0000-0000-000000000000</Column>|<Column name="Tm2C"></Column>|<Column name="DecC" decimalformatter="#,##0.00">0</Column>|<DataItem>|<Column name="IdC">2</Column>|<Column name="TmC">9:00:00 AM</Column>|<Column name="DtmC">3/5/2024 9:00:00 AM</Column>|<Column name="GdC">abcdef01-2345-6789-abcd-ef0123456789</Column>|<Column name="Tm2C">12:34:56 PM</Column>|<Column name="DecC" decimalformatter="#,##0.00">12.3</Column>|');
+        Observer.Expect('dataset', '<DataItems>|<DataItem>|<Column name="IdC">1</Column>|<Column name="TmC"></Column>|<Column name="DtmC"></Column>|<Column name="GdC">00000000-0000-0000-0000-000000000000</Column>|<Column name="Tm2C"></Column>|<Column name="DecC" decimalformatter="#,##0.00">0</Column>|<DataItem>|<Column name="IdC">2</Column>|<Column name="TmC">9:00:00 AM</Column>|<Column name="DtmC">3/5/2024 9:00:00 AM</Column>|<Column name="GdC">abcdef01-2345-6789-abcd-ef0123456789</Column>|<Column name="Tm2C">12:34:56 PM</Column>|<Column name="DecC" decimalformatter="#,##0.00">12.3</Column>|');
         Observer.Verify();
     end;
 

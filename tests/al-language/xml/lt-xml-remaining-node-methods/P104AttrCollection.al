@@ -116,7 +116,7 @@ codeunit 71829 "LT P104 AttrCollection"
         Observer.Expect('af121|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 6.');
         Observer.Expect('af121|code', 'Xml:Xml');
         Observer.Expect('before_count', '1');
-        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\n<e>\n  <c />t</e>');
+        Observer.Expect('doc', '<?xml version="1.0" encoding="utf-16"?>\r\n<e>\r\n  <c />t</e>');
         Observer.Expect('after_count', '0');
         Observer.Verify();
     end;

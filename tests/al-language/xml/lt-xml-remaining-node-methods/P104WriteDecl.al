@@ -297,13 +297,13 @@ codeunit 71822 "LT P104 Write Decl"
         RunText(Observer, Nd, 'removed_opt', 2);
         Doc.WriteTo(Before);
         Observer.Observe('doc_after', Before);
-        Observer.Expect('doc_before', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc_before', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Expect('node_before', '[<?xml version="1.0" encoding="utf-8" standalone="yes"?>]');
         Observer.Expect('af230|text', 'The requested operation cannot be performed in this context.');
         Observer.Expect('af230|code', 'InvalidOperation');
         Observer.Expect('removed', '[<?xml version="1.0" encoding="utf-8" standalone="yes"?>]');
         Observer.Expect('removed_opt', '[<?xml version="1.0" encoding="utf-8" standalone="yes"?>]');
-        Observer.Expect('doc_after', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n<r>\n  <a />\n  <b />\n</r>');
+        Observer.Expect('doc_after', '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\r\n<r>\r\n  <a />\r\n  <b />\r\n</r>');
         Observer.Verify();
     end;
 
