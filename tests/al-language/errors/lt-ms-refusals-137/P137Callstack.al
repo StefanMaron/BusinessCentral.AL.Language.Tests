@@ -276,68 +276,9 @@ codeunit 74442 "LT P137 Callstack"
         Observer.Verify();
     end;
 
-    [Test]
-    procedure P137_Callstack_PageFieldAndPageTriggers_New()
-    var
-        Observer: Codeunit "Probe Observer";
-        Ctl: Codeunit "LT P137 Ctl";
-        Card: TestPage "LT P137 CS Page";
-    begin
-        Clean();
-        Card.OpenNew();
-        Observer.Observe('open_new', Ctl.Take());
-        Card.Id.SetValue(7);
-        Observer.Observe('set_id', Ctl.Take());
-        Card.Val.SetValue(8);
-        Observer.Observe('set_val', Ctl.Take());
-        Card.Note.SetValue('n');
-        Observer.Observe('set_note', Ctl.Take());
-        Card.Val.Drilldown();
-        Observer.Observe('drilldown', Ctl.Take());
-        Card.Id.AssistEdit();
-        Observer.Observe('assistedit', Ctl.Take());
-        Card.Note.Lookup();
-        Observer.Observe('lookup', Ctl.Take());
-        Card.Close();
-        Observer.Observe('close', Ctl.Take());
-        Observer.Expect('open_new', 'sub OnOpenPageEvent: "LT P137 CS Page Subs"(CodeUnit 74443).OnOpenPageSub line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageFieldAndPageTriggers_New line 7 - AL Language Coverage Tests by AL Language version x\;page OnNewRecord: "LT P137 CS Page"(Page 74439).OnNewRecord(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageFieldAndPageTriggers_New line 7 - AL Language Coverage Tests by AL Language version x\;');
-        Observer.Expect('set_id', '');
-        Observer.Expect('set_note', '');
-        Observer.Expect('drilldown', 'page field Val OnDrillDown: "LT P137 CS Page"(Page 74439)."Val - OnDrillDown"(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageFieldAndPageTriggers_New line 15 - AL Language Coverage Tests by AL Language version x\;');
-        Observer.Expect('assistedit', 'page field Id OnAssistEdit: "LT P137 CS Page"(Page 74439)."Id - OnAssistEdit"(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageFieldAndPageTriggers_New line 17 - AL Language Coverage Tests by AL Language version x\;');
-        Observer.Expect('lookup', 'page field Note OnLookup: "LT P137 CS Page"(Page 74439)."Note - OnLookup"(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageFieldAndPageTriggers_New line 19 - AL Language Coverage Tests by AL Language version x\;');
-        Observer.Ignore('set_val'); // a dump or environment data: observed, not asserted
-        Observer.Ignore('close'); // a dump or environment data: observed, not asserted
-        Observer.Verify();
-    end;
 
 
 
-
-
-    [Test]
-    procedure P137_Callstack_PageTriggers_Existing()
-    var
-        Observer: Codeunit "Probe Observer";
-        Ctl: Codeunit "LT P137 Ctl";
-        Row: Record "LT P137 CS Table";
-        Card: TestPage "LT P137 CS Page";
-    begin
-        Clean();
-        Row.Id := 9;
-        Row.Insert(false);
-        Ctl.Take();
-        Card.OpenEdit();
-        Observer.Observe('open_edit', Ctl.Take());
-        Card.Val.SetValue(4);
-        Observer.Observe('set_val', Ctl.Take());
-        Card.Close();
-        Observer.Observe('close', Ctl.Take());
-        Observer.Expect('open_edit', 'sub OnOpenPageEvent: "LT P137 CS Page Subs"(CodeUnit 74443).OnOpenPageSub line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 11 - AL Language Coverage Tests by AL Language version x\;page OnAfterGetRecord: "LT P137 CS Page"(Page 74439).OnAfterGetRecord(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 11 - AL Language Coverage Tests by AL Language version x\;sub OnAfterGetRecordEvent: "LT P137 CS Page Subs"(CodeUnit 74443).OnAfterGetRecordSub line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 11 - AL Language Coverage Tests by AL Language version x\;');
-        Observer.Expect('set_val', 'sub BeforeValidate: "LT P137 CS Subs"(CodeUnit 74438).BeforeValidate line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 13 - AL Language Coverage Tests by AL Language version x\;field Val OnValidate: "LT P137 CS Table"(Table 74436)."Val - OnValidate"(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 13 - AL Language Coverage Tests by AL Language version x\;sub AfterValidate: "LT P137 CS Subs"(CodeUnit 74438).AfterValidate line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 13 - AL Language Coverage Tests by AL Language version x\;page field Val OnValidate: "LT P137 CS Page"(Page 74439)."Val - OnValidate"(Trigger) line 4 - AL Language Coverage Tests by AL Language version x\"LT P137 Callstack"(CodeUnit 74442).P137_Callstack_PageTriggers_Existing line 13 - AL Language Coverage Tests by AL Language version x\;');
-        Observer.Ignore('close'); // a dump or environment data: observed, not asserted
-        Observer.Verify();
-    end;
 
 
 

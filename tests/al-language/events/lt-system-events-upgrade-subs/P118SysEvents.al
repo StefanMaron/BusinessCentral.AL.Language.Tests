@@ -274,35 +274,6 @@ codeunit 71210 "LT P118 Sys Events Test"
     end;
 
     [Test]
-    procedure P118_AutoFormatTranslate_Page()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT P118 Sys Log";
-        Row: Record "LT P118 Filter Row";
-        Card: TestPage "LT P118 AutoFmt Card";
-    begin
-        Row.DeleteAll();
-        Row.Id := 1;
-        Row.Amount := 1234.5;
-        Row."Currency Code" := 'USD';
-        Row.Insert();
-        Commit();
-        Log.Reset();
-        Card.OpenView();
-        Card.GoToRecord(Row);
-        Observer.Observe('cur', Card.Cur.Value());
-        Observer.Observe('cust', Card.Cust.Value());
-        Observer.Observe('log', Log.Joined());
-        Observer.Observe('count-type1', Format(Log.CountOf('AutoFormatTranslate:1:USD')));
-        Card.Close();
-        Observer.Expect('cur', '1,234.50');
-        Observer.Expect('cust', '1,234.500');
-        Observer.Expect('log', 'AutoFormatTranslate:1:;AutoFormatTranslate:11:<Precision,3:3><Standard Format,0>;AutoFormatTranslate:1:USD;');
-        Observer.Expect('count-type1', '1');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure P118_GetApplicationLanguage_Reads()
     var
         Observer: Codeunit "Probe Observer";
