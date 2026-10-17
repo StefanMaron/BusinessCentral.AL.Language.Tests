@@ -81,8 +81,18 @@ codeunit 61471 "LT LEO Tests"
         TypeOfExc := Exc.GetType();
         Observer.Observe('typeFullName', TypeOfExc.FullName);
         Observer.Observe('innerExceptionIsNull', Format(IsNull(Exc.InnerException)));
-        Observer.Observe('format', Format(Exc));
-        Observer.Observe('toString', Exc.ToString());
+        // The stack frames in the text depend on the BC version (compiler generated class names), so only the first line and the shape are asserted.
+        Observer.Observe('formatEqualsToString', Format(Format(Exc) = Exc.ToString()));
+        Observer.Observe('toStringFirstLine', FirstLine(Exc.ToString()));
+        Observer.Observe('toStringHasStackFrames', Format(StrPos(Exc.ToString(), '   at ') > 0));
+    end;
+
+    local procedure FirstLine(Value: Text): Text
+    var
+        Lf: Text[1];
+    begin
+        Lf[1] := 10;
+        exit(CopyStr(Value, 1, StrPos(Value + Lf, Lf) - 1));
     end;
 
     [TryFunction]
@@ -135,7 +145,18 @@ codeunit 61471 "LT LEO Tests"
         Ran := Thrower.Run();
         Observer.Observe('ran', Format(Ran));
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'LT boom from Codeunit.Run');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('message', 'LT boom from Codeunit.Run');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT boom from Codeunit.Run');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +170,18 @@ codeunit 61471 "LT LEO Tests"
         Ran := Thrower.Run();
         Observer.Observe('ran', Format(Ran));
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'LT boom with arg and 42');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('message', 'LT boom with arg and 42');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT boom with arg and 42');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +194,18 @@ codeunit 61471 "LT LEO Tests"
         Ok := Thrower.TryRaise();
         Observer.Observe('ok', Format(Ok));
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'LT boom from TryFunction');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('message', 'LT boom from TryFunction');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT boom from TryFunction');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +216,17 @@ codeunit 61471 "LT LEO Tests"
     begin
         asserterror Thrower.Raise();
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'LT boom from asserterror');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('message', 'LT boom from asserterror');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT boom from asserterror');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +240,18 @@ codeunit 61471 "LT LEO Tests"
         Ran := Thrower.Run();
         Observer.Observe('ran', Format(Ran));
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('lastErrorCode', 'DB:RecordNotFound');
+        Observer.Expect('message', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException: The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -201,7 +265,18 @@ codeunit 61471 "LT LEO Tests"
         Ran := Thrower.Run();
         Observer.Observe('ran', Format(Ran));
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'Attempted to divide by zero.');
+        Observer.Expect('lastErrorCode', 'AL:DivideByZero');
+        Observer.Expect('message', 'Attempted to divide by zero.');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavALException');
+        Observer.Expect('innerExceptionIsNull', 'No');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavALException: Attempted to divide by zero.');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +291,13 @@ codeunit 61471 "LT LEO Tests"
         ClearLastError();
         Observer.Observe('lastErrorTextAfterClear', GetLastErrorText());
         DescribeGuarded(Observer);
-        Observer.Finish();
+        Observer.Expect('lastErrorTextAfterClear', '');
+        Observer.Expect('field1', 'ok:Yes');
+        Observer.Expect('field2', 'error:A DotNet variable has not been instantiated. Attempting to call System.Exception.Message in CodeUnit LT LEO Tests: TryOne|DotNetVariableNotCreated');
+        Observer.Expect('field3', 'error:A DotNet variable has not been instantiated. Attempting to call System.Exception.GetType in CodeUnit LT LEO Tests: TryOne|DotNetVariableNotCreated');
+        Observer.Expect('field4', 'ok:null');
+        Observer.Expect('field5', 'error:A DotNet variable has not been instantiated. Attempting to call System.Exception.ToString in CodeUnit LT LEO Tests: TryOne|DotNetVariableNotCreated');
+        Observer.Verify();
     end;
 
     [Test]
@@ -233,6 +314,18 @@ codeunit 61471 "LT LEO Tests"
         Observer.Observe('ranSecond', Format(Ran));
         Observer.Observe('lastErrorTextAfterSuccess', GetLastErrorText());
         Describe(Observer);
-        Observer.Finish();
+        Observer.Expect('ranSecond', 'Yes');
+        Observer.Expect('lastErrorTextAfterSuccess', 'LT boom from Codeunit.Run');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('lastErrorText', 'LT boom from Codeunit.Run');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('message', 'LT boom from Codeunit.Run');
+        Observer.Expect('messageEqualsLastErrorText', 'Yes');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('formatEqualsToString', 'Yes');
+        Observer.Expect('toStringFirstLine', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT boom from Codeunit.Run');
+        Observer.Expect('toStringHasStackFrames', 'Yes');
+        Observer.Verify();
     end;
 }

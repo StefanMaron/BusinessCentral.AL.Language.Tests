@@ -180,7 +180,12 @@ codeunit 74364 "LT EvVar Tests"
         Observer.Observe('globalNote', Pub.GetNote());
         Observer.Observe('paramsBeforeSenderCall', Sub.Seen('before'));
         Observer.Observe('paramsAfterSenderCall', Sub.Seen('after'));
-        Observer.Finish();
+        Observer.Expect('globalCreated', 'Yes');
+        Observer.Expect('globalCounter', '5');
+        Observer.Expect('globalNote', 'set by sender');
+        Observer.Expect('paramsBeforeSenderCall', 'No/1/initial');
+        Observer.Expect('paramsAfterSenderCall', 'Yes/5/set by sender');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +203,11 @@ codeunit 74364 "LT EvVar Tests"
         Observer.Observe('globalCounter', Format(Pub.GetCounter()));
         Observer.Observe('globalNote', Pub.GetNote());
         Observer.Observe('subscriberSeen', Sub.Seen());
-        Observer.Finish();
+        Observer.Expect('globalCreated', 'Yes');
+        Observer.Expect('globalCounter', '99');
+        Observer.Expect('globalNote', 'set by subscriber');
+        Observer.Expect('subscriberSeen', '5/set by sender/99/set by subscriber/99/set by subscriber');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +225,11 @@ codeunit 74364 "LT EvVar Tests"
         Observer.Observe('globalCounter', Format(Pub.GetCounter()));
         Observer.Observe('globalNote', Pub.GetNote());
         Observer.Observe('subscriberSeen', Sub.Seen());
-        Observer.Finish();
+        Observer.Expect('globalCreated', 'Yes');
+        Observer.Expect('globalCounter', '5');
+        Observer.Expect('globalNote', 'set by sender');
+        Observer.Expect('subscriberSeen', '5/set by sender');
+        Observer.Verify();
     end;
 
     [Test]
@@ -242,6 +255,12 @@ codeunit 74364 "LT EvVar Tests"
         Observer.Observe('globalCreated', Format(Pub.GetCreated()));
         Observer.Observe('globalCounter', Format(Pub.GetCounter()));
         Observer.Observe('paramsAfterSenderCall', Sub.Seen('after'));
-        Observer.Finish();
+        Observer.Expect('localCreated', 'No');
+        Observer.Expect('localCounter', '10');
+        Observer.Expect('localNote', 'local');
+        Observer.Expect('globalCreated', 'Yes');
+        Observer.Expect('globalCounter', '5');
+        Observer.Expect('paramsAfterSenderCall', 'No/10/local');
+        Observer.Verify();
     end;
 }
