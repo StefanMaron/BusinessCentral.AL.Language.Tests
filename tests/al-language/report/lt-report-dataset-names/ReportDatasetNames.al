@@ -4,7 +4,9 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: the element names Report.SaveAs(Xml) writes for data item names that contain dots, slashes and spaces: a dot, a slash, a run of dots, a dot next to a space, a double space,
 // a leading or trailing dot; and what happens when two names map to the same element name. Column names cannot contain a dot, slash or space: AL0379 (the name does not comply with the Common Language Specification) on AL 16, 17 and 18. Complements ReportSaveAsDataItems.al (which pins "Prod. Order Line", "Sales/Line", hyphen and ampersand).
-// BC versions: 29 (27 and 28 by CI)
+// Measured: a run of dots, slashes and spaces in a data item name becomes ONE underscore ("A. B" A_B, "C/D" C_D, "G..H" G_H, "I./J" I_J, "K  L" K_L, "O. . P" O_P, "Q//R" Q_R); a trailing dot is dropped ("M." M); a leading dot becomes an underscore (".N" _N);
+// names that map to the same element get a numeric suffix in dataset order (X_Y, X_Y1, X_Y2). Same on BC 27.0 to 29.0.
+// BC versions: 27.0 to 29.0
 
 table 71758 "LT DN Row"
 {
@@ -178,7 +180,8 @@ codeunit 71762 "LT Report Dataset Names"
     begin
         Seed();
         Observer.Observe('tree', DataItemsOf(Report::"LT DN Items"));
-        Observer.Finish();
+        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="A_B">|      <Columns>|        <Column name="ABId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="C_D">|      <Columns>|        <Column name="CDId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="E_F">|      <Columns>|        <Column name="EFId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="G_H">|      <Columns>|        <Column name="GHId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="I_J">|      <Columns>|        <Column name="IJId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="K_L">|      <Columns>|        <Column name="KLId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="M">|      <Columns>|        <Column name="MId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="_N">|      <Columns>|        <Column name="NId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="O_P">|      <Columns>|        <Column name="OPId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Q_R">|      <Columns>|        <Column name="QRId">1</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,6 +191,7 @@ codeunit 71762 "LT Report Dataset Names"
     begin
         Seed();
         Observer.Observe('tree', DataItemsOf(Report::"LT DN Collisions"));
-        Observer.Finish();
+        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="X_Y">|      <Columns>|        <Column name="ZId">1</Column>|        <Column name="ZName">one</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="X_Y1">|      <Columns>|        <Column name="Plain">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="X_Y2">|      <Columns>|        <Column name="Plain2">1</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+        Observer.Verify();
     end;
 }

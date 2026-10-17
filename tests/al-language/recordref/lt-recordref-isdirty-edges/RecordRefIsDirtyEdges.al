@@ -94,7 +94,15 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('r2_set_value_stored', Format(Ref2.IsDirty()));
         Ref2.Field(2).Value := 'third';
         Observer.Observe('r2_set_third', Format(Ref2.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('r1_after_set', 'Yes');
+        Observer.Expect('r2_after_r1_set', 'No');
+        Observer.Expect('r1_after_modify', 'No');
+        Observer.Expect('r2_after_r1_modify', 'No');
+        Observer.Expect('r2_name_still', 'one');
+        Observer.Expect('r2_set_value_it_read', 'No');
+        Observer.Expect('r2_set_value_stored', 'Yes');
+        Observer.Expect('r2_set_third', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,11 +121,12 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Ref1.Modify();
         Ref2.Field(2).Value := 'two';
         Observer.Observe('r2_dirty', Format(Ref2.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('r2_dirty', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure IsDirty_TwoRefs_StaleModify()
+    procedure IsDirty_TwoRefs_StaleModifyDoesNotRaise()
     var
         Observer: Codeunit "Probe Observer";
         Ref1: RecordRef;
@@ -132,8 +141,7 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Ref1.Field(3).Value := 99;
         Ref1.Modify();
         Ref2.Field(2).Value := 'two';
-        asserterror Ref2.Modify();
-        Observer.ObserveError('stale_modify');
+        Ref2.Modify();
         Observer.Observe('r2_dirty_after', Format(Ref2.IsDirty()));
         Stored.Get(1);
         Observer.Observe('stored_qty', Format(Stored.Qty));
@@ -165,7 +173,12 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('stored_qty', Format(Stored.Qty));
         Observer.Observe('stored_name', Stored.Name);
         Observer.Observe('r2_dirty_after_modify', Format(Ref2.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('r2_qty_after_refind', '99');
+        Observer.Expect('r2_dirty_after_refind', 'No');
+        Observer.Expect('stored_qty', '99');
+        Observer.Expect('stored_name', 'two');
+        Observer.Expect('r2_dirty_after_modify', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +200,12 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('then_unloaded_same_as_stored', Format(Ref.IsDirty()));
         Ref.Field(3).Value := 11;
         Observer.Observe('then_unloaded_changed', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_find', 'No');
+        Observer.Expect('loaded_same', 'No');
+        Observer.Expect('loaded_changed', 'Yes');
+        Observer.Expect('then_unloaded_same_as_stored', 'Yes');
+        Observer.Expect('then_unloaded_changed', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -206,7 +224,10 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('unloaded_changed', Format(Ref.IsDirty()));
         Ref.Field(4).Value := 'n1';
         Observer.Observe('unloaded_back_to_stored', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('unloaded_same_as_stored', 'Yes');
+        Observer.Expect('unloaded_changed', 'Yes');
+        Observer.Expect('unloaded_back_to_stored', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,7 +246,11 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('set_same', Format(Ref.IsDirty()));
         Ref.Field(3).Value := 12;
         Observer.Observe('set_other', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('read_unloaded', '10');
+        Observer.Expect('after_read', 'No');
+        Observer.Expect('set_same', 'No');
+        Observer.Expect('set_other', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -246,7 +271,11 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('name', Stored.Name);
         Observer.Observe('qty', Format(Stored.Qty));
         Observer.Observe('note', Stored.Note);
-        Observer.Finish();
+        Observer.Expect('after_modify', 'No');
+        Observer.Expect('name', 'partial');
+        Observer.Expect('qty', '10');
+        Observer.Expect('note', 'n1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -266,7 +295,12 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('then_qty_changed', Format(Ref.IsDirty()));
         Ref.Field(3).Value := 10;
         Observer.Observe('then_qty_back', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_find', 'No');
+        Observer.Expect('after_calc', 'No');
+        Observer.Expect('total', '12');
+        Observer.Expect('then_qty_changed', 'Yes');
+        Observer.Expect('then_qty_back', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,7 +322,10 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Observer.Observe('total', Format(Ref.Field(5).Value));
         Ref.Modify();
         Observer.Observe('after_modify', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_second_calc', 'No');
+        Observer.Expect('total', '107');
+        Observer.Expect('after_modify', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -306,7 +343,11 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Ref.FindFirst();
         Observer.Observe('autocalc_total', Format(Ref.Field(5).Value));
         Observer.Observe('autocalc_dirty', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('flow_value_uncalculated', '0');
+        Observer.Expect('after_reading_flow', 'No');
+        Observer.Expect('autocalc_total', '12');
+        Observer.Expect('autocalc_dirty', 'No');
+        Observer.Verify();
     end;
 }
 #endif

@@ -252,7 +252,11 @@ codeunit 71775 "LT Page Action Sub Errors"
         Log.Reset('');
         Card.Act.Invoke();
         Observer.Observe('log_second_invoke', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('invoke|text', 'PS before-Act failed');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', '[before-Act]');
+        Observer.Expect('log_second_invoke', '[before-Act | OnAction-Act | after-Act]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -272,7 +276,11 @@ codeunit 71775 "LT Page Action Sub Errors"
         Log.Reset('');
         Card.Act.Invoke();
         Observer.Observe('log_second_invoke', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('invoke|text', 'PS after-Act failed');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', '[before-Act | OnAction-Act | after-Act]');
+        Observer.Expect('log_second_invoke', '[before-Act | OnAction-Act | after-Act]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -289,7 +297,10 @@ codeunit 71775 "LT Page Action Sub Errors"
         asserterror Card.Act.Invoke();
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('invoke|text', 'PS before-Act failed');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', '[before-Act]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,11 +318,12 @@ codeunit 71775 "LT Page Action Sub Errors"
         Card.RunPg.Invoke();
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', '[target-OnOpenPage | handler | target-OnClosePage]');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure RunPage_BeforeSubscriberRaises()
+    procedure RunPage_BeforeSubscriberConfiguredToRaise()
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT PS Log";
@@ -321,15 +333,14 @@ codeunit 71775 "LT Page Action Sub Errors"
         Card.OpenEdit();
         Card.First();
         Log.Reset('before');
-        asserterror Card.RunPg.Invoke();
-        Observer.ObserveError('invoke');
+        Card.RunPg.Invoke();
         Observer.Observe('log', Log.Dump());
         Observer.Finish();
     end;
 
     [Test]
     [HandlerFunctions('TargetHandler')]
-    procedure RunPage_AfterSubscriberRaises()
+    procedure RunPage_AfterSubscriberConfiguredToRaise()
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT PS Log";
@@ -339,8 +350,7 @@ codeunit 71775 "LT Page Action Sub Errors"
         Card.OpenEdit();
         Card.First();
         Log.Reset('after');
-        asserterror Card.RunPg.Invoke();
-        Observer.ObserveError('invoke');
+        Card.RunPg.Invoke();
         Observer.Observe('log', Log.Dump());
         Observer.Finish();
     end;
@@ -359,11 +369,12 @@ codeunit 71775 "LT Page Action Sub Errors"
         Card.RunCu.Invoke();
         Observer.Observe('log', Log.Dump());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', '[codeunit-OnRun | after-RunCu]');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure RunCodeunit_BeforeSubscriberRaises()
+    procedure RunCodeunit_BeforeSubscriberConfiguredToRaise()
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT PS Log";
@@ -373,8 +384,7 @@ codeunit 71775 "LT Page Action Sub Errors"
         Card.OpenEdit();
         Card.First();
         Log.Reset('before');
-        asserterror Card.RunCu.Invoke();
-        Observer.ObserveError('invoke');
+        Card.RunCu.Invoke();
         Observer.Observe('log', Log.Dump());
         Observer.Finish();
     end;
@@ -393,6 +403,9 @@ codeunit 71775 "LT Page Action Sub Errors"
         asserterror Card.RunCu.Invoke();
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('invoke|text', 'PS after-RunCu failed');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', '[codeunit-OnRun | after-RunCu]');
+        Observer.Verify();
     end;
 }
