@@ -31,12 +31,24 @@ codeunit 74795 "LT TBV Tests"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    [TryFunction]
+    local procedure TryAppend(var TB: TextBuilder; V: Variant)
+    begin
+        TB.Append(V);
+    end;
+
     local procedure Both(var Observer: Codeunit "Probe Observer"; Tag: Text; V: Variant)
     var
         TB: TextBuilder;
+        Ok: Boolean;
     begin
-        TB.Append(V);
-        Observer.Observe(Tag + '.append', '[' + TB.ToText() + ']');
+        Ok := TryAppend(TB, V);
+        if Ok then
+            Observer.Observe(Tag + '.append', '[' + TB.ToText() + ']')
+        else begin
+            Observer.Observe(Tag + '.append', 'error');
+            Observer.ObserveError(Tag + '.appendErr');
+        end;
         Observer.Observe(Tag + '.format', '[' + Format(V) + ']');
     end;
 
@@ -86,6 +98,7 @@ codeunit 74795 "LT TBV Tests"
         FR: FieldRef;
         TB: TextBuilder;
         i: Integer;
+        Ok: Boolean;
     begin
         Row.Init();
         Row.Id := 1;
@@ -93,8 +106,8 @@ codeunit 74795 "LT TBV Tests"
         for i := 1 to RR.FieldCount() do begin
             FR := RR.FieldIndex(i);
             Clear(TB);
-            TB.Append(FR.Value());
-            Observer.Observe('blank.' + FR.Name(), '[' + TB.ToText() + '] format=[' + Format(FR.Value()) + ']');
+            Ok := TryAppend(TB, FR.Value());
+            Observer.Observe('blank.' + FR.Name(), Format(Ok) + ' [' + TB.ToText() + '] format=[' + Format(FR.Value()) + ']');
         end;
         Row.D := DMY2Date(5, 3, 2024);
         Row.Dec := 1.5;
@@ -107,8 +120,8 @@ codeunit 74795 "LT TBV Tests"
         for i := 1 to RR.FieldCount() do begin
             FR := RR.FieldIndex(i);
             Clear(TB);
-            TB.Append(FR.Value());
-            Observer.Observe('set.' + FR.Name(), '[' + TB.ToText() + '] format=[' + Format(FR.Value()) + ']');
+            Ok := TryAppend(TB, FR.Value());
+            Observer.Observe('set.' + FR.Name(), Format(Ok) + ' [' + TB.ToText() + '] format=[' + Format(FR.Value()) + ']');
         end;
         Observer.Finish();
     end;

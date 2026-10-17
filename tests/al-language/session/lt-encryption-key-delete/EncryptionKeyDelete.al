@@ -1,12 +1,20 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-deleteencryptionkey-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); codeunit 74897
+// Fixtures used: Probe Observer (codeunit 69160); codeunits 74792 (runner) and 74897 (tests)
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
-// Facts: DeleteEncryptionKey and the state it leaves: EncryptionEnabled() and EncryptionKeyExists() before and after, DeleteEncryptionKey with no key present
-//   (does it raise, error text and code), with a key present (CreateEncryptionKey first, only when the database has none, so the database ends as it began),
-//   and a second DeleteEncryptionKey right after the first.
-//   The test that creates a key runs only when the database had none at the start, and always deletes the key again.
+// Facts: DeleteEncryptionKey and the state it leaves: EncryptionEnabled() and EncryptionKeyExists() before and after, DeleteEncryptionKey with a key present, and a second
+//   DeleteEncryptionKey with no key (does it raise, error text and code). The CI database has a key at the start (measured), so the test deletes it and creates a new one
+//   at the end (CreateEncryptionKey), so the database ends with a key as it began. The codeunit has one of the highest ids, so the tests that run after it still find a key.
+//   Nothing is encrypted by these tests.
 // BC versions: all (CI)
+
+codeunit 74792 "LT EKD Runner"
+{
+    trigger OnRun()
+    begin
+        DeleteEncryptionKey();
+    end;
+}
 
 codeunit 74897 "LT Encryption Key Delete"
 {
@@ -20,45 +28,36 @@ codeunit 74897 "LT Encryption Key Delete"
     begin
         Observer.Observe('enabled', Format(EncryptionEnabled()));
         Observer.Observe('keyExists', Format(EncryptionKeyExists()));
-        Observer.Finish();
+        Observer.Expect('enabled', 'Yes');
+        Observer.Expect('keyExists', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure Delete_WithoutKey()
+    procedure Delete_WithKey_ThenWithout_ThenRestore()
     var
         Observer: Codeunit "Probe Observer";
+        Runner: Codeunit "LT EKD Runner";
+        Ran: Boolean;
     begin
-        if EncryptionKeyExists() then begin
-            Observer.Observe('skipped', 'key exists');
-            Observer.Finish();
-            exit;
-        end;
-        asserterror DeleteEncryptionKey();
-        Observer.ObserveError('deleteNoKey');
-        Observer.Observe('enabledAfter', Format(EncryptionEnabled()));
-        Observer.Observe('keyExistsAfter', Format(EncryptionKeyExists()));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Delete_WithKey_ThenAgain()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        if EncryptionKeyExists() then begin
-            Observer.Observe('skipped', 'key exists');
-            Observer.Finish();
-            exit;
-        end;
-        CreateEncryptionKey();
-        Observer.Observe('enabledWithKey', Format(EncryptionEnabled()));
-        Observer.Observe('keyExistsWithKey', Format(EncryptionKeyExists()));
-        DeleteEncryptionKey();
+        Observer.Observe('keyExistsAtStart', Format(EncryptionKeyExists()));
+        if not EncryptionKeyExists() then
+            CreateEncryptionKey();
+        Ran := Runner.Run();
+        Observer.Observe('deleteWithKeyRan', Format(Ran));
+        if not Ran then
+            Observer.ObserveError('deleteWithKeyErr');
         Observer.Observe('enabledAfterDelete', Format(EncryptionEnabled()));
         Observer.Observe('keyExistsAfterDelete', Format(EncryptionKeyExists()));
-        asserterror DeleteEncryptionKey();
-        Observer.ObserveError('deleteTwice');
-        Observer.Observe('keyExistsEnd', Format(EncryptionKeyExists()));
+        Ran := Runner.Run();
+        Observer.Observe('deleteWithoutKeyRan', Format(Ran));
+        if not Ran then
+            Observer.ObserveError('deleteWithoutKeyErr');
+        Observer.Observe('enabledAfterSecond', Format(EncryptionEnabled()));
+        Observer.Observe('keyExistsAfterSecond', Format(EncryptionKeyExists()));
+        if not EncryptionKeyExists() then
+            CreateEncryptionKey();
+        Observer.Observe('keyExistsRestored', Format(EncryptionKeyExists()));
         Observer.Finish();
     end;
 }

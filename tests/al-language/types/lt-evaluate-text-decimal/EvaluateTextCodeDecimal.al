@@ -4,7 +4,7 @@
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
 // Facts: Evaluate into a Text and a Code[n] with and without a format number (0, 1, 2, 9): the stored value and its length for leading and trailing blanks,
 //   text longer than the variable, lower case; Evaluate into a Decimal for mixed letter and digit text ('attributeValue1', 'uri1', 'EU1', '12D', '1E3', '1,5', ...):
-//   which are rejected, the error text and code, and the value left in the variable; the same with format number 9.
+//   which are rejected, the error text and code (read from the same Evaluate with the result left unused, because a used result sets no error), and the value left in the variable; the same with format number 9.
 // BC versions: all (CI)
 
 codeunit 74889 "LT EVT Tests"
@@ -44,6 +44,17 @@ codeunit 74889 "LT EVT Tests"
         end;
     end;
 
+    [TryFunction]
+    local procedure TryEvalDec(Input: Text; Format2: Integer)
+    var
+        D: Decimal;
+    begin
+        if Format2 < 0 then
+            Evaluate(D, Input)
+        else
+            Evaluate(D, Input, Format2);
+    end;
+
     local procedure EvDec(var Observer: Codeunit "Probe Observer"; Tag: Text; Input: Text; Format2: Integer)
     var
         D: Decimal;
@@ -58,7 +69,8 @@ codeunit 74889 "LT EVT Tests"
         if Ok then
             Observer.Observe(Tag + 'Value', Format(D, 0, 9))
         else begin
-            Observer.ObserveError(Tag + 'Err');
+            if not TryEvalDec(Input, Format2) then
+                Observer.ObserveError(Tag + 'Err');
             Observer.Observe(Tag + 'Kept', Format(D, 0, 9));
         end;
     end;
@@ -80,7 +92,45 @@ codeunit 74889 "LT EVT Tests"
         EvText(Observer, 'lead9', '  abc', 9);
         EvText(Observer, 'trail9', 'abc  ', 9);
         EvText(Observer, 'amp9', 'a&amp;b', 9);
-        Observer.Finish();
+        Observer.Expect('plain0Ok', 'Yes');
+        Observer.Expect('plain0Value', '[abc] len=3');
+        Observer.Expect('lead0Ok', 'Yes');
+        Observer.Expect('lead0Value', '[  abc] len=5');
+        Observer.Expect('trail0Ok', 'Yes');
+        Observer.Expect('trail0Value', '[abc  ] len=5');
+        Observer.Expect('empty0Ok', 'Yes');
+        Observer.Expect('empty0Value', '[] len=0');
+        Observer.Expect('blank0Ok', 'Yes');
+        Observer.Expect('blank0Value', '[   ] len=3');
+        Observer.Expect('plain1Ok', 'Yes');
+        Observer.Expect('plain1Value', '[abc] len=3');
+        Observer.Expect('lead1Ok', 'Yes');
+        Observer.Expect('lead1Value', '[  abc] len=5');
+        Observer.Expect('trail1Ok', 'Yes');
+        Observer.Expect('trail1Value', '[abc  ] len=5');
+        Observer.Expect('empty1Ok', 'Yes');
+        Observer.Expect('empty1Value', '[] len=0');
+        Observer.Expect('blank1Ok', 'Yes');
+        Observer.Expect('blank1Value', '[   ] len=3');
+        Observer.Expect('plain2Ok', 'Yes');
+        Observer.Expect('plain2Value', '[abc] len=3');
+        Observer.Expect('lead2Ok', 'Yes');
+        Observer.Expect('lead2Value', '[  abc] len=5');
+        Observer.Expect('trail2Ok', 'Yes');
+        Observer.Expect('trail2Value', '[abc  ] len=5');
+        Observer.Expect('empty2Ok', 'Yes');
+        Observer.Expect('empty2Value', '[] len=0');
+        Observer.Expect('blank2Ok', 'Yes');
+        Observer.Expect('blank2Value', '[   ] len=3');
+        Observer.Expect('plain9Ok', 'Yes');
+        Observer.Expect('plain9Value', '[abc] len=3');
+        Observer.Expect('lead9Ok', 'Yes');
+        Observer.Expect('lead9Value', '[  abc] len=5');
+        Observer.Expect('trail9Ok', 'Yes');
+        Observer.Expect('trail9Value', '[abc  ] len=5');
+        Observer.Expect('amp9Ok', 'Yes');
+        Observer.Expect('amp9Value', '[a&amp;b] len=7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +151,63 @@ codeunit 74889 "LT EVT Tests"
         EvCode(Observer, 'lower9', 'abc', 9);
         EvCode(Observer, 'trailFits9', 'abcde   ', 9);
         EvCode(Observer, 'tooLong9', 'abcdef', 9);
-        Observer.Finish();
+        Observer.Expect('lower0Ok', 'Yes');
+        Observer.Expect('lower0Value', '[ABC] len=3');
+        Observer.Expect('exact0Ok', 'Yes');
+        Observer.Expect('exact0Value', '[ABCDE] len=5');
+        Observer.Expect('trailFits0Ok', 'Yes');
+        Observer.Expect('trailFits0Value', '[ABCDE] len=5');
+        Observer.Expect('tooLong0Ok', 'No');
+        Observer.Expect('tooLong0Err|text', 'The length of the string is 6, but it must be less than or equal to 5 characters. Value: abcdef');
+        Observer.Expect('tooLong0Err|code', 'StringLengthExceeded');
+        Observer.Expect('tooLong0Kept', '[BEF]');
+        Observer.Expect('leadBlank0Ok', 'Yes');
+        Observer.Expect('leadBlank0Value', '[ABC] len=3');
+        Observer.Expect('leadFull0Ok', 'Yes');
+        Observer.Expect('leadFull0Value', '[ABCDE] len=5');
+        Observer.Expect('blank0Ok', 'Yes');
+        Observer.Expect('blank0Value', '[] len=0');
+        Observer.Expect('lower1Ok', 'Yes');
+        Observer.Expect('lower1Value', '[ABC] len=3');
+        Observer.Expect('exact1Ok', 'Yes');
+        Observer.Expect('exact1Value', '[ABCDE] len=5');
+        Observer.Expect('trailFits1Ok', 'Yes');
+        Observer.Expect('trailFits1Value', '[ABCDE] len=5');
+        Observer.Expect('tooLong1Ok', 'No');
+        Observer.Expect('tooLong1Err|text', 'The length of the string is 6, but it must be less than or equal to 5 characters. Value: abcdef');
+        Observer.Expect('tooLong1Err|code', 'StringLengthExceeded');
+        Observer.Expect('tooLong1Kept', '[BEF]');
+        Observer.Expect('leadBlank1Ok', 'Yes');
+        Observer.Expect('leadBlank1Value', '[ABC] len=3');
+        Observer.Expect('leadFull1Ok', 'Yes');
+        Observer.Expect('leadFull1Value', '[ABCDE] len=5');
+        Observer.Expect('blank1Ok', 'Yes');
+        Observer.Expect('blank1Value', '[] len=0');
+        Observer.Expect('lower2Ok', 'Yes');
+        Observer.Expect('lower2Value', '[ABC] len=3');
+        Observer.Expect('exact2Ok', 'Yes');
+        Observer.Expect('exact2Value', '[ABCDE] len=5');
+        Observer.Expect('trailFits2Ok', 'Yes');
+        Observer.Expect('trailFits2Value', '[ABCDE] len=5');
+        Observer.Expect('tooLong2Ok', 'No');
+        Observer.Expect('tooLong2Err|text', 'The length of the string is 6, but it must be less than or equal to 5 characters. Value: abcdef');
+        Observer.Expect('tooLong2Err|code', 'StringLengthExceeded');
+        Observer.Expect('tooLong2Kept', '[BEF]');
+        Observer.Expect('leadBlank2Ok', 'Yes');
+        Observer.Expect('leadBlank2Value', '[ABC] len=3');
+        Observer.Expect('leadFull2Ok', 'Yes');
+        Observer.Expect('leadFull2Value', '[ABCDE] len=5');
+        Observer.Expect('blank2Ok', 'Yes');
+        Observer.Expect('blank2Value', '[] len=0');
+        Observer.Expect('lower9Ok', 'Yes');
+        Observer.Expect('lower9Value', '[ABC] len=3');
+        Observer.Expect('trailFits9Ok', 'Yes');
+        Observer.Expect('trailFits9Value', '[ABCDE] len=5');
+        Observer.Expect('tooLong9Ok', 'No');
+        Observer.Expect('tooLong9Err|text', 'The length of the string is 6, but it must be less than or equal to 5 characters. Value: abcdef');
+        Observer.Expect('tooLong9Err|code', 'StringLengthExceeded');
+        Observer.Expect('tooLong9Kept', '[BEF]');
+        Observer.Verify();
     end;
 
     [Test]

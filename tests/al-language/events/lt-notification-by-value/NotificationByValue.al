@@ -87,7 +87,10 @@ codeunit 74882 "LT NBV Tests"
         N.Message('original');
         Pub.ByValue(N);
         Describe(Observer, 'afterByValue', N);
-        Observer.Finish();
+        Observer.Expect('afterByValue.hasData', 'Yes');
+        Observer.Expect('afterByValue.data', 'inCallee');
+        Observer.Expect('afterByValue.message', 'messageInCallee');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +104,10 @@ codeunit 74882 "LT NBV Tests"
         N.SetData('key', 'original');
         Pub.ByValue(N);
         Describe(Observer, 'afterByValue', N);
-        Observer.Finish();
+        Observer.Expect('afterByValue.hasData', 'Yes');
+        Observer.Expect('afterByValue.data', 'inCallee');
+        Observer.Expect('afterByValue.message', 'messageInCallee');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +120,10 @@ codeunit 74882 "LT NBV Tests"
         N.Message('original');
         Pub.ByVar(N);
         Describe(Observer, 'afterByVar', N);
-        Observer.Finish();
+        Observer.Expect('afterByVar.hasData', 'Yes');
+        Observer.Expect('afterByVar.data', 'inCallee');
+        Observer.Expect('afterByVar.message', 'messageInCallee');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +136,8 @@ codeunit 74882 "LT NBV Tests"
         N.Message('original');
         N.SetData('key', 'x');
         Observer.Observe('calleeSees', Pub.ByValueReadOnly(N));
-        Observer.Finish();
+        Observer.Expect('calleeSees', 'original/Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +154,13 @@ codeunit 74882 "LT NBV Tests"
         Copy2.Message('changedCopyMessage');
         Describe(Observer, 'original', N);
         Describe(Observer, 'copy', Copy2);
-        Observer.Finish();
+        Observer.Expect('original.hasData', 'Yes');
+        Observer.Expect('original.data', 'original');
+        Observer.Expect('original.message', 'original');
+        Observer.Expect('copy.hasData', 'Yes');
+        Observer.Expect('copy.data', 'changedCopy');
+        Observer.Expect('copy.message', 'changedCopyMessage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +173,10 @@ codeunit 74882 "LT NBV Tests"
         N.Message('original');
         Pub.Raise(N);
         Describe(Observer, 'afterEvent', N);
-        Observer.Finish();
+        Observer.Expect('afterEvent.hasData', 'Yes');
+        Observer.Expect('afterEvent.data', 'inSubscriber');
+        Observer.Expect('afterEvent.message', 'messageInSubscriber');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,6 +189,9 @@ codeunit 74882 "LT NBV Tests"
         N.Message('original');
         Pub.RaiseVar(N);
         Describe(Observer, 'afterEventVar', N);
-        Observer.Finish();
+        Observer.Expect('afterEventVar.hasData', 'Yes');
+        Observer.Expect('afterEventVar.data', 'inSubscriberVar');
+        Observer.Expect('afterEventVar.message', 'messageInSubscriberVar');
+        Observer.Verify();
     end;
 }

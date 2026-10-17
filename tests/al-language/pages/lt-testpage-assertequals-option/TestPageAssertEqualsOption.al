@@ -127,7 +127,26 @@ codeunit 74885 "LT TAO Tests"
         CaseTxt(Observer, 'textBlank-int0', '', 0);
         CaseTxt(Observer, 'text0-int0', '0', 0);
         CaseTxt(Observer, 'textTrue-bool', 'Yes', true);
-        Observer.Finish();
+        Observer.Expect('text5-int5', 'Yes');
+        Observer.Expect('text5-text5', 'Yes');
+        Observer.Expect('text5-int6', 'No');
+        Observer.Expect('text5-int6Err|text', 'AssertEquals for Field: Txt Expected = ''6'', Actual = ''5''');
+        Observer.Expect('text5-int6Err|code', 'TestAssertEquals');
+        Observer.Expect('text05-int5', 'No');
+        Observer.Expect('text05-int5Err|text', 'AssertEquals for Field: Txt Expected = ''5'', Actual = ''05''');
+        Observer.Expect('text05-int5Err|code', 'TestAssertEquals');
+        Observer.Expect('text5-big5', 'Yes');
+        Observer.Expect('text5.5-dec5.5', 'Yes');
+        Observer.Expect('text5-dec5', 'Yes');
+        Observer.Expect('textAbc-int5', 'No');
+        Observer.Expect('textAbc-int5Err|text', 'AssertEquals for Field: Txt Expected = ''5'', Actual = ''abc''');
+        Observer.Expect('textAbc-int5Err|code', 'TestAssertEquals');
+        Observer.Expect('textBlank-int0', 'No');
+        Observer.Expect('textBlank-int0Err|text', 'AssertEquals for Field: Txt Expected = ''0'', Actual = ''''');
+        Observer.Expect('textBlank-int0Err|code', 'TestAssertEquals');
+        Observer.Expect('text0-int0', 'Yes');
+        Observer.Expect('textTrue-bool', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -147,7 +166,21 @@ codeunit 74885 "LT TAO Tests"
         CaseCde(Observer, 'code5.5-dec5.5', '5.5', Dec);
         CaseCde(Observer, 'codeAbc-text-abc', 'ABC', 'abc');
         CaseCde(Observer, 'codeBlank-int0', '', 0);
-        Observer.Finish();
+        Observer.Expect('code5-int5', 'Yes');
+        Observer.Expect('code5-text5', 'Yes');
+        Observer.Expect('code5-int6', 'No');
+        Observer.Expect('code5-int6Err|text', 'AssertEquals for Field: Cde Expected = ''6'', Actual = ''5''');
+        Observer.Expect('code5-int6Err|code', 'TestAssertEquals');
+        Observer.Expect('code05-int5', 'No');
+        Observer.Expect('code05-int5Err|text', 'AssertEquals for Field: Cde Expected = ''5'', Actual = ''05''');
+        Observer.Expect('code05-int5Err|code', 'TestAssertEquals');
+        Observer.Expect('code5-big5', 'Yes');
+        Observer.Expect('code5.5-dec5.5', 'Yes');
+        Observer.Expect('codeAbc-text-abc', 'Yes');
+        Observer.Expect('codeBlank-int0', 'No');
+        Observer.Expect('codeBlank-int0Err|text', 'AssertEquals for Field: Cde Expected = ''0'', Actual = ''''');
+        Observer.Expect('codeBlank-int0Err|code', 'TestAssertEquals');
+        Observer.Verify();
     end;
 
     [Test]
@@ -165,7 +198,10 @@ codeunit 74885 "LT TAO Tests"
         TP.Close();
         Row.Get(1);
         Observer.Observe('stored', Format(OptNo(Row)));
-        Observer.Finish();
+        Observer.Expect('start', 'A');
+        Observer.Expect('afterMember', '[ ]');
+        Observer.Expect('stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -182,7 +218,9 @@ codeunit 74885 "LT TAO Tests"
         TP.Close();
         Row.Get(1);
         Observer.Observe('stored', Format(OptNo(Row)));
-        Observer.Finish();
+        Observer.Expect('afterSpace', '[ ]');
+        Observer.Expect('stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -194,7 +232,8 @@ codeunit 74885 "LT TAO Tests"
     begin
         Seed('', '', 1);
         TP.OpenEdit();
-        TP.Opt.SetValue('');
+        asserterror TP.Opt.SetValue('');
+        Observer.ObserveError('setEmpty');
         Observer.Observe('afterEmpty', '[' + TP.Opt.Value() + ']');
         TP.Close();
         Row.Get(1);
@@ -220,6 +259,10 @@ codeunit 74885 "LT TAO Tests"
         TP.Close();
         Row.Get(1);
         Observer.Observe('stored', Format(OptNo(Row)));
-        Observer.Finish();
+        Observer.Expect('afterB', '[B]');
+        Observer.Expect('afterMemberA', '[A]');
+        Observer.Expect('afterInteger2', '[B]');
+        Observer.Expect('stored', '2');
+        Observer.Verify();
     end;
 }

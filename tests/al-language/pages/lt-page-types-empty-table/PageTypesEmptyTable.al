@@ -213,7 +213,12 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('codeEditable', Format(TP."Code".Editable()));
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];OnNewRecord code=[] name=[init];OnAfterGetCurrRecord code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('name', '');
+        Observer.Expect('codeEditable', 'No');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -230,7 +235,12 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('codeEditable', Format(TP."Code".Editable()));
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('name', '');
+        Observer.Expect('codeEditable', 'No');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,7 +257,12 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('codeEditable', Format(TP."Code".Editable()));
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];OnNewRecord code=[] name=[init];OnAfterGetCurrRecord code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('name', '');
+        Observer.Expect('codeEditable', 'No');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -264,7 +279,12 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('codeEditable', Format(TP."Code".Editable()));
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('name', '');
+        Observer.Expect('codeEditable', 'No');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -281,7 +301,12 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('codeEditable', Format(TP."Code".Editable()));
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];OnNewRecord code=[] name=[init];OnAfterGetCurrRecord code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('name', '');
+        Observer.Expect('codeEditable', 'No');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -298,7 +323,12 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('codeEditable', Format(TP."Code".Editable()));
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('name', '');
+        Observer.Expect('codeEditable', 'No');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +343,10 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('code', TP."Code".Value());
         Observer.Observe('name', TP.Name.Value());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];OnAfterGetRecord code=[R1] name=[row one];OnAfterGetCurrRecord code=[R1] name=[row one];');
+        Observer.Expect('code', 'R1');
+        Observer.Expect('name', 'row one');
+        Observer.Verify();
     end;
 
     [Test]
@@ -328,7 +361,10 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('code', TP."Code".Value());
         Observer.Observe('name', TP.Name.Value());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];OnAfterGetRecord code=[R1] name=[row one];OnAfterGetCurrRecord code=[R1] name=[row one];');
+        Observer.Expect('code', 'R1');
+        Observer.Expect('name', 'row one');
+        Observer.Verify();
     end;
 
     [Test]
@@ -343,6 +379,9 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('code', TP."Code".Value());
         Observer.Observe('name', TP.Name.Value());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'OnOpenPage code=[] name=[init];OnAfterGetRecord code=[R1] name=[row one];OnAfterGetCurrRecord code=[R1] name=[row one];');
+        Observer.Expect('code', 'R1');
+        Observer.Expect('name', 'row one');
+        Observer.Verify();
     end;
 }

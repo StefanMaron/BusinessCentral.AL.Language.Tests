@@ -1,10 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/currpage/currpage-setselectionfilter-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); table 74870, page 74871, test codeunit 74892
+// Fixtures used: Probe Observer (codeunit 69160); table 74870, page 74871, store 74791, test codeunit 74892
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
 // Facts: CurrPage.SetSelectionFilter(Sel) from a procedure of a list page, called by a typed modal handler, in these states:
 //   (1) no current row: the page view is filtered to nothing while the table has rows; (2) called in OnOpenPage, before a row is current;
-//   (3) the baseline: a current row; and the marks of Sel before the call: (4) marks without MarkedOnly, (5) MarkedOnly(true) without marks,
+//   (3) the same call from a typed handler (the page shows no positioned row there) and, for contrast, from an action of a TestPage positioned on a row; and the marks of Sel before the call: (4) marks without MarkedOnly, (5) MarkedOnly(true) without marks,
 //   (6) a mark on the selected row, (7) a mark on another row with MarkedOnly(true). After each: row count, GetFilters, MarkedOnly, the Id of the page's current row.
 // BC versions: all (CI)
 
@@ -19,6 +19,24 @@ table 74870 "LT SSN Row"
     }
 
     keys { key(PK; Id) { Clustered = true; } }
+}
+
+codeunit 74791 "LT SSN Store"
+{
+    SingleInstance = true;
+
+    var
+        Kept: Record "LT SSN Row";
+
+    procedure Keep(var Sel: Record "LT SSN Row")
+    begin
+        Kept.Copy(Sel);
+    end;
+
+    procedure Get(var Sel: Record "LT SSN Row")
+    begin
+        Sel.Copy(Kept);
+    end;
 }
 
 page 74871 "LT SSN List"
@@ -36,6 +54,26 @@ page 74871 "LT SSN List"
             {
                 field(Id; Rec.Id) { ApplicationArea = All; }
                 field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(CaptureAction)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Store: Codeunit "LT SSN Store";
+                    LocalSel: Record "LT SSN Row";
+                begin
+                    CurrPage.SetSelectionFilter(LocalSel);
+                    Store.Keep(LocalSel);
+                end;
             }
         }
     }
@@ -144,7 +182,12 @@ codeunit 74892 "LT SSN Tests"
         P.RunModal();
         Obs.Observe('currentId', Format(Current));
         Describe('', Sel);
-        Obs.Finish();
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Id: 0');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
     end;
 
     [Test]
@@ -161,12 +204,17 @@ codeunit 74892 "LT SSN Tests"
         P.GetOpenSel(OpenResult);
         Obs.Observe('currentId', Format(Current));
         Describe('', OpenResult);
-        Obs.Finish();
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '5');
+        Obs.Expect('Filters', '');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'No');
+        Obs.Verify();
     end;
 
     [Test]
     [HandlerFunctions('CaptureHandler')]
-    procedure Baseline_CurrentRow()
+    procedure HandlerOpened_NoRowPositioned()
     var
         P: Page "LT SSN List";
     begin
@@ -191,7 +239,14 @@ codeunit 74892 "LT SSN Tests"
         Describe('', Sel);
         Sel.MarkedOnly(true);
         Obs.Observe('markedCountAfter', Format(Sel.Count()));
-        Obs.Finish();
+        Obs.Expect('beforeMarkedOnly', 'No');
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Id: 0');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Expect('markedCountAfter', '0');
+        Obs.Verify();
     end;
 
     [Test]
@@ -206,7 +261,13 @@ codeunit 74892 "LT SSN Tests"
         P.RunModal();
         Obs.Observe('currentId', Format(Current));
         Describe('', Sel);
-        Obs.Finish();
+        Obs.Expect('beforeCount', '0');
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Marked: Yes, Id: 0');
+        Obs.Expect('MarkedOnly', 'Yes');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
     end;
 
     [Test]
@@ -220,7 +281,12 @@ codeunit 74892 "LT SSN Tests"
         P.RunModal();
         Obs.Observe('currentId', Format(Current));
         Describe('', Sel);
-        Obs.Finish();
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Id: 0');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
     end;
 
     [Test]
@@ -235,6 +301,43 @@ codeunit 74892 "LT SSN Tests"
         P.RunModal();
         Obs.Observe('currentId', Format(Current));
         Describe('', Sel);
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Marked: Yes, Id: 0');
+        Obs.Expect('MarkedOnly', 'Yes');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure TestPage_RowSelected()
+    var
+        Store: Codeunit "LT SSN Store";
+        Captured: Record "LT SSN Row";
+        TP: TestPage "LT SSN List";
+    begin
+        Seed();
+        TP.OpenView();
+        TP.GoToKey(3);
+        TP.CaptureAction.Invoke();
+        Store.Get(Captured);
+        Describe('', Captured);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure TestPage_FilteredToNothing()
+    var
+        Store: Codeunit "LT SSN Store";
+        Captured: Record "LT SSN Row";
+        TP: TestPage "LT SSN List";
+    begin
+        Seed();
+        TP.OpenView();
+        TP.Filter.SetFilter(Id, '99');
+        TP.CaptureAction.Invoke();
+        Store.Get(Captured);
+        Describe('', Captured);
         Obs.Finish();
     end;
 }

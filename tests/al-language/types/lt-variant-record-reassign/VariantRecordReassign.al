@@ -88,7 +88,16 @@ codeunit 74883 "LT VRR Tests"
         Describe(Observer, 'second', V);
         V := A;
         Describe(Observer, 'third', V);
-        Observer.Finish();
+        Observer.Expect('first.isRecord', 'Yes');
+        Observer.Expect('first.table', '74882 LT VRR Alpha');
+        Observer.Expect('first.values', 'Id=7;AlphaText=alpha;');
+        Observer.Expect('second.isRecord', 'Yes');
+        Observer.Expect('second.table', '74883 LT VRR Beta');
+        Observer.Expect('second.values', 'Code=BCODE;BetaText=beta;BetaNumber=3;');
+        Observer.Expect('third.isRecord', 'Yes');
+        Observer.Expect('third.table', '74882 LT VRR Alpha');
+        Observer.Expect('third.values', 'Id=7;AlphaText=alpha;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +117,13 @@ codeunit 74883 "LT VRR Tests"
         Describe(Observer, 'same', V);
         A1.AlphaText := 'changedAfterAssign';
         Describe(Observer, 'copyNotShared', V);
-        Observer.Finish();
+        Observer.Expect('same.isRecord', 'Yes');
+        Observer.Expect('same.table', '74882 LT VRR Alpha');
+        Observer.Expect('same.values', 'Id=2;AlphaText=two;');
+        Observer.Expect('copyNotShared.isRecord', 'Yes');
+        Observer.Expect('copyNotShared.table', '74882 LT VRR Alpha');
+        Observer.Expect('copyNotShared.values', 'Id=2;AlphaText=two;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,7 +151,11 @@ codeunit 74883 "LT VRR Tests"
         Observer.Observe('readBeta', Format(Ok) + ' ' + B2.Code + ' ' + B2.BetaText);
         if not Ok then
             Observer.ObserveError('readBetaErr');
-        Observer.Finish();
+        Observer.Expect('readAlpha', 'No 0');
+        Observer.Expect('readAlphaErr|text', 'The requested operation is not supported.');
+        Observer.Expect('readAlphaErr|code', 'NotSupportedOperation');
+        Observer.Expect('readBeta', 'Yes BCODE beta');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +177,10 @@ codeunit 74883 "LT VRR Tests"
         RR.GetTable(V);
         Observer.Observe('afterBetaIsTemporary', Format(RR.IsTemporary()));
         Observer.Observe('afterBetaNumber', Format(RR.Number()));
-        Observer.Finish();
+        Observer.Expect('tempIsTemporary', 'Yes');
+        Observer.Expect('afterBetaIsTemporary', 'No');
+        Observer.Expect('afterBetaNumber', '74883');
+        Observer.Verify();
     end;
 
     [Test]
@@ -182,6 +204,13 @@ codeunit 74883 "LT VRR Tests"
         V := A;
         Observer.Observe('backToRecordIsRecordRef', Format(V.IsRecordRef()));
         Observer.Observe('backToRecordIsRecord', Format(V.IsRecord()));
-        Observer.Finish();
+        Observer.Expect('record.isRecord', 'Yes');
+        Observer.Expect('record.table', '74882 LT VRR Alpha');
+        Observer.Expect('record.values', 'Id=3;AlphaText=three;');
+        Observer.Expect('recordRefIsRecord', 'No');
+        Observer.Expect('recordRefIsRecordRef', 'Yes');
+        Observer.Expect('backToRecordIsRecordRef', 'No');
+        Observer.Expect('backToRecordIsRecord', 'Yes');
+        Observer.Verify();
     end;
 }

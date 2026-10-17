@@ -181,7 +181,15 @@ codeunit 74793 "LT PBK Tests"
         TP.Close();
         Observer.Observe('afterClose', Log.Take());
         ObserveDb(Observer, 'db');
-        Observer.Finish();
+        Observer.Expect('afterOpen', 'HostOnNewRecord;LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];');
+        Observer.Expect('afterLineNo', 'HostOnInsert code=[] descr=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];');
+        Observer.Expect('afterLineDescr', 'LineOnInsert host=[] no=1;');
+        Observer.Expect('afterClose', '');
+        Observer.Expect('dbHosts', '1');
+        Observer.Expect('dbLines', '1');
+        Observer.Expect('dbHostKey', '[]');
+        Observer.Expect('dbLineHostCode', '[] no=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -200,7 +208,14 @@ codeunit 74793 "LT PBK Tests"
         TP.Close();
         Observer.Observe('afterClose', Log.Take());
         ObserveDb(Observer, 'db');
-        Observer.Finish();
+        Observer.Expect('afterHostDescr', 'HostOnNewRecord;LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];HostOnInsert code=[] descr=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];');
+        Observer.Expect('afterLineNo', 'HostOnModify code=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];');
+        Observer.Expect('afterClose', 'LineOnInsert host=[] no=1;');
+        Observer.Expect('dbHosts', '1');
+        Observer.Expect('dbLines', '1');
+        Observer.Expect('dbHostKey', '[]');
+        Observer.Expect('dbLineHostCode', '[] no=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -220,7 +235,13 @@ codeunit 74793 "LT PBK Tests"
         TP.Close();
         Observer.Observe('afterClose', Log.Take());
         ObserveDb(Observer, 'db');
-        Observer.Finish();
+        Observer.Expect('afterNewLine', 'HostOnNewRecord;LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];HostOnInsert code=[] descr=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnInsert host=[] no=1;LineOnNewRecord host=[];');
+        Observer.Expect('afterClose', 'LineOnInsert host=[] no=2;');
+        Observer.Expect('dbHosts', '1');
+        Observer.Expect('dbLines', '2');
+        Observer.Expect('dbHostKey', '[]');
+        Observer.Expect('dbLineHostCode', '[] no=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,6 +259,12 @@ codeunit 74793 "LT PBK Tests"
         TP.Close();
         Observer.Observe('afterClose', Log.Take());
         ObserveDb(Observer, 'db');
-        Observer.Finish();
+        Observer.Expect('afterKey', 'HostOnNewRecord;LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];LineOnNewRecord host=[];');
+        Observer.Expect('afterClose', 'HostOnInsert code=[H1] descr=[];LineOnNewRecord host=[H1];LineOnNewRecord host=[H1];LineOnNewRecord host=[H1];LineOnInsert host=[H1] no=1;');
+        Observer.Expect('dbHosts', '1');
+        Observer.Expect('dbLines', '1');
+        Observer.Expect('dbHostKey', '[H1]');
+        Observer.Expect('dbLineHostCode', '[H1] no=1');
+        Observer.Verify();
     end;
 }

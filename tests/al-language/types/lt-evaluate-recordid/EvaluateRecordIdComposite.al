@@ -176,7 +176,19 @@ codeunit 74891 "LT EVR Tests"
         T.B := '';
         RR.GetTable(T);
         RoundTrip(Observer, 'ccBlankB', RidOf(RR));
-        Observer.Finish();
+        Observer.Expect('ccText', 'LT EVR CodeCode: AA,BB');
+        Observer.Expect('ccOk', 'Yes');
+        Observer.Expect('ccBack', 'LT EVR CodeCode: AA,BB');
+        Observer.Expect('ccEqual', 'Yes');
+        Observer.Expect('ccBlankAText', 'LT EVR CodeCode: "",BB');
+        Observer.Expect('ccBlankAOk', 'Yes');
+        Observer.Expect('ccBlankABack', 'LT EVR CodeCode: "",BB');
+        Observer.Expect('ccBlankAEqual', 'Yes');
+        Observer.Expect('ccBlankBText', 'LT EVR CodeCode: AA,""');
+        Observer.Expect('ccBlankBOk', 'Yes');
+        Observer.Expect('ccBlankBBack', 'LT EVR CodeCode: AA,""');
+        Observer.Expect('ccBlankBEqual', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +205,15 @@ codeunit 74891 "LT EVR Tests"
         T.Kind := T.Kind::Alpha;
         RR.GetTable(T);
         RoundTrip(Observer, 'ecAlpha', RidOf(RR));
-        Observer.Finish();
+        Observer.Expect('ecText', 'LT EVR EnumCode: Beta,BB');
+        Observer.Expect('ecOk', 'Yes');
+        Observer.Expect('ecBack', 'LT EVR EnumCode: Beta,BB');
+        Observer.Expect('ecEqual', 'Yes');
+        Observer.Expect('ecAlphaText', 'LT EVR EnumCode: Alpha,BB');
+        Observer.Expect('ecAlphaOk', 'Yes');
+        Observer.Expect('ecAlphaBack', 'LT EVR EnumCode: Alpha,BB');
+        Observer.Expect('ecAlphaEqual', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -211,7 +231,15 @@ codeunit 74891 "LT EVR Tests"
         T.N := -7;
         RR.GetTable(T);
         RoundTrip(Observer, 'iccNegative', RidOf(RR));
-        Observer.Finish();
+        Observer.Expect('iccText', 'LT EVR IntCodeCode: 42,AA,BB');
+        Observer.Expect('iccOk', 'Yes');
+        Observer.Expect('iccBack', 'LT EVR IntCodeCode: 42,AA,BB');
+        Observer.Expect('iccEqual', 'Yes');
+        Observer.Expect('iccNegativeText', 'LT EVR IntCodeCode: -7,AA,BB');
+        Observer.Expect('iccNegativeOk', 'Yes');
+        Observer.Expect('iccNegativeBack', 'LT EVR IntCodeCode: -7,AA,BB');
+        Observer.Expect('iccNegativeEqual', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +256,15 @@ codeunit 74891 "LT EVR Tests"
         T.D := 0D;
         RR.GetTable(T);
         RoundTrip(Observer, 'dcBlank', RidOf(RR));
-        Observer.Finish();
+        Observer.Expect('dcText', 'LT EVR DateCode: 03/05/24,BB');
+        Observer.Expect('dcOk', 'Yes');
+        Observer.Expect('dcBack', 'LT EVR DateCode: 03/05/24,BB');
+        Observer.Expect('dcEqual', 'Yes');
+        Observer.Expect('dcBlankText', 'LT EVR DateCode: "",BB');
+        Observer.Expect('dcBlankOk', 'Yes');
+        Observer.Expect('dcBlankBack', 'LT EVR DateCode: "",BB');
+        Observer.Expect('dcBlankEqual', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -256,7 +292,27 @@ codeunit 74891 "LT EVR Tests"
         S.A := '"q"';
         RR.GetTable(S);
         RoundTrip(Observer, 'dquote', RidOf(RR));
-        Observer.Finish();
+        Observer.Expect('commaText', 'LT EVR CodeCode: "X,Y",Z');
+        Observer.Expect('commaOk', 'Yes');
+        Observer.Expect('commaBack', 'LT EVR CodeCode: "X,Y",Z');
+        Observer.Expect('commaEqual', 'Yes');
+        Observer.Expect('commaSecondText', 'LT EVR CodeCode: X,"Y,Z"');
+        Observer.Expect('commaSecondOk', 'Yes');
+        Observer.Expect('commaSecondBack', 'LT EVR CodeCode: X,"Y,Z"');
+        Observer.Expect('commaSecondEqual', 'Yes');
+        Observer.Expect('commaSingleText', 'LT EVR Single: "A,B,C"');
+        Observer.Expect('commaSingleOk', 'Yes');
+        Observer.Expect('commaSingleBack', 'LT EVR Single: "A,B,C"');
+        Observer.Expect('commaSingleEqual', 'Yes');
+        Observer.Expect('quoteText', 'LT EVR Single: IT''S');
+        Observer.Expect('quoteOk', 'Yes');
+        Observer.Expect('quoteBack', 'LT EVR Single: IT''S');
+        Observer.Expect('quoteEqual', 'Yes');
+        Observer.Expect('dquoteText', 'LT EVR Single: """Q"""');
+        Observer.Expect('dquoteOk', 'Yes');
+        Observer.Expect('dquoteBack', 'LT EVR Single: """Q"""');
+        Observer.Expect('dquoteEqual', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -276,7 +332,37 @@ codeunit 74891 "LT EVR Tests"
         Eval(Observer, 'badDate', 'LT EVR DateCode: notadate,B');
         Eval(Observer, 'codeTooLong', 'LT EVR CodeCode: AAAAAAAAAAAA,B');
         Eval(Observer, 'idNumber', 'LT EVR EnumCode: 1,B');
-        Observer.Finish();
+        Observer.Expect('exactOk', 'Yes');
+        Observer.Expect('exactBack', 'LT EVR CodeCode: A,B');
+        Observer.Expect('tooFewOk', 'Yes');
+        Observer.Expect('tooFewBack', 'LT EVR CodeCode: A');
+        Observer.Expect('tooManyOk', 'No');
+        Observer.Expect('tooManyErr|text', 'The value "LT EVR CodeCode: A,B,C" can''t be evaluated into type RecordID.');
+        Observer.Expect('tooManyErr|code', 'Evaluate');
+        Observer.Expect('noValuesOk', 'Yes');
+        Observer.Expect('noValuesBack', 'LT EVR CodeCode');
+        Observer.Expect('noColonOk', 'Yes');
+        Observer.Expect('noColonBack', 'LT EVR CodeCode');
+        Observer.Expect('tooFew3Ok', 'Yes');
+        Observer.Expect('tooFew3Back', 'LT EVR IntCodeCode: 1,A');
+        Observer.Expect('tooMany1Ok', 'No');
+        Observer.Expect('tooMany1Err|text', 'The value "LT EVR Single: A,B" can''t be evaluated into type RecordID.');
+        Observer.Expect('tooMany1Err|code', 'Evaluate');
+        Observer.Expect('badIntegerOk', 'No');
+        Observer.Expect('badIntegerErr|text', 'The value "x" can''t be evaluated into type Integer.');
+        Observer.Expect('badIntegerErr|code', 'Evaluate');
+        Observer.Expect('badEnumOk', 'No');
+        Observer.Expect('badEnumErr|text', '''Gamma'' is not an option. The existing options are: Alpha,Beta');
+        Observer.Expect('badEnumErr|code', 'InvalidOptionString');
+        Observer.Expect('badDateOk', 'No');
+        Observer.Expect('badDateErr|text', 'The format of the Date ''notadate'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('badDateErr|code', 'Evaluate');
+        Observer.Expect('codeTooLongOk', 'No');
+        Observer.Expect('codeTooLongErr|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: AAAAAAAAAAAA');
+        Observer.Expect('codeTooLongErr|code', 'StringLengthExceeded');
+        Observer.Expect('idNumberOk', 'Yes');
+        Observer.Expect('idNumberBack', 'LT EVR EnumCode: Beta,B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -344,7 +430,28 @@ codeunit 74891 "LT EVR Tests"
         if not Ran then
             Observer.ObserveError('emptyUnusedErr');
         Observer.Observe('emptyUnusedResult', Format(Ev.Result()));
-        Observer.Finish();
+        Observer.Expect('start', 'LT EVR CodeCode: OLD,KEY');
+        Observer.Expect('validRan', 'Yes');
+        Observer.Expect('validReturned', 'Yes');
+        Observer.Expect('validResult', 'LT EVR CodeCode: NEW,KEY');
+        Observer.Expect('otherTableRan', 'Yes');
+        Observer.Expect('otherTableResult', 'LT EVR Single: ONE');
+        Observer.Expect('garbageRan', 'Yes');
+        Observer.Expect('garbageReturned', 'No');
+        Observer.Expect('garbageResult', 'LT EVR CodeCode: OLD,KEY');
+        Observer.Expect('garbageUnusedRan', 'No');
+        Observer.Expect('garbageUnusedErr|text', 'The value "garbage" can''t be evaluated into type RecordID.');
+        Observer.Expect('garbageUnusedErr|code', 'Evaluate');
+        Observer.Expect('garbageUnusedResult', 'LT EVR CodeCode: OLD,KEY');
+        Observer.Expect('fewRan', 'Yes');
+        Observer.Expect('fewReturned', 'Yes');
+        Observer.Expect('fewResult', 'LT EVR CodeCode: ONLY');
+        Observer.Expect('emptyRan', 'Yes');
+        Observer.Expect('emptyReturned', 'Yes');
+        Observer.Expect('emptyResult', '');
+        Observer.Expect('emptyUnusedRan', 'Yes');
+        Observer.Expect('emptyUnusedResult', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -380,6 +487,15 @@ codeunit 74891 "LT EVR Tests"
         FR := RR.Field(T.FieldNo(A));
         Ok := Evaluate(FR, 'abc');
         Observer.Observe('codeField', Format(Ok) + ' ' + Format(FR.Value));
-        Observer.Finish();
+        Observer.Expect('validUsed', 'Yes 12');
+        Observer.Expect('invalidUsed', 'No 12');
+        Observer.Expect('invalidUsedErr|text', '');
+        Observer.Expect('invalidUsedErr|code', '');
+        Observer.Expect('validUnused', 'Yes 34');
+        Observer.Expect('invalidUnused', 'No 34');
+        Observer.Expect('invalidUnusedErr|text', 'The value "x" can''t be evaluated into type Integer.');
+        Observer.Expect('invalidUnusedErr|code', 'Evaluate');
+        Observer.Expect('codeField', 'Yes ABC');
+        Observer.Verify();
     end;
 }

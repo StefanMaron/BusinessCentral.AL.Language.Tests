@@ -1,9 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-insert-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); tables 74766 (with OnInsert) and 74767 (without), codeunits 74797 (log), 74798 (runner) and 74796 (tests)
+// Fixtures used: Probe Observer (codeunit 69160); tables 74766 (with OnInsert) and 74767 (without), codeunits 74797 (log) and 74796 (tests)
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
 // Facts: Insert of a record whose primary key already exists, in a table with an OnInsert trigger and in a table without one: Insert(true) with the result left unused,
-//   Insert(true) with the result used, Insert(), Insert(false) unused and used. Whether it raised (the statement runs inside Codeunit.Run so the test survives),
+//   Insert(true) with the result used, Insert(), Insert(false) unused and used. Whether it raised (the first measurement showed that a duplicate key error inside Codeunit.Run ends the whole test with
+//   'An error occurred and the transaction is stopped', so the unused-result cases use asserterror and the used-result cases run plain),
 //   the error text and code, whether OnInsert ran (log) and in which order relative to the error, the returned value, and the row count afterwards.
 //   The own-table version of the Vendor and Item Journal Line cases of the Microsoft tests.
 // BC versions: all (CI)
@@ -63,51 +64,6 @@ codeunit 74797 "LT DIO Log"
     end;
 }
 
-codeunit 74798 "LT DIO Runner"
-{
-    var
-        Mode: Integer;
-        UseTrigger: Boolean;
-        Returned: Boolean;
-
-    procedure Setup(NewMode: Integer; NewUseTrigger: Boolean)
-    begin
-        Mode := NewMode;
-        UseTrigger := NewUseTrigger;
-        Returned := false;
-    end;
-
-    procedure ReturnedValue(): Boolean
-    begin
-        exit(Returned);
-    end;
-
-    trigger OnRun()
-    var
-        W: Record "LT DIO With Trigger";
-        N: Record "LT DIO Without Trigger";
-    begin
-        W.Id := 1;
-        W.Name := 'duplicate';
-        N.Id := 1;
-        N.Name := 'duplicate';
-        case Mode of
-            1: // unused, with trigger flag true
-                if UseTrigger then W.Insert(true) else N.Insert(true);
-            2: // used, true
-                if UseTrigger then Returned := W.Insert(true) else Returned := N.Insert(true);
-            3: // unused, no argument
-                if UseTrigger then W.Insert() else N.Insert();
-            4: // unused, false
-                if UseTrigger then W.Insert(false) else N.Insert(false);
-            5: // used, false
-                if UseTrigger then Returned := W.Insert(false) else Returned := N.Insert(false);
-            6: // used, no argument
-                if UseTrigger then Returned := W.Insert() else Returned := N.Insert();
-        end;
-    end;
-}
-
 codeunit 74796 "LT DIO Tests"
 {
     Subtype = Test;
@@ -130,79 +86,204 @@ codeunit 74796 "LT DIO Tests"
         Log.Take();
     end;
 
-    local procedure Attempt(var Observer: Codeunit "Probe Observer"; Tag: Text; Mode: Integer; UseTrigger: Boolean)
+    local procedure After(var Observer: Codeunit "Probe Observer")
     var
-        Runner: Codeunit "LT DIO Runner";
         Log: Codeunit "LT DIO Log";
         W: Record "LT DIO With Trigger";
         N: Record "LT DIO Without Trigger";
-        Ran: Boolean;
+    begin
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('countWith', Format(W.Count()));
+        Observer.Observe('countWithout', Format(N.Count()));
+        if W.Get(1) then
+            Observer.Observe('nameWith', W.Name);
+        if N.Get(1) then
+            Observer.Observe('nameWithout', N.Name);
+    end;
+
+    local procedure Dup(var W: Record "LT DIO With Trigger")
+    begin
+        W.Id := 1;
+        W.Name := 'duplicate';
+    end;
+
+    local procedure DupN(var N: Record "LT DIO Without Trigger")
+    begin
+        N.Id := 1;
+        N.Name := 'duplicate';
+    end;
+
+    [Test]
+    procedure Duplicate_WithOnInsert_InsertTrue_Unused()
+    var
+        Observer: Codeunit "Probe Observer";
+        W: Record "LT DIO With Trigger";
     begin
         Seed();
-        Runner.Setup(Mode, UseTrigger);
-        Ran := Runner.Run();
-        Observer.Observe(Tag + '.ran', Format(Ran));
-        if not Ran then
-            Observer.ObserveError(Tag + '.err')
-        else
-            Observer.Observe(Tag + '.returned', Format(Runner.ReturnedValue()));
-        Observer.Observe(Tag + '.log', Log.Take());
-        Observer.Observe(Tag + '.countWith', Format(W.Count()));
-        Observer.Observe(Tag + '.countWithout', Format(N.Count()));
-        W.Get(1);
-        N.Get(1);
-        Observer.Observe(Tag + '.nameWith', W.Name);
-        Observer.Observe(Tag + '.nameWithout', N.Name);
-    end;
-
-    [Test]
-    procedure DuplicateInsert_WithOnInsert_TrueUnused()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Attempt(Observer, 'insertTrueUnused', 1, true);
+        Dup(W);
+        asserterror W.Insert(true);
+        Observer.ObserveError('err');
+        After(Observer);
         Observer.Finish();
     end;
 
     [Test]
-    procedure DuplicateInsert_WithOnInsert_TrueUsed()
+    procedure Duplicate_WithOnInsert_InsertTrue_Used()
     var
         Observer: Codeunit "Probe Observer";
+        W: Record "LT DIO With Trigger";
+        Ok: Boolean;
     begin
-        Attempt(Observer, 'insertTrueUsed', 2, true);
+        Seed();
+        Dup(W);
+        Ok := W.Insert(true);
+        Observer.Observe('returned', Format(Ok));
+        After(Observer);
         Observer.Finish();
     end;
 
     [Test]
-    procedure DuplicateInsert_WithOnInsert_NoArgument()
+    procedure Duplicate_WithOnInsert_InsertNoArg_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        W: Record "LT DIO With Trigger";
     begin
-        Attempt(Observer, 'insertUnused', 3, true);
-        Attempt(Observer, 'insertUsed', 6, true);
+        Seed();
+        Dup(W);
+        asserterror W.Insert();
+        Observer.ObserveError('err');
+        After(Observer);
         Observer.Finish();
     end;
 
     [Test]
-    procedure DuplicateInsert_WithOnInsert_FalseArgument()
+    procedure Duplicate_WithOnInsert_InsertNoArg_Used()
     var
         Observer: Codeunit "Probe Observer";
+        W: Record "LT DIO With Trigger";
+        Ok: Boolean;
     begin
-        Attempt(Observer, 'insertFalseUnused', 4, true);
-        Attempt(Observer, 'insertFalseUsed', 5, true);
+        Seed();
+        Dup(W);
+        Ok := W.Insert();
+        Observer.Observe('returned', Format(Ok));
+        After(Observer);
         Observer.Finish();
     end;
 
     [Test]
-    procedure DuplicateInsert_WithoutOnInsert_Contrast()
+    procedure Duplicate_WithOnInsert_InsertFalse_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        W: Record "LT DIO With Trigger";
     begin
-        Attempt(Observer, 'insertTrueUnused', 1, false);
-        Attempt(Observer, 'insertTrueUsed', 2, false);
-        Attempt(Observer, 'insertUnused', 3, false);
-        Attempt(Observer, 'insertFalseUnused', 4, false);
-        Attempt(Observer, 'insertFalseUsed', 5, false);
+        Seed();
+        Dup(W);
+        asserterror W.Insert(false);
+        Observer.ObserveError('err');
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithOnInsert_InsertFalse_Used()
+    var
+        Observer: Codeunit "Probe Observer";
+        W: Record "LT DIO With Trigger";
+        Ok: Boolean;
+    begin
+        Seed();
+        Dup(W);
+        Ok := W.Insert(false);
+        Observer.Observe('returned', Format(Ok));
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithoutOnInsert_InsertTrue_Unused()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: Record "LT DIO Without Trigger";
+    begin
+        Seed();
+        DupN(N);
+        asserterror N.Insert(true);
+        Observer.ObserveError('err');
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithoutOnInsert_InsertTrue_Used()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: Record "LT DIO Without Trigger";
+        Ok: Boolean;
+    begin
+        Seed();
+        DupN(N);
+        Ok := N.Insert(true);
+        Observer.Observe('returned', Format(Ok));
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithoutOnInsert_InsertNoArg_Unused()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: Record "LT DIO Without Trigger";
+    begin
+        Seed();
+        DupN(N);
+        asserterror N.Insert();
+        Observer.ObserveError('err');
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithoutOnInsert_InsertNoArg_Used()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: Record "LT DIO Without Trigger";
+        Ok: Boolean;
+    begin
+        Seed();
+        DupN(N);
+        Ok := N.Insert();
+        Observer.Observe('returned', Format(Ok));
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithoutOnInsert_InsertFalse_Unused()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: Record "LT DIO Without Trigger";
+    begin
+        Seed();
+        DupN(N);
+        asserterror N.Insert(false);
+        Observer.ObserveError('err');
+        After(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Duplicate_WithoutOnInsert_InsertFalse_Used()
+    var
+        Observer: Codeunit "Probe Observer";
+        N: Record "LT DIO Without Trigger";
+        Ok: Boolean;
+    begin
+        Seed();
+        DupN(N);
+        Ok := N.Insert(false);
+        Observer.Observe('returned', Format(Ok));
+        After(Observer);
         Observer.Finish();
     end;
 }

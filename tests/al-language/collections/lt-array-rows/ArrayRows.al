@@ -99,7 +99,9 @@ codeunit 74888 "LT ARR Tests"
         Observer.Observe('afterClearRow2', Dump2(A));
         Clear(A[1, 3]);
         Observer.Observe('afterClearElement', Dump2(A));
-        Observer.Finish();
+        Observer.Expect('afterClearRow2', '11,12,13,14,|0,0,0,0,|31,32,33,34,|');
+        Observer.Expect('afterClearElement', '11,12,0,14,|0,0,0,0,|31,32,33,34,|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +115,10 @@ codeunit 74888 "LT ARR Tests"
         Observer.Observe('afterByValue', Dump2(A));
         RowByVar(A[2]);
         Observer.Observe('afterByVar', Dump2(A));
-        Observer.Finish();
+        Observer.Expect('byValueResult', '999,22,23,24');
+        Observer.Expect('afterByValue', '11,12,13,14,|21,22,23,24,|31,32,33,34,|');
+        Observer.Expect('afterByVar', '11,12,13,14,|999,22,23,24,|31,32,33,34,|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -125,7 +130,8 @@ codeunit 74888 "LT ARR Tests"
         Fill2(A);
         CopyArray(A[3], A[1], 1);
         Observer.Observe('copyRow3IntoRow1', Dump2(A));
-        Observer.Finish();
+        Observer.Expect('copyRow3IntoRow1', '11,12,13,14,|21,22,23,24,|11,12,13,14,|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +145,11 @@ codeunit 74888 "LT ARR Tests"
         Observer.Observe('afterByValue', Dump2(A));
         Observer.Observe('byVar', ShorterParam(A[2]));
         Observer.Observe('afterByVar', Dump2(A));
-        Observer.Finish();
+        Observer.Expect('byValue', 'len=4 r1=777 r3=23');
+        Observer.Expect('afterByValue', '11,12,13,14,|21,22,23,24,|31,32,33,34,|');
+        Observer.Expect('byVar', 'len=4 r1=777 r2=22 r3=23');
+        Observer.Expect('afterByVar', '11,12,13,14,|777,22,23,24,|31,32,33,34,|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,7 +180,22 @@ codeunit 74888 "LT ARR Tests"
         if not Ok then
             Observer.ObserveError('write7Err');
         Observer.Observe('afterWrite7', Dump2(A));
-        Observer.Finish();
+        Observer.Expect('read', 'len=4 r1=21 r4=24');
+        Observer.Expect('read5', 'No 0');
+        Observer.Expect('read5Err|text', 'Index out of bounds.');
+        Observer.Expect('read5Err|code', 'IndexOutOfBounds');
+        Observer.Expect('read6', 'No 0');
+        Observer.Expect('read6Err|text', 'Index out of bounds.');
+        Observer.Expect('read6Err|code', 'IndexOutOfBounds');
+        Observer.Expect('write5', 'No');
+        Observer.Expect('write5Err|text', 'Index out of bounds.');
+        Observer.Expect('write5Err|code', 'IndexOutOfBounds');
+        Observer.Expect('afterWrite5', '11,12,13,14,|21,22,23,24,|31,32,33,34,|');
+        Observer.Expect('write7', 'No');
+        Observer.Expect('write7Err|text', 'Index out of bounds.');
+        Observer.Expect('write7Err|code', 'IndexOutOfBounds');
+        Observer.Expect('afterWrite7', '11,12,13,14,|21,22,23,24,|31,32,33,34,|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,7 +228,15 @@ codeunit 74888 "LT ARR Tests"
                 Result += Format(B[2, j, k]) + ',';
         Observer.Observe('afterClearSubArray', Result + ' other ' + Format(B[1, 1, 1]));
         Observer.Observe('lens', Format(ArrayLen(B)) + ' ' + Format(ArrayLen(B, 2)) + ' ' + Format(ArrayLen(B, 3)));
-        Observer.Finish();
+        Observer.Expect('subArrayByValue', '4242,112,113,114,|121,122,123,124,|131,132,133,134,|');
+        Observer.Expect('subArrayAfterByValue', '111');
+        Observer.Expect('subArrayAfterByVar', '4242 111');
+        Observer.Expect('rowByValue', '999,122,123,124');
+        Observer.Expect('rowAfterByVar', '999 221');
+        Observer.Expect('afterClearRow', '0,0 neighbours 111,131');
+        Observer.Expect('afterClearSubArray', '0,0,0,0,0,0,0,0,0,0,0,0, other 111');
+        Observer.Expect('lens', '24 3 4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -218,6 +251,8 @@ codeunit 74888 "LT ARR Tests"
         B[1, 2, 4] := 4;
         Observer.Observe('shorter', ShorterParam(B[1, 2]));
         Observer.Observe('after', Format(B[1, 2, 1]) + ',' + Format(B[1, 2, 2]) + ',' + Format(B[1, 2, 3]) + ',' + Format(B[1, 2, 4]));
-        Observer.Finish();
+        Observer.Expect('shorter', 'len=4 r1=777 r2=2 r3=3');
+        Observer.Expect('after', '777,2,3,4');
+        Observer.Verify();
     end;
 }

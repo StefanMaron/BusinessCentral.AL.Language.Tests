@@ -119,7 +119,15 @@ codeunit 74886 "LT TRV Tests"
         Seed(Temp);
         Callee.ByValue(Temp, Observer, 50);
         Report(Observer, Temp);
-        Observer.Finish();
+        Observer.Expect('byValue.isTemporary', 'No');
+        Observer.Expect('byValue.countSeen', '1');
+        Observer.Expect('byValue.countAfterInsert', '2');
+        Observer.Expect('byValue.isTemporaryAfter', 'No');
+        Observer.Expect('caller.tempCount', '2');
+        Observer.Expect('caller.storedCount', '2');
+        Observer.Expect('caller.tempRows', '1=temp1;2=temp2;');
+        Observer.Expect('caller.storedRows', '50=inCallee;100=stored;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -132,7 +140,14 @@ codeunit 74886 "LT TRV Tests"
         Seed(Temp);
         Callee.ByVar(Temp, Observer, 50);
         Report(Observer, Temp);
-        Observer.Finish();
+        Observer.Expect('byVar.isTemporary', 'Yes');
+        Observer.Expect('byVar.countSeen', '2');
+        Observer.Expect('byVar.countAfterInsert', '3');
+        Observer.Expect('caller.tempCount', '3');
+        Observer.Expect('caller.storedCount', '1');
+        Observer.Expect('caller.tempRows', '1=temp1;2=temp2;50=inCallee;');
+        Observer.Expect('caller.storedRows', '100=stored;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,7 +160,13 @@ codeunit 74886 "LT TRV Tests"
         Seed(Temp);
         Callee.ByValueTemporary(Observer, 50, Temp);
         Report(Observer, Temp);
-        Observer.Finish();
+        Observer.Expect('byVarTemp.isTemporary', 'Yes');
+        Observer.Expect('byVarTemp.countSeen', '2');
+        Observer.Expect('caller.tempCount', '3');
+        Observer.Expect('caller.storedCount', '1');
+        Observer.Expect('caller.tempRows', '1=temp1;2=temp2;50=inCallee;');
+        Observer.Expect('caller.storedRows', '100=stored;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,7 +181,17 @@ codeunit 74886 "LT TRV Tests"
         Report(Observer, Temp);
         Callee.ByValueDeleteAll(Temp, Observer);
         Report(Observer, Temp);
-        Observer.Finish();
+        Observer.Expect('modify.firstName', 'changed');
+        Observer.Expect('caller.tempCount', '2');
+        Observer.Expect('caller.storedCount', '1');
+        Observer.Expect('caller.tempRows', '1=temp1;2=temp2;');
+        Observer.Expect('caller.storedRows', '100=changed;');
+        Observer.Expect('deleteAll.countInCallee', '0');
+        Observer.Expect('caller.tempCount', '2');
+        Observer.Expect('caller.storedCount', '0');
+        Observer.Expect('caller.tempRows', '1=temp1;2=temp2;');
+        Observer.Expect('caller.storedRows', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -174,6 +205,14 @@ codeunit 74886 "LT TRV Tests"
         Seed(Temp);
         Callee.ByValue(Stored, Observer, 60);
         Report(Observer, Temp);
-        Observer.Finish();
+        Observer.Expect('byValue.isTemporary', 'No');
+        Observer.Expect('byValue.countSeen', '1');
+        Observer.Expect('byValue.countAfterInsert', '2');
+        Observer.Expect('byValue.isTemporaryAfter', 'No');
+        Observer.Expect('caller.tempCount', '2');
+        Observer.Expect('caller.storedCount', '2');
+        Observer.Expect('caller.tempRows', '1=temp1;2=temp2;');
+        Observer.Expect('caller.storedRows', '60=inCallee;100=stored;');
+        Observer.Verify();
     end;
 }

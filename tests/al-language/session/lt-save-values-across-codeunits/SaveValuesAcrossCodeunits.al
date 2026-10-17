@@ -102,7 +102,9 @@ codeunit 74899 "LT SVX A"
         Open('set', true);
         Open('read', true);
         Observer.Observe('reopenInSameTest', SeenBound);
-        Observer.Finish();
+        Observer.Expect('firstOpen', '');
+        Observer.Expect('reopenInSameTest', 'A-bound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +115,8 @@ codeunit 74899 "LT SVX A"
     begin
         Open('read', true);
         Observer.Observe('nextTest', SeenBound);
-        Observer.Finish();
+        Observer.Expect('nextTest', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,7 +129,8 @@ codeunit 74899 "LT SVX A"
         asserterror Error('rolled back');
         Open('read', true);
         Observer.Observe('afterRollback', SeenBound);
-        Observer.Finish();
+        Observer.Expect('afterRollback', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +144,9 @@ codeunit 74899 "LT SVX A"
         Open('set', true);
         Open('read', true);
         Observer.Observe('unboundReopen', SeenUnbound);
-        Observer.Finish();
+        Observer.Expect('unboundFirst', '');
+        Observer.Expect('unboundReopen', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -151,7 +157,8 @@ codeunit 74899 "LT SVX A"
     begin
         Open('read', true);
         Observer.Observe('unboundNextTest', SeenUnbound);
-        Observer.Finish();
+        Observer.Expect('unboundNextTest', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +170,8 @@ codeunit 74899 "LT SVX A"
         Open('set', false);
         Open('read', false);
         Observer.Observe('afterCancel', SeenBound);
-        Observer.Finish();
+        Observer.Expect('afterCancel', '');
+        Observer.Verify();
     end;
 }
 
@@ -194,6 +202,8 @@ codeunit 74898 "LT SVX B"
         Page.RunModal(Page::"LT SVX Dialog");
         Observer.Observe('otherCodeunitBound', SeenBound);
         Observer.Observe('otherCodeunitUnbound', SeenUnbound);
-        Observer.Finish();
+        Observer.Expect('otherCodeunitBound', '');
+        Observer.Expect('otherCodeunitUnbound', '');
+        Observer.Verify();
     end;
 }

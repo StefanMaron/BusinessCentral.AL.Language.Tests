@@ -107,7 +107,8 @@ codeunit 74884 "LT THR Tests"
         Target.Get(4);
         P.AssignRec(Target);
         P.RunModal();
-        Obs.Finish();
+        Obs.Expect('handlerRec', '4/row4');
+        Obs.Verify();
     end;
 
     [Test]
@@ -124,7 +125,8 @@ codeunit 74884 "LT THR Tests"
         Target.Get(1);
         P.AssignRec(Target);
         P.RunModal();
-        Obs.Finish();
+        Obs.Expect('handlerRec', '1/row1');
+        Obs.Verify();
     end;
 
     [Test]
@@ -138,7 +140,8 @@ codeunit 74884 "LT THR Tests"
         Target.Get(3);
         P.AssignRec(Target);
         P.RunModal();
-        Obs.Finish();
+        Obs.Expect('handlerRec', '3/row3');
+        Obs.Verify();
     end;
 
     [Test]
@@ -156,7 +159,11 @@ codeunit 74884 "LT THR Tests"
         Act := Page.RunModal(Page::"LT THR List", Row);
         Obs.Observe('action', Format(Act));
         Obs.Observe('rowAfter', Format(Row.Id) + '/' + Row.Name);
-        Obs.Finish();
+        Obs.Expect('handlerRecBefore', '1/row1');
+        Obs.Expect('handlerRecAfter', '4/row4');
+        Obs.Expect('action', 'LookupOK');
+        Obs.Expect('rowAfter', '4/row4');
+        Obs.Verify();
     end;
 
     [Test]
@@ -174,7 +181,11 @@ codeunit 74884 "LT THR Tests"
         Act := Page.RunModal(Page::"LT THR List", Row);
         Obs.Observe('action', Format(Act));
         Obs.Observe('rowAfter', Format(Row.Id) + '/' + Row.Name);
-        Obs.Finish();
+        Obs.Expect('handlerRecBefore', '1/row1');
+        Obs.Expect('handlerRecAfter', '4/row4');
+        Obs.Expect('action', 'Cancel');
+        Obs.Expect('rowAfter', '1/row1');
+        Obs.Verify();
     end;
 
     [Test]
@@ -191,7 +202,11 @@ codeunit 74884 "LT THR Tests"
         Act := Page.RunModal(Page::"LT THR List", Row);
         Obs.Observe('action', Format(Act));
         Obs.Observe('rowAfter', Format(Row.Id) + '/' + Row.Name);
-        Obs.Finish();
+        Obs.Expect('handlerRecBefore', '2/row2');
+        Obs.Expect('handlerRecAfter', '2/row2');
+        Obs.Expect('action', 'LookupOK');
+        Obs.Expect('rowAfter', '2/row2');
+        Obs.Verify();
     end;
 
     [Test]
@@ -215,7 +230,12 @@ codeunit 74884 "LT THR Tests"
         Obs.Observe('action', Format(Act));
         Obs.Observe('rowAfter', Format(Row.Id) + '/' + Row.Name);
         Obs.Observe('getRecord', Format(Out.Id) + '/' + Out.Name);
-        Obs.Finish();
+        Obs.Expect('handlerRecBefore', '1/row1');
+        Obs.Expect('handlerRecAfter', '5/row5');
+        Obs.Expect('action', 'LookupOK');
+        Obs.Expect('rowAfter', '1/row1');
+        Obs.Expect('getRecord', '5/row5');
+        Obs.Verify();
     end;
 
     [Test]
@@ -238,6 +258,10 @@ codeunit 74884 "LT THR Tests"
         P.GetRecord(Out);
         Obs.Observe('action', Format(Act));
         Obs.Observe('getRecord', Format(Out.Id) + '/' + Out.Name);
-        Obs.Finish();
+        Obs.Expect('handlerRecBefore', '1/row1');
+        Obs.Expect('handlerRecAfter', '5/row5');
+        Obs.Expect('action', 'Cancel');
+        Obs.Expect('getRecord', '5/row5');
+        Obs.Verify();
     end;
 }
