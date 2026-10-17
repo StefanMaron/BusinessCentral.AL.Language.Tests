@@ -134,6 +134,7 @@ codeunit 70962 "LT TFT FRef Other"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure P189_FldRef_Guid_Value()
     var
@@ -159,7 +160,9 @@ codeunit 70962 "LT TFT FRef Other"
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure P189_FldRef_Guid_WithErrorInfo()
     var
@@ -195,4 +198,5 @@ codeunit 70962 "LT TFT FRef Other"
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
+#endif
 }

@@ -140,6 +140,7 @@ codeunit 70960 "LT TFT FRef Numeric"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure P189_FldRef_Byte_Value()
     var
@@ -165,7 +166,9 @@ codeunit 70960 "LT TFT FRef Numeric"
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure P189_FldRef_Byte_WithErrorInfo()
     var
@@ -201,6 +204,7 @@ codeunit 70960 "LT TFT FRef Numeric"
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure P189_FldRef_Char_Value()
