@@ -115,7 +115,7 @@ codeunit 74899 "LT SVX A"
     begin
         Open('read', true);
         Observer.Observe('nextTest', SeenBound);
-        Observer.Expect('nextTest', '');
+        Observer.Expect('nextTest', 'A-bound');
         Observer.Verify();
     end;
 
@@ -129,7 +129,7 @@ codeunit 74899 "LT SVX A"
         asserterror Error('rolled back');
         Open('read', true);
         Observer.Observe('afterRollback', SeenBound);
-        Observer.Expect('afterRollback', '');
+        Observer.Expect('afterRollback', 'A-bound');
         Observer.Verify();
     end;
 
@@ -170,7 +170,7 @@ codeunit 74899 "LT SVX A"
         Open('set', false);
         Open('read', false);
         Observer.Observe('afterCancel', SeenBound);
-        Observer.Expect('afterCancel', '');
+        Observer.Expect('afterCancel', 'A-bound');
         Observer.Verify();
     end;
 }

@@ -58,6 +58,14 @@ codeunit 74897 "LT Encryption Key Delete"
         if not EncryptionKeyExists() then
             CreateEncryptionKey();
         Observer.Observe('keyExistsRestored', Format(EncryptionKeyExists()));
-        Observer.Finish();
+        Observer.Expect('keyExistsAtStart', 'Yes');
+        Observer.Expect('deleteWithKeyRan', 'Yes');
+        Observer.Expect('enabledAfterDelete', 'No');
+        Observer.Expect('keyExistsAfterDelete', 'No');
+        Observer.Expect('deleteWithoutKeyRan', 'Yes');
+        Observer.Expect('enabledAfterSecond', 'No');
+        Observer.Expect('keyExistsAfterSecond', 'No');
+        Observer.Expect('keyExistsRestored', 'Yes');
+        Observer.Verify();
     end;
 }

@@ -222,7 +222,12 @@ codeunit 74892 "LT SSN Tests"
         P.RunModal();
         Obs.Observe('currentId', Format(Current));
         Describe('', Sel);
-        Obs.Finish();
+        Obs.Expect('currentId', '0');
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Id: 0');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
     end;
 
     [Test]
@@ -322,7 +327,11 @@ codeunit 74892 "LT SSN Tests"
         TP.CaptureAction.Invoke();
         Store.Get(Captured);
         Describe('', Captured);
-        Obs.Finish();
+        Obs.Expect('Count', '1');
+        Obs.Expect('Filters', 'Id: 3');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
     end;
 
     [Test]
@@ -338,6 +347,10 @@ codeunit 74892 "LT SSN Tests"
         TP.CaptureAction.Invoke();
         Store.Get(Captured);
         Describe('', Captured);
-        Obs.Finish();
+        Obs.Expect('Count', '0');
+        Obs.Expect('Filters', 'Id: 99');
+        Obs.Expect('MarkedOnly', 'No');
+        Obs.Expect('HasFilter', 'Yes');
+        Obs.Verify();
     end;
 }

@@ -238,7 +238,11 @@ codeunit 74885 "LT TAO Tests"
         TP.Close();
         Row.Get(1);
         Observer.Observe('stored', Format(OptNo(Row)));
-        Observer.Finish();
+        Observer.Expect('setEmpty|text', 'Validation error for Field: Opt,  Message = ''Your entry of '''' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('setEmpty|code', 'TestValidation');
+        Observer.Expect('afterEmpty', '[1]');
+        Observer.Expect('stored', '0');
+        Observer.Verify();
     end;
 
     [Test]

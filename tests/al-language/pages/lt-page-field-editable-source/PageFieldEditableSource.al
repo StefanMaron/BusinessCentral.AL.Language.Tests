@@ -172,7 +172,9 @@ codeunit 74894 "LT PFE Tests"
         TP.Close();
         Row.Get('R1');
         Observer.Observe('stored', Row.Locked);
-        Observer.Finish();
+        Observer.Expect('valueAfter', 'new');
+        Observer.Expect('stored', 'new');
+        Observer.Verify();
     end;
 
     [Test]
@@ -189,7 +191,9 @@ codeunit 74894 "LT PFE Tests"
         TP.Close();
         Row.Get('R1');
         Observer.Observe('stored', Row.Plain);
-        Observer.Finish();
+        Observer.Expect('valueAfter', 'new');
+        Observer.Expect('stored', 'new');
+        Observer.Verify();
     end;
 
     [Test]
@@ -206,6 +210,8 @@ codeunit 74894 "LT PFE Tests"
         TP.Close();
         Row.Get('R1');
         Observer.Observe('stored', Row.LockedAgain);
-        Observer.Finish();
+        Observer.Expect('valueAfter', 'new');
+        Observer.Expect('stored', 'new');
+        Observer.Verify();
     end;
 }

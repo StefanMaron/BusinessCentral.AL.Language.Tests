@@ -53,7 +53,7 @@ codeunit 74795 "LT TBV Tests"
     end;
 
     [Test]
-    procedure Variant_Values()
+    procedure Variant_Dates()
     var
         Observer: Codeunit "Probe Observer";
         BlankDate: Date;
@@ -61,8 +61,6 @@ codeunit 74795 "LT TBV Tests"
         BlankDt: DateTime;
         SomeDt: DateTime;
         SomeTime: Time;
-        Dec: Decimal;
-        Cde: Code[10];
     begin
         SomeDate := DMY2Date(5, 3, 2024);
         SomeDt := CreateDateTime(SomeDate, 143015T);
@@ -72,6 +70,15 @@ codeunit 74795 "LT TBV Tests"
         Both(Observer, 'blankDateTime', BlankDt);
         Both(Observer, 'dateTime', SomeDt);
         Both(Observer, 'time', SomeTime);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Variant_Decimals()
+    var
+        Observer: Codeunit "Probe Observer";
+        Dec: Decimal;
+    begin
         Dec := 0;
         Both(Observer, 'decimal0', Dec);
         Dec := 1.5;
@@ -80,6 +87,15 @@ codeunit 74795 "LT TBV Tests"
         Both(Observer, 'decimalNeg', Dec);
         Dec := 0.1234567890123;
         Both(Observer, 'decimalLong', Dec);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Variant_OtherTypes()
+    var
+        Observer: Codeunit "Probe Observer";
+        Cde: Code[10];
+    begin
         Both(Observer, 'boolTrue', true);
         Both(Observer, 'boolFalse', false);
         Both(Observer, 'integer', 42);
@@ -123,6 +139,22 @@ codeunit 74795 "LT TBV Tests"
             Ok := TryAppend(TB, FR.Value());
             Observer.Observe('set.' + FR.Name(), Format(Ok) + ' [' + TB.ToText() + '] format=[' + Format(FR.Value()) + ']');
         end;
-        Observer.Finish();
+        Observer.Expect('blank.Id', 'No [] format=[1]');
+        Observer.Expect('blank.D', 'No [] format=[]');
+        Observer.Expect('blank.Dec', 'No [] format=[0]');
+        Observer.Expect('blank.Dt', 'No [] format=[]');
+        Observer.Expect('blank.Tm', 'No [] format=[]');
+        Observer.Expect('blank.Flag', 'No [] format=[No]');
+        Observer.Expect('blank.Cde', 'Yes [] format=[]');
+        Observer.Expect('blank.Txt', 'Yes [] format=[]');
+        Observer.Expect('set.Id', 'No [] format=[1]');
+        Observer.Expect('set.D', 'No [] format=[03/05/24]');
+        Observer.Expect('set.Dec', 'No [] format=[1.5]');
+        Observer.Expect('set.Dt', 'No [] format=[03/05/24 02:30 PM]');
+        Observer.Expect('set.Tm', 'No [] format=[ 2:30:15 PM]');
+        Observer.Expect('set.Flag', 'No [] format=[Yes]');
+        Observer.Expect('set.Cde', 'Yes [ABC] format=[ABC]');
+        Observer.Expect('set.Txt', 'Yes [text] format=[text]');
+        Observer.Verify();
     end;
 }

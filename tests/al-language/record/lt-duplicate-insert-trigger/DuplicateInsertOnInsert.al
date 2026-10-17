@@ -4,7 +4,7 @@
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
 // Facts: Insert of a record whose primary key already exists, in a table with an OnInsert trigger and in a table without one: Insert(true) with the result left unused,
 //   Insert(true) with the result used, Insert(), Insert(false) unused and used. Whether it raised (the first measurement showed that a duplicate key error inside Codeunit.Run ends the whole test with
-//   'An error occurred and the transaction is stopped', so the unused-result cases use asserterror and the used-result cases run plain),
+//   'An error occurred and the transaction is stopped', so the cases run plain; the second measurement showed that with the result unused the statement raises nothing at once, so a read of the table follows it inside a TryFunction to see where the error surfaces),
 //   the error text and code, whether OnInsert ran (log) and in which order relative to the error, the returned value, and the row count afterwards.
 //   The own-table version of the Vendor and Item Journal Line cases of the Microsoft tests.
 // BC versions: all (CI)
@@ -101,6 +101,24 @@ codeunit 74796 "LT DIO Tests"
             Observer.Observe('nameWithout', N.Name);
     end;
 
+    [TryFunction]
+    local procedure TryFlushW()
+    var
+        W: Record "LT DIO With Trigger";
+    begin
+        if W.Count() < 0 then
+            exit;
+    end;
+
+    [TryFunction]
+    local procedure TryFlushN()
+    var
+        N: Record "LT DIO Without Trigger";
+    begin
+        if N.Count() < 0 then
+            exit;
+    end;
+
     local procedure Dup(var W: Record "LT DIO With Trigger")
     begin
         W.Id := 1;
@@ -117,12 +135,18 @@ codeunit 74796 "LT DIO Tests"
     procedure Duplicate_WithOnInsert_InsertTrue_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT DIO Log";
         W: Record "LT DIO With Trigger";
+        Flushed: Boolean;
     begin
         Seed();
         Dup(W);
-        asserterror W.Insert(true);
-        Observer.ObserveError('err');
+        W.Insert(true);
+        Observer.Observe('logAfterInsert', Log.Take());
+        Flushed := TryFlushW();
+        Observer.Observe('flushOk', Format(Flushed));
+        if not Flushed then
+            Observer.ObserveError('flushErr');
         After(Observer);
         Observer.Finish();
     end;
@@ -139,19 +163,31 @@ codeunit 74796 "LT DIO Tests"
         Ok := W.Insert(true);
         Observer.Observe('returned', Format(Ok));
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('log', 'OnInsert 1/duplicate;');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Duplicate_WithOnInsert_InsertNoArg_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT DIO Log";
         W: Record "LT DIO With Trigger";
+        Flushed: Boolean;
     begin
         Seed();
         Dup(W);
-        asserterror W.Insert();
-        Observer.ObserveError('err');
+        W.Insert();
+        Observer.Observe('logAfterInsert', Log.Take());
+        Flushed := TryFlushW();
+        Observer.Observe('flushOk', Format(Flushed));
+        if not Flushed then
+            Observer.ObserveError('flushErr');
         After(Observer);
         Observer.Finish();
     end;
@@ -168,19 +204,31 @@ codeunit 74796 "LT DIO Tests"
         Ok := W.Insert();
         Observer.Observe('returned', Format(Ok));
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Duplicate_WithOnInsert_InsertFalse_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT DIO Log";
         W: Record "LT DIO With Trigger";
+        Flushed: Boolean;
     begin
         Seed();
         Dup(W);
-        asserterror W.Insert(false);
-        Observer.ObserveError('err');
+        W.Insert(false);
+        Observer.Observe('logAfterInsert', Log.Take());
+        Flushed := TryFlushW();
+        Observer.Observe('flushOk', Format(Flushed));
+        if not Flushed then
+            Observer.ObserveError('flushErr');
         After(Observer);
         Observer.Finish();
     end;
@@ -197,19 +245,31 @@ codeunit 74796 "LT DIO Tests"
         Ok := W.Insert(false);
         Observer.Observe('returned', Format(Ok));
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Duplicate_WithoutOnInsert_InsertTrue_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT DIO Log";
         N: Record "LT DIO Without Trigger";
+        Flushed: Boolean;
     begin
         Seed();
         DupN(N);
-        asserterror N.Insert(true);
-        Observer.ObserveError('err');
+        N.Insert(true);
+        Observer.Observe('logAfterInsert', Log.Take());
+        Flushed := TryFlushN();
+        Observer.Observe('flushOk', Format(Flushed));
+        if not Flushed then
+            Observer.ObserveError('flushErr');
         After(Observer);
         Observer.Finish();
     end;
@@ -226,19 +286,31 @@ codeunit 74796 "LT DIO Tests"
         Ok := N.Insert(true);
         Observer.Observe('returned', Format(Ok));
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Duplicate_WithoutOnInsert_InsertNoArg_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT DIO Log";
         N: Record "LT DIO Without Trigger";
+        Flushed: Boolean;
     begin
         Seed();
         DupN(N);
-        asserterror N.Insert();
-        Observer.ObserveError('err');
+        N.Insert();
+        Observer.Observe('logAfterInsert', Log.Take());
+        Flushed := TryFlushN();
+        Observer.Observe('flushOk', Format(Flushed));
+        if not Flushed then
+            Observer.ObserveError('flushErr');
         After(Observer);
         Observer.Finish();
     end;
@@ -255,19 +327,31 @@ codeunit 74796 "LT DIO Tests"
         Ok := N.Insert();
         Observer.Observe('returned', Format(Ok));
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Duplicate_WithoutOnInsert_InsertFalse_Unused()
     var
         Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT DIO Log";
         N: Record "LT DIO Without Trigger";
+        Flushed: Boolean;
     begin
         Seed();
         DupN(N);
-        asserterror N.Insert(false);
-        Observer.ObserveError('err');
+        N.Insert(false);
+        Observer.Observe('logAfterInsert', Log.Take());
+        Flushed := TryFlushN();
+        Observer.Observe('flushOk', Format(Flushed));
+        if not Flushed then
+            Observer.ObserveError('flushErr');
         After(Observer);
         Observer.Finish();
     end;
@@ -284,6 +368,12 @@ codeunit 74796 "LT DIO Tests"
         Ok := N.Insert(false);
         Observer.Observe('returned', Format(Ok));
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 }
