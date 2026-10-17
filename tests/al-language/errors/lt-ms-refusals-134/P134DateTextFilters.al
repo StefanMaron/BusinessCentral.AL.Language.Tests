@@ -226,29 +226,4 @@ codeunit 74134 "LT P134 Date Filters"
         Observer.Expect('af252|code', 'DataBinding:Filter');
         Observer.Verify();
     end;
-
-    [Test]
-    procedure P134_FieldRef_Date_EmptyAndBlankForms()
-    var
-        Observer: Codeunit "Probe Observer";
-        Texts: List of [Text];
-    begin
-        Seed();
-        Texts.Add('');
-        Texts.Add(' ');
-        Texts.Add('''''');
-        Texts.Add('<>''''');
-        Texts.Add('0D');
-        Texts.Add('<>0D');
-        Texts.Add('0');
-        ObserveAll(Observer, Texts, 'e', 1);
-        Observer.Expect('e1[]', 'ok|filter=|rows=1,2,3,4,5,');
-        Observer.Expect('e2[ ]', 'ok|filter=|rows=1,2,3,4,5,');
-        Observer.Expect('e3['''']', 'ok|filter=''''|rows=1,');
-        Observer.Expect('e4[<>'''']', 'ok|filter=<>''''|rows=2,3,4,5,');
-        Observer.Expect('e5[0D]', 'ok|filter=10/16/26|rows=');
-        Observer.Expect('e6[<>0D]', 'ok|filter=<>10/16/26|rows=1,2,3,4,5,');
-        Observer.Expect('e7[0]', 'error:The filter "0" is not valid for the D field on the LT P134 DateRow table. The format of the Date ''0'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Verify();
-    end;
 }

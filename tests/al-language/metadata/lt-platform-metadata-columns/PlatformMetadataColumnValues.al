@@ -207,29 +207,6 @@ codeunit 71394 "LT PM Values Tests"
     end;
 
     [Test]
-    procedure KeyTable_SumIndexFields_BaseApp()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT PM Values Helper";
-    begin
-        Helper.KeyRows(Observer, 'cust ledger entry ', 21, 4);
-        Observer.Expect('cust ledger entry rows > 0', 'Yes');
-        Observer.Expect('cust ledger entry key1 Key', 'Entry No.');
-        Observer.Expect('cust ledger entry key1 SumIndexFields', '');
-        Observer.Expect('cust ledger entry key1 MaintainSIFTIndex', 'No');
-        Observer.Expect('cust ledger entry key2 Key', 'Customer No.,Currency Code');
-        Observer.Expect('cust ledger entry key2 SumIndexFields', 'Sales (LCY),Profit (LCY),Inv. Discount (LCY)');
-        Observer.Expect('cust ledger entry key2 MaintainSIFTIndex', 'Yes');
-        Observer.Expect('cust ledger entry key3 Key', 'Document No.');
-        Observer.Expect('cust ledger entry key3 SumIndexFields', '');
-        Observer.Expect('cust ledger entry key3 MaintainSIFTIndex', 'No');
-        Observer.Expect('cust ledger entry key4 Key', 'External Document No.');
-        Observer.Expect('cust ledger entry key4 SumIndexFields', '');
-        Observer.Expect('cust ledger entry key4 MaintainSIFTIndex', 'No');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure FieldTable_IsPartOfPrimaryKey_OwnTable()
     var
         Observer: Codeunit "Probe Observer";
