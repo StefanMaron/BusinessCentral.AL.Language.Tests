@@ -148,7 +148,16 @@ codeunit 74796 "LT DIO Tests"
         if not Flushed then
             Observer.ObserveError('flushErr');
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('logAfterInsert', 'OnInsert 1/duplicate;');
+        Observer.Expect('flushOk', 'No');
+        Observer.Expect('flushErr|text', 'The record in table LT DIO With Trigger already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('flushErr|code', 'DB:RecordExists');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
@@ -189,7 +198,16 @@ codeunit 74796 "LT DIO Tests"
         if not Flushed then
             Observer.ObserveError('flushErr');
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('logAfterInsert', '');
+        Observer.Expect('flushOk', 'No');
+        Observer.Expect('flushErr|text', 'The record in table LT DIO With Trigger already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('flushErr|code', 'DB:RecordExists');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
@@ -230,7 +248,16 @@ codeunit 74796 "LT DIO Tests"
         if not Flushed then
             Observer.ObserveError('flushErr');
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('logAfterInsert', '');
+        Observer.Expect('flushOk', 'No');
+        Observer.Expect('flushErr|text', 'The record in table LT DIO With Trigger already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('flushErr|code', 'DB:RecordExists');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,7 +298,16 @@ codeunit 74796 "LT DIO Tests"
         if not Flushed then
             Observer.ObserveError('flushErr');
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('logAfterInsert', '');
+        Observer.Expect('flushOk', 'No');
+        Observer.Expect('flushErr|text', 'The record in table LT DIO Without Trigger already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('flushErr|code', 'DB:RecordExists');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
@@ -312,7 +348,16 @@ codeunit 74796 "LT DIO Tests"
         if not Flushed then
             Observer.ObserveError('flushErr');
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('logAfterInsert', '');
+        Observer.Expect('flushOk', 'No');
+        Observer.Expect('flushErr|text', 'The record in table LT DIO Without Trigger already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('flushErr|code', 'DB:RecordExists');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]
@@ -353,7 +398,16 @@ codeunit 74796 "LT DIO Tests"
         if not Flushed then
             Observer.ObserveError('flushErr');
         After(Observer);
-        Observer.Finish();
+        Observer.Expect('logAfterInsert', '');
+        Observer.Expect('flushOk', 'No');
+        Observer.Expect('flushErr|text', 'The record in table LT DIO Without Trigger already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('flushErr|code', 'DB:RecordExists');
+        Observer.Expect('log', '');
+        Observer.Expect('countWith', '1');
+        Observer.Expect('countWithout', '1');
+        Observer.Expect('nameWith', 'original');
+        Observer.Expect('nameWithout', 'original');
+        Observer.Verify();
     end;
 
     [Test]

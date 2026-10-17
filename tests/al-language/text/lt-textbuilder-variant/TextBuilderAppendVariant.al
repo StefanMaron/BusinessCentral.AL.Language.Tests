@@ -70,7 +70,27 @@ codeunit 74795 "LT TBV Tests"
         Both(Observer, 'blankDateTime', BlankDt);
         Both(Observer, 'dateTime', SomeDt);
         Both(Observer, 'time', SomeTime);
-        Observer.Finish();
+        Observer.Expect('blankDate.append', 'error');
+        Observer.Expect('blankDate.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('blankDate.appendErr|code', 'TypeConversion');
+        Observer.Expect('blankDate.format', '[]');
+        Observer.Expect('date.append', 'error');
+        Observer.Expect('date.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('date.appendErr|code', 'TypeConversion');
+        Observer.Expect('date.format', '[03/05/24]');
+        Observer.Expect('blankDateTime.append', 'error');
+        Observer.Expect('blankDateTime.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('blankDateTime.appendErr|code', 'TypeConversion');
+        Observer.Expect('blankDateTime.format', '[]');
+        Observer.Expect('dateTime.append', 'error');
+        Observer.Expect('dateTime.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('dateTime.appendErr|code', 'TypeConversion');
+        Observer.Expect('dateTime.format', '[03/05/24 02:30 PM]');
+        Observer.Expect('time.append', 'error');
+        Observer.Expect('time.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('time.appendErr|code', 'TypeConversion');
+        Observer.Expect('time.format', '[ 2:30:15 PM]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -87,7 +107,23 @@ codeunit 74795 "LT TBV Tests"
         Both(Observer, 'decimalNeg', Dec);
         Dec := 0.1234567890123;
         Both(Observer, 'decimalLong', Dec);
-        Observer.Finish();
+        Observer.Expect('decimal0.append', 'error');
+        Observer.Expect('decimal0.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('decimal0.appendErr|code', 'TypeConversion');
+        Observer.Expect('decimal0.format', '[0]');
+        Observer.Expect('decimal1.5.append', 'error');
+        Observer.Expect('decimal1.5.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('decimal1.5.appendErr|code', 'TypeConversion');
+        Observer.Expect('decimal1.5.format', '[1.5]');
+        Observer.Expect('decimalNeg.append', 'error');
+        Observer.Expect('decimalNeg.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('decimalNeg.appendErr|code', 'TypeConversion');
+        Observer.Expect('decimalNeg.format', '[-1,234,567.891]');
+        Observer.Expect('decimalLong.append', 'error');
+        Observer.Expect('decimalLong.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('decimalLong.appendErr|code', 'TypeConversion');
+        Observer.Expect('decimalLong.format', '[0.1234567890123]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -102,7 +138,23 @@ codeunit 74795 "LT TBV Tests"
         Both(Observer, 'text', 'text');
         Cde := 'abc';
         Both(Observer, 'code', Cde);
-        Observer.Finish();
+        Observer.Expect('boolTrue.append', 'error');
+        Observer.Expect('boolTrue.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('boolTrue.appendErr|code', 'TypeConversion');
+        Observer.Expect('boolTrue.format', '[Yes]');
+        Observer.Expect('boolFalse.append', 'error');
+        Observer.Expect('boolFalse.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('boolFalse.appendErr|code', 'TypeConversion');
+        Observer.Expect('boolFalse.format', '[No]');
+        Observer.Expect('integer.append', 'error');
+        Observer.Expect('integer.appendErr|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('integer.appendErr|code', 'TypeConversion');
+        Observer.Expect('integer.format', '[42]');
+        Observer.Expect('text.append', '[text]');
+        Observer.Expect('text.format', '[text]');
+        Observer.Expect('code.append', '[ABC]');
+        Observer.Expect('code.format', '[ABC]');
+        Observer.Verify();
     end;
 
     [Test]
