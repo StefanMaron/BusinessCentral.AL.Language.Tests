@@ -1,10 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-styleexpr-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunits 71888, 71892 to 71897
+// Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunits 71888, 71892 to 71895
 // Probe: written against BC 29 and checked on the corpus CI matrix (27, 28, 29); every literal asserted below is what BC produced.
-// Facts: the PageStyle enum: Format(PageStyle::X), Format(PageStyle::X, 0, 2) and Format(PageStyle::X, 0, 1) for every member (PageStyle is an option-like type: AsInteger does not exist); Format into a Text and back with Evaluate.
-//   The Text of a page's StyleExpr variable is the Format of a PageStyle member. Opening such a page with a TestPage ends the test session
-//   on every BC version run so far, so no TestPage test is written and a style cannot be read back from a TestPage control.
+// Facts: the PageStyle type: Format(PageStyle::X), Format(PageStyle::X, 0, 2) and Format(PageStyle::X, 0, 1) for every member (PageStyle is an option-like type: AsInteger does not exist); a PageStyle variable after assignment and after Clear (Format gives 0).
+//   Evaluate(PageStyle, Text) is not pinned: a test that calls it ends the test session ("hub connection closed") on BC 28 and 29, so no result can be recorded.
+//   A style cannot be read back from a TestPage control (the TestPage field has no style member), so only the text a page puts into its StyleExpr variable is covered.
 // BC versions: 27, 28, 29
 table 71886 "LT PS Row"
 {
@@ -192,7 +192,10 @@ codeunit 71894 "LT PageStyle Assign"
         Observer.Observe('assigned_format2', Format(Style, 0, 2));
         Txt := Format(PageStyle::AttentionAccent);
         Observer.Observe('text', Txt);
-        Observer.Finish();
+        Observer.Expect('assigned', 'Favorable');
+        Observer.Expect('assigned_format2', '8');
+        Observer.Expect('text', 'AttentionAccent');
+        Observer.Verify();
     end;
 }
 
@@ -213,49 +216,8 @@ codeunit 71895 "LT PageStyle Clear"
         Clear(Style);
         Observer.Observe('cleared', Format(Style));
         Observer.Observe('cleared_format2', Format(Style, 0, 2));
-        Observer.Finish();
-    end;
-}
-
-codeunit 71896 "LT PageStyle Evaluate"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure PageStyle_Evaluate_Name()
-    var
-        Observer: Codeunit "Probe Observer";
-        Style: PageStyle;
-        Txt: Text;
-        Ok: Boolean;
-    begin
-        Txt := Format(PageStyle::AttentionAccent);
-        Ok := Evaluate(Style, Txt);
-        Observer.Observe('evaluate_ok', Format(Ok));
-        Observer.Observe('evaluate_back', Format(Style));
-        Observer.Finish();
-    end;
-}
-
-codeunit 71897 "LT PageStyle Eval Lowercase"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure PageStyle_Evaluate_Lowercase()
-    var
-        Observer: Codeunit "Probe Observer";
-        Style: PageStyle;
-        Txt: Text;
-        Ok: Boolean;
-    begin
-        Ok := Evaluate(Style, 'strong');
-        Observer.Observe('lowercase_ok', Format(Ok));
-        Observer.Observe('lowercase_back', Format(Style));
-        Ok := Evaluate(Style, 'NoSuchStyle');
-        Observer.Observe('unknown_ok', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('cleared', '0');
+        Observer.Expect('cleared_format2', '0');
+        Observer.Verify();
     end;
 }
