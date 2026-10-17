@@ -295,8 +295,13 @@ codeunit 61400 "Test DotNet Value Kinds"
         Numbers.Add(2);
 
         asserterror foreach Piece in Numbers do;
+#if BC28PLUS
+        Assert.AreEqual('The value "1" can''t be evaluated into type Text.', GetLastErrorText(), 'Text over int');
+        Assert.AreEqual('Evaluate:Argument', GetLastErrorCode(), 'Text over int: code');
+#else
         Assert.AreEqual('Invalid Conversion. Source: Int32, Destination: NavText.', GetLastErrorText(), 'Text over int');
         Assert.AreEqual('Argument', GetLastErrorCode(), 'Text over int: code');
+#endif
 
         asserterror foreach Number in Numbers do begin
             Count += 1;
@@ -314,8 +319,13 @@ codeunit 61400 "Test DotNet Value Kinds"
         Texts := Texts.ArrayList();
         Texts.Add('text');
         asserterror foreach Day in Texts do;
+#if BC28PLUS
+        Assert.IsTrue(GetLastErrorText().StartsWith('The format of the Date ''text'' does not match your device''s date settings.'), 'Date over text');
+        Assert.AreEqual('Evaluate:Conversion', GetLastErrorCode(), 'Date over text: code');
+#else
         Assert.AreEqual('Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavText to System.DateTime.', GetLastErrorText(), 'Date over text');
         Assert.AreEqual('Conversion', GetLastErrorCode(), 'Date over text: code');
+#endif
     end;
 
     local procedure BlobText(var Blob: Codeunit "Temp Blob"): Text
