@@ -4,7 +4,10 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: RecordRef.IsDirty edge cases. Two RecordRefs on the same row where one modifies (is dirty measured against the row as read or against the stored row); IsDirty after SetLoadFields
 // and a partial FindFirst, after changing a loaded and then an unloaded field; IsDirty on a table with a FlowField after FieldRef.CalcField. The basic cases are in P92DirtyRef.al and P107RecRefNames.al.
-// BC versions: 29 (27 and 28 by CI)
+// Measured: IsDirty compares a field with the value the RecordRef itself read (not with the stored row): after another RecordRef modified the row, the first one stays clean and a value equal to what it read is
+// clean, one equal to the newly stored value is dirty. A stale Modify does not raise; it writes the whole row from its own copy (the other RecordRef's change is lost). After SetLoadFields, setting an unloaded
+// field is dirty even to the stored value, and stays dirty when set back; reading it first makes the comparison work. FieldRef.CalcField and SetAutoCalcFields leave IsDirty at No. RecordRef.IsDirty exists from BC 28 only.
+// BC versions: 28.0 to 29.0
 
 #if BC28PLUS
 table 71765 "LT RD Item"
@@ -146,7 +149,10 @@ codeunit 71767 "LT RecRef IsDirty Edges"
         Stored.Get(1);
         Observer.Observe('stored_qty', Format(Stored.Qty));
         Observer.Observe('stored_name', Stored.Name);
-        Observer.Finish();
+        Observer.Expect('r2_dirty_after', 'No');
+        Observer.Expect('stored_qty', '10');
+        Observer.Expect('stored_name', 'two');
+        Observer.Verify();
     end;
 
     [Test]

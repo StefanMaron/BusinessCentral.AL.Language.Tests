@@ -5,7 +5,10 @@
 // Facts: a subscriber to OnBeforeActionEvent or OnAfterActionEvent of a page action that raises an error, when a TestPage invokes the action: does OnAction run, does the other event fire, what error does
 // Invoke report (text and code), and can the action be invoked again. The same for an action with RunObject = Page and RunObject = Codeunit: do both events fire, and in what order relative to the opened page or codeunit.
 // The no-error order of a plain action is in P114PageActionEvents.al.
-// BC versions: 29 (27 and 28 by CI)
+// Measured: an error in the before subscriber of a plain action stops the action (OnAction and the after event do not run); an error in the after subscriber comes after OnAction ran; Invoke reports the
+// subscriber's text with code TestWrapped:Dialog; with both failing only the before error is reported; the action can be invoked again. For an action with RunObject = Page neither event fires (the target
+// opens and closes, the failing mode makes no difference). For RunObject = Codeunit only OnAfterActionEvent fires, after the codeunit ran, and an error in it reaches Invoke; the before event does not fire.
+// BC versions: 27.0 to 29.0
 
 table 71770 "LT PS Row"
 {
@@ -323,22 +326,6 @@ codeunit 71775 "LT Page Action Sub Errors"
     end;
 
     [Test]
-    procedure RunPage_BeforeSubscriberConfiguredToRaise()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
-    begin
-        Seed('before');
-        Card.OpenEdit();
-        Card.First();
-        Log.Reset('before');
-        Card.RunPg.Invoke();
-        Observer.Observe('log', Log.Dump());
-        Observer.Finish();
-    end;
-
-    [Test]
     [HandlerFunctions('TargetHandler')]
     procedure RunPage_AfterSubscriberConfiguredToRaise()
     var
@@ -352,7 +339,8 @@ codeunit 71775 "LT Page Action Sub Errors"
         Log.Reset('after');
         Card.RunPg.Invoke();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', '[target-OnOpenPage | handler | target-OnClosePage]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +374,8 @@ codeunit 71775 "LT Page Action Sub Errors"
         Log.Reset('before');
         Card.RunCu.Invoke();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', '[codeunit-OnRun | after-RunCu]');
+        Observer.Verify();
     end;
 
     [Test]
