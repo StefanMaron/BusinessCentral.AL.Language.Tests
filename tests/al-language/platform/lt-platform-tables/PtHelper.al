@@ -92,7 +92,6 @@ codeunit 67105 "LT PT Runner"
                     Rec.Result := 'done';
                 end;
         end;
-        Rec.Modify();
     end;
 
     local procedure Columns(var RR: RecordRef): Text
@@ -225,10 +224,11 @@ codeunit 67106 "LT PT Ops"
     // Runs one request in a codeunit of its own and returns "ok:<result>" or "error:<text>|<code>".
     procedure Perform(TableNo: Integer; Op: Text; Request: Text; RunTriggers: Boolean): Text
     var
-        Arg: Record "LT PT Arg";
+        Arg: Record "LT PT Arg" temporary;
     begin
         ClearLastError();
         Arg.Init();
+        Arg.Id := 1;
         Arg."Table No." := TableNo;
         Arg.Op := CopyStr(Op, 1, MaxStrLen(Arg.Op));
         Arg.Request := CopyStr(Request, 1, MaxStrLen(Arg.Request));
@@ -237,7 +237,6 @@ codeunit 67106 "LT PT Ops"
         if not Codeunit.Run(Codeunit::"LT PT Runner", Arg) then begin
             exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
         end;
-        Arg.Get(Arg.Id);
         exit('ok:' + Arg.Result);
     end;
 }

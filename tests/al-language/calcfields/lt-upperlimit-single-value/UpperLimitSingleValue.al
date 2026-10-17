@@ -128,7 +128,14 @@ codeunit 67180 "LT UL Upper Limit"
         Observer.Observe('setrange_0d_d', Both(Header));
         Header.SetRange("Date Filter", DMY2Date(3, 1, 2024), 0D);
         Observer.Observe('setrange_d_0d', Both(Header));
-        Observer.Finish();
+        Observer.Expect('setfilter_format_d', 'filter=01/03/24|upto=111|inrange=100');
+        Observer.Expect('setfilter_dotdot_d', 'filter=..01/03/24|upto=111|inrange=111');
+        Observer.Expect('setfilter_le_d', 'filter=<=01/03/24|upto=111|inrange=111');
+        Observer.Expect('setfilter_lt_d', 'filter=<01/03/24|upto=error:The filter expression "<01/03/24" applied to the field Date Filter in the LT UL Header table results in more than one range.|inrange=11');
+        Observer.Expect('setrange_d', 'filter=01/03/24|upto=111|inrange=100');
+        Observer.Expect('setrange_0d_d', 'filter=''''..01/03/24|upto=111|inrange=111');
+        Observer.Expect('setrange_d_0d', 'filter=01/03/24..''''|upto=0|inrange=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -155,6 +162,14 @@ codeunit 67180 "LT UL Upper Limit"
         Observer.Observe('setrange_before_all', Both(Header));
         Header.SetRange("Date Filter", DMY2Date(1, 1, 2025));
         Observer.Observe('setrange_after_all', Both(Header));
-        Observer.Finish();
+        Observer.Expect('setfilter_d_dotdot', 'filter=01/03/24..|upto=error:The filter expression "01/03/24.." applied to the field Date Filter in the LT UL Header table results in more than one range.|inrange=11,100');
+        Observer.Expect('setfilter_gt_d', 'filter=>01/03/24|upto=error:The filter expression ">01/03/24" applied to the field Date Filter in the LT UL Header table results in more than one range.|inrange=11,000');
+        Observer.Expect('setfilter_empty', 'filter=|upto=11,111|inrange=11,111');
+        Observer.Expect('setfilter_two_values', 'filter=01/02/24|01/04/24|upto=error:The filter expression "01/02/24|01/04/24" applied to the field Date Filter in the LT UL Header table results in more than one range.|inrange=1,010');
+        Observer.Expect('setfilter_range_and_value', 'filter=01/01/24..01/02/24|01/04/24|upto=error:The filter expression "01/01/24..01/02/24|01/04/24" applied to the field Date Filter in the LT UL Header table results in more than one range.|inrange=1,011');
+        Observer.Expect('setfilter_not_d', 'filter=<>01/03/24|upto=error:The filter expression "<>01/03/24" applied to the field Date Filter in the LT UL Header table results in more than one range.|inrange=11,011');
+        Observer.Expect('setrange_before_all', 'filter=01/01/23|upto=0|inrange=0');
+        Observer.Expect('setrange_after_all', 'filter=01/01/25|upto=11,111|inrange=0');
+        Observer.Verify();
     end;
 }

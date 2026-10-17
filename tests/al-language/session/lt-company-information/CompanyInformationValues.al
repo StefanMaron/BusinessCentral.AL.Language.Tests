@@ -18,7 +18,9 @@ codeunit 67858 "LT Company Information Values"
         // The distance to Today() depends on the date of the test image, so only the kind of value is observed.
         Observer.Observe('workdate_not_blank', Format(WorkDate() <> 0D));
         Observer.Observe('workdate_is_a_whole_date', Format(WorkDate() = DT2Date(CreateDateTime(WorkDate(), 0T))));
-        Observer.Finish();
+        Observer.Expect('workdate_not_blank', 'Yes');
+        Observer.Expect('workdate_is_a_whole_date', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -32,7 +34,9 @@ codeunit 67858 "LT Company Information Values"
         Observer.Observe('after_set_days_from_saved', Format(WorkDate() - Saved));
         WorkDate(Saved);
         Observer.Observe('after_restore_equals_saved', Format(WorkDate() = Saved));
-        Observer.Finish();
+        Observer.Expect('after_set_days_from_saved', '3');
+        Observer.Expect('after_restore_equals_saved', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]

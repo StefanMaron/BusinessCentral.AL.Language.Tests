@@ -107,7 +107,11 @@ codeunit 67153 "LT SA Edges"
         Observer.Observe('view_plain', Row.GetView(false));
         Observer.Observe('ascending', Format(Row.Ascending()));
         Observer.Observe('ids', Ids(Row));
-        Observer.Finish();
+        Observer.Expect('view', 'VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending)');
+        Observer.Expect('view_plain', 'VERSION(1) SORTING(Field2,Field3) ORDER(1)');
+        Observer.Expect('ascending', 'No');
+        Observer.Expect('ids', '4,5,6,1,2,3,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +133,14 @@ codeunit 67153 "LT SA Edges"
         Observer.Observe('qty_desc_view_plain', Row.GetView(false));
         Observer.Observe('qty_desc_ids', Ids(Row));
         Observer.Observe('qty_desc_ascending', Format(Row.Ascending()));
-        Observer.Finish();
+        Observer.Expect('grp_desc_view', 'VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending,Ascending)');
+        Observer.Expect('grp_desc_view_plain', 'VERSION(1) SORTING(Field2,Field3) ORDER(1,0)');
+        Observer.Expect('grp_desc_ids', '6,5,4,3,2,1,');
+        Observer.Expect('qty_desc_view', 'VERSION(1) SORTING(Grp,LT Quantity) ORDER(Ascending,Descending)');
+        Observer.Expect('qty_desc_view_plain', 'VERSION(1) SORTING(Field2,Field3) ORDER(0,1)');
+        Observer.Expect('qty_desc_ids', '1,2,3,4,5,6,');
+        Observer.Expect('qty_desc_ascending', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +157,15 @@ codeunit 67153 "LT SA Edges"
         Observer.Observe('order_desc_no_sorting', ViewOutcome('ORDER(Descending)'));
         Observer.Observe('order_ascending_only', ViewOutcome('SORTING(Grp,Qty) ORDER(Ascending)'));
         Observer.Observe('order_three_values', ViewOutcome('SORTING(Grp,Qty) ORDER(Descending,Ascending,Descending)'));
-        Observer.Finish();
+        Observer.Expect('sorting_order_desc_asc', 'ok:view=VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending,Ascending)|plain=VERSION(1) SORTING(Field2,Field3) ORDER(1,0)|asc_grp=No|asc_qty=Yes|ascending=No|ids=6,5,4,3,2,1,');
+        Observer.Expect('sorting_order_asc_desc', 'ok:view=VERSION(1) SORTING(Grp,LT Quantity) ORDER(Ascending,Descending)|plain=VERSION(1) SORTING(Field2,Field3) ORDER(0,1)|asc_grp=Yes|asc_qty=No|ascending=No|ids=1,2,3,4,5,6,');
+        Observer.Expect('sorting_order_desc_desc', 'ok:view=VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending)|plain=VERSION(1) SORTING(Field2,Field3) ORDER(1)|asc_grp=No|asc_qty=No|ascending=No|ids=4,5,6,1,2,3,');
+        Observer.Expect('sorting_order_desc_only', 'ok:view=VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending)|plain=VERSION(1) SORTING(Field2,Field3) ORDER(1)|asc_grp=No|asc_qty=No|ascending=No|ids=4,5,6,1,2,3,');
+        Observer.Expect('order_desc_asc_no_sorting', 'error:The number of ascending/descending specifications in the ORDER clause must either be 1 or the same as number of fields specified in the SORTING clause.|DB:Ok');
+        Observer.Expect('order_desc_no_sorting', 'ok:view=VERSION(1) SORTING(Id) ORDER(Descending)|plain=VERSION(1) SORTING(Field1) ORDER(1)|asc_grp=error:Cannot call GetAscending on field Grp because it is not part of the current sorting.|asc_qty=error:Cannot call GetAscending on field Qty because it is not part of the current sorting.|ascending=No|ids=6,5,4,3,2,1,');
+        Observer.Expect('order_ascending_only', 'ok:view=VERSION(1) SORTING(Grp,LT Quantity)|plain=VERSION(1) SORTING(Field2,Field3)|asc_grp=Yes|asc_qty=Yes|ascending=Yes|ids=3,2,1,6,5,4,');
+        Observer.Expect('order_three_values', 'error:The number of ascending/descending specifications in the ORDER clause must either be 1 or the same as number of fields specified in the SORTING clause.|DB:Ok');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -173,7 +192,17 @@ codeunit 67153 "LT SA Edges"
         Observer.Observe('id_ascending_after', Format(Row.GetAscending(Id)));
         Observer.Observe('grp_ascending_after', Format(Row.GetAscending(Grp)));
         Observer.Observe('ids', Ids(Row));
-        Observer.Finish();
+        Observer.Expect('default_view', 'VERSION(1) SORTING(Grp,LT Quantity)');
+        Observer.Expect('id_ascending_before', 'Yes');
+        Observer.Expect('set_id_outcome', 'No');
+        Observer.Expect('set_id|text', 'The specified sorting could not be set on field ''Id'' with the key consisting of ''Grp,Qty''.');
+        Observer.Expect('set_id|code', 'InvalidSortingFields');
+        Observer.Expect('id_desc_view', 'VERSION(1) SORTING(Grp,LT Quantity)');
+        Observer.Expect('id_desc_view_plain', 'VERSION(1) SORTING(Field2,Field3)');
+        Observer.Expect('id_ascending_after', 'Yes');
+        Observer.Expect('grp_ascending_after', 'Yes');
+        Observer.Expect('ids', '3,2,1,6,5,4,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -194,7 +223,15 @@ codeunit 67153 "LT SA Edges"
         Observer.Observe('then_grp_true_qty', Format(Row.GetAscending(Qty)));
         Observer.Observe('then_grp_true_ascending', Format(Row.Ascending()));
         Observer.Observe('then_grp_true_ids', Ids(Row));
-        Observer.Finish();
+        Observer.Expect('after_ascending_false_view', 'VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending)');
+        Observer.Expect('after_ascending_false_grp', 'No');
+        Observer.Expect('after_ascending_false_qty', 'No');
+        Observer.Expect('then_grp_true_view', 'VERSION(1) SORTING(Grp,LT Quantity) ORDER(Ascending,Descending)');
+        Observer.Expect('then_grp_true_grp', 'Yes');
+        Observer.Expect('then_grp_true_qty', 'No');
+        Observer.Expect('then_grp_true_ascending', 'No');
+        Observer.Expect('then_grp_true_ids', '1,2,3,4,5,6,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,7 +251,13 @@ codeunit 67153 "LT SA Edges"
         Observer.Observe('then_false_view', Row.GetView());
         Observer.Observe('then_false_grp', Format(Row.GetAscending(Grp)));
         Observer.Observe('then_false_qty', Format(Row.GetAscending(Qty)));
-        Observer.Finish();
+        Observer.Expect('view', 'VERSION(1) SORTING(Grp,LT Quantity)');
+        Observer.Expect('grp', 'Yes');
+        Observer.Expect('qty', 'Yes');
+        Observer.Expect('then_false_view', 'VERSION(1) SORTING(Grp,LT Quantity) ORDER(Descending)');
+        Observer.Expect('then_false_grp', 'No');
+        Observer.Expect('then_false_qty', 'No');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -244,6 +287,12 @@ codeunit 67153 "LT SA Edges"
         ClearLastError();
         Observer.Observe('qty_on_primary_key_outcome', Format(TrySetAscendingQtyOnPrimaryKey(Row)));
         Observer.ObserveError('qty_on_primary_key');
-        Observer.Finish();
+        Observer.Expect('note_outcome', 'No');
+        Observer.Expect('note|text', 'Cannot call SetAscending on field Note because it is not part of the current sorting.');
+        Observer.Expect('note|code', 'DB:Ok');
+        Observer.Expect('qty_on_primary_key_outcome', 'No');
+        Observer.Expect('qty_on_primary_key|text', 'Cannot call SetAscending on field Qty because it is not part of the current sorting.');
+        Observer.Expect('qty_on_primary_key|code', 'DB:Ok');
+        Observer.Verify();
     end;
 }
