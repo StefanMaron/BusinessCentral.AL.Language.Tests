@@ -65,7 +65,16 @@ codeunit 71889 "LT Evaluate Wide Decimal"
         Observer.Observe('d16_nines', Dec('9999999999999999'));
         Observer.Observe('d17', Dec('12345678901234567'));
         Observer.Observe('d18', Dec('123456789012345678'));
-        Observer.Finish();
+        Observer.Expect('d12', 'Yes|100000000000');
+        Observer.Expect('d13', 'Yes|1000000000000');
+        Observer.Expect('d13_nines', 'Yes|9999999999999');
+        Observer.Expect('d15', 'Yes|100000000000000');
+        Observer.Expect('d15_nines', 'Yes|999999999999999');
+        Observer.Expect('d16', 'No|7');
+        Observer.Expect('d16_nines', 'No|7');
+        Observer.Expect('d17', 'No|7');
+        Observer.Expect('d18', 'No|7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,7 +91,16 @@ codeunit 71889 "LT Evaluate Wide Decimal"
         Observer.Observe('d16_nines', Dec9('9999999999999999'));
         Observer.Observe('d17', Dec9('12345678901234567'));
         Observer.Observe('d18', Dec9('123456789012345678'));
-        Observer.Finish();
+        Observer.Expect('d12', 'Yes|100000000000');
+        Observer.Expect('d13', 'Yes|1000000000000');
+        Observer.Expect('d13_nines', 'Yes|9999999999999');
+        Observer.Expect('d15', 'Yes|100000000000000');
+        Observer.Expect('d15_nines', 'Yes|999999999999999');
+        Observer.Expect('d16', 'No|7');
+        Observer.Expect('d16_nines', 'No|7');
+        Observer.Expect('d17', 'No|7');
+        Observer.Expect('d18', 'No|7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +116,15 @@ codeunit 71889 "LT Evaluate Wide Decimal"
         Observer.Observe('f17_9', Dec9('12345678901234567.5'));
         Observer.Observe('f13_exact', Dec('1000000000000.123456789'));
         Observer.Observe('f13_exact_9', Dec9('1000000000000.123456789'));
-        Observer.Finish();
+        Observer.Expect('f13', 'Yes|1000000000000.5');
+        Observer.Expect('f15', 'Yes|100000000000000.5');
+        Observer.Expect('f16', 'No|7');
+        Observer.Expect('f17', 'No|7');
+        Observer.Expect('f16_9', 'No|7');
+        Observer.Expect('f17_9', 'No|7');
+        Observer.Expect('f13_exact', 'Yes|1000000000000.12345');
+        Observer.Expect('f13_exact_9', 'Yes|1000000000000.12345');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +141,16 @@ codeunit 71889 "LT Evaluate Wide Decimal"
         Observer.Observe('n16_9', Dec9('-1000000000000000'));
         Observer.Observe('n17_9', Dec9('-12345678901234567'));
         Observer.Observe('plus_16', Dec('+1000000000000000'));
-        Observer.Finish();
+        Observer.Expect('n13', 'Yes|-1000000000000');
+        Observer.Expect('n15_nines', 'Yes|-999999999999999');
+        Observer.Expect('n16', 'No|7');
+        Observer.Expect('n17', 'No|7');
+        Observer.Expect('n16_fraction', 'No|7');
+        Observer.Expect('n13_9', 'Yes|-1000000000000');
+        Observer.Expect('n16_9', 'No|7');
+        Observer.Expect('n17_9', 'No|7');
+        Observer.Expect('plus_16', 'No|7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,6 +171,19 @@ codeunit 71889 "LT Evaluate Wide Decimal"
         Observer.Observe('bn17', Big('-12345678901234567'));
         Observer.Observe('bn19_min', Big('-9223372036854775808'));
         Observer.Observe('b16_fraction', Big('1000000000000000.5'));
-        Observer.Finish();
+        Observer.Expect('b13', 'Yes|1000000000000');
+        Observer.Expect('b15_nines', 'Yes|999999999999999');
+        Observer.Expect('b16', 'Yes|1000000000000000');
+        Observer.Expect('b16_nines', 'Yes|9999999999999999');
+        Observer.Expect('b17', 'Yes|12345678901234567');
+        Observer.Expect('b18', 'Yes|123456789012345678');
+        Observer.Expect('b19_max', 'Yes|9223372036854775807');
+        Observer.Expect('b19_over', 'No|7');
+        Observer.Expect('b17_9', 'Yes|12345678901234567');
+        Observer.Expect('b19_max_9', 'Yes|9223372036854775807');
+        Observer.Expect('bn17', 'Yes|-12345678901234567');
+        Observer.Expect('bn19_min', 'Yes|-9223372036854775808');
+        Observer.Expect('b16_fraction', 'No|7');
+        Observer.Verify();
     end;
 }

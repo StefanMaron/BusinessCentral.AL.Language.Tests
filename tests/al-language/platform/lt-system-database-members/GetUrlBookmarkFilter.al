@@ -111,7 +111,18 @@ codeunit 71883 "LT GUB GetUrl Bookmark Filter"
         Observer.Observe('query', Tail(GetUrl(ClientType::Web, 'My Company', ObjectType::Query, 71890, Row, false)));
         Observer.Observe('no_company', Tail(GetUrl(ClientType::Web, '', ObjectType::Page, 71890, Row, false)));
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('a1', '?company=My%20Company&page=71890&bookmark=15%3byBgBAAJ7%2f0EAMQ%3d%3d');
+        Observer.Expect('a1_again_equal', 'Yes');
+        Observer.Expect('lower_space', '?company=My%20Company&page=71890&bookmark=17%3byBgBAAJ7%2f0IAIAAy');
+        Observer.Expect('ampersand', '?company=My%20Company&page=71890&bookmark=17%3byBgBAAJ7%2f1gAJgBZ');
+        Observer.Expect('single_char', '?company=My%20Company&page=71890&bookmark=13%3byBgBAAJ7%2f0E%3d');
+        Observer.Expect('empty_code', '?company=My%20Company&page=71890&bookmark=11%3byBgBAAJ7');
+        Observer.Expect('not_inserted', '?company=My%20Company&page=71890&bookmark=33%3byBgBAAJ7%2f04ATwBUAEkATgBTAEUAUgBUAEUARA%3d%3d');
+        Observer.Expect('report', 'noquery');
+        Observer.Expect('table', 'noquery');
+        Observer.Expect('query', 'noquery');
+        Observer.Expect('no_company', '?page=71890&bookmark=33%3byBgBAAJ7%2f04ATwBUAEkATgBTAEUAUgBUAEUARA%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,7 +152,18 @@ codeunit 71883 "LT GUB GetUrl Bookmark Filter"
             Observer.Observe('id_' + Format(Id), Tail(GetUrl(ClientType::Web, 'My Company', ObjectType::Page, 71890, Row, false)));
         end;
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('id_0', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACH');
+        Observer.Expect('id_1', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACHAQ%3d%3d');
+        Observer.Expect('id_127', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACHfw%3d%3d');
+        Observer.Expect('id_128', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACHgA%3d%3d');
+        Observer.Expect('id_255', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACH%2fw%3d%3d');
+        Observer.Expect('id_256', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACHAAE%3d');
+        Observer.Expect('id_100000', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACHoIYB');
+        Observer.Expect('id_-1', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACH%2f%2f%2f%2f%2fw%3d%3d');
+        Observer.Expect('id_-5', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACH%2b%2f%2f%2f%2fw%3d%3d');
+        Observer.Expect('id_2147483647', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACH%2f%2f%2f%2ffw%3d%3d');
+        Observer.Expect('id_-2147483647', '?company=My%20Company&page=71890&bookmark=12%3byRgBAACHAQAAgA%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
@@ -169,9 +191,14 @@ codeunit 71883 "LT GUB GetUrl Bookmark Filter"
         Observer.Observe('a1_0', Tail(GetUrl(ClientType::Web, 'My Company', ObjectType::Page, 71890, Row, false)));
         Row.Code := 'A1';
         Row.Line := -1;
-        Observer.Observe('a1_minus1_not_inserted', Tail(GetUrl(ClientType::Web, 'My Company', ObjectType::Page, 71890, Row, true)));
+        Observer.Observe('usefilters_true_not_inserted', Tail(GetUrl(ClientType::Web, 'My Company', ObjectType::Page, 71890, Row, true)));
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('a1_10000', '?company=My%20Company&page=71890&bookmark=21%3byhgBAAJ7%2f0EAMQAAAACHECc%3d');
+        Observer.Expect('a1_20000', '?company=My%20Company&page=71890&bookmark=21%3byhgBAAJ7%2f0EAMQAAAACHIE4%3d');
+        Observer.Expect('b2_10000', '?company=My%20Company&page=71890&bookmark=21%3byhgBAAJ7%2f0IAMgAAAACHECc%3d');
+        Observer.Expect('a1_0', '?company=My%20Company&page=71890&bookmark=21%3byhgBAAJ7%2f0EAMQAAAACH');
+        Observer.Expect('usefilters_true_not_inserted', '?company=My%20Company&page=71890');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,7 +240,13 @@ codeunit 71883 "LT GUB GetUrl Bookmark Filter"
         Row.Reset();
         Row.DeleteAll();
         TwoRow.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('code_row_equal', 'Yes');
+        Observer.Expect('code_row_ref', '?company=My%20Company&page=71890&bookmark=15%3byBgBAAJ7%2f0EAMQ%3d%3d');
+        Observer.Expect('filtered_equal', 'Yes');
+        Observer.Expect('filtered_ref', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A1..A9%27');
+        Observer.Expect('two_row_equal', 'Yes');
+        Observer.Expect('two_row_ref', '?company=My%20Company&page=71890&bookmark=21%3byhgBAAJ7%2f0EAMQAAAACHECc%3d');
+        Observer.Verify();
     end;
 
     [Test]
@@ -270,6 +303,22 @@ codeunit 71883 "LT GUB GetUrl Bookmark Filter"
         Observer.Observe('found_filtered_nofilters', PageUrl(Row, false));
         Row.Reset();
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('range_one', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A1%27');
+        Observer.Expect('range_one_nofilters', '?company=My%20Company&page=71890&bookmark=15%3byBgBAAJ7%2f0IAMg%3d%3d');
+        Observer.Expect('range_two', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A1..B9%27');
+        Observer.Expect('filter_range', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%2710..20%27');
+        Observer.Expect('filter_or_wildcard', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A%2A%7CB%2A%27');
+        Observer.Expect('filter_not_and', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27%3C%3EA1%26%3C%3EB2%27');
+        Observer.Expect('filter_ge', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27%3E%3DA1%27');
+        Observer.Expect('int_one', '?company=My%20Company&page=71890&filter=%27Qty%27%20IS%20%275%27');
+        Observer.Expect('int_filter', '?company=My%20Company&page=71890&filter=%27Qty%27%20IS%20%271..5%7C8%7C%3E20%27');
+        Observer.Expect('special_chars', '?company=My%20Company&page=71890&filter=%27Name%27%20IS%20%27%27%27A%26B%20c%25d%27%27%27');
+        Observer.Expect('empty_filter', '?company=My%20Company&page=71890&filter=%27Name%27%20IS%20%27%27%27%27%27%27');
+        Observer.Expect('two_fields', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A1%27%20AND%20%27Qty%27%20IS%20%271..3%27');
+        Observer.Expect('three_fields', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A1%27%20AND%20%27Name%27%20IS%20%27N-A1%27%20AND%20%27Qty%27%20IS%20%271..3%27');
+        Observer.Expect('reset_usefilters', '?company=My%20Company&page=71890');
+        Observer.Expect('found_filtered', '?company=My%20Company&page=71890&filter=%27Code%27%20IS%20%27A1%27');
+        Observer.Expect('found_filtered_nofilters', '?company=My%20Company&page=71890&bookmark=15%3byBgBAAJ7%2f0EAMQ%3d%3d');
+        Observer.Verify();
     end;
 }

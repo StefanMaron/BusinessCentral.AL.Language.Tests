@@ -36,7 +36,12 @@ codeunit 71885 "LT SecretText From Text"
         Blank := ' ';
         Secret := SecretStrSubstNo('%1', Blank);
         Observer.Observe('single_space_bare_template', Format(Secret.IsEmpty()));
-        Observer.Finish();
+        Observer.Expect('text_var_in_template', 'No');
+        Observer.Expect('text_var_bare_template', 'No');
+        Observer.Expect('blank_text_bare_template', 'Yes');
+        Observer.Expect('blank_text_in_template', 'No');
+        Observer.Expect('single_space_bare_template', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -54,6 +59,11 @@ codeunit 71885 "LT SecretText From Text"
         Code20 := 'ABC';
         Observer.Observe('code_var', Emptiness(Code20));
         Observer.Observe('concatenation', Emptiness(Plain + '!'));
-        Observer.Finish();
+        Observer.Expect('text_var', 'No');
+        Observer.Expect('blank_text_var', 'Yes');
+        Observer.Expect('code_var_blank', 'Yes');
+        Observer.Expect('code_var', 'No');
+        Observer.Expect('concatenation', 'No');
+        Observer.Verify();
     end;
 }

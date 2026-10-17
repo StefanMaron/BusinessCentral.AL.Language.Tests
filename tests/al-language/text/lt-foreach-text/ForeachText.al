@@ -38,7 +38,13 @@ codeunit 71884 "LT Foreach Text"
         Observer.Observe('blank_between', CodesOf('a  b'));
         Observer.Observe('trailing_blank', CodesOf('ab '));
         Observer.Observe('umlaut', CodesOf('a' + 'ä' + 'b'));
-        Observer.Finish();
+        Observer.Expect('base64_chars', '5|a:97 +:43 /:47 =:61 b:98 ');
+        Observer.Expect('empty', '0|');
+        Observer.Expect('one', '1|z:122 ');
+        Observer.Expect('blank_between', '4|a:97  :32  :32 b:98 ');
+        Observer.Expect('trailing_blank', '3|a:97 b:98  :32 ');
+        Observer.Expect('umlaut', '3|a:97 ä:228 b:98 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +75,11 @@ codeunit 71884 "LT Foreach Text"
         foreach Ch in TextConstant do
             Visited += Format(Ch);
         Observer.Observe('text_constant', Visited);
-        Observer.Finish();
+        Observer.Expect('text_var', 'a+/=b');
+        Observer.Expect('code_var', 'AB-C');
+        Observer.Expect('text5_var', 'q w');
+        Observer.Expect('text_constant', 'x-y');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +98,9 @@ codeunit 71884 "LT Foreach Text"
         end;
         Observer.Observe('text1_visited', Visited);
         Observer.Observe('text1_count', Format(Count));
-        Observer.Finish();
+        Observer.Expect('text1_visited', 'a,+,/,=,b,');
+        Observer.Expect('text1_count', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -106,7 +118,9 @@ codeunit 71884 "LT Foreach Text"
         end;
         Observer.Observe('visited', Visited);
         Observer.Observe('after', T);
-        Observer.Finish();
+        Observer.Expect('visited', 'abc');
+        Observer.Expect('after', 'xyz123');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,6 +144,9 @@ codeunit 71884 "LT Foreach Text"
         Observer.Observe('count', Format(Count));
         Observer.Observe('codes', Codes);
         Observer.Observe('strlen', Format(StrLen(T)));
-        Observer.Finish();
+        Observer.Expect('count', '4');
+        Observer.Expect('codes', '97 55357 56832 98 ');
+        Observer.Expect('strlen', '4');
+        Observer.Verify();
     end;
 }

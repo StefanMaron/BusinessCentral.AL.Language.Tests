@@ -2,8 +2,9 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunit 71888
 // Probe: written against BC 29 and checked on the corpus CI matrix (27, 28, 29); every literal asserted below is what BC produced.
-// Facts: the PageStyle enum: Format(PageStyle::X), Format(PageStyle::X, 0, 2) and Format(PageStyle::X, 0, 1) for every member (PageStyle is an option-like type: AsInteger does not exist); the text assigned to a
-//   StyleExpr variable on a page and the style text the page holds.
+// Facts: the PageStyle enum: Format(PageStyle::X), Format(PageStyle::X, 0, 2) and Format(PageStyle::X, 0, 1) for every member (PageStyle is an option-like type: AsInteger does not exist); Format into a Text and back with Evaluate.
+//   The Text of a page's StyleExpr variable is the Format of a PageStyle member. Opening such a page with a TestPage ends the test session
+//   on every BC version run so far, so no TestPage test is written and a style cannot be read back from a TestPage control.
 // BC versions: 27, 28, 29
 table 71886 "LT PS Row"
 {
@@ -151,31 +152,4 @@ codeunit 71888 "LT PageStyle"
         Observer.Finish();
     end;
 
-    [Test]
-    procedure PageStyle_StyleExpr_PageHoldsText()
-    var
-        Observer: Codeunit "Probe Observer";
-        Row: Record "LT PS Row";
-        PageLst: TestPage "LT PS List";
-    begin
-        Row.DeleteAll();
-        Row.Init();
-        Row.Id := 1;
-        Row.Name := 'strong';
-        Row.Insert();
-        Row.Id := 2;
-        Row.Name := 'unfavorable';
-        Row.Insert();
-        Row.Id := 3;
-        Row.Name := 'none';
-        Row.Insert();
-        PageLst.OpenView();
-        PageLst.First();
-        Observer.Observe('row1_id', PageLst.Id.Value());
-        PageLst.Next();
-        Observer.Observe('row2_id', PageLst.Id.Value());
-        PageLst.Close();
-        Row.DeleteAll();
-        Observer.Finish();
-    end;
 }

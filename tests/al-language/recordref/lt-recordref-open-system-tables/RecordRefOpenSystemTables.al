@@ -13,18 +13,22 @@ codeunit 71891 "LT RecordRef Open System"
 
     local procedure OpenResult(TableNo: Integer): Text
     var
-        RecRef: RecordRef;
+        Described: Text;
     begin
         ClearLastError();
-        if not TryOpen(RecRef, TableNo) then
+        if not TryOpen(TableNo, Described) then
             exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        exit('opened|' + Format(RecRef.Number) + '|' + RecRef.Name());
+        exit(Described);
     end;
 
     [TryFunction]
-    local procedure TryOpen(var RecRef: RecordRef; TableNo: Integer)
+    local procedure TryOpen(TableNo: Integer; var Described: Text)
+    var
+        RecRef: RecordRef;
     begin
         RecRef.Open(TableNo);
+        Described := 'opened|' + Format(RecRef.Number) + '|' + RecRef.Name();
+        RecRef.Close();
     end;
 
     [Test]
