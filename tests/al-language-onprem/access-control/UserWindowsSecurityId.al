@@ -34,7 +34,33 @@ codeunit 61234 "LT User Windows SID"
         Observer.Observe('insert_sid_case', Ops.Perform(T, 'insert', '1={A1000000-0000-0000-0000-000000000008};2=LTSID8;7=s-1-5-21-1000-2000-3000-1001;10=4', true));
         Observer.Observe('count_sid_1001', Ops.Perform(T, 'count', '7=S-1-5-21-1000-2000-3000-1001', false));
         Observer.Observe('count_sid_1002', Ops.Perform(T, 'count', '7=S-1-5-21-1000-2000-3000-1002', false));
-        Observer.Finish();
+        Observer.Expect('insert_first', 'ok:Yes');
+        Observer.Expect('insert_same_sid_other_name', 'error:The same Windows Account can be connected to only one Business Central user.|UserTableUserWindowsSidMustBeUnique');
+        Observer.Expect('insert_other_sid_same_name', 'error:The user name must be unique.|UserTableUserNameMustBeUnique');
+        Observer.Expect('insert_other_sid_other_name', 'ok:Yes');
+        Observer.Expect('insert_blank_sid_a', 'ok:Yes');
+        Observer.Expect('insert_blank_sid_b', 'ok:Yes');
+#if BC29PLUS
+        Observer.Expect('modify_to_sid_held_by_other', 'error:The same Windows Account can be connected to only one Business Central user.|UserTableUserWindowsSidMustBeUnique');
+#else
+        Observer.Expect('modify_to_sid_held_by_other', 'error:Windows security identifier is not supported in online environments.|Dialog');
+#endif
+#if BC29PLUS
+        Observer.Expect('modify_to_free_sid', 'ok:Yes');
+#else
+        Observer.Expect('modify_to_free_sid', 'error:Windows security identifier is not supported in online environments.|Dialog');
+#endif
+#if BC29PLUS
+        Observer.Expect('modify_own_sid_unchanged', 'ok:Yes');
+#else
+        Observer.Expect('modify_own_sid_unchanged', 'error:Windows security identifier is not supported in online environments.|Dialog');
+#endif
+        Observer.Expect('modify_sid_to_blank', 'ok:Yes');
+        Observer.Expect('insert_not_a_sid', 'ok:Yes');
+        Observer.Expect('insert_sid_case', 'ok:Yes');
+        Observer.Expect('count_sid_1001', 'ok:1');
+        Observer.Expect('count_sid_1002', 'ok:1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -47,6 +73,13 @@ codeunit 61234 "LT User Windows SID"
         Observer.Observe('insert_disabled', Ops.Perform(T, 'insert', '1={A1000000-0000-0000-0000-000000000011};2=LTSID11;4=1;7=S-1-5-21-1000-2000-3000-1101;10=4', true));
         Observer.Observe('insert_enabled_same_sid', Ops.Perform(T, 'insert', '1={A1000000-0000-0000-0000-000000000012};2=LTSID12;7=S-1-5-21-1000-2000-3000-1101;10=4', true));
         Observer.Observe('modify_disabled_to_enabled', Ops.Perform(T, 'modify', '1={A1000000-0000-0000-0000-000000000011}|4=0', true));
-        Observer.Finish();
+        Observer.Expect('insert_disabled', 'ok:Yes');
+        Observer.Expect('insert_enabled_same_sid', 'error:The same Windows Account can be connected to only one Business Central user.|UserTableUserWindowsSidMustBeUnique');
+#if BC29PLUS
+        Observer.Expect('modify_disabled_to_enabled', 'ok:Yes');
+#else
+        Observer.Expect('modify_disabled_to_enabled', 'error:Windows security identifier is not supported in online environments.|Dialog');
+#endif
+        Observer.Verify();
     end;
 }
