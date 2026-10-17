@@ -161,7 +161,11 @@ codeunit 70960 "LT TFT FRef Numeric"
         asserterror Fld.TestField(D);
         Observer.ObserveError('different');
         Observer.Expect('equal_no_error', 'ok');
+#if BC28PLUS
         Observer.Expect('different|text', 'Int must be equal to ''\u0008''  in LT TFT Rec: Id=0. Current value is ''7''.');
+#else
+        Observer.Expect('different|text', 'Int must be equal to ''8''  in LT TFT Rec: Id=0. Current value is ''7''.');
+#endif
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
@@ -197,7 +201,11 @@ codeunit 70960 "LT TFT FRef Numeric"
         Observer.Expect('text_has_message', 'No');
         Observer.Expect('text_has_title', 'No');
         Observer.Expect('text_has_detail', 'No');
+#if BC28PLUS
         Observer.Expect('different|text', 'Int must be equal to ''\u0008''  in LT TFT Rec: Id=0. Current value is ''7''.');
+#else
+        Observer.Expect('different|text', 'Int must be equal to ''8''  in LT TFT Rec: Id=0. Current value is ''7''.');
+#endif
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;

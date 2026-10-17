@@ -49,17 +49,33 @@ codeunit 70968 "LT TFT Wrong Guid on Text"
         Observer.Observe('info_text_has_message', Format(GetLastErrorText().Contains('TFT message')));
         Observer.ObserveError('info_different');
         Observer.Expect('same_result', 'No');
+#if BC28PLUS
         Observer.Expect('same|text', 'Txt must be equal to ''{11111111-2222-3333-4444-555555555555}''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('same|text', 'Txt must be equal to ''11111111-2222-3333-4444-555555555555''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
         Observer.Expect('same|code', 'TestField');
         Observer.Expect('different_result', 'No');
+#if BC28PLUS
         Observer.Expect('different|text', 'Txt must be equal to ''{11111111-2222-3333-4444-555555555556}''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different|text', 'Txt must be equal to ''11111111-2222-3333-4444-555555555556''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
         Observer.Expect('different|code', 'TestField');
         Observer.Expect('info_same_result', 'No');
+#if BC28PLUS
         Observer.Expect('info_same|text', 'Txt must be equal to ''{11111111-2222-3333-4444-555555555555}''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('info_same|text', 'Txt must be equal to ''11111111-2222-3333-4444-555555555555''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
         Observer.Expect('info_same|code', 'TestField');
         Observer.Expect('info_different_result', 'No');
         Observer.Expect('info_text_has_message', 'No');
+#if BC28PLUS
         Observer.Expect('info_different|text', 'Txt must be equal to ''{11111111-2222-3333-4444-555555555556}''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('info_different|text', 'Txt must be equal to ''11111111-2222-3333-4444-555555555556''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
         Observer.Expect('info_different|code', 'TestField');
         Observer.Verify();
     end;
