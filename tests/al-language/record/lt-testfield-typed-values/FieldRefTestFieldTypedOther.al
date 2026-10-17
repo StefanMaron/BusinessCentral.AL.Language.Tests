@@ -156,7 +156,11 @@ codeunit 70962 "LT TFT FRef Other"
         asserterror Fld.TestField(D);
         Observer.ObserveError('different');
         Observer.Expect('equal_no_error', 'ok');
+#if BC28PLUS
         Observer.Expect('different|text', 'Gd must be equal to ''{11111111-2222-3333-4444-555555555556}''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different|text', 'Gd must be equal to ''11111111-2222-3333-4444-555555555556''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
@@ -194,7 +198,11 @@ codeunit 70962 "LT TFT FRef Other"
         Observer.Expect('text_has_message', 'No');
         Observer.Expect('text_has_title', 'No');
         Observer.Expect('text_has_detail', 'No');
+#if BC28PLUS
         Observer.Expect('different|text', 'Gd must be equal to ''{11111111-2222-3333-4444-555555555556}''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different|text', 'Gd must be equal to ''11111111-2222-3333-4444-555555555556''  in LT TFT Rec: Id=0. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
