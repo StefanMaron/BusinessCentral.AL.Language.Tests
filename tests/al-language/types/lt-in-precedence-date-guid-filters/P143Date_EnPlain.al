@@ -36,7 +36,7 @@ codeunit 74650 "LT P143 EnPlain"
         Observer.Expect('d_1_1_2027_count', '1');
         Observer.Expect('d_empty_filter', '');
         Observer.Expect('d_empty_count', '10');
-        Observer.Expect('d_zero_filter', '10/16/26');
+        Observer.Expect('d_zero_filter', Format(Today(), 0, '<Month,2>/<Day,2>/<Year,2>'));
         Observer.Expect('d_zero_count', '1');
         Observer.Expect('d_0117_2027_filter', '01/17/27');
         Observer.Expect('d_0117_2027_count', '1');

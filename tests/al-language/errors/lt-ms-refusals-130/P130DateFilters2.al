@@ -93,10 +93,10 @@ codeunit 73550 "LT P130 Date Filters 2"
         Observer.Expect('one_space', 'ok count=4 filter=');
         Observer.Expect('quoted_space', 'ok count=1 filter=''''');
         Observer.Expect('zero_digit', 'error:The filter "0" is not valid for the Dt field on the LT P130 Filter Row table. The format of the Date ''0'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
-        Observer.Expect('zero_date_text', 'ok count=0 filter=10/16/26');
-        Observer.Expect('star', 'ok count=0 filter=10/16/26');
-        Observer.Expect('at_star', 'ok count=0 filter=10/16/26');
-        Observer.Expect('question', 'ok count=0 filter=10/16/26');
+        Observer.Expect('zero_date_text', 'ok count=0 filter=' + Format(Today(), 0, '<Month,2>/<Day,2>/<Year,2>'));
+        Observer.Expect('star', 'ok count=0 filter=' + Format(Today(), 0, '<Month,2>/<Day,2>/<Year,2>'));
+        Observer.Expect('at_star', 'ok count=0 filter=' + Format(Today(), 0, '<Month,2>/<Day,2>/<Year,2>'));
+        Observer.Expect('question', 'ok count=0 filter=' + Format(Today(), 0, '<Month,2>/<Day,2>/<Year,2>'));
         Observer.Expect('dotdot', 'error:The filter ".." is not valid for the Dt field on the LT P130 Filter Row table. Both sides of the range (''..'') cannot be empty.|Filter:CSide');
         Observer.Expect('pipe_only', 'error:The filter "|" is not valid for the Dt field on the LT P130 Filter Row table. The left side of ''|'' operators cannot be empty.|Filter:CSide');
         Observer.Expect('leading_pipe', 'error:The filter "|2024-01-03" is not valid for the Dt field on the LT P130 Filter Row table. The left side of ''|'' operators cannot be empty.|Filter:CSide');

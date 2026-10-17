@@ -217,7 +217,11 @@ codeunit 71394 "LT PM Values Tests"
         Observer.Expect('cust ledger entry key1 Key', 'Entry No.');
         Observer.Expect('cust ledger entry key1 SumIndexFields', '');
         Observer.Expect('cust ledger entry key1 MaintainSIFTIndex', 'No');
+#if BC28PLUS
         Observer.Expect('cust ledger entry key2 Key', 'Customer No.,Currency Code');
+#else
+        Observer.Expect('cust ledger entry key2 Key', 'Customer No.,Posting Date,Currency Code');
+#endif
         Observer.Expect('cust ledger entry key2 SumIndexFields', 'Sales (LCY),Profit (LCY),Inv. Discount (LCY)');
         Observer.Expect('cust ledger entry key2 MaintainSIFTIndex', 'Yes');
         Observer.Expect('cust ledger entry key3 Key', 'Document No.');
