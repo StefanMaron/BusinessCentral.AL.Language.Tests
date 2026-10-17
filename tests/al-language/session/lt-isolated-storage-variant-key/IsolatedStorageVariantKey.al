@@ -99,7 +99,22 @@ codeunit 74192 "LT ISK Variant Key"
         K := 5;
         AllScopes(Observer, K, 'int', '5');
         if IsolatedStorage.Delete('5', DataScope::Module) then;
-        Observer.Finish();
+        Observer.Expect('int_module_set', 'err:TypeConversion');
+        Observer.Expect('int_module_set_error_text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('int_module_contains', 'err:TypeConversion');
+        Observer.Expect('int_module_get', 'err:TypeConversion');
+        Observer.Expect('int_module_contains_as_text', 'No');
+        Observer.Expect('int_module_delete', 'err:TypeConversion');
+        Observer.Expect('int_company_set', 'err:TypeConversion');
+        Observer.Expect('int_company_contains', 'err:TypeConversion');
+        Observer.Expect('int_company_delete', 'err:TypeConversion');
+        Observer.Expect('int_user_set', 'err:TypeConversion');
+        Observer.Expect('int_user_contains', 'err:TypeConversion');
+        Observer.Expect('int_user_delete', 'err:TypeConversion');
+        Observer.Expect('int_cu_set', 'err:TypeConversion');
+        Observer.Expect('int_cu_contains', 'err:TypeConversion');
+        Observer.Expect('int_cu_delete', 'err:TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -112,7 +127,22 @@ codeunit 74192 "LT ISK Variant Key"
         AllScopes(Observer, K, 'code', 'ABC');
         if IsolatedStorage.Delete('ABC', DataScope::Module) then;
         if IsolatedStorage.Delete('abc', DataScope::Module) then;
-        Observer.Finish();
+        Observer.Expect('code_module_set', 'ok:');
+        Observer.Expect('code_module_set_error_text', '');
+        Observer.Expect('code_module_contains', 'ok:Yes');
+        Observer.Expect('code_module_get', 'ok:Yes|v');
+        Observer.Expect('code_module_contains_as_text', 'Yes');
+        Observer.Expect('code_module_delete', 'ok:Yes');
+        Observer.Expect('code_company_set', 'ok:');
+        Observer.Expect('code_company_contains', 'ok:Yes');
+        Observer.Expect('code_company_delete', 'ok:Yes');
+        Observer.Expect('code_user_set', 'ok:');
+        Observer.Expect('code_user_contains', 'ok:Yes');
+        Observer.Expect('code_user_delete', 'ok:Yes');
+        Observer.Expect('code_cu_set', 'ok:');
+        Observer.Expect('code_cu_contains', 'ok:Yes');
+        Observer.Expect('code_cu_delete', 'ok:Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,7 +154,22 @@ codeunit 74192 "LT ISK Variant Key"
         Evaluate(K, '{12345678-1234-1234-1234-123456789ABC}');
         AllScopes(Observer, K, 'guid', Format(K));
         if IsolatedStorage.Delete(Format(K), DataScope::Module) then;
-        Observer.Finish();
+        Observer.Expect('guid_module_set', 'ok:');
+        Observer.Expect('guid_module_set_error_text', '');
+        Observer.Expect('guid_module_contains', 'ok:Yes');
+        Observer.Expect('guid_module_get', 'ok:Yes|v');
+        Observer.Expect('guid_module_contains_as_text', 'Yes');
+        Observer.Expect('guid_module_delete', 'ok:Yes');
+        Observer.Expect('guid_company_set', 'ok:');
+        Observer.Expect('guid_company_contains', 'ok:Yes');
+        Observer.Expect('guid_company_delete', 'ok:Yes');
+        Observer.Expect('guid_user_set', 'ok:');
+        Observer.Expect('guid_user_contains', 'ok:Yes');
+        Observer.Expect('guid_user_delete', 'ok:Yes');
+        Observer.Expect('guid_cu_set', 'ok:');
+        Observer.Expect('guid_cu_contains', 'ok:Yes');
+        Observer.Expect('guid_cu_delete', 'ok:Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,7 +181,22 @@ codeunit 74192 "LT ISK Variant Key"
         K := 1.5;
         AllScopes(Observer, K, 'dec', '1.5');
         if IsolatedStorage.Delete('1.5', DataScope::Module) then;
-        Observer.Finish();
+        Observer.Expect('dec_module_set', 'err:TypeConversion');
+        Observer.Expect('dec_module_set_error_text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('dec_module_contains', 'err:TypeConversion');
+        Observer.Expect('dec_module_get', 'err:TypeConversion');
+        Observer.Expect('dec_module_contains_as_text', 'No');
+        Observer.Expect('dec_module_delete', 'err:TypeConversion');
+        Observer.Expect('dec_company_set', 'err:TypeConversion');
+        Observer.Expect('dec_company_contains', 'err:TypeConversion');
+        Observer.Expect('dec_company_delete', 'err:TypeConversion');
+        Observer.Expect('dec_user_set', 'err:TypeConversion');
+        Observer.Expect('dec_user_contains', 'err:TypeConversion');
+        Observer.Expect('dec_user_delete', 'err:TypeConversion');
+        Observer.Expect('dec_cu_set', 'err:TypeConversion');
+        Observer.Expect('dec_cu_contains', 'err:TypeConversion');
+        Observer.Expect('dec_cu_delete', 'err:TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +208,22 @@ codeunit 74192 "LT ISK Variant Key"
         K := true;
         AllScopes(Observer, K, 'bool', Format(K));
         if IsolatedStorage.Delete(Format(K), DataScope::Module) then;
-        Observer.Finish();
+        Observer.Expect('bool_module_set', 'err:TypeConversion');
+        Observer.Expect('bool_module_set_error_text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('bool_module_contains', 'err:TypeConversion');
+        Observer.Expect('bool_module_get', 'err:TypeConversion');
+        Observer.Expect('bool_module_contains_as_text', 'No');
+        Observer.Expect('bool_module_delete', 'err:TypeConversion');
+        Observer.Expect('bool_company_set', 'err:TypeConversion');
+        Observer.Expect('bool_company_contains', 'err:TypeConversion');
+        Observer.Expect('bool_company_delete', 'err:TypeConversion');
+        Observer.Expect('bool_user_set', 'err:TypeConversion');
+        Observer.Expect('bool_user_contains', 'err:TypeConversion');
+        Observer.Expect('bool_user_delete', 'err:TypeConversion');
+        Observer.Expect('bool_cu_set', 'err:TypeConversion');
+        Observer.Expect('bool_cu_contains', 'err:TypeConversion');
+        Observer.Expect('bool_cu_delete', 'err:TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,6 +235,21 @@ codeunit 74192 "LT ISK Variant Key"
         K := DMY2Date(2, 1, 2026);
         AllScopes(Observer, K, 'date', Format(K));
         if IsolatedStorage.Delete(Format(K), DataScope::Module) then;
-        Observer.Finish();
+        Observer.Expect('date_module_set', 'err:TypeConversion');
+        Observer.Expect('date_module_set_error_text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('date_module_contains', 'err:TypeConversion');
+        Observer.Expect('date_module_get', 'err:TypeConversion');
+        Observer.Expect('date_module_contains_as_text', 'No');
+        Observer.Expect('date_module_delete', 'err:TypeConversion');
+        Observer.Expect('date_company_set', 'err:TypeConversion');
+        Observer.Expect('date_company_contains', 'err:TypeConversion');
+        Observer.Expect('date_company_delete', 'err:TypeConversion');
+        Observer.Expect('date_user_set', 'err:TypeConversion');
+        Observer.Expect('date_user_contains', 'err:TypeConversion');
+        Observer.Expect('date_user_delete', 'err:TypeConversion');
+        Observer.Expect('date_cu_set', 'err:TypeConversion');
+        Observer.Expect('date_cu_contains', 'err:TypeConversion');
+        Observer.Expect('date_cu_delete', 'err:TypeConversion');
+        Observer.Verify();
     end;
 }
