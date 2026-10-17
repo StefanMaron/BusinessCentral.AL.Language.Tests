@@ -65,7 +65,7 @@ codeunit 73552 "LT P130 Evaluate Date"
         Observer.Expect('16102026', 'No|2000-01-01');
         Observer.Expect('10162026', 'Yes|2026-10-16');
         Observer.Expect('01022003', 'Yes|2003-01-02');
-        Observer.Expect('1010', 'Yes|2026-10-10');
+        Observer.Expect('1010', 'Yes|' + Format(DMY2Date(10, 10, Date2DMY(Today(), 3)), 0, 9));
         Observer.Expect('10101', 'Yes|2001-10-10');
         Observer.Expect('1010101', 'Yes|0101-10-10');
         Observer.Expect('0', 'No|2000-01-01');
