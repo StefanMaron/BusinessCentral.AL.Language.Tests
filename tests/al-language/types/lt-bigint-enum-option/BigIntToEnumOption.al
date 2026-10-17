@@ -115,13 +115,6 @@ codeunit 74064 "LT BigInt To Option"
         Obs.Expect('o100.val', '100|100');
         Obs.Expect('om1.set', 'ok');
         Obs.Expect('om1.val', '-1|-1');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT BigInt To Option"(CodeUnit 74064).Option_FromBigInteger_InRangeAndLacking line 9 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -146,13 +139,6 @@ AL Callstack:
         Obs.Expect('imin1.err|code', 'ConversionCast');
         Obs.Expect('lmax.err|text', 'Overflow under conversion of System.Int64 value 9223372036854775807 to System.Int32.');
         Obs.Expect('lmax.err|code', 'ConversionCast');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT BigInt To Option"(CodeUnit 74064).Option_FromBigInteger_BeyondInteger line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -181,13 +167,6 @@ AL Callstack:
         Obs.Expect('e100.val', '100|100');
         Obs.Expect('em1.set', 'ok');
         Obs.Expect('em1.val', '-1|-1');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT BigInt To Option"(CodeUnit 74064).Enum_FromBigInteger_InRangeAndLacking line 9 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -212,13 +191,6 @@ AL Callstack:
         Obs.Expect('imin1.err|code', 'ConversionCast');
         Obs.Expect('lmax.err|text', 'Overflow under conversion of System.Int64 value 9223372036854775807 to System.Int32.');
         Obs.Expect('lmax.err|code', 'ConversionCast');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT BigInt To Option"(CodeUnit 74064).Enum_FromBigInteger_BeyondInteger line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 #endif

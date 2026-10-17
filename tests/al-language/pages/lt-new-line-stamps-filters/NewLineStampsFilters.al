@@ -253,13 +253,6 @@ codeunit 74141 "LT New Line Stamps Filters"
         Obs.Expect('close', 'ok');
         Obs.Expect('db.count', '1');
         Obs.Expect('db.first', 'HA|A|A|x');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT New Line Stamps Filters"(CodeUnit 74141).PartB_ExistingHeaderTypeA_NewLine line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -304,13 +297,6 @@ AL Callstack:
         Obs.Expect('close', 'ok');
         Obs.Expect('db.count', '1');
         Obs.Expect('db.first', 'HA|A|A|x');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT New Line Stamps Filters"(CodeUnit 74141).PartPlain_ExistingHeaderTypeA_NewLine line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -336,13 +322,6 @@ AL Callstack:
         Obs.Expect('close', 'ok');
         Obs.Expect('db.count', '1');
         Obs.Expect('db.first', '|A|A|x');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT New Line Stamps Filters"(CodeUnit 74141).PartB_OpenNewHeader_TypeThenNo line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -368,13 +347,6 @@ AL Callstack:
         Obs.Expect('close', 'ok');
         Obs.Expect('db.count', '1');
         Obs.Expect('db.first', 'HN|A|A|x');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT New Line Stamps Filters"(CodeUnit 74141).PartB_OpenNewHeader_NoThenType line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 }

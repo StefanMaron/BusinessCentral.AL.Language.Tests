@@ -133,13 +133,6 @@ codeunit 74068 "LT Table Relation Quotes"
         Obs.Expect('v_R5', 'The field By Kind of table LT TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
         Obs.Expect('v_', 'ok');
         Obs.Expect('v_NOPE', 'The field By Kind of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByKind_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -154,13 +147,6 @@ AL Callstack:
         Obs.Expect('v_R5', 'ok');
         Obs.Expect('v_', 'ok');
         Obs.Expect('v_NOPE', 'The field By Opt of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByOpt_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -175,13 +161,6 @@ AL Callstack:
         Obs.Expect('v_R5', 'The field By Quoted Only of table LT TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
         Obs.Expect('v_', 'ok');
         Obs.Expect('v_NOPE', 'The field By Quoted Only of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByQuotedOnly_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -196,13 +175,6 @@ AL Callstack:
         Obs.Expect('v_R5', 'ok');
         Obs.Expect('v_', 'ok');
         Obs.Expect('v_NOPE', 'The field By Plain of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByPlain_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -217,13 +189,6 @@ AL Callstack:
         Obs.Expect('v_R5', 'The field By Const of table LT TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
         Obs.Expect('v_', 'ok');
         Obs.Expect('v_NOPE', 'The field By Const of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByConst_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -238,13 +203,6 @@ AL Callstack:
         Obs.Expect('v_R5', 'ok');
         Obs.Expect('v_', 'ok');
         Obs.Expect('v_NOPE', 'The field By Not of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByNot_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 }

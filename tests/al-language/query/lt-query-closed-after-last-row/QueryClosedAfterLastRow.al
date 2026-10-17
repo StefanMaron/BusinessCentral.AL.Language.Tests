@@ -115,13 +115,6 @@ codeunit 73584 "LT Query Closed After Last Row"
         Obs.Expect('open2', 'ok');
         Obs.Expect('read2', 'ok');
         Obs.Expect('read2.rows', '3,');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Query Closed After Last Row"(CodeUnit 73584).Query_AfterLastRow_SetRangeThenOpen line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -139,13 +132,6 @@ AL Callstack:
         Obs.Expect('open2', 'ok');
         Obs.Expect('read2', 'ok');
         Obs.Expect('read2.rows', '1,2,3,');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Query Closed After Last Row"(CodeUnit 73584).Query_AfterLastRow_OpenAgainNoFilter line 7 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -165,13 +151,6 @@ AL Callstack:
         Obs.Expect('open3', 'ok');
         Obs.Expect('read3', 'ok');
         Obs.Expect('read3.rows', '1,2,3,');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Query Closed After Last Row"(CodeUnit 73584).Query_AfterLastRow_OpenTwice line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -189,13 +168,6 @@ AL Callstack:
         Obs.Expect('range', 'ok');
         Obs.Expect('read2', 'The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function.');
         Obs.Expect('read2.rows', '');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Query Closed After Last Row"(CodeUnit 73584).Query_AfterLastRow_SetRangeWithoutOpen line 7 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -218,13 +190,6 @@ AL Callstack:
         Obs.Expect('open3', 'ok');
         Obs.Expect('read3', 'ok');
         Obs.Expect('read3.rows', '3,');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT Query Closed After Last Row"(CodeUnit 73584).Query_RowsLeft_OpenAgainAndSetRange line 10 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 }

@@ -179,13 +179,6 @@ codeunit 74146 "LT OnInsertRecord False"
         Obs.Expect('after_ok', 'ins=1 mod=1');
         Obs.Expect('end.count', '1');
         Obs.Expect('end.row', 'K1|v1|v2');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT OnInsertRecord False"(CodeUnit 74146).Card_OpenNew_KeyThenField_OK line 17 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -204,13 +197,6 @@ AL Callstack:
         Obs.Expect('after_close', 'ins=1 mod=1');
         Obs.Expect('end.count', '1');
         Obs.Expect('end.row', 'K1|v1|');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT OnInsertRecord False"(CodeUnit 74146).Card_OpenNew_KeyThenField_Close line 11 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -228,13 +214,6 @@ AL Callstack:
         Obs.Expect('after_close', 'ins=1 mod=0');
         Obs.Expect('end.count', '1');
         Obs.Expect('end.row', 'K1||');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT OnInsertRecord False"(CodeUnit 74146).Card_OpenNew_KeyOnly_Close line 10 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -266,13 +245,6 @@ AL Callstack:
         Obs.Expect('after_close', 'ins=1 mod=1');
         Obs.Expect('end.count', '1');
         Obs.Expect('end.row', 'K1|v1|v2');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT OnInsertRecord False"(CodeUnit 74146).List_New_KeyThenField line 18 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 
@@ -295,13 +267,6 @@ AL Callstack:
         Obs.Expect('after_close', 'ins=0 mod=1');
         Obs.Expect('end.count', '1');
         Obs.Expect('end.row', 'K1|v1|');
-        Obs.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT OnInsertRecord False"(CodeUnit 74146).List_ExistingRow_ModifyField line 14 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Obs.Verify();
     end;
 }
