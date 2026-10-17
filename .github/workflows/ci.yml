@@ -273,6 +273,30 @@ jobs:
       # debugger 9.0.
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
 
+  # The Target = OnPrem DotNet test app (tests/al-language-onprem-dotnet), in a job of its own for the same
+  # one-test-app-per-invocation reason as test-onprem above. Its dotnet declarations need an AL compiler of 18.0 or
+  # newer: the compilers the default policy picks for BC 27 (16.x) and BC 28 (17.x) report AL0451 (mscorlib not found
+  # in the assembly probing paths). al_tool_version pins 18.0.43.1464 for every BC version; a newer compiler accepts the
+  # app's runtime 16.0.
+  test-onprem-dotnet:
+    name: BC OnPrem DotNet ${{ matrix.bc_version }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    with:
+      bc_version:           ${{ matrix.bc_version }}
+      bc_country:           "w1"
+      app_dirs: |
+        tests/al-language-internals-fixture
+        tests/al-language
+      test_app_dirs:        "tests/al-language-onprem-dotnet"
+      codeunit_range:       "61400..61499"
+      preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      al_tool_version:      "18.0.43.1464"
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+
     # Optional: supply a base64-encoded BC developer license.
     # Without this, BC boots with the public Cronus license (sufficient
     # for all language coverage tests — no ISV app IDs needed).
