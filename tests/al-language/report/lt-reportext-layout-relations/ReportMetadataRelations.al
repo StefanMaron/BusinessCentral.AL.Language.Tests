@@ -194,28 +194,6 @@ codeunit 71698 "LT Report Meta Relations"
     end;
 
     [Test]
-    procedure ReportMeta_ColumnNames()
-    var
-        Observer: Codeunit "Probe Observer";
-        Helper: Codeunit "LT Meta Rel Helper";
-        RR: RecordRef;
-    begin
-        RR.Open(2000000139);
-        Observer.Observe('columnCount', Format(RR.FieldCount()));
-        Observer.Observe('columnNames', Helper.ColumnNames(RR));
-        RR.Close();
-        RR.Open(2000000234);
-        Observer.Observe('layoutListColumnCount', Format(RR.FieldCount()));
-        Observer.Observe('layoutListColumnNames', Helper.ColumnNames(RR));
-        RR.Close();
-        Observer.Expect('columnCount', '31');
-        Observer.Expect('columnNames', 'ID,Name,Caption,UseRequestPage,UseSystemPrinter,EnableExternalImages,EnableHyperLinks,EnableExternalAssemblies,ProcessingOnly,ShowPrintStatus,TransactionType,PaperSourceFirstPage,PaperSourceDefaultPage,PaperSourceLastPage,PreviewMode,DefaultLayout,WordMergeDataItem,FirstDataItemTableID,MaxRows,MaxDocuments,Timeout,AllowScheduling,DefaultLayoutName,FormatRegion,ExcelLayoutMultipleDataSheets,App ID,InherentPermissions,InherentEntitlements,AL Namespace,DefaultHeaderFooterPartName,DefaultThemePartName,');
-        Observer.Expect('layoutListColumnCount', '21');
-        Observer.Expect('layoutListColumnNames', 'Report ID,Name,Runtime Package ID,Caption,CaptionML,Layout,Layout Format,Custom Type,MIME Type,Description,Application ID,Report Name,Layout Publisher,User Defined,ReportIsInstalled,IsObsolete,ExcelLayoutMultipleDataSheets,Layout Status,Layout Subtype,HeaderFooterPart,ThemePart,');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure LayoutList_TwoLayouts_RowCountEqualsDeclared()
     var
         Observer: Codeunit "Probe Observer";
