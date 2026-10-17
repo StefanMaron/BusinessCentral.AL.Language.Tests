@@ -115,7 +115,13 @@ codeunit 73774 "LT VUK Variant Kinds"
         Observer.Observe('recordid_flags', Flags(V));
         Observer.Observe('recordid_format', Format(V));
         Observer.Observe('recordid_format2', Format(V, 0, 2));
-        Observer.Finish();
+        Observer.Expect('guid_flags', 'IsGuid ');
+        Observer.Expect('guid_format', '{12345678-1234-1234-1234-123456789ABC}');
+        Observer.Expect('guid_format2', '{12345678-1234-1234-1234-123456789ABC}');
+        Observer.Expect('recordid_flags', 'IsRecordId ');
+        Observer.Expect('recordid_format', 'LT VUK Rec: 1');
+        Observer.Expect('recordid_format2', 'LT VUK Rec: 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +135,9 @@ codeunit 73774 "LT VUK Variant Kinds"
         Observer.Observe('blob_flags', Flags(V));
         V := Rec.Med;
         Observer.Observe('media_flags', Flags(V));
-        Observer.Finish();
+        Observer.Expect('blob_flags', '');
+        Observer.Expect('media_flags', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,6 +158,10 @@ codeunit 73774 "LT VUK Variant Kinds"
         Observer.Observe('media_format', Res);
         Res := Format(V, 0, 2);
         Observer.Observe('media_format2', Res);
-        Observer.Finish();
+        Observer.Expect('blob_format', ' ');
+        Observer.Expect('blob_format2', ' ');
+        Observer.Expect('media_format', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('media_format2', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Verify();
     end;
 }

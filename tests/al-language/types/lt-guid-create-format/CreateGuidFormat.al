@@ -74,7 +74,14 @@ codeunit 74185 "LT CGF CreateGuid Format"
         for i := 1 to 50 do
             Guids.Add(CreateGuid());
         Shape(Guids, Observer, 'create');
-        Observer.Finish();
+        Observer.Expect('create_count', '50');
+        Observer.Expect('create_bad_length36', '0');
+        Observer.Expect('create_bad_braced38', '0');
+        Observer.Expect('create_not_upper', '0');
+        Observer.Expect('create_distinct', '50');
+        Observer.Expect('create_version_char_always_4', 'Yes');
+        Observer.Expect('create_variant_char_always_8_9_A_B', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -92,7 +99,14 @@ codeunit 74185 "LT CGF CreateGuid Format"
             Guids.Add(Row.SystemId);
         end;
         Shape(Guids, Observer, 'systemid');
-        Observer.Finish();
+        Observer.Expect('systemid_count', '50');
+        Observer.Expect('systemid_bad_length36', '0');
+        Observer.Expect('systemid_bad_braced38', '0');
+        Observer.Expect('systemid_not_upper', '0');
+        Observer.Expect('systemid_distinct', '50');
+        Observer.Expect('systemid_version_char_always_4', 'No');
+        Observer.Expect('systemid_variant_char_always_8_9_A_B', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,6 +130,10 @@ codeunit 74185 "LT CGF CreateGuid Format"
         Own := Row.SystemId;
         Row.Insert();
         Observer.Observe('kept_assigned', Format(Row.SystemId = Own));
-        Observer.Finish();
+        Observer.Expect('before_insert_null', 'Yes');
+        Observer.Expect('after_insert_null', 'No');
+        Observer.Expect('get_by_systemid_id', '1');
+        Observer.Expect('kept_assigned', 'No');
+        Observer.Verify();
     end;
 }

@@ -158,7 +158,11 @@ codeunit 73954 "LT PXD Ext OnDeleteRecord"
         Observer: Codeunit "Probe Observer";
     begin
         Run(true, true, Observer);
-        Observer.Finish();
+        Observer.Expect('delete', 'Yes');
+        Observer.Expect('error', '');
+        Observer.Expect('log', '');
+        Observer.Expect('row_exists', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +171,11 @@ codeunit 73954 "LT PXD Ext OnDeleteRecord"
         Observer: Codeunit "Probe Observer";
     begin
         Run(true, false, Observer);
-        Observer.Finish();
+        Observer.Expect('delete', 'Yes');
+        Observer.Expect('error', '');
+        Observer.Expect('log', '');
+        Observer.Expect('row_exists', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -176,7 +184,11 @@ codeunit 73954 "LT PXD Ext OnDeleteRecord"
         Observer: Codeunit "Probe Observer";
     begin
         Run(false, true, Observer);
-        Observer.Finish();
+        Observer.Expect('delete', 'Yes');
+        Observer.Expect('error', '');
+        Observer.Expect('log', '');
+        Observer.Expect('row_exists', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,6 +197,10 @@ codeunit 73954 "LT PXD Ext OnDeleteRecord"
         Observer: Codeunit "Probe Observer";
     begin
         Run(false, false, Observer);
-        Observer.Finish();
+        Observer.Expect('delete', 'Yes');
+        Observer.Expect('error', '');
+        Observer.Expect('log', '');
+        Observer.Expect('row_exists', 'No');
+        Observer.Verify();
     end;
 }

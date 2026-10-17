@@ -55,20 +55,26 @@ codeunit 74192 "LT ISK Variant Key"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    var
+        LastErrorText: Text;
+
     local procedure Exec(Op: Integer; KeyValue: Variant; Scope: DataScope; Stored: Text): Text
     var
         Worker: Codeunit "LT ISK Worker";
     begin
+        LastErrorText := '';
         ClearLastError();
         Worker.Prepare(Op, KeyValue, Scope, Stored);
         if Worker.Run() then
             exit('ok:' + Worker.GetResult());
-        exit('err:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        LastErrorText := GetLastErrorText();
+        exit('err:' + GetLastErrorCode());
     end;
 
     local procedure AllScopes(Observer: Codeunit "Probe Observer"; KeyValue: Variant; Prefix: Text; AsText: Text)
     begin
         Observer.Observe(Prefix + '_module_set', Exec(1, KeyValue, DataScope::Module, 'v'));
+        Observer.Observe(Prefix + '_module_set_error_text', LastErrorText);
         Observer.Observe(Prefix + '_module_contains', Exec(2, KeyValue, DataScope::Module, ''));
         Observer.Observe(Prefix + '_module_get', Exec(3, KeyValue, DataScope::Module, ''));
         Observer.Observe(Prefix + '_module_contains_as_text', Format(IsolatedStorage.Contains(AsText, DataScope::Module)));

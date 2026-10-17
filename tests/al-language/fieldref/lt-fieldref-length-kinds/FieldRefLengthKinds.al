@@ -75,7 +75,9 @@ codeunit 73957 "LT FLK FieldRef Length"
         RR.Open(Database::"LT FLK Rec");
         Probe(RR, 2, Observer);
         Probe(RR, 3, Observer);
-        Observer.Finish();
+        Observer.Expect('Cd', 'ok:17');
+        Observer.Expect('Tx', 'ok:45');
+        Observer.Verify();
     end;
 
     [Test]
@@ -87,7 +89,9 @@ codeunit 73957 "LT FLK FieldRef Length"
         RR.Open(Database::"LT FLK Rec");
         Probe(RR, 10, Observer);
         Probe(RR, 11, Observer);
-        Observer.Finish();
+        Observer.Expect('Op', 'ok:4');
+        Observer.Expect('En', 'ok:4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -107,6 +111,16 @@ codeunit 73957 "LT FLK FieldRef Length"
         Probe(RR, 13, Observer);
         Probe(RR, 14, Observer);
         Probe(RR, 15, Observer);
-        Observer.Finish();
+        Observer.Expect('Id', 'ok:4');
+        Observer.Expect('Dc', 'ok:12');
+        Observer.Expect('Dt', 'ok:4');
+        Observer.Expect('Bo', 'ok:4');
+        Observer.Expect('Gd', 'ok:16');
+        Observer.Expect('Bi', 'ok:8');
+        Observer.Expect('Bl', 'ok:8');
+        Observer.Expect('Tm', 'ok:4');
+        Observer.Expect('Du', 'ok:8');
+        Observer.Expect('DtTm', 'ok:8');
+        Observer.Verify();
     end;
 }

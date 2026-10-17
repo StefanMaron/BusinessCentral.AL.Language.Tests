@@ -79,7 +79,10 @@ codeunit 73779 "LT EEV Enum Ext Variant"
         Observer.Observe('flags', Flags(V));
         Observer.Observe('format', Format(V));
         Observer.Observe('format_ordinal', Format(V, 0, 2));
-        Observer.Finish();
+        Observer.Expect('flags', 'IsOption ');
+        Observer.Expect('format', 'B');
+        Observer.Expect('format_ordinal', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,6 +101,11 @@ codeunit 73779 "LT EEV Enum Ext Variant"
         W := Rec.InternalEnum::Y;
         Observer.Observe('literal_flags', Flags(W));
         Observer.Observe('same_value', Format(Format(V) = Format(W)));
-        Observer.Finish();
+        Observer.Expect('flags', 'IsOption ');
+        Observer.Expect('format', 'Y');
+        Observer.Expect('format_ordinal', '1');
+        Observer.Expect('literal_flags', 'IsOption ');
+        Observer.Expect('same_value', 'Yes');
+        Observer.Verify();
     end;
 }
