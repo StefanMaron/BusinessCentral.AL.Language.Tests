@@ -118,6 +118,7 @@ codeunit 70958 "LT TFT Rec Other"
         Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure P189_Rec_Guid_Value()
     var
@@ -143,7 +144,9 @@ codeunit 70958 "LT TFT Rec Other"
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure P189_Rec_Guid_WithErrorInfo()
     var
@@ -179,4 +182,5 @@ codeunit 70958 "LT TFT Rec Other"
         Observer.Expect('different|code', 'TestField');
         Observer.Verify();
     end;
+#endif
 }

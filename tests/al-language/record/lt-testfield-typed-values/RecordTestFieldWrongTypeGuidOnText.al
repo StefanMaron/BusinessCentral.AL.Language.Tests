@@ -5,6 +5,7 @@
 // Facts: Record.TestField with a variable of type Guid against a field of another type (Txt): does it compile, the result and the error text and code, with and without ErrorInfo.
 // Risky: the type mismatch may not compile; own file so only this file drops.
 // BC versions: 29 (27 and 28 by CI)
+#if BC28PLUS
 
 codeunit 70968 "LT TFT Wrong Guid on Text"
 {
@@ -80,3 +81,4 @@ codeunit 70968 "LT TFT Wrong Guid on Text"
         Observer.Verify();
     end;
 }
+#endif
