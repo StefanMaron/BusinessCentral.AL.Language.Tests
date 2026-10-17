@@ -3,7 +3,7 @@
 // Fixtures used: Probe Observer (69160); own table 73580, test codeunit 73581
 // Probe: written against BC on CI (no local container); every literal asserted below is what the CI tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: a table with a DateFormula field and rows with and without a formula. SetFilter on the field with the empty text, with not-equal and the empty text
-//   (as a literal and as a %1 argument), with two single quotes, and SetRange with an empty DateFormula: whether it raises, GetFilter and Count.
+//   (as a literal and with an empty DateFormula as the %1 argument), with two single quotes, and SetRange with an empty DateFormula: whether it raises, GetFilter and Count.
 // BC versions: 27, 28, 29 by CI
 
 table 73580 "LT FD Row"
@@ -53,8 +53,12 @@ codeunit 73581 "LT Filter Empty DateFormula"
 
     [TryFunction]
     local procedure TryArg(var R: Record "LT FD Row"; Expr: Text; Arg: Text)
+    var
+        Df: DateFormula;
     begin
-        R.SetFilter(Due, Expr, Arg);
+        if Arg <> '' then
+            Evaluate(Df, Arg);
+        R.SetFilter(Due, Expr, Df);
     end;
 
     [TryFunction]
@@ -108,7 +112,7 @@ codeunit 73581 "LT Filter Empty DateFormula"
         R.Reset();
         Report('eq_day', R, TryRaw(R, '<1D>'));
         R.Reset();
-        Report('neq_day', R, TryRaw(R, '<>%1', '<1D>'));
+        Report('neq_day', R, TryArg(R, '<>%1', '<1D>'));
         R.Reset();
         Report('arg_neq_day', R, TryArg(R, '<>%1', '<1D>'));
         R.Reset();

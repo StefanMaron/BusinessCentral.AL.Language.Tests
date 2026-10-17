@@ -1,11 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/option/option-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own enum 74063, test codeunit 74064
-// Probe: written against BC on CI (no local container); every literal asserted below is what the CI tier produced. Other BC versions are checked by the corpus CI matrix.
-// Facts: a BigInteger assigned to an Option variable and to an Enum variable (Opt := Big, E := Big): in range, an ordinal the Option or Enum lacks,
-//   negative, beyond the Integer range. Whether the assignment raises, and what the variable holds afterwards.
+// Fixtures used: Probe Observer (69160); own enum 74063 (BC 29 only), test codeunit 74064
+// Facts: a BigInteger assigned to an Option variable (Opt := Big): in range, an ordinal the Option lacks, negative, beyond the Integer range.
+//   Whether the assignment raises, and what the variable holds afterwards. An Enum variable gets the same values on BC 29 only (E := Big does not compile on AL 16 and 17: must-not-compile/cases/0451).
 // BC versions: 27, 28, 29 by CI
 
+#if BC29PLUS
 enum 74063 "LT BE Enum"
 {
     Extensible = false;
@@ -15,8 +15,9 @@ enum 74063 "LT BE Enum"
     value(2; Two) { }
     value(7; Seven) { }
 }
+#endif
 
-codeunit 74064 "LT BigInt To Enum Option"
+codeunit 74064 "LT BigInt To Option"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -24,7 +25,9 @@ codeunit 74064 "LT BigInt To Enum Option"
     var
         Obs: Codeunit "Probe Observer";
         Opt: Option Zero,One,Two;
+#if BC29PLUS
         E: Enum "LT BE Enum";
+#endif
         Shown: Text;
 
     [TryFunction]
@@ -33,6 +36,7 @@ codeunit 74064 "LT BigInt To Enum Option"
         Opt := Big;
     end;
 
+#if BC29PLUS
     [TryFunction]
     local procedure SetEnum(Big: BigInteger)
     begin
@@ -40,34 +44,9 @@ codeunit 74064 "LT BigInt To Enum Option"
     end;
 
     [TryFunction]
-    local procedure ShowOpt()
-    var
-        Int: Integer;
-    begin
-        Int := Opt;
-        Shown := Format(Opt) + '|' + Format(Int);
-    end;
-
-    [TryFunction]
     local procedure ShowEnum()
     begin
         Shown := Format(E) + '|' + Format(E.AsInteger());
-    end;
-
-    local procedure ProbeOpt(Name: Text; Value: Text)
-    var
-        Big: BigInteger;
-    begin
-        Evaluate(Big, Value);
-        Clear(Opt);
-        if SetOpt(Big) then begin
-            Obs.Observe(Name + '.set', 'ok');
-            if ShowOpt() then
-                Obs.Observe(Name + '.val', Shown)
-            else
-                Obs.ObserveError(Name + '.showerr');
-        end else
-            Obs.ObserveError(Name + '.err');
     end;
 
     local procedure ProbeEnum(Name: Text; Value: Text)
@@ -79,6 +58,32 @@ codeunit 74064 "LT BigInt To Enum Option"
         if SetEnum(Big) then begin
             Obs.Observe(Name + '.set', 'ok');
             if ShowEnum() then
+                Obs.Observe(Name + '.val', Shown)
+            else
+                Obs.ObserveError(Name + '.showerr');
+        end else
+            Obs.ObserveError(Name + '.err');
+    end;
+
+#endif
+    [TryFunction]
+    local procedure ShowOpt()
+    var
+        Int: Integer;
+    begin
+        Int := Opt;
+        Shown := Format(Opt) + '|' + Format(Int);
+    end;
+
+    local procedure ProbeOpt(Name: Text; Value: Text)
+    var
+        Big: BigInteger;
+    begin
+        Evaluate(Big, Value);
+        Clear(Opt);
+        if SetOpt(Big) then begin
+            Obs.Observe(Name + '.set', 'ok');
+            if ShowOpt() then
                 Obs.Observe(Name + '.val', Shown)
             else
                 Obs.ObserveError(Name + '.showerr');
@@ -111,6 +116,7 @@ codeunit 74064 "LT BigInt To Enum Option"
         Obs.Finish();
     end;
 
+#if BC29PLUS
     [Test]
     procedure Enum_FromBigInteger_InRangeAndLacking()
     begin
@@ -135,4 +141,5 @@ codeunit 74064 "LT BigInt To Enum Option"
         ProbeEnum('lmax', '9223372036854775807');
         Obs.Finish();
     end;
+#endif
 }

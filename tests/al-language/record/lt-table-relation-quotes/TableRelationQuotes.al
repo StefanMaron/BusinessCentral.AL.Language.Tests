@@ -2,8 +2,9 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); own enum 74065, tables 74066 and 74067, test codeunit 74068
 // Probe: written against BC on CI (no local container); every literal asserted below is what the CI tier produced. Other BC versions are checked by the corpus CI matrix.
-// Facts: TableRelation ... where(F = filter(A | "B C")): a filter() text with a double-quoted identifier that holds a space, on an enum field, a Code field and
-//   a Text field of the related table, next to filter(A | 'B C'), const('B C') and filter(A | D). Validate of the field with the code of a row whose
+// Facts: TableRelation ... where(F = filter(A | "B C")): a filter() text with a double-quoted enum or option member that holds a space, on an enum field and an
+//   option field of the related table, next to filter("B C"), const("B C"), filter(A | D) and filter(<> "B C"). (filter() on a Code or Text field with unquoted
+//   or quoted values does not compile: AL0186.) Validate of the field with the code of a row whose
 //   value is A, "B C", D, a prefix of "B C", an empty code and a code that does not exist: accepted or the related-table error.
 // BC versions: 27, 28, 29 by CI
 
@@ -24,8 +25,7 @@ table 74066 "LT TQ Ref"
     {
         field(1; "Code"; Code[10]) { }
         field(2; Kind; Enum "LT TQ Kind") { }
-        field(3; Tag; Code[10]) { }
-        field(4; Txt; Text[20]) { }
+        field(3; Opt; Option) { OptionMembers = A,"B C",D; }
     }
 
     keys { key(PK; "Code") { Clustered = true; } }
@@ -39,11 +39,11 @@ table 74067 "LT TQ Src"
     {
         field(1; "No."; Code[10]) { }
         field(2; "By Kind"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Kind = filter(A | "B C")); }
-        field(3; "By Tag"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Tag = filter(A | "B C")); }
-        field(4; "By Txt"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Txt = filter(A | "B C")); }
-        field(5; "By Single"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Tag = filter(A | 'B C')); }
-        field(6; "By Const"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Tag = const('B C')); }
-        field(7; "By Plain"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Tag = filter(A | D)); }
+        field(3; "By Opt"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Opt = filter(A | "B C")); }
+        field(4; "By Quoted Only"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Kind = filter("B C")); }
+        field(5; "By Plain"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Kind = filter(A | D)); }
+        field(6; "By Const"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Kind = const("B C")); }
+        field(7; "By Not"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Kind = filter(<> "B C")); }
     }
 
     keys { key(PK; "No.") { Clustered = true; } }
@@ -62,20 +62,20 @@ codeunit 74068 "LT Table Relation Quotes"
         R: Record "LT TQ Ref";
     begin
         R.DeleteAll();
-        AddRef('R1', "LT TQ Kind"::A, 'A', 'A');
-        AddRef('R2', "LT TQ Kind"::"B C", 'B C', 'B C');
-        AddRef('R3', "LT TQ Kind"::D, 'D', 'D');
-        AddRef('R5', "LT TQ Kind"::A, 'B', 'B');
+        AddRef('R1', "LT TQ Kind"::A, 0);
+        AddRef('R2', "LT TQ Kind"::"B C", 1);
+        AddRef('R3', "LT TQ Kind"::D, 2);
+        AddRef('R4', "LT TQ Kind"::A, 2);
+        AddRef('R5', "LT TQ Kind"::D, 0);
     end;
 
-    local procedure AddRef(Code: Code[10]; Kind: Enum "LT TQ Kind"; Tag: Code[10]; Txt: Text[20])
+    local procedure AddRef(Code: Code[10]; Kind: Enum "LT TQ Kind"; Opt: Option A,"B C",D)
     var
         R: Record "LT TQ Ref";
     begin
         R.Code := Code;
         R.Kind := Kind;
-        R.Tag := Tag;
-        R.Txt := Txt;
+        R.Opt := Opt;
         R.Insert();
     end;
 
@@ -88,15 +88,15 @@ codeunit 74068 "LT Table Relation Quotes"
             2:
                 S.Validate("By Kind", CopyStr(Value, 1, 10));
             3:
-                S.Validate("By Tag", CopyStr(Value, 1, 10));
+                S.Validate("By Opt", CopyStr(Value, 1, 10));
             4:
-                S.Validate("By Txt", CopyStr(Value, 1, 10));
+                S.Validate("By Quoted Only", CopyStr(Value, 1, 10));
             5:
-                S.Validate("By Single", CopyStr(Value, 1, 10));
+                S.Validate("By Plain", CopyStr(Value, 1, 10));
             6:
                 S.Validate("By Const", CopyStr(Value, 1, 10));
             7:
-                S.Validate("By Plain", CopyStr(Value, 1, 10));
+                S.Validate("By Not", CopyStr(Value, 1, 10));
         end;
     end;
 
@@ -109,6 +109,7 @@ codeunit 74068 "LT Table Relation Quotes"
         Codes.Add('R1');
         Codes.Add('R2');
         Codes.Add('R3');
+        Codes.Add('R4');
         Codes.Add('R5');
         Codes.Add('');
         Codes.Add('NOPE');
@@ -129,21 +130,21 @@ codeunit 74068 "LT Table Relation Quotes"
     end;
 
     [Test]
-    procedure Validate_ByTag_QuotedFilter()
+    procedure Validate_ByOpt_QuotedFilter()
     begin
         ProbeField(3);
         Obs.Finish();
     end;
 
     [Test]
-    procedure Validate_ByTxt_QuotedFilter()
+    procedure Validate_ByQuotedOnly_QuotedFilter()
     begin
         ProbeField(4);
         Obs.Finish();
     end;
 
     [Test]
-    procedure Validate_BySingle_QuotedFilter()
+    procedure Validate_ByPlain_QuotedFilter()
     begin
         ProbeField(5);
         Obs.Finish();
@@ -157,7 +158,7 @@ codeunit 74068 "LT Table Relation Quotes"
     end;
 
     [Test]
-    procedure Validate_ByPlain_QuotedFilter()
+    procedure Validate_ByNot_QuotedFilter()
     begin
         ProbeField(7);
         Obs.Finish();
