@@ -159,7 +159,10 @@ codeunit 73672 "LT ESR Event Sub Rows"
         Observer.Observe('callsDelta', Format(Calls('OnTableBeforeValidate') - Before));
         Observer.Observe('row', Dump('OnTableBeforeValidate', true, Count, N));
         Observer.Observe('count', Format(Count));
-        Observer.Finish();
+        Observer.Expect('callsDelta', '1');
+        Observer.Expect('row', 'Subscriber Codeunit ID=73671;Subscriber Function=OnTableBeforeValidate;Event Type=Trigger;Publisher Object Type=Table;Publisher Object ID=73668;Published Function=OnBeforeValidateEvent - Name;Active=Yes;Error Information=;Originating Package ID={x};Originating App Name=AL Language Coverage Tests;Subscriber Instance=Static-Automatic;Active Manual Instances=0;');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -178,7 +181,10 @@ codeunit 73672 "LT ESR Event Sub Rows"
         Observer.Observe('callsDelta', Format(Calls('OnTableAfterInsert') - Before));
         Observer.Observe('row', Dump('OnTableAfterInsert', true, Count, N));
         Observer.Observe('count', Format(Count));
-        Observer.Finish();
+        Observer.Expect('callsDelta', '1');
+        Observer.Expect('row', 'Subscriber Codeunit ID=73671;Subscriber Function=OnTableAfterInsert;Event Type=Trigger;Publisher Object Type=Table;Publisher Object ID=73668;Published Function=OnAfterInsertEvent;Active=Yes;Error Information=;Originating Package ID={x};Originating App Name=AL Language Coverage Tests;Subscriber Instance=Static-Automatic;Active Manual Instances=0;');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +204,10 @@ codeunit 73672 "LT ESR Event Sub Rows"
         Observer.Observe('callsDelta', Format(Calls('OnTableBeforeDelete') - Before));
         Observer.Observe('row', Dump('OnTableBeforeDelete', true, Count, N));
         Observer.Observe('count', Format(Count));
-        Observer.Finish();
+        Observer.Expect('callsDelta', '1');
+        Observer.Expect('row', 'Subscriber Codeunit ID=73671;Subscriber Function=OnTableBeforeDelete;Event Type=Trigger;Publisher Object Type=Table;Publisher Object ID=73668;Published Function=OnBeforeDeleteEvent;Active=Yes;Error Information=;Originating Package ID={x};Originating App Name=AL Language Coverage Tests;Subscriber Instance=Static-Automatic;Active Manual Instances=0;');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +219,9 @@ codeunit 73672 "LT ESR Event Sub Rows"
     begin
         Observer.Observe('row', Dump('OnPageAfterAction', false, Count, N));
         Observer.Observe('count', Format(Count));
-        Observer.Finish();
+        Observer.Expect('row', 'Subscriber Codeunit ID=73671;Subscriber Function=OnPageAfterAction;Event Type=Trigger;Publisher Object Type=Page;Publisher Object ID=73669;Published Function=OnAfterActionEvent - 780149250;Active=Yes;Number of Calls=0;Error Information=;Originating Package ID={x};Originating App Name=AL Language Coverage Tests;Subscriber Instance=Static-Automatic;Active Manual Instances=0;');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +243,13 @@ codeunit 73672 "LT ESR Event Sub Rows"
         Observer.Observe('integrationCount', Format(Count));
         Observer.Observe('businessRow', Dump('OnBusinessSub', true, Count, N));
         Observer.Observe('businessCount', Format(Count));
-        Observer.Finish();
+        Observer.Expect('integrationCallsDelta', '1');
+        Observer.Expect('businessCallsDelta', '1');
+        Observer.Expect('integrationRow', 'Subscriber Codeunit ID=73671;Subscriber Function=OnIntegrationSub;Event Type=Integration;Publisher Object Type=Codeunit;Publisher Object ID=73670;Published Function=OnIntegration;Active=Yes;Error Information=;Originating Package ID={x};Originating App Name=AL Language Coverage Tests;Subscriber Instance=Static-Automatic;Active Manual Instances=0;');
+        Observer.Expect('integrationCount', '1');
+        Observer.Expect('businessRow', 'Subscriber Codeunit ID=73671;Subscriber Function=OnBusinessSub;Event Type=Business;Publisher Object Type=Codeunit;Publisher Object ID=73670;Published Function=OnBusiness;Active=Yes;Error Information=;Originating Package ID={x};Originating App Name=AL Language Coverage Tests;Subscriber Instance=Static-Automatic;Active Manual Instances=0;');
+        Observer.Expect('businessCount', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -263,6 +280,16 @@ codeunit 73672 "LT ESR Event Sub Rows"
         Observer.Observe('beforeValidateByName', Format(Sub.Count()));
         Sub.SetRange("Published Function", 'OnAfterActionEvent - DoIt');
         Observer.Observe('afterActionByName', Format(Sub.Count()));
-        Observer.Finish();
+        Observer.Expect('all', '6');
+        Observer.Expect('trigger', '4');
+        Observer.Expect('integration', '1');
+        Observer.Expect('business', '1');
+        Observer.Expect('tablePublisher', '3');
+        Observer.Expect('pagePublisher', '1');
+        Observer.Expect('codeunitPublisher', '2');
+        Observer.Expect('afterInsertByName', '1');
+        Observer.Expect('beforeValidateByName', '1');
+        Observer.Expect('afterActionByName', '0');
+        Observer.Verify();
     end;
 }

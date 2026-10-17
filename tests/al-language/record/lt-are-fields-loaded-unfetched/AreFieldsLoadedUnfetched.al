@@ -56,7 +56,13 @@ codeunit 74148 "LT AFL Are Fields Loaded"
         Observer.Observe('assigned_qty', Format(Row.AreFieldsLoaded(Qty)));
         Observer.Observe('assigned_all', Format(Row.AreFieldsLoaded(Id, Name, Qty)));
         Observer.Observe('assigned_name_value', Row.Name);
-        Observer.Finish();
+        Observer.Expect('fresh_id', 'No');
+        Observer.Expect('assigned_id', 'Yes');
+        Observer.Expect('assigned_name', 'Yes');
+        Observer.Expect('assigned_qty', 'Yes');
+        Observer.Expect('assigned_all', 'Yes');
+        Observer.Expect('assigned_name_value', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -72,7 +78,12 @@ codeunit 74148 "LT AFL Are Fields Loaded"
         Row.Validate(Qty, 3);
         Observer.Observe('validated_qty', Format(Row.AreFieldsLoaded(Qty)));
         Observer.Observe('validated_name', Format(Row.AreFieldsLoaded(Name)));
-        Observer.Finish();
+        Observer.Expect('init_id', 'No');
+        Observer.Expect('init_name', 'No');
+        Observer.Expect('init_all', 'No');
+        Observer.Expect('validated_qty', 'Yes');
+        Observer.Expect('validated_name', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +104,12 @@ codeunit 74148 "LT AFL Are Fields Loaded"
         Row.Qty := 1;
         Row.Modify();
         Observer.Observe('after_modify_all', Format(Row.AreFieldsLoaded(Id, Name, Qty)));
-        Observer.Finish();
+        Observer.Expect('before_insert_name', 'Yes');
+        Observer.Expect('after_insert_id', 'Yes');
+        Observer.Expect('after_insert_name', 'Yes');
+        Observer.Expect('after_insert_all', 'Yes');
+        Observer.Expect('after_modify_all', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,7 +142,18 @@ codeunit 74148 "LT AFL Are Fields Loaded"
         Row.Get(2);
         Observer.Observe('get_name', Format(Row.AreFieldsLoaded(Name)));
         Observer.Observe('get_qty', Format(Row.AreFieldsLoaded(Qty)));
-        Observer.Finish();
+        Observer.Expect('findfirst_id', 'Yes');
+        Observer.Expect('findfirst_name', 'Yes');
+        Observer.Expect('findfirst_qty', 'No');
+        Observer.Expect('find_name', 'Yes');
+        Observer.Expect('find_qty', 'No');
+        Observer.Expect('findset_name', 'No');
+        Observer.Expect('findset_qty', 'Yes');
+        Observer.Expect('next_name', 'No');
+        Observer.Expect('next_qty', 'Yes');
+        Observer.Expect('get_name', 'Yes');
+        Observer.Expect('get_qty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,7 +172,11 @@ codeunit 74148 "LT AFL Are Fields Loaded"
         Dup.Copy(Row);
         Observer.Observe('copycall_name', Format(Dup.AreFieldsLoaded(Name)));
         Observer.Observe('copycall_qty', Format(Dup.AreFieldsLoaded(Qty)));
-        Observer.Finish();
+        Observer.Expect('copy_name', 'Yes');
+        Observer.Expect('copy_qty', 'No');
+        Observer.Expect('copycall_name', 'Yes');
+        Observer.Expect('copycall_qty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,6 +206,16 @@ codeunit 74148 "LT AFL Are Fields Loaded"
         Temp.Get(1);
         Observer.Observe('partial_get_name', Format(Temp.AreFieldsLoaded(Name)));
         Observer.Observe('partial_get_qty', Format(Temp.AreFieldsLoaded(Qty)));
-        Observer.Finish();
+        Observer.Expect('fresh_name', 'No');
+        Observer.Expect('assigned_name', 'Yes');
+        Observer.Expect('inserted_name', 'Yes');
+        Observer.Expect('inserted_qty', 'Yes');
+        Observer.Expect('found_name', 'Yes');
+        Observer.Expect('found_qty', 'Yes');
+        Observer.Expect('partial_name', 'Yes');
+        Observer.Expect('partial_qty', 'Yes');
+        Observer.Expect('partial_get_name', 'Yes');
+        Observer.Expect('partial_get_qty', 'Yes');
+        Observer.Verify();
     end;
 }

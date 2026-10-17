@@ -92,7 +92,7 @@ codeunit 74192 "LT ISK Variant Key"
     begin
         K := 5;
         AllScopes(Observer, K, 'int', '5');
-        IsolatedStorage.Delete('5', DataScope::Module);
+        if IsolatedStorage.Delete('5', DataScope::Module) then;
         Observer.Finish();
     end;
 
@@ -104,8 +104,8 @@ codeunit 74192 "LT ISK Variant Key"
     begin
         K := 'abc';
         AllScopes(Observer, K, 'code', 'ABC');
-        IsolatedStorage.Delete('ABC', DataScope::Module);
-        IsolatedStorage.Delete('abc', DataScope::Module);
+        if IsolatedStorage.Delete('ABC', DataScope::Module) then;
+        if IsolatedStorage.Delete('abc', DataScope::Module) then;
         Observer.Finish();
     end;
 
@@ -117,7 +117,7 @@ codeunit 74192 "LT ISK Variant Key"
     begin
         Evaluate(K, '{12345678-1234-1234-1234-123456789ABC}');
         AllScopes(Observer, K, 'guid', Format(K));
-        IsolatedStorage.Delete(Format(K), DataScope::Module);
+        if IsolatedStorage.Delete(Format(K), DataScope::Module) then;
         Observer.Finish();
     end;
 
@@ -129,7 +129,7 @@ codeunit 74192 "LT ISK Variant Key"
     begin
         K := 1.5;
         AllScopes(Observer, K, 'dec', '1.5');
-        IsolatedStorage.Delete('1.5', DataScope::Module);
+        if IsolatedStorage.Delete('1.5', DataScope::Module) then;
         Observer.Finish();
     end;
 
@@ -141,7 +141,7 @@ codeunit 74192 "LT ISK Variant Key"
     begin
         K := true;
         AllScopes(Observer, K, 'bool', Format(K));
-        IsolatedStorage.Delete(Format(K), DataScope::Module);
+        if IsolatedStorage.Delete(Format(K), DataScope::Module) then;
         Observer.Finish();
     end;
 
@@ -153,7 +153,7 @@ codeunit 74192 "LT ISK Variant Key"
     begin
         K := DMY2Date(2, 1, 2026);
         AllScopes(Observer, K, 'date', Format(K));
-        IsolatedStorage.Delete(Format(K), DataScope::Module);
+        if IsolatedStorage.Delete(Format(K), DataScope::Module) then;
         Observer.Finish();
     end;
 }

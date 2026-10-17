@@ -46,7 +46,13 @@ codeunit 74320 "LT FCF Format Comma String"
         Observer.Observe('s5', Show(TryFormat(Value, '<Sign><Integer><Decimals><Comma>', Res), Res));
         Res := '';
         Observer.Observe('s6', Show(TryFormat(Value, '<Decimals><Comma,.>', Res), Res));
-        Observer.Finish();
+        Observer.Expect('s1', 'ok:1234.5');
+        Observer.Expect('s2', 'ok:');
+        Observer.Expect('s3', 'ok:1234.5');
+        Observer.Expect('s4', 'ok:1234,5');
+        Observer.Expect('s5', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma>|InvalidFormatString');
+        Observer.Expect('s6', 'ok:.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +75,13 @@ codeunit 74320 "LT FCF Format Comma String"
         Observer.Observe('s5', Show(TryFormat(Value, '<Sign><Integer><Decimals><Comma>', Res), Res));
         Res := '';
         Observer.Observe('s6', Show(TryFormat(Value, '<Decimals><Comma,.>', Res), Res));
-        Observer.Finish();
+        Observer.Expect('s1', 'ok:-1234.567');
+        Observer.Expect('s2', 'ok:');
+        Observer.Expect('s3', 'ok:1234.567');
+        Observer.Expect('s4', 'ok:-1234,567');
+        Observer.Expect('s5', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma>|InvalidFormatString');
+        Observer.Expect('s6', 'ok:.567');
+        Observer.Verify();
     end;
 
     [Test]
@@ -92,7 +104,13 @@ codeunit 74320 "LT FCF Format Comma String"
         Observer.Observe('s5', Show(TryFormat(Value, '<Sign><Integer><Decimals><Comma>', Res), Res));
         Res := '';
         Observer.Observe('s6', Show(TryFormat(Value, '<Decimals><Comma,.>', Res), Res));
-        Observer.Finish();
+        Observer.Expect('s1', 'ok:0');
+        Observer.Expect('s2', 'ok:');
+        Observer.Expect('s3', 'ok:0');
+        Observer.Expect('s4', 'ok:0');
+        Observer.Expect('s5', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma>|InvalidFormatString');
+        Observer.Expect('s6', 'ok:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +133,13 @@ codeunit 74320 "LT FCF Format Comma String"
         Observer.Observe('s5', Show(TryFormat(Value, '<Sign><Integer><Decimals><Comma>', Res), Res));
         Res := '';
         Observer.Observe('s6', Show(TryFormat(Value, '<Decimals><Comma,.>', Res), Res));
-        Observer.Finish();
+        Observer.Expect('s1', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma,.>|InvalidFormatString');
+        Observer.Expect('s2', 'ok:');
+        Observer.Expect('s3', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('s4', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma,,>|InvalidFormatString');
+        Observer.Expect('s5', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma>|InvalidFormatString');
+        Observer.Expect('s6', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimals><Comma,.>|InvalidFormatString');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +162,13 @@ codeunit 74320 "LT FCF Format Comma String"
         Observer.Observe('s5', Show(TryFormat(Value, '<Sign><Integer><Decimals><Comma>', Res), Res));
         Res := '';
         Observer.Observe('s6', Show(TryFormat(Value, '<Decimals><Comma,.>', Res), Res));
-        Observer.Finish();
+        Observer.Expect('s1', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma,.>|InvalidFormatString');
+        Observer.Expect('s2', 'ok:');
+        Observer.Expect('s3', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('s4', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma,,>|InvalidFormatString');
+        Observer.Expect('s5', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma>|InvalidFormatString');
+        Observer.Expect('s6', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimals><Comma,.>|InvalidFormatString');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,6 +191,12 @@ codeunit 74320 "LT FCF Format Comma String"
         Observer.Observe('s5', Show(TryFormat(Value, '<Sign><Integer><Decimals><Comma>', Res), Res));
         Res := '';
         Observer.Observe('s6', Show(TryFormat(Value, '<Decimals><Comma,.>', Res), Res));
-        Observer.Finish();
+        Observer.Expect('s1', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma,.>|InvalidFormatString');
+        Observer.Expect('s2', 'ok:');
+        Observer.Expect('s3', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('s4', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma,,>|InvalidFormatString');
+        Observer.Expect('s5', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Sign><Integer><Decimals><Comma>|InvalidFormatString');
+        Observer.Expect('s6', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Decimals><Comma,.>|InvalidFormatString');
+        Observer.Verify();
     end;
 }

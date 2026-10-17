@@ -152,7 +152,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:2');
+        Observer.Expect('setrange_a_b_max', 'ok:4');
+        Observer.Expect('setrange_a_min', 'ok:2');
+        Observer.Expect('setrange_a_max', 'ok:2');
+        Observer.Expect('filter_a_min', 'ok:2');
+        Observer.Expect('filter_a_max', 'ok:2');
+        Observer.Expect('filter_a_b_min', 'ok:2');
+        Observer.Expect('filter_a_b_max', 'ok:4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +195,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryMinInt(R, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryMaxInt(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..4" on the Id field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:4');
+        Observer.Expect('filter_open_lo_min', 'ok:2');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "2.." on the Id field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "2|4" applied to the field Id in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "2|4" applied to the field Id in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Id field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Id field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -224,7 +240,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..4" on the Id field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:4');
+        Observer.Expect('filter_open_lo_min', 'ok:2');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "2.." on the Id field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "2|4" applied to the field Id in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "2|4" applied to the field Id in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Id field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Id field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,7 +286,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:B');
+        Observer.Expect('setrange_a_b_max', 'ok:D');
+        Observer.Expect('setrange_a_min', 'ok:B');
+        Observer.Expect('setrange_a_max', 'ok:B');
+        Observer.Expect('filter_a_min', 'ok:B');
+        Observer.Expect('filter_a_max', 'ok:B');
+        Observer.Expect('filter_a_b_min', 'ok:B');
+        Observer.Expect('filter_a_b_max', 'ok:D');
+        Observer.Verify();
     end;
 
     [Test]
@@ -297,7 +329,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryMinCode(R, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryMaxCode(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..D" on the Cd field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:D');
+        Observer.Expect('filter_open_lo_min', 'ok:B');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "B.." on the Cd field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "B|D" applied to the field Cd in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "B|D" applied to the field Cd in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Cd field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Cd field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -334,7 +374,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..D" on the Cd field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:D');
+        Observer.Expect('filter_open_lo_min', 'ok:B');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "B.." on the Cd field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "B|D" applied to the field Cd in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "B|D" applied to the field Cd in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Cd field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Cd field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -370,7 +418,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryMinDate(R, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryMaxDate(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:2026-01-02');
+        Observer.Expect('setrange_a_b_max', 'ok:2026-01-04');
+        Observer.Expect('setrange_a_min', 'ok:2026-01-02');
+        Observer.Expect('setrange_a_max', 'ok:2026-01-02');
+        Observer.Expect('filter_a_min', 'ok:2026-02-01');
+        Observer.Expect('filter_a_max', 'ok:2026-02-01');
+        Observer.Expect('filter_a_b_min', 'ok:2026-02-01');
+        Observer.Expect('filter_a_b_max', 'ok:2026-04-01');
+        Observer.Verify();
     end;
 
     [Test]
@@ -408,7 +464,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:2026-01-02');
+        Observer.Expect('setrange_a_b_max', 'ok:2026-01-04');
+        Observer.Expect('setrange_a_min', 'ok:2026-01-02');
+        Observer.Expect('setrange_a_max', 'ok:2026-01-02');
+        Observer.Expect('filter_a_min', 'ok:2026-02-01');
+        Observer.Expect('filter_a_max', 'ok:2026-02-01');
+        Observer.Expect('filter_a_b_min', 'ok:2026-02-01');
+        Observer.Expect('filter_a_b_max', 'ok:2026-04-01');
+        Observer.Verify();
     end;
 
     [Test]
@@ -443,7 +507,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryMinDate(R, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryMaxDate(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..04/01/26" on the Dt field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:2026-04-01');
+        Observer.Expect('filter_open_lo_min', 'ok:2026-02-01');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "02/01/26.." on the Dt field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "02/01/26|04/01/26" applied to the field Dt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "02/01/26|04/01/26" applied to the field Dt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Dt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Dt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -480,7 +552,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..04/01/26" on the Dt field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:2026-04-01');
+        Observer.Expect('filter_open_lo_min', 'ok:2026-02-01');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "02/01/26.." on the Dt field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "02/01/26|04/01/26" applied to the field Dt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "02/01/26|04/01/26" applied to the field Dt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Dt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Dt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -516,7 +596,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryMinOpt(R, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryMaxOpt(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:1');
+        Observer.Expect('setrange_a_b_max', 'ok:3');
+        Observer.Expect('setrange_a_min', 'ok:1');
+        Observer.Expect('setrange_a_max', 'ok:1');
+        Observer.Expect('filter_a_min', 'ok:1');
+        Observer.Expect('filter_a_max', 'ok:1');
+        Observer.Expect('filter_a_b_min', 'ok:1');
+        Observer.Expect('filter_a_b_max', 'ok:3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -554,7 +642,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:1');
+        Observer.Expect('setrange_a_b_max', 'ok:3');
+        Observer.Expect('setrange_a_min', 'ok:1');
+        Observer.Expect('setrange_a_max', 'ok:1');
+        Observer.Expect('filter_a_min', 'ok:1');
+        Observer.Expect('filter_a_max', 'ok:1');
+        Observer.Expect('filter_a_b_min', 'ok:1');
+        Observer.Expect('filter_a_b_max', 'ok:3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -589,7 +685,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryMinOpt(R, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryMaxOpt(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..D" on the Opt field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:3');
+        Observer.Expect('filter_open_lo_min', 'ok:1');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "B.." on the Opt field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "B|D" applied to the field Opt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "B|D" applied to the field Opt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Opt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Opt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -626,7 +730,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..D" on the Opt field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:3');
+        Observer.Expect('filter_open_lo_min', 'ok:1');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "B.." on the Opt field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "B|D" applied to the field Opt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "B|D" applied to the field Opt in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the Opt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the Opt field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -662,7 +774,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryMinEnum(R, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryMaxEnum(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:1');
+        Observer.Expect('setrange_a_b_max', 'ok:3');
+        Observer.Expect('setrange_a_min', 'ok:1');
+        Observer.Expect('setrange_a_max', 'ok:1');
+        Observer.Expect('filter_a_min', 'ok:1');
+        Observer.Expect('filter_a_max', 'ok:1');
+        Observer.Expect('filter_a_b_min', 'ok:1');
+        Observer.Expect('filter_a_b_max', 'ok:3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -700,7 +820,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('filter_a_b_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('filter_a_b_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('setrange_a_b_min', 'ok:1');
+        Observer.Expect('setrange_a_b_max', 'ok:3');
+        Observer.Expect('setrange_a_min', 'ok:1');
+        Observer.Expect('setrange_a_max', 'ok:1');
+        Observer.Expect('filter_a_min', 'ok:1');
+        Observer.Expect('filter_a_max', 'ok:1');
+        Observer.Expect('filter_a_b_min', 'ok:1');
+        Observer.Expect('filter_a_b_max', 'ok:3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -735,7 +863,15 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryMinEnum(R, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryMaxEnum(R, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..D" on the En field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:3');
+        Observer.Expect('filter_open_lo_min', 'ok:1');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "B.." on the En field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "B|D" applied to the field En in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "B|D" applied to the field En in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the En field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the En field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 
     [Test]
@@ -772,6 +908,14 @@ codeunit 74071 "LT RMM Range MinMax Types"
         Observer.Observe('nofilter_min', Show(TryRefMin(F, Res), Res));
         Res := '';
         Observer.Observe('nofilter_max', Show(TryRefMax(F, Res), Res));
-        Observer.Finish();
+        Observer.Expect('filter_open_hi_min', 'err:The filter "..D" on the En field in the LT RMM Rec table has no lower bound.|DB:Ok');
+        Observer.Expect('filter_open_hi_max', 'ok:3');
+        Observer.Expect('filter_open_lo_min', 'ok:1');
+        Observer.Expect('filter_open_lo_max', 'err:The filter "B.." on the En field in the LT RMM Rec table has no upper bound.|DB:Ok');
+        Observer.Expect('filter_or_min', 'err:The filter expression "B|D" applied to the field En in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('filter_or_max', 'err:The filter expression "B|D" applied to the field En in the LT RMM Rec table results in more than one range.|DB:NotIntervalFilter');
+        Observer.Expect('nofilter_min', 'err:Specify a filter for the En field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Expect('nofilter_max', 'err:Specify a filter for the En field in the LT RMM Rec table.|DB:NoFilter');
+        Observer.Verify();
     end;
 }
