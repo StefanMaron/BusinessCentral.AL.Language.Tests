@@ -147,11 +147,22 @@ codeunit 74955 "LT SaveAs Data Items"
         At: Integer;
         Marker: Text;
     begin
+        // systemId (a Guid) and tableId are left out: the attributes exist from BC 28 only (see Gate ReportSaveAsDataItemIdentity).
         Marker := ' systemId="';
         At := StrPos(Xml, Marker);
         while At > 0 do begin
             Result += CopyStr(Xml, 1, At - 1);
             Xml := CopyStr(Xml, At + StrLen(Marker) + 37);
+            At := StrPos(Xml, Marker);
+        end;
+        Xml := Result + Xml;
+        Result := '';
+        Marker := ' tableId="';
+        At := StrPos(Xml, Marker);
+        while At > 0 do begin
+            Result += CopyStr(Xml, 1, At - 1);
+            Xml := CopyStr(Xml, At + StrLen(Marker));
+            Xml := CopyStr(Xml, StrPos(Xml, '"') + 1);
             At := StrPos(Xml, Marker);
         end;
         exit(Result + Xml);
@@ -187,7 +198,7 @@ codeunit 74955 "LT SaveAs Data Items"
     begin
         Seed();
         Observer.Observe('tree', DataItemsOf(Report::"LT SD Parent Child"));
-        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Par" tableId="74948">|      <Columns>|        <Column name="ParId">1</Column>|        <Column name="ParName">one</Column>|      </Columns>|      <DataItems>|        <DataItem name="Chi" tableId="74949">|          <Columns>|            <Column name="ChiId">10</Column>|            <Column name="ChiNote">c10</Column>|          </Columns>|        </DataItem>|        <DataItem name="Chi" tableId="74949">|          <Columns>|            <Column name="ChiId">11</Column>|            <Column name="ChiNote">c11</Column>|          </Columns>|        </DataItem>|      </DataItems>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Par" tableId="74948">|      <Columns>|        <Column name="ParId">2</Column>|        <Column name="ParName">a&lt;b&amp;c</Column>|      </Columns>|      <DataItems>|        <DataItem name="Chi" tableId="74949">|          <Columns>|            <Column name="ChiId">20</Column>|            <Column name="ChiNote">c20</Column>|          </Columns>|        </DataItem>|      </DataItems>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Par">|      <Columns>|        <Column name="ParId">1</Column>|        <Column name="ParName">one</Column>|      </Columns>|      <DataItems>|        <DataItem name="Chi">|          <Columns>|            <Column name="ChiId">10</Column>|            <Column name="ChiNote">c10</Column>|          </Columns>|        </DataItem>|        <DataItem name="Chi">|          <Columns>|            <Column name="ChiId">11</Column>|            <Column name="ChiNote">c11</Column>|          </Columns>|        </DataItem>|      </DataItems>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Par">|      <Columns>|        <Column name="ParId">2</Column>|        <Column name="ParName">a&lt;b&amp;c</Column>|      </Columns>|      <DataItems>|        <DataItem name="Chi">|          <Columns>|            <Column name="ChiId">20</Column>|            <Column name="ChiNote">c20</Column>|          </Columns>|        </DataItem>|      </DataItems>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
         Observer.Verify();
     end;
 
@@ -198,7 +209,7 @@ codeunit 74955 "LT SaveAs Data Items"
     begin
         Seed();
         Observer.Observe('tree', DataItemsOf(Report::"LT SD Siblings"));
-        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Par" tableId="74948">|      <Columns>|        <Column name="ParId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Par" tableId="74948">|      <Columns>|        <Column name="ParId">2</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Oth" tableId="74950">|      <Columns>|        <Column name="OthId">5</Column>|        <Column name="OthLabel">five</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Oth" tableId="74950">|      <Columns>|        <Column name="OthId">6</Column>|        <Column name="OthLabel">six</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Par">|      <Columns>|        <Column name="ParId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Par">|      <Columns>|        <Column name="ParId">2</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Oth">|      <Columns>|        <Column name="OthId">5</Column>|        <Column name="OthLabel">five</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Oth">|      <Columns>|        <Column name="OthId">6</Column>|        <Column name="OthLabel">six</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
         Observer.Verify();
     end;
 
@@ -209,7 +220,7 @@ codeunit 74955 "LT SaveAs Data Items"
     begin
         Seed();
         Observer.Observe('tree', DataItemsOf(Report::"LT SD Special Names"));
-        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Prod_Order_Line" tableId="74948">|      <Columns>|        <Column name="ProdId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Sales_Line" tableId="74948">|      <Columns>|        <Column name="SlashId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Sales_Line1" tableId="74948">|      <Columns>|        <Column name="HyphenId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="A_x0026_B_Line" tableId="74948">|      <Columns>|        <Column name="AmpId">1</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+        Observer.Expect('tree', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Prod_Order_Line">|      <Columns>|        <Column name="ProdId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Sales_Line">|      <Columns>|        <Column name="SlashId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="Sales_Line1">|      <Columns>|        <Column name="HyphenId">1</Column>|      </Columns>|    </DataItem>|    <DataItem language="en-US" formatRegion="en-US" name="A_x0026_B_Line">|      <Columns>|        <Column name="AmpId">1</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
         Observer.Verify();
     end;
 }
