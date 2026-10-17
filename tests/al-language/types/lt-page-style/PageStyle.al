@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-styleexpr-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunit 71888
+// Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunits 71888, 71892 to 71894
 // Probe: written against BC 29 and checked on the corpus CI matrix (27, 28, 29); every literal asserted below is what BC produced.
 // Facts: the PageStyle enum: Format(PageStyle::X), Format(PageStyle::X, 0, 2) and Format(PageStyle::X, 0, 1) for every member (PageStyle is an option-like type: AsInteger does not exist); Format into a Text and back with Evaluate.
 //   The Text of a page's StyleExpr variable is the Format of a PageStyle member. Opening such a page with a TestPage ends the test session
@@ -66,7 +66,7 @@ page 71887 "LT PS List"
     end;
 }
 
-codeunit 71888 "LT PageStyle"
+codeunit 71888 "LT PageStyle Format"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -89,6 +89,12 @@ codeunit 71888 "LT PageStyle"
         Observer.Observe('format_Subordinate', Format(PageStyle::Subordinate));
         Observer.Finish();
     end;
+}
+
+codeunit 71892 "LT PageStyle FormatNumber2"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
 
     [Test]
     procedure PageStyle_FormatNumber2_AllMembers()
@@ -108,7 +114,12 @@ codeunit 71888 "LT PageStyle"
         Observer.Observe('format2_Subordinate', Format(PageStyle::Subordinate, 0, 2));
         Observer.Finish();
     end;
+}
 
+codeunit 71893 "LT PageStyle FormatNumber1"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
 
     [Test]
     procedure PageStyle_FormatNumber1_AllMembers()
@@ -128,6 +139,12 @@ codeunit 71888 "LT PageStyle"
         Observer.Observe('format1_Subordinate', Format(PageStyle::Subordinate, 0, 1));
         Observer.Finish();
     end;
+}
+
+codeunit 71894 "LT PageStyle FormatText"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
 
     [Test]
     procedure PageStyle_FormatIntoTextAndBack()
@@ -151,5 +168,4 @@ codeunit 71888 "LT PageStyle"
         Observer.Observe('cleared', Format(Style));
         Observer.Finish();
     end;
-
 }

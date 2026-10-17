@@ -43,7 +43,14 @@ codeunit 71891 "LT RecordRef Open System"
         Observer.Observe('t0', OpenResult(0));
         Observer.Observe('t_negative', OpenResult(-1));
         Observer.Observe('t99999999', OpenResult(99999999));
-        Observer.Finish();
+        Observer.Expect('t2000000999', 'error:You tried to invoke the Table object with the ID 2000000999 from the object LT RecordRef Open System. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('t2000000004', 'opened|2000000004|Permission Set');
+        Observer.Expect('t2000000058', 'opened|2000000058|AllObjWithCaption');
+        Observer.Expect('t2000000000', 'error:You tried to invoke the Table object with the ID 2000000000 from the object LT RecordRef Open System. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('t0', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('t_negative', 'error:You tried to invoke the Table object with the ID -1 from the object LT RecordRef Open System. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Expect('t99999999', 'error:You tried to invoke the Table object with the ID 99999999 from the object LT RecordRef Open System. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -54,6 +61,9 @@ codeunit 71891 "LT RecordRef Open System"
         Observer.Observe('permission_set', OpenResult(Database::"Permission Set"));
         Observer.Observe('all_obj_with_caption', OpenResult(Database::AllObjWithCaption));
         Observer.Observe('integer', OpenResult(Database::Integer));
-        Observer.Finish();
+        Observer.Expect('permission_set', 'opened|2000000004|Permission Set');
+        Observer.Expect('all_obj_with_caption', 'opened|2000000058|AllObjWithCaption');
+        Observer.Expect('integer', 'opened|2000000026|Integer');
+        Observer.Verify();
     end;
 }
