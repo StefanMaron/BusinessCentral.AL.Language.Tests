@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-styleexpr-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunits 71888, 71892 to 71894
+// Fixtures used: Probe Observer (codeunit 69160); own table 71886, page 71887 and test codeunits 71888, 71892 to 71897
 // Probe: written against BC 29 and checked on the corpus CI matrix (27, 28, 29); every literal asserted below is what BC produced.
 // Facts: the PageStyle enum: Format(PageStyle::X), Format(PageStyle::X, 0, 2) and Format(PageStyle::X, 0, 1) for every member (PageStyle is an option-like type: AsInteger does not exist); Format into a Text and back with Evaluate.
 //   The Text of a page's StyleExpr variable is the Format of a PageStyle member. Opening such a page with a TestPage ends the test session
@@ -87,7 +87,18 @@ codeunit 71888 "LT PageStyle Format"
         Observer.Observe('format_Unfavorable', Format(PageStyle::Unfavorable));
         Observer.Observe('format_Ambiguous', Format(PageStyle::Ambiguous));
         Observer.Observe('format_Subordinate', Format(PageStyle::Subordinate));
-        Observer.Finish();
+        Observer.Expect('format_None', 'None');
+        Observer.Expect('format_Standard', 'Standard');
+        Observer.Expect('format_StandardAccent', 'StandardAccent');
+        Observer.Expect('format_Strong', 'Strong');
+        Observer.Expect('format_StrongAccent', 'StrongAccent');
+        Observer.Expect('format_Attention', 'Attention');
+        Observer.Expect('format_AttentionAccent', 'AttentionAccent');
+        Observer.Expect('format_Favorable', 'Favorable');
+        Observer.Expect('format_Unfavorable', 'Unfavorable');
+        Observer.Expect('format_Ambiguous', 'Ambiguous');
+        Observer.Expect('format_Subordinate', 'Subordinate');
+        Observer.Verify();
     end;
 }
 
@@ -112,7 +123,18 @@ codeunit 71892 "LT PageStyle FormatNumber2"
         Observer.Observe('format2_Unfavorable', Format(PageStyle::Unfavorable, 0, 2));
         Observer.Observe('format2_Ambiguous', Format(PageStyle::Ambiguous, 0, 2));
         Observer.Observe('format2_Subordinate', Format(PageStyle::Subordinate, 0, 2));
-        Observer.Finish();
+        Observer.Expect('format2_None', '1');
+        Observer.Expect('format2_Standard', '2');
+        Observer.Expect('format2_StandardAccent', '3');
+        Observer.Expect('format2_Strong', '4');
+        Observer.Expect('format2_StrongAccent', '5');
+        Observer.Expect('format2_Attention', '6');
+        Observer.Expect('format2_AttentionAccent', '7');
+        Observer.Expect('format2_Favorable', '8');
+        Observer.Expect('format2_Unfavorable', '9');
+        Observer.Expect('format2_Ambiguous', '10');
+        Observer.Expect('format2_Subordinate', '11');
+        Observer.Verify();
     end;
 }
 
@@ -137,17 +159,71 @@ codeunit 71893 "LT PageStyle FormatNumber1"
         Observer.Observe('format1_Unfavorable', Format(PageStyle::Unfavorable, 0, 1));
         Observer.Observe('format1_Ambiguous', Format(PageStyle::Ambiguous, 0, 1));
         Observer.Observe('format1_Subordinate', Format(PageStyle::Subordinate, 0, 1));
-        Observer.Finish();
+        Observer.Expect('format1_None', 'None');
+        Observer.Expect('format1_Standard', 'Standard');
+        Observer.Expect('format1_StandardAccent', 'StandardAccent');
+        Observer.Expect('format1_Strong', 'Strong');
+        Observer.Expect('format1_StrongAccent', 'StrongAccent');
+        Observer.Expect('format1_Attention', 'Attention');
+        Observer.Expect('format1_AttentionAccent', 'AttentionAccent');
+        Observer.Expect('format1_Favorable', 'Favorable');
+        Observer.Expect('format1_Unfavorable', 'Unfavorable');
+        Observer.Expect('format1_Ambiguous', 'Ambiguous');
+        Observer.Expect('format1_Subordinate', 'Subordinate');
+        Observer.Verify();
     end;
 }
 
-codeunit 71894 "LT PageStyle FormatText"
+codeunit 71894 "LT PageStyle Assign"
 {
     Subtype = Test;
     TestPermissions = Disabled;
 
     [Test]
-    procedure PageStyle_FormatIntoTextAndBack()
+    procedure PageStyle_Variable_Assign()
+    var
+        Observer: Codeunit "Probe Observer";
+        Style: PageStyle;
+        Txt: Text;
+        Ok: Boolean;
+    begin
+        Style := PageStyle::Favorable;
+        Observer.Observe('assigned', Format(Style));
+        Observer.Observe('assigned_format2', Format(Style, 0, 2));
+        Txt := Format(PageStyle::AttentionAccent);
+        Observer.Observe('text', Txt);
+        Observer.Finish();
+    end;
+}
+
+codeunit 71895 "LT PageStyle Clear"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure PageStyle_Variable_Clear()
+    var
+        Observer: Codeunit "Probe Observer";
+        Style: PageStyle;
+        Txt: Text;
+        Ok: Boolean;
+    begin
+        Style := PageStyle::Favorable;
+        Clear(Style);
+        Observer.Observe('cleared', Format(Style));
+        Observer.Observe('cleared_format2', Format(Style, 0, 2));
+        Observer.Finish();
+    end;
+}
+
+codeunit 71896 "LT PageStyle Evaluate"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure PageStyle_Evaluate_Name()
     var
         Observer: Codeunit "Probe Observer";
         Style: PageStyle;
@@ -155,17 +231,31 @@ codeunit 71894 "LT PageStyle FormatText"
         Ok: Boolean;
     begin
         Txt := Format(PageStyle::AttentionAccent);
-        Observer.Observe('text', Txt);
         Ok := Evaluate(Style, Txt);
         Observer.Observe('evaluate_ok', Format(Ok));
-        Observer.Observe('evaluate_back_format1', Format(Style, 0, 1));
+        Observer.Observe('evaluate_back', Format(Style));
+        Observer.Finish();
+    end;
+}
+
+codeunit 71897 "LT PageStyle Eval Lowercase"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure PageStyle_Evaluate_Lowercase()
+    var
+        Observer: Codeunit "Probe Observer";
+        Style: PageStyle;
+        Txt: Text;
+        Ok: Boolean;
+    begin
         Ok := Evaluate(Style, 'strong');
-        Observer.Observe('evaluate_lowercase_ok', Format(Ok));
-        Observer.Observe('evaluate_lowercase_format1', Format(Style, 0, 1));
-        Style := PageStyle::Favorable;
-        Observer.Observe('default_after_assign', Format(Style));
-        Clear(Style);
-        Observer.Observe('cleared', Format(Style));
+        Observer.Observe('lowercase_ok', Format(Ok));
+        Observer.Observe('lowercase_back', Format(Style));
+        Ok := Evaluate(Style, 'NoSuchStyle');
+        Observer.Observe('unknown_ok', Format(Ok));
         Observer.Finish();
     end;
 }
