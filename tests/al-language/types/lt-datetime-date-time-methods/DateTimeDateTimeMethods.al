@@ -29,7 +29,29 @@ codeunit 73578 "LT DateTime Date Time Methods"
         Show('set', CreateDateTime(DMY2Date(15, 6, 2026), 143025.123T));
         Show('midnight', CreateDateTime(DMY2Date(15, 6, 2026), 0T));
         Show('endday', CreateDateTime(DMY2Date(31, 12, 2026), 235959.999T));
-        Obs.Finish();
+        Obs.Expect('set.dt', '2026-06-15T14:30:25.123Z');
+        Obs.Expect('set.date_method', '2026-06-15');
+        Obs.Expect('set.date_fn', '2026-06-15');
+        Obs.Expect('set.time_method', '14:30:25.123');
+        Obs.Expect('set.time_fn', '14:30:25.123');
+        Obs.Expect('midnight.dt', '2026-06-15T00:00:00Z');
+        Obs.Expect('midnight.date_method', '2026-06-15');
+        Obs.Expect('midnight.date_fn', '2026-06-15');
+        Obs.Expect('midnight.time_method', '00:00:00');
+        Obs.Expect('midnight.time_fn', '00:00:00');
+        Obs.Expect('endday.dt', '2026-12-31T23:59:59.999Z');
+        Obs.Expect('endday.date_method', '2026-12-31');
+        Obs.Expect('endday.date_fn', '2026-12-31');
+        Obs.Expect('endday.time_method', '23:59:59.999');
+        Obs.Expect('endday.time_fn', '23:59:59.999');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DateTime Date Time Methods"(CodeUnit 73578).DateTime_DateAndTimeMethods_SetValue line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -41,7 +63,26 @@ codeunit 73578 "LT DateTime Date Time Methods"
         Show('var', Dt);
         Obs.Observe('date_is_zero', Format(Dt.Date() = 0D));
         Obs.Observe('time_is_zero', Format(Dt.Time() = 0T));
-        Obs.Finish();
+        Obs.Expect('zero.dt', '');
+        Obs.Expect('zero.date_method', '');
+        Obs.Expect('zero.date_fn', '');
+        Obs.Expect('zero.time_method', '');
+        Obs.Expect('zero.time_fn', '');
+        Obs.Expect('var.dt', '');
+        Obs.Expect('var.date_method', '');
+        Obs.Expect('var.date_fn', '');
+        Obs.Expect('var.time_method', '');
+        Obs.Expect('var.time_fn', '');
+        Obs.Expect('date_is_zero', 'Yes');
+        Obs.Expect('time_is_zero', 'Yes');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DateTime Date Time Methods"(CodeUnit 73578).DateTime_DateAndTimeMethods_Undefined line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [TryFunction]
@@ -61,6 +102,14 @@ codeunit 73578 "LT DateTime Date Time Methods"
             Obs.Observe('date0', GetLastErrorText());
             ClearLastError();
         end;
-        Obs.Finish();
+        Obs.Expect('date0', 'The date is not valid.');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DateTime Date Time Methods"(CodeUnit 73578).DateTime_DateAndTimeMethods_DateZeroWithTime line 10 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 }

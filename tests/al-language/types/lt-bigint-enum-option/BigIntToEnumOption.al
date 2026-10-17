@@ -101,7 +101,28 @@ codeunit 74064 "LT BigInt To Option"
         ProbeOpt('o7', '7');
         ProbeOpt('o100', '100');
         ProbeOpt('om1', '-1');
-        Obs.Finish();
+        Obs.Expect('o0.set', 'ok');
+        Obs.Expect('o0.val', 'Zero|0');
+        Obs.Expect('o1.set', 'ok');
+        Obs.Expect('o1.val', 'One|1');
+        Obs.Expect('o2.set', 'ok');
+        Obs.Expect('o2.val', 'Two|2');
+        Obs.Expect('o3.set', 'ok');
+        Obs.Expect('o3.val', '3|3');
+        Obs.Expect('o7.set', 'ok');
+        Obs.Expect('o7.val', '7|7');
+        Obs.Expect('o100.set', 'ok');
+        Obs.Expect('o100.val', '100|100');
+        Obs.Expect('om1.set', 'ok');
+        Obs.Expect('om1.val', '-1|-1');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT BigInt To Option"(CodeUnit 74064).Option_FromBigInteger_InRangeAndLacking line 9 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -113,7 +134,26 @@ codeunit 74064 "LT BigInt To Option"
         ProbeOpt('imin', '-2147483648');
         ProbeOpt('imin1', '-2147483649');
         ProbeOpt('lmax', '9223372036854775807');
-        Obs.Finish();
+        Obs.Expect('imax.set', 'ok');
+        Obs.Expect('imax.val', '2147483647|2147483647');
+        Obs.Expect('imax1.err|text', 'Overflow under conversion of System.Int64 value 2147483648 to System.Int32.');
+        Obs.Expect('imax1.err|code', 'ConversionCast');
+        Obs.Expect('u32.err|text', 'Overflow under conversion of System.Int64 value 4294967296 to System.Int32.');
+        Obs.Expect('u32.err|code', 'ConversionCast');
+        Obs.Expect('imin.set', 'ok');
+        Obs.Expect('imin.val', '-2147483648|-2147483648');
+        Obs.Expect('imin1.err|text', 'Overflow under conversion of System.Int64 value -2147483649 to System.Int32.');
+        Obs.Expect('imin1.err|code', 'ConversionCast');
+        Obs.Expect('lmax.err|text', 'Overflow under conversion of System.Int64 value 9223372036854775807 to System.Int32.');
+        Obs.Expect('lmax.err|code', 'ConversionCast');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT BigInt To Option"(CodeUnit 74064).Option_FromBigInteger_BeyondInteger line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
 #if BC29PLUS
@@ -127,7 +167,28 @@ codeunit 74064 "LT BigInt To Option"
         ProbeEnum('e7', '7');
         ProbeEnum('e100', '100');
         ProbeEnum('em1', '-1');
-        Obs.Finish();
+        Obs.Expect('e0.set', 'ok');
+        Obs.Expect('e0.val', 'Zero|0');
+        Obs.Expect('e1.set', 'ok');
+        Obs.Expect('e1.val', 'One|1');
+        Obs.Expect('e2.set', 'ok');
+        Obs.Expect('e2.val', 'Two|2');
+        Obs.Expect('e3.set', 'ok');
+        Obs.Expect('e3.val', '3|3');
+        Obs.Expect('e7.set', 'ok');
+        Obs.Expect('e7.val', 'Seven|7');
+        Obs.Expect('e100.set', 'ok');
+        Obs.Expect('e100.val', '100|100');
+        Obs.Expect('em1.set', 'ok');
+        Obs.Expect('em1.val', '-1|-1');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT BigInt To Option"(CodeUnit 74064).Enum_FromBigInteger_InRangeAndLacking line 9 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -139,7 +200,26 @@ codeunit 74064 "LT BigInt To Option"
         ProbeEnum('imin', '-2147483648');
         ProbeEnum('imin1', '-2147483649');
         ProbeEnum('lmax', '9223372036854775807');
-        Obs.Finish();
+        Obs.Expect('imax.set', 'ok');
+        Obs.Expect('imax.val', '2147483647|2147483647');
+        Obs.Expect('imax1.err|text', 'Overflow under conversion of System.Int64 value 2147483648 to System.Int32.');
+        Obs.Expect('imax1.err|code', 'ConversionCast');
+        Obs.Expect('u32.err|text', 'Overflow under conversion of System.Int64 value 4294967296 to System.Int32.');
+        Obs.Expect('u32.err|code', 'ConversionCast');
+        Obs.Expect('imin.set', 'ok');
+        Obs.Expect('imin.val', '-2147483648|-2147483648');
+        Obs.Expect('imin1.err|text', 'Overflow under conversion of System.Int64 value -2147483649 to System.Int32.');
+        Obs.Expect('imin1.err|code', 'ConversionCast');
+        Obs.Expect('lmax.err|text', 'Overflow under conversion of System.Int64 value 9223372036854775807 to System.Int32.');
+        Obs.Expect('lmax.err|code', 'ConversionCast');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT BigInt To Option"(CodeUnit 74064).Enum_FromBigInteger_BeyondInteger line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 #endif
 }

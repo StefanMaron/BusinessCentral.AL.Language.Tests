@@ -133,18 +133,17 @@ codeunit 74141 "LT New Line Stamps Filters"
     var
         Obs: Codeunit "Probe Observer";
 
-    local procedure Seed()
+    local procedure Seed(HeaderNo: Code[10]; HeaderType: Enum "LT NL Type")
     var
         H: Record "LT NL Header";
         L: Record "LT NL Line";
     begin
         L.DeleteAll();
         H.DeleteAll();
-        H."No." := 'HB';
-        H.Type := "LT NL Type"::B;
-        H.Insert();
-        H."No." := 'HA';
-        H.Type := "LT NL Type"::A;
+        if HeaderNo = '' then
+            exit;
+        H."No." := HeaderNo;
+        H.Type := HeaderType;
         H.Insert();
     end;
 
@@ -215,9 +214,8 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host: TestPage "LT NL Host";
         Result: Text;
     begin
-        Seed();
+        Seed('HB', "LT NL Type"::B);
         Host.OpenEdit();
-        Host.GoToKey('HB');
         Step('new', TryNewB(Host));
         if TryReadB(Host, Result) then
             Obs.Observe('draft', Result)
@@ -239,9 +237,8 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host: TestPage "LT NL Host";
         Result: Text;
     begin
-        Seed();
+        Seed('HA', "LT NL Type"::A);
         Host.OpenEdit();
-        Host.GoToKey('HA');
         Step('new', TryNewB(Host));
         if TryReadB(Host, Result) then
             Obs.Observe('draft', Result)
@@ -250,7 +247,20 @@ codeunit 74141 "LT New Line Stamps Filters"
         Step('type', TryTypeB(Host));
         Step('close', TryClose(Host));
         ObserveLines('db');
-        Obs.Finish();
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'HA|A|A');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'HA|A|A|x');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT New Line Stamps Filters"(CodeUnit 74141).PartB_ExistingHeaderTypeA_NewLine line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -259,9 +269,8 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host: TestPage "LT NL Host";
         Result: Text;
     begin
-        Seed();
+        Seed('HB', "LT NL Type"::B);
         Host.OpenEdit();
-        Host.GoToKey('HB');
         Step('new', TryNewPlain(Host));
         if TryReadPlain(Host, Result) then
             Obs.Observe('draft', Result)
@@ -279,9 +288,8 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host: TestPage "LT NL Host";
         Result: Text;
     begin
-        Seed();
+        Seed('HA', "LT NL Type"::A);
         Host.OpenEdit();
-        Host.GoToKey('HA');
         Step('new', TryNewPlain(Host));
         if TryReadPlain(Host, Result) then
             Obs.Observe('draft', Result)
@@ -290,7 +298,20 @@ codeunit 74141 "LT New Line Stamps Filters"
         Step('type', TryTypePlain(Host));
         Step('close', TryClose(Host));
         ObserveLines('db');
-        Obs.Finish();
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'HA|A|A');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'HA|A|A|x');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT New Line Stamps Filters"(CodeUnit 74141).PartPlain_ExistingHeaderTypeA_NewLine line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -299,7 +320,7 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host: TestPage "LT NL Host";
         Result: Text;
     begin
-        Seed();
+        Seed('', "LT NL Type"::A);
         Host.OpenNew();
         Host.Type.SetValue('B');
         Host."No.".SetValue('HN');
@@ -310,7 +331,19 @@ codeunit 74141 "LT New Line Stamps Filters"
             Step('read', false);
         Step('close', TryClose(Host));
         ObserveLines('db');
-        Obs.Finish();
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', '|A|A');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', '|A|A|x');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT New Line Stamps Filters"(CodeUnit 74141).PartB_OpenNewHeader_TypeThenNo line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -319,7 +352,7 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host: TestPage "LT NL Host";
         Result: Text;
     begin
-        Seed();
+        Seed('', "LT NL Type"::A);
         Host.OpenNew();
         Host."No.".SetValue('HN');
         Host.Type.SetValue('B');
@@ -330,6 +363,18 @@ codeunit 74141 "LT New Line Stamps Filters"
             Step('read', false);
         Step('close', TryClose(Host));
         ObserveLines('db');
-        Obs.Finish();
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'HN|A|A');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'HN|A|A|x');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT New Line Stamps Filters"(CodeUnit 74141).PartB_OpenNewHeader_NoThenType line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 }

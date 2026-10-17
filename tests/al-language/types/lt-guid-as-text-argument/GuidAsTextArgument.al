@@ -32,7 +32,21 @@ codeunit 73579 "LT Guid As Text Argument"
         Obs.Observe('uppercase', UpperCase(G));
         Obs.Observe('lowercase', LowerCase(G));
         Obs.Observe('strpos', Format(StrPos(G, '-')));
-        Obs.Finish();
+        Obs.Expect('format', '{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}');
+        Obs.Expect('copystr_1_50', '{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}');
+        Obs.Expect('copystr_2_8', '1A2B3C4D');
+        Obs.Expect('strlen', '38');
+        Obs.Expect('uppercase', '{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}');
+        Obs.Expect('lowercase', '{1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d}');
+        Obs.Expect('strpos', '10');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Guid As Text Argument"(CodeUnit 73579).Guid_AsTextArgument_StringFunctions line 12 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -47,7 +61,19 @@ codeunit 73579 "LT Guid As Text Argument"
         Obs.Observe('created_strlen', Format(StrLen(Created)));
         Obs.Observe('created_copystr_len', Format(StrLen(CopyStr(Created, 1, 50))));
         Obs.Observe('created_copystr_equals_format', Format(CopyStr(Created, 1, 50) = Format(Created)));
-        Obs.Finish();
+        Obs.Expect('null_strlen', '38');
+        Obs.Expect('null_copystr', '{00000000-0000-0000-0000-000000000000}');
+        Obs.Expect('created_strlen', '38');
+        Obs.Expect('created_copystr_len', '38');
+        Obs.Expect('created_copystr_equals_format', 'Yes');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Guid As Text Argument"(CodeUnit 73579).Guid_AsTextArgument_NullGuidAndCreated line 11 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -61,6 +87,16 @@ codeunit 73579 "LT Guid As Text Argument"
         Obs.Observe('has', Format(N.HasData('k')));
         Obs.Observe('get', N.GetData('k'));
         Obs.Observe('get_equals_format', Format(N.GetData('k') = Format(G)));
-        Obs.Finish();
+        Obs.Expect('has', 'Yes');
+        Obs.Expect('get', '{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}');
+        Obs.Expect('get_equals_format', 'Yes');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Guid As Text Argument"(CodeUnit 73579).Guid_AsTextArgument_NotificationData line 10 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 }

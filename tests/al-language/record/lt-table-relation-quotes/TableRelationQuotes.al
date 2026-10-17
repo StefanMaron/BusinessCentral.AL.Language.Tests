@@ -126,41 +126,125 @@ codeunit 74068 "LT Table Relation Quotes"
     procedure Validate_ByKind_QuotedFilter()
     begin
         ProbeField(2);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'The field By Kind of table LT TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4', 'ok');
+        Obs.Expect('v_R5', 'The field By Kind of table LT TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'The field By Kind of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByKind_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Validate_ByOpt_QuotedFilter()
     begin
         ProbeField(3);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'The field By Opt of table LT TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4', 'The field By Opt of table LT TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'The field By Opt of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByOpt_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Validate_ByQuotedOnly_QuotedFilter()
     begin
         ProbeField(4);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'The field By Quoted Only of table LT TQ Src contains a value (R1) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'The field By Quoted Only of table LT TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4', 'The field By Quoted Only of table LT TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R5', 'The field By Quoted Only of table LT TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'The field By Quoted Only of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByQuotedOnly_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Validate_ByPlain_QuotedFilter()
     begin
         ProbeField(5);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2', 'The field By Plain of table LT TQ Src contains a value (R2) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R3', 'ok');
+        Obs.Expect('v_R4', 'ok');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'The field By Plain of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByPlain_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Validate_ByConst_QuotedFilter()
     begin
         ProbeField(6);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'The field By Const of table LT TQ Src contains a value (R1) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'The field By Const of table LT TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4', 'The field By Const of table LT TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R5', 'The field By Const of table LT TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'The field By Const of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByConst_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Validate_ByNot_QuotedFilter()
     begin
         ProbeField(7);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2', 'The field By Not of table LT TQ Src contains a value (R2) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R3', 'ok');
+        Obs.Expect('v_R4', 'ok');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'The field By Not of table LT TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Table Relation Quotes"(CodeUnit 74068).Validate_ByNot_QuotedFilter line 3 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 }

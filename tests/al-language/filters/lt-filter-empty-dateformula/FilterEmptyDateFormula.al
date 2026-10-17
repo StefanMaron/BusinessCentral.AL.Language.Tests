@@ -100,7 +100,28 @@ codeunit 73581 "LT Filter Empty DateFormula"
         Report('arg_eq_empty', R, TryArg(R, '%1', ''));
         R.Reset();
         Report('range_empty', R, TryRangeEmpty(R));
-        Obs.Finish();
+        Obs.Expect('total', '4');
+        Obs.Expect('empty.filter', '');
+        Obs.Expect('empty.count', '4');
+        Obs.Expect('quotes.filter', '''''');
+        Obs.Expect('quotes.count', '2');
+        Obs.Expect('neq_quotes.filter', '<>''''');
+        Obs.Expect('neq_quotes.count', '2');
+        Obs.Expect('neq_bare', 'The filter "<>" is not valid for the Due field on the LT FD Row table. A value is expected after the ''<>''.');
+        Obs.Expect('arg_neq_empty.filter', '<>''''');
+        Obs.Expect('arg_neq_empty.count', '2');
+        Obs.Expect('arg_eq_empty.filter', '''''');
+        Obs.Expect('arg_eq_empty.count', '2');
+        Obs.Expect('range_empty.filter', '''''');
+        Obs.Expect('range_empty.count', '2');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Filter Empty DateFormula"(CodeUnit 73581).DateFormula_SetFilter_EmptyText line 19 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 
     [Test]
@@ -117,6 +138,20 @@ codeunit 73581 "LT Filter Empty DateFormula"
         Report('arg_neq_day', R, TryArg(R, '<>%1', '<1D>'));
         R.Reset();
         Report('or_empty_day', R, TryRaw(R, '''''|<1D>'));
-        Obs.Finish();
+        Obs.Expect('total', '4');
+        Obs.Expect('eq_day', 'The filter "<1D>" is not valid for the Due field on the LT FD Row table. An error occurred while interpreting the filter: Did not expect ''>''.\\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.');
+        Obs.Expect('neq_day.filter', '<>1D');
+        Obs.Expect('neq_day.count', '3');
+        Obs.Expect('arg_neq_day.filter', '<>1D');
+        Obs.Expect('arg_neq_day.count', '3');
+        Obs.Expect('or_empty_day', 'The filter "''''|<1D>" is not valid for the Due field on the LT FD Row table. An error occurred while interpreting the filter: Did not expect ''>''.\\For more information, see https://go.microsoft.com/fwlink/?linkid=2158058.');
+        Obs.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT Filter Empty DateFormula"(CodeUnit 73581).DateFormula_SetFilter_Formulas line 13 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Obs.Verify();
     end;
 }
