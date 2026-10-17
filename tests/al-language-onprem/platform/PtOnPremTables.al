@@ -112,7 +112,7 @@ codeunit 61229 "LT PT OnPrem Tables"
     end;
 }
 
-codeunit 61252 "LT PT Cloud Runner OnPrem Tables"
+codeunit 61252 "LT PT Cloud Runner OnPrem"
 {
     Subtype = Test;
     TestPermissions = Disabled;
