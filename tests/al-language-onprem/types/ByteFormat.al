@@ -39,7 +39,23 @@ codeunit 61235 "LT Byte Format"
         Show(Observer, 'b80', 128);
         Show(Observer, 'b9F', 159);
         Show(Observer, 'bA0', 160);
-        Observer.Finish();
+        Observer.Expect('b7F_format_len', '1');
+        Observer.Expect('b7F_format_code1', '127');
+        Observer.Expect('b7F_text1_code', '127');
+        Observer.Expect('b7F_as_integer', '127');
+        Observer.Expect('b80_format_len', '1');
+        Observer.Expect('b80_format_code1', '199');
+        Observer.Expect('b80_text1_code', '199');
+        Observer.Expect('b80_as_integer', '128');
+        Observer.Expect('b9F_format_len', '1');
+        Observer.Expect('b9F_format_code1', '402');
+        Observer.Expect('b9F_text1_code', '402');
+        Observer.Expect('b9F_as_integer', '159');
+        Observer.Expect('bA0_format_len', '1');
+        Observer.Expect('bA0_format_code1', '225');
+        Observer.Expect('bA0_text1_code', '225');
+        Observer.Expect('bA0_as_integer', '160');
+        Observer.Verify();
     end;
 
     [Test]
@@ -51,7 +67,23 @@ codeunit 61235 "LT Byte Format"
         Show(Observer, 'bBB', 187);
         Show(Observer, 'bBF', 191);
         Show(Observer, 'bFF', 255);
-        Observer.Finish();
+        Observer.Expect('bEF_format_len', '1');
+        Observer.Expect('bEF_format_code1', '217');
+        Observer.Expect('bEF_text1_code', '217');
+        Observer.Expect('bEF_as_integer', '239');
+        Observer.Expect('bBB_format_len', '1');
+        Observer.Expect('bBB_format_code1', '8249');
+        Observer.Expect('bBB_text1_code', '8249');
+        Observer.Expect('bBB_as_integer', '187');
+        Observer.Expect('bBF_format_len', '1');
+        Observer.Expect('bBF_format_code1', '143');
+        Observer.Expect('bBF_text1_code', '143');
+        Observer.Expect('bBF_as_integer', '191');
+        Observer.Expect('bFF_format_len', '1');
+        Observer.Expect('bFF_format_code1', '160');
+        Observer.Expect('bFF_text1_code', '160');
+        Observer.Expect('bFF_as_integer', '255');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,6 +106,10 @@ codeunit 61235 "LT Byte Format"
             Code := Bom[Index];
             Observer.Observe('bom_code_' + Format(Index), Format(Code));
         end;
-        Observer.Finish();
+        Observer.Expect('bom_len', '3');
+        Observer.Expect('bom_code_1', '217');
+        Observer.Expect('bom_code_2', '8249');
+        Observer.Expect('bom_code_3', '143');
+        Observer.Verify();
     end;
 }

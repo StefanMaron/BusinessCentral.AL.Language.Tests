@@ -23,7 +23,12 @@ codeunit 67183 "LT Notification Guid"
         Observer.Observe('equals_format_default', Format(N.GetData('k') = Format(G)));
         Observer.Observe('equals_format_braces_off', Format(N.GetData('k') = Format(G, 0, 4)));
         Observer.Observe('length', Format(StrLen(N.GetData('k'))));
-        Observer.Finish();
+        Observer.Expect('has_data', 'Yes');
+        Observer.Expect('get_data', '{12345678-1234-1234-1234-123456789ABC}');
+        Observer.Expect('equals_format_default', 'Yes');
+        Observer.Expect('equals_format_braces_off', 'No');
+        Observer.Expect('length', '38');
+        Observer.Verify();
     end;
 
     [Test]
@@ -40,6 +45,11 @@ codeunit 67183 "LT Notification Guid"
         Observer.Observe('int_text', N.GetData('int'));
         Observer.Observe('missing_has_data', Format(N.HasData('missing')));
         Observer.Observe('missing_get_data', '[' + N.GetData('missing') + ']');
-        Observer.Finish();
+        Observer.Expect('blank_guid', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('blank_guid_has_data', 'Yes');
+        Observer.Expect('int_text', '42');
+        Observer.Expect('missing_has_data', 'No');
+        Observer.Expect('missing_get_data', '[]');
+        Observer.Verify();
     end;
 }

@@ -100,7 +100,26 @@ codeunit 67168 "LT GT Get Text"
         Observer.Observe('text_2_0', ViaVariant(Text1));
         Observer.Observe('integer_0', ViaVariant(0));
         Observer.Observe('integer_2', ViaVariant(2));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('empty_text', 'error:The value "" can''t be evaluated into type Integer.|Evaluate:Format');
+#else
+        Observer.Expect('empty_text', 'error:The type NavInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Expect('text_2', 'found=Yes|name=two');
+#if BC28PLUS
+        Observer.Expect('text_abc', 'error:The value "abc" can''t be evaluated into type Integer.|Evaluate:Format');
+#else
+        Observer.Expect('text_abc', 'error:The type NavInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Expect('text_space_2', 'found=Yes|name=two');
+#if BC28PLUS
+        Observer.Expect('text_2_0', 'error:The value "2.0" can''t be evaluated into type Integer.|Evaluate:Format');
+#else
+        Observer.Expect('text_2_0', 'error:The type NavInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Expect('integer_0', 'found=Yes|name=zero');
+        Observer.Expect('integer_2', 'found=Yes|name=two');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -126,7 +145,21 @@ codeunit 67168 "LT GT Get Text"
         Observer.ObserveError('empty_text');
         Observer.Observe('text_2_returned', Format(TryGetDirect('2', Found, Name)));
         Observer.Observe('text_2_found', Format(Found) + '|' + Name);
-        Observer.Finish();
+        Observer.Expect('empty_text_returned', 'No');
+        Observer.Expect('empty_text_found', 'No');
+#if BC28PLUS
+        Observer.Expect('empty_text|text', 'The value "" can''t be evaluated into type Integer.');
+#else
+        Observer.Expect('empty_text|text', 'The type NavInteger is unknown.');
+#endif
+#if BC28PLUS
+        Observer.Expect('empty_text|code', 'Evaluate:Format');
+#else
+        Observer.Expect('empty_text|code', 'NotSupportedType');
+#endif
+        Observer.Expect('text_2_returned', 'Yes');
+        Observer.Expect('text_2_found', 'Yes|two');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,6 +179,11 @@ codeunit 67168 "LT GT Get Text"
         Text1 := 'not a guid';
         Observer.Observe('text_not_a_guid', ViaSystemId(Text1));
         Observer.Observe('integer', ViaSystemId(2));
-        Observer.Finish();
+        Observer.Expect('guid', 'found=Yes|name=two');
+        Observer.Expect('text_of_the_guid', 'found=Yes|name=two');
+        Observer.Expect('empty_text', 'error:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.|InvalidGuidFormat');
+        Observer.Expect('text_not_a_guid', 'error:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.|InvalidGuidFormat');
+        Observer.Expect('integer', 'error:The expression Variant cannot be type-converted to a GUID value.|TypeConversion');
+        Observer.Verify();
     end;
 }

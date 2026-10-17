@@ -79,7 +79,13 @@ codeunit 67859 "LT Evaluate DelChr Edges"
         ClearLastError();
         Called := TryEvalCode5('ab de', Result, Ok);
         Observer.Observe('code5_with_space', Show(Called, Ok, Result));
-        Observer.Finish();
+        Observer.Expect('text5_ten_chars', 'returned=No|result=[]|len=0');
+        Observer.Expect('text5_five_chars', 'returned=Yes|result=[abcde]|len=5');
+        Observer.Expect('text5_six_chars', 'returned=No|result=[]|len=0');
+        Observer.Expect('code5_ten_chars', 'returned=No|result=[]|len=0');
+        Observer.Expect('code5_six_chars', 'returned=No|result=[]|len=0');
+        Observer.Expect('code5_with_space', 'returned=Yes|result=[AB DE]|len=5');
+        Observer.Verify();
     end;
 
     local procedure FormatCase(var Observer: Codeunit "Probe Observer"; Number: Integer)
@@ -104,7 +110,13 @@ codeunit 67859 "LT Evaluate DelChr Edges"
         FormatCase(Observer, 0);
         FormatCase(Observer, 1);
         FormatCase(Observer, 9);
-        Observer.Finish();
+        Observer.Expect('text_format_0', 'returned=Yes|result=[a<b>&c]|len=6');
+        Observer.Expect('code_format_0', 'returned=Yes|result=[A<B>&C]|len=6');
+        Observer.Expect('text_format_1', 'returned=Yes|result=[a<b>&c]|len=6');
+        Observer.Expect('code_format_1', 'returned=Yes|result=[A<B>&C]|len=6');
+        Observer.Expect('text_format_9', 'returned=Yes|result=[a<b>&c]|len=6');
+        Observer.Expect('code_format_9', 'returned=Yes|result=[A<B>&C]|len=6');
+        Observer.Verify();
     end;
 
     local procedure Del(Source: Text; Where: Text; What: Text): Text
@@ -145,6 +157,18 @@ codeunit 67859 "LT Evaluate DelChr Edges"
         Observer.Observe('where_5', DelOutcome('=<>=<'));
         Observer.Observe('where_empty', DelOutcome(''));
         Observer.Observe('where_letter', DelOutcome('x'));
-        Observer.Finish();
+        Observer.Expect('where_1_equals', 'ok:[abc]');
+        Observer.Expect('where_1_less', 'ok:[a<b>>c>>]');
+        Observer.Expect('where_1_greater', 'ok:[<<a<b>>c]');
+        Observer.Expect('where_2_less_greater', 'ok:[a<b>>c]');
+        Observer.Expect('where_2_equals_less', 'ok:[abc]');
+        Observer.Expect('where_3', 'ok:[abc]');
+        Observer.Expect('where_4', 'ok:[abc]');
+        Observer.Expect('where_4_less', 'ok:[a<b>>c>>]');
+        Observer.Expect('where_4_mixed', 'ok:[abc]');
+        Observer.Expect('where_5', 'ok:[abc]');
+        Observer.Expect('where_empty', 'ok:[<<a<b>>c>>]');
+        Observer.Expect('where_letter', 'error:Incorrect use of the where parameter.|ALSystemString');
+        Observer.Verify();
     end;
 }

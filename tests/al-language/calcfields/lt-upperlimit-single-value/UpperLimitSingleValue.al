@@ -76,10 +76,34 @@ codeunit 67180 "LT UL Upper Limit"
         end;
     end;
 
-    local procedure Both(var Header: Record "LT UL Header"): Text
+    [TryFunction]
+    local procedure TryCalcUpTo(var Header: Record "LT UL Header")
     begin
-        Header.CalcFields("Up To", "In Range");
-        exit('filter=' + Header.GetFilter("Date Filter") + '|upto=' + Format(Header."Up To") + '|inrange=' + Format(Header."In Range"));
+        Header.CalcFields("Up To");
+    end;
+
+    [TryFunction]
+    local procedure TryCalcInRange(var Header: Record "LT UL Header")
+    begin
+        Header.CalcFields("In Range");
+    end;
+
+    local procedure Both(var Header: Record "LT UL Header"): Text
+    var
+        UpTo: Text;
+        InRange: Text;
+    begin
+        ClearLastError();
+        if TryCalcUpTo(Header) then
+            UpTo := Format(Header."Up To")
+        else
+            UpTo := 'error:' + GetLastErrorText();
+        ClearLastError();
+        if TryCalcInRange(Header) then
+            InRange := Format(Header."In Range")
+        else
+            InRange := 'error:' + GetLastErrorText();
+        exit('filter=' + Header.GetFilter("Date Filter") + '|upto=' + UpTo + '|inrange=' + InRange);
     end;
 
     [Test]

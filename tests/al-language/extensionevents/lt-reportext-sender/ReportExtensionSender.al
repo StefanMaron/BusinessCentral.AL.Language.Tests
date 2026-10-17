@@ -109,7 +109,10 @@ codeunit 67192 "LT RS Report Extension Sender"
         Observer.Observe('log', Log.Text());
         Observer.Observe('marker_after_subscriber', Rep.GetMarker());
         Observer.Observe('ext_marker_after_subscriber', Rep.GetExtMarker());
-        Observer.Finish();
+        Observer.Expect('log', 'argument=extension state|base_marker=base state|ext_marker=extension state;');
+        Observer.Expect('marker_after_subscriber', 'set by the subscriber');
+        Observer.Expect('ext_marker_after_subscriber', 'extension state');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +133,10 @@ codeunit 67192 "LT RS Report Extension Sender"
         Observer.Observe('log', Log.Text());
         Observer.Observe('first_marker', First.GetMarker());
         Observer.Observe('second_marker', Second.GetMarker());
-        Observer.Finish();
+        Observer.Expect('log', 'argument=second ext|base_marker=second|ext_marker=second ext;argument=first ext|base_marker=first|ext_marker=first ext;');
+        Observer.Expect('first_marker', 'set by the subscriber');
+        Observer.Expect('second_marker', 'set by the subscriber');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,6 +150,8 @@ codeunit 67192 "LT RS Report Extension Sender"
         Rep.RaiseWithSender();
         Observer.Observe('log', Log.Text());
         Observer.Observe('marker_after', Rep.GetMarker());
-        Observer.Finish();
+        Observer.Expect('log', 'argument=|base_marker=|ext_marker=;');
+        Observer.Expect('marker_after', 'set by the subscriber');
+        Observer.Verify();
     end;
 }

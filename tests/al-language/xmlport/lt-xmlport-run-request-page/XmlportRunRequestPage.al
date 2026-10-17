@@ -119,6 +119,8 @@ codeunit 67165 "LT XR Run Request Page"
         Log.Reset();
     end;
 
+    // BC 27: these runs raise an unexpected CLR exception (NullReferenceException) that a TryFunction cannot catch, so the three tests that
+    // reach it without a request page window exist from BC 28 on.
     [TryFunction]
     local procedure TryOneArgument(Id: Integer)
     begin
@@ -138,6 +140,7 @@ codeunit 67165 "LT XR Run Request Page"
         exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|hits=' + Format(Log.Hits()));
     end;
 
+#if BC28PLUS
     [Test]
     procedure Run_NoRequestPage_OneArgument()
     var
@@ -146,8 +149,10 @@ codeunit 67165 "LT XR Run Request Page"
         Seed();
         ClearLastError();
         Observer.Observe('one_argument', Outcome(TryOneArgument(Xmlport::"LT XR No Request Page")));
-        Observer.Finish();
+        Observer.Expect('one_argument', 'ok|hits=3');
+        Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Run_NoRequestPage_WindowTrue()
@@ -157,9 +162,15 @@ codeunit 67165 "LT XR Run Request Page"
         Seed();
         ClearLastError();
         Observer.Observe('window_true', Outcome(TryThreeArguments(Xmlport::"LT XR No Request Page", true, false)));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('window_true', 'error:An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.|DB:Ok|hits=0');
+#else
+        Observer.Expect('window_true', 'error:Unhandled UI: RequestPage 67163|MissingUIHandler|hits=0');
+#endif
+        Observer.Verify();
     end;
 
+#if BC28PLUS
     [Test]
     procedure Run_NoRequestPage_WindowFalse()
     var
@@ -168,9 +179,12 @@ codeunit 67165 "LT XR Run Request Page"
         Seed();
         ClearLastError();
         Observer.Observe('window_false', Outcome(TryThreeArguments(Xmlport::"LT XR No Request Page", false, false)));
-        Observer.Finish();
+        Observer.Expect('window_false', 'ok|hits=3');
+        Observer.Verify();
     end;
+#endif
 
+#if BC28PLUS
     [Test]
     procedure Run_WithRequestPage_WindowFalse()
     var
@@ -179,8 +193,10 @@ codeunit 67165 "LT XR Run Request Page"
         Seed();
         ClearLastError();
         Observer.Observe('window_false', Outcome(TryThreeArguments(Xmlport::"LT XR With Request Page", false, false)));
-        Observer.Finish();
+        Observer.Expect('window_false', 'ok|hits=3');
+        Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure Run_WithRequestPage_OneArgument()
@@ -190,7 +206,12 @@ codeunit 67165 "LT XR Run Request Page"
         Seed();
         ClearLastError();
         Observer.Observe('one_argument', Outcome(TryOneArgument(Xmlport::"LT XR With Request Page")));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('one_argument', 'error:An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.|DB:Ok|hits=0');
+#else
+        Observer.Expect('one_argument', 'error:Unhandled UI: RequestPage 67164|MissingUIHandler|hits=0');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -201,6 +222,11 @@ codeunit 67165 "LT XR Run Request Page"
         Seed();
         ClearLastError();
         Observer.Observe('window_true', Outcome(TryThreeArguments(Xmlport::"LT XR With Request Page", true, false)));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('window_true', 'error:An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.|DB:Ok|hits=0');
+#else
+        Observer.Expect('window_true', 'error:Unhandled UI: RequestPage 67164|MissingUIHandler|hits=0');
+#endif
+        Observer.Verify();
     end;
 }

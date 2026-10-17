@@ -128,7 +128,11 @@ codeunit 67158 "LT RG Get RecordId"
         Observer.Observe('row_outside_filter', Try(RR, IdOfA(4)));
         Observer.Observe('after_filter', RR.GetFilters());
         Observer.Observe('after_count', Format(RR.Count()));
-        Observer.Finish();
+        Observer.Expect('row_inside_filter', 'ok:Yes|number=67156|row=A:2|name=LT RG A|count=2|filter=Id: 1..2');
+        Observer.Expect('row_outside_filter', 'ok:Yes|number=67156|row=A:4|name=LT RG A|count=2|filter=Id: 1..2');
+        Observer.Expect('after_filter', 'Id: 1..2');
+        Observer.Expect('after_count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +150,11 @@ codeunit 67158 "LT RG Get RecordId"
         Observer.Observe('unmarked_row', Try(RR, IdOfA(3)));
         Observer.Observe('marked_only_after', Format(RR.MarkedOnly()));
         Observer.Observe('count_marked_only', Format(RR.Count()));
-        Observer.Finish();
+        Observer.Expect('marked_row', 'ok:Yes|number=67156|row=A:1|name=LT RG A|count=1|filter=Marked: Yes');
+        Observer.Expect('unmarked_row', 'ok:Yes|number=67156|row=A:3|name=LT RG A|count=1|filter=Marked: Yes');
+        Observer.Expect('marked_only_after', 'Yes');
+        Observer.Expect('count_marked_only', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,7 +172,11 @@ codeunit 67158 "LT RG Get RecordId"
         RR.Insert();
         Observer.Observe('row_after_temp_insert', Try(RR, IdOfA(2)));
         Observer.Observe('name_after', Format(RR.Field(2).Value));
-        Observer.Finish();
+        Observer.Expect('is_temporary', 'Yes');
+        Observer.Expect('row_of_the_real_table', 'ok:No|number=67156|row=A:0|name=LT RG A|count=0|filter=');
+        Observer.Expect('row_after_temp_insert', 'ok:Yes|number=67156|row=A:2|name=LT RG A|count=1|filter=');
+        Observer.Expect('name_after', 'T2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -179,7 +191,10 @@ codeunit 67158 "LT RG Get RecordId"
         Observer.Observe('other_table_row', Try(RR, IdOfB('B1')));
         Observer.Observe('number_after', Format(RR.Number()));
         Observer.Observe('is_a_after', Format(RR.Number() = Database::"LT RG A"));
-        Observer.Finish();
+        Observer.Expect('other_table_row', 'ok:Yes|number=67157|row=B:B1|name=LT RG B|count=2|filter=');
+        Observer.Expect('number_after', '67157');
+        Observer.Expect('is_a_after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -197,7 +212,9 @@ codeunit 67158 "LT RG Get RecordId"
         RR.Open(Database::"LT RG A");
         Observer.Observe('missing_other_table_row', Try(RR, Missing));
         Observer.Observe('number_after', Format(RR.Number()));
-        Observer.Finish();
+        Observer.Expect('missing_other_table_row', 'ok:No|number=67156|row=A:0|name=LT RG A|count=4|filter=');
+        Observer.Expect('number_after', '67156');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +233,11 @@ codeunit 67158 "LT RG Get RecordId"
         Observer.Observe('blank_is_blank', Format(Format(Blank) = ''));
         Got := RR.Get(IdOfA(1));
         Observer.Observe('then_valid', Format(Got));
-        Observer.Finish();
+        Observer.Expect('blank_try', 'ok:No|number=67156|row=A:0|name=LT RG A|count=4|filter=');
+        Observer.Expect('blank_record_id_text', '');
+        Observer.Expect('blank_is_blank', 'Yes');
+        Observer.Expect('then_valid', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -233,6 +254,12 @@ codeunit 67158 "LT RG Get RecordId"
         Observer.ObserveError('statement');
         Observer.Observe('statement_missing_row_outcome', Format(TryGetStatement(RR, IdOfB('B1'))));
         Observer.ObserveError('statement_other_table');
-        Observer.Finish();
+        Observer.Expect('statement_outcome', 'No');
+        Observer.Expect('statement|text', 'You tried to invoke the Table object with the ID 0 from the object LT RG Get RecordId. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('statement|code', 'AL:MetadataNotFound');
+        Observer.Expect('statement_missing_row_outcome', 'Yes');
+        Observer.Expect('statement_other_table|text', '');
+        Observer.Expect('statement_other_table|code', '');
+        Observer.Verify();
     end;
 }

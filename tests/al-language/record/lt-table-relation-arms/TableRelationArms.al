@@ -174,7 +174,14 @@ codeunit 67177 "LT TR Arms"
         Observer.Observe('a_opt_value_of_two', OptionOutcome(1, 'TWO'));
         Observer.Observe('a_opt_missing', OptionOutcome(1, 'NONE'));
         Observer.Observe('blank_opt_blank_value', OptionOutcome(0, ''));
-        Observer.Finish();
+        Observer.Expect('blank_opt_value_of_one', 'ok');
+        Observer.Expect('blank_opt_value_of_two', 'error:The field Ref of table LT TR Option Child contains a value (TWO) that cannot be found in the related table (LT TR One).|DB:PrimRecordNotFound');
+        Observer.Expect('blank_opt_missing', 'error:The field Ref of table LT TR Option Child contains a value (NONE) that cannot be found in the related table (LT TR One).|DB:PrimRecordNotFound');
+        Observer.Expect('a_opt_value_of_one', 'error:The field Ref of table LT TR Option Child contains a value (ONE) that cannot be found in the related table (LT TR Two).|DB:PrimRecordNotFound');
+        Observer.Expect('a_opt_value_of_two', 'ok');
+        Observer.Expect('a_opt_missing', 'error:The field Ref of table LT TR Option Child contains a value (NONE) that cannot be found in the related table (LT TR Two).|DB:PrimRecordNotFound');
+        Observer.Expect('blank_opt_blank_value', 'ok');
+        Observer.Verify();
     end;
 
     local procedure KindChild(Id: Integer; Kind: Integer; Ref: Code[10])
@@ -214,7 +221,10 @@ codeunit 67177 "LT TR Arms"
         Observer.Observe('kind_a_ref', RefOf(1));
         Observer.Observe('kind_b_ref', RefOf(2));
         Observer.Observe('kind_c_ref', RefOf(3));
-        Observer.Finish();
+        Observer.Expect('kind_a_ref', 'P2');
+        Observer.Expect('kind_b_ref', 'P2');
+        Observer.Expect('kind_c_ref', 'P1');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -246,6 +256,12 @@ codeunit 67177 "LT TR Arms"
         Observer.Observe('inactive_kind_b', WhereOutcome('INACTIVEB'));
         Observer.Observe('missing', WhereOutcome('MISSING'));
         Observer.Observe('blank', WhereOutcome(''));
-        Observer.Finish();
+        Observer.Expect('active_and_kind_a', 'ok');
+        Observer.Expect('active_kind_b', 'error:The field Ref of table LT TR Where Child contains a value (ACTIVEB) that cannot be found in the related table (LT TR Parent).|DB:NothingInsideFilter');
+        Observer.Expect('inactive_kind_a', 'error:The field Ref of table LT TR Where Child contains a value (INACTIVEA) that cannot be found in the related table (LT TR Parent).|DB:NothingInsideFilter');
+        Observer.Expect('inactive_kind_b', 'error:The field Ref of table LT TR Where Child contains a value (INACTIVEB) that cannot be found in the related table (LT TR Parent).|DB:NothingInsideFilter');
+        Observer.Expect('missing', 'error:The field Ref of table LT TR Where Child contains a value (MISSING) that cannot be found in the related table (LT TR Parent).|DB:NothingInsideFilter');
+        Observer.Expect('blank', 'ok');
+        Observer.Verify();
     end;
 }

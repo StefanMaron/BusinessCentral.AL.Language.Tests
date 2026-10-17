@@ -75,7 +75,13 @@ codeunit 67182 "LT TF Blob Decimal"
         Row.Get(1);
         Row.CalcFields(Data);
         Observer.Observe('after_clear_saved_and_calcfields', BlobOutcome(Row));
-        Observer.Finish();
+        Observer.Expect('empty_in_memory', 'error:Data must have a value in LT TF Row: Id=1. It cannot be zero or empty.|TestField');
+        Observer.Expect('content_in_memory', 'ok');
+        Observer.Expect('after_get_without_calcfields', 'ok');
+        Observer.Expect('after_calcfields', 'ok');
+        Observer.Expect('after_clear_in_memory', 'error:Data must have a value in LT TF Row: Id=1. It cannot be zero or empty.|TestField');
+        Observer.Expect('after_clear_saved_and_calcfields', 'error:Data must have a value in LT TF Row: Id=1. It cannot be zero or empty.|TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -97,7 +103,9 @@ codeunit 67182 "LT TF Blob Decimal"
         Fresh.SetRange(Id, 1);
         Fresh.FindFirst();
         Observer.Observe('findfirst_without_calcfields', BlobOutcome(Fresh));
-        Observer.Finish();
+        Observer.Expect('setautocalcfields_then_get', 'ok');
+        Observer.Expect('findfirst_without_calcfields', 'ok');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -145,6 +153,19 @@ codeunit 67182 "LT TF Blob Decimal"
         Observer.Observe('plain_rounded_5', DecimalOutcome(Row, 4, 20.63667));
         Observer.Observe('plain_sixth_decimal', DecimalOutcome(Row, 4, 20.636671));
         Observer.Observe('plain_tiny_difference', DecimalOutcome(Row, 4, 20.63666666666668));
-        Observer.Finish();
+        Observer.Expect('stored_cost_in_memory', '20.63667');
+        Observer.Expect('stored_plain_in_memory', '20.6366666666666667');
+        Observer.Expect('stored_cost_after_get', '20.63667');
+        Observer.Expect('stored_plain_after_get', '20.6366666666666667');
+        Observer.Expect('cost_same_long_value', 'ok');
+        Observer.Expect('cost_rounded_5', 'error:Cost must be equal to ''20.63667''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Expect('cost_rounded_4', 'error:Cost must be equal to ''20.6367''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Expect('cost_sixth_decimal', 'error:Cost must be equal to ''20.636671''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Expect('cost_sixth_decimal_below', 'error:Cost must be equal to ''20.636669''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Expect('plain_same_long_value', 'ok');
+        Observer.Expect('plain_rounded_5', 'error:Plain must be equal to ''20.63667''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Expect('plain_sixth_decimal', 'error:Plain must be equal to ''20.636671''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Expect('plain_tiny_difference', 'error:Plain must be equal to ''20.63666666666668''  in LT TF Row: Id=1. Current value is ''20.6366666666666667''.|TestField');
+        Observer.Verify();
     end;
 }

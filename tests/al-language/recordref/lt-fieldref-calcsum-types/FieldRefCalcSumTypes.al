@@ -91,7 +91,13 @@ codeunit 67155 "LT FCT CalcSum"
         Observer.Observe('duration', Sum(7));
         Observer.Observe('option', Sum(6));
         Observer.Observe('flowfilter', Sum(12));
-        Observer.Finish();
+        Observer.Expect('big_in_sumindex', 'ok:Yes|value=60000000000');
+        Observer.Expect('big_not_in_sumindex', 'ok:Yes|value=30');
+        Observer.Expect('dec_in_sumindex', 'ok:Yes|value=9');
+        Observer.Expect('duration', 'ok:Yes|value=6 seconds');
+        Observer.Expect('option', 'error:Cannot calculate a sum of the values in the Opt field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=Zero');
+        Observer.Expect('flowfilter', 'error:Cannot calculate a sum of the values in the FlowFilterDec field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -106,6 +112,12 @@ codeunit 67155 "LT FCT CalcSum"
         Observer.Observe('datetime', Sum(9));
         Observer.Observe('code', Sum(10));
         Observer.Observe('integer_key_field', Sum(1));
-        Observer.Finish();
+        Observer.Expect('boolean', 'error:Cannot calculate a sum of the values in the Flag field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=No');
+        Observer.Expect('date', 'error:Cannot calculate a sum of the values in the Day field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=');
+        Observer.Expect('time', 'error:Cannot calculate a sum of the values in the Tm field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=');
+        Observer.Expect('datetime', 'error:Cannot calculate a sum of the values in the Stamp field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=');
+        Observer.Expect('code', 'error:Cannot calculate a sum of the values in the Cd field in the LT FCT Row table because one or more values are not normal numeric fields.|DB:Ok|value=');
+        Observer.Expect('integer_key_field', 'ok:Yes|value=6');
+        Observer.Verify();
     end;
 }

@@ -74,7 +74,13 @@ codeunit 67160 "LT TB Temporary Blob"
         Fresh.SetAutoCalcFields(Data);
         Observer.Observe('findset', Format(Fresh.FindSet()) + '|' + Shown(Fresh));
         Observer.Observe('calcfields_after', ShownAfterCalc(Fresh));
-        Observer.Finish();
+        Observer.Expect('after_insert', 'len=5|has=Yes');
+        Observer.Expect('find', 'Yes|len=5|has=Yes');
+        Observer.Expect('findfirst', 'Yes|len=5|has=Yes');
+        Observer.Expect('get', 'Yes|len=5|has=Yes');
+        Observer.Expect('findset', 'Yes|len=5|has=Yes');
+        Observer.Expect('calcfields_after', 'len=5|has=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +107,14 @@ codeunit 67160 "LT TB Temporary Blob"
         Row.Get(1);
         Observer.Observe('plain_modify_then_get', Shown(Row));
         Observer.Observe('plain_modify_then_get_calc', ShownAfterCalc(Row));
-        Observer.Finish();
+        Observer.Expect('get_without_calc', 'len=5|has=Yes');
+        Observer.Expect('get_with_calc', 'len=5|has=Yes');
+        Observer.Expect('after_modify', 'len=12|has=Yes');
+        Observer.Expect('modify_then_get', 'len=12|has=Yes');
+        Observer.Expect('modify_then_get_calc', 'len=12|has=Yes');
+        Observer.Expect('plain_modify_then_get', 'len=12|has=Yes');
+        Observer.Expect('plain_modify_then_get_calc', 'len=12|has=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,6 +139,11 @@ codeunit 67160 "LT TB Temporary Blob"
         Observer.Observe('modify_then_get_calc', ShownAfterCalc(Row));
         Fresh.SetAutoCalcFields(Data);
         Observer.Observe('autocalc_find', Format(Fresh.FindFirst()) + '|' + Shown(Fresh));
-        Observer.Finish();
+        Observer.Expect('get_without_calc', 'len=11|has=Yes');
+        Observer.Expect('get_with_calc', 'len=5|has=Yes');
+        Observer.Expect('modify_then_get', 'len=18|has=Yes');
+        Observer.Expect('modify_then_get_calc', 'len=12|has=Yes');
+        Observer.Expect('autocalc_find', 'Yes|len=12|has=Yes');
+        Observer.Verify();
     end;
 }

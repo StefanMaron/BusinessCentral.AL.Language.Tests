@@ -128,7 +128,10 @@ codeunit 67187 "LT CN Calc Formula Namespace"
         Header.Get('D3');
         Header.CalcFields(Total, Lines, AnyLine);
         Observer.Observe('d3', Format(Header.Total) + '|' + Format(Header.Lines) + '|' + Format(Header.AnyLine));
-        Observer.Finish();
+        Observer.Expect('d1', '42.5|2|Yes');
+        Observer.Expect('d2', '7|1|Yes');
+        Observer.Expect('d3', '0|0|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,6 +147,8 @@ codeunit 67187 "LT CN Calc Formula Namespace"
         Header.Get('D3');
         Header.CalcFields(Total, Lines, AnyLine);
         Observer.Observe('d3', Format(Header.Total) + '|' + Format(Header.Lines) + '|' + Format(Header.AnyLine));
-        Observer.Finish();
+        Observer.Expect('d1', '42.5|2|Yes');
+        Observer.Expect('d3', '0|0|No');
+        Observer.Verify();
     end;
 }

@@ -95,7 +95,16 @@ codeunit 67170 "LT SV Caption Tests"
         Row.SetCurrentKey(Alpha);
         Observer.Observe('sorting_view', Row.GetView());
         Observer.Observe('sorting_view_plain', Row.GetView(false));
-        Observer.Finish();
+        Observer.Expect('line_no_view', 'VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2))');
+        Observer.Expect('line_no_view_plain', 'VERSION(1) SORTING(Field1) WHERE(Field1=1(2))');
+        Observer.Expect('line_no_filters', 'Primary Key: 2');
+        Observer.Expect('alpha_view', 'VERSION(1) SORTING(Primary Key) WHERE(Beta=FILTER(20))');
+        Observer.Expect('alpha_view_plain', 'VERSION(1) SORTING(Field1) WHERE(Field2=1(20))');
+        Observer.Expect('beta_view', 'VERSION(1) SORTING(Primary Key) WHERE(Gamma=FILTER(3))');
+        Observer.Expect('beta_view_plain', 'VERSION(1) SORTING(Field1) WHERE(Field3=1(3))');
+        Observer.Expect('sorting_view', 'VERSION(1) SORTING(Beta)');
+        Observer.Expect('sorting_view_plain', 'VERSION(1) SORTING(Field2)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +124,11 @@ codeunit 67170 "LT SV Caption Tests"
         Other.SetView(Row.GetView(false));
         Observer.Observe('round_trip_plain_view', Other.GetView());
         Observer.Observe('round_trip_plain_ids', Ids(Other));
-        Observer.Finish();
+        Observer.Expect('round_trip_view', 'VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2..3),Gamma=FILTER(2..3))');
+        Observer.Expect('round_trip_ids', '2,3,');
+        Observer.Expect('round_trip_plain_view', 'VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2..3),Gamma=FILTER(2..3))');
+        Observer.Expect('round_trip_plain_ids', '2,3,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,7 +144,14 @@ codeunit 67170 "LT SV Caption Tests"
         Observer.Observe('name_alpha', ViewOutcome('WHERE(Alpha=FILTER(20))'));
         Observer.Observe('name_beta_is_also_a_caption', ViewOutcome('WHERE(Beta=FILTER(20))'));
         Observer.Observe('name_beta_value_3', ViewOutcome('WHERE(Beta=FILTER(3))'));
-        Observer.Finish();
+        Observer.Expect('name_line_no', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2))|plain=VERSION(1) SORTING(Field1) WHERE(Field1=1(2))|filters=Primary Key: 2|ids=2,');
+        Observer.Expect('caption_primary_key', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2))|plain=VERSION(1) SORTING(Field1) WHERE(Field1=1(2))|filters=Primary Key: 2|ids=2,');
+        Observer.Expect('caption_primary_key_quoted', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2))|plain=VERSION(1) SORTING(Field1) WHERE(Field1=1(2))|filters=Primary Key: 2|ids=2,');
+        Observer.Expect('caption_gamma', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Gamma=FILTER(3))|plain=VERSION(1) SORTING(Field1) WHERE(Field3=1(3))|filters=Gamma: 3|ids=2,');
+        Observer.Expect('name_alpha', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Beta=FILTER(20))|plain=VERSION(1) SORTING(Field1) WHERE(Field2=1(20))|filters=Beta: 20|ids=2,');
+        Observer.Expect('name_beta_is_also_a_caption', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Gamma=FILTER(20))|plain=VERSION(1) SORTING(Field1) WHERE(Field3=1(20))|filters=Gamma: 20|ids=');
+        Observer.Expect('name_beta_value_3', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Gamma=FILTER(3))|plain=VERSION(1) SORTING(Field1) WHERE(Field3=1(3))|filters=Gamma: 3|ids=2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,6 +164,10 @@ codeunit 67170 "LT SV Caption Tests"
         Observer.Observe('sorting_caption_of_alpha', ViewOutcome('SORTING(Beta)'));
         Observer.Observe('sorting_caption_primary_key', ViewOutcome('SORTING(Primary Key)'));
         Observer.Observe('sorting_and_where_caption', ViewOutcome('SORTING(Primary Key) WHERE(Primary Key=FILTER(2..3))'));
-        Observer.Finish();
+        Observer.Expect('sorting_name', 'ok:view=VERSION(1) SORTING(Beta)|plain=VERSION(1) SORTING(Field2)|filters=|ids=1,2,3,4,');
+        Observer.Expect('sorting_caption_of_alpha', 'ok:view=VERSION(1) SORTING(Gamma)|plain=VERSION(1) SORTING(Field3)|filters=|ids=4,3,2,1,');
+        Observer.Expect('sorting_caption_primary_key', 'ok:view=VERSION(1) SORTING(Primary Key)|plain=VERSION(1) SORTING(Field1)|filters=|ids=1,2,3,4,');
+        Observer.Expect('sorting_and_where_caption', 'ok:view=VERSION(1) SORTING(Primary Key) WHERE(Primary Key=FILTER(2..3))|plain=VERSION(1) SORTING(Field1) WHERE(Field1=1(2..3))|filters=Primary Key: 2..3|ids=2,3,');
+        Observer.Verify();
     end;
 }

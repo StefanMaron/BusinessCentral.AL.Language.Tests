@@ -92,6 +92,7 @@ codeunit 67105 "LT PT Runner"
                     Rec.Result := 'done';
                 end;
         end;
+        Rec.Modify();
     end;
 
     local procedure Columns(var RR: RecordRef): Text

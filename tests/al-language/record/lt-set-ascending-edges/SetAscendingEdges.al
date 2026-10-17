@@ -71,7 +71,26 @@ codeunit 67153 "LT SA Edges"
         Row.Reset();
         if not TrySetView(Row, View) then
             exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        exit('ok:view=' + Row.GetView() + '|plain=' + Row.GetView(false) + '|asc_grp=' + Format(Row.GetAscending(Grp)) + '|asc_qty=' + Format(Row.GetAscending(Qty)) + '|ascending=' + Format(Row.Ascending()) + '|ids=' + Ids(Row));
+        exit('ok:view=' + Row.GetView() + '|plain=' + Row.GetView(false) + '|asc_grp=' + AscOutcome(Row, 1) + '|asc_qty=' + AscOutcome(Row, 2) + '|ascending=' + Format(Row.Ascending()) + '|ids=' + Ids(Row));
+    end;
+
+    [TryFunction]
+    local procedure TryGetAscending(var Row: Record "LT SA Row"; Which: Integer; var Result: Boolean)
+    begin
+        if Which = 1 then
+            Result := Row.GetAscending(Grp)
+        else
+            Result := Row.GetAscending(Qty);
+    end;
+
+    local procedure AscOutcome(var Row: Record "LT SA Row"; Which: Integer): Text
+    var
+        Result: Boolean;
+    begin
+        ClearLastError();
+        if not TryGetAscending(Row, Which, Result) then
+            exit('error:' + GetLastErrorText());
+        exit(Format(Result));
     end;
 
     [Test]
@@ -130,6 +149,12 @@ codeunit 67153 "LT SA Edges"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure TrySetAscendingId(var Row: Record "LT SA Row")
+    begin
+        Row.SetAscending(Id, false);
+    end;
+
     [Test]
     procedure SetAscending_PrimaryKeyFieldFollowingTheKey()
     var
@@ -140,7 +165,9 @@ codeunit 67153 "LT SA Edges"
         Row.SetCurrentKey(Grp, Qty);
         Observer.Observe('default_view', Row.GetView());
         Observer.Observe('id_ascending_before', Format(Row.GetAscending(Id)));
-        Row.SetAscending(Id, false);
+        ClearLastError();
+        Observer.Observe('set_id_outcome', Format(TrySetAscendingId(Row)));
+        Observer.ObserveError('set_id');
         Observer.Observe('id_desc_view', Row.GetView());
         Observer.Observe('id_desc_view_plain', Row.GetView(false));
         Observer.Observe('id_ascending_after', Format(Row.GetAscending(Id)));
