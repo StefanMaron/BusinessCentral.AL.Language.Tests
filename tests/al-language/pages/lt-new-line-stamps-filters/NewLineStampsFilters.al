@@ -193,6 +193,12 @@ codeunit 74141 "LT New Line Stamps Filters"
         Host.LinesPlain.Descr.SetValue('x');
     end;
 
+    [TryFunction]
+    local procedure TryClose(var Host: TestPage "LT NL Host")
+    begin
+        Host.Close();
+    end;
+
     local procedure Step(Name: Text; Ok: Boolean)
     begin
         if Ok then
@@ -222,7 +228,7 @@ codeunit 74141 "LT New Line Stamps Filters"
             Obs.Observe('typed', Result)
         else
             Step('read2', false);
-        Host.Close();
+        Step('close', TryClose(Host));
         ObserveLines('db');
         Obs.Finish();
     end;
@@ -242,7 +248,7 @@ codeunit 74141 "LT New Line Stamps Filters"
         else
             Step('read', false);
         Step('type', TryTypeB(Host));
-        Host.Close();
+        Step('close', TryClose(Host));
         ObserveLines('db');
         Obs.Finish();
     end;
@@ -262,7 +268,7 @@ codeunit 74141 "LT New Line Stamps Filters"
         else
             Step('read', false);
         Step('type', TryTypePlain(Host));
-        Host.Close();
+        Step('close', TryClose(Host));
         ObserveLines('db');
         Obs.Finish();
     end;
@@ -282,7 +288,7 @@ codeunit 74141 "LT New Line Stamps Filters"
         else
             Step('read', false);
         Step('type', TryTypePlain(Host));
-        Host.Close();
+        Step('close', TryClose(Host));
         ObserveLines('db');
         Obs.Finish();
     end;
@@ -302,7 +308,7 @@ codeunit 74141 "LT New Line Stamps Filters"
             Obs.Observe('typed', Result)
         else
             Step('read', false);
-        Host.Close();
+        Step('close', TryClose(Host));
         ObserveLines('db');
         Obs.Finish();
     end;
@@ -322,7 +328,7 @@ codeunit 74141 "LT New Line Stamps Filters"
             Obs.Observe('typed', Result)
         else
             Step('read', false);
-        Host.Close();
+        Step('close', TryClose(Host));
         ObserveLines('db');
         Obs.Finish();
     end;

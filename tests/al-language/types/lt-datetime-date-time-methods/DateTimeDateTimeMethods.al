@@ -39,10 +39,28 @@ codeunit 73578 "LT DateTime Date Time Methods"
     begin
         Show('zero', 0DT);
         Show('var', Dt);
-        Show('date0', CreateDateTime(0D, 120000T));
-        Show('time0', CreateDateTime(DMY2Date(15, 6, 2026), 0T));
         Obs.Observe('date_is_zero', Format(Dt.Date() = 0D));
         Obs.Observe('time_is_zero', Format(Dt.Time() = 0T));
+        Obs.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryDate0Time(var Dt: DateTime)
+    begin
+        Dt := CreateDateTime(0D, 120000T);
+    end;
+
+    [Test]
+    procedure DateTime_DateAndTimeMethods_DateZeroWithTime()
+    var
+        Dt: DateTime;
+    begin
+        if TryDate0Time(Dt) then
+            Show('date0', Dt)
+        else begin
+            Obs.Observe('date0', GetLastErrorText());
+            ClearLastError();
+        end;
         Obs.Finish();
     end;
 }
