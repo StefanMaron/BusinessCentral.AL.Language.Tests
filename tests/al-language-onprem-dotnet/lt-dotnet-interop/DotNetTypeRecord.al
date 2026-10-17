@@ -95,6 +95,20 @@ codeunit 61440 "LT DotNetType Record"
         Result := Format(TA.Equals(TB));
     end;
 
+    // The runtime class name in the message is not asserted: a local BC 29 container names Microsoft.Dynamics.Nav.Runtime.StubNavRecord, the CI
+    // container of BC 27.5 names Microsoft.Dynamics.Nav.BusinessApplication.Record<table id>. The text before it and the code are asserted.
+    local procedure ErrorShape(): Text
+    var
+        Prefix: Text;
+        Msg: Text;
+    begin
+        Prefix := 'GetDotNetType() does not support the type ';
+        Msg := GetLastErrorText();
+        if Msg.StartsWith(Prefix) and Msg.EndsWith('.') then
+            exit(Prefix + '<record class>.|' + GetLastErrorCode());
+        exit(Msg + '|' + GetLastErrorCode());
+    end;
+
     [Test]
     procedure GetDotNetType_Record_FullNameNameFormat()
     var
@@ -111,15 +125,15 @@ codeunit 61440 "LT DotNetType Record"
             Observer.Observe('record_name', ShortName);
             Observer.Observe('record_format', Shown);
         end else
-            Observer.Observe('record_error', GetLastErrorText() + '|' + GetLastErrorCode());
+            Observer.Observe('record_error', ErrorShape());
         ClearLastError();
         if TryTemporary(FullName, Shown) then begin
             Observer.Observe('temporary_fullname', FullName);
             Observer.Observe('temporary_format', Shown);
         end else
-            Observer.Observe('temporary_error', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Expect('record_error', 'GetDotNetType() does not support the type Microsoft.Dynamics.Nav.Runtime.StubNavRecord.|NotSupportedType');
-        Observer.Expect('temporary_error', 'GetDotNetType() does not support the type Microsoft.Dynamics.Nav.Runtime.StubNavRecord.|NotSupportedType');
+            Observer.Observe('temporary_error', ErrorShape());
+        Observer.Expect('record_error', 'GetDotNetType() does not support the type <record class>.|NotSupportedType');
+        Observer.Expect('temporary_error', 'GetDotNetType() does not support the type <record class>.|NotSupportedType');
         Observer.Verify();
     end;
 
@@ -161,8 +175,8 @@ codeunit 61440 "LT DotNetType Record"
         if TryEqualsOther(Result) then
             Observer.Observe('equals_other_variable', Result)
         else
-            Observer.Observe('equals_other_variable_error', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Expect('equals_other_variable_error', 'GetDotNetType() does not support the type Microsoft.Dynamics.Nav.Runtime.StubNavRecord.|NotSupportedType');
+            Observer.Observe('equals_other_variable_error', ErrorShape());
+        Observer.Expect('equals_other_variable_error', 'GetDotNetType() does not support the type <record class>.|NotSupportedType');
         Observer.Verify();
     end;
 }
