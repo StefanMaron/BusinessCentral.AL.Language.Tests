@@ -180,7 +180,12 @@ codeunit 61229 "LT PT OnPrem Tables"
         asserterror Ops.Perform(Database::"Device", 'insert', '1=LTPT0001;2=LT PT Device;3=1;4=true', true);
         Observer.Observe('insert_error', GetLastErrorText());
         Observer.Observe('count_after_error', Ops.Perform(Database::"Device", 'count', '1=LTPT0001', false));
-        Observer.Finish();
+        Observer.Expect('columns', 'ok:1:MAC Address:Code:20:Normal;2:Name:Text:80:Normal;3:Device Type:Option:4:Normal;4:Enabled:Boolean:4:Normal;');
+        Observer.Expect('has_rows', 'ok:No');
+        Observer.Expect('first_row', 'ok:none');
+        Observer.Expect('insert_error', 'The new devices do not meet the terms of the current license. The current license allows 0 full devices, 0 limited devices, 0 ISV devices, 0 ISV functional devices and 1 devices.');
+        Observer.Expect('count_after_error', 'ok:0');
+        Observer.Verify();
     end;
 
     [Test]
