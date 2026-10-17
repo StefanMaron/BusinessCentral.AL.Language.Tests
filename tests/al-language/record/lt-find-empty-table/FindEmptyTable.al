@@ -74,6 +74,20 @@ codeunit 67073 "LT FE Find"
         Observer.Observe('used_next', Used('>'));
         Observer.Observe('used_previous', Used('<'));
         Observer.Observe('used_all_directions', Used('=><'));
-        Observer.Finish();
+        Observer.Expect('unused_default', 'error:The LT FE Row does not exist. Identification fields and values: Id=''0''|DB:RecordNotFound');
+        Observer.Expect('unused_equals', 'error:The LT FE Row does not exist. Identification fields and values: Id=''0''|DB:RecordNotFound');
+        Observer.Expect('unused_first', 'error:The LT FE Row table is empty.|DB:TableIsEmpty');
+        Observer.Expect('unused_last', 'error:The LT FE Row table is empty.|DB:TableIsEmpty');
+        Observer.Expect('unused_next', 'error:The LT FE Row does not exist. >\\Identification fields and values:\\Id=''0''|DB:RecordNotFound');
+        Observer.Expect('unused_previous', 'error:The LT FE Row does not exist. <\\Identification fields and values:\\Id=''0''|DB:RecordNotFound');
+        Observer.Expect('unused_all_directions', 'error:The LT FE Row does not exist. =><\\Identification fields and values:\\Id=''0''|DB:RecordNotFound');
+        Observer.Expect('used_default', 'No');
+        Observer.Expect('used_equals', 'No');
+        Observer.Expect('used_first', 'No');
+        Observer.Expect('used_last', 'No');
+        Observer.Expect('used_next', 'No');
+        Observer.Expect('used_previous', 'No');
+        Observer.Expect('used_all_directions', 'No');
+        Observer.Verify();
     end;
 }

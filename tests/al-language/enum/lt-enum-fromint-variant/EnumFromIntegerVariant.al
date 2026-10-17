@@ -55,6 +55,11 @@ codeunit 67071 "LT FI Variant"
         Observer.Observe('enum', Outcome(Color));
         Observer.Observe('decimal', Outcome(DecValue));
         Observer.Observe('text', Outcome(TextValue));
-        Observer.Finish();
+        Observer.Expect('integer', 'ok:Blue|5');
+        Observer.Expect('integer_undefined', 'ok:7|7');
+        Observer.Expect('enum', 'ok:Green|1');
+        Observer.Expect('decimal', 'ok:Green|1');
+        Observer.Expect('text', 'ok:Green|1');
+        Observer.Verify();
     end;
 }

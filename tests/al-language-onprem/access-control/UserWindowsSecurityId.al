@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-insert-method
 // Scope: in-scope, OnPrem app (the platform checks the Windows Security ID on tiers that use Windows authentication; see TestUserAuthEmailTrigger.al)
-// Fixtures used: tests/al-language/platform/lt-platform-tables/PtHelper.al (LT PT Ops)
+// Fixtures used: tests/al-language/platform/lt-platform-tables/PtHelper.al (LT PT OnPrem Ops, PtOnPremOps.al)
 // Probe: the User system table with a non-blank "Windows Security ID" (field 7): a first User, a second User with the same SID, a User with another SID
 // and the same User Name, two Users with a blank SID, a Modify that moves a SID to a SID another User holds, a Modify to a free SID, and a text that is not a SID.
 // Every User is an External User (license type 4), as in TestUserAuthEmailTrigger.al. Each request runs in its own Codeunit.Run, so an error is observed as text and code.
@@ -11,7 +11,7 @@ codeunit 61234 "LT User Windows SID"
     TestPermissions = Disabled;
 
     var
-        Ops: Codeunit "LT PT Ops";
+        Ops: Codeunit "LT PT OnPrem Ops";
 
     [Test]
     procedure InsertAndModify_SidUniqueness()
