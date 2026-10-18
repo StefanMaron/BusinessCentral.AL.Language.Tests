@@ -66,7 +66,7 @@ codeunit 75571 "LT Y Report Parts Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('meta', Helper.Facts(2000000139, 1, Report::"LT Y Rep Parts", 'DefaultLayout,DefaultLayoutName,DefaultHeaderFooterPartName,DefaultThemePartName'));
-        Observer.Expect('meta', 'TODO');
+        Observer.Expect('meta', 'DefaultLayout=Word;DefaultLayoutName=PartsBody;DefaultHeaderFooterPartName=PartsHf;DefaultThemePartName=PartsTheme;');
         Observer.Verify();
     end;
 
@@ -75,9 +75,35 @@ codeunit 75571 "LT Y Report Parts Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('rows', Helper.LayoutRows(Report::"LT Y Rep Parts"));
+        Observer.Observe('rows', PartColumns());
         Observer.Expect('rows', 'TODO');
         Observer.Verify();
+    end;
+
+    // Per layout of the report: its name, then every column whose name mentions Subtype, Part, Theme or HeaderFooter.
+    local procedure PartColumns(): Text
+    var
+        LayoutList: Record "Report Layout List";
+        RR: RecordRef;
+        FR: FieldRef;
+        i: Integer;
+        Result: Text;
+    begin
+        LayoutList.SetRange("Report ID", Report::"LT Y Rep Parts");
+        if LayoutList.FindSet() then
+            repeat
+                RR.GetTable(LayoutList);
+                Result += '[' + LayoutList.Name;
+                for i := 1 to RR.FieldCount() do begin
+                    FR := RR.FieldIndex(i);
+                    if FR.Name.Contains('Subtype') or FR.Name.Contains('Part') or FR.Name.Contains('Theme') or FR.Name.Contains('HeaderFooter') then
+                        Result += ' ' + FR.Name + '=' + Format(FR.Value);
+                end;
+                Result += ']';
+            until LayoutList.Next() = 0
+        else
+            Result := 'no layouts';
+        exit(Result);
     end;
 }
 #endif
