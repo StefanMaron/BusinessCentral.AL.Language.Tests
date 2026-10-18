@@ -67,7 +67,12 @@ codeunit 61289 "LT P Super User Last"
         PutBack(Saved);
         User.Get(UserSecurityId());
         Observer.Observe('state_after', Format(User.State));
-        Observer.Finish();
+        Observer.Expect('current_user_has_super', 'Yes');
+        Observer.Expect('user_found', 'Yes');
+        Observer.Expect('disable_error|text', 'There should be at least one enabled ''SUPER'' user.');
+        Observer.Expect('disable_error|code', 'Dialog');
+        Observer.Expect('state_after', 'Enabled');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,6 +93,9 @@ codeunit 61289 "LT P Super User Last"
         EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
         Observer.ObserveError('remove_error');
         PutBack(Saved);
-        Observer.Finish();
+        Observer.Expect('assignment_found', 'Yes');
+        Observer.Expect('remove_error|text', 'There should be at least one enabled ''SUPER'' user.');
+        Observer.Expect('remove_error|code', 'Dialog');
+        Observer.Verify();
     end;
 }
