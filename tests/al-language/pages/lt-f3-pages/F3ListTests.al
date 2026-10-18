@@ -48,7 +48,24 @@ codeunit 67095 "LT F3 List Cursor"
         Observer.Observe('goto', Format(P.GoToKey('R1009')));
         Step(Observer, 'after_goto');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Find(=><)=Yes | AGR(R1001) | Next(1)=1 | AGR(R1002) | Next(1)=1 | AGR(R1003) | Next(1)=1 | AGR(R1004) | Next(1)=1 | AGR(R1005) | Next(1)=1 | AGR(R1006) | Next(1)=1 | AGR(R1007) | Next(1)=1 | AGR(R1008) | Next(1)=1 | AGR(R1009) | Next(1)=1 | AGR(R1010) | Next(1)=1 | AGR(R1011) | Next(1)=1 | AGR(R1012) | Next(1)=0 | AGR(R1001) | Next(-1)=0 | ');
+        Observer.Expect('last', 'Yes');
+        Observer.Expect('last_no', 'R1012');
+        Observer.Expect('after_last', '');
+        Observer.Expect('prev1', 'Yes');
+        Observer.Expect('prev2', 'Yes');
+        Observer.Expect('prev3', 'Yes');
+        Observer.Expect('prev_no', 'R1009');
+        Observer.Expect('after_previous3', '');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('after_first', '');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('next2', 'Yes');
+        Observer.Expect('next_no', 'R1003');
+        Observer.Expect('after_next2', '');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('after_goto', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,7 +91,12 @@ codeunit 67095 "LT F3 List Cursor"
         Observer.Observe('rows', Rows);
         Step(Observer, 'after_walk');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('current_no', 'R1008');
+        Observer.Expect('after_update', 'AGR(R1003) | AGR(R1003) | OnlyBig done | Next(1)=1 | AGR(R1008) | Find(=>)=Yes | AGR(R1008) | Next(1)=1 | AGR(R1009) | Next(1)=1 | AGR(R1010) | Next(1)=1 | AGR(R1011) | Next(1)=1 | AGR(R1012) | Next(1)=0 | AGR(R1008) | Next(-1)=0 | ');
+        Observer.Expect('rows', 'R1008,R1009,R1010,R1011,R1012,');
+        Observer.Expect('after_walk', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -123,7 +145,21 @@ codeunit 67095 "LT F3 List Cursor"
             end;
         end;
         P.Close();
-        Observer.Finish();
+        Observer.Expect('f1_ok', 'Yes');
+        Observer.Expect('f1_result', 'R1002');
+        Observer.Expect('f2_ok', 'Yes');
+        Observer.Expect('f2_result', '2');
+        Observer.Expect('f3_ok', 'Yes');
+        Observer.Expect('f3_result', 'R1002');
+        Observer.Expect('f4_ok', 'Yes');
+        Observer.Expect('f4_result', '2');
+        Observer.Expect('f5_ok', 'Yes');
+        Observer.Expect('f5_result', 'Yes');
+        Observer.Expect('f6_ok', 'Yes');
+        Observer.Expect('f6_result', 'No');
+        Observer.Expect('f7_ok', 'Yes');
+        Observer.Expect('f7_result', 'TestPage 67078');
+        Observer.Verify();
     end;
 }
 
@@ -167,7 +203,13 @@ codeunit 67096 "LT F3 List Delete Select"
         Observer.Observe('first', Format(P.First()));
         Observer.Observe('log_after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'AGCR() | AGCR() | AGCR() | ');
+        Observer.Expect('no', '');
+        Observer.Expect('name', '');
+        Observer.Expect('db_count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Expect('log_after_first', 'AGCR() | AGCR() | AGCR() | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +229,12 @@ codeunit 67096 "LT F3 List Delete Select"
         Observer.Observe('db_count', Format(Row.Count()));
         Observer.Observe('first', Format(P.First()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'AGCR() | AGCR() | AGCR() | ');
+        Observer.Expect('no', '');
+        Observer.Expect('name', '');
+        Observer.Expect('db_count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -207,7 +254,13 @@ codeunit 67096 "LT F3 List Delete Select"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('next', Format(P.Next()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('log', 'AGCR(R1001) | AGCR(R1001) | ');
+        Observer.Expect('no', 'R1001');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('next', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,7 +275,9 @@ codeunit 67096 "LT F3 List Delete Select"
         Row.SetRange(Qty, 99);
         Page.Run(Page::"LT F3 Delete List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('h_first', 'No');
+        Observer.Expect('log', 'AGCR() | AGCR() | Selection count=0 filter=[No.: ''''] | AGCR() | AGCR() | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -236,6 +291,8 @@ codeunit 67096 "LT F3 List Delete Select"
         Log.Clear();
         Page.Run(Page::"LT F3 Delete List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('h_goto', 'Yes');
+        Observer.Expect('log', 'AGCR(R1001) | AGCR(R1002) | Selection count=1 filter=[No.: R1002] | AGCR(R1002) | ');
+        Observer.Verify();
     end;
 }

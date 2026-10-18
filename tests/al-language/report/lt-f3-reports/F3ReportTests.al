@@ -70,7 +70,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Parent H1 sum=60 count=3 | Child H1/1 descr=First sibs=3 | Child H1/2 descr=First sibs=3 | Child H1/3 descr=First sibs=3 | Parent H2 sum=12 count=2 | Child H2/1 descr=Second sibs=2 | Child H2/2 descr=Second sibs=2 | Parent H3 sum=0 count=0 | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -83,7 +84,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Parent H1 sum=0 count=0 | Child H1/1 descr= sibs=0 | Child H1/2 descr= sibs=0 | Child H1/3 descr= sibs=0 | Parent H2 sum=0 count=0 | Child H2/1 descr= sibs=0 | Child H2/2 descr= sibs=0 | Parent H3 sum=0 count=0 | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +98,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Parent H1 sum=60 count=0 | Child H1/1 descr= sibs=3 | Child H1/2 descr= sibs=3 | Child H1/3 descr= sibs=3 | Parent H2 sum=12 count=0 | Child H2/1 descr= sibs=2 | Child H2/2 descr= sibs=2 | Parent H3 sum=0 count=0 | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +112,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Parent H1 | Child H1/1 | Child H1/2 | Child H1/3 | Parent H2 | Parent H3 | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -125,7 +129,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Child filters at Parent.OnPreDataItem=[Head Code: H2] | Parent H1 child filters=[Head Code: H2] | Parent H2 child filters=[Head Code: H2] | Child H2/1 | Child H2/2 | Parent H3 child filters=[Head Code: H2] | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,7 +146,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Child filters at Parent.OnPreDataItem=[Line No.: >=2] | Parent H1 child filters=[Line No.: >=2] | Child H1/2 | Child H1/3 | Parent H2 child filters=[Line No.: >=2] | Child H2/2 | Parent H3 child filters=[Line No.: >=2] | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,47 +163,8 @@ codeunit 67115 "LT F3 Report Probes"
         Rep.UseRequestPage(false);
         Rep.Run();
         Observer.Observe('log', Dump());
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReportHandlerFn')]
-    procedure ReportHandler_NoRequestPage()
-    var
-        Data: Codeunit "LT F3 Report Data";
-        Rep: Report "LT F3 Request Report";
-    begin
-        Data.Seed();
-        Rep.UseRequestPage(false);
-        Rep.Run();
-        Observer.Observe('log', Dump());
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReportHandlerFn')]
-    procedure ReportHandler_WithRequestPage()
-    var
-        Data: Codeunit "LT F3 Report Data";
-        Rep: Report "LT F3 Request Report";
-    begin
-        Data.Seed();
-        Rep.UseRequestPage(true);
-        Rep.Run();
-        Observer.Observe('log', Dump());
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReportHandlerFn')]
-    procedure ReportHandler_ReportRunStatic()
-    var
-        Data: Codeunit "LT F3 Report Data";
-    begin
-        Data.Seed();
-        Report.Run(Report::"LT F3 Request Report");
-        Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Parent H1 | Parent H2 | Parent H3 | ');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -210,6 +177,55 @@ codeunit 67115 "LT F3 Report Probes"
             Rep.RunModal()
         else
             Rep.Run();
+    end;
+
+    [TryFunction]
+    local procedure TryRunStatic()
+    begin
+        Report.Run(Report::"LT F3 Request Report");
+    end;
+
+    [Test]
+    [HandlerFunctions('ReportHandlerFn')]
+    procedure ReportHandler_NoRequestPage()
+    begin
+        ObserveTry('run', false, false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReportHandlerFn')]
+    procedure ReportHandler_WithRequestPage()
+    begin
+        ObserveTry('run', true, false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReportHandlerFn')]
+    procedure ReportHandler_WithRequestPage_RunModal()
+    begin
+        ObserveTry('runmodal', true, true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReportHandlerFn')]
+    procedure ReportHandler_ReportRunStatic()
+    var
+        Data: Codeunit "LT F3 Report Data";
+        Ok: Boolean;
+    begin
+        Data.Seed();
+        ClearLastError();
+        Ok := TryRunStatic();
+        Observer.Observe('ok', Format(Ok));
+        if not Ok then begin
+            Observer.Observe('error', GetLastErrorText());
+            Observer.Observe('code', GetLastErrorCode());
+        end;
+        Observer.Observe('log', Dump());
+        Observer.Finish();
     end;
 
     local procedure ObserveTry(Name: Text; UseRequest: Boolean; Modal: Boolean)

@@ -32,7 +32,10 @@ codeunit 67093 "LT F3 Part Reads"
         Observer.Observe('next', Format(Doc.Next()));
         Step(Observer, 'after_next');
         Doc.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Open(|);Host.AGR(H1);Find(=><)=Yes;AGR(H1/10000);Next(1)=1;AGR(H1/20000);Next(1)=1;AGR(H1/30000);Next(1)=0;AGR(H1/10000);Next(-1)=0');
+        Observer.Expect('next', 'No');
+        Observer.Expect('after_next', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -52,7 +55,14 @@ codeunit 67093 "LT F3 Part Reads"
         Observer.Observe('next3', Format(Doc.Next()));
         Step(Observer, 'after_next3');
         Doc.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Open(|);Host.AGR(H1);Find(=><)=Yes;AGR(H1/10000);Next(1)=1;AGR(H1/20000);Next(1)=1;AGR(H1/30000);Next(1)=0;AGR(H1/10000);Next(-1)=0');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('after_next1', 'Host.AGR(H2);Find(=><)=Yes;AGR(H2/10000);Next(1)=1;AGR(H2/20000);Next(1)=1;AGR(H2/30000);Next(1)=0;AGR(H2/10000);Next(-1)=0');
+        Observer.Expect('next2', 'Yes');
+        Observer.Expect('after_next2', 'Host.AGR(H3);Find(=><)=Yes;AGR(H3/10000);Next(1)=1;AGR(H3/20000);Next(1)=1;AGR(H3/30000);Next(1)=0;AGR(H3/10000);Next(-1)=0');
+        Observer.Expect('next3', 'Yes');
+        Observer.Expect('after_next3', 'Host.AGR(H4);Find(=><)=Yes;AGR(H4/10000);Next(1)=1;AGR(H4/20000);Next(1)=1;AGR(H4/30000);Next(1)=0;AGR(H4/10000);Next(-1)=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -68,7 +78,10 @@ codeunit 67093 "LT F3 Part Reads"
         Observer.Observe('next', Format(Doc.Next()));
         Step(Observer, 'after_next');
         Doc.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Open(|);Host.AGR(H1);Find(=><)=Yes;AGR(H1/10000);Next(1)=1;AGR(H1/20000);Next(1)=1;AGR(H1/30000);Next(1)=0;AGR(H1/10000);Next(-1)=0');
+        Observer.Expect('next', 'No');
+        Observer.Expect('after_next', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +101,14 @@ codeunit 67093 "LT F3 Part Reads"
         Observer.Observe('next3', Format(Doc.Next()));
         Step(Observer, 'after_next3');
         Doc.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Open(|);Host.AGR(H1);Find(=><)=Yes;AGR(H1/10000);Next(1)=1;AGR(H1/20000);Next(1)=1;AGR(H1/30000);Next(1)=0;AGR(H1/10000);Next(-1)=0');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('after_next1', 'Host.AGR(H2);Find(=><)=Yes;AGR(H2/10000);Next(1)=1;AGR(H2/20000);Next(1)=1;AGR(H2/30000);Next(1)=0;AGR(H2/10000);Next(-1)=0');
+        Observer.Expect('next2', 'Yes');
+        Observer.Expect('after_next2', 'Host.AGR(H3);Find(=><)=Yes;AGR(H3/10000);Next(1)=1;AGR(H3/20000);Next(1)=1;AGR(H3/30000);Next(1)=0;AGR(H3/10000);Next(-1)=0');
+        Observer.Expect('next3', 'Yes');
+        Observer.Expect('after_next3', 'Host.AGR(H4);Find(=><)=Yes;AGR(H4/10000);Next(1)=1;AGR(H4/20000);Next(1)=1;AGR(H4/30000);Next(1)=0;AGR(H4/10000);Next(-1)=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +124,10 @@ codeunit 67093 "LT F3 Part Reads"
         Observer.Observe('next', Format(Doc.Next()));
         Step(Observer, 'after_next');
         Doc.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Open(|);Host.AGR(H1);Find(=><)=Yes;AGR(H1/30000);Next(1)=0;Next(-1)=-1;AGR(H1/20000);Next(-1)=-1;AGR(H1/10000);Next(-1)=0');
+        Observer.Expect('next', 'No');
+        Observer.Expect('after_next', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +151,18 @@ codeunit 67093 "LT F3 Part Reads"
         Observer.Observe('first', Format(Doc.First()));
         Step(Observer, 'after_first');
         Doc.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'Open(|);Host.AGR(H1);Find(=><)=Yes;AGR(H1/30000);Next(1)=0;Next(-1)=-1;AGR(H1/20000);Next(-1)=-1;AGR(H1/10000);Next(-1)=0');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('after_next1', 'Host.AGR(H2);Find(=><)=Yes;AGR(H2/10000);Next(1)=1;AGR(H2/20000);Next(1)=1;AGR(H2/30000);Next(1)=0;AGR(H2/10000);Next(-1)=0');
+        Observer.Expect('next2', 'Yes');
+        Observer.Expect('after_next2', 'Host.AGR(H3);Find(=><)=Yes;AGR(H3/10000);Next(1)=1;AGR(H3/20000);Next(1)=1;AGR(H3/30000);Next(1)=0;AGR(H3/10000);Next(-1)=0');
+        Observer.Expect('last', 'Yes');
+        Observer.Expect('after_last', 'Host.AGR(H4);Find(=><)=Yes;AGR(H4/10000);Next(1)=1;AGR(H4/20000);Next(1)=1;AGR(H4/30000);Next(1)=0;AGR(H4/10000);Next(-1)=0');
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('after_previous', 'Host.AGR(H3);Find(=><)=Yes;AGR(H3/30000);Next(1)=0;Next(-1)=-1;AGR(H3/20000);Next(-1)=-1;AGR(H3/10000);Next(-1)=0');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('after_first', 'Host.AGR(H1);Find(=><)=Yes;AGR(H1/30000);Next(1)=0;Next(-1)=-1;AGR(H1/20000);Next(-1)=-1;AGR(H1/10000);Next(-1)=0');
+        Observer.Verify();
     end;
 }
 
@@ -184,7 +218,9 @@ codeunit 67094 "LT F3 Part Of Closed Page"
     begin
         Log.Seed(2);
         ObserveRead('never_opened', Host);
-        Observer.Finish();
+        Observer.Expect('never_opened_ok', 'Yes');
+        Observer.Expect('never_opened_result', '/0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +238,13 @@ codeunit 67094 "LT F3 Part Of Closed Page"
         Result := Host.RunModal();
         Observer.Observe('action', Format(Result));
         ObserveRead('after_modal', Host);
-        Observer.Finish();
+        Observer.Expect('h_code', 'H1');
+        Observer.Expect('h_goto', 'Yes');
+        Observer.Expect('h_line', '20000');
+        Observer.Expect('action', 'OK');
+        Observer.Expect('after_modal_ok', 'Yes');
+        Observer.Expect('after_modal_result', 'H1/20000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,6 +264,8 @@ codeunit 67094 "LT F3 Part Of Closed Page"
             Observer.Observe('error', GetLastErrorText());
             Observer.Observe('code', GetLastErrorCode());
         end;
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('result', 'count=0 filter=[No.: '''']');
+        Observer.Verify();
     end;
 }

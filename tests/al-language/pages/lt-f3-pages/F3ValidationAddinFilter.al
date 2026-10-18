@@ -168,7 +168,13 @@ codeunit 67120 "LT F3 Validation Error"
         ObserveGet(Observer, 'noindex', P, 0);
         ObserveGet(Observer, 'index1', P, 1);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('noindex_ok', 'Yes');
+        Observer.Expect('noindex_result', '');
+        Observer.Expect('index1_ok', 'No');
+        Observer.Expect('index1_result', '');
+        Observer.Expect('index1_error', 'Index out of bounds.');
+        Observer.Expect('index1_code', 'IndexOutOfBounds');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +191,17 @@ codeunit 67120 "LT F3 Validation Error"
         ObserveGet(Observer, 'index1', P, 1);
         ObserveGet(Observer, 'index2', P, 2);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('set_a|text', 'Validation error for Field: ACtl,  Message = ''A must not be negative (Select Refresh to discard errors)''');
+        Observer.Expect('set_a|code', 'TestValidation');
+        Observer.Expect('noindex_ok', 'Yes');
+        Observer.Expect('noindex_result', 'A must not be negative (Select Refresh to discard errors)');
+        Observer.Expect('index1_ok', 'Yes');
+        Observer.Expect('index1_result', 'A must not be negative (Select Refresh to discard errors)');
+        Observer.Expect('index2_ok', 'No');
+        Observer.Expect('index2_result', '');
+        Observer.Expect('index2_error', 'Index out of bounds.');
+        Observer.Expect('index2_code', 'IndexOutOfBounds');
+        Observer.Verify();
     end;
 
     [Test]
@@ -205,7 +221,21 @@ codeunit 67120 "LT F3 Validation Error"
         ObserveGet(Observer, 'index2', P, 2);
         ObserveGet(Observer, 'index3', P, 3);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('set_a|text', 'Validation error for Field: ACtl,  Message = ''A must not be negative (Select Refresh to discard errors)''');
+        Observer.Expect('set_a|code', 'TestValidation');
+        Observer.Expect('set_b|text', 'Validation error for Field: BCtl,  Message = ''B must not be negative (Select Refresh to discard errors)''');
+        Observer.Expect('set_b|code', 'TestValidation');
+        Observer.Expect('noindex_ok', 'Yes');
+        Observer.Expect('noindex_result', 'A must not be negative (Select Refresh to discard errors)\r\nB must not be negative (Select Refresh to discard errors)');
+        Observer.Expect('index1_ok', 'Yes');
+        Observer.Expect('index1_result', 'A must not be negative (Select Refresh to discard errors)');
+        Observer.Expect('index2_ok', 'Yes');
+        Observer.Expect('index2_result', 'B must not be negative (Select Refresh to discard errors)');
+        Observer.Expect('index3_ok', 'No');
+        Observer.Expect('index3_result', '');
+        Observer.Expect('index3_error', 'Index out of bounds.');
+        Observer.Expect('index3_code', 'IndexOutOfBounds');
+        Observer.Verify();
     end;
 
     [Test]
@@ -221,7 +251,11 @@ codeunit 67120 "LT F3 Validation Error"
         P.ACtl.SetValue(5);
         ObserveGet(Observer, 'noindex', P, 0);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('set_bad|text', 'Validation error for Field: ACtl,  Message = ''A must not be negative (Select Refresh to discard errors)''');
+        Observer.Expect('set_bad|code', 'TestValidation');
+        Observer.Expect('noindex_ok', 'Yes');
+        Observer.Expect('noindex_result', '');
+        Observer.Verify();
     end;
 }
 
@@ -257,7 +291,11 @@ codeunit 67121 "LT F3 TestFilter Empty"
             until not P.Next();
         Observer.Observe('rows_after_empty', Format(Count));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('filter_set', '>=3');
+        Observer.Expect('rows_filtered', '3');
+        Observer.Expect('filter_empty', '');
+        Observer.Expect('rows_after_empty', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -274,7 +312,9 @@ codeunit 67121 "LT F3 TestFilter Empty"
         Observer.Observe('qty_filter', P.Filter.GetFilter(Qty));
         Observer.Observe('name_filter', P.Filter.GetFilter(Name));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('qty_filter', '>=3');
+        Observer.Expect('name_filter', '');
+        Observer.Verify();
     end;
 }
 
@@ -335,7 +375,11 @@ codeunit 67122 "LT F3 Addin Calls"
             Observer.Observe('code', GetLastErrorCode());
         end;
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('error', 'A call to SetLocale failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('code', 'DotNetInvoke:NullReference');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -354,6 +398,13 @@ codeunit 67122 "LT F3 Addin Calls"
         ObserveCall('setlocale', Pg, 1);
         ObserveCall('load', Pg, 2);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('setlocale_ok', 'No');
+        Observer.Expect('setlocale_error', 'A call to SetLocale failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('setlocale_code', 'DotNetInvoke:NullReference');
+        Observer.Expect('load_ok', 'No');
+        Observer.Expect('load_error', 'A call to Load failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('load_code', 'DotNetInvoke:NullReference');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 }

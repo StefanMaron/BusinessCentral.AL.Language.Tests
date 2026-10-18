@@ -24,7 +24,8 @@ codeunit 67123 "LT F3 Enum Foreach"
         foreach Color in Numbers do
             Seen += Format(Color) + '/' + Format(Color.AsInteger()) + ';';
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', 'Red/0;Blue/5;Green/1;7/7;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -40,6 +41,7 @@ codeunit 67123 "LT F3 Enum Foreach"
         foreach Value in Colors do
             Seen += Format(Value) + ';';
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', '5;1;');
+        Observer.Verify();
     end;
 }

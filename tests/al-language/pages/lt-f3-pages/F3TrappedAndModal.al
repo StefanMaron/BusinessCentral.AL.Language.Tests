@@ -37,6 +37,7 @@ codeunit 67091 "LT F3 Trapped Page"
         Log: Codeunit "LT F3 Log Mgt";
         Row: Record "LT F3 Row";
     begin
+        Log.Seed(3);
         Log.Clear();
         Row.Get('R1002');
         TrappedCard.Trap();
@@ -65,6 +66,7 @@ codeunit 67091 "LT F3 Trapped Page"
         Log: Codeunit "LT F3 Log Mgt";
         Row: Record "LT F3 Row";
     begin
+        Log.Seed(3);
         Log.Clear();
         Row.Get('R1003');
         TrappedCard.Trap();
@@ -198,7 +200,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Card_OK()
     begin
         Run(Page::"LT F3 Card", 0);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -206,7 +213,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Card_Cancel()
     begin
         Run(Page::"LT F3 Card", 1);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,7 +226,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Card_HandlerDoesNothing()
     begin
         Run(Page::"LT F3 Card", 3);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Name 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,7 +239,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Card_HandlerEditsOnly()
     begin
         Run(Page::"LT F3 Card", 2);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -230,7 +252,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Card_PageTypedHandler()
     begin
         Run(Page::"LT F3 Card", 3);
-        Observer.Finish();
+        Observer.Expect('h_page', 'called');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'None');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Name 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,7 +265,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Dialog_OK()
     begin
         Run(Page::"LT F3 Dialog", 0);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -246,7 +278,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Dialog_Cancel()
     begin
         Run(Page::"LT F3 Dialog", 1);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +291,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Dialog_HandlerDoesNothing()
     begin
         Run(Page::"LT F3 Dialog", 3);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Name 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,7 +304,12 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure Dialog_PageTypedHandler()
     begin
         Run(Page::"LT F3 Dialog", 3);
-        Observer.Finish();
+        Observer.Expect('h_page', 'called');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'None');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Name 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -270,7 +317,13 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure List_OK()
     begin
         Run(Page::"LT F3 List", 0);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('h_after_goto', 'Name 2');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('row_no', 'R1002');
+        Observer.Expect('row_name', 'Name 2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -278,7 +331,13 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure List_Cancel()
     begin
         Run(Page::"LT F3 List", 1);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('h_after_goto', 'Name 2');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1002');
+        Observer.Expect('row_name', 'Name 2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -286,7 +345,13 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure List_HandlerDoesNothing()
     begin
         Run(Page::"LT F3 List", 3);
-        Observer.Finish();
+        Observer.Expect('h_name', 'Name 1');
+        Observer.Expect('h_after_goto', 'Name 2');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('row_no', 'R1002');
+        Observer.Expect('row_name', 'Name 2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,6 +359,11 @@ codeunit 67092 "LT F3 RunModal Field"
     procedure List_PageTypedHandler()
     begin
         Run(Page::"LT F3 List", 3);
-        Observer.Finish();
+        Observer.Expect('h_page', 'called');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('action', 'None');
+        Observer.Expect('row_no', 'R1001');
+        Observer.Expect('row_name', 'Name 1');
+        Observer.Verify();
     end;
 }

@@ -29,13 +29,23 @@ codeunit 67125 "LT F3 Query Range"
         Q.SetRange(Qty, Low, High);
     end;
 
-    local procedure Drain(var Q: Query "LT F3 Row Query"): Text
-    var
-        Result: Text;
+    [TryFunction]
+    local procedure TryDrain(var Q: Query "LT F3 Row Query"; var Result: Text)
     begin
         while Q.Read() do
             Result += Q.No + ',';
-        exit(Result);
+    end;
+
+    local procedure Drain(var Q: Query "LT F3 Row Query"): Text
+    var
+        Result: Text;
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Ok := TryDrain(Q, Result);
+        if Ok then
+            exit(Result);
+        exit('error: ' + GetLastErrorText() + ' | ' + GetLastErrorCode() + ' | read so far: ' + Result);
     end;
 
     [Test]
@@ -84,7 +94,10 @@ codeunit 67125 "LT F3 Query Range"
         Q.Open();
         Observer.Observe('rows', Drain(Q));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('first_read', 'Yes');
+        Observer.Expect('set_ok', 'Yes');
+        Observer.Expect('rows', 'R1004,R1005,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -102,7 +115,9 @@ codeunit 67125 "LT F3 Query Range"
         Q.Open();
         Observer.Observe('second_pass', Drain(Q));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('first_pass', 'R1002,R1003,');
+        Observer.Expect('second_pass', 'R1002,R1003,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,6 +132,7 @@ codeunit 67125 "LT F3 Query Range"
         Q.Open();
         Observer.Observe('rows', Drain(Q));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('rows', 'R1004,R1005,');
+        Observer.Verify();
     end;
 }
