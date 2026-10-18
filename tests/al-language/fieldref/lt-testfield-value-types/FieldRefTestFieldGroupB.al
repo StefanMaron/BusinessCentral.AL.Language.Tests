@@ -29,7 +29,10 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val);
         Observer.ObserveError('different');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('different|text', 'Dt Cap must be equal to ''02/01/24''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -65,7 +68,17 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val, Info);
         Observer.ObserveError('different_empty_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('message_in_text', 'No');
+        Observer.Expect('title_in_text', 'No');
+        Observer.Expect('detail_in_text', 'No');
+        Observer.Expect('different|text', 'Dt Cap must be equal to ''02/01/24''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Expect('different_collectible_outside|text', 'Dt Cap must be equal to ''02/01/24''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24''.');
+        Observer.Expect('different_collectible_outside|code', 'TestField');
+        Observer.Expect('different_empty_info|text', 'Dt Cap must be equal to ''02/01/24''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24''.');
+        Observer.Expect('different_empty_info|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -100,7 +113,13 @@ codeunit 67903 "LT R FRTF B"
             Observer.Observe('collected_collectible', Format(Info.Collectible));
         end;
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('after_call', 'reached');
+        Observer.Expect('has_collected', 'Yes');
+        Observer.Expect('collected_count', '1');
+        Observer.Expect('collected_message', 'info message');
+        Observer.Expect('collected_title', 'info title');
+        Observer.Expect('collected_collectible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +142,10 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val);
         Observer.ObserveError('different');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('different|text', 'Dtm Cap must be equal to ''01/31/24 12:34 PM''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24 12:34 PM''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +181,17 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val, Info);
         Observer.ObserveError('different_empty_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('message_in_text', 'No');
+        Observer.Expect('title_in_text', 'No');
+        Observer.Expect('detail_in_text', 'No');
+        Observer.Expect('different|text', 'Dtm Cap must be equal to ''01/31/24 12:34 PM''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24 12:34 PM''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Expect('different_collectible_outside|text', 'Dtm Cap must be equal to ''01/31/24 12:34 PM''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24 12:34 PM''.');
+        Observer.Expect('different_collectible_outside|code', 'TestField');
+        Observer.Expect('different_empty_info|text', 'Dtm Cap must be equal to ''01/31/24 12:34 PM''  in R Row Caption: Code Cap=K1. Current value is ''01/31/24 12:34 PM''.');
+        Observer.Expect('different_empty_info|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -194,7 +226,13 @@ codeunit 67903 "LT R FRTF B"
             Observer.Observe('collected_collectible', Format(Info.Collectible));
         end;
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('after_call', 'reached');
+        Observer.Expect('has_collected', 'Yes');
+        Observer.Expect('collected_count', '1');
+        Observer.Expect('collected_message', 'info message');
+        Observer.Expect('collected_title', 'info title');
+        Observer.Expect('collected_collectible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -217,7 +255,10 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val);
         Observer.ObserveError('different');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('different|text', 'Dec Cap must be equal to ''12.6''  in R Row Caption: Code Cap=K1. Current value is ''12.5''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -253,7 +294,17 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val, Info);
         Observer.ObserveError('different_empty_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('message_in_text', 'No');
+        Observer.Expect('title_in_text', 'No');
+        Observer.Expect('detail_in_text', 'No');
+        Observer.Expect('different|text', 'Dec Cap must be equal to ''12.6''  in R Row Caption: Code Cap=K1. Current value is ''12.5''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Expect('different_collectible_outside|text', 'Dec Cap must be equal to ''12.6''  in R Row Caption: Code Cap=K1. Current value is ''12.5''.');
+        Observer.Expect('different_collectible_outside|code', 'TestField');
+        Observer.Expect('different_empty_info|text', 'Dec Cap must be equal to ''12.6''  in R Row Caption: Code Cap=K1. Current value is ''12.5''.');
+        Observer.Expect('different_empty_info|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,7 +339,13 @@ codeunit 67903 "LT R FRTF B"
             Observer.Observe('collected_collectible', Format(Info.Collectible));
         end;
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('after_call', 'reached');
+        Observer.Expect('has_collected', 'Yes');
+        Observer.Expect('collected_count', '1');
+        Observer.Expect('collected_message', 'info message');
+        Observer.Expect('collected_title', 'info title');
+        Observer.Expect('collected_collectible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -311,7 +368,10 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val);
         Observer.ObserveError('different');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('different|text', 'En Cap must be equal to ''Blue Cap''  in R Row Caption: Code Cap=K1. Current value is ''Green Cap''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -347,7 +407,17 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val, Info);
         Observer.ObserveError('different_empty_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('message_in_text', 'No');
+        Observer.Expect('title_in_text', 'No');
+        Observer.Expect('detail_in_text', 'No');
+        Observer.Expect('different|text', 'En Cap must be equal to ''Blue Cap''  in R Row Caption: Code Cap=K1. Current value is ''Green Cap''.');
+        Observer.Expect('different|code', 'TestField');
+        Observer.Expect('different_collectible_outside|text', 'En Cap must be equal to ''Blue Cap''  in R Row Caption: Code Cap=K1. Current value is ''Green Cap''.');
+        Observer.Expect('different_collectible_outside|code', 'TestField');
+        Observer.Expect('different_empty_info|text', 'En Cap must be equal to ''Blue Cap''  in R Row Caption: Code Cap=K1. Current value is ''Green Cap''.');
+        Observer.Expect('different_empty_info|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -382,7 +452,13 @@ codeunit 67903 "LT R FRTF B"
             Observer.Observe('collected_collectible', Format(Info.Collectible));
         end;
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('after_call', 'reached');
+        Observer.Expect('has_collected', 'Yes');
+        Observer.Expect('collected_count', '1');
+        Observer.Expect('collected_message', 'info message');
+        Observer.Expect('collected_title', 'info title');
+        Observer.Expect('collected_collectible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -405,7 +481,14 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val);
         Observer.ObserveError('different');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+#if BC28PLUS
+        Observer.Expect('different|text', 'Gd Cap must be equal to ''{11111111-2222-3333-4444-555555555556}''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different|text', 'Gd Cap must be equal to ''11111111-2222-3333-4444-555555555556''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
+        Observer.Expect('different|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -441,7 +524,29 @@ codeunit 67903 "LT R FRTF B"
         asserterror Fld.TestField(Val, Info);
         Observer.ObserveError('different_empty_info');
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('equal', 'no error');
+        Observer.Expect('message_in_text', 'No');
+        Observer.Expect('title_in_text', 'No');
+        Observer.Expect('detail_in_text', 'No');
+#if BC28PLUS
+        Observer.Expect('different|text', 'Gd Cap must be equal to ''{11111111-2222-3333-4444-555555555556}''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different|text', 'Gd Cap must be equal to ''11111111-2222-3333-4444-555555555556''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
+        Observer.Expect('different|code', 'TestField');
+#if BC28PLUS
+        Observer.Expect('different_collectible_outside|text', 'Gd Cap must be equal to ''{11111111-2222-3333-4444-555555555556}''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different_collectible_outside|text', 'Gd Cap must be equal to ''11111111-2222-3333-4444-555555555556''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
+        Observer.Expect('different_collectible_outside|code', 'TestField');
+#if BC28PLUS
+        Observer.Expect('different_empty_info|text', 'Gd Cap must be equal to ''{11111111-2222-3333-4444-555555555556}''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#else
+        Observer.Expect('different_empty_info|text', 'Gd Cap must be equal to ''11111111-2222-3333-4444-555555555556''  in R Row Caption: Code Cap=K1. Current value is ''{11111111-2222-3333-4444-555555555555}''.');
+#endif
+        Observer.Expect('different_empty_info|code', 'TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -476,6 +581,12 @@ codeunit 67903 "LT R FRTF B"
             Observer.Observe('collected_collectible', Format(Info.Collectible));
         end;
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('after_call', 'reached');
+        Observer.Expect('has_collected', 'Yes');
+        Observer.Expect('collected_count', '1');
+        Observer.Expect('collected_message', 'info message');
+        Observer.Expect('collected_title', 'info title');
+        Observer.Expect('collected_collectible', 'Yes');
+        Observer.Verify();
     end;
 }

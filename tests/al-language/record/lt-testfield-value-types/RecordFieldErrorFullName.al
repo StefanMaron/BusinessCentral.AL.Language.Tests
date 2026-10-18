@@ -32,6 +32,20 @@ codeunit 67908 "LT R RFE"
         Observer.ObserveError('boolean_text');
         asserterror Rec.FieldError(En, 'custom reason');
         Observer.ObserveError('enum_text');
-        Observer.Finish();
+        Observer.Expect('integer_no_text|text', 'Num Cap must not be 5 in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('integer_no_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('integer_text|text', 'Num Cap custom reason in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('integer_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('integer_empty_text|text', 'Num Cap must not be 5 in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('integer_empty_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('text_no_text|text', 'Txt Cap must not be Hello in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('text_no_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('text_text|text', 'Txt Cap custom reason in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('text_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('boolean_text|text', 'Bool Cap custom reason in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('boolean_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('enum_text|text', 'En Cap custom reason in R Row Caption Code Cap=''K1''.');
+        Observer.Expect('enum_text|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 }
