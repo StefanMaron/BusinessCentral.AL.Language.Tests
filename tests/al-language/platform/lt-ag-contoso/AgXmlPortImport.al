@@ -206,8 +206,10 @@ codeunit 78402 "LT AG XP Import"
         OutS: OutStream;
     begin
         Job.Id := XmlportId;
+        Job.Insert();
         Job.Content.CreateOutStream(OutS, TextEncoding::UTF8);
         OutS.WriteText(Content);
+        Job.Modify();
         Commit();
         exit(Codeunit.Run(Codeunit::"LT AG XP Import Runner", Job));
     end;
@@ -222,7 +224,7 @@ codeunit 78402 "LT AG XP Import"
     begin
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(XmlportId, OutS);
-        TempBlob.CreateInStream(InS);
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
         while not InS.EOS() do begin
             InS.ReadText(Line);
             Result += Line + '|';
