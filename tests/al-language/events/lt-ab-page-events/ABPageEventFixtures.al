@@ -33,6 +33,20 @@ codeunit 77050 "LT AB Log"
         exit(Result);
     end;
 
+    procedure DumpRange(FromIndex: Integer; Count: Integer): Text
+    var
+        Index: Integer;
+        Result: Text;
+    begin
+        for Index := FromIndex to FromIndex + Count - 1 do
+            if Index <= Entries.Count() then begin
+                if Result <> '' then
+                    Result += ' | ';
+                Result += Entries.Get(Index);
+            end;
+        exit(Result);
+    end;
+
     var
         Entries: List of [Text];
 }
