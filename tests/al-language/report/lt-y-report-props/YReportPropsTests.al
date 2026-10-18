@@ -27,7 +27,7 @@ codeunit 75510 "LT Y Report Props Tests"
             Observer.Observe('xml', Helper.AsciiOnly(Xml))
         else
             Observer.Observe('xml', Helper.Failed());
-        Observer.Observe('meta', Helper.RowOf(2000000139, 1, ReportId));
+        Observer.Observe('meta', Helper.ReportFacts(ReportId));
     end;
 
     [Test]
@@ -89,8 +89,8 @@ codeunit 75510 "LT Y Report Props Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('meta', Helper.RowOf(2000000139, 1, Report::"LT Y Rep Props"));
-        Observer.Observe('layouts', Helper.LayoutRows(Report::"LT Y Rep Props"));
+        Observer.Observe('meta', Helper.ReportFacts(Report::"LT Y Rep Props"));
+        Observer.Observe('layouts', Helper.LayoutFacts(Report::"LT Y Rep Props"));
         Observer.Finish();
     end;
 
@@ -142,8 +142,8 @@ codeunit 75510 "LT Y Report Props Tests"
         Text1: Text;
     begin
         Observer.Observe('default_layout', Format(Report.DefaultLayout(ReportId)));
-        Observer.Observe('meta', Helper.RowOf(2000000139, 1, ReportId));
-        Observer.Observe('layouts', Helper.LayoutRows(ReportId));
+        Observer.Observe('meta', Helper.ReportFacts(ReportId));
+        Observer.Observe('layouts', Helper.LayoutFacts(ReportId));
         if TryExcelLayout(ReportId, Text1) then
             Observer.Observe('excel_layout', Text1)
         else
@@ -159,7 +159,7 @@ codeunit 75510 "LT Y Report Props Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('meta', Helper.RowOf(2000000139, 1, Report::"LT Y Rep Props"));
+        Observer.Observe('meta', Helper.ReportFacts(Report::"LT Y Rep Props"));
         Observer.Finish();
     end;
 

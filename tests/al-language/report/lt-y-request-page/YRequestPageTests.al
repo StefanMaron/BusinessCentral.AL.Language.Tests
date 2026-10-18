@@ -358,7 +358,7 @@ codeunit 75512 "LT Y Request Page Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('misc', Helper.RowOf(2000000139, 1, Report::"LT Y RP Misc"));
+        Observer.Observe('misc', Helper.ReportFacts(Report::"LT Y RP Misc"));
         Observer.Observe('misc_items', Helper.DataItemRows(Report::"LT Y RP Misc"));
         Observer.Finish();
     end;

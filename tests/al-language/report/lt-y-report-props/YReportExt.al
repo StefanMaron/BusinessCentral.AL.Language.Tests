@@ -150,8 +150,8 @@ codeunit 75511 "LT Y Report Ext Tests"
         Result: Text;
     begin
         Observer.Observe('default_layout', Format(Report.DefaultLayout(ReportId)));
-        Observer.Observe('meta', Helper.RowOf(2000000139, 1, ReportId));
-        Observer.Observe('layouts', Helper.LayoutRows(ReportId));
+        Observer.Observe('meta', Helper.ReportFacts(ReportId));
+        Observer.Observe('layouts', Helper.LayoutFacts(ReportId));
         Streams(Observer, ReportId);
         if SaveFormat <> ReportFormat::Pdf then begin
             // RDLC rendering is stubbed on the Linux service tier of the CI, so SaveAs and Run are observed for Word and Excel only.

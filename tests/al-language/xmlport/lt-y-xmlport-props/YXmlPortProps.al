@@ -687,11 +687,11 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer: Codeunit "Probe Observer";
         Helper: Codeunit "LT Y Helper";
     begin
-        Observer.Observe('plain', Helper.RowOf(2000000280, 1, 75564));
-        Observer.Observe('ml', Helper.RowOf(2000000280, 1, 75565));
-        Observer.Observe('inline', Helper.RowOf(2000000280, 1, 75552));
-        Observer.Observe('v11', Helper.RowOf(2000000280, 1, 75556));
-        Observer.Observe('perm', Helper.RowOf(2000000280, 1, 75559));
+        Observer.Observe('plain', Helper.Facts(2000000280, 1, 75564, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
+        Observer.Observe('ml', Helper.Facts(2000000280, 1, 75565, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
+        Observer.Observe('inline', Helper.Facts(2000000280, 1, 75552, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
+        Observer.Observe('v11', Helper.Facts(2000000280, 1, 75556, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
+        Observer.Observe('perm', Helper.Facts(2000000280, 1, 75559, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
         Observer.Finish();
     end;
 }

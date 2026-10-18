@@ -188,6 +188,44 @@ codeunit 75500 "LT Y Helper"
         exit(Result);
     end;
 
+    // Name=value of the named columns of one row (a column that does not exist on the platform shows as absent).
+    procedure Facts(TableNo: Integer; KeyField: Integer; Id: Integer; Names: Text): Text
+    var
+        RR: RecordRef;
+        FR: FieldRef;
+        Wanted: Text;
+        i: Integer;
+        Found: Boolean;
+        Result: Text;
+    begin
+        RR.Open(TableNo);
+        FR := RR.Field(KeyField);
+        FR.SetRange(Id);
+        if not RR.FindFirst() then begin
+            RR.Close();
+            exit('no row');
+        end;
+        foreach Wanted in Names.Split(',') do begin
+            Found := false;
+            for i := 1 to RR.FieldCount() do begin
+                FR := RR.FieldIndex(i);
+                if FR.Name = Wanted then begin
+                    Result += Wanted + '=' + Format(FR.Value) + ';';
+                    Found := true;
+                end;
+            end;
+            if not Found then
+                Result += Wanted + '=absent;';
+        end;
+        RR.Close();
+        exit(Result);
+    end;
+
+    procedure ReportFacts(ReportId: Integer): Text
+    begin
+        exit(Facts(2000000139, 1, ReportId, 'UseRequestPage,ProcessingOnly,EnableExternalImages,EnableExternalAssemblies,PaperSourceFirstPage,PaperSourceDefaultPage,PaperSourceLastPage,DefaultLayout,DefaultLayoutName,FormatRegion,ExcelLayoutMultipleDataSheets,DefaultHeaderFooterPartName,DefaultThemePartName'));
+    end;
+
     procedure RowOf(TableNo: Integer; KeyField: Integer; Id: Integer): Text
     var
         RR: RecordRef;
@@ -202,6 +240,22 @@ codeunit 75500 "LT Y Helper"
         else
             Result := 'no row';
         RR.Close();
+        exit(Result);
+    end;
+
+    // Name, format, Excel sheet setting and subtype of the layouts of one report.
+    procedure LayoutFacts(ReportId: Integer): Text
+    var
+        LayoutList: Record "Report Layout List";
+        Result: Text;
+    begin
+        LayoutList.SetRange("Report ID", ReportId);
+        if LayoutList.FindSet() then
+            repeat
+                Result += '[' + LayoutList.Name + ' ' + Format(LayoutList."Layout Format") + ' multi=' + Format(LayoutList.ExcelLayoutMultipleDataSheets, 0, 2) + ']';
+            until LayoutList.Next() = 0
+        else
+            Result := 'no layouts';
         exit(Result);
     end;
 
@@ -233,8 +287,7 @@ codeunit 75500 "LT Y Helper"
         Items.SetRange("Report ID", ReportId);
         if Items.FindSet() then
             repeat
-                RR.GetTable(Items);
-                Result += '[' + DumpRow(RR) + ']';
+                Result += '[' + Items.Name + ' filter_fields=' + Items."Request Filter Fields" + ' view=' + Items."Data Item Table View" + ']';
             until Items.Next() = 0
         else
             Result := 'no data items';
