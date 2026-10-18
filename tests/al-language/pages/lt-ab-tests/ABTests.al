@@ -859,18 +859,14 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('after-name', Log.Dump());
         Log.Reset();
         Rows.Next();
-        Observer.Observe('after-leave-row-1', Log.DumpRange(1, 8));
-        Observer.Observe('after-leave-row-2', Log.DumpRange(9, 8));
-        Observer.Observe('after-leave-row-3', Log.DumpRange(17, 8));
-        Observer.Observe('after-leave-row-4', Log.DumpRange(25, 8));
-        Observer.Observe('after-leave-row-5', Log.DumpRange(33, 8));
+        Observer.Observe('after-leave-row', Log.Dump());
         Rows.Close();
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Observe('stored-ten-exists', Format(Stored.Get(10)));
         Observer.Expect('after-new', 'page OnNewRecord Yes | A2 OnNewRecordEvent 0 Yes | A1 OnNewRecordEvent 0 Yes | B OnNewRecordEvent 0 Yes | page OnAfterGetCurrRecord 0 | A2 OnAfterGetCurrRecordEvent 0 | A1 OnAfterGetCurrRecordEvent 0 | B OnAfterGetCurrRecordEvent 0');
         Observer.Expect('after-id', '');
         Observer.Expect('after-name', 'page OnInsertRecord 10  | A2 OnInsertRecordEvent 10  1 Yes Yes | A1 OnInsertRecordEvent 10  1 Yes Yes | B OnInsertRecordEvent 10  1 Yes Yes');
-        Observer.Expect('after-leave-row-1', 'page OnModifyRecord Ten was  | A2 OnModifyRecordEvent Ten  Yes | A1 OnM');
+        Observer.Expect('after-leave-row', 'page OnModifyRecord Ten was  | A2 OnModifyRecordEvent Ten  Yes | A1 OnModifyRecordEvent Ten  Yes | B OnModifyRecordEvent Ten  Yes | page OnAfterGetCurrRecord 2 | A2 OnAfterGetCurrRecordEvent 2 | A1 OnAfterGetCurrRecordEvent 2 | B OnAfterGetCurrRecordEvent 2');
         Observer.Verify();
     end;
 
@@ -960,138 +956,6 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('close-error', 'The page cannot be closed at this time.');
         Observer.Expect('log', 'page OnQueryClosePage OK | A2 OnQueryClosePageEvent 2 Yes | A1 OnQueryClosePageEvent 2 No | B OnQueryClosePageEvent 2 No');
         Observer.Verify();
-    end;
-
-    // ---------------------------------------------------------------- ReqPage
-
-    local procedure ReqPageSeed()
-    var
-        Row: Record "LT AB Row";
-        Flags: Codeunit "LT AB Flags";
-        Log: Codeunit "LT AB Log";
-    begin
-        Row.DeleteAll();
-        Row.Id := 1;
-        Row.Name := 'One';
-        Row.Insert();
-        Row.Id := 2;
-        Row.Name := 'Two';
-        Row.Insert();
-        Flags.SetVeto(false);
-        Log.Reset();
-        Commit();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReqPageOkHandler')]
-    procedure ReqPageBaseReportOk()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-    begin
-        ReqPageSeed();
-        Report.Run(Report::"LT AB RP Report");
-        Observer.Observe('log-1', Log.DumpRange(1, 8));
-        Observer.Observe('log-2', Log.DumpRange(9, 8));
-        Observer.Observe('log-3', Log.DumpRange(17, 8));
-        Observer.Observe('log-4', Log.DumpRange(25, 8));
-        Observer.Observe('log-5', Log.DumpRange(33, 8));
-        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
-        Observer.Expect('log-2', 'handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | base OnClosePage 2 | ext OnClosePage 0 | handler after OK');
-        Observer.Expect('log-3', 'report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnAfterGetRecord 2 | re');
-        Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReqPageCancelHandler')]
-    procedure ReqPageBaseReportCancel()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-    begin
-        ReqPageSeed();
-        Report.Run(Report::"LT AB RP Report");
-        Observer.Observe('log-1', Log.DumpRange(1, 8));
-        Observer.Observe('log-2', Log.DumpRange(9, 8));
-        Observer.Observe('log-3', Log.DumpRange(17, 8));
-        Observer.Observe('log-4', Log.DumpRange(25, 8));
-        Observer.Observe('log-5', Log.DumpRange(33, 8));
-        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
-        Observer.Expect('log-2', 'base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel | base OnClosePage 2');
-        Observer.Expect('log-3', 'ext OnClosePage 0 | handler after Cancel');
-        Observer.Expect('log-4', '');
-        Observer.Expect('log-5', '');
-        Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReqPageOkHandler')]
-    procedure ReqPageBaseReportQueryCloseVeto()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-        Flags: Codeunit "LT AB Flags";
-    begin
-        ReqPageSeed();
-        Flags.SetVeto(true);
-        Report.Run(Report::"LT AB RP Report");
-        Observer.Observe('log-1', Log.DumpRange(1, 8));
-        Observer.Observe('log-2', Log.DumpRange(9, 8));
-        Observer.Observe('log-3', Log.DumpRange(17, 8));
-        Observer.Observe('log-4', Log.DumpRange(25, 8));
-        Observer.Observe('log-5', Log.DumpRange(33, 8));
-        Flags.SetVeto(false);
-        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
-        Observer.Expect('log-2', 'handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | handler after OK | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel');
-        Observer.Expect('log-3', 'report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnA');
-        Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('ReqPagePlainOkHandler')]
-    procedure ReqPagePlainReportOkWithExtensionTriggers()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-    begin
-        ReqPageSeed();
-        Report.Run(Report::"LT AB RP Plain Report");
-        Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'ext2 OnOpenPage 0 | ext2 OnAfterGetRecord 0 | ext2 OnAfterGetCurrRecord 0 | handler start | ext2 OnQueryClosePage OK | ext2 OnClosePage 0 | handler after OK | plain OnPreReport');
-        Observer.Verify();
-    end;
-
-
-    [RequestPageHandler]
-    procedure ReqPageOkHandler(var RequestPage: TestRequestPage "LT AB RP Report")
-    var
-        Log: Codeunit "LT AB Log";
-    begin
-        Log.Add('handler start');
-        RequestPage.NameF.SetValue('typed');
-        Log.Add('handler after SetValue');
-        RequestPage.OK().Invoke();
-        Log.Add('handler after OK');
-    end;
-
-    [RequestPageHandler]
-    procedure ReqPageCancelHandler(var RequestPage: TestRequestPage "LT AB RP Report")
-    var
-        Log: Codeunit "LT AB Log";
-    begin
-        Log.Add('handler start');
-        RequestPage.Cancel().Invoke();
-        Log.Add('handler after Cancel');
-    end;
-
-    [RequestPageHandler]
-    procedure ReqPagePlainOkHandler(var RequestPage: TestRequestPage "LT AB RP Plain Report")
-    var
-        Log: Codeunit "LT AB Log";
-    begin
-        Log.Add('handler start');
-        RequestPage.OK().Invoke();
-        Log.Add('handler after OK');
     end;
 
     // ---------------------------------------------------------------- ActionAddIn
@@ -1282,6 +1146,126 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('run|code', 'ReportRendering:Json');
         Observer.Expect('log', 'report OnPreReport | ext OnPreRendering keys=0');
         Observer.Verify();
+    end;
+
+    // ---------------------------------------------------------------- ReqPage
+
+    local procedure ReqPageSeed()
+    var
+        Row: Record "LT AB Row";
+        Flags: Codeunit "LT AB Flags";
+        Log: Codeunit "LT AB Log";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Name := 'One';
+        Row.Insert();
+        Row.Id := 2;
+        Row.Name := 'Two';
+        Row.Insert();
+        Flags.SetVeto(false);
+        Log.Reset();
+        Commit();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReqPageOkHandler')]
+    procedure ReqPageBaseReportOk()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+    begin
+        ReqPageSeed();
+        Report.Run(Report::"LT AB RP Report");
+        Observer.Observe('log', Log.Dump());
+        Observer.Expect('log', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start | handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | base OnClosePage 2 | ext OnClosePage 0 | handler after OK | report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnAfterGetRecord 2 | report OnPostReport');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReqPageCancelHandler')]
+    procedure ReqPageBaseReportCancel()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+    begin
+        ReqPageSeed();
+        Report.Run(Report::"LT AB RP Report");
+        Observer.Observe('log-1', Log.DumpRange(1, 8));
+        Observer.Observe('log-2', Log.DumpRange(9, 8));
+        Observer.Observe('log-3', Log.DumpRange(17, 8));
+        Observer.Observe('log-4', Log.DumpRange(25, 8));
+        Observer.Observe('log-5', Log.DumpRange(33, 8));
+        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
+        Observer.Expect('log-2', 'base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel | base OnClosePage 2');
+        Observer.Expect('log-3', 'ext OnClosePage 0 | handler after Cancel');
+        Observer.Expect('log-4', '');
+        Observer.Expect('log-5', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReqPageOkHandler')]
+    procedure ReqPageBaseReportQueryCloseVeto()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+        Flags: Codeunit "LT AB Flags";
+    begin
+        ReqPageSeed();
+        Flags.SetVeto(true);
+        Report.Run(Report::"LT AB RP Report");
+        Observer.Observe('log', Log.Dump());
+        Flags.SetVeto(false);
+        Observer.Expect('log', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start | handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | handler after OK | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel | report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnAfterGetRecord 2 | report OnPostReport');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReqPagePlainOkHandler')]
+    procedure ReqPagePlainReportOkWithExtensionTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+    begin
+        ReqPageSeed();
+        Report.Run(Report::"LT AB RP Plain Report");
+        Observer.Observe('log', Log.Dump());
+        Observer.Expect('log', 'ext2 OnOpenPage 0 | ext2 OnAfterGetRecord 0 | ext2 OnAfterGetCurrRecord 0 | handler start | ext2 OnQueryClosePage OK | ext2 OnClosePage 0 | handler after OK | plain OnPreReport');
+        Observer.Verify();
+    end;
+
+
+    [RequestPageHandler]
+    procedure ReqPageOkHandler(var RequestPage: TestRequestPage "LT AB RP Report")
+    var
+        Log: Codeunit "LT AB Log";
+    begin
+        Log.Add('handler start');
+        RequestPage.NameF.SetValue('typed');
+        Log.Add('handler after SetValue');
+        RequestPage.OK().Invoke();
+        Log.Add('handler after OK');
+    end;
+
+    [RequestPageHandler]
+    procedure ReqPageCancelHandler(var RequestPage: TestRequestPage "LT AB RP Report")
+    var
+        Log: Codeunit "LT AB Log";
+    begin
+        Log.Add('handler start');
+        RequestPage.Cancel().Invoke();
+        Log.Add('handler after Cancel');
+    end;
+
+    [RequestPageHandler]
+    procedure ReqPagePlainOkHandler(var RequestPage: TestRequestPage "LT AB RP Plain Report")
+    var
+        Log: Codeunit "LT AB Log";
+    begin
+        Log.Add('handler start');
+        RequestPage.OK().Invoke();
+        Log.Add('handler after OK');
     end;
 
     [Test]
