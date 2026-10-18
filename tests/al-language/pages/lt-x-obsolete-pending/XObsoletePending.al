@@ -258,8 +258,6 @@ query 75056 "LT X Obs Query"
     {
         dataitem(Source; "LT X Obs Src")
         {
-            column(IdCol; Id) { }
-            column(NameCol; Name) { }
             column(Id; Id)
             {
                 ObsoleteState = Pending;
@@ -287,12 +285,12 @@ report 75057 "LT X Obs Report"
     {
         dataitem(Source; "LT X Obs Src")
         {
-            column(IdCol; Id) { }
-            column(NameCol; Name) { }
             ObsoleteState = Pending;
             ObsoleteReason = 'Data item replaced.';
             ObsoleteTag = '1.0';
 
+            column(IdCol; Id) { }
+            column(NameCol; Name) { }
             trigger OnAfterGetRecord()
             var
                 Log: Codeunit "LT X Obs Log";
@@ -592,12 +590,12 @@ report 75060 "LT X Obs Report Item"
     {
         dataitem(Source; "LT X Obs Src")
         {
-            column(IdCol; Id) { }
-            column(NameCol; Name) { }
             ObsoleteState = Pending;
             ObsoleteReason = 'Data item replaced.';
             ObsoleteTag = '1.0';
 
+            column(IdCol; Id) { }
+            column(NameCol; Name) { }
             trigger OnAfterGetRecord()
             var
                 Log: Codeunit "LT X Obs Log";
