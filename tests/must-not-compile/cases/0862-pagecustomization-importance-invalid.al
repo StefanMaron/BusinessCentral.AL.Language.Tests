@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Low' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Low' is not valid
 // Importance knows Standard, Promoted and Additional only.
 table 59862 "MNC Z Row 0862"
 {

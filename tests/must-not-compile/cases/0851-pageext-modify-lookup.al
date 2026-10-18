@@ -1,4 +1,4 @@
-// @expect AL0246 | The property 'Lookup' cannot be customized. This property is read-only in the current context.
+// @expect AL0246 | The property 'Lookup' cannot be customized.
 // A page extension cannot change Lookup with modify.
 table 59851 "MNC Z Row 0851"
 {

@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Hidden' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Hidden' is not valid
 // MaskType knows None and Concealed only.
 table 59856 "MNC Z Row 0856"
 {

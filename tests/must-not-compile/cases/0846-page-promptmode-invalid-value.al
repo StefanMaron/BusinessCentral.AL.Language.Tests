@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Other' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Other' is not valid
 // PromptMode knows Prompt, Content and Generate only.
 table 59846 "MNC Z Row 0846"
 {

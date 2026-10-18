@@ -1,4 +1,4 @@
-// @expect AL0208 | The expression must be of Boolean type. Use a comparison or boolean expression.
+// @expect AL0208 | The expression must be of Boolean type
 // QuickEntry takes a boolean constant.
 table 59868 "MNC Z Row 0868"
 {

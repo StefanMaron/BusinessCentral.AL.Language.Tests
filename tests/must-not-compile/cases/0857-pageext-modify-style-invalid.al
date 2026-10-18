@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Red' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Red' is not valid
 // Style knows the ten named styles only.
 table 59857 "MNC Z Row 0857"
 {

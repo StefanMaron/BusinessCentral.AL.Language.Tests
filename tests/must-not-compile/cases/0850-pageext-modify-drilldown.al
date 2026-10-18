@@ -1,4 +1,4 @@
-// @expect AL0246 | The property 'DrillDown' cannot be customized. This property is read-only in the current context.
+// @expect AL0246 | The property 'DrillDown' cannot be customized.
 // A page extension cannot change DrillDown with modify.
 table 59850 "MNC Z Row 0850"
 {

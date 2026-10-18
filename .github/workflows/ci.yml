@@ -203,7 +203,7 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "60000..60999|67000..69999|70000..74999"
+      codeunit_range:       "60000..60999|67000..69999|70000..74999|75000..76999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       # Pinned to the 29.0 build before 29.0.54011.55892 (published 2026-10-07). That build
       # reports debugger protocol 9.0, and no published al tool supports it yet: 18.0.37.11445-beta
