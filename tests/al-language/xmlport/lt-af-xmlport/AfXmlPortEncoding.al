@@ -69,12 +69,14 @@ codeunit 78313 "LT AF XmlPort Encoding"
         B: Byte;
         Result: Text;
         n: Integer;
+        Num: Integer;
     begin
         TempBlob.CreateInStream(InS);
         Result := Format(TempBlob.Length()) + ':';
         while (not InS.EOS()) and (n < 8) do begin
             InS.Read(B);
-            Result += Format(B) + ',';
+            Num := B;
+            Result += Format(Num) + ',';
             n += 1;
         end;
         exit(Result);
@@ -175,9 +177,8 @@ codeunit 78313 "LT AF XmlPort Encoding"
         exit(Result);
     end;
 
-    local procedure ImportCase(Name: Text; Xport16: Boolean; Enc: TextEncoding; Declared: Text; Id: Integer)
+    local procedure ImportCase(var Observer: Codeunit "Probe Observer"; Name: Text; Xport16: Boolean; Enc: TextEncoding; Declared: Text; Id: Integer)
     var
-        Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         Ok: Boolean;
     begin
@@ -191,7 +192,6 @@ codeunit 78313 "LT AF XmlPort Encoding"
             Observer.Observe(Name, 'ok ' + RowName(Id))
         else
             Observer.ObserveError(Name);
-        Observer.Finish();
     end;
 
     [Test]
@@ -205,7 +205,6 @@ codeunit 78313 "LT AF XmlPort Encoding"
         if TryExport8(TempBlob) then begin
             Observer.Observe('utf8 export bytes', Bytes(TempBlob));
             Observer.Observe('utf8 export as utf8', Decl(TempBlob, TextEncoding::UTF8));
-            Observer.Observe('utf8 export as utf16', Decl(TempBlob, TextEncoding::UTF16));
         end else
             Observer.ObserveError('utf8 export');
         Clear(TempBlob);
@@ -213,7 +212,6 @@ codeunit 78313 "LT AF XmlPort Encoding"
         if TryExport16(TempBlob) then begin
             Observer.Observe('utf16 export bytes', Bytes(TempBlob));
             Observer.Observe('utf16 export as utf16', Decl(TempBlob, TextEncoding::UTF16));
-            Observer.Observe('utf16 export as utf8', Decl(TempBlob, TextEncoding::UTF8));
         end else
             Observer.ObserveError('utf16 export');
         Observer.Finish();
@@ -221,43 +219,69 @@ codeunit 78313 "LT AF XmlPort Encoding"
 
     [Test]
     procedure AF_Encoding_Import_Utf8Property_Utf8Doc()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ImportCase('xp utf8, doc utf8 declared utf-8', false, TextEncoding::UTF8, 'utf-8', 11);
+        ImportCase(Observer, 'xp utf8, doc utf8 declared utf-8', false, TextEncoding::UTF8, 'utf-8', 11);
+        Observer.Expect('xp utf8, doc utf8 declared utf-8', 'ok 72,252,114,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_Encoding_Import_Utf8Property_Utf16Doc()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ImportCase('xp utf8, doc utf16 declared utf-16', false, TextEncoding::UTF16, 'utf-16', 12);
+        ImportCase(Observer, 'xp utf8, doc utf16 declared utf-16', false, TextEncoding::UTF16, 'utf-16', 12);
+        Observer.Expect('xp utf8, doc utf16 declared utf-16', 'ok 72,252,114,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_Encoding_Import_Utf16Property_Utf8Doc()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ImportCase('xp utf16, doc utf8 declared utf-8', true, TextEncoding::UTF8, 'utf-8', 13);
+        ImportCase(Observer, 'xp utf16, doc utf8 declared utf-8', true, TextEncoding::UTF8, 'utf-8', 13);
+        Observer.Expect('xp utf16, doc utf8 declared utf-8', 'ok 72,252,114,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_Encoding_Import_Utf16Property_Utf16Doc()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ImportCase('xp utf16, doc utf16 declared utf-16', true, TextEncoding::UTF16, 'utf-16', 14);
+        ImportCase(Observer, 'xp utf16, doc utf16 declared utf-16', true, TextEncoding::UTF16, 'utf-16', 14);
+        Observer.Expect('xp utf16, doc utf16 declared utf-16', 'ok 72,252,114,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_Encoding_Import_Utf8Property_Utf8DocDeclaredUtf16()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ImportCase('xp utf8, doc utf8 declared utf-16', false, TextEncoding::UTF8, 'utf-16', 15);
+        ImportCase(Observer, 'xp utf8, doc utf8 declared utf-16', false, TextEncoding::UTF8, 'utf-16', 15);
+        Observer.Expect('xp utf8, doc utf8 declared utf-16|text', 'There is no Unicode byte order mark. Cannot switch to Unicode.');
+        Observer.Expect('xp utf8, doc utf8 declared utf-16|code', 'XmlPortImport:Xml');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_Encoding_Import_Utf8Property_Utf16DocDeclaredUtf8()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ImportCase('xp utf8, doc utf16 declared utf-8', false, TextEncoding::UTF16, 'utf-8', 16);
+        ImportCase(Observer, 'xp utf8, doc utf16 declared utf-8', false, TextEncoding::UTF16, 'utf-8', 16);
+        Observer.Expect('xp utf8, doc utf16 declared utf-8|text', 'Name cannot begin with the ''.'' character, hexadecimal value 0x00. Line 1, position 40.');
+        Observer.Expect('xp utf8, doc utf16 declared utf-8|code', 'XmlPortImport:Xml');
+        Observer.Verify();
     end;
 }

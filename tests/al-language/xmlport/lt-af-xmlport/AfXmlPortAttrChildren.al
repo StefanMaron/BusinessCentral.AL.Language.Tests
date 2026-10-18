@@ -252,7 +252,11 @@ codeunit 78305 "LT AF XmlPort Attr Children"
             Observer.Observe('attr import kind', Kind);
         end else
             Observer.ObserveError('attr import');
-        Observer.Finish();
+        Observer.Expect('attr export', '<?xml version="1.0" encoding="UTF-8" standalone="no"?><Root>  <Row>    <Id>1</Id>    <Name Lang="en" Kind="K1">Alpha</Name>  </Row></Root>');
+        Observer.Expect('attr import', 'ok');
+        Observer.Expect('attr import row 2', 'Beta|de');
+        Observer.Expect('attr import kind', 'K9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -278,7 +282,11 @@ codeunit 78305 "LT AF XmlPort Attr Children"
             Observer.Observe('child text import child', Child);
         end else
             Observer.ObserveError('child text import');
-        Observer.Finish();
+        Observer.Expect('child text export', '<?xml version="1.0" encoding="UTF-8" standalone="no"?><Root>  <Row>    <Id>1</Id>    <Name>Alpha<Child>c1</Child></Name>  </Row></Root>');
+        Observer.Expect('child text import', 'ok');
+        Observer.Expect('child text import row 3', 'Gamma|');
+        Observer.Expect('child text import child', 'cc');
+        Observer.Verify();
     end;
 
     [Test]
@@ -302,6 +310,9 @@ codeunit 78305 "LT AF XmlPort Attr Children"
             Observer.Observe('child field import row 4', RowState(4));
         end else
             Observer.ObserveError('child field import');
-        Observer.Finish();
+        Observer.Expect('child field export', '<?xml version="1.0" encoding="UTF-8" standalone="no"?><Root>  <Row>    <Id>1</Id>    <Name>Alpha<Lang>en</Lang></Name>  </Row></Root>');
+        Observer.Expect('child field import', 'ok');
+        Observer.Expect('child field import row 4', 'Delta|fr');
+        Observer.Verify();
     end;
 }
