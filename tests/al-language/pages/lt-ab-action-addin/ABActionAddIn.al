@@ -34,6 +34,53 @@ page 77080 "LT AB Action Card"
                 begin
                     Log.Add('field OnValidate ' + Rec.Name);
                 end;
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(Act)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    Log.Add('base OnAction');
+                end;
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        Log.Add('page OnOpenPage');
+    end;
+
+    var
+        Log: Codeunit "LT AB Log";
+}
+
+page 77083 "LT AB AddIn Card"
+{
+    PageType = Card;
+    SourceTable = "LT AB Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(NameF; Rec.Name)
+            {
+                ApplicationArea = All;
+
+                trigger OnValidate()
+                begin
+                    Log.Add('field OnValidate ' + Rec.Name);
+                end;
 
                 trigger OnControlAddIn(Index: Integer; Data: Text)
                 begin
@@ -52,22 +99,6 @@ page 77080 "LT AB Action Card"
                 trigger Raised(Index: Integer; Data: Text)
                 begin
                     Log.Add('usercontrol Raised ' + Format(Index) + ' ' + Data);
-                end;
-            }
-        }
-    }
-
-    actions
-    {
-        area(Processing)
-        {
-            action(Act)
-            {
-                ApplicationArea = All;
-
-                trigger OnAction()
-                begin
-                    Log.Add('base OnAction');
                 end;
             }
         }

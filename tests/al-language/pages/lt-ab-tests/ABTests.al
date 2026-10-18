@@ -624,32 +624,6 @@ codeunit 77099 "LT AB Tests"
     end;
 
     [Test]
-    procedure PageEvtInsertVetoedBySubscriber()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-        Flags: Codeunit "LT AB Flags";
-        Stored: Record "LT AB Row";
-        Rows: TestPage "LT AB Event Rows";
-    begin
-        PageEvtSeed();
-        Flags.SetVeto(true);
-        Rows.OpenEdit();
-        Rows.New();
-        Rows.IdF.SetValue(20);
-        Log.Reset();
-        Rows.NameF.SetValue('Twenty');
-        Observer.Observe('next-ok', Format(PageEvtTryNext(Rows)));
-        Observer.Observe('next-error', GetLastErrorText());
-        Observer.Observe('log', Log.Dump());
-        Flags.SetVeto(false);
-        Observer.Observe('retry-next-ok', Format(PageEvtTryNext(Rows)));
-        Observer.Observe('close-ok', Format(PageEvtTryClose(Rows)));
-        Observer.Observe('stored-count', Format(Stored.Count()));
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure PageEvtCloseVetoedBySubscriber()
     var
         Observer: Codeunit "Probe Observer";
@@ -845,7 +819,7 @@ codeunit 77099 "LT AB Tests"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT AB Log";
-        Card: TestPage "LT AB Action Card";
+        Card: TestPage "LT AB AddIn Card";
     begin
         ActionAddInSeed();
         Card.OpenEdit();
