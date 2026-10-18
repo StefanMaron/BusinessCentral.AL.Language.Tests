@@ -418,7 +418,6 @@ codeunit 69886 "LT W Pt Observe"
     end;
 
     [Test]
-    [HandlerFunctions('PageH')]
     procedure PageRun_Zero()
     begin
         Act('pagerun0');
@@ -431,11 +430,6 @@ codeunit 69886 "LT W Pt Observe"
         Observer.Expect('pagerun0|m3|err-same', 'Yes');
         Observer.Expect('pagerun0|m3', 'ok=No res= log=[]');
         Observer.Verify();
-    end;
-
-    [PageHandler]
-    procedure PageH(var P: TestPage "LT W Pt Card")
-    begin
     end;
 
     local procedure Seed()
