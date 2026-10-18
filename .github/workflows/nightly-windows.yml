@@ -743,6 +743,9 @@ jobs:
             @{ id = $probe.id; cu = 61275; fn = 'IsPathTemporary_Paths' },
             @{ id = $probe.id; cu = 61275; fn = 'Erase_EmptyName_FullErrorText' },
             @{ id = $probe.id; cu = 61258; fn = 'O_Database_ExportData_ImportData_Files' },
+            @{ id = $probe.id; cu = 69852; fn = 'GlobalTriggers_MaskFifteenAndAllSetupFlagsFalse_RowB' },
+            @{ id = $probe.id; cu = 69852; fn = 'GlobalTriggers_MaskFifteenAndAllSetupFlagsTrue_Arguments_RowD' },
+            @{ id = $probe.id; cu = 69852; fn = 'GlobalTriggers_MaskZeroAndAllSetupFlagsTrue_RowC' },
             @{ id = $fts.id;   cu = 79951; fn = 'Fts_InsertAndFilter' }
           )
           $n = 0
