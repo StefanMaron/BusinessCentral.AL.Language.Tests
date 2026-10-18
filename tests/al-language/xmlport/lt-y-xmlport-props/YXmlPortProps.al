@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), LT Y Seen (75501); own tables 75550-75551, xmlports 75552-75567, codeunits 75513 (import runner) and 75514 (tests)
+// Fixtures used: Probe Observer (codeunit 69160), LT Y XP State (75568); own tables 75550-75551, xmlports 75552-75567, codeunits 75513 (import runner) and 75514 (tests)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts: XmlPort properties FileName, InlineSchema, UseLax, XmlVersionNo, InherentEntitlements, InherentPermissions; field/text node properties XmlName, NamespacePrefix, Unbound, AutoCalcField, Width;
 // table element properties RequestFilterHeading(ML), Unbound, Width. Width out of Integer range, an invalid XmlName and RequestFilterHeading with RequestFilterHeadingML are must-not-compile cases 0814-0825.
@@ -374,11 +374,34 @@ xmlport 75565 "LT Y XP Heading ML"
     }
 }
 
+codeunit 75568 "LT Y XP State"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Dictionary of [Text, Text];
+
+    procedure Put(Name: Text; Value: Text)
+    begin
+        if Entries.ContainsKey(Name) then
+            Entries.Set(Name, Value)
+        else
+            Entries.Add(Name, Value);
+    end;
+
+    procedure Get(Name: Text): Text
+    begin
+        if Entries.ContainsKey(Name) then
+            exit(Entries.Get(Name));
+        exit('<none>');
+    end;
+}
+
 codeunit 75513 "LT Y XP Import Runner"
 {
     trigger OnRun()
     var
-        Seen: Codeunit "LT Y Seen";
+        Seen: Codeunit "LT Y XP State";
         TempBlob: Codeunit "Temp Blob";
         OutS: OutStream;
         InS: InStream;
@@ -404,7 +427,7 @@ codeunit 75514 "LT Y XmlPort Tests"
     TestPermissions = Disabled;
 
     var
-        Seen: Codeunit "LT Y Seen";
+        Seen: Codeunit "LT Y XP State";
 
     local procedure Seed()
     var
