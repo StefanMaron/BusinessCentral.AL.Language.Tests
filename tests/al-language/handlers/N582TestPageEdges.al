@@ -23,13 +23,13 @@ table 67604 "LT N582 Page Row"
         field(4; Flow; Decimal)
         {
             FieldClass = FlowField;
-            CalcFormula = count("LT N582 Page Row");
+            CalcFormula = sum("LT N582 Page Row".Dec);
             Editable = false;
         }
         field(5; FlowDefault; Decimal)
         {
             FieldClass = FlowField;
-            CalcFormula = count("LT N582 Page Row");
+            CalcFormula = sum("LT N582 Page Row".Dec);
         }
         field(6; Plain; Integer)
         {
