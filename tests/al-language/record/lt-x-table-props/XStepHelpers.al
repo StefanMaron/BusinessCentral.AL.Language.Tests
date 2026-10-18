@@ -46,7 +46,8 @@ codeunit 75041 "LT X Linked Step"
             1:
                 Rec.Insert();
             2:
-                Rec.Count();
+                if Rec.Count() < 0 then
+                    Error('unreachable');
         end;
     end;
 }
