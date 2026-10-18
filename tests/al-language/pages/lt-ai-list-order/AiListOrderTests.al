@@ -429,7 +429,13 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('update', 'R:R1006;A:filter;A:done;N:1=0;N:-1=-1;R:R1005;F:=>=Yes;R:R1005;N:1=0;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0;R:R1005;F:==Yes;R:R1005;C:R1005');
+        Observer.Expect('current', 'R1005');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', 'R:R1001;F:==Yes;R:R1001;C:R1001');
+        Observer.Verify();
     end;
 
     [Test]
