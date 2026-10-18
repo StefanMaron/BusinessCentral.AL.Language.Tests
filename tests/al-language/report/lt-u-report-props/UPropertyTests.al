@@ -271,7 +271,11 @@ codeunit 69789 "LT U Property Tests"
             Observer.ObserveError('plain_report_run');
         Observer.Observe('state_after_plain', State.Dump());
         TempBlob.CreateOutStream(OutS);
-        Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS);
+        asserterror begin Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('saveas_inherent|failed')
+        else
+            ClearLastError();
         Observer.Observe('inherent_report_saveas_length_positive', Format(TempBlob.Length() > 0));
         asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
         if GetLastErrorText() <> 'NOERROR' then

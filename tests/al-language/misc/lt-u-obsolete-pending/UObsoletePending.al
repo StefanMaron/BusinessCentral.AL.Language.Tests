@@ -101,7 +101,11 @@ codeunit 69799 "LT U Obsolete Pending Tests"
             Observer.ObserveError('Card_ObsExtAction_Invoke_|failed')
         else
             ClearLastError();
-        Card.Close();
+        asserterror begin Card.Close(); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('close|failed')
+        else
+            ClearLastError();
         Observer.Finish();
     end;
 

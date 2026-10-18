@@ -187,9 +187,13 @@ codeunit 69592 "LT U Page Props Tests"
             ClearLastError();
         Observer.Observe('ext_on_pages_opened', Format(LookupOpened));
         LookupOpened := 0;
-        asserterror Card.ExtLookupOff.Lookup();
+        asserterror begin Card.ExtLookupOff.Lookup(); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('ext_off|no_error', 'true');
+        end else
+            Observer.ObserveError('ext_off');
         Observer.Observe('ext_off_pages_opened', Format(LookupOpened));
-        Observer.ObserveError('ext_off');
         Card.Close();
         Observer.Finish();
     end;
@@ -286,7 +290,11 @@ codeunit 69592 "LT U Page Props Tests"
             Observer.Observe('ext_enabled_off_invoke|no_error', 'true');
         end else
             Observer.ObserveError('ext_enabled_off_invoke');
-        Card.Close();
+        asserterror begin Card.Close(); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('close|failed')
+        else
+            ClearLastError();
         Observer.Finish();
     end;
 
