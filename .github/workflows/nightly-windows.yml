@@ -679,7 +679,7 @@ jobs:
 
           # Order matters: the fixture is a dependency of al-language, which is in turn a
           # dependency of al-language-onprem.
-          $apps = @('tests/al-language-internals-fixture', 'tests/al-language', 'tests/al-language-onprem')
+          $apps = @('tests/al-language-win-probe', 'tests/al-language-win-probe-fts')
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
@@ -695,8 +695,13 @@ jobs:
             Write-Host "::endgroup::"
 
             Write-Host "::group::publish $folder"
-            Publish-BcContainerApp -containerName $c -credential $cred `
-              -appFile $appFile -skipVerification -sync -install
+            try {
+              Publish-BcContainerApp -containerName $c -credential $cred `
+                -appFile $appFile -skipVerification -sync -install
+              Write-Host "WCRESULT publish $folder : ok"
+            } catch {
+              Write-Host "WCRESULT publish $folder : FAILED: $($_.Exception.Message)"
+            }
             Write-Host "::endgroup::"
           }
 
@@ -722,27 +727,44 @@ jobs:
             }
           }
 
-          $suites = @(
-            @{ name = 'al-language';        folder = 'tests/al-language' },
-            @{ name = 'al-language-onprem'; folder = 'tests/al-language-onprem' }
+          $probe = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe/app.json') -Raw | ConvertFrom-Json
+          $fts = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-fts/app.json') -Raw | ConvertFrom-Json
+          # One run per test function, so a crashed session loses only that probe.
+          $runs = @(
+            @{ id = $probe.id; cu = 79901; fn = 'Download_File' },
+            @{ id = $probe.id; cu = 79901; fn = 'Download_FromStream' },
+            @{ id = $probe.id; cu = 67582; fn = 'PartLine_EnteredAfterHostKey_Baseline' },
+            @{ id = $probe.id; cu = 67582; fn = 'PartLine_EnteredBeforeHostKey_ThenKeyTyped' },
+            @{ id = $probe.id; cu = 79923; fn = 'TestPage_SetValue_FlowField' },
+            @{ id = $probe.id; cu = 79931; fn = 'Page_GestureContextMenu_Opens' },
+            @{ id = $probe.id; cu = 79911; fn = 'Evaluate_PageStyle' },
+            @{ id = $probe.id; cu = 79912; fn = 'Evaluate_HttpRequestType' },
+            @{ id = $probe.id; cu = 79913; fn = 'Evaluate_PageBackgroundTaskErrorLevel' },
+            @{ id = $probe.id; cu = 61275; fn = 'IsPathTemporary_Paths' },
+            @{ id = $probe.id; cu = 61275; fn = 'Erase_EmptyName_FullErrorText' },
+            @{ id = $probe.id; cu = 61258; fn = 'O_Database_ExportData_ImportData_Files' },
+            @{ id = $fts.id;   cu = 79951; fn = 'Fts_InsertAndFilter' }
           )
-
-          foreach ($s in $suites) {
-            $appJson = Get-Content (Join-Path $env:GITHUB_WORKSPACE "$($s.folder)/app.json") -Raw | ConvertFrom-Json
-            $out = Join-Path $env:GITHUB_WORKSPACE "xunit-$($s.name).xml"
-            Write-Host "::group::run $($s.name) ($($appJson.id))"
-            $sw = [Diagnostics.Stopwatch]::StartNew()
+          $n = 0
+          foreach ($r in $runs) {
+            $n++
+            $out = Join-Path $env:GITHUB_WORKSPACE ("xunit-wc-{0:d2}-{1}.xml" -f $n, $r.fn)
+            Write-Host "::group::run $($r.cu) $($r.fn)"
             try {
               Run-TestsInBcContainer -containerName $c -credential $cred `
-                -extensionId $appJson.id `
+                -extensionId $r.id -testCodeunit $r.cu -testFunction $r.fn `
                 -culture $env:CULTURE -timezone $env:TIMEZONE `
                 -XUnitResultFileName $out -AzureDevOps 'no' -GitHubActions 'no' `
                 -detailed -returnTrueIfAllPassed | Out-Null
             } catch {
-              # A failing test must not abort the other suite -- the artifact is the deliverable.
-              Write-Host "::warning::Run-TestsInBcContainer for $($s.name) raised: $($_.Exception.Message)"
+              Write-Host "WCRESULT $($r.cu) $($r.fn) RAISED: $($_.Exception.Message)"
             }
-            Write-Host ("$($s.name) finished in {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+            if (Test-Path $out) {
+              $x = Get-Content $out -Raw
+              Write-Host ("WCRESULT $($r.cu) $($r.fn) XML: " + $x.Substring(0, [Math]::Min(3500, $x.Length)))
+            } else {
+              Write-Host "WCRESULT $($r.cu) $($r.fn) NO XUNIT FILE"
+            }
             Write-Host "::endgroup::"
           }
 
@@ -764,6 +786,7 @@ jobs:
       # ---------------------------------------------------------------------------------
       - name: Isolation probe -- compile, publish, run under two custom test runners
         id: isolation_probe
+        if: false
         continue-on-error: true
         run: |
           $ErrorActionPreference = 'Stop'
@@ -810,7 +833,7 @@ jobs:
           }
 
       - name: Compare against issue #213
-        if: always()
+        if: false
         shell: bash
         run: |
           python .github/scripts/bc-test-results.py \
@@ -821,7 +844,7 @@ jobs:
             --outdir test-results
 
       - name: Isolation probe -- per-test rows
-        if: always()
+        if: false
         continue-on-error: true
         shell: bash
         run: |

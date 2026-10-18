@@ -1,0 +1,39 @@
+{
+  "id": "9d2b6f41-3c55-4e2f-8b18-4a7e9f32c0d5",
+  "name": "AL Language Windows Check FTS",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "Probes of results that looked like Linux host bugs; run only by the Windows nightly on a branch.",
+  "description": "Windows check of Linux suspects.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "application": "27.0.0.0",
+  "dependencies": [
+    {
+      "id": "63ca2fa4-4f03-4f2b-a480-172fef340d3f",
+      "name": "System Application",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    },
+    {
+      "id": "437dbf0e-84ff-417a-965d-ed2bb9650972",
+      "name": "Base Application",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    }
+  ],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 79950,
+      "to": 79999
+    }
+  ],
+  "features": [],
+  "runtime": "18.0",
+  "target": "OnPrem"
+}
