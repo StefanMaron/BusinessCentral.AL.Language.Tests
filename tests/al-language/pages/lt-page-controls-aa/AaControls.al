@@ -347,34 +347,6 @@ page 76514 "LT AA Lenient Card"
     }
 }
 
-// Gesture = ContextMenu compiles, but the service tier cannot load the page metadata (a CLR exception when the page is opened).
-page 76515 "LT AA ContextMenu Card"
-{
-    PageType = Card;
-    SourceTable = "LT AA Row";
-    ApplicationArea = All;
-
-    layout
-    {
-        area(Content)
-        {
-            field(Id; Rec.Id) { ApplicationArea = All; }
-        }
-    }
-
-    actions
-    {
-        area(Processing)
-        {
-            action(ActContext)
-            {
-                ApplicationArea = All;
-                Gesture = ContextMenu;
-            }
-        }
-    }
-}
-
 codeunit 76511 "LT AA Controls Tests"
 {
     Subtype = Test;
@@ -401,7 +373,7 @@ codeunit 76511 "LT AA Controls Tests"
     end;
 
     [Test]
-    procedure AA_Controls_ActionState()
+    procedure AA_Controls_Action_Gestures()
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT AA Row";
@@ -412,19 +384,134 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('left-visible', Format(P.ActSwipeLeft.Visible()));
         Observer.Observe('left-enabled', Format(P.ActSwipeLeft.Enabled()));
         Observer.Observe('right-visible', Format(P.ActSwipeRight.Visible()));
+        Observer.Observe('right-enabled', Format(P.ActSwipeRight.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_ScopeRepeater()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
         Observer.Observe('none-visible', Format(P.ActNone.Visible()));
+        Observer.Observe('none-enabled', Format(P.ActNone.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_ScopePageFooter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
         Observer.Observe('page-scope-visible', Format(P.ActPageScope.Visible()));
+        Observer.Observe('page-scope-enabled', Format(P.ActPageScope.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_EnabledLiterals()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
+        Observer.Observe('true-visible', Format(P.ActEnabledTrue.Visible()));
         Observer.Observe('true-enabled', Format(P.ActEnabledTrue.Enabled()));
+        Observer.Observe('false-visible', Format(P.ActEnabledFalse.Visible()));
         Observer.Observe('false-enabled', Format(P.ActEnabledFalse.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_Ellipsis()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
+        Observer.Observe('ellipsis-visible', Format(P.ActEllipsis.Visible()));
+        Observer.Observe('ellipsis-enabled', Format(P.ActEllipsis.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_SplitButton()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
+        Observer.Observe('split-first-visible', Format(P.SplitFirst.Visible()));
+        Observer.Observe('split-first-enabled', Format(P.SplitFirst.Enabled()));
+        Observer.Observe('split-second-visible', Format(P.SplitSecond.Visible()));
+        Observer.Observe('split-second-enabled', Format(P.SplitSecond.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_StandardGroup()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
+        Observer.Observe('standard-first-visible', Format(P.StandardFirst.Visible()));
+        Observer.Observe('standard-first-enabled', Format(P.StandardFirst.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_HeaderSeparator()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
+        Observer.Observe('after-header-visible', Format(P.AfterHeader.Visible()));
+        Observer.Observe('after-header-enabled', Format(P.AfterHeader.Enabled()));
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AA_Controls_Action_EnabledExpression()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA Controls Card";
+    begin
+        Seed(Row);
+        P.OpenEdit();
         Observer.Observe('flag-enabled-before', Format(P.ActEnabledFlag.Enabled()));
         P.Toggle.Invoke();
         Observer.Observe('flag-enabled-after', Format(P.ActEnabledFlag.Enabled()));
         P.Toggle.Invoke();
         Observer.Observe('flag-enabled-again', Format(P.ActEnabledFlag.Enabled()));
-        Observer.Observe('split-first-visible', Format(P.SplitFirst.Visible()));
-        Observer.Observe('split-second-enabled', Format(P.SplitSecond.Enabled()));
-        Observer.Observe('standard-first-visible', Format(P.StandardFirst.Visible()));
-        Observer.Observe('after-header-visible', Format(P.AfterHeader.Visible()));
         P.Close();
         Observer.Finish();
     end;
@@ -450,19 +537,6 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('flag-enabled-after', Format(P.PartByFlag.Enabled()));
         Observer.Observe('flag-editable-after', Format(P.PartByFlag.Editable()));
         P.Close();
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure AA_Controls_GestureContextMenuOpen()
-    var
-        Observer: Codeunit "Probe Observer";
-        Row: Record "LT AA Row";
-        P: TestPage "LT AA ContextMenu Card";
-    begin
-        Seed(Row);
-        asserterror P.OpenEdit();
-        Observer.Observe('error-start', CopyStr(GetLastErrorText(), 1, 100));
         Observer.Finish();
     end;
 

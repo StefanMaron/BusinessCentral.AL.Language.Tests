@@ -97,19 +97,35 @@ codeunit 76510 "LT AA Field Tests"
     begin
         Seed(Row);
         P.OpenEdit();
-        P.TableLower.SetValue('abc');
-        Observer.Observe('page-ok', P.TableLower.Value());
-        asserterror P.TableLower.SetValue('ABC');
-        Observer.ObserveError('page-error');
+        Observer.Observe('page-lower-ok', Format(TrySetTableLower(P, 'abc')));
+        Observer.Observe('page-lower-value', P.TableLower.Value());
+        Observer.Observe('page-upper-ok', Format(TrySetTableLower(P, 'ABC')));
+        if GetLastErrorText() <> '' then
+            Observer.ObserveError('page-upper-error');
+        Observer.Observe('page-upper-value', P.TableLower.Value());
         P.Close();
         Row.Get('A');
-        Row.Validate(Lower, 'xyz');
-        Observer.Observe('validate-ok', Row.Lower);
-        asserterror Row.Validate(Lower, 'XYZ');
-        Observer.ObserveError('validate-error');
+        Observer.Observe('stored-after-page', Row.Lower);
+        Observer.Observe('validate-ok', Format(TryValidateLower(Row, 'xyz')));
+        Observer.Observe('validate-ok-value', Row.Lower);
+        Observer.Observe('validate-upper', Format(TryValidateLower(Row, 'XYZ')));
+        if GetLastErrorText() <> '' then
+            Observer.ObserveError('validate-upper-error');
         Row.Lower := 'QRS';
         Observer.Observe('assign', Row.Lower);
         Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySetTableLower(var P: TestPage "LT AA Field Card"; NewValue: Text)
+    begin
+        P.TableLower.SetValue(NewValue);
+    end;
+
+    [TryFunction]
+    local procedure TryValidateLower(var Row: Record "LT AA Row"; NewValue: Text)
+    begin
+        Row.Validate(Lower, CopyStr(NewValue, 1, MaxStrLen(Row.Lower)));
     end;
 
     [Test]
