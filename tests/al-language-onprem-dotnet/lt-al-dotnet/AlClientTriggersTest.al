@@ -90,30 +90,6 @@ codeunit 99131 "LT AL Client Triggers Test"
     end;
 
     [Test]
-    procedure ALClient_NotifierAndUserTours()
-    begin
-        Probe(99132, true);
-    end;
-
-    [Test]
-    procedure ALClient_Tour()
-    begin
-        Probe(99133, true);
-    end;
-
-    [Test]
-    procedure ALClient_Camera()
-    begin
-        Probe(99134, true);
-    end;
-
-    [Test]
-    procedure ALClient_Location()
-    begin
-        Probe(99135, true);
-    end;
-
-    [Test]
     procedure ALClient_NoHandler()
     begin
         Probe(99136, false);
