@@ -125,4 +125,52 @@ codeunit 67359 "LT DTF Tests"
         GlobalLanguage(SavedLanguage);
         Observer.Finish();
     end;
+
+    [Test]
+    procedure GetRange_DayAboveTwelve_English()
+    var
+        Observer: Codeunit "Probe Observer";
+        SavedLanguage: Integer;
+        SavedWorkDate: Date;
+    begin
+        SavedLanguage := GlobalLanguage();
+        SavedWorkDate := WorkDate();
+        GlobalLanguage(1033);
+        WorkDate(DMY2Date(15, 6, 2031));
+        Run('dd_mm_four', '1301', Observer);
+        Run('mm_dd_four', '0113', Observer);
+        Run('dd_mm_yy_six', '130126', Observer);
+        Run('mm_dd_yy_six', '011326', Observer);
+        Run('dd_mm_yyyy_eight', '13012026', Observer);
+        Run('mm_dd_yyyy_eight', '01132026', Observer);
+        Run('dd_mm_yy_separators', '13-01-26', Observer);
+        Run('mm_dd_yy_separators', '01-13-26', Observer);
+        WorkDate(SavedWorkDate);
+        GlobalLanguage(SavedLanguage);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GetRange_DayAboveTwelve_German()
+    var
+        Observer: Codeunit "Probe Observer";
+        SavedLanguage: Integer;
+        SavedWorkDate: Date;
+    begin
+        SavedLanguage := GlobalLanguage();
+        SavedWorkDate := WorkDate();
+        GlobalLanguage(1031);
+        WorkDate(DMY2Date(15, 6, 2031));
+        Run('dd_mm_four', '1301', Observer);
+        Run('mm_dd_four', '0113', Observer);
+        Run('dd_mm_yy_six', '130126', Observer);
+        Run('mm_dd_yy_six', '011326', Observer);
+        Run('dd_mm_yyyy_eight', '13012026', Observer);
+        Run('mm_dd_yyyy_eight', '01132026', Observer);
+        Run('dd_mm_yy_separators', '13.01.26', Observer);
+        Run('mm_dd_yy_separators', '01.13.26', Observer);
+        WorkDate(SavedWorkDate);
+        GlobalLanguage(SavedLanguage);
+        Observer.Finish();
+    end;
 }

@@ -36,10 +36,14 @@ codeunit 67357 "LT FCM Tests"
     procedure Format_CommaBeforeDecimals_Decimal()
     var
         Observer: Codeunit "Probe Observer";
+        WholeDecimal: Decimal;
         Saved: Integer;
     begin
         Saved := GlobalLanguage();
         GlobalLanguage(1033);
+        WholeDecimal := 1000;
+        Run('whole_decimal', WholeDecimal, '<Integer><Comma,,><Decimals>', Observer);
+        Run('whole_decimal_dot', WholeDecimal, '<Integer><Comma,.><Decimals>', Observer);
         Run('big', 1234567.891, '<Integer><Comma,,><Decimals>', Observer);
         Run('small', 0.5, '<Integer><Comma,,><Decimals>', Observer);
         Run('negative', -1234.5, '<Integer><Comma,,><Decimals>', Observer);
@@ -91,6 +95,30 @@ codeunit 67357 "LT FCM Tests"
         Run('duration_comma', Dur, '<Integer><Comma,,><Decimals>', Observer);
         Run('datetime', Stamp, '<Integer Thousand><Comma,.><Decimals>', Observer);
         Run('datetime_comma', Stamp, '<Integer><Comma,,><Decimals>', Observer);
+        GlobalLanguage(Saved);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Format_CommaWithoutDecimals_OtherTypes()
+    var
+        Observer: Codeunit "Probe Observer";
+        BigValue: BigInteger;
+        Dur: Duration;
+        Stamp: DateTime;
+        Saved: Integer;
+    begin
+        Saved := GlobalLanguage();
+        GlobalLanguage(1033);
+        BigValue := 1234567890123L;
+        Dur := 3723000;
+        Stamp := CreateDateTime(DMY2Date(15, 6, 2026), 134500T);
+        Run('biginteger_integer', BigValue, '<Integer Thousand><Comma,.>', Observer);
+        Run('biginteger_only', BigValue, '<Comma,.>', Observer);
+        Run('duration_integer', Dur, '<Integer Thousand><Comma,.>', Observer);
+        Run('duration_only', Dur, '<Comma,.>', Observer);
+        Run('datetime_integer', Stamp, '<Integer Thousand><Comma,.>', Observer);
+        Run('datetime_only', Stamp, '<Comma,.>', Observer);
         GlobalLanguage(Saved);
         Observer.Finish();
     end;
