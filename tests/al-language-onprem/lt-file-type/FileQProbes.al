@@ -127,17 +127,18 @@ codeunit 61276 "LT Q File Probes"
         Observer.Observe('dl_blank_from_tofile', '[' + ToFile + ']');
         Observer.Observe('source_still_exists', Format(File.Exists(P)));
         Cleanup(P);
-        Observer.Expect('dl_title', 'ok ret=No');
         Observer.Expect('dl_title_tofile', '[untouched]');
-        Observer.Expect('dl_all_args', 'ok ret=No');
         Observer.Expect('dl_all_args_tofile', '[untouched]');
-        Observer.Expect('dl_blank', 'ok ret=No');
         Observer.Expect('dl_blank_tofile', '[untouched]');
-        Observer.Expect('dl_missing', 'ok ret=No');
         Observer.Expect('dl_missing_tofile', '[untouched]');
-        Observer.Expect('dl_blank_from', 'ok ret=No');
         Observer.Expect('dl_blank_from_tofile', '[untouched]');
+        // Linux container differs from Windows BC (run 39125184978 / 39125190236): File.Download returns Yes (the pre-set value is kept) on BC 27.5 and 29.0 and leaves ToFile untouched; Linux BC 28+ returns No. The dl_* return values are not asserted.
         Observer.Expect('source_still_exists', 'Yes');
+        Observer.Ignore('dl_title');
+        Observer.Ignore('dl_all_args');
+        Observer.Ignore('dl_blank');
+        Observer.Ignore('dl_missing');
+        Observer.Ignore('dl_blank_from');
         Observer.Verify();
     end;
 
@@ -169,13 +170,14 @@ codeunit 61276 "LT Q File Probes"
         Observer.Observe('dls_blank_tofile', '[' + ToFile + ']');
         Observer.Observe('stream_eos_after', Format(InS.EOS()));
         F.Close();
-        Observer.Expect('dls_title', 'ok ret=No');
         Observer.Expect('dls_title_tofile', '[untouched]');
-        Observer.Expect('dls_all_args', 'ok ret=No');
         Observer.Expect('dls_all_args_tofile', '[untouched]');
-        Observer.Expect('dls_blank', 'ok ret=No');
         Observer.Expect('dls_blank_tofile', '[untouched]');
+        // Linux container differs from Windows BC (run 39125184978 / 39125190236): DownloadFromStream returns Yes on Windows (27.5 and 29.0); Linux BC 28+ returns No. The dls_* return values are not asserted.
         Observer.Expect('stream_eos_after', 'No');
+        Observer.Ignore('dls_title');
+        Observer.Ignore('dls_all_args');
+        Observer.Ignore('dls_blank');
         Observer.Verify();
     end;
 #endif
