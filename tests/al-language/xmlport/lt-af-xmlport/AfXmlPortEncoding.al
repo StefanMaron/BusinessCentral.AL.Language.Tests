@@ -197,9 +197,11 @@ codeunit 78313 "LT AF XmlPort Encoding"
     [Test]
     procedure AF_Encoding_Export()
     var
+        Umlaut: Text[1];
         Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
     begin
+        Umlaut[1] := 252;
         Seed();
         ClearLastError();
         if TryExport8(TempBlob) then begin
@@ -214,7 +216,11 @@ codeunit 78313 "LT AF XmlPort Encoding"
             Observer.Observe('utf16 export as utf16', Decl(TempBlob, TextEncoding::UTF16));
         end else
             Observer.ObserveError('utf16 export');
-        Observer.Finish();
+        Observer.Expect('utf8 export bytes', '129:60,63,120,109,108,32,118,101,');
+        Observer.Expect('utf8 export as utf8', '<?xml version="1.0" encoding="UTF-8" standalone="no"?><Root>  <Row>    <Id>1</Id>    <Name>G' + Umlaut + 'n</Name>  </Row></Root>');
+        Observer.Expect('utf16 export bytes', '260:255,254,60,0,63,0,120,0,');
+        Observer.Expect('utf16 export as utf16', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root>  <Row>    <Id>1</Id>    <Name>G' + Umlaut + 'n</Name>  </Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
