@@ -680,6 +680,19 @@ codeunit 69851 "LT V Subs"
     end;
 }
 
+codeunit 69855 "LT V Session Worker"
+{
+    trigger OnRun()
+    var
+        Row: Record "LT V Event Log";
+    begin
+        Row.Init();
+        Row."Event Name" := 'Worker';
+        Row."Session Id" := SessionId();
+        Row.Insert();
+    end;
+}
+
 report 69860 "LT V Report A"
 {
     UsageCategory = None;
