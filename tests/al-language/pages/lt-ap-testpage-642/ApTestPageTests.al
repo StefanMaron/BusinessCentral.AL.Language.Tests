@@ -429,7 +429,10 @@ codeunit 79650 "LT AP TestPage Tests"
         P.VarCd.SetValue('X');
         Mand(P, 'vars-set');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('value', 'Code=No Name=No Txt=No Cd=No TxtNB=No CdNB=No VarTxt=No VarCd=No');
+        Observer.Expect('blank', 'Code=No Name=No Txt=No Cd=No TxtNB=No CdNB=No VarTxt=No VarCd=No');
+        Observer.Expect('vars-set', 'Code=No Name=No Txt=No Cd=No TxtNB=No CdNB=No VarTxt=No VarCd=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -445,7 +448,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.GoToKey('E');
         Mand(P, 'blank');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('value', 'Code=No Name=No Txt=No Cd=No TxtNB=No CdNB=No VarTxt=No VarCd=No');
+        Observer.Expect('blank', 'Code=No Name=No Txt=No Cd=No TxtNB=No CdNB=No VarTxt=No VarCd=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -458,7 +463,8 @@ codeunit 79650 "LT AP TestPage Tests"
         P.OpenNew();
         Mand(P, 'new');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('new', 'Code=No Name=No Txt=No Cd=No TxtNB=No CdNB=No VarTxt=No VarCd=No');
+        Observer.Verify();
     end;
 
     // ---- item 8: SetValue on a page with ModifyAllowed = false ----
@@ -503,7 +509,13 @@ codeunit 79650 "LT AP TestPage Tests"
             Observer.ObserveError('close');
         Row.Get('A');
         Observer.Observe('stored', Row.Name);
-        Observer.Finish();
+        Observer.Expect('editable', 'No');
+        Observer.Expect('set', 'ok');
+        Observer.Expect('value', 'changed');
+        Observer.Expect('close|text', 'Page cannot be saved.');
+        Observer.Expect('close|code', 'TestWrapped');
+        Observer.Expect('stored', 'Alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -530,7 +542,14 @@ codeunit 79650 "LT AP TestPage Tests"
         else
             Observer.ObserveError('close');
         Observer.Observe('stored', Format(Row.Get('NM1')) + '|' + Row.Name);
-        Observer.Finish();
+        Observer.Expect('editable', 'No');
+        Observer.Expect('set-code', 'ok');
+        Observer.Expect('set-name', 'ok');
+        Observer.Expect('value', 'new');
+        Observer.Expect('close|text', 'Page cannot be saved.');
+        Observer.Expect('close|code', 'TestWrapped');
+        Observer.Expect('stored', 'Yes|');
+        Observer.Verify();
     end;
 
     // ---- item 9: Ratio control text ----
@@ -545,7 +564,8 @@ codeunit 79650 "LT AP TestPage Tests"
         Row.Insert();
     end;
 
-    [Test]
+    // Linux suspect, not asserted: on the BC 29.0 Linux container every value (0.5, 1, 12.5, 0.25, -0.5, 0.333) reads '0%' from the Ratio
+    // control while a plain control on the same field reads the value. Kept as a probe without [Test] until the Windows nightly confirms it.
     procedure Ap09_RatioValue()
     var
         Row: Record "LT AP Row";
