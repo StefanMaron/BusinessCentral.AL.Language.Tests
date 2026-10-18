@@ -363,6 +363,7 @@ page 79614 "LT AP Card"
                     ApplicationArea = All;
                     ExtendedDatatype = Ratio;
                 }
+                field(RtPlain; Rec.Rt) { ApplicationArea = All; }
                 field(Val; Rec.Val) { ApplicationArea = All; }
                 field(SecF; Rec.Sec)
                 {

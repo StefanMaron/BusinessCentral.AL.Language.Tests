@@ -74,7 +74,10 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('g-name', Host.PartG.Name.Value());
         Observer.Observe('f-page', Host.PartF."Page".Value());
         Host.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'PGB;PFB;');
+        Observer.Expect('g-name', 'Beta');
+        Observer.Expect('f-page', 'Beta');
+        Observer.Verify();
     end;
 
     // ---- item 2: OpenNew, Filter.SetFilter on a key field / a non-key field, then SetValue on a non-key field ----
@@ -108,7 +111,15 @@ codeunit 79650 "LT AP TestPage Tests"
         P.Close();
         Observer.Observe('close', Log.Take());
         Stored('closed');
-        Observer.Finish();
+        Observer.Expect('open', 'O;W;C;');
+        Observer.Expect('filter', 'W;CK1;W;CK1;');
+        Observer.Expect('code-on-page', 'K1');
+        Observer.Expect('setvalue', '');
+        Observer.Expect('sv-count', '0');
+        Observer.Expect('close', 'IK1/typed;Q;');
+        Observer.Expect('closed-count', '1');
+        Observer.Expect('closed-row', 'K1|typed|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,7 +142,15 @@ codeunit 79650 "LT AP TestPage Tests"
         P.Close();
         Observer.Observe('close', Log.Take());
         Stored('closed');
-        Observer.Finish();
+        Observer.Expect('open', 'O;W;C;');
+        Observer.Expect('filter', 'W;C;W;C;');
+        Observer.Expect('grp-on-page', '');
+        Observer.Expect('setvalue', '');
+        Observer.Expect('sv-count', '0');
+        Observer.Expect('close', 'I/typed;Q;');
+        Observer.Expect('closed-count', '1');
+        Observer.Expect('closed-row', '|typed|');
+        Observer.Verify();
     end;
 
     // ---- item 3: an empty list shows a row inserted by page code; reads of the action and of First() apart ----
@@ -156,7 +175,15 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('next-log', Log.Take());
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open', 'O;W;C;W;C;');
+        Observer.Expect('action', 'ins;RNEW1;RNEW1;RNEW1;CNEW1;');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first-log', '');
+        Observer.Expect('code', 'NEW1');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next-log', 'W;C;');
+        Observer.Expect('close', 'Q;');
+        Observer.Verify();
     end;
 
     // ---- item 4: Filter.SetFilter on a Boolean field (non-modal list) and a Text field filter on a modal list ----
@@ -181,7 +208,15 @@ codeunit 79650 "LT AP TestPage Tests"
         BoolFilter('No');
         BoolFilter('true');
         BoolFilter('false');
-        Observer.Finish();
+        Observer.Expect('Yes-filter', 'Yes');
+        Observer.Expect('Yes-rows', 'A,C,');
+        Observer.Expect('No-filter', 'No');
+        Observer.Expect('No-rows', 'B,D,');
+        Observer.Expect('true-filter', '');
+        Observer.Expect('true-rows', 'A,B,C,D,');
+        Observer.Expect('false-filter', '');
+        Observer.Expect('false-rows', 'A,B,C,D,');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -204,7 +239,10 @@ codeunit 79650 "LT AP TestPage Tests"
         Seed();
         HandlerFilter := 'B*|D*';
         Page.RunModal(Page::"LT AP List", Row);
-        Observer.Finish();
+        Observer.Expect('before', 'A,B,C,D,,');
+        Observer.Expect('filter', 'B*|D*');
+        Observer.Expect('after', 'B,D,,');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -228,7 +266,11 @@ codeunit 79650 "LT AP TestPage Tests"
         Page.RunModal(Page::"LT AP List", Row);
         HandlerFilter := 'false';
         Page.RunModal(Page::"LT AP List", Row);
-        Observer.Finish();
+        Observer.Expect('Yes-filter', 'Yes');
+        Observer.Expect('Yes-rows', 'A,C,,');
+        Observer.Expect('false-filter', '');
+        Observer.Expect('false-rows', 'A,B,C,D,,');
+        Observer.Verify();
     end;
 
     // ---- item 5: Page.RunModal over a temporary record: reads, where New() rows go ----
@@ -283,7 +325,17 @@ codeunit 79650 "LT AP TestPage Tests"
                 Shown += Temp."Code" + ',';
             until Temp.Next() = 0;
         Observer.Observe('temp', Shown);
-        Observer.Finish();
+        Observer.Expect('h-open', 'O;RT5;RT3;RT1;RT5;RT5;CT5;');
+        Observer.Expect('h-cur', 'T5');
+        Observer.Expect('h-rows', 'T1,T3,T5,');
+        Observer.Expect('h-walk', 'RT1;RT1;CT1;RT3;RT3;CT3;RT5;RT5;CT5;');
+        Observer.Expect('h-new', 'RT1;RT1;CT1;W;C;IT4/n4;W;C;');
+        Observer.Expect('h-rows2', 'T1,T4,T0,T3,T5,');
+        Observer.Expect('h-ok', 'Q;');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('after', '');
+        Observer.Expect('temp', 'T0,T1,T3,T4,T5,');
+        Observer.Verify();
     end;
 
     // ---- item 6: the same OnValidate error on a card, a list and a list part ----
@@ -299,7 +351,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.GoToKey('A');
         asserterror P.Val.SetValue('BAD');
         Observer.ObserveError('card');
-        Observer.Finish();
+        Observer.Expect('card|text', 'Validation error for Field: Val,  Message = ''LT AP bad value BAD (Select Refresh to discard errors)''');
+        Observer.Expect('card|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +367,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.GoToKey('A');
         asserterror P.Val.SetValue('BAD');
         Observer.ObserveError('list');
-        Observer.Finish();
+        Observer.Expect('list|text', 'Validation error for Field: Val,  Message = ''LT AP bad value BAD''');
+        Observer.Expect('list|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -327,14 +383,16 @@ codeunit 79650 "LT AP TestPage Tests"
         P.GoToKey('A');
         asserterror P.PartF.Val.SetValue('BAD');
         Observer.ObserveError('listpart');
-        Observer.Finish();
+        Observer.Expect('listpart|text', 'Validation error for Field: Val,  Message = ''LT AP bad value BAD''');
+        Observer.Expect('listpart|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     // ---- items 7 and 18: ShowMandatory of Text and Code fields with and without NotBlank, and of page variables ----
 
     local procedure Mand(var P: TestPage "LT AP Card"; Name: Text)
     begin
-        Observer.Observe(Name, 'Txt=' + Format(P.Txt.ShowMandatory()) + ' Cd=' + Format(P.Cd.ShowMandatory()) +
+        Observer.Observe(Name, 'Code=' + Format(P."Code".ShowMandatory()) + ' Name=' + Format(P.Name.ShowMandatory()) + ' Txt=' + Format(P.Txt.ShowMandatory()) + ' Cd=' + Format(P.Cd.ShowMandatory()) +
             ' TxtNB=' + Format(P.TxtNB.ShowMandatory()) + ' CdNB=' + Format(P.CdNB.ShowMandatory()) +
             ' VarTxt=' + Format(P.VarTxt.ShowMandatory()) + ' VarCd=' + Format(P.VarCd.ShowMandatory()));
     end;
@@ -417,6 +475,12 @@ codeunit 79650 "LT AP TestPage Tests"
         P."Code".SetValue(V);
     end;
 
+    [TryFunction]
+    local procedure TryClose(var P: TestPage "LT AP NoModify Card")
+    begin
+        P.Close();
+    end;
+
     [Test]
     procedure Ap08_ModifyAllowedFalse_StoredRow()
     var
@@ -433,7 +497,10 @@ codeunit 79650 "LT AP TestPage Tests"
         else
             Observer.ObserveError('set');
         Observer.Observe('value', P.Name.Value());
-        P.Close();
+        if TryClose(P) then
+            Observer.Observe('close', 'ok')
+        else
+            Observer.ObserveError('close');
         Row.Get('A');
         Observer.Observe('stored', Row.Name);
         Observer.Finish();
@@ -458,7 +525,10 @@ codeunit 79650 "LT AP TestPage Tests"
         else
             Observer.ObserveError('set-name');
         Observer.Observe('value', P.Name.Value());
-        P.Close();
+        if TryClose(P) then
+            Observer.Observe('close', 'ok')
+        else
+            Observer.ObserveError('close');
         Observer.Observe('stored', Format(Row.Get('NM1')) + '|' + Row.Name);
         Observer.Finish();
     end;
@@ -491,17 +561,17 @@ codeunit 79650 "LT AP TestPage Tests"
         RatioRow('R6', 0.333);
         P.OpenView();
         P.GoToKey('R1');
-        Observer.Observe('0.5', P.RtF.Value());
+        Observer.Observe('0.5', P."Code".Value() + '|' + P.RtF.Value() + '|' + P.RtPlain.Value());
         P.GoToKey('R2');
-        Observer.Observe('1', P.RtF.Value());
+        Observer.Observe('1', P."Code".Value() + '|' + P.RtF.Value() + '|' + P.RtPlain.Value());
         P.GoToKey('R3');
-        Observer.Observe('12.5', P.RtF.Value());
+        Observer.Observe('12.5', P."Code".Value() + '|' + P.RtF.Value() + '|' + P.RtPlain.Value());
         P.GoToKey('R4');
-        Observer.Observe('0.25', P.RtF.Value());
+        Observer.Observe('0.25', P."Code".Value() + '|' + P.RtF.Value() + '|' + P.RtPlain.Value());
         P.GoToKey('R5');
-        Observer.Observe('-0.5', P.RtF.Value());
+        Observer.Observe('-0.5', P."Code".Value() + '|' + P.RtF.Value() + '|' + P.RtPlain.Value());
         P.GoToKey('R6');
-        Observer.Observe('0.333', P.RtF.Value());
+        Observer.Observe('0.333', P."Code".Value() + '|' + P.RtF.Value() + '|' + P.RtPlain.Value());
         P.Close();
         Observer.Finish();
     end;
@@ -523,7 +593,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.SelFilter.Invoke();
         Observer.Observe('log', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'No');
+        Observer.Expect('log', 'S n=0 f=[Code: ZZZ] cf=[ZZZ];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -542,7 +614,8 @@ codeunit 79650 "LT AP TestPage Tests"
         P.SelFilter.Invoke();
         Observer.Observe('log', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'S n=0 f=[Code: ''''] cf=[''''];W;C;W;C;');
+        Observer.Verify();
     end;
 
     // ---- item 11: CurrPage.SaveRecord and CurrPage.Update in one action ----
@@ -566,7 +639,11 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('stored', Row.Name);
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('before', 'O;RA;RA;');
+        Observer.Expect('action', 'RA;saved;updated;RA;RA;');
+        Observer.Expect('stored', 'edited');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -588,7 +665,11 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('stored', Row.Name);
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('before', 'O;RA;RA;');
+        Observer.Expect('action', 'RA;saved;updated;RA;RA;');
+        Observer.Expect('stored', 'edited');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     // ---- items 5 and 12: a Page variable with SetRecord of a temporary record whose key is before, between or after the table's keys ----
@@ -627,7 +708,10 @@ codeunit 79650 "LT AP TestPage Tests"
     begin
         Start();
         SetRecordTemp('C');
-        Observer.Finish();
+        Observer.Expect('h-open', 'O;RD;RF;RD;RB;RD;RD;CD;');
+        Observer.Expect('h-cur', 'D|db-d');
+        Observer.Expect('h-rows', 'B,D,F,,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -636,7 +720,10 @@ codeunit 79650 "LT AP TestPage Tests"
     begin
         Start();
         SetRecordTemp('A');
-        Observer.Finish();
+        Observer.Expect('h-open', 'O;RB;RD;RF;RB;RB;CB;');
+        Observer.Expect('h-cur', 'B|db-b');
+        Observer.Expect('h-rows', 'B,D,F,,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -645,7 +732,10 @@ codeunit 79650 "LT AP TestPage Tests"
     begin
         Start();
         SetRecordTemp('G');
-        Observer.Finish();
+        Observer.Expect('h-open', 'O;RF;RD;RB;RF;RF;CF;');
+        Observer.Expect('h-cur', 'F|db-f');
+        Observer.Expect('h-rows', 'B,D,F,,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -654,7 +744,10 @@ codeunit 79650 "LT AP TestPage Tests"
     begin
         Start();
         SetRecordTemp('D');
-        Observer.Finish();
+        Observer.Expect('h-open', 'O;RD;RF;RD;RB;RD;RD;CD;');
+        Observer.Expect('h-cur', 'D|db-d');
+        Observer.Expect('h-rows', 'B,D,F,,');
+        Observer.Verify();
     end;
 
     // ---- item 13: Cancel().Invoke() on a card and on a list that declare only OnAfterGetCurrRecord ----
@@ -691,7 +784,11 @@ codeunit 79650 "LT AP TestPage Tests"
         Row.Get('B');
         Observer.Observe('result', Format(Page.RunModal(Page::"LT AP Cancel Card", Row)));
         Observer.Observe('after', Log.Take());
-        Observer.Finish();
+        Observer.Expect('h-open', 'CB;');
+        Observer.Expect('h-cancel', 'CB;QLookupCancel;X;');
+        Observer.Expect('result', 'LookupCancel');
+        Observer.Expect('after', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -706,7 +803,11 @@ codeunit 79650 "LT AP TestPage Tests"
         Row.Get('B');
         Observer.Observe('result', Format(Page.RunModal(Page::"LT AP Cancel List", Row)));
         Observer.Observe('after', Log.Take());
-        Observer.Finish();
+        Observer.Expect('h-open', 'CB;');
+        Observer.Expect('h-cancel', 'CB;QLookupCancel;X;');
+        Observer.Expect('result', 'LookupCancel');
+        Observer.Expect('after', '');
+        Observer.Verify();
     end;
 
     // ---- item 14: CaptionML in German only, English session (and a German one) ----
@@ -731,7 +832,12 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('de-field', P.Name.Caption());
         P.Close();
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('lang', '1033');
+        Observer.Expect('en-page', 'LT AP Caption DE - A');
+        Observer.Expect('en-field', 'Name');
+        Observer.Expect('de-page', 'Deutsche Seite - A');
+        Observer.Expect('de-field', 'Deutscher Name');
+        Observer.Verify();
     end;
 
     // ---- item 15: SetSelectionFilter into a record that already has marks ----
@@ -752,7 +858,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.SelMarksOnly.Invoke();
         Observer.Observe('marked-only', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('marks', 'RC;before=AB;n=1 f=[Code: C] mo=No;rows=C*;after=C;RC;RC;RD;RC;RB;RA;RC;RC;CC;');
+        Observer.Expect('marked-only', 'RC;before=AB;n=1 f=[Marked: Yes, Code: C] mo=Yes;rows=C*;after=C;RC;RC;RD;RC;RB;RA;RC;RC;CC;');
+        Observer.Verify();
     end;
 
     // ---- item 16: a field in a group with Enabled = false on a card page ----
@@ -789,7 +897,15 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('view-enabled', Format(P.Qty.Enabled()));
         Observer.Observe('view-editable', Format(P.Qty.Editable()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('edit-enabled', 'No');
+        Observer.Expect('edit-editable', 'Yes');
+        Observer.Expect('edit-visible', 'Yes');
+        Observer.Expect('name-enabled', 'Yes');
+        Observer.Expect('set', 'ok');
+        Observer.Expect('stored', '5');
+        Observer.Expect('view-enabled', 'No');
+        Observer.Expect('view-editable', 'No');
+        Observer.Verify();
     end;
 
     // ---- item 17: NotBlank on a list and on a page without a row; Masked under 11 characters; Numeric with other non-digits ----
@@ -805,7 +921,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.GoToKey('A');
         asserterror P.NameNB.SetValue('');
         Observer.ObserveError('list-blank');
-        Observer.Finish();
+        Observer.Expect('list-blank|text', 'Validation error for Field: NameNB,  Message = ''Txt must be filled in. Enter a value.''');
+        Observer.Expect('list-blank|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -820,7 +938,10 @@ codeunit 79650 "LT AP TestPage Tests"
         Observer.Observe('code', P."Code".Value());
         asserterror P.NBF.SetValue('');
         Observer.ObserveError('empty-blank');
-        Observer.Finish();
+        Observer.Expect('code', '');
+        Observer.Expect('empty-blank|text', 'The row does not exist on the TestPage.');
+        Observer.Expect('empty-blank|code', 'TestRowNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -833,7 +954,9 @@ codeunit 79650 "LT AP TestPage Tests"
         P.VarNB.SetValue('x');
         asserterror P.VarNB.SetValue('');
         Observer.ObserveError('nosource-blank');
-        Observer.Finish();
+        Observer.Expect('nosource-blank|text', 'Validation error for Field: VarNB,  Message = '' must be filled in. Enter a value.''');
+        Observer.Expect('nosource-blank|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     local procedure MaskRow(NewCode: Code[20]; V: Text[30])
@@ -874,7 +997,13 @@ codeunit 79650 "LT AP TestPage Tests"
         P.GoToKey('M20');
         Observer.Observe('20', P.SecF.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('0', '');
+        Observer.Expect('1', '••••••••••');
+        Observer.Expect('5', '••••••••••');
+        Observer.Expect('10', '••••••••••');
+        Observer.Expect('11', '••••••••••');
+        Observer.Expect('20', '••••••••••');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -911,6 +1040,14 @@ codeunit 79650 "LT AP TestPage Tests"
         Num(P, '#1');
         Num(P, '');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('[12-3]', 'error:Validation error for Field: NumF,  Message = ''Your entry of ''12-3'' is not an acceptable value for ''Num''. Only numeric characters are allowed in field. (Select Refresh to discard errors)''');
+        Observer.Expect('[-5]', 'error:Validation error for Field: NumF,  Message = ''Your entry of ''-5'' is not an acceptable value for ''Num''. Only numeric characters are allowed in field. (Select Refresh to discard errors)''');
+        Observer.Expect('[+5]', 'error:Validation error for Field: NumF,  Message = ''Your entry of ''+5'' is not an acceptable value for ''Num''. Only numeric characters are allowed in field. (Select Refresh to discard errors)''');
+        Observer.Expect('[1.5]', 'error:Validation error for Field: NumF,  Message = ''Your entry of ''1.5'' is not an acceptable value for ''Num''. Only numeric characters are allowed in field. (Select Refresh to discard errors)''');
+        Observer.Expect('[1,5]', 'error:Validation error for Field: NumF,  Message = ''Your entry of ''1,5'' is not an acceptable value for ''Num''. Only numeric characters are allowed in field. (Select Refresh to discard errors)''');
+        Observer.Expect('[1 2]', 'ok:1 2');
+        Observer.Expect('[#1]', 'error:Validation error for Field: NumF,  Message = ''Your entry of ''#1'' is not an acceptable value for ''Num''. Only numeric characters are allowed in field. (Select Refresh to discard errors)''');
+        Observer.Expect('[]', 'ok:');
+        Observer.Verify();
     end;
 }
