@@ -96,12 +96,11 @@ is only a reference.
 | 0111 | AL0130 | this passed to a var parameter of another codeunit. |
 | 0112 | AL0296 | SecretText.Unwrap named from a Cloud app (the method has scope OnPrem). |
 | 0113 | AL0296 | A variable of the File data type in a Cloud app. |
-| 0640 | AL0132 | `JsonArray.SelectTokens` does not exist on 27 |
+| 0640 | AL0666 | `JsonArray.SelectTokens` needs runtime 17; the BC 27 app runs on 16.1 (BC 28 and 29 compile it) |
 | 0641, 0642 | AL0126 | `MediaSet.ImportStream` and `Media.ImportStream` with a file name as fourth argument (0642: on 27, 28 and 29) |
 | 0643 to 0646 | AL0296 | `Media.ExportFile`, `Media.ImportFile`, `MediaSet.ExportFile` and `MediaSet.ImportFile` named from a Cloud app (Scope = OnPrem) |
 | 0647 to 0650 | AL0133 | `Query.SaveAsCsv` and `Query.SaveAsXml` with a file name (instance and by object number): in a Cloud app only the OutStream forms exist |
 | 0651 to 0653 | AL0296 | `HttpClient.UseDefaultNetworkWindowsAuthentication` and `UseWindowsAuthentication` (Text and SecretText) named from a Cloud app |
-| 0654 | AL0666 | `JsonArray.SelectTokens` needs runtime 17 (28 and 29) |
 | 0722 | AL0284 | A subscriber to Global Triggers.OnGlobalInsert declares its parameter as Integer instead of RecordRef. |
 | 0723 | AL0284 | A subscriber to Environment Triggers.OnAfterCopyEnvironmentPerDatabase declares the environment types as Integer instead of an Option (two diagnostics). |
 | 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
