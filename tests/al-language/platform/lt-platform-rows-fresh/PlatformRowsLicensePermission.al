@@ -1,11 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: every row, with every column, of the platform tables Language Selection, License Permission, Tenant Report Layout Selection, MediaResources and
-// Tenant Web Service on the fresh tenant of a test container (read through RecordRef by table name). Only rows that are the same on every container
-// are asserted. First rows are pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78100.
+// Probe: the count and the first 10 rows, with every column, of the platform table License Permission on the fresh tenant of a test container (read through RecordRef by table name).
+// First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78108.
 
-codeunit 78100 "LT AD Platform Rows"
+codeunit 78108 "LT AD Platform Rows License Permission"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -49,8 +48,7 @@ codeunit 78100 "LT AD Platform Rows"
         if Id < 0 then
             exit;
         RR.Open(Id);
-        Observer.Observe(TableName + ' count', Format(RR.Count()));
-        if RR.FindSet() then
+                if RR.FindSet() then
             repeat
                 n += 1;
                 if (n > Skip) and (n <= Skip + Take) then
@@ -59,47 +57,25 @@ codeunit 78100 "LT AD Platform Rows"
     end;
 
     [Test]
-    procedure Rows_LanguageSelection()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, 'Language Selection', 0, 3);
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure Rows_LicensePermission()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'License Permission', 0, 8);
+        Dump(Observer, 'License Permission', 0, 10);
         Observer.Finish();
     end;
 
     [Test]
-    procedure Rows_TenantReportLayoutSelection()
+    procedure Count_LicensePermission()
     var
         Observer: Codeunit "Probe Observer";
+        RR: RecordRef;
+        Id: Integer;
     begin
-        Dump(Observer, 'Tenant Report Layout Selection', 0, 8);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Rows_MediaResources()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, 'MediaResources', 0, 8);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Rows_TenantWebService()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Dump(Observer, 'Tenant Web Service', 0, 8);
+        Id := TableIdByName('License Permission');
+        Observer.Observe('id', Format(Id));
+        RR.Open(Id);
+        Observer.Observe('count', Format(RR.Count()));
         Observer.Finish();
     end;
 }

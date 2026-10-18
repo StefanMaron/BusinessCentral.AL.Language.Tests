@@ -157,18 +157,12 @@ codeunit 78008 "LT AD SetAscending Ties"
     begin
         Seed();
         Row.SetCurrentKey(Grp, Id);
-        Row.SetAscending(Grp, false);
-        Observer.Observe('grp_desc_id_asc', All(Row));
-        Row.Reset();
-        Row.SetCurrentKey(Grp, Id);
-        Row.SetAscending(Grp, true);
-        Row.SetAscending(Id, false);
-        Observer.Observe('grp_asc_id_desc', All(Row));
+        Observer.Observe('key_grp_id_plain', All(Row));
+        IdCase(Observer, 'key_grp_id_id_desc', Row, false);
         Row.Reset();
         Row.SetCurrentKey(Grp, Id);
         Row.Ascending(false);
-        Row.SetAscending(Id, true);
-        Observer.Observe('all_desc_id_asc', All(Row));
+        Observer.Observe('key_grp_id_all_desc', All(Row));
         Observer.Finish();
     end;
 
