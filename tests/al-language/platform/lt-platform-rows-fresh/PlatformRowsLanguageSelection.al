@@ -4,7 +4,7 @@
 // Probe: the count and the first 10 rows, with every column, of the platform table Language Selection on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78100.
 
-codeunit 78100 "LT AD Platform Rows Language Selection"
+codeunit 78100 "LT AD Plat Rows Language"
 {
     Subtype = Test;
     TestPermissions = Disabled;

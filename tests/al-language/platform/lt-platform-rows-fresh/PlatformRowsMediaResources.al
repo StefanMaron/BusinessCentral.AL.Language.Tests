@@ -4,7 +4,7 @@
 // Probe: the count and the first 10 rows, with every column, of the platform table MediaResources on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78110.
 
-codeunit 78110 "LT AD Platform Rows MediaResources"
+codeunit 78110 "LT AD Plat Rows Media"
 {
     Subtype = Test;
     TestPermissions = Disabled;

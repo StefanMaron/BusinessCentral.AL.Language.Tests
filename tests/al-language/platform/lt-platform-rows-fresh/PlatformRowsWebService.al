@@ -4,7 +4,7 @@
 // Probe: the count and the first 10 rows, with every column, of the platform table Tenant Web Service on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78111.
 
-codeunit 78111 "LT AD Platform Rows Web Service"
+codeunit 78111 "LT AD Plat Rows WebSvc"
 {
     Subtype = Test;
     TestPermissions = Disabled;

@@ -4,7 +4,7 @@
 // Probe: the count and the first 10 rows, with every column, of the platform table Tenant Report Layout Selection on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78109.
 
-codeunit 78109 "LT AD Platform Rows Layout Selection"
+codeunit 78109 "LT AD Plat Rows Layout"
 {
     Subtype = Test;
     TestPermissions = Disabled;

@@ -4,7 +4,7 @@
 // Probe: the count and the first 10 rows, with every column, of the platform table License Permission on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78108.
 
-codeunit 78108 "LT AD Platform Rows License Permission"
+codeunit 78108 "LT AD Plat Rows License"
 {
     Subtype = Test;
     TestPermissions = Disabled;
