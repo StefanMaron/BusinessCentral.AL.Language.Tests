@@ -136,6 +136,7 @@ codeunit 69850 "LT V Log"
 
     var
         Entries: List of [Text];
+        EarlyEntries: List of [Text];
         Settings: Dictionary of [Text, Text];
         Active: Boolean;
 
@@ -160,6 +161,21 @@ codeunit 69850 "LT V Log"
     begin
         if Active then
             Entries.Add(Entry);
+    end;
+
+    procedure AddEarly(Entry: Text)
+    begin
+        EarlyEntries.Add(Entry);
+    end;
+
+    procedure Early(): Text
+    var
+        E: Text;
+        R: Text;
+    begin
+        foreach E in EarlyEntries do
+            R += E + ';';
+        exit(R);
     end;
 
     procedure Take(): Text
@@ -203,17 +219,6 @@ codeunit 69850 "LT V Log"
     end;
 }
 
-codeunit 69856 "LT V Event Writer"
-{
-    TableNo = "LT V Event Log";
-    Permissions = tabledata "LT V Event Log" = RI;
-
-    trigger OnRun()
-    begin
-        Rec.Insert();
-    end;
-}
-
 codeunit 69851 "LT V Subs"
 {
     var
@@ -229,7 +234,7 @@ codeunit 69851 "LT V Subs"
         exit(Format(RecRef.Field(1).Value) + '/' + Format(RecRef.Field(2).Value) + '/' + Format(RecRef.Field(3).Value));
     end;
 
-    local procedure TryDb(EventName: Text; Info: Text)
+    local procedure WriteRow(EventName: Text; Info: Text)
     var
         Row: Record "LT V Event Log";
     begin
@@ -237,13 +242,13 @@ codeunit 69851 "LT V Subs"
         Row."Event Name" := CopyStr(EventName, 1, MaxStrLen(Row."Event Name"));
         Row.Info := CopyStr(Info, 1, MaxStrLen(Row.Info));
         Row."Session Id" := SessionId();
-        if Codeunit.Run(Codeunit::"LT V Event Writer", Row) then;
+        if Row.Insert() then;
     end;
 
     local procedure Note(EventName: Text; Info: Text)
     begin
         Log.Add(EventName + '(' + Info + ')');
-        TryDb(EventName, Info);
+        Log.AddEarly(EventName + '(' + Info + ')');
     end;
 
     // ---- Global Triggers ----
@@ -390,12 +395,14 @@ codeunit 69851 "LT V Subs"
     local procedure ExtInstallPerCompany()
     begin
         Note('OnInstallAppPerCompany', CompanyName());
+        WriteRow('OnInstallAppPerCompany', CompanyName());
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Extension Triggers", 'OnInstallAppPerDatabase', '', false, false)]
     local procedure ExtInstallPerDatabase()
     begin
         Note('OnInstallAppPerDatabase', '');
+        WriteRow('OnInstallAppPerDatabase', '');
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Upgrade Triggers", 'OnUpgradePerCompany', '', false, false)]
@@ -699,8 +706,12 @@ codeunit 69855 "LT V Session Worker"
         Row.Init();
         Row."Event Name" := 'Worker';
         Row."Session Id" := SessionId();
+        Row.Info := CopyStr(Log.Early(), 1, MaxStrLen(Row.Info));
         Row.Insert();
     end;
+
+    var
+        Log: Codeunit "LT V Log";
 }
 
 report 69860 "LT V Report A"

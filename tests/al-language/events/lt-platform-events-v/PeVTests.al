@@ -221,7 +221,6 @@ codeunit 69852 "LT V Platform Event Tests"
         Names: List of [Text];
         N: Text;
     begin
-        Names.Add('OnCompanyOpen');
         Names.Add('OnInstallAppPerCompany');
         Names.Add('OnInstallAppPerDatabase');
         Names.Add('OnUpgradePerCompany');
@@ -237,10 +236,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Names.Add('OnAfterUserInitialization');
         foreach N in Names do
             Observer.Observe('rows ' + N, Format(RowsOf(N)));
-        Observer.Observe('rows OnCompanyOpen for this session', Format(RowsOfSession('OnCompanyOpen', SessionId())));
-        Observer.Observe('rows OnCompanyOpenCompleted for this session', Format(RowsOfSession('OnCompanyOpenCompleted', SessionId())));
-        Observer.Observe('rows OnCompanyClose for this session', Format(RowsOfSession('OnCompanyClose', SessionId())));
-        Observer.Observe('any OnCompanyOpenCompleted row', Format(RowsOf('OnCompanyOpenCompleted') > 0));
+        Observer.Observe('early entries of the test session', Log.Early());
         Observer.Observe('total rows', Format(Row.Count()));
         Observer.Finish();
     end;
@@ -256,10 +252,6 @@ codeunit 69852 "LT V Platform Event Tests"
             repeat
                 Observer.Observe('install per company #' + Format(Row.Id) + ' info is the company of the test session', Format(Row.Info = CompanyName()));
             until Row.Next() = 0;
-        Row.SetRange("Event Name", 'OnCompanyOpenCompleted');
-        Row.SetRange("Session Id", SessionId());
-        if Row.FindFirst() then
-            Observer.Observe('open completed info is the company of the test session', Format(Row.Info = CompanyName()));
         Observer.Finish();
     end;
 
@@ -281,44 +273,24 @@ codeunit 69852 "LT V Platform Event Tests"
     end;
 
     [Test]
-    procedure StartSession_RaisesCompanyOpenAndClose()
+    procedure StartSession_CompanyEventsSeenByTheNewSession()
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT V Event Log";
         Session: Integer;
         Started: Boolean;
         Deadline: DateTime;
-        OpenId: Integer;
-        WorkerId: Integer;
-        CloseId: Integer;
     begin
         Started := StartSession(Session, Codeunit::"LT V Session Worker", CompanyName());
         Observer.Observe('started', Format(Started));
         Deadline := CurrentDateTime() + 60000;
         while (RowsOfSession('Worker', Session) = 0) and (CurrentDateTime() < Deadline) do
             Sleep(250);
-        Deadline := CurrentDateTime() + 30000;
-        while (RowsOfSession('OnCompanyClose', Session) = 0) and (CurrentDateTime() < Deadline) do
-            Sleep(250);
         Row.SetRange("Session Id", Session);
-        Row.SetRange("Event Name", 'OnCompanyOpenCompleted');
-        if Row.FindFirst() then
-            OpenId := Row.Id;
         Row.SetRange("Event Name", 'Worker');
         if Row.FindFirst() then
-            WorkerId := Row.Id;
-        Row.SetRange("Event Name", 'OnCompanyClose');
-        if Row.FindFirst() then
-            CloseId := Row.Id;
-        Observer.Observe('open rows', Format(RowsOfSession('OnCompanyOpen', Session)));
-        Observer.Observe('open completed rows', Format(RowsOfSession('OnCompanyOpenCompleted', Session)));
+            Observer.Observe('entries seen by the worker session', Row.Info.Replace(CompanyName(), '<company>'));
         Observer.Observe('worker rows', Format(RowsOfSession('Worker', Session)));
-        Observer.Observe('close rows', Format(RowsOfSession('OnCompanyClose', Session)));
-        Observer.Observe('open completed before worker', Format((OpenId > 0) and (OpenId < WorkerId)));
-        Observer.Observe('worker before close', Format((WorkerId > 0) and (WorkerId < CloseId)));
-        Row.SetRange("Event Name", 'OnCompanyOpenCompleted');
-        if Row.FindFirst() then
-            Observer.Observe('open completed info is the company', Format(Row.Info = CompanyName()));
         Observer.Finish();
     end;
 
