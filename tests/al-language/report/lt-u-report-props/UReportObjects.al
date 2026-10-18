@@ -35,14 +35,14 @@ report 69783 "LT U Report"
         {
             area(Content)
             {
-                field(RelField; RelValue) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
-                field(AmtField; AmtValue)
+                field(RelField; RelField) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
+                field(AmtField; AmtField)
                 {
                     ApplicationArea = All;
                     AutoFormatType = 11;
                     AutoFormatExpression = '<Precision,3:3><Standard Format,0>';
                 }
-                field(DfField; DfValue) { ApplicationArea = All; }
+                field(DfField; DfField) { ApplicationArea = All; }
             }
         }
     }
@@ -53,9 +53,9 @@ report 69783 "LT U Report"
     }
 
     var
-        RelValue: Integer;
-        AmtValue: Decimal;
-        DfValue: DateFormula;
+        RelField: Integer;
+        AmtField: Decimal;
+        DfField: DateFormula;
 }
 
 reportextension 69784 "LT U Report Ext" extends "LT U Report"
@@ -81,13 +81,13 @@ reportextension 69784 "LT U Report Ext" extends "LT U Report"
         {
             addlast(Content)
             {
-                field(ExtRelField; ExtRelValue) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
+                field(ExtRelField; ExtRelField) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
             }
         }
     }
 
     var
-        ExtRelValue: Integer;
+        ExtRelField: Integer;
 }
 
 report 69785 "LT U Report Plain"
