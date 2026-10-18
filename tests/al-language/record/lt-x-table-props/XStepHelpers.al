@@ -1,5 +1,5 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-sqldatatype-property
-// Scope: in-scope
+// Scope: in-scope (probe, issue 611)
 // Fixtures used: objects in XTableObjects.al
 // Probe (issue 611): helper codeunits that run one database step inside Codeunit.Run, so a probe can observe the error text of a step
 // that may or may not fail (a TryFunction cannot contain Insert or Modify). Object id 75041 (75040 is unused).
