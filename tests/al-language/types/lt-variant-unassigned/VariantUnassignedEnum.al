@@ -145,7 +145,15 @@ codeunit 67511 "LT VUE Tests"
         Observer.Observe('is_code', Format(V.IsCode()));
         Observer.Observe('is_record', Format(V.IsRecord()));
         Observer.Observe('format', '[' + Format(V) + ']');
-        Observer.Finish();
+        Observer.Expect('is_integer', 'No');
+        Observer.Expect('is_option', 'No');
+        Observer.Expect('is_text', 'No');
+        Observer.Expect('is_boolean', 'No');
+        Observer.Expect('is_decimal', 'No');
+        Observer.Expect('is_code', 'No');
+        Observer.Expect('is_record', 'No');
+        Observer.Expect('format', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -155,16 +163,17 @@ codeunit 67511 "LT VUE Tests"
         V: Variant;
     begin
         MatchAll(Observer, V);
-        Observer.Finish();
+        Observer.Expect('enum_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('enum_one', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_0', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_1', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('empty_text', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('false', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('zero_date', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('decimal_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Verify();
     end;
 
-    [Test]
-    procedure Unassigned_Variant_CaseMatches_More1()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
     [Test]
     procedure Unassigned_Variant_CaseMatches_InsideProcedure()
@@ -174,7 +183,8 @@ codeunit 67511 "LT VUE Tests"
         Matched: Boolean;
     begin
         Observer.Observe('two_branches_and_else', Outcome(TwoBranches(V, Matched), Matched));
-        Observer.Finish();
+        Observer.Expect('two_branches_and_else', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +198,16 @@ codeunit 67511 "LT VUE Tests"
         V := Kind;
         Observer.Observe('is_option', Format(V.IsOption()));
         MatchAll(Observer, V);
-        Observer.Finish();
+        Observer.Expect('is_option', 'Yes');
+        Observer.Expect('enum_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('enum_one', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_0', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_1', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('empty_text', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('false', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('zero_date', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('decimal_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Verify();
     end;
 
     [Test]
@@ -201,7 +220,15 @@ codeunit 67511 "LT VUE Tests"
         Kind := Kind::One;
         V := Kind;
         MatchAll(Observer, V);
-        Observer.Finish();
+        Observer.Expect('enum_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('enum_one', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_0', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_1', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('empty_text', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('false', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('zero_date', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('decimal_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,7 +240,15 @@ codeunit 67511 "LT VUE Tests"
     begin
         V := Zero;
         MatchAll(Observer, V);
-        Observer.Finish();
+        Observer.Expect('enum_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('enum_one', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_0', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_1', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('empty_text', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('false', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('zero_date', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('decimal_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,6 +260,14 @@ codeunit 67511 "LT VUE Tests"
         V := 5;
         Clear(V);
         MatchAll(Observer, V);
-        Observer.Finish();
+        Observer.Expect('enum_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('enum_one', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_0', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('integer_1', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('empty_text', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('false', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('zero_date', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Expect('decimal_zero', 'ran=No matched=No error=Unable to compare operands of type NavVariant with NavVariant.');
+        Observer.Verify();
     end;
 }

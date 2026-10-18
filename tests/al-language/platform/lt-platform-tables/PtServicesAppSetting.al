@@ -59,7 +59,9 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Content(Observer, 2000000201);
-        Observer.Finish();
+        Observer.Expect('columns', '1:App ID:GUID:16:Normal;2:Allow HttpClient Requests:Boolean:4:Normal;');
+        Observer.Expect('count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -68,48 +70,38 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Content(Observer, 2000000168);
-        Observer.Finish();
+        Observer.Expect('columns', '3:Object Type:Option:4:Normal;9:Service Name:Text:250:Normal;6:Object ID:Integer:4:Normal;12:Published:Boolean:4:Normal;13:ExcludeFieldsOutsideRepeater:Boolean:4:Normal;14:ExcludeNonEditableFlowFields:Boolean:4:Normal;');
+        Observer.Expect('count', '64');
+        Observer.Expect('row1', '3=Codeunit;9=WorkflowActionResponse;6=1544;12=Yes;13=No;14=No;');
+        Observer.Expect('row2', '3=Page;9=Chart of Accounts;6=16;12=Yes;13=No;14=No;');
+        Observer.Expect('row3', '3=Page;9=ExcelTemplateAgedAccountsPayable;6=5500;12=Yes;13=No;14=No;');
+        Observer.Expect('row4', '3=Page;9=ExcelTemplateAgedAccountsReceivable;6=5499;12=Yes;13=No;14=No;');
+        Observer.Expect('row5', '3=Page;9=ExcelTemplateBalanceSheet;6=5501;12=Yes;13=No;14=No;');
+        Observer.Expect('row6', '3=Page;9=ExcelTemplateCashFlowStatement;6=5493;12=Yes;13=No;14=No;');
+        Observer.Expect('row7', '3=Page;9=ExcelTemplateIncomeStatement;6=5503;12=Yes;13=No;14=No;');
+        Observer.Expect('row8', '3=Page;9=ExcelTemplateRetainedEarnings;6=5497;12=Yes;13=No;14=No;');
+        Observer.Expect('row9', '3=Page;9=ExcelTemplateTrialBalance;6=5502;12=Yes;13=No;14=No;');
+        Observer.Expect('row10', '3=Page;9=ExcelTemplateViewCompanyInformation;6=1320;12=Yes;13=No;14=No;');
+        Observer.Expect('row11', '3=Page;9=Job List;6=89;12=Yes;13=No;14=No;');
+        Observer.Expect('row12', '3=Page;9=Job Planning Lines;6=1007;12=Yes;13=No;14=No;');
+        Observer.Expect('row13', '3=Page;9=Job Task Lines;6=1002;12=Yes;13=No;14=No;');
+        Observer.Expect('row14', '3=Page;9=Power BI Aged Acc. Payable;6=6307;12=Yes;13=No;14=No;');
+        Observer.Expect('row15', '3=Page;9=Power BI Aged Acc. Receivable;6=6308;12=Yes;13=No;14=No;');
+        Observer.Expect('row16', '3=Page;9=Power BI Aged Inventory Chart;6=6309;12=Yes;13=No;14=No;');
+        Observer.Expect('row17', '3=Page;9=Power BI Job Act. v. Budg. Cost;6=6312;12=Yes;13=No;14=No;');
+        Observer.Expect('row18', '3=Page;9=Power BI Job Act. v. Budg. Price;6=6310;12=Yes;13=No;14=No;');
+        Observer.Expect('row19', '3=Page;9=Power BI Job Profitability;6=6311;12=Yes;13=No;14=No;');
+        Observer.Expect('row20', '3=Page;9=Power BI Sales Pipeline;6=6314;12=Yes;13=No;14=No;');
+        Observer.Expect('row21', '3=Page;9=Power BI Top 5 Opportunities;6=6315;12=Yes;13=No;14=No;');
+        Observer.Expect('row22', '3=Page;9=Power BI WorkDate Calc.;6=6313;12=Yes;13=No;14=No;');
+        Observer.Expect('row23', '3=Page;9=purchaseDocumentLines;6=6405;12=Yes;13=No;14=No');
+        Observer.Verify();
     end;
 
-    [Test]
-    procedure TenantWebService_Content_More1()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
-    [Test]
-    procedure TenantWebService_Content_More2()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
-    [Test]
-    procedure TenantWebService_Content_More3()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
-    [Test]
-    procedure TenantWebService_Content_More4()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
-    [Test]
-    procedure TenantWebService_Content_More5()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 }
 
 codeunit 67518 "LT PT Nas Mutations"
@@ -121,10 +113,8 @@ codeunit 67518 "LT PT Nas Mutations"
         Ops: Codeunit "LT PT Ops";
 
     local procedure Clean()
-    var
-        Setting: Record "NAV App Setting";
     begin
-        Setting.DeleteAll();
+        Ops.Perform(2000000201, 'deleteall', '', false);
     end;
 
     local procedure Standard(var Observer: Codeunit "Probe Observer"; TableNo: Integer; InsertRequest: Text; FilterRequest: Text; ChangeRequest: Text)
@@ -179,14 +169,37 @@ codeunit 67518 "LT PT Nas Mutations"
         Arg.Init();
         Arg.Id := 1;
         Arg.Insert();
-        Observer.Observe('first_call', RunText(Arg));
-        Observer.Observe('second_call', RunText(Arg));
+        Observer.Observe('first_call', RunText(Arg, 'getorinsert'));
+        Observer.Observe('second_call', RunText(Arg, 'getorinsert'));
         Observer.Finish();
     end;
 
-    local procedure RunText(var Arg: Record "LT PT Arg" temporary): Text
+    [Test]
+    procedure NavAppSetting_TypedBulkOperations()
+    var
+        Observer: Codeunit "Probe Observer";
+        Arg: Record "LT PT Arg" temporary;
+    begin
+        Clean();
+        Arg.Init();
+        Arg.Id := 1;
+        Arg.Insert();
+        Observer.Observe('insert_one', Ops.Perform(2000000201, 'insert', '1=11111111-2222-3333-4444-555555555551;2=true', true));
+        Observer.Observe('insert_two', Ops.Perform(2000000201, 'insert', '1=11111111-2222-3333-4444-555555555552;2=true', true));
+        Observer.Observe('count', RunText(Arg, 'count'));
+        Observer.Observe('modify_all', RunText(Arg, 'modifyall'));
+        Observer.Observe('delete_all_false', RunText(Arg, 'deleteall_false'));
+        Observer.Observe('insert_again', Ops.Perform(2000000201, 'insert', '1=11111111-2222-3333-4444-555555555551;2=true', true));
+        Observer.Observe('delete_all_true', RunText(Arg, 'deleteall_true'));
+        Observer.Observe('insert_third', Ops.Perform(2000000201, 'insert', '1=11111111-2222-3333-4444-555555555553;2=true', true));
+        Observer.Observe('delete_all_default', RunText(Arg, 'deleteall'));
+        Observer.Finish();
+    end;
+
+    local procedure RunText(var Arg: Record "LT PT Arg" temporary; Op: Text): Text
     begin
         ClearLastError();
+        Arg.Op := CopyStr(Op, 1, MaxStrLen(Arg.Op));
         if not Codeunit.Run(Codeunit::"LT PT Nas Runner", Arg) then
             exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
         exit('ok:' + Arg.Result);
@@ -194,7 +207,8 @@ codeunit 67518 "LT PT Nas Mutations"
 
 }
 
-// Get-or-insert on NAV App Setting through the typed record: Get by the app id, insert when it is missing, then read the row back. Not a test codeunit.
+// Typed-record operations on NAV App Setting, chosen by Rec.Op: getorinsert (Get by the app id, insert when missing, read back), deleteall, deleteall_false,
+// deleteall_true, modifyall, count. Not a test codeunit.
 codeunit 67517 "LT PT Nas Runner"
 {
     TableNo = "LT PT Arg";
@@ -205,15 +219,43 @@ codeunit 67517 "LT PT Nas Runner"
         AppId: Guid;
         Existed: Boolean;
     begin
-        Evaluate(AppId, '11111111-2222-3333-4444-555555555556');
-        Existed := Setting.Get(AppId);
-        if not Existed then begin
-            Setting.Init();
-            Setting."App ID" := AppId;
-            Setting."Allow HttpClient Requests" := true;
-            Setting.Insert(true);
+        case Rec.Op of
+            'getorinsert':
+                begin
+                    Evaluate(AppId, '11111111-2222-3333-4444-555555555556');
+                    Existed := Setting.Get(AppId);
+                    if not Existed then begin
+                        Setting.Init();
+                        Setting."App ID" := AppId;
+                        Setting."Allow HttpClient Requests" := true;
+                        Setting.Insert(true);
+                    end;
+                    Setting.Get(AppId);
+                    Rec.Result := 'existed=' + Format(Existed) + ' allow=' + Format(Setting."Allow HttpClient Requests") + ' count=' + Format(Setting.Count());
+                end;
+            'deleteall':
+                begin
+                    Setting.DeleteAll();
+                    Rec.Result := 'done count=' + Format(Setting.Count());
+                end;
+            'deleteall_false':
+                begin
+                    Setting.DeleteAll(false);
+                    Rec.Result := 'done count=' + Format(Setting.Count());
+                end;
+            'deleteall_true':
+                begin
+                    Setting.DeleteAll(true);
+                    Rec.Result := 'done count=' + Format(Setting.Count());
+                end;
+            'modifyall':
+                begin
+                    Setting.ModifyAll("Allow HttpClient Requests", false);
+                    Setting.SetRange("Allow HttpClient Requests", false);
+                    Rec.Result := 'done false-count=' + Format(Setting.Count());
+                end;
+            'count':
+                Rec.Result := Format(Setting.Count());
         end;
-        Setting.Get(AppId);
-        Rec.Result := 'existed=' + Format(Existed) + ' allow=' + Format(Setting."Allow HttpClient Requests") + ' count=' + Format(Setting.Count());
     end;
 }

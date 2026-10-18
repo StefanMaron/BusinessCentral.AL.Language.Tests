@@ -125,7 +125,11 @@ codeunit 67502 "LT BAC Tests"
         Row: Record "LT BAC Row" temporary;
     begin
         InsertOne(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('before_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_find', '7:Yes:8:<eos>');
+        Observer.Expect('after_calcfields', '7:Yes:8:inserted');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +139,11 @@ codeunit 67502 "LT BAC Tests"
         Row: Record "LT BAC Row";
     begin
         InsertOne(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('before_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_find', '7:Yes:14:<eos>');
+        Observer.Expect('after_calcfields', '7:Yes:8:inserted');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +154,11 @@ codeunit 67502 "LT BAC Tests"
     begin
         Row.SetAutoCalcFields(Data);
         InsertOne(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('before_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_find', '7:Yes:8:inserted');
+        Observer.Expect('after_calcfields', '7:Yes:8:inserted');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +169,11 @@ codeunit 67502 "LT BAC Tests"
     begin
         Row.SetAutoCalcFields(Data);
         InsertOne(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('before_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_insert', '7:Yes:8:inserted');
+        Observer.Expect('after_find', '7:Yes:8:inserted');
+        Observer.Expect('after_calcfields', '7:Yes:8:inserted');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,16 +186,25 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('after_insert_last_row', Show(Row));
         Row.SetAutoCalcFields(Data);
         Walk(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('after_insert_last_row', '3:No:0:<eos>');
+        Observer.Expect('after_init', '3:No:0:<eos>');
+        Observer.Expect('get_1', '1:Yes:5:alpha');
+        Observer.Expect('get_2', '2:Yes:12:bravo-longer');
+        Observer.Expect('get_3_no_content', '3:No:0:<eos>');
+        Observer.Expect('find_equal', '1:Yes:5:alpha');
+        Observer.Expect('find_first', '1:Yes:5:alpha');
+        Observer.Expect('find_last', '3:No:0:<eos>');
+        Observer.Expect('find_minus', '1:Yes:5:alpha');
+        Observer.Expect('find_plus', '3:No:0:<eos>');
+        Observer.Expect('find_set_1', '1:Yes:5:alpha');
+        Observer.Expect('next_2', '2:Yes:12:bravo-longer');
+        Observer.Expect('next_3', '3:No:0:<eos>');
+        Observer.Expect('next_end', '0');
+        Observer.Expect('next_back', '2:Yes:12:bravo-longer');
+        Observer.Expect('find_default', '2:Yes:12:bravo-longer');
+        Observer.Verify();
     end;
 
-    [Test]
-    procedure Temporary_SetAutoCalcFields_Blob_More1()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
     [Test]
     procedure Persistent_SetAutoCalcFields_Blob()
@@ -191,16 +216,25 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('after_insert_last_row', Show(Row));
         Row.SetAutoCalcFields(Data);
         Walk(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('after_insert_last_row', '3:No:0:<eos>');
+        Observer.Expect('after_init', '3:No:0:<eos>');
+        Observer.Expect('get_1', '1:Yes:5:alpha');
+        Observer.Expect('get_2', '2:Yes:12:bravo-longer');
+        Observer.Expect('get_3_no_content', '3:No:0:<eos>');
+        Observer.Expect('find_equal', '1:Yes:5:alpha');
+        Observer.Expect('find_first', '1:Yes:5:alpha');
+        Observer.Expect('find_last', '3:No:0:<eos>');
+        Observer.Expect('find_minus', '1:Yes:5:alpha');
+        Observer.Expect('find_plus', '3:No:0:<eos>');
+        Observer.Expect('find_set_1', '1:Yes:5:alpha');
+        Observer.Expect('next_2', '2:Yes:12:bravo-longer');
+        Observer.Expect('next_3', '3:No:0:<eos>');
+        Observer.Expect('next_end', '0');
+        Observer.Expect('next_back', '2:Yes:12:bravo-longer');
+        Observer.Expect('find_default', '2:Yes:12:bravo-longer');
+        Observer.Verify();
     end;
 
-    [Test]
-    procedure Persistent_SetAutoCalcFields_Blob_More1()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
     [Test]
     procedure Temporary_WithoutSetAutoCalcFields_Blob()
@@ -210,16 +244,24 @@ codeunit 67502 "LT BAC Tests"
     begin
         Seed(Row);
         Walk(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('after_init', '3:No:0:<eos>');
+        Observer.Expect('get_1', '1:Yes:5:<eos>');
+        Observer.Expect('get_2', '2:Yes:12:<eos>');
+        Observer.Expect('get_3_no_content', '3:No:0:<eos>');
+        Observer.Expect('find_equal', '1:Yes:5:<eos>');
+        Observer.Expect('find_first', '1:Yes:5:<eos>');
+        Observer.Expect('find_last', '3:No:0:<eos>');
+        Observer.Expect('find_minus', '1:Yes:5:<eos>');
+        Observer.Expect('find_plus', '3:No:0:<eos>');
+        Observer.Expect('find_set_1', '1:Yes:5:<eos>');
+        Observer.Expect('next_2', '2:Yes:12:<eos>');
+        Observer.Expect('next_3', '3:No:0:<eos>');
+        Observer.Expect('next_end', '0');
+        Observer.Expect('next_back', '2:Yes:12:<eos>');
+        Observer.Expect('find_default', '2:Yes:12:<eos>');
+        Observer.Verify();
     end;
 
-    [Test]
-    procedure Temporary_WithoutSetAutoCalcFields_Blob_More1()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
     [Test]
     procedure Persistent_WithoutSetAutoCalcFields_Blob()
@@ -229,16 +271,24 @@ codeunit 67502 "LT BAC Tests"
     begin
         Seed(Row);
         Walk(Row, Observer);
-        Observer.Finish();
+        Observer.Expect('after_init', '3:No:0:<eos>');
+        Observer.Expect('get_1', '1:Yes:11:<eos>');
+        Observer.Expect('get_2', '2:Yes:18:<eos>');
+        Observer.Expect('get_3_no_content', '3:No:0:<eos>');
+        Observer.Expect('find_equal', '1:Yes:11:<eos>');
+        Observer.Expect('find_first', '1:Yes:11:<eos>');
+        Observer.Expect('find_last', '3:No:0:<eos>');
+        Observer.Expect('find_minus', '1:Yes:11:<eos>');
+        Observer.Expect('find_plus', '3:No:0:<eos>');
+        Observer.Expect('find_set_1', '1:Yes:11:<eos>');
+        Observer.Expect('next_2', '2:Yes:18:<eos>');
+        Observer.Expect('next_3', '3:No:0:<eos>');
+        Observer.Expect('next_end', '0');
+        Observer.Expect('next_back', '2:Yes:18:<eos>');
+        Observer.Expect('find_default', '2:Yes:18:<eos>');
+        Observer.Verify();
     end;
 
-    [Test]
-    procedure Persistent_WithoutSetAutoCalcFields_Blob_More1()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.More();
-    end;
 
     [Test]
     procedure Temporary_CalcFields_Blob()
@@ -251,7 +301,9 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('get', Show(Row));
         Row.CalcFields(Data);
         Observer.Observe('after_calcfields', Show(Row));
-        Observer.Finish();
+        Observer.Expect('get', '2:Yes:12:<eos>');
+        Observer.Expect('after_calcfields', '2:Yes:12:bravo-longer');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +317,9 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('get', Show(Row));
         Row.CalcFields(Data);
         Observer.Observe('after_calcfields', Show(Row));
-        Observer.Finish();
+        Observer.Expect('get', '2:Yes:18:<eos>');
+        Observer.Expect('after_calcfields', '2:Yes:12:bravo-longer');
+        Observer.Verify();
     end;
 
     [Test]
@@ -286,7 +340,9 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('after_modify_get', Show(Row));
         Row.Delete();
         Observer.Observe('get_deleted', Format(Row.Get(1)));
-        Observer.Finish();
+        Observer.Expect('after_modify_get', '1:Yes:7:changed');
+        Observer.Expect('get_deleted', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,6 +363,8 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('after_modify_get', Show(Row));
         Row.Delete();
         Observer.Observe('get_deleted', Format(Row.Get(1)));
-        Observer.Finish();
+        Observer.Expect('after_modify_get', '1:Yes:7:changed');
+        Observer.Expect('get_deleted', 'No');
+        Observer.Verify();
     end;
 }

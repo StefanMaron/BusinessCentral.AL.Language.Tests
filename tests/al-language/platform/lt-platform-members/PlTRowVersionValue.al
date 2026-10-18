@@ -46,7 +46,14 @@ codeunit 67515 "LT RV Tests"
         Snapshot(Observer, 'after_commit_no_write');
         Snapshot(Observer, 'again');
         Observer.Observe('in_write_transaction', Format(IsInWriteTransaction()));
-        Observer.Finish();
+        Observer.Expect('after_commit_no_write_min_minus_last', '1');
+        Observer.Expect('after_commit_no_write_equals_last_plus_one', 'Yes');
+        Observer.Expect('after_commit_no_write_min_positive', 'Yes');
+        Observer.Expect('again_min_minus_last', '1');
+        Observer.Expect('again_equals_last_plus_one', 'Yes');
+        Observer.Expect('again_min_positive', 'Yes');
+        Observer.Expect('in_write_transaction', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -70,7 +77,16 @@ codeunit 67515 "LT RV Tests"
         Row.Name := 'x';
         Row.Modify();
         Observer.Observe('after_modify_not_above_last_plus_one', Format(MinimumActiveRowVersion() <= LastUsedRowVersion() + 1));
-        Observer.Finish();
+        Observer.Expect('in_write_transaction', 'Yes');
+        Observer.Expect('after_insert_min_minus_last', '1');
+        Observer.Expect('after_insert_equals_last_plus_one', 'Yes');
+        Observer.Expect('after_insert_min_positive', 'Yes');
+        Observer.Expect('min_unchanged_by_open_insert', 'Yes');
+        Observer.Expect('after_second_insert_min_minus_last', '1');
+        Observer.Expect('after_second_insert_equals_last_plus_one', 'Yes');
+        Observer.Expect('after_second_insert_min_positive', 'Yes');
+        Observer.Expect('after_modify_not_above_last_plus_one', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +109,12 @@ codeunit 67515 "LT RV Tests"
         Observer.Observe('after_commit_positive', Format(MinimumActiveRowVersion() > 0));
         Row.DeleteAll();
         Commit();
-        Observer.Finish();
+        Observer.Expect('before_positive', 'Yes');
+        Observer.Expect('in_write_transaction', 'No');
+        Observer.Expect('after_commit_not_above_last_plus_one', 'Yes');
+        Observer.Expect('after_commit_below_last_plus_one', 'Yes');
+        Observer.Expect('after_commit_positive', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,6 +125,8 @@ codeunit 67515 "LT RV Tests"
         Commit();
         Observer.Observe('prefixed_equals_bare', Format(Database.MinimumActiveRowVersion() = MinimumActiveRowVersion()));
         Observer.Observe('last_prefixed_equals_bare', Format(Database.LastUsedRowVersion() = LastUsedRowVersion()));
-        Observer.Finish();
+        Observer.Expect('prefixed_equals_bare', 'Yes');
+        Observer.Expect('last_prefixed_equals_bare', 'Yes');
+        Observer.Verify();
     end;
 }
