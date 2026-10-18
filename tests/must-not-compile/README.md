@@ -101,6 +101,33 @@ is only a reference.
 | 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
 | 0725 | AL0280 | A subscriber names an event that Company Triggers does not declare (OnCompanyOpened). |
 | 0740 | AL0161 | An app subscribes to GetRoleCenterBannerPartID of the platform codeunit "System Action Triggers"; the event is declared an InternalEvent. |
+| 0800 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
+| 0801 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
+| 0802 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
+| 0803 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
+| 0804 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
+| 0805 | AL0223 | Runtime 18.0 (BC 29): layout Subtype needs Type = Word. BC 27 and 28 give AL0666 for Subtype instead (case 0803). (@from BC 29) |
+| 0806 | AL0296 | . |
+| 0807 | AL0169 | . |
+| 0808 | AL0169 | . |
+| 0809 | AL0169 | . |
+| 0810 | AL0169 | . |
+| 0811 | AL0436 | . |
+| 0812 | AL0543 | ContextSensitiveHelpPage needs the manifest property contextSensitiveHelpUrl, which the corpus apps do not set. |
+| 0813 | AL0543, AL0428 | . |
+| 0814 | AL0471 | . |
+| 0815 | AL0185 | . |
+| 0816 | AL0428 | . |
+| 0817 | AL0324 | . |
+| 0818 | AL0160 | . |
+| 0819 | AL0359 | . |
+| 0820 | AL0373 | . |
+| 0821 | AL0103 | . |
+| 0822 | AL0103 | . |
+| 0823 | AL0103 | . |
+| 0824 | AL0103 | . |
+| 0825 | AL0169 | . |
+| 0826 | AL0124 | . |
 | 0840 | AL0543, AL0428 | HelpLink and ContextSensitiveHelpPage cannot both be set on a page. (3 diagnostics) |
 | 0841 | AL0543 | ContextSensitiveHelpPage needs the manifest property contextSensitiveHelpUrl (app.json has none). |
 | 0842 | AL0428 | EntityCaption and EntityCaptionML cannot both be set on an API page. (2 diagnostics) |
