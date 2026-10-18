@@ -41,10 +41,21 @@ codeunit 67508 "LT XLT Log"
 
     var
         Lines: Text;
+        SeedExport: Boolean;
 
     procedure Add(Line: Text)
     begin
         Lines += Line + ';';
+    end;
+
+    procedure SetSeeding(Value: Boolean)
+    begin
+        SeedExport := Value;
+    end;
+
+    procedure Seeding(): Boolean
+    begin
+        exit(SeedExport);
     end;
 
     procedure Take(): Text
@@ -103,7 +114,7 @@ xmlport 67505 "LT XLT Both Temp"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.ImportFile() then
+        if not Log.Seeding() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -176,7 +187,7 @@ xmlport 67523 "LT XLT Linked"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.ImportFile() then
+        if not Log.Seeding() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -247,7 +258,7 @@ xmlport 67524 "LT XLT No Link"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.ImportFile() then
+        if not Log.Seeding() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -318,7 +329,7 @@ xmlport 67506 "LT XLT Child Persistent"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.ImportFile() then
+        if not Log.Seeding() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -375,7 +386,7 @@ xmlport 67525 "LT XLT Persistent Both"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.ImportFile() then
+        if not Log.Seeding() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -522,7 +533,9 @@ codeunit 67507 "LT XLT Tests"
         Log.Take();
         TempBlob.CreateOutStream(OutS);
         Port.SetDestination(OutS);
+        Log.SetSeeding(true);
         Port.Export();
+        Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
         Observer.Finish();
@@ -542,7 +555,9 @@ codeunit 67507 "LT XLT Tests"
         Log.Take();
         TempBlob.CreateOutStream(OutS);
         Port.SetDestination(OutS);
+        Log.SetSeeding(true);
         Port.Export();
+        Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
         Observer.Finish();
@@ -556,7 +571,11 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 1);
-Observer.Finish();
+Observer.Expect('result', 'Yes||');
+Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
+Observer.Expect('persistent_child_rows', '');
+Observer.Expect('persistent_parent_count', '0');
+Observer.Verify();
     end;
 
     [Test]
@@ -565,7 +584,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 2);
-Observer.Finish();
+Observer.Expect('result', 'Yes||');
+Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
+Observer.Expect('persistent_child_rows', '');
+Observer.Expect('persistent_parent_count', '0');
+Observer.Verify();
     end;
 
     [Test]
@@ -574,7 +597,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 2, 1);
-Observer.Finish();
+Observer.Expect('result', 'Yes||');
+Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
+Observer.Expect('persistent_child_rows', '10/1 ');
+Observer.Expect('persistent_parent_count', '0');
+Observer.Verify();
     end;
 
     [Test]
@@ -583,7 +610,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 2, 2);
-Observer.Finish();
+Observer.Expect('result', 'Yes||');
+Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
+Observer.Expect('persistent_child_rows', '10/1 11/1 20/2 ');
+Observer.Expect('persistent_parent_count', '0');
+Observer.Verify();
     end;
     [Test]
     procedure Linked_Export()
@@ -596,7 +627,9 @@ Observer.Finish();
         Log.Take();
         TempBlob.CreateOutStream(OutS);
         Port.SetDestination(OutS);
+        Log.SetSeeding(true);
         Port.Export();
+        Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
         Observer.Finish();
@@ -613,7 +646,9 @@ Observer.Finish();
         Log.Take();
         TempBlob.CreateOutStream(OutS);
         Port.SetDestination(OutS);
+        Log.SetSeeding(true);
         Port.Export();
+        Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
         Observer.Finish();
@@ -625,7 +660,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 3, 1);
-        Observer.Finish();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -634,7 +673,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 3, 2);
-        Observer.Finish();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -643,7 +686,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 4, 1);
-        Observer.Finish();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import child 10 under parent 1;import parent 1;');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -652,7 +699,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 4, 2);
-        Observer.Finish();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import child 10 under parent 1;import child 11 under parent 1;import parent 1;import child 20 under parent 2;import parent 2;');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
     [Test]
     procedure BothTemporary_Import_ParentOnly()
@@ -660,7 +711,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 3);
-        Observer.Finish();
+        Observer.Expect('result', 'No|Imported XML cannot validate with the schema: The element ''ParentRow'' has incomplete content. List of possible elements expected: ''ChildRow''.|XmlPortInvalidXml');
+        Observer.Expect('log', '');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -669,7 +724,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 4, 3);
-        Observer.Finish();
+        Observer.Expect('result', 'No|Imported XML cannot validate with the schema: The element ''ParentRow'' has incomplete content. List of possible elements expected: ''ChildRow''.|XmlPortInvalidXml');
+        Observer.Expect('log', '');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -678,7 +737,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 5, 1);
-        Observer.Finish();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
+        Observer.Expect('persistent_child_rows', '10/1 ');
+        Observer.Expect('persistent_parent_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -687,7 +750,11 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 5, 2);
-        Observer.Finish();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
+        Observer.Expect('persistent_child_rows', '10/1 11/1 20/2 ');
+        Observer.Expect('persistent_parent_count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -696,6 +763,10 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 5, 3);
-        Observer.Finish();
+        Observer.Expect('result', 'No|Imported XML cannot validate with the schema: The element ''ParentRow'' has incomplete content. List of possible elements expected: ''ChildRow''.|XmlPortInvalidXml');
+        Observer.Expect('log', '');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 }
