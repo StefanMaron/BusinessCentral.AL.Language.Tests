@@ -139,9 +139,42 @@ codeunit 69789 "LT U Property Tests"
     [RequestPageHandler]
     procedure RequestPageFieldsHandler(var Req: TestRequestPage "LT U Report")
     var
+        Missing: Boolean;
     begin
-        asserterror Req.RelField.SetValue(9999);
-        Observer.ObserveError('rel_missing');
+        asserterror begin Observer.Observe('probe_AmtField', Req.AmtField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then begin
+            Observer.ObserveError('probe_AmtField|failed');
+            Missing := true;
+        end else
+            ClearLastError();
+        asserterror begin Observer.Observe('probe_DfField', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then begin
+            Observer.ObserveError('probe_DfField|failed');
+            Missing := true;
+        end else
+            ClearLastError();
+        asserterror begin Observer.Observe('probe_RelField', Req.RelField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then begin
+            Observer.ObserveError('probe_RelField|failed');
+            Missing := true;
+        end else
+            ClearLastError();
+        asserterror begin Observer.Observe('probe_ExtRelField', Req.ExtRelField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then begin
+            Observer.ObserveError('probe_ExtRelField|failed');
+            Missing := true;
+        end else
+            ClearLastError();
+        if Missing then begin
+            Req.Cancel().Invoke();
+            exit;
+        end;
+        asserterror begin Req.RelField.SetValue(9999); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('rel_missing|no_error', 'true');
+        end else
+            Observer.ObserveError('rel_missing');
         Req.RelField.SetValue(1);
         Observer.Observe('rel_existing', Req.RelField.Value);
         asserterror Req.ExtRelField.SetValue(9999);

@@ -35,7 +35,7 @@ report 69783 "LT U Report"
         {
             area(Content)
             {
-                field(RelField; RelField) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
+                field(RelField; RelField) { ApplicationArea = All; }
                 field(AmtField; AmtField)
                 {
                     ApplicationArea = All;
