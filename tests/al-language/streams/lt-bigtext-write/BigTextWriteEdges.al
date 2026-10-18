@@ -56,7 +56,7 @@ codeunit 67412 "LT BTW Tests"
                 if Codes <> '' then
                     Codes += ',';
                 C := T[i];
-                Codes += Format(C);
+                Codes += Format(C, 0, 9);
             end;
         end;
         Observer.Observe(Tag + '.readcodes', '[' + Codes + ']');
