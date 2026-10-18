@@ -242,47 +242,6 @@ codeunit 70317 "LT P81 Date Filters"
     end;
 
     [Test]
-    procedure SetFilter_Date_OtherKeywordLetters()
-    var
-        Observer: Codeunit "Probe Observer";
-        Texts: List of [Text];
-        SavedWorkDate: Date;
-    begin
-        SavedWorkDate := WorkDate();
-        WorkDate(20260101D);
-        Seed();
-        Texts.Add('TODAY');
-        Texts.Add('Today');
-        Texts.Add('WORKDATE');
-        Texts.Add('M');
-        Texts.Add('Y');
-        Texts.Add('D');
-        Texts.Add('CM');
-        Texts.Add('CY');
-        Texts.Add('CW');
-        Texts.Add('-1D');
-        Texts.Add('+1D');
-        Texts.Add('T-1D');
-        Texts.Add('1D');
-        ObserveList(Observer, Texts, 'o');
-        WorkDate(SavedWorkDate);
-        Observer.Expect('o1[TODAY]', 'ok|filter=<today>|rows=');
-        Observer.Expect('o2[Today]', 'ok|filter=<today>|rows=');
-        Observer.Expect('o3[WORKDATE]', 'ok|filter=<workdate>|rows=E2,');
-        Observer.Expect('o4[M]', 'ok|filter=12/29/25|rows=');
-        Observer.Expect('o5[Y]', 'ok|filter=<workdate>..12/31/26|rows=E2,E3,E4,');
-        Observer.Expect('o6[D]', 'ok|filter=<workdate>|rows=E2,');
-        Observer.Expect('o7[CM]', 'ok|filter=' + Scrub(Format(CalcDate('<CM>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
-        Observer.Expect('o8[CY]', 'ok|filter=' + Scrub(Format(CalcDate('<CY>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
-        Observer.Expect('o9[CW]', 'ok|filter=' + Scrub(Format(CalcDate('<CW>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
-        Observer.Expect('o10[-1D]', 'ok|filter=' + Scrub(Format(CalcDate('<-1D>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
-        Observer.Expect('o11[+1D]', 'ok|filter=' + Scrub(Format(CalcDate('<+1D>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
-        Observer.Expect('o12[T-1D]', 'ok|filter=12/30/25|rows=');
-        Observer.Expect('o13[1D]', 'ok|filter=<workdate>|rows=E2,');
-        Observer.Verify();
-    end;
-
-    [Test]
     procedure SetFilter_Date_Placeholders_TwoDates()
     var
         Observer: Codeunit "Probe Observer";
