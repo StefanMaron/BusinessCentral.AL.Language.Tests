@@ -863,6 +863,8 @@ codeunit 77099 "LT AB Tests"
         Rows.Close();
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Observe('stored-ten-exists', Format(Stored.Get(10)));
+        Observer.Expect('stored-count', '3');
+        Observer.Expect('stored-ten-exists', 'Yes');
         Observer.Expect('after-new', 'page OnNewRecord Yes | A2 OnNewRecordEvent 0 Yes | A1 OnNewRecordEvent 0 Yes | B OnNewRecordEvent 0 Yes | page OnAfterGetCurrRecord 0 | A2 OnAfterGetCurrRecordEvent 0 | A1 OnAfterGetCurrRecordEvent 0 | B OnAfterGetCurrRecordEvent 0');
         Observer.Expect('after-id', '');
         Observer.Expect('after-name', 'page OnInsertRecord 10  | A2 OnInsertRecordEvent 10  1 Yes Yes | A1 OnInsertRecordEvent 10  1 Yes Yes | B OnInsertRecordEvent 10  1 Yes Yes');
@@ -1231,7 +1233,11 @@ codeunit 77099 "LT AB Tests"
         ReqPageSeed();
         Report.Run(Report::"LT AB RP Plain Report");
         Observer.Observe('log', Log.Dump());
+#if BC28PLUS
         Observer.Expect('log', 'ext2 OnOpenPage 0 | ext2 OnAfterGetRecord 0 | ext2 OnAfterGetCurrRecord 0 | handler start | ext2 OnQueryClosePage OK | ext2 OnClosePage 0 | handler after OK | plain OnPreReport');
+#else
+        Observer.Expect('log', 'ext2 OnOpenPage 0 | ext2 OnAfterGetRecord 0 | handler start | ext2 OnQueryClosePage OK | ext2 OnClosePage 0 | handler after OK | plain OnPreReport');
+#endif
         Observer.Verify();
     end;
 
