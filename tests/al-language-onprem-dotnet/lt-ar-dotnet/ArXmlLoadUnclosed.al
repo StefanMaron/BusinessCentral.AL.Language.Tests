@@ -64,7 +64,13 @@ codeunit 99200 "LT AR XmlDocument Unclosed"
         Doc := Doc.XmlDocument();
         asserterror Doc.LoadXml('<a>');
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('try text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Data at the root level is invalid. Line 1, position 1.');
+        Observer.Expect('try code', 'DotNetInvoke:Xml');
+        Observer.Expect('try type', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDotNetInvokeException');
+        Observer.Expect('asserterror|text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Data at the root level is invalid. Line 1, position 1.');
+        Observer.Expect('asserterror|code', 'DotNetInvoke:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -77,6 +83,12 @@ codeunit 99200 "LT AR XmlDocument Unclosed"
         Doc := Doc.XmlDocument();
         asserterror Doc.LoadXml('<a><b>');
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('try text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Unexpected end of file has occurred. The following elements are not closed: b, a. Line 1, position 7.');
+        Observer.Expect('try code', 'DotNetInvoke:Xml');
+        Observer.Expect('try type', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDotNetInvokeException');
+        Observer.Expect('asserterror|text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Unexpected end of file has occurred. The following elements are not closed: b, a. Line 1, position 7.');
+        Observer.Expect('asserterror|code', 'DotNetInvoke:Xml');
+        Observer.Verify();
     end;
 }

@@ -3,7 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160); self-contained table 67220 (also used by the OnPrem app), codeunits 67221 and 67222
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
 // Facts: Variant.IsDataClassificationType and Variant.IsSecurityFiltering over many value kinds;
-// Database.CopyCompany (destination company, copied rows, errors for a missing source and an existing destination).
+// Database.CopyCompany (errors for a missing source and an existing destination; a successful copy cannot run inside the test runner).
 // BC versions: 27, 28, 29
 
 table 67220 "LT O Blob Row"
@@ -84,23 +84,15 @@ codeunit 67221 "LT O Small Builtins"
         exit(Runner.Run());
     end;
 
-    local procedure DropCompany(Name: Text[30])
-    var
-        Company: Record Company;
-    begin
-        if Company.Get(Name) then
-            Company.Delete(true);
-    end;
-
-    // Copies a company the test creates (never the session company): copying the session company also copies the test runner's own row in
-    // table "Test Method Line", which the runner holds in its open transaction (corpus issue 654: the copy then failed on Windows 27.5 and 29.0
-    // and on Linux 27 with "a record in table 'Test Method Line' is being updated in a transaction done by another session").
+    // Only the two error arms of CopyCompany: a copy that succeeds cannot run inside the test runner (corpus issue 654). Copying the session
+    // company also copies the runner's own row in table "Test Method Line", which the runner holds in its open transaction (Windows 27.5 and
+    // 29.0 and Linux 27: "a record in table 'Test Method Line' is being updated in a transaction done by another session"); copying a company
+    // the test creates hung the BC 29.0 session until the CI timeout (corpus CI run 39170558346).
     [Test]
     procedure O_Database_CopyCompany()
     var
         Observer: Codeunit "Probe Observer";
         Company: Record Company;
-        Row: Record "LT O Blob Row";
     begin
         if CopyIt('LT O No Such Company', 'LT O Copy Target') then
             Observer.Observe('missing source', 'no error')
@@ -111,37 +103,12 @@ codeunit 67221 "LT O Small Builtins"
             Observer.Observe('existing destination', 'no error')
         else
             Observer.ObserveError('existing destination');
-        DropCompany('LT O Copy Source');
-        DropCompany('LT O Copy Target');
-        DropCompany('LT O Copy Target 2');
-        Company.Init();
-        Company.Name := 'LT O Copy Source';
-        Company.Insert();
-        Commit();
-        if CopyIt('LT O Copy Source', 'LT O Copy Target') then
-            Observer.Observe('copy', 'no error')
-        else
-            Observer.ObserveError('copy');
-        Observer.Observe('copy|destination exists', Format(Company.Get('LT O Copy Target')));
-        Row.ChangeCompany('LT O Copy Source');
-        Row.Id := 1;
-        Row.Name := 'copied';
-        Row.Insert();
-        Commit();
-        if CopyIt('LT O Copy Source', 'LT O Copy Target 2') then
-            Observer.Observe('copy rows', 'no error')
-        else
-            Observer.ObserveError('copy rows');
-        Clear(Row);
-        if Row.ChangeCompany('LT O Copy Target 2') then
-            Observer.Observe('copy rows|target', Format(Row.Count()) + '|' + Format(Row.Get(1)) + '|' + Row.Name)
-        else
-            Observer.Observe('copy rows|target', 'no company');
-        DropCompany('LT O Copy Source');
-        DropCompany('LT O Copy Target');
-        DropCompany('LT O Copy Target 2');
-        Commit();
-        Observer.Finish();
+        Observer.Expect('missing source|text', 'The Company does not exist. Identification fields and values: Name=''LT O No Such Company''');
+        Observer.Expect('missing source|code', 'DB:RecordNotFound');
+        Observer.Expect('missing source|destination exists', 'No');
+        Observer.Expect('existing destination|text', 'The record in table Company already exists. Identification fields and values: Name=''<Company>''');
+        Observer.Expect('existing destination|code', 'DB:RecordExists');
+        Observer.Verify();
     end;
 }
 
