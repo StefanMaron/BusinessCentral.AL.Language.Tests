@@ -70,6 +70,15 @@ page 77080 "LT AB Action Card"
                     Log.Add('base OnAction');
                 end;
             }
+            action(ActBase)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    Log.Add('base OnAction of ActBase');
+                end;
+            }
         }
     }
 

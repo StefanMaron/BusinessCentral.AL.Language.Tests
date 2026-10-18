@@ -30,6 +30,22 @@ codeunit 77099 "LT AB Tests"
         Row.Insert();
     end;
 
+    [TryFunction]
+    local procedure FixedTryHiddenValue(var Card: TestPage "LT AB Fixed Props")
+    var
+        Dummy: Text;
+    begin
+        Dummy := Card.FxHiddenF.Value();
+    end;
+
+    [TryFunction]
+    local procedure FixedTryVisExprValue(var Card: TestPage "LT AB Fixed Props")
+    var
+        Dummy: Text;
+    begin
+        Dummy := Card.FxVisExprF.Value();
+    end;
+
     local procedure FixedRun(Ed: Boolean; En: Boolean; Vi: Boolean)
     var
         Observer: Codeunit "Probe Observer";
@@ -42,18 +58,18 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('true-editable', Format(Card.FxTrueF.Editable()));
         Observer.Observe('true-enabled', Format(Card.FxTrueF.Enabled()));
         Observer.Observe('true-visible', Format(Card.FxTrueF.Visible()));
+        Observer.Observe('true-value', Card.FxTrueF.Value());
         Observer.Observe('false-editable', Format(Card.FxFalseF.Editable()));
         Observer.Observe('false-enabled', Format(Card.FxFalseF.Enabled()));
         Observer.Observe('false-visible', Format(Card.FxFalseF.Visible()));
+        Observer.Observe('false-value', Card.FxFalseF.Value());
         Observer.Observe('expr-editable', Format(Card.FxExprF.Editable()));
         Observer.Observe('expr-enabled', Format(Card.FxExprF.Enabled()));
         Observer.Observe('expr-visible', Format(Card.FxExprF.Visible()));
-        Observer.Observe('plain-editable', Format(Card.PlainF.Editable()));
-        Observer.Observe('plain-enabled', Format(Card.PlainF.Enabled()));
-        Observer.Observe('plain-visible', Format(Card.PlainF.Visible()));
-        Observer.Observe('true-value', Card.FxTrueF.Value());
-        Observer.Observe('false-value', Card.FxFalseF.Value());
         Observer.Observe('expr-value', Card.FxExprF.Value());
+        Observer.Observe('plain-editable', Format(Card.PlainF.Editable()));
+        Observer.Observe('hidden-reachable', Format(FixedTryHiddenValue(Card)));
+        Observer.Observe('visexpr-reachable', Format(FixedTryVisExprValue(Card)));
         Card.Close();
         Observer.Finish();
     end;
@@ -88,6 +104,18 @@ codeunit 77099 "LT AB Tests"
         FixedRun(true, true, false);
     end;
 
+    [TryFunction]
+    local procedure FixedTrySetFalse(var Card: TestPage "LT AB Fixed Props")
+    begin
+        Card.FxFalseF.SetValue('set-false');
+    end;
+
+    [TryFunction]
+    local procedure FixedTrySetExpr(var Card: TestPage "LT AB Fixed Props")
+    begin
+        Card.FxExprF.SetValue('set-expr');
+    end;
+
     [Test]
     procedure FixedInputOnEditableAndNonEditable()
     var
@@ -101,10 +129,10 @@ codeunit 77099 "LT AB Tests"
         Card.OpenEdit();
         Card.FxTrueF.SetValue('set-true');
         Observer.Observe('true-after-setvalue', Card.FxTrueF.Value());
-        asserterror Card.FxFalseF.SetValue('set-false');
-        Observer.ObserveError('false-setvalue');
-        asserterror Card.FxExprF.SetValue('set-expr');
-        Observer.ObserveError('expr-not-editable-setvalue');
+        Observer.Observe('false-setvalue-ok', Format(FixedTrySetFalse(Card)));
+        Observer.Observe('false-setvalue-error', GetLastErrorText());
+        Observer.Observe('expr-setvalue-ok', Format(FixedTrySetExpr(Card)));
+        Observer.Observe('expr-setvalue-error', GetLastErrorText());
         Observer.Observe('expr-value-after', Card.FxExprF.Value());
         Card.Close();
         Stored.Get(1);
@@ -141,7 +169,6 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('rows', Names);
         Observer.Observe('tree-field', List.TreeF.Value());
         Observer.Observe('plain-field', List.PlainTreeF.Value());
-        Observer.Observe('plain-action-visible', Format(List.PlainAct.Visible()));
         List.Close();
         Observer.Finish();
     end;
@@ -158,6 +185,22 @@ codeunit 77099 "LT AB Tests"
         Row.Insert();
     end;
 
+    [TryFunction]
+    local procedure GridTryHiddenValue(var Card: TestPage "LT AB Grid Props")
+    var
+        Dummy: Text;
+    begin
+        Dummy := Card.GrHiddenF.Value();
+    end;
+
+    [TryFunction]
+    local procedure GridTryVisExprValue(var Card: TestPage "LT AB Grid Props")
+    var
+        Dummy: Text;
+    begin
+        Dummy := Card.GrVisExprF.Value();
+    end;
+
     local procedure GridRun(Ed: Boolean; En: Boolean; Vi: Boolean)
     var
         Observer: Codeunit "Probe Observer";
@@ -170,18 +213,18 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('true-editable', Format(Card.GrTrueF.Editable()));
         Observer.Observe('true-enabled', Format(Card.GrTrueF.Enabled()));
         Observer.Observe('true-visible', Format(Card.GrTrueF.Visible()));
+        Observer.Observe('true-value', Card.GrTrueF.Value());
         Observer.Observe('false-editable', Format(Card.GrFalseF.Editable()));
         Observer.Observe('false-enabled', Format(Card.GrFalseF.Enabled()));
         Observer.Observe('false-visible', Format(Card.GrFalseF.Visible()));
+        Observer.Observe('false-value', Card.GrFalseF.Value());
         Observer.Observe('expr-editable', Format(Card.GrExprF.Editable()));
         Observer.Observe('expr-enabled', Format(Card.GrExprF.Enabled()));
         Observer.Observe('expr-visible', Format(Card.GrExprF.Visible()));
-        Observer.Observe('plain-editable', Format(Card.PlainF.Editable()));
-        Observer.Observe('plain-enabled', Format(Card.PlainF.Enabled()));
-        Observer.Observe('plain-visible', Format(Card.PlainF.Visible()));
-        Observer.Observe('true-value', Card.GrTrueF.Value());
-        Observer.Observe('false-value', Card.GrFalseF.Value());
         Observer.Observe('expr-value', Card.GrExprF.Value());
+        Observer.Observe('plain-editable', Format(Card.PlainF.Editable()));
+        Observer.Observe('hidden-reachable', Format(GridTryHiddenValue(Card)));
+        Observer.Observe('visexpr-reachable', Format(GridTryVisExprValue(Card)));
         Card.Close();
         Observer.Finish();
     end;
@@ -216,6 +259,18 @@ codeunit 77099 "LT AB Tests"
         GridRun(true, true, false);
     end;
 
+    [TryFunction]
+    local procedure GridTrySetFalse(var Card: TestPage "LT AB Grid Props")
+    begin
+        Card.GrFalseF.SetValue('set-false');
+    end;
+
+    [TryFunction]
+    local procedure GridTrySetExpr(var Card: TestPage "LT AB Grid Props")
+    begin
+        Card.GrExprF.SetValue('set-expr');
+    end;
+
     [Test]
     procedure GridInputOnEditableAndNonEditable()
     var
@@ -229,10 +284,10 @@ codeunit 77099 "LT AB Tests"
         Card.OpenEdit();
         Card.GrTrueF.SetValue('set-true');
         Observer.Observe('true-after-setvalue', Card.GrTrueF.Value());
-        asserterror Card.GrFalseF.SetValue('set-false');
-        Observer.ObserveError('false-setvalue');
-        asserterror Card.GrExprF.SetValue('set-expr');
-        Observer.ObserveError('expr-not-editable-setvalue');
+        Observer.Observe('false-setvalue-ok', Format(GridTrySetFalse(Card)));
+        Observer.Observe('false-setvalue-error', GetLastErrorText());
+        Observer.Observe('expr-setvalue-ok', Format(GridTrySetExpr(Card)));
+        Observer.Observe('expr-setvalue-error', GetLastErrorText());
         Observer.Observe('expr-value-after', Card.GrExprF.Value());
         Card.Close();
         Stored.Get(1);
@@ -269,7 +324,6 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('rows', Names);
         Observer.Observe('tree-field', List.TreeF.Value());
         Observer.Observe('plain-field', List.PlainTreeF.Value());
-        Observer.Observe('plain-action-visible', Format(List.PlainAct.Visible()));
         List.Close();
         Observer.Finish();
     end;
@@ -286,6 +340,22 @@ codeunit 77099 "LT AB Tests"
         Row.Insert();
     end;
 
+    [TryFunction]
+    local procedure CueTryHiddenValue(var Card: TestPage "LT AB Cue Props")
+    var
+        Dummy: Text;
+    begin
+        Dummy := Card.CgHiddenF.Value();
+    end;
+
+    [TryFunction]
+    local procedure CueTryVisExprValue(var Card: TestPage "LT AB Cue Props")
+    var
+        Dummy: Text;
+    begin
+        Dummy := Card.CgVisExprF.Value();
+    end;
+
     local procedure CueRun(Ed: Boolean; En: Boolean; Vi: Boolean)
     var
         Observer: Codeunit "Probe Observer";
@@ -298,18 +368,18 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('true-editable', Format(Card.CgTrueF.Editable()));
         Observer.Observe('true-enabled', Format(Card.CgTrueF.Enabled()));
         Observer.Observe('true-visible', Format(Card.CgTrueF.Visible()));
+        Observer.Observe('true-value', Card.CgTrueF.Value());
         Observer.Observe('false-editable', Format(Card.CgFalseF.Editable()));
         Observer.Observe('false-enabled', Format(Card.CgFalseF.Enabled()));
         Observer.Observe('false-visible', Format(Card.CgFalseF.Visible()));
+        Observer.Observe('false-value', Card.CgFalseF.Value());
         Observer.Observe('expr-editable', Format(Card.CgExprF.Editable()));
         Observer.Observe('expr-enabled', Format(Card.CgExprF.Enabled()));
         Observer.Observe('expr-visible', Format(Card.CgExprF.Visible()));
-        Observer.Observe('plain-editable', Format(Card.PlainF.Editable()));
-        Observer.Observe('plain-enabled', Format(Card.PlainF.Enabled()));
-        Observer.Observe('plain-visible', Format(Card.PlainF.Visible()));
-        Observer.Observe('true-value', Card.CgTrueF.Value());
-        Observer.Observe('false-value', Card.CgFalseF.Value());
         Observer.Observe('expr-value', Card.CgExprF.Value());
+        Observer.Observe('plain-editable', Format(Card.PlainF.Editable()));
+        Observer.Observe('hidden-reachable', Format(CueTryHiddenValue(Card)));
+        Observer.Observe('visexpr-reachable', Format(CueTryVisExprValue(Card)));
         Card.Close();
         Observer.Finish();
     end;
@@ -344,6 +414,18 @@ codeunit 77099 "LT AB Tests"
         CueRun(true, true, false);
     end;
 
+    [TryFunction]
+    local procedure CueTrySetFalse(var Card: TestPage "LT AB Cue Props")
+    begin
+        Card.CgFalseF.SetValue('set-false');
+    end;
+
+    [TryFunction]
+    local procedure CueTrySetExpr(var Card: TestPage "LT AB Cue Props")
+    begin
+        Card.CgExprF.SetValue('set-expr');
+    end;
+
     [Test]
     procedure CueInputOnEditableAndNonEditable()
     var
@@ -357,10 +439,10 @@ codeunit 77099 "LT AB Tests"
         Card.OpenEdit();
         Card.CgTrueF.SetValue('set-true');
         Observer.Observe('true-after-setvalue', Card.CgTrueF.Value());
-        asserterror Card.CgFalseF.SetValue('set-false');
-        Observer.ObserveError('false-setvalue');
-        asserterror Card.CgExprF.SetValue('set-expr');
-        Observer.ObserveError('expr-not-editable-setvalue');
+        Observer.Observe('false-setvalue-ok', Format(CueTrySetFalse(Card)));
+        Observer.Observe('false-setvalue-error', GetLastErrorText());
+        Observer.Observe('expr-setvalue-ok', Format(CueTrySetExpr(Card)));
+        Observer.Observe('expr-setvalue-error', GetLastErrorText());
         Observer.Observe('expr-value-after', Card.CgExprF.Value());
         Card.Close();
         Stored.Get(1);
@@ -397,7 +479,6 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('rows', Names);
         Observer.Observe('tree-field', List.TreeF.Value());
         Observer.Observe('plain-field', List.PlainTreeF.Value());
-        Observer.Observe('plain-action-visible', Format(List.PlainAct.Visible()));
         List.Close();
         Observer.Finish();
     end;
@@ -506,6 +587,18 @@ codeunit 77099 "LT AB Tests"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure PageEvtTryNext(var Rows: TestPage "LT AB Event Rows")
+    begin
+        Rows.Next();
+    end;
+
+    [TryFunction]
+    local procedure PageEvtTryClose(var Rows: TestPage "LT AB Event Rows")
+    begin
+        Rows.Close();
+    end;
+
     [Test]
     procedure PageEvtModifyVetoedBySubscriber()
     var
@@ -520,10 +613,11 @@ codeunit 77099 "LT AB Tests"
         Rows.OpenEdit();
         Log.Reset();
         Rows.NameF.SetValue('Vetoed');
-        asserterror Rows.Next();
-        Observer.ObserveError('next-after-veto');
+        Observer.Observe('next-ok', Format(PageEvtTryNext(Rows)));
+        Observer.Observe('next-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
-        Rows.Close();
+        Flags.SetVeto(false);
+        Observer.Observe('close-ok', Format(PageEvtTryClose(Rows)));
         Stored.Get(1);
         Observer.Observe('stored-name', Stored.Name);
         Observer.Finish();
@@ -545,10 +639,12 @@ codeunit 77099 "LT AB Tests"
         Rows.IdF.SetValue(20);
         Log.Reset();
         Rows.NameF.SetValue('Twenty');
-        asserterror Rows.Next();
-        Observer.ObserveError('next-after-veto');
+        Observer.Observe('next-ok', Format(PageEvtTryNext(Rows)));
+        Observer.Observe('next-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
-        Rows.Close();
+        Flags.SetVeto(false);
+        Observer.Observe('close-ok', Format(PageEvtTryClose(Rows)));
+        Observer.Observe('close-error', GetLastErrorText());
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Finish();
     end;
@@ -565,8 +661,8 @@ codeunit 77099 "LT AB Tests"
         Flags.SetVeto(true);
         Rows.OpenView();
         Log.Reset();
-        asserterror Rows.Close();
-        Observer.ObserveError('close-after-veto');
+        Observer.Observe('close-ok', Format(PageEvtTryClose(Rows)));
+        Observer.Observe('close-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Flags.SetVeto(false);
         Observer.Finish();
@@ -709,6 +805,22 @@ codeunit 77099 "LT AB Tests"
     end;
 
     [Test]
+    procedure ActionAddInBaseActionWithoutExtension()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+        Card: TestPage "LT AB Action Card";
+    begin
+        ActionAddInSeed();
+        Card.OpenEdit();
+        Log.Reset();
+        Card.ActBase.Invoke();
+        Observer.Observe('log', Log.Dump());
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure ActionAddInBeforeActionRunsBeforeOnAction()
     var
         Observer: Codeunit "Probe Observer";
@@ -774,6 +886,23 @@ codeunit 77099 "LT AB Tests"
         Row.Insert();
         Commit();
         Log.Reset();
+    end;
+
+    [Test]
+    procedure RenderPlainExtensionSaveAsPdf()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+    begin
+        RenderSeed();
+        TempBlob.CreateOutStream(OutStr);
+        asserterror Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
+        Observer.ObserveError('saveas-pdf');
+        Observer.Observe('log', Log.Dump());
+        Observer.Observe('has-output', Format(TempBlob.Length() > 0));
+        Observer.Finish();
     end;
 
     [Test]

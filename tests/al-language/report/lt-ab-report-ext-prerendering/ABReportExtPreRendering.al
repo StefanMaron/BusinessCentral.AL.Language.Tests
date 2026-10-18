@@ -55,3 +55,48 @@ reportextension 77091 "LT AB Render Report Ext" extends "LT AB Render Report"
     var
         Log: Codeunit "LT AB Log";
 }
+
+report 77093 "LT AB Render Plain Report"
+{
+    UsageCategory = None;
+    UseRequestPage = false;
+    DefaultRenderingLayout = RdlcLayout;
+
+    dataset
+    {
+        dataitem(T; "LT AB Row")
+        {
+            column(EntryNo; Id) { }
+            column(Description; Name) { }
+            column(Amount; Level) { }
+        }
+    }
+
+    rendering
+    {
+        layout(RdlcLayout)
+        {
+            Type = RDLC;
+            LayoutFile = './FixtureLayout.rdlc';
+        }
+    }
+
+    trigger OnPreReport()
+    begin
+        Log.Add('plain OnPreReport');
+    end;
+
+    var
+        Log: Codeunit "LT AB Log";
+}
+
+reportextension 77094 "LT AB Render Plain Report Ext" extends "LT AB Render Plain Report"
+{
+    trigger OnPreRendering(var RenderingPayload: JsonObject)
+    begin
+        Log.Add('plain ext OnPreRendering keys=' + Format(RenderingPayload.Keys().Count()));
+    end;
+
+    var
+        Log: Codeunit "LT AB Log";
+}

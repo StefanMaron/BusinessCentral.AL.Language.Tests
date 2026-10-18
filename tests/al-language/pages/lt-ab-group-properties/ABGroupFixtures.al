@@ -76,15 +76,24 @@ page 77012 "LT AB Fixed Props"
             {
                 Editable = false;
                 Enabled = false;
-                Visible = false;
+                Visible = true;
                 field(FxFalseF; Rec.Name) { ApplicationArea = All; }
+            }
+            fixed(FxHidden)
+            {
+                Visible = false;
+                field(FxHiddenF; Rec.Name) { ApplicationArea = All; }
             }
             fixed(FxExpr)
             {
                 Editable = EditableFlag;
                 Enabled = EnabledFlag;
-                Visible = VisibleFlag;
                 field(FxExprF; Rec.Name) { ApplicationArea = All; }
+            }
+            fixed(FxVisExpr)
+            {
+                Visible = VisibleFlag;
+                field(FxVisExprF; Rec.Name) { ApplicationArea = All; }
             }
             field(PlainF; Rec.Name) { ApplicationArea = All; }
         }
@@ -172,15 +181,24 @@ page 77022 "LT AB Grid Props"
             {
                 Editable = false;
                 Enabled = false;
-                Visible = false;
+                Visible = true;
                 field(GrFalseF; Rec.Name) { ApplicationArea = All; }
+            }
+            grid(GrHidden)
+            {
+                Visible = false;
+                field(GrHiddenF; Rec.Name) { ApplicationArea = All; }
             }
             grid(GrExpr)
             {
                 Editable = EditableFlag;
                 Enabled = EnabledFlag;
-                Visible = VisibleFlag;
                 field(GrExprF; Rec.Name) { ApplicationArea = All; }
+            }
+            grid(GrVisExpr)
+            {
+                Visible = VisibleFlag;
+                field(GrVisExprF; Rec.Name) { ApplicationArea = All; }
             }
             field(PlainF; Rec.Name) { ApplicationArea = All; }
         }
@@ -268,15 +286,24 @@ page 77032 "LT AB Cue Props"
             {
                 Editable = false;
                 Enabled = false;
-                Visible = false;
+                Visible = true;
                 field(CgFalseF; Rec.Name) { ApplicationArea = All; }
+            }
+            cuegroup(CgHidden)
+            {
+                Visible = false;
+                field(CgHiddenF; Rec.Name) { ApplicationArea = All; }
             }
             cuegroup(CgExpr)
             {
                 Editable = EditableFlag;
                 Enabled = EnabledFlag;
-                Visible = VisibleFlag;
                 field(CgExprF; Rec.Name) { ApplicationArea = All; }
+            }
+            cuegroup(CgVisExpr)
+            {
+                Visible = VisibleFlag;
+                field(CgVisExprF; Rec.Name) { ApplicationArea = All; }
             }
             field(PlainF; Rec.Name) { ApplicationArea = All; }
         }
