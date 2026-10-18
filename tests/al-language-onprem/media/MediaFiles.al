@@ -151,11 +151,15 @@ codeunit 61285 "LT S Media Files"
         Observer.Expect('export_return', 'Yes');
         Observer.Expect('source_len', '68');
         Observer.Expect('export_exists', 'Yes');
+#if BC29PLUS
         Observer.Expect('export_len', '68');
         Observer.Expect('export_base64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
         Observer.Expect('export_overwrite_ok', 'Yes');
         Observer.Expect('export_overwrite_len', '68');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
