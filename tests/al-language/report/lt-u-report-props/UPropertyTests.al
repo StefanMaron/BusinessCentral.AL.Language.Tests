@@ -11,6 +11,7 @@ codeunit 69789 "LT U Property Tests"
     TestPermissions = Disabled;
 
     var
+        Observer: Codeunit "Probe Observer";
         DrillPages: Integer;
 
     local procedure SeedParent()
@@ -60,7 +61,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure Report_RdlcAndWordLayout_AreSelected()
     var
-        Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         InS: InStream;
         Magic: Text;
@@ -83,7 +83,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure Report_SaveAs_UsesTheLayouts()
     var
-        Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         State: Codeunit "LT U State";
         OutS: OutStream;
@@ -123,7 +122,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure ReportExtension_CalcFields_AndBaseCalcFields()
     var
-        Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         State: Codeunit "LT U State";
         OutS: OutStream;
@@ -140,7 +138,6 @@ codeunit 69789 "LT U Property Tests"
     [HandlerFunctions('RequestPageFieldsHandler,DrillPageHandler')]
     procedure Report_RequestPageFields_Relation_AutoFormat_DateFormula()
     var
-        Observer: Codeunit "Probe Observer";
         Mock: Codeunit "Permissions Mock";
     begin
         SeedPageSrc();
@@ -153,7 +150,6 @@ codeunit 69789 "LT U Property Tests"
     [RequestPageHandler]
     procedure RequestPageFieldsHandler(var Req: TestRequestPage "LT U Report")
     var
-        Observer: Codeunit "Probe Observer";
     begin
         asserterror Req.RelField.SetValue(9999);
         Observer.ObserveError('rel_missing');
@@ -177,7 +173,6 @@ codeunit 69789 "LT U Property Tests"
         asserterror Req.DrillField.Drilldown();
         Observer.ObserveError('drill');
         Req.Cancel().Invoke();
-        Observer.Finish();
     end;
 
     [PageHandler]
@@ -190,7 +185,6 @@ codeunit 69789 "LT U Property Tests"
     [HandlerFunctions('PermissionedRequestHandler')]
     procedure Report_RequestPagePermissions_AndInherentPermissions()
     var
-        Observer: Codeunit "Probe Observer";
         Mock: Codeunit "Permissions Mock";
         State: Codeunit "LT U State";
         Src: Record "LT U Page Src";
@@ -223,7 +217,6 @@ codeunit 69789 "LT U Property Tests"
     [RequestPageHandler]
     procedure PermissionedRequestHandler(var Req: TestRequestPage "LT U Report")
     var
-        Observer: Codeunit "Probe Observer";
     begin
         Req.RelField.SetValue(1);
         Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value);
@@ -235,7 +228,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure Query_InherentPermissions_UnderTheMock()
     var
-        Observer: Codeunit "Probe Observer";
         Mock: Codeunit "Permissions Mock";
         Inherent: Query "LT U Query Inherent";
         Plain: Query "LT U Query Plain";
@@ -270,7 +262,6 @@ codeunit 69789 "LT U Property Tests"
 
     local procedure ImportObserve(Name: Text; XmlText: Text)
     var
-        Observer: Codeunit "Probe Observer";
         Ok: Boolean;
     begin
         Ok := TryImport(XmlText);
@@ -294,7 +285,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure XmlPort_Import_Occurrence_Validation_TextType()
     var
-        Observer: Codeunit "Probe Observer";
         State: Codeunit "LT U State";
         Src: Record "LT U Page Src";
     begin
@@ -313,7 +303,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure XmlPort_Import_MissingAndInvalid()
     var
-        Observer: Codeunit "Probe Observer";
         State: Codeunit "LT U State";
         Src: Record "LT U Page Src";
     begin
@@ -337,7 +326,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure XmlPort_Export_OptionalAttributes()
     var
-        Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         Src: Record "LT U Page Src";
         OutS: OutStream;
@@ -364,7 +352,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure Runner_Function_RollsBackEachTest()
     var
-        Observer: Codeunit "Probe Observer";
         Row: Record "LT U Isolation Row";
         State: Codeunit "LT U State";
     begin
@@ -381,7 +368,6 @@ codeunit 69789 "LT U Property Tests"
     [Test]
     procedure Runner_Codeunit_RollsBackAfterTheCodeunit()
     var
-        Observer: Codeunit "Probe Observer";
         Row: Record "LT U Isolation Row";
         State: Codeunit "LT U State";
     begin
