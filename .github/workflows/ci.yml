@@ -205,7 +205,7 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..99999"
+      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -268,7 +268,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem"
-      codeunit_range:       "61200..61299"
+      codeunit_range:       "61200..61299|98000..98999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -298,7 +298,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem-dotnet"
-      codeunit_range:       "61400..61499"
+      codeunit_range:       "61400..61499|99000..99499"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
