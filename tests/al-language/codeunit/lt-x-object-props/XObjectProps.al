@@ -445,16 +445,6 @@ codeunit 75039 "LT X Object Props Tests"
         GlobalLanguage(OldLanguage);
         Observer.Finish();
     end;
-            Observer.Observe(Name + '_plain', QueryFacts(Query::"LT X Api Plain"));
-            Observer.Observe(Name + '_ml', QueryFacts(Query::"LT X Api Ml"));
-        end;
-        GlobalLanguage(OldLanguage);
-        Observer.Expect('enu_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
-        Observer.Expect('enu_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props|version=v1.0');
-        Observer.Expect('deu_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
-        Observer.Expect('deu_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props');
-        Observer.Verify();
-    end;
 
     [Test]
     procedure Query_HelpLinkAndEntityCaptions_ReadsUnchanged()
