@@ -261,7 +261,13 @@ codeunit 67572 "LT HPSF Tests"
             Observer.Observe('log after next', Log.Dump());
             Host.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('opened', 'Yes');
+        Observer.Expect('error text', '');
+        Observer.Expect('error code', '');
+        Observer.Expect('log', '[host-start:1 | proc-start | sel-count=0 | sel-filters=Id: 0 | sel-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | sel-ids=() | rec-before=/3 | rec-count=0 | rec-filters=Id: 0 | rec-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | proc-end | host-end]');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log after next', '[host-start:2 | proc-start | sel-count=0 | sel-filters=Id: 0 | sel-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | sel-ids=() | rec-before=Id: 0/0 | rec-count=0 | rec-filters=Id: 0 | rec-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | proc-end | host-end]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -284,7 +290,13 @@ codeunit 67572 "LT HPSF Tests"
             Observer.Observe('log after next', Log.Dump());
             Host.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('opened', 'Yes');
+        Observer.Expect('error text', '');
+        Observer.Expect('error code', '');
+        Observer.Expect('log', '[part-OnOpenPage | host-start:1 | proc-start | sel-count=0 | sel-filters=Id: 0 | sel-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | sel-ids=() | rec-before=/3 | rec-count=0 | rec-filters=Id: 0 | rec-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | proc-end | host-end]');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log after next', '[host-start:2 | proc-start | sel-count=1 | sel-filters=Id: 1 | sel-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(1)) | sel-ids=(1,) | rec-before=/3 | rec-count=1 | rec-filters=Id: 1 | rec-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(1)) | proc-end | host-end]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,6 +319,12 @@ codeunit 67572 "LT HPSF Tests"
             Observer.Observe('log after next', Log.Dump());
             Host.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('opened', 'Yes');
+        Observer.Expect('error text', '');
+        Observer.Expect('error code', '');
+        Observer.Expect('log', '[part-OnOpenPage | host-start:1 | proc-start | sel-count=0 | sel-filters=Id: 0 | sel-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | sel-ids=() | rec-before=/3 | rec-count=0 | rec-filters=Id: 0 | rec-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(0)) | proc-end | host-end]');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log after next', '[host-start:2 | proc-start | sel-count=1 | sel-filters=Id: 1 | sel-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(1)) | sel-ids=(1,) | rec-before=/3 | rec-count=1 | rec-filters=Id: 1 | rec-view=VERSION(1) SORTING(Id) WHERE(Id=FILTER(1)) | proc-end | host-end]');
+        Observer.Verify();
     end;
 }

@@ -48,7 +48,22 @@ codeunit 67554 "LT Evaluate Date 3 Digit Year"
         TryAll(Observer, 'en_');
         Observer.Observe('en_language', Format(GlobalLanguage()));
         GlobalLanguage(Previous);
-        Observer.Finish();
+        Observer.Expect('en_slash_3digit', '[01/02/026] Yes 0026-01-02');
+        Observer.Expect('en_dot_3digit', '[1.2.026] Yes 0026-01-02');
+        Observer.Expect('en_slash_3digit_other', '[01/02/999] Yes 0999-01-02');
+        Observer.Expect('en_dot_3digit_other', '[1.2.999] Yes 0999-01-02');
+        Observer.Expect('en_dot_3digit_padded', '[01.02.026] Yes 0026-01-02');
+        Observer.Expect('en_slash_1digit', '[01/02/6] Yes 2006-01-02');
+        Observer.Expect('en_slash_2digit', '[01/02/26] Yes 2026-01-02');
+        Observer.Expect('en_dot_2digit', '[1.2.26] Yes 2026-01-02');
+        Observer.Expect('en_slash_4digit_leading_zero', '[01/02/0026] Yes 0026-01-02');
+        Observer.Expect('en_dot_4digit_leading_zero', '[1.2.0026] Yes 0026-01-02');
+        Observer.Expect('en_slash_4digit', '[01/02/2026] Yes 2026-01-02');
+        Observer.Expect('en_dot_4digit', '[1.2.2026] Yes 2026-01-02');
+        Observer.Expect('en_slash_5digit', '[01/02/12026] No ');
+        Observer.Expect('en_dash_3digit', '[01-02-026] Yes 0026-01-02');
+        Observer.Expect('en_language', '1033');
+        Observer.Verify();
     end;
 
     [Test]
@@ -62,7 +77,22 @@ codeunit 67554 "LT Evaluate Date 3 Digit Year"
         TryAll(Observer, 'de_');
         Observer.Observe('de_language', Format(GlobalLanguage()));
         GlobalLanguage(Previous);
-        Observer.Finish();
+        Observer.Expect('de_slash_3digit', '[01/02/026] Ja 0026-01-02');
+        Observer.Expect('de_dot_3digit', '[1.2.026] Ja 0026-01-02');
+        Observer.Expect('de_slash_3digit_other', '[01/02/999] Ja 0999-01-02');
+        Observer.Expect('de_dot_3digit_other', '[1.2.999] Ja 0999-01-02');
+        Observer.Expect('de_dot_3digit_padded', '[01.02.026] Ja 0026-01-02');
+        Observer.Expect('de_slash_1digit', '[01/02/6] Ja 2006-01-02');
+        Observer.Expect('de_slash_2digit', '[01/02/26] Ja 2026-01-02');
+        Observer.Expect('de_dot_2digit', '[1.2.26] Ja 2026-01-02');
+        Observer.Expect('de_slash_4digit_leading_zero', '[01/02/0026] Ja 0026-01-02');
+        Observer.Expect('de_dot_4digit_leading_zero', '[1.2.0026] Ja 0026-01-02');
+        Observer.Expect('de_slash_4digit', '[01/02/2026] Ja 2026-01-02');
+        Observer.Expect('de_dot_4digit', '[1.2.2026] Ja 2026-01-02');
+        Observer.Expect('de_slash_5digit', '[01/02/12026] Nein ');
+        Observer.Expect('de_dash_3digit', '[01-02-026] Ja 0026-01-02');
+        Observer.Expect('de_language', '1031');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,6 +106,21 @@ codeunit 67554 "LT Evaluate Date 3 Digit Year"
         TryAll(Observer, 'gb_');
         Observer.Observe('gb_language', Format(GlobalLanguage()));
         GlobalLanguage(Previous);
-        Observer.Finish();
+        Observer.Expect('gb_slash_3digit', '[01/02/026] Yes 0026-01-02');
+        Observer.Expect('gb_dot_3digit', '[1.2.026] Yes 0026-01-02');
+        Observer.Expect('gb_slash_3digit_other', '[01/02/999] Yes 0999-01-02');
+        Observer.Expect('gb_dot_3digit_other', '[1.2.999] Yes 0999-01-02');
+        Observer.Expect('gb_dot_3digit_padded', '[01.02.026] Yes 0026-01-02');
+        Observer.Expect('gb_slash_1digit', '[01/02/6] Yes 2006-01-02');
+        Observer.Expect('gb_slash_2digit', '[01/02/26] Yes 2026-01-02');
+        Observer.Expect('gb_dot_2digit', '[1.2.26] Yes 2026-01-02');
+        Observer.Expect('gb_slash_4digit_leading_zero', '[01/02/0026] Yes 0026-01-02');
+        Observer.Expect('gb_dot_4digit_leading_zero', '[1.2.0026] Yes 0026-01-02');
+        Observer.Expect('gb_slash_4digit', '[01/02/2026] Yes 2026-01-02');
+        Observer.Expect('gb_dot_4digit', '[1.2.2026] Yes 2026-01-02');
+        Observer.Expect('gb_slash_5digit', '[01/02/12026] No ');
+        Observer.Expect('gb_dash_3digit', '[01-02-026] Yes 0026-01-02');
+        Observer.Expect('gb_language', '2057');
+        Observer.Verify();
     end;
 }

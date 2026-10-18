@@ -66,6 +66,37 @@ codeunit 67555 "LT Encryption Key Lifecycle"
         State(Observer, 'after_second_create');
         if not EncryptionKeyExists() then
             CreateEncryptionKey();
-        Observer.Finish();
+        Observer.Expect('start_enabled', 'Yes');
+        Observer.Expect('start_key_exists', 'Yes');
+        Observer.Expect('start_encrypt', 'ok length 344');
+        Observer.Expect('create_when_present', 'No');
+        Observer.Expect('create_when_present_error|text', 'Unable to create a new encryption key. An encryption key already exists.');
+        Observer.Expect('create_when_present_error|code', 'EncryptionCreated');
+        Observer.Expect('after_create_when_present_enabled', 'Yes');
+        Observer.Expect('after_create_when_present_key_exists', 'Yes');
+        Observer.Expect('after_create_when_present_encrypt', 'ok length 344');
+        Observer.Expect('delete_when_present', 'Yes');
+        Observer.Expect('after_delete_enabled', 'No');
+        Observer.Expect('after_delete_key_exists', 'No');
+        Observer.Expect('after_delete_encrypt', 'error');
+        Observer.Expect('after_delete_encrypt_error|text', 'An encryption key is required to complete the request.');
+        Observer.Expect('after_delete_encrypt_error|code', 'EncryptionNotCreated');
+        Observer.Expect('delete_when_absent', 'Yes');
+        Observer.Expect('after_second_delete_enabled', 'No');
+        Observer.Expect('after_second_delete_key_exists', 'No');
+        Observer.Expect('after_second_delete_encrypt', 'error');
+        Observer.Expect('after_second_delete_encrypt_error|text', 'An encryption key is required to complete the request.');
+        Observer.Expect('after_second_delete_encrypt_error|code', 'EncryptionNotCreated');
+        Observer.Expect('create_when_absent', 'Yes');
+        Observer.Expect('after_create_enabled', 'Yes');
+        Observer.Expect('after_create_key_exists', 'Yes');
+        Observer.Expect('after_create_encrypt', 'ok length 344');
+        Observer.Expect('create_again', 'No');
+        Observer.Expect('create_again_error|text', 'Unable to create a new encryption key. An encryption key already exists.');
+        Observer.Expect('create_again_error|code', 'EncryptionCreated');
+        Observer.Expect('after_second_create_enabled', 'Yes');
+        Observer.Expect('after_second_create_key_exists', 'Yes');
+        Observer.Expect('after_second_create_encrypt', 'ok length 344');
+        Observer.Verify();
     end;
 }

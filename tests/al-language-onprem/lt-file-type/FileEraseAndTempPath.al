@@ -34,7 +34,7 @@ codeunit 61275 "LT File Erase And Temp Path"
         R: Boolean;
     begin
         if TIsTemp(P, R) then
-            Observer.Observe(Name, '[' + P + '] ' + Format(R))
+            Observer.Observe(Name, Format(R))
         else begin
             Observer.Observe(Name, 'error');
             Observer.ObserveError(Name + '_error');
@@ -47,9 +47,12 @@ codeunit 61275 "LT File Erase And Temp Path"
         Observer: Codeunit "Probe Observer";
     begin
         EraseCase(Observer, 'empty', '');
-        EraseCase(Observer, 'blank', ' ');
         Observer.Observe('exists_empty', Format(File.Exists('')));
-        Observer.Finish();
+        Observer.Expect('empty', 'error');
+        Observer.Expect('empty_error|text', 'The value cannot be an empty string. (Parameter ''path'')');
+        Observer.Expect('empty_error|code', 'InvalidPath');
+        Observer.Expect('exists_empty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -72,6 +75,19 @@ codeunit 61275 "LT File Erase And Temp Path"
         TempCase(Observer, 'other_drive_z_slash', 'Z:/lt-other.tmp');
         TempCase(Observer, 'unc', '\\lt-server\share\lt-other.tmp');
         TempCase(Observer, 'root', '/');
-        Observer.Finish();
+        Observer.Expect('temporary_path_ends_with_separator', 'Yes');
+        Observer.Expect('temporary_path', 'Yes');
+        Observer.Expect('file_in_temporary_path', 'Yes');
+        Observer.Expect('subfolder_file_in_temporary_path', 'Yes');
+        Observer.Expect('relative', 'Yes');
+        Observer.Expect('relative_subfolder', 'Yes');
+        Observer.Expect('empty', 'Yes');
+        Observer.Expect('blank', 'Yes');
+        Observer.Expect('other_drive_c', 'Yes');
+        Observer.Expect('other_drive_d', 'Yes');
+        Observer.Expect('other_drive_z_slash', 'Yes');
+        Observer.Expect('unc', 'Yes');
+        Observer.Expect('root', 'Yes');
+        Observer.Verify();
     end;
 }

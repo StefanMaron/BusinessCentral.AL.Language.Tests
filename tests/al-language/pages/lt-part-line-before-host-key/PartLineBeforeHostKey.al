@@ -319,6 +319,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Observe(Name + '_part_quantity', '[' + Host.Lines.Quantity.Value() + ']');
     end;
 
+#if BC28PLUS // BC 27 raises an uncatchable CLR exception when the key is typed after a line was entered (see the BC 27 test below)
     [Test]
     procedure PartLine_EnteredBeforeHostKey_ThenKeyTyped()
     var
@@ -338,8 +339,71 @@ codeunit 67582 "LT DL Tests"
         Stored(Observer, 'after_name');
         Step(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
+        Observer.Expect('open_new', 'Yes');
+        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('new_line', 'Yes');
+        Observer.Expect('new_line_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('description_before_key', 'Yes');
+        Observer.Expect('description_before_key_log', '[L.OnValidate(Description):first key=/0]');
+        Observer.Expect('quantity_before_key', 'Yes');
+        Observer.Expect('quantity_before_key_log', '[LP.OnInsertRecord:/20000 | L.OnInsert:/20000 | L.OnValidate(Quantity):3 key=/20000]');
+        Observer.Expect('before_key_headers', '1');
+        Observer.Expect('before_key_header_rows', '[|]');
+        Observer.Expect('before_key_lines', '1');
+        Observer.Expect('before_key_line_rows', '[|20000|first|0]');
+        Observer.Expect('type_key', 'Yes');
+        Observer.Expect('type_key_log', '[L.OnModify:/20000 | H.OnValidate(No.):D1]');
+        Observer.Expect('after_key_card_no', '[]');
+        Observer.Expect('after_key_card_name', '[]');
+        Observer.Expect('after_key_part_description', '[first]');
+        Observer.Expect('after_key_part_quantity', '[3.00]');
+        Observer.Expect('after_key_headers', '1');
+        Observer.Expect('after_key_header_rows', '[|]');
+        Observer.Expect('after_key_lines', '1');
+        Observer.Expect('after_key_line_rows', '[|20000|first|3]');
+        Observer.Expect('type_name', 'Yes');
+        Observer.Expect('type_name_log', '[H.OnValidate(Name):Doc one key=]');
+        Observer.Expect('after_name_headers', '1');
+        Observer.Expect('after_name_header_rows', '[|]');
+        Observer.Expect('after_name_lines', '1');
+        Observer.Expect('after_name_line_rows', '[|20000|first|3]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[H.OnModify:]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|Doc one]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|20000|first|3]');
+        Observer.Verify();
+    end;
+#endif
+
+#if not BC28PLUS
+    [Test]
+    procedure PartLine_EnteredBeforeHostKey_ThenKeyTyped_BC27()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        Step(Observer, 'open_new', TryOpenNew(Host));
+        Step(Observer, 'new_line', TryNewLine(Host));
+        Step(Observer, 'description_before_key', TryDescription(Host, 'first'));
+        Step(Observer, 'quantity_before_key', TryQuantity(Host, 3));
+        Stored(Observer, 'before_key');
+        asserterror Host."No.".SetValue('D1');
+        Observer.ObserveError('type_key');
+        Observer.Observe('type_key_log', LogDump());
+        Stored(Observer, 'after_key');
         Observer.Finish();
     end;
+
+    local procedure LogDump(): Text
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        exit(Log.Dump());
+    end;
+#endif
 
     [Test]
     procedure PartLine_EnteredAfterHostKey_Baseline()
@@ -358,7 +422,35 @@ codeunit 67582 "LT DL Tests"
         Stored(Observer, 'after_line');
         Step(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', 'Yes');
+        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('type_key', 'Yes');
+        Observer.Expect('type_key_log', '[H.OnValidate(No.):D2 | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('after_key_headers', '0');
+        Observer.Expect('after_key_header_rows', '');
+        Observer.Expect('after_key_lines', '0');
+        Observer.Expect('after_key_line_rows', '');
+        Observer.Expect('new_line', 'Yes');
+        Observer.Expect('new_line_log', '[HP.OnInsertRecord:D2 | H.OnInsert:D2 | L.OnValidate(Document No.):D2 | LP.OnNewRecord:D2 | LP.OnNewRecord:D2 | L.OnValidate(Document No.):D2 | LP.OnNewRecord:D2 | L.OnValidate(Document No.):D2 | LP.OnNewRecord:D2]');
+        Observer.Expect('description', 'Yes');
+        Observer.Expect('description_log', '[L.OnValidate(Description):second key=D2/0]');
+        Observer.Expect('quantity', 'Yes');
+        Observer.Expect('quantity_log', '[LP.OnInsertRecord:D2/20000 | L.OnInsert:D2/20000 | L.OnValidate(Quantity):4 key=D2/20000]');
+        Observer.Expect('after_line_card_no', '[D2]');
+        Observer.Expect('after_line_card_name', '[]');
+        Observer.Expect('after_line_part_description', '[second]');
+        Observer.Expect('after_line_part_quantity', '[4.00]');
+        Observer.Expect('after_line_headers', '1');
+        Observer.Expect('after_line_header_rows', '[D2|]');
+        Observer.Expect('after_line_lines', '1');
+        Observer.Expect('after_line_line_rows', '[D2|20000|second|0]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[L.OnModify:D2/20000]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[D2|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[D2|20000|second|4]');
+        Observer.Verify();
     end;
 
     [TryFunction]
