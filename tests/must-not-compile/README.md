@@ -96,6 +96,10 @@ is only a reference.
 | 0111 | AL0130 | this passed to a var parameter of another codeunit. |
 | 0112 | AL0296 | SecretText.Unwrap named from a Cloud app (the method has scope OnPrem). |
 | 0113 | AL0296 | A variable of the File data type in a Cloud app. |
+| 0722 | AL0284 | A subscriber to Global Triggers.OnGlobalInsert declares its parameter as Integer instead of RecordRef. |
+| 0723 | AL0284 | A subscriber to Environment Triggers.OnAfterCopyEnvironmentPerDatabase declares the environment types as Integer instead of an Option (two diagnostics). |
+| 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
+| 0725 | AL0280 | A subscriber names an event that Company Triggers does not declare (OnCompanyOpened). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
