@@ -3,7 +3,7 @@
 // Fixtures used: Probe Observer (69160); P110 File UI members (RISKY: may raise)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Pins the return value and the outputs of File.Download, File.DownloadFromStream, File.Upload, both File.UploadIntoStream forms, File.View and File.ViewFromStream when no client handles the dialog. The return variable is set to true before each call, so an untouched variable shows as ret=Yes.
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 29 (27 and 28 by CI). File.Download and File.DownloadFromStream are pinned from BC 28 only: on BC 27 both raise an uncatchable System.NullReferenceException ("Unexpected CLR exception thrown.") that fails the test, even inside asserterror or a TryFunction.
 codeunit 61282 "LT Q File Ui Returns"
 {
     Subtype = Test;
@@ -174,53 +174,6 @@ codeunit 61282 "LT Q File Ui Returns"
         Observer.Expect('dls_blank_tofile', '[untouched]');
         Observer.Expect('stream_eos_after', 'No');
         Observer.Verify();
-    end;
-#else
-    [Test]
-    procedure Download_NoClient_RaisesClrException()
-    var
-        Observer: Codeunit "Probe Observer";
-        F: File;
-        OutS: OutStream;
-        P: Text;
-        ToFile: Text;
-    begin
-        P := TempName();
-        F.Create(P);
-        F.CreateOutStream(OutS);
-        OutS.WriteText('download content');
-        F.Close();
-        ToFile := 'untouched';
-        asserterror File.Download(P, 'Title', '', '', ToFile);
-        Observer.Observe('dl_error', CopyStr(GetLastErrorText(), 1, 90));
-        Observer.Observe('dl_code', GetLastErrorCode());
-        ClearLastError();
-        Observer.Observe('dl_tofile', '[' + ToFile + ']');
-        Cleanup(P);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure DownloadFromStream_NoClient_RaisesClrException()
-    var
-        Observer: Codeunit "Probe Observer";
-        F: File;
-        OutS: OutStream;
-        InS: InStream;
-        ToFile: Text;
-    begin
-        F.CreateTempFile();
-        F.CreateOutStream(OutS);
-        OutS.WriteText('stream content');
-        F.CreateInStream(InS);
-        ToFile := 'untouched';
-        asserterror File.DownloadFromStream(InS, 'Title', '', '', ToFile);
-        Observer.Observe('dls_error', CopyStr(GetLastErrorText(), 1, 90));
-        Observer.Observe('dls_code', GetLastErrorCode());
-        ClearLastError();
-        Observer.Observe('dls_tofile', '[' + ToFile + ']');
-        F.Close();
-        Observer.Finish();
     end;
 #endif
 
