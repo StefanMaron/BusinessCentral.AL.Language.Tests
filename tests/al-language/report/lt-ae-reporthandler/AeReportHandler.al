@@ -111,8 +111,7 @@ codeunit 78200 "LT AE Report Handler"
     procedure Execute_WithReportHandler()
     begin
         Seed();
-        asserterror Report.Execute(Report::"LT RpT Request", '');
-        Observer.ObserveError('execute');
+        Report.Execute(Report::"LT RpT Request", '');
         Observer.Observe('log', L.Take());
         Observer.Finish();
     end;
@@ -127,8 +126,8 @@ codeunit 78200 "LT AE Report Handler"
     begin
         Seed();
         TempBlob.CreateOutStream(OutS);
-        asserterror Ok := Report.SaveAs(Report::"LT RpT Request", '', ReportFormat::Xml, OutS);
-        Observer.ObserveError('saveas');
+        Ok := Report.SaveAs(Report::"LT RpT Request", '', ReportFormat::Xml, OutS);
+        Observer.Observe('result', Format(Ok));
         Observer.Observe('log', L.Take());
         Observer.Observe('length', Format(TempBlob.Length()));
         Observer.Finish();
@@ -141,8 +140,7 @@ codeunit 78200 "LT AE Report Handler"
         Params: Text;
     begin
         Seed();
-        asserterror Params := Report.RunRequestPage(Report::"LT RpT Request");
-        Observer.ObserveError('runrequestpage');
+        Params := Report.RunRequestPage(Report::"LT RpT Request");
         Observer.Observe('params', Params);
         Observer.Observe('log', L.Take());
         Observer.Finish();
@@ -200,8 +198,7 @@ codeunit 78200 "LT AE Report Handler"
         Rpt: Report "LT RpT Request Skipped";
     begin
         Seed();
-        asserterror Rpt.Run();
-        Observer.ObserveError('run');
+        Rpt.Run();
         Observer.Observe('log', L.Take());
         Observer.Finish();
     end;

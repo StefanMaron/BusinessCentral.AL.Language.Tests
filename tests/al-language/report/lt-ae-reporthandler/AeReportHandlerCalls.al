@@ -80,8 +80,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 1;
-        asserterror Report.Run(Report::"LT RpT Request");
-        Observer.ObserveError('run');
+        Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
         Observer.Finish();
     end;
@@ -92,8 +91,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 2;
-        asserterror Report.Run(Report::"LT RpT Request");
-        Observer.ObserveError('run');
+        Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
         Observer.Finish();
     end;
@@ -104,8 +102,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 3;
-        asserterror Report.Run(Report::"LT RpT Request");
-        Observer.ObserveError('run');
+        Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
         Observer.Finish();
     end;
@@ -122,8 +119,8 @@ codeunit 78201 "LT AE Report Handler Calls"
         Observer.Finish();
     end;
 
-    [Test]
-    [HandlerFunctions('CallHandler')]
+    // Not a test: R.RunRequestPage() inside the handler calls the handler again until BC raises StackOverflow ("There is insufficient memory to execute this function. This can be
+    // caused by recursive function calls."); the depth varies, so it is not an oracle and a deep recursion may end a session. Listed as a suspect in the hand-off note.
     procedure Handler_RunRequestPage()
     begin
         Seed();
