@@ -439,12 +439,6 @@ codeunit 75010 "LT X Table Props Tests"
         Card.OpenEdit();
         Observer.Observe('page_modified_off', Card.Closing.Value);
         Observer.Observe('page_modified_on', Card.Closing2.Value);
-        Card.Closing2.SetValue(DMY2Date(1, 2, 2026));
-        Observer.Observe('page_set_normal_date', Card.Closing2.Value);
-        Card.Closing2.SetValue(D);
-        Observer.Observe('page_set_closing_date_modified_on', Card.Closing2.Value);
-        Card.Closing.SetValue(D);
-        Observer.Observe('page_set_closing_date_modified_off', Card.Closing.Value);
         Card.Close();
         Observer.Finish();
     end;

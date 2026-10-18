@@ -27,6 +27,6 @@
     }
   ],
   "features": [],
-  "runtime": "16.0",
+  "runtime": "18.0",
   "target": "Cloud"
 }
