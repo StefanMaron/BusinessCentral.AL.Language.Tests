@@ -50,7 +50,19 @@ codeunit 60129 "Test Record Extended"
         // AddLoadFields returns true when partial-load mode is active (after SetLoadFields).
         // Without prior SetLoadFields, it returns false (full load already active) — not an error.
         Result := Rec.AddLoadFields(Rec."Integer Field");
-        Assert.IsTrue(true, 'AddLoadFields on valid field must not throw error (returns false when full-load is active)');
+        Assert.IsFalse(Result, 'AddLoadFields without a prior SetLoadFields must return false (full load is already active)');
+    end;
+
+    [Test]
+    procedure Record_AddLoadFields_AfterSetLoadFields_ReturnsTrue()
+    var
+        Rec: Record "ALT Universal";
+        Result: Boolean;
+    begin
+        Initialize();
+        Rec.SetLoadFields(Rec."Integer Field");
+        Result := Rec.AddLoadFields(Rec."Text Field");
+        Assert.IsTrue(Result, 'AddLoadFields after SetLoadFields (partial load active) must return true');
     end;
 
     [Test]
@@ -62,7 +74,7 @@ codeunit 60129 "Test Record Extended"
         Initialize();
         Result := Rec.AddLoadFields(Rec."Integer Field", Rec."Text Field");
         // Returns false in full-load mode — not an error
-        Assert.IsTrue(true, 'AddLoadFields with multiple fields must not throw error');
+        Assert.IsFalse(Result, 'AddLoadFields with multiple fields and no prior SetLoadFields must return false');
     end;
 
     // ── Record.SetBaseLoadFields() ───────────────────────────────────────────
