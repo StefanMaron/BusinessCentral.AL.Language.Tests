@@ -501,7 +501,11 @@ codeunit 78100 "LT AD Plat Rows Language"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'Language Selection', 'Language Tag', 0, 'bn-BD~de-CH~de-LI~en-ID');
-        Observer.Finish();
+        Observer.Expect('Language Selection row bn-BD', 'Name=Bangla (Bangladesh)|Language Tag=bn-BD|Language ID=2117|Primary Language ID=1093|Abbreviated Name=BNB|Enabled=No|');
+        Observer.Expect('Language Selection row de-CH', 'Name=German (Switzerland)|Language Tag=de-CH|Language ID=2055|Primary Language ID=1031|Abbreviated Name=DES|Enabled=Yes|');
+        Observer.Expect('Language Selection row de-LI', 'Name=German (Liechtenstein)|Language Tag=de-LI|Language ID=5127|Primary Language ID=1031|Abbreviated Name=DEC|Enabled=No|');
+        Observer.Expect('Language Selection row en-ID', 'Name=English (Indonesia)|Language Tag=en-ID|Language ID=14345|Primary Language ID=1033|Abbreviated Name=ZZZ|Enabled=No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -510,7 +514,11 @@ codeunit 78100 "LT AD Plat Rows Language"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'Language Selection', 'Language Tag', 0, 'en-IE~es-MX~es-SV~et-EE');
-        Observer.Finish();
+        Observer.Expect('Language Selection row en-IE', 'Name=English (Ireland)|Language Tag=en-IE|Language ID=6153|Primary Language ID=1033|Abbreviated Name=ENI|Enabled=No|');
+        Observer.Expect('Language Selection row es-MX', 'Name=Spanish (Mexico)|Language Tag=es-MX|Language ID=2058|Primary Language ID=1034|Abbreviated Name=ESM|Enabled=Yes|');
+        Observer.Expect('Language Selection row es-SV', 'Name=Spanish (El Salvador)|Language Tag=es-SV|Language ID=17418|Primary Language ID=1034|Abbreviated Name=ESE|Enabled=No|');
+        Observer.Expect('Language Selection row et-EE', 'Name=Estonian (Estonia)|Language Tag=et-EE|Language ID=1061|Primary Language ID=1061|Abbreviated Name=ETI|Enabled=Yes|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -519,7 +527,11 @@ codeunit 78100 "LT AD Plat Rows Language"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'Language Selection', 'Language Tag', 0, 'fo-FO~fr-MC~fr-ML~id-ID');
-        Observer.Finish();
+        Observer.Expect('Language Selection row fo-FO', 'Name=Faroese (Faroe Islands)|Language Tag=fo-FO|Language ID=1080|Primary Language ID=1080|Abbreviated Name=FOS|Enabled=No|');
+        Observer.Expect('Language Selection row fr-MC', 'Name=French (Monaco)|Language Tag=fr-MC|Language ID=6156|Primary Language ID=1036|Abbreviated Name=FRM|Enabled=No|');
+        Observer.Expect('Language Selection row fr-ML', 'Name=French (Mali)|Language Tag=fr-ML|Language ID=13324|Primary Language ID=1036|Abbreviated Name=FRF|Enabled=No|');
+        Observer.Expect('Language Selection row id-ID', 'Name=Indonesian (Indonesia)|Language Tag=id-ID|Language ID=1057|Primary Language ID=1057|Abbreviated Name=IND|Enabled=No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -528,7 +540,11 @@ codeunit 78100 "LT AD Plat Rows Language"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'Language Selection', 'Language Tag', 0, 'ky-KG~mr-IN~ne-IN~pl-PL');
-        Observer.Finish();
+        Observer.Expect('Language Selection row ky-KG', 'Name=Kyrgyz (Kyrgyzstan)|Language Tag=ky-KG|Language ID=1088|Primary Language ID=1088|Abbreviated Name=KYR|Enabled=No|');
+        Observer.Expect('Language Selection row mr-IN', 'Name=Marathi (India)|Language Tag=mr-IN|Language ID=1102|Primary Language ID=1102|Abbreviated Name=MAR|Enabled=No|');
+        Observer.Expect('Language Selection row ne-IN', 'Name=Nepali (India)|Language Tag=ne-IN|Language ID=2145|Primary Language ID=1121|Abbreviated Name=NEI|Enabled=No|');
+        Observer.Expect('Language Selection row pl-PL', 'Name=Polish (Poland)|Language Tag=pl-PL|Language ID=1045|Primary Language ID=1045|Abbreviated Name=PLK|Enabled=Yes|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -537,7 +553,11 @@ codeunit 78100 "LT AD Plat Rows Language"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'Language Selection', 'Language Tag', 0, 'ps-AF~sa-IN~sr-Cyrl-BA~uz-Latn-UZ');
-        Observer.Finish();
+        Observer.Expect('Language Selection row ps-AF', 'Name=Pashto (Afghanistan)|Language Tag=ps-AF|Language ID=1123|Primary Language ID=1123|Abbreviated Name=PAS|Enabled=No|');
+        Observer.Expect('Language Selection row sa-IN', 'Name=Sanskrit (India)|Language Tag=sa-IN|Language ID=1103|Primary Language ID=1103|Abbreviated Name=SAN|Enabled=No|');
+        Observer.Expect('Language Selection row sr-Cyrl-BA', 'Name=Serbian (Cyrillic, Bosnia & Herzegovina)|Language Tag=sr-Cyrl-BA|Language ID=7194|Primary Language ID=1050|Abbreviated Name=SRN|Enabled=No|');
+        Observer.Expect('Language Selection row uz-Latn-UZ', 'Name=Uzbek (Latin, Uzbekistan)|Language Tag=uz-Latn-UZ|Language ID=1091|Primary Language ID=1091|Abbreviated Name=UZB|Enabled=No|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -546,7 +566,8 @@ codeunit 78100 "LT AD Plat Rows Language"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'Language Selection', 'Language Tag', 0, 'wo-SN');
-        Observer.Finish();
+        Observer.Expect('Language Selection row wo-SN', 'Name=Wolof (Senegal)|Language Tag=wo-SN|Language ID=1160|Primary Language ID=1160|Abbreviated Name=WOL|Enabled=No|');
+        Observer.Verify();
     end;
 
     [Test]

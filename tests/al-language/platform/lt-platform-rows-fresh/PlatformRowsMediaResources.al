@@ -161,7 +161,8 @@ codeunit 78110 "LT AD Plat Rows Media"
         Observer: Codeunit "Probe Observer";
     begin
         DumpKeys(Observer, 'MediaResources', 'Code', 0, 'FIRSTINVOICESPLASH.PNG');
-        Observer.Finish();
+        Observer.Expect('MediaResources row FIRSTINVOICESPLASH.PNG', 'Code=FIRSTINVOICESPLASH.PNG|MediaSet Reference=<MediaSet>|Media Reference=<Media>|Blob=<BLOB>|');
+        Observer.Verify();
     end;
 
     [Test]
