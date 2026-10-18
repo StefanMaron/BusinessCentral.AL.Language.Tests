@@ -5,6 +5,8 @@
 // BC versions: 28.0 and later
 
 #if BC28PLUS
+namespace LT.T.Fqn;
+
 table 69383 "LT T Fqn Row"
 {
     DataClassification = SystemMetadata;
@@ -154,22 +156,19 @@ codeunit 69387 "LT T Fqn Tests"
         RecRef.Open(Database::"G/L Entry");
         Observer.Observe('gl entry fqn', RecRef.FullyQualifiedName());
         RecRef.Close();
-        Names.Add('AL Language.AL Language Coverage Tests.LT T Fqn Row');
-        Names.Add('AL Language Coverage Tests.LT T Fqn Row');
-        Names.Add('AL Language/AL Language Coverage Tests/LT T Fqn Row');
-        Names.Add('AL Language_AL Language Coverage Tests_LT T Fqn Row');
-        Names.Add('AL Language::LT T Fqn Row');
-        Names.Add('Microsoft.Base Application.Customer');
-        Names.Add('Base Application.Customer');
-        Names.Add('Microsoft/Base Application/Customer');
+        Names.Add('LT.T.Fqn.LT T Fqn Row');
+        Names.Add('LT.T.Fqn.lt t fqn row');
+        Names.Add('LT.T.Fqn.No Such Table');
+        Names.Add('lt.t.fqn.LT T Fqn Row');
+        Names.Add('LT.T.LT T Fqn Row');
+        Names.Add('LT T Fqn Row');
+        Names.Add('Microsoft.Sales.Customer.Customer');
+        Names.Add('Microsoft.Sales.Customer.customer');
+        Names.Add('Sales.Customer.Customer');
         Names.Add('Customer');
-        Names.Add('Microsoft.Customer');
-        Names.Add('a1b2c3d4-e5f6-7890-abcd-ef1234567890.LT T Fqn Row');
-        Names.Add('"AL Language"."AL Language Coverage Tests"."LT T Fqn Row"');
-        Names.Add('AL Language.LT T Fqn Row');
-        Names.Add('[AL Language].[AL Language Coverage Tests].[LT T Fqn Row]');
-        Names.Add('AL Language,AL Language Coverage Tests,LT T Fqn Row');
-        Names.Add('LT T Fqn Row, AL Language Coverage Tests, AL Language');
+        Names.Add('');
+        Names.Add('LT.T.Fqn.');
+        Names.Add('.LT T Fqn Row');
         Index := 0;
         foreach Name in Names do begin
             Index += 1;
@@ -186,10 +185,13 @@ codeunit 69387 "LT T Fqn Tests"
     var
         RecRef: RecordRef;
     begin
-        RecRef.Open('LT T Fqn Row');
+        RecRef.Open('LT.T.Fqn.LT T Fqn Row');
         Observer.Observe('plain name number', Format(RecRef.Number));
         RecRef.Close();
-        RecRef.Open(Format(Database::"LT T Fqn Row"));
+        asserterror RecRef.Open('LT T Fqn Row');
+        Observer.ObserveError('open plain name');
+        asserterror RecRef.Open(Format(Database::"LT T Fqn Row"));
+        Observer.ObserveError('open number text');
         Observer.Finish();
     end;
 
@@ -226,18 +228,21 @@ codeunit 69387 "LT T Fqn Tests"
         Seed();
         RecRef.Open(Database::"LT T Fqn Row");
         Name := RecRef.FullyQualifiedName();
-        Observer.Observe('plain Run', '');
-        Report.Run('LT T Fqn Report', false, false);
+        asserterror Report.Run('LT T Fqn Report', false, false);
+        Observer.ObserveError('run plain name');
+        asserterror Report.Execute('LT T Fqn Report', '');
+        Observer.ObserveError('execute plain name');
+        Report.Run('LT.T.Fqn.LT T Fqn Report', false, false);
         Observer.Observe('plain run log', FqnLog.Take());
         Row.SetFilter(Id, '>=%1', 4);
-        Report.Run('LT T Fqn Report', false, false, Row);
+        Report.Run('LT.T.Fqn.LT T Fqn Report', false, false, Row);
         Observer.Observe('plain run row log', FqnLog.Take());
-        Report.RunModal('LT T Fqn Report', false, false, Row);
+        Report.RunModal('LT.T.Fqn.LT T Fqn Report', false, false, Row);
         Observer.Observe('plain runmodal row log', FqnLog.Take());
         RecRef.SetView(Row.GetView());
-        Report.Execute('LT T Fqn Report', '', RecRef);
+        Report.Execute('LT.T.Fqn.LT T Fqn Report', '', RecRef);
         Observer.Observe('plain execute recref log', FqnLog.Take());
-        Report.Execute('LT T Fqn Report', '');
+        Report.Execute('LT.T.Fqn.LT T Fqn Report', '');
         Observer.Observe('plain execute log', FqnLog.Take());
         asserterror Report.Run('No Such Report', false, false);
         Observer.ObserveError('run unknown');
@@ -257,11 +262,11 @@ codeunit 69387 "LT T Fqn Tests"
         Seed();
         Row.Get(3);
         Seen := '';
-        Page.Run('LT T Fqn Page', Row, Row.Txt);
+        Page.Run('LT.T.Fqn.LT T Fqn Page', Row, Row.Txt);
         Observer.Observe('page run seen', Seen);
         Seen := '';
-        Page.Run('LT T Fqn Page', Row);
-        Observer.Observe('page run (no field) seen', Seen);
+        asserterror Page.Run('LT T Fqn Page', Row);
+        Observer.ObserveError('page run plain name');
         Observer.Finish();
     end;
 
@@ -283,15 +288,15 @@ codeunit 69387 "LT T Fqn Tests"
         Seed();
         Row.Get(2);
         Seen := '';
-        Result := Page.RunModal('LT T Fqn Page', Row, Row.Txt);
+        Result := Page.RunModal('LT.T.Fqn.LT T Fqn Page', Row, Row.Txt);
         Observer.Observe('modal field', Format(Result) + ' ' + Seen);
         Seen := '';
-        Result := Page.RunModal('LT T Fqn Page', Row, 2);
+        Result := Page.RunModal('LT.T.Fqn.LT T Fqn Page', Row, 2);
         Observer.Observe('modal fieldno', Format(Result) + ' ' + Seen);
         RecRef.GetTable(Row);
         FRef := RecRef.Field(2);
         Seen := '';
-        Result := Page.RunModal('LT T Fqn Page', Row, FRef);
+        Result := Page.RunModal('LT.T.Fqn.LT T Fqn Page', Row, FRef);
         Observer.Observe('modal fieldref', Format(Result) + ' ' + Seen);
         Observer.Finish();
     end;
@@ -312,7 +317,7 @@ codeunit 69387 "LT T Fqn Tests"
     begin
         Seed();
         Row.Get(2);
-        Result := Page.RunModal('LT T Fqn Page', Row, Row.Txt);
+        Result := Page.RunModal('LT.T.Fqn.LT T Fqn Page', Row, Row.Txt);
         Observer.Observe('modal cancel', Format(Result));
         asserterror Page.Run('No Such Page', Row);
         Observer.ObserveError('page run unknown');
