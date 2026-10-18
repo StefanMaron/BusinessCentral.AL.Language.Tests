@@ -28,6 +28,13 @@ codeunit 80004 "LT AT Precision Std Format 2"
         Observer.Observe('0.005', F(0.005));
         Observer.Observe('1234567.1', F(1234567.1));
         Observer.Observe('-0.5', F(-0.5));
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('1234.567', '1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('1234567.1', '1234567.10');
+        Observer.Expect('-0.5', '-0.50');
+        Observer.Verify();
     end;
 }

@@ -93,7 +93,11 @@ codeunit 80006 "LT AT Get Integer On Code Key"
         Seed(true);
         Probe(Observer, 'literal', 0);
         Probe(Observer, 'variable', 1);
-        Observer.Finish();
+        Observer.Expect('literal', 'Yes');
+        Observer.Expect('literal row', '123|hit');
+        Observer.Expect('variable', 'Yes');
+        Observer.Expect('variable row', '123|hit');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +108,11 @@ codeunit 80006 "LT AT Get Integer On Code Key"
         Seed(false);
         Probe(Observer, 'literal', 0);
         Probe(Observer, 'variable', 1);
-        Observer.Finish();
+        Observer.Expect('literal', 'No');
+        Observer.Expect('literal row', '|');
+        Observer.Expect('variable', 'No');
+        Observer.Expect('variable row', '|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,6 +122,8 @@ codeunit 80006 "LT AT Get Integer On Code Key"
     begin
         Seed(false);
         Probe(Observer, 'bare', 2);
-        Observer.Finish();
+        Observer.Expect('bare|text', 'The LT AT Code Key does not exist. Identification fields and values: No.=''123''');
+        Observer.Expect('bare|code', 'DB:RecordNotFound');
+        Observer.Verify();
     end;
 }

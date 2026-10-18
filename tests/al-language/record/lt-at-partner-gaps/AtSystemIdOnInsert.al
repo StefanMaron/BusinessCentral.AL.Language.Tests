@@ -137,7 +137,18 @@ codeunit 80002 "LT AT SystemId OnInsert"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, 0);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('trigger saw null', 'No');
+        Observer.Expect('trigger saw preset', 'No');
+        Observer.Expect('trigger ran', 'Yes');
+        Observer.Expect('caller = trigger', 'Yes');
+        Observer.Expect('caller = preset', 'No');
+        Observer.Expect('caller null', 'No');
+        Observer.Expect('caller changed', 'Yes');
+        Observer.Expect('stored = trigger', 'Yes');
+        Observer.Expect('stored = caller', 'Yes');
+        Observer.Expect('GetBySystemId(caller)', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +157,18 @@ codeunit 80002 "LT AT SystemId OnInsert"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, 1);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('trigger saw null', 'No');
+        Observer.Expect('trigger saw preset', 'No');
+        Observer.Expect('trigger ran', 'Yes');
+        Observer.Expect('caller = trigger', 'Yes');
+        Observer.Expect('caller = preset', 'No');
+        Observer.Expect('caller null', 'No');
+        Observer.Expect('caller changed', 'Yes');
+        Observer.Expect('stored = trigger', 'Yes');
+        Observer.Expect('stored = caller', 'Yes');
+        Observer.Expect('GetBySystemId(caller)', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -155,7 +177,18 @@ codeunit 80002 "LT AT SystemId OnInsert"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, 2);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('trigger saw null', 'No');
+        Observer.Expect('trigger saw preset', 'Yes');
+        Observer.Expect('trigger ran', 'Yes');
+        Observer.Expect('caller = trigger', 'Yes');
+        Observer.Expect('caller = preset', 'No');
+        Observer.Expect('caller null', 'No');
+        Observer.Expect('caller changed', 'Yes');
+        Observer.Expect('stored = trigger', 'Yes');
+        Observer.Expect('stored = caller', 'Yes');
+        Observer.Expect('GetBySystemId(caller)', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,6 +197,17 @@ codeunit 80002 "LT AT SystemId OnInsert"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, 3);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('trigger saw null', 'Yes');
+        Observer.Expect('trigger saw preset', 'No');
+        Observer.Expect('trigger ran', 'No');
+        Observer.Expect('caller = trigger', 'No');
+        Observer.Expect('caller = preset', 'No');
+        Observer.Expect('caller null', 'No');
+        Observer.Expect('caller changed', 'Yes');
+        Observer.Expect('stored = trigger', 'No');
+        Observer.Expect('stored = caller', 'Yes');
+        Observer.Expect('GetBySystemId(caller)', 'Yes');
+        Observer.Verify();
     end;
 }

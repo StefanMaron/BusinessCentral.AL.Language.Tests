@@ -4,14 +4,15 @@
 // Probe: the "Time Zone" virtual table (2000000164) lists the time zones of the HOST operating system, so "No." and ID depend on the machine.
 // The shape (1..N, no gaps, non-blank IDs) is pinned host-independently in record/TestTimeZoneVirtualTable.al.
 // Facts asked: the No. of the row with ID 'W. Europe Standard Time', the row count, the first and last ID.
+// NOT ASSERTED (Linux suspect, issue 655 item 5): the corpus CI runs BC in a Linux container, where the list is the IANA list. Observed on BC 29.0
+// (Linux, 2026-10-19): count 419; no row with ID 'W. Europe Standard Time'; 'Europe/Berlin' is No. 195; first 1=Pacific/Niue, 2=Pacific/Midway,
+// 3=Pacific/Pago_Pago; last 419=Pacific/Kiritimati. These are values of the host, not BC behavior; they wait for the Windows nightly.
+// So the codeunit below is not a test codeunit: it keeps the probe source for that run.
 // BC versions: 27, 28, 29
 
 codeunit 80007 "LT AT Time Zone Numbering"
 {
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
+    // Raises the OBSERVE error with the values when called (see Probe Observer).
     procedure AT_TimeZone_Numbering_Probe()
     var
         Observer: Codeunit "Probe Observer";

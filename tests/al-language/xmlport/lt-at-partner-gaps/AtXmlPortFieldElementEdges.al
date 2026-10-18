@@ -170,7 +170,8 @@ codeunit 80011 "LT AT XmlPort FieldElem Edges"
             Observer.Observe('export', Body(TempBlob))
         else
             Observer.ObserveError('export');
-        Observer.Finish();
+        Observer.Expect('export', '<Root>  <Row>    <Id>1</Id>    <Name>      <Child>c1</Child>    </Name>  </Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +186,8 @@ codeunit 80011 "LT AT XmlPort FieldElem Edges"
             Observer.Observe('export', Body(TempBlob))
         else
             Observer.ObserveError('export');
-        Observer.Finish();
+        Observer.Expect('export', '<Root>  <Row>    <Id>1</Id>    <Name>      <Child />    </Name>  </Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -200,7 +202,8 @@ codeunit 80011 "LT AT XmlPort FieldElem Edges"
             Observer.Observe('export', Body(TempBlob))
         else
             Observer.ObserveError('export');
-        Observer.Finish();
+        Observer.Expect('export', '<Root>  <Row>    <Id>1</Id>    <Name Lang="">Alpha</Name>  </Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -218,6 +221,9 @@ codeunit 80011 "LT AT XmlPort FieldElem Edges"
         else
             Observer.ObserveError('import');
         Observer.Observe('row 2', RowState(2));
-        Observer.Finish();
+        Observer.Expect('import|text', 'Imported XML cannot validate with the schema: The required attribute ''Lang'' is missing.');
+        Observer.Expect('import|code', 'XmlPortInvalidXml');
+        Observer.Expect('row 2', 'absent');
+        Observer.Verify();
     end;
 }

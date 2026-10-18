@@ -29,7 +29,13 @@ codeunit 80003 "LT AT Text Char Literal"
         Observer.Observe('fmt S1 - 0', Format(S[1] - '0'));
         Observer.Observe('S1 - 0 + 1', Format(S[1] - '0' + 1));
         Observer.Observe('S1 - 0 = 7', Format(S[1] - '0' = 7));
-        Observer.Finish();
+        Observer.Expect('S1 - 0', '7');
+        Observer.Expect('S2 - A', '1');
+        Observer.Expect('0 - S1', '-7');
+        Observer.Expect('fmt S1 - 0', '7');
+        Observer.Expect('S1 - 0 + 1', '8');
+        Observer.Expect('S1 - 0 = 7', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -46,7 +52,11 @@ codeunit 80003 "LT AT Text Char Literal"
         Observer.Observe('A + S1', Format(I));
         Observer.Observe('fmt S2 + A', Format(S[2] + 'A'));
         Observer.Observe('fmt A + S1', Format('A' + S[1]));
-        Observer.Finish();
+        Observer.Expect('S2 + A', '131');
+        Observer.Expect('A + S1', '120');
+        Observer.Expect('fmt S2 + A', '131');
+        Observer.Expect('fmt A + S1', '120');
+        Observer.Verify();
     end;
 
     [Test]
@@ -61,7 +71,12 @@ codeunit 80003 "LT AT Text Char Literal"
         Observer.Observe('S1 + ab', Format(S[1] + 'ab'));
         Observer.Observe('S1 + S2', Format(S[1] + S[2]));
         Observer.Observe('S1 + empty', Format(S[1] + ''));
-        Observer.Finish();
+        Observer.Expect('a + S1 + b', '250');
+        Observer.Expect('ab + S1', 'ab7');
+        Observer.Expect('S1 + ab', '7ab');
+        Observer.Expect('S1 + S2', '121');
+        Observer.Expect('S1 + empty', '7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -77,6 +92,9 @@ codeunit 80003 "LT AT Text Char Literal"
         I := C[1] - 'A';
         Observer.Observe('C1 - A', Format(I));
         Observer.Observe('fmt A + C1', Format('A' + C[1]));
-        Observer.Finish();
+        Observer.Expect('C2 - 0', '9');
+        Observer.Expect('C1 - A', '23');
+        Observer.Expect('fmt A + C1', '153');
+        Observer.Verify();
     end;
 }
