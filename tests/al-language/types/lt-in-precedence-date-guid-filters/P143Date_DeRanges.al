@@ -35,7 +35,7 @@ codeunit 74654 "LT P143 DeRanges"
         Observer.Expect('r_ge_err|text', 'Der Filter ''>=31.01.27'' ist für das Feld ''D'' der Tabelle ''LT P143 Row'' nicht gültig. Das Format Date „31.01.27“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.');
         Observer.Expect('r_ge_err|code', 'Filter:CSide');
         Observer.Expect('r_us_range_filter', '01/01/27..01/31/27');
-        Observer.Expect('r_us_range_count', '4');
+        Observer.Expect('r_us_range_count', Format(4 + Helper.InRows(20270101D, 20270131D)));
         Observer.Expect('language_restored', 'Yes');
         Observer.Verify();
     end;
