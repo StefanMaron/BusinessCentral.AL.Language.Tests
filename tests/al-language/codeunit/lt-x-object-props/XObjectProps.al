@@ -256,7 +256,12 @@ codeunit 75039 "LT X Object Props Tests"
         Observer.Observe('function_ai', CodeunitFacts(Codeunit::"LT X Iso Function"));
         Observer.Observe('defaults', CodeunitFacts(Codeunit::"LT X Iso Default"));
         Observer.Observe('this_codeunit', CodeunitFacts(Codeunit::"LT X Object Props Tests"));
-        Observer.Finish();
+        Observer.Expect('none_unittest', 'LT X Iso None|subtype=Test|testtype=UnitTest|isolation=None|testtype_ord=1|isolation_ord=0');
+        Observer.Expect('disabled_integration', 'LT X Iso Disabled|subtype=Test|testtype=IntegrationTest|isolation=Disabled|testtype_ord=2|isolation_ord=1');
+        Observer.Expect('codeunit_uncategorized', 'LT X Iso Codeunit|subtype=Test|testtype=Uncategorized|isolation=Codeunit|testtype_ord=3|isolation_ord=2');
+        Observer.Expect('function_ai', 'LT X Iso Function|subtype=Test|testtype=AITest|isolation=Function|testtype_ord=4|isolation_ord=3');
+        Observer.Expect('defaults', 'LT X Iso Defaul');
+        Observer.Verify();
     end;
 
     [Test]
@@ -268,7 +273,8 @@ codeunit 75039 "LT X Object Props Tests"
         Pg.OpenView();
         Observer.Observe('opened', 'yes');
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('opened', 'yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -286,7 +292,10 @@ codeunit 75039 "LT X Object Props Tests"
         Source := Source::None;
         Target := Assigner.Assign(Source);
         Observer.Observe('target_none', Format(Target));
-        Observer.Finish();
+        Observer.Expect('target_after_assign', 'Second');
+        Observer.Expect('target_ordinal', '2');
+        Observer.Expect('target_none', 'None');
+        Observer.Verify();
     end;
 
     local procedure ExpandedFacts(RoleId: Text): Text
@@ -324,7 +333,15 @@ codeunit 75039 "LT X Object Props Tests"
         Declared.SetRange("App ID", CurrentAppId());
         Declared.SetRange("Role ID", 'LT X PS MAIN');
         Observer.Observe('main_declared_permissions', Format(Declared.Count()));
-        Observer.Finish();
+        Observer.Expect('base', 'R=Yes I=Yes M=Yes D=  count=1');
+        Observer.Expect('neg', 'R=  I=Yes M=Yes D=  count=1');
+        Observer.Expect('main_includes_base_excludes_neg', 'R=Yes I=  M=  D=  count=1');
+        Observer.Expect('control_includes_base_only', 'R=Yes I=Yes M=Yes D=  count=1');
+        Observer.Expect('main_relation_count', '2');
+        Observer.Expect('main_relation_LT X PS BASE', 'Include');
+        Observer.Expect('main_relation_LT X PS NEG', 'Exclude');
+        Observer.Expect('main_declared_permissions', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -357,7 +374,13 @@ codeunit 75039 "LT X Object Props Tests"
                 Observer.Observe(Name + '_row', 'missing');
         end;
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('enu_description', 'English profile text');
+        Observer.Expect('enu_caption', 'LT X Profile Caption');
+        Observer.Expect('deu_description', 'Deutscher Profiltext');
+        Observer.Expect('deu_caption', 'LT X Profile Caption');
+        Observer.Expect('fra_description', 'English profile text');
+        Observer.Expect('fra_caption', 'LT X Profile Caption');
+        Observer.Verify();
     end;
 
     local procedure QueryFacts(QueryId: Integer): Text
@@ -393,7 +416,11 @@ codeunit 75039 "LT X Object Props Tests"
             Observer.Observe(Name + '_ml', QueryFacts(Query::"LT X Api Ml"));
         end;
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('enu_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Expect('enu_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Expect('deu_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Expect('deu_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props');
+        Observer.Verify();
     end;
 
     [Test]
@@ -423,7 +450,9 @@ codeunit 75039 "LT X Object Props Tests"
             Rows += Format(MlQuery.Id) + '=' + MlQuery.Name + ';';
         MlQuery.Close();
         Observer.Observe('ml_rows', Rows);
-        Observer.Finish();
+        Observer.Expect('plain_rows', '1=one;2=two;');
+        Observer.Expect('ml_rows', '1=one;2=two;');
+        Observer.Verify();
     end;
 
     local procedure LanguageList() Languages: List of [Integer]

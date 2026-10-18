@@ -366,7 +366,11 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer.Observe('obs_action_enabled', Format(Pg.ObsAction.Enabled()));
         Observer.Observe('obs_action_visible', Format(Pg.ObsAction.Visible()));
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('repeater_rows', '1=one;2=two;');
+        Observer.Expect('actions_run', 'ObsAction;InGroup;');
+        Observer.Expect('obs_action_enabled', 'Yes');
+        Observer.Expect('obs_action_visible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -383,7 +387,10 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer.Observe('fixed_field', Pg.AmountInFixed.Value);
         Pg.NameInGrid.SetValue('changed');
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('group_field', '2');
+        Observer.Expect('grid_field', 'two');
+        Observer.Expect('fixed_field', '2.50');
+        Observer.Verify();
     end;
 
     [Test]
@@ -397,7 +404,9 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer.Observe('opened_id', Pg.Id.Value);
         Observer.Observe('id_visible_with_customization', Format(Pg.Id.Visible()));
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('opened_id', '1');
+        Observer.Expect('id_visible_with_customization', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -412,7 +421,10 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer.Observe('count', Format(Src.Count()));
         Src.Get(2);
         Observer.Observe('second_amount', Format(Src.Amount));
-        Observer.Finish();
+        Observer.Expect('first', 'one');
+        Observer.Expect('count', '2');
+        Observer.Expect('second_amount', '2.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -429,7 +441,11 @@ codeunit 75058 "LT X Obsolete Pending Tests"
             Observer.Observe('role_center_is_page', Format(AllProfile."Role Center ID" = Page::"LT X Obs Role Center"));
             Observer.Observe('enabled', Format(AllProfile.Enabled));
         end;
-        Observer.Finish();
+        Observer.Expect('row_count', '1');
+        Observer.Expect('caption', 'LT X Obs Profile Caption');
+        Observer.Expect('role_center_is_page', 'Yes');
+        Observer.Expect('enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -449,7 +465,10 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Expanded.SetRange("Object ID", Database::"LT X Obs Src");
         if Expanded.FindFirst() then
             Observer.Observe('grant', 'R=' + Format(Expanded."Read Permission") + ' I=' + Format(Expanded."Insert Permission") + ' M=' + Format(Expanded."Modify Permission"));
-        Observer.Finish();
+        Observer.Expect('set_rows', '1');
+        Observer.Expect('assignable', 'Yes');
+        Observer.Expect('grant', 'R=Yes I=Yes M= ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -479,7 +498,10 @@ codeunit 75058 "LT X Obsolete Pending Tests"
             Rows += Format(Obs.Id) + '=' + Obs.Name + ';';
         Obs.Close();
         Observer.Observe('filtered_rows_amount_2_5', Rows);
-        Observer.Finish();
+        Observer.Expect('all_rows', '1=one;2=two;');
+        Observer.Expect('filtered_rows_amount_2', '');
+        Observer.Expect('filtered_rows_amount_2_5', '2=two;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -497,7 +519,10 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         else
             Observer.ObserveError('run_error');
         Observer.Observe('rows_seen_by_data_item', Log.Take());
-        Observer.Finish();
+        Observer.Expect('run_error|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run_error|code', 'DB:Ok');
+        Observer.Expect('rows_seen_by_data_item', '');
+        Observer.Verify();
     end;
 
     [TryFunction]

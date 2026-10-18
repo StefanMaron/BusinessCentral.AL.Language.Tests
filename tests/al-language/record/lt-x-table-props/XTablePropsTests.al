@@ -76,7 +76,14 @@ codeunit 75010 "LT X Table Props Tests"
         Check(Observer, 'picky_e_between_ranges', Row, Row.FieldNo(Picky), 'abe');
         Check(Observer, 'picky_uppercase', Row, Row.FieldNo(Picky), 'A');
         Check(Observer, 'picky_q', Row, Row.FieldNo(Picky), 'abq');
-        Observer.Finish();
+        Observer.Expect('digits_allowed', '123');
+        Observer.Expect('digits_disallowed', 'no error: 12A');
+        Observer.Expect('digits_assigned_not_checked', '12A');
+        Observer.Expect('picky_allowed', 'abmpz');
+        Observer.Expect('picky_e_between_ranges', 'no error: abe');
+        Observer.Expect('picky_uppercase', 'no error: A');
+        Observer.Expect('picky_q', 'no error: abq');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +100,11 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.ObserveError('page_digits_disallowed');
         Observer.Observe('page_digits_after_error', Card.Digits.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('page_digits_allowed', '456');
+        Observer.Expect('page_digits_disallowed|text', 'Validation error for Field: Digits,  Message = ''The character X is not valid in this field. You can specify the following characters: 09. (Select Refresh to discard errors)''');
+        Observer.Expect('page_digits_disallowed|code', 'TestValidation');
+        Observer.Expect('page_digits_after_error', '456');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,7 +130,13 @@ codeunit 75010 "LT X Table Props Tests"
         Card.DateText.SetValue('xyz');
         Observer.Observe('page_garbage_value', Card.DateText.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('validate_1M', '1M');
+        Observer.Expect('validate_CM_1D', '<CM+1D>');
+        Observer.Expect('validate_garbage', 'no error: not a formula');
+        Observer.Expect('assigned_garbage', 'not a formula');
+        Observer.Expect('page_2W', '2W');
+        Observer.Expect('page_garbage_value', 'xyz');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,7 +162,13 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('record_secret', Row.Secret);
         Observer.Observe('record_plain', Row.Plain);
         Observer.Observe('record_secret2', Row.Secret2);
-        Observer.Finish();
+        Observer.Expect('page_concealed', 'pw-1');
+        Observer.Expect('page_none', 'open-1');
+        Observer.Expect('page_after_set', 'pw-3');
+        Observer.Expect('record_secret', 'pw-3');
+        Observer.Expect('record_plain', 'open-1');
+        Observer.Expect('record_secret2', 'pw-2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +216,22 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('deu_page_optml_modified', Card.OptMl.Value);
         Card.Close();
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('enu_format', 'Beta');
+        Observer.Expect('enu_format_modified_field', 'Yellow');
+        Observer.Expect('enu_optioncaption', 'Alpha,Beta,Gamma');
+        Observer.Expect('enu_optionmembers', 'A,B,C');
+        Observer.Expect('enu_optioncaption_modified', 'Cyan,Magenta,Yellow');
+        Observer.Expect('deu_format', 'Zwei');
+        Observer.Expect('deu_format_modified_field', 'Gelb');
+        Observer.Expect('deu_optioncaption', 'Eins,Zwei,Drei');
+        Observer.Expect('deu_optioncaption_modified', 'Zyan,Magenta,Gelb');
+        Observer.Expect('fra_format_fallback', 'Beta');
+        Observer.Expect('fra_format_modified_fallback', 'Yellow');
+        Observer.Expect('fra_optioncaption_fallback', 'Alpha,Beta,Gamma');
+        Observer.Expect('fra_optioncaption_modified_fallback', 'Cyan,Magenta,Yellow');
+        Observer.Expect('deu_page_op', 'Zwei');
+        Observer.Expect('deu_page_optml_modified', 'Gelb');
+        Observer.Verify();
     end;
 
     [Test]
@@ -219,7 +257,11 @@ codeunit 75010 "LT X Table Props Tests"
         Card.OpenEdit();
         Observer.Observe('page_negative', Card.Disp.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('format_negative', '-1,234.5');
+        Observer.Expect('format_positive', '1,234.5');
+        Observer.Expect('format_zero', '0');
+        Observer.Expect('page_negative', '-1,234.50');
+        Observer.Verify();
     end;
 
     local procedure SeedSql(var Row: Record "LT X Props Sql")
@@ -271,7 +313,16 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('first_by_varchar_key', Format(Row.Id));
         Row.FindLast();
         Observer.Observe('last_by_varchar_key', Format(Row.Id));
-        Observer.Finish();
+        Observer.Expect('integer_value', '10');
+        Observer.Expect('varchar_value', '10');
+        Observer.Expect('bigint_value', '10');
+        Observer.Expect('integer_empty_on_row_3', '');
+        Observer.Expect('varchar_text_on_row_3', 'ABC');
+        Observer.Expect('first_by_integer_key', '3');
+        Observer.Expect('last_by_integer_key', '1');
+        Observer.Expect('first_by_varchar_key', '1');
+        Observer.Expect('last_by_varchar_key', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -283,7 +334,8 @@ codeunit 75010 "LT X Table Props Tests"
         SeedSql(Row);
         Row.Get(2);
         Observer.Observe('integer_nine', Row.AsInteger);
-        Observer.Finish();
+        Observer.Expect('integer_nine', '9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -297,7 +349,9 @@ codeunit 75010 "LT X Table Props Tests"
         Row.AsInteger := '0';
         asserterror Row.Modify();
         Observer.ObserveError('modify_zero');
-        Observer.Finish();
+        Observer.Expect('modify_zero|text', 'The LT X Props Sql table contains a value that is not valid in an integer Code field:\\Id=''1''\Error code: 22928070');
+        Observer.Expect('modify_zero|code', 'NDBCS:BadCSideCodeData');
+        Observer.Verify();
     end;
 
     [Test]
@@ -311,7 +365,9 @@ codeunit 75010 "LT X Table Props Tests"
         Row.AsInteger := '007';
         asserterror Row.Modify();
         Observer.ObserveError('modify_leading_zero');
-        Observer.Finish();
+        Observer.Expect('modify_leading_zero|text', 'The LT X Props Sql table contains a value that is not valid in an integer Code field:\\Id=''1''\Error code: 22928070');
+        Observer.Expect('modify_leading_zero|code', 'NDBCS:BadCSideCodeData');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,7 +381,9 @@ codeunit 75010 "LT X Table Props Tests"
         Row.AsInteger := 'ABC';
         asserterror Row.Modify();
         Observer.ObserveError('modify_text');
-        Observer.Finish();
+        Observer.Expect('modify_text|text', 'The LT X Props Sql table contains a value that is not valid in an integer Code field:\\Id=''1''\Error code: 22928072');
+        Observer.Expect('modify_text|code', 'NDBCS:BadSqlIntCodeData');
+        Observer.Verify();
     end;
 
     [Test]
@@ -351,7 +409,11 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Modify();
         Row.Get(1);
         Observer.Observe('stamp_assignment_ignored', Format(Row.Stamp <> 5));
-        Observer.Finish();
+        Observer.Expect('stamp_positive_after_insert', 'Yes');
+        Observer.Expect('stamp_grows_after_modify', 'Yes');
+        Observer.Expect('stamp_stable_without_modify', 'Yes');
+        Observer.Expect('stamp_assignment_ignored', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -372,7 +434,10 @@ codeunit 75010 "LT X Table Props Tests"
         Card.OpenEdit();
         Observer.Observe('page_wide', Card.Wide.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('wide_value', 'abcdefghijklmnopqrstuvwxyz');
+        Observer.Expect('wide2_value_modified_to_5', 'abcdefghijklmnopqrstuvwxyz');
+        Observer.Expect('page_wide', 'abcdefghijklmnopqrstuvwxyz');
+        Observer.Verify();
     end;
 
     [Test]
@@ -395,7 +460,13 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Modify();
         Observer.Observe('format_five_modified_false', Format(Row.Bz));
         Observer.Observe('format_five_modified_true', Format(Row.Bz2));
-        Observer.Finish();
+        Observer.Expect('format_zero_blankzero_true_modified_false', '0');
+        Observer.Expect('format_zero_blankzero_false_modified_true', '0');
+        Observer.Expect('page_zero_modified_false', '0.00');
+        Observer.Expect('page_zero_modified_true', '');
+        Observer.Expect('format_five_modified_false', '5');
+        Observer.Expect('format_five_modified_true', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -413,7 +484,11 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('caption_second_modified', Card.CapCls2.Caption());
         Observer.Observe('caption_plain_field', Card.Id.Caption());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('resolver_calls_at_open', '');
+        Observer.Expect('caption_base_modified', 'resolved:Modified');
+        Observer.Expect('caption_second_modified', 'resolved:Modified2');
+        Observer.Expect('caption_plain_field', 'Id');
+        Observer.Verify();
     end;
 
     [Test]
@@ -440,7 +515,14 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('page_modified_off', Card.Closing.Value);
         Observer.Observe('page_modified_on', Card.Closing2.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('format_closing_modified_off', 'C12/31/25');
+        Observer.Expect('format_closing_modified_on', 'C12/31/25');
+        Observer.Expect('is_closing_date', 'Yes');
+        Observer.Expect('stored_modified_off', 'C12/31/25');
+        Observer.Expect('stored_modified_on', 'C12/31/25');
+        Observer.Expect('page_modified_off', '12/31/2025');
+        Observer.Expect('page_modified_on', 'C12/31/2025');
+        Observer.Verify();
     end;
 
     [Test]
@@ -473,7 +555,15 @@ codeunit 75010 "LT X Table Props Tests"
         asserterror Card.OptCap.SetValue('Two');
         Observer.ObserveError('page_set_replaced_base_caption');
         Card.Close();
-Observer.Finish();
+Observer.Expect('format_modified', 'Dos');
+Observer.Expect('fieldref_optioncaption', 'Uno,Dos,Tres');
+Observer.Expect('fieldref_optionmembers', 'A,B,C');
+Observer.Expect('page_value', 'Dos');
+Observer.Expect('page_after_set_caption', 'Tres');
+Observer.Expect('record_after_page', '2');
+Observer.Expect('page_set_replaced_base_caption|text', 'Validation error for Field: OptCap,  Message = ''Your entry of ''Two'' is not an acceptable value for ''OptCap''. (Select Refresh to discard errors)''');
+Observer.Expect('page_set_replaced_base_caption|code', 'TestValidation');
+Observer.Verify();
     end;
 
     [Test]
@@ -492,7 +582,14 @@ Observer.Finish();
         Observer.Observe('linked_lookup_page', Format(Meta.LookupPageID));
         Meta.Get(Database::"LT X Props Column Store");
         Observer.Observe('columnstore_linked_object', Format(Meta.LinkedObject));
-        Observer.Finish();
+        Observer.Expect('props_lookup_page_is_target', 'Yes');
+        Observer.Expect('props_drilldown_page_is_target', 'Yes');
+        Observer.Expect('props_data_caption_fields', '1,4');
+        Observer.Expect('props_linked_object', 'No');
+        Observer.Expect('linked_linked_object', 'Yes');
+        Observer.Expect('linked_lookup_page', '0');
+        Observer.Expect('columnstore_linked_object', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -509,7 +606,8 @@ Observer.Finish();
         Card.OpenEdit();
         Observer.Observe('page_caption', Card.Caption());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('page_caption', 'LT X Props Card - 1 ∙ 1M');
+        Observer.Verify();
     end;
 
     [Test]
@@ -530,7 +628,9 @@ Observer.Finish();
         Observer.Observe('opened_page', OpenedPage);
         Observer.Observe('related_value_after_lookup', Card.Rel.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('opened_page', 'LT X Lookup Target');
+        Observer.Expect('related_value_after_lookup', '2');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -554,7 +654,8 @@ Observer.Finish();
         Card.Cnt.DrillDown();
         Observer.Observe('opened_page', OpenedPage);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('opened_page', 'LT X Drill Target');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -577,7 +678,9 @@ Observer.Finish();
         Row.Get(1);
         Observer.Observe('base_never_field_id', Format(Row.Id));
         Observer.Observe('modified_field', Row.DateText);
-        Observer.Finish();
+        Observer.Expect('base_never_field_id', '1');
+        Observer.Expect('modified_field', 'x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -605,7 +708,12 @@ Observer.Finish();
         Observer.Observe('row2_amount_after_modify', Format(Row.Amount));
         Row.Delete();
         Observer.Observe('count_after_delete', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('sum', '30.5');
+        Observer.Expect('count', '2');
+        Observer.Expect('row2_amount', '20');
+        Observer.Expect('row2_amount_after_modify', '21');
+        Observer.Expect('count_after_delete', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -620,7 +728,13 @@ Observer.Finish();
         LinkedStep(Observer, 'count', Row, 2);
         Row.Id := 2;
         LinkedStep(Observer, 'insert_2', Row, 1);
-        Observer.Finish();
+        Observer.Expect('insert_1|text', 'An unexpected error occurred after a database command was cancelled.');
+        Observer.Expect('insert_1|code', 'Sql:Sql');
+        Observer.Expect('count|text', 'An unexpected error occurred after a database command was cancelled.');
+        Observer.Expect('count|code', 'Sql:Sql');
+        Observer.Expect('insert_2|text', 'An unexpected error occurred after a database command was cancelled.');
+        Observer.Expect('insert_2|code', 'Sql:Sql');
+        Observer.Verify();
     end;
 
     [Test]
@@ -665,7 +779,10 @@ Observer.Finish();
             Observer.Observe(Name + '_columns', Result);
         end;
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('enu_columns', '[<Column name="Plain">Beta</Column>][<Column name="WithCaptionML">Col two</Column>][<Column name="EnuOnly">Only B</Column>]');
+        Observer.Expect('deu_columns', '[<Column name="Plain">Zwei</Column>][<Column name="WithCaptionML">Spalte zwei</Column>][<Column name="EnuOnly">Only B</Column>]');
+        Observer.Expect('fra_columns', '[<Column name="Plain">Beta</Column>][<Column name="WithCaptionML">Col two</Column>][<Column name="EnuOnly">Only B</Column>]');
+        Observer.Verify();
     end;
 
     local procedure LanguageList() Languages: List of [Integer]
