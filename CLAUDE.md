@@ -91,7 +91,7 @@ test that would compile in `tests/al-language` and was put here instead is
 misfiled: it loses the Cloud guarantee that is this repo's primary goal. Keep
 the OnPrem app small.
 
-Its objects live in `61200..61299`, and it depends on the Cloud app so it can
+Its objects live in `61200..61299` and `98000..98999` (new objects: use 98000..98999; the OnPrem DotNet app has `61400..61499` and `99000..99499`), and it depends on the Cloud app so it can
 reuse the shared `Assert` fixture rather than growing a second one.
 
 ### Untestable by construction -- document, don't stub
