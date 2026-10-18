@@ -49,46 +49,137 @@ codeunit 69886 "LT W Pt Observe"
     end;
 
     [Test]
-    procedure Format_And_Caption()
+    procedure Round_Format()
     begin
         Act('round');
         Act('format');
         Act('evaluate');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Captions()
+    begin
         Act('fieldcap');
         Act('fieldcaptxt');
         Observer.Finish();
     end;
 
     [Test]
-    procedure Filters()
+    procedure Filter_Date()
     begin
         Act('datefilter');
         Act('datefiltertext');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Filter_DateTime_Time()
+    begin
         Act('datetimefilter');
         Act('timefilter');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Filter_View()
+    begin
         Act('view');
         Observer.Finish();
     end;
 
     [Test]
-    procedure BadFilters()
+    procedure Bad_Date()
     begin
         Act('baddate');
         Act('baddate2');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Bad_DateTime()
+    begin
         Act('baddatetime');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Bad_Time()
+    begin
         Act('badtime');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Bad_Int()
+    begin
         Act('badint');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Bad_Decimal()
+    begin
         Act('baddec');
         Observer.Finish();
     end;
 
     [Test]
-    [HandlerFunctions('PageH')]
-    procedure Misc()
+    procedure Notifications()
     begin
         Act('mynotif');
         Act('mynotifoff');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GetUrl_Copilot()
+    begin
+        Act('geturl');
+        Act('copilotactive');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Privacy_Feature()
+    begin
+        Act('privstate');
+        Act('feature');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure LegacyBar()
+    begin
+        Act('legacybar');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Report_Xml()
+    begin
+        Act('saveasxml');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Report_Pdf()
+    begin
+        Act('saveaspdf');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Download()
+    begin
         Act('download');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PageH')]
+    procedure PageRun_Zero()
+    begin
         Act('pagerun0');
         Observer.Finish();
     end;
@@ -96,31 +187,6 @@ codeunit 69886 "LT W Pt Observe"
     [PageHandler]
     procedure PageH(var P: TestPage "LT W Pt Card")
     begin
-    end;
-
-    [Test]
-    procedure SystemActions_1()
-    begin
-        Act('geturl');
-        Act('copilotactive');
-        Act('privstate');
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure SystemActions_2()
-    begin
-        Act('legacybar');
-        Act('feature');
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Reports()
-    begin
-        Act('saveasxml');
-        Act('saveaspdf');
-        Observer.Finish();
     end;
 
     local procedure Seed()
@@ -169,6 +235,30 @@ codeunit 69886 "LT W Pt Observe"
             Observer.Observe('close|m' + Format(Mode), Short(Log.Dump()));
             Log.SetMode(0);
         end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure TestPage_BadFilter()
+    var
+        Log: Codeunit "LT W Pt Log";
+        List: TestPage "LT W Pt List";
+    begin
+        Seed();
+        List.OpenView();
+        Log.SetMode(1);
+        Log.Reset();
+        asserterror List.Filter.SetFilter(D, 'abc');
+        Observer.ObserveError('baddate-m1');
+        Observer.Observe('baddate-m1-log', Short(Log.Dump()));
+        Log.SetMode(3);
+        Log.Reset();
+        List.Filter.SetFilter(D, 'abc');
+        Observer.Observe('baddate-m3-log', Short(Log.Dump()));
+        Observer.Observe('baddate-m3-filter', List.Filter.GetFilter(D));
+        Observer.Observe('baddate-m3-rows', Format(List.First()));
+        Log.SetMode(0);
+        List.Close();
         Observer.Finish();
     end;
 
