@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: the count and the first 10 rows, with every column, of the platform table License Permission on the fresh tenant of a test container (read through RecordRef by table name).
+// Probe: the first 10 rows (the count is not asserted: Count on this table takes minutes and ends the run), with every column, of the platform table License Permission on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78108.
 
 codeunit 78108 "LT AD Plat Rows License"
@@ -62,20 +62,6 @@ codeunit 78108 "LT AD Plat Rows License"
         Observer: Codeunit "Probe Observer";
     begin
         Dump(Observer, 'License Permission', 0, 10);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Count_LicensePermission()
-    var
-        Observer: Codeunit "Probe Observer";
-        RR: RecordRef;
-        Id: Integer;
-    begin
-        Id := TableIdByName('License Permission');
-        Observer.Observe('id', Format(Id));
-        RR.Open(Id);
-        Observer.Observe('count', Format(RR.Count()));
         Observer.Finish();
     end;
 }
