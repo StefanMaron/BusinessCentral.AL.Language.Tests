@@ -236,7 +236,7 @@ codeunit 67507 "LT XLT Tests"
             InS.ReadText(Line);
             Result += Line;
         end;
-        exit(Result);
+        exit(Result.Replace('  ', ''));
     end;
 
     local procedure Import(var Observer: Codeunit "Probe Observer"; PortNo: Integer; Document: Integer)
@@ -252,6 +252,7 @@ codeunit 67507 "LT XLT Tests"
         Arg.Id := PortNo;
         Arg."Parent Id" := Document;
         Arg.Insert();
+        Commit();
         Ok := Codeunit.Run(Codeunit::"LT XLT Import Runner", Arg);
         Observer.Observe('result', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         Observer.Observe('log', Log.Take());
