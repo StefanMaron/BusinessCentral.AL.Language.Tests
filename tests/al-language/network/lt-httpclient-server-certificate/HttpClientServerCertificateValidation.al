@@ -29,7 +29,12 @@ codeunit 68580 "LT S Http Server Cert"
         Observer.Observe('false_twice', Format(Ok));
         Ok := Other.UseServerCertificateValidation(false);
         Observer.Observe('second_client', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('true', 'Yes');
+        Observer.Expect('false', 'No');
+        Observer.Expect('true_again', 'Yes');
+        Observer.Expect('false_twice', 'No');
+        Observer.Expect('second_client', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -43,6 +48,8 @@ codeunit 68580 "LT S Http Server Cert"
         Ok := Client.UseServerCertificateValidation(false);
         asserterror Ok := Client.Get('https://example.invalid/', Resp);
         Observer.ObserveError('get_after_validation_off');
-        Observer.Finish();
+        Observer.Expect('get_after_validation_off|text', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''BlockOutboundRequests''. Please ensure that an HTTP client handler is configured.');
+        Observer.Expect('get_after_validation_off|code', 'TestCodeunitUnhandledHttpRequest');
+        Observer.Verify();
     end;
 }

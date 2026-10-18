@@ -72,7 +72,26 @@ codeunit 61282 "LT S Write With Secrets"
         Ok := O.WriteWithSecretsTo('a..b', Secret, Result);
         Observer.Observe('double_dot_ok', Format(Ok));
         Observer.Observe('double_dot_result', Plain(Result));
-        Observer.Finish();
+        Observer.Expect('top', 'Yes {"user":"anna","password":"s3cret","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('dollar', 'Yes {"user":"anna","password":"s3cret","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('nested', 'Yes {"user":"anna","password":"placeholder","nested":{"token":"s3cret","list":[1,2]},"n":5}');
+        Observer.Expect('number_value', 'No {"user":"anna","password":"placeholder","nested":{"token":"s3cret","list":[1,2]},"n":5}');
+        Observer.Expect('object_value', 'No {"user":"anna","password":"placeholder","nested":{"token":"s3cret","list":[1,2]},"n":5}');
+        Observer.Expect('array_element', 'No {"user":"anna","password":"placeholder","nested":{"token":"s3cret","list":[1,2]},"n":5}');
+        Observer.Expect('missing_ok', 'No');
+        Observer.Expect('missing_result', '{"user":"anna","password":"placeholder","nested":{"token":"s3cret","list":[1,2]},"n":5}');
+        Observer.Expect('empty_path_ok', 'No');
+        Observer.Expect('empty_path_result', '{"user":"anna","password":"placeholder","nested":{"token":"s3cret","list":[1,2]},"n":5}');
+        Observer.Expect('missing_cleared_ok', 'No');
+        Observer.Expect('missing_cleared_result', '');
+        Observer.Expect('empty_secret', 'Yes {"user":"anna","password":"","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('escaped_secret', 'Yes {"user":"anna","password":"a\"b\\c","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('source_unchanged', '{"user":"anna","password":"placeholder","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('invalid_path_ok', 'No');
+        Observer.Expect('invalid_path_result', '{"user":"anna","password":"a\"b\\c","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('double_dot_ok', 'No');
+        Observer.Expect('double_dot_result', '{"user":"anna","password":"a\"b\\c","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,6 +127,15 @@ codeunit 61282 "LT S Write With Secrets"
         Ok := O.WriteWithSecretsTo(Secrets, Result);
         Observer.Observe('invalid_path_ok', Format(Ok));
         Observer.Observe('invalid_path_result', Plain(Result));
-        Observer.Finish();
+        Observer.Expect('empty_dictionary', 'Yes {"user":"anna","password":"placeholder","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('one', 'Yes {"user":"anna","password":"pw","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('three', 'Yes {"user":"bob","password":"pw","nested":{"token":"tk","list":[1,2]},"n":5}');
+        Observer.Expect('with_missing_key_ok', 'No');
+        Observer.Expect('with_missing_key_result', '{"user":"bob","password":"pw","nested":{"token":"tk","list":[1,2]},"n":5}');
+        Observer.Expect('dollar_path', 'No {"user":"bob","password":"pw","nested":{"token":"tk","list":[1,2]},"n":5}');
+        Observer.Expect('source_unchanged', '{"user":"anna","password":"placeholder","nested":{"token":"t0","list":[1,2]},"n":5}');
+        Observer.Expect('invalid_path_ok', 'No');
+        Observer.Expect('invalid_path_result', '{"user":"bob","password":"pw","nested":{"token":"tk","list":[1,2]},"n":5}');
+        Observer.Verify();
     end;
 }

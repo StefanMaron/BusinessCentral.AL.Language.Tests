@@ -142,7 +142,20 @@ codeunit 61285 "LT S Media Files"
         Observer.Observe('export_overwrite_len', Format(LenOf(Dst)));
         Cleanup(Src);
         Cleanup(Dst);
-        Observer.Finish();
+        Observer.Expect('import_id_null', 'No');
+        Observer.Expect('import_id_is_media_id', 'Yes');
+        Observer.Expect('hasvalue', 'Yes');
+        Observer.Expect('tenant_3args', 'description=[the description] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
+        Observer.Expect('tenant_2args', 'description=[second] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
+        Observer.Expect('tenant_other_mime', 'description=[third] mime=[text/plain] filename_contains_source_name=Yes filename_longer_than_name=Yes width=0 height=0 hascontent=Yes');
+        Observer.Expect('export_return', 'Yes');
+        Observer.Expect('source_len', '68');
+        Observer.Expect('export_exists', 'Yes');
+        Observer.Expect('export_len', '68');
+        Observer.Expect('export_base64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        Observer.Expect('export_overwrite_ok', 'Yes');
+        Observer.Expect('export_overwrite_len', '68');
+        Observer.Verify();
     end;
 
     [Test]
@@ -184,7 +197,16 @@ codeunit 61285 "LT S Media Files"
         Observer.Observe('empty_prefix_export_set', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
         Cleanup(Dst);
-        Observer.Finish();
+        Observer.Expect('empty_export', 'Yes |');
+        Observer.Expect('empty_export_file', 'No');
+        Observer.Expect('missing_import', 'Yes [FileNotFound]');
+        Observer.Expect('missing_import_text', 'Yes Yes Yes');
+        Observer.Expect('empty_import', 'No The specified path is invalid.|InvalidPath');
+        Observer.Expect('empty_name_export', 'No File name was not specified.|MissingFileName');
+        Observer.Expect('missing_dir_export', 'No Could not find a part of the path ''/no/such/dir/out.png''.|InvalidPath');
+        Observer.Expect('missing_dir_export_set', 'Yes |');
+        Observer.Expect('empty_prefix_export_set', 'No File name was not specified.|MissingFileName');
+        Observer.Verify();
     end;
 
     [Test]
@@ -221,6 +243,15 @@ codeunit 61285 "LT S Media Files"
         Observer.Observe('export_count', Format(Count));
         Observer.Observe('prefix_itself_exists', Format(File.Exists(Prefix)));
         Cleanup(Src);
-        Observer.Finish();
+        Observer.Expect('set_import_id_null', 'No');
+        Observer.Expect('set_count_after_one', '1');
+        Observer.Expect('set_count_after_two', '2');
+        Observer.Expect('set_import_ids_equal', 'Yes');
+        Observer.Expect('set_id_is_media_id', 'Yes');
+        Observer.Expect('item1', 'description=[first set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
+        Observer.Expect('item2', 'description=[second set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
+        Observer.Expect('export_count', '2');
+        Observer.Expect('prefix_itself_exists', 'No');
+        Observer.Verify();
     end;
 }

@@ -26,7 +26,9 @@ codeunit 61283 "LT S Http Client Auth Config"
         Observer.Observe('first', Format(Ok));
         Ok := Client.UseDefaultNetworkWindowsAuthentication();
         Observer.Observe('second', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('second', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -42,7 +44,10 @@ codeunit 61283 "LT S Http Client Auth Config"
         Observer.Observe('without_domain', Format(Ok));
         Ok := Client.UseWindowsAuthentication('', '', '');
         Observer.Observe('empty', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('with_domain', 'Yes');
+        Observer.Expect('without_domain', 'Yes');
+        Observer.Expect('empty', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -58,7 +63,10 @@ codeunit 61283 "LT S Http Client Auth Config"
         Observer.Observe('without_domain', Format(Ok));
         Ok := Client.UseWindowsAuthentication(Sec(''), Sec(''), Sec(''));
         Observer.Observe('empty', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('with_domain', 'Yes');
+        Observer.Expect('without_domain', 'Yes');
+        Observer.Expect('empty', 'Yes');
+        Observer.Verify();
     end;
 }
 
@@ -118,7 +126,14 @@ codeunit 61289 "LT S Http Client After Config"
         Ok := Client.UseWindowsAuthentication(Sec('user'), Sec('password'));
         Observer.Observe('after_windows_auth_secret', Request(Client));
         Observer.Observe('handler_calls', Format(Calls));
-        Observer.Finish();
+        Observer.Expect('plain', 'Yes 200 [reply 1]');
+        Observer.Expect('after_certificate_validation_off', 'Yes 200 [reply 2]');
+        Observer.Expect('after_certificate_validation_on', 'Yes 200 [reply 3]');
+        Observer.Expect('after_default_network_auth', 'Yes 200 [reply 4]');
+        Observer.Expect('after_windows_auth_text', 'Yes 200 [reply 5]');
+        Observer.Expect('after_windows_auth_secret', 'Yes 200 [reply 6]');
+        Observer.Expect('handler_calls', '6');
+        Observer.Verify();
     end;
 }
 #endif
