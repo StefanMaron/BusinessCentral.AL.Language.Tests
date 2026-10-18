@@ -35,7 +35,11 @@ codeunit 61258 "LT O Database Ops"
             Observer.Observe('enable clustered key', 'no error')
         else
             Observer.ObserveError('enable clustered key');
-        Observer.Finish();
+        Observer.Expect('disable clustered key|text', 'Cannot alter the key with name ''PK''. Keys which are obsolete, primary, unique, or SumIndexField cannot be altered.\Additionally, the system id key cannot be disabled when the table has fields that are optimized for text search.');
+        Observer.Expect('disable clustered key|code', 'DB:Ok');
+        Observer.Expect('enable clustered key|text', 'Cannot alter the key with name ''PK''. Keys which are obsolete, primary, unique, or SumIndexField cannot be altered.\Additionally, the system id key cannot be disabled when the table has fields that are optimized for text search.');
+        Observer.Expect('enable clustered key|code', 'DB:Ok');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -70,7 +74,11 @@ codeunit 61258 "LT O Database Ops"
             Observer.Observe('set unknown user', 'no error')
         else
             Observer.ObserveError('set unknown user');
-        Observer.Finish();
+        Observer.Expect('change wrong old|return', 'No');
+        Observer.Expect('change blank|return', 'No');
+        Observer.Expect('set unknown user|text', 'There is no User Property within the filter.\\Filters: User Security ID: {7E57C0DE-0000-4000-8000-00000000A0A0}');
+        Observer.Expect('set unknown user|code', 'DB:NothingInsideFilter');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -145,7 +153,21 @@ codeunit 61258 "LT O Database Ops"
             Observer.Observe('info missing', 'description=' + Desc)
         else
             Observer.ObserveError('info missing');
-        Observer.Finish();
+        Observer.Expect('export 0', 'no error');
+        Observer.Expect('export 0|file exists', 'No');
+        Observer.Expect('info 0', 'description= global=No');
+        Observer.Expect('export 1', 'no error');
+        Observer.Expect('export 1|file exists', 'No');
+        Observer.Expect('info 1', 'description= global=No');
+        Observer.Expect('export 2', 'no error');
+        Observer.Expect('export 2|file exists', 'No');
+        Observer.Expect('info 2', 'description= global=No');
+        Observer.Expect('export 3', 'no error');
+        Observer.Expect('export 3|file exists', 'No');
+        Observer.Expect('info 3', 'description= global=No');
+        Observer.Expect('import missing', 'no error');
+        Observer.Expect('info missing', 'description=');
+        Observer.Verify();
     end;
 }
 
@@ -198,7 +220,16 @@ codeunit 61259 "LT O Encryption Files"
             else
                 Observer.ObserveError('import wrong password');
         Observer.Observe('enabled after', Format(EncryptionEnabled()));
-        Observer.Finish();
+        Observer.Expect('enabled', 'Yes');
+        Observer.Expect('export', 'file exists=Yes blank=No');
+        Observer.Expect('export blank password', 'blank=No');
+        Observer.Expect('import missing file|starts', 'File ');
+        Observer.Expect('import missing file|ends', 'ing.key was not found.');
+        Observer.Expect('import missing file|code', 'FileNotFound');
+        Observer.Expect('import wrong password|text', 'The import failed and the encryption key file cannot be decrypted. Check that the password is valid and that the content of the encryption key file has not changed.');
+        Observer.Expect('import wrong password|code', 'EncryptionInvalidKeyFile:Cryptographic');
+        Observer.Expect('enabled after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -215,7 +246,12 @@ codeunit 61259 "LT O Encryption Files"
             else
                 Observer.ObserveError(Format(Minutes) + ' minutes');
         end;
-        Observer.Finish();
+        Observer.Expect('5 minutes', 'url blank=No starts with http=No');
+        Observer.Expect('0 minutes|text', 'The contents ''MinutesToExpire'' of ImportWithUrlAccess parameter number 3 are invalid.');
+        Observer.Expect('0 minutes|code', 'Argument');
+        Observer.Expect('-1 minutes|text', 'The contents ''MinutesToExpire'' of ImportWithUrlAccess parameter number 3 are invalid.');
+        Observer.Expect('-1 minutes|code', 'Argument');
+        Observer.Verify();
     end;
 
     local procedure Minutes5() Result: List of [Integer]

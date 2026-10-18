@@ -58,6 +58,10 @@ codeunit 61404 "LT O CanLoadType"
             Observer.Observe('unassigned builder|return', Format(Result))
         else
             Observer.ObserveError('unassigned builder');
-        Observer.Finish();
+        Observer.Expect('unassigned type|return', 'Yes');
+        Observer.Expect('assigned type|return', 'Yes');
+        Observer.Expect('builder|return', 'Yes');
+        Observer.Expect('unassigned builder|return', 'Yes');
+        Observer.Verify();
     end;
 }

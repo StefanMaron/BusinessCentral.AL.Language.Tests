@@ -51,7 +51,11 @@ codeunit 61236 "LT O Blob File"
         Inn.ReadText(Content);
         Observer.Observe('imported content', Content);
         if Erase(Path) then;
-        Observer.Finish();
+        Observer.Expect('export', 'return ends with file name=Yes');
+        Observer.Expect('import', 'return ends with file name=Yes');
+        Observer.Expect('imported length', '16');
+        Observer.Expect('imported content', 'blob content 123');
+        Observer.Verify();
     end;
 
     // The error text holds the service tier's temporary folder: observe its start and end only.
@@ -89,7 +93,14 @@ codeunit 61236 "LT O Blob File"
             Observer.Observe('export blank', 'return=' + Result)
         else
             Observer.ObserveError('export blank');
-        Observer.Finish();
+        Observer.Expect('export invalid path', 'return ends with file name=Yes');
+        Observer.Expect('import missing|starts', 'File ');
+        Observer.Expect('import missing|ends', '.bin was not found.');
+        Observer.Expect('import missing|code', 'FileNotFound');
+        Observer.Expect('blob length after failed import', '1');
+        Observer.Expect('export blank|text', 'File name was not specified.');
+        Observer.Expect('export blank|code', 'MissingFileName');
+        Observer.Verify();
     end;
 }
 
@@ -124,7 +135,9 @@ codeunit 61257 "LT O Session Misc"
             Observer.Observe('second form', 'no error')
         else
             Observer.ObserveError('second form');
-        Observer.Finish();
+        Observer.Expect('plain', 'no error');
+        Observer.Expect('second form', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +153,11 @@ codeunit 61257 "LT O Session Misc"
         Observer.Observe('is integer', Format(Used.IsInteger()));
         Observer.Observe('is decimal', Format(Used.IsDecimal()));
         Observer.Observe('is biginteger', Format(Used.IsBigInteger()));
-        Observer.Finish();
+        Observer.Expect('value', '0');
+        Observer.Expect('is integer', 'No');
+        Observer.Expect('is decimal', 'No');
+        Observer.Expect('is biginteger', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,6 +171,9 @@ codeunit 61257 "LT O Session Misc"
         Observer.Observe('filled', Secret.Unwrap());
         Observer.Observe('empty', '[' + Empty.Unwrap() + ']');
         Observer.Observe('empty is empty', Format(Empty.IsEmpty()));
-        Observer.Finish();
+        Observer.Expect('filled', 'abcdef');
+        Observer.Expect('empty', '[]');
+        Observer.Expect('empty is empty', 'Yes');
+        Observer.Verify();
     end;
 }

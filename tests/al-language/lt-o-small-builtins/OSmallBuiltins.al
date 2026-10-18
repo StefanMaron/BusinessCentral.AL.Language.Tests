@@ -57,7 +57,23 @@ codeunit 67221 "LT O Small Builtins"
         VariantKinds(Observer, 'Option', Opt);
         VariantKinds(Observer, 'Verbosity', Vb);
         VariantKinds(Observer, 'empty variant', Empty);
-        Observer.Finish();
+        Observer.Expect('DataClassification|IsDataClassificationType', 'Yes');
+        Observer.Expect('DataClassification|IsSecurityFiltering', 'No');
+        Observer.Expect('SecurityFilter|IsDataClassificationType', 'No');
+        Observer.Expect('SecurityFilter|IsSecurityFiltering', 'Yes');
+        Observer.Expect('Integer|IsDataClassificationType', 'No');
+        Observer.Expect('Integer|IsSecurityFiltering', 'No');
+        Observer.Expect('Text|IsDataClassificationType', 'No');
+        Observer.Expect('Text|IsSecurityFiltering', 'No');
+        Observer.Expect('Boolean|IsDataClassificationType', 'No');
+        Observer.Expect('Boolean|IsSecurityFiltering', 'No');
+        Observer.Expect('Option|IsDataClassificationType', 'No');
+        Observer.Expect('Option|IsSecurityFiltering', 'No');
+        Observer.Expect('Verbosity|IsDataClassificationType', 'No');
+        Observer.Expect('Verbosity|IsSecurityFiltering', 'No');
+        Observer.Expect('empty variant|IsDataClassificationType', 'No');
+        Observer.Expect('empty variant|IsSecurityFiltering', 'No');
+        Observer.Verify();
     end;
 
     local procedure CopyIt(Source: Text; Destination: Text): Boolean
@@ -90,7 +106,14 @@ codeunit 67221 "LT O Small Builtins"
         Observer.Observe('copy|destination exists', Format(Company.Get('LT O Copy Target')));
         if Company.Get('LT O Copy Target') then
             Company.Delete();
-        Observer.Finish();
+        Observer.Expect('missing source|text', 'The Company does not exist. Identification fields and values: Name=''LT O No Such Company''');
+        Observer.Expect('missing source|code', 'DB:RecordNotFound');
+        Observer.Expect('missing source|destination exists', 'No');
+        Observer.Expect('existing destination|text', 'The record in table Company already exists. Identification fields and values: Name=''<Company>''');
+        Observer.Expect('existing destination|code', 'DB:RecordExists');
+        Observer.Expect('copy', 'no error');
+        Observer.Expect('copy|destination exists', 'Yes');
+        Observer.Verify();
     end;
 }
 
