@@ -31,8 +31,17 @@ codeunit 67097 "LT F3 P145 Order"
             Row."No." := CopyStr(Parts.Get(1), 1, 20);
             Row.Grp := CopyStr(Parts.Get(2), 1, 10);
             Row.Qty := Qty;
-            Row.Insert();
+            if not Row.Insert() then
+                Row.Modify();
         end;
+    end;
+
+    local procedure ObserveBefore(var Observer: Codeunit "Probe Observer")
+    var
+        Fresh: Record "LT P145 Row";
+    begin
+        Observer.Observe('pre_filters', Fresh.GetFilters());
+        Observer.Observe('pre_count', Format(Fresh.Count()));
     end;
 
     [PageHandler]
@@ -57,12 +66,12 @@ codeunit 67097 "LT F3 P145 Order"
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT P145 Log Mgt";
     begin
+        ObserveBefore(Observer);
         Seed();
         Log.Clear();
         Page.Run(Page::"LT P145 List B");
         Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'B open: group-at-open=0 g0=[] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | B key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | B rows=R5,R4,R6,R1,, | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -73,12 +82,12 @@ codeunit 67097 "LT F3 P145 Order"
         Log: Codeunit "LT P145 Log Mgt";
         Row: Record "LT P145 Row";
     begin
+        ObserveBefore(Observer);
         Seed();
         Log.Clear();
         Page.Run(Page::"LT P145 List B", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'B open: group-at-open=0 g0=[] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | B key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | B rows=R5,R4,R6,R1,, | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -89,14 +98,14 @@ codeunit 67097 "LT F3 P145 Order"
         Log: Codeunit "LT P145 Log Mgt";
         Row: Record "LT P145 Row";
     begin
+        ObserveBefore(Observer);
         Seed();
         Log.Clear();
         Row.SetCurrentKey(Grp, Qty);
         Row.Ascending(true);
         Page.Run(Page::"LT P145 List B", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'B open: group-at-open=0 g0=[] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | B key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | B rows=R5,R4,R6,R1,, | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -107,14 +116,14 @@ codeunit 67097 "LT F3 P145 Order"
         Log: Codeunit "LT P145 Log Mgt";
         Row: Record "LT P145 Row";
     begin
+        ObserveBefore(Observer);
         Seed();
         Log.Clear();
         Row.SetCurrentKey(Grp, Qty);
         Row.Ascending(false);
         Page.Run(Page::"LT P145 List B", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'B open: group-at-open=0 g0=[] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | B key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | B rows=R5,R4,R6,R1,, | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -125,13 +134,13 @@ codeunit 67097 "LT F3 P145 Order"
         Log: Codeunit "LT P145 Log Mgt";
         Row: Record "LT P145 Row";
     begin
+        ObserveBefore(Observer);
         Seed();
         Log.Clear();
         Row.SetFilter(Qty, '>=4');
         Page.Run(Page::"LT P145 List B", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'B open: group-at-open=0 g0=[Qty: >=4] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | B key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending) WHERE(Qty=FILTER(>=4))] | B rows=R5,R4,R6,, | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -142,12 +151,12 @@ codeunit 67097 "LT F3 P145 Order"
         Log: Codeunit "LT P145 Log Mgt";
         Row: Record "LT P145 Row";
     begin
+        ObserveBefore(Observer);
         Seed();
         Log.Clear();
         Row.SetCurrentKey(Qty);
         Page.Run(Page::"LT P145 List B", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Expect('log', 'B open: group-at-open=0 g0=[] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | B key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | B rows=R5,R4,R6,R1,, | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 }

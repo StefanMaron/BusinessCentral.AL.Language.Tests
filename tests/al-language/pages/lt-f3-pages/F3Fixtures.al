@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-pages-overview
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own objects 67075, 67077 - 67082
+// Fixtures used: Probe Observer (69160); own objects 67075 - 67082
 // Probe: shared fixtures of the page probes in this folder: row table, log, list / card / dialog pages with open and close triggers, a list with find and next triggers, a deletable list
 // BC versions: 27.0+
 
@@ -22,31 +22,53 @@ table 67075 "LT F3 Row"
     }
 }
 
+table 67076 "LT F3 Log"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Txt; Text[250]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
 codeunit 67077 "LT F3 Log Mgt"
 {
-    SingleInstance = true;
-
-    var
-        Entries: List of [Text];
-
     procedure Clear()
+    var
+        Log: Record "LT F3 Log";
     begin
-        if Entries.Count() > 0 then
-            Entries.RemoveRange(1, Entries.Count());
+        Log.DeleteAll();
     end;
 
     procedure Add(Value: Text)
+    var
+        Log: Record "LT F3 Log";
+        NextId: Integer;
     begin
-        Entries.Add(Value);
+        if Log.FindLast() then
+            NextId := Log.Id;
+        Log.Init();
+        Log.Id := NextId + 1;
+        Log.Txt := CopyStr(Value, 1, MaxStrLen(Log.Txt));
+        Log.Insert();
     end;
 
     procedure Dump(): Text
     var
-        Entry: Text;
+        Log: Record "LT F3 Log";
         Result: Text;
     begin
-        foreach Entry in Entries do
-            Result += Entry + ' | ';
+        if Log.FindSet() then
+            repeat
+                Result += Log.Txt + ' | ';
+            until Log.Next() = 0;
         exit(Result);
     end;
 

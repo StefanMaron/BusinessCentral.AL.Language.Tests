@@ -69,7 +69,11 @@ codeunit 67125 "LT F3 Query Range"
         end;
         Observer.Observe('rest', Drain(Q));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('first_read', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('set_ok', 'Yes');
+        Observer.Expect('rest', 'error: The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function. | Query | read so far: ');
+        Observer.Verify();
     end;
 
     [Test]

@@ -24,9 +24,10 @@ codeunit 67093 "LT F3 Part Reads"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Doc: TestPage "LT F3 Host Filter";
     begin
-        Log.Seed(1);
+        Data.Seed(1);
         Doc.OpenView();
         Step(Observer, 'open');
         Observer.Observe('next', Format(Doc.Next()));
@@ -43,9 +44,10 @@ codeunit 67093 "LT F3 Part Reads"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Doc: TestPage "LT F3 Host Filter";
     begin
-        Log.Seed(4);
+        Data.Seed(4);
         Doc.OpenView();
         Step(Observer, 'open');
         Observer.Observe('next1', Format(Doc.Next()));
@@ -70,9 +72,10 @@ codeunit 67093 "LT F3 Part Reads"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Doc: TestPage "LT F3 Host NotEqual";
     begin
-        Log.Seed(1);
+        Data.Seed(1);
         Doc.OpenView();
         Step(Observer, 'open');
         Observer.Observe('next', Format(Doc.Next()));
@@ -89,9 +92,10 @@ codeunit 67093 "LT F3 Part Reads"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Doc: TestPage "LT F3 Host NotEqual";
     begin
-        Log.Seed(4);
+        Data.Seed(4);
         Doc.OpenView();
         Step(Observer, 'open');
         Observer.Observe('next1', Format(Doc.Next()));
@@ -116,9 +120,10 @@ codeunit 67093 "LT F3 Part Reads"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Doc: TestPage "LT F3 Host Same";
     begin
-        Log.Seed(1);
+        Data.Seed(1);
         Doc.OpenView();
         Step(Observer, 'open');
         Observer.Observe('next', Format(Doc.Next()));
@@ -135,9 +140,10 @@ codeunit 67093 "LT F3 Part Reads"
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Doc: TestPage "LT F3 Host Same";
     begin
-        Log.Seed(4);
+        Data.Seed(4);
         Doc.OpenView();
         Step(Observer, 'open');
         Observer.Observe('next1', Format(Doc.Next()));
@@ -214,9 +220,9 @@ codeunit 67094 "LT F3 Part Of Closed Page"
     procedure PageVariableNeverOpened_PartRead()
     var
         Host: Page "LT F3 Host Filter";
-        Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
     begin
-        Log.Seed(2);
+        Data.Seed(2);
         ObserveRead('never_opened', Host);
         Observer.Expect('never_opened_ok', 'Yes');
         Observer.Expect('never_opened_result', '/0');
@@ -229,10 +235,10 @@ codeunit 67094 "LT F3 Part Of Closed Page"
     var
         Host: Page "LT F3 Host Filter";
         Head: Record "LT F3 Head";
-        Log: Codeunit "LT F3 Part Log";
+        Data: Codeunit "LT F3 Part Data";
         Result: Action;
     begin
-        Log.Seed(2);
+        Data.Seed(2);
         Head.Get('H1');
         Host.SetRecord(Head);
         Result := Host.RunModal();

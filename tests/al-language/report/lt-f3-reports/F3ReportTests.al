@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-calcfields-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); LT F3 Log Mgt (67077); F3ReportFixtures.al
+// Fixtures used: Probe Observer (69160); LT F3 Report Log (67126); F3ReportFixtures.al
 // Probe: (1) data item CalcFields on a nested data item and with a list of fields; (2) a filter on the DataItemLink field set in the item's view or by the caller with SetTableView;
 //        (3) ReportHandler functions with UseRequestPage(false) and (true); (4) a ProcessingOnly report with request page fields, UseRequestPage(true), Run and RunModal with no handler and with a RequestPageHandler;
 //        (5) SetFilter(Field, '') on a data item of a TestRequestPage.
@@ -48,14 +48,14 @@ codeunit 67115 "LT F3 Report Probes"
     [ReportHandler]
     procedure ReportHandlerFn(var R: Report "LT F3 Request Report")
     var
-        Log: Codeunit "LT F3 Log Mgt";
+        Log: Codeunit "LT F3 Report Log";
     begin
         Log.Add('ReportHandler called');
     end;
 
     local procedure Dump(): Text
     var
-        Log: Codeunit "LT F3 Log Mgt";
+        Log: Codeunit "LT F3 Report Log";
     begin
         exit(Log.Dump());
     end;
@@ -185,11 +185,41 @@ codeunit 67115 "LT F3 Report Probes"
         Report.Run(Report::"LT F3 Request Report");
     end;
 
+    local procedure RunReport(UseRequest: Boolean; Modal: Boolean)
+    var
+        Rep: Report "LT F3 Request Report";
+    begin
+        Rep.UseRequestPage(UseRequest);
+        if Modal then
+            Rep.RunModal()
+        else
+            Rep.Run();
+    end;
+
+    local procedure ObserveErrorRun(Name: Text; UseRequest: Boolean; Modal: Boolean)
+    var
+        Data: Codeunit "LT F3 Report Data";
+    begin
+        Data.Seed();
+        asserterror RunReport(UseRequest, Modal);
+        Observer.ObserveError(Name);
+        Observer.Observe(Name + '_log', Dump());
+    end;
+
+    local procedure ObserveDirectRun(Name: Text; UseRequest: Boolean; Modal: Boolean)
+    var
+        Data: Codeunit "LT F3 Report Data";
+    begin
+        Data.Seed();
+        RunReport(UseRequest, Modal);
+        Observer.Observe(Name + '_log', Dump());
+    end;
+
     [Test]
     [HandlerFunctions('ReportHandlerFn')]
     procedure ReportHandler_NoRequestPage()
     begin
-        ObserveTry('run', false, false);
+        ObserveDirectRun('run', false, false);
         Observer.Finish();
     end;
 
@@ -197,7 +227,7 @@ codeunit 67115 "LT F3 Report Probes"
     [HandlerFunctions('ReportHandlerFn')]
     procedure ReportHandler_WithRequestPage()
     begin
-        ObserveTry('run', true, false);
+        ObserveErrorRun('run', true, false);
         Observer.Finish();
     end;
 
@@ -205,7 +235,7 @@ codeunit 67115 "LT F3 Report Probes"
     [HandlerFunctions('ReportHandlerFn')]
     procedure ReportHandler_WithRequestPage_RunModal()
     begin
-        ObserveTry('runmodal', true, true);
+        ObserveErrorRun('runmodal', true, true);
         Observer.Finish();
     end;
 
@@ -214,54 +244,32 @@ codeunit 67115 "LT F3 Report Probes"
     procedure ReportHandler_ReportRunStatic()
     var
         Data: Codeunit "LT F3 Report Data";
-        Ok: Boolean;
     begin
         Data.Seed();
-        ClearLastError();
-        Ok := TryRunStatic();
-        Observer.Observe('ok', Format(Ok));
-        if not Ok then begin
-            Observer.Observe('error', GetLastErrorText());
-            Observer.Observe('code', GetLastErrorCode());
-        end;
+        asserterror Report.Run(Report::"LT F3 Request Report");
+        Observer.ObserveError('static');
         Observer.Observe('log', Dump());
         Observer.Finish();
-    end;
-
-    local procedure ObserveTry(Name: Text; UseRequest: Boolean; Modal: Boolean)
-    var
-        Data: Codeunit "LT F3 Report Data";
-        Ok: Boolean;
-    begin
-        Data.Seed();
-        ClearLastError();
-        Ok := TryRun(UseRequest, Modal);
-        Observer.Observe(Name + '_ok', Format(Ok));
-        if not Ok then begin
-            Observer.Observe(Name + '_error', GetLastErrorText());
-            Observer.Observe(Name + '_code', GetLastErrorCode());
-        end;
-        Observer.Observe(Name + '_log', Dump());
     end;
 
     [Test]
     procedure RequestPageReport_UseRequestPage_NoHandler_Run()
     begin
-        ObserveTry('run', true, false);
+        ObserveErrorRun('run', true, false);
         Observer.Finish();
     end;
 
     [Test]
     procedure RequestPageReport_UseRequestPage_NoHandler_RunModal()
     begin
-        ObserveTry('runmodal', true, true);
+        ObserveErrorRun('runmodal', true, true);
         Observer.Finish();
     end;
 
     [Test]
     procedure RequestPageReport_NoRequestPage_NoHandler()
     begin
-        ObserveTry('norequest', false, false);
+        ObserveDirectRun('norequest', false, false);
         Observer.Finish();
     end;
 
@@ -270,7 +278,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_OK()
     begin
         HandlerMode := 0;
-        ObserveTry('ok', true, false);
+        ObserveDirectRun('ok', true, false);
         Observer.Finish();
     end;
 
@@ -279,7 +287,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_Cancel()
     begin
         HandlerMode := 1;
-        ObserveTry('cancel', true, false);
+        ObserveDirectRun('cancel', true, false);
         Observer.Finish();
     end;
 
@@ -288,7 +296,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_TypedTag()
     begin
         HandlerMode := 2;
-        ObserveTry('typed', true, false);
+        ObserveDirectRun('typed', true, false);
         Observer.Finish();
     end;
 
@@ -297,7 +305,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_SetFilterThenEmpty()
     begin
         HandlerMode := 3;
-        ObserveTry('clear', true, false);
+        ObserveDirectRun('clear', true, false);
         Observer.Finish();
     end;
 
@@ -306,7 +314,16 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_SetFilterKept()
     begin
         HandlerMode := 4;
-        ObserveTry('kept', true, false);
+        ObserveDirectRun('kept', true, false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestHandler')]
+    procedure RequestPageReport_Handler_RunModal()
+    begin
+        HandlerMode := 0;
+        ObserveDirectRun('modal', true, true);
         Observer.Finish();
     end;
 }

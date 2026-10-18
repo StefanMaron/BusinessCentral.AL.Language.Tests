@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-calcfields-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); LT F3 Log Mgt (67077); own objects 67098 - 67099, 67108 - 67114
+// Fixtures used: Probe Observer (69160); LT F3 Report Log (67077); own objects 67098 - 67099, 67108 - 67114, 67126
 // Probe: shared fixtures of the report probes: header and line tables with FlowFields, and ProcessingOnly reports that log the FlowField values and rows they read.
 // BC versions: 27.0+
 
@@ -57,13 +57,43 @@ table 67099 "LT F3 RLine"
     }
 }
 
+// In-memory log: written from report triggers that run inside TryFunctions, where table writes are not allowed. Used by one test codeunit only.
+codeunit 67126 "LT F3 Report Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: List of [Text];
+
+    procedure Clear()
+    begin
+        if Entries.Count() > 0 then
+            Entries.RemoveRange(1, Entries.Count());
+    end;
+
+    procedure Add(Value: Text)
+    begin
+        Entries.Add(Value);
+    end;
+
+    procedure Dump(): Text
+    var
+        Entry: Text;
+        Result: Text;
+    begin
+        foreach Entry in Entries do
+            Result += Entry + ' | ';
+        exit(Result);
+    end;
+}
+
 codeunit 67108 "LT F3 Report Data"
 {
     procedure Seed()
     var
         Head: Record "LT F3 RHead";
         Line: Record "LT F3 RLine";
-        Log: Codeunit "LT F3 Log Mgt";
+        Log: Codeunit "LT F3 Report Log";
     begin
         Head.DeleteAll();
         Line.DeleteAll();
@@ -118,7 +148,7 @@ report 67109 "LT F3 CalcFields Lists"
 
                 trigger OnAfterGetRecord()
                 var
-                    Log: Codeunit "LT F3 Log Mgt";
+                    Log: Codeunit "LT F3 Report Log";
                 begin
                     Log.Add('Child ' + Child."Head Code" + '/' + Format(Child."Line No.") + ' descr=' + Child.HeadDescr + ' sibs=' + Format(Child.Sibs));
                 end;
@@ -126,7 +156,7 @@ report 67109 "LT F3 CalcFields Lists"
 
             trigger OnAfterGetRecord()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code" + ' sum=' + Format(Parent.SumQty) + ' count=' + Format(Parent.LineCount));
             end;
@@ -149,7 +179,7 @@ report 67110 "LT F3 CalcFields None"
 
                 trigger OnAfterGetRecord()
                 var
-                    Log: Codeunit "LT F3 Log Mgt";
+                    Log: Codeunit "LT F3 Report Log";
                 begin
                     Log.Add('Child ' + Child."Head Code" + '/' + Format(Child."Line No.") + ' descr=' + Child.HeadDescr + ' sibs=' + Format(Child.Sibs));
                 end;
@@ -157,7 +187,7 @@ report 67110 "LT F3 CalcFields None"
 
             trigger OnAfterGetRecord()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code" + ' sum=' + Format(Parent.SumQty) + ' count=' + Format(Parent.LineCount));
             end;
@@ -183,7 +213,7 @@ report 67111 "LT F3 CalcFields Single"
 
                 trigger OnAfterGetRecord()
                 var
-                    Log: Codeunit "LT F3 Log Mgt";
+                    Log: Codeunit "LT F3 Report Log";
                 begin
                     Log.Add('Child ' + Child."Head Code" + '/' + Format(Child."Line No.") + ' descr=' + Child.HeadDescr + ' sibs=' + Format(Child.Sibs));
                 end;
@@ -191,7 +221,7 @@ report 67111 "LT F3 CalcFields Single"
 
             trigger OnAfterGetRecord()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code" + ' sum=' + Format(Parent.SumQty) + ' count=' + Format(Parent.LineCount));
             end;
@@ -216,7 +246,7 @@ report 67112 "LT F3 Link Filter View"
 
                 trigger OnAfterGetRecord()
                 var
-                    Log: Codeunit "LT F3 Log Mgt";
+                    Log: Codeunit "LT F3 Report Log";
                 begin
                     Log.Add('Child ' + Child."Head Code" + '/' + Format(Child."Line No."));
                 end;
@@ -224,7 +254,7 @@ report 67112 "LT F3 Link Filter View"
 
             trigger OnAfterGetRecord()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code");
             end;
@@ -248,7 +278,7 @@ report 67113 "LT F3 Link Filter Caller"
 
                 trigger OnAfterGetRecord()
                 var
-                    Log: Codeunit "LT F3 Log Mgt";
+                    Log: Codeunit "LT F3 Report Log";
                 begin
                     Log.Add('Child ' + Child."Head Code" + '/' + Format(Child."Line No."));
                 end;
@@ -256,14 +286,14 @@ report 67113 "LT F3 Link Filter Caller"
 
             trigger OnPreDataItem()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Child filters at Parent.OnPreDataItem=[' + Child.GetFilters() + ']');
             end;
 
             trigger OnAfterGetRecord()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code" + ' child filters=[' + Child.GetFilters() + ']');
             end;
@@ -283,7 +313,7 @@ report 67114 "LT F3 Request Report"
         {
             trigger OnAfterGetRecord()
             var
-                Log: Codeunit "LT F3 Log Mgt";
+                Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code");
             end;
@@ -313,7 +343,7 @@ report 67114 "LT F3 Request Report"
 
     trigger OnInitReport()
     var
-        Log: Codeunit "LT F3 Log Mgt";
+        Log: Codeunit "LT F3 Report Log";
     begin
         Tag := 'default';
         Log.Add('OnInitReport');
@@ -321,14 +351,14 @@ report 67114 "LT F3 Request Report"
 
     trigger OnPreReport()
     var
-        Log: Codeunit "LT F3 Log Mgt";
+        Log: Codeunit "LT F3 Report Log";
     begin
         Log.Add('OnPreReport tag=' + Tag);
     end;
 
     trigger OnPostReport()
     var
-        Log: Codeunit "LT F3 Log Mgt";
+        Log: Codeunit "LT F3 Report Log";
     begin
         Log.Add('OnPostReport');
     end;

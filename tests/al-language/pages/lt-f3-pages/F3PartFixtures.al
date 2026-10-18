@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-subpageview-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own objects 67083 - 67092
+// Fixtures used: Probe Observer (69160); own objects 67083 - 67087, 67089, 67090, 67128
 // Probe: shared fixtures of the part probes: header and line tables, one list part that logs every read and every cursor trigger, and four host cards whose part differs only in its SubPageView
 // BC versions: 27.0+
 
@@ -66,9 +66,13 @@ codeunit 67085 "LT F3 Part Log"
         end;
         exit(Result);
     end;
+}
 
+codeunit 67128 "LT F3 Part Data"
+{
     procedure Seed(Heads: Integer)
     var
+        PartLog: Codeunit "LT F3 Part Log";
         Head: Record "LT F3 Head";
         Line: Record "LT F3 Line";
         i: Integer;
@@ -76,7 +80,7 @@ codeunit 67085 "LT F3 Part Log"
     begin
         Head.DeleteAll();
         Line.DeleteAll();
-        Reset();
+        PartLog.Reset();
         for i := 1 to Heads do begin
             Head.Init();
             Head."Code" := 'H' + Format(i);

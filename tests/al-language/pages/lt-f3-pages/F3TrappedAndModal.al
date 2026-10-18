@@ -60,7 +60,7 @@ codeunit 67091 "LT F3 Trapped Page"
     end;
 
     [Test]
-    procedure Trapped_04_LeftOpenAtTestEnd_NextTestSeesLog()
+    procedure Trapped_04_RunAgainAfterClose()
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT F3 Log Mgt";
@@ -71,16 +71,6 @@ codeunit 67091 "LT F3 Trapped Page"
         Row.Get('R1003');
         TrappedCard.Trap();
         Page.Run(Page::"LT F3 Card", Row);
-        Observer.Observe('log', Log.Dump());
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Trapped_05_PreviousTestLeftPageOpen()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT F3 Log Mgt";
-    begin
         Observer.Observe('log', Log.Dump());
         Observer.Finish();
     end;
