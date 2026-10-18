@@ -867,7 +867,11 @@ codeunit 77099 "LT AB Tests"
         Rows.Close();
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Observe('stored-ten-exists', Format(Stored.Get(10)));
-        Observer.Finish();
+        Observer.Expect('after-new', 'page OnNewRecord Yes | A2 OnNewRecordEvent 0 Yes | A1 OnNewRecordEvent 0 Yes | B OnNewRecordEvent 0 Yes | page OnAfterGetCurrRecord 0 | A2 OnAfterGetCurrRecordEvent 0 | A1 OnAfterGetCurrRecordEvent 0 | B OnAfterGetCurrRecordEvent 0');
+        Observer.Expect('after-id', '');
+        Observer.Expect('after-name', 'page OnInsertRecord 10  | A2 OnInsertRecordEvent 10  1 Yes Yes | A1 OnInsertRecordEvent 10  1 Yes Yes | B OnInsertRecordEvent 10  1 Yes Yes');
+        Observer.Expect('after-leave-row-1', 'page OnModifyRecord Ten was  | A2 OnModifyRecordEvent Ten  Yes | A1 OnM');
+        Observer.Verify();
     end;
 
     [Test]
@@ -992,7 +996,10 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('log-3', Log.DumpRange(17, 8));
         Observer.Observe('log-4', Log.DumpRange(25, 8));
         Observer.Observe('log-5', Log.DumpRange(33, 8));
-        Observer.Finish();
+        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
+        Observer.Expect('log-2', 'handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | base OnClosePage 2 | ext OnClosePage 0 | handler after OK');
+        Observer.Expect('log-3', 'report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnAfterGetRecord 2 | re');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1009,7 +1016,12 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('log-3', Log.DumpRange(17, 8));
         Observer.Observe('log-4', Log.DumpRange(25, 8));
         Observer.Observe('log-5', Log.DumpRange(33, 8));
-        Observer.Finish();
+        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
+        Observer.Expect('log-2', 'base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel | base OnClosePage 2');
+        Observer.Expect('log-3', 'ext OnClosePage 0 | handler after Cancel');
+        Observer.Expect('log-4', '');
+        Observer.Expect('log-5', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1029,7 +1041,10 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('log-4', Log.DumpRange(25, 8));
         Observer.Observe('log-5', Log.DumpRange(33, 8));
         Flags.SetVeto(false);
-        Observer.Finish();
+        Observer.Expect('log-1', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start');
+        Observer.Expect('log-2', 'handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | handler after OK | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel');
+        Observer.Expect('log-3', 'report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnA');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1046,21 +1061,6 @@ codeunit 77099 "LT AB Tests"
         Observer.Verify();
     end;
 
-    [Test]
-    procedure ReqPageNoRequestPageHandler()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-    begin
-        ReqPageSeed();
-        asserterror Report.Run(Report::"LT AB RP Report");
-        Observer.ObserveError('run-without-handler');
-        Observer.Observe('log', Log.Dump());
-        Observer.Expect('run-without-handler|text', 'Unhandled UI: RequestPage 77070');
-        Observer.Expect('run-without-handler|code', 'MissingUIHandler');
-        Observer.Expect('log', '');
-        Observer.Verify();
-    end;
 
     [RequestPageHandler]
     procedure ReqPageOkHandler(var RequestPage: TestRequestPage "LT AB RP Report")
@@ -1110,7 +1110,45 @@ codeunit 77099 "LT AB Tests"
         Log.Reset();
     end;
 
+    [Test]
+    procedure ActionAddInErrorInBeforeActionStopsOnAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+        Flags: Codeunit "LT AB Flags";
+        Card: TestPage "LT AB Action Card";
+    begin
+        ActionAddInSeed();
+        Card.OpenEdit();
+        Log.Reset();
+        Flags.SetVeto(true);
+        asserterror Card.Act.Invoke();
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Dump());
+        Flags.SetVeto(false);
+        Card.Close();
+        Observer.Expect('invoke|text', 'LT AB before action error');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', 'ext OnBeforeAction');
+        Observer.Verify();
+    end;
 
+    [Test]
+    procedure ActionAddInBeforeActionRunsBeforeOnAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+        Card: TestPage "LT AB Action Card";
+    begin
+        ActionAddInSeed();
+        Card.OpenEdit();
+        Log.Reset();
+        Card.Act.Invoke();
+        Observer.Observe('log', Log.Dump());
+        Card.Close();
+        Observer.Expect('log', 'ext OnBeforeAction | base OnAction');
+        Observer.Verify();
+    end;
 
     [Test]
     procedure ActionAddInControlAddInTriggersOnTestPage()
@@ -1131,6 +1169,9 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('after-close', 'page OnOpenPage | field OnValidate Typed');
         Observer.Verify();
     end;
+
+
+
 
     // ---------------------------------------------------------------- Render
 
@@ -1240,6 +1281,22 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('run|text', 'Unable to deserialize report rendering payload.');
         Observer.Expect('run|code', 'ReportRendering:Json');
         Observer.Expect('log', 'report OnPreReport | ext OnPreRendering keys=0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure ReqPageNoRequestPageHandler()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+    begin
+        ReqPageSeed();
+        asserterror Report.Run(Report::"LT AB RP Report");
+        Observer.ObserveError('run-without-handler');
+        Observer.Observe('log', Log.Dump());
+        Observer.Expect('run-without-handler|text', 'Unhandled UI: RequestPage 77070');
+        Observer.Expect('run-without-handler|code', 'MissingUIHandler');
+        Observer.Expect('log', '');
         Observer.Verify();
     end;
 }
