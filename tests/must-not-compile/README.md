@@ -230,6 +230,45 @@ is only a reference.
 | 0949 | AL0162 | A request page extension refuses the trigger OnNextRecord (every other page trigger compiles there: report/lt-ab-request-page-triggers/ABRequestPageExt.al); a page extension refuses the same two (0017, 0018). |
 | 0950 | AL0161 | The Rec variable of the base request page is not accessible from a trigger of a request page extension (the base page's own triggers use it: report/lt-ab-request-page-triggers/ABRequestPageFixtures.al). |
 | 0951 | AL0477 | OnValidateUpgradePerCompany and OnValidateUpgradePerDatabase are valid only in a codeunit with Subtype = Upgrade (such a codeunit runs at publish, so the corpus holds none: .github/scripts/check-install-triggers.py). (two diagnostics). |
+| 0960 | AL0132 | Record.IsDirty() exists from BC 29 (AL 18); BC 27 and 28 reject it. Runtime tests for BC 29: tests/al-language/lt-ac. |
+| 0961 | AL0134 | The DataSourceContext type exists from BC 29. Runtime test for BC 29: tests/al-language/lt-ac/ACContexts.al. |
+| 0962 | AL0134 | The TestHandlerContext type exists from BC 29. Runtime test for BC 29: tests/al-language/lt-ac/ACContexts.al. |
+| 0963 | AL0126 | IsolatedStorage.Get with an IsolationLevel exists from BC 29. Runtime tests for BC 29: tests/al-language/lt-ac. |
+| 0964 | AL0132 | ModuleInfo.ContextSensitiveHelpUrl, EULA, Help and PrivacyStatement exist from BC 29. Runtime tests for BC 29: tests/al-language/lt-ac. (4 diagnostics) |
+| 0965 | AL0133 | NavApp.GetResource, GetResourceAsText and GetResourceAsJson with an AppId exist from BC 29. Runtime tests for BC 29: tests/al-language/lt-ac. (4 diagnostics) |
+| 0966 | AL0126, AL0132 | NavApp.ListResources(AppId) and NavApp.ListAppsWithPublicResources exist from BC 29. Runtime tests for BC 29: tests/al-language/lt-ac. (2 diagnostics) |
+| 0967 | AL0895 | The Native attribute on a procedure with a body outside the platform symbols app. (2 diagnostics) |
+| 0968 | AL0112 | The Scope attribute takes OnPrem, Internal or Cloud; any other value is reported as an unknown attribute. |
+| 0969 | AL0195 | InherentPermissions with a permission letter that is not R, I, M or D. |
+| 0970 | AL0433 | A table with ObsoleteState = Removed is used as a record variable. A codeunit cannot be Removed (AL0169), a table can. |
+| 0971 | AL0112 | The RequiredPending attribute exists from BC 29. |
+| 0972 | AL0772 | RequiredPermissions is only valid on an external business event. |
+| 0973 | AL0187, AL0296 | RunOnClient on a procedure: it is only valid on variables, and it has scope OnPrem. (2 diagnostics) |
+| 0974 | AL0187, AL0296 | SuppressDispose on a procedure: it is only valid on variables, and it has scope OnPrem. (2 diagnostics) |
+| 0975 | AL0187, AL0296 | WithEvents on a procedure: it is only valid on variables, and it has scope OnPrem. (2 diagnostics) |
+| 0976 | AL0187 | SecurityFiltering on a procedure (it belongs on a Record variable: tests/al-language/lt-ac/ACAttributes.al). |
+| 0977 | AL0187 | InDataSet on a procedure. The attribute is deprecated (AL0667 warning) and valid only on variables. |
+| 0978 | AL0243 | The TestPermissions attribute on a procedure of a codeunit that is not a test codeunit. |
+| 0979 | AL0132 | TestPermissions has Disabled, Restrictive, NonRestrictive and InheritFromTestRunner; there is no Normal. |
+| 0980 | AL0619 | The Caption attribute on a procedure of a test codeunit (a plain codeunit accepts it). With ServiceEnabled it compiles: tests/al-language/lt-ac/ACAttributes.al. |
+| 0981 | AL0296 | A procedure with [Scope('OnPrem')] called from the same Cloud app. |
+| 0982 | AL0296 | A procedure with [Scope('Internal')] called from the same Cloud app. |
+| 0983 | AL0296 | The HttpClientHandler attribute in a Cloud app (it has scope OnPrem). |
+| 0984 | AL0241 | An HttpClientHandler procedure without parameters. |
+| 0985 | AL0241 | A ReportHandler procedure without the Report parameter. Runtime test: tests/al-language/lt-ac/ACAttributes.al. |
+| 0986 | AL0243 | The ReportHandler attribute in a codeunit that is not a test codeunit. |
+| 0987 | AL0112 | The TestDataSource attribute exists from BC 29. |
+| 0988 | AL0595 | On BC 29 the TestDataSource attribute names a codeunit that must implement ITestDataSource. |
+| 0989 | AL0175 | PageStyle is option-like: it supports = and <> but not an ordering operator. The same holds for HttpRequestType, AuditCategory, SecurityOperationResult and PageBackgroundTaskErrorLevel. |
+| 0990 | AL0132, AL0122 | HttpRequestType is option-like: no AsInteger, and an Integer cannot be assigned. The same holds for PageStyle, AuditCategory, SecurityOperationResult and PageBackgroundTaskErrorLevel. (2 diagnostics) |
+| 0991 | AL0132 | A page calls a procedure that the control add-in does not declare. Runtime test for the valid call: tests/al-language/lt-ac/ACControlAddIn.al. |
+| 0992 | AL0458 | WithEvents on a variable of a type that has no events (OnPrem app). Runtime test for a DotNet variable: tests/al-language-onprem-dotnet/lt-ac/AcDnAttributes.al. |
+| 0993 | AL0458 | RunOnClient on a Boolean variable (OnPrem app): the attribute is valid only on DotNet variables. Runtime test: tests/al-language-onprem-dotnet/lt-ac/AcDnAttributes.al. |
+| 0994 | AL0895 | The Native attribute needs runtime 17.0; at that runtime a procedure with a body outside the platform symbols app is rejected (once for the object, once for the attribute). (2 diagnostics) |
+| 0995 | AL0666 | The DataSourceContext type needs runtime 18.0 (BC 29 and later). An app below that runtime gets AL0666 on every BC major (the AL 16 and 17 compilers' verdict for BC 27 and 28 is in cases 0961, 0962, 0971). |
+| 0996 | AL0666 | The TestHandlerContext type needs runtime 18.0 (BC 29 and later). An app below that runtime gets AL0666 on every BC major (the AL 16 and 17 compilers' verdict for BC 27 and 28 is in cases 0961, 0962, 0971). |
+| 0997 | AL0666 | The RequiredPending attribute needs runtime 18.0 (BC 29 and later). An app below that runtime gets AL0666 on every BC major (the AL 16 and 17 compilers' verdict for BC 27 and 28 is in cases 0961, 0962, 0971). |
+| 0998 | AL0666 | The BC 29 methods Record.IsDirty, IsolatedStorage.Get with an IsolationLevel, ModuleInfo.ContextSensitiveHelpUrl, EULA, Help, PrivacyStatement and the NavApp resource methods need runtime 18.0. An app declared at runtime 16.0 gets AL0666 for each, on every BC major; the corpus app itself uses runtime 18.0 on BC 29 and guards them with BC29PLUS. (14 diagnostics) |
 | 1040 | AL0175 | A Char minus a Text literal of two characters or of none, and the same literals minus a Char (four diagnostics). A one-character literal compiles. |
 | 1041 | AL0122 | A Char minus a one-character literal is an Integer and cannot be assigned to a Text; a Char plus a two-character literal is a Text and cannot be assigned to an Integer (two diagnostics). |
 | 1050 | AL0124 | XmlPort fieldelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
@@ -240,9 +279,6 @@ is only a reference.
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
-| 1120 | AL0132 | A TestRequestPage data item (TestFilter) has no SetRange, GetRangeMin or GetRangeMax. |
-| 1121 | AL0721 | A report rendering section without DefaultRenderingLayout. |
-| 1122 | AL0379 | A report column name with a space. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
