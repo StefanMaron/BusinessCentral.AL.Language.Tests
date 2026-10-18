@@ -107,6 +107,7 @@ codeunit 69381 "LT T GetUrl Tests"
         At: Integer;
         Rest: Text;
         Slash: Integer;
+        Q: Integer;
     begin
         At := StrPos(Value, '://');
         if At = 0 then
@@ -115,7 +116,12 @@ codeunit 69381 "LT T GetUrl Tests"
         Slash := StrPos(Rest, '/');
         if Slash = 0 then
             exit(CopyStr(Value, 1, At + 2) + '<host>');
-        exit(CopyStr(Value, 1, At + 2) + '<host>' + CopyStr(Rest, Slash));
+        Rest := CopyStr(Rest, Slash + 1);
+        Slash := StrPos(Rest + '/', '/');
+        Q := StrPos(Rest + '?', '?');
+        if Q < Slash then
+            Slash := Q;
+        exit(CopyStr(Value, 1, At + 2) + '<host>/<instance>' + CopyStr(Rest, Slash));
     end;
 
     [TryFunction]

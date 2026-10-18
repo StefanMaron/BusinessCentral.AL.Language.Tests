@@ -21,6 +21,27 @@ table 69374 "LT T Link Host"
     }
 }
 
+codeunit 69382 "LT T Delete Link"
+{
+    var
+        TargetId: RecordId;
+        TargetLink: Integer;
+
+    procedure Set(NewTarget: RecordId; NewLink: Integer)
+    begin
+        TargetId := NewTarget;
+        TargetLink := NewLink;
+    end;
+
+    trigger OnRun()
+    var
+        Ref: RecordRef;
+    begin
+        Ref.Get(TargetId);
+        Ref.DeleteLink(TargetLink);
+    end;
+}
+
 codeunit 69369 "LT T RecordRef Links Tests"
 {
     Subtype = Test;
@@ -56,18 +77,15 @@ codeunit 69369 "LT T RecordRef Links Tests"
         Target.GetTable(Host);
     end;
 
-    [TryFunction]
-    local procedure TryDelete(var Ref: RecordRef; LinkId: Integer)
-    begin
-        Ref.DeleteLink(LinkId);
-    end;
-
     local procedure DeleteResult(var Ref: RecordRef; LinkId: Integer): Text
     var
+        Deleter: Codeunit "LT T Delete Link";
         Ok: Boolean;
         Result: Text;
     begin
-        Ok := TryDelete(Ref, LinkId);
+        Deleter.Set(Ref.RecordId(), LinkId);
+        Commit();
+        Ok := Deleter.Run();
         Result := Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode();
         ClearLastError();
         exit(Result);

@@ -513,6 +513,7 @@ codeunit 69371 "LT T TextConst Methods"
         Clear(D);
         Clear(L);
         Clear(M);
+        T := TcPad;
         Observer.Observe('tc spaces both sides', '[' + TcPad.Trim() + ']');
         Observer.Observe('text spaces both sides', '[' + T.Trim() + ']');
         Observer.Finish();

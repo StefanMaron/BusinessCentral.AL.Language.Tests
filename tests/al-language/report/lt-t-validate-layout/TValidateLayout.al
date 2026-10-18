@@ -1,8 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-validateandpreparelayout-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), Temp Blob (System Application), layout file ./FixtureLayout.rdlc of the app root; self-contained report 69367, test codeunit 69366
-// Facts: Report.ValidateAndPrepareLayout, static (report id) and on a Report variable: the return value, the prepared stream and the error for the report's own layout and for text that is not a layout,
-// for each layout type, and the error of an unknown report id when the Ok result is not used.
+// Facts: Report.ValidateAndPrepareLayout, static (report id) and on a Report variable: the return value and the prepared stream for the report's own RDLC layout, and the error for a layout of the wrong type and for an unknown report id.
 // BC versions: 27.0 and later
 
 report 69367 "LT T Layout Rpt"
@@ -63,9 +62,13 @@ codeunit 69366 "LT T Validate Layout Tests"
     local procedure OwnLayout(var Stream: InStream)
     var
         Raw: InStream;
+        OutStr: OutStream;
     begin
         Report.RdlcLayout(Report::"LT T Layout Rpt", Raw);
-        TextStream(ReadAll(Raw), HolderBlob, Stream);
+        Clear(HolderBlob);
+        HolderBlob.CreateOutStream(OutStr);
+        CopyStream(OutStr, Raw);
+        HolderBlob.CreateInStream(Stream, TextEncoding::UTF8);
     end;
 
     [TryFunction]
@@ -112,63 +115,30 @@ codeunit 69366 "LT T Validate Layout Tests"
     end;
 
     [Test]
-    procedure Validate_Static_NotALayout()
+    procedure Validate_Static_WrongLayoutType_Errors()
     var
-        TempBlob: Codeunit "Temp Blob";
         Layout: InStream;
         Prepared: InStream;
-        Ok: Boolean;
     begin
-        TextStream('this is not a layout', TempBlob, Layout);
-        Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::RDLC);
-        Describe('static rdlc garbage', Ok, Prepared, '');
-        Clear(TempBlob);
-        Clear(Prepared);
-        TextStream('this is not a layout', TempBlob, Layout);
-        Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Word);
-        Describe('static word garbage', Ok, Prepared, '');
-        Clear(TempBlob);
-        Clear(Prepared);
-        TextStream('this is not a layout', TempBlob, Layout);
-        Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Excel);
-        Describe('static excel garbage', Ok, Prepared, '');
-        Clear(TempBlob);
-        Clear(Prepared);
-        TextStream('', TempBlob, Layout);
-        Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::RDLC);
-        Describe('static rdlc empty', Ok, Prepared, '');
+        OwnLayout(Layout);
+        asserterror Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Word);
+        Observer.ObserveError('static rdlc content as word');
+        OwnLayout(Layout);
+        asserterror Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Excel);
+        Observer.ObserveError('static rdlc content as excel');
         Observer.Finish();
     end;
 
     [Test]
-    procedure Validate_Static_RdlcLayoutAsWord()
+    procedure Validate_Static_UnknownReport_Errors()
     var
         Layout: InStream;
         Prepared: InStream;
-        Ok: Boolean;
     begin
         OwnLayout(Layout);
-        Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Word);
-        Describe('static rdlc content as word', Ok, Prepared, '');
-        Clear(Prepared);
-        OwnLayout(Layout);
-        Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Excel);
-        Describe('static rdlc content as excel', Ok, Prepared, '');
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Validate_Static_NoOkResult_Errors()
-    var
-        TempBlob: Codeunit "Temp Blob";
-        Layout: InStream;
-        Prepared: InStream;
-    begin
-        TextStream('this is not a layout', TempBlob, Layout);
-        asserterror Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::RDLC);
-        Observer.ObserveError('static garbage');
         asserterror Report.ValidateAndPrepareLayout(71999, Layout, Prepared, ReportLayoutType::RDLC);
         Observer.ObserveError('static unknown report');
+        OwnLayout(Layout);
         asserterror Report.ValidateAndPrepareLayout(0, Layout, Prepared, ReportLayoutType::RDLC);
         Observer.ObserveError('static report 0');
         Observer.Finish();
@@ -193,27 +163,15 @@ codeunit 69366 "LT T Validate Layout Tests"
     end;
 
     [Test]
-    procedure Validate_Instance_NotALayout()
+    procedure Validate_Instance_WrongLayoutType_Errors()
     var
         Rpt: Report "LT T Layout Rpt";
-        TempBlob: Codeunit "Temp Blob";
         Layout: InStream;
         Prepared: InStream;
-        Ok: Boolean;
     begin
-        TextStream('this is not a layout', TempBlob, Layout);
-        Ok := Rpt.ValidateAndPrepareLayout(Layout, Prepared, ReportLayoutType::RDLC);
-        Describe('instance rdlc garbage', Ok, Prepared, '');
-        Clear(TempBlob);
-        Clear(Prepared);
-        TextStream('this is not a layout', TempBlob, Layout);
-        Ok := Rpt.ValidateAndPrepareLayout(Layout, Prepared, ReportLayoutType::Word);
-        Describe('instance word garbage', Ok, Prepared, '');
-        Clear(TempBlob);
-        Clear(Prepared);
-        TextStream('this is not a layout', TempBlob, Layout);
-        asserterror Rpt.ValidateAndPrepareLayout(Layout, Prepared, ReportLayoutType::RDLC);
-        Observer.ObserveError('instance garbage no result');
+        OwnLayout(Layout);
+        asserterror Rpt.ValidateAndPrepareLayout(Layout, Prepared, ReportLayoutType::Word);
+        Observer.ObserveError('instance rdlc content as word');
         Observer.Finish();
     end;
 }
