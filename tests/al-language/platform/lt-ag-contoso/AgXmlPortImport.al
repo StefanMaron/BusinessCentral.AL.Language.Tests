@@ -253,7 +253,27 @@ codeunit 78402 "LT AG XP Import"
         ObserveImport('required Active missing', Xmlport::"LT AG XP Attr Occurrence", '<Root><Row Id="10" Name="ten"/></Root>');
         ObserveImport('all missing', Xmlport::"LT AG XP Attr Occurrence", '<Root><Row/></Root>');
         ObserveImport('no row element', Xmlport::"LT AG XP Attr Occurrence", '<Root/>');
-        Observer.Finish();
+        Observer.Expect('all present ok', 'Yes');
+        Observer.Expect('all present rows', '1:seed-one:Yes,2:seed-two:No,10:ten:Yes,');
+        Observer.Expect('optional missing ok', 'Yes');
+        Observer.Expect('optional missing rows', '1:seed-one:Yes,2:seed-two:No,10::Yes,');
+        Observer.Expect('required Id missing ok', 'No');
+        Observer.Expect('required Id missing error', 'Imported XML cannot validate with the schema: The required attribute ''Id'' is missing.');
+        Observer.Expect('required Id missing code', 'XmlPortInvalidXml');
+        Observer.Expect('required Id missing rows', '1:seed-one:Yes,2:seed-two:No,');
+        Observer.Expect('required Active missing ok', 'No');
+        Observer.Expect('required Active missing error', 'Imported XML cannot validate with the schema: The required attribute ''Active'' is missing.');
+        Observer.Expect('required Active missing code', 'XmlPortInvalidXml');
+        Observer.Expect('required Active missing rows', '1:seed-one:Yes,2:seed-two:No,');
+        Observer.Expect('all missing ok', 'No');
+        Observer.Expect('all missing error', 'Imported XML cannot validate with the schema: The required attribute ''Id'' is missing.');
+        Observer.Expect('all missing code', 'XmlPortInvalidXml');
+        Observer.Expect('all missing rows', '1:seed-one:Yes,2:seed-two:No,');
+        Observer.Expect('no row element ok', 'No');
+        Observer.Expect('no row element error', 'Imported XML cannot validate with the schema: The element ''Root'' has incomplete content. List of possible elements expected: ''Row''.');
+        Observer.Expect('no row element code', 'XmlPortInvalidXml');
+        Observer.Expect('no row element rows', '1:seed-one:Yes,2:seed-two:No,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -261,7 +281,11 @@ codeunit 78402 "LT AG XP Import"
     begin
         ObserveImport('no row element', Xmlport::"LT AG XP Elem MinOccurs Import", '<Root/>');
         ObserveImport('one row', Xmlport::"LT AG XP Elem MinOccurs Import", '<Root><Row><Id>10</Id><Name>ten</Name></Row></Root>');
-        Observer.Finish();
+        Observer.Expect('no row element ok', 'Yes');
+        Observer.Expect('no row element rows', '1:seed-one:Yes,2:seed-two:No,');
+        Observer.Expect('one row ok', 'Yes');
+        Observer.Expect('one row rows', '1:seed-one:Yes,2:seed-two:No,10:ten:No,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +293,13 @@ codeunit 78402 "LT AG XP Import"
     begin
         ObserveImport('active and inactive', Xmlport::"LT AG XP Source Table View", '<Root><Row><Id>3</Id><Name>three</Name><Active>1</Active></Row><Row><Id>4</Id><Name>four</Name><Active>0</Active></Row></Root>');
         ObserveImport('replace seeded row', Xmlport::"LT AG XP Source Table View", '<Root><Row><Id>1</Id><Name>again</Name><Active>1</Active></Row></Root>');
-        Observer.Finish();
+        Observer.Expect('active and inactive ok', 'Yes');
+        Observer.Expect('active and inactive rows', '1:seed-one:Yes,2:seed-two:No,3:three:Yes,4:four:No,');
+        Observer.Expect('replace seeded row ok', 'No');
+        Observer.Expect('replace seeded row error', 'The record in table LT AG XP Row already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('replace seeded row code', 'DB:RecordExists');
+        Observer.Expect('replace seeded row rows', '1:seed-one:Yes,2:seed-two:No,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -277,7 +307,8 @@ codeunit 78402 "LT AG XP Import"
     begin
         Seed();
         Observer.Observe('export', ExportText(Xmlport::"LT AG XP Source Table View"));
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|    <Active>Yes</Active>|  </Row>|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,6 +319,12 @@ codeunit 78402 "LT AG XP Import"
         Seed();
         Observer.Observe('empty requestpage export', ExportText(Xmlport::"LT AG XP Empty Request Page"));
         Observer.Observe('no requestpage export', ExportText(Xmlport::"LT AG XP No Request Page"));
-        Observer.Finish();
+        Observer.Expect('empty requestpage import ok', 'Yes');
+        Observer.Expect('empty requestpage import rows', '1:seed-one:Yes,2:seed-two:No,10:ten:No,');
+        Observer.Expect('no requestpage import ok', 'Yes');
+        Observer.Expect('no requestpage import rows', '1:seed-one:Yes,2:seed-two:No,10:ten:No,');
+        Observer.Expect('empty requestpage export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|  </Row>|  <Row>|    <Id>2</Id>|    <Name>seed-two</Name>|  </Row>|</Root>|');
+        Observer.Expect('no requestpage export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|  </Row>|  <Row>|    <Id>2</Id>|    <Name>seed-two</Name>|  </Row>|</Root>|');
+        Observer.Verify();
     end;
 }

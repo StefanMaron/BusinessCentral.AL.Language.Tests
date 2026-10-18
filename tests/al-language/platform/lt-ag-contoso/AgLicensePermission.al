@@ -52,7 +52,19 @@ codeunit 78401 "LT AG License Permission"
         Observer.Observe('xmlport_1', Describe(LicensePermission."Object Type"::XMLport, 1));
         Observer.Observe('query_1', Describe(LicensePermission."Object Type"::Query, 1));
         Observer.Observe('system_1', Describe(LicensePermission."Object Type"::System, 1));
-        Observer.Finish();
+        Observer.Expect('codeunit_410', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('codeunit_1', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('codeunit_80', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('codeunit_99999999', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('codeunit_own_78401', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('table_18', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('tabledata_18', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('page_21', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('report_1', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('xmlport_1', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('query_1', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Expect('system_1', 'Read=Yes Insert=Yes Modify=Yes Delete=Yes Execute=Yes Limited= ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,6 +81,10 @@ codeunit 78401 "LT AG License Permission"
         Observer.Observe('codeunit_1_5_ids', Ids(LicensePermission));
         LicensePermission.SetRange("Object Number", 78400, 78402);
         Observer.Observe('codeunit_own_ids', Ids(LicensePermission));
-        Observer.Finish();
+        Observer.Expect('codeunit_410_count', '1');
+        Observer.Expect('codeunit_400_420_ids', '400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,');
+        Observer.Expect('codeunit_1_5_ids', '1,2,3,4,5,');
+        Observer.Expect('codeunit_own_ids', '78400,78401,78402,');
+        Observer.Verify();
     end;
 }

@@ -37,6 +37,18 @@ codeunit 78403 "LT AG Platform Read Only"
         WindowsLanguage.Get(1033);
         Observer.Observe('name_after', WindowsLanguage.Name);
         Observer.Observe('has_99999', Format(WindowsLanguage.Get(99999)));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'The Windows Language table is read-only.');
+        Observer.Expect('insert|code', 'DB:Ok');
+        Observer.Expect('insert_trigger|text', 'The Windows Language table is read-only.');
+        Observer.Expect('insert_trigger|code', 'DB:Ok');
+        Observer.Expect('modify|text', 'The Windows Language table is read-only.');
+        Observer.Expect('modify|code', 'DB:Ok');
+        Observer.Expect('delete|text', 'The Windows Language table is read-only.');
+        Observer.Expect('delete|code', 'DB:Ok');
+        Observer.Expect('delete_all|text', 'The Windows Language table is read-only.');
+        Observer.Expect('delete_all|code', 'DB:Ok');
+        Observer.Expect('name_after', 'English (United States)');
+        Observer.Expect('has_99999', 'No');
+        Observer.Verify();
     end;
 }
