@@ -1,4 +1,4 @@
-// @expect AL0126 | TODO
+// @expect AL0126 | No overload for method 'ImportStream' takes 4 arguments. Candidates: built-in method 'ImportStream(InStream, Text, [Text])'
 // MediaSet.ImportStream with a file name as a fourth argument does not exist (only InStream, Description, [MimeType]).
 table 50641 "MNC MediaSet Row"
 {

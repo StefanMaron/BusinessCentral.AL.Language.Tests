@@ -1,4 +1,4 @@
-// @expect AL0126 | TODO
+// @expect AL0126 | No overload for method 'ImportStream' takes 4 arguments. Candidates: built-in method 'ImportStream(InStream, Text, [Text])'
 // Media.ImportStream with a file name as a fourth argument does not exist on 27, 28 and 29 (case 0076 pins 27 only).
 table 50642 "MNC Media Row2"
 {
