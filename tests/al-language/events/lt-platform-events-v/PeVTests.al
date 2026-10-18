@@ -7,6 +7,7 @@
 //   2. Events only a platform action raises (install, upgrade, environment copy, user initialization, company open and close, debugger, SmartList designer, Excel, the ChangeCompany
 //      system action). The subscribers also write a row into the table LT V Event Log (no company), so an event raised before the test session started is visible too.
 //   3. Reporting Triggers raised by Report.SaveAs / RunRequestPage / Execute, and what a subscriber that changes each var argument does.
+// Note: the PDF, Word and Excel renders of Report.SaveAs run on the Linux tier of the CI (the 'Test Report SaveAs Pdf Body' test explains why they can refuse); their rows record what that tier raises.
 // BC versions: 27 - 29
 
 codeunit 69852 "LT V Platform Event Tests"
@@ -123,18 +124,6 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Finish();
     end;
 
-    [TryFunction]
-    local procedure TryMutatingInsert(var RecRef: RecordRef)
-    begin
-        RecRef.Insert(true);
-    end;
-
-    [TryFunction]
-    local procedure TryMutatingModify(var RecRef: RecordRef)
-    begin
-        RecRef.Modify(true);
-    end;
-
     [Test]
     procedure GlobalTriggers_SubscriberChangesTheRecordItIsHanded_RowI()
     var
@@ -150,16 +139,14 @@ codeunit 69852 "LT V Platform Event Tests"
         RecRef.Field(1).Value := 1;
         RecRef.Field(2).Value := 'a';
         RecRef.Field(3).Value := 1.5;
-        Observer.Observe('insert_ok', Format(TryMutatingInsert(RecRef)));
-        Observer.ObserveError('insert_error');
+        RecRef.Insert(true);
         Observer.Observe('insert_log', Log.Take());
         Observer.Observe('variable_after_insert', Format(RecRef.Field(2).Value) + '/' + Format(RecRef.Field(3).Value));
         Observer.Observe('found', Format(Check.Get(1)));
         Observer.Observe('stored_after_insert', Check.Name + '/' + Format(Check.Amount));
         RecRef.Field(2).Value := 'b';
         RecRef.Field(3).Value := 2.5;
-        Observer.Observe('modify_ok', Format(TryMutatingModify(RecRef)));
-        Observer.ObserveError('modify_error');
+        RecRef.Modify(true);
         Observer.Observe('modify_log', Log.Take());
         Observer.Observe('variable_after_modify', Format(RecRef.Field(2).Value) + '/' + Format(RecRef.Field(3).Value));
         Observer.Observe('found_again', Format(Check.Get(1)));
@@ -273,24 +260,16 @@ codeunit 69852 "LT V Platform Event Tests"
     end;
 
     [Test]
-    procedure StartSession_CompanyEventsSeenByTheNewSession()
+    procedure StartSession_IsRefusedInATestSession()
     var
         Observer: Codeunit "Probe Observer";
-        Row: Record "LT V Event Log";
         Session: Integer;
         Started: Boolean;
-        Deadline: DateTime;
     begin
-        Started := StartSession(Session, Codeunit::"LT V Session Worker", CompanyName());
+        // A new session would show OnCompanyOpen and OnCompanyOpenCompleted to the worker; the test session cannot start one.
+        asserterror Started := StartSession(Session, Codeunit::"LT V Session Worker", CompanyName());
+        Observer.ObserveError('start session');
         Observer.Observe('started', Format(Started));
-        Deadline := CurrentDateTime() + 60000;
-        while (RowsOfSession('Worker', Session) = 0) and (CurrentDateTime() < Deadline) do
-            Sleep(250);
-        Row.SetRange("Session Id", Session);
-        Row.SetRange("Event Name", 'Worker');
-        if Row.FindFirst() then
-            Observer.Observe('entries seen by the worker session', Row.Info.Replace(CompanyName(), '<company>'));
-        Observer.Observe('worker rows', Format(RowsOfSession('Worker', Session)));
         Observer.Finish();
     end;
 
@@ -409,7 +388,26 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure TryRunRequestPage(var Parameters: Text)
+    begin
+        Parameters := Report.RunRequestPage(Report::"LT V Report A");
+    end;
+
+    [TryFunction]
+    local procedure TryExecute()
+    begin
+        Report.Execute(Report::"LT V Report A", '');
+    end;
+
+    [RequestPageHandler]
+    procedure RequestPageA(var Request: TestRequestPage "LT V Report A")
+    begin
+        Request.OK().Invoke();
+    end;
+
     [Test]
+    [HandlerFunctions('RequestPageA')]
     procedure RunRequestPageAndExecute_RaisedEvents()
     var
         Observer: Codeunit "Probe Observer";
@@ -417,9 +415,11 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Seed();
         Log.Start();
-        Parameters := Report.RunRequestPage(Report::"LT V Report A");
+        Observer.Observe('request page ok', Format(TryRunRequestPage(Parameters)));
+        Observer.ObserveError('request page error');
         Observer.Observe('request page log', Log.Take());
-        Report.Execute(Report::"LT V Report A", '');
+        Observer.Observe('execute ok', Format(TryExecute()));
+        Observer.ObserveError('execute error');
         Observer.Observe('execute log', Log.Take());
         Log.Stop();
         Observer.Finish();
