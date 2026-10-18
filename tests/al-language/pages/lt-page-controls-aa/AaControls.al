@@ -168,44 +168,76 @@ page 76505 "LT AA Controls Card"
             {
                 ApplicationArea = All;
                 Gesture = LeftSwipe;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActSwipeRight)
             {
                 ApplicationArea = All;
                 Gesture = RightSwipe;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActNone)
             {
                 ApplicationArea = All;
                 Gesture = None;
                 Scope = Repeater;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActPageScope)
             {
                 ApplicationArea = All;
                 Scope = Page;
                 InFooterBar = true;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActEnabledTrue)
             {
                 ApplicationArea = All;
                 Enabled = true;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActEnabledFalse)
             {
                 ApplicationArea = All;
                 Enabled = false;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActEnabledFlag)
             {
                 ApplicationArea = All;
                 Enabled = EnabledFlag;
+
+                trigger OnAction()
+                begin
+                end;
             }
             action(ActEllipsis)
             {
                 ApplicationArea = All;
                 Caption = 'Ellipsis action';
                 Ellipsis = true;
+
+                trigger OnAction()
+                begin
+                end;
             }
             group(SplitGroup)
             {
@@ -215,10 +247,18 @@ page 76505 "LT AA Controls Card"
                 action(SplitFirst)
                 {
                     ApplicationArea = All;
+
+                    trigger OnAction()
+                    begin
+                    end;
                 }
                 action(SplitSecond)
                 {
                     ApplicationArea = All;
+
+                    trigger OnAction()
+                    begin
+                    end;
                 }
             }
             group(StandardGroup)
@@ -229,6 +269,10 @@ page 76505 "LT AA Controls Card"
                 action(StandardFirst)
                 {
                     ApplicationArea = All;
+
+                    trigger OnAction()
+                    begin
+                    end;
                 }
             }
             group(HeaderGroup)
@@ -243,6 +287,10 @@ page 76505 "LT AA Controls Card"
                 action(AfterHeader)
                 {
                     ApplicationArea = All;
+
+                    trigger OnAction()
+                    begin
+                    end;
                 }
                 separator(PlainSep)
                 {
