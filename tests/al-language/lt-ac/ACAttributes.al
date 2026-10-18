@@ -4,7 +4,7 @@
 // Probe: attributes on procedures and variables in a Cloud app: Caption, None, Obsolete (Pending), Scope (Cloud), ServiceEnabled, InDataSet, SecurityFiltering on a Record variable, TestPermissions on a test procedure, ReportHandler. Settles #629 items 1, 3, 6, 7, 8, 12 (Cloud scope), 13, 14 and 17.
 //   Compile errors are in the must-not-compile cases 0967 to 0980. Items that need an OnPrem app are in tests/al-language-onprem-dotnet/lt-ac.
 // BC versions: 27, 28, 29
-//   Not pinned here: RequiredPending needs runtime 18.0 (the app compiles at runtime 16.0: AL0666, must-not-compile case 0997).
+//   RequiredPending is BC 29 (runtime 18.0) and guarded; BC 27 and 28 reject it (must-not-compile case 0971).
 
 table 77530 "LT AC Attr Row"
 {
@@ -142,6 +142,23 @@ codeunit 77532 "LT AC Attributes"
         Observer.Expect('calls', '5');
         Observer.Verify();
     end;
+
+#if BC29PLUS
+    [Test]
+    procedure AC_Attr_RequiredPending()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('required_pending', RequiredPendingProc());
+        Observer.Finish();
+    end;
+
+    [RequiredPending('Use the new procedure', '29.0')]
+    local procedure RequiredPendingProc(): Text
+    begin
+        exit('required_pending_ran');
+    end;
+#endif
 
     [Test]
     procedure AC_Attr_SecurityFiltering_Variable()
