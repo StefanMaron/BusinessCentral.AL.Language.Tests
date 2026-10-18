@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), Temp Blob (Base Application); own table 78410, xmlports 78420 to 78424, test codeunit 78402
+// Fixtures used: Probe Observer (codeunit 69160), Temp Blob (Base Application); own tables 78410-78411, codeunit 78405, xmlports 78420 to 78424, test codeunit 78402
 // Probe: XmlPort properties that Microsoft's Contoso demo-data xmlports use on import: Occurrence = Optional and Required on field attributes
 // (missing and present attribute), SourceTableView on a tableelement (import and export), and an empty requestpage section against none
 // (Xmlport.Import and Xmlport.Export from code). MinOccurs on a tableelement, FieldValidate and Encoding on import are pinned in
@@ -134,6 +134,37 @@ xmlport 78424 "LT AG XP Elem MinOccurs Import"
     }
 }
 
+table 78411 "LT AG XP Job"
+{
+    DataClassification = SystemMetadata;
+    TableType = Temporary;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Content; Blob) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+codeunit 78405 "LT AG XP Import Runner"
+{
+    TableNo = "LT AG XP Job";
+
+    trigger OnRun()
+    var
+        InS: InStream;
+    begin
+        Rec.CalcFields(Content);
+        Rec.Content.CreateInStream(InS, TextEncoding::UTF8);
+        Xmlport.Import(Rec.Id, InS);
+    end;
+}
+
 codeunit 78402 "LT AG XP Import"
 {
     Subtype = Test;
@@ -169,17 +200,16 @@ codeunit 78402 "LT AG XP Import"
         Row.Insert();
     end;
 
-    [TryFunction]
-    local procedure TryImport(XmlportId: Integer; Content: Text)
+    local procedure RunImport(XmlportId: Integer; Content: Text): Boolean
     var
-        TempBlob: Codeunit "Temp Blob";
+        Job: Record "LT AG XP Job" temporary;
         OutS: OutStream;
-        InS: InStream;
     begin
-        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        Job.Id := XmlportId;
+        Job.Content.CreateOutStream(OutS, TextEncoding::UTF8);
         OutS.WriteText(Content);
-        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
-        Xmlport.Import(XmlportId, InS);
+        Commit();
+        exit(Codeunit.Run(Codeunit::"LT AG XP Import Runner", Job));
     end;
 
     local procedure ExportText(XmlportId: Integer): Text
@@ -187,19 +217,23 @@ codeunit 78402 "LT AG XP Import"
         TempBlob: Codeunit "Temp Blob";
         OutS: OutStream;
         InS: InStream;
+        Line: Text;
         Result: Text;
     begin
-        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        TempBlob.CreateOutStream(OutS);
         Xmlport.Export(XmlportId, OutS);
-        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
-        InS.ReadText(Result);
+        TempBlob.CreateInStream(InS);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Result += Line + '|';
+        end;
         exit(Result);
     end;
 
     local procedure ObserveImport(Name: Text; XmlportId: Integer; Content: Text)
     begin
         Seed();
-        Observer.Observe(Name + ' ok', Format(TryImport(XmlportId, Content)));
+        Observer.Observe(Name + ' ok', Format(RunImport(XmlportId, Content)));
         if GetLastErrorText() <> '' then begin
             Observer.Observe(Name + ' error', GetLastErrorText());
             Observer.Observe(Name + ' code', GetLastErrorCode());
