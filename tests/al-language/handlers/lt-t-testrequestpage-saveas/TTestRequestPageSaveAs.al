@@ -95,19 +95,28 @@ codeunit 69373 "LT T RP SaveAs Tests"
         L: Codeunit "LT T RP Log";
         Kind: Integer;
 
+    [TryFunction]
+    local procedure TrySave(var RP: TestRequestPage "LT T RP Rpt"; Which: Integer)
+    begin
+        case Which of
+            1:
+                RP.SaveAsExcel('/lt-t-no-such-folder/probe.xlsx');
+            2:
+                RP.SaveAsPdf('/lt-t-no-such-folder/probe.pdf');
+            3:
+                RP.SaveAsWord('/lt-t-no-such-folder/probe.docx');
+        end;
+    end;
+
     [RequestPageHandler]
     procedure SaveHandler(var RP: TestRequestPage "LT T RP Rpt")
+    var
+        Ok: Boolean;
     begin
         RP.ThresholdField.SetValue(7);
-        case Kind of
-            1:
-                asserterror RP.SaveAsExcel('/lt-t-no-such-folder/probe.xlsx');
-            2:
-                asserterror RP.SaveAsPdf('/lt-t-no-such-folder/probe.pdf');
-            3:
-                asserterror RP.SaveAsWord('/lt-t-no-such-folder/probe.docx');
-        end;
-        Observer.ObserveError('save');
+        Ok := TrySave(RP, Kind);
+        Observer.Observe('save', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Observe('threshold after', RP.ThresholdField.Value());
         asserterror RP.Cancel().Invoke();
         Observer.ObserveError('cancel after save');

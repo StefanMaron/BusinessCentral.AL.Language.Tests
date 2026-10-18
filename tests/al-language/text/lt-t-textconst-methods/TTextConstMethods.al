@@ -18,6 +18,14 @@ codeunit 69371 "LT T TextConst Methods"
         TcMixed: TextConst ENU = 'MiXed Case 123 ÄÖ';
         TcPad: TextConst ENU = '  padded  ';
         TcChars: TextConst ENU = 'xxabcxx';
+        T: Text;
+        T2: Text;
+        T3: Text;
+        I: Integer;
+        C: List of [Char];
+        D: List of [Char];
+        L: List of [Text];
+        M: List of [Text];
 
     local procedure Join(Parts: List of [Text]): Text
     var
@@ -32,15 +40,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_Contains()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc true', Format(TcHello.Contains('World')));
         Observer.Observe('text true', Format(T.Contains('World')));
@@ -58,15 +63,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_EndsWith()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc true', Format(TcHello.EndsWith('Hello')));
         Observer.Observe('text true', Format(T.EndsWith('Hello')));
@@ -82,15 +84,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_IndexOf()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc found', Format(TcHello.IndexOf('o')));
         Observer.Observe('text found', Format(T.IndexOf('o')));
@@ -106,29 +105,30 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text different case', Format(T.IndexOf('world')));
         Observer.Observe('tc empty value', Format(TcHello.IndexOf('')));
         Observer.Observe('text empty value', Format(T.IndexOf('')));
-        asserterror I := TcHello.IndexOf('o', 0);
-        Observer.ObserveError('tc start 0');
-        asserterror I := T.IndexOf('o', 0);
-        Observer.ObserveError('text start 0');
-        asserterror I := TcHello.IndexOf('o', 100);
-        Observer.ObserveError('tc start past end');
-        asserterror I := T.IndexOf('o', 100);
-        Observer.ObserveError('text start past end');
+        Ok := Try1();
+        Observer.Observe('tc start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try2();
+        Observer.Observe('text start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try3();
+        Observer.Observe('tc start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try4();
+        Observer.Observe('text start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_IndexOfAnyChars()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         C.Add('W'); C.Add('o');
         D.Add('z'); D.Add('q');
         T := TcHello;
@@ -140,29 +140,18 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text missing', Format(T.IndexOfAny(D)));
         Observer.Observe('tc missing from 3', Format(TcHello.IndexOfAny(D, 3)));
         Observer.Observe('text missing from 3', Format(T.IndexOfAny(D, 3)));
-        asserterror I := TcHello.IndexOfAny(C, 0);
-        Observer.ObserveError('tc start 0');
-        asserterror I := T.IndexOfAny(C, 0);
-        Observer.ObserveError('text start 0');
-        asserterror I := TcHello.IndexOfAny(C, 100);
-        Observer.ObserveError('tc start past end');
-        asserterror I := T.IndexOfAny(C, 100);
-        Observer.ObserveError('text start past end');
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_IndexOfAnyText()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc found', Format(TcHello.IndexOfAny('Wo')));
         Observer.Observe('text found', Format(T.IndexOfAny('Wo')));
@@ -172,29 +161,18 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text missing', Format(T.IndexOfAny('zq')));
         Observer.Observe('tc missing from 3', Format(TcHello.IndexOfAny('zq', 3)));
         Observer.Observe('text missing from 3', Format(T.IndexOfAny('zq', 3)));
-        asserterror I := TcHello.IndexOfAny('Wo', 0);
-        Observer.ObserveError('tc start 0');
-        asserterror I := T.IndexOfAny('Wo', 0);
-        Observer.ObserveError('text start 0');
-        asserterror I := TcHello.IndexOfAny('Wo', 100);
-        Observer.ObserveError('tc start past end');
-        asserterror I := T.IndexOfAny('Wo', 100);
-        Observer.ObserveError('text start past end');
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_LastIndexOf()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc found', Format(TcHello.LastIndexOf('o')));
         Observer.Observe('text found', Format(T.LastIndexOf('o')));
@@ -208,29 +186,30 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text missing', Format(T.LastIndexOf('zzz')));
         Observer.Observe('tc missing with start 5', Format(TcHello.LastIndexOf('zzz', 5)));
         Observer.Observe('text missing with start 5', Format(T.LastIndexOf('zzz', 5)));
-        asserterror I := TcHello.LastIndexOf('o', 0);
-        Observer.ObserveError('tc start 0');
-        asserterror I := T.LastIndexOf('o', 0);
-        Observer.ObserveError('text start 0');
-        asserterror I := TcHello.LastIndexOf('o', 100);
-        Observer.ObserveError('tc start past end');
-        asserterror I := T.LastIndexOf('o', 100);
-        Observer.ObserveError('text start past end');
+        Ok := Try5();
+        Observer.Observe('tc start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try6();
+        Observer.Observe('text start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try7();
+        Observer.Observe('tc start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try8();
+        Observer.Observe('text start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_PadLeft()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc default char', TcHello.PadLeft(20));
         Observer.Observe('text default char', T.PadLeft(20));
@@ -242,25 +221,24 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text same count', T.PadLeft(17, '*'));
         Observer.Observe('tc count 0', TcHello.PadLeft(0));
         Observer.Observe('text count 0', T.PadLeft(0));
-        asserterror T2 := TcHello.PadLeft(-1);
-        Observer.ObserveError('tc negative count');
-        asserterror T2 := T.PadLeft(-1);
-        Observer.ObserveError('text negative count');
+        Ok := Try9();
+        Observer.Observe('tc negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try10();
+        Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_PadRight()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc default char', TcHello.PadRight(20));
         Observer.Observe('text default char', T.PadRight(20));
@@ -272,25 +250,24 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text same count', T.PadRight(17, '*'));
         Observer.Observe('tc count 0', TcHello.PadRight(0));
         Observer.Observe('text count 0', T.PadRight(0));
-        asserterror T2 := TcHello.PadRight(-1);
-        Observer.ObserveError('tc negative count');
-        asserterror T2 := T.PadRight(-1);
-        Observer.ObserveError('text negative count');
+        Ok := Try11();
+        Observer.Observe('tc negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try12();
+        Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_Remove()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc from 7', TcHello.Remove(7));
         Observer.Observe('text from 7', T.Remove(7));
@@ -300,41 +277,48 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text from 1 count 0', T.Remove(1, 0));
         Observer.Observe('tc last char', TcHello.Remove(17, 1));
         Observer.Observe('text last char', T.Remove(17, 1));
-        asserterror T2 := TcHello.Remove(0);
-        Observer.ObserveError('tc start 0');
-        asserterror T2 := T.Remove(0);
-        Observer.ObserveError('text start 0');
-        asserterror T2 := TcHello.Remove(100);
-        Observer.ObserveError('tc start past end');
-        asserterror T2 := T.Remove(100);
-        Observer.ObserveError('text start past end');
-        asserterror T2 := TcHello.Remove(18);
-        Observer.ObserveError('tc start after end');
-        asserterror T2 := T.Remove(18);
-        Observer.ObserveError('text start after end');
-        asserterror T2 := TcHello.Remove(7, 100);
-        Observer.ObserveError('tc count past end');
-        asserterror T2 := T.Remove(7, 100);
-        Observer.ObserveError('text count past end');
-        asserterror T2 := TcHello.Remove(7, -1);
-        Observer.ObserveError('tc negative count');
-        asserterror T2 := T.Remove(7, -1);
-        Observer.ObserveError('text negative count');
+        Ok := Try13();
+        Observer.Observe('tc start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try14();
+        Observer.Observe('text start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try15();
+        Observer.Observe('tc start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try16();
+        Observer.Observe('text start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try17();
+        Observer.Observe('tc start after end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try18();
+        Observer.Observe('text start after end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try19();
+        Observer.Observe('tc count past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try20();
+        Observer.Observe('text count past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try21();
+        Observer.Observe('tc negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try22();
+        Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_Replace()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc single match', TcHello.Replace('World', 'There'));
         Observer.Observe('text single match', T.Replace('World', 'There'));
@@ -346,25 +330,24 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text remove by empty', T.Replace('o', ''));
         Observer.Observe('tc different case', TcHello.Replace('hello', 'Bye'));
         Observer.Observe('text different case', T.Replace('hello', 'Bye'));
-        asserterror T2 := TcHello.Replace('', 'x');
-        Observer.ObserveError('tc empty old value');
-        asserterror T2 := T.Replace('', 'x');
-        Observer.ObserveError('text empty old value');
+        Ok := Try23();
+        Observer.Observe('tc empty old value', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try24();
+        Observer.Observe('text empty old value', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_SplitText()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcSep;
         Observer.Observe('tc default', Join(TcSep.Split()));
         Observer.Observe('text default', Join(T.Split()));
@@ -384,15 +367,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_SplitChars()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         C.Add(','); C.Add(';');
         D.Add('#');
         T := TcSep;
@@ -406,15 +386,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_SplitTexts()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         L.Add(',,'); L.Add(';');
         M.Add('#');
         T := TcSep;
@@ -428,15 +405,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_StartsWith()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc true', Format(TcHello.StartsWith('Hello')));
         Observer.Observe('text true', Format(T.StartsWith('Hello')));
@@ -452,15 +426,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_Substring()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcHello;
         Observer.Observe('tc from 7', TcHello.Substring(7));
         Observer.Observe('text from 7', T.Substring(7));
@@ -470,41 +441,48 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text from 1 count 0', T.Substring(1, 0));
         Observer.Observe('tc last char', TcHello.Substring(17, 1));
         Observer.Observe('text last char', T.Substring(17, 1));
-        asserterror T2 := TcHello.Substring(0);
-        Observer.ObserveError('tc start 0');
-        asserterror T2 := T.Substring(0);
-        Observer.ObserveError('text start 0');
-        asserterror T2 := TcHello.Substring(100);
-        Observer.ObserveError('tc start past end');
-        asserterror T2 := T.Substring(100);
-        Observer.ObserveError('text start past end');
-        asserterror T2 := TcHello.Substring(18);
-        Observer.ObserveError('tc start after end');
-        asserterror T2 := T.Substring(18);
-        Observer.ObserveError('text start after end');
-        asserterror T2 := TcHello.Substring(7, 100);
-        Observer.ObserveError('tc count past end');
-        asserterror T2 := T.Substring(7, 100);
-        Observer.ObserveError('text count past end');
-        asserterror T2 := TcHello.Substring(7, -1);
-        Observer.ObserveError('tc negative count');
-        asserterror T2 := T.Substring(7, -1);
-        Observer.ObserveError('text negative count');
+        Ok := Try25();
+        Observer.Observe('tc start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try26();
+        Observer.Observe('text start 0', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try27();
+        Observer.Observe('tc start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try28();
+        Observer.Observe('text start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try29();
+        Observer.Observe('tc start after end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try30();
+        Observer.Observe('text start after end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try31();
+        Observer.Observe('tc count past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try32();
+        Observer.Observe('text count past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try33();
+        Observer.Observe('tc negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := Try34();
+        Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
     [Test]
     procedure TextConst_ToLower()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcMixed;
         Observer.Observe('tc mixed', TcMixed.ToLower());
         Observer.Observe('text mixed', T.ToLower());
@@ -514,15 +492,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_ToUpper()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcMixed;
         Observer.Observe('tc mixed', TcMixed.ToUpper());
         Observer.Observe('text mixed', T.ToUpper());
@@ -532,15 +507,12 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_Trim()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         Observer.Observe('tc spaces both sides', '[' + TcPad.Trim() + ']');
         Observer.Observe('text spaces both sides', '[' + T.Trim() + ']');
         Observer.Finish();
@@ -549,16 +521,13 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_TrimEnd()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
         T3 := TcPad;
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcChars;
         Observer.Observe('tc default', '[' + TcChars.TrimEnd() + ']');
         Observer.Observe('text default', '[' + T.TrimEnd() + ']');
@@ -576,16 +545,13 @@ codeunit 69371 "LT T TextConst Methods"
     [Test]
     procedure TextConst_TrimStart()
     var
-        T: Text;
-        T2: Text;
-        T3: Text;
-        I: Integer;
-        C: List of [Char];
-        D: List of [Char];
-        L: List of [Text];
-        M: List of [Text];
+        Ok: Boolean;
     begin
         T3 := TcPad;
+        Clear(C);
+        Clear(D);
+        Clear(L);
+        Clear(M);
         T := TcChars;
         Observer.Observe('tc default', '[' + TcChars.TrimStart() + ']');
         Observer.Observe('text default', '[' + T.TrimStart() + ']');
@@ -598,5 +564,209 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('tc padded default', '[' + TcPad.TrimStart() + ']');
         Observer.Observe('text padded default', '[' + T3.TrimStart() + ']');
         Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure Try1()
+    begin
+        I := TcHello.IndexOf('o', 0);
+    end;
+
+    [TryFunction]
+    local procedure Try2()
+    begin
+        I := T.IndexOf('o', 0);
+    end;
+
+    [TryFunction]
+    local procedure Try3()
+    begin
+        I := TcHello.IndexOf('o', 100);
+    end;
+
+    [TryFunction]
+    local procedure Try4()
+    begin
+        I := T.IndexOf('o', 100);
+    end;
+
+    [TryFunction]
+    local procedure Try5()
+    begin
+        I := TcHello.LastIndexOf('o', 0);
+    end;
+
+    [TryFunction]
+    local procedure Try6()
+    begin
+        I := T.LastIndexOf('o', 0);
+    end;
+
+    [TryFunction]
+    local procedure Try7()
+    begin
+        I := TcHello.LastIndexOf('o', 100);
+    end;
+
+    [TryFunction]
+    local procedure Try8()
+    begin
+        I := T.LastIndexOf('o', 100);
+    end;
+
+    [TryFunction]
+    local procedure Try9()
+    begin
+        T2 := TcHello.PadLeft(-1);
+    end;
+
+    [TryFunction]
+    local procedure Try10()
+    begin
+        T2 := T.PadLeft(-1);
+    end;
+
+    [TryFunction]
+    local procedure Try11()
+    begin
+        T2 := TcHello.PadRight(-1);
+    end;
+
+    [TryFunction]
+    local procedure Try12()
+    begin
+        T2 := T.PadRight(-1);
+    end;
+
+    [TryFunction]
+    local procedure Try13()
+    begin
+        T2 := TcHello.Remove(0);
+    end;
+
+    [TryFunction]
+    local procedure Try14()
+    begin
+        T2 := T.Remove(0);
+    end;
+
+    [TryFunction]
+    local procedure Try15()
+    begin
+        T2 := TcHello.Remove(100);
+    end;
+
+    [TryFunction]
+    local procedure Try16()
+    begin
+        T2 := T.Remove(100);
+    end;
+
+    [TryFunction]
+    local procedure Try17()
+    begin
+        T2 := TcHello.Remove(18);
+    end;
+
+    [TryFunction]
+    local procedure Try18()
+    begin
+        T2 := T.Remove(18);
+    end;
+
+    [TryFunction]
+    local procedure Try19()
+    begin
+        T2 := TcHello.Remove(7, 100);
+    end;
+
+    [TryFunction]
+    local procedure Try20()
+    begin
+        T2 := T.Remove(7, 100);
+    end;
+
+    [TryFunction]
+    local procedure Try21()
+    begin
+        T2 := TcHello.Remove(7, -1);
+    end;
+
+    [TryFunction]
+    local procedure Try22()
+    begin
+        T2 := T.Remove(7, -1);
+    end;
+
+    [TryFunction]
+    local procedure Try23()
+    begin
+        T2 := TcHello.Replace('', 'x');
+    end;
+
+    [TryFunction]
+    local procedure Try24()
+    begin
+        T2 := T.Replace('', 'x');
+    end;
+
+    [TryFunction]
+    local procedure Try25()
+    begin
+        T2 := TcHello.Substring(0);
+    end;
+
+    [TryFunction]
+    local procedure Try26()
+    begin
+        T2 := T.Substring(0);
+    end;
+
+    [TryFunction]
+    local procedure Try27()
+    begin
+        T2 := TcHello.Substring(100);
+    end;
+
+    [TryFunction]
+    local procedure Try28()
+    begin
+        T2 := T.Substring(100);
+    end;
+
+    [TryFunction]
+    local procedure Try29()
+    begin
+        T2 := TcHello.Substring(18);
+    end;
+
+    [TryFunction]
+    local procedure Try30()
+    begin
+        T2 := T.Substring(18);
+    end;
+
+    [TryFunction]
+    local procedure Try31()
+    begin
+        T2 := TcHello.Substring(7, 100);
+    end;
+
+    [TryFunction]
+    local procedure Try32()
+    begin
+        T2 := T.Substring(7, 100);
+    end;
+
+    [TryFunction]
+    local procedure Try33()
+    begin
+        T2 := TcHello.Substring(7, -1);
+    end;
+
+    [TryFunction]
+    local procedure Try34()
+    begin
+        T2 := T.Substring(7, -1);
     end;
 }

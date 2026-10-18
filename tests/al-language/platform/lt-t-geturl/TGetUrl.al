@@ -98,7 +98,24 @@ codeunit 69381 "LT T GetUrl Tests"
         B := Base();
         if B <> '' then
             Value := Value.Replace(B, '<base>');
-        exit(Value);
+        exit(Host(Value));
+    end;
+
+    // A non-Web address (dynamicsnav://host:port/BC...) has the container's host and port: they become <host>.
+    local procedure Host(Value: Text): Text
+    var
+        At: Integer;
+        Rest: Text;
+        Slash: Integer;
+    begin
+        At := StrPos(Value, '://');
+        if At = 0 then
+            exit(Value);
+        Rest := CopyStr(Value, At + 3);
+        Slash := StrPos(Rest, '/');
+        if Slash = 0 then
+            exit(CopyStr(Value, 1, At + 2) + '<host>');
+        exit(CopyStr(Value, 1, At + 2) + '<host>' + CopyStr(Rest, Slash));
     end;
 
     [TryFunction]
@@ -114,9 +131,9 @@ codeunit 69381 "LT T GetUrl Tests"
     end;
 
     [TryFunction]
-    local procedure TryRecord(Client: ClientType; Company: Text; ObjType: ObjectType; ObjId: Integer; var Row: Record "LT T Url Row"; var Result: Text)
+    local procedure TryRecord(Client: ClientType; Company: Text; ObjType: ObjectType; ObjId: Integer; var Row: Record "LT T Url Row"; UseFilters: Boolean; var Result: Text)
     begin
-        Result := GetUrl(Client, Company, ObjType, ObjId, Row);
+        Result := GetUrl(Client, Company, ObjType, ObjId, Row, UseFilters);
     end;
 
     local procedure Company(Client: ClientType; Name: Text): Text
@@ -139,12 +156,12 @@ codeunit 69381 "LT T GetUrl Tests"
         exit('error|' + GetLastErrorCode() + '|' + GetLastErrorText());
     end;
 
-    local procedure Rec(Client: ClientType; Name: Text; ObjType: ObjectType; ObjId: Integer; var Row: Record "LT T Url Row"): Text
+    local procedure Rec(Client: ClientType; Name: Text; ObjType: ObjectType; ObjId: Integer; var Row: Record "LT T Url Row"; UseFilters: Boolean): Text
     var
         R: Text;
     begin
         ClearLastError();
-        if TryRecord(Client, Name, ObjType, ObjId, Row, R) then
+        if TryRecord(Client, Name, ObjType, ObjId, Row, UseFilters, R) then
             exit('ok|' + Shape(R));
         exit('error|' + GetLastErrorCode() + '|' + GetLastErrorText());
     end;
@@ -169,8 +186,8 @@ codeunit 69381 "LT T GetUrl Tests"
         Observer.Observe(Tag + ' page', Obj(Client, '', ObjectType::Page, 21));
         Observer.Observe(Tag + ' company page', Obj(Client, 'My Company', ObjectType::Page, 21));
         Observer.Observe(Tag + ' company report', Obj(Client, 'My Company', ObjectType::Report, 69367));
-        Observer.Observe(Tag + ' company page record', Rec(Client, 'My Company', ObjectType::Page, 21, Row));
-        Observer.Observe(Tag + ' page record no company', Rec(Client, '', ObjectType::Page, 21, Row));
+        Observer.Observe(Tag + ' company page record', Rec(Client, 'My Company', ObjectType::Page, 21, Row, false));
+        Observer.Observe(Tag + ' page record no company', Rec(Client, '', ObjectType::Page, 21, Row, false));
         Observer.Finish();
     end;
 
@@ -244,23 +261,23 @@ codeunit 69381 "LT T GetUrl Tests"
         Seed(Row);
         Row.Get(5);
         Row.SetFilter(Name, '%1', 'A,B');
-        Observer.Observe('comma', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('comma', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A_B');
-        Observer.Observe('underscore', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('underscore', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A(B)');
-        Observer.Observe('parentheses', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('parentheses', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A;B');
-        Observer.Observe('semicolon', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('semicolon', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A:B');
-        Observer.Observe('colon', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('colon', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A+B');
-        Observer.Observe('plus', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('plus', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A@B');
-        Observer.Observe('at', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('at', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, '%1', 'A!B');
-        Observer.Observe('exclamation', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('exclamation', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, 'A*|B..C');
-        Observer.Observe('filter expression', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row));
+        Observer.Observe('filter expression', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Observer.Finish();
     end;
 
@@ -272,15 +289,17 @@ codeunit 69381 "LT T GetUrl Tests"
     begin
         Seed(Row);
         Row.Get(5);
-        Observer.Observe('report', Rec(ClientType::Web, 'My Company', ObjectType::Report, 69367, Row));
-        Observer.Observe('query', Rec(ClientType::Web, 'My Company', ObjectType::Query, 69376, Row));
-        Observer.Observe('codeunit', Rec(ClientType::Web, 'My Company', ObjectType::Codeunit, 69366, Row));
-        Observer.Observe('table', Rec(ClientType::Web, 'My Company', ObjectType::Table, 69380, Row));
-        Observer.Observe('report no company', Rec(ClientType::Web, '', ObjectType::Report, 69367, Row));
-        Observer.Observe('query no company', Rec(ClientType::Web, '', ObjectType::Query, 69376, Row));
-        Observer.Observe('codeunit no company', Rec(ClientType::Web, '', ObjectType::Codeunit, 69366, Row));
+        Observer.Observe('report', Rec(ClientType::Web, 'My Company', ObjectType::Report, 69367, Row, false));
+        Observer.Observe('query', Rec(ClientType::Web, 'My Company', ObjectType::Query, 69376, Row, false));
+        Observer.Observe('codeunit', Rec(ClientType::Web, 'My Company', ObjectType::Codeunit, 69366, Row, false));
+        Observer.Observe('table', Rec(ClientType::Web, 'My Company', ObjectType::Table, 69380, Row, false));
+        Observer.Observe('report no company', Rec(ClientType::Web, '', ObjectType::Report, 69367, Row, false));
+        Observer.Observe('query no company', Rec(ClientType::Web, '', ObjectType::Query, 69376, Row, false));
+        Observer.Observe('codeunit no company', Rec(ClientType::Web, '', ObjectType::Codeunit, 69366, Row, false));
         Rep.SetRange(Name, 'Alpha');
-        Observer.Observe('report with filter', Rec(ClientType::Web, 'My Company', ObjectType::Report, 69367, Rep));
+        Observer.Observe('report with filter', Rec(ClientType::Web, 'My Company', ObjectType::Report, 69367, Rep, false));
+        Observer.Observe('report with filter use filters', Rec(ClientType::Web, 'My Company', ObjectType::Report, 69367, Rep, true));
+        Observer.Observe('page with filter use filters', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Rep, true));
         Observer.Observe('report without record', Obj(ClientType::Web, 'My Company', ObjectType::Report, 69367));
         Observer.Observe('query without record', Obj(ClientType::Web, 'My Company', ObjectType::Query, 69376));
         Observer.Observe('codeunit without record', Obj(ClientType::Web, 'My Company', ObjectType::Codeunit, 69366));

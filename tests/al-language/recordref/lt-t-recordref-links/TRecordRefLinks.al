@@ -56,6 +56,23 @@ codeunit 69369 "LT T RecordRef Links Tests"
         Target.GetTable(Host);
     end;
 
+    [TryFunction]
+    local procedure TryDelete(var Ref: RecordRef; LinkId: Integer)
+    begin
+        Ref.DeleteLink(LinkId);
+    end;
+
+    local procedure DeleteResult(var Ref: RecordRef; LinkId: Integer): Text
+    var
+        Ok: Boolean;
+        Result: Text;
+    begin
+        Ok := TryDelete(Ref, LinkId);
+        Result := Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
     local procedure LinkList(RecId: RecordId): Text
     var
         RecordLink: Record "Record Link";
@@ -157,17 +174,12 @@ codeunit 69369 "LT T RecordRef Links Tests"
         Observer.Observe('source after delete', LinkList(Source.RecordId()));
         Observer.Observe('source still has links', Format(Source.HasLinks()));
         Observer.Observe('target untouched', LinkList(Target.RecordId()));
-        asserterror Source.DeleteLink(Id1);
-        Observer.ObserveError('delete again');
+        Observer.Observe('delete again', DeleteResult(Source, Id1));
         Missing := Id1 + Id2 + 1000;
-        asserterror Source.DeleteLink(Missing);
-        Observer.ObserveError('delete unknown id');
-        asserterror Source.DeleteLink(0);
-        Observer.ObserveError('delete 0');
-        asserterror Source.DeleteLink(-1);
-        Observer.ObserveError('delete negative');
-        asserterror Target.DeleteLink(Id2);
-        Observer.ObserveError('delete id of another record');
+        Observer.Observe('delete unknown id', DeleteResult(Source, Missing));
+        Observer.Observe('delete 0', DeleteResult(Source, 0));
+        Observer.Observe('delete negative', DeleteResult(Source, -1));
+        Observer.Observe('delete id of another record', DeleteResult(Target, Id2));
         Observer.Observe('source after errors', LinkList(Source.RecordId()));
         Observer.Observe('target after errors', LinkList(Target.RecordId()));
         Source.DeleteLink(Id2);

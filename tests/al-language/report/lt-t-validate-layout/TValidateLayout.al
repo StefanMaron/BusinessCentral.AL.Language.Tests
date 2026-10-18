@@ -37,6 +37,7 @@ codeunit 69366 "LT T Validate Layout Tests"
 
     var
         Observer: Codeunit "Probe Observer";
+        HolderBlob: Codeunit "Temp Blob";
 
     local procedure ReadAll(var Content: InStream): Text
     var
@@ -56,21 +57,33 @@ codeunit 69366 "LT T Validate Layout Tests"
     begin
         TempBlob.CreateOutStream(OutStr);
         OutStr.WriteText(Content);
-        TempBlob.CreateInStream(Stream);
+        TempBlob.CreateInStream(Stream, TextEncoding::UTF8);
     end;
 
     local procedure OwnLayout(var Stream: InStream)
+    var
+        Raw: InStream;
     begin
-        Report.RdlcLayout(Report::"LT T Layout Rpt", Stream);
+        Report.RdlcLayout(Report::"LT T Layout Rpt", Raw);
+        TextStream(ReadAll(Raw), HolderBlob, Stream);
+    end;
+
+    [TryFunction]
+    local procedure TryAtEnd(var Stream: InStream; var AtEnd: Boolean)
+    begin
+        AtEnd := Stream.EOS();
     end;
 
     local procedure Describe(Tag: Text; Ok: Boolean; var Prepared: InStream; Original: Text)
     var
         Text1: Text;
+        AtEnd: Boolean;
     begin
         Observer.Observe(Tag + ' ok', Format(Ok));
         Observer.Observe(Tag + ' error', GetLastErrorText());
-        if Prepared.EOS() then
+        if not TryAtEnd(Prepared, AtEnd) then
+            Observer.Observe(Tag + ' prepared', 'not initialized')
+        else if AtEnd then
             Observer.Observe(Tag + ' prepared', 'EOS')
         else begin
             Text1 := ReadAll(Prepared);
