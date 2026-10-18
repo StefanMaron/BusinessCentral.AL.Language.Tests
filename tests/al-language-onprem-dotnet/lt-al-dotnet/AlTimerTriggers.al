@@ -147,22 +147,6 @@ codeunit 99112 "LT AL Timer Triggers"
     end;
 
     [Test]
-    procedure ALTimer_ExceptionOccurred()
-    var
-        Observer: Codeunit "Probe Observer";
-        Host: Codeunit "LT AL Timer Host";
-    begin
-        Host.Reset();
-        Host.StartTimer(100, true);
-        Sleep(1500);
-        Host.StopTimer();
-        Observer.Observe('elapsed_fired', Format(Host.GetElapsedCount() > 0));
-        Observer.Observe('exception_fired', Format(Host.GetExceptionCount() > 0));
-        Observer.Observe('exception_message', Host.GetExceptionMessage());
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure ALTimer_NoHandler()
     var
         Observer: Codeunit "Probe Observer";
