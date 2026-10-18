@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-report-handlers
 // Scope: in-scope
-// Fixtures used: report 73841/73842/73843, table 73806 and log codeunit 73840 of lt-report-requestpage (RptRequestPage.al, RptFixtures.al); Probe Observer (69160). Log 73840 is Taken at the start of each test.
+// Fixtures used: reports 78215 and 78218 and log codeunit 78214 (AeFixtureH.al, copies of reports 73841 and 73843 and of log 73840 of lt-report-requestpage), table 73806 (RptFixtures.al); Probe Observer (69160). Log 78214 is Taken at the start of each test.
 // Probe: al-runtime-rs corpus topic 206 items 9 and 11 (corpus issue 632): [ReportHandler] functions for a report run from a test (Run, RunModal, Execute, SaveAs,
 //   RunRequestPage, a handler of another report, ReportHandler and RequestPageHandler on the same test), and SetFilter(Field, '') on a data item filter of a TestRequestPage.
 // A [HandlerFunctions] entry that the test never executes fails the test: "The following UI handlers were not executed: <name>" (seen for every handler of a run that does not call it; not assertable from AL).
@@ -13,7 +13,7 @@ codeunit 78200 "LT AE Report Handler"
 
     var
         Observer: Codeunit "Probe Observer";
-        L: Codeunit "LT RpT Request Log";
+        L: Codeunit "LT AE Log H";
 
     local procedure Seed()
     var
@@ -35,14 +35,14 @@ codeunit 78200 "LT AE Report Handler"
     procedure Run_StaticCall()
     begin
         Seed();
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request H");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
         Observer.Verify();
     end;
 
     [ReportHandler]
-    procedure PlainHandler(var R: Report "LT RpT Request")
+    procedure PlainHandler(var R: Report "LT AE Request H")
     begin
         L.Add('handler');
     end;
@@ -51,7 +51,7 @@ codeunit 78200 "LT AE Report Handler"
     [HandlerFunctions('PlainHandler')]
     procedure Run_VariableRun()
     var
-        Rpt: Report "LT RpT Request";
+        Rpt: Report "LT AE Request H";
     begin
         Seed();
         Rpt.Run();
@@ -64,7 +64,7 @@ codeunit 78200 "LT AE Report Handler"
     [HandlerFunctions('PlainHandler')]
     procedure Run_VariableRunModal()
     var
-        Rpt: Report "LT RpT Request";
+        Rpt: Report "LT AE Request H";
     begin
         Seed();
         Rpt.RunModal();
@@ -76,7 +76,7 @@ codeunit 78200 "LT AE Report Handler"
     [Test]
     procedure Run_UseRequestPageFalse()
     var
-        Rpt: Report "LT RpT Request";
+        Rpt: Report "LT AE Request H";
     begin
         Seed();
         Rpt.UseRequestPage(false);
@@ -90,7 +90,7 @@ codeunit 78200 "LT AE Report Handler"
     [HandlerFunctions('PlainHandler')]
     procedure Run_UseRequestPageTrue()
     var
-        Rpt: Report "LT RpT Request";
+        Rpt: Report "LT AE Request H";
     begin
         Seed();
         Rpt.UseRequestPage(true);
@@ -105,8 +105,8 @@ codeunit 78200 "LT AE Report Handler"
     procedure Run_Twice_HandlerCalledTwice()
     begin
         Seed();
-        Report.Run(Report::"LT RpT Request");
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request H");
+        Report.Run(Report::"LT AE Request H");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;OnInitReport;RP OnInit text=[init] int=7;handler;');
         Observer.Verify();
@@ -116,7 +116,7 @@ codeunit 78200 "LT AE Report Handler"
     procedure Execute_WithReportHandler()
     begin
         Seed();
-        Report.Execute(Report::"LT RpT Request", '');
+        Report.Execute(Report::"LT AE Request H", '');
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
         Observer.Verify();
@@ -131,7 +131,7 @@ codeunit 78200 "LT AE Report Handler"
     begin
         Seed();
         TempBlob.CreateOutStream(OutS);
-        Ok := Report.SaveAs(Report::"LT RpT Request", '', ReportFormat::Xml, OutS);
+        Ok := Report.SaveAs(Report::"LT AE Request H", '', ReportFormat::Xml, OutS);
         Observer.Observe('result', Format(Ok));
         Observer.Observe('log', L.Take());
         Observer.Observe('length', Format(TempBlob.Length()));
@@ -148,7 +148,7 @@ codeunit 78200 "LT AE Report Handler"
         Params: Text;
     begin
         Seed();
-        Params := Report.RunRequestPage(Report::"LT RpT Request");
+        Params := Report.RunRequestPage(Report::"LT AE Request H");
         Observer.Observe('params', Params);
         Observer.Observe('log', L.Take());
         Observer.Expect('params', '');
@@ -159,7 +159,7 @@ codeunit 78200 "LT AE Report Handler"
     [Test]
     procedure Run_UseRequestPageFalseReport_NoHandlerCall()
     var
-        Rpt: Report "LT RpT Request Skipped";
+        Rpt: Report "LT AE Request Skipped H";
     begin
         Seed();
         Rpt.Run();
@@ -173,14 +173,14 @@ codeunit 78200 "LT AE Report Handler"
     procedure TestRequestPage_SetFilterEmpty_ClearsFilter()
     begin
         Seed();
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request H");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;RP OnOpenPage text=[init] int=7;start=[];range=[2..3];cleared=[];or=[1|4];cleared again=[];RP OnQueryClosePage action=OK text=[init];RP OnClosePage text=[init];OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
         Observer.Verify();
     end;
 
     [RequestPageHandler]
-    procedure SetFilterHandler(var RP: TestRequestPage "LT RpT Request")
+    procedure SetFilterHandler(var RP: TestRequestPage "LT AE Request H")
     begin
         L.Add('start=[' + RP.Row.GetFilter(Id) + ']');
         RP.Row.SetFilter(Id, '2..3');
@@ -199,14 +199,14 @@ codeunit 78200 "LT AE Report Handler"
     procedure TestRequestPage_SetFilterEmpty_OnUntouchedFilter()
     begin
         Seed();
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request H");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;RP OnOpenPage text=[init] int=7;empty=[];RP OnQueryClosePage action=OK text=[init];RP OnClosePage text=[init];OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
         Observer.Verify();
     end;
 
     [RequestPageHandler]
-    procedure SetFilterOnlyEmptyHandler(var RP: TestRequestPage "LT RpT Request")
+    procedure SetFilterOnlyEmptyHandler(var RP: TestRequestPage "LT AE Request H")
     begin
         RP.Row.SetFilter(Id, '');
         L.Add('empty=[' + RP.Row.GetFilter(Id) + ']');
@@ -218,14 +218,14 @@ codeunit 78200 "LT AE Report Handler"
     procedure TestRequestPage_SetFilterEmpty_ThenReportRows()
     begin
         Seed();
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request H");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;RP OnOpenPage text=[init] int=7;RP OnQueryClosePage action=OK text=[init];RP OnClosePage text=[init];OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
         Observer.Verify();
     end;
 
     [RequestPageHandler]
-    procedure SetFilterTextHandler(var RP: TestRequestPage "LT RpT Request")
+    procedure SetFilterTextHandler(var RP: TestRequestPage "LT AE Request H")
     begin
         RP.Row.SetFilter(Id, '2..3');
         RP.Row.SetFilter(Id, '');

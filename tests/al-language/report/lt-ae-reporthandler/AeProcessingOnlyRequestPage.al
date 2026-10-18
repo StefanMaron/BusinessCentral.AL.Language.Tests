@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-request-page
 // Scope: in-scope
-// Fixtures used: log codeunit 73840 of lt-report-requestpage (RptRequestPage.al); Probe Observer (69160); reports 78211 and 78212 below
+// Fixtures used: log codeunit 78213 (AeFixtureP.al, a copy of log 73840 of lt-report-requestpage); Probe Observer (69160); reports 78211 and 78212 below
 // Probe: al-runtime-rs corpus topic 206 item 14 (corpus issue 632): a ProcessingOnly report with request page fields and no dataset, run from a test with UseRequestPage(true)
 //   by Run and RunModal, without a handler and with a RequestPageHandler; and a ProcessingOnly report that has no requestpage section at all.
 //   Report 78211 is the fixture report of lt-report-requestpage with the dataset removed and nothing else changed.
@@ -46,7 +46,7 @@ report 78211 "LT AE Plain Request"
     var
         IntVal: Integer;
         TextVal: Text[30];
-        L: Codeunit "LT RpT Request Log";
+        L: Codeunit "LT AE Log P";
 
     trigger OnInitReport()
     begin
@@ -70,7 +70,7 @@ report 78212 "LT AE No Request Page"
     ProcessingOnly = true;
 
     var
-        L: Codeunit "LT RpT Request Log";
+        L: Codeunit "LT AE Log P";
 
     trigger OnInitReport()
     begin
@@ -95,7 +95,7 @@ codeunit 78210 "LT AE Processing Only"
 
     var
         Observer: Codeunit "Probe Observer";
-        L: Codeunit "LT RpT Request Log";
+        L: Codeunit "LT AE Log P";
 
     [Test]
     procedure Plain_NoHandler_Run()

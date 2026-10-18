@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-report-handlers
 // Scope: in-scope
-// Fixtures used: report 73841 and log codeunit 73840 of lt-report-requestpage; Probe Observer (69160)
+// Fixtures used: report 78217 and log codeunit 78216 (AeFixtureC.al, copies of report 73841 and of log 73840 of lt-report-requestpage), table 73806 (RptFixtures.al); Probe Observer (69160)
 // Probe: what a [ReportHandler] function can do with the report variable it receives (Run, RunModal, UseRequestPage, SetTableView, SaveAs, RunRequestPage), each in a test of its own.
 // Object id 78201.
 
@@ -11,7 +11,7 @@ codeunit 78201 "LT AE Report Handler Calls"
 
     var
         Observer: Codeunit "Probe Observer";
-        L: Codeunit "LT RpT Request Log";
+        L: Codeunit "LT AE Log C";
         Mode: Integer;
 
     local procedure Seed()
@@ -30,7 +30,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     end;
 
     [ReportHandler]
-    procedure CallHandler(var R: Report "LT RpT Request")
+    procedure CallHandler(var R: Report "LT AE Request C")
     var
         Row: Record "LT RpT Row";
         TempBlob: Codeunit "Temp Blob";
@@ -80,7 +80,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 1;
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request C");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler mode=1;OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
         Observer.Verify();
@@ -92,7 +92,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 2;
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request C");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler mode=2;OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
         Observer.Verify();
@@ -104,7 +104,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 3;
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request C");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler mode=3;OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[2..3];row 2;row 3;OnPostReport;');
         Observer.Verify();
@@ -116,10 +116,10 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 4;
-        asserterror Report.Run(Report::"LT RpT Request");
+        asserterror Report.Run(Report::"LT AE Request C");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
-        Observer.Expect('run|text', 'Report 73841 is a processing-only report. Output cannot be rendered and saved to a file.');
+        Observer.Expect('run|text', 'Report 78217 is a processing-only report. Output cannot be rendered and saved to a file.');
         Observer.Expect('run|code', 'ReportProcessingOnly');
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler mode=4;');
         Observer.Verify();
@@ -131,7 +131,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 5;
-        asserterror Report.Run(Report::"LT RpT Request");
+        asserterror Report.Run(Report::"LT AE Request C");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
         Observer.Finish();
@@ -143,7 +143,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 6;
-        Report.Run(Report::"LT RpT Request");
+        Report.Run(Report::"LT AE Request C");
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler mode=6;use request page=Yes;');
         Observer.Verify();
@@ -155,7 +155,7 @@ codeunit 78201 "LT AE Report Handler Calls"
     begin
         Seed();
         Mode := 7;
-        asserterror Report.Run(Report::"LT RpT Request");
+        asserterror Report.Run(Report::"LT AE Request C");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
         Observer.Expect('run|text', 'LT AE handler error');
