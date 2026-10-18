@@ -37,33 +37,40 @@ table 67084 "LT F3 Line"
     }
 }
 
+// Table backed log (not SingleInstance): both test codeunits of this folder reach it through the part pages.
 codeunit 67085 "LT F3 Part Log"
 {
-    SingleInstance = true;
-
-    var
-        Entries: List of [Text];
-
     procedure Reset()
+    var
+        Log: Record "LT F3 Log";
     begin
-        Clear(Entries);
+        Log.DeleteAll();
     end;
 
     procedure Add(Entry: Text)
+    var
+        Log: Record "LT F3 Log";
+        NextId: Integer;
     begin
-        Entries.Add(Entry);
+        if Log.FindLast() then
+            NextId := Log.Id;
+        Log.Init();
+        Log.Id := NextId + 1;
+        Log.Txt := CopyStr(Entry, 1, MaxStrLen(Log.Txt));
+        Log.Insert();
     end;
 
     procedure Dump(): Text
     var
-        Entry: Text;
+        Log: Record "LT F3 Log";
         Result: Text;
     begin
-        foreach Entry in Entries do begin
-            if Result <> '' then
-                Result += ';';
-            Result += Entry;
-        end;
+        if Log.FindSet() then
+            repeat
+                if Result <> '' then
+                    Result += ';';
+                Result += Log.Txt;
+            until Log.Next() = 0;
         exit(Result);
     end;
 }
