@@ -122,7 +122,13 @@ codeunit 69369 "LT T RecordRef Links Tests"
         Observer.Observe('target has links after', Format(Target.HasLinks()));
         Observer.Observe('target link rows', LinkList(Target.RecordId()));
         Observer.Observe('source link rows', LinkList(Source.RecordId()));
-        Observer.Finish();
+        Observer.Expect('ids are positive and different', 'Yes');
+        Observer.Expect('source has links', 'Yes');
+        Observer.Expect('target has links before', 'No');
+        Observer.Expect('target has links after', 'Yes');
+        Observer.Expect('target link rows', 'https://example.com/a|first|Link;https://example.com/b|second|Link;');
+        Observer.Expect('source link rows', 'https://example.com/a|first|Link;https://example.com/b|second|Link;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -151,7 +157,12 @@ codeunit 69369 "LT T RecordRef Links Tests"
         V := Source;
         Target.CopyLinks(V);
         Observer.Observe('from variant recordref', LinkList(Target.RecordId()));
-        Observer.Finish();
+        Observer.Expect('from record', 'https://example.com/a|first|Link;');
+        Observer.Expect('from record again', 'https://example.com/a|first|Link;https://example.com/a|first|Link;');
+        Observer.Expect('from variant record without links', 'https://example.com/a|first|Link;https://example.com/a|first|Link;');
+        Observer.Expect('from variant record', 'https://example.com/a|first|Link;https://example.com/a|first|Link;https://example.com/a|first|Link;');
+        Observer.Expect('from variant recordref', 'https://example.com/a|first|Link;https://example.com/a|first|Link;https://example.com/a|first|Link;https://example.com/a|first|Link;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -172,7 +183,10 @@ codeunit 69369 "LT T RecordRef Links Tests"
         Target.CopyLinks(EmptyRef);
         Observer.Observe('target after copy from empty', LinkList(Target.RecordId()));
         Observer.Observe('empty has links', Format(EmptyRef.HasLinks()));
-        Observer.Finish();
+        Observer.Expect('target after copy', 'https://example.com/own|own|Link;https://example.com/a|first|Link;');
+        Observer.Expect('target after copy from empty', 'https://example.com/own|own|Link;https://example.com/a|first|Link;');
+        Observer.Expect('empty has links', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,6 +217,18 @@ codeunit 69369 "LT T RecordRef Links Tests"
         Source.DeleteLink(Id2);
         Observer.Observe('source after last delete', LinkList(Source.RecordId()));
         Observer.Observe('source has links at the end', Format(Source.HasLinks()));
-        Observer.Finish();
+        Observer.Expect('source after delete', 'https://example.com/b|second|Link;');
+        Observer.Expect('source still has links', 'Yes');
+        Observer.Expect('target untouched', 'https://example.com/t|target|Link;');
+        Observer.Expect('delete again', 'Yes||');
+        Observer.Expect('delete unknown id', 'Yes||');
+        Observer.Expect('delete 0', 'Yes||');
+        Observer.Expect('delete negative', 'Yes||');
+        Observer.Expect('delete id of another record', 'Yes||');
+        Observer.Expect('source after errors', 'https://example.com/b|second|Link;');
+        Observer.Expect('target after errors', 'https://example.com/t|target|Link;');
+        Observer.Expect('source after last delete', '');
+        Observer.Expect('source has links at the end', 'No');
+        Observer.Verify();
     end;
 }

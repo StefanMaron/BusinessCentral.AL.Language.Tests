@@ -194,43 +194,48 @@ codeunit 69381 "LT T GetUrl Tests"
         Observer.Observe(Tag + ' company report', Obj(Client, 'My Company', ObjectType::Report, 69367));
         Observer.Observe(Tag + ' company page record', Rec(Client, 'My Company', ObjectType::Page, 21, Row, false));
         Observer.Observe(Tag + ' page record no company', Rec(Client, '', ObjectType::Page, 21, Row, false));
-        Observer.Finish();
     end;
 
     [Test]
     procedure GetUrl_ClientDefault()
     begin
         ClientTest(ClientType::Default, 'default');
+        Observer.Finish();
     end;
 
     [Test]
     procedure GetUrl_ClientWeb()
     begin
         ClientTest(ClientType::Web, 'web');
+        Observer.Finish();
     end;
 
     [Test]
     procedure GetUrl_ClientWindows()
     begin
         ClientTest(ClientType::Windows, 'windows');
+        Observer.Finish();
     end;
 
     [Test]
     procedure GetUrl_ClientPhone()
     begin
         ClientTest(ClientType::Phone, 'phone');
+        Observer.Finish();
     end;
 
     [Test]
     procedure GetUrl_ClientTablet()
     begin
         ClientTest(ClientType::Tablet, 'tablet');
+        Observer.Finish();
     end;
 
     [Test]
     procedure GetUrl_ClientDesktop()
     begin
         ClientTest(ClientType::Desktop, 'desktop');
+        Observer.Finish();
     end;
 
     [Test]
@@ -256,7 +261,27 @@ codeunit 69381 "LT T GetUrl Tests"
         Observer.Observe('pipe caret', Company(ClientType::Web, 'A|B^C'));
         Observer.Observe('double quote', Company(ClientType::Web, 'A"B'));
         Observer.Observe('plus in object url', Obj(ClientType::Web, 'A+B,C', ObjectType::Page, 21));
-        Observer.Finish();
+        Observer.Expect('comma', 'ok|<base>/?company=CRONUS%20USA%2C%20Inc.');
+        Observer.Expect('underscore', 'ok|<base>/?company=A_B');
+        Observer.Expect('parentheses', 'ok|<base>/?company=A%28B%29');
+        Observer.Expect('semicolon', 'ok|<base>/?company=A%3BB');
+        Observer.Expect('colon', 'ok|<base>/?company=A%3AB');
+        Observer.Expect('plus', 'ok|<base>/?company=A%2BB');
+        Observer.Expect('at', 'ok|<base>/?company=A%40B');
+        Observer.Expect('exclamation', 'ok|<base>/?company=A%21B');
+        Observer.Expect('hash', 'ok|<base>/?company=A%23B');
+        Observer.Expect('percent', 'ok|<base>/?company=A%25B');
+        Observer.Expect('equals', 'ok|<base>/?company=A%3DB');
+        Observer.Expect('question', 'ok|<base>/?company=A%3FB');
+        Observer.Expect('dash dot tilde', 'ok|<base>/?company=A-B.C~D');
+        Observer.Expect('star dollar', 'ok|<base>/?company=A%2AB%24C');
+        Observer.Expect('brackets', 'ok|<base>/?company=A%5BB%5D%7BC%7D');
+        Observer.Expect('backslash', 'ok|<base>/?company=A%5CB');
+        Observer.Expect('less greater', 'ok|<base>/?company=A%3CB%3EC');
+        Observer.Expect('pipe caret', 'ok|<base>/?company=A%7CB%5EC');
+        Observer.Expect('double quote', 'ok|<base>/?company=A%22B');
+        Observer.Expect('plus in object url', 'ok|<base>/?company=A%2BB%2CC&page=21');
+        Observer.Verify();
     end;
 
     [Test]
@@ -284,7 +309,16 @@ codeunit 69381 "LT T GetUrl Tests"
         Observer.Observe('exclamation', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
         Row.SetFilter(Name, 'A*|B..C');
         Observer.Observe('filter expression', Rec(ClientType::Web, 'My Company', ObjectType::Page, 21, Row, true));
-        Observer.Finish();
+        Observer.Expect('comma', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%2CB%27');
+        Observer.Expect('underscore', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A_B%27');
+        Observer.Expect('parentheses', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27%27%27A%28B%29%27%27%27');
+        Observer.Expect('semicolon', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%3BB%27');
+        Observer.Expect('colon', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%3AB%27');
+        Observer.Expect('plus', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%2BB%27');
+        Observer.Expect('at', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%40B%27');
+        Observer.Expect('exclamation', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%21B%27');
+        Observer.Expect('filter expression', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27A%2A%7CB..C%27');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,7 +343,20 @@ codeunit 69381 "LT T GetUrl Tests"
         Observer.Observe('report without record', Obj(ClientType::Web, 'My Company', ObjectType::Report, 69367));
         Observer.Observe('query without record', Obj(ClientType::Web, 'My Company', ObjectType::Query, 69376));
         Observer.Observe('codeunit without record', Obj(ClientType::Web, 'My Company', ObjectType::Codeunit, 69366));
-        Observer.Finish();
+        Observer.Expect('report', 'ok|');
+        Observer.Expect('query', 'ok|');
+        Observer.Expect('codeunit', 'ok|');
+        Observer.Expect('table', 'ok|');
+        Observer.Expect('report no company', 'ok|');
+        Observer.Expect('query no company', 'ok|');
+        Observer.Expect('codeunit no company', 'ok|');
+        Observer.Expect('report with filter', 'ok|');
+        Observer.Expect('report with filter use filters', 'ok|');
+        Observer.Expect('page with filter use filters', 'ok|<base>/?company=My%20Company&page=21&filter=%27Name%27%20IS%20%27Alpha%27');
+        Observer.Expect('report without record', 'ok|<base>/?company=My%20Company&report=69367');
+        Observer.Expect('query without record', 'ok|<base>/?company=My%20Company&query=69376');
+        Observer.Expect('codeunit without record', 'ok|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -353,6 +400,15 @@ codeunit 69381 "LT T GetUrl Tests"
         Two.K2 := 'B';
         Two.Insert();
         Observer.Observe('two first empty', Shape(GetUrl(ClientType::Web, 'My Company', ObjectType::Page, 21, Two, false)));
-        Observer.Finish();
+        Observer.Expect('code10 short', '<base>/?company=My%20Company&page=21&bookmark=15%3bAQ8BAAJ7%2f0EAMQ%3d%3d');
+        Observer.Expect('code10 full', '<base>/?company=My%20Company&page=21&bookmark=31%3bAQ8BAAJ7%2f0EAQgBDAEQARQBGAEcASABJAEo%3d');
+        Observer.Expect('code50 short', '<base>/?company=My%20Company&page=21&bookmark=15%3bAg8BAAJ7%2f0EAMQ%3d%3d');
+        Observer.Expect('code50 full', '<base>/?company=My%20Company&page=21&bookmark=111%3bAg8BAAJ7%2f0EAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVABVAFYAVwBYAFkAWgAwADEAMgAzADQANQA2ADcAOAA5AEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATg%3d%3d');
+        Observer.Expect('code50 symbols', '<base>/?company=My%20Company&page=21&bookmark=25%3bAg8BAAJ7%2f0EALQBCAF8AQwAuAEQ%3d');
+        Observer.Expect('two short', '<base>/?company=My%20Company&page=21&bookmark=24%3bAw8BAAJ7%2f0EAMQAAAAJ7%2f0IAMg%3d%3d');
+        Observer.Expect('two full', '<base>/?company=My%20Company&page=21&bookmark=96%3bAw8BAAJ7%2f0EAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVAAAAAJ7%2f1UAVgBXAFgAWQBaADAAMQAyADMANAA1ADYANwA4ADkAQQBCAEMARA%3d%3d');
+        Observer.Expect('two second empty', '<base>/?company=My%20Company&page=21&bookmark=18%3bAw8BAAJ7%2f0EAAAACew%3d%3d');
+        Observer.Expect('two first empty', '<base>/?company=My%20Company&page=21&bookmark=18%3bAw8BAAJ7AAAAAnv%2fQg%3d%3d');
+        Observer.Verify();
     end;
 }

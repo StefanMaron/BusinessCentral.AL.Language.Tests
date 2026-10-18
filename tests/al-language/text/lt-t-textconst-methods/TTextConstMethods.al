@@ -57,7 +57,17 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text empty value', Format(T.Contains('')));
         Observer.Observe('tc whole text', Format(TcHello.Contains('Hello World Hello')));
         Observer.Observe('text whole text', Format(T.Contains('Hello World Hello')));
-        Observer.Finish();
+        Observer.Expect('tc true', 'Yes');
+        Observer.Expect('text true', 'Yes');
+        Observer.Expect('tc false', 'No');
+        Observer.Expect('text false', 'No');
+        Observer.Expect('tc different case', 'No');
+        Observer.Expect('text different case', 'No');
+        Observer.Expect('tc empty value', 'Yes');
+        Observer.Expect('text empty value', 'Yes');
+        Observer.Expect('tc whole text', 'Yes');
+        Observer.Expect('text whole text', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -78,7 +88,15 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text different case', Format(T.EndsWith('hello')));
         Observer.Observe('tc empty value', Format(TcHello.EndsWith('')));
         Observer.Observe('text empty value', Format(T.EndsWith('')));
-        Observer.Finish();
+        Observer.Expect('tc true', 'Yes');
+        Observer.Expect('text true', 'Yes');
+        Observer.Expect('tc false', 'No');
+        Observer.Expect('text false', 'No');
+        Observer.Expect('tc different case', 'No');
+        Observer.Expect('text different case', 'No');
+        Observer.Expect('tc empty value', 'Yes');
+        Observer.Expect('text empty value', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +135,25 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try4();
         Observer.Observe('text start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc found', '5');
+        Observer.Expect('text found', '5');
+        Observer.Expect('tc found from 6', '8');
+        Observer.Expect('text found from 6', '8');
+        Observer.Expect('tc found text from 2', '13');
+        Observer.Expect('text found text from 2', '13');
+        Observer.Expect('tc missing', '0');
+        Observer.Expect('text missing', '0');
+        Observer.Expect('tc missing from 3', '0');
+        Observer.Expect('text missing from 3', '0');
+        Observer.Expect('tc different case', '0');
+        Observer.Expect('text different case', '0');
+        Observer.Expect('tc empty value', '1');
+        Observer.Expect('text empty value', '1');
+        Observer.Expect('tc start 0', 'No|Index was out of range. Must be non-negative and less than or equal to the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start 0', 'No|Index was out of range. Must be non-negative and less than or equal to the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('tc start past end', 'No|Index was out of range. Must be non-negative and less than or equal to the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start past end', 'No|Index was out of range. Must be non-negative and less than or equal to the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +176,15 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text missing', Format(T.IndexOfAny(D)));
         Observer.Observe('tc missing from 3', Format(TcHello.IndexOfAny(D, 3)));
         Observer.Observe('text missing from 3', Format(T.IndexOfAny(D, 3)));
-        Observer.Finish();
+        Observer.Expect('tc found', '5');
+        Observer.Expect('text found', '5');
+        Observer.Expect('tc found from 6', '7');
+        Observer.Expect('text found from 6', '7');
+        Observer.Expect('tc missing', '0');
+        Observer.Expect('text missing', '0');
+        Observer.Expect('tc missing from 3', '0');
+        Observer.Expect('text missing from 3', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,7 +205,15 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text missing', Format(T.IndexOfAny('zq')));
         Observer.Observe('tc missing from 3', Format(TcHello.IndexOfAny('zq', 3)));
         Observer.Observe('text missing from 3', Format(T.IndexOfAny('zq', 3)));
-        Observer.Finish();
+        Observer.Expect('tc found', '5');
+        Observer.Expect('text found', '5');
+        Observer.Expect('tc found from 6', '7');
+        Observer.Expect('text found from 6', '7');
+        Observer.Expect('tc missing', '0');
+        Observer.Expect('text missing', '0');
+        Observer.Expect('tc missing from 3', '0');
+        Observer.Expect('text missing from 3', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +250,23 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try8();
         Observer.Observe('text start past end', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc found', '17');
+        Observer.Expect('text found', '17');
+        Observer.Expect('tc found with start 17', '17');
+        Observer.Expect('text found with start 17', '17');
+        Observer.Expect('tc found with start 10', '8');
+        Observer.Expect('text found with start 10', '8');
+        Observer.Expect('tc found text', '13');
+        Observer.Expect('text found text', '13');
+        Observer.Expect('tc missing', '0');
+        Observer.Expect('text missing', '0');
+        Observer.Expect('tc missing with start 5', '0');
+        Observer.Expect('text missing with start 5', '0');
+        Observer.Expect('tc start 0', 'No|Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start 0', 'No|Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('tc start past end', 'No|Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start past end', 'No|Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,7 +295,19 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try10();
         Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc default char', '   Hello World Hello');
+        Observer.Expect('text default char', '   Hello World Hello');
+        Observer.Expect('tc given char', '***Hello World Hello');
+        Observer.Expect('text given char', '***Hello World Hello');
+        Observer.Expect('tc shorter count', 'Hello World Hello');
+        Observer.Expect('text shorter count', 'Hello World Hello');
+        Observer.Expect('tc same count', 'Hello World Hello');
+        Observer.Expect('text same count', 'Hello World Hello');
+        Observer.Expect('tc count 0', 'Hello World Hello');
+        Observer.Expect('text count 0', 'Hello World Hello');
+        Observer.Expect('tc negative count', 'No|totalWidth (''-1'') must be a non-negative value. (Parameter ''totalWidth'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Expect('text negative count', 'No|totalWidth (''-1'') must be a non-negative value. (Parameter ''totalWidth'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -256,7 +336,19 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try12();
         Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc default char', 'Hello World Hello   ');
+        Observer.Expect('text default char', 'Hello World Hello   ');
+        Observer.Expect('tc given char', 'Hello World Hello***');
+        Observer.Expect('text given char', 'Hello World Hello***');
+        Observer.Expect('tc shorter count', 'Hello World Hello');
+        Observer.Expect('text shorter count', 'Hello World Hello');
+        Observer.Expect('tc same count', 'Hello World Hello');
+        Observer.Expect('text same count', 'Hello World Hello');
+        Observer.Expect('tc count 0', 'Hello World Hello');
+        Observer.Expect('text count 0', 'Hello World Hello');
+        Observer.Expect('tc negative count', 'No|totalWidth (''-1'') must be a non-negative value. (Parameter ''totalWidth'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Expect('text negative count', 'No|totalWidth (''-1'') must be a non-negative value. (Parameter ''totalWidth'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,7 +399,25 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try22();
         Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc from 7', 'Hello ');
+        Observer.Expect('text from 7', 'Hello ');
+        Observer.Expect('tc from 7 count 6', 'Hello Hello');
+        Observer.Expect('text from 7 count 6', 'Hello Hello');
+        Observer.Expect('tc from 1 count 0', 'Hello World Hello');
+        Observer.Expect('text from 1 count 0', 'Hello World Hello');
+        Observer.Expect('tc last char', 'Hello World Hell');
+        Observer.Expect('text last char', 'Hello World Hell');
+        Observer.Expect('tc start 0', 'No|StartIndex cannot be less than 1. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start 0', 'No|StartIndex cannot be less than 1. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('tc start past end', 'No|startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start past end', 'No|startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('tc start after end', 'Yes||');
+        Observer.Expect('text start after end', 'Yes||');
+        Observer.Expect('tc count past end', 'No|count (''100'') must be less than or equal to ''11''. (Parameter ''count'')\Actual value was 100.|ArgumentOutOfRange');
+        Observer.Expect('text count past end', 'No|count (''100'') must be less than or equal to ''11''. (Parameter ''count'')\Actual value was 100.|ArgumentOutOfRange');
+        Observer.Expect('tc negative count', 'No|count (''-1'') must be a non-negative value. (Parameter ''count'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Expect('text negative count', 'No|count (''-1'') must be a non-negative value. (Parameter ''count'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -336,7 +446,19 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try24();
         Observer.Observe('text empty old value', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc single match', 'Hello There Hello');
+        Observer.Expect('text single match', 'Hello There Hello');
+        Observer.Expect('tc repeated match', 'Bye World Bye');
+        Observer.Expect('text repeated match', 'Bye World Bye');
+        Observer.Expect('tc missing', 'Hello World Hello');
+        Observer.Expect('text missing', 'Hello World Hello');
+        Observer.Expect('tc remove by empty', 'Hell Wrld Hell');
+        Observer.Expect('text remove by empty', 'Hell Wrld Hell');
+        Observer.Expect('tc different case', 'Hello World Hello');
+        Observer.Expect('text different case', 'Hello World Hello');
+        Observer.Expect('tc empty old value', 'No|The value cannot be an empty string. (Parameter ''oldValue'')|Argument');
+        Observer.Expect('text empty old value', 'No|The value cannot be an empty string. (Parameter ''oldValue'')|Argument');
+        Observer.Verify();
     end;
 
     [Test]
@@ -361,7 +483,19 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text missing separator', Join(T.Split('#')));
         Observer.Observe('tc empty separator', Join(TcSep.Split('')));
         Observer.Observe('text empty separator', Join(T.Split('')));
-        Observer.Finish();
+        Observer.Expect('tc default', '2|a,b;c|d,,e');
+        Observer.Expect('text default', '2|a,b;c|d,,e');
+        Observer.Expect('tc comma', '4|a|b;c d||e');
+        Observer.Expect('text comma', '4|a|b;c d||e');
+        Observer.Expect('tc comma and semicolon', '5|a|b|c d||e');
+        Observer.Expect('text comma and semicolon', '5|a|b|c d||e');
+        Observer.Expect('tc space', '2|a,b;c|d,,e');
+        Observer.Expect('text space', '2|a,b;c|d,,e');
+        Observer.Expect('tc missing separator', '1|a,b;c d,,e');
+        Observer.Expect('text missing separator', '1|a,b;c d,,e');
+        Observer.Expect('tc empty separator', '1|a,b;c d,,e');
+        Observer.Expect('text empty separator', '1|a,b;c d,,e');
+        Observer.Verify();
     end;
 
     [Test]
@@ -380,7 +514,11 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text comma and semicolon', Join(T.Split(C)));
         Observer.Observe('tc missing', Join(TcSep.Split(D)));
         Observer.Observe('text missing', Join(T.Split(D)));
-        Observer.Finish();
+        Observer.Expect('tc comma and semicolon', '5|a|b|c d||e');
+        Observer.Expect('text comma and semicolon', '5|a|b|c d||e');
+        Observer.Expect('tc missing', '1|a,b;c d,,e');
+        Observer.Expect('text missing', '1|a,b;c d,,e');
+        Observer.Verify();
     end;
 
     [Test]
@@ -399,7 +537,11 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text two texts', Join(T.Split(L)));
         Observer.Observe('tc missing', Join(TcSep.Split(M)));
         Observer.Observe('text missing', Join(T.Split(M)));
-        Observer.Finish();
+        Observer.Expect('tc two texts', '3|a,b|c d|e');
+        Observer.Expect('text two texts', '3|a,b|c d|e');
+        Observer.Expect('tc missing', '1|a,b;c d,,e');
+        Observer.Expect('text missing', '1|a,b;c d,,e');
+        Observer.Verify();
     end;
 
     [Test]
@@ -420,7 +562,15 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text different case', Format(T.StartsWith('hello')));
         Observer.Observe('tc empty value', Format(TcHello.StartsWith('')));
         Observer.Observe('text empty value', Format(T.StartsWith('')));
-        Observer.Finish();
+        Observer.Expect('tc true', 'Yes');
+        Observer.Expect('text true', 'Yes');
+        Observer.Expect('tc false', 'No');
+        Observer.Expect('text false', 'No');
+        Observer.Expect('tc different case', 'No');
+        Observer.Expect('text different case', 'No');
+        Observer.Expect('tc empty value', 'Yes');
+        Observer.Expect('text empty value', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -471,7 +621,25 @@ codeunit 69371 "LT T TextConst Methods"
         Ok := Try34();
         Observer.Observe('text negative count', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('tc from 7', 'World Hello');
+        Observer.Expect('text from 7', 'World Hello');
+        Observer.Expect('tc from 7 count 5', 'World');
+        Observer.Expect('text from 7 count 5', 'World');
+        Observer.Expect('tc from 1 count 0', '');
+        Observer.Expect('text from 1 count 0', '');
+        Observer.Expect('tc last char', 'o');
+        Observer.Expect('text last char', 'o');
+        Observer.Expect('tc start 0', 'No|startIndex (''-1'') must be a non-negative value. (Parameter ''startIndex'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Expect('text start 0', 'No|startIndex (''-1'') must be a non-negative value. (Parameter ''startIndex'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Expect('tc start past end', 'No|startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('text start past end', 'No|startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('tc start after end', 'Yes||');
+        Observer.Expect('text start after end', 'Yes||');
+        Observer.Expect('tc count past end', 'Yes||');
+        Observer.Expect('text count past end', 'Yes||');
+        Observer.Expect('tc negative count', 'No|length (''-1'') must be a non-negative value. (Parameter ''length'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Expect('text negative count', 'No|length (''-1'') must be a non-negative value. (Parameter ''length'')\Actual value was -1.|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -486,7 +654,9 @@ codeunit 69371 "LT T TextConst Methods"
         T := TcMixed;
         Observer.Observe('tc mixed', TcMixed.ToLower());
         Observer.Observe('text mixed', T.ToLower());
-        Observer.Finish();
+        Observer.Expect('tc mixed', 'mixed case 123 äö');
+        Observer.Expect('text mixed', 'mixed case 123 äö');
+        Observer.Verify();
     end;
 
     [Test]
@@ -501,7 +671,9 @@ codeunit 69371 "LT T TextConst Methods"
         T := TcMixed;
         Observer.Observe('tc mixed', TcMixed.ToUpper());
         Observer.Observe('text mixed', T.ToUpper());
-        Observer.Finish();
+        Observer.Expect('tc mixed', 'MIXED CASE 123 ÄÖ');
+        Observer.Expect('text mixed', 'MIXED CASE 123 ÄÖ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -516,7 +688,9 @@ codeunit 69371 "LT T TextConst Methods"
         T := TcPad;
         Observer.Observe('tc spaces both sides', '[' + TcPad.Trim() + ']');
         Observer.Observe('text spaces both sides', '[' + T.Trim() + ']');
-        Observer.Finish();
+        Observer.Expect('tc spaces both sides', '[padded]');
+        Observer.Expect('text spaces both sides', '[padded]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -540,7 +714,17 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text char not at end', '[' + T.TrimEnd('a') + ']');
         Observer.Observe('tc padded default', '[' + TcPad.TrimEnd() + ']');
         Observer.Observe('text padded default', '[' + T3.TrimEnd() + ']');
-        Observer.Finish();
+        Observer.Expect('tc default', '[xxabcxx]');
+        Observer.Expect('text default', '[xxabcxx]');
+        Observer.Expect('tc given chars', '[xxabc]');
+        Observer.Expect('text given chars', '[xxabc]');
+        Observer.Expect('tc several chars', '[xxab]');
+        Observer.Expect('text several chars', '[xxab]');
+        Observer.Expect('tc char not at end', '[xxabcxx]');
+        Observer.Expect('text char not at end', '[xxabcxx]');
+        Observer.Expect('tc padded default', '[  padded]');
+        Observer.Expect('text padded default', '[  padded]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -564,7 +748,17 @@ codeunit 69371 "LT T TextConst Methods"
         Observer.Observe('text char not at start', '[' + T.TrimStart('c') + ']');
         Observer.Observe('tc padded default', '[' + TcPad.TrimStart() + ']');
         Observer.Observe('text padded default', '[' + T3.TrimStart() + ']');
-        Observer.Finish();
+        Observer.Expect('tc default', '[xxabcxx]');
+        Observer.Expect('text default', '[xxabcxx]');
+        Observer.Expect('tc given chars', '[abcxx]');
+        Observer.Expect('text given chars', '[abcxx]');
+        Observer.Expect('tc several chars', '[bcxx]');
+        Observer.Expect('text several chars', '[bcxx]');
+        Observer.Expect('tc char not at start', '[xxabcxx]');
+        Observer.Expect('text char not at start', '[xxabcxx]');
+        Observer.Expect('tc padded default', '[padded  ]');
+        Observer.Expect('text padded default', '[padded  ]');
+        Observer.Verify();
     end;
 
     [TryFunction]
