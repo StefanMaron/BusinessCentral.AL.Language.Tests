@@ -1,0 +1,129 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-optionordinalvalues-property
+// Scope: in-scope
+// Fixtures used: Probe Observer (69160)
+// Probe (issue 599.1): OptionOrdinalValues needs TableType = CRM or CDS and ExternalType Picklist, State or Status (AL0167 otherwise, see the must-not-compile case).
+// The table below is a CDS table: its records can be built and read in memory, so the names against the ordinals show in Format, assignment, Evaluate
+// and FieldRef. Object ids 69581 and 69782.
+
+table 69581 "LT U Cds Option"
+{
+    TableType = CDS;
+    ExternalName = 'ltucdsoption';
+
+    fields
+    {
+        field(1; Id; Guid)
+        {
+            ExternalName = 'ltucdsoptionid';
+            ExternalType = 'Uniqueidentifier';
+            ExternalAccess = Insert;
+        }
+        field(2; Opt; Option)
+        {
+            ExternalName = 'ltuopt';
+            ExternalType = 'Picklist';
+            OptionMembers = Alpha,Beta,Gamma;
+            OptionOrdinalValues = 5, 10, 20;
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+codeunit 69782 "LT U Cds Option Tests"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure OptionOrdinalValues_Format_Assign_Evaluate()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "LT U Cds Option";
+        Ordinal: Integer;
+        Parsed: Option Alpha,Beta,Gamma;
+    begin
+        Rec.Init();
+        Rec.Opt := Rec.Opt::Beta;
+        Ordinal := Rec.Opt;
+        Observer.Observe('beta_format', Format(Rec.Opt));
+        Observer.Observe('beta_ordinal', Format(Ordinal));
+        Observer.Observe('beta_format_ordinal', Format(Rec.Opt, 0, 2));
+        Observer.Observe('beta_format_xml', Format(Rec.Opt, 0, 9));
+        Rec.Opt := Rec.Opt::Gamma;
+        Ordinal := Rec.Opt;
+        Observer.Observe('gamma_ordinal', Format(Ordinal));
+        Rec.Opt := Rec.Opt::Alpha;
+        Ordinal := Rec.Opt;
+        Observer.Observe('alpha_ordinal', Format(Ordinal));
+        Observer.Observe('init_value_format', Format(Rec.Opt));
+
+        Rec.Opt := 10;
+        Observer.Observe('assign_10_format', Format(Rec.Opt));
+        Rec.Opt := 20;
+        Observer.Observe('assign_20_format', Format(Rec.Opt));
+        Rec.Opt := 5;
+        Observer.Observe('assign_5_format', Format(Rec.Opt));
+        asserterror Rec.Opt := 1;
+        Observer.ObserveError('assign_1');
+        asserterror Rec.Opt := 2;
+        Observer.ObserveError('assign_2');
+
+        Observer.Observe('evaluate_name_ok', Format(Evaluate(Rec.Opt, 'Gamma')));
+        Observer.Observe('evaluate_name_format', Format(Rec.Opt));
+        Observer.Observe('evaluate_ordinal_10_ok', Format(Evaluate(Rec.Opt, '10')));
+        Observer.Observe('evaluate_ordinal_10_format', Format(Rec.Opt));
+        Observer.Observe('evaluate_ordinal_1_ok', Format(Evaluate(Rec.Opt, '1')));
+        Observer.ObserveError('evaluate_ordinal_1');
+        Observer.Observe('evaluate_unknown_ok', Format(Evaluate(Rec.Opt, 'Delta')));
+        Observer.Observe('local_option_evaluate_gamma', Format(Evaluate(Parsed, 'Gamma')));
+        Observer.Observe('local_option_gamma_ordinal', Format(Parsed));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure OptionOrdinalValues_FieldRef_Filters()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "LT U Cds Option";
+        RecRef: RecordRef;
+        FieldRef: FieldRef;
+    begin
+        Rec.SetRange(Opt, Rec.Opt::Gamma);
+        Observer.Observe('range_gamma_filter_text', Rec.GetFilter(Opt));
+        Rec.SetFilter(Opt, 'Beta|Gamma');
+        Observer.Observe('filter_names_text', Rec.GetFilter(Opt));
+        Rec.SetFilter(Opt, '10');
+        Observer.Observe('filter_ordinal_10_text', Rec.GetFilter(Opt));
+        asserterror Rec.SetFilter(Opt, '1');
+        Observer.ObserveError('filter_ordinal_1');
+        Rec.SetFilter(Opt, '>=10');
+        Observer.Observe('filter_ge_10_text', Rec.GetFilter(Opt));
+        Rec.Reset();
+
+        Rec.Init();
+        Rec.Opt := Rec.Opt::Beta;
+        RecRef.GetTable(Rec);
+        FieldRef := RecRef.Field(Rec.FieldNo(Opt));
+        Observer.Observe('fieldref_value', Format(FieldRef.Value));
+        Observer.Observe('fieldref_option_members', FieldRef.OptionMembers);
+        Observer.Observe('fieldref_option_caption', FieldRef.OptionCaption);
+        Observer.Observe('fieldref_format_ordinal', Format(FieldRef.Value, 0, 2));
+        FieldRef.Value := 20;
+        Observer.Observe('fieldref_set_20_value', Format(FieldRef.Value));
+        FieldRef.Value := 'Alpha';
+        Observer.Observe('fieldref_set_alpha_value', Format(FieldRef.Value));
+        FieldRef.Validate(10);
+        Observer.Observe('fieldref_validate_10_value', Format(FieldRef.Value));
+
+        Observer.Observe('is_temporary', Format(Rec.IsTemporary()));
+        asserterror Rec.Insert();
+        Observer.ObserveError('insert');
+        asserterror Rec.FindFirst();
+        Observer.ObserveError('find_first');
+        Observer.Finish();
+    end;
+}
