@@ -98,7 +98,34 @@ codeunit 61287 "LT S Query SaveAs File"
         Q.SetFilter(Id, '2');
         Observer.Observe('filtered ok', Format(Q.SaveAsCsv(Name)));
         ObserveFile(Observer, Name, 'filtered', '');
-        Observer.Finish();
+        Observer.Expect('default ok', 'Yes');
+        Observer.Expect('default exists', 'Yes');
+        Observer.Expect('default length', '86');
+        Observer.Expect('default first bytes', 'I d , ');
+        Observer.Expect('default text', 'Id,Name,Amt,D,Flag\r\n1,"a,b;c ""q"" <x>",12.5,3/5/2024 12:00:00 AM,True\r\n2,,0,0,False\r\n');
+        Observer.Expect('format0', 'No The query output cannot be saved. The following error occurred: Missing or invalid argument: Positions|QuerySaveAs');
+        Observer.Expect('format0 exists', 'No');
+        Observer.Expect('format3', 'Yes |');
+        Observer.Expect('format3 exists', 'Yes');
+        Observer.Expect('format3 length', '86');
+        Observer.Expect('format3 first bytes', 'I d , ');
+        Observer.Expect('format3 text', 'Id,Name,Amt,D,Flag\r\n1,"a,b;c ""q"" <x>",12.5,3/5/2024 12:00:00 AM,True\r\n2,,0,0,False\r\n');
+        Observer.Expect('format1 semicolon ok', 'Yes');
+        Observer.Expect('format1 semicolon exists', 'Yes');
+        Observer.Expect('format1 semicolon length', '86');
+        Observer.Expect('format1 semicolon first bytes', 'I d ; ');
+        Observer.Expect('format1 semicolon text', 'Id;Name;Amt;D;Flag\r\n1;"a,b;c ""q"" <x>";12.5;3/5/2024 12:00:00 AM;True\r\n2;;0;0;False\r\n');
+        Observer.Expect('format2 ok', 'Yes');
+        Observer.Expect('format2 exists', 'Yes');
+        Observer.Expect('format2 length', '86');
+        Observer.Expect('format2 first bytes', 'I d , ');
+        Observer.Expect('format2 text', 'Id,Name,Amt,D,Flag\r\n1,"a,b;c ""q"" <x>",12.5,3/5/2024 12:00:00 AM,True\r\n2,,0,0,False\r\n');
+        Observer.Expect('filtered ok', 'Yes');
+        Observer.Expect('filtered exists', 'Yes');
+        Observer.Expect('filtered length', '34');
+        Observer.Expect('filtered first bytes', 'I d , ');
+        Observer.Expect('filtered text', 'Id,Name,Amt,D,Flag\r\n2,,0,0,False\r\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +140,17 @@ codeunit 61287 "LT S Query SaveAs File"
         ObserveFile(Observer, Name, 'default', '');
         Observer.Observe('format1 semicolon ok', Format(Query.SaveAsCsv(71922, Name, 1, ';')));
         ObserveFile(Observer, Name, 'format1 semicolon', '');
-        Observer.Finish();
+        Observer.Expect('default ok', 'Yes');
+        Observer.Expect('default exists', 'Yes');
+        Observer.Expect('default length', '86');
+        Observer.Expect('default first bytes', 'I d , ');
+        Observer.Expect('default text', 'Id,Name,Amt,D,Flag\r\n1,"a,b;c ""q"" <x>",12.5,3/5/2024 12:00:00 AM,True\r\n2,,0,0,False\r\n');
+        Observer.Expect('format1 semicolon ok', 'Yes');
+        Observer.Expect('format1 semicolon exists', 'Yes');
+        Observer.Expect('format1 semicolon length', '86');
+        Observer.Expect('format1 semicolon first bytes', 'I d ; ');
+        Observer.Expect('format1 semicolon text', 'Id;Name;Amt;D;Flag\r\n1;"a,b;c ""q"" <x>";12.5;3/5/2024 12:00:00 AM;True\r\n2;;0;0;False\r\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +166,17 @@ codeunit 61287 "LT S Query SaveAs File"
         ObserveFile(Observer, Name, 'instance', '<Result>');
         Observer.Observe('by number ok', Format(Query.SaveAsXml(71922, Name)));
         ObserveFile(Observer, Name, 'by number', '<Result>');
-        Observer.Finish();
+        Observer.Expect('instance ok', 'Yes');
+        Observer.Expect('instance exists', 'Yes');
+        Observer.Expect('instance length', '1326');
+        Observer.Expect('instance first bytes', 'Ù ‹  ');
+        Observer.Expect('instance text', '<Result>\r\n    <Id>1</Id>\r\n    <Name>a,b;c "q" &lt;x&gt;</Name>\r\n    <Amt>12.5</Amt>\r\n    <D>2024-03-05T00:00:00+00:00</D>\r\n    <Flag>true</Flag>\r\n  </Result>\r\n  <Result>\r\n    <Id>2</Id>\r\n    <Name />\r\n    <Amt>0</Amt>\r\n    <Flag>false</Flag>\r\n  </Result>\r\n</DataSet>');
+        Observer.Expect('by number ok', 'Yes');
+        Observer.Expect('by number exists', 'Yes');
+        Observer.Expect('by number length', '1326');
+        Observer.Expect('by number first bytes', 'Ù ‹  ');
+        Observer.Expect('by number text', '<Result>\r\n    <Id>1</Id>\r\n    <Name>a,b;c "q" &lt;x&gt;</Name>\r\n    <Amt>12.5</Amt>\r\n    <D>2024-03-05T00:00:00+00:00</D>\r\n    <Flag>true</Flag>\r\n  </Result>\r\n  <Result>\r\n    <Id>2</Id>\r\n    <Name />\r\n    <Amt>0</Amt>\r\n    <Flag>false</Flag>\r\n  </Result>\r\n</DataSet>');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -184,6 +231,11 @@ codeunit 61287 "LT S Query SaveAs File"
         Ok := TrySaveByNumber(61299, TempName('.csv'));
         Observer.Observe('unknown query number', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('csv empty name', 'No The query output cannot be saved. The following error occurred: Empty file name|QuerySaveAs');
+        Observer.Expect('csv missing dir', 'No The query output cannot be saved. The following error occurred: Could not find a part of the path ''/no/such/dir/out.csv''.|QuerySaveAs:DirectoryNotFound');
+        Observer.Expect('xml empty name', 'No The query output cannot be saved. The following error occurred: Empty file name|QuerySaveAs');
+        Observer.Expect('xml missing dir', 'No The query output cannot be saved. The following error occurred: Could not find a part of the path ''/no/such/dir/out.xml''.|QuerySaveAs:DirectoryNotFound');
+        Observer.Expect('unknown query number', 'No You tried to invoke the Query object with the ID 61299 from the object LT S Query SaveAs File. An object with that ID does not exist in the current application compiled with emit version n.|AL:MetadataNotFound');
+        Observer.Verify();
     end;
 }
