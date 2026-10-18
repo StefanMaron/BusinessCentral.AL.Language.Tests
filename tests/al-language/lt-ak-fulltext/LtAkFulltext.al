@@ -80,10 +80,14 @@ codeunit 79201 "LT AK Fts Test"
     begin
         Seed();
         R.SetFilter(Txt, '*hello*');
-        Assert.AreEqual(4, R.Count(), '*hello* on optimized field');
+        Assert.AreEqual(2, R.Count(), '*hello* on optimized field is case-sensitive');
+        R.SetFilter(Txt, '*Hello*');
+        Assert.AreEqual(1, R.Count(), '*Hello*');
+        R.SetFilter(Txt, '*HELLO*');
+        Assert.AreEqual(1, R.Count(), '*HELLO*');
         R.Reset();
         R.SetFilter(Plain, '*hello*');
-        Assert.AreEqual(4, R.Count(), '*hello* on plain field');
+        Assert.AreEqual(2, R.Count(), '*hello* on plain field is case-sensitive');
     end;
 
     [Test]
@@ -95,7 +99,7 @@ codeunit 79201 "LT AK Fts Test"
         R.SetFilter(Txt, '@hello*');
         Assert.AreEqual(3, R.Count(), '@hello*');
         R.SetFilter(Txt, '@*hello');
-        Assert.AreEqual(3, R.Count(), '@*hello');
+        Assert.AreEqual(1, R.Count(), '@*hello');
         R.SetFilter(Txt, '@*hello there');
         Assert.AreEqual(1, R.Count(), '@*hello there');
         R.SetFilter(Txt, '@*world*');
