@@ -18,6 +18,7 @@ The header is the run of `//` comment lines at the top. A line `// @key value` i
 | `// @depends Base Application,System Application` | the dependencies; this is the default (names are `Base Application` and `System Application`). |
 | `// @appjson {"assemblyProbingPaths": ["./x"]}` | JSON merged into the generated app.json (for diagnostics about app.json). |
 | `// @from 27` / `// @until 28` | the BC majors the verdict holds for (default all). |
+| `// @max-al 17` | the case is skipped with a compiler newer than this AL major (the verdict is that of the AL 16 and 17 compilers; AL 18 and later accept the file). |
 | `// @min-al 18` | the case is skipped with a compiler older than this AL major (AL 16 and 17 report AL0451 for a `dotnet` block before they reach the real error). |
 
 The expected `AL` code and text are for the compiler of that BC major; where two majors differ, write two files (with `@from`/`@until`).
@@ -25,7 +26,7 @@ The expected `AL` code and text are for the compiler of that BC major; where two
 ## How a case is checked
 
 `.github/scripts/check-must-not-compile.py --al "<AL command>" --symbols <dir of .app symbol packages> --bc-major 27 [--al-major 16]` builds for
-each file a project with a generated `app.json` (`runtime` 16.0, platform and application 27.0.0.0 unless `@appjson` says otherwise) and the file as
+each file a project with a generated `app.json` (`runtime` 16.1 for BC 27, 17.1 for BC 28, 18.0 for BC 29, or `--runtime`; platform and application 27.0.0.0 unless `@appjson` says otherwise) and the file as
 `src/case.al`, runs `AL compile /project:... /packagecachepath:... /out:... /define:BC<major>PLUS`, and requires: the compiler exits with errors, no
 package is written, and the `error ALxxxx: text` lines equal the `@expect` lines. `.github/scripts/test-must-not-compile.py` tests the parsing and the
 comparison without a compiler (it runs in the existing self-test job).
@@ -101,6 +102,10 @@ is only a reference.
 | 0647 to 0650 | AL0133 | `Query.SaveAsCsv` and `Query.SaveAsXml` with a file name (instance and by object number): in a Cloud app only the OutStream forms exist |
 | 0651 to 0653 | AL0296 | `HttpClient.UseDefaultNetworkWindowsAuthentication` and `UseWindowsAuthentication` (Text and SecretText) named from a Cloud app |
 | 0654 | AL0666 | `JsonArray.SelectTokens` needs runtime 17 (28 and 29) |
+| 0722 | AL0284 | A subscriber to Global Triggers.OnGlobalInsert declares its parameter as Integer instead of RecordRef. |
+| 0723 | AL0284 | A subscriber to Environment Triggers.OnAfterCopyEnvironmentPerDatabase declares the environment types as Integer instead of an Option (two diagnostics). |
+| 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
+| 0725 | AL0280 | A subscriber names an event that Company Triggers does not declare (OnCompanyOpened). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
