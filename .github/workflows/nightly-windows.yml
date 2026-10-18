@@ -664,6 +664,24 @@ jobs:
           $env_table | ConvertTo-Json | Out-File 'environment.json' -Encoding utf8
           $env_table.GetEnumerator() | ForEach-Object { Write-Host ("{0,-26}: {1}" -f $_.Key, $_.Value) }
 
+      # The apps' app.json says runtime 18.0 (the newest). A BC 27 or 28 server refuses a newer runtime than its own
+      # ("17.1 or earlier"), so set the runtime per leg, the same values ci.yml uses (27 -> 16.1, 28 -> 17.1,
+      # 29 -> 18.0). Changes the checkout of this job only; no test file is committed.
+      - name: Set the app runtime for this BC version
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $major = [int]($env:BC_VERSION -split '\.')[0]
+          $rt = switch ($major) { 27 { '16.1' } 28 { '17.1' } default { '18.0' } }
+          Write-Host "app runtime for BC $env:BC_VERSION : $rt"
+          foreach ($f in Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'tests') -Filter app.json -Recurse -Depth 2) {
+            $raw = [IO.File]::ReadAllText($f.FullName)
+            $new = [regex]::Replace($raw, '("runtime"\s*:\s*)"[0-9.]+"', ('${1}"' + $rt + '"'))
+            if ($new -ne $raw) {
+              [IO.File]::WriteAllText($f.FullName, $new, (New-Object Text.UTF8Encoding($false)))
+              Write-Host "runtime $rt -> $($f.FullName)"
+            }
+          }
+
       - name: Compile and publish the corpus apps
         run: |
           $ErrorActionPreference = 'Stop'
