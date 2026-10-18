@@ -470,7 +470,19 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         FilteredNewRow(Observer, 0);
-        Observer.Finish();
+        Observer.Expect('flt', '[A]');
+        Observer.Expect('first', 'Yes1');
+        Observer.Expect('new', 'Yes');
+        Observer.Expect('newF', '[]');
+        Observer.Expect('id', 'Yes');
+        Observer.Expect('idF', '[]');
+        Observer.Expect('nm', 'No');
+        Observer.Expect('nm|text', 'Validation error for Field: ,  Message = ''The view is filtered, and the entry is outside the filter. Some actions may not work.''');
+        Observer.Expect('nm|code', 'TestValidation');
+        Observer.Expect('cl', 'Yes');
+        Observer.Expect('stored', 'Yes');
+        Observer.Expect('F', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -479,7 +491,19 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         FilteredNewRow(Observer, 2);
-        Observer.Finish();
+        Observer.Expect('flt', '[A]');
+        Observer.Expect('first', 'Yes1');
+        Observer.Expect('new', 'Yes');
+        Observer.Expect('newF', '[]');
+        Observer.Expect('id', 'Yes');
+        Observer.Expect('idF', '[]');
+        Observer.Expect('nm', 'No');
+        Observer.Expect('nm|text', 'Validation error for Field: ,  Message = ''The view is filtered, and the entry is outside the filter. Some actions may not work.''');
+        Observer.Expect('nm|code', 'TestValidation');
+        Observer.Expect('cl', 'Yes');
+        Observer.Expect('stored', 'Yes');
+        Observer.Expect('F', '[]');
+        Observer.Verify();
     end;
 
     // ---- item 11: RunPageLink F = const('') and F = filter('') ----
@@ -614,7 +638,13 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('h2', Format(Hdr.Get('H13')));
         Observer.Observe('lines', Format(Line.Count()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('d0', '[]');
+        Observer.Expect('d1', '[]');
+        Observer.Expect('h1', 'No');
+        Observer.Expect('d2', '[]');
+        Observer.Expect('h2', 'No');
+        Observer.Expect('lines', '0');
+        Observer.Verify();
     end;
 
     // ---- item 15: TestFilter SetFilter(F, ' ') and SetFilter(F, '') after a filter; the same on a request page ----
