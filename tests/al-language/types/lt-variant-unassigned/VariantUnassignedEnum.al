@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); own enum 67509, codeunit 67511
-// Probe: a Variant cannot be compared with = or <> (must-not-compile case 0502), but it can be the subject of a case statement. Which case branches an unassigned Variant matches: an enum member (ordinal 0 and 1), the integers 0 and 1, an empty text, false and the zero date; the same for a Variant that holds an enum member (issue 580 item 6).
+// Probe: a Variant cannot be compared with = or <> (must-not-compile case 0502), but it can be the subject of a case statement. Whether a case statement over an unassigned Variant matches (or raises on): an enum member (ordinal 0 and 1), the integers 0 and 1, an empty text, false and the zero date; the same for a Variant that holds an enum member (issue 580 item 6).
 // BC versions: 27+
 
 enum 67509 "LT VUE Kind"
@@ -18,88 +18,117 @@ codeunit 67511 "LT VUE Tests"
     Subtype = Test;
     TestPermissions = Disabled;
 
-    local procedure MatchZeroMember(V: Variant): Text
+    [TryFunction]
+    local procedure MatchZeroMember(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             "LT VUE Kind"::Zero:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchOneMember(V: Variant): Text
+    [TryFunction]
+    local procedure MatchOneMember(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             "LT VUE Kind"::One:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchInteger0(V: Variant): Text
+    [TryFunction]
+    local procedure MatchInteger0(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             0:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchInteger1(V: Variant): Text
+    [TryFunction]
+    local procedure MatchInteger1(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             1:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchEmptyText(V: Variant): Text
+    [TryFunction]
+    local procedure MatchEmptyText(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             '':
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchFalse(V: Variant): Text
+    [TryFunction]
+    local procedure MatchFalse(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             false:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchZeroDate(V: Variant): Text
+    [TryFunction]
+    local procedure MatchZeroDate(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             0D:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
     end;
 
-    local procedure MatchDecimalZero(V: Variant): Text
+    [TryFunction]
+    local procedure MatchDecimalZero(V: Variant; var Matched: Boolean)
     begin
+        Matched := false;
         case V of
             0.0:
-                exit('match');
+                Matched := true;
         end;
-        exit('no match');
+    end;
+
+    [TryFunction]
+    local procedure TwoBranches(V: Variant; var Matched: Boolean)
+    begin
+        Matched := false;
+        case V of
+            "LT VUE Kind"::Zero:
+                Matched := true;
+            "LT VUE Kind"::One:
+                Matched := true;
+            else
+                Matched := false;
+        end;
+    end;
+
+    local procedure Outcome(Ok: Boolean; Matched: Boolean): Text
+    begin
+        exit('ran=' + Format(Ok) + ' matched=' + Format(Matched) + ' error=' + GetLastErrorText());
     end;
 
     local procedure MatchAll(var Observer: Codeunit "Probe Observer"; V: Variant)
+    var
+        Matched: Boolean;
     begin
-        Observer.Observe('enum_zero', MatchZeroMember(V));
-        Observer.Observe('enum_one', MatchOneMember(V));
-        Observer.Observe('integer_0', MatchInteger0(V));
-        Observer.Observe('integer_1', MatchInteger1(V));
-        Observer.Observe('empty_text', MatchEmptyText(V));
-        Observer.Observe('false', MatchFalse(V));
-        Observer.Observe('zero_date', MatchZeroDate(V));
-        Observer.Observe('decimal_zero', MatchDecimalZero(V));
+        Observer.Observe('enum_zero', Outcome(MatchZeroMember(V, Matched), Matched));
+        Observer.Observe('enum_one', Outcome(MatchOneMember(V, Matched), Matched));
+        Observer.Observe('integer_0', Outcome(MatchInteger0(V, Matched), Matched));
+        Observer.Observe('integer_1', Outcome(MatchInteger1(V, Matched), Matched));
+        Observer.Observe('empty_text', Outcome(MatchEmptyText(V, Matched), Matched));
+        Observer.Observe('false', Outcome(MatchFalse(V, Matched), Matched));
+        Observer.Observe('zero_date', Outcome(MatchZeroDate(V, Matched), Matched));
+        Observer.Observe('decimal_zero', Outcome(MatchDecimalZero(V, Matched), Matched));
     end;
 
     [Test]
@@ -130,21 +159,21 @@ codeunit 67511 "LT VUE Tests"
     end;
 
     [Test]
+    procedure Unassigned_Variant_CaseMatches_More1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
+    end;
+
+    [Test]
     procedure Unassigned_Variant_CaseMatches_InsideProcedure()
     var
         Observer: Codeunit "Probe Observer";
         V: Variant;
-        Result: Text;
+        Matched: Boolean;
     begin
-        case V of
-            "LT VUE Kind"::Zero:
-                Result := 'enum zero';
-            "LT VUE Kind"::One:
-                Result := 'enum one';
-            else
-                Result := 'else';
-        end;
-        Observer.Observe('own_variable', Result);
+        Observer.Observe('two_branches_and_else', Outcome(TwoBranches(V, Matched), Matched));
         Observer.Finish();
     end;
 

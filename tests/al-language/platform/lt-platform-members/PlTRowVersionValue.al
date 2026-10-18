@@ -69,7 +69,7 @@ codeunit 67515 "LT RV Tests"
         Snapshot(Observer, 'after_second_insert');
         Row.Name := 'x';
         Row.Modify();
-        Snapshot(Observer, 'after_modify');
+        Observer.Observe('after_modify_not_above_last_plus_one', Format(MinimumActiveRowVersion() <= LastUsedRowVersion() + 1));
         Observer.Finish();
     end;
 
@@ -83,12 +83,14 @@ codeunit 67515 "LT RV Tests"
         Row.DeleteAll();
         Commit();
         Before := MinimumActiveRowVersion();
+        Observer.Observe('before_positive', Format(Before > 0));
         Row.Id := 1;
         Row.Insert();
         Commit();
         Observer.Observe('in_write_transaction', Format(IsInWriteTransaction()));
-        Snapshot(Observer, 'after_commit');
-        Observer.Observe('min_moved_by_commit', Format(MinimumActiveRowVersion() > Before));
+        Observer.Observe('after_commit_not_above_last_plus_one', Format(MinimumActiveRowVersion() <= LastUsedRowVersion() + 1));
+        Observer.Observe('after_commit_below_last_plus_one', Format(MinimumActiveRowVersion() < LastUsedRowVersion() + 1));
+        Observer.Observe('after_commit_positive', Format(MinimumActiveRowVersion() > 0));
         Row.DeleteAll();
         Commit();
         Observer.Finish();

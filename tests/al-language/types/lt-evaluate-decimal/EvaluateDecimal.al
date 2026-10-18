@@ -67,6 +67,14 @@ codeunit 67522 "LT Evaluate Decimal"
     end;
 
     [Test]
+    procedure Evaluate_SignsBlanksAndGarbage_More1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
+    end;
+
+    [Test]
     procedure Evaluate_FailureRaisesWithoutReturnValue()
     var
         Observer: Codeunit "Probe Observer";
@@ -81,37 +89,47 @@ codeunit 67522 "LT Evaluate Decimal"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure ToDecimal(V: Variant; var D: Decimal)
+    begin
+        D := V;
+    end;
+
+    local procedure Convert(var Observer: Codeunit "Probe Observer"; Name: Text; V: Variant)
+    var
+        D: Decimal;
+        Ok: Boolean;
+    begin
+        D := -1;
+        ClearLastError();
+        Ok := ToDecimal(V, D);
+        Observer.Observe(Name, Format(Ok) + ' ' + Format(D, 0, 9) + ' [' + GetLastErrorText() + ']');
+    end;
+
     [Test]
     procedure Variant_HoldingText_ConvertsToDecimal()
     var
         Observer: Codeunit "Probe Observer";
-        D: Decimal;
-        V: Variant;
+        T: Text;
     begin
-        V := '100';
-        D := V;
-        Observer.Observe('plain', Format(D, 0, 9));
-        V := '100.5';
-        D := V;
-        Observer.Observe('decimal_point', Format(D, 0, 9));
-        V := '1,000.5';
-        D := V;
-        Observer.Observe('thousands_and_point', Format(D, 0, 9));
-        V := '1,000';
-        D := V;
-        Observer.Observe('thousands_comma', Format(D, 0, 9));
-        V := '100,5';
-        asserterror D := V;
-        Observer.ObserveError('comma_decimal');
-        V := 'abc';
-        asserterror D := V;
-        Observer.ObserveError('letters');
-        V := '';
-        asserterror D := V;
-        Observer.ObserveError('empty');
-        V := ' 100 ';
-        D := V;
-        Observer.Observe('blanks', Format(D, 0, 9));
+        T := '100';
+        Convert(Observer, 'plain', T);
+        T := '100.5';
+        Convert(Observer, 'decimal_point', T);
+        T := '1,000.5';
+        Convert(Observer, 'thousands_and_point', T);
+        T := '1,000';
+        Convert(Observer, 'thousands_comma', T);
+        T := '100,5';
+        Convert(Observer, 'comma_decimal', T);
+        T := 'abc';
+        Convert(Observer, 'letters', T);
+        T := '';
+        Convert(Observer, 'empty', T);
+        T := ' 100 ';
+        Convert(Observer, 'blanks', T);
+        T := '-100';
+        Convert(Observer, 'negative', T);
         Observer.Finish();
     end;
 
@@ -119,18 +137,14 @@ codeunit 67522 "LT Evaluate Decimal"
     procedure Variant_HoldingCode_ConvertsToDecimal()
     var
         Observer: Codeunit "Probe Observer";
-        D: Decimal;
-        V: Variant;
         C: Code[20];
     begin
         C := '100';
-        V := C;
-        D := V;
-        Observer.Observe('plain', Format(D, 0, 9));
+        Convert(Observer, 'plain', C);
         C := '1,000.5';
-        V := C;
-        D := V;
-        Observer.Observe('thousands_and_point', Format(D, 0, 9));
+        Convert(Observer, 'thousands_and_point', C);
+        C := 'ABC';
+        Convert(Observer, 'letters', C);
         Observer.Finish();
     end;
 

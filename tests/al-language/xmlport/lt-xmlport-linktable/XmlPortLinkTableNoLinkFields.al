@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-linktable-xmlport-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own tables 67503-67504, xmlports 67505-67506, codeunits 67507-67508
+// Fixtures used: Probe Observer (69160); own tables 67503-67504, xmlports 67505-67506, codeunits 67507-67508, 67519
 // Probe: a child table element that sets LinkTable to its parent element and has no LinkFields, on temporary table elements (UseTemporary) and with a persistent child table. The XmlPort compiles; export and import observe which rows are visited and written (issue 580 item 2).
 // BC versions: 27+
 
@@ -187,6 +187,36 @@ xmlport 67506 "LT XLT Child Persistent"
         Log: Codeunit "LT XLT Log";
 }
 
+// Runs one import in a codeunit of its own so a failure is observed as text. Rec.Id picks the XmlPort (1 both temporary, 2 persistent child),
+// Rec."Parent Id" picks the document (1 one parent with one child, 2 two parents with three children). Not a test codeunit.
+codeunit 67519 "LT XLT Import Runner"
+{
+    TableNo = "LT XLT Child";
+
+    trigger OnRun()
+    var
+        TempBlob: Codeunit "Temp Blob";
+        BothTemporary: XmlPort "LT XLT Both Temp";
+        PersistentChild: XmlPort "LT XLT Child Persistent";
+        OutS: OutStream;
+        InS: InStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        if Rec."Parent Id" = 1 then
+            OutS.WriteText('<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow></ParentRow></Root>')
+        else
+            OutS.WriteText('<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow></ParentRow></Root>');
+        TempBlob.CreateInStream(InS);
+        if Rec.Id = 1 then begin
+            BothTemporary.SetSource(InS);
+            BothTemporary.Import();
+        end else begin
+            PersistentChild.SetSource(InS);
+            PersistentChild.Import();
+        end;
+    end;
+}
+
 codeunit 67507 "LT XLT Tests"
 {
     Subtype = Test;
@@ -201,7 +231,7 @@ codeunit 67507 "LT XLT Tests"
         Line: Text;
         Result: Text;
     begin
-        TempBlob.CreateInStream(InS);
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
         while not InS.EOS() do begin
             InS.ReadText(Line);
             Result += Line;
@@ -209,9 +239,46 @@ codeunit 67507 "LT XLT Tests"
         exit(Result);
     end;
 
-    local procedure Document(): Text
+    local procedure Import(var Observer: Codeunit "Probe Observer"; PortNo: Integer; Document: Integer)
+    var
+        Arg: Record "LT XLT Child" temporary;
+        Child: Record "LT XLT Child";
+        Rows: Text;
+        Ok: Boolean;
     begin
-        exit('<?xml version="1.0" encoding="UTF-8" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow></ParentRow></Root>');
+        Child.DeleteAll();
+        Log.Take();
+        ClearLastError();
+        Arg.Id := PortNo;
+        Arg."Parent Id" := Document;
+        Arg.Insert();
+        Ok := Codeunit.Run(Codeunit::"LT XLT Import Runner", Arg);
+        Observer.Observe('result', Format(Ok) + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Observe('log', Log.Take());
+        if Child.FindSet() then
+            repeat
+                Rows += Format(Child.Id) + '/' + Format(Child."Parent Id") + ' ';
+            until Child.Next() = 0;
+        Observer.Observe('persistent_child_rows', Rows);
+    end;
+
+    local procedure SeedChildren()
+    var
+        Child: Record "LT XLT Child";
+    begin
+        Child.DeleteAll();
+        Child.Id := 10;
+        Child."Parent Id" := 1;
+        Child.Insert();
+        Child.Id := 11;
+        Child."Parent Id" := 1;
+        Child.Insert();
+        Child.Id := 20;
+        Child."Parent Id" := 2;
+        Child.Insert();
+        Child.Id := 30;
+        Child."Parent Id" := 0;
+        Child.Insert();
     end;
 
     [Test]
@@ -232,22 +299,19 @@ codeunit 67507 "LT XLT Tests"
     end;
 
     [Test]
-    procedure BothTemporary_Import()
+    procedure BothTemporary_Export_More1()
     var
         Observer: Codeunit "Probe Observer";
-        TempBlob: Codeunit "Temp Blob";
-        Port: XmlPort "LT XLT Both Temp";
-        OutS: OutStream;
-        InS: InStream;
     begin
-        Log.Take();
-        TempBlob.CreateOutStream(OutS);
-        OutS.WriteText(Document());
-        TempBlob.CreateInStream(InS);
-        Port.SetSource(InS);
-        Port.Import();
-        Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.More();
+    end;
+
+    [Test]
+    procedure BothTemporary_Export_More2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
     end;
 
     [Test]
@@ -256,22 +320,9 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         Port: XmlPort "LT XLT Child Persistent";
-        Child: Record "LT XLT Child";
         OutS: OutStream;
     begin
-        Child.DeleteAll();
-        Child.Id := 10;
-        Child."Parent Id" := 1;
-        Child.Insert();
-        Child.Id := 11;
-        Child."Parent Id" := 1;
-        Child.Insert();
-        Child.Id := 20;
-        Child."Parent Id" := 2;
-        Child.Insert();
-        Child.Id := 30;
-        Child."Parent Id" := 0;
-        Child.Insert();
+        SeedChildren();
         Log.Take();
         TempBlob.CreateOutStream(OutS);
         Port.SetDestination(OutS);
@@ -282,29 +333,54 @@ codeunit 67507 "LT XLT Tests"
     end;
 
     [Test]
-    procedure PersistentChild_Import()
+    procedure PersistentChild_Export_More1()
     var
         Observer: Codeunit "Probe Observer";
-        TempBlob: Codeunit "Temp Blob";
-        Port: XmlPort "LT XLT Child Persistent";
-        Child: Record "LT XLT Child";
-        OutS: OutStream;
-        InS: InStream;
-        Rows: Text;
     begin
-        Child.DeleteAll();
-        Log.Take();
-        TempBlob.CreateOutStream(OutS);
-        OutS.WriteText(Document());
-        TempBlob.CreateInStream(InS);
-        Port.SetSource(InS);
-        Port.Import();
-        Observer.Observe('log', Log.Take());
-        if Child.FindSet() then
-            repeat
-                Rows += Format(Child.Id) + '/' + Format(Child."Parent Id") + ' ';
-            until Child.Next() = 0;
-        Observer.Observe('child_rows', Rows);
+        Observer.More();
+    end;
+
+    [Test]
+    procedure PersistentChild_Export_More2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
+    end;
+
+    [Test]
+    procedure BothTemporary_Import_OneParentOneChild()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 1, 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BothTemporary_Import_TwoParents()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 1, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PersistentChild_Import_OneParentOneChild()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 2, 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PersistentChild_Import_TwoParents()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 2, 2);
         Observer.Finish();
     end;
 }

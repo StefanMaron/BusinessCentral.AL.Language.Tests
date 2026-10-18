@@ -100,6 +100,66 @@ codeunit 67502 "LT BAC Tests"
         Observer.Observe('find_default', Show(Row));
     end;
 
+    local procedure InsertOne(var Row: Record "LT BAC Row"; var Observer: Codeunit "Probe Observer")
+    var
+        OutS: OutStream;
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.Id := 7;
+        Row.Data.CreateOutStream(OutS);
+        OutS.WriteText('inserted');
+        Observer.Observe('before_insert', Show(Row));
+        Row.Insert();
+        Observer.Observe('after_insert', Show(Row));
+        Row.Find();
+        Observer.Observe('after_find', Show(Row));
+        Row.CalcFields(Data);
+        Observer.Observe('after_calcfields', Show(Row));
+    end;
+
+    [Test]
+    procedure Temporary_InsertedRecord_Blob()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BAC Row" temporary;
+    begin
+        InsertOne(Row, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Persistent_InsertedRecord_Blob()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BAC Row";
+    begin
+        InsertOne(Row, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Temporary_InsertedRecord_WithSetAutoCalcFields_Blob()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BAC Row" temporary;
+    begin
+        Row.SetAutoCalcFields(Data);
+        InsertOne(Row, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Persistent_InsertedRecord_WithSetAutoCalcFields_Blob()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BAC Row";
+    begin
+        Row.SetAutoCalcFields(Data);
+        InsertOne(Row, Observer);
+        Observer.Finish();
+    end;
+
     [Test]
     procedure Temporary_SetAutoCalcFields_Blob()
     var
@@ -111,6 +171,14 @@ codeunit 67502 "LT BAC Tests"
         Row.SetAutoCalcFields(Data);
         Walk(Row, Observer);
         Observer.Finish();
+    end;
+
+    [Test]
+    procedure Temporary_SetAutoCalcFields_Blob_More1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
     end;
 
     [Test]
@@ -127,6 +195,14 @@ codeunit 67502 "LT BAC Tests"
     end;
 
     [Test]
+    procedure Persistent_SetAutoCalcFields_Blob_More1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
+    end;
+
+    [Test]
     procedure Temporary_WithoutSetAutoCalcFields_Blob()
     var
         Observer: Codeunit "Probe Observer";
@@ -138,6 +214,14 @@ codeunit 67502 "LT BAC Tests"
     end;
 
     [Test]
+    procedure Temporary_WithoutSetAutoCalcFields_Blob_More1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
+    end;
+
+    [Test]
     procedure Persistent_WithoutSetAutoCalcFields_Blob()
     var
         Observer: Codeunit "Probe Observer";
@@ -146,6 +230,14 @@ codeunit 67502 "LT BAC Tests"
         Seed(Row);
         Walk(Row, Observer);
         Observer.Finish();
+    end;
+
+    [Test]
+    procedure Persistent_WithoutSetAutoCalcFields_Blob_More1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.More();
     end;
 
     [Test]
