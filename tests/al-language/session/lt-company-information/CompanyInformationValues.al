@@ -44,7 +44,27 @@ codeunit 67858 "LT Company Information Values"
     var
         Observer: Codeunit "Probe Observer";
         Info: Record "Company Information";
+        Saved: Record "Company Information";
+        Existed: Boolean;
     begin
+        // The values are set here, so the test does not depend on the demo data of the test image. The row is restored before the assertions.
+        Existed := Info.Get();
+        if Existed then
+            Saved := Info
+        else begin
+            Info.Init();
+            Info.Insert();
+        end;
+        Info.Name := CopyStr(CompanyName(), 1, MaxStrLen(Info.Name));
+        Info.Address := '5 The Ring';
+        Info."Address 2" := 'Westminster';
+        Info.City := 'London';
+        Info."Post Code" := 'W2 8HG';
+        Info."Country/Region Code" := 'GB';
+        Info.County := '';
+        Info."Phone No." := '0666-666-6666';
+        Info.Modify();
+        Clear(Info);
         Observer.Observe('get', Format(Info.Get()));
         Observer.Observe('name', Info.Name);
         Observer.Observe('address', Info.Address);
@@ -55,6 +75,11 @@ codeunit 67858 "LT Company Information Values"
         Observer.Observe('county', Info.County);
         Observer.Observe('phone_no', Info."Phone No.");
         Observer.Observe('name_equals_company_name', Format(Info.Name = CompanyName()));
+        if Existed then begin
+            Info := Saved;
+            Info.Modify();
+        end else
+            Info.Delete();
         Observer.Expect('get', 'Yes');
         Observer.Expect('name', '<Company>');
         Observer.Expect('address', '5 The Ring');
