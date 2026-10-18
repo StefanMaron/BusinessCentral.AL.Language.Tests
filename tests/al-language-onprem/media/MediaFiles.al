@@ -142,12 +142,17 @@ codeunit 61286 "LT S Media Files"
 #if BC29PLUS
         Observer.Expect('export_len', '68');
         Observer.Expect('export_base64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
-        Observer.Expect('export_overwrite_ok', 'Yes');
-        Observer.Expect('export_overwrite_len', '68');
-        Observer.Verify();
 #else
-        Observer.Finish();
+        Observer.Expect('export_len', '93');
+        Observer.Expect('export_base64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAAXNSR0IArs4c6QAAAAFzQklUCOYKW5kAAAAKSURBVAiZY2AAAAACAAH0cWSmAAAAAElFTkSuQmCC');
 #endif
+        Observer.Expect('export_overwrite_ok', 'Yes');
+#if BC29PLUS
+        Observer.Expect('export_overwrite_len', '68');
+#else
+        Observer.Expect('export_overwrite_len', '93');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
