@@ -90,14 +90,17 @@ codeunit 79255 "LT AM Report Output Tests"
         DataCompression.GetEntryList(Names);
         foreach Name in Names do begin
             Entries += Name + ',';
-            Clear(EntryBlob);
-            EntryBlob.CreateOutStream(EntryOut);
-            DataCompression.ExtractEntry(Name, EntryOut, Length);
-            Content := AllText(EntryBlob, TextEncoding::UTF8);
-            if Content.Contains('AMREQ42') then
-                WithReq += Name + ',';
-            if Content.Contains('AMMARK') then
-                WithMark += Name + ',';
+            // Only the XML parts are read as text; a binary part (an image, a thumbnail) cannot be read as UTF-8 text.
+            if Name.EndsWith('.xml') or Name.EndsWith('.rels') then begin
+                Clear(EntryBlob);
+                EntryBlob.CreateOutStream(EntryOut);
+                DataCompression.ExtractEntry(Name, EntryOut, Length);
+                Content := AllText(EntryBlob, TextEncoding::UTF8);
+                if Content.Contains('AMREQ42') then
+                    WithReq += Name + ',';
+                if Content.Contains('AMMARK') then
+                    WithMark += Name + ',';
+            end;
         end;
         DataCompression.CloseZipArchive();
     end;
@@ -130,7 +133,7 @@ codeunit 79255 "LT AM Report Output Tests"
             'zip':
                 begin
                     ZipFacts(TempBlob, Entries, WithReq, WithMark);
-                    Observer.Observe('entries', Entries);
+                    Observer.Observe('main_part', Format(Entries.Contains('word/document.xml,')) + '/' + Format(Entries.Contains('xl/workbook.xml,')));
                     Observer.Observe('entries_with_request_value', WithReq);
                     Observer.Observe('entries_with_constant_column', WithMark);
                 end;

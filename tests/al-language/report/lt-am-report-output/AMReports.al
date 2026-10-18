@@ -241,15 +241,23 @@ codeunit 79254 "LT AM Subscribers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'OnDocumentReady', '', false, false)]
     local procedure AmDocumentReady(ObjectId: Integer; ObjectPayload: JsonObject; DocumentStream: InStream; var TargetStream: OutStream; var Success: Boolean)
-    var
-        Keys: Text;
-        KeyName: Text;
     begin
         if (ObjectId < 79251) or (ObjectId > 79253) then
             exit;
         // The document stream is not read here: reading it could change what the caller receives.
-        foreach KeyName in ObjectPayload.Keys() do
-            Keys += KeyName + ',';
-        AmLog.Add('OnDocumentReady(' + Format(ObjectId) + ',keys=' + Keys + ',success=' + Format(Success) + ')');
+        AmLog.Add('OnDocumentReady(' + Format(ObjectId) + ',keys=' + Format(ObjectPayload.Keys().Count()) + ',documenttype=' + Value(ObjectPayload, 'documenttype') +
+            ',layoutmimetype=' + Value(ObjectPayload, 'layoutmimetype') + ',layoutname=' + Value(ObjectPayload, 'layoutname') + ',objectname=' + Value(ObjectPayload, 'objectname') +
+            ',success=' + Format(Success) + ')');
+    end;
+
+    local procedure Value(Payload: JsonObject; KeyName: Text): Text
+    var
+        Token: JsonToken;
+    begin
+        if not Payload.Get(KeyName, Token) then
+            exit('<absent>');
+        if not Token.IsValue() then
+            exit('<not a value>');
+        exit(Token.AsValue().AsText());
     end;
 }
