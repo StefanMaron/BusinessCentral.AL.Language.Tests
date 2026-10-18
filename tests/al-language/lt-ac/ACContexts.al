@@ -4,32 +4,10 @@
 // Probe: DataSourceContext (AppId, CodeunitId) and TestHandlerContext (CodeunitId, CodeunitName, ProcedureName, TestCaseName, Success, Skip) used on a variable outside any handler (BC 29 and later; BC 27 and 28 reject the types, see must-not-compile cases 0961 and 0962). The types are only handed to a handler by the test framework (the symbols that declare the handler enum and ITestContext are not public); this pins the result of every member on a variable of the type that is not inside a handler.
 //   Settles #626 items 9, 10, 17 and #627 items 14 to 19 as far as they are reachable from AL.
 // BC versions: 29
+//   DataSourceContext.AppId() is not probed: a test that calls it ends the test session.
 //   Each member is probed in a codeunit of its own: a member that ends the test session would otherwise hide the others.
 
 #if BC29PLUS
-codeunit 77505 "LT AC Contexts DsApp"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure AC_DataSourceContext_AppId()
-    var
-        Observer: Codeunit "Probe Observer";
-        Ctx: DataSourceContext;
-    begin
-        if not TryRead(Ctx, Observer) then
-            Observer.ObserveError('appid_err');
-        Observer.Finish();
-    end;
-
-    [TryFunction]
-    local procedure TryRead(var Ctx: DataSourceContext; var Observer: Codeunit "Probe Observer")
-    begin
-        Observer.Observe('appid', Format(Ctx.AppId()));
-    end;
-}
-
 codeunit 77506 "LT AC Contexts DsCodeunit"
 {
     Subtype = Test;
@@ -43,7 +21,9 @@ codeunit 77506 "LT AC Contexts DsCodeunit"
     begin
         if not TryRead(Ctx, Observer) then
             Observer.ObserveError('codeunitid_err');
-        Observer.Finish();
+        Observer.Expect('codeunitid_err|text', 'The expression System.Func`1[System.Int32] cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavValue value.');
+        Observer.Expect('codeunitid_err|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -66,7 +46,8 @@ codeunit 77541 "LT AC Contexts ThCodeunitId"
     begin
         if not TryRead(Ctx, Observer) then
             Observer.ObserveError('codeunitid_err');
-        Observer.Finish();
+        Observer.Expect('codeunitid', '0');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -89,7 +70,8 @@ codeunit 77543 "LT AC Contexts ThCodeunitName"
     begin
         if not TryRead(Ctx, Observer) then
             Observer.ObserveError('codeunitname_err');
-        Observer.Finish();
+        Observer.Expect('codeunitname', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -112,7 +94,8 @@ codeunit 77544 "LT AC Contexts ThProcName"
     begin
         if not TryRead(Ctx, Observer) then
             Observer.ObserveError('procedurename_err');
-        Observer.Finish();
+        Observer.Expect('procedurename', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -135,7 +118,8 @@ codeunit 77545 "LT AC Contexts ThCaseName"
     begin
         if not TryRead(Ctx, Observer) then
             Observer.ObserveError('testcasename_err');
-        Observer.Finish();
+        Observer.Expect('testcasename', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -158,7 +142,8 @@ codeunit 77546 "LT AC Contexts ThSuccess"
     begin
         if not TryRead(Ctx, Observer) then
             Observer.ObserveError('success_err');
-        Observer.Finish();
+        Observer.Expect('success', 'No');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -183,7 +168,8 @@ codeunit 77542 "LT AC Contexts Skip"
             Observer.ObserveError('skip_err')
         else
             Observer.Observe('skip_returned', 'yes');
-        Observer.Finish();
+        Observer.Expect('skip_returned', 'yes');
+        Observer.Verify();
     end;
 
     [TryFunction]

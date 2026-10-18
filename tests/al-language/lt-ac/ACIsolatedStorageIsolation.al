@@ -100,7 +100,12 @@ codeunit 77520 "LT AC IsoStorage IsoLevel"
         Found := IsolatedStorage.Get('ac_missing', DataScope::Module, IsolationLevel::ReadCommitted, Secret);
         Observer.Observe('missing', Format(Found) + '/empty=' + Format(Secret.IsEmpty()));
         Clean();
-        Observer.Finish();
+        Observer.Expect('module_default', 'Yes/empty=No');
+        Observer.Expect('module_readcommitted', 'Yes/empty=No');
+        Observer.Expect('module_updlock', 'Yes/empty=No');
+        Observer.Expect('other_scope', 'No/empty=Yes');
+        Observer.Expect('missing', 'No/empty=Yes');
+        Observer.Verify();
     end;
 
     [Test]

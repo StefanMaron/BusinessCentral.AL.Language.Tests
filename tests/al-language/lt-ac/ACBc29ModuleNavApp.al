@@ -41,7 +41,12 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Observer.Observe('eula', Info.EULA());
         Observer.Observe('help', Info.Help());
         Observer.Observe('privacy', Info.PrivacyStatement());
-        Observer.Finish();
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('context_help', '');
+        Observer.Expect('eula', 'https://go.microsoft.com/fwlink/?linkid=2009120');
+        Observer.Expect('help', 'https://go.microsoft.com/fwlink/?linkid=2103698');
+        Observer.Expect('privacy', 'https://go.microsoft.com/fwlink/?linkid=724009');
+        Observer.Verify();
     end;
 
     [Test]
@@ -55,7 +60,12 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Observer.Observe('eula', Info.EULA());
         Observer.Observe('help', Info.Help());
         Observer.Observe('privacy', Info.PrivacyStatement());
-        Observer.Finish();
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('context_help', '');
+        Observer.Expect('eula', 'https://go.microsoft.com/fwlink/?linkid=2009120');
+        Observer.Expect('help', 'https://go.microsoft.com/fwlink/?linkid=2104024');
+        Observer.Expect('privacy', 'https://go.microsoft.com/fwlink/?LinkId=724009');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +79,12 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Observer.Observe('eula', Info.EULA());
         Observer.Observe('help', Info.Help());
         Observer.Observe('privacy', Info.PrivacyStatement());
-        Observer.Finish();
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('context_help', '');
+        Observer.Expect('eula', '');
+        Observer.Expect('help', '');
+        Observer.Expect('privacy', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -78,7 +93,8 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Observer: Codeunit "Probe Observer";
         Info: ModuleInfo;
     begin
-        Observer.Observe('found', Format(NavApp.GetModuleInfo('00000000-0000-0000-0000-000000000001', Info)));
+        if not TryGet(Info, Observer) then
+            Observer.ObserveError('found_err');
         if not TryContext(Info, Observer) then
             Observer.ObserveError('context_help_err');
         if not TryEula(Info, Observer) then
@@ -88,6 +104,12 @@ codeunit 77521 "LT AC ModuleInfo Help"
         if not TryPrivacy(Info, Observer) then
             Observer.ObserveError('privacy_err');
         Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryGet(var Info: ModuleInfo; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('found', Format(NavApp.GetModuleInfo('00000000-0000-0000-0000-000000000001', Info)));
     end;
 
     [TryFunction]
@@ -134,7 +156,14 @@ codeunit 77522 "LT AC NavApp Resources"
         Observer.ObserveError('nested');
         asserterror NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream, TextEncoding::UTF16);
         Observer.ObserveError('utf16');
-        Observer.Finish();
+        Observer.Expect('default_encoding|text', 'A resource matching ''greeting.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('default_encoding|code', 'ResourceNotFound');
+        Observer.Expect('utf8|text', 'A resource matching ''greeting.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('utf8|code', 'ResourceNotFound');
+        Observer.Expect('nested|text', 'A resource matching ''sub/nested.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('nested|code', 'ResourceNotFound');
+        Observer.Expect('utf16|text', 'A resource matching ''greeting.txt'' co');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +188,8 @@ codeunit 77522 "LT AC NavApp Resources"
         Observer.Expect('unknown_app|code', 'ResourceNotFound');
         Observer.Expect('other_app_not_public|text', 'A resource matching ''greeting.txt'' could not be found in app ''63ca2fa4-4f03-4f2b-a480-172fef340d3f''.');
         Observer.Expect('other_app_not_public|code', 'ResourceNotFound');
-        Observer.Expect('empty_nam', '');
+        Observer.Expect('empty_name|text', 'A resource matching '''' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('empty_name|code', 'ResourceNotFound');
         Observer.Verify();
     end;
 
@@ -181,7 +211,14 @@ codeunit 77522 "LT AC NavApp Resources"
         Evaluate(Unknown, '00000000-0000-0000-0000-000000000001');
         asserterror Json := NavApp.GetResourceAsJson('ac-sample.json', Unknown);
         Observer.ObserveError('unknown_app');
-        Observer.Finish();
+        Observer.Expect('content|text', 'A resource matching ''ac-sample.json'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('content|code', 'ResourceNotFound');
+        Observer.Expect('utf8|text', 'A resource matching ''ac-sample.json'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('utf8|code', 'ResourceNotFound');
+        Observer.Expect('not_json|text', 'A resource matching ''greeting.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('not_json|code', 'ResourceNotFound');
+        Observer.Expect('missing|text', 'A resource matching ''missing.json'' could not be');
+        Observer.Verify();
     end;
 
     [Test]
@@ -208,7 +245,14 @@ codeunit 77522 "LT AC NavApp Resources"
         Evaluate(Unknown, '00000000-0000-0000-0000-000000000001');
         asserterror Content := NavApp.GetResourceAsText('greeting.txt', Unknown);
         Observer.ObserveError('unknown_app');
-        Observer.Finish();
+        Observer.Expect('default|text', 'A resource matching ''greeting.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('default|code', 'ResourceNotFound');
+        Observer.Expect('utf8|text', 'A resource matching ''greeting.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('utf8|code', 'ResourceNotFound');
+        Observer.Expect('utf16|text', 'A resource matching ''greeting.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('utf16|code', 'ResourceNotFound');
+        Observer.Expect('msdos|text', 'A resource matching ''greeting.txt'' could not be found in ap');
+        Observer.Verify();
     end;
 
     [Test]
