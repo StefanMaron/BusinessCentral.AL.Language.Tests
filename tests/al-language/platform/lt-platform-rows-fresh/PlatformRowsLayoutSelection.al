@@ -1,7 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: the count and every row (4 on BC 29; the first five columns, because BC 27 and 28 have fewer columns), with every column, of the platform table Tenant Report Layout Selection on the fresh tenant of a test container (read through RecordRef by table name).
+// Probe: the count and every row, with every column, of the platform table Tenant Report Layout Selection on the fresh tenant of a test container (read through RecordRef by
+// table name). The rows are named by Layout Name; where a row differs between BC 27, 28 and 29 (or is missing in one), the expected text is guarded with BC28PLUS and BC29PLUS.
+// Only the first five columns are read: BC 27 and 28 have fewer columns than BC 29.
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78109.
 
 codeunit 78109 "LT AD Plat Rows Layout"
@@ -49,33 +51,39 @@ codeunit 78109 "LT AD Plat Rows Layout"
         end;
     end;
 
-    // Rows are named by the value of KeyField (not by position), because the rows of a platform table differ between BC versions.
-    local procedure Dump(var Observer: Codeunit "Probe Observer"; TableName: Text; KeyField: Text; MaxField: Integer; Skip: Integer; Take: Integer)
+    // Observes the rows whose KeyField value is in Keys (separated by ~), named by that value and not by position, because the rows of a platform
+    // table differ between BC versions. A key without a row is observed as <absent>.
+    local procedure DumpKeys(var Observer: Codeunit "Probe Observer"; TableName: Text; KeyField: Text; MaxField: Integer; Keys: Text)
     var
         RR: RecordRef;
+        Rows: Dictionary of [Text, Text];
+        RowKey: Text;
         Id: Integer;
-        n: Integer;
     begin
         Id := TableIdByName(TableName);
-        Observer.Observe(TableName + ' id', Format(Id));
-        if Id < 0 then
-            exit;
         RR.Open(Id);
         if RR.FindSet() then
             repeat
-                n += 1;
-                if (n > Skip) and (n <= Skip + Take) then
-                    Observer.Observe(TableName + ' row ' + KeyText(RR, KeyField), RowText(RR, MaxField));
-            until (RR.Next() = 0) or (n >= Skip + Take);
+                Rows.Set(KeyText(RR, KeyField), RowText(RR, MaxField));
+            until RR.Next() = 0;
+        foreach RowKey in Keys.Split('~') do
+            if Rows.ContainsKey(RowKey) then
+                Observer.Observe(TableName + ' row ' + RowKey, Rows.Get(RowKey))
+            else
+                Observer.Observe(TableName + ' row ' + RowKey, '<absent>');
     end;
 
     [Test]
-    procedure Rows_TenantReportLayoutSelection()
+    procedure Rows_TenantReportLayoutSelection_01()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'Tenant Report Layout Selection', 'Layout Name', 5, 0, 10);
-        Observer.Finish();
+        DumpKeys(Observer, 'Tenant Report Layout Selection', 'Layout Name', 5, 'StandardDraftSalesInvoiceBlue.docx~StandardSalesInvoiceBlueSimple.docx~StandardSalesProFormaInv.docx~StandardSalesQuoteBlue.docx');
+        Observer.Expect('Tenant Report Layout Selection row StandardDraftSalesInvoiceBlue.docx', 'Report ID=1303|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardDraftSalesInvoiceBlue.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|');
+        Observer.Expect('Tenant Report Layout Selection row StandardSalesInvoiceBlueSimple.docx', 'Report ID=1306|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardSalesInvoiceBlueSimple.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|');
+        Observer.Expect('Tenant Report Layout Selection row StandardSalesProFormaInv.docx', 'Report ID=1302|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardSalesProFormaInv.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|');
+        Observer.Expect('Tenant Report Layout Selection row StandardSalesQuoteBlue.docx', 'Report ID=1304|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardSalesQuoteBlue.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -83,12 +91,10 @@ codeunit 78109 "LT AD Plat Rows Layout"
     var
         Observer: Codeunit "Probe Observer";
         RR: RecordRef;
-        Id: Integer;
     begin
-        Id := TableIdByName('Tenant Report Layout Selection');
-        Observer.Observe('id', Format(Id));
-        RR.Open(Id);
+        RR.Open(TableIdByName('Tenant Report Layout Selection'));
         Observer.Observe('count', Format(RR.Count()));
-        Observer.Finish();
+        Observer.Expect('count', '4');
+        Observer.Verify();
     end;
 }
