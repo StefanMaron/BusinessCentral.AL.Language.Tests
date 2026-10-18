@@ -232,6 +232,12 @@ codeunit 69881 "LT W Pt Subs"
         if Log.Mode() = 0 then
             exit;
         Log.Add('MakeDateTimeFilter(' + 'DateTimeFilterText=' + DateTimeFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if DateTimeFilterText.Contains('..') then
+                DateTimeFilterText := '2020-01-01T12:00:00..2020-12-31T12:00:00'
+            else
+                DateTimeFilterText := '2020-12-31T12:00:00';
+        end;
         if Log.Mode() = 2 then begin
             DateTimeFilterText := 'W:DateTimeFilterText';
         end;
@@ -245,6 +251,12 @@ codeunit 69881 "LT W Pt Subs"
         if Log.Mode() = 0 then
             exit;
         Log.Add('MakeIntFilter(' + 'IntFilterText=' + IntFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if IntFilterText.Contains('..') then
+                IntFilterText := '1..5'
+            else
+                IntFilterText := '5';
+        end;
         if Log.Mode() = 2 then begin
             IntFilterText := 'W:IntFilterText';
         end;
@@ -258,6 +270,12 @@ codeunit 69881 "LT W Pt Subs"
         if Log.Mode() = 0 then
             exit;
         Log.Add('MakeDateFilter(' + 'DateFilterText=' + DateFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if DateFilterText.Contains('..') then
+                DateFilterText := '2020-01-01..2020-12-31'
+            else
+                DateFilterText := '2020-12-31';
+        end;
         if Log.Mode() = 2 then begin
             DateFilterText := 'W:DateFilterText';
         end;
@@ -271,6 +289,12 @@ codeunit 69881 "LT W Pt Subs"
         if Log.Mode() = 0 then
             exit;
         Log.Add('MakeTextFilter(' + 'TextFilterText=' + TextFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if TextFilterText.Contains('..') then
+                TextFilterText := 'A*'
+            else
+                TextFilterText := 'A*';
+        end;
         if Log.Mode() = 2 then begin
             TextFilterText := 'W:TextFilterText';
         end;
@@ -284,6 +308,12 @@ codeunit 69881 "LT W Pt Subs"
         if Log.Mode() = 0 then
             exit;
         Log.Add('MakeCodeFilter(' + 'TextFilterText=' + TextFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if TextFilterText.Contains('..') then
+                TextFilterText := 'A*'
+            else
+                TextFilterText := 'A*';
+        end;
         if Log.Mode() = 2 then begin
             TextFilterText := 'W:TextFilterText';
         end;
@@ -297,6 +327,12 @@ codeunit 69881 "LT W Pt Subs"
         if Log.Mode() = 0 then
             exit;
         Log.Add('MakeTimeFilter(' + 'TimeFilterText=' + TimeFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if TimeFilterText.Contains('..') then
+                TimeFilterText := '12:00:00..13:00:00'
+            else
+                TimeFilterText := '12:00:00';
+        end;
         if Log.Mode() = 2 then begin
             TimeFilterText := 'W:TimeFilterText';
         end;

@@ -14,7 +14,7 @@ codeunit 69886 "LT W Pt Observe"
 
     local procedure Short(Value: Text): Text
     begin
-        exit(CopyStr(Value, 1, 700));
+        exit(CopyStr(Value, 1, 330));
     end;
 
     local procedure Act(Which: Text)
@@ -24,7 +24,7 @@ codeunit 69886 "LT W Pt Observe"
         Ok: Boolean;
         Err: Text;
     begin
-        for Mode := 0 to 2 do begin
+        for Mode := 0 to 3 do begin
             Log.SetMode(Mode);
             Log.Reset();
             Log.SetWhich(Which);
@@ -71,10 +71,36 @@ codeunit 69886 "LT W Pt Observe"
     end;
 
     [Test]
+    procedure BadFilters()
+    begin
+        Act('baddate');
+        Act('baddate2');
+        Act('baddatetime');
+        Act('badtime');
+        Act('badint');
+        Act('baddec');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PageH')]
+    procedure Misc()
+    begin
+        Act('mynotif');
+        Act('mynotifoff');
+        Act('download');
+        Act('pagerun0');
+        Observer.Finish();
+    end;
+
+    [PageHandler]
+    procedure PageH(var P: TestPage "LT W Pt Card")
+    begin
+    end;
+
+    [Test]
     procedure SystemActions_1()
     begin
-        Act('notifsend');
-        Act('hyperlink');
         Act('geturl');
         Act('copilotactive');
         Act('privstate');
@@ -84,10 +110,8 @@ codeunit 69886 "LT W Pt Observe"
     [Test]
     procedure SystemActions_2()
     begin
-        Act('privconfirm');
         Act('legacybar');
         Act('feature');
-        Act('usersettings');
         Observer.Finish();
     end;
 

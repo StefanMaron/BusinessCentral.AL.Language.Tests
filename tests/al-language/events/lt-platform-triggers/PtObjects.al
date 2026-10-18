@@ -98,6 +98,9 @@ codeunit 69882 "LT W Pt Runner"
         Notif: Notification;
         Dec: Decimal;
         OutStr: OutStream;
+        InStr: InStream;
+        FileName: Text;
+        MyNotif: Record "My Notifications";
         Blob: Codeunit "Temp Blob";
         Id: Guid;
         AppConstants: Codeunit "Application System Constants";
@@ -143,6 +146,63 @@ codeunit 69882 "LT W Pt Runner"
                 begin
                     Row.SetFilter(T, '>=%1', 120000T);
                     exit(Row.GetFilter(T));
+                end;
+            'baddate':
+                begin
+                    Row.SetFilter(D, 'abc');
+                    exit(Row.GetFilter(D));
+                end;
+            'baddatetime':
+                begin
+                    Row.SetFilter(DT, 'abc');
+                    exit(Row.GetFilter(DT));
+                end;
+            'badtime':
+                begin
+                    Row.SetFilter(T, 'abc');
+                    exit(Row.GetFilter(T));
+                end;
+            'badint':
+                begin
+                    Row.SetFilter(Id, 'abc');
+                    exit(Row.GetFilter(Id));
+                end;
+            'baddec':
+                begin
+                    Row.SetFilter(Amount, 'abc');
+                    exit(Row.GetFilter(Amount));
+                end;
+            'baddate2':
+                begin
+                    Row.SetFilter(D, '010120..311220');
+                    exit(Row.GetFilter(D));
+                end;
+            'mynotif':
+                begin
+                    Id := '{22222222-3333-4444-5555-666666666666}';
+                    MyNotif.InsertDefault(Id, 'LT W Pt', 'LT W Pt notification', true);
+                    exit(Format(MyNotif.IsEnabled(Id)));
+                end;
+            'mynotifoff':
+                begin
+                    Id := '{22222222-3333-4444-5555-666666666666}';
+                    MyNotif.InsertDefault(Id, 'LT W Pt', 'LT W Pt notification', true);
+                    MyNotif.Disable(Id);
+                    exit(Format(MyNotif.IsEnabled(Id)));
+                end;
+            'download':
+                begin
+                    Blob.CreateOutStream(OutStr);
+                    OutStr.WriteText('x');
+                    FileName := 'a.txt';
+                    Blob.CreateInStream(InStr);
+                    exit(Format(DownloadFromStream(InStr, '', '', '', FileName)));
+                end;
+            'pagerun0':
+                begin
+                    Row.Id := 1;
+                    Page.Run(0, Row);
+                    exit('done');
                 end;
             'view':
                 begin
