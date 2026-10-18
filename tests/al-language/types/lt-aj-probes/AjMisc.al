@@ -73,7 +73,17 @@ codeunit 79013 "LT AJ Misc"
         Cd := G;
         Observer.Observe('Code[40] := G', Cd);
         Observer.Observe('StrLen(Format(G))', Format(StrLen(Format(G))));
-        Observer.Finish();
+        Observer.Expect('x + Format(G)', 'x{11111111-2222-3333-4444-555555555555}');
+        Observer.Expect('x + G', 'x{11111111-2222-3333-4444-555555555555}');
+        Observer.Expect('x + G length', '39');
+        Observer.Expect('G + x', '{11111111-2222-3333-4444-555555555555}x');
+        Observer.Expect('x + empty guid', 'x{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('MaxStrLen(G)', '2147483647');
+        Observer.Expect('MaxStrLen(empty)', '2147483647');
+        Observer.Expect('Text[40] := G', '{11111111-2222-3333-4444-555555555555}');
+        Observer.Expect('Code[40] := G', '{11111111-2222-3333-4444-555555555555}');
+        Observer.Expect('StrLen(Format(G))', '38');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +111,24 @@ codeunit 79013 "LT AJ Misc"
         Observer.Observe('field C > 1.5', Format(Item.Opt > 1.5));
         Observer.Observe('field C = 2.5', Format(Item.Opt = 2.5));
         Observer.Observe('field C < 2.5', Format(Item.Opt < 2.5));
-        Observer.Finish();
+        Observer.Expect('B = 1.0', 'Yes');
+        Observer.Expect('B = 1', 'Yes');
+        Observer.Expect('B = 0.0', 'No');
+        Observer.Expect('B = 1.5', 'No');
+        Observer.Expect('B <> 1.5', 'Yes');
+        Observer.Expect('B > 0.5', 'Yes');
+        Observer.Expect('B > 1.0', 'No');
+        Observer.Expect('B >= 1.0', 'Yes');
+        Observer.Expect('B < 1.5', 'Yes');
+        Observer.Expect('B < 1.0', 'No');
+        Observer.Expect('B <= 0.9', 'No');
+        Observer.Expect('0.5 < B', 'Yes');
+        Observer.Expect('1.0 = B', 'Yes');
+        Observer.Expect('field C = 2.0', 'Yes');
+        Observer.Expect('field C > 1.5', 'Yes');
+        Observer.Expect('field C = 2.5', 'No');
+        Observer.Expect('field C < 2.5', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,7 +148,11 @@ codeunit 79013 "LT AJ Misc"
         Observer.Observe('Enum Seven', Dump(Tmp, 'Enum', E.AsInteger()));
         Evaluate(DF, '<1M>');
         Observer.Observe('DateFormula 1M', Dump(Tmp, 'DateFormula', DF));
-        Observer.Finish();
+        Observer.Expect('Code[10] ab', '3:41 42 00 ');
+        Observer.Expect('Option C', '4:02 00 00 00 ');
+        Observer.Expect('Enum Seven', '4:07 00 00 00 ');
+        Observer.Expect('DateFormula 1M', '32:31 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -137,7 +168,10 @@ codeunit 79013 "LT AJ Misc"
         Clear(RId);
         Observer.Observe('RecordId empty', Dump(Tmp, 'RecordId', RId));
         Observer.Observe('Label', Dump(Tmp, 'Label', LabelValue));
-        Observer.Finish();
+        Observer.Expect('RecordId', 'err:ALStream.ALWrite, invalid stream mode: Stream|InvalidStreamMode');
+        Observer.Expect('RecordId empty', 'err:ALStream.ALWrite, invalid stream mode: Stream|InvalidStreamMode');
+        Observer.Expect('Label', '4:4C 62 6C 00 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +190,12 @@ codeunit 79013 "LT AJ Misc"
         Observer.Observe('Variant true', Dump(Tmp, 'Variant', V));
         Clear(V);
         Observer.Observe('Variant empty', Dump(Tmp, 'Variant', V));
-        Observer.Finish();
+        Observer.Expect('Variant 42', '4:2A 00 00 00 ');
+        Observer.Expect('Variant hi', '3:68 69 00 ');
+        Observer.Expect('Variant 1.5', '12:40 00 00 00 00 00 00 00 00 15 00 00 ');
+        Observer.Expect('Variant true', '4:01 00 00 00 ');
+        Observer.Expect('Variant empty', 'err:The type Variant is not supported.|NotSupportedType');
+        Observer.Verify();
     end;
 
     [Test]
@@ -174,7 +213,10 @@ codeunit 79013 "LT AJ Misc"
         Observer.Observe('Record', Dump(Tmp, 'Record', Cu));
         Jo.ReadFrom('{"a":1}');
         Observer.Observe('JsonObject', Dump(Tmp, 'JsonObject', Jo));
-        Observer.Finish();
+        Observer.Expect('BigText abc', 'err:ALStream.ALWrite, invalid stream mode: Stream|InvalidStreamMode');
+        Observer.Expect('Record', 'err:ALStream.ALWrite, invalid stream mode: Stream|InvalidStreamMode');
+        Observer.Expect('JsonObject', 'err:The type JsonObject is not supported.|NotSupportedType');
+        Observer.Verify();
     end;
 
     local procedure Dump(var Tmp: Codeunit "Temp Blob"; Kind: Text; Value: Variant): Text
@@ -280,7 +322,9 @@ codeunit 79013 "LT AJ Misc"
     begin
         Observer.Observe('Get(0)', Describe(Database::"LT AJ Ts", 0));
         Observer.Observe('rows', ListRows(Database::"LT AJ Ts", ''));
-        Observer.Finish();
+        Observer.Expect('Get(0)', 'not found');
+        Observer.Expect('rows', '1:Id:Integer:Normal:4;2:Txt:Text:Normal:30;2000000000:$systemId:GUID:Normal:16;2000000001:SystemCreatedAt:DateTime:Normal:8;2000000002:SystemCreatedBy:GUID:Normal:16;2000000003:SystemModifiedAt:DateTime:Normal:8;2000000004:SystemModifiedBy:GUID:Normal:16;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -293,7 +337,10 @@ codeunit 79013 "LT AJ Misc"
         Fld.SetRange(TableNo, Database::Customer);
         Fld.SetRange("No.", 0);
         Observer.Observe('No. = 0 count', Format(Fld.Count()));
-        Observer.Finish();
+        Observer.Expect('Get(0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -312,7 +359,8 @@ codeunit 79013 "LT AJ Misc"
                     Seen += Format(Fld."No.") + ':' + Fld.FieldName + ';';
             until Fld.Next() = 0;
         Observer.Observe('first three', Seen);
-        Observer.Finish();
+        Observer.Expect('first three', '1:No.;2:Name;3:Search Name;');
+        Observer.Verify();
     end;
 
     local procedure ListRows(TableNumber: Integer; NameFilter: Text): Text
@@ -321,6 +369,8 @@ codeunit 79013 "LT AJ Misc"
         Result: Text;
     begin
         Fld.SetRange(TableNo, TableNumber);
+        if TableNumber = Database::"LT AJ Ts" then
+            Fld.SetFilter("No.", '<2000000005'); // the four FlowField system fields 2000000005..8 exist only from BC 28
         if NameFilter <> '' then
             Fld.SetRange(FieldName, NameFilter);
         if Fld.FindSet() then

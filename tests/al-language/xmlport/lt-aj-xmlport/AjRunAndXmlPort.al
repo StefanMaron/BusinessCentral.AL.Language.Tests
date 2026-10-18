@@ -105,7 +105,11 @@ codeunit 79002 "LT AJ This Run"
         Observer.Observe('statement', Format(Plain.GetCount()));
         Ok := Plain.Run();
         Observer.Observe('outside Run', Format(Ok) + '|' + Format(Plain.GetCount()));
-        Observer.Finish();
+        Observer.Expect('first call', 'Yes|1');
+        Observer.Expect('second call', 'Yes|2');
+        Observer.Expect('statement', '3');
+        Observer.Expect('outside Run', 'Yes|4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +121,8 @@ codeunit 79002 "LT AJ This Run"
     begin
         Ok := Empty.CallThisRun();
         Observer.Observe('empty OnRun', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('empty OnRun', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -133,7 +138,12 @@ codeunit 79002 "LT AJ This Run"
         Observer.ObserveError('error returned');
         asserterror Failing.CallThisRunAsStatement();
         Observer.ObserveError('error statement');
-        Observer.Finish();
+        Observer.Expect('error returned', 'No');
+        Observer.Expect('error returned|text', 'boom from OnRun');
+        Observer.Expect('error returned|code', 'Dialog');
+        Observer.Expect('error statement|text', 'boom from OnRun');
+        Observer.Expect('error statement|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,7 +160,9 @@ codeunit 79002 "LT AJ This Run"
         Observer.Observe('first', Format(Ok) + '|' + Format(Item.Id) + '|' + Item.Txt + '|' + Format(WithRec.GetCount()));
         Ok := WithRec.CallThisRun(Item);
         Observer.Observe('second', Format(Ok) + '|' + Format(Item.Id) + '|' + Item.Txt + '|' + Format(WithRec.GetCount()));
-        Observer.Finish();
+        Observer.Expect('first', 'Yes|101|ran 1|1');
+        Observer.Expect('second', 'Yes|201|ran 2|2');
+        Observer.Verify();
     end;
 }
 
@@ -306,7 +318,9 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('real after', Format(Real.Count()));
-        Observer.Finish();
+        Observer.Expect('log', 'afterInsert temp=0 real=0 isTemp=Yes;afterInsert temp=0 real=0 isTemp=Yes;post temp=0 real=0;');
+        Observer.Expect('real after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -324,7 +338,9 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('real after', Format(Real.Count()));
-        Observer.Finish();
+        Observer.Expect('log', 'afterInsert temp=1 real=0;afterInsert temp=2 real=0;post temp=2 real=0;');
+        Observer.Expect('real after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -342,6 +358,8 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('real after', Format(Real.Count()));
-        Observer.Finish();
+        Observer.Expect('log', 'afterInsert count=0;afterInsert count=0;post count=0;');
+        Observer.Expect('real after', '0');
+        Observer.Verify();
     end;
 }

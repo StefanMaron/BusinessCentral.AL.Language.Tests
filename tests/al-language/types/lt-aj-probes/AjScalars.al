@@ -39,7 +39,21 @@ codeunit 79000 "LT AJ Scalars"
                 Observer.Observe(T + ' value after', Format(D));
             end;
         end;
-        Observer.Finish();
+        Observer.Expect('New/Updated bool', 'No|99');
+        Observer.Expect('New/Updated statement|text', 'The value "New/Updated" can''t be evaluated into type Decimal.');
+        Observer.Expect('New/Updated statement|code', 'Evaluate');
+        Observer.Expect('New/Updated value after', '99');
+        Observer.Expect('12/5 bool', 'No|99');
+        Observer.Expect('12/5 statement|text', 'The value "12/5" can''t be evaluated into type Decimal.');
+        Observer.Expect('12/5 statement|code', 'Evaluate');
+        Observer.Expect('12/5 value after', '99');
+        Observer.Expect('abc1 bool', 'No|99');
+        Observer.Expect('abc1 statement|text', 'The value "abc1" can''t be evaluated into type Decimal.');
+        Observer.Expect('abc1 statement|code', 'Evaluate');
+        Observer.Expect('abc1 value after', '99');
+        Observer.Expect('1abc bool', 'No|99');
+        Observer.Expect('1abc statement|text', 'T');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -75,7 +89,11 @@ codeunit 79000 "LT AJ Scalars"
         Tm := 120000T;
         Ok := Evaluate(Tm, '12/19/21');
         Observer.Observe('us date text', Format(Ok) + '|' + Format(Tm, 0, 9));
-        Observer.Finish();
+        Observer.Expect('date text bool', 'Yes|20:21:12.19');
+        Observer.Expect('date text statement', 'no error|20:21:12.19');
+        Observer.Expect('date text fmt 9', 'No|12:00:00');
+        Observer.Expect('us date text', 'Yes|12:19:21');
+        Observer.Verify();
     end;
 
     local procedure ObserveJsonString(JKey: Text)
@@ -109,49 +127,70 @@ codeunit 79000 "LT AJ Scalars"
     procedure JsonValue_String_100_00_AsDecimalAndInteger()
     begin
         ObserveJsonString('a');
-        Observer.Finish();
+        Observer.Expect('a AsText', '100.00');
+        Observer.Expect('a AsDecimal', 'ok 100');
+        Observer.Expect('a AsInteger', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to System.Int32.|Conversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure JsonValue_String_4_AsDecimalAndInteger()
     begin
         ObserveJsonString('b');
-        Observer.Finish();
+        Observer.Expect('b AsText', '4');
+        Observer.Expect('b AsDecimal', 'ok 4');
+        Observer.Expect('b AsInteger', 'ok 4');
+        Observer.Verify();
     end;
 
     [Test]
     procedure JsonValue_String_Letters_AsDecimalAndInteger()
     begin
         ObserveJsonString('c');
-        Observer.Finish();
+        Observer.Expect('c AsText', 'abc');
+        Observer.Expect('c AsDecimal', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.Decimal18.|Conversion');
+        Observer.Expect('c AsInteger', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to System.Int32.|Conversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure JsonValue_String_Empty_AsDecimalAndInteger()
     begin
         ObserveJsonString('d');
-        Observer.Finish();
+        Observer.Expect('d AsText', '');
+        Observer.Expect('d AsDecimal', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.Decimal18.|Conversion');
+        Observer.Expect('d AsInteger', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to System.Int32.|Conversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure JsonValue_String_Padded_AsDecimalAndInteger()
     begin
         ObserveJsonString('e');
-        Observer.Finish();
+        Observer.Expect('e AsText', ' 7 ');
+        Observer.Expect('e AsDecimal', 'ok 7');
+        Observer.Expect('e AsInteger', 'ok 7');
+        Observer.Verify();
     end;
 
     [Test]
     procedure JsonValue_String_Exponent_AsDecimalAndInteger()
     begin
         ObserveJsonString('f');
-        Observer.Finish();
+        Observer.Expect('f AsText', '1e2');
+        Observer.Expect('f AsDecimal', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.Decimal18.|Conversion');
+        Observer.Expect('f AsInteger', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to System.Int32.|Conversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure JsonValue_String_Negative_AsDecimalAndInteger()
     begin
         ObserveJsonString('g');
-        Observer.Finish();
+        Observer.Expect('g AsText', '-3.5');
+        Observer.Expect('g AsDecimal', 'ok -3.5');
+        Observer.Expect('g AsInteger', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to System.Int32.|Conversion');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -201,21 +240,41 @@ codeunit 79000 "LT AJ Scalars"
     procedure Format_FillerCharacter_OnDateTime()
     begin
         ObserveFiller('DateTime');
-        Observer.Finish();
+        Observer.Expect('<Filler Character,0>', '');
+        Observer.Expect('<Filler Character,0><Day,4>', '0005');
+        Observer.Expect('<Day,4><Filler Character,0>', '0005');
+        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', '0500032024');
+        Observer.Expect('<Filler Character,0><Hours24,5><Minutes,5>', '0000900007');
+        Observer.Expect('<Filler Character,#><Day,4>', '0005');
+        Observer.Expect('<Filler Character,*><Hours12,4>', '0009');
+        Observer.Expect('<Filler Character,0><Standard Format,0>', '03/05/24 09:07 AM');
+        Observer.Expect('<Day,4><Filler Character,0><Month,4>', '00050003');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Format_FillerCharacter_OnDate()
     begin
         ObserveFiller('Date');
-        Observer.Finish();
+        Observer.Expect('<Filler Character,0>', '');
+        Observer.Expect('<Filler Character,0><Day,4>', '0005');
+        Observer.Expect('<Day,4><Filler Character,0>', '0005');
+        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', '0500032024');
+        Observer.Expect('<Filler Character,0><Hours24,5><Minutes,5>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Hours24,5><Minutes,5>|InvalidFormatString');
+        Observer.Expect('<Filler Character,#><Day,4>', '0005');
+        Observer.Expect('<Filler Character,*><Hours12,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Characte');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Format_FillerCharacter_OnTime()
     begin
         ObserveFiller('Time');
-        Observer.Finish();
+        Observer.Expect('<Filler Character,0>', '');
+        Observer.Expect('<Filler Character,0><Day,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,4>|InvalidFormatString');
+        Observer.Expect('<Day,4><Filler Character,0>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Day,4><Filler Character,0>|InvalidFormatString');
+        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,2><Mon');
+        Observer.Verify();
     end;
 
     local procedure TryFormat(V: Variant; F: Text): Text
@@ -267,41 +326,55 @@ codeunit 79000 "LT AJ Scalars"
     procedure Random_Decimal_0_4()
     begin
         ObserveRandom(0.4);
-        Observer.Finish();
+        Observer.Expect('Random(0.4) at 1|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 0.4 to System.Int32.');
+        Observer.Expect('Random(0.4) at 1|code', 'ConversionCast');
+        Observer.Expect('Random(0.4) min|max', '1000|-1000');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Random_Decimal_1_0()
     begin
         ObserveRandom(1.0);
-        Observer.Finish();
+        Observer.Expect('Random(1) min|max', '1|1');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Random_Decimal_1_5()
     begin
         ObserveRandom(1.5);
-        Observer.Finish();
+        Observer.Expect('Random(1.5) at 1|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 1.5 to System.Int32.');
+        Observer.Expect('Random(1.5) at 1|code', 'ConversionCast');
+        Observer.Expect('Random(1.5) min|max', '1000|-1000');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Random_Decimal_2_5()
     begin
         ObserveRandom(2.5);
-        Observer.Finish();
+        Observer.Expect('Random(2.5) at 1|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.');
+        Observer.Expect('Random(2.5) at 1|code', 'ConversionCast');
+        Observer.Expect('Random(2.5) min|max', '1000|-1000');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Random_Decimal_2_9()
     begin
         ObserveRandom(2.9);
-        Observer.Finish();
+        Observer.Expect('Random(2.9) at 1|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.9 to System.Int32.');
+        Observer.Expect('Random(2.9) at 1|code', 'ConversionCast');
+        Observer.Expect('Random(2.9) min|max', '1000|-1000');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Random_Decimal_3_0()
     begin
         ObserveRandom(3.0);
-        Observer.Finish();
+        Observer.Expect('Random(3) min|max', '1|3');
+        Observer.Verify();
     end;
 }
