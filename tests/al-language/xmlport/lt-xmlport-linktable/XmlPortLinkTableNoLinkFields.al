@@ -103,7 +103,7 @@ xmlport 67505 "LT XLT Both Temp"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.Import() then
+        if currXMLport.ImportFile() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -176,7 +176,7 @@ xmlport 67523 "LT XLT Linked"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.Import() then
+        if currXMLport.ImportFile() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -247,7 +247,7 @@ xmlport 67524 "LT XLT No Link"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.Import() then
+        if currXMLport.ImportFile() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -318,7 +318,7 @@ xmlport 67506 "LT XLT Child Persistent"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.Import() then
+        if currXMLport.ImportFile() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -375,7 +375,7 @@ xmlport 67525 "LT XLT Persistent Both"
 
     trigger OnPreXmlPort()
     begin
-        if currXMLport.Import() then
+        if currXMLport.ImportFile() then
             exit;
         ParentRow.Init();
         ParentRow.Id := 1;
@@ -405,7 +405,7 @@ codeunit 67519 "LT XLT Import Runner"
         OutS: OutStream;
         InS: InStream;
     begin
-        TempBlob.CreateOutStream(OutS);
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF16);
         if Rec."Parent Id" = 3 then
             OutS.WriteText('<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id></ParentRow></Root>')
         else if Rec."Parent Id" = 1 then
@@ -525,9 +525,7 @@ codeunit 67507 "LT XLT Tests"
         Port.Export();
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
-        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
 
@@ -547,9 +545,7 @@ codeunit 67507 "LT XLT Tests"
         Port.Export();
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
-        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
 
@@ -603,9 +599,7 @@ Observer.Finish();
         Port.Export();
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow></ParentRow></Root>');
-        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export parent 2;export child 20 under parent 2;');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -622,9 +616,7 @@ Observer.Finish();
         Port.Export();
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
-        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]

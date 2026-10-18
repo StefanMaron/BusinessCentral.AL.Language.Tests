@@ -78,7 +78,9 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Content(Observer, 2000000168);
-        Observer.Finish();
+        Observer.Expect('columns', '3:Object Type:Option:4:Normal;9:Service Name:Text:250:Normal;6:Object ID:Integer:4:Normal;12:Published:Boolean:4:Normal;13:ExcludeFieldsOutsideRepeater:Boolean:4:Normal;14:ExcludeNonEditableFlowFields:Boolean:4:Normal;');
+        Observer.Expect('count', '64');
+        Observer.Verify();
     end;
 
     [Test]
@@ -87,7 +89,22 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Rows(Observer, 2000000168, 1, 15);
-        Observer.Finish();
+        Observer.Expect('row1', '3=Codeunit;9=WorkflowActionResponse;6=1544;12=Yes;13=No;14=No;');
+        Observer.Expect('row2', '3=Page;9=Chart of Accounts;6=16;12=Yes;13=No;14=No;');
+        Observer.Expect('row3', '3=Page;9=ExcelTemplateAgedAccountsPayable;6=5500;12=Yes;13=No;14=No;');
+        Observer.Expect('row4', '3=Page;9=ExcelTemplateAgedAccountsReceivable;6=5499;12=Yes;13=No;14=No;');
+        Observer.Expect('row5', '3=Page;9=ExcelTemplateBalanceSheet;6=5501;12=Yes;13=No;14=No;');
+        Observer.Expect('row6', '3=Page;9=ExcelTemplateCashFlowStatement;6=5493;12=Yes;13=No;14=No;');
+        Observer.Expect('row7', '3=Page;9=ExcelTemplateIncomeStatement;6=5503;12=Yes;13=No;14=No;');
+        Observer.Expect('row8', '3=Page;9=ExcelTemplateRetainedEarnings;6=5497;12=Yes;13=No;14=No;');
+        Observer.Expect('row9', '3=Page;9=ExcelTemplateTrialBalance;6=5502;12=Yes;13=No;14=No;');
+        Observer.Expect('row10', '3=Page;9=ExcelTemplateViewCompanyInformation;6=1320;12=Yes;13=No;14=No;');
+        Observer.Expect('row11', '3=Page;9=Job List;6=89;12=Yes;13=No;14=No;');
+        Observer.Expect('row12', '3=Page;9=Job Planning Lines;6=1007;12=Yes;13=No;14=No;');
+        Observer.Expect('row13', '3=Page;9=Job Task Lines;6=1002;12=Yes;13=No;14=No;');
+        Observer.Expect('row14', '3=Page;9=Power BI Aged Acc. Payable;6=6307;12=Yes;13=No;14=No;');
+        Observer.Expect('row15', '3=Page;9=Power BI Aged Acc. Receivable;6=6308;12=Yes;13=No;14=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +113,22 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Rows(Observer, 2000000168, 16, 30);
-        Observer.Finish();
+        Observer.Expect('row16', '3=Page;9=Power BI Aged Inventory Chart;6=6309;12=Yes;13=No;14=No;');
+        Observer.Expect('row17', '3=Page;9=Power BI Job Act. v. Budg. Cost;6=6312;12=Yes;13=No;14=No;');
+        Observer.Expect('row18', '3=Page;9=Power BI Job Act. v. Budg. Price;6=6310;12=Yes;13=No;14=No;');
+        Observer.Expect('row19', '3=Page;9=Power BI Job Profitability;6=6311;12=Yes;13=No;14=No;');
+        Observer.Expect('row20', '3=Page;9=Power BI Sales Pipeline;6=6314;12=Yes;13=No;14=No;');
+        Observer.Expect('row21', '3=Page;9=Power BI Top 5 Opportunities;6=6315;12=Yes;13=No;14=No;');
+        Observer.Expect('row22', '3=Page;9=Power BI WorkDate Calc.;6=6313;12=Yes;13=No;14=No;');
+        Observer.Expect('row23', '3=Page;9=purchaseDocumentLines;6=6405;12=Yes;13=No;14=No;');
+        Observer.Expect('row24', '3=Page;9=purchaseDocuments;6=6404;12=Yes;13=No;14=No;');
+        Observer.Expect('row25', '3=Page;9=salesDocumentLines;6=6403;12=Yes;13=No;14=No;');
+        Observer.Expect('row26', '3=Page;9=salesDocuments;6=6402;12=Yes;13=No;14=No;');
+        Observer.Expect('row27', '3=Page;9=workflowCustomers;6=6408;12=Yes;13=No;14=No;');
+        Observer.Expect('row28', '3=Page;9=workflowGenJournalBatches;6=6406;12=Yes;13=No;14=No;');
+        Observer.Expect('row29', '3=Page;9=workflowGenJournalLines;6=6407;12=Yes;13=No;14=No;');
+        Observer.Expect('row30', '3=Page;9=workflowItems;6=6409;12=Yes;13=No;14=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +137,22 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Rows(Observer, 2000000168, 31, 45);
-        Observer.Finish();
+        Observer.Expect('row31', '3=Page;9=workflowPurchaseDocumentLines;6=6405;12=Yes;13=No;14=No;');
+        Observer.Expect('row32', '3=Page;9=workflowPurchaseDocuments;6=6404;12=Yes;13=No;14=No;');
+        Observer.Expect('row33', '3=Page;9=workflowSalesDocumentLines;6=6403;12=Yes;13=No;14=No;');
+        Observer.Expect('row34', '3=Page;9=workflowSalesDocuments;6=6402;12=Yes;13=No;14=No;');
+        Observer.Expect('row35', '3=Page;9=workflowVendors;6=6410;12=Yes;13=No;14=No;');
+        Observer.Expect('row36', '3=Page;9=workflowWebhookSubscriptions;6=831;12=Yes;13=No;14=No;');
+        Observer.Expect('row37', '3=Query;9=BankAccountLedgerEntries;6=264;12=Yes;13=No;14=No;');
+        Observer.Expect('row38', '3=Query;9=Cust.LedgerEntries;6=262;12=Yes;13=No;14=No;');
+        Observer.Expect('row39', '3=Query;9=DimensionSetEntries;6=260;12=Yes;13=No;14=No;');
+        Observer.Expect('row40', '3=Query;9=FALedgerEntries;6=267;12=Yes;13=No;14=No;');
+        Observer.Expect('row41', '3=Query;9=G/LBudgetEntries;6=270;12=Yes;13=No;14=No;');
+        Observer.Expect('row42', '3=Query;9=G/LEntries;6=261;12=Yes;13=No;14=No;');
+        Observer.Expect('row43', '3=Query;9=ItemLedgerEntries;6=265;12=Yes;13=No;14=No;');
+        Observer.Expect('row44', '3=Query;9=JobLedgerEntries;6=268;12=Yes;13=No;14=No;');
+        Observer.Expect('row45', '3=Query;9=Power BI Cust. Item Ledg. Ent.;6=61;12=Yes;13=No;14=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +161,22 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Rows(Observer, 2000000168, 46, 60);
-        Observer.Finish();
+        Observer.Expect('row46', '3=Query;9=Power BI Cust. Ledger Entries;6=62;12=Yes;13=No;14=No;');
+        Observer.Expect('row47', '3=Query;9=Power BI Customer List;6=50;12=Yes;13=No;14=No;');
+        Observer.Expect('row48', '3=Query;9=Power BI GL Amount List;6=53;12=Yes;13=No;14=No;');
+        Observer.Expect('row49', '3=Query;9=Power BI GL BudgetedAmount;6=58;12=Yes;13=No;14=No;');
+        Observer.Expect('row50', '3=Query;9=Power BI Item Purchase List;6=52;12=Yes;13=No;14=No;');
+        Observer.Expect('row51', '3=Query;9=Power BI Item Sales List;6=57;12=Yes;13=No;14=No;');
+        Observer.Expect('row52', '3=Query;9=Power BI Jobs List;6=54;12=Yes;13=No;14=No;');
+        Observer.Expect('row53', '3=Query;9=Power BI Purchase Hdr. Vendor;6=64;12=Yes;13=No;14=No;');
+        Observer.Expect('row54', '3=Query;9=Power BI Purchase List;6=56;12=Yes;13=No;14=No;');
+        Observer.Expect('row55', '3=Query;9=Power BI Sales Hdr. Cust.;6=60;12=Yes;13=No;14=No;');
+        Observer.Expect('row56', '3=Query;9=Power BI Sales List;6=55;12=Yes;13=No;14=No;');
+        Observer.Expect('row57', '3=Query;9=Power BI Top Cust. Overview;6=59;12=Yes;13=No;14=No;');
+        Observer.Expect('row58', '3=Query;9=Power BI Vend. Item Ledg. Ent.;6=65;12=Yes;13=No;14=No;');
+        Observer.Expect('row59', '3=Query;9=Power BI Vendor Ledger Entries;6=63;12=Yes;13=No;14=No;');
+        Observer.Expect('row60', '3=Query;9=Power BI Vendor List;6=51;12=Yes;13=No;14=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +185,11 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Rows(Observer, 2000000168, 61, 64);
-        Observer.Finish();
+        Observer.Expect('row61', '3=Query;9=Res.LedgerEntries;6=269;12=Yes;13=No;14=No;');
+        Observer.Expect('row62', '3=Query;9=SegmentLines;6=106;12=Yes;13=No;14=No;');
+        Observer.Expect('row63', '3=Query;9=ValueEntries;6=266;12=Yes;13=No;14=No;');
+        Observer.Expect('row64', '3=Query;9=VendorLedgerEntries;6=263;12=Yes;13=No;14=No;');
+        Observer.Verify();
     end;
 }
 
