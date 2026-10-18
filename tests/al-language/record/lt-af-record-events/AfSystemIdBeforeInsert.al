@@ -78,9 +78,8 @@ codeunit 78310 "LT AF SystemId BeforeInsert"
     var
         Subscriber: Codeunit "LT AF Sys Subscriber";
 
-    local procedure Run(Name: Text; Mode: Integer)
+    local procedure Run(var Observer: Codeunit "Probe Observer"; Name: Text; Mode: Integer)
     var
-        Observer: Codeunit "Probe Observer";
         Row: Record "LT AF Sys";
         Stored: Record "LT AF Sys";
         Wanted: Guid;
@@ -106,24 +105,47 @@ codeunit 78310 "LT AF SystemId BeforeInsert"
         Observer.Observe(Name + '|caller keeps', Format(Row.SystemId = Wanted));
         Observer.Observe(Name + '|stored', Format(Stored.Get(1)));
         Observer.Observe(Name + '|stored keeps', Format(Stored.SystemId = Wanted));
-        Observer.Finish();
     end;
 
     [Test]
     procedure AF_SystemId_In_OnBeforeInsert_Insert()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Run('insert()', 0);
+        Run(Observer, 'insert()', 0);
+        Observer.Expect('insert()|insert', 'Yes');
+        Observer.Expect('insert()|subscriber', 'null before=No; set=Yes; after insert event=Yes; ');
+        Observer.Expect('insert()|caller keeps', 'Yes');
+        Observer.Expect('insert()|stored', 'Yes');
+        Observer.Expect('insert()|stored keeps', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_SystemId_In_OnBeforeInsert_InsertTrue()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Run('insert(true)', 1);
+        Run(Observer, 'insert(true)', 1);
+        Observer.Expect('insert(true)|insert', 'Yes');
+        Observer.Expect('insert(true)|subscriber', 'null before=No; set=Yes; after insert event=Yes; ');
+        Observer.Expect('insert(true)|caller keeps', 'Yes');
+        Observer.Expect('insert(true)|stored', 'Yes');
+        Observer.Expect('insert(true)|stored keeps', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_SystemId_In_OnBeforeInsert_InsertWithSystemId()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Run('insert(false, true)', 2);
+        Run(Observer, 'insert(false, true)', 2);
+        Observer.Expect('insert(false, true)|insert', 'Yes');
+        Observer.Expect('insert(false, true)|subscriber', 'null before=No; set=Yes; after insert event=Yes; ');
+        Observer.Expect('insert(false, true)|caller keeps', 'Yes');
+        Observer.Expect('insert(false, true)|stored', 'Yes');
+        Observer.Expect('insert(false, true)|stored keeps', 'Yes');
+        Observer.Verify();
     end;
 }

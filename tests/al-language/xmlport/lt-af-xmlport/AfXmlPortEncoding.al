@@ -80,18 +80,28 @@ codeunit 78313 "LT AF XmlPort Encoding"
         exit(Result);
     end;
 
-    local procedure Decl(var TempBlob: Codeunit "Temp Blob"; Enc: TextEncoding): Text
+    [TryFunction]
+    local procedure TryDecode(var TempBlob: Codeunit "Temp Blob"; Enc: TextEncoding; var Result: Text)
     var
         InS: InStream;
         Line: Text;
-        Result: Text;
     begin
+        Result := '';
         TempBlob.CreateInStream(InS, Enc);
         while not InS.EOS() do begin
             InS.ReadText(Line);
             Result += Line;
         end;
-        exit(Result);
+    end;
+
+    local procedure Decl(var TempBlob: Codeunit "Temp Blob"; Enc: TextEncoding): Text
+    var
+        Result: Text;
+    begin
+        ClearLastError();
+        if TryDecode(TempBlob, Enc, Result) then
+            exit(Result);
+        exit('unreadable: ' + GetLastErrorText());
     end;
 
     [TryFunction]
@@ -154,11 +164,14 @@ codeunit 78313 "LT AF XmlPort Encoding"
         Row: Record "LT AF Row";
         Result: Text;
         i: Integer;
+        Code: Integer;
     begin
         if not Row.Get(Id) then
             exit('absent');
-        for i := 1 to StrLen(Row.Name) do
-            Result += Format(Row.Name[i]) + ',';
+        for i := 1 to StrLen(Row.Name) do begin
+            Code := Row.Name[i];
+            Result += Format(Code) + ',';
+        end;
         exit(Result);
     end;
 
@@ -239,5 +252,12 @@ codeunit 78313 "LT AF XmlPort Encoding"
     begin
         Seed();
         ImportCase('xp utf8, doc utf8 declared utf-16', false, TextEncoding::UTF8, 'utf-16', 15);
+    end;
+
+    [Test]
+    procedure AF_Encoding_Import_Utf8Property_Utf16DocDeclaredUtf8()
+    begin
+        Seed();
+        ImportCase('xp utf8, doc utf16 declared utf-8', false, TextEncoding::UTF16, 'utf-8', 16);
     end;
 }

@@ -30,9 +30,8 @@ codeunit 99050 "LT AF MailAddress"
         Addr := Addr.MailAddress(Text, DisplayName);
     end;
 
-    local procedure Describe(Name: Text; Input: Text)
+    local procedure Describe(var Observer: Codeunit "Probe Observer"; Name: Text; Input: Text)
     var
-        Observer: Codeunit "Probe Observer";
         Addr: DotNet LtAfMailAddress;
     begin
         ClearLastError();
@@ -44,37 +43,67 @@ codeunit 99050 "LT AF MailAddress"
             Observer.Observe(Name + '|tostring', Addr.ToString());
         end else
             Observer.ObserveError(Name);
-        Observer.Finish();
     end;
 
     [Test]
     procedure AF_MailAddress_Valid()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Describe('valid', 'john.doe@example.com');
+        Describe(Observer, 'valid', 'john.doe@example.com');
+        Observer.Expect('valid|address', 'john.doe@example.com');
+        Observer.Expect('valid|displayname', '');
+        Observer.Expect('valid|user', 'john.doe');
+        Observer.Expect('valid|host', 'example.com');
+        Observer.Expect('valid|tostring', 'john.doe@example.com');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_MailAddress_WithDisplayName()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Describe('display name', 'John Doe <john.doe@example.com>');
+        Describe(Observer, 'display name', 'John Doe <john.doe@example.com>');
+        Observer.Expect('display name|address', 'john.doe@example.com');
+        Observer.Expect('display name|displayname', 'John Doe');
+        Observer.Expect('display name|user', 'john.doe');
+        Observer.Expect('display name|host', 'example.com');
+        Observer.Expect('display name|tostring', '"John Doe" <john.doe@example.com>');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_MailAddress_Invalid_NoAt()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Describe('invalid no at', 'not-an-address');
+        Describe(Observer, 'invalid no at', 'not-an-address');
+        Observer.Expect('invalid no at|text', 'A call to System.Net.Mail.MailAddress failed with this message: The specified string is not in the form required for an e-mail address.');
+        Observer.Expect('invalid no at|code', 'DotNetInvoke:Format');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_MailAddress_Invalid_Empty()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Describe('invalid empty', '');
+        Describe(Observer, 'invalid empty', '');
+        Observer.Expect('invalid empty|text', 'A call to System.Net.Mail.MailAddress failed with this message: The value cannot be an empty string. (Parameter ''address'')');
+        Observer.Expect('invalid empty|code', 'DotNetInvoke:Argument');
+        Observer.Verify();
     end;
 
     [Test]
     procedure AF_MailAddress_Invalid_TwoAt()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Describe('invalid two at', 'a@b@c.com');
+        Describe(Observer, 'invalid two at', 'a@b@c.com');
+        Observer.Expect('invalid two at|text', 'A call to System.Net.Mail.MailAddress failed with this message: An invalid character was found in the mail header: ''@''.');
+        Observer.Expect('invalid two at|code', 'DotNetInvoke:Format');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,6 +120,10 @@ codeunit 99050 "LT AF MailAddress"
             Observer.Observe('two args|host', Addr.Host);
         end else
             Observer.ObserveError('two args');
-        Observer.Finish();
+        Observer.Expect('two args|address', 'jane@example.org');
+        Observer.Expect('two args|displayname', 'Jane');
+        Observer.Expect('two args|user', 'jane');
+        Observer.Expect('two args|host', 'example.org');
+        Observer.Verify();
     end;
 }

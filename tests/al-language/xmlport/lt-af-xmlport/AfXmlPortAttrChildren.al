@@ -24,6 +24,7 @@ xmlport 78302 "LT AF XP Attr"
 {
     Direction = Both;
     Format = Xml;
+    Encoding = UTF8;
     UseRequestPage = false;
 
     schema
@@ -57,6 +58,7 @@ xmlport 78303 "LT AF XP Child Text"
 {
     Direction = Both;
     Format = Xml;
+    Encoding = UTF8;
     UseRequestPage = false;
 
     schema
@@ -91,6 +93,7 @@ xmlport 78304 "LT AF XP Child Field"
 {
     Direction = Both;
     Format = Xml;
+    Encoding = UTF8;
     UseRequestPage = false;
 
     schema

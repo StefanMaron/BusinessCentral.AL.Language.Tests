@@ -102,7 +102,10 @@ codeunit 78307 "LT AF Modify LoadFields"
         Row.Modify(true);
         Observer.Observe('subscribers modify(true)', Subscribers.Take());
         Observer.Observe('caller after modify(true)', Loaded(Row));
-        Observer.Finish();
+        Observer.Expect('after get', 'A=Yes B=No C=No');
+        Observer.Expect('subscribers modify(true)', 'before rec A=Yes B=Yes C=Yes AB=Yes; before xrec A=Yes B=Yes C=Yes AB=Yes; after rec A=Yes B=Yes C=Yes AB=Yes; after xrec A=Yes B=Yes C=Yes AB=Yes; ');
+        Observer.Expect('caller after modify(true)', 'A=Yes B=Yes C=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,7 +121,9 @@ codeunit 78307 "LT AF Modify LoadFields"
         Row.Modify(false);
         Observer.Observe('subscribers modify(false)', Subscribers.Take());
         Observer.Observe('caller after modify(false)', Loaded(Row));
-        Observer.Finish();
+        Observer.Expect('subscribers modify(false)', 'before rec A=Yes B=Yes C=Yes AB=Yes; before xrec A=Yes B=Yes C=Yes AB=Yes; after rec A=Yes B=Yes C=Yes AB=Yes; after xrec A=Yes B=Yes C=Yes AB=Yes; ');
+        Observer.Expect('caller after modify(false)', 'A=Yes B=Yes C=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +139,9 @@ codeunit 78307 "LT AF Modify LoadFields"
         Row.Modify(true);
         Observer.Observe('subscribers modify(true) A,B', Subscribers.Take());
         Observer.Observe('caller after modify(true) A,B', Loaded(Row));
-        Observer.Finish();
+        Observer.Expect('subscribers modify(true) A,B', 'before rec A=Yes B=Yes C=Yes AB=Yes; before xrec A=Yes B=Yes C=Yes AB=Yes; after rec A=Yes B=Yes C=Yes AB=Yes; after xrec A=Yes B=Yes C=Yes AB=Yes; ');
+        Observer.Expect('caller after modify(true) A,B', 'A=Yes B=Yes C=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,6 +156,8 @@ codeunit 78307 "LT AF Modify LoadFields"
         Row.Modify(true);
         Observer.Observe('subscribers modify(true) full', Subscribers.Take());
         Observer.Observe('caller after modify(true) full', Loaded(Row));
-        Observer.Finish();
+        Observer.Expect('subscribers modify(true) full', 'before rec A=Yes B=Yes C=Yes AB=Yes; before xrec A=Yes B=Yes C=Yes AB=Yes; after rec A=Yes B=Yes C=Yes AB=Yes; after xrec A=Yes B=Yes C=Yes AB=Yes; ');
+        Observer.Expect('caller after modify(true) full', 'A=Yes B=Yes C=Yes');
+        Observer.Verify();
     end;
 }

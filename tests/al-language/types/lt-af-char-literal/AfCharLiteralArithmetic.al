@@ -41,6 +41,21 @@ codeunit 78300 "LT AF Char Literal Arithmetic"
         Observer.Observe('C + two-char text', Format(Ch + 'AB'));
         Observer.Observe('C + empty text', Format(Ch + ''));
         Observer.Observe('two-char text + C', Format('AB' + Ch));
-        Observer.Finish();
+        Observer.Expect('C - A', '2');
+        Observer.Expect('A - C', '-2');
+        Observer.Expect('C + A', '132');
+        Observer.Expect('A + C', '132');
+        Observer.Expect('C - a', '-30');
+        Observer.Expect('C as integer', '67');
+        Observer.Expect('format(C - A)', '2');
+        Observer.Expect('format(A - C)', '-2');
+        Observer.Expect('format(C + A)', '132');
+        Observer.Expect('format(A + C)', '132');
+        Observer.Expect('C - A + 1', '3');
+        Observer.Expect('C - A = 2', 'Yes');
+        Observer.Expect('C + two-char text', 'CAB');
+        Observer.Expect('C + empty text', 'C');
+        Observer.Expect('two-char text + C', 'ABC');
+        Observer.Verify();
     end;
 }
