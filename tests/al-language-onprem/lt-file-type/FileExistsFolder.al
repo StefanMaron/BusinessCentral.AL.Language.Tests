@@ -28,6 +28,12 @@ codeunit 61285 "LT Q File Exists Folder"
         Observer.Observe('file_leading_blank', Format(File.Exists(' ' + P)));
         File.Erase(P);
         Observer.Observe('file_erased', Format(File.Exists(P)));
-        Observer.Finish();
+        Observer.Expect('folder', 'No');
+        Observer.Expect('folder_trimmed', 'No');
+        Observer.Expect('blank', 'No');
+        Observer.Expect('file', 'Yes');
+        Observer.Expect('file_leading_blank', 'No');
+        Observer.Expect('file_erased', 'No');
+        Observer.Verify();
     end;
 }

@@ -299,7 +299,19 @@ codeunit 61284 "LT Q File Write Oth"
         V := '';
         Do_Code(Observer, 'bin_empty', V, false);
         Do_Code(Observer, 'txt_empty', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_abc_w', 'ok');
+        Observer.Expect('bin_abc_pos', '12/12');
+        Observer.Expect('bin_abc_bytes', 'FF4142433132330000000000');
+        Observer.Expect('txt_abc_w', 'ok');
+        Observer.Expect('txt_abc_pos', '8/8');
+        Observer.Expect('txt_abc_bytes', '4142433132330D0A');
+        Observer.Expect('bin_empty_w', 'ok');
+        Observer.Expect('bin_empty_pos', '12/12');
+        Observer.Expect('bin_empty_bytes', '000000000000000000000000');
+        Observer.Expect('txt_empty_w', 'ok');
+        Observer.Expect('txt_empty_pos', '2/2');
+        Observer.Expect('txt_empty_bytes', '0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -316,7 +328,19 @@ codeunit 61284 "LT Q File Write Oth"
         V := 0D;
         Do_Date(Observer, 'bin_blank', V, false);
         Do_Date(Observer, 'txt_blank', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_d_w', 'ok');
+        Observer.Expect('bin_d_pos', '4/4');
+        Observer.Expect('bin_d_bytes', 'C9861600');
+        Observer.Expect('txt_d_w', 'ok');
+        Observer.Expect('txt_d_pos', '10/10');
+        Observer.Expect('txt_d_bytes', '31322F32342F32300D0A');
+        Observer.Expect('bin_blank_w', 'ok');
+        Observer.Expect('bin_blank_pos', '4/4');
+        Observer.Expect('bin_blank_bytes', '00000000');
+        Observer.Expect('txt_blank_w', 'ok');
+        Observer.Expect('txt_blank_pos', '2/2');
+        Observer.Expect('txt_blank_bytes', '0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,7 +353,13 @@ codeunit 61284 "LT Q File Write Oth"
         Evaluate(V, '<1M+CM>');
         Do_DateFormula(Observer, 'bin_f', V, false);
         Do_DateFormula(Observer, 'txt_f', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_f_w', 'ok');
+        Observer.Expect('bin_f_pos', '32/32');
+        Observer.Expect('bin_f_bytes', '31052B0105000000000000000000000000000000000000000000000000000000');
+        Observer.Expect('txt_f_w', 'ok');
+        Observer.Expect('txt_f_pos', '7/7');
+        Observer.Expect('txt_f_bytes', '314D2B434D0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -346,7 +376,19 @@ codeunit 61284 "LT Q File Write Oth"
         V := 0DT;
         Do_DateTime(Observer, 'bin_blank', V, false);
         Do_DateTime(Observer, 'txt_blank', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_dt_w', 'ok');
+        Observer.Expect('bin_dt_pos', '8/8');
+        Observer.Expect('bin_dt_bytes', 'D9B004CD013A0000');
+        Observer.Expect('txt_dt_w', 'ok');
+        Observer.Expect('txt_dt_pos', '19/19');
+        Observer.Expect('txt_dt_bytes', '30322F30312F32312030323A333020504D0D0A');
+        Observer.Expect('bin_blank_w', 'ok');
+        Observer.Expect('bin_blank_pos', '8/8');
+        Observer.Expect('bin_blank_bytes', '0000000000000000');
+        Observer.Expect('txt_blank_w', 'ok');
+        Observer.Expect('txt_blank_pos', '2/2');
+        Observer.Expect('txt_blank_bytes', '0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -363,7 +405,19 @@ codeunit 61284 "LT Q File Write Oth"
         V := 0;
         Do_Duration(Observer, 'bin_zero', V, false);
         Do_Duration(Observer, 'txt_zero', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_d_w', 'ok');
+        Observer.Expect('bin_d_pos', '8/8');
+        Observer.Expect('bin_d_bytes', 'C9385E0500000000');
+        Observer.Expect('txt_d_w', 'ok');
+        Observer.Expect('txt_d_pos', '46/46');
+        Observer.Expect('txt_d_bytes', '3120646179203120686F75722031206D696E7574652031207365636F6E642031206D696C6C697365636F6E640D0A');
+        Observer.Expect('bin_zero_w', 'ok');
+        Observer.Expect('bin_zero_pos', '8/8');
+        Observer.Expect('bin_zero_bytes', '0000000000000000');
+        Observer.Expect('txt_zero_w', 'ok');
+        Observer.Expect('txt_zero_pos', '2/2');
+        Observer.Expect('txt_zero_bytes', '0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -380,7 +434,21 @@ codeunit 61284 "LT Q File Write Oth"
         V := '';
         Do_Text(Observer, 'bin_empty', V, false);
         Do_Text(Observer, 'txt_empty', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_plain_w|text', 'WRITE is not supported for Text without a maximum length.');
+        Observer.Expect('bin_plain_w|code', 'StreamWideTextMaxLength');
+        Observer.Expect('bin_plain_pos', '0/0');
+        Observer.Expect('bin_plain_bytes', '');
+        Observer.Expect('txt_plain_w', 'ok');
+        Observer.Expect('txt_plain_pos', '12/12');
+        Observer.Expect('txt_plain_bytes', '706C61696E20746578740D0A');
+        Observer.Expect('bin_empty_w|text', 'WRITE is not supported for Text without a maximum length.');
+        Observer.Expect('bin_empty_w|code', 'StreamWideTextMaxLength');
+        Observer.Expect('bin_empty_pos', '0/0');
+        Observer.Expect('bin_empty_bytes', '');
+        Observer.Expect('txt_empty_w', 'ok');
+        Observer.Expect('txt_empty_pos', '2/2');
+        Observer.Expect('txt_empty_bytes', '0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -397,7 +465,19 @@ codeunit 61284 "LT Q File Write Oth"
         V := 0T;
         Do_Time(Observer, 'bin_blank', V, false);
         Do_Time(Observer, 'txt_blank', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_t_w', 'ok');
+        Observer.Expect('bin_t_pos', '4/4');
+        Observer.Expect('bin_t_bytes', '19582605');
+        Observer.Expect('txt_t_w', 'ok');
+        Observer.Expect('txt_t_pos', '13/13');
+        Observer.Expect('txt_t_bytes', '31313A35393A353920504D0D0A');
+        Observer.Expect('bin_blank_w', 'ok');
+        Observer.Expect('bin_blank_pos', '4/4');
+        Observer.Expect('bin_blank_bytes', '00000000');
+        Observer.Expect('txt_blank_w', 'ok');
+        Observer.Expect('txt_blank_pos', '2/2');
+        Observer.Expect('txt_blank_bytes', '0D0A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -410,7 +490,15 @@ codeunit 61284 "LT Q File Write Oth"
         V.AddText('bigtext value');
         Do_BigText(Observer, 'bin_bt', V, false);
         Do_BigText(Observer, 'txt_bt', V, true);
-        Observer.Finish();
+        Observer.Expect('bin_bt_w|text', 'ALStream.ALWrite, invalid stream mode: FileBinary');
+        Observer.Expect('bin_bt_w|code', 'InvalidStreamMode');
+        Observer.Expect('bin_bt_pos', '0/0');
+        Observer.Expect('bin_bt_bytes', '');
+        Observer.Expect('txt_bt_w|text', 'ALStream.ALWrite, invalid stream mode: FileText');
+        Observer.Expect('txt_bt_w|code', 'InvalidStreamMode');
+        Observer.Expect('txt_bt_pos', '0/0');
+        Observer.Expect('txt_bt_bytes', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -455,7 +543,13 @@ codeunit 61284 "LT Q File Write Oth"
             Observer.ObserveError('txt_bytes');
         F.Close();
         Cleanup(P);
-        Observer.Finish();
+        Observer.Expect('bin_w', 'ok');
+        Observer.Expect('bin_pos', '11/11');
+        Observer.Expect('bin_bytes', '6C6162656C207465787400');
+        Observer.Expect('txt_w', 'ok');
+        Observer.Expect('txt_pos', '12/12');
+        Observer.Expect('txt_bytes', '6C6162656C20746578740D0A');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -517,6 +611,20 @@ codeunit 61284 "LT Q File Write Oth"
     begin
         Do_Record(Observer, 'bin', false);
         Do_Record(Observer, 'txt', true);
-        Observer.Finish();
+        Observer.Expect('bin_rec_w|text', 'ALStream.ALWrite, invalid stream mode: FileBinary');
+        Observer.Expect('bin_rec_w|code', 'InvalidStreamMode');
+        Observer.Expect('bin_rec_pos', '0/0');
+        Observer.Expect('bin_rec_bytes', '');
+        Observer.Expect('bin_rid_w|text', 'ALStream.ALWrite, invalid stream mode: FileBinary');
+        Observer.Expect('bin_rid_w|code', 'InvalidStreamMode');
+        Observer.Expect('bin_rid_pos', '0/0');
+        Observer.Expect('bin_rid_bytes', '');
+        Observer.Expect('txt_rec_w', 'ok');
+        Observer.Expect('txt_rec_pos', '14/14');
+        Observer.Expect('txt_rec_bytes', '41310931322E35096E6F74650D0A');
+        Observer.Expect('txt_rid_w', 'ok');
+        Observer.Expect('txt_rid_pos', '22/22');
+        Observer.Expect('txt_rid_bytes', '4C5420503131302046696C65205265633A2041310D0A');
+        Observer.Verify();
     end;
 }

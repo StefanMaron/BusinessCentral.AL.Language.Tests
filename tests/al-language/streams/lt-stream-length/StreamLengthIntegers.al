@@ -218,7 +218,23 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Integer(Observer, 'w4', V, 4, 4);
         V := 258;
         Do_Integer(Observer, 'w2', V, 2, 2);
-        Observer.Finish();
+        Observer.Expect('n258_wret', '4');
+        Observer.Expect('n258_bytes', '4:02010000');
+        Observer.Expect('n258_rd', '4/258/Yes/5');
+        Observer.Expect('n258_rd2', '0/0/Yes/5');
+        Observer.Expect('w4_wret', '4');
+        Observer.Expect('w4_bytes', '4:02010000');
+        Observer.Expect('w4_rd', '4/258/Yes/5');
+        Observer.Expect('w4_rd2', '0/0/Yes/5');
+        Observer.Expect('w2_w|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('w2_w|code', 'InvalidStreamLength');
+        Observer.Expect('w2_bytes', '0:');
+        Observer.Expect('w2_r|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('w2_r|code', 'InvalidStreamLength');
+        Observer.Expect('w2_rval', '0/Yes/1');
+        Observer.Expect('w2_r2|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('w2_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -233,7 +249,31 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Integer(Observer, 'w0', V, 0, 0);
         V := 258;
         Do_Integer(Observer, 'w8', V, 8, 8);
-        Observer.Finish();
+        Observer.Expect('w1_w|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('w1_w|code', 'InvalidStreamLength');
+        Observer.Expect('w1_bytes', '0:');
+        Observer.Expect('w1_r|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('w1_r|code', 'InvalidStreamLength');
+        Observer.Expect('w1_rval', '0/Yes/1');
+        Observer.Expect('w1_r2|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('w1_r2|code', 'InvalidStreamLength');
+        Observer.Expect('w0_w|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('w0_w|code', 'InvalidStreamLength');
+        Observer.Expect('w0_bytes', '0:');
+        Observer.Expect('w0_r|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('w0_r|code', 'InvalidStreamLength');
+        Observer.Expect('w0_rval', '0/Yes/1');
+        Observer.Expect('w0_r2|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('w0_r2|code', 'InvalidStreamLength');
+        Observer.Expect('w8_w|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('w8_w|code', 'InvalidStreamLength');
+        Observer.Expect('w8_bytes', '0:');
+        Observer.Expect('w8_r|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('w8_r|code', 'InvalidStreamLength');
+        Observer.Expect('w8_rval', '0/Yes/1');
+        Observer.Expect('w8_r2|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('w8_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -248,7 +288,25 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Integer(Observer, 'r2', V, -1, 2);
         V := 258;
         Do_Integer(Observer, 'r8', V, -1, 8);
-        Observer.Finish();
+        Observer.Expect('neg4_wret', '4');
+        Observer.Expect('neg4_bytes', '4:FFFFFFFF');
+        Observer.Expect('neg4_rd', '4/-1/Yes/5');
+        Observer.Expect('neg4_rd2', '0/0/Yes/5');
+        Observer.Expect('r2_wret', '4');
+        Observer.Expect('r2_bytes', '4:02010000');
+        Observer.Expect('r2_r|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('r2_r|code', 'InvalidStreamLength');
+        Observer.Expect('r2_rval', '0/No/1');
+        Observer.Expect('r2_r2|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('r2_r2|code', 'InvalidStreamLength');
+        Observer.Expect('r8_wret', '4');
+        Observer.Expect('r8_bytes', '4:02010000');
+        Observer.Expect('r8_r|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('r8_r|code', 'InvalidStreamLength');
+        Observer.Expect('r8_rval', '0/No/1');
+        Observer.Expect('r8_r2|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('r8_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +317,14 @@ codeunit 67860 "LT Q Stream Len Int"
     begin
         V := 258;
         Do_Integer(Observer, 'r0', V, -1, 0);
-        Observer.Finish();
+        Observer.Expect('r0_wret', '4');
+        Observer.Expect('r0_bytes', '4:02010000');
+        Observer.Expect('r0_r|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('r0_r|code', 'InvalidStreamLength');
+        Observer.Expect('r0_rval', '0/No/1');
+        Observer.Expect('r0_r2|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('r0_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -274,7 +339,23 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_BigInteger(Observer, 'w8', V, 8, 8);
         V := 258;
         Do_BigInteger(Observer, 'w4', V, 4, 4);
-        Observer.Finish();
+        Observer.Expect('n258_wret', '8');
+        Observer.Expect('n258_bytes', '8:0201000000000000');
+        Observer.Expect('n258_rd', '8/258/Yes/9');
+        Observer.Expect('n258_rd2', '0/0/Yes/9');
+        Observer.Expect('w8_wret', '8');
+        Observer.Expect('w8_bytes', '8:0201000000000000');
+        Observer.Expect('w8_rd', '8/258/Yes/9');
+        Observer.Expect('w8_rd2', '0/0/Yes/9');
+        Observer.Expect('w4_w|text', 'An invalid length 4 was specified in stream function. 8 was expected.');
+        Observer.Expect('w4_w|code', 'InvalidStreamLength');
+        Observer.Expect('w4_bytes', '0:');
+        Observer.Expect('w4_r|text', 'An invalid length 4 was specified in stream function. 8 was expected.');
+        Observer.Expect('w4_r|code', 'InvalidStreamLength');
+        Observer.Expect('w4_rval', '0/Yes/1');
+        Observer.Expect('w4_r2|text', 'An invalid length 4 was specified in stream function. 8 was expected.');
+        Observer.Expect('w4_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -289,7 +370,30 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_BigInteger(Observer, 'w9', V, 9, 9);
         V := 258;
         Do_BigInteger(Observer, 'r4', V, -1, 4);
-        Observer.Finish();
+        Observer.Expect('w0_w|text', 'An invalid length 0 was specified in stream function. 8 was expected.');
+        Observer.Expect('w0_w|code', 'InvalidStreamLength');
+        Observer.Expect('w0_bytes', '0:');
+        Observer.Expect('w0_r|text', 'An invalid length 0 was specified in stream function. 8 was expected.');
+        Observer.Expect('w0_r|code', 'InvalidStreamLength');
+        Observer.Expect('w0_rval', '0/Yes/1');
+        Observer.Expect('w0_r2|text', 'An invalid length 0 was specified in stream function. 8 was expected.');
+        Observer.Expect('w0_r2|code', 'InvalidStreamLength');
+        Observer.Expect('w9_w|text', 'An invalid length 9 was specified in stream function. 8 was expected.');
+        Observer.Expect('w9_w|code', 'InvalidStreamLength');
+        Observer.Expect('w9_bytes', '0:');
+        Observer.Expect('w9_r|text', 'An invalid length 9 was specified in stream function. 8 was expected.');
+        Observer.Expect('w9_r|code', 'InvalidStreamLength');
+        Observer.Expect('w9_rval', '0/Yes/1');
+        Observer.Expect('w9_r2|text', 'An invalid length 9 was specified in stream function. 8 was expected.');
+        Observer.Expect('w9_r2|code', 'InvalidStreamLength');
+        Observer.Expect('r4_wret', '8');
+        Observer.Expect('r4_bytes', '8:0201000000000000');
+        Observer.Expect('r4_r|text', 'An invalid length 4 was specified in stream function. 8 was expected.');
+        Observer.Expect('r4_r|code', 'InvalidStreamLength');
+        Observer.Expect('r4_rval', '0/No/1');
+        Observer.Expect('r4_r2|text', 'An invalid length 4 was specified in stream function. 8 was expected.');
+        Observer.Expect('r4_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -300,7 +404,14 @@ codeunit 67860 "LT Q Stream Len Int"
     begin
         V := 258;
         Do_BigInteger(Observer, 'r0', V, -1, 0);
-        Observer.Finish();
+        Observer.Expect('r0_wret', '8');
+        Observer.Expect('r0_bytes', '8:0201000000000000');
+        Observer.Expect('r0_r|text', 'An invalid length 0 was specified in stream function. 8 was expected.');
+        Observer.Expect('r0_r|code', 'InvalidStreamLength');
+        Observer.Expect('r0_rval', '0/No/1');
+        Observer.Expect('r0_r2|text', 'An invalid length 0 was specified in stream function. 8 was expected.');
+        Observer.Expect('r0_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -315,7 +426,23 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Boolean(Observer, 'w4', V, 4, 4);
         V := true;
         Do_Boolean(Observer, 'w1', V, 1, 1);
-        Observer.Finish();
+        Observer.Expect('ntrue_wret', '4');
+        Observer.Expect('ntrue_bytes', '4:01000000');
+        Observer.Expect('ntrue_rd', '4/Yes/Yes/5');
+        Observer.Expect('ntrue_rd2', '0/No/Yes/5');
+        Observer.Expect('w4_wret', '4');
+        Observer.Expect('w4_bytes', '4:01000000');
+        Observer.Expect('w4_rd', '4/Yes/Yes/5');
+        Observer.Expect('w4_rd2', '0/No/Yes/5');
+        Observer.Expect('w1_w|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('w1_w|code', 'InvalidStreamLength');
+        Observer.Expect('w1_bytes', '0:');
+        Observer.Expect('w1_r|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('w1_r|code', 'InvalidStreamLength');
+        Observer.Expect('w1_rval', 'No/Yes/1');
+        Observer.Expect('w1_r2|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('w1_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -330,7 +457,31 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Boolean(Observer, 'w0', V, 0, 0);
         V := true;
         Do_Boolean(Observer, 'w8', V, 8, 8);
-        Observer.Finish();
+        Observer.Expect('w2_w|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('w2_w|code', 'InvalidStreamLength');
+        Observer.Expect('w2_bytes', '0:');
+        Observer.Expect('w2_r|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('w2_r|code', 'InvalidStreamLength');
+        Observer.Expect('w2_rval', 'No/Yes/1');
+        Observer.Expect('w2_r2|text', 'An invalid length 2 was specified in stream function. 4 was expected.');
+        Observer.Expect('w2_r2|code', 'InvalidStreamLength');
+        Observer.Expect('w0_w|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('w0_w|code', 'InvalidStreamLength');
+        Observer.Expect('w0_bytes', '0:');
+        Observer.Expect('w0_r|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('w0_r|code', 'InvalidStreamLength');
+        Observer.Expect('w0_rval', 'No/Yes/1');
+        Observer.Expect('w0_r2|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('w0_r2|code', 'InvalidStreamLength');
+        Observer.Expect('w8_w|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('w8_w|code', 'InvalidStreamLength');
+        Observer.Expect('w8_bytes', '0:');
+        Observer.Expect('w8_r|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('w8_r|code', 'InvalidStreamLength');
+        Observer.Expect('w8_rval', 'No/Yes/1');
+        Observer.Expect('w8_r2|text', 'An invalid length 8 was specified in stream function. 4 was expected.');
+        Observer.Expect('w8_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -343,7 +494,21 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Boolean(Observer, 'r1', V, -1, 1);
         V := true;
         Do_Boolean(Observer, 'r0', V, -1, 0);
-        Observer.Finish();
+        Observer.Expect('r1_wret', '4');
+        Observer.Expect('r1_bytes', '4:01000000');
+        Observer.Expect('r1_r|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('r1_r|code', 'InvalidStreamLength');
+        Observer.Expect('r1_rval', 'No/No/1');
+        Observer.Expect('r1_r2|text', 'An invalid length 1 was specified in stream function. 4 was expected.');
+        Observer.Expect('r1_r2|code', 'InvalidStreamLength');
+        Observer.Expect('r0_wret', '4');
+        Observer.Expect('r0_bytes', '4:01000000');
+        Observer.Expect('r0_r|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('r0_r|code', 'InvalidStreamLength');
+        Observer.Expect('r0_rval', 'No/No/1');
+        Observer.Expect('r0_r2|text', 'An invalid length 0 was specified in stream function. 4 was expected.');
+        Observer.Expect('r0_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -358,7 +523,23 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Byte(Observer, 'w1', V, 1, 1);
         V := 200;
         Do_Byte(Observer, 'w2', V, 2, 2);
-        Observer.Finish();
+        Observer.Expect('n200_wret', '1');
+        Observer.Expect('n200_bytes', '1:C8');
+        Observer.Expect('n200_rd', '1/˜/Yes/2');
+        Observer.Expect('n200_rd2', '0/\u0000/Yes/2');
+        Observer.Expect('w1_wret', '1');
+        Observer.Expect('w1_bytes', '1:C8');
+        Observer.Expect('w1_rd', '1/˜/Yes/2');
+        Observer.Expect('w1_rd2', '0/\u0000/Yes/2');
+        Observer.Expect('w2_w|text', 'An invalid length 2 was specified in stream function. 1 was expected.');
+        Observer.Expect('w2_w|code', 'InvalidStreamLength');
+        Observer.Expect('w2_bytes', '0:');
+        Observer.Expect('w2_r|text', 'An invalid length 2 was specified in stream function. 1 was expected.');
+        Observer.Expect('w2_r|code', 'InvalidStreamLength');
+        Observer.Expect('w2_rval', '\u0000/Yes/1');
+        Observer.Expect('w2_r2|text', 'An invalid length 2 was specified in stream function. 1 was expected.');
+        Observer.Expect('w2_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 
     [Test]
@@ -373,6 +554,28 @@ codeunit 67860 "LT Q Stream Len Int"
         Do_Byte(Observer, 'r2', V, -1, 2);
         V := 200;
         Do_Byte(Observer, 'r0', V, -1, 0);
-        Observer.Finish();
+        Observer.Expect('w0_w|text', 'An invalid length 0 was specified in stream function. 1 was expected.');
+        Observer.Expect('w0_w|code', 'InvalidStreamLength');
+        Observer.Expect('w0_bytes', '0:');
+        Observer.Expect('w0_r|text', 'An invalid length 0 was specified in stream function. 1 was expected.');
+        Observer.Expect('w0_r|code', 'InvalidStreamLength');
+        Observer.Expect('w0_rval', '\u0000/Yes/1');
+        Observer.Expect('w0_r2|text', 'An invalid length 0 was specified in stream function. 1 was expected.');
+        Observer.Expect('w0_r2|code', 'InvalidStreamLength');
+        Observer.Expect('r2_wret', '1');
+        Observer.Expect('r2_bytes', '1:C8');
+        Observer.Expect('r2_r|text', 'An invalid length 2 was specified in stream function. 1 was expected.');
+        Observer.Expect('r2_r|code', 'InvalidStreamLength');
+        Observer.Expect('r2_rval', '\u0000/No/1');
+        Observer.Expect('r2_r2|text', 'An invalid length 2 was specified in stream function. 1 was expected.');
+        Observer.Expect('r2_r2|code', 'InvalidStreamLength');
+        Observer.Expect('r0_wret', '1');
+        Observer.Expect('r0_bytes', '1:C8');
+        Observer.Expect('r0_r|text', 'An invalid length 0 was specified in stream function. 1 was expected.');
+        Observer.Expect('r0_r|code', 'InvalidStreamLength');
+        Observer.Expect('r0_rval', '\u0000/No/1');
+        Observer.Expect('r0_r2|text', 'An invalid length 0 was specified in stream function. 1 was expected.');
+        Observer.Expect('r0_r2|code', 'InvalidStreamLength');
+        Observer.Verify();
     end;
 }

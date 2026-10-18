@@ -86,6 +86,7 @@ codeunit 61282 "LT Q File Ui Returns"
         R := File.ViewFromStream(InS, Name, Allow);
     end;
 
+#if BC28PLUS
     [Test]
     procedure Download_NoClient_ReturnAndToFile()
     var
@@ -123,7 +124,18 @@ codeunit 61282 "LT Q File Ui Returns"
         Observer.Observe('dl_blank_from_tofile', '[' + ToFile + ']');
         Observer.Observe('source_still_exists', Format(File.Exists(P)));
         Cleanup(P);
-        Observer.Finish();
+        Observer.Expect('dl_title', 'ok ret=No');
+        Observer.Expect('dl_title_tofile', '[untouched]');
+        Observer.Expect('dl_all_args', 'ok ret=No');
+        Observer.Expect('dl_all_args_tofile', '[untouched]');
+        Observer.Expect('dl_blank', 'ok ret=No');
+        Observer.Expect('dl_blank_tofile', '[untouched]');
+        Observer.Expect('dl_missing', 'ok ret=No');
+        Observer.Expect('dl_missing_tofile', '[untouched]');
+        Observer.Expect('dl_blank_from', 'ok ret=No');
+        Observer.Expect('dl_blank_from_tofile', '[untouched]');
+        Observer.Expect('source_still_exists', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,8 +166,63 @@ codeunit 61282 "LT Q File Ui Returns"
         Observer.Observe('dls_blank_tofile', '[' + ToFile + ']');
         Observer.Observe('stream_eos_after', Format(InS.EOS()));
         F.Close();
+        Observer.Expect('dls_title', 'ok ret=No');
+        Observer.Expect('dls_title_tofile', '[untouched]');
+        Observer.Expect('dls_all_args', 'ok ret=No');
+        Observer.Expect('dls_all_args_tofile', '[untouched]');
+        Observer.Expect('dls_blank', 'ok ret=No');
+        Observer.Expect('dls_blank_tofile', '[untouched]');
+        Observer.Expect('stream_eos_after', 'No');
+        Observer.Verify();
+    end;
+#else
+    [Test]
+    procedure Download_NoClient_RaisesClrException()
+    var
+        Observer: Codeunit "Probe Observer";
+        F: File;
+        OutS: OutStream;
+        P: Text;
+        ToFile: Text;
+    begin
+        P := TempName();
+        F.Create(P);
+        F.CreateOutStream(OutS);
+        OutS.WriteText('download content');
+        F.Close();
+        ToFile := 'untouched';
+        asserterror File.Download(P, 'Title', '', '', ToFile);
+        Observer.Observe('dl_error', CopyStr(GetLastErrorText(), 1, 90));
+        Observer.Observe('dl_code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Observe('dl_tofile', '[' + ToFile + ']');
+        Cleanup(P);
         Observer.Finish();
     end;
+
+    [Test]
+    procedure DownloadFromStream_NoClient_RaisesClrException()
+    var
+        Observer: Codeunit "Probe Observer";
+        F: File;
+        OutS: OutStream;
+        InS: InStream;
+        ToFile: Text;
+    begin
+        F.CreateTempFile();
+        F.CreateOutStream(OutS);
+        OutS.WriteText('stream content');
+        F.CreateInStream(InS);
+        ToFile := 'untouched';
+        asserterror File.DownloadFromStream(InS, 'Title', '', '', ToFile);
+        Observer.Observe('dls_error', CopyStr(GetLastErrorText(), 1, 90));
+        Observer.Observe('dls_code', GetLastErrorCode());
+        ClearLastError();
+        Observer.Observe('dls_tofile', '[' + ToFile + ']');
+        F.Close();
+        Observer.Finish();
+    end;
+#endif
 
     [Test]
     procedure Upload_NoClient_ReturnAndToFile()
@@ -172,7 +239,11 @@ codeunit 61282 "LT Q File Ui Returns"
         ToFile := 'untouched';
         Rec(Observer, 'up_all_args', TUpload('Title', TemporaryPath(), 'Text files (*.txt)|*.txt', 'a.txt', ToFile, R), R);
         Observer.Observe('up_all_args_tofile', '[' + ToFile + ']');
-        Observer.Finish();
+        Observer.Expect('up_title', 'ok ret=No');
+        Observer.Expect('up_title_tofile', '[untouched]');
+        Observer.Expect('up_all_args', 'ok ret=No');
+        Observer.Expect('up_all_args_tofile', '[untouched]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,7 +262,11 @@ codeunit 61282 "LT Q File Ui Returns"
         FromFile := 'untouched';
         Rec(Observer, 'uis_filter', TUploadIntoStream4('', '', 'Text files (*.txt)|*.txt', FromFile, InS, R), R);
         Observer.Observe('uis_filter_fromfile', '[' + FromFile + ']');
-        Observer.Finish();
+        Observer.Expect('uis_title', 'ok ret=No');
+        Observer.Expect('uis_title_fromfile', '[untouched]');
+        Observer.Expect('uis_filter', 'ok ret=No');
+        Observer.Expect('uis_filter_fromfile', '[untouched]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -205,7 +280,9 @@ codeunit 61282 "LT Q File Ui Returns"
         Rec(Observer, 'uis2_blank', TUploadIntoStream2('', InS, R), R);
         R := true;
         Rec(Observer, 'uis2_txt', TUploadIntoStream2('Text files (*.txt)|*.txt', InS, R), R);
-        Observer.Finish();
+        Observer.Expect('uis2_blank', 'ok ret=No');
+        Observer.Expect('uis2_txt', 'ok ret=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -231,7 +308,11 @@ codeunit 61282 "LT Q File Ui Returns"
         R := true;
         Rec(Observer, 'view_blank', TView('', true, R), R);
         Cleanup(P);
-        Observer.Finish();
+        Observer.Expect('view_existing', 'ok ret=No');
+        Observer.Expect('view_existing_disallow', 'ok ret=No');
+        Observer.Expect('view_missing', 'ok ret=No');
+        Observer.Expect('view_blank', 'ok ret=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,6 +335,9 @@ codeunit 61282 "LT Q File Ui Returns"
         R := true;
         Rec(Observer, 'vfs_blank_name', TViewFromStream(InS, '', true, R), R);
         F.Close();
-        Observer.Finish();
+        Observer.Expect('vfs_allow', 'ok ret=No');
+        Observer.Expect('vfs_disallow', 'ok ret=No');
+        Observer.Expect('vfs_blank_name', 'ok ret=No');
+        Observer.Verify();
     end;
 }
