@@ -46,18 +46,6 @@ codeunit 75010 "LT X Table Props Tests"
         end;
     end;
 
-    local procedure SqlStep(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT X Props Sql"; Step: Integer)
-    var
-        Helper: Codeunit "LT X Sql Step";
-    begin
-        ClearLastError();
-        Helper.SetStep(Step);
-        if Helper.Run(Row) then
-            Observer.Observe(Name, 'ok')
-        else
-            Observer.ObserveError(Name);
-    end;
-
     local procedure LinkedStep(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT X Props Linked"; Step: Integer)
     var
         Helper: Codeunit "LT X Linked Step";
@@ -293,9 +281,8 @@ codeunit 75010 "LT X Table Props Tests"
         Row: Record "LT X Props Sql";
     begin
         SeedSql(Row);
-        Row.Id := 2;
-        SqlStep(Observer, 'get_2', Row, 3);
-        Observer.Observe('integer_nine', Row.AsInteger);
+        asserterror Row.Get(2);
+        Observer.ObserveError('get_2_value_9');
         Observer.Finish();
     end;
 
@@ -306,11 +293,10 @@ codeunit 75010 "LT X Table Props Tests"
         Row: Record "LT X Props Sql";
     begin
         SeedSql(Row);
-        Row.Get(2);
+        Row.Get(1);
         Row.AsInteger := '0';
-        SqlStep(Observer, 'modify_zero', Row, 2);
-        Row.Id := 2;
-        SqlStep(Observer, 'get_after_zero', Row, 3);
+        Row.Modify();
+        Row.Get(1);
         Observer.Observe('integer_zero_stored', Row.AsInteger);
         Observer.Finish();
     end;
@@ -322,11 +308,10 @@ codeunit 75010 "LT X Table Props Tests"
         Row: Record "LT X Props Sql";
     begin
         SeedSql(Row);
-        Row.Get(2);
+        Row.Get(1);
         Row.AsInteger := '007';
-        SqlStep(Observer, 'modify_007', Row, 2);
-        Row.Id := 2;
-        SqlStep(Observer, 'get_after_007', Row, 3);
+        Row.Modify();
+        Row.Get(1);
         Observer.Observe('integer_leading_zero_stored', Row.AsInteger);
         Observer.Finish();
     end;
@@ -338,9 +323,10 @@ codeunit 75010 "LT X Table Props Tests"
         Row: Record "LT X Props Sql";
     begin
         SeedSql(Row);
-        Row.Get(2);
+        Row.Get(1);
         Row.AsInteger := 'ABC';
-        SqlStep(Observer, 'modify_text', Row, 2);
+        asserterror Row.Modify();
+        Observer.ObserveError('modify_text');
         Observer.Finish();
     end;
 
