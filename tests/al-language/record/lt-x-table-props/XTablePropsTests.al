@@ -107,7 +107,7 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Secret2 := 'pw-2';
         Row.Modify();
         Card.OpenEdit();
-        Observer.Observe('page_concealed_overridden_to_none', Card.Secret.Value);
+        Observer.Observe('page_concealed', Card.Secret.Value);
         Observer.Observe('page_none', Card.Plain.Value);
         Card.Secret.SetValue('pw-3');
         Observer.Observe('page_after_set', Card.Secret.Value);
@@ -115,7 +115,7 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Get(1);
         Observer.Observe('record_secret', Row.Secret);
         Observer.Observe('record_plain', Row.Plain);
-        Observer.Observe('record_secret2_concealed_by_modify_stays', Row.Secret2);
+        Observer.Observe('record_secret2', Row.Secret2);
         Observer.Finish();
     end;
 

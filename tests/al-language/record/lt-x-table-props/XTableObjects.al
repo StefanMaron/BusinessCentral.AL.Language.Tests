@@ -4,6 +4,7 @@
 // Probe (issue 611): objects for the table and table extension field and table properties CharAllowed, DateFormula, MaskType, OptionCaptionML,
 // SignDisplacement, SqlDataType, SqlTimestamp, Width, AllowInCustomizations, ColumnStoreIndex, LinkedObject, LinkedInTransaction, DataCaptionFields,
 // DrillDownPageId and LookupPageId, and the modify() of BlankZero, CaptionClass, ClosingDates, MaskType, OptionCaption, OptionCaptionML and Width.
+// modify() of MaskType compiles but BC refuses to publish it ("Modifications to property MaskType are not supported."), so it is not in this app.
 // Object ids 75000-75019.
 table 75000 "LT X Props"
 {
@@ -73,8 +74,6 @@ tableextension 75001 "LT X Props Ext" extends "LT X Props"
         modify(CapCls2) { CaptionClass = 'LTX,Modified2'; }
         modify(Closing) { ClosingDates = false; }
         modify(Closing2) { ClosingDates = true; }
-        modify(Secret) { MaskType = None; }
-        modify(Secret2) { MaskType = Concealed; }
         modify(OptCap) { OptionCaption = 'Uno,Dos,Tres'; }
         modify(OptMl) { OptionCaptionML = ENU = 'Cyan,Magenta,Yellow', DEU = 'Zyan,Magenta,Gelb'; }
         modify(Wide) { Width = 20; }
