@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500)
+// The part columns hold the id of the app that declares the layout (the corpus app.json id), then :: and the layout name.
 // Probe: observed values; every literal asserted below is what the BC 29 tier produced.
 // Facts: BC 29 (app runtime 18.0): DefaultHeaderFooterPart, DefaultThemePart, layout HeaderFooterPart, ThemePart and Subtype compile and show in the
 // Report Metadata row (DefaultHeaderFooterPartName, DefaultThemePartName) and in the Report Layout List rows of the report. Before BC 29 the properties do not
@@ -76,7 +77,7 @@ codeunit 75571 "LT Y Report Parts Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('rows', PartColumns());
-        Observer.Expect('rows', 'TODO');
+        Observer.Expect('rows', '[PartsBody Layout Subtype=Body HeaderFooterPart=a1b2c3d4-e5f6-7890-abcd-ef1234567890::PartsHf ThemePart=a1b2c3d4-e5f6-7890-abcd-ef1234567890::PartsTheme][PartsHf Layout Subtype=Header/Footer HeaderFooterPart= ThemePart=][PartsTheme Layout Subtype=Theme HeaderFooterPart= ThemePart=]');
         Observer.Verify();
     end;
 
