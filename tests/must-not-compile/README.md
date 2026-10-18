@@ -159,6 +159,7 @@ is only a reference.
 | 0870 | AL0843 | OptionCaptionML on a Text field. |
 | 1040 | AL0175 | A Char minus a Text literal of two characters or of none, and the same literals minus a Char (four diagnostics). A one-character literal compiles. |
 | 1041 | AL0122 | A Char minus a one-character literal is an Integer and cannot be assigned to a Text; a Char plus a two-character literal is a Text and cannot be assigned to an Integer (two diagnostics). |
+| 1080 | AL0777 | A Guid assigned to a Text[10] variable: the textual form of a Guid is longer than the target. (A Text[40] or a Code[40] target compiles.) |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
