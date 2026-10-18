@@ -81,6 +81,14 @@ codeunit 67605 "LT N582 Eval FieldRef"
         EvalStatement(Observer, 'boolean maybe', 5, 'maybe');
         EvalStatement(Observer, 'boolean empty', 5, '');
         EvalStatement(Observer, 'boolean yes', 5, 'Yes');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure N582_Evaluate_FieldRef_Statement_BadText_Others()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         EvalStatement(Observer, 'code too long', 2, 'ABCDEFGHIJKLMNOP');
         EvalStatement(Observer, 'code ok', 2, 'abc');
         EvalStatement(Observer, 'text too long', 8, 'ABCDEFGHIJ');

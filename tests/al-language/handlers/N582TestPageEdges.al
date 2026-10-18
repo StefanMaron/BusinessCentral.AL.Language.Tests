@@ -20,13 +20,13 @@ table 67604 "LT N582 Page Row"
             OptionMembers = Zero,One,Two;
         }
         field(3; Txt; Text[50]) { }
-        field(4; Flow; Integer)
+        field(4; Flow; Decimal)
         {
             FieldClass = FlowField;
             CalcFormula = count("LT N582 Page Row");
             Editable = false;
         }
-        field(5; FlowDefault; Integer)
+        field(5; FlowDefault; Decimal)
         {
             FieldClass = FlowField;
             CalcFormula = count("LT N582 Page Row");
@@ -184,7 +184,26 @@ codeunit 67604 "LT N582 Test Page Edges"
         SetOpt(Observer, 'in range number', '2');
         SetOpt(Observer, 'member with blank', 'Two ');
         SetOpt(Observer, 'prefix of member', 'Tw');
-        Observer.Finish();
+        Observer.Expect('Nope|text', 'Validation error for Field: Opt,  Message = ''Your entry of ''Nope'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('Nope|code', 'TestValidation');
+        Observer.Expect('Nope|value', '1');
+        Observer.Expect('lower case member', 'no error');
+        Observer.Expect('lower case member|value', 'Two');
+        Observer.Expect('empty|text', 'Validation error for Field: Opt,  Message = ''Your entry of '''' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty|code', 'TestValidation');
+        Observer.Expect('empty|value', '1');
+        Observer.Expect('out of range number|text', 'Validation error for Field: Opt,  Message = ''Your entry of ''5'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('out of range number|code', 'TestValidation');
+        Observer.Expect('out of range number|value', '1');
+        Observer.Expect('in range number|text', 'Validation error for Field: Opt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('in range number|code', 'TestValidation');
+        Observer.Expect('in range number|value', '1');
+        Observer.Expect('member with blank', 'no error');
+        Observer.Expect('member with blank|value', 'Two');
+        Observer.Expect('prefix of member|text', 'Validation error for Field: Opt,  Message = ''Your entry of ''Tw'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('prefix of member|code', 'TestValidation');
+        Observer.Expect('prefix of member|value', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -217,7 +236,34 @@ codeunit 67604 "LT N582 Test Page Edges"
         NumVsText(Observer, 'int 10 vs 11', '11', I);
         I := 10;
         NumVsText(Observer, 'int 10 vs text', 'ten', I);
-        Observer.Finish();
+        Observer.Expect('int 5 vs 5|shown', '5');
+        Observer.Expect('int 5 vs 5', 'equal');
+        Observer.Expect('int 10 vs 10|shown', '10');
+        Observer.Expect('int 10 vs 10', 'equal');
+        Observer.Expect('int 123 vs 123|shown', '123');
+        Observer.Expect('int 123 vs 123', 'equal');
+        Observer.Expect('int 12345 vs 12345|shown', '12345');
+        Observer.Expect('int 12345 vs 12345', 'equal');
+        Observer.Expect('int 1234567 vs 1234567|shown', '1234567');
+        Observer.Expect('int 1234567 vs 1234567', 'equal');
+        Observer.Expect('int 1234567 vs grouped|shown', '1,234,567');
+        Observer.Expect('int 1234567 vs grouped|text', 'AssertEquals for Field: Txt Expected = ''1234567'', Actual = ''1,234,567''');
+        Observer.Expect('int 1234567 vs grouped|code', 'TestAssertEquals');
+        Observer.Expect('int -5 vs -5|shown', '-5');
+        Observer.Expect('int -5 vs -5', 'equal');
+        Observer.Expect('int -10 vs -10|shown', '-10');
+        Observer.Expect('int -10 vs -10', 'equal');
+        Observer.Expect('int -1234 vs -1234|shown', '-1234');
+        Observer.Expect('int -1234 vs -1234', 'equal');
+        Observer.Expect('int 0 vs 0|shown', '0');
+        Observer.Expect('int 0 vs 0', 'equal');
+        Observer.Expect('int 10 vs 11|shown', '11');
+        Observer.Expect('int 10 vs 11|text', 'AssertEquals for Field: Txt Expected = ''10'', Actual = ''11''');
+        Observer.Expect('int 10 vs 11|code', 'TestAssertEquals');
+        Observer.Expect('int 10 vs text|shown', 'ten');
+        Observer.Expect('int 10 vs text|text', 'AssertEquals for Field: Txt Expected = ''10'', Actual = ''ten''');
+        Observer.Expect('int 10 vs text|code', 'TestAssertEquals');
+        Observer.Verify();
     end;
 
     [Test]
@@ -256,7 +302,42 @@ codeunit 67604 "LT N582 Test Page Edges"
         NumVsText(Observer, 'dec 0 vs 0', '0', D);
         D := 1000;
         NumVsText(Observer, 'dec 1000 vs 1001', '1001', D);
-        Observer.Finish();
+        Observer.Expect('dec 5 vs 5|shown', '5');
+        Observer.Expect('dec 5 vs 5', 'equal');
+        Observer.Expect('dec 10 vs 10|shown', '10');
+        Observer.Expect('dec 10 vs 10', 'equal');
+        Observer.Expect('dec 1.5 vs 1.5|shown', '1.5');
+        Observer.Expect('dec 1.5 vs 1.5', 'equal');
+        Observer.Expect('dec 999.99 vs 999.99|shown', '999.99');
+        Observer.Expect('dec 999.99 vs 999.99', 'equal');
+        Observer.Expect('dec 1000 vs 1000|shown', '1000');
+        Observer.Expect('dec 1000 vs 1000|text', 'AssertEquals for Field: Txt Expected = ''1,000'', Actual = ''1000''');
+        Observer.Expect('dec 1000 vs 1000|code', 'TestAssertEquals');
+        Observer.Expect('dec 1000 vs grouped|shown', '1,000');
+        Observer.Expect('dec 1000 vs grouped', 'equal');
+        Observer.Expect('dec 1234.5 vs 1234.5|shown', '1234.5');
+        Observer.Expect('dec 1234.5 vs 1234.5|text', 'AssertEquals for Field: Txt Expected = ''1,234.5'', Actual = ''1234.5''');
+        Observer.Expect('dec 1234.5 vs 1234.5|code', 'TestAssertEquals');
+        Observer.Expect('dec 1234.5 vs grouped|shown', '1,234.5');
+        Observer.Expect('dec 1234.5 vs grouped', 'equal');
+        Observer.Expect('dec 1234567.89 vs plain|shown', '1234567.89');
+        Observer.Expect('dec 1234567.89 vs plain|text', 'AssertEquals for Field: Txt Expected = ''1,234,567.89'', Actual = ''1234567.89''');
+        Observer.Expect('dec 1234567.89 vs plain|code', 'TestAssertEquals');
+        Observer.Expect('dec 1234567.89 vs grouped|shown', '1,234,567.89');
+        Observer.Expect('dec 1234567.89 vs grouped', 'equal');
+        Observer.Expect('dec -1000 vs -1000|shown', '-1000');
+        Observer.Expect('dec -1000 vs -1000|text', 'AssertEquals for Field: Txt Expected = ''-1,000'', Actual = ''-1000''');
+        Observer.Expect('dec -1000 vs -1000|code', 'TestAssertEquals');
+        Observer.Expect('dec -1234.5 vs grouped|shown', '-1,234.5');
+        Observer.Expect('dec -1234.5 vs grouped', 'equal');
+        Observer.Expect('dec -0.5 vs -0.5|shown', '-0.5');
+        Observer.Expect('dec -0.5 vs -0.5', 'equal');
+        Observer.Expect('dec 0 vs 0|shown', '0');
+        Observer.Expect('dec 0 vs 0', 'equal');
+        Observer.Expect('dec 1000 vs 1001|shown', '1001');
+        Observer.Expect('dec 1000 vs 1001|text', 'AssertEquals for Field: Txt Expected = ''1,000'', Actual = ''1001''');
+        Observer.Expect('dec 1000 vs 1001|code', 'TestAssertEquals');
+        Observer.Verify();
     end;
 
     [Test]
