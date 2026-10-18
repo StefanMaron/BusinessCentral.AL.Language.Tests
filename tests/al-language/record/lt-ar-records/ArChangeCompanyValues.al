@@ -54,6 +54,14 @@ codeunit 79851 "LT AR Change Company Values"
         if Company.Get(CompanyTok) then
             Company.Delete(true);
         Commit();
-        Observer.Finish();
+        Observer.Expect('changed', 'Yes');
+        Observer.Expect('values', '7|home');
+        Observer.Expect('find', 'No');
+        Observer.Expect('values after find', '7|home');
+        Observer.Expect('other company row', 'Yes|home');
+        Observer.Expect('back', 'Yes');
+        Observer.Expect('values back', '7|home');
+        Observer.Expect('home count', '1');
+        Observer.Verify();
     end;
 }

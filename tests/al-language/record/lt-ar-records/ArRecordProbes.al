@@ -7,6 +7,11 @@
 // SetCurrentKey on a Media and a MediaSet field (item 7); table globals of a record in an array element and through RecordRef.SetTable (item 9);
 // Format(Record) position of FlowFilter fields among FlowFields (item 12); a Variant holding a filtered RecordRef assigned to a Record and
 // passed to a Record parameter (item 14).
+// Results (BC 29.0): a second AddRecord under one name for another table fails "A table that has the name Rows already exists with a different ID."
+// (Argument), for the same table it succeeds and keeps the first control; a re-imported Media gets a new id and Modify deletes the old Tenant
+// Media row, a MediaSet import adds an item and keeps the old one; SetCurrentKey on a Media or MediaSet field succeeds; an array element keeps
+// its own table globals (assignment does not copy them); Format(Record) lists normal fields, then FlowFilter fields, then FlowFields; a Record
+// assigned from a Variant holding a filtered RecordRef gets the current row and position but not the filters.
 // Already pinned elsewhere: SetView on an unknown control (filterpage/W3FilterPageBuilder.al), MediaSet.Item(0) / Item(Count + 1) and
 // ExportStream of an empty Media (streams/StTMedia.al), SetCurrentKey on a FlowField, FlowFilter and Blob (record/ProbeClearAllSetKeyHyperlink.al).
 // BC versions: 27, 28, 29
@@ -74,7 +79,13 @@ codeunit 79850 "LT AR Record Probes"
         Observer.Observe('count', Format(FPB.Count()));
         asserterror FPB.AddRecord('Rows', Other);
         Observer.ObserveError('ae');
-        Observer.Finish();
+        Observer.Expect('try', 'No');
+        Observer.Expect('e|text', 'A table that has the name Rows already exists with a different ID.');
+        Observer.Expect('e|code', 'Argument');
+        Observer.Expect('count', '1');
+        Observer.Expect('ae|text', 'A table that has the name Rows already exists with a different ID.');
+        Observer.Expect('ae|code', 'Argument');
+        Observer.Verify();
     end;
 
     [Test]
@@ -89,7 +100,12 @@ codeunit 79850 "LT AR Record Probes"
         Observer.ObserveError('e');
         Observer.Observe('count', Format(FPB.Count()));
         Observer.Observe('view', FPB.GetView('Rows'));
-        Observer.Finish();
+        Observer.Expect('try', 'Yes');
+        Observer.Expect('e|text', '');
+        Observer.Expect('e|code', '');
+        Observer.Expect('count', '1');
+        Observer.Expect('view', 'VERSION(1) SORTING(Id)');
+        Observer.Verify();
     end;
 
     // ---- item 2: ImportStream on a Media / MediaSet field that already holds media ----
@@ -121,7 +137,12 @@ codeunit 79850 "LT AR Record Probes"
         Observer.Observe('new', Format(TenantMedia.Get(Second)));
         Row.Get(1);
         Observer.Observe('stored is new', Format(Row.Pic.MediaId() = Second));
-        Observer.Finish();
+        Observer.Expect('changed', 'Yes');
+        Observer.Expect('old before modify', 'Yes');
+        Observer.Expect('old after modify', 'No');
+        Observer.Expect('new', 'Yes');
+        Observer.Expect('stored is new', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -151,7 +172,12 @@ codeunit 79850 "LT AR Record Probes"
         Observer.Observe('item1 kept', Format(Row.Pics.Item(1) = Item1));
         Observer.Observe('item2 new', Format(Row.Pics.Item(2) <> Item1));
         Observer.Observe('old media', Format(TenantMedia.Get(Item1)));
-        Observer.Finish();
+        Observer.Expect('count', '2');
+        Observer.Expect('same set', 'Yes');
+        Observer.Expect('item1 kept', 'Yes');
+        Observer.Expect('item2 new', 'Yes');
+        Observer.Expect('old media', 'Yes');
+        Observer.Verify();
     end;
 
     // ---- item 7: SetCurrentKey on a Media and a MediaSet field ----
@@ -178,7 +204,11 @@ codeunit 79850 "LT AR Record Probes"
         Observer.Observe('ok', Format(TryKeyMedia(Row)));
         Observer.ObserveError('e');
         Observer.Observe('key', Row.CurrentKey());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('e|text', '');
+        Observer.Expect('e|code', '');
+        Observer.Expect('key', 'Pic');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,7 +221,11 @@ codeunit 79850 "LT AR Record Probes"
         Observer.Observe('ok', Format(TryKeyMediaSet(Row)));
         Observer.ObserveError('e');
         Observer.Observe('key', Row.CurrentKey());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('e|text', '');
+        Observer.Expect('e|code', '');
+        Observer.Expect('key', 'Pics');
+        Observer.Verify();
     end;
 
     // ---- item 9: table globals of a record in an array element, and through RecordRef.SetTable / GetTable ----
@@ -217,7 +251,14 @@ codeunit 79850 "LT AR Record Probes"
         Plain.Bump();
         Rows[1] := Plain;
         Observer.Observe('elem1 from plain', Format(Rows[1].GetCounter()));
-        Observer.Finish();
+        Observer.Expect('elem1', '2');
+        Observer.Expect('elem2', '0');
+        Observer.Expect('elem2 after assign', '0');
+        Observer.Expect('elem1 after bump2', '2');
+        Observer.Expect('elem2 after bump2', '1');
+        Observer.Expect('plain from elem', '0');
+        Observer.Expect('elem1 from plain', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -239,7 +280,10 @@ codeunit 79850 "LT AR Record Probes"
         RecRef.GetTable(Plain);
         RecRef.SetTable(Rows[1]);
         Observer.Observe('settable into elem1', Format(Rows[1].GetCounter()));
-        Observer.Finish();
+        Observer.Expect('settable into elem2', '0');
+        Observer.Expect('settable into plain', '1');
+        Observer.Expect('settable into elem1', '2');
+        Observer.Verify();
     end;
 
     // ---- item 12: Format(Record) with FlowFilter fields before and after FlowFields ----
@@ -272,7 +316,10 @@ codeunit 79850 "LT AR Record Probes"
         Observer.Observe('calc', Format(F));
         F.SetRange(FltA, 5);
         Observer.Observe('filtered', Format(F));
-        Observer.Finish();
+        Observer.Expect('assigned', '1\tn\t11\t22\t0\t0');
+        Observer.Expect('calc', '1\tn\t11\t22\t2\t7');
+        Observer.Expect('filtered', '1\tn\t11\t22\t2\t7');
+        Observer.Verify();
     end;
 
     // ---- item 14: a Variant holding a filtered, found RecordRef, assigned to a Record or passed to a Record parameter ----
@@ -306,7 +353,13 @@ codeunit 79850 "LT AR Record Probes"
         Row.Modify();
         Check.Get(Row.Id);
         Observer.Observe('stored', Format(Check.Id) + '|' + Check.Name);
-        Observer.Finish();
+        Observer.Expect('row', '2|r2');
+        Observer.Expect('filters', '');
+        Observer.Expect('count', '4');
+        Observer.Expect('next', '1');
+        Observer.Expect('after next', '3');
+        Observer.Expect('stored', '3|m');
+        Observer.Verify();
     end;
 
     [Test]
@@ -322,6 +375,7 @@ codeunit 79850 "LT AR Record Probes"
         RR.FindLast();
         V := RR;
         Observer.Observe('param', Describe(V));
-        Observer.Finish();
+        Observer.Expect('param', '3|r3||4');
+        Observer.Verify();
     end;
 }
