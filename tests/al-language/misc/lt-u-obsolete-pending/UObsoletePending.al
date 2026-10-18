@@ -44,6 +44,7 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Observer: Codeunit "Probe Observer";
         Src: Record "LT U Page Src";
         Card: TestPage "LT U Obsolete Page";
+        Value: Text;
     begin
         Src.DeleteAll();
         Src.Init();
@@ -51,18 +52,37 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Src.Txt := 'one';
         Src.Insert();
         Card.OpenView();
-        Observer.Observe('group_field', Card.InObsGroup.Value);
-        Observer.Observe('group_field_visible', Format(Card.InObsGroup.Visible()));
-        Observer.Observe('cue_field', Card.InObsCue.Value);
-        Observer.Observe('label_visible', Format(Card.ObsLabel.Visible()));
-        Observer.Observe('action_enabled', Format(Card.ObsAction.Enabled()));
-        Observer.Observe('ext_field_visible', Format(Card.ObsExtField.Visible()));
-        Observer.Observe('ext_group_field', Card.InObsExtGroup.Value);
-        Observer.Observe('ext_action_enabled', Format(Card.ObsExtAction.Enabled()));
+        asserterror begin Value := Card.InObsGroup.Value; Error('NOERROR'); end;
+        Observer.Observe('group_field', Outcome(Value));
+        asserterror begin Value := Format(Card.InObsGroup.Visible()); Error('NOERROR'); end;
+        Observer.Observe('group_field_visible', Outcome(Value));
+        asserterror begin Value := Card.InObsCue.Value; Error('NOERROR'); end;
+        Observer.Observe('cue_field', Outcome(Value));
+        asserterror begin Value := Format(Card.ObsLabel.Visible()); Error('NOERROR'); end;
+        Observer.Observe('label_visible', Outcome(Value));
+        asserterror begin Value := Format(Card.ObsAction.Enabled()); Error('NOERROR'); end;
+        Observer.Observe('action_enabled', Outcome(Value));
+        asserterror begin Value := Format(Card.ObsExtField.Visible()); Error('NOERROR'); end;
+        Observer.Observe('ext_field_visible', Outcome(Value));
+        asserterror begin Value := Card.InObsExtGroup.Value; Error('NOERROR'); end;
+        Observer.Observe('ext_group_field', Outcome(Value));
+        asserterror begin Value := Format(Card.ObsExtAction.Enabled()); Error('NOERROR'); end;
+        Observer.Observe('ext_action_enabled', Outcome(Value));
         Card.ObsAction.Invoke();
         Card.ObsExtAction.Invoke();
         Card.Close();
         Observer.Finish();
+    end;
+
+    local procedure Outcome(Value: Text): Text
+    begin
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            exit(Value);
+        end;
+        Value := 'ERR ' + GetLastErrorCode();
+        ClearLastError();
+        exit(Value);
     end;
 
     [Test]

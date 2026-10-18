@@ -54,6 +54,13 @@ codeunit 69789 "LT U Property Tests"
         exit(CopyStr(Value, StrPos(Value, Marker) + StrLen(Marker), Len));
     end;
 
+    local procedure Capture(CaptureName: Text)
+    begin
+        Observer.Observe(CaptureName, GetLastErrorText());
+        Observer.Observe(CaptureName + '|code', GetLastErrorCode());
+        ClearLastError();
+    end;
+
     local procedure ReadAll(var InS: InStream) Result: Text
     var
         Line: Text;
@@ -142,16 +149,17 @@ codeunit 69789 "LT U Property Tests"
         if not WasStarted then
             Mock.Start();
         Mock.Set('ALTPermissionSet');
-        asserterror Src.FindFirst();
-        Observer.ObserveError('direct_read_of_src');
-        Report.Run(Report::"LT U Report Plain", false, false);
-        Observer.Observe('plain_report_run|no_error', 'true');
+        asserterror begin Src.FindFirst(); Error('NOERROR'); end;
+        Capture('direct_read_of_src');
+        asserterror begin Report.Run(Report::"LT U Report Plain", false, false); Error('NOERROR'); end;
+        Capture('plain_report_run');
         Observer.Observe('state_after_plain', State.Dump());
         TempBlob.CreateOutStream(OutS);
-        asserterror Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS);
-        Observer.ObserveError('saveas_inherent');
+        asserterror begin Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS); Error('NOERROR'); end;
+        Capture('saveas_inherent');
         Observer.Observe('inherent_report_saveas_length_positive', Format(TempBlob.Length() > 0));
-        Report.Run(Report::"LT U Report", true, false);
+        asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
+        Capture('run_request_page');
         Mock.ClearAssignments();
         if not WasStarted then
             Mock.Stop();
@@ -165,52 +173,21 @@ codeunit 69789 "LT U Property Tests"
         Req.RelField.SetValue(1);
         Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value);
         asserterror begin Req.AmtField.SetValue(1234.5); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('amount_set|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('amount_value', Req.AmtField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('amount_value|failed')
-        else
-            ClearLastError();
+        Capture('amount_set');
+        Observer.Observe('amount_value', Req.AmtField.Value);
         asserterror begin Req.DfField.SetValue('1D'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_1d_set|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('date_formula_1d', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_1d|failed')
-        else
-            ClearLastError();
+        Capture('date_formula_1d_set');
+        Observer.Observe('date_formula_1d', Req.DfField.Value);
         asserterror begin Req.DfField.SetValue('<1W>'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_1w_set|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('date_formula_1w', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_1w|failed')
-        else
-            ClearLastError();
+        Capture('date_formula_1w_set');
+        Observer.Observe('date_formula_1w', Req.DfField.Value);
         asserterror begin Req.DfField.SetValue('CM+1D'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_cm_set|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('date_formula_cm', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_cm|failed')
-        else
-            ClearLastError();
+        Capture('date_formula_cm_set');
+        Observer.Observe('date_formula_cm', Req.DfField.Value);
         asserterror begin Req.RelField.SetValue(9999); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('rel_missing_set|failed')
-        else
-            ClearLastError();
-        asserterror Req.ExtRelField.SetValue(1);
-        Observer.ObserveError('request_page_ext_rel');
+        Capture('rel_missing_set');
+        asserterror begin Req.ExtRelField.SetValue(1); Error('NOERROR'); end;
+        Capture('request_page_ext_rel');
         Req.Cancel().Invoke();
     end;
 
