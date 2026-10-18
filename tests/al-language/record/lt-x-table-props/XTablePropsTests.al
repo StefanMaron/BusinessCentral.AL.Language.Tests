@@ -275,19 +275,19 @@ codeunit 75010 "LT X Table Props Tests"
     end;
 
     [Test]
-    procedure SQLDataType_Code_GetRow2()
+    procedure SQLDataType_Code_GetRowWithNine()
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT X Props Sql";
     begin
         SeedSql(Row);
-        asserterror Row.Get(2);
-        Observer.ObserveError('get_2_value_9');
+        Row.Get(2);
+        Observer.Observe('integer_nine', Row.AsInteger);
         Observer.Finish();
     end;
 
     [Test]
-    procedure SQLDataType_Code_ModifyToZero()
+    procedure SQLDataType_Code_ModifyToZeroErrors()
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT X Props Sql";
@@ -295,14 +295,13 @@ codeunit 75010 "LT X Table Props Tests"
         SeedSql(Row);
         Row.Get(1);
         Row.AsInteger := '0';
-        Row.Modify();
-        Row.Get(1);
-        Observer.Observe('integer_zero_stored', Row.AsInteger);
+        asserterror Row.Modify();
+        Observer.ObserveError('modify_zero');
         Observer.Finish();
     end;
 
     [Test]
-    procedure SQLDataType_Code_ModifyToLeadingZero()
+    procedure SQLDataType_Code_ModifyToLeadingZeroErrors()
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT X Props Sql";
@@ -310,9 +309,8 @@ codeunit 75010 "LT X Table Props Tests"
         SeedSql(Row);
         Row.Get(1);
         Row.AsInteger := '007';
-        Row.Modify();
-        Row.Get(1);
-        Observer.Observe('integer_leading_zero_stored', Row.AsInteger);
+        asserterror Row.Modify();
+        Observer.ObserveError('modify_leading_zero');
         Observer.Finish();
     end;
 
