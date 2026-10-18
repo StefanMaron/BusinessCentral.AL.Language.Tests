@@ -100,7 +100,7 @@ report 68372 "Probe Col Types Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeColTypesLayout.rdl';
+            LayoutFile = './ProbeColTypesLayout_4.rdl';
             Caption = 'Probe layout';
         }
     }

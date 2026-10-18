@@ -135,7 +135,7 @@ report 72952 "LT P175 Rpt Rdlc"
         layout(OneRdlc)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_2.rdlc';
             Caption = 'P175 one rdlc';
             Summary = 'P175 rdlc summary';
         }
@@ -162,13 +162,13 @@ report 72953 "LT P175 Rpt Multi"
         layout(FirstRdlc)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_3.rdlc';
             Caption = 'P175 first';
         }
         layout(SecondRdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeSaveAsDatasetLayout.rdl';
+            LayoutFile = './ProbeSaveAsDatasetLayout_2.rdl';
             Caption = 'P175 second';
             Summary = 'P175 second summary';
         }

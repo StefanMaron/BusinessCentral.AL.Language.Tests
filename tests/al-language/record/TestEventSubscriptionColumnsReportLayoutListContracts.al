@@ -72,7 +72,7 @@ report 69083 "Probe RL Report"
         layout(Word)
         {
             Type = Word;
-            LayoutFile = './ProbeRlLayout.docx';
+            LayoutFile = './ProbeRlLayout_2.docx';
             Caption = 'RL word';
         }
     }
