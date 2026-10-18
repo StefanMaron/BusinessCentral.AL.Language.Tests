@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-calcfields-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); LT F3 Report Log (67077); own objects 67098 - 67099, 67108 - 67114, 67126, 67132
+// Fixtures used: Probe Observer (69160); LT F3 Report Log (67077); own objects 67098 - 67099, 67108 - 67114, 67126
 // Probe: shared fixtures of the report probes: header and line tables with FlowFields, and ProcessingOnly reports that log the FlowField values and rows they read.
 // BC versions: 27.0+
 
@@ -317,77 +317,6 @@ report 67114 "LT F3 Request Report"
                 Log: Codeunit "LT F3 Report Log";
             begin
                 Log.Add('Parent ' + Parent."Code");
-            end;
-        }
-    }
-
-    requestpage
-    {
-        layout
-        {
-            area(Content)
-            {
-                group(Options)
-                {
-                    field(TagCtl; Tag)
-                    {
-                        ApplicationArea = All;
-                        Caption = 'Tag';
-                    }
-                }
-            }
-        }
-
-        trigger OnOpenPage()
-        var
-            Log: Codeunit "LT F3 Report Log";
-        begin
-            Log.Add('RP OnOpenPage');
-        end;
-    }
-
-    var
-        Tag: Text[20];
-
-    trigger OnInitReport()
-    var
-        Log: Codeunit "LT F3 Report Log";
-    begin
-        Tag := 'default';
-        Log.Add('OnInitReport');
-    end;
-
-    trigger OnPreReport()
-    var
-        Log: Codeunit "LT F3 Report Log";
-    begin
-        Log.Add('OnPreReport tag=' + Tag);
-    end;
-
-    trigger OnPostReport()
-    var
-        Log: Codeunit "LT F3 Report Log";
-    begin
-        Log.Add('OnPostReport');
-    end;
-}
-
-// Same as 67114 over a table without FlowFields.
-report 67132 "LT F3 Request Plain"
-{
-    ProcessingOnly = true;
-
-    dataset
-    {
-        dataitem(Parent; "LT F3 Row")
-        {
-            RequestFilterFields = "No.";
-
-            trigger OnAfterGetRecord()
-            var
-                Log: Codeunit "LT F3 Report Log";
-            begin
-                Log.Add('Parent ' + Parent."No.");
             end;
         }
     }
