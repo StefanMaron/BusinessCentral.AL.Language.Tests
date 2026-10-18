@@ -36,7 +36,19 @@ codeunit 79000 "LT AJ Scalars"
         ObserveEvaluateDecimal('New/Updated');
         ObserveEvaluateDecimal('12/5');
         ObserveEvaluateDecimal('1/2');
-        Observer.Finish();
+        Observer.Expect('New/Updated bool', 'No|99');
+        Observer.Expect('New/Updated statement|text', 'The value "New/Updated" can''t be evaluated into type Decimal.');
+        Observer.Expect('New/Updated statement|code', 'Evaluate');
+        Observer.Expect('New/Updated value after', '99');
+        Observer.Expect('12/5 bool', 'No|99');
+        Observer.Expect('12/5 statement|text', 'The value "12/5" can''t be evaluated into type Decimal.');
+        Observer.Expect('12/5 statement|code', 'Evaluate');
+        Observer.Expect('12/5 value after', '99');
+        Observer.Expect('1/2 bool', 'No|99');
+        Observer.Expect('1/2 statement|text', 'The value "1/2" can''t be evaluated into type Decimal.');
+        Observer.Expect('1/2 statement|code', 'Evaluate');
+        Observer.Expect('1/2 value after', '99');
+        Observer.Verify();
     end;
 
     [Test]
@@ -45,7 +57,17 @@ codeunit 79000 "LT AJ Scalars"
         ObserveEvaluateDecimal('abc1');
         ObserveEvaluateDecimal('1abc');
         ObserveEvaluateDecimal('5-');
-        Observer.Finish();
+        Observer.Expect('abc1 bool', 'No|99');
+        Observer.Expect('abc1 statement|text', 'The value "abc1" can''t be evaluated into type Decimal.');
+        Observer.Expect('abc1 statement|code', 'Evaluate');
+        Observer.Expect('abc1 value after', '99');
+        Observer.Expect('1abc bool', 'No|99');
+        Observer.Expect('1abc statement|text', 'The value "1abc" can''t be evaluated into type Decimal.');
+        Observer.Expect('1abc statement|code', 'Evaluate');
+        Observer.Expect('1abc value after', '99');
+        Observer.Expect('5- bool', 'Yes|-5');
+        Observer.Expect('5- statement', 'no error|-5');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -251,28 +273,45 @@ codeunit 79000 "LT AJ Scalars"
     procedure Format_FillerCharacter_OnDate_1()
     begin
         ObserveFiller('Date', 1, 5);
-        Observer.Finish();
+        Observer.Expect('<Filler Character,0>', '');
+        Observer.Expect('<Filler Character,0><Day,4>', '0005');
+        Observer.Expect('<Day,4><Filler Character,0>', '0005');
+        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', '0500032024');
+        Observer.Expect('<Filler Character,0><Hours24,5><Minutes,5>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Hours24,5><Minutes,5>|InvalidFormatString');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Format_FillerCharacter_OnDate_2()
     begin
         ObserveFiller('Date', 6, 9);
-        Observer.Finish();
+        Observer.Expect('<Filler Character,#><Day,4>', '0005');
+        Observer.Expect('<Filler Character,*><Hours12,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,*><Hours12,4>|InvalidFormatString');
+        Observer.Expect('<Filler Character,0><Standard Format,0>', '03/05/24');
+        Observer.Expect('<Day,4><Filler Character,0><Month,4>', '00050003');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Format_FillerCharacter_OnTime_1()
     begin
         ObserveFiller('Time', 1, 5);
-        Observer.Finish();
+        Observer.Expect('<Filler Character,0>', '');
+        Observer.Expect('<Filler Character,0><Day,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,4>|InvalidFormatString');
+        Observer.Expect('<Day,4><Filler Character,0>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Day,4><Filler Character,0>|InvalidFormatString');
+        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,2><Mon');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Format_FillerCharacter_OnTime_2()
     begin
         ObserveFiller('Time', 6, 9);
-        Observer.Finish();
+        Observer.Expect('<Filler Character,#><Day,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,#><Day,4>|InvalidFormatString');
+        Observer.Expect('<Filler Character,*><Hours12,4>', '   9');
+        Observer.Expect('<Filler Character,0><Standard Format,0>', ' 9:07:02 AM');
+        Observer.Expect('<Day,4><Filler Character,0><Month,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Day,4><Filler Character,0><Month,4>|InvalidFormatString');
+        Observer.Verify();
     end;
 
     local procedure TryFormat(V: Variant; F: Text): Text
