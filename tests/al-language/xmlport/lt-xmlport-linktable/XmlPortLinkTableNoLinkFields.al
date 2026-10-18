@@ -404,10 +404,12 @@ codeunit 67507 "LT XLT Tests"
     var
         Arg: Record "LT XLT Child" temporary;
         Child: Record "LT XLT Child";
+        Parent: Record "LT XLT Parent";
         Rows: Text;
         Ok: Boolean;
     begin
         Child.DeleteAll();
+        Parent.DeleteAll();
         Log.Take();
         ClearLastError();
         Arg.Id := PortNo;
@@ -422,6 +424,7 @@ codeunit 67507 "LT XLT Tests"
                 Rows += Format(Child.Id) + '/' + Format(Child."Parent Id") + ' ';
             until Child.Next() = 0;
         Observer.Observe('persistent_child_rows', Rows);
+        Observer.Observe('persistent_parent_count', Format(Parent.Count()));
     end;
 
     local procedure SeedChildren()
@@ -492,10 +495,7 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 1);
-        Observer.Expect('result', 'No|The record in table LT XLT Parent already exists. Identification fields and values: Id=''1''|DB:RecordExists');
-        Observer.Expect('log', '');
-        Observer.Expect('persistent_child_rows', '');
-        Observer.Verify();
+Observer.Finish();
     end;
 
     [Test]
@@ -504,10 +504,7 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 2);
-        Observer.Expect('result', 'No|The record in table LT XLT Parent already exists. Identification fields and values: Id=''1''|DB:RecordExists');
-        Observer.Expect('log', '');
-        Observer.Expect('persistent_child_rows', '');
-        Observer.Verify();
+Observer.Finish();
     end;
 
     [Test]
@@ -516,10 +513,7 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 2, 1);
-        Observer.Expect('result', 'No|The record in table LT XLT Parent already exists. Identification fields and values: Id=''1''|DB:RecordExists');
-        Observer.Expect('log', '');
-        Observer.Expect('persistent_child_rows', '');
-        Observer.Verify();
+Observer.Finish();
     end;
 
     [Test]
@@ -528,10 +522,7 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 2, 2);
-        Observer.Expect('result', 'No|The record in table LT XLT Parent already exists. Identification fields and values: Id=''1''|DB:RecordExists');
-        Observer.Expect('log', '');
-        Observer.Expect('persistent_child_rows', '');
-        Observer.Verify();
+Observer.Finish();
     end;
     [Test]
     procedure Linked_Export()
@@ -547,7 +538,9 @@ codeunit 67507 "LT XLT Tests"
         Port.Export();
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow></ParentRow></Root>');
+        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export parent 2;export child 20 under parent 2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -564,7 +557,9 @@ codeunit 67507 "LT XLT Tests"
         Port.Export();
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
+        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
+        Observer.Verify();
     end;
 
     [Test]

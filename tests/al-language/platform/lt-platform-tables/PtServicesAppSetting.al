@@ -94,7 +94,7 @@ codeunit 67514 "LT PT Services Content"
         Observer.Expect('row20', '3=Page;9=Power BI Sales Pipeline;6=6314;12=Yes;13=No;14=No;');
         Observer.Expect('row21', '3=Page;9=Power BI Top 5 Opportunities;6=6315;12=Yes;13=No;14=No;');
         Observer.Expect('row22', '3=Page;9=Power BI WorkDate Calc.;6=6313;12=Yes;13=No;14=No;');
-        Observer.Expect('row23', '3=Page;9=purchaseDocumentLines;6=6405;12=Yes;13=No;14=No');
+        Observer.Expect('row23', '3=Page;9=purchaseDocumentLines;6=6405;12=Yes;13=No;14=No;');
         Observer.Verify();
     end;
 
@@ -140,7 +140,19 @@ codeunit 67518 "LT PT Nas Mutations"
     begin
         Clean();
         Standard(Observer, 2000000201, '1=11111111-2222-3333-4444-555555555555;2=true', '1=11111111-2222-3333-4444-555555555555', '2=false');
-        Observer.Finish();
+        Observer.Expect('insert', 'ok:Yes');
+        Observer.Expect('find_inserted', 'ok:1=<guid>;2=Yes;');
+        Observer.Expect('count_inserted', 'ok:1');
+        Observer.Expect('insert_duplicate', 'ok:No');
+        Observer.Expect('modify', 'ok:Yes');
+        Observer.Expect('find_modified', 'ok:1=<guid>;2=No;');
+        Observer.Expect('delete', 'ok:Yes');
+        Observer.Expect('count_deleted', 'ok:0');
+        Observer.Expect('insert_no_triggers', 'ok:Yes');
+        Observer.Expect('modify_no_triggers', 'ok:Yes');
+        Observer.Expect('delete_all_no_triggers', 'ok:done');
+        Observer.Expect('count_after_delete_all', 'ok:0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +168,12 @@ codeunit 67518 "LT PT Nas Mutations"
         Observer.Observe('count_both', Ops.Perform(T, 'count', '2=true', false));
         Observer.Observe('insert_blank_guid', Ops.Perform(T, 'insert', '1=00000000-0000-0000-0000-000000000000;2=true', true));
         Observer.Observe('count_after_blank_guid', Ops.Perform(T, 'count', '', false));
-        Observer.Finish();
+        Observer.Expect('insert_one', 'ok:Yes');
+        Observer.Expect('insert_two', 'ok:Yes');
+        Observer.Expect('count_both', 'ok:2');
+        Observer.Expect('insert_blank_guid', 'ok:Yes');
+        Observer.Expect('count_after_blank_guid', 'ok:3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -171,7 +188,9 @@ codeunit 67518 "LT PT Nas Mutations"
         Arg.Insert();
         Observer.Observe('first_call', RunText(Arg, 'getorinsert'));
         Observer.Observe('second_call', RunText(Arg, 'getorinsert'));
-        Observer.Finish();
+        Observer.Expect('first_call', 'ok:existed=No allow=Yes count=1');
+        Observer.Expect('second_call', 'ok:existed=Yes allow=Yes count=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +212,16 @@ codeunit 67518 "LT PT Nas Mutations"
         Observer.Observe('delete_all_true', RunText(Arg, 'deleteall_true'));
         Observer.Observe('insert_third', Ops.Perform(2000000201, 'insert', '1=11111111-2222-3333-4444-555555555553;2=true', true));
         Observer.Observe('delete_all_default', RunText(Arg, 'deleteall'));
-        Observer.Finish();
+        Observer.Expect('insert_one', 'ok:Yes');
+        Observer.Expect('insert_two', 'ok:Yes');
+        Observer.Expect('count', 'ok:2');
+        Observer.Expect('modify_all', 'ok:done false-count=2');
+        Observer.Expect('delete_all_false', 'ok:done count=0');
+        Observer.Expect('insert_again', 'ok:Yes');
+        Observer.Expect('delete_all_true', 'ok:done count=0');
+        Observer.Expect('insert_third', 'ok:Yes');
+        Observer.Expect('delete_all_default', 'ok:done count=0');
+        Observer.Verify();
     end;
 
     local procedure RunText(var Arg: Record "LT PT Arg" temporary; Op: Text): Text
