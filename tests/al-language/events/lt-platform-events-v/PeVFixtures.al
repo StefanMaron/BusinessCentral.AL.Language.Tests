@@ -218,7 +218,6 @@ codeunit 69851 "LT V Subs"
         exit(Format(RecRef.Field(1).Value) + '/' + Format(RecRef.Field(2).Value) + '/' + Format(RecRef.Field(3).Value));
     end;
 
-    [TryFunction]
     local procedure TryDb(EventName: Text; Info: Text)
     var
         Row: Record "LT V Event Log";
@@ -227,13 +226,13 @@ codeunit 69851 "LT V Subs"
         Row."Event Name" := CopyStr(EventName, 1, MaxStrLen(Row."Event Name"));
         Row.Info := CopyStr(Info, 1, MaxStrLen(Row.Info));
         Row."Session Id" := SessionId();
-        Row.Insert();
+        if Row.Insert() then;
     end;
 
     local procedure Note(EventName: Text; Info: Text)
     begin
         Log.Add(EventName + '(' + Info + ')');
-        if TryDb(EventName, Info) then;
+        TryDb(EventName, Info);
     end;
 
     // ---- Global Triggers ----
