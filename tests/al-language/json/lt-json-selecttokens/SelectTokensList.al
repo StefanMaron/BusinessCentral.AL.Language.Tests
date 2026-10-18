@@ -91,9 +91,8 @@ codeunit 78800 "LT S Array SelectTokens"
         Dummy := Subject.SelectTokens(Path, L);
     end;
 
-    local procedure Probe(Name: Text; Path: Text)
+    local procedure Probe(var Observer: Codeunit "Probe Observer"; Name: Text; Path: Text)
     var
-        Observer: Codeunit "Probe Observer";
         L: List of [JsonToken];
     begin
         Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
@@ -109,12 +108,12 @@ codeunit 78800 "LT S Array SelectTokens"
         EmptyDoc: JsonArray;
     begin
         Doc(Subject);
-        Probe('bad1', '$[');
-        Probe('bad2', '$.a[?(@.x');
-        Probe('bad3', '');
-        Probe('bad4', 'a..[');
-        Probe('bad5', '$.a.[');
-        Probe('bad6', '$[?(');
+        Probe(Observer, 'bad1', '$[');
+        Probe(Observer, 'bad2', '$.a[?(@.x');
+        Probe(Observer, 'bad3', '');
+        Probe(Observer, 'bad4', 'a..[');
+        Probe(Observer, 'bad5', '$.a.[');
+        Probe(Observer, 'bad6', '$[?(');
         Observer.Observe('empty_array', Format(EmptyDoc.SelectTokens('$[*]', L)));
         Observer.Observe('empty_array_list', Render(L));
         Observer.Finish();
@@ -209,9 +208,8 @@ codeunit 78801 "LT S Object SelectTokens"
         Dummy := Subject.SelectTokens(Path, L);
     end;
 
-    local procedure Probe(Name: Text; Path: Text)
+    local procedure Probe(var Observer: Codeunit "Probe Observer"; Name: Text; Path: Text)
     var
-        Observer: Codeunit "Probe Observer";
         L: List of [JsonToken];
     begin
         Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
@@ -227,12 +225,12 @@ codeunit 78801 "LT S Object SelectTokens"
         EmptyDoc: JsonObject;
     begin
         Doc(Subject);
-        Probe('bad1', '$[');
-        Probe('bad2', '$.a[?(@.x');
-        Probe('bad3', '');
-        Probe('bad4', 'a..[');
-        Probe('bad5', '$.a.[');
-        Probe('bad6', '$[?(');
+        Probe(Observer, 'bad1', '$[');
+        Probe(Observer, 'bad2', '$.a[?(@.x');
+        Probe(Observer, 'bad3', '');
+        Probe(Observer, 'bad4', 'a..[');
+        Probe(Observer, 'bad5', '$.a.[');
+        Probe(Observer, 'bad6', '$[?(');
         Observer.Observe('empty_object', Format(EmptyDoc.SelectTokens('$.*', L)));
         Observer.Observe('empty_object_list', Render(L));
         Observer.Finish();
