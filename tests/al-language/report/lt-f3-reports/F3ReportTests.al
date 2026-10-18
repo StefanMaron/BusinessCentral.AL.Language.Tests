@@ -220,7 +220,8 @@ codeunit 67115 "LT F3 Report Probes"
     procedure ReportHandler_NoRequestPage()
     begin
         ObserveDirectRun('run', false, false);
-        Observer.Finish();
+        Observer.Expect('run_log', 'OnInitReport | OnPreReport tag=default | Parent H1 | Parent H2 | Parent H3 | OnPostReport | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +229,10 @@ codeunit 67115 "LT F3 Report Probes"
     procedure ReportHandler_WithRequestPage()
     begin
         ObserveErrorRun('run', true, false);
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('run_log', 'OnInitReport | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -236,7 +240,10 @@ codeunit 67115 "LT F3 Report Probes"
     procedure ReportHandler_WithRequestPage_RunModal()
     begin
         ObserveErrorRun('runmodal', true, true);
-        Observer.Finish();
+        Observer.Expect('runmodal|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('runmodal|code', 'DB:Ok');
+        Observer.Expect('runmodal_log', 'OnInitReport | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -249,28 +256,47 @@ codeunit 67115 "LT F3 Report Probes"
         asserterror Report.Run(Report::"LT F3 Request Report");
         Observer.ObserveError('static');
         Observer.Observe('log', Dump());
-        Observer.Finish();
+        Observer.Expect('static|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('static|code', 'DB:Ok');
+        Observer.Expect('log', 'OnInitReport | ');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RequestPageReport_UseRequestPage_NoHandler_Run()
     begin
         ObserveErrorRun('run', true, false);
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('run_log', 'OnInitReport | ');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RequestPageReport_UseRequestPage_NoHandler_RunModal()
     begin
         ObserveErrorRun('runmodal', true, true);
-        Observer.Finish();
+        Observer.Expect('runmodal|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('runmodal|code', 'DB:Ok');
+        Observer.Expect('runmodal_log', 'OnInitReport | ');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RequestPageReport_NoRequestPage_NoHandler()
     begin
         ObserveDirectRun('norequest', false, false);
-        Observer.Finish();
+        Observer.Expect('norequest_log', 'OnInitReport | OnPreReport tag=default | Parent H1 | Parent H2 | Parent H3 | OnPostReport | ');
+        Observer.Verify();
+    end;
+
+    local procedure ObserveStaticRun(Name: Text)
+    var
+        Data: Codeunit "LT F3 Report Data";
+    begin
+        Data.Seed();
+        Report.Run(Report::"LT F3 Request Report");
+        Observer.Observe(Name + '_log', Dump());
     end;
 
     [Test]
@@ -278,7 +304,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_OK()
     begin
         HandlerMode := 0;
-        ObserveDirectRun('ok', true, false);
+        ObserveStaticRun('ok');
         Observer.Finish();
     end;
 
@@ -287,7 +313,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_Cancel()
     begin
         HandlerMode := 1;
-        ObserveDirectRun('cancel', true, false);
+        ObserveStaticRun('cancel');
         Observer.Finish();
     end;
 
@@ -296,7 +322,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_TypedTag()
     begin
         HandlerMode := 2;
-        ObserveDirectRun('typed', true, false);
+        ObserveStaticRun('typed');
         Observer.Finish();
     end;
 
@@ -305,7 +331,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_SetFilterThenEmpty()
     begin
         HandlerMode := 3;
-        ObserveDirectRun('clear', true, false);
+        ObserveStaticRun('clear');
         Observer.Finish();
     end;
 
@@ -314,16 +340,25 @@ codeunit 67115 "LT F3 Report Probes"
     procedure RequestPageReport_Handler_SetFilterKept()
     begin
         HandlerMode := 4;
-        ObserveDirectRun('kept', true, false);
+        ObserveStaticRun('kept');
         Observer.Finish();
     end;
 
     [Test]
     [HandlerFunctions('RequestHandler')]
-    procedure RequestPageReport_Handler_RunModal()
+    procedure RequestPageReport_Handler_ViaVariableRun()
     begin
         HandlerMode := 0;
-        ObserveDirectRun('modal', true, true);
+        ObserveErrorRun('variable_run', true, false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestHandler')]
+    procedure RequestPageReport_Handler_ViaVariableRunModal()
+    begin
+        HandlerMode := 0;
+        ObserveErrorRun('variable_runmodal', true, true);
         Observer.Finish();
     end;
 }

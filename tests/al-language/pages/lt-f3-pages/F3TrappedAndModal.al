@@ -27,7 +27,9 @@ codeunit 67091 "LT F3 Trapped Page"
         Page.Run(Page::"LT F3 Card", Row);
         Observer.Observe('log', Log.Dump());
         Observer.Observe('no', TrappedCard.NoCtl.Value());
-        Observer.Finish();
+        Observer.Expect('log', 'Card.OnOpenPage(R1001) | ');
+        Observer.Expect('no', 'R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -44,7 +46,9 @@ codeunit 67091 "LT F3 Trapped Page"
         Page.Run(Page::"LT F3 Card", Row);
         Observer.Observe('log', Log.Dump());
         Observer.Observe('no', TrappedCard.NoCtl.Value());
-        Observer.Finish();
+        Observer.Expect('log', 'Card.OnQueryClosePage(OK) | Card.OnClosePage(R1001) | Card.OnOpenPage(R1002) | ');
+        Observer.Expect('no', 'R1002');
+        Observer.Verify();
     end;
 
     [Test]
@@ -56,7 +60,8 @@ codeunit 67091 "LT F3 Trapped Page"
         Log.Clear();
         TrappedCard.Close();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Card.OnQueryClosePage(OK) | Card.OnClosePage(R1002) | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -72,7 +77,8 @@ codeunit 67091 "LT F3 Trapped Page"
         TrappedCard.Trap();
         Page.Run(Page::"LT F3 Card", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'Card.OnOpenPage(R1003) | ');
+        Observer.Verify();
     end;
 }
 

@@ -406,7 +406,11 @@ codeunit 67122 "LT F3 Addin Calls"
             Observer.Observe('code', GetLastErrorCode());
         end;
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('error', 'A call to SetLocale failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('code', 'DotNetInvoke:NullReference');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -425,6 +429,13 @@ codeunit 67122 "LT F3 Addin Calls"
         ObserveCall('setlocale', Pg, 1);
         ObserveCall('load', Pg, 2);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('setlocale_ok', 'No');
+        Observer.Expect('setlocale_error', 'A call to SetLocale failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('setlocale_code', 'DotNetInvoke:NullReference');
+        Observer.Expect('load_ok', 'No');
+        Observer.Expect('load_error', 'A call to Load failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('load_code', 'DotNetInvoke:NullReference');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 }
