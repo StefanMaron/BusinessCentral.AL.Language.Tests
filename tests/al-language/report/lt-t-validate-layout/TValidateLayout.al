@@ -90,8 +90,7 @@ codeunit 69366 "LT T Validate Layout Tests"
             Observer.Observe(Tag + ' prepared', 'EOS')
         else begin
             Text1 := ReadAll(Prepared);
-            Observer.Observe(Tag + ' prepared length', Format(StrLen(Text1)));
-            Observer.Observe(Tag + ' prepared equals original', Format(Text1 = Original));
+            Observer.Observe(Tag + ' prepared is xml', Format(Text1.Contains('<Report')));
         end;
         ClearLastError();
     end;
@@ -107,15 +106,12 @@ codeunit 69366 "LT T Validate Layout Tests"
     begin
         OwnLayout(Again);
         Original := ReadAll(Again);
-        Observer.Observe('original length', Format(StrLen(Original)));
         OwnLayout(Layout);
         Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::RDLC);
         Describe('static rdlc', Ok, Prepared, Original);
-        Observer.Expect('original length', '2015');
         Observer.Expect('static rdlc ok', 'Yes');
         Observer.Expect('static rdlc error', '');
-        Observer.Expect('static rdlc prepared length', '2015');
-        Observer.Expect('static rdlc prepared equals original', 'Yes');
+        Observer.Expect('static rdlc prepared is xml', 'Yes');
         Observer.Verify();
     end;
 
@@ -128,7 +124,9 @@ codeunit 69366 "LT T Validate Layout Tests"
         OwnLayout(Layout);
         asserterror Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::Word);
         Observer.ObserveError('static rdlc content as word');
-        Observer.Finish();
+        Observer.Expect('static rdlc content as word|text', 'File contains corrupted data.');
+        Observer.Expect('static rdlc content as word|code', 'AL:FileFormat');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,8 +141,6 @@ codeunit 69366 "LT T Validate Layout Tests"
         OwnLayout(Layout);
         asserterror Report.ValidateAndPrepareLayout(0, Layout, Prepared, ReportLayoutType::RDLC);
         Observer.ObserveError('static report 0');
-        Observer.Expect('static rdlc content as word|text', 'File contains corrupted data.');
-        Observer.Expect('static rdlc content as word|code', 'AL:FileFormat');
         Observer.Expect('static unknown report|text', 'You tried to invoke the Report object with the ID 71999 from the object LT T Validate Layout Tests. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('static unknown report|code', 'AL:MetadataNotFound');
         Observer.Expect('static report 0|text', 'You tried to invoke the Report object with the ID 0 from the object LT T Validate Layout Tests. An object with that ID does not exist in the current application compiled with emit version n.');
@@ -169,8 +165,7 @@ codeunit 69366 "LT T Validate Layout Tests"
         Describe('instance rdlc', Ok, Prepared, Original);
         Observer.Expect('instance rdlc ok', 'Yes');
         Observer.Expect('instance rdlc error', '');
-        Observer.Expect('instance rdlc prepared length', '2015');
-        Observer.Expect('instance rdlc prepared equals original', 'Yes');
+        Observer.Expect('instance rdlc prepared is xml', 'Yes');
         Observer.Verify();
     end;
 

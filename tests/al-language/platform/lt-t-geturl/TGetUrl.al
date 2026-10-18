@@ -200,42 +200,90 @@ codeunit 69381 "LT T GetUrl Tests"
     procedure GetUrl_ClientDefault()
     begin
         ClientTest(ClientType::Default, 'default');
-        Observer.Finish();
+        Observer.Expect('default alone', 'dynamicsnav://<host>/<instance>//');
+        Observer.Expect('default company', 'ok|dynamicsnav://<host>/<instance>/My%20Company/');
+        Observer.Expect('default empty company', 'ok|dynamicsnav://<host>/<instance>//');
+        Observer.Expect('default page', 'ok|dynamicsnav://<host>/<instance>//runpage?page=21');
+        Observer.Expect('default company page', 'ok|dynamicsnav://<host>/<instance>/My%20Company/runpage?page=21');
+        Observer.Expect('default company report', 'ok|dynamicsnav://<host>/<instance>/My%20Company/runreport?report=69367');
+        Observer.Expect('default company page record', 'ok|dynamicsnav://<host>/<instance>/My%20Company/runpage?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Expect('default page record no company', 'ok|dynamicsnav://<host>/<instance>//runpage?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GetUrl_ClientWeb()
     begin
         ClientTest(ClientType::Web, 'web');
-        Observer.Finish();
+        Observer.Expect('web alone', '<base>');
+        Observer.Expect('web company', 'ok|<base>/?company=My%20Company');
+        Observer.Expect('web empty company', 'ok|<base>');
+        Observer.Expect('web page', 'ok|<base>/?page=21');
+        Observer.Expect('web company page', 'ok|<base>/?company=My%20Company&page=21');
+        Observer.Expect('web company report', 'ok|<base>/?company=My%20Company&report=69367');
+        Observer.Expect('web company page record', 'ok|<base>/?company=My%20Company&page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Expect('web page record no company', 'ok|<base>/?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GetUrl_ClientWindows()
     begin
         ClientTest(ClientType::Windows, 'windows');
-        Observer.Finish();
+        Observer.Expect('windows alone', 'dynamicsnav://<host>/<instance>//');
+        Observer.Expect('windows company', 'ok|dynamicsnav://<host>/<instance>/My%20Company/');
+        Observer.Expect('windows empty company', 'ok|dynamicsnav://<host>/<instance>//');
+        Observer.Expect('windows page', 'ok|dynamicsnav://<host>/<instance>//runpage?page=21');
+        Observer.Expect('windows company page', 'ok|dynamicsnav://<host>/<instance>/My%20Company/runpage?page=21');
+        Observer.Expect('windows company report', 'ok|dynamicsnav://<host>/<instance>/My%20Company/runreport?report=69367');
+        Observer.Expect('windows company page record', 'ok|dynamicsnav://<host>/<instance>/My%20Company/runpage?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Expect('windows page record no company', 'ok|dynamicsnav://<host>/<instance>//runpage?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GetUrl_ClientPhone()
     begin
         ClientTest(ClientType::Phone, 'phone');
-        Observer.Finish();
+        Observer.Expect('phone alone', 'ms-dynamicsnav://<host>/<instance>');
+        Observer.Expect('phone company', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company');
+        Observer.Expect('phone empty company', 'ok|ms-dynamicsnav://<host>/<instance>');
+        Observer.Expect('phone page', 'ok|ms-dynamicsnav://<host>/<instance>?page=21');
+        Observer.Expect('phone company page', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&page=21');
+        Observer.Expect('phone company report', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&report=69367');
+        Observer.Expect('phone company page record', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Expect('phone page record no company', 'ok|ms-dynamicsnav://<host>/<instance>?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GetUrl_ClientTablet()
     begin
         ClientTest(ClientType::Tablet, 'tablet');
-        Observer.Finish();
+        Observer.Expect('tablet alone', 'ms-dynamicsnav://<host>/<instance>');
+        Observer.Expect('tablet company', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company');
+        Observer.Expect('tablet empty company', 'ok|ms-dynamicsnav://<host>/<instance>');
+        Observer.Expect('tablet page', 'ok|ms-dynamicsnav://<host>/<instance>?page=21');
+        Observer.Expect('tablet company page', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&page=21');
+        Observer.Expect('tablet company report', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&report=69367');
+        Observer.Expect('tablet company page record', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Expect('tablet page record no company', 'ok|ms-dynamicsnav://<host>/<instance>?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GetUrl_ClientDesktop()
     begin
         ClientTest(ClientType::Desktop, 'desktop');
-        Observer.Finish();
+        Observer.Expect('desktop alone', 'ms-dynamicsnav://<host>/<instance>');
+        Observer.Expect('desktop company', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company');
+        Observer.Expect('desktop empty company', 'ok|ms-dynamicsnav://<host>/<instance>');
+        Observer.Expect('desktop page', 'ok|ms-dynamicsnav://<host>/<instance>?page=21');
+        Observer.Expect('desktop company page', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&page=21');
+        Observer.Expect('desktop company report', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&report=69367');
+        Observer.Expect('desktop company page record', 'ok|ms-dynamicsnav://<host>/<instance>?company=My%20Company&page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Expect('desktop page record no company', 'ok|ms-dynamicsnav://<host>/<instance>?page=21&bookmark=12%3bBA8BAACHBQ%3d%3d');
+        Observer.Verify();
     end;
 
     [Test]
