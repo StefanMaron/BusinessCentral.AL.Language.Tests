@@ -53,7 +53,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row A", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69841,in=0);Setup(69841,in=NoNoNoNo);');
+        Observer.Expect('insert', '');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -63,7 +68,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row B", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69842,in=0);Setup(69842,in=NoNoNoNo);');
+        Observer.Expect('insert', '');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', 'GR(2/b/2.5 was 1/b/2.5);');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -73,7 +83,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row C", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69843,in=0);Setup(69843,in=NoNoNoNo);');
+        Observer.Expect('insert', 'DI(1/a/1.5);');
+        Observer.Expect('modify', 'DM(1/b/2.5);');
+        Observer.Expect('rename', 'DR(2/b/2.5 was 1/b/2.5);');
+        Observer.Expect('delete', 'DD(2/b/2.5);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -83,7 +98,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row D", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69844,in=0);Setup(69844,in=NoNoNoNo);');
+        Observer.Expect('insert', 'DI(1/a/1.5);');
+        Observer.Expect('modify', 'DM(1/b/2.5);');
+        Observer.Expect('rename', 'GR(2/b/2.5 was 1/b/2.5);DR(2/b/2.5 was 1/b/2.5);');
+        Observer.Expect('delete', 'DD(2/b/2.5);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +113,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row E", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69845,in=0);Setup(69845,in=NoNoNoNo);');
+        Observer.Expect('insert', 'DI(1/a/1.5);');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +128,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row F", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69846,in=0);Setup(69846,in=NoNoNoNo);');
+        Observer.Expect('insert', '');
+        Observer.Expect('modify', 'DM(1/b/2.5);');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +143,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row G", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69847,in=0);Setup(69847,in=NoNoNoNo);');
+        Observer.Expect('insert', '');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', 'DD(2/b/2.5);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +158,12 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row H", Observer);
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69848,in=0);Setup(69848,in=NoNoNoNo);');
+        Observer.Expect('insert', '');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', 'DR(2/b/2.5 was 1/b/2.5);');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -155,7 +195,16 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Observe('stored_after_modify', Check.Name + '/' + Format(Check.Amount));
         RecRef.Close();
         Log.Stop();
-        Observer.Finish();
+        Observer.Expect('open_and_deleteall', 'Mask(69849,in=0);Setup(69849,in=NoNoNoNo);');
+        Observer.Expect('insert_log', 'DI(1/a/1.5);');
+        Observer.Expect('variable_after_insert', 'dbmut/1.5');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('stored_after_insert', 'dbmut/1.5');
+        Observer.Expect('modify_log', 'DM(1/b/2.5);');
+        Observer.Expect('variable_after_modify', 'dbmod/2.5');
+        Observer.Expect('found_again', 'Yes');
+        Observer.Expect('stored_after_modify', 'dbmod/2.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -181,7 +230,12 @@ codeunit 69852 "LT V Platform Event Tests"
         Row.Delete(true);
         Observer.Observe('delete_true', Log.Take());
         Log.Stop();
-        Observer.Finish();
+        Observer.Expect('insert_false', 'DI(5/quiet/0);');
+        Observer.Expect('modify_false', 'DM(5/quiet2/0);');
+        Observer.Expect('delete_false', 'DD(5/quiet2/0);');
+        Observer.Expect('insert_true', 'DI(6/quiet2/0);');
+        Observer.Expect('delete_true', 'DD(6/quiet2/0);');
+        Observer.Verify();
     end;
 
 
@@ -227,7 +281,21 @@ codeunit 69852 "LT V Platform Event Tests"
             Observer.Observe('rows ' + N, Format(RowsOf(N)));
         Observer.Observe('early entries of the test session', Log.Early());
         Observer.Observe('total rows', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('rows OnInstallAppPerCompany', '2');
+        Observer.Expect('rows OnInstallAppPerDatabase', '1');
+        Observer.Expect('rows OnUpgradePerCompany', '0');
+        Observer.Expect('rows OnUpgradePerDatabase', '0');
+        Observer.Expect('rows OnValidateUpgradePerCompany', '0');
+        Observer.Expect('rows OnValidateUpgradePerDatabase', '0');
+        Observer.Expect('rows OnAfterUpgradeCommitPerCompany', '0');
+        Observer.Expect('rows OnAfterUpgradeCommitPerDatabase', '0');
+        Observer.Expect('rows OnAfterCopyEnvironmentPerCompany', '0');
+        Observer.Expect('rows OnAfterCopyEnvironmentPerDatabase', '0');
+        Observer.Expect('rows OnAfterCopyEnvironmentToSandbox', '0');
+        Observer.Expect('rows OnAfterCopyEnvironmentToSandboxPerCompany', '0');
+        Observer.Expect('rows OnAfterUserInitialization', '0');
+        Observer.Expect('early entries of the test ', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +309,9 @@ codeunit 69852 "LT V Platform Event Tests"
             repeat
                 Observer.Observe('install per company #' + Format(Row.Id) + ' info is the company of the test session', Format(Row.Info = CompanyName()));
             until Row.Next() = 0;
-        Observer.Finish();
+        Observer.Expect('install per company #1 info is the company of the test session', 'Yes');
+        Observer.Expect('install per company #2 info is the company of the test session', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +328,8 @@ codeunit 69852 "LT V Platform Event Tests"
         Commit();
         Observer.Observe('log after write and commit', Log.Take());
         Log.Stop();
-        Observer.Finish();
+        Observer.Expect('log after write and commit', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -272,7 +343,10 @@ codeunit 69852 "LT V Platform Event Tests"
         asserterror Started := StartSession(Session, Codeunit::"LT V Session Worker", CompanyName());
         Observer.ObserveError('start session');
         Observer.Observe('started', Format(Started));
-        Observer.Finish();
+        Observer.Expect('start session|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('start session|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('started', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -289,7 +363,10 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Observe('company of the variable', Row.CurrentCompany());
         Observer.Observe('count in the other company', Format(Row.Count()));
         Log.Stop();
-        Observer.Finish();
+        Observer.Expect('log', '');
+        Observer.Expect('company of the variable', '<Company>');
+        Observer.Expect('count in the other company', '0');
+        Observer.Verify();
     end;
 
 
@@ -351,7 +428,8 @@ codeunit 69852 "LT V Platform Event Tests"
         Log.Start();
         Run(Observer, 'xml', Report::"LT V Report A", ReportFormat::Xml);
         Log.Stop();
-        Observer.Finish();
+        Observer.Expect('xml', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -379,7 +457,11 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.ObserveError('request page error');
         Observer.Observe('request page log', Log.Take());
         Log.Stop();
-        Observer.Finish();
+        Observer.Expect('request page ok', 'Yes');
+        Observer.Expect('request page error|text', '');
+        Observer.Expect('request page error|code', '');
+        Observer.Expect('request page log', 'SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+        Observer.Verify();
     end;
 
     local procedure ChangeOne(Observer: Codeunit "Probe Observer"; EventName: Text; Fmt: ReportFormat)
@@ -397,7 +479,8 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Seed();
         ChangeOne(Observer, 'SubstituteReport', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('SubstituteReport', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69861,in=No);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -409,7 +492,10 @@ codeunit 69852 "LT V Platform Event Tests"
         ChangeOne(Observer, 'HasCustomLayout', ReportFormat::Xml);
         ChangeOne(Observer, 'SelectedBuiltinLayoutType', ReportFormat::Xml);
         ChangeOne(Observer, 'SelectReportLayoutCode', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('HasCustomLayout', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('SelectedBuiltinLayoutType', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('SelectReportLayoutCode', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -421,7 +507,10 @@ codeunit 69852 "LT V Platform Event Tests"
         ChangeOne(Observer, 'FetchReportLayoutByCode', ReportFormat::Xml);
         ChangeOne(Observer, 'CustomDocumentMergerEx', ReportFormat::Xml);
         ChangeOne(Observer, 'OnDocumentReady', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('FetchReportLayoutByCode', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('CustomDocumentMergerEx', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('OnDocumentReady', 'Yes|saved=Yes|data=Yes|head=LTV ready|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -434,7 +523,11 @@ codeunit 69852 "LT V Platform Event Tests"
         ChangeOne(Observer, 'OnDocumentPrintReady', ReportFormat::Xml);
         ChangeOne(Observer, 'OnDocumentDownload', ReportFormat::Xml);
         ChangeOne(Observer, 'GetPrinterName', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('OnIntermediateDocumentReady', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('OnDocumentPrintReady', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('OnDocumentDownload', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('GetPrinterName', 'Yes|sav');
+        Observer.Verify();
     end;
 
     [Test]
@@ -449,6 +542,10 @@ codeunit 69852 "LT V Platform Event Tests"
         ChangeOne(Observer, 'SelectReportLayoutUI', ReportFormat::Xml);
         ChangeOne(Observer, 'ApplicationReportMergeStrategy', ReportFormat::Xml);
         ChangeOne(Observer, 'WordDocumentMergerAppMode', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('GetPaperTrayForReport', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('ScheduleReport', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('SetupPrinters', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('SelectReportLayoutUI', 'Yes|saved=Yes|data');
+        Observer.Verify();
     end;
 }
