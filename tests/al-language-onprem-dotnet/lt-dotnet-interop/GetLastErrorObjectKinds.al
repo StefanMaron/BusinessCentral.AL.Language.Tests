@@ -1,10 +1,12 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-getlasterrorobject-method
+// Not pinned: GetLastErrorObject in a session where no error has happened. StartSession is refused inside a test ("Sessions can only be started in tests that are run by a TestRunner that has
+//   TestIsolation set to Disabled"), and the state in the test session depends on the tests that ran before. The cleared state (null, Format = null) is pinned in GetLastErrorObject.al.
 // Scope: in-scope, but ONLY for a Target = OnPrem app, AL compiler 18.0 or newer (see GetLastErrorObject.al and TestDotNetValueKindsContracts.al)
-// Fixtures used: Probe Observer (69160) from the AL Language Coverage Tests app; Base Application codeunit "DotNet Exception Handler" (1291); self-contained codeunits 61480-61484
+// Fixtures used: Probe Observer (69160) from the AL Language Coverage Tests app; Base Application codeunit "DotNet Exception Handler" (1291); self-contained codeunits 61480, 61481, 61483 and 61484
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: after an error caught by Codeunit.Run: the class (GetType().FullName), Message, GetLastErrorCode, InnerException null or not, and GetBaseException() class and Message, for
 //   Error(Label), Error(Text variable), Error(ErrorInfo), a failing TestField, Modify and Delete of a row that does not exist and an Evaluate without a return value;
-//   GetLastErrorObject in a new session where no error has happened (StartSession); Type.Equals for two exceptions of the same and of different kinds; the lines of ToString of a dialog exception;
+//   Type.Equals for two exceptions of the same and of different kinds; the lines of ToString of a dialog exception;
 //   what "DotNet Exception Handler".Rethrow raises after each kind. Corpus issue 577.
 // BC versions: 27, 28, 29
 dotnet
@@ -204,20 +206,6 @@ codeunit 61481 "LT LEK Tests"
     end;
 }
 
-// Runs in a session of its own (StartSession): that session has not had an error yet.
-codeunit 61482 "LT LEK Fresh Session"
-{
-    trigger OnRun()
-    var
-        Exc: DotNet LtLekExc;
-        Result: Text;
-    begin
-        Exc := GetLastErrorObject();
-        Result := 'isNull=' + Format(IsNull(Exc)) + ';format=' + Format(Exc) + ';lastErrorText=[' + GetLastErrorText() + '];lastErrorCode=[' + GetLastErrorCode() + ']';
-        IsolatedStorage.Set('LT_LEK_Fresh', Result, DataScope::Module);
-    end;
-}
-
 codeunit 61483 "LT LEK Member Tests"
 {
     Subtype = Test;
@@ -239,30 +227,6 @@ codeunit 61483 "LT LEK Member Tests"
         TypeA := A.GetType();
         TypeB := B.GetType();
         exit(Format(TypeA.Equals(TypeB)));
-    end;
-
-    [Test]
-    procedure Session_GetLastErrorObjectBeforeAnyError()
-    var
-        Observer: Codeunit "Probe Observer";
-        SessionId: Integer;
-        Result: Text;
-        Waited: Integer;
-    begin
-        if IsolatedStorage.Contains('LT_LEK_Fresh', DataScope::Module) then
-            IsolatedStorage.Delete('LT_LEK_Fresh', DataScope::Module);
-        Observer.Observe('started', Format(StartSession(SessionId, Codeunit::"LT LEK Fresh Session")));
-        while (not IsolatedStorage.Contains('LT_LEK_Fresh', DataScope::Module)) and (Waited < 100) do begin
-            Sleep(300);
-            Waited += 1;
-        end;
-        if IsolatedStorage.Get('LT_LEK_Fresh', DataScope::Module, Result) then
-            Observer.Observe('result', Result)
-        else
-            Observer.Observe('result', 'no answer from the session');
-        if IsolatedStorage.Contains('LT_LEK_Fresh', DataScope::Module) then
-            IsolatedStorage.Delete('LT_LEK_Fresh', DataScope::Module);
-        Observer.Finish();
     end;
 
     [Test]
