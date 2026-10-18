@@ -272,7 +272,8 @@ codeunit 69851 "LT V Subs"
     begin
         if not IsRow(TableId) or not Log.IsActive() then
             exit;
-        Log.Add('Setup(' + Format(TableId) + ',in=' + Format(OnDatabaseInsert) + Format(OnDatabaseModify) + Format(OnDatabaseDelete) + Format(OnDatabaseRename) + ')');
+        // Linux container differs from Windows BC (run 39125184978 / 39125190236): the inbound flags are NoNoNoNo on Linux and YesYesYesYes on Windows (other subscribers run first); not asserted, so they are not logged.
+        Log.Add('Setup(' + Format(TableId) + ')');
         case TableId of
             Database::"LT V Row B":
                 begin

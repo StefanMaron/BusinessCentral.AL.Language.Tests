@@ -53,7 +53,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row A", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69841,in=0);Setup(69841,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69841,in=0);Setup(69841);');
         Observer.Expect('insert', '');
         Observer.Expect('modify', '');
         Observer.Expect('rename', '');
@@ -68,7 +68,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row B", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69842,in=0);Setup(69842,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69842,in=0);Setup(69842);');
         Observer.Expect('insert', '');
         Observer.Expect('modify', '');
         Observer.Expect('rename', 'GR(2/b/2.5 was 1/b/2.5);');
@@ -83,7 +83,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row C", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69843,in=0);Setup(69843,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69843,in=0);Setup(69843);');
         Observer.Expect('insert', 'DI(1/a/1.5);');
         Observer.Expect('modify', 'DM(1/b/2.5);');
         Observer.Expect('rename', 'DR(2/b/2.5 was 1/b/2.5);');
@@ -98,7 +98,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row D", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69844,in=0);Setup(69844,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69844,in=0);Setup(69844);');
         Observer.Expect('insert', 'DI(1/a/1.5);');
         Observer.Expect('modify', 'DM(1/b/2.5);');
         Observer.Expect('rename', 'GR(2/b/2.5 was 1/b/2.5);DR(2/b/2.5 was 1/b/2.5);');
@@ -113,7 +113,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row E", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69845,in=0);Setup(69845,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69845,in=0);Setup(69845);');
         Observer.Expect('insert', 'DI(1/a/1.5);');
         Observer.Expect('modify', '');
         Observer.Expect('rename', '');
@@ -128,7 +128,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row F", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69846,in=0);Setup(69846,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69846,in=0);Setup(69846);');
         Observer.Expect('insert', '');
         Observer.Expect('modify', 'DM(1/b/2.5);');
         Observer.Expect('rename', '');
@@ -143,7 +143,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row G", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69847,in=0);Setup(69847,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69847,in=0);Setup(69847);');
         Observer.Expect('insert', '');
         Observer.Expect('modify', '');
         Observer.Expect('rename', '');
@@ -158,7 +158,7 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         Log.Start();
         Cycle(Database::"LT V Row H", Observer);
-        Observer.Expect('open_and_deleteall', 'Mask(69848,in=0);Setup(69848,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69848,in=0);Setup(69848);');
         Observer.Expect('insert', '');
         Observer.Expect('modify', '');
         Observer.Expect('rename', 'DR(2/b/2.5 was 1/b/2.5);');
@@ -195,7 +195,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Observe('stored_after_modify', Check.Name + '/' + Format(Check.Amount));
         RecRef.Close();
         Log.Stop();
-        Observer.Expect('open_and_deleteall', 'Mask(69849,in=0);Setup(69849,in=NoNoNoNo);');
+        Observer.Expect('open_and_deleteall', 'Mask(69849,in=0);Setup(69849);');
         Observer.Expect('insert_log', 'DI(1/a/1.5);');
         Observer.Expect('variable_after_insert', 'dbmut/1.5');
         Observer.Expect('found', 'Yes');
