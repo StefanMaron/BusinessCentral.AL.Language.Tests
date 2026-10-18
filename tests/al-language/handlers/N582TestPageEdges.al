@@ -5,6 +5,7 @@
 // The calls run inside TryFunctions, so a call that raises and one that does not are both observed.
 // Facts: TestPage SetValue of a text that is not an Option member (error code, text, Value() afterwards);
 // AssertEquals of a number (Integer and Decimal, 10 or more, negative, 1000 or more) against a Text control;
+// (SetValue on a FlowField page field crashes the service tier with a NullReferenceException that no TryFunction catches: not pinned.)
 // Editable() of a page field over a FlowField with Editable = false.
 // BC versions: 27, 28, 29
 
@@ -118,15 +119,6 @@ codeunit 67604 "LT N582 Test Page Edges"
         Pg.Txt.AssertEquals(Expected);
     end;
 
-    [TryFunction]
-    local procedure TrySetFlow(var Pg: TestPage "LT N582 Page Card"; Which: Integer)
-    begin
-        if Which = 1 then
-            Pg.Flow.SetValue(5)
-        else
-            Pg.FlowDefault.SetValue(5);
-    end;
-
     local procedure SetOpt(var Observer: Codeunit "Probe Observer"; Name: Text; Txt: Text)
     var
         Pg: TestPage "LT N582 Page Card";
@@ -158,18 +150,6 @@ codeunit 67604 "LT N582 Test Page Edges"
         else
             Observer.ObserveError(Name);
         Pg.Close();
-    end;
-
-    local procedure SetFlow(var Observer: Codeunit "Probe Observer"; Name: Text; Which: Integer)
-    var
-        Pg: TestPage "LT N582 Page Card";
-    begin
-        Seed();
-        Pg.OpenEdit();
-        if TrySetFlow(Pg, Which) then
-            Observer.Observe(Name, 'no error')
-        else
-            Observer.ObserveError(Name);
     end;
 
     [Test]
@@ -364,8 +344,6 @@ codeunit 67604 "LT N582 Test Page Edges"
         Observer.Observe('view card flow', Format(Card.Flow.Editable()));
         Observer.Observe('view card id', Format(Card.Id.Editable()));
         Card.Close();
-        SetFlow(Observer, 'card flow SetValue', 1);
-        SetFlow(Observer, 'card flow default SetValue', 2);
         Observer.Finish();
     end;
 }
