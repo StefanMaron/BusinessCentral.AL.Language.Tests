@@ -1,0 +1,218 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-width-property
+// Scope: in-scope
+// Fixtures used: Probe Observer (69160); own table 80519, xmlports 80520-80522, codeunit 80523
+// Probe: observe probe; every literal asserted below is what the corpus CI service tiers produced.
+// Facts: a fieldattribute with Width compiles in a FixedText and in an Xml XmlPort. The exported text of a FixedText XmlPort whose table element has a
+// fieldattribute (Width 4) and fieldelements (Width 6), values shorter and longer than the width; the exported text of an Xml XmlPort with a
+// fieldattribute and a fieldelement of Width 3; and a FixedText import through the same layout (the values stored).
+// BC versions: 27, 28, 29 (corpus CI)
+
+table 80519 "LT AY Width Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Code; Code[20]) { }
+        field(3; Name; Text[30]) { }
+    }
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+xmlport 80520 "LT AY Width Fixed"
+{
+    Format = FixedText;
+    Direction = Both;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT AY Width Row")
+            {
+                XmlName = 'Row';
+                fieldattribute(Code; Rw.Code) { Width = 4; }
+                fieldelement(Id; Rw.Id) { Width = 6; }
+                fieldelement(Name; Rw.Name) { Width = 6; }
+            }
+        }
+    }
+}
+
+xmlport 80521 "LT AY Width Xml"
+{
+    Format = Xml;
+    Direction = Export;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT AY Width Row")
+            {
+                XmlName = 'Row';
+                fieldattribute(Code; Rw.Code) { Width = 3; }
+                fieldelement(Name; Rw.Name) { Width = 3; }
+            }
+        }
+    }
+}
+
+xmlport 80522 "LT AY Width Fixed Attr Only"
+{
+    Format = FixedText;
+    Direction = Export;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT AY Width Row")
+            {
+                XmlName = 'Row';
+                fieldattribute(Code; Rw.Code) { Width = 4; }
+                fieldattribute(Name; Rw.Name) { Width = 2; }
+            }
+        }
+    }
+}
+
+codeunit 80523 "LT AY Width Tests"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Setup()
+    var
+        R: Record "LT AY Width Row";
+    begin
+        R.DeleteAll();
+        R.Id := 1;
+        R.Code := 'AB';
+        R.Name := 'x';
+        R.Insert();
+        R.Id := 22;
+        R.Code := 'ABCDEFG';
+        R.Name := 'longer name';
+        R.Insert();
+    end;
+
+    // CR, LF and spaces made visible
+    local procedure ReadAll(var TempBlob: Codeunit "Temp Blob"): Text
+    var
+        InS: InStream;
+        C: Char;
+        All: Text;
+        Cr: Char;
+        Lf: Char;
+    begin
+        Cr := 13;
+        Lf := 10;
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
+        while not InS.EOS() do begin
+            InS.Read(C);
+            case C of
+                Cr:
+                    All += '\r';
+                Lf:
+                    All += '\n';
+                ' ':
+                    All += '_';
+                else
+                    All += Format(C);
+            end;
+        end;
+        exit(All.Replace('<?xml version="1.0" encoding="UTF-8" standalone="no"?>', '<?decl?>'));
+    end;
+
+    [Test]
+    procedure Width_FixedText_FieldAttribute_Export()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        Xp: XmlPort "LT AY Width Fixed";
+        OutS: OutStream;
+    begin
+        Setup();
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        Xp.SetDestination(OutS);
+        Observer.Observe('ok', Format(Xp.Export()));
+        Observer.Observe('text', ReadAll(TempBlob));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Width_FixedText_AttributesOnly_Export()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        Xp: XmlPort "LT AY Width Fixed Attr Only";
+        OutS: OutStream;
+    begin
+        Setup();
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        Xp.SetDestination(OutS);
+        Observer.Observe('ok', Format(Xp.Export()));
+        Observer.Observe('text', ReadAll(TempBlob));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Width_Xml_FieldAttribute_Export()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        Xp: XmlPort "LT AY Width Xml";
+        OutS: OutStream;
+    begin
+        Setup();
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        Xp.SetDestination(OutS);
+        Observer.Observe('ok', Format(Xp.Export()));
+        Observer.Observe('text', ReadAll(TempBlob));
+        Observer.Finish();
+    end;
+
+    local procedure DoImport(var Observer: Codeunit "Probe Observer")
+    var
+        R: Record "LT AY Width Row";
+        TempBlob: Codeunit "Temp Blob";
+        Xp: XmlPort "LT AY Width Fixed";
+        OutS: OutStream;
+        InS: InStream;
+        All: Text;
+    begin
+        R.DeleteAll();
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        OutS.WriteText('WXYZ000007abcdef');
+        OutS.WriteText();
+        OutS.WriteText('Q   8     g');
+        OutS.WriteText();
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
+        Xp.SetSource(InS);
+        Observer.Observe('ok', Format(Xp.Import()));
+        if R.FindSet() then
+            repeat
+                All += Format(R.Id) + '|' + R.Code + '|' + R.Name + ';';
+            until R.Next() = 0;
+        Observer.Observe('rows', All);
+        Error('FINISHED');
+    end;
+
+    [Test]
+    procedure Width_FixedText_FieldAttribute_Import()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        asserterror DoImport(Observer);
+        Observer.ObserveError('end');
+        Observer.Finish();
+    end;
+}
