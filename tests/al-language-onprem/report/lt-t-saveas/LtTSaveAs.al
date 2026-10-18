@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveaspdf-method
 // Scope: in-scope, but ONLY for a Target = OnPrem app (File, TemporaryPath, Report.SaveAs* are Scope = OnPrem)
-// Fixtures used: Probe Observer (codeunit 69160); layout ./ProbeRpSaveLayout.rdl of the app root; self-contained table 98100, report 98101, test codeunit 98102
+// Fixtures used: Probe Observer (codeunit 69160); layout ./report/lt-t-saveas/LtTSave1.rdl of the app root; self-contained table 98100, report 98101, test codeunit 98102
 // Facts: Report.SaveAsExcel, SaveAsHtml, SaveAsPdf, SaveAsWord and SaveAsXml, static (report id, file name, record) and on a Report variable: the return value, whether the file exists, and the Record filter the data comes from.
 // BC versions: 27.0 and later
 
@@ -40,7 +40,7 @@ report 98101 "LT T Save Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeRpSaveLayout.rdl';
+            LayoutFile = './report/lt-t-saveas/LtTSave1.rdl';
             Caption = 'LT T layout';
         }
     }
@@ -86,6 +86,7 @@ codeunit 98102 "LT T Save As Tests"
         One: Text[1];
         Head: Text;
         Count: Integer;
+        Full: Text;
     begin
         Observer.Observe(Tag + ' ok', Format(Ok));
         Observer.ObserveError(Tag + ' last error');
@@ -102,6 +103,16 @@ codeunit 98102 "LT T Save As Tests"
             Observer.Observe(Tag + ' length>0', Format(SaveFile.Len() > 0));
             SaveFile.Close();
             Observer.Observe(Tag + ' head', Head);
+            if Name.EndsWith('.xml') then begin
+                SaveFile.Open(Name);
+                SaveFile.CreateInStream(InStr);
+                while not InStr.EOS() do begin
+                    InStr.ReadText(Head);
+                    Full += Head + '|';
+                end;
+                SaveFile.Close();
+                Observer.Observe(Tag + ' text', Full);
+            end;
             Erase(Name);
         end;
     end;
@@ -201,8 +212,7 @@ codeunit 98102 "LT T Save As Tests"
         Observer.Finish();
     end;
 
-    [Test]
-    procedure Instance_All()
+    local procedure InstanceOne(Tag: Text; Ext: Text; Filtered: Boolean)
     var
         Row: Record "LT T Save Row";
         Rpt: Report "LT T Save Report";
@@ -210,26 +220,80 @@ codeunit 98102 "LT T Save As Tests"
         Ok: Boolean;
     begin
         Seed();
+        if Filtered then begin
+            FilterRows(Row);
+            Rpt.SetTableView(Row);
+        end;
+        Name := FileName(Ext);
+        case Ext of
+            'xml':
+                Ok := Rpt.SaveAsXml(Name);
+            'pdf':
+                Ok := Rpt.SaveAsPdf(Name);
+            'html':
+                Ok := Rpt.SaveAsHtml(Name);
+            'xlsx':
+                Ok := Rpt.SaveAsExcel(Name);
+            'docx':
+                Ok := Rpt.SaveAsWord(Name);
+        end;
+        Describe(Tag, Ok, Name);
+    end;
+
+    [Test]
+    procedure Instance_Xml()
+    begin
+        InstanceOne('i xml', 'xml', false);
+        InstanceOne('i xml filtered', 'xml', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Instance_Html()
+    begin
+        InstanceOne('i html', 'html', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Instance_Pdf()
+    begin
+        InstanceOne('i pdf', 'pdf', false);
+        InstanceOne('i pdf filtered', 'pdf', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Instance_Excel()
+    begin
+        InstanceOne('i excel', 'xlsx', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Instance_Word()
+    begin
+        InstanceOne('i word', 'docx', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Instance_SecondUse_Errors()
+    var
+        Rpt: Report "LT T Save Report";
+        Name: Text;
+        Ok: Boolean;
+    begin
+        Seed();
         Name := FileName('xml');
         Ok := Rpt.SaveAsXml(Name);
-        Describe('i xml', Ok, Name);
-        Name := FileName('pdf');
-        Ok := Rpt.SaveAsPdf(Name);
-        Describe('i pdf', Ok, Name);
-        Name := FileName('html');
-        Ok := Rpt.SaveAsHtml(Name);
-        Describe('i html', Ok, Name);
-        Name := FileName('xlsx');
-        Ok := Rpt.SaveAsExcel(Name);
-        Describe('i excel', Ok, Name);
-        Name := FileName('docx');
-        Ok := Rpt.SaveAsWord(Name);
-        Describe('i word', Ok, Name);
-        FilterRows(Row);
-        Rpt.SetTableView(Row);
-        Name := FileName('xml');
+        Observer.Observe('first ok', Format(Ok));
+        Erase(Name);
+        asserterror Ok := Rpt.SaveAsXml(Name);
+        Observer.ObserveError('second xml');
+        Clear(Rpt);
         Ok := Rpt.SaveAsXml(Name);
-        Describe('i xml filtered', Ok, Name);
+        Observer.Observe('after clear ok', Format(Ok));
         Observer.Finish();
     end;
 }

@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testrequestpage/testrequestpage-saveaspdf-method
 // Scope: in-scope, but ONLY for a Target = OnPrem app (File, TemporaryPath)
-// Fixtures used: Probe Observer (codeunit 69160), table "LT T Save Row" (98100); layout ./ProbeRpSaveLayout.rdl; self-contained report 98103, test codeunit 98104
+// Fixtures used: Probe Observer (codeunit 69160), table "LT T Save Row" (98100); layout ./report/lt-t-saveas/LtTSave2.rdl; self-contained report 98103, test codeunit 98104
 // Facts: TestRequestPage.SaveAsExcel, SaveAsPdf and SaveAsWord from a request page handler: the file is written, and what the request page does afterwards.
 // BC versions: 27.0 and later
 
@@ -39,7 +39,7 @@ report 98103 "LT T Save RP Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeRpSaveLayout.rdl';
+            LayoutFile = './report/lt-t-saveas/LtTSave2.rdl';
             Caption = 'LT T RP layout';
         }
     }

@@ -127,6 +127,60 @@ codeunit 69387 "LT T Fqn Tests"
         Observer.Finish();
     end;
 
+
+    [TryFunction]
+    local procedure TryOpen(Name: Text; var Number: Integer)
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(Name);
+        Number := RecRef.Number;
+        RecRef.Close();
+    end;
+
+    [Test]
+    procedure Candidates()
+    var
+        Names: List of [Text];
+        Name: Text;
+        Number: Integer;
+        Ok: Boolean;
+        Index: Integer;
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(Database::Customer);
+        Observer.Observe('customer fqn', RecRef.FullyQualifiedName());
+        RecRef.Close();
+        RecRef.Open(Database::"G/L Entry");
+        Observer.Observe('gl entry fqn', RecRef.FullyQualifiedName());
+        RecRef.Close();
+        Names.Add('AL Language.AL Language Coverage Tests.LT T Fqn Row');
+        Names.Add('AL Language Coverage Tests.LT T Fqn Row');
+        Names.Add('AL Language/AL Language Coverage Tests/LT T Fqn Row');
+        Names.Add('AL Language_AL Language Coverage Tests_LT T Fqn Row');
+        Names.Add('AL Language::LT T Fqn Row');
+        Names.Add('Microsoft.Base Application.Customer');
+        Names.Add('Base Application.Customer');
+        Names.Add('Microsoft/Base Application/Customer');
+        Names.Add('Customer');
+        Names.Add('Microsoft.Customer');
+        Names.Add('a1b2c3d4-e5f6-7890-abcd-ef1234567890.LT T Fqn Row');
+        Names.Add('"AL Language"."AL Language Coverage Tests"."LT T Fqn Row"');
+        Names.Add('AL Language.LT T Fqn Row');
+        Names.Add('[AL Language].[AL Language Coverage Tests].[LT T Fqn Row]');
+        Names.Add('AL Language,AL Language Coverage Tests,LT T Fqn Row');
+        Names.Add('LT T Fqn Row, AL Language Coverage Tests, AL Language');
+        Index := 0;
+        foreach Name in Names do begin
+            Index += 1;
+            Number := 0;
+            Ok := TryOpen(Name, Number);
+            Observer.Observe('cand ' + Format(Index) + ' ' + Name, Format(Ok) + ' ' + Format(Number) + ' ' + GetLastErrorText());
+            ClearLastError();
+        end;
+        Observer.Finish();
+    end;
+
     [Test]
     procedure OpenByName()
     var
