@@ -84,19 +84,19 @@ codeunit 78800 "LT S Array SelectTokens"
         Subject: JsonArray;
 
     [TryFunction]
-    local procedure TrySelect(Path: Text; var L: List of [JsonToken])
-    var
-        Dummy: Boolean;
+    local procedure TrySelect(Path: Text; var L: List of [JsonToken]; var Selected: Boolean)
     begin
-        Dummy := Subject.SelectTokens(Path, L);
+        Selected := Subject.SelectTokens(Path, L);
     end;
 
     local procedure Probe(var Observer: Codeunit "Probe Observer"; Name: Text; Path: Text)
     var
         L: List of [JsonToken];
+        Selected: Boolean;
     begin
         ClearLastError();
-        Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
+        Observer.Observe(Name + '_noexception', Format(TrySelect(Path, L, Selected)));
+        Observer.Observe(Name + '_result', Format(Selected));
         Observer.ObserveError(Name);
         Observer.Observe(Name + '_count', Format(L.Count()));
     end;
@@ -255,19 +255,19 @@ codeunit 78801 "LT S Object SelectTokens"
         Subject: JsonObject;
 
     [TryFunction]
-    local procedure TrySelect(Path: Text; var L: List of [JsonToken])
-    var
-        Dummy: Boolean;
+    local procedure TrySelect(Path: Text; var L: List of [JsonToken]; var Selected: Boolean)
     begin
-        Dummy := Subject.SelectTokens(Path, L);
+        Selected := Subject.SelectTokens(Path, L);
     end;
 
     local procedure Probe(var Observer: Codeunit "Probe Observer"; Name: Text; Path: Text)
     var
         L: List of [JsonToken];
+        Selected: Boolean;
     begin
         ClearLastError();
-        Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
+        Observer.Observe(Name + '_noexception', Format(TrySelect(Path, L, Selected)));
+        Observer.Observe(Name + '_result', Format(Selected));
         Observer.ObserveError(Name);
         Observer.Observe(Name + '_count', Format(L.Count()));
     end;
