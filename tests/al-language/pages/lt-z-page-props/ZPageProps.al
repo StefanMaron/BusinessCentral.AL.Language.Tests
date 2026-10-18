@@ -221,6 +221,20 @@ codeunit 76020 "LT Z Page Props Tests"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure TryOpen(var P: TestPage "LT Z Api")
+    begin
+        P.OpenView();
+        P.Close();
+    end;
+
+    [TryFunction]
+    local procedure TryOpenMl(var P: TestPage "LT Z Api ML")
+    begin
+        P.OpenView();
+        P.Close();
+    end;
+
     [Test]
     procedure ZApiEntityCaptions_MetadataAndTestPage()
     var
@@ -234,9 +248,10 @@ codeunit 76020 "LT Z Page Props Tests"
         R.Insert();
         Meta(Page::"LT Z Api", 'api');
         Meta(Page::"LT Z Api ML", 'apiml');
-        asserterror P.OpenView();
+        ClearLastError();
+        Observer.Observe('api open ok', Format(TryOpen(P)));
         Observer.ObserveError('api open view');
-        asserterror P2.OpenView();
+        Observer.Observe('apiml open ok', Format(TryOpenMl(P2)));
         Observer.ObserveError('apiml open view');
         Observer.Finish();
     end;

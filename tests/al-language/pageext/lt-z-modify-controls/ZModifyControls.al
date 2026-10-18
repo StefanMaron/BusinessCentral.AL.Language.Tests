@@ -255,6 +255,12 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure TrySetDate(var P: TestPage "LT Z Mod Base"; NewDate: Date)
+    begin
+        P.Dt.SetValue(NewDate);
+    end;
+
     [Test]
     procedure ZClosingDates_ValueAndStored()
     var
@@ -268,11 +274,15 @@ codeunit 76360 "LT Z Modify Controls Tests"
         P.OpenEdit();
         Observer.Observe('closing date shown', P.Dt.Value());
         Observer.Observe('closing date plain shown', P.DtPlain.Value());
-        P.Dt.SetValue(ClosingDate(20250630D));
+        P.Dt.SetValue(ClosingDate(20250115D));
+        Observer.Observe('closing date after set', P.Dt.Value());
+        ClearLastError();
+        Observer.Observe('june ok', Format(TrySetDate(P, ClosingDate(20250630D))));
+        Observer.ObserveError('june');
         P.Close();
         R.Get(1);
         Observer.Observe('stored', Format(R.Dt));
-        Observer.Observe('stored is closing date', Format(R.Dt = ClosingDate(20250630D)));
+        Observer.Observe('stored is closing date', Format(R.Dt = ClosingDate(20250115D)));
         Observer.Observe('stored normal date', Format(NormalDate(R.Dt), 0, 9));
         Observer.Finish();
     end;
@@ -367,16 +377,6 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Finish();
     end;
 
-    [ModalPageHandler]
-    procedure LookupHandler(var T: TestPage "LT Z Lookup Target")
-    begin
-        Observer.Observe('lookup opened', 'yes');
-        Observer.Observe('lookup first', T.Name.Value());
-        T.Next();
-        Observer.Observe('lookup second', T.Name.Value());
-        T.OK().Invoke();
-    end;
-
     [TryFunction]
     local procedure TryLookup(var P: TestPage "LT Z Lk Base"; Which: Integer)
     begin
@@ -389,7 +389,6 @@ codeunit 76360 "LT Z Modify Controls Tests"
     end;
 
     [Test]
-    [HandlerFunctions('LookupHandler')]
     procedure ZLookupPageId_OpensTargetPage()
     var
         P: TestPage "LT Z Lk Base";
