@@ -157,6 +157,8 @@ is only a reference.
 | 0868 | AL0208 | QuickEntry takes a boolean constant. |
 | 0869 | AL0844 | BlankZero on a Text field of a page extension (a number property). |
 | 0870 | AL0843 | OptionCaptionML on a Text field. |
+| 1040 | AL0175 | Char minus a literal of two or more characters is refused (four diagnostics). |
+| 1041 | AL0122 | A one-character literal is Text in a Char context and Integer where an Integer is wanted: the wrong direction is refused (two diagnostics). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
