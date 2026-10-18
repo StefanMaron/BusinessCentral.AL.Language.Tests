@@ -35,7 +35,15 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         foreach Index in Ordinals do
             Names += Value.Names().Get(Ordinals.IndexOf(Index)) + ',';
         Observer.Observe('enum_names', Names);
-        Observer.Finish();
+        Observer.Expect('codeunit_answer', '42');
+        Observer.Expect('interface_answer', '42');
+        Observer.Expect('scope_cloud_interface_ping', '7');
+        Observer.Expect('enum_value_old', 'Old');
+        Observer.Expect('enum_value_old_ordinal', '1');
+        Observer.Expect('enum_ext_value_old', 'ExtOld');
+        Observer.Expect('enum_ext_value_old_ordinal', '69793');
+        Observer.Expect('enum_names', 'Current,Old,ExtOld,ExtCurrent,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,8 +77,6 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         asserterror begin Value := Format(Card.ObsExtAction.Enabled()); Error('NOERROR'); end;
         Observer.Observe('ext_action_enabled', Outcome(Value));
         Card.ObsAction.Invoke();
-        Card.ObsExtAction.Invoke();
-        Card.Close();
         Observer.Finish();
     end;
 
@@ -92,6 +98,7 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         TempBlob: Codeunit "Temp Blob";
         Src: Record "LT U Page Src";
         Qry: Query "LT U Obsolete Query";
+        Row: Record "LT U Isolation Row";
         OutS: OutStream;
         InS: InStream;
         Xml: Text;
@@ -105,7 +112,10 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Observer.Observe('query_read', Format(Qry.Read()));
         Observer.Observe('query_id', Format(Qry.Id));
         Qry.Close();
+        Row.DeleteAll();
         Report.Run(Report::"LT U Obsolete Report", false, false);
+        Observer.Observe('report_row_inserted', Format(Row.Get(100)));
+        Observer.Observe('report_row_note', Row.Note);
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(Xmlport::"LT U Obsolete XmlPort", OutS);
         TempBlob.CreateInStream(InS, TextEncoding::UTF16);

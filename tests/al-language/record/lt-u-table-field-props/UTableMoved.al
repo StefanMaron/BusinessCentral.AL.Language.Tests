@@ -90,7 +90,13 @@ codeunit 69780 "LT U Moved Tests"
         Observer.Observe('moved_to_name', ToTable.Name);
         Observer.Observe('moved_from_table_name', FromTable.TableName());
         Observer.Observe('moved_to_table_name', ToTable.TableName());
-        Observer.Finish();
+        Observer.Expect('moved_from_insert', 'Yes');
+        Observer.Expect('moved_to_insert', 'Yes');
+        Observer.Expect('moved_from_name', 'from');
+        Observer.Expect('moved_to_name', 'to');
+        Observer.Expect('moved_from_table_name', 'LT U Moved From');
+        Observer.Expect('moved_to_table_name', 'LT U Moved To');
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,6 +122,14 @@ codeunit 69780 "LT U Moved Tests"
         Observer.Observe('moved_in_field_name', RecRef.Field(69583).Name());
         Observer.Observe('moved_out_field_name', RecRef.Field(69584).Name());
         Cust.Delete();
-        Observer.Finish();
+        Observer.Expect('ext_insert', 'Yes');
+        Observer.Expect('moved_in_field', 'in');
+        Observer.Expect('moved_out_field', 'out');
+        Observer.Expect('moved_in_field_caption', 'LT U Moved In');
+        Observer.Expect('moved_in_field_no', '69583');
+        Observer.Expect('moved_out_field_no', '69584');
+        Observer.Expect('moved_in_field_name', 'LT U Moved In');
+        Observer.Expect('moved_out_field_name', 'LT U Moved Out');
+        Observer.Verify();
     end;
 }

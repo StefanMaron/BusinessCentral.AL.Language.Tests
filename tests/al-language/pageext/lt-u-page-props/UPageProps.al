@@ -54,7 +54,22 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('label_enabled_after_modify', Format(Card.Lbl.Enabled()));
         Observer.Observe('label_visible', Format(Card.Lbl.Visible()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('base_group_visible_field_visible|text', 'The field with ID = n is not found on the page.');
+        Observer.Expect('base_group_visible_field_visible|code', 'TestFieldNotFound');
+        Observer.Expect('base_group_editable_field_editable', 'No');
+        Observer.Expect('base_group_editable_field_visible', 'Yes');
+        Observer.Expect('ext_group_hidden_field_visible|text', 'The field with ID = n is not found on the page.');
+        Observer.Expect('ext_group_hidden_field_visible|code', 'TestFieldNotFound');
+        Observer.Expect('ext_group_readonly_field_editable', 'No');
+        Observer.Expect('ext_group_readonly_field_visible', 'Yes');
+        Observer.Expect('modify_field_enabled_off', 'No');
+        Observer.Expect('modify_field_enabled_off_editable', 'Yes');
+        Observer.Expect('ext_field_enabled_off', 'No');
+        Observer.Expect('ext_field_enabled_off_editable', 'Yes');
+        Observer.Expect('ext_field_default_enabled', 'Yes');
+        Observer.Expect('label_enabled_after_modify', 'Yes');
+        Observer.Expect('label_visible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,7 +89,15 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('page_auto_on_base_control', Card.AutoOnPage.Value);
         Observer.Observe('page_auto_on_ext_control', Card.ExtAutoPage.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('base_decimal_places_2', '1,234.50');
+        Observer.Expect('ext_decimal_places_3', '1,234.500');
+        Observer.Expect('table_ext_auto_plain', '1,234.50');
+        Observer.Expect('table_ext_auto_custom', '1,234.500');
+        Observer.Expect('table_ext_auto_currency', '1,234.50');
+        Observer.Expect('table_ext_auto_custom_on_ext_control', '1,234.500');
+        Observer.Expect('page_auto_on_base_control', '1,234.5');
+        Observer.Expect('page_auto_on_ext_control', '1,234.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -94,7 +117,15 @@ codeunit 69592 "LT U Page Props Tests"
         asserterror Card.ExtDrillOff.Drilldown();
         Observer.ObserveError('ext_off');
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('base_on|text', 'drilled on');
+        Observer.Expect('base_on|code', 'TestWrapped:Dialog');
+        Observer.Expect('base_off|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('base_off|code', 'MethodNotSupported');
+        Observer.Expect('ext_on|text', 'ext drilled on');
+        Observer.Expect('ext_on|code', 'TestWrapped:Dialog');
+        Observer.Expect('ext_off|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('ext_off|code', 'MethodNotSupported');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +148,11 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('ext_off|no_error', 'true');
         Observer.Observe('ext_off_pages_opened', Format(LookupOpened));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('base_lookup_pages_opened', '1');
+        Observer.Expect('ext_on_pages_opened', '1');
+        Observer.Expect('ext_off|no_error', 'true');
+        Observer.Expect('ext_off_pages_opened', '0');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -153,7 +188,22 @@ codeunit 69592 "LT U Page Props Tests"
         Card.ExtActEnabledOff.Invoke();
         Observer.Observe('ext_enabled_off_invoke', 'ok');
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('base_enabled_modified_off', 'No');
+        Observer.Expect('base_enabled_modified_off_visible', 'Yes');
+        Observer.Expect('base_visible_modified_off', 'No');
+        Observer.Expect('base_visible_modified_off_enabled', 'Yes');
+        Observer.Expect('base_scope_page', 'Yes');
+        Observer.Expect('base_footer_false', 'Yes');
+        Observer.Expect('actionref_hidden_modified_visible', 'Yes');
+        Observer.Expect('ext_enabled_off', 'No');
+        Observer.Expect('ext_enabled_off_visible', 'Yes');
+        Observer.Expect('ext_visible_off', 'No');
+        Observer.Expect('ext_visible_off_enabled', 'Yes');
+        Observer.Expect('ext_scope_repeater_visible', 'Yes');
+        Observer.Expect('ext_scope_repeater_enabled', 'Yes');
+        Observer.Expect('ext_scope_repeater_invoked', 'ok');
+        Observer.Expect('ext_enabled_off_invoke', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -178,7 +228,19 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('ext_part_filtered_first', Format(Card.ExtPart.First()));
         Observer.Observe('ext_part_filtered_first_txt', Card.ExtPart.Txt.Value);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('part_host_visible', 'Yes');
+        Observer.Expect('part_host_editable', 'Yes');
+        Observer.Expect('part_sub_visible', 'Yes');
+        Observer.Expect('part_sub_editable', 'Yes');
+        Observer.Expect('ext_part_visible', 'Yes');
+        Observer.Expect('ext_part_editable', 'Yes');
+        Observer.Expect('ext_part_row_id', '1');
+        Observer.Expect('ext_part_row_txt', 'first');
+        Observer.Expect('ext_part_row_id_editable', 'No');
+        Observer.Expect('ext_part_row_txt_editable', 'No');
+        Observer.Expect('ext_part_filtered_first', 'No');
+        Observer.Expect('ext_part_filtered_first_txt', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -200,7 +262,13 @@ codeunit 69592 "LT U Page Props Tests"
         Card.Close();
         Src.Get(1);
         Observer.Observe('record_after_close', Src.Txt);
-        Observer.Finish();
+        Observer.Expect('host_before', 'first');
+        Observer.Expect('host_after_part_both_edit', 'first');
+        Observer.Expect('sibling_sub_part_after_both_edit', 'from both');
+        Observer.Expect('host_after_part_subpart_edit', 'from both');
+        Observer.Expect('sibling_both_part_after_subpart_edit', 'from both');
+        Observer.Expect('record_after_close', 'from subpart');
+        Observer.Verify();
     end;
 
     [Test]
@@ -220,7 +288,12 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('card_caption', Card.Caption());
         Observer.Observe('card_txt_editable_in_view', Format(Card.DrillOn.Editable()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('list_caption', 'LT U Lookup List - LT U ext caption');
+        Observer.Expect('list_txt_editable', 'No');
+        Observer.Expect('list_id_editable', 'No');
+        Observer.Expect('card_caption', 'LT U Base Card - 1');
+        Observer.Expect('card_txt_editable_in_view', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -240,7 +313,14 @@ codeunit 69592 "LT U Page Props Tests"
         Api.txt.SetValue('changed');
         Observer.Observe('set_on_read_only|no_error', 'true');
         Api.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('txt', 'first');
+        Observer.Expect('txt_editable', 'No');
+        Observer.Expect('lines_visible', 'Yes');
+        Observer.Expect('lines_row_txt', 'first');
+        Observer.Expect('page_caption', 'LT U Api Page');
+        Observer.Expect('set_on_read_only|no_error', 'true');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +332,8 @@ codeunit 69592 "LT U Page Props Tests"
         Seed();
         Api.OpenEdit();
         Observer.Observe('open_edit|no_error', 'true');
-        Observer.Finish();
+        Observer.Expect('open_edit|no_error', 'true');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,6 +354,12 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('count_by_role_center', Format(Profile.Count()));
         Profile.SetRange(Enabled, true);
         Observer.Observe('count_by_role_center_enabled', Format(Profile.Count()));
-        Observer.Finish();
+        Observer.Expect('count_by_id', '1');
+        Observer.Expect('enabled', 'No');
+        Observer.Expect('role_center_id', '69590');
+        Observer.Expect('caption', '');
+        Observer.Expect('count_by_role_center', '1');
+        Observer.Expect('count_by_role_center_enabled', '0');
+        Observer.Verify();
     end;
 }

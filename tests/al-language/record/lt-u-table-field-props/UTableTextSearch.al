@@ -39,6 +39,10 @@ codeunit 69584 "LT U Text Search Tests"
         Observer.Observe('table_caption_length', Format(StrLen(Rec.TableCaption())));
         Observer.Observe('field_caption', Rec.FieldCaption(Txt));
         Observer.Observe('field_caption_length', Format(StrLen(Rec.FieldCaption(Txt))));
-        Observer.Finish();
+        Observer.Expect('table_caption', 'Text ');
+        Observer.Expect('table_caption_length', '5');
+        Observer.Expect('field_caption', 'Text');
+        Observer.Expect('field_caption_length', '4');
+        Observer.Verify();
     end;
 }

@@ -90,7 +90,16 @@ codeunit 69789 "LT U Property Tests"
         Observer.Observe('word_is_zip', Magic);
         Observer.Observe('plain_rdlc_found', Format(Report.RdlcLayout(Report::"LT U Report Plain", InS)));
         Observer.Observe('plain_word_found', Format(Report.WordLayout(Report::"LT U Report Plain", InS)));
-        Observer.Finish();
+        Observer.Expect('rdlc_found', 'Yes');
+        Observer.Expect('rdlc_length_positive', 'Yes');
+        Observer.Expect('rdlc_is_report_definition', 'Yes');
+        Observer.Expect('rdlc_names_entryno', 'Yes');
+        Observer.Expect('rdlc_names_parentcode', 'Yes');
+        Observer.Expect('word_found', 'Yes');
+        Observer.Expect('word_is_zip', 'PK');
+        Observer.Expect('plain_rdlc_found', 'No');
+        Observer.Expect('plain_word_found', 'No');
+        Observer.Verify();
     end;
 
     // The rendered formats (Pdf, Word, Html) need the Windows reporting service; the Linux BC of the CI cannot render RDLC (see the hand-off note), so only the Xml format is pinned.
@@ -113,7 +122,11 @@ codeunit 69789 "LT U Property Tests"
         Observer.Observe('xml_entryno_column', After(Xml, 'name="EntryNo">', 5));
         Observer.Observe('xml_parentcode_column', After(Xml, 'name="ParentCode">', 6));
         Observer.Observe('xml_dataitem_parent', Format(Xml.Contains('name="Parent"')));
-        Observer.Finish();
+        Observer.Expect('xml_has_parent_code', 'Yes');
+        Observer.Expect('xml_entryno_column', '69789');
+        Observer.Expect('xml_parentcode_column', 'LTU-P<');
+        Observer.Expect('xml_dataitem_parent', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +141,8 @@ codeunit 69789 "LT U Property Tests"
         TempBlob.CreateOutStream(OutS);
         Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS);
         Observer.Observe('state', State.Dump());
-        Observer.Finish();
+        Observer.Expect('state', 'base count=2 amount=15 first= | ext count=2 amount=15 first=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +177,46 @@ codeunit 69789 "LT U Property Tests"
         Mock.ClearAssignments();
         if not WasStarted then
             Mock.Stop();
-        Observer.Finish();
+        Observer.Expect('direct_read_of_src', 'Sorry, the current permissions prevented the action. (TableData 69585 LT U Page Src Read: AL Language Coverage Tests)');
+        Observer.Expect('direct_read_of_src|code', 'DB:ClientReadDenied');
+        Observer.Expect('plain_report_run', 'NOERROR');
+        Observer.Expect('plain_report_run|code', 'Dialog');
+        Observer.Expect('state_after_plain', 'plain report ran');
+#if BC29PLUS
+        Observer.Expect('saveas_inherent', 'Sorry, the current permissions prevented the action. (TableData 79 Company Information Read: Base Application)');
+#else
+        Observer.Expect('saveas_inherent', 'NOERROR');
+#endif
+#if BC29PLUS
+        Observer.Expect('saveas_inherent|code', 'DB:ClientReadDenied');
+#else
+        Observer.Expect('saveas_inherent|code', 'Dialog');
+#endif
+#if BC29PLUS
+        Observer.Expect('inherent_report_saveas_length_positive', 'No');
+#else
+        Observer.Expect('inherent_report_saveas_length_positive', 'Yes');
+#endif
+        Observer.Expect('request_page_rel_with_permissions', '1');
+        Observer.Expect('amount_set', 'NOERROR');
+        Observer.Expect('amount_set|code', 'Dialog');
+        Observer.Expect('amount_value', '1,234.500');
+        Observer.Expect('date_formula_1d_set', 'NOERROR');
+        Observer.Expect('date_formula_1d_set|code', 'Dialog');
+        Observer.Expect('date_formula_1d', '1D');
+        Observer.Expect('date_formula_1w_set', 'NOERROR');
+        Observer.Expect('date_formula_1w_set|code', 'Dialog');
+        Observer.Expect('date_formula_1w', '1W');
+        Observer.Expect('date_formula_cm_set', 'NOERROR');
+        Observer.Expect('date_formula_cm_set|code', 'Dialog');
+        Observer.Expect('date_formula_cm', 'CM+1D');
+        Observer.Expect('rel_missing_set', 'NOERROR');
+        Observer.Expect('rel_missing_set|code', 'Dialog');
+        Observer.Expect('request_page_ext_rel', 'The field with ID = n is not found on the page.');
+        Observer.Expect('request_page_ext_rel|code', 'TestFieldNotFound');
+        Observer.Expect('run_request_page', 'NOERROR');
+        Observer.Expect('run_request_page|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -217,7 +270,13 @@ codeunit 69789 "LT U Property Tests"
         if not WasStarted then
             Mock.Stop();
         Universal.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('plain_open', 'Yes');
+        Observer.Expect('plain_open|text', '');
+        Observer.Expect('plain_open|code', '');
+        Observer.Expect('inherent_open', 'Yes');
+        Observer.Expect('inherent_read', 'Yes');
+        Observer.Expect('inherent_entryno', '69789');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -263,7 +322,14 @@ codeunit 69789 "LT U Property Tests"
         Observer.Observe('row10_dec', Format(Src.Dec));
         Observer.Observe('row10_rel', Format(Src.Rel));
         Observer.Observe('row10_rel2', Format(Src.Rel2));
-        Observer.Finish();
+        Observer.Expect('full_row|ok', 'Yes');
+        Observer.Expect('state_full_row', 'import required=r optional=o bigLength=8 big=bigvalue');
+        Observer.Expect('row10_exists', 'Yes');
+        Observer.Expect('row10_note', 'validated abc');
+        Observer.Expect('row10_dec', '2.5');
+        Observer.Expect('row10_rel', '1');
+        Observer.Expect('row10_rel2', '9999');
+        Observer.Verify();
     end;
 
     [Test]
@@ -286,7 +352,25 @@ codeunit 69789 "LT U Property Tests"
         Observer.Observe('row14_exists', Format(Src.Get(14)));
         Observer.Observe('row14_rel2', Format(Src.Rel2));
         Observer.Observe('state', State.Dump());
-        Observer.Finish();
+        Observer.Expect('missing_required_field_attribute|ok', 'No');
+        Observer.Expect('missing_required_field_attribute|text', 'Imported XML cannot validate with the schema: The required attribute ''Id'' is missing.');
+        Observer.Expect('missing_required_field_attribute|code', 'XmlPortInvalidXml');
+        Observer.Expect('missing_required_text_attribute|ok', 'No');
+        Observer.Expect('missing_required_text_attribute|text', 'Imported XML cannot validate with the schema: The required attribute ''RequiredText'' is missing.');
+        Observer.Expect('missing_required_text_attribute|code', 'XmlPortInvalidXml');
+        Observer.Expect('missing_optional_field_attribute|ok', 'Yes');
+        Observer.Expect('row12_exists', 'Yes');
+        Observer.Expect('row12_note', 'validated abc');
+        Observer.Expect('row12_txt', 'abc');
+        Observer.Expect('bad_relation_validated|ok', 'No');
+        Observer.Expect('bad_relation_validated|text', 'The field Rel of table LT U Page Src contains a value (9999) that cannot be found in the related table (LT U Page Src).');
+        Observer.Expect('bad_relation_validated|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('row13_exists', 'No');
+        Observer.Expect('bad_relation_not_validated|ok', 'Yes');
+        Observer.Expect('row14_exists', 'Yes');
+        Observer.Expect('row14_rel2', '9999');
+        Observer.Expect('state', 'import required=r optional= bigLength=0 big= | import required=r optional= bigLength=0 big=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -312,6 +396,8 @@ codeunit 69789 "LT U Property Tests"
         Xmlport.Export(Xmlport::"LT U XmlPort", OutS);
         TempBlob.CreateInStream(InS, TextEncoding::UTF16);
         Observer.Observe('export_dec_7_5', ReadAll(InS));
-        Observer.Finish();
+        Observer.Expect('export_zero_dec', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\n<Root>\n  <Row Id="1" Dec="0.00" RequiredText="req" BigAttr="big">\n    <Txt>one</Txt>\n    <Rel>0</Rel>\n    <Rel2>0</Rel2>\n  </Row>\n</Root>\n');
+        Observer.Expect('export_dec_7_5', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\n<Root>\n  <Row Id="1" Dec="7.50" RequiredText="req" BigAttr="big">\n    <Txt>one</Txt>\n    <Rel>0</Rel>\n    <Rel2>0</Rel2>\n  </Row>\n</Root>\n');
+        Observer.Verify();
     end;
 }

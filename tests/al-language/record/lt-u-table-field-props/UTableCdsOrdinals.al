@@ -81,7 +81,29 @@ codeunit 69782 "LT U Cds Option Tests"
         Observer.Observe('evaluate_unknown_ok', Format(Evaluate(Rec.Opt, 'Delta')));
         Observer.Observe('local_option_evaluate_gamma', Format(Evaluate(Parsed, 'Gamma')));
         Observer.Observe('local_option_gamma_ordinal', Format(Parsed));
-        Observer.Finish();
+        Observer.Expect('beta_format', 'Beta');
+        Observer.Expect('beta_ordinal', '1');
+        Observer.Expect('beta_format_ordinal', '1');
+        Observer.Expect('beta_format_xml', '1');
+        Observer.Expect('gamma_ordinal', '2');
+        Observer.Expect('alpha_ordinal', '0');
+        Observer.Expect('init_value_format', 'Alpha');
+        Observer.Expect('assign_10_format', '10');
+        Observer.Expect('assign_20_format', '20');
+        Observer.Expect('assign_5_format', '5');
+        Observer.Expect('assign_1|no_error', 'true');
+        Observer.Expect('assign_2|no_error', 'true');
+        Observer.Expect('evaluate_name_ok', 'Yes');
+        Observer.Expect('evaluate_name_format', 'Gamma');
+        Observer.Expect('evaluate_ordinal_10_ok', 'Yes');
+        Observer.Expect('evaluate_ordinal_10_format', '10');
+        Observer.Expect('evaluate_ordinal_1_ok', 'Yes');
+        Observer.Expect('evaluate_ordinal_1|text', '');
+        Observer.Expect('evaluate_ordinal_1|code', '');
+        Observer.Expect('evaluate_unknown_ok', 'No');
+        Observer.Expect('local_option_evaluate_gamma', 'Yes');
+        Observer.Expect('local_option_gamma_ordinal', 'Gamma');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,6 +157,35 @@ codeunit 69782 "LT U Cds Option Tests"
         asserterror Plain.FindFirst();
         Observer.Observe('plain_find_first_failed', Format(GetLastErrorText() <> ''));
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('range_gamma_filter_text', 'Gamma');
+        Observer.Expect('filter_names_text', 'Beta|Gamma');
+        Observer.Expect('filter_ordinal_10_text', '10');
+        Observer.Expect('filter_ordinal_1|no_error', 'true');
+        Observer.Expect('filter_ge_10_text', '>=10');
+        Observer.Expect('fieldref_value', 'Beta');
+        Observer.Expect('fieldref_option_members', 'Alpha,Beta,Gamma');
+        Observer.Expect('fieldref_option_caption', 'Alpha,Beta,Gamma');
+        Observer.Expect('fieldref_format_ordinal', '1');
+        Observer.Expect('fieldref_set_20_value', '20');
+#if BC28PLUS
+        Observer.Expect('fieldref_set_alpha|text', 'The value "Alpha" can''t be evaluated into type Option.');
+#else
+        Observer.Expect('fieldref_set_alpha|text', 'The type NavOption is unknown.');
+#endif
+#if BC28PLUS
+        Observer.Expect('fieldref_set_alpha|code', 'Evaluate:Format');
+#else
+        Observer.Expect('fieldref_set_alpha|code', 'NotSupportedType');
+#endif
+        Observer.Expect('fieldref_after_failed_alpha', '20');
+        Observer.Expect('fieldref_validate_10_value', '10');
+        Observer.Expect('is_temporary', 'Yes');
+        Observer.Expect('temp_insert_count', '1');
+        Observer.Expect('temp_find_first', 'Yes');
+        Observer.Expect('temp_find_first_value', 'Beta');
+        Observer.Expect('plain_init_failed', 'Yes');
+        Observer.Expect('plain_insert_failed', 'Yes');
+        Observer.Expect('plain_find_first_failed', 'Yes');
+        Observer.Verify();
     end;
 }

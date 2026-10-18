@@ -210,9 +210,11 @@ report 69797 "LT U Obsolete Report"
 
     trigger OnPreReport()
     var
-        Observer: Codeunit "Probe Observer";
+        Row: Record "LT U Isolation Row";
     begin
-        Observer.Observe('report_state', 'obsolete report ran');
+        Row.Id := 100;
+        Row.Note := 'obsolete report ran';
+        Row.Insert();
     end;
 }
 
