@@ -584,7 +584,7 @@ Observer.Finish();
         Row.Insert();
         Row.CalcSums(Amount);
         Observer.Observe('sum', Format(Row.Amount));
-        LinkedCount(Observer, Row);
+        Observer.Observe('count', Format(Row.Count()));
         Row.Get(2);
         Observer.Observe('row2_amount', Format(Row.Amount));
         Row.Amount := 21;
