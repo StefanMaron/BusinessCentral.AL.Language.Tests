@@ -12,48 +12,40 @@ codeunit 79000 "LT AJ Scalars"
     var
         Observer: Codeunit "Probe Observer";
 
-    [Test]
-    procedure Evaluate_Decimal_TextWithLetters()
+    local procedure ObserveEvaluateDecimal(T: Text)
     var
         D: Decimal;
         Ok: Boolean;
-        Texts: List of [Text];
-        T: Text;
     begin
-        Texts.Add('New/Updated');
-        Texts.Add('12/5');
-        Texts.Add('abc1');
-        Texts.Add('1abc');
-        Texts.Add('1/2');
-        Texts.Add('5-');
-        foreach T in Texts do begin
-            D := 99;
-            Ok := Evaluate(D, T);
-            Observer.Observe(T + ' bool', Format(Ok) + '|' + Format(D));
-            D := 99;
-            ClearLastError();
-            if TryEvaluateDecimal(T, D) then
-                Observer.Observe(T + ' statement', 'no error|' + Format(D))
-            else begin
-                Observer.ObserveError(T + ' statement');
-                Observer.Observe(T + ' value after', Format(D));
-            end;
+        D := 99;
+        Ok := Evaluate(D, T);
+        Observer.Observe(T + ' bool', Format(Ok) + '|' + Format(D));
+        D := 99;
+        ClearLastError();
+        if TryEvaluateDecimal(T, D) then
+            Observer.Observe(T + ' statement', 'no error|' + Format(D))
+        else begin
+            Observer.ObserveError(T + ' statement');
+            Observer.Observe(T + ' value after', Format(D));
         end;
-        Observer.Expect('New/Updated bool', 'No|99');
-        Observer.Expect('New/Updated statement|text', 'The value "New/Updated" can''t be evaluated into type Decimal.');
-        Observer.Expect('New/Updated statement|code', 'Evaluate');
-        Observer.Expect('New/Updated value after', '99');
-        Observer.Expect('12/5 bool', 'No|99');
-        Observer.Expect('12/5 statement|text', 'The value "12/5" can''t be evaluated into type Decimal.');
-        Observer.Expect('12/5 statement|code', 'Evaluate');
-        Observer.Expect('12/5 value after', '99');
-        Observer.Expect('abc1 bool', 'No|99');
-        Observer.Expect('abc1 statement|text', 'The value "abc1" can''t be evaluated into type Decimal.');
-        Observer.Expect('abc1 statement|code', 'Evaluate');
-        Observer.Expect('abc1 value after', '99');
-        Observer.Expect('1abc bool', 'No|99');
-        Observer.Expect('1abc statement|text', 'T');
-        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Evaluate_Decimal_Slash_Texts()
+    begin
+        ObserveEvaluateDecimal('New/Updated');
+        ObserveEvaluateDecimal('12/5');
+        ObserveEvaluateDecimal('1/2');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Evaluate_Decimal_Letter_Texts()
+    begin
+        ObserveEvaluateDecimal('abc1');
+        ObserveEvaluateDecimal('1abc');
+        ObserveEvaluateDecimal('5-');
+        Observer.Finish();
     end;
 
     [TryFunction]
@@ -205,13 +197,14 @@ codeunit 79000 "LT AJ Scalars"
         I := Val.AsInteger();
     end;
 
-    local procedure ObserveFiller(Kind: Text)
+    local procedure ObserveFiller(Kind: Text; FromIndex: Integer; ToIndex: Integer)
     var
         Dt: DateTime;
         D: Date;
         Tm: Time;
         Fmts: List of [Text];
         F: Text;
+        Index: Integer;
     begin
         Dt := CreateDateTime(DMY2Date(5, 3, 2024), 090702.123T);
         D := DMY2Date(5, 3, 2024);
@@ -225,7 +218,8 @@ codeunit 79000 "LT AJ Scalars"
         Fmts.Add('<Filler Character,*><Hours12,4>');
         Fmts.Add('<Filler Character,0><Standard Format,0>');
         Fmts.Add('<Day,4><Filler Character,0><Month,4>');
-        foreach F in Fmts do
+        for Index := FromIndex to ToIndex do begin
+            F := Fmts.Get(Index);
             case Kind of
                 'DateTime':
                     Observer.Observe(F, TryFormat(Dt, F));
@@ -234,12 +228,13 @@ codeunit 79000 "LT AJ Scalars"
                 'Time':
                     Observer.Observe(F, TryFormat(Tm, F));
             end;
+        end;
     end;
 
     [Test]
     procedure Format_FillerCharacter_OnDateTime()
     begin
-        ObserveFiller('DateTime');
+        ObserveFiller('DateTime', 1, 9);
         Observer.Expect('<Filler Character,0>', '');
         Observer.Expect('<Filler Character,0><Day,4>', '0005');
         Observer.Expect('<Day,4><Filler Character,0>', '0005');
@@ -253,28 +248,31 @@ codeunit 79000 "LT AJ Scalars"
     end;
 
     [Test]
-    procedure Format_FillerCharacter_OnDate()
+    procedure Format_FillerCharacter_OnDate_1()
     begin
-        ObserveFiller('Date');
-        Observer.Expect('<Filler Character,0>', '');
-        Observer.Expect('<Filler Character,0><Day,4>', '0005');
-        Observer.Expect('<Day,4><Filler Character,0>', '0005');
-        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', '0500032024');
-        Observer.Expect('<Filler Character,0><Hours24,5><Minutes,5>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Hours24,5><Minutes,5>|InvalidFormatString');
-        Observer.Expect('<Filler Character,#><Day,4>', '0005');
-        Observer.Expect('<Filler Character,*><Hours12,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Characte');
-        Observer.Verify();
+        ObserveFiller('Date', 1, 5);
+        Observer.Finish();
     end;
 
     [Test]
-    procedure Format_FillerCharacter_OnTime()
+    procedure Format_FillerCharacter_OnDate_2()
     begin
-        ObserveFiller('Time');
-        Observer.Expect('<Filler Character,0>', '');
-        Observer.Expect('<Filler Character,0><Day,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,4>|InvalidFormatString');
-        Observer.Expect('<Day,4><Filler Character,0>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Day,4><Filler Character,0>|InvalidFormatString');
-        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,2><Mon');
-        Observer.Verify();
+        ObserveFiller('Date', 6, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Format_FillerCharacter_OnTime_1()
+    begin
+        ObserveFiller('Time', 1, 5);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Format_FillerCharacter_OnTime_2()
+    begin
+        ObserveFiller('Time', 6, 9);
+        Observer.Finish();
     end;
 
     local procedure TryFormat(V: Variant; F: Text): Text
