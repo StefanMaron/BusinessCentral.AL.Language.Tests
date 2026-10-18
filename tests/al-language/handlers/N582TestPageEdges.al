@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained table 67604, pages 67604 and 67605, codeunit 67604
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
-// An asserterror around a call that does not raise gives the ASSERTERROR text; the observed value shows that case.
+// The calls run inside TryFunctions, so a call that raises and one that does not are both observed.
 // Facts: TestPage SetValue of a text that is not an Option member (error code, text, Value() afterwards);
 // AssertEquals of a number (Integer and Decimal, 10 or more, negative, 1000 or more) against a Text control;
 // Editable() of a page field over a FlowField with Editable = false.
@@ -100,17 +100,49 @@ codeunit 67604 "LT N582 Test Page Edges"
         Row.Insert();
     end;
 
+    [TryFunction]
+    local procedure TrySetOpt(var Pg: TestPage "LT N582 Page Card"; Txt: Text)
+    begin
+        Pg.Opt.SetValue(Txt);
+    end;
+
+    [TryFunction]
+    local procedure TryOptValue(var Pg: TestPage "LT N582 Page Card"; var Result: Text)
+    begin
+        Result := Pg.Opt.Value();
+    end;
+
+    [TryFunction]
+    local procedure TryTxtAssert(var Pg: TestPage "LT N582 Page Card"; Expected: Variant)
+    begin
+        Pg.Txt.AssertEquals(Expected);
+    end;
+
+    [TryFunction]
+    local procedure TrySetFlow(var Pg: TestPage "LT N582 Page Card"; Which: Integer)
+    begin
+        if Which = 1 then
+            Pg.Flow.SetValue(5)
+        else
+            Pg.FlowDefault.SetValue(5);
+    end;
+
     local procedure SetOpt(var Observer: Codeunit "Probe Observer"; Name: Text; Txt: Text)
     var
         Pg: TestPage "LT N582 Page Card";
+        Shown: Text;
     begin
         Seed();
         Pg.OpenEdit();
         Pg.Opt.SetValue('One');
-        asserterror Pg.Opt.SetValue(Txt);
-        Observer.ObserveError(Name);
-        Observer.Observe(Name + '|value', Pg.Opt.Value());
-        Pg.Close();
+        if TrySetOpt(Pg, Txt) then
+            Observer.Observe(Name, 'no error')
+        else
+            Observer.ObserveError(Name);
+        if TryOptValue(Pg, Shown) then
+            Observer.Observe(Name + '|value', Shown)
+        else
+            Observer.ObserveError(Name + '|value');
     end;
 
     local procedure NumVsText(var Observer: Codeunit "Probe Observer"; Name: Text; Shown: Text; Expected: Variant)
@@ -121,9 +153,23 @@ codeunit 67604 "LT N582 Test Page Edges"
         Pg.OpenEdit();
         Pg.Txt.SetValue(Shown);
         Observer.Observe(Name + '|shown', Pg.Txt.Value());
-        asserterror Pg.Txt.AssertEquals(Expected);
-        Observer.ObserveError(Name);
+        if TryTxtAssert(Pg, Expected) then
+            Observer.Observe(Name, 'equal')
+        else
+            Observer.ObserveError(Name);
         Pg.Close();
+    end;
+
+    local procedure SetFlow(var Observer: Codeunit "Probe Observer"; Name: Text; Which: Integer)
+    var
+        Pg: TestPage "LT N582 Page Card";
+    begin
+        Seed();
+        Pg.OpenEdit();
+        if TrySetFlow(Pg, Which) then
+            Observer.Observe(Name, 'no error')
+        else
+            Observer.ObserveError(Name);
     end;
 
     [Test]
@@ -227,10 +273,6 @@ codeunit 67604 "LT N582 Test Page Edges"
         Observer.Observe('card plain Editable=false', Format(Card.Plain.Editable()));
         Observer.Observe('card id', Format(Card.Id.Editable()));
         Observer.Observe('card flow value', Card.Flow.Value());
-        asserterror Card.Flow.SetValue(5);
-        Observer.ObserveError('card flow SetValue');
-        asserterror Card.FlowDefault.SetValue(5);
-        Observer.ObserveError('card flow default SetValue');
         Card.Close();
         List.OpenEdit();
         Observer.Observe('list flow Editable=false', Format(List.Flow.Editable()));
@@ -241,6 +283,8 @@ codeunit 67604 "LT N582 Test Page Edges"
         Observer.Observe('view card flow', Format(Card.Flow.Editable()));
         Observer.Observe('view card id', Format(Card.Id.Editable()));
         Card.Close();
+        SetFlow(Observer, 'card flow SetValue', 1);
+        SetFlow(Observer, 'card flow default SetValue', 2);
         Observer.Finish();
     end;
 }

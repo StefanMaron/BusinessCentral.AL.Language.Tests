@@ -89,7 +89,15 @@ codeunit 67601 "LT N582 RecordId Text"
         FormatCode(Observer, 'plain', 'AB');
         FormatCode(Observer, 'comma', 'A,B');
         FormatCode(Observer, 'blank inside', 'A B');
-        Observer.Finish();
+        Observer.Expect('quote inside', '[A"B]|LT N582 Rid Code: A"B');
+        Observer.Expect('quote at end', '[AB"]|LT N582 Rid Code: AB"');
+        Observer.Expect('quote at start', '["AB]|LT N582 Rid Code: """AB"');
+        Observer.Expect('only a quote', '["]|LT N582 Rid Code: """"');
+        Observer.Expect('two quotes', '[""]|LT N582 Rid Code: """"""');
+        Observer.Expect('plain', '[AB]|LT N582 Rid Code: AB');
+        Observer.Expect('comma', '[A,B]|LT N582 Rid Code: "A,B"');
+        Observer.Expect('blank inside', '[A B]|LT N582 Rid Code: A B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +121,14 @@ codeunit 67601 "LT N582 RecordId Text"
         Observer.Observe('one part for two', Format(Ok) + '|' + Format(Rid) + '|' + Format(Rid.TableNo()));
         Ok := Evaluate(Rid, 'LT N582 Rid Two: X,Y,Z');
         Observer.Observe('three parts for two', Format(Ok) + '|' + Format(Rid) + '|' + Format(Rid.TableNo()));
-        Observer.Finish();
+        Observer.Expect('empty first part', 'Yes|LT N582 Rid Two: "",X|67603');
+        Observer.Expect('empty second part', 'Yes|LT N582 Rid Two: X|67603');
+        Observer.Expect('both parts empty', 'Yes|LT N582 Rid Two: ""|67603');
+        Observer.Expect('quoted empty first part', 'Yes|LT N582 Rid Two: "",X|67603');
+        Observer.Expect('two parts', 'Yes|LT N582 Rid Two: X,Y|67603');
+        Observer.Expect('one part for two', 'Yes|LT N582 Rid Two: X|67603');
+        Observer.Expect('three parts for two', 'No|LT N582 Rid Two: X|67603');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,7 +156,15 @@ codeunit 67601 "LT N582 RecordId Text"
         Observer.Observe('text key with blanks, format', Format(Row.RecordId));
         Ok := Evaluate(Rid, 'LT N582 Rid Text: ' + ' A ');
         Observer.Observe('text key blanks around', Format(Ok) + '|' + Format(Rid) + '|equalsBlanks=' + Format(Rid = Row.RecordId));
-        Observer.Finish();
+        Observer.Expect('text key', 'Yes|LT N582 Rid Text: Hello|67602');
+        Observer.Expect('text key with blank', 'Yes|LT N582 Rid Text: Hello World|67602');
+        Observer.Expect('text key lower case', 'Yes|LT N582 Rid Text: hello|equalsHello=No');
+        Observer.Expect('text key empty', 'Yes|LT N582 Rid Text|67602');
+        Observer.Expect('text key quoted comma', 'Yes|LT N582 Rid Text: "A,B"|67602');
+        Observer.Expect('text key with quote, format', 'LT N582 Rid Text: A"B');
+        Observer.Expect('text key with blanks, format', 'LT N582 Rid Text: " A "');
+        Observer.Expect('text key blanks around', 'Yes|LT N582 Rid Text: A|equalsBlanks=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,7 +183,18 @@ codeunit 67601 "LT N582 RecordId Text"
         EvalCode(Observer, 'quoted plain', 'LT N582 Rid Code: "A"');
         EvalCode(Observer, 'lower case', 'LT N582 Rid Code: a');
         EvalCode(Observer, 'only blanks', 'LT N582 Rid Code:   ');
-        Observer.Finish();
+        Observer.Expect('no blanks', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('blanks both sides', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('trailing blank', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('leading blank only', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('two leading blanks', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('no separator blank', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('quoted with blanks', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('quoted trailing blank', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('quoted plain', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('lower case', 'Yes|LT N582 Rid Code: A|67601|equalsA=Yes');
+        Observer.Expect('only blanks', 'Yes|LT N582 Rid Code|67601|equalsA=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,6 +222,10 @@ codeunit 67601 "LT N582 RecordId Text"
         Txt := Format(Row.RecordId);
         Ok := Evaluate(Rid, Txt);
         Observer.Observe('comma round trip', Format(Ok) + '|' + Format(Rid) + '|same=' + Format(Rid = Row.RecordId));
-        Observer.Finish();
+        Observer.Expect('inside quote round trip', 'Yes|LT N582 Rid Code: A"B|same=Yes');
+        Observer.Expect('end quote round trip', 'Yes|LT N582 Rid Code: AB"|same=Yes');
+        Observer.Expect('only quote round trip', 'Yes|LT N582 Rid Code: """"|same=Yes');
+        Observer.Expect('comma round trip', 'Yes|LT N582 Rid Code: "A,B"|same=Yes');
+        Observer.Verify();
     end;
 }

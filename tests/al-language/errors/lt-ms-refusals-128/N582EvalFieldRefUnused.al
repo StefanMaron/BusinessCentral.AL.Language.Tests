@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained table 67605, codeunit 67605
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
-// An asserterror around a call that does not raise gives the ASSERTERROR text; the observed value shows that case.
+// The call runs inside a TryFunction, so a call that raises and one that does not are both observed.
 // Facts: Evaluate(FieldRef, Text) called as a statement (result not used) with text that does not parse: does it raise, with which code and text,
 // and what the field holds afterwards (Decimal, Date, Boolean, Code, Option, Integer).
 // BC versions: 27, 28, 29
@@ -37,6 +37,12 @@ codeunit 67605 "LT N582 Eval FieldRef"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    [TryFunction]
+    local procedure TryEval(FldRef: FieldRef; Txt: Text)
+    begin
+        Evaluate(FldRef, Txt);
+    end;
+
     local procedure EvalStatement(var Observer: Codeunit "Probe Observer"; Name: Text; FieldNo: Integer; Txt: Text)
     var
         Row: Record "LT N582 Eval Fld";
@@ -54,8 +60,10 @@ codeunit 67605 "LT N582 Eval FieldRef"
         RecRef.GetTable(Row);
         FldRef := RecRef.Field(FieldNo);
         ClearLastError();
-        asserterror Evaluate(FldRef, Txt);
-        Observer.ObserveError(Name);
+        if TryEval(FldRef, Txt) then
+            Observer.Observe(Name, 'no error')
+        else
+            Observer.ObserveError(Name);
         Observer.Observe(Name + '|value', Format(FldRef.Value));
     end;
 
