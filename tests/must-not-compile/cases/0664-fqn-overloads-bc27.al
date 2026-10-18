@@ -1,11 +1,11 @@
-// @expect AL0133 | Argument 1: cannot convert from 'Text' to 'Integer'
-// @expect AL0133 | Argument 1: cannot convert from 'Text' to 'Integer'
-// @expect AL0133 | Argument 1: cannot convert from 'Text' to 'Integer'
-// @expect AL0133 | Argument 1: cannot convert from 'Text' to 'Integer'
-// @expect AL0133 | Argument 1: cannot convert from 'Text' to 'Integer'
-// @expect AL0132 | 'RecordRef' does not contain a definition for 'FullyQualifiedName'
+// @expect AL0666 | 'Run' is not available in runtime version '16.1'. The supported runtime versions are: '17.0' or greater.
+// @expect AL0666 | 'RunModal' is not available in runtime version '16.1'. The supported runtime versions are: '17.0' or greater.
+// @expect AL0666 | 'Execute' is not available in runtime version '16.1'. The supported runtime versions are: '17.0' or greater.
+// @expect AL0666 | 'Run' is not available in runtime version '16.1'. The supported runtime versions are: '17.0' or greater.
+// @expect AL0666 | 'Open' is not available in runtime version '16.1'. The supported runtime versions are: '17.0' or greater.
+// @expect AL0666 | 'FullyQualifiedName' is not available in runtime version '16.1'. The supported runtime versions are: '17.0' or greater.
 // @until 27
-// Report.Run, Report.RunModal, Report.Execute, Page.Run, RecordRef.Open with the fully qualified name of the object and RecordRef.FullyQualifiedName exist from BC 28 (runtime 17.0): BC 27 rejects them.
+// The fully qualified name overloads of Report.Run, Report.RunModal, Report.Execute, Page.Run and RecordRef.Open and RecordRef.FullyQualifiedName need runtime 17.0: the BC 27 app runtime is 16.1 and cannot call them (the BC 28 and 29 apps run on 17.1 and 18.0, where tests/al-language pins them).
 report 50000 "MNC T Fqn Report"
 {
     UseRequestPage = false;

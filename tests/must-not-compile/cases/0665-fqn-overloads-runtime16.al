@@ -6,8 +6,8 @@
 // @expect AL0666 | 'Execute' is not available in runtime version '16.0'. The supported runtime versions are: '17.0' or greater.
 // @expect AL0666 | 'Open' is not available in runtime version '16.0'. The supported runtime versions are: '17.0' or greater.
 // @expect AL0666 | 'FullyQualifiedName' is not available in runtime version '16.0'. The supported runtime versions are: '17.0' or greater.
-// @from 28
-// The fully qualified name overloads of Report.Run, Report.RunModal, Report.Execute, Page.Run, Page.RunModal and RecordRef.Open and RecordRef.FullyQualifiedName need runtime 17.0: an app with runtime 16.0 (the default here) cannot call them in BC 28 and later.
+// @appjson {"runtime": "16.0"}
+// The fully qualified name overloads of Report.Run, Report.RunModal, Report.Execute, Page.Run, Page.RunModal and RecordRef.Open and RecordRef.FullyQualifiedName need runtime 17.0: an app with runtime 16.0 (the default here) cannot call them on any BC major.
 report 50000 "MNC T Fqn Report"
 {
     UseRequestPage = false;
