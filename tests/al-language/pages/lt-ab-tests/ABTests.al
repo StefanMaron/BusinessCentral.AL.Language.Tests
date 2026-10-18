@@ -863,12 +863,12 @@ codeunit 77099 "LT AB Tests"
         Rows.Close();
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Observe('stored-ten-exists', Format(Stored.Get(10)));
-        Observer.Expect('stored-count', '3');
-        Observer.Expect('stored-ten-exists', 'Yes');
         Observer.Expect('after-new', 'page OnNewRecord Yes | A2 OnNewRecordEvent 0 Yes | A1 OnNewRecordEvent 0 Yes | B OnNewRecordEvent 0 Yes | page OnAfterGetCurrRecord 0 | A2 OnAfterGetCurrRecordEvent 0 | A1 OnAfterGetCurrRecordEvent 0 | B OnAfterGetCurrRecordEvent 0');
         Observer.Expect('after-id', '');
         Observer.Expect('after-name', 'page OnInsertRecord 10  | A2 OnInsertRecordEvent 10  1 Yes Yes | A1 OnInsertRecordEvent 10  1 Yes Yes | B OnInsertRecordEvent 10  1 Yes Yes');
         Observer.Expect('after-leave-row', 'page OnModifyRecord Ten was  | A2 OnModifyRecordEvent Ten  Yes | A1 OnModifyRecordEvent Ten  Yes | B OnModifyRecordEvent Ten  Yes | page OnAfterGetCurrRecord 2 | A2 OnAfterGetCurrRecordEvent 2 | A1 OnAfterGetCurrRecordEvent 2 | B OnAfterGetCurrRecordEvent 2');
+        Observer.Expect('stored-count', '3');
+        Observer.Expect('stored-ten-exists', 'Yes');
         Observer.Verify();
     end;
 
