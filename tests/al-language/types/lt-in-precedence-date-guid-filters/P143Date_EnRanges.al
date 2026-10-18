@@ -34,7 +34,8 @@ codeunit 74651 "LT P143 EnRanges"
         Observer.Expect('r_open_to_filter', '01/17/27..');
         Observer.Expect('r_open_to_count', '3');
         Observer.Expect('r_or_filter', '01/17/27|10/18/26');
-        Observer.Expect('r_or_count', '2');
+        // One row per listed date (17 Jan 2027, 18 Oct 2026), plus row 7 when Today falls on one of them.
+        Observer.Expect('r_or_count', Format(Helper.CountOn(20270117D) + Helper.CountOn(20261018D)));
         Observer.Expect('r_lt_filter', '<01/17/27');
         Observer.Expect('r_lt_count', '7');
         Observer.Expect('r_ge_filter', '>=01/31/27');
