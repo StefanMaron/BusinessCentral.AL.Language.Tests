@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httprequesttype/httprequesttype-option
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
-// Probe: the HttpRequestType option type: Format of every member as text (Format 0,0), as ordinal (Format 0,2) and as number text (Format 0,1), a case statement over every member, Evaluate by name and by number, and the error text of Evaluate for an invalid name and ordinal. The type is option-like: AsInteger does not exist and an Integer is not assignable (AL0132 and AL0122 at compile time).
+// Probe: the HttpRequestType option type: Format of every member as text (Format 0,0), as ordinal (Format 0,2) and as number text (Format 0,1), a case statement over every member, . The type is option-like: AsInteger does not exist and an Integer is not assignable (AL0132 and AL0122 at compile time).
+//   Evaluate(Type, Text) is not probed: a test that calls it ends the test session ("hub connection closed") on BC 29, like PageStyle (types/lt-page-style/PageStyle.al).
 //   Settles #626 items 11 to 15 for HttpRequestType.
 // BC versions: 27, 28, 29
 
@@ -46,7 +47,37 @@ codeunit 77510 "LT AC HttpReqType Format"
         Observer.Observe('number_Head', Format(HttpRequestType::Head, 0, 1));
         Observer.Observe('number_Connect', Format(HttpRequestType::Connect, 0, 1));
         Observer.Observe('number_Trace', Format(HttpRequestType::Trace, 0, 1));
-        Observer.Finish();
+        Observer.Expect('text_Unknown', 'Unknown');
+        Observer.Expect('text_Get', 'Get');
+        Observer.Expect('text_Delete', 'Delete');
+        Observer.Expect('text_Post', 'Post');
+        Observer.Expect('text_Put', 'Put');
+        Observer.Expect('text_Patch', 'Patch');
+        Observer.Expect('text_Options', 'Options');
+        Observer.Expect('text_Head', 'Head');
+        Observer.Expect('text_Connect', 'Connect');
+        Observer.Expect('text_Trace', 'Trace');
+        Observer.Expect('ordinal_Unknown', '0');
+        Observer.Expect('ordinal_Get', '1');
+        Observer.Expect('ordinal_Delete', '2');
+        Observer.Expect('ordinal_Post', '3');
+        Observer.Expect('ordinal_Put', '4');
+        Observer.Expect('ordinal_Patch', '5');
+        Observer.Expect('ordinal_Options', '6');
+        Observer.Expect('ordinal_Head', '7');
+        Observer.Expect('ordinal_Connect', '8');
+        Observer.Expect('ordinal_Trace', '9');
+        Observer.Expect('number_Unknown', 'Unknown');
+        Observer.Expect('number_Get', 'Get');
+        Observer.Expect('number_Delete', 'Delete');
+        Observer.Expect('number_Post', 'Post');
+        Observer.Expect('number_Put', 'Put');
+        Observer.Expect('number_Patch', 'Patch');
+        Observer.Expect('number_Options', 'Options');
+        Observer.Expect('number_Head', 'Head');
+        Observer.Expect('number_Connect', 'Connect');
+        Observer.Expect('number_Trace', 'Trace');
+        Observer.Verify();
     end;
 
     [Test]
@@ -65,7 +96,14 @@ codeunit 77510 "LT AC HttpReqType Format"
         Observer.Observe('eq_first', Format(V = HttpRequestType::Unknown));
         Clear(V);
         Observer.Observe('cleared', Format(V));
-        Observer.Finish();
+        Observer.Expect('default', 'Unknown');
+        Observer.Expect('default_ordinal', '0');
+        Observer.Expect('last', 'Trace');
+        Observer.Expect('last_ordinal', '9');
+        Observer.Expect('eq_last', 'Yes');
+        Observer.Expect('eq_first', 'No');
+        Observer.Expect('cleared', 'Unknown');
+        Observer.Verify();
     end;
 
     [Test]
@@ -94,7 +132,17 @@ codeunit 77510 "LT AC HttpReqType Format"
         Observer.Observe('case_Connect', CaseName(V));
         V := HttpRequestType::Trace;
         Observer.Observe('case_Trace', CaseName(V));
-        Observer.Finish();
+        Observer.Expect('case_Unknown', 'is_Unknown');
+        Observer.Expect('case_Get', 'is_Get');
+        Observer.Expect('case_Delete', 'is_Delete');
+        Observer.Expect('case_Post', 'is_Post');
+        Observer.Expect('case_Put', 'is_Put');
+        Observer.Expect('case_Patch', 'is_Patch');
+        Observer.Expect('case_Options', 'is_Options');
+        Observer.Expect('case_Head', 'is_Head');
+        Observer.Expect('case_Connect', 'is_Connect');
+        Observer.Expect('case_Trace', 'is_Trace');
+        Observer.Verify();
     end;
 
     local procedure CaseName(V: HttpRequestType): Text
@@ -123,131 +171,5 @@ codeunit 77510 "LT AC HttpReqType Format"
             else
                 exit('other');
         end;
-    end;
-}
-
-codeunit 77511 "LT AC HttpReqType Eval"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure AC_HttpRequestType_Evaluate()
-    var
-        Observer: Codeunit "Probe Observer";
-        V: HttpRequestType;
-        Ok: Boolean;
-    begin
-        Clear(V);
-        Ok := Evaluate(V, 'Unknown');
-        Observer.Observe('name_Unknown', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Get');
-        Observer.Observe('name_Get', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Delete');
-        Observer.Observe('name_Delete', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Post');
-        Observer.Observe('name_Post', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Put');
-        Observer.Observe('name_Put', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Patch');
-        Observer.Observe('name_Patch', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Options');
-        Observer.Observe('name_Options', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Head');
-        Observer.Observe('name_Head', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Connect');
-        Observer.Observe('name_Connect', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'Trace');
-        Observer.Observe('name_Trace', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'get');
-        Observer.Observe('name_lowercase', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, 'GET');
-        Observer.Observe('name_uppercase', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '0');
-        Observer.Observe('number_0', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '1');
-        Observer.Observe('number_1', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '2');
-        Observer.Observe('number_2', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '3');
-        Observer.Observe('number_3', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '4');
-        Observer.Observe('number_4', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '5');
-        Observer.Observe('number_5', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '6');
-        Observer.Observe('number_6', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '7');
-        Observer.Observe('number_7', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '8');
-        Observer.Observe('number_8', Format(Ok) + '/' + Format(V, 0, 2));
-        Clear(V);
-        Ok := Evaluate(V, '9');
-        Observer.Observe('number_9', Format(Ok) + '/' + Format(V, 0, 2));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure AC_HttpRequestType_EvaluateInvalid()
-    var
-        Observer: Codeunit "Probe Observer";
-        V: HttpRequestType;
-    begin
-        Clear(V);
-        if Evaluate(V, 'Bogus') then
-            Observer.Observe('bogus_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('bogus');
-        Clear(V);
-        if Evaluate(V, '') then
-            Observer.Observe('empty_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('empty');
-        Clear(V);
-        if Evaluate(V, '10') then
-            Observer.Observe('past_end_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('past_end');
-        Clear(V);
-        if Evaluate(V, '99') then
-            Observer.Observe('large_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('large');
-        Clear(V);
-        if Evaluate(V, '-1') then
-            Observer.Observe('negative_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('negative');
-        Clear(V);
-        if Evaluate(V, ' Get') then
-            Observer.Observe('space_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('space');
-        Clear(V);
-        if Evaluate(V, '1.5') then
-            Observer.Observe('decimal_ok', Format(V, 0, 2))
-        else
-            Observer.ObserveError('decimal');
-        Observer.Finish();
     end;
 }

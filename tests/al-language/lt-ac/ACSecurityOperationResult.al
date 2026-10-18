@@ -28,7 +28,19 @@ codeunit 77514 "LT AC SecOp Result Format"
         Observer.Observe('number_ClientError', Format(SecurityOperationResult::ClientError, 0, 1));
         Observer.Observe('number_Failure', Format(SecurityOperationResult::Failure, 0, 1));
         Observer.Observe('number_Timeout', Format(SecurityOperationResult::Timeout, 0, 1));
-        Observer.Finish();
+        Observer.Expect('text_Success', 'Success');
+        Observer.Expect('text_ClientError', 'ClientError');
+        Observer.Expect('text_Failure', 'Failure');
+        Observer.Expect('text_Timeout', 'Timeout');
+        Observer.Expect('ordinal_Success', '1');
+        Observer.Expect('ordinal_ClientError', '2');
+        Observer.Expect('ordinal_Failure', '3');
+        Observer.Expect('ordinal_Timeout', '4');
+        Observer.Expect('number_Success', 'Success');
+        Observer.Expect('number_ClientError', 'ClientError');
+        Observer.Expect('number_Failure', 'Failure');
+        Observer.Expect('number_Timeout', 'Timeout');
+        Observer.Verify();
     end;
 
     [Test]
@@ -47,7 +59,14 @@ codeunit 77514 "LT AC SecOp Result Format"
         Observer.Observe('eq_first', Format(V = SecurityOperationResult::Success));
         Clear(V);
         Observer.Observe('cleared', Format(V));
-        Observer.Finish();
+        Observer.Expect('default', '0');
+        Observer.Expect('default_ordinal', '0');
+        Observer.Expect('last', 'Timeout');
+        Observer.Expect('last_ordinal', '4');
+        Observer.Expect('eq_last', 'Yes');
+        Observer.Expect('eq_first', 'No');
+        Observer.Expect('cleared', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -64,7 +83,11 @@ codeunit 77514 "LT AC SecOp Result Format"
         Observer.Observe('case_Failure', CaseName(V));
         V := SecurityOperationResult::Timeout;
         Observer.Observe('case_Timeout', CaseName(V));
-        Observer.Finish();
+        Observer.Expect('case_Success', 'is_Success');
+        Observer.Expect('case_ClientError', 'is_ClientError');
+        Observer.Expect('case_Failure', 'is_Failure');
+        Observer.Expect('case_Timeout', 'is_Timeout');
+        Observer.Verify();
     end;
 
     local procedure CaseName(V: SecurityOperationResult): Text
@@ -126,7 +149,17 @@ codeunit 77515 "LT AC SecOp Result Eval"
         Clear(V);
         Ok := Evaluate(V, '3');
         Observer.Observe('number_3', Format(Ok) + '/' + Format(V, 0, 2));
-        Observer.Finish();
+        Observer.Expect('name_Success', 'Yes/1');
+        Observer.Expect('name_ClientError', 'Yes/2');
+        Observer.Expect('name_Failure', 'Yes/3');
+        Observer.Expect('name_Timeout', 'Yes/4');
+        Observer.Expect('name_lowercase', 'Yes/2');
+        Observer.Expect('name_uppercase', 'Yes/2');
+        Observer.Expect('number_0', 'No/0');
+        Observer.Expect('number_1', 'Yes/1');
+        Observer.Expect('number_2', 'Yes/2');
+        Observer.Expect('number_3', 'Yes/3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,6 +203,17 @@ codeunit 77515 "LT AC SecOp Result Eval"
             Observer.Observe('decimal_ok', Format(V, 0, 2))
         else
             Observer.ObserveError('decimal');
-        Observer.Finish();
+        Observer.Expect('bogus|text', '''Bogus'' is not an option. The existing options are: Success, Failure, ClientError, Timeout');
+        Observer.Expect('bogus|code', 'InvalidOptionString');
+        Observer.Expect('empty_ok', '1');
+        Observer.Expect('past_end_ok', '4');
+        Observer.Expect('large|text', '''99'' is not an option. The existing options are: Success, Failure, ClientError, Timeout');
+        Observer.Expect('large|code', 'InvalidOptionString');
+        Observer.Expect('negative|text', '''-1'' is not an option. The existing options are: Success, Failure, ClientError, Timeout');
+        Observer.Expect('negative|code', 'InvalidOptionString');
+        Observer.Expect('space_ok', '2');
+        Observer.Expect('decimal|text', '''1.5'' is not an option. The existing options are: Success, Failure, ClientError, Timeout');
+        Observer.Expect('decimal|code', 'InvalidOptionString');
+        Observer.Verify();
     end;
 }

@@ -49,7 +49,40 @@ codeunit 77518 "LT AC Page Style Format"
         Observer.Observe('number_Unfavorable', Format(PageStyle::Unfavorable, 0, 1));
         Observer.Observe('number_Ambiguous', Format(PageStyle::Ambiguous, 0, 1));
         Observer.Observe('number_Subordinate', Format(PageStyle::Subordinate, 0, 1));
-        Observer.Finish();
+        Observer.Expect('text_None', 'None');
+        Observer.Expect('text_Standard', 'Standard');
+        Observer.Expect('text_StandardAccent', 'StandardAccent');
+        Observer.Expect('text_Strong', 'Strong');
+        Observer.Expect('text_StrongAccent', 'StrongAccent');
+        Observer.Expect('text_Attention', 'Attention');
+        Observer.Expect('text_AttentionAccent', 'AttentionAccent');
+        Observer.Expect('text_Favorable', 'Favorable');
+        Observer.Expect('text_Unfavorable', 'Unfavorable');
+        Observer.Expect('text_Ambiguous', 'Ambiguous');
+        Observer.Expect('text_Subordinate', 'Subordinate');
+        Observer.Expect('ordinal_None', '1');
+        Observer.Expect('ordinal_Standard', '2');
+        Observer.Expect('ordinal_StandardAccent', '3');
+        Observer.Expect('ordinal_Strong', '4');
+        Observer.Expect('ordinal_StrongAccent', '5');
+        Observer.Expect('ordinal_Attention', '6');
+        Observer.Expect('ordinal_AttentionAccent', '7');
+        Observer.Expect('ordinal_Favorable', '8');
+        Observer.Expect('ordinal_Unfavorable', '9');
+        Observer.Expect('ordinal_Ambiguous', '10');
+        Observer.Expect('ordinal_Subordinate', '11');
+        Observer.Expect('number_None', 'None');
+        Observer.Expect('number_Standard', 'Standard');
+        Observer.Expect('number_StandardAccent', 'StandardAccent');
+        Observer.Expect('number_Strong', 'Strong');
+        Observer.Expect('number_StrongAccent', 'StrongAccent');
+        Observer.Expect('number_Attention', 'Attention');
+        Observer.Expect('number_AttentionAccent', 'AttentionAccent');
+        Observer.Expect('number_Favorable', 'Favorable');
+        Observer.Expect('number_Unfavorable', 'Unfavorable');
+        Observer.Expect('number_Ambiguous', 'Ambiguous');
+        Observer.Expect('number_Subordinate', 'Subordinate');
+        Observer.Verify();
     end;
 
     [Test]
@@ -68,7 +101,14 @@ codeunit 77518 "LT AC Page Style Format"
         Observer.Observe('eq_first', Format(V = PageStyle::None));
         Clear(V);
         Observer.Observe('cleared', Format(V));
-        Observer.Finish();
+        Observer.Expect('default', '0');
+        Observer.Expect('default_ordinal', '0');
+        Observer.Expect('last', 'Subordinate');
+        Observer.Expect('last_ordinal', '11');
+        Observer.Expect('eq_last', 'Yes');
+        Observer.Expect('eq_first', 'No');
+        Observer.Expect('cleared', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -99,7 +139,18 @@ codeunit 77518 "LT AC Page Style Format"
         Observer.Observe('case_Ambiguous', CaseName(V));
         V := PageStyle::Subordinate;
         Observer.Observe('case_Subordinate', CaseName(V));
-        Observer.Finish();
+        Observer.Expect('case_None', 'is_None');
+        Observer.Expect('case_Standard', 'is_Standard');
+        Observer.Expect('case_StandardAccent', 'is_StandardAccent');
+        Observer.Expect('case_Strong', 'is_Strong');
+        Observer.Expect('case_StrongAccent', 'is_StrongAccent');
+        Observer.Expect('case_Attention', 'is_Attention');
+        Observer.Expect('case_AttentionAccent', 'is_AttentionAccent');
+        Observer.Expect('case_Favorable', 'is_Favorable');
+        Observer.Expect('case_Unfavorable', 'is_Unfavorable');
+        Observer.Expect('case_Ambiguous', 'is_Ambiguous');
+        Observer.Expect('case_Subordinate', 'is_Subordinate');
+        Observer.Verify();
     end;
 
     local procedure CaseName(V: PageStyle): Text

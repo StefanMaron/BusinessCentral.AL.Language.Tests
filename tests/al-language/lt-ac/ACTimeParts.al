@@ -27,7 +27,13 @@ codeunit 77500 "LT AC Time Parts"
         Observer.Observe('noon', Format(T.Hour()));
         T := 235959T;
         Observer.Observe('max_second', Format(T.Hour()));
-        Observer.Finish();
+        Observer.Expect('fixed', '12');
+        Observer.Expect('midnight', '0');
+        Observer.Expect('last_ms', '23');
+        Observer.Expect('one_am', '1');
+        Observer.Expect('noon', '12');
+        Observer.Expect('max_second', '23');
+        Observer.Verify();
     end;
 
     [Test]
@@ -46,7 +52,12 @@ codeunit 77500 "LT AC Time Parts"
         Observer.Observe('one', Format(T.Minute()));
         T := 125900T;
         Observer.Observe('fifty_nine', Format(T.Minute()));
-        Observer.Finish();
+        Observer.Expect('fixed', '34');
+        Observer.Expect('midnight', '0');
+        Observer.Expect('last_ms', '59');
+        Observer.Expect('one', '1');
+        Observer.Expect('fifty_nine', '59');
+        Observer.Verify();
     end;
 
     [Test]
@@ -65,7 +76,12 @@ codeunit 77500 "LT AC Time Parts"
         Observer.Observe('one', Format(T.Second()));
         T := 120059.500T;
         Observer.Observe('half_ms', Format(T.Second()));
-        Observer.Finish();
+        Observer.Expect('fixed', '56');
+        Observer.Expect('midnight', '0');
+        Observer.Expect('last_ms', '59');
+        Observer.Expect('one', '1');
+        Observer.Expect('half_ms', '59');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +104,14 @@ codeunit 77500 "LT AC Time Parts"
         Observer.Observe('hundred', Format(T.Millisecond()));
         T := 235959T;
         Observer.Observe('no_ms', Format(T.Millisecond()));
-        Observer.Finish();
+        Observer.Expect('fixed', '789');
+        Observer.Expect('midnight', '0');
+        Observer.Expect('last_ms', '999');
+        Observer.Expect('one', '1');
+        Observer.Expect('ten', '10');
+        Observer.Expect('hundred', '100');
+        Observer.Expect('no_ms', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,6 +138,19 @@ codeunit 77500 "LT AC Time Parts"
         T := 150000T;
         Observer.Observe('afternoon_default', T.ToText());
         Observer.Observe('afternoon_true', T.ToText(true));
-        Observer.Finish();
+        Observer.Expect('ms_default', '12:34:56 PM');
+        Observer.Expect('ms_false', '12:34:56 PM');
+        Observer.Expect('ms_true', '12:34:56.789');
+        Observer.Expect('ms_format_0_0', '12:34:56 PM');
+        Observer.Expect('ms_format_0_9', '12:34:56.789');
+        Observer.Expect('midnight_default', '12:00:00 AM');
+        Observer.Expect('midnight_true', '00:00:00');
+        Observer.Expect('last_default', '11:59:59 PM');
+        Observer.Expect('last_true', '23:59:59.999');
+        Observer.Expect('morning_default', ' 9:05:00 AM');
+        Observer.Expect('morning_true', '09:05:00');
+        Observer.Expect('afternoon_default', ' 3:00:00 PM');
+        Observer.Expect('afternoon_true', '15:00:00');
+        Observer.Verify();
     end;
 }

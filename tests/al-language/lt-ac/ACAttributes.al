@@ -101,6 +101,16 @@ codeunit 77531 "LT AC Report State"
     end;
 }
 
+codeunit 77533 "LT AC Insert Helper"
+{
+    TableNo = "LT AC Attr Row";
+
+    trigger OnRun()
+    begin
+        Rec.Insert();
+    end;
+}
+
 codeunit 77532 "LT AC Attributes"
 {
     Subtype = Test;
@@ -123,7 +133,14 @@ codeunit 77532 "LT AC Attributes"
         Observer.Observe('service_enabled', ServiceEnabledProc());
         Observer.Observe('in_data_set_flag', Format(InDataSetFlag));
         Observer.Observe('calls', Format(Calls));
-        Observer.Finish();
+        Observer.Expect('caption', 'captioned_ran');
+        Observer.Expect('none', 'none_ran');
+        Observer.Expect('obsolete_pending', 'obsolete_ran');
+        Observer.Expect('scope_cloud', 'cloud_ran');
+        Observer.Expect('service_enabled', 'service_enabled_ran');
+        Observer.Expect('in_data_set_flag', 'No');
+        Observer.Expect('calls', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +166,14 @@ codeunit 77532 "LT AC Attributes"
         Observer.Observe('validated_count', Format(ValidatedRow.Count()));
         Observer.Observe('ignored_count', Format(IgnoredRow.Count()));
         FilteredRow.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('plain', 'Validated');
+        Observer.Expect('filtered', 'Filtered');
+        Observer.Expect('validated', 'Validated');
+        Observer.Expect('ignored', 'Ignored');
+        Observer.Expect('filtered_count', '1');
+        Observer.Expect('validated_count', '1');
+        Observer.Expect('ignored_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -166,7 +190,8 @@ codeunit 77532 "LT AC Attributes"
         else
             Observer.ObserveError('insert');
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('insert', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -177,7 +202,7 @@ codeunit 77532 "LT AC Attributes"
         Row: Record "LT AC Attr Row";
     begin
         Row.Id := 2;
-        if TryInsert(Row) then
+        if Codeunit.Run(Codeunit::"LT AC Insert Helper", Row) then
             Observer.Observe('insert', 'ok')
         else
             Observer.ObserveError('insert');
@@ -192,7 +217,7 @@ codeunit 77532 "LT AC Attributes"
         Row: Record "LT AC Attr Row";
     begin
         Row.Id := 3;
-        if TryInsert(Row) then
+        if Codeunit.Run(Codeunit::"LT AC Insert Helper", Row) then
             Observer.Observe('insert', 'ok')
         else
             Observer.ObserveError('insert');
@@ -206,7 +231,8 @@ codeunit 77532 "LT AC Attributes"
         ReportState: Codeunit "LT AC Report State";
     begin
         ReportState.Reset();
-        Report.Run(Report::"LT AC Attr Report");
+        asserterror Report.Run(Report::"LT AC Attr Report");
+        Observer.ObserveError('run');
         Observer.Observe('notes', ReportState.Text());
         Observer.Finish();
     end;
@@ -222,7 +248,9 @@ codeunit 77532 "LT AC Attributes"
         Report.Run(Report::"LT AC Attr Report");
         Observer.Observe('notes', ReportState.Text());
         Observer.Observe('handler_calls', Format(Calls));
-        Observer.Finish();
+        Observer.Expect('notes', '');
+        Observer.Expect('handler_calls', '6');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,7 +275,9 @@ codeunit 77532 "LT AC Attributes"
             Observer.Observe('xml_length_over_zero', Format(StrLen(Xml) > 0));
         end else
             Observer.ObserveError('save_as_xml');
-        Observer.Finish();
+        Observer.Expect('save_as_xml|text', 'Report 77530 is a processing-only report. Output cannot be rendered and saved to a file.');
+        Observer.Expect('save_as_xml|code', 'ReportProcessingOnly');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -261,12 +291,6 @@ codeunit 77532 "LT AC Attributes"
     begin
         Calls += 1;
         AttrReport.SetOptionValue(42);
-    end;
-
-    [TryFunction]
-    local procedure TryInsert(var Row: Record "LT AC Attr Row")
-    begin
-        Row.Insert();
     end;
 
     [ServiceEnabled]

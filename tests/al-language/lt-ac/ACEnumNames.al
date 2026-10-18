@@ -51,7 +51,15 @@ codeunit 77502 "LT AC Enum Names"
         Observer.Observe('contains_space_name', Format(Names.Contains('Beta Value')));
         Observer.Observe('contains_ext_name', Format(Names.Contains('Ext Fifty')));
         Observer.Observe('contains_caption', Format(Names.Contains('Beta caption')));
-        Observer.Finish();
+        Observer.Expect('count', '6');
+        Observer.Expect('names', '[Alpha][Beta Value][Gamma][Delta][Ext Fifty][ExtSeven]');
+        Observer.Expect('count_qualified', '6');
+        Observer.Expect('first', 'Alpha');
+        Observer.Expect('last', 'ExtSeven');
+        Observer.Expect('contains_space_name', 'Yes');
+        Observer.Expect('contains_ext_name', 'Yes');
+        Observer.Expect('contains_caption', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,7 +82,14 @@ codeunit 77502 "LT AC Enum Names"
         Observer.Observe('last', Format(Ordinals.Get(Ordinals.Count())));
         Observer.Observe('contains_ext_ordinal', Format(Ordinals.Contains(50)));
         Observer.Observe('contains_missing', Format(Ordinals.Contains(1)));
-        Observer.Finish();
+        Observer.Expect('count', '6');
+        Observer.Expect('ordinals', '[0][5][2][100][50][7]');
+        Observer.Expect('count_qualified', '6');
+        Observer.Expect('first', '0');
+        Observer.Expect('last', '7');
+        Observer.Expect('contains_ext_ordinal', 'Yes');
+        Observer.Expect('contains_missing', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +106,11 @@ codeunit 77502 "LT AC Enum Names"
         Observer.Observe('name_1', Names.Get(1));
         Observer.Observe('ordinals_count', Format(Ordinals.Count()));
         Observer.Observe('ordinal_1', Format(Ordinals.Get(1)));
-        Observer.Finish();
+        Observer.Expect('names_count', '1');
+        Observer.Expect('name_1', 'Only');
+        Observer.Expect('ordinals_count', '1');
+        Observer.Expect('ordinal_1', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -112,6 +131,8 @@ codeunit 77502 "LT AC Enum Names"
             Joined += '[' + Format(Ordinals.Get(i)) + '=' + Format(E) + '/' + Names.Get(i) + ']';
         end;
         Observer.Observe('pairs', Joined);
-        Observer.Finish();
+        Observer.Expect('same_count', 'Yes');
+        Observer.Expect('pairs', '[0=Alpha/Alpha][5=Beta caption/Beta Value][2=Gamma/Gamma][100=Delta/Delta][50=Ext Fifty/Ext Fifty][7=ExtSeven/ExtSeven]');
+        Observer.Verify();
     end;
 }

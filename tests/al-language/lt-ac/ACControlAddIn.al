@@ -94,17 +94,10 @@ codeunit 77540 "LT AC ControlAddIn"
         Row.Insert();
         TP.OpenEdit();
         Observer.Observe('opened', TP.NameF.Value());
-        if TrySetName(TP) then
-            Observer.Observe('set_name', TP.NameF.Value())
-        else
-            Observer.ObserveError('set_name');
+        asserterror TP.NameF.SetValue('changed');
+        Observer.ObserveError('set_name');
         TP.Close();
         Observer.Finish();
     end;
 
-    [TryFunction]
-    local procedure TrySetName(var TP: TestPage "LT AC Addin Card")
-    begin
-        TP.NameF.SetValue('changed');
-    end;
 }
