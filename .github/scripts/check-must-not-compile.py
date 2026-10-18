@@ -24,6 +24,9 @@ DEFAULT_APP = {
     "runtime": "16.0",
     "target": "Cloud",
 }
+# The app runtime follows the BC major: the newest runtime each server accepts at publish
+# (corpus run 39110861115: 27.5 up to 16.1, 28.5 up to 17.1, 29.0 up to 18.0).
+RUNTIME_BY_BC_MAJOR = {27: "16.1", 28: "17.1", 29: "18.0"}
 DEPENDENCIES = {
     "Base Application": ("437dbf0e-84ff-417a-965d-ed2bb9650972", "Microsoft"),
     "System Application": ("63ca2fa4-4f03-4f2b-a480-172fef340d3f", "Microsoft"),
@@ -66,11 +69,15 @@ def applies(h, bc_major, al_major):
         return False
     if 'min-al' in h and al_major is not None and al_major < int(h['min-al']):
         return False
+    if 'max-al' in h and al_major is not None and al_major > int(h['max-al']):
+        return False
     return True
 
 
-def build_project(root, case_path, h, symbols):
+def build_project(root, case_path, h, symbols, runtime=None):
     app = json.loads(json.dumps(DEFAULT_APP))
+    if runtime:
+        app['runtime'] = runtime
     app['target'] = h.get('target', 'Cloud')
     for name in h.get('depends', 'Base Application,System Application').split(','):
         name = name.strip()
@@ -87,9 +94,9 @@ def build_project(root, case_path, h, symbols):
             os.symlink(os.path.abspath(os.path.join(symbols, f)), os.path.join(root, '.alpackages', f))
 
 
-def run_case(al, symbols, case_path, h, define):
+def run_case(al, symbols, case_path, h, define, runtime=None):
     with tempfile.TemporaryDirectory(prefix='mnc-') as root:
-        build_project(root, case_path, h, symbols)
+        build_project(root, case_path, h, symbols, runtime)
         cmd = al.split() + ['compile', '/project:' + root, '/packagecachepath:' + os.path.join(root, '.alpackages'),
                             '/out:' + os.path.join(root, 'out.app')]
         if define:
@@ -126,12 +133,14 @@ def main():
     ap.add_argument('--symbols', required=True)
     ap.add_argument('--bc-major', type=int, default=27)
     ap.add_argument('--al-major', type=int)
+    ap.add_argument('--runtime', help='app.json runtime; default follows --bc-major (RUNTIME_BY_BC_MAJOR)')
     ap.add_argument('--cases', default=os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'must-not-compile', 'cases'))
     ap.add_argument('--only')
     a = ap.parse_args()
     cases = sorted(f for f in os.listdir(a.cases) if f.endswith('.al'))
     if a.only:
         cases = [c for c in cases if a.only in c]
+    runtime = a.runtime or RUNTIME_BY_BC_MAJOR.get(a.bc_major)
     bad = 0
     ran = 0
     for c in cases:
@@ -144,7 +153,7 @@ def main():
         if not applies(h, a.bc_major, a.al_major):
             print('skip %s (BC %d, AL %s)' % (c, a.bc_major, a.al_major))
             continue
-        rc, built, out = run_case(a.al, a.symbols, path, h, 'BC%dPLUS' % a.bc_major)
+        rc, built, out = run_case(a.al, a.symbols, path, h, 'BC%dPLUS' % a.bc_major, runtime)
         ran += 1
         found = [(code, msg) for code, msg, _ in parse_diagnostics(out)]
         problems = check(h['expect'], found)
