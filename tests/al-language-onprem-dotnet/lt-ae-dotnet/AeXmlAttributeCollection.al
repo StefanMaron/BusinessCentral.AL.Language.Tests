@@ -48,7 +48,12 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Observer.Observe('name', Attr.Name());
         Observer.Observe('value', Attr.Value());
         Observer.Observe('innertext', Attr.InnerText());
-        Observer.Finish();
+        Observer.Expect('count', '1');
+        Observer.Expect('name null', 'No');
+        Observer.Expect('name', 'x');
+        Observer.Expect('value', '1');
+        Observer.Expect('innertext', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -66,7 +71,11 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Observer.Observe('index 1', Attr.Name() + '=' + Attr.Value());
         Attr := Attrs.Item(1);
         Observer.Observe('Item(1)', Attr.Name() + '=' + Attr.Value());
-        Observer.Finish();
+        Observer.Expect('count', '2');
+        Observer.Expect('index 0', 'x=1');
+        Observer.Expect('index 1', 'y=two');
+        Observer.Expect('Item(1)', 'y=two');
+        Observer.Verify();
     end;
 
     [Test]
@@ -81,7 +90,9 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Observer.Observe('missing name null', Format(IsNull(Attr)));
         Attr := Attrs.ItemOf('X');
         Observer.Observe('wrong case null', Format(IsNull(Attr)));
-        Observer.Finish();
+        Observer.Expect('missing name null', 'Yes');
+        Observer.Expect('wrong case null', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,8 +107,8 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Observer.ObserveError('index 5');
         asserterror Attr := Attrs.ItemOf(-1);
         Observer.ObserveError('index -1');
-        asserterror Attr := Attrs.Item(5);
-        Observer.ObserveError('Item(5)');
+        Attr := Attrs.Item(5);
+        Observer.Observe('Item(5) null', Format(IsNull(Attr)));
         Observer.Finish();
     end;
 
@@ -112,7 +123,9 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Observer.Observe('count', Format(Attrs.Count()));
         Attr := Attrs.ItemOf('x');
         Observer.Observe('null', Format(IsNull(Attr)));
-        Observer.Finish();
+        Observer.Expect('count', '0');
+        Observer.Expect('null', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,6 +140,8 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Attr := Attrs.ItemOf('nope');
         asserterror Value := Attr.Value();
         Observer.ObserveError('value of null');
-        Observer.Finish();
+        Observer.Expect('value of null|text', 'A DotNet variable has not been instantiated. Attempting to call System.Xml.XmlAttribute.Value in CodeUnit LT AE XmlAttributeCollection: Attribute_Null_MemberAccess_Error');
+        Observer.Expect('value of null|code', 'DotNetVariableNotCreated');
+        Observer.Verify();
     end;
 }

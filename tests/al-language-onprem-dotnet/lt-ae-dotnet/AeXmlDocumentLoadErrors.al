@@ -85,7 +85,13 @@ codeunit 99003 "LT AE XmlDocument Load Errors"
         Doc := Doc.XmlDocument();
         asserterror Doc.LoadXml('');
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('try text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Root element is missing.');
+        Observer.Expect('try code', 'DotNetInvoke:Xml');
+        Observer.Expect('try type', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDotNetInvokeException');
+        Observer.Expect('asserterror|text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Root element is missing.');
+        Observer.Expect('asserterror|code', 'DotNetInvoke:Xml');
+        Observer.Verify();
     end;
 
     // Not a test: LoadXml('<a>') gave "Data at the root level is invalid. Line 1, position 1.", the text of 'not xml', where System.Xml gives "Unexpected end of file has occurred. The following elements are not closed: a."
@@ -112,7 +118,13 @@ codeunit 99003 "LT AE XmlDocument Load Errors"
         Doc := Doc.XmlDocument();
         asserterror Doc.LoadXml('not xml');
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('try text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Data at the root level is invalid. Line 1, position 1.');
+        Observer.Expect('try code', 'DotNetInvoke:Xml');
+        Observer.Expect('try type', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDotNetInvokeException');
+        Observer.Expect('asserterror|text', 'A call to System.Xml.XmlDocument.LoadXml failed with this message: Data at the root level is invalid. Line 1, position 1.');
+        Observer.Expect('asserterror|code', 'DotNetInvoke:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -125,7 +137,13 @@ codeunit 99003 "LT AE XmlDocument Load Errors"
         Doc := Doc.XmlDocument();
         asserterror Doc.Load('');
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('try text', 'A call to System.Xml.XmlDocument.Load failed with this message: The value cannot be an empty string. (Parameter ''url'')');
+        Observer.Expect('try code', 'DotNetInvoke:Argument');
+        Observer.Expect('try type', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDotNetInvokeException');
+        Observer.Expect('asserterror|text', 'A call to System.Xml.XmlDocument.Load failed with this message: The value cannot be an empty string. (Parameter ''url'')');
+        Observer.Expect('asserterror|code', 'DotNetInvoke:Argument');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,6 +158,12 @@ codeunit 99003 "LT AE XmlDocument Load Errors"
         Mem := Mem.MemoryStream();
         asserterror Doc.Load(Mem);
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('try text', 'A call to System.Xml.XmlDocument.Load failed with this message: Root element is missing.');
+        Observer.Expect('try code', 'DotNetInvoke:Xml');
+        Observer.Expect('try type', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDotNetInvokeException');
+        Observer.Expect('asserterror|text', 'A call to System.Xml.XmlDocument.Load failed with this message: Root element is missing.');
+        Observer.Expect('asserterror|code', 'DotNetInvoke:Xml');
+        Observer.Verify();
     end;
 }

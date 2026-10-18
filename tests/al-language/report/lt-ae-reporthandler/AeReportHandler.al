@@ -36,7 +36,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [ReportHandler]
@@ -54,7 +55,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -66,7 +68,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Rpt.RunModal();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,7 +82,8 @@ codeunit 78200 "LT AE Report Handler"
         Rpt.UseRequestPage(false);
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -92,7 +96,8 @@ codeunit 78200 "LT AE Report Handler"
         Rpt.UseRequestPage(true);
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +108,8 @@ codeunit 78200 "LT AE Report Handler"
         Report.Run(Report::"LT RpT Request");
         Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +119,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Report.Execute(Report::"LT RpT Request", '');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +137,10 @@ codeunit 78200 "LT AE Report Handler"
         Observer.Observe('result', Format(Ok));
         Observer.Observe('log', L.Take());
         Observer.Observe('length', Format(TempBlob.Length()));
-        Observer.Finish();
+        Observer.Expect('result', 'No');
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;');
+        Observer.Expect('length', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +153,9 @@ codeunit 78200 "LT AE Report Handler"
         Params := Report.RunRequestPage(Report::"LT RpT Request");
         Observer.Observe('params', Params);
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('params', '');
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,7 +166,10 @@ codeunit 78200 "LT AE Report Handler"
         asserterror Report.Run(Report::"LT RpT Request");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('run|text', 'Unhandled UI: RequestPage 73841');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;');
+        Observer.Verify();
     end;
 
     [ReportHandler]
@@ -171,7 +186,10 @@ codeunit 78200 "LT AE Report Handler"
         asserterror Report.Run(Report::"LT RpT Request Other");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('run|text', 'Unhandled UI: RequestPage 73842');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -181,7 +199,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -200,7 +219,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'Skipped OnPreReport val=0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -212,7 +232,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Rpt.Run();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'Skipped OnPreReport val=0;');
+        Observer.Verify();
     end;
 
     [ReportHandler]
@@ -228,7 +249,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;RP OnOpenPage text=[init] int=7;start=[];range=[2..3];cleared=[];or=[1|4];cleared again=[];RP OnQueryClosePage action=OK text=[init];RP OnClosePage text=[init];OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -253,7 +275,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;RP OnOpenPage text=[init] int=7;empty=[];RP OnQueryClosePage action=OK text=[init];RP OnClosePage text=[init];OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -271,7 +294,8 @@ codeunit 78200 "LT AE Report Handler"
         Seed();
         Report.Run(Report::"LT RpT Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;RP OnOpenPage text=[init] int=7;RP OnQueryClosePage action=OK text=[init];RP OnClosePage text=[init];OnPreReport text=[init] int=7 dec=1.5 bool=Yes date=2020-03-02 opt=B fixed=99;row pre filter=[];row 1;row 2;row 3;row 4;OnPostReport;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]

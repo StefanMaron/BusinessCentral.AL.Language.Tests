@@ -20,6 +20,8 @@ codeunit 99000 "LT AE UserAccountHelper"
     begin
         Observer.Observe('graph delegated admin', Format(GraphUser.IsUserDelegatedAdmin()));
         Observer.Observe('graph delegated helpdesk', Format(GraphUser.IsUserDelegatedHelpdesk()));
-        Observer.Finish();
+        Observer.Expect('graph delegated admin', 'No');
+        Observer.Expect('graph delegated helpdesk', 'No');
+        Observer.Verify();
     end;
 }

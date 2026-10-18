@@ -104,7 +104,10 @@ codeunit 78210 "LT AE Processing Only"
         asserterror Report.Run(Report::"LT AE Plain Request");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('run|text', 'Unhandled UI: RequestPage 78211');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Expect('log', 'OnInitReport;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +120,10 @@ codeunit 78210 "LT AE Processing Only"
         asserterror Rpt.RunModal();
         Observer.ObserveError('run modal');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('run modal|text', 'Unhandled UI: RequestPage 78211');
+        Observer.Expect('run modal|code', 'MissingUIHandler');
+        Observer.Expect('log', 'OnInitReport;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +135,8 @@ codeunit 78210 "LT AE Processing Only"
         Rpt.UseRequestPage(false);
         Rpt.RunModal();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;OnPreReport int=5 text=[];OnPostReport;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +149,8 @@ codeunit 78210 "LT AE Processing Only"
         Rpt.UseRequestPage(true);
         Rpt.RunModal();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnOpenPage int=5;h int=[5] text=[];RP OnClosePage int=9;OnPreReport int=9 text=[typed];OnPostReport;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -164,7 +172,8 @@ codeunit 78210 "LT AE Processing Only"
         Rpt.UseRequestPage(true);
         Rpt.RunModal();
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnOpenPage int=5;RP OnClosePage int=5;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -180,7 +189,8 @@ codeunit 78210 "LT AE Processing Only"
         L.Take();
         Report.Run(Report::"LT AE Plain Request");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInitReport;RP OnOpenPage int=5;h returning;RP OnClosePage int=5;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -196,7 +206,10 @@ codeunit 78210 "LT AE Processing Only"
         asserterror Report.Run(Report::"LT AE No Request Page");
         Observer.ObserveError('run');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('run|text', 'Unhandled UI: RequestPage 78212');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Expect('log', 'OnInitReport;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -209,6 +222,9 @@ codeunit 78210 "LT AE Processing Only"
         asserterror Rpt.RunModal();
         Observer.ObserveError('run modal');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('run modal|text', 'Unhandled UI: RequestPage 78212');
+        Observer.Expect('run modal|code', 'MissingUIHandler');
+        Observer.Expect('log', 'OnInitReport;');
+        Observer.Verify();
     end;
 }
