@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: none
 // Objects of the issue 600 probes (page, part and page extension properties); the tests are in UPageProps.al.
-// Object ids 69585 to 69591, 69594 and 69595.
+// Object ids 69585 to 69591, 69593 to 69595.
 
 table 69585 "LT U Page Src"
 {
@@ -405,4 +405,10 @@ profile "LT U Profile"
 profileextension "LT U Profile Ext" extends "LT U Profile"
 {
     Enabled = false;
+}
+
+pageextension 69593 "LT U Lookup List Ext" extends "LT U Lookup List"
+{
+    Editable = true;
+    DataCaptionExpression = 'LT U ext caption';
 }

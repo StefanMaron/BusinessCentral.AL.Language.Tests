@@ -202,6 +202,26 @@ codeunit 69592 "LT U Page Props Tests"
     end;
 
     [Test]
+    procedure PageExt_PageLevel_Editable_And_DataCaptionExpression()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT U Lookup List";
+        Card: TestPage "LT U Base Card";
+    begin
+        Seed();
+        List.OpenView();
+        Observer.Observe('list_caption', List.Caption());
+        Observer.Observe('list_txt_editable', Format(List.Txt.Editable()));
+        Observer.Observe('list_id_editable', Format(List.Id.Editable()));
+        List.Close();
+        Card.OpenView();
+        Observer.Observe('card_caption', Card.Caption());
+        Observer.Observe('card_txt_editable_in_view', Format(Card.DrillOn.Editable()));
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure ApiPage_PartAndReadOnlyIntent()
     var
         Observer: Codeunit "Probe Observer";
