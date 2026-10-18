@@ -170,13 +170,6 @@ codeunit 69886 "LT W Pt Observe"
     end;
 
     [Test]
-    procedure Download()
-    begin
-        Act('download');
-        Observer.Finish();
-    end;
-
-    [Test]
     [HandlerFunctions('PageH')]
     procedure PageRun_Zero()
     begin
@@ -187,6 +180,26 @@ codeunit 69886 "LT W Pt Observe"
     [PageHandler]
     procedure PageH(var P: TestPage "LT W Pt Card")
     begin
+    end;
+
+    [Test]
+    procedure RoleCenter_And_List()
+    var
+        Log: Codeunit "LT W Pt Log";
+        RoleCenter: TestPage "Business Manager Role Center";
+        Customers: TestPage "Customer List";
+    begin
+        Log.SetMode(1);
+        Log.Reset();
+        RoleCenter.OpenView();
+        Observer.Observe('rolecenter-open', Short(Log.Dump()));
+        RoleCenter.Close();
+        Log.Reset();
+        Customers.OpenView();
+        Observer.Observe('customers-open', Short(Log.Dump()));
+        Customers.Close();
+        Log.SetMode(0);
+        Observer.Finish();
     end;
 
     local procedure Seed()

@@ -234,9 +234,9 @@ codeunit 69881 "LT W Pt Subs"
         Log.Add('MakeDateTimeFilter(' + 'DateTimeFilterText=' + DateTimeFilterText + ')');
         if Log.Mode() = 3 then begin
             if DateTimeFilterText.Contains('..') then
-                DateTimeFilterText := '2020-01-01T12:00:00..2020-12-31T12:00:00'
+                DateTimeFilterText := '01/01/20 12:00 PM..12/31/20 12:00 PM'
             else
-                DateTimeFilterText := '2020-12-31T12:00:00';
+                DateTimeFilterText := '12/31/20 12:00 PM';
         end;
         if Log.Mode() = 2 then begin
             DateTimeFilterText := 'W:DateTimeFilterText';
