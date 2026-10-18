@@ -2,7 +2,8 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), AsFixtures.al (tables 79906, 79908, 79900, enum 79907, helper 79913)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced (corpus issue 644, items 9, 10 and 11).
-// Facts: the TestField error text for a Byte value of 10 and 200 against an Integer field, an Enum value with a caption, a Guid against a Code
+// Facts: the FieldRef.TestField error text for a Byte value of 10 and 200 against an Integer field (Record.TestField with a Byte does not compile:
+//   must-not-compile case 1141), an Enum value with a caption, a Guid against a Code
 //   field (item 9); ModifyAll on a primary key field whose caption differs from its name, with zero rows and with one row (item 10);
 //   SetFilter on a Date field with a two-digit year from 29 to 50: the year read and GetFilter (item 11).
 // BC versions: 27-29
@@ -35,7 +36,7 @@ codeunit 79926 "LT AS TestField Texts"
     begin
         Seed(Row);
         B := 10;
-        asserterror Row.TestField(Num, B);
+        asserterror NumRef(Row).TestField(B);
         Observer.Observe('byte10', Helper.LastError());
         Observer.Finish();
     end;
@@ -49,7 +50,7 @@ codeunit 79926 "LT AS TestField Texts"
     begin
         Seed(Row);
         B := 200;
-        asserterror Row.TestField(Num, B);
+        asserterror NumRef(Row).TestField(B);
         Observer.Observe('byte200', Helper.LastError());
         Observer.Finish();
     end;
@@ -74,7 +75,17 @@ codeunit 79926 "LT AS TestField Texts"
     [TryFunction]
     local procedure TryTestNum(var Row: Record "LT AS TF Row"; B: Byte)
     begin
-        Row.TestField(Num, B);
+        NumRef(Row).TestField(B);
+    end;
+
+    // Record.TestField(Num, ByteVariable) does not compile (AL0196, ambiguous between the Integer and BigInteger overloads: must-not-compile
+    // case 1141), so the Byte value goes through FieldRef.TestField.
+    local procedure NumRef(var Row: Record "LT AS TF Row"): FieldRef
+    var
+        Ref: RecordRef;
+    begin
+        Ref.GetTable(Row);
+        exit(Ref.Field(Row.FieldNo(Num)));
     end;
 
     [Test]

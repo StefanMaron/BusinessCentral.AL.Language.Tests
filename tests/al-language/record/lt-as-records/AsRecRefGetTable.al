@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), AsFixtures.al (tables 79902, 79904, helper 79913)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced (corpus issue 644, item 2).
-// Facts: B.GetTable(A) with A a RecordRef: A open on a filtered table with a found row (what B holds, and whether a later change of A's
+// Facts: B.GetTable(V) with V a Variant that holds a RecordRef A (B.GetTable(A) itself does not compile: must-not-compile case 1140): A open on a filtered table with a found row (what B holds, and whether a later change of A's
 //   field value, filter or current row shows in B); A not open; B already open on another table.
 // BC versions: 27-29
 
@@ -13,6 +13,15 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
 
     var
         Helper: Codeunit "LT AS Helper";
+
+    // B.GetTable(A) with A a RecordRef does not compile (AL0133, must-not-compile case 1140); a Variant that holds the RecordRef does.
+    local procedure GetTableOf(var B: RecordRef; var A: RecordRef)
+    var
+        V: Variant;
+    begin
+        V := A;
+        B.GetTable(V);
+    end;
 
     local procedure OpenA(var A: RecordRef)
     begin
@@ -30,7 +39,7 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         B: RecordRef;
     begin
         OpenA(A);
-        B.GetTable(A);
+        GetTableOf(B, A);
         Observer.Observe('number', Format(B.Number));
         Observer.Observe('filters', B.GetFilters());
         Observer.Observe('row', Format(B.Field(1).Value));
@@ -46,7 +55,7 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         B: RecordRef;
     begin
         OpenA(A);
-        B.GetTable(A);
+        GetTableOf(B, A);
         A.Field(2).Value := 'changed';
         Observer.Observe('b_name', Format(B.Field(2).Value));
         B.Field(3).Value := 42;
@@ -62,7 +71,7 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         B: RecordRef;
     begin
         OpenA(A);
-        B.GetTable(A);
+        GetTableOf(B, A);
         A.Field(2).SetRange();
         A.FindFirst();
         Observer.Observe('b_filters', B.GetFilters());
@@ -78,7 +87,7 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         B: RecordRef;
     begin
         OpenA(A);
-        B.GetTable(A);
+        GetTableOf(B, A);
         B.Field(2).Value := 'via b';
         B.Modify();
         Observer.Observe('a_name', Format(A.Field(2).Value));
@@ -96,7 +105,7 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
     begin
         Helper.SeedRows();
         ClearLastError();
-        asserterror B.GetTable(A);
+        asserterror GetTableOf(B, A);
         Observer.Observe('error', Helper.LastError());
         Observer.Observe('b_open', Format(B.Number));
         Observer.Finish();
@@ -111,7 +120,7 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
     begin
         OpenA(A);
         B.Open(Database::"LT AS Other");
-        B.GetTable(A);
+        GetTableOf(B, A);
         Observer.Observe('number', Format(B.Number));
         Observer.Observe('row', Format(B.Field(1).Value));
         Observer.Observe('filters', B.GetFilters());
