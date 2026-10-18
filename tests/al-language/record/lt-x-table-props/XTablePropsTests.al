@@ -47,41 +47,27 @@ codeunit 75010 "LT X Table Props Tests"
     end;
 
     local procedure SqlStep(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT X Props Sql"; Step: Integer)
+    var
+        Helper: Codeunit "LT X Sql Step";
     begin
         ClearLastError();
-        if TrySql(Row, Step) then
+        Helper.SetStep(Step);
+        if Helper.Run(Row) then
             Observer.Observe(Name, 'ok')
         else
             Observer.ObserveError(Name);
     end;
 
-    [TryFunction]
-    local procedure TrySql(var Row: Record "LT X Props Sql"; Step: Integer)
-    begin
-        case Step of
-            1:
-                Row.Insert();
-            2:
-                Row.Modify();
-            3:
-                Row.Get(Row.Id);
-        end;
-    end;
-
-    local procedure LinkedCount(var Observer: Codeunit "Probe Observer"; var Row: Record "LT X Props Linked")
+    local procedure LinkedStep(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT X Props Linked"; Step: Integer)
+    var
+        Helper: Codeunit "LT X Linked Step";
     begin
         ClearLastError();
-        if TryCount(Row) then
-            Observer.Observe('count', Format(Row.Count()))
+        Helper.SetStep(Step);
+        if Helper.Run(Row) then
+            Observer.Observe(Name, 'ok')
         else
-            Observer.ObserveError('count_error');
-    end;
-
-    [TryFunction]
-    local procedure TryCount(var Row: Record "LT X Props Linked")
-    begin
-        if Row.Count() < 0 then
-            Error('unreachable');
+            Observer.ObserveError(Name);
     end;
 
     [Test]
@@ -142,8 +128,8 @@ codeunit 75010 "LT X Table Props Tests"
         Card.OpenEdit();
         Card.DateText.SetValue('2W');
         Observer.Observe('page_2W', Card.DateText.Value);
-        asserterror Card.DateText.SetValue('xyz');
-        Observer.ObserveError('page_garbage');
+        Card.DateText.SetValue('xyz');
+        Observer.Observe('page_garbage_value', Card.DateText.Value);
         Card.Close();
         Observer.Finish();
     end;
@@ -602,18 +588,12 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
         Row: Record "LT X Props Linked";
     begin
-        ClearLastError();
         Row.Id := 1;
         Row.Note := 'a';
-        if Row.Insert() then
-            Observer.Observe('insert_ok', 'yes')
-        else
-            Observer.Observe('insert_ok', 'no');
-        LinkedCount(Observer, Row);
-        ClearLastError();
+        LinkedStep(Observer, 'insert_1', Row, 1);
+        LinkedStep(Observer, 'count', Row, 2);
         Row.Id := 2;
-        asserterror Row.Insert(true);
-        Observer.ObserveError('second_insert_error');
+        LinkedStep(Observer, 'insert_2', Row, 1);
         Observer.Finish();
     end;
 
