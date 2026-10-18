@@ -97,7 +97,8 @@ codeunit 69789 "LT U Property Tests"
         TempBlob.CreateInStream(InS, TextEncoding::UTF8);
         Xml := ReadAll(InS);
         Observer.Observe('xml_has_parent_code', Format(Xml.Contains('LTU-P')));
-        Observer.Observe('xml_has_entryno_column', Format(Xml.Contains('<EntryNo>69789</EntryNo>')));
+        Observer.Observe('xml_entryno_element', CopyStr(Xml, StrPos(Xml, '<EntryNo>'), 24));
+        Observer.Observe('xml_parentcode_element', CopyStr(Xml, StrPos(Xml, '<ParentCode>'), 28));
         Observer.Finish();
     end;
 

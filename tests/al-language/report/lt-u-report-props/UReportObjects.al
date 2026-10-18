@@ -37,15 +37,16 @@ report 69783 "LT U Report"
         {
             area(Content)
             {
-                field(RelField; RelValue) { TableRelation = "LT U Page Src".Id; }
+                field(RelField; RelValue) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
                 field(AmtField; AmtValue)
                 {
+                    ApplicationArea = All;
                     AutoFormatType = 11;
                     AutoFormatExpression = '<Precision,3:3><Standard Format,0>';
                 }
-                field(DfField; DfValue) { DateFormula = true; }
-                field(DrillField; DrillValue) { DrillDownPageID = "LT U Lookup List"; }
-                field(WidthField; WidthValue) { Width = 20; }
+                field(DfField; DfValue) { ApplicationArea = All; DateFormula = true; }
+                field(DrillField; DrillValue) { ApplicationArea = All; DrillDownPageID = "LT U Lookup List"; }
+                field(WidthField; WidthValue) { ApplicationArea = All; Width = 20; }
             }
         }
     }
@@ -86,7 +87,7 @@ reportextension 69784 "LT U Report Ext" extends "LT U Report"
         {
             addlast(Content)
             {
-                field(ExtRelField; ExtRelValue) { TableRelation = "LT U Page Src".Id; }
+                field(ExtRelField; ExtRelValue) { ApplicationArea = All; TableRelation = "LT U Page Src".Id; }
             }
         }
     }

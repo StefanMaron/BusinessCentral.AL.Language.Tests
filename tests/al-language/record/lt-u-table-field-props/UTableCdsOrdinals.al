@@ -127,8 +127,9 @@ codeunit 69782 "LT U Cds Option Tests"
         Observer.Observe('fieldref_format_ordinal', Format(FieldRef.Value, 0, 2));
         FieldRef.Value := 20;
         Observer.Observe('fieldref_set_20_value', Format(FieldRef.Value));
-        FieldRef.Value := 'Alpha';
-        Observer.Observe('fieldref_set_alpha_value', Format(FieldRef.Value));
+        asserterror FieldRef.Value := 'Alpha';
+        Observer.ObserveError('fieldref_set_alpha');
+        Observer.Observe('fieldref_after_failed_alpha', Format(FieldRef.Value));
         FieldRef.Validate(10);
         Observer.Observe('fieldref_validate_10_value', Format(FieldRef.Value));
 
