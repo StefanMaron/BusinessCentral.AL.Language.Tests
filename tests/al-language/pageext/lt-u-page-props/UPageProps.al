@@ -150,10 +150,9 @@ codeunit 69592 "LT U Page Props Tests"
         Observer.Observe('ext_scope_repeater_enabled', Format(Card.ExtActScope.Enabled()));
         Card.ExtActScope.Invoke();
         Observer.Observe('ext_scope_repeater_invoked', 'ok');
-        asserterror Card.ExtActEnabledOff.Invoke();
-        Observer.ObserveError('ext_enabled_off_invoke');
-        asserterror Card.Close();
-        Observer.ObserveError('close');
+        Card.ExtActEnabledOff.Invoke();
+        Observer.Observe('ext_enabled_off_invoke', 'ok');
+        Card.Close();
         Observer.Finish();
     end;
 

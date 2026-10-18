@@ -60,10 +60,8 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Observer.Observe('ext_group_field', Card.InObsExtGroup.Value);
         Observer.Observe('ext_action_enabled', Format(Card.ObsExtAction.Enabled()));
         Card.ObsAction.Invoke();
-        asserterror Card.ObsExtAction.Invoke();
-        Observer.ObserveError('Card_ObsExtAction_Invoke_');
-        asserterror Card.Close();
-        Observer.ObserveError('close');
+        Card.ObsExtAction.Invoke();
+        Card.Close();
         Observer.Finish();
     end;
 

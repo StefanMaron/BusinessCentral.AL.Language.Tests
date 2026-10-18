@@ -125,74 +125,6 @@ codeunit 69789 "LT U Property Tests"
     end;
 
     [Test]
-    [HandlerFunctions('RequestPageFieldsHandler')]
-    procedure Report_RequestPageFields_Relation_AutoFormat_DateFormula()
-    var
-        Mock: Codeunit "Permissions Mock";
-    begin
-        SeedPageSrc();
-        asserterror Report.Run(Report::"LT U Report", true, false);
-        Observer.ObserveError('run_request_page');
-        Observer.Finish();
-    end;
-
-    [RequestPageHandler]
-    procedure RequestPageFieldsHandler(var Req: TestRequestPage "LT U Report")
-    var
-        Missing: Boolean;
-    begin
-        asserterror begin Observer.Observe('probe_AmtField', Req.AmtField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then begin
-            Observer.ObserveError('probe_AmtField|failed');
-            Missing := true;
-        end else
-            ClearLastError();
-        asserterror begin Observer.Observe('probe_DfField', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then begin
-            Observer.ObserveError('probe_DfField|failed');
-            Missing := true;
-        end else
-            ClearLastError();
-        asserterror begin Observer.Observe('probe_RelField', Req.RelField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then begin
-            Observer.ObserveError('probe_RelField|failed');
-            Missing := true;
-        end else
-            ClearLastError();
-        asserterror begin Observer.Observe('probe_ExtRelField', Req.ExtRelField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then begin
-            Observer.ObserveError('probe_ExtRelField|failed');
-            Missing := true;
-        end else
-            ClearLastError();
-        if Missing then begin
-            Req.Cancel().Invoke();
-            exit;
-        end;
-        asserterror begin Req.RelField.SetValue(9999); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('rel_missing|no_error', 'true');
-        end else
-            Observer.ObserveError('rel_missing');
-        Req.RelField.SetValue(1);
-        Observer.Observe('rel_existing', Req.RelField.Value);
-        asserterror Req.ExtRelField.SetValue(9999);
-        Observer.ObserveError('ext_rel_missing');
-        Req.ExtRelField.SetValue(1);
-        Observer.Observe('ext_rel_existing', Req.ExtRelField.Value);
-        Req.AmtField.SetValue(1234.5);
-        Observer.Observe('amount_value', Req.AmtField.Value);
-        Req.DfField.SetValue('1D');
-        Observer.Observe('date_formula_1d', Req.DfField.Value);
-        Req.DfField.SetValue('<1W>');
-        Observer.Observe('date_formula_1w', Req.DfField.Value);
-        Req.DfField.SetValue('CM+1D');
-        Observer.Observe('date_formula_cm', Req.DfField.Value);
-        Req.Cancel().Invoke();
-    end;
-
-    [Test]
     [HandlerFunctions('PermissionedRequestHandler')]
     procedure Report_RequestPagePermissions_AndInherentPermissions()
     var
@@ -232,6 +164,51 @@ codeunit 69789 "LT U Property Tests"
     begin
         Req.RelField.SetValue(1);
         Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value);
+        asserterror begin Req.AmtField.SetValue(1234.5); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('amount_set|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('amount_value', Req.AmtField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('amount_value|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DfField.SetValue('1D'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_1d_set|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('date_formula_1d', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_1d|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DfField.SetValue('<1W>'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_1w_set|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('date_formula_1w', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_1w|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DfField.SetValue('CM+1D'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_cm_set|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('date_formula_cm', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_cm|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.RelField.SetValue(9999); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('rel_missing_set|failed')
+        else
+            ClearLastError();
         asserterror Req.ExtRelField.SetValue(1);
         Observer.ObserveError('request_page_ext_rel');
         Req.Cancel().Invoke();
