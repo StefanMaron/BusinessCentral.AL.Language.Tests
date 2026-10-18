@@ -340,9 +340,9 @@ codeunit 60285 "TPARONH Tests"
     // So the refusal DOES discard the uncommitted rows of the transaction it unwinds, and a
     // missing 'OPENED' row here would have proved nothing -- it would be missing whether the
     // page opened or not. The guard did its job: it caught an unfalsifiable assertion before it
-    // could ship green. (Codeunit 60170's Test04 pins that an uncommitted Insert survives a
-    // plain asserterror Error(), so this is not the general case; something about this route
-    // differs, and which part is a separate question this arm does not settle.)
+    // could ship green. (Codeunit 60170's Test04 pins that an uncommitted Insert is also
+    // rolled back by a plain asserterror Error(), so the rollback is the general case and not
+    // specific to a refused Page.Run; corpus issue 205.)
     //
     // The observable therefore has to be one a rollback cannot reach, so the logging target
     // also marks a SingleInstance codeunit, whose state is memory rather than database. Arm 5

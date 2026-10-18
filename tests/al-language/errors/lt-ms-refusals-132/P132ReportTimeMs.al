@@ -67,7 +67,7 @@ report 73740 "LT P132 PreErr Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeSdLayout.rdl';
+            LayoutFile = './ProbeSdLayout_2.rdl';
             Caption = 'P132 layout';
         }
     }
@@ -102,7 +102,7 @@ report 73741 "LT P132 RowErr Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeSdLayout.rdl';
+            LayoutFile = './ProbeSdLayout_3.rdl';
             Caption = 'P132 layout';
         }
     }
