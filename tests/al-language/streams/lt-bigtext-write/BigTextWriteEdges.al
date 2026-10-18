@@ -44,6 +44,7 @@ codeunit 67412 "LT BTW Tests"
         Back: BigText;
         T: Text;
         i: Integer;
+        C: Integer;
         Codes: Text;
     begin
         TempBlob.CreateInStream(Ins);
@@ -54,7 +55,8 @@ codeunit 67412 "LT BTW Tests"
             for i := 1 to StrLen(T) do begin
                 if Codes <> '' then
                     Codes += ',';
-                Codes += Format(T[i]);
+                C := T[i];
+                Codes += Format(C);
             end;
         end;
         Observer.Observe(Tag + '.readcodes', '[' + Codes + ']');
@@ -99,6 +101,32 @@ codeunit 67412 "LT BTW Tests"
         Big.Write(Out);
         ObserveBlob(Observer, 'utf8', TempBlob);
         ObserveReadBack(Observer, 'utf8', TempBlob);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Write_NonAscii_ExplicitEncodings()
+    var
+        Observer: Codeunit "Probe Observer";
+        Utf16Blob: Codeunit "Temp Blob";
+        WindowsBlob: Codeunit "Temp Blob";
+        MsDosBlob: Codeunit "Temp Blob";
+        Big: BigText;
+        Out: OutStream;
+    begin
+        Big.AddText(NonAscii());
+        Utf16Blob.CreateOutStream(Out, TextEncoding::UTF16);
+        Big.Write(Out);
+        ObserveBlob(Observer, 'utf16', Utf16Blob);
+        ObserveReadBack(Observer, 'utf16', Utf16Blob);
+        WindowsBlob.CreateOutStream(Out, TextEncoding::Windows);
+        Big.Write(Out);
+        ObserveBlob(Observer, 'windows', WindowsBlob);
+        ObserveReadBack(Observer, 'windows', WindowsBlob);
+        MsDosBlob.CreateOutStream(Out, TextEncoding::MSDos);
+        Big.Write(Out);
+        ObserveBlob(Observer, 'msdos', MsDosBlob);
+        ObserveReadBack(Observer, 'msdos', MsDosBlob);
         Observer.Finish();
     end;
 
