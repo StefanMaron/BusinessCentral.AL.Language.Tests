@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-customization-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), table 76000, log 76002 (pages/lt-z-page-props/ZFixtures.al); pages 76200-76219, codeunit 76220
+// Fixtures used: Probe Observer (codeunit 69160), table 76000 (pages/lt-z-page-props/ZFixtures.al); pages 76200-76219, codeunits 76220-76221
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles corpus issue 618: page customization object properties ClearActions, ClearLayout, ClearViews, DeleteAllowed, InsertAllowed, ModifyAllowed,
 //   PromotedActionCategories, and the control properties Editable, Importance, MaskType, QuickEntry and Width of modify() in a page customization.
@@ -18,7 +18,7 @@ page 76200 "LT Z CA Base"
 
     layout { area(Content) { field(Id; Rec.Id) { ApplicationArea = All; } field(Name; Rec.Name) { ApplicationArea = All; } } }
 
-    actions { area(Processing) { action(ActA) { ApplicationArea = All; trigger OnAction() var Log: Codeunit "LT Z Log"; begin Log.Add('ActA'); end; } } }
+    actions { area(Processing) { action(ActA) { ApplicationArea = All; trigger OnAction() var Log: Codeunit "LT Z Cust Log"; begin Log.Add('ActA'); end; } } }
 }
 
 pagecustomization "LT Z CA Cust" customizes "LT Z CA Base"
@@ -35,7 +35,7 @@ page 76201 "LT Z CL Base"
 
     layout { area(Content) { field(Id; Rec.Id) { ApplicationArea = All; } field(Name; Rec.Name) { ApplicationArea = All; } } }
 
-    actions { area(Processing) { action(ActB) { ApplicationArea = All; trigger OnAction() var Log: Codeunit "LT Z Log"; begin Log.Add('ActB'); end; } } }
+    actions { area(Processing) { action(ActB) { ApplicationArea = All; trigger OnAction() var Log: Codeunit "LT Z Cust Log"; begin Log.Add('ActB'); end; } } }
 }
 
 pagecustomization "LT Z CL Cust" customizes "LT Z CL Base"
@@ -52,7 +52,7 @@ page 76202 "LT Z CV Base"
 
     layout { area(Content) { repeater(R) { field(Id; Rec.Id) { ApplicationArea = All; } field(Name; Rec.Name) { ApplicationArea = All; } } } }
 
-    actions { area(Processing) { action(ActC) { ApplicationArea = All; trigger OnAction() var Log: Codeunit "LT Z Log"; begin Log.Add('ActC'); end; } } }
+    actions { area(Processing) { action(ActC) { ApplicationArea = All; trigger OnAction() var Log: Codeunit "LT Z Cust Log"; begin Log.Add('ActC'); end; } } }
 
     views { view(V1) { Filters = where(Id = const(1)); } }
 }
@@ -122,7 +122,7 @@ page 76206 "LT Z CP Base"
 
     layout { area(Content) { field(Id; Rec.Id) { ApplicationArea = All; } field(Name; Rec.Name) { ApplicationArea = All; } } }
 
-    actions { area(Processing) { action(A1) { ApplicationArea = All; Promoted = true; PromotedCategory = Category4; trigger OnAction() var Log: Codeunit "LT Z Log"; begin Log.Add('A1'); end; } } }
+    actions { area(Processing) { action(A1) { ApplicationArea = All; Promoted = true; PromotedCategory = Category4; trigger OnAction() var Log: Codeunit "LT Z Cust Log"; begin Log.Add('A1'); end; } } }
 }
 
 pagecustomization "LT Z CP Cust" customizes "LT Z CP Base"
@@ -229,7 +229,7 @@ codeunit 76220 "LT Z Page Customization Tests"
     [Test]
     procedure ZClearActions_ActionList()
     var
-        Log: Codeunit "LT Z Log";
+        Log: Codeunit "LT Z Cust Log";
         P: TestPage "LT Z CA Base";
         Visible: Text;
     begin
@@ -363,7 +363,7 @@ codeunit 76220 "LT Z Page Customization Tests"
     [Test]
     procedure ZCustPromotedActionCategories_ActionUnchanged()
     var
-        Log: Codeunit "LT Z Log";
+        Log: Codeunit "LT Z Cust Log";
         P: TestPage "LT Z CP Base";
     begin
         Seed();
@@ -438,5 +438,27 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.Observe('qe2', Format(P.Qe2.Visible()));
         P.Close();
         Observer.Finish();
+    end;
+}
+
+codeunit 76221 "LT Z Cust Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
     end;
 }

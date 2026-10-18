@@ -1,10 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-ext-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), table 76000, cards 76001, log 76002 (pages/lt-z-page-props/ZFixtures.al); pages 76300-76329, page extensions 76330-76359, codeunit 76360
+// Fixtures used: Probe Observer (codeunit 69160), table 76000, card 76001 (pages/lt-z-page-props/ZFixtures.al); pages 76300-76329, page extensions 76330-76359, codeunits 76360-76362
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles corpus issue 619: properties of a control that a page extension sets in modify(): AssistEdit, BlankZero, CaptionClass, ClosingDates, HideValue,
-//   LookupPageId, MaskType, ODataEDMType, OptionCaptionML, QuickEntry, ShowCaption, ShowMandatory, Style, Width.
+//   LookupPageId, OptionCaptionML, QuickEntry, ShowCaption, ShowMandatory, Style, Width.
 // Facts: what a TestPage reads from the modified control, the trigger that AssistEdit and Lookup fire, the option captions per language.
+//   MaskType in modify() compiles but BC refuses to publish the app ("Modifications to property MaskType are not supported"): not pinnable in this app.
 //   Properties that a page extension cannot modify (DecimalPlaces, DrillDown, Lookup, ShowFilter, UpdatePropagation) and invalid values are must-not-compile cases.
 // BC versions: 29 (27 and 28 by CI)
 
@@ -74,7 +75,7 @@ pageextension 76330 "LT Z Mod Ext" extends "LT Z Mod Base"
 
             trigger OnAssistEdit()
             var
-                Log: Codeunit "LT Z Log";
+                Log: Codeunit "LT Z Mod Log";
             begin
                 Log.Add('assist');
             end;
@@ -85,13 +86,12 @@ pageextension 76330 "LT Z Mod Ext" extends "LT Z Mod Base"
         modify(CapRes) { CaptionClass = 'LTZ,resolve me'; }
         modify(Dt) { ClosingDates = true; }
         modify(Hid) { HideValue = HideNow; }
-        modify(Mask) { MaskType = Concealed; }
         modify(Qe) { QuickEntry = false; }
+        modify(Edm) { ODataEDMType = 'LTZ.TYPE'; }
         modify(Sc) { ShowCaption = false; }
         modify(Mand) { ShowMandatory = true; }
         modify(Sty1) { Style = Attention; StyleExpr = true; }
         modify(Wid) { Width = 10; }
-        modify(Edm) { ODataEDMType = 'LTZ.TYPE'; }
         modify(Opt) { OptionCaptionML = ENU = 'One,Two,Three', DEU = 'Eins,Zwei,Drei'; }
     }
 
@@ -100,9 +100,42 @@ pageextension 76330 "LT Z Mod Ext" extends "LT Z Mod Base"
 
     trigger OnAfterGetRecord()
     var
-        Log: Codeunit "LT Z Log";
+        Log: Codeunit "LT Z Mod Log";
     begin
         HideNow := Log.GetHide();
+    end;
+}
+
+codeunit 76362 "LT Z Mod Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+        HideNow: Boolean;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
+
+    procedure SetHide(NewValue: Boolean)
+    begin
+        HideNow := NewValue;
+    end;
+
+    procedure GetHide(): Boolean
+    begin
+        exit(HideNow);
     end;
 }
 
@@ -177,7 +210,7 @@ codeunit 76360 "LT Z Modify Controls Tests"
     [Test]
     procedure ZAssistEdit_TriggerFires()
     var
-        Log: Codeunit "LT Z Log";
+        Log: Codeunit "LT Z Mod Log";
         P: TestPage "LT Z Mod Base";
     begin
         Seed();
@@ -247,7 +280,7 @@ codeunit 76360 "LT Z Modify Controls Tests"
     [Test]
     procedure ZHideValue_TrueAndFalse()
     var
-        Log: Codeunit "LT Z Log";
+        Log: Codeunit "LT Z Mod Log";
         P: TestPage "LT Z Mod Base";
     begin
         Seed();
@@ -261,20 +294,6 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('plain while hide true', P.Plain.Value());
         P.Close();
         Log.SetHide(false);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure ZMaskType_ValueReadable()
-    var
-        P: TestPage "LT Z Mod Base";
-    begin
-        Seed();
-        P.OpenEdit();
-        Observer.Observe('mask value', P.Mask.Value());
-        P.Mask.SetValue('changed');
-        Observer.Observe('mask after set', P.Mask.Value());
-        P.Close();
         Observer.Finish();
     end;
 
