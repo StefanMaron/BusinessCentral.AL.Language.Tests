@@ -80,24 +80,42 @@ codeunit 78800 "LT S Array SelectTokens"
         Observer.Finish();
     end;
 
+    var
+        Subject: JsonArray;
+
+    [TryFunction]
+    local procedure TrySelect(Path: Text; var L: List of [JsonToken])
+    var
+        Dummy: Boolean;
+    begin
+        Dummy := Subject.SelectTokens(Path, L);
+    end;
+
+    local procedure Probe(Name: Text; Path: Text)
+    var
+        Observer: Codeunit "Probe Observer";
+        L: List of [JsonToken];
+    begin
+        Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
+        Observer.ObserveError(Name);
+        Observer.Observe(Name + '_count', Format(L.Count()));
+    end;
+
     [Test]
     procedure SelectTokens_Array_Errors()
     var
         Observer: Codeunit "Probe Observer";
-        A: JsonArray;
         L: List of [JsonToken];
-        Empty: JsonArray;
+        EmptyDoc: JsonArray;
     begin
-        Doc(A);
-        asserterror Observer.Observe('bad1', Format(A.SelectTokens('$[', L)));
-        Observer.ObserveError('bad1');
-        asserterror Observer.Observe('bad2', Format(A.SelectTokens('$.a[?(@.x', L)));
-        Observer.ObserveError('bad2');
-        asserterror Observer.Observe('bad3', Format(A.SelectTokens('', L)));
-        Observer.ObserveError('bad3');
-        asserterror Observer.Observe('bad4', Format(A.SelectTokens('a..[', L)));
-        Observer.ObserveError('bad4');
-        Observer.Observe('empty_array', Format(Empty.SelectTokens('$[*]', L)));
+        Doc(Subject);
+        Probe('bad1', '$[');
+        Probe('bad2', '$.a[?(@.x');
+        Probe('bad3', '');
+        Probe('bad4', 'a..[');
+        Probe('bad5', '$.a.[');
+        Probe('bad6', '$[?(');
+        Observer.Observe('empty_array', Format(EmptyDoc.SelectTokens('$[*]', L)));
         Observer.Observe('empty_array_list', Render(L));
         Observer.Finish();
     end;
@@ -180,24 +198,42 @@ codeunit 78801 "LT S Object SelectTokens"
         Observer.Finish();
     end;
 
+    var
+        Subject: JsonObject;
+
+    [TryFunction]
+    local procedure TrySelect(Path: Text; var L: List of [JsonToken])
+    var
+        Dummy: Boolean;
+    begin
+        Dummy := Subject.SelectTokens(Path, L);
+    end;
+
+    local procedure Probe(Name: Text; Path: Text)
+    var
+        Observer: Codeunit "Probe Observer";
+        L: List of [JsonToken];
+    begin
+        Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
+        Observer.ObserveError(Name);
+        Observer.Observe(Name + '_count', Format(L.Count()));
+    end;
+
     [Test]
     procedure SelectTokens_Object_Errors()
     var
         Observer: Codeunit "Probe Observer";
-        O: JsonObject;
         L: List of [JsonToken];
-        Empty: JsonObject;
+        EmptyDoc: JsonObject;
     begin
-        Doc(O);
-        asserterror Observer.Observe('bad1', Format(O.SelectTokens('$[', L)));
-        Observer.ObserveError('bad1');
-        asserterror Observer.Observe('bad2', Format(O.SelectTokens('$.list[?(@.x', L)));
-        Observer.ObserveError('bad2');
-        asserterror Observer.Observe('bad3', Format(O.SelectTokens('', L)));
-        Observer.ObserveError('bad3');
-        asserterror Observer.Observe('bad4', Format(O.SelectTokens('a..[', L)));
-        Observer.ObserveError('bad4');
-        Observer.Observe('empty_object', Format(Empty.SelectTokens('$.*', L)));
+        Doc(Subject);
+        Probe('bad1', '$[');
+        Probe('bad2', '$.a[?(@.x');
+        Probe('bad3', '');
+        Probe('bad4', 'a..[');
+        Probe('bad5', '$.a.[');
+        Probe('bad6', '$[?(');
+        Observer.Observe('empty_object', Format(EmptyDoc.SelectTokens('$.*', L)));
         Observer.Observe('empty_object_list', Render(L));
         Observer.Finish();
     end;
