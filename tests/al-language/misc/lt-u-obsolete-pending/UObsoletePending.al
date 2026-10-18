@@ -77,7 +77,15 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         asserterror begin Value := Format(Card.ObsExtAction.Enabled()); Error('NOERROR'); end;
         Observer.Observe('ext_action_enabled', Outcome(Value));
         Card.ObsAction.Invoke();
-        Observer.Finish();
+        Observer.Expect('group_field', 'one');
+        Observer.Expect('group_field_visible', 'Yes');
+        Observer.Expect('cue_field', '1');
+        Observer.Expect('label_visible', 'Yes');
+        Observer.Expect('action_enabled', 'Yes');
+        Observer.Expect('ext_field_visible', 'Yes');
+        Observer.Expect('ext_group_field', '0.00');
+        Observer.Expect('ext_action_enabled', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure Outcome(Value: Text): Text
@@ -124,6 +132,12 @@ codeunit 69799 "LT U Obsolete Pending Tests"
             Xml += Line + '\n';
         end;
         Observer.Observe('xmlport_export', Xml);
-        Observer.Finish();
+        Observer.Expect('query_open', 'Yes');
+        Observer.Expect('query_read', 'Yes');
+        Observer.Expect('query_id', '7');
+        Observer.Expect('report_row_inserted', 'Yes');
+        Observer.Expect('report_row_note', 'obsolete report ran');
+        Observer.Expect('xmlport_export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\n<Root>\n  <Src>\n    <Id>7</Id>\n  </Src>\n</Root>\n');
+        Observer.Verify();
     end;
 }
