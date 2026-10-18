@@ -64,12 +64,12 @@ report 69743 "PW PT Layout Report"
         layout(NoCaptionLayout)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_10.rdlc';
         }
         layout(CaptionedLayout)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_11.rdlc';
             Caption = 'Layout caption text';
             Summary = 'Layout summary text';
         }

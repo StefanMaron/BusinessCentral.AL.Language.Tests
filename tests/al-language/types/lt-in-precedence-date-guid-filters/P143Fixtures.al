@@ -102,6 +102,19 @@ codeunit 74648 "LT P143 Helper"
             Observer.ObserveError(Name + '_err');
     end;
 
+    // How many of the two run-date rows (7 = Today, 8 = WorkDate) fall inside From..To. The
+    // expectations add this to the count of the fixed rows, so they hold on any run date.
+    procedure InRows(FromDate: Date; ToDate: Date): Integer
+    var
+        Result: Integer;
+    begin
+        if (Today() >= FromDate) and (Today() <= ToDate) then
+            Result += 1;
+        if (WorkDate() >= FromDate) and (WorkDate() <= ToDate) then
+            Result += 1;
+        exit(Result);
+    end;
+
     // count of rows whose D equals Value (the relation target of the date formulas)
     procedure CountOn(Value: Date): Integer
     var
