@@ -571,7 +571,11 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('plain', ExportText(75554));
         Observer.Observe('import_back', ImportText(75552, Text1));
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Item">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Id" type="xs:int" />|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|    </xs:sequence>|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="unbounded" name="Item" type="Item" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema><Item><Id>1</Id><Name>one</Name></Item><Item><Id>2</Id><Name>two</Name></Item></Root>|');
+        Observer.Expect('plain', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('import_back', 'error:Data at the root level is invalid. Line 1, position 56.|XmlPortImport:Xml');
+        Observer.Expect('rows', '1/one/5;2/two/6;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -588,7 +592,15 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('strict', ImportText(75554, '<Root><Item><Id>8</Id><Name>eight</Name><Unknown>x</Unknown></Item></Root>'));
         Observer.Observe('strict_root', ImportText(75554, '<Root><Item><Id>9</Id><Name>nine</Name></Item><Other/></Root>'));
         Observer.Observe('rows_strict', Rows());
-        Observer.Finish();
+        Observer.Expect('lax', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown''. List of possible elements expected: any element in namespace ''##other''.|XmlPortInvalidXml');
+        Observer.Expect('rows_lax', '1/one/5;2/two/6;');
+        Observer.Expect('lax_other_namespace', 'ok');
+        Observer.Expect('rows_lax_ns', '1/one/5;2/two/6;6/six/0;');
+        Observer.Expect('strict_other_namespace', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown'' in namespace ''urn:other''.|XmlPortInvalidXml');
+        Observer.Expect('strict', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown''.|XmlPortInvalidXml');
+        Observer.Expect('strict_root', 'error:Imported XML cannot validate with the schema: The element ''Root'' has invalid child element ''Other''. List of possible elements expected: ''Item''.|XmlPortInvalidXml');
+        Observer.Expect('rows_strict', '1/one/5;2/two/6;6/six/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -603,7 +615,13 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('import_v11', ImportText(75556, '<?xml version="1.1" encoding="utf-8"?><Root><Item><Id>7</Id><Name>seven</Name></Item></Root>'));
         Observer.Observe('import_v10', ImportText(75555, '<?xml version="1.0" encoding="utf-8"?><Root><Item><Id>8</Id><Name>eight</Name></Item></Root>'));
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('v10', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('v11', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('default', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('import_v11', 'error:Version number ''1.1'' is invalid. Line 1, position 16.|XmlPortImport:Xml');
+        Observer.Expect('import_v10', 'ok');
+        Observer.Expect('rows', '1/one/5;2/two/6;8/eight/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -614,7 +632,9 @@ codeunit 75514 "LT Y XmlPort Tests"
         Seed();
         Export(Observer, 'named', 75557);
         Export(Observer, 'empty', 75558);
-        Observer.Finish();
+        Observer.Expect('named', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('empty', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -624,7 +644,8 @@ codeunit 75514 "LT Y XmlPort Tests"
     begin
         Seed();
         Export(Observer, 'export', 75559);
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -635,7 +656,9 @@ codeunit 75514 "LT Y XmlPort Tests"
         Seed();
         Export(Observer, 'attr', 75560);
         Export(Observer, 'nocalc', 75561);
-        Observer.Finish();
+        Observer.Expect('attr', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root xmlns:p="urn:lt-y">|  <Item Ident="1" Total="2" Note="">|    <p:Label>one</p:Label>|    <Lines>2</Lines>|  </Item>|  <Item Ident="2" Total="1" Note="">|    <p:Label>two</p:Label>|    <Lines>1</Lines>|  </Item>|</Root>|');
+        Observer.Expect('nocalc', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item Total="0">|    <Count>0</Count>|  </Item>|  <Item Total="0">|    <Count>0</Count>|  </Item>|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -648,7 +671,11 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('rows', Rows());
         Observer.Observe('import_no_prefix', ImportText(75560, '<Root><Item Ident="12" Total="0" Note=""><Label>twelve</Label><Lines>0</Lines></Item></Root>'));
         Observer.Observe('rows2', Rows());
-        Observer.Finish();
+        Observer.Expect('import', 'ok');
+        Observer.Expect('rows', '1/one/5;2/two/6;11/eleven/0;');
+        Observer.Expect('import_no_prefix', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Label''. List of possible elements expected: ''Label'' in namespace ''urn:lt-y''.|XmlPortInvalidXml');
+        Observer.Expect('rows2', '1/one/5;2/two/6;11/eleven/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -660,7 +687,10 @@ codeunit 75514 "LT Y XmlPort Tests"
         Export(Observer, 'export', 75562);
         Observer.Observe('import', ImportText(75562, '<Root><Item Id="21" Free="f"><Name>twentyone</Name></Item></Root>'));
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item Id="1" Free="one">|    <Name>one</Name>|  </Item>|  <Item Id="2" Free="two">|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('import', 'ok');
+        Observer.Expect('rows', '1/one/5;2/two/6;21/twentyone/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -672,7 +702,10 @@ codeunit 75514 "LT Y XmlPort Tests"
         Export(Observer, 'export', 75566);
         Observer.Observe('import', ImportText(75566, '<Root><Item Id="22" Tag="t"><Name>twentytwo</Name></Item></Root>'));
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item Id="1" Tag="">|    <Name>one</Name>|  </Item>|  <Item Id="2" Tag="">|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('import', 'ok');
+        Observer.Expect('rows', '1/one/5;2/two/6;22/twentytwo/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -684,7 +717,9 @@ codeunit 75514 "LT Y XmlPort Tests"
         // Exporting this xmlport does not end (the export grows until the blob capacity is exceeded), so only the import is observed.
         Observer.Observe('import', ImportText(75567, '<Root><Item Id="23"><Extra>99</Extra></Item></Root>'));
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('import', 'ok');
+        Observer.Expect('rows', '1/one/5;2/two/6;23//99;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -698,6 +733,11 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('inline', Helper.Facts(2000000280, 1, 75552, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
         Observer.Observe('v11', Helper.Facts(2000000280, 1, 75556, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
         Observer.Observe('perm', Helper.Facts(2000000280, 1, 75559, 'UseRequestPage,Direction,Format,InherentPermissions,InherentEntitlements'));
-        Observer.Finish();
+        Observer.Expect('plain', 'UseRequestPage=Yes;Direction=Both;Format=Xml;InherentPermissions=;InherentEntitlements=;');
+        Observer.Expect('ml', 'UseRequestPage=Yes;Direction=Both;Format=Xml;InherentPermissions=;InherentEntitlements=;');
+        Observer.Expect('inline', 'UseRequestPage=No;Direction=Both;Format=Xml;InherentPermissions=;InherentEntitlements=;');
+        Observer.Expect('v11', 'UseRequestPage=No;Direction=Both;Format=Xml;InherentPermissions=;InherentEntitlements=;');
+        Observer.Expect('perm', 'UseRequestPage=No;Direction=Both;Format=Xml;InherentPermissions=X;InherentEntitlements=X;');
+        Observer.Verify();
     end;
 }

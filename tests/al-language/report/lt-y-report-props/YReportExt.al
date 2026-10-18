@@ -172,7 +172,17 @@ codeunit 75511 "LT Y Report Ext Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Facts(Observer, Report::"LT Y Ext Base Rdlc", ReportFormat::Pdf);
-        Observer.Finish();
+        Observer.Expect('default_layout', 'RDLC');
+#if BC29PLUS
+        Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
+#else
+        Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=absent;DefaultThemePartName=absent;');
+#endif
+        Observer.Expect('layouts', '[./report/lt-y-report-props/LtYExtRdlc.rdlc RDLC multi=0]');
+        Observer.Expect('rdlc', 'Yes eos=No');
+        Observer.Expect('word', 'error:Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.|NotInitialized');
+        Observer.Expect('excel', 'error:Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.|NotInitialized');
+        Observer.Verify();
     end;
 
     [Test]
@@ -181,7 +191,19 @@ codeunit 75511 "LT Y Report Ext Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Facts(Observer, Report::"LT Y Ext Base Word", ReportFormat::Word);
-        Observer.Finish();
+        Observer.Expect('default_layout', 'RDLC');
+#if BC29PLUS
+        Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
+#else
+        Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=absent;DefaultThemePartName=absent;');
+#endif
+        Observer.Expect('layouts', '[./report/lt-y-report-props/LtYExtWord.docx Word multi=0]');
+        Observer.Expect('rdlc', 'Yes eos=Yes');
+        Observer.Expect('word', 'Yes eos=No');
+        Observer.Expect('excel', 'error:Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.|NotInitialized');
+        Observer.Expect('save_as', 'error:Report 75521 does not have a valid layout. Valid layout types are: Word, RDLC, Excel, and Custom.|ReportNoLayout');
+        Observer.Expect('run', 'error:Report 75521 does not have a valid layout. Valid layout types are: Word, RDLC, Excel, and Custom.|ReportNoLayout');
+        Observer.Verify();
     end;
 
     [Test]
@@ -190,7 +212,19 @@ codeunit 75511 "LT Y Report Ext Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Facts(Observer, Report::"LT Y Ext Base Excel", ReportFormat::Excel);
-        Observer.Finish();
+        Observer.Expect('default_layout', 'RDLC');
+#if BC29PLUS
+        Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
+#else
+        Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=absent;DefaultThemePartName=absent;');
+#endif
+        Observer.Expect('layouts', '[./report/lt-y-report-props/LtYExtExcel.xlsx Excel multi=0]');
+        Observer.Expect('rdlc', 'Yes eos=Yes');
+        Observer.Expect('word', 'error:Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.|NotInitialized');
+        Observer.Expect('excel', 'Yes eos=No');
+        Observer.Expect('save_as', 'error:Report 75522 does not have a valid layout. Valid layout types are: Word, RDLC, Excel, and Custom.|ReportNoLayout');
+        Observer.Expect('run', 'error:Report 75522 does not have a valid layout. Valid layout types are: Word, RDLC, Excel, and Custom.|ReportNoLayout');
+        Observer.Verify();
     end;
 
     [Test]
@@ -199,6 +233,7 @@ codeunit 75511 "LT Y Report Ext Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('data_items', Helper.DataItemRows(Report::"LT Y Ext Base Filter"));
-        Observer.Finish();
+        Observer.Expect('data_items', '[Row filter_fields=1 view=WHERE(Field1=0(1))]');
+        Observer.Verify();
     end;
 }

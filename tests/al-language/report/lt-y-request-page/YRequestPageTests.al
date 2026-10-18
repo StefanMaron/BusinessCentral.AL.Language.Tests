@@ -77,7 +77,13 @@ codeunit 75512 "LT Y Request Page Tests"
         Seed();
         Parameters := Report.RunRequestPage(Report::"LT Y RP View");
         ObserveSeen(Observer, 'view,filters,count,temporary,caption,docno');
-        Observer.Finish();
+        Observer.Expect('view', 'VERSION(1) SORTING(DocNo,LineNo)');
+        Observer.Expect('filters', '');
+        Observer.Expect('count', '3');
+        Observer.Expect('temporary', 'No');
+        Observer.Expect('caption', 'LT Y RP View');
+        Observer.Expect('docno', 'A');
+        Observer.Verify();
     end;
 
     // ---- SourceTableTemporary
@@ -99,7 +105,11 @@ codeunit 75512 "LT Y Request Page Tests"
         Parameters := Report.RunRequestPage(Report::"LT Y RP Temp");
         ObserveSeen(Observer, 'temporary,count_before,count_after');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('temporary', 'Yes');
+        Observer.Expect('count_before', '0');
+        Observer.Expect('count_after', '1');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     // ---- DeleteAllowed / ModifyAllowed
@@ -144,7 +154,13 @@ codeunit 75512 "LT Y Request Page Tests"
         Parameters := Report.RunRequestPage(Report::"LT Y RP Locked");
         ObserveSeen(Observer, 'caption,docno,editable,modify,new');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('caption', 'LT Y RP Locked');
+        Observer.Expect('docno', 'A');
+        Observer.Expect('editable', 'No');
+        Observer.Expect('modify', 'ok changed');
+        Observer.Expect('new', 'error:New method failed because Insert is not allowed. Page = LT Y RP Locked, Id = 0.|DB:ClientInsertDenied');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -187,7 +203,13 @@ codeunit 75512 "LT Y Request Page Tests"
         Parameters := Report.RunRequestPage(Report::"LT Y RP Open");
         ObserveSeen(Observer, 'caption,docno,editable,modify,new');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('caption', 'LT Y RP Open');
+        Observer.Expect('docno', 'A');
+        Observer.Expect('editable', 'Yes');
+        Observer.Expect('modify', 'ok changed');
+        Observer.Expect('new', 'ok');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     // ---- DataCaptionFields / DataCaptionExpression
@@ -216,7 +238,8 @@ codeunit 75512 "LT Y Request Page Tests"
         Seed();
         Parameters := Report.RunRequestPage(Report::"LT Y RP Caption Fields");
         ObserveSeen(Observer, 'caption');
-        Observer.Finish();
+        Observer.Expect('caption', 'LT Y request');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +252,8 @@ codeunit 75512 "LT Y Request Page Tests"
         Seed();
         Parameters := Report.RunRequestPage(Report::"LT Y RP Caption Expr");
         ObserveSeen(Observer, 'caption');
-        Observer.Finish();
+        Observer.Expect('caption', 'LT Y request');
+        Observer.Verify();
     end;
 
     // ---- AutoSplitKey / MultipleNewLines
@@ -269,7 +293,11 @@ codeunit 75512 "LT Y Request Page Tests"
         Parameters := Report.RunRequestPage(Report::"LT Y RP Split");
         ObserveSeen(Observer, 'new,first_key,second_key');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('new', 'ok');
+        Observer.Expect('first_key', '0');
+        Observer.Expect('second_key', '0');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;A/30000/inserted 2;A/40000/inserted 1;B/10000/other;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -307,7 +335,11 @@ codeunit 75512 "LT Y Request Page Tests"
         Parameters := Report.RunRequestPage(Report::"LT Y RP NoSplit");
         ObserveSeen(Observer, 'new,first_key,second_key');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('new', 'ok');
+        Observer.Expect('first_key', '0');
+        Observer.Expect('second_key', '0');
+        Observer.Expect('rows', 'A/0/inserted 2;A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     // ---- CardPageId, LinksAllowed, PopulateAllFields, HelpLink
@@ -330,7 +362,9 @@ codeunit 75512 "LT Y Request Page Tests"
         Seed();
         Parameters := Report.RunRequestPage(Report::"LT Y RP Misc");
         ObserveSeen(Observer, 'caption,docno');
-        Observer.Finish();
+        Observer.Expect('caption', 'LT Y RP Misc');
+        Observer.Expect('docno', 'A');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -350,7 +384,8 @@ codeunit 75512 "LT Y Request Page Tests"
         Seed();
         Parameters := Report.RunRequestPage(Report::"LT Y RP Links");
         ObserveSeen(Observer, 'caption');
-        Observer.Finish();
+        Observer.Expect('caption', 'LT Y RP Links');
+        Observer.Verify();
     end;
 
     [Test]
@@ -360,6 +395,12 @@ codeunit 75512 "LT Y Request Page Tests"
     begin
         Observer.Observe('misc', Helper.ReportFacts(Report::"LT Y RP Misc"));
         Observer.Observe('misc_items', Helper.DataItemRows(Report::"LT Y RP Misc"));
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('misc', 'UseRequestPage=Yes;ProcessingOnly=Yes;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
+#else
+        Observer.Expect('misc', 'UseRequestPage=Yes;ProcessingOnly=Yes;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=absent;DefaultThemePartName=absent;');
+#endif
+        Observer.Expect('misc_items', '[Line filter_fields= view=]');
+        Observer.Verify();
     end;
 }
