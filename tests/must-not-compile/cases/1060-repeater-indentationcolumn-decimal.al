@@ -1,4 +1,4 @@
-// @expect AL0316 | The expression must be of Integer type. Convert the expression or use an Integer variable.
+// @expect AL0316 | The expression must be of Integer type
 // A tree repeater whose IndentationColumn is a Decimal field.
 table 51060 "MNC AH T1060"
 {

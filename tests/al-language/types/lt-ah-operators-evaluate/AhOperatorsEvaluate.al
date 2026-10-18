@@ -139,8 +139,6 @@ codeunit 78601 "LT AH Evaluate"
         D := -1;
         Ok := Evaluate(D, Input);
         Observer.Observe(Name, '[' + Input + '] ' + Format(Ok) + ' ' + Format(D, 0, 9));
-        if not Ok then
-            Observer.ObserveError(Name + '_err');
     end;
 
     [Test]

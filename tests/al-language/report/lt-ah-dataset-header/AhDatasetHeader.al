@@ -44,7 +44,8 @@ codeunit 78603 "LT AH Dataset Header"
         InStr: InStream;
         Line: Text;
         Result: Text;
-        N: Integer;
+        Tag: Text;
+        Index: Integer;
     begin
         TempBlob.CreateOutStream(OutStr);
         if not Report.SaveAs(Report::"LT AH Header Report", '', ReportFormat::Xml, OutStr) then
@@ -53,12 +54,16 @@ codeunit 78603 "LT AH Dataset Header"
         while not InStr.EOS() do begin
             InStr.ReadText(Line);
             Line := Line.Trim();
-            if Line.StartsWith('<CompanyAddressLine') then begin
-                N += 1;
-                Result += Line + ' ';
+            for Index := 1 to 8 do begin
+                Tag := 'CompanyAddressLine' + Format(Index);
+                if Line.StartsWith('<' + Tag + '>') then
+                    Result += Format(Index) + '=[' + Line.Substring(StrLen(Tag) + 3, StrLen(Line) - 2 * StrLen(Tag) - 5) + '] '
+                else
+                    if Line = '<' + Tag + ' />' then
+                        Result += Format(Index) + '=[] ';
             end;
         end;
-        exit(Format(N) + ' lines: ' + Result);
+        exit(Result);
     end;
 
     local procedure Run(var Observer: Codeunit "Probe Observer"; Name: Text; Address: Text; Address2: Text; City: Text; PostCode: Text; County: Text; CountryCode: Code[10])
@@ -110,6 +115,21 @@ codeunit 78603 "LT AH Dataset Header"
         Run(Observer, 'country_code_only', 'Street 1', 'Floor 2', 'Town', 'ZIP 12', '', 'AHX');
         Run(Observer, 'all_five_filled', 'Street 1', 'Floor 2', 'Town', 'ZIP 12', 'Countyshire', 'AHX');
         Run(Observer, 'no_address2', 'Street 1', '', 'Town', 'ZIP 12', 'Countyshire', 'AHX');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Header_AddressLines_PartlyFilled()
+    var
+        Observer: Codeunit "Probe Observer";
+        Country: Record "Country/Region";
+    begin
+        if not Country.Get('AHX') then begin
+            Country.Init();
+            Country.Code := 'AHX';
+            Country.Name := 'Ahland';
+            Country.Insert();
+        end;
         Run(Observer, 'only_city', '', '', 'Town', '', '', '');
         Run(Observer, 'only_post_code', '', '', '', 'ZIP 12', '', '');
         Run(Observer, 'only_county', '', '', '', '', 'Countyshire', '');

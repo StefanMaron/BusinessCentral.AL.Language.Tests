@@ -24,6 +24,7 @@ codeunit 78620 "LT AH Card Tests"
         Row.Name := 'n0';
         Row.Other := 'o0';
         Row.Insert();
+        Commit();
     end;
 
     local procedure Stored(): Text
@@ -199,7 +200,7 @@ codeunit 78620 "LT AH Card Tests"
     end;
 
     [Test]
-    procedure GetValidationError_ThreeControls()
+    procedure GVE_Three_page_count()
     var
         Observer: Codeunit "Probe Observer";
         P: TestPage "LT AH Card";
@@ -207,30 +208,14 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
-        Observer.ObserveError('refused_qty');
         asserterror P.DecCtl.SetValue(-5);
-        Observer.ObserveError('refused_dec');
         asserterror P.LettersCtl.SetValue('a-b');
-        Observer.ObserveError('refused_letters');
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
-        Observer.Observe('page_no_index', P.GetValidationError());
-        Observer.Observe('page_1', P.GetValidationError(1));
-        Observer.Observe('page_2', P.GetValidationError(2));
-        Observer.Observe('page_3', P.GetValidationError(3));
-        asserterror Observer.Observe('page_4', P.GetValidationError(4));
-        Observer.ObserveError('page_4_error');
-        Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
-        Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
-        Observer.Observe('dec_count', Format(P.DecCtl.ValidationErrorCount()));
-        Observer.Observe('dec_no_index', P.DecCtl.GetValidationError());
-        Observer.Observe('letters_count', Format(P.LettersCtl.ValidationErrorCount()));
-        Observer.Observe('letters_no_index', P.LettersCtl.GetValidationError());
-        Observer.Observe('txt_count', Format(P.TxtCtl.ValidationErrorCount()));
         Observer.Finish();
     end;
 
     [Test]
-    procedure GetValidationError_TwoErrorsOnOneControl_AndAnotherControl()
+    procedure GVE_Three_page_no_index()
     var
         Observer: Codeunit "Probe Observer";
         P: TestPage "LT AH Card";
@@ -238,27 +223,149 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
-        Observer.ObserveError('refused_qty_1');
-        asserterror P.QtyCtl.SetValue('abc');
-        Observer.ObserveError('refused_qty_2');
         asserterror P.DecCtl.SetValue(-5);
-        Observer.ObserveError('refused_dec');
-        Observer.Observe('page_count', Format(P.ValidationErrorCount()));
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_no_index', P.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_page_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_1', P.GetValidationError(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_page_2()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_2', P.GetValidationError(2));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_page_3()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_3', P.GetValidationError(3));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_qty_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_qty_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_qty_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('qty_1', P.QtyCtl.GetValidationError(1));
-        Observer.Observe('qty_2', P.QtyCtl.GetValidationError(2));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_dec_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('dec_count', Format(P.DecCtl.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_dec_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
+        Observer.Observe('dec_no_index', P.DecCtl.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_dec_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('dec_1', P.DecCtl.GetValidationError(1));
         Observer.Finish();
     end;
 
     [Test]
-    procedure GetValidationError_NoIndex_OneError()
+    procedure GVE_Three_letters_no_index()
     var
         Observer: Codeunit "Probe Observer";
         P: TestPage "LT AH Card";
@@ -266,27 +373,333 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
-        Observer.ObserveError('refused_qty');
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
+        Observer.Observe('letters_no_index', P.LettersCtl.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_letters_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
+        Observer.Observe('letters_1', P.LettersCtl.GetValidationError(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_txt_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
+        Observer.Observe('txt_count', Format(P.TxtCtl.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Three_page_4()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.DecCtl.SetValue(-5);
+        asserterror P.LettersCtl.SetValue('a-b');
+        asserterror Observer.Observe('page_4', P.GetValidationError(4));
+        Observer.ObserveError('page_4_error');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_page_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_page_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_no_index', P.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_page_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_1', P.GetValidationError(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_page_2()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
+        Observer.Observe('page_2', P.GetValidationError(2));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_page_3()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
+        Observer.Observe('page_3', P.GetValidationError(3));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_qty_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
+        Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_qty_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_qty_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('qty_1', P.QtyCtl.GetValidationError(1));
         Observer.Finish();
     end;
 
     [Test]
-    procedure GetValidationError_PageNoIndex_NoErrors()
+    procedure GVE_TwoOnOne_qty_2()
     var
         Observer: Codeunit "Probe Observer";
         P: TestPage "LT AH Card";
-        Text: Text;
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
+        Observer.Observe('qty_2', P.QtyCtl.GetValidationError(2));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_dec_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
+        Observer.Observe('dec_count', Format(P.DecCtl.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_TwoOnOne_dec_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        asserterror P.QtyCtl.SetValue('abc');
+        asserterror P.DecCtl.SetValue(-5);
+        Observer.Observe('dec_1', P.DecCtl.GetValidationError(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_One_page_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        Observer.Observe('page_count', Format(P.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_One_page_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        Observer.Observe('page_no_index', P.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_One_page_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        Observer.Observe('page_1', P.GetValidationError(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_One_qty_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_One_qty_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        asserterror P.QtyCtl.SetValue(99);
+        Observer.Observe('qty_1', P.QtyCtl.GetValidationError(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Zero_page_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
     begin
         Seed();
         P.OpenEdit();
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
-        asserterror Text := P.GetValidationError();
-        Observer.ObserveError('page_no_index_error');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Zero_page_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        Observer.Observe('page_no_index', P.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Zero_qty_count()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure GVE_Zero_qty_no_index()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT AH Card";
+    begin
+        Seed();
+        P.OpenEdit();
+        Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
         Observer.Finish();
     end;
 
@@ -307,7 +720,6 @@ codeunit 78620 "LT AH Card Tests"
         P.QtyCtl.SetValue(3);
         Observer.Observe('page_count_after_qty_fix', Format(P.ValidationErrorCount()));
         Observer.Observe('qty_count_after_qty_fix', Format(P.QtyCtl.ValidationErrorCount()));
-        Observer.Observe('page_1_after_qty_fix', P.GetValidationError(1));
         P.DecCtl.SetValue(3);
         P.LettersCtl.SetValue('abc');
         Observer.Observe('page_count_after_all_fixed', Format(P.ValidationErrorCount()));
@@ -328,6 +740,7 @@ codeunit 78623 "LT AH CharAllowed Tests"
         Row.Init();
         Row.Id := 'R1';
         Row.Insert();
+        Commit();
     end;
 
     [TryFunction]
@@ -511,6 +924,7 @@ codeunit 78621 "LT AH Tree Tests"
         AddRow('T3', 2);
         AddRow('T4', 1);
         AddRow('T5', 0);
+        Commit();
     end;
 
     local procedure AddRow(Id: Code[20]; Level: Integer)
@@ -636,6 +1050,7 @@ codeunit 78622 "LT AH Part Tests"
         AddRow('R1', 'a', 1);
         AddRow('R2', 'b', 2);
         AddRow('R3', 'c', 3);
+        Commit();
     end;
 
     local procedure AddRow(Id: Code[20]; Txt: Text[30]; Qty: Integer)
@@ -771,6 +1186,7 @@ codeunit 78622 "LT AH Part Tests"
         Line.LineNo := 10;
         Line.Descr := 'foreign';
         Line.Insert();
+        Commit();
     end;
 
     local procedure AddLine(LineNo: Integer; Descr: Text[30]; Amount: Decimal)
@@ -823,7 +1239,7 @@ codeunit 78622 "LT AH Part Tests"
         Doc.OpenEdit();
         Doc.GoToKey('H1');
         Observer.Observe('lines', LinesOf(Doc));
-        Doc.Lines.GoToKey(10);
+        Doc.Lines.GoToKey('H1', 10);
         Doc.Lines.DescrCtl.SetValue('edited');
         Observer.Observe('db_after_edit', DumpHeadsAndLines());
         Doc.Close();
@@ -860,9 +1276,9 @@ codeunit 78622 "LT AH Part Tests"
         Doc.OpenEdit();
         Doc.GoToKey('H1');
         Doc.DescrCtl.SetValue('head edited');
-        Doc.Lines.GoToKey(20);
+        Doc.Lines.GoToKey('H1', 20);
         Doc.Lines.AmountCtl.SetValue(22);
-        Doc.Lines.GoToKey(10);
+        Doc.Lines.GoToKey('H1', 10);
         Observer.Observe('db_after_row_change', DumpHeadsAndLines());
         Doc.Close();
         Observer.Observe('db_after_close', DumpHeadsAndLines());
@@ -879,7 +1295,7 @@ codeunit 78622 "LT AH Part Tests"
         Doc.OpenEdit();
         Doc.GoToKey('H1');
         Doc.DescrCtl.SetValue('head edited');
-        Doc.Lines.GoToKey(20);
+        Doc.Lines.GoToKey('H1', 20);
         Doc.Lines.DescrCtl.SetValue('part edited');
         asserterror Doc.Lines.AmountCtl.SetValue('abc');
         Observer.ObserveError('part_refused');

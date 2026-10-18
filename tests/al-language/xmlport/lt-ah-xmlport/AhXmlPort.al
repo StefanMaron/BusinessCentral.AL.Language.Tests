@@ -282,6 +282,8 @@ codeunit 78630 "LT AH XmlPort Link Tests"
             InStr.ReadText(Line);
             Result += Line;
         end;
+        if Result.Contains('<?xml') then
+            Result := Result.Substring(Result.IndexOf('<?xml'));
         exit(Result);
     end;
 
@@ -327,6 +329,16 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     end;
 
     [Test]
+    procedure Mixed_Import_MatchingLinkValues()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Wipe();
+        ImportObserved(Observer, 'matching', 78633, '<Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>1</ParentId><Name>a10</Name></ChA><ChB><Id>20</Id><ParentId>98</ParentId><Name>b20</Name></ChB></Par><Par><Id>2</Id><Name>p2</Name><ChA><Id>12</Id><ParentId>2</ParentId><Name>a12</Name></ChA><ChB><Id>21</Id><ParentId>96</ParentId><Name>b21</Name></ChB><ChB><Id>22</Id><ParentId>95</ParentId><Name>b22</Name></ChB></Par></Root>');
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure Mixed_Import_ParentOnly()
     var
         Observer: Codeunit "Probe Observer";
@@ -343,6 +355,16 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Seed();
         Observer.Observe('xml', ExportText(78637));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Grand_Import_MatchingLinkValues()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Wipe();
+        ImportObserved(Observer, 'nested_matching', 78637, '<Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>1</ParentId><Name>a10</Name><Gr><Id>30</Id><ParentId>98</ParentId><Name>g30</Name></Gr></ChA></Par></Root>');
         Observer.Finish();
     end;
 
