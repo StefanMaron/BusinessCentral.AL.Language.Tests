@@ -963,7 +963,19 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'No');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'No');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('close ok', 'No');
+        Observer.Expect('close|text', 'Page cannot be saved.');
+        Observer.Expect('close|code', 'TestWrapped');
+        Observer.Expect('stored name', 'One');
+        Observer.Verify();
     end;
 
 
@@ -998,7 +1010,19 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('stored name', 'Changed');
+        Observer.Verify();
     end;
 
 
@@ -1033,7 +1057,19 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('stored name', 'Changed');
+        Observer.Verify();
     end;
 
 
@@ -1068,6 +1104,18 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'No');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'No');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('close ok', 'No');
+        Observer.Expect('close|text', 'Page cannot be saved.');
+        Observer.Expect('close|code', 'TestWrapped');
+        Observer.Expect('stored name', 'One');
+        Observer.Verify();
     end;
 }

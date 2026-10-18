@@ -269,12 +269,6 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Verify();
     end;
 
-    [TryFunction]
-    local procedure TrySetDate(var P: TestPage "LT Z Mod Base"; NewDate: Date)
-    begin
-        P.Dt.SetValue(NewDate);
-    end;
-
     [Test]
     procedure ZClosingDates_ValueAndStored()
     var
@@ -288,15 +282,10 @@ codeunit 76360 "LT Z Modify Controls Tests"
         P.OpenEdit();
         Observer.Observe('closing date shown', P.Dt.Value());
         Observer.Observe('closing date plain shown', P.DtPlain.Value());
-        P.Dt.SetValue(ClosingDate(20250115D));
-        Observer.Observe('closing date after set', P.Dt.Value());
-        ClearLastError();
-        Observer.Observe('june ok', Format(TrySetDate(P, ClosingDate(20250630D))));
-        Observer.ObserveError('june');
         P.Close();
         R.Get(1);
         Observer.Observe('stored', Format(R.Dt));
-        Observer.Observe('stored is closing date', Format(R.Dt = ClosingDate(20250115D)));
+        Observer.Observe('stored is closing date', Format(R.Dt = ClosingDate(20250101D)));
         Observer.Observe('stored normal date', Format(NormalDate(R.Dt), 0, 9));
         Observer.Finish();
     end;

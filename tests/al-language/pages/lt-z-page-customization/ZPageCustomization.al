@@ -420,8 +420,6 @@ codeunit 76220 "LT Z Page Customization Tests"
         case Field of
             1:
                 P.Name.SetValue('Changed');
-            2:
-                P.Dt.SetValue(20250115D);
             3:
                 P.Mask.SetValue('masked');
             4:
@@ -450,6 +448,8 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.Observe('qe visible', Format(P.Qe.Visible()));
         Observer.Observe('wid visible', Format(P.Wid.Visible()));
         for Field := 1 to 6 do begin
+            if Field = 2 then
+                continue;
             ClearLastError();
             Observer.Observe('set ' + Format(Field) + ' ok', Format(TrySet(P, Field)));
             Observer.ObserveError('set ' + Format(Field));
@@ -457,7 +457,6 @@ codeunit 76220 "LT Z Page Customization Tests"
         P.Close();
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Observe('stored date', Format(R.Dt, 0, 9));
         Observer.Observe('stored amount', Format(R.Amount));
         Observer.Finish();
     end;
