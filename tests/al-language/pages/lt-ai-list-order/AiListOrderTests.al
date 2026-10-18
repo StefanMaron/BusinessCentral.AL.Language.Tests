@@ -17,12 +17,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.KeepFilter.Invoke();
@@ -43,12 +43,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.SameView.Invoke();
@@ -69,12 +69,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Curr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.KeepFilter.Invoke();
@@ -95,12 +95,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Curr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.SameView.Invoke();
@@ -121,7 +121,7 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
@@ -144,7 +144,7 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Curr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
@@ -167,12 +167,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Plain";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.KeepFilter.Invoke();
@@ -193,12 +193,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List PlainCurr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.SameView.Invoke();
@@ -219,12 +219,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List FindOnly";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentRowsAfter.Invoke();
@@ -245,12 +245,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Plain";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentRowsAfter.Invoke();
@@ -271,12 +271,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List PlainCurr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1003')));
+        Observer.Observe('goto', Format(P.GoToKey('R1002')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentRowsAfter.Invoke();
@@ -297,12 +297,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1012')));
+        Observer.Observe('goto', Format(P.GoToKey('R1006')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentNoRowsAfter.Invoke();
@@ -323,12 +323,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Curr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1012')));
+        Observer.Observe('goto', Format(P.GoToKey('R1006')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentNoRowsAfter.Invoke();
@@ -349,12 +349,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List FindOnly";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1012')));
+        Observer.Observe('goto', Format(P.GoToKey('R1006')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentNoRowsAfter.Invoke();
@@ -375,12 +375,12 @@ codeunit 78860 "LT AI List Update Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Plain";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1012')));
+        Observer.Observe('goto', Format(P.GoToKey('R1006')));
         Observer.Observe('goto_log', Log.Dump());
         Log.Clear();
         P.DropCurrentNoRowsAfter.Invoke();
@@ -564,12 +564,12 @@ codeunit 78861 "LT AI List Navigation Order"
         Row: Record "LT AI Row";
         P: TestPage "LT AI List";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Row.Get('R1007');
+        Row.Get('R1004');
         Observer.Observe('goto', Format(P.GoToRecord(Row)));
         Observer.Observe('goto_log', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
@@ -588,12 +588,12 @@ codeunit 78861 "LT AI List Navigation Order"
         Row: Record "LT AI Row";
         P: TestPage "LT AI List Curr";
     begin
-        Log.Seed(12);
+        Log.Seed(6);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         Log.Clear();
-        Row.Get('R1007');
+        Row.Get('R1004');
         Observer.Observe('goto', Format(P.GoToRecord(Row)));
         Observer.Observe('goto_log', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
@@ -611,8 +611,8 @@ codeunit 78861 "LT AI List Navigation Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Pos";
     begin
-        Log.Seed(12);
-        Log.SetStartKey('R1007');
+        Log.Seed(6);
+        Log.SetStartKey('R1004');
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
@@ -632,8 +632,8 @@ codeunit 78861 "LT AI List Navigation Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Pos";
     begin
-        Log.Seed(12);
-        Log.SetStartKey('R1007');
+        Log.Seed(6);
+        Log.SetStartKey('R1004');
         Log.Clear();
         P.OpenView();
         Log.Clear();
@@ -652,8 +652,8 @@ codeunit 78861 "LT AI List Navigation Order"
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List Pos";
     begin
-        Log.Seed(12);
-        Log.SetStartKey('R1012');
+        Log.Seed(6);
+        Log.SetStartKey('R1006');
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
@@ -718,45 +718,135 @@ codeunit 78862 "LT AI List Paging Order"
     end;
 
     [Test]
-    procedure Paging_TwentyFiveRows_Nav()
+    procedure Paging_Open_Nav()
     var
         Log: Codeunit "LT AI Log Mgt";
         P: TestPage "LT AI List";
-        Walked: Integer;
     begin
         Log.Seed(25);
         Log.Clear();
         P.OpenView();
         Observer.Observe('open', Log.Dump());
-        Log.Clear();
-        Observer.Observe('last', Format(P.Last()));
-        Observer.Observe('last_log', Log.Dump());
-        Observer.Observe('last_no', P.NoCtl.Value());
-        Log.Clear();
-        Observer.Observe('first', Format(P.First()));
-        Observer.Observe('first_log', Log.Dump());
-        Log.Clear();
-        Observer.Observe('goto', Format(P.GoToKey('R1021')));
-        Observer.Observe('goto_log', Log.Dump());
-        Log.Clear();
-        while P.Next() do
-            Walked += 1;
-        Observer.Observe('walked', Format(Walked));
-        Observer.Observe('walk_log', Log.Dump());
         P.Close();
         Observer.Finish();
     end;
 
     [Test]
-    procedure Paging_TwentyFiveRows_UpdateOnRowTwentyOne()
+    procedure Paging_OpenThenNext_Nav()
     var
         Log: Codeunit "LT AI Log Mgt";
-        P: TestPage "LT AI List Curr";
+        P: TestPage "LT AI List";
     begin
         Log.Seed(25);
         Log.Clear();
         P.OpenView();
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_log', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Paging_Last_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List";
+    begin
+        Log.Seed(25);
+        Log.Clear();
+        P.OpenView();
+        Log.Clear();
+        Observer.Observe('last', Format(P.Last()));
+        Observer.Observe('last_log', Log.Dump());
+        Observer.Observe('last_no', P.NoCtl.Value());
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Paging_LastThenFirst_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List";
+    begin
+        Log.Seed(25);
+        Log.Clear();
+        P.OpenView();
+        P.Last();
+        Log.Clear();
+        Observer.Observe('first', Format(P.First()));
+        Observer.Observe('first_log', Log.Dump());
+        Observer.Observe('first_no', P.NoCtl.Value());
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Paging_GoToKey_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List";
+    begin
+        Log.Seed(25);
+        Log.Clear();
+        P.OpenView();
+        Log.Clear();
         Observer.Observe('goto', Format(P.GoToKey('R1021')));
+        Observer.Observe('goto_log', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Paging_GoToKeyThenWalk_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List";
+    begin
+        Log.Seed(25);
+        Log.Clear();
+        P.OpenView();
+        P.GoToKey('R1021');
+        Log.Clear();
+        while P.Next() do
+            Observer.Observe('at' + P.NoCtl.Value(), Log.Dump());
+        Observer.Observe('end', P.NoCtl.Value());
+        Observer.Observe('end_log', Log.Dump());
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Paging_UpdateOnRowTwentyOne_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List";
+    begin
+        Log.Seed(25);
+        Log.Clear();
+        P.OpenView();
+        P.GoToKey('R1021');
+        Log.Clear();
+        P.SameView.Invoke();
+        Observer.Observe('update', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        P.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Paging_UpdateOnRowTwentyOne_Plain()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List Plain";
+    begin
+        Log.Seed(25);
+        Log.Clear();
+        P.OpenView();
+        P.GoToKey('R1021');
         Log.Clear();
         P.SameView.Invoke();
         Observer.Observe('update', Log.Dump());

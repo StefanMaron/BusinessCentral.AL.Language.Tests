@@ -39,25 +39,34 @@ table 78851 "LT AI Log"
 
 codeunit 78852 "LT AI Log Mgt"
 {
-    SingleInstance = true;
-
-    var
-        StartKey: Code[20];
-
+    // The start key of the Pos list lives in the row with Id = -1 of the log table (no SingleInstance state).
     procedure SetStartKey(NewKey: Code[20])
+    var
+        Log: Record "LT AI Log";
     begin
-        StartKey := NewKey;
+        if Log.Get(-1) then
+            Log.Delete();
+        if NewKey = '' then
+            exit;
+        Log.Init();
+        Log.Id := -1;
+        Log.Txt := NewKey;
+        Log.Insert();
     end;
 
     procedure GetStartKey(): Code[20]
+    var
+        Log: Record "LT AI Log";
     begin
-        exit(StartKey);
+        if Log.Get(-1) then
+            exit(CopyStr(Log.Txt, 1, 20));
     end;
 
     procedure Clear()
     var
         Log: Record "LT AI Log";
     begin
+        Log.SetFilter(Id, '>0');
         Log.DeleteAll();
     end;
 
@@ -79,6 +88,7 @@ codeunit 78852 "LT AI Log Mgt"
         Log: Record "LT AI Log";
         Result: Text;
     begin
+        Log.SetFilter(Id, '>0');
         if Log.FindSet() then
             repeat
                 if Result <> '' then
@@ -133,7 +143,7 @@ page 78853 "LT AI List"
                     Log: Codeunit "LT AI Log Mgt";
                 begin
                     Log.Add('A:filter');
-                    Rec.SetFilter(Qty, '<=%1', 8);
+                    Rec.SetFilter(Qty, '<=%1', 4);
                     CurrPage.Update(false);
                     Log.Add('A:done');
                 end;
@@ -237,7 +247,7 @@ page 78854 "LT AI List Curr"
                     Log: Codeunit "LT AI Log Mgt";
                 begin
                     Log.Add('A:filter');
-                    Rec.SetFilter(Qty, '<=%1', 8);
+                    Rec.SetFilter(Qty, '<=%1', 4);
                     CurrPage.Update(false);
                     Log.Add('A:done');
                 end;
@@ -348,7 +358,7 @@ page 78855 "LT AI List FindOnly"
                     Log: Codeunit "LT AI Log Mgt";
                 begin
                     Log.Add('A:filter');
-                    Rec.SetFilter(Qty, '<=%1', 8);
+                    Rec.SetFilter(Qty, '<=%1', 4);
                     CurrPage.Update(false);
                     Log.Add('A:done');
                 end;
@@ -442,7 +452,7 @@ page 78856 "LT AI List Plain"
                     Log: Codeunit "LT AI Log Mgt";
                 begin
                     Log.Add('A:filter');
-                    Rec.SetFilter(Qty, '<=%1', 8);
+                    Rec.SetFilter(Qty, '<=%1', 4);
                     CurrPage.Update(false);
                     Log.Add('A:done');
                 end;
@@ -526,7 +536,7 @@ page 78857 "LT AI List PlainCurr"
                     Log: Codeunit "LT AI Log Mgt";
                 begin
                     Log.Add('A:filter');
-                    Rec.SetFilter(Qty, '<=%1', 8);
+                    Rec.SetFilter(Qty, '<=%1', 4);
                     CurrPage.Update(false);
                     Log.Add('A:done');
                 end;
@@ -617,7 +627,7 @@ page 78858 "LT AI List Pos"
                     Log: Codeunit "LT AI Log Mgt";
                 begin
                     Log.Add('A:filter');
-                    Rec.SetFilter(Qty, '<=%1', 8);
+                    Rec.SetFilter(Qty, '<=%1', 4);
                     CurrPage.Update(false);
                     Log.Add('A:done');
                 end;
