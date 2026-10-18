@@ -294,7 +294,8 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('rows OnAfterCopyEnvironmentToSandbox', '0');
         Observer.Expect('rows OnAfterCopyEnvironmentToSandboxPerCompany', '0');
         Observer.Expect('rows OnAfterUserInitialization', '0');
-        Observer.Expect('early entries of the test ', '');
+        Observer.Expect('early entries of the test session', 'OnCompanyOpen(<Company>);OnCompanyOpenCompleted(<Company>);');
+        Observer.Expect('total rows', '3');
         Observer.Verify();
     end;
 
@@ -526,7 +527,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('OnIntermediateDocumentReady', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Expect('OnDocumentPrintReady', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Expect('OnDocumentDownload', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
-        Observer.Expect('GetPrinterName', 'Yes|sav');
+        Observer.Expect('GetPrinterName', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Verify();
     end;
 
@@ -545,7 +546,9 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('GetPaperTrayForReport', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Expect('ScheduleReport', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Expect('SetupPrinters', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
-        Observer.Expect('SelectReportLayoutUI', 'Yes|saved=Yes|data');
+        Observer.Expect('SelectReportLayoutUI', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('ApplicationReportMergeStrategy', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('WordDocumentMergerAppMode', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Verify();
     end;
 }
