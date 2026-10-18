@@ -106,6 +106,36 @@ is only a reference.
 | 0723 | AL0284 | A subscriber to Environment Triggers.OnAfterCopyEnvironmentPerDatabase declares the environment types as Integer instead of an Option (two diagnostics). |
 | 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
 | 0725 | AL0280 | A subscriber names an event that Company Triggers does not declare (OnCompanyOpened). |
+| 0740 | AL0161 | An app subscribes to GetRoleCenterBannerPartID of the platform codeunit "System Action Triggers"; the event is declared an InternalEvent. |
+| 0840 | AL0543, AL0428 | HelpLink and ContextSensitiveHelpPage cannot both be set on a page. (3 diagnostics) |
+| 0841 | AL0543 | ContextSensitiveHelpPage needs the manifest property contextSensitiveHelpUrl (app.json has none). |
+| 0842 | AL0428 | EntityCaption and EntityCaptionML cannot both be set on an API page. (2 diagnostics) |
+| 0843 | AL0428 | EntitySetCaption and EntitySetCaptionML cannot both be set on an API page. (2 diagnostics) |
+| 0844 | AL0428 | PromotedActionCategories and PromotedActionCategoriesML cannot both be set on a page. (2 diagnostics) |
+| 0845 | AL0428 | AdditionalSearchTerms and AdditionalSearchTermsML cannot both be set in a page extension. (2 diagnostics) |
+| 0846 | AL0169 | PromptMode knows Prompt, Content and Generate only. |
+| 0847 | AL0223 | A PromptDialog page must set Extensible = false. |
+| 0848 | AL0471 | HelpLink must be a URL. |
+| 0849 | AL0246 | A page extension cannot change DecimalPlaces with modify. |
+| 0850 | AL0246 | A page extension cannot change DrillDown with modify. |
+| 0851 | AL0246 | A page extension cannot change Lookup with modify. |
+| 0852 | AL0246 | A page extension cannot change ShowFilter of a part with modify. |
+| 0853 | AL0246 | A page extension cannot change UpdatePropagation of a part with modify. |
+| 0854 | AL0185 | CardPageId must name an existing page. |
+| 0855 | AL0185 | LookupPageId must name an existing page. |
+| 0856 | AL0169 | MaskType knows None and Concealed only. |
+| 0857 | AL0169 | Style knows the ten named styles only. |
+| 0858 | AL0232 | Width must be within the allowed range (a negative value). |
+| 0860 | AL0808 | A page customization cannot set Editable = true on a control whose source field has AllowInCustomizations ToBeClassified. |
+| 0861 | AL0223 | ClearViews is for list pages only. |
+| 0862 | AL0169 | Importance knows Standard, Promoted and Additional only. |
+| 0863 | AL0169 | MaskType knows None and Concealed only. |
+| 0864 | AL0232 | Width must be within the allowed range (a negative value). |
+| 0865 | AL0161 | A page customization cannot name a variable of the page it customizes in an expression. |
+| 0866 | AL0270 | modify() names a control that the customized page does not have. |
+| 0868 | AL0208 | QuickEntry takes a boolean constant. |
+| 0869 | AL0844 | BlankZero on a Text field of a page extension (a number property). |
+| 0870 | AL0843 | OptionCaptionML on a Text field. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
