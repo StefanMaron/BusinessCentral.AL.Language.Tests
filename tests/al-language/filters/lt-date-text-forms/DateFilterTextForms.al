@@ -69,7 +69,19 @@ codeunit 67359 "LT DTF Tests"
         Run('separators_slash_short_year', '02/01/26', Observer);
         WorkDate(SavedWorkDate);
         GlobalLanguage(SavedLanguage);
-        Observer.Finish();
+        Observer.Expect('four_digits', 'ok:2031-02-01 .. 2031-02-01 | filter 02/01/31');
+        Observer.Expect('eight_digits', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('separators_short_year', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('separators_iso', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('separators_slash_short_year', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DTF Tests"(CodeUnit 67359).GetRange_DateTextForms_English line 17 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -86,7 +98,15 @@ codeunit 67359 "LT DTF Tests"
         Run('four_digits', '0201', Observer);
         WorkDate(SavedWorkDate);
         GlobalLanguage(SavedLanguage);
-        Observer.Finish();
+        Observer.Expect('four_digits', 'ok:2038-02-01 .. 2038-02-01 | filter 02/01/38');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DTF Tests"(CodeUnit 67359).GetRange_FourDigits_OtherWorkDate line 13 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -106,7 +126,18 @@ codeunit 67359 "LT DTF Tests"
         Run('separators_short_year', '02.01.26', Observer);
         WorkDate(SavedWorkDate);
         GlobalLanguage(SavedLanguage);
-        Observer.Finish();
+        Observer.Expect('six_digits', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('eight_digits', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('four_digits', 'ok:2031-02-01 .. 2031-02-01 | filter 02/01/31');
+        Observer.Expect('separators_short_year', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DTF Tests"(CodeUnit 67359).GetRange_SixDigits_German line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +154,15 @@ codeunit 67359 "LT DTF Tests"
         Run('six_digits', '020126', Observer);
         WorkDate(SavedWorkDate);
         GlobalLanguage(SavedLanguage);
-        Observer.Finish();
+        Observer.Expect('six_digits', 'ok:2026-02-01 .. 2026-02-01 | filter 02/01/26');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DTF Tests"(CodeUnit 67359).GetRange_SixDigits_English line 13 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -147,7 +186,22 @@ codeunit 67359 "LT DTF Tests"
         Run('mm_dd_yy_separators', '01-13-26', Observer);
         WorkDate(SavedWorkDate);
         GlobalLanguage(SavedLanguage);
-        Observer.Finish();
+        Observer.Expect('dd_mm_four', 'error:The filter "1301" is not valid for the Day field on the LT DTF Table table. The format of the Date ''1301'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('mm_dd_four', 'ok:2031-01-13 .. 2031-01-13 | filter 01/13/31');
+        Observer.Expect('dd_mm_yy_six', 'error:The filter "130126" is not valid for the Day field on the LT DTF Table table. The format of the Date ''130126'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('mm_dd_yy_six', 'ok:2026-01-13 .. 2026-01-13 | filter 01/13/26');
+        Observer.Expect('dd_mm_yyyy_eight', 'error:The filter "13012026" is not valid for the Day field on the LT DTF Table table. The format of the Date ''13012026'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('mm_dd_yyyy_eight', 'ok:2026-01-13 .. 2026-01-13 | filter 01/13/26');
+        Observer.Expect('dd_mm_yy_separators', 'error:The filter "13-01-26" is not valid for the Day field on the LT DTF Table table. The format of the Date ''13-01-26'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Filter:CSide');
+        Observer.Expect('mm_dd_yy_separators', 'ok:2026-01-13 .. 2026-01-13 | filter 01/13/26');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DTF Tests"(CodeUnit 67359).GetRange_DayAboveTwelve_English line 20 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -171,6 +225,19 @@ codeunit 67359 "LT DTF Tests"
         Run('mm_dd_yy_separators', '01.13.26', Observer);
         WorkDate(SavedWorkDate);
         GlobalLanguage(SavedLanguage);
-        Observer.Finish();
+        Observer.Expect('dd_mm_four', 'error:Der Filter ''1301'' ist für das Feld ''Day'' der Tabelle ''LT DTF Table'' nicht gültig. Das Format Date „1301“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.|Filter:CSide');
+        Observer.Expect('mm_dd_four', 'ok:2031-01-13 .. 2031-01-13 | filter 01/13/31');
+        Observer.Expect('dd_mm_yy_six', 'error:Der Filter ''130126'' ist für das Feld ''Day'' der Tabelle ''LT DTF Table'' nicht gültig. Das Format Date „130126“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.|Filter:CSide');
+        Observer.Expect('mm_dd_yy_six', 'ok:2026-01-13 .. 2026-01-13 | filter 01/13/26');
+        Observer.Expect('dd_mm_yyyy_eight', 'error:Der Filter ''13012026'' ist für das Feld ''Day'' der Tabelle ''LT DTF Table'' nicht gültig. Das Format Date „13012026“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.|Filter:CSide');
+        Observer.Expect('mm_dd_yyyy_eight', 'ok:2026-01-13 .. 2026-01-13 | filter 01/13/26');
+        Observer.Expect('dd_mm_yy_separators', 'error:Der Filter ''13.01.26'' ist für das Feld ''Day'' der Tabelle ''LT DTF Table'' nicht gültig. Das Format Date „13.01.26“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.|F<MORE>
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 7 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT DTF Tests"(CodeUnit 67359).GetRange_DayAboveTwelve_German line 20 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+');
+        Observer.Verify();
     end;
 }

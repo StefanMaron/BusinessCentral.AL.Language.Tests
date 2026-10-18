@@ -121,7 +121,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(1, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT label error arg');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('message', 'LT label error arg');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('baseMessage', 'LT label error arg');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_ErrorWithLabel line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +147,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(2, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT text variable error');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('message', 'LT text variable error');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('baseMessage', 'LT text variable error');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_ErrorWithTextVariable line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +173,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(3, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT errorinfo message');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('message', 'LT errorinfo message');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('baseMessage', 'LT errorinfo message');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_ErrorWithErrorInfo line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +199,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(4, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'Entry No. must be equal to ''5''  in Probe Observer Entry: Entry No.=0. Current value is ''0''.');
+        Observer.Expect('lastErrorCode', 'TestField');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.NavTestFieldException');
+        Observer.Expect('message', 'Entry No. must be equal to ''5''  in Probe Observer Entry: Entry No.=0. Current value is ''0''.');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.NavTestFieldException');
+        Observer.Expect('baseMessage', 'Entry No. must be equal to ''5''  in Probe Observer Entry: Entry No.=0. Current value is ''0''.');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_FailingTestFieldWithValue line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +225,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(10, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'Entry No. must have a value in Probe Observer Entry: Entry No.=0. It cannot be zero or empty.');
+        Observer.Expect('lastErrorCode', 'TestField');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.NavTestFieldException');
+        Observer.Expect('message', 'Entry No. must have a value in Probe Observer Entry: Entry No.=0. It cannot be zero or empty.');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.NavTestFieldException');
+        Observer.Expect('baseMessage', 'Entry No. must have a value in Probe Observer Entry: Entry No.=0. It cannot be zero or empty.');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_FailingTestFieldWithoutValue line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -166,7 +251,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(5, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('lastErrorCode', 'DB:RecordNotFound');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException');
+        Observer.Expect('message', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException');
+        Observer.Expect('baseMessage', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_ModifyOfMissingRow line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +277,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(6, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('lastErrorCode', 'DB:RecordNotFound');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException');
+        Observer.Expect('message', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException');
+        Observer.Expect('baseMessage', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_DeleteOfMissingRow line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -184,7 +303,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(7, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'The value "not a number" can''t be evaluated into type Integer.');
+        Observer.Expect('lastErrorCode', 'Evaluate');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLEvaluateException');
+        Observer.Expect('message', 'The value "not a number" can''t be evaluated into type Integer.');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLEvaluateException');
+        Observer.Expect('baseMessage', 'The value "not a number" can''t be evaluated into type Integer.');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_EvaluateWithoutReturnValue line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +329,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(8, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT plain literal');
+        Observer.Expect('lastErrorCode', 'Dialog');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('message', 'LT plain literal');
+        Observer.Expect('innerExceptionIsNull', 'Yes');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('baseMessage', 'LT plain literal');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_ErrorWithLiteral line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +355,24 @@ codeunit 61481 "LT LEK Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Describe(9, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'Attempted to divide by zero.');
+        Observer.Expect('lastErrorCode', 'AL:DivideByZero');
+        Observer.Expect('isNull', 'No');
+        Observer.Expect('typeFullName', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavALException');
+        Observer.Expect('message', 'Attempted to divide by zero.');
+        Observer.Expect('innerExceptionIsNull', 'No');
+        Observer.Expect('baseIsNull', 'No');
+        Observer.Expect('baseTypeFullName', 'System.DivideByZeroException');
+        Observer.Expect('baseMessage', 'Attempted to divide by zero.');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Tests"(CodeUnit 61481).Kind_DivisionByZero line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }
 
@@ -249,7 +419,19 @@ codeunit 61483 "LT LEK Member Tests"
         Fail(6);
         Second := GetLastErrorObject();
         Observer.Observe('notFound_notFound', SameType(First, Second));
-        Observer.Finish();
+        Observer.Expect('dialog_dialog', 'Yes');
+        Observer.Expect('dialog_dialog_messagesDiffer', 'Yes');
+        Observer.Expect('dialog_dialog_sameObject', 'No');
+        Observer.Expect('dialog_self_sameObject', 'Yes');
+        Observer.Expect('notFound_notFound', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Member Tests"(CodeUnit 61483).Type_Equals_SameKinds line 19 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +451,17 @@ codeunit 61483 "LT LEK Member Tests"
         Observer.Observe('dialog_notFound', SameType(Dialog, NotFound));
         Observer.Observe('dialog_division', SameType(Dialog, Division));
         Observer.Observe('notFound_division', SameType(NotFound, Division));
-        Observer.Finish();
+        Observer.Expect('dialog_notFound', 'No');
+        Observer.Expect('dialog_division', 'No');
+        Observer.Expect('notFound_division', 'No');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Member Tests"(CodeUnit 61483).Type_Equals_DifferentKinds line 16 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -292,7 +484,20 @@ codeunit 61483 "LT LEK Member Tests"
         for Index := 1 to Lines.Count() do
             if Index <= 12 then
                 Observer.Observe('line' + Format(Index), Lines.Get(Index));
-        Observer.Finish();
+        Observer.Expect('lineCount', '4');
+        Observer.Expect('endsWithLineFeed', 'No');
+        Observer.Expect('line1', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT plain literal');
+        Observer.Expect('line2', '   at Microsoft.Dynamics.Nav.Runtime.NavDialog.ALError(NavSession session, Guid automationId, String message, NavValue[] values)');
+        Observer.Expect('line3', '   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit61480.OnRunAsync(INavRecordHandle εrec)');
+        Observer.Expect('line4', '   at Microsoft.Dynamics.Nav.Runtime.NavCodeunit.DoRunAsync(DataError errorLevel, NavRecord record)');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Member Tests"(CodeUnit 61483).ToString_DialogException_Lines line 19 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }
 
@@ -332,7 +537,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(1, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT label error arg');
+        Observer.Expect('handlerMessage', 'LT label error arg');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'LT label error arg');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterErrorWithLabel line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -341,7 +561,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(2, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT text variable error');
+        Observer.Expect('handlerMessage', 'LT text variable error');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'LT text variable error');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterErrorWithTextVariable line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -350,7 +585,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(3, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'LT errorinfo message');
+        Observer.Expect('handlerMessage', 'LT errorinfo message');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'LT errorinfo message');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterErrorWithErrorInfo line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -359,7 +609,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(4, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'Entry No. must be equal to ''5''  in Probe Observer Entry: Entry No.=0. Current value is ''0''.');
+        Observer.Expect('handlerMessage', 'Entry No. must be equal to ''5''  in Probe Observer Entry: Entry No.=0. Current value is ''0''.');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'Entry No. must be equal to ''5''  in Probe Observer Entry: Entry No.=0. Current value is ''0''.');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterFailingTestField line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -368,7 +633,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(5, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('handlerMessage', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterModifyOfMissingRow line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -377,7 +657,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(6, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('handlerMessage', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'The Probe Observer Entry does not exist. Identification fields and values: Entry No.=''-987654''');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterDeleteOfMissingRow line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +681,22 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(7, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'The value "not a number" can''t be evaluated into type Integer.');
+        Observer.Expect('handlerMessage', 'The value "not a number" can''t be evaluated into type Integer.');
+        Observer.Expect('tryCastToOwnType', 'Yes');
+        Observer.Expect('rethrowText', 'The value "not a number" can''t be evaluated into type Integer.');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterEvaluateWithoutReturnValue line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -395,6 +705,21 @@ codeunit 61484 "LT LEK Rethrow Tests"
         Observer: Codeunit "Probe Observer";
     begin
         AfterError(9, Observer);
-        Observer.Finish();
+        Observer.Expect('ran', 'No');
+        Observer.Expect('lastErrorText', 'Attempted to divide by zero.');
+        Observer.Expect('handlerMessage', 'Attempted to divide by zero.');
+        Observer.Expect('tryCastToOwnType', 'No');
+        Observer.Expect('rethrowText', 'Attempted to divide by zero.');
+        Observer.Expect('rethrowCode', 'Dialog');
+        Observer.Expect('rethrowType', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('rethrowInnerIsNull', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT LEK Rethrow Tests"(CodeUnit 61484).Rethrow_AfterDivisionByZero line 5 - AL Language Coverage Tests (OnPrem DotNet) by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }

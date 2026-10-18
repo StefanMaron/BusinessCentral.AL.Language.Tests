@@ -52,7 +52,23 @@ codeunit 67357 "LT FCM Tests"
         Run('dot_big', 1234567.891, '<Integer><Comma,.><Decimals>', Observer);
         Run('dot_whole', 1000, '<Integer><Comma,.><Decimals>', Observer);
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('whole_decimal', 'ok:1000');
+        Observer.Expect('whole_decimal_dot', 'ok:1000');
+        Observer.Expect('big', 'ok:1234567.891');
+        Observer.Expect('small', 'ok:0.5');
+        Observer.Expect('negative', 'ok:1234.5');
+        Observer.Expect('whole', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,,><Decimals>|InvalidFormatString');
+        Observer.Expect('thousand_big', 'ok:1,234,567.891');
+        Observer.Expect('dot_big', 'ok:1234567.891');
+        Observer.Expect('dot_whole', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT FCM Tests"(CodeUnit 67357).Format_CommaBeforeDecimals_Decimal line 19 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -72,7 +88,22 @@ codeunit 67357 "LT FCM Tests"
         Run('sign', -1234.5, '<Sign><Integer Thousand><Comma,.><Decimals,2>', Observer);
         Run('padded', 1234.5, '<Integer,8><Filler Character,0><Comma,.><Decimals,2>', Observer);
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('thousand_dot_dec3', 'ok:1,234,567***');
+        Observer.Expect('thousand_dot_dec3_whole', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Comma,.><Decimals,3>|InvalidFormatString');
+        Observer.Expect('thousand_dot_dec3_small', 'ok:0.50');
+        Observer.Expect('thousand_dot_dec3_negative', 'ok:1,234.50');
+        Observer.Expect('width10', 'ok:      1234.50');
+        Observer.Expect('thousand_width12', 'ok:   1,234,567***');
+        Observer.Expect('sign', 'ok:-1,234.5');
+        Observer.Expect('padded', 'ok:00001234.5');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT FCM Tests"(CodeUnit 67357).Format_CommaWithThousandAndWidth_Decimal line 16 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +127,20 @@ codeunit 67357 "LT FCM Tests"
         Run('datetime', Stamp, '<Integer Thousand><Comma,.><Decimals>', Observer);
         Run('datetime_comma', Stamp, '<Integer><Comma,,><Decimals>', Observer);
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('biginteger', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('biginteger_comma', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,,><Decimals>|InvalidFormatString');
+        Observer.Expect('duration', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('duration_comma', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,,><Decimals>|InvalidFormatString');
+        Observer.Expect('datetime', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Comma,.><Decimals>|InvalidFormatString');
+        Observer.Expect('datetime_comma', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer><Comma,,><Decimals>|InvalidFormatString');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT FCM Tests"(CodeUnit 67357).Format_CommaOnOtherTypes line 20 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,6 +164,19 @@ codeunit 67357 "LT FCM Tests"
         Run('datetime_integer', Stamp, '<Integer Thousand><Comma,.>', Observer);
         Run('datetime_only', Stamp, '<Comma,.>', Observer);
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('biginteger_integer', 'ok:1,234,567,890,123');
+        Observer.Expect('biginteger_only', 'ok:');
+        Observer.Expect('duration_integer', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Comma,.>|InvalidFormatString');
+        Observer.Expect('duration_only', 'ok:');
+        Observer.Expect('datetime_integer', 'error:An invalid field or attribute has been specified for the ''Format'' property.\\<Integer Thousand><Comma,.>|InvalidFormatString');
+        Observer.Expect('datetime_only', 'ok:');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT FCM Tests"(CodeUnit 67357).Format_CommaWithoutDecimals_OtherTypes line 20 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }

@@ -220,7 +220,20 @@ codeunit 67354 "LT PEN Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveRows('A', 'Act', Observer);
-        Observer.Finish();
+        Observer.Expect('count', '5');
+        Observer.Expect('AActActFive', 'OnAfterActionEvent - 1762977804');
+        Observer.Expect('AActActFour', 'OnAfterActionEvent - 1637616802');
+        Observer.Expect('AActActOne', 'OnAfterActionEvent - 1230864492');
+        Observer.Expect('AActActThree', 'OnAfterActionEvent - 964416274');
+        Observer.Expect('AActActTwo', 'OnAfterActionEvent - 325473572');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT PEN Tests"(CodeUnit 67354).PublishedFunction_ActionEvents_CardPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +242,20 @@ codeunit 67354 "LT PEN Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveRows('B', 'Act', Observer);
-        Observer.Finish();
+        Observer.Expect('count', '5');
+        Observer.Expect('BActDoIt', 'OnAfterActionEvent - 1237138033');
+        Observer.Expect('BActPost', 'OnAfterActionEvent - 729958143');
+        Observer.Expect('BActProcess', 'OnAfterActionEvent - 2052478748');
+        Observer.Expect('BActRelease', 'OnAfterActionEvent - 709761342');
+        Observer.Expect('BActReopen', 'OnAfterActionEvent - 1985144420');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT PEN Tests"(CodeUnit 67354).PublishedFunction_ActionEvents_ListPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,7 +264,20 @@ codeunit 67354 "LT PEN Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveRows('A', 'Fld', Observer);
-        Observer.Finish();
+        Observer.Expect('count', '5');
+        Observer.Expect('AFldAmount', 'OnAfterValidateEvent - 195763894');
+        Observer.Expect('AFldCode', 'OnAfterValidateEvent - 1621358379');
+        Observer.Expect('AFldDescCtl', 'OnAfterValidateEvent - 1251029156');
+        Observer.Expect('AFldId', 'OnAfterValidateEvent - 1598304267');
+        Observer.Expect('AFldNameCtl', 'OnAfterValidateEvent - 785226970');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT PEN Tests"(CodeUnit 67354).PublishedFunction_FieldValidateEvents_CardPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,6 +286,19 @@ codeunit 67354 "LT PEN Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveRows('B', 'Fld', Observer);
-        Observer.Finish();
+        Observer.Expect('count', '5');
+        Observer.Expect('BFldAmountB', 'OnAfterValidateEvent - 1752492791');
+        Observer.Expect('BFldCodeCtl', 'OnAfterValidateEvent - 919346209');
+        Observer.Expect('BFldDescription', 'OnAfterValidateEvent - 593484303');
+        Observer.Expect('BFldIdB', 'OnAfterValidateEvent - 2072102672');
+        Observer.Expect('BFldName', 'OnAfterValidateEvent - 738282952');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT PEN Tests"(CodeUnit 67354).PublishedFunction_FieldValidateEvents_ListPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }

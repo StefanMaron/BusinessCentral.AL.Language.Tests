@@ -45,7 +45,19 @@ codeunit 67356 "LT AFL Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Ask('new', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('new_quantity', 'No');
+        Observer.Expect('new_name', 'No');
+        Observer.Expect('new_flag', 'No');
+        Observer.Expect('new_id', 'No');
+        Observer.Expect('new_quantity_and_name', 'No');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_NewRecordNothingAssigned line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -56,7 +68,19 @@ codeunit 67356 "LT AFL Tests"
     begin
         Rec.Quantity := 0;
         Ask('quantity0', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('quantity0_quantity', 'Yes');
+        Observer.Expect('quantity0_name', 'Yes');
+        Observer.Expect('quantity0_flag', 'Yes');
+        Observer.Expect('quantity0_id', 'Yes');
+        Observer.Expect('quantity0_quantity_and_name', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_AfterAssigningTheDefaultValue line 7 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -68,7 +92,19 @@ codeunit 67356 "LT AFL Tests"
         Rec.Name := '';
         Rec.Flag := false;
         Ask('nameflag', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('nameflag_quantity', 'Yes');
+        Observer.Expect('nameflag_name', 'Yes');
+        Observer.Expect('nameflag_flag', 'Yes');
+        Observer.Expect('nameflag_id', 'Yes');
+        Observer.Expect('nameflag_quantity_and_name', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_AfterAssigningTheDefaultValueTextAndBoolean line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,7 +115,19 @@ codeunit 67356 "LT AFL Tests"
     begin
         Rec.Quantity := 5;
         Ask('quantity5', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('quantity5_quantity', 'Yes');
+        Observer.Expect('quantity5_name', 'Yes');
+        Observer.Expect('quantity5_flag', 'Yes');
+        Observer.Expect('quantity5_id', 'Yes');
+        Observer.Expect('quantity5_quantity_and_name', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_AfterAssigningAnotherValue line 7 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -90,7 +138,19 @@ codeunit 67356 "LT AFL Tests"
     begin
         Rec.Init();
         Ask('init', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('init_quantity', 'No');
+        Observer.Expect('init_name', 'No');
+        Observer.Expect('init_flag', 'No');
+        Observer.Expect('init_id', 'No');
+        Observer.Expect('init_quantity_and_name', 'No');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_AfterInit line 7 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -102,7 +162,19 @@ codeunit 67356 "LT AFL Tests"
         Rec.Init();
         Rec.Quantity := 0;
         Ask('init_quantity0', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('init_quantity0_quantity', 'Yes');
+        Observer.Expect('init_quantity0_name', 'Yes');
+        Observer.Expect('init_quantity0_flag', 'Yes');
+        Observer.Expect('init_quantity0_id', 'Yes');
+        Observer.Expect('init_quantity0_quantity_and_name', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_AfterInitAndAssigningTheDefaultValue line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,6 +186,18 @@ codeunit 67356 "LT AFL Tests"
         Rec.Init();
         Rec.Quantity := 5;
         Ask('init_quantity5', Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('init_quantity5_quantity', 'Yes');
+        Observer.Expect('init_quantity5_name', 'Yes');
+        Observer.Expect('init_quantity5_flag', 'Yes');
+        Observer.Expect('init_quantity5_id', 'Yes');
+        Observer.Expect('init_quantity5_quantity_and_name', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT AFL Tests"(CodeUnit 67356).AreFieldsLoaded_AfterInitAndAssigningAnotherValue line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }

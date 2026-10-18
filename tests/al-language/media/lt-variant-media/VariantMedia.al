@@ -43,7 +43,23 @@ codeunit 67378 "LT VM Tests"
         Rec.Insert();
         V := Rec.Picture;
         Describe('empty', V, Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('empty_isGuid', 'No');
+        Observer.Expect('empty_isCode', 'No');
+        Observer.Expect('empty_isBoolean', 'No');
+        Observer.Expect('empty_isText', 'No');
+        Observer.Expect('empty_isInteger', 'No');
+        Observer.Expect('empty_isRecord', 'No');
+        Observer.Expect('empty_formatLength', '38');
+        Observer.Expect('empty_formatEqualsMediaId', 'Yes');
+        Observer.Expect('empty_hasValue', 'No');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT VM Tests"(CodeUnit 67378).Variant_HoldingEmptyMediaField line 11 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -67,6 +83,22 @@ codeunit 67378 "LT VM Tests"
         Rec.Modify();
         V := Rec.Picture;
         Describe('imported', V, Rec, Observer);
-        Observer.Finish();
+        Observer.Expect('imported_isGuid', 'No');
+        Observer.Expect('imported_isCode', 'No');
+        Observer.Expect('imported_isBoolean', 'No');
+        Observer.Expect('imported_isText', 'No');
+        Observer.Expect('imported_isInteger', 'No');
+        Observer.Expect('imported_isRecord', 'No');
+        Observer.Expect('imported_formatLength', '38');
+        Observer.Expect('imported_formatEqualsMediaId', 'Yes');
+        Observer.Expect('imported_hasValue', 'Yes');
+        Observer.Expect('
+AL Callstack:
+"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
+"LT VM Tests"(CodeUnit 67378).Variant_HoldingImportedMediaField line 20 - AL Language Coverage Tests by AL Language version 1.0.0.0
+
+', '');
+        Observer.Verify();
     end;
 }
