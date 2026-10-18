@@ -1,10 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpclient/httpclient-data-type
 // Scope: in-scope (OnPrem app: UseDefaultNetworkWindowsAuthentication and UseWindowsAuthentication are Scope = OnPrem, must-not-compile cases 0651 to 0653)
-// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 61283
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 61284
 // Probe: written against BC 29 (runtime 16); the values are measured on the corpus CI service tiers.
 // Facts: HttpClient.UseDefaultNetworkWindowsAuthentication, UseWindowsAuthentication (Text and SecretText): return values and errors
 // BC versions: 27, 28, 29
-codeunit 61283 "LT S Http Client Auth Config"
+codeunit 61284 "LT S Http Client Auth Config"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -71,7 +71,7 @@ codeunit 61283 "LT S Http Client Auth Config"
 }
 
 #if BC29PLUS
-codeunit 61289 "LT S Http Client After Config"
+codeunit 61285 "LT S Http Client After Config"
 {
     Subtype = Test;
     TestPermissions = Disabled;

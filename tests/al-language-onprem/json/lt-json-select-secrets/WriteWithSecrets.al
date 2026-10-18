@@ -1,11 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/methods-auto/jsonobject/jsonobject-writewithsecretsto-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 61282
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 61283
 // Probe: written against BC 29 (runtime 16); the values are measured on the corpus CI service tiers.
 // Facts: JsonObject.WriteWithSecretsTo(Path, Secret, var Result) and WriteWithSecretsTo(Secrets, var Result): substitution, several secrets, missing path or key
 // BC versions: 27, 28, 29
 
-codeunit 61282 "LT S Write With Secrets"
+codeunit 61283 "LT S Write With Secrets"
 {
     Subtype = Test;
     TestPermissions = Disabled;

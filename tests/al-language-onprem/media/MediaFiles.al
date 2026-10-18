@@ -1,24 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/media/media-exportfile-method
 // Scope: in-scope (OnPrem app: Media.ExportFile / ImportFile and MediaSet.ExportFile / ImportFile are Scope = OnPrem)
-// Fixtures used: Probe Observer (codeunit 69160), self-contained table 61284 and codeunit 61285
+// Fixtures used: Probe Observer (codeunit 69160), table 61294 "PZ OnPrem Media Row" (session/PZMediaImportFile.al) and codeunit 61286
 // Probe: written against BC 29 (runtime 16); the values are measured on the corpus CI service tiers.
 // Facts: Media.ImportFile / ExportFile, MediaSet.ImportFile / ExportFile: returned Guid, Tenant Media properties, exported file, export of an empty media, a missing file
 // BC versions: 27, 28, 29
-table 61284 "LT S Media File Row"
-{
-    DataClassification = SystemMetadata;
-
-    fields
-    {
-        field(1; Code; Code[10]) { }
-        field(2; Pic; Media) { }
-        field(3; Pics; MediaSet) { }
-    }
-
-    keys { key(PK; Code) { Clustered = true; } }
-}
-
-codeunit 61285 "LT S Media Files"
+codeunit 61286 "LT S Media Files"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -76,19 +62,19 @@ codeunit 61285 "LT S Media Files"
     end;
 
     [TryFunction]
-    local procedure TryExport(var Row: Record "LT S Media File Row"; Name: Text)
+    local procedure TryExport(var Row: Record "PZ OnPrem Media Row"; Name: Text)
     begin
         Row.Pic.ExportFile(Name);
     end;
 
     [TryFunction]
-    local procedure TryExportSet(var Row: Record "LT S Media File Row"; Prefix: Text)
+    local procedure TryExportSet(var Row: Record "PZ OnPrem Media Row"; Prefix: Text)
     begin
-        Row.Pics.ExportFile(Prefix);
+        Row.Set.ExportFile(Prefix);
     end;
 
     [TryFunction]
-    local procedure TryImport(var Row: Record "LT S Media File Row"; Name: Text; var Id: Guid)
+    local procedure TryImport(var Row: Record "PZ OnPrem Media Row"; Name: Text; var Id: Guid)
     begin
         Id := Row.Pic.ImportFile(Name, 'desc');
     end;
@@ -97,7 +83,7 @@ codeunit 61285 "LT S Media Files"
     procedure Media_ImportFile_ExportFile()
     var
         Observer: Codeunit "Probe Observer";
-        Row: Record "LT S Media File Row";
+        Row: Record "PZ OnPrem Media Row";
         Base64: Codeunit "Base64 Convert";
         Src: Text;
         Dst: Text;
@@ -107,26 +93,28 @@ codeunit 61285 "LT S Media Files"
         F: File;
         Head: Text;
     begin
+        Row.SetFilter(Code, 'LTS*');
         Row.DeleteAll();
+        Row.Reset();
         Src := TempName('.png');
         Dst := TempName('.png');
         WritePng(Src);
-        Row.Code := 'A';
+        Row.Code := 'LTSA';
         Id := Row.Pic.ImportFile(Src, 'the description', 'image/png');
         Row.Insert();
         Observer.Observe('import_id_null', Format(IsNullGuid(Id)));
         Observer.Observe('import_id_is_media_id', Format(Id = Row.Pic.MediaId()));
         Observer.Observe('hasvalue', Format(Row.Pic.HasValue()));
         Observer.Observe('tenant_3args', DescribeTenant(Id, BaseOf(Src)));
-        Row.Code := 'B';
+        Row.Code := 'LTSB';
         Id2 := Row.Pic.ImportFile(Src, 'second');
         Row.Insert();
         Observer.Observe('tenant_2args', DescribeTenant(Id2, BaseOf(Src)));
-        Row.Code := 'C';
+        Row.Code := 'LTSC';
         Id2 := Row.Pic.ImportFile(Src, 'third', 'text/plain');
         Row.Insert();
         Observer.Observe('tenant_other_mime', DescribeTenant(Id2, BaseOf(Src)));
-        Row.Get('A');
+        Row.Get('LTSA');
         Observer.Observe('export_return', Format(Row.Pic.ExportFile(Dst)));
         Observer.Observe('source_len', Format(LenOf(Src)));
         Observer.Observe('export_exists', Format(File.Exists(Dst)));
@@ -166,15 +154,17 @@ codeunit 61285 "LT S Media Files"
     procedure Media_ExportFile_EmptyMedia_AndBadPaths()
     var
         Observer: Codeunit "Probe Observer";
-        Row: Record "LT S Media File Row";
+        Row: Record "PZ OnPrem Media Row";
         Dst: Text;
         Missing: Text;
         Id: Guid;
         Ok: Boolean;
     begin
+        Row.SetFilter(Code, 'LTS*');
         Row.DeleteAll();
+        Row.Reset();
         Dst := TempName('.png');
-        Row.Code := 'E';
+        Row.Code := 'LTSE';
         Row.Insert();
         Ok := TryExport(Row, Dst);
         Observer.Observe('empty_export', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
@@ -217,7 +207,7 @@ codeunit 61285 "LT S Media Files"
     procedure MediaSet_ImportFile_ExportFile()
     var
         Observer: Codeunit "Probe Observer";
-        Row: Record "LT S Media File Row";
+        Row: Record "PZ OnPrem Media Row";
         Src: Text;
         Prefix: Text;
         Dir: Text;
@@ -225,25 +215,27 @@ codeunit 61285 "LT S Media Files"
         Id2: Guid;
         Count: Integer;
     begin
+        Row.SetFilter(Code, 'LTS*');
         Row.DeleteAll();
+        Row.Reset();
         Src := TempName('.png');
         WritePng(Src);
-        Row.Code := 'S';
-        Id := Row.Pics.ImportFile(Src, 'first set item', 'image/png');
+        Row.Code := 'LTSS';
+        Id := Row.Set.ImportFile(Src, 'first set item', 'image/png');
         Observer.Observe('set_import_id_null', Format(IsNullGuid(Id)));
         Row.Insert();
-        Observer.Observe('set_count_after_one', Format(Row.Pics.Count()));
-        Id2 := Row.Pics.ImportFile(Src, 'second set item');
+        Observer.Observe('set_count_after_one', Format(Row.Set.Count()));
+        Id2 := Row.Set.ImportFile(Src, 'second set item');
         Row.Modify();
-        Observer.Observe('set_count_after_two', Format(Row.Pics.Count()));
+        Observer.Observe('set_count_after_two', Format(Row.Set.Count()));
         Observer.Observe('set_import_ids_equal', Format(Id = Id2));
-        Observer.Observe('set_id_is_media_id', Format(Id2 = Row.Pics.MediaId()));
-        Observer.Observe('item1', DescribeTenant(Row.Pics.Item(1), BaseOf(Src)));
-        Observer.Observe('item2', DescribeTenant(Row.Pics.Item(2), BaseOf(Src)));
-        Row.Get('S');
+        Observer.Observe('set_id_is_media_id', Format(Id2 = Row.Set.MediaId()));
+        Observer.Observe('item1', DescribeTenant(Row.Set.Item(1), BaseOf(Src)));
+        Observer.Observe('item2', DescribeTenant(Row.Set.Item(2), BaseOf(Src)));
+        Row.Get('LTSS');
         Dir := TemporaryPath() + 'ltsmediaset' + DelChr(Format(CreateGuid()), '=', '{}-');
         Prefix := Dir + '-';
-        Count := Row.Pics.ExportFile(Prefix);
+        Count := Row.Set.ExportFile(Prefix);
         Observer.Observe('export_count', Format(Count));
         Observer.Observe('prefix_itself_exists', Format(File.Exists(Prefix)));
         Cleanup(Src);
