@@ -95,7 +95,12 @@ codeunit 67411 "LT TBD Tests"
         ObserveField(Observer, 'set.date', FR);
         FR := RR.Field(Row.FieldNo(Cde));
         ObserveField(Observer, 'set.code', FR);
-        Observer.Finish();
+        Observer.Expect('set.int', 'ok [42]');
+        Observer.Expect('set.dec', 'ok [1,234.5]');
+        Observer.Expect('set.flag', 'ok [Yes]');
+        Observer.Expect('set.date', 'ok [03/05/24]');
+        Observer.Expect('set.code', 'ok [ABC]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,7 +123,12 @@ codeunit 67411 "LT TBD Tests"
         ObserveField(Observer, 'blank.date', FR);
         FR := RR.Field(Row.FieldNo(Cde));
         ObserveField(Observer, 'blank.code', FR);
-        Observer.Finish();
+        Observer.Expect('blank.int', 'ok [0]');
+        Observer.Expect('blank.dec', 'ok [0]');
+        Observer.Expect('blank.flag', 'ok [No]');
+        Observer.Expect('blank.date', 'ok []');
+        Observer.Expect('blank.code', 'ok []');
+        Observer.Verify();
     end;
 
     [Test]
@@ -133,7 +143,12 @@ codeunit 67411 "LT TBD Tests"
         RR.GetTable(Row);
         for i := 2 to RR.FieldCount() do
             ObserveIndex(Observer, 'idx.' + Format(i), RR, i);
-        Observer.Finish();
+        Observer.Expect('idx.2', 'ok [42]');
+        Observer.Expect('idx.3', 'ok [1,234.5]');
+        Observer.Expect('idx.4', 'ok [Yes]');
+        Observer.Expect('idx.5', 'ok [03/05/24]');
+        Observer.Expect('idx.6', 'ok [ABC]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,6 +163,11 @@ codeunit 67411 "LT TBD Tests"
         RR.GetTable(Row);
         for i := 2 to RR.FieldCount() do
             ObserveIndex(Observer, 'idx.' + Format(i), RR, i);
-        Observer.Finish();
+        Observer.Expect('idx.2', 'ok [0]');
+        Observer.Expect('idx.3', 'ok [0]');
+        Observer.Expect('idx.4', 'ok [No]');
+        Observer.Expect('idx.5', 'ok []');
+        Observer.Expect('idx.6', 'ok []');
+        Observer.Verify();
     end;
 }

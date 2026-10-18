@@ -5,6 +5,8 @@
 // Facts: BigText.Write into a Blob OutStream. Non-ASCII text (a with umlaut, euro sign, a Cyrillic letter) on a default stream and on a UTF-8 stream,
 //   the bytes read back with InStream.Read(Byte); a stream that was written with WriteText before; WriteText after BigText.Write;
 //   streams created with UTF16, Windows and MSDos for ASCII text; an empty BigText (Blob length and HasValue).
+// Observed: a default stream (and MSDos) stores one byte per character in the OEM code page (84 B1 3F for a with umlaut, euro sign, Cyrillic: the Cyrillic letter becomes 3F),
+//   Windows stores E4 80 3F, UTF-8 stores C3 A4 E2 82 AC D0 96 and UTF16 stores 16-bit units; BigText.Read decodes with the default (OEM) code page.
 // BC versions: all (CI)
 
 codeunit 67412 "LT BTW Tests"
@@ -85,7 +87,12 @@ codeunit 67412 "LT BTW Tests"
         Big.Write(Out);
         ObserveBlob(Observer, 'default', TempBlob);
         ObserveReadBack(Observer, 'default', TempBlob);
-        Observer.Finish();
+        Observer.Expect('default.len', '3');
+        Observer.Expect('default.hasvalue', 'Yes');
+        Observer.Expect('default.bytes', '[84 B1 3F]');
+        Observer.Expect('default.readlen', '3');
+        Observer.Expect('default.readcodes', '[228,8364,63]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +108,12 @@ codeunit 67412 "LT BTW Tests"
         Big.Write(Out);
         ObserveBlob(Observer, 'utf8', TempBlob);
         ObserveReadBack(Observer, 'utf8', TempBlob);
-        Observer.Finish();
+        Observer.Expect('utf8.len', '7');
+        Observer.Expect('utf8.hasvalue', 'Yes');
+        Observer.Expect('utf8.bytes', '[C3 A4 E2 82 AC D0 96]');
+        Observer.Expect('utf8.readlen', '7');
+        Observer.Expect('utf8.readcodes', '[8220,241,203,233,188,168,251]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +139,22 @@ codeunit 67412 "LT BTW Tests"
         Big.Write(Out);
         ObserveBlob(Observer, 'msdos', MsDosBlob);
         ObserveReadBack(Observer, 'msdos', MsDosBlob);
-        Observer.Finish();
+        Observer.Expect('utf16.len', '6');
+        Observer.Expect('utf16.hasvalue', 'Yes');
+        Observer.Expect('utf16.bytes', '[E4 00 AC 20 16 04]');
+        Observer.Expect('utf16.readlen', '1');
+        Observer.Expect('utf16.readcodes', '[205]');
+        Observer.Expect('windows.len', '3');
+        Observer.Expect('windows.hasvalue', 'Yes');
+        Observer.Expect('windows.bytes', '[E4 80 3F]');
+        Observer.Expect('windows.readlen', '3');
+        Observer.Expect('windows.readcodes', '[205,199,63]');
+        Observer.Expect('msdos.len', '3');
+        Observer.Expect('msdos.hasvalue', 'Yes');
+        Observer.Expect('msdos.bytes', '[84 B1 3F]');
+        Observer.Expect('msdos.readlen', '3');
+        Observer.Expect('msdos.readcodes', '[228,8364,63]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +170,10 @@ codeunit 67412 "LT BTW Tests"
         Out.WriteText('abc');
         Big.Write(Out);
         ObserveBlob(Observer, 'after-writetext', TempBlob);
-        Observer.Finish();
+        Observer.Expect('after-writetext.len', '6');
+        Observer.Expect('after-writetext.hasvalue', 'Yes');
+        Observer.Expect('after-writetext.bytes', '[61 62 63 64 65 66]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +189,10 @@ codeunit 67412 "LT BTW Tests"
         Big.Write(Out);
         Out.WriteText('xyz');
         ObserveBlob(Observer, 'before-writetext', TempBlob);
-        Observer.Finish();
+        Observer.Expect('before-writetext.len', '6');
+        Observer.Expect('before-writetext.hasvalue', 'Yes');
+        Observer.Expect('before-writetext.bytes', '[61 62 63 78 79 7A]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -182,7 +215,16 @@ codeunit 67412 "LT BTW Tests"
         MsDosBlob.CreateOutStream(Out, TextEncoding::MSDos);
         Big.Write(Out);
         ObserveBlob(Observer, 'msdos', MsDosBlob);
-        Observer.Finish();
+        Observer.Expect('utf16.len', '6');
+        Observer.Expect('utf16.hasvalue', 'Yes');
+        Observer.Expect('utf16.bytes', '[61 00 62 00 63 00]');
+        Observer.Expect('windows.len', '3');
+        Observer.Expect('windows.hasvalue', 'Yes');
+        Observer.Expect('windows.bytes', '[61 62 63]');
+        Observer.Expect('msdos.len', '3');
+        Observer.Expect('msdos.hasvalue', 'Yes');
+        Observer.Expect('msdos.bytes', '[61 62 63]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -196,6 +238,9 @@ codeunit 67412 "LT BTW Tests"
         TempBlob.CreateOutStream(Out);
         Big.Write(Out);
         ObserveBlob(Observer, 'empty', TempBlob);
-        Observer.Finish();
+        Observer.Expect('empty.len', '0');
+        Observer.Expect('empty.hasvalue', 'No');
+        Observer.Expect('empty.bytes', '[]');
+        Observer.Verify();
     end;
 }
