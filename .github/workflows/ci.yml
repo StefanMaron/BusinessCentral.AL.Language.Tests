@@ -8,7 +8,7 @@ name: AL Language Test Suite
 #
 # Adding a new BC version:
 #   1. In the prepare job, add an include entry to the else-branch JSON:
-#      {"bc_version":"29.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}
+#      {"bc_version":"29.0","runtime":"18.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}
 #   2. If new API/keywords only exist from that version, guard tests with
 #      #if BC29PLUS and define the symbol in the include entry above.
 #   al_tool_version and runtime_version are auto-derived from bc_version
@@ -189,7 +189,7 @@ jobs:
           else
             # al-runtime-rs-staging only: the newest minor of each major (al-runtime-rs reads only these as its oracle).
             # Master keeps every minor from 27.0 to 29.0 (the AL Runner project reads that matrix).
-            JSON='{"include":[{"bc_version":"27.5","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.5","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"29.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}]}'
+            JSON='{"include":[{"bc_version":"27.5","runtime":"16.1","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.5","runtime":"17.1","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"29.0","runtime":"18.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}]}'
           fi
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
 
@@ -208,6 +208,7 @@ jobs:
       codeunit_range:       "60000..60999|67000..69999|70000..74999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
       # Pinned to the 29.0 build before 29.0.54011.55892 (published 2026-10-07). That build
       # reports debugger protocol 9.0, and no published al tool supports it yet: 18.0.37.11445-beta
       # and 18.0.43.1464 stop at 7.0, 30.0.42.60748-beta at 8.0, so every codeunit ended "al
@@ -270,6 +271,7 @@ jobs:
       codeunit_range:       "61200..61299"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
       # Pinned to the 29.0 build before 29.0.54011.55892 (published 2026-10-07). That build
       # reports debugger protocol 9.0, and no published al tool supports it yet: 18.0.37.11445-beta
       # and 18.0.43.1464 stop at 7.0, 30.0.42.60748-beta at 8.0, so every codeunit ended "al
@@ -299,6 +301,7 @@ jobs:
       codeunit_range:       "61400..61499"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
 
     # Optional: supply a base64-encoded BC developer license.
