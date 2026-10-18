@@ -46,9 +46,8 @@ codeunit 77099 "LT AB Tests"
         Dummy := Card.FxVisExprF.Value();
     end;
 
-    local procedure FixedRun(Ed: Boolean; En: Boolean; Vi: Boolean)
+    local procedure FixedRun(var Observer: Codeunit "Probe Observer"; Ed: Boolean; En: Boolean; Vi: Boolean)
     var
-        Observer: Codeunit "Probe Observer";
         Flags: Codeunit "LT AB Flags";
         Card: TestPage "LT AB Fixed Props";
     begin
@@ -71,37 +70,126 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('hidden-reachable', Format(FixedTryHiddenValue(Card)));
         Observer.Observe('visexpr-reachable', Format(FixedTryVisExprValue(Card)));
         Card.Close();
-        Observer.Finish();
     end;
 
     [Test]
     procedure FixedExpressionTrue()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        FixedRun(true, true, true);
+        FixedRun(Observer, true, true, true);
+        Observer.Expect('true-editable', 'No');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure FixedExpressionFalse()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        FixedRun(false, false, false);
+        FixedRun(Observer, false, false, false);
+        Observer.Expect('true-editable', 'No');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure FixedExpressionNotEditable()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        FixedRun(false, true, true);
+        FixedRun(Observer, false, true, true);
+        Observer.Expect('true-editable', 'No');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure FixedExpressionNotEnabled()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        FixedRun(true, false, true);
+        FixedRun(Observer, true, false, true);
+        Observer.Expect('true-editable', 'No');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure FixedExpressionNotVisible()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        FixedRun(true, true, false);
+        FixedRun(Observer, true, true, false);
+        Observer.Expect('true-editable', 'No');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -137,7 +225,14 @@ codeunit 77099 "LT AB Tests"
         Card.Close();
         Stored.Get(1);
         Observer.Observe('stored-name', Stored.Name);
-        Observer.Finish();
+        Observer.Expect('true-after-setvalue', 'set-true');
+        Observer.Expect('false-setvalue-ok', 'Yes');
+        Observer.Expect('false-setvalue-error', '');
+        Observer.Expect('expr-setvalue-ok', 'Yes');
+        Observer.Expect('expr-setvalue-error', '');
+        Observer.Expect('expr-value-after', 'set-expr');
+        Observer.Expect('stored-name', 'set-expr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,7 +265,11 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('tree-field', List.TreeF.Value());
         Observer.Observe('plain-field', List.PlainTreeF.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('row-count', '3');
+        Observer.Expect('rows', '1=One;2=Two;3=Three;');
+        Observer.Expect('tree-field', 'Three');
+        Observer.Expect('plain-field', 'Three');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- Grid
@@ -201,9 +300,8 @@ codeunit 77099 "LT AB Tests"
         Dummy := Card.GrVisExprF.Value();
     end;
 
-    local procedure GridRun(Ed: Boolean; En: Boolean; Vi: Boolean)
+    local procedure GridRun(var Observer: Codeunit "Probe Observer"; Ed: Boolean; En: Boolean; Vi: Boolean)
     var
-        Observer: Codeunit "Probe Observer";
         Flags: Codeunit "LT AB Flags";
         Card: TestPage "LT AB Grid Props";
     begin
@@ -226,37 +324,126 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('hidden-reachable', Format(GridTryHiddenValue(Card)));
         Observer.Observe('visexpr-reachable', Format(GridTryVisExprValue(Card)));
         Card.Close();
-        Observer.Finish();
     end;
 
     [Test]
     procedure GridExpressionTrue()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        GridRun(true, true, true);
+        GridRun(Observer, true, true, true);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GridExpressionFalse()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        GridRun(false, false, false);
+        GridRun(Observer, false, false, false);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GridExpressionNotEditable()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        GridRun(false, true, true);
+        GridRun(Observer, false, true, true);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GridExpressionNotEnabled()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        GridRun(true, false, true);
+        GridRun(Observer, true, false, true);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure GridExpressionNotVisible()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        GridRun(true, true, false);
+        GridRun(Observer, true, true, false);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', 'First');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', 'First');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', 'First');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -292,7 +479,14 @@ codeunit 77099 "LT AB Tests"
         Card.Close();
         Stored.Get(1);
         Observer.Observe('stored-name', Stored.Name);
-        Observer.Finish();
+        Observer.Expect('true-after-setvalue', 'set-true');
+        Observer.Expect('false-setvalue-ok', 'Yes');
+        Observer.Expect('false-setvalue-error', '');
+        Observer.Expect('expr-setvalue-ok', 'Yes');
+        Observer.Expect('expr-setvalue-error', '');
+        Observer.Expect('expr-value-after', 'set-expr');
+        Observer.Expect('stored-name', 'set-expr');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,7 +519,11 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('tree-field', List.TreeF.Value());
         Observer.Observe('plain-field', List.PlainTreeF.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('row-count', '3');
+        Observer.Expect('rows', '1=One;2=Two;3=Three;');
+        Observer.Expect('tree-field', 'Three');
+        Observer.Expect('plain-field', 'Three');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- Cue
@@ -356,9 +554,8 @@ codeunit 77099 "LT AB Tests"
         Dummy := Card.CgVisExprF.Value();
     end;
 
-    local procedure CueRun(Ed: Boolean; En: Boolean; Vi: Boolean)
+    local procedure CueRun(var Observer: Codeunit "Probe Observer"; Ed: Boolean; En: Boolean; Vi: Boolean)
     var
-        Observer: Codeunit "Probe Observer";
         Flags: Codeunit "LT AB Flags";
         Card: TestPage "LT AB Cue Props";
     begin
@@ -381,37 +578,126 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('hidden-reachable', Format(CueTryHiddenValue(Card)));
         Observer.Observe('visexpr-reachable', Format(CueTryVisExprValue(Card)));
         Card.Close();
-        Observer.Finish();
     end;
 
     [Test]
     procedure CueExpressionTrue()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        CueRun(true, true, true);
+        CueRun(Observer, true, true, true);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', '0');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', '0');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', '0');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure CueExpressionFalse()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        CueRun(false, false, false);
+        CueRun(Observer, false, false, false);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', '0');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', '0');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'No');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', '0');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure CueExpressionNotEditable()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        CueRun(false, true, true);
+        CueRun(Observer, false, true, true);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', '0');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', '0');
+        Observer.Expect('expr-editable', 'No');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', '0');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure CueExpressionNotEnabled()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        CueRun(true, false, true);
+        CueRun(Observer, true, false, true);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', '0');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', '0');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'No');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', '0');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
     procedure CueExpressionNotVisible()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        CueRun(true, true, false);
+        CueRun(Observer, true, true, false);
+        Observer.Expect('true-editable', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-value', '0');
+        Observer.Expect('false-editable', 'No');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-value', '0');
+        Observer.Expect('expr-editable', 'Yes');
+        Observer.Expect('expr-enabled', 'Yes');
+        Observer.Expect('expr-visible', 'Yes');
+        Observer.Expect('expr-value', '0');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('hidden-reachable', 'No');
+        Observer.Expect('visexpr-reachable', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -447,7 +733,14 @@ codeunit 77099 "LT AB Tests"
         Card.Close();
         Stored.Get(1);
         Observer.Observe('stored-name', Stored.Name);
-        Observer.Finish();
+        Observer.Expect('true-after-setvalue', '0');
+        Observer.Expect('false-setvalue-ok', 'Yes');
+        Observer.Expect('false-setvalue-error', '');
+        Observer.Expect('expr-setvalue-ok', 'Yes');
+        Observer.Expect('expr-setvalue-error', '');
+        Observer.Expect('expr-value-after', '0');
+        Observer.Expect('stored-name', 'First');
+        Observer.Verify();
     end;
 
     [Test]
@@ -480,7 +773,11 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('tree-field', List.TreeF.Value());
         Observer.Observe('plain-field', List.PlainTreeF.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('row-count', '3');
+        Observer.Expect('rows', '1=One;2=Two;3=Three;');
+        Observer.Expect('tree-field', '0');
+        Observer.Expect('plain-field', '0');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- PageEvt
@@ -515,7 +812,9 @@ codeunit 77099 "LT AB Tests"
         Log.Reset();
         Rows.Close();
         Observer.Observe('after-close', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('after-open', 'page OnOpenPage | A2 OnOpenPageEvent 2 | A1 OnOpenPageEvent 2 | B OnOpenPageEvent 2 | page OnAfterGetCurrRecord 1 | A2 OnAfterGetCurrRecordEvent 1 | A1 OnAfterGetCurrRecordEvent 1 | B OnAfterGetCurrRecordEvent 1');
+        Observer.Expect('after-close', 'page OnQueryClosePage OK | A2 OnQueryClosePageEvent 2 Yes | A1 OnQueryClosePageEvent 2 Yes | B OnQueryClosePageEvent 2 Yes | page OnClosePage | A2 OnClosePageEvent 2 | A1 OnClosePageEvent 2 | B OnClosePageEvent 2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -534,7 +833,9 @@ codeunit 77099 "LT AB Tests"
         Rows.Previous();
         Observer.Observe('after-previous', Log.Dump());
         Rows.Close();
-        Observer.Finish();
+        Observer.Expect('after-next', 'page OnAfterGetCurrRecord 2 | A2 OnAfterGetCurrRecordEvent 2 | A1 OnAfterGetCurrRecordEvent 2 | B OnAfterGetCurrRecordEvent 2');
+        Observer.Expect('after-previous', 'page OnAfterGetCurrRecord 1 | A2 OnAfterGetCurrRecordEvent 1 | A1 OnAfterGetCurrRecordEvent 1 | B OnAfterGetCurrRecordEvent 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -562,7 +863,11 @@ codeunit 77099 "LT AB Tests"
         Rows.Close();
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Observe('stored-ten-exists', Format(Stored.Get(10)));
-        Observer.Finish();
+        Observer.Expect('after-new', 'page OnNewRecord Yes | A2 OnNewRecordEvent 0 Yes | A1 OnNewRecordEvent 0 Yes | B OnNewRecordEvent 0 Yes | page OnAfterGetCurrRecord 0 | A2 OnAfterGetCurrRecordEvent 0 | A1 OnAfterGetCurrRecordEvent 0 | B OnAfterGetCurrRecordEvent 0');
+        Observer.Expect('after-id', '');
+        Observer.Expect('after-name', 'page OnInsertRecord 10  | A2 OnInsertRecordEvent 10  1 Yes Yes | A1 OnInsertRecordEvent 10  1 Yes Yes | B OnInsertRecordEvent 10  1 Yes Yes');
+        Observer.Expect('after-leave-row', 'page OnModifyRecord Ten was  | A2 OnModifyRecordEvent Ten  Yes | A1 OnMod');
+        Observer.Verify();
     end;
 
     [Test]
@@ -584,7 +889,10 @@ codeunit 77099 "LT AB Tests"
         Rows.Close();
         Stored.Get(1);
         Observer.Observe('stored-name', Stored.Name);
-        Observer.Finish();
+        Observer.Expect('after-setvalue', '');
+        Observer.Expect('after-leave-row', 'page OnModifyRecord Changed was One | A2 OnModifyRecordEvent Changed One Yes | A1 OnModifyRecordEvent Changed One Yes | B OnModifyRecordEvent Changed One Yes | page OnAfterGetCurrRecord 2 | A2 OnAfterGetCurrRecordEvent 2 | A1 OnAfterGetCurrRecordEvent 2 | B OnAfterGetCurrRecordEvent 2');
+        Observer.Expect('stored-name', 'Changed');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -620,7 +928,12 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('close-ok', Format(PageEvtTryClose(Rows)));
         Stored.Get(1);
         Observer.Observe('stored-name', Stored.Name);
-        Observer.Finish();
+        Observer.Expect('next-ok', 'Yes');
+        Observer.Expect('next-error', '');
+        Observer.Expect('log', 'page OnModifyRecord Vetoed was One | A2 OnModifyRecordEvent Vetoed One Yes | A1 OnModifyRecordEvent Vetoed One No | B OnModifyRecordEvent Vetoed One No | page OnAfterGetCurrRecord 2 | A2 OnAfterGetCurrRecordEvent 2 | A1 OnAfterGetCurrRecordEvent 2 | B OnAfterGetCurrRecordEvent 2');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('stored-name', 'One');
+        Observer.Verify();
     end;
 
     [Test]
@@ -639,7 +952,10 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('close-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Flags.SetVeto(false);
-        Observer.Finish();
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close-error', 'The page cannot be closed at this time.');
+        Observer.Expect('log', 'page OnQueryClosePage OK | A2 OnQueryClosePageEvent 2 Yes | A1 OnQueryClosePageEvent 2 No | B OnQueryClosePageEvent 2 No');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- ReqPage
@@ -672,7 +988,8 @@ codeunit 77099 "LT AB Tests"
         ReqPageSeed();
         Report.Run(Report::"LT AB RP Report");
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start | handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | base OnClosePage 2 | ext OnClosePage 0 | handler after OK | report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnAfterGetRecord 2 | report OnPos');
+        Observer.Verify();
     end;
 
     [Test]
@@ -685,7 +1002,8 @@ codeunit 77099 "LT AB Tests"
         ReqPageSeed();
         Report.Run(Report::"LT AB RP Report");
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel | base OnClosePage 2 | ext OnClosePage 0 | handler after Cancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -701,7 +1019,8 @@ codeunit 77099 "LT AB Tests"
         Report.Run(Report::"LT AB RP Report");
         Observer.Observe('log', Log.Dump());
         Flags.SetVeto(false);
-        Observer.Finish();
+        Observer.Expect('log', 'base OnOpenPage 2 | ext OnOpenPage 0 | base OnFindRecord = | base OnAfterGetRecord 0 | ext OnAfterGetRecord 0 | base OnAfterGetCurrRecord 0 | ext OnAfterGetCurrRecord 0 | handler start | handler after SetValue | base OnModifyRecord typed | ext OnModifyRecord 0 | base OnQueryClosePage OK | ext OnQueryClosePage OK | handler after OK | base OnQueryClosePage Cancel | ext OnQueryClosePage Cancel | report OnPreReport | report OnPreDataItem | report OnAfterGetRecord 1 | report OnAfterGetRec');
+        Observer.Verify();
     end;
 
     [Test]
@@ -714,7 +1033,8 @@ codeunit 77099 "LT AB Tests"
         ReqPageSeed();
         Report.Run(Report::"LT AB RP Plain Report");
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'ext2 OnOpenPage 0 | ext2 OnAfterGetRecord 0 | ext2 OnAfterGetCurrRecord 0 | handler start | ext2 OnQueryClosePage OK | ext2 OnClosePage 0 | handler after OK | plain OnPreReport');
+        Observer.Verify();
     end;
 
     [Test]
@@ -727,7 +1047,10 @@ codeunit 77099 "LT AB Tests"
         asserterror Report.Run(Report::"LT AB RP Report");
         Observer.ObserveError('run-without-handler');
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('run-without-handler|text', 'Unhandled UI: RequestPage 77070');
+        Observer.Expect('run-without-handler|code', 'MissingUIHandler');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -779,22 +1102,6 @@ codeunit 77099 "LT AB Tests"
     end;
 
     [Test]
-    procedure ActionAddInBeforeActionRunsBeforeOnAction()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-        Card: TestPage "LT AB Action Card";
-    begin
-        ActionAddInSeed();
-        Card.OpenEdit();
-        Log.Reset();
-        Card.Act.Invoke();
-        Observer.Observe('log', Log.Dump());
-        Card.Close();
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure ActionAddInErrorInBeforeActionStopsOnAction()
     var
         Observer: Codeunit "Probe Observer";
@@ -810,6 +1117,25 @@ codeunit 77099 "LT AB Tests"
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Dump());
         Flags.SetVeto(false);
+        Card.Close();
+        Observer.Expect('invoke|text', 'LT AB before action error');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', 'ext OnBeforeAction');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure ActionAddInBeforeActionRunsBeforeOnAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AB Log";
+        Card: TestPage "LT AB Action Card";
+    begin
+        ActionAddInSeed();
+        Card.OpenEdit();
+        Log.Reset();
+        Card.Act.Invoke();
+        Observer.Observe('log', Log.Dump());
         Card.Close();
         Observer.Finish();
     end;
@@ -828,7 +1154,10 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('after-setvalue', Log.Dump());
         Card.Close();
         Observer.Observe('after-close', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('after-open', 'page OnOpenPage');
+        Observer.Expect('after-setvalue', 'page OnOpenPage | field OnValidate Typed');
+        Observer.Expect('after-close', 'page OnOpenPage | field OnValidate Typed');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- Render
@@ -860,7 +1189,11 @@ codeunit 77099 "LT AB Tests"
         Observer.ObserveError('saveas-pdf');
         Observer.Observe('log', Log.Dump());
         Observer.Observe('has-output', Format(TempBlob.Length() > 0));
-        Observer.Finish();
+        Observer.Expect('saveas-pdf|text', 'RDLC report rendering is not implemented on Linux BC: the Windows Reporting Service is stubbed out (bc-linux StartupHook.cs Patch #19). IReportingServiceClient.RenderAsync() cannot produce report output on this platform.');
+        Observer.Expect('saveas-pdf|code', 'Report');
+        Observer.Expect('log', 'plain OnPreReport | plain ext OnPreRendering keys=0');
+        Observer.Expect('has-output', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -877,7 +1210,11 @@ codeunit 77099 "LT AB Tests"
         Observer.ObserveError('saveas-pdf');
         Observer.Observe('log', Log.Dump());
         Observer.Observe('has-output', Format(TempBlob.Length() > 0));
-        Observer.Finish();
+        Observer.Expect('saveas-pdf|text', 'Unable to deserialize report rendering payload.');
+        Observer.Expect('saveas-pdf|code', 'ReportRendering:Json');
+        Observer.Expect('log', 'report OnPreReport | ext OnPreRendering keys=0');
+        Observer.Expect('has-output', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -893,7 +1230,10 @@ codeunit 77099 "LT AB Tests"
         asserterror Report.SaveAs(Report::"LT AB Render Report", '', ReportFormat::Word, OutStr);
         Observer.ObserveError('saveas-word');
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('saveas-word|text', 'Unable to deserialize report rendering payload.');
+        Observer.Expect('saveas-word|code', 'ReportRendering:Json');
+        Observer.Expect('log', 'report OnPreReport | ext OnPreRendering keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -909,7 +1249,10 @@ codeunit 77099 "LT AB Tests"
         asserterror Report.SaveAs(Report::"LT AB Render Report", '', ReportFormat::Xml, OutStr);
         Observer.ObserveError('saveas-xml');
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('saveas-xml|text', 'Unable to deserialize report rendering payload.');
+        Observer.Expect('saveas-xml|code', 'ReportRendering:Json');
+        Observer.Expect('log', 'report OnPreReport | ext OnPreRendering keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -922,6 +1265,9 @@ codeunit 77099 "LT AB Tests"
         asserterror Report.Run(Report::"LT AB Render Report");
         Observer.ObserveError('run');
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('run|text', 'Unable to deserialize report rendering payload.');
+        Observer.Expect('run|code', 'ReportRendering:Json');
+        Observer.Expect('log', 'report OnPreReport | ext OnPreRendering keys=0');
+        Observer.Verify();
     end;
 }

@@ -65,6 +65,13 @@ codeunit 77041 "LT AB Layout Tests"
         Observer.Observe('columns-value', Card.GrColumnsF.Value());
         Observer.Observe('columns-visible', Format(Card.GrColumnsF.Visible()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('wide-value', '0');
+        Observer.Expect('wide-visible', 'Yes');
+        Observer.Expect('wide-lower-value', '0');
+        Observer.Expect('rows-value', 'Layout');
+        Observer.Expect('rows-visible', 'Yes');
+        Observer.Expect('columns-value', 'Layout');
+        Observer.Expect('columns-visible', 'Yes');
+        Observer.Verify();
     end;
 }
