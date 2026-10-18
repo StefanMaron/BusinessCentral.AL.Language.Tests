@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-dotnet-interoperability
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); self-contained codeunits 67289-67291
+// Fixtures used: Probe Observer (69160); self-contained codeunits 67289-67290
 // RISKY (runtime): codeunits 9804 "Log Recorded Events" and 9802 "Log Activity Permissions" register platform event receivers (DotNet, with the triggers EventReceiver::OnEventCheckEvent and EventReceiver::OnPermissionCheckEvent);
 // whether the receivers deliver anything to a test session is observed, not assumed. OnRecordingErrorOccurred shows its message only when the recording breaks, which a test cannot cause.
 //

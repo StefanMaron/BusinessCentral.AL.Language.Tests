@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testrunner-codeunits
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); self-contained codeunits 67284-67288
+// Fixtures used: Probe Observer (69160); self-contained codeunits 67284-67288 and 67294, table 67295
 // RISKY (runtime): a test that runs a codeunit of Subtype = TestRunner while the corpus runs under Microsoft's top-level runner; what a test sees is observed.
 //
 // The triggers OnBeforeTestRun (its Boolean result decides whether the test method runs) and OnAfterTestRun (it receives the success flag) of a test runner codeunit, and a runner without them.
@@ -11,14 +11,13 @@ codeunit 67284 "LT P Runner Log"
 
     var
         Entries: List of [Text];
-        FailSubject: Boolean;
-        SkipMethod: Text;
 
     procedure Reset()
+    var
+        Flag: Record "LT P Runner Flag";
     begin
         Clear(Entries);
-        FailSubject := false;
-        SkipMethod := '';
+        Flag.DeleteAll();
     end;
 
     procedure Add(Entry: Text)
@@ -36,24 +35,38 @@ codeunit 67284 "LT P Runner Log"
         exit(R);
     end;
 
-    procedure SetFailSubject(Value: Boolean)
+    procedure SetFlag(FlagName: Text; FlagValue: Text)
+    var
+        Flag: Record "LT P Runner Flag";
     begin
-        FailSubject := Value;
+        Flag.Init();
+        Flag.Name := CopyStr(FlagName, 1, MaxStrLen(Flag.Name));
+        Flag.Value := CopyStr(FlagValue, 1, MaxStrLen(Flag.Value));
+        Flag.Insert();
     end;
+}
 
-    procedure GetFailSubject(): Boolean
-    begin
-        exit(FailSubject);
-    end;
+table 67295 "LT P Runner Flag"
+{
+    fields
+    {
+        field(1; Name; Code[20]) { }
+        field(2; Value; Text[50]) { }
+    }
+    keys
+    {
+        key(PK; Name) { Clustered = true; }
+    }
+}
 
-    procedure SetSkipMethod(Value: Text)
+codeunit 67294 "LT P Runner Subject Hook"
+{
+    procedure Body(Name: Text)
+    var
+        Flag: Record "LT P Runner Flag";
     begin
-        SkipMethod := Value;
-    end;
-
-    procedure GetSkipMethod(): Text
-    begin
-        exit(SkipMethod);
+        if Flag.Get('FAIL') and (Flag.Value = Name) then
+            Error('LT P subject failed on purpose');
     end;
 }
 
@@ -65,19 +78,17 @@ codeunit 67285 "LT P Runner Subject"
     [Test]
     procedure PSubjectOne()
     var
-        Log: Codeunit "LT P Runner Log";
+        Hook: Codeunit "LT P Runner Subject Hook";
     begin
-        Log.Add('body One');
+        Hook.Body('One');
     end;
 
     [Test]
     procedure PSubjectTwo()
     var
-        Log: Codeunit "LT P Runner Log";
+        Hook: Codeunit "LT P Runner Subject Hook";
     begin
-        Log.Add('body Two');
-        if Log.GetFailSubject() then
-            Error('LT P subject failed on purpose');
+        Hook.Body('Two');
     end;
 }
 
@@ -96,9 +107,10 @@ codeunit 67286 "LT P Runner With Triggers"
     trigger OnBeforeTestRun(CodeunitId: Integer; CodeunitName: Text; FunctionName: Text; FunctionTestPermissions: TestPermissions): Boolean
     var
         Log: Codeunit "LT P Runner Log";
+        Flag: Record "LT P Runner Flag";
     begin
         Log.Add(StrSubstNo('before %1 %2 %3 %4', CodeunitId, CodeunitName, FunctionName, Format(FunctionTestPermissions)));
-        exit(FunctionName <> Log.GetSkipMethod());
+        exit(not Flag.Get('SKIP') or (Flag.Value <> FunctionName));
     end;
 
     trigger OnAfterTestRun(CodeunitId: Integer; CodeunitName: Text; FunctionName: Text; FunctionTestPermissions: TestPermissions; IsSuccess: Boolean)
@@ -164,8 +176,8 @@ codeunit 67288 "LT P Runner Triggers Test"
         Log: Codeunit "LT P Runner Log";
     begin
         Log.Reset();
-        Log.SetSkipMethod('PSubjectOne');
-        Log.SetFailSubject(true);
+        Log.SetFlag('SKIP', 'PSubjectOne');
+        Log.SetFlag('FAIL', 'Two');
         RunRunner(Observer, Codeunit::"LT P Runner With Triggers");
         Log.Reset();
         Observer.Finish();
