@@ -3,7 +3,8 @@
 // @expect AL0133 | Argument 2: cannot convert from 'Guid' to 'TextEncoding'
 // @expect AL0133 | Argument 2: cannot convert from 'Guid' to 'TextEncoding'
 // @until 28
-// NavApp.GetResource, GetResourceAsText and GetResourceAsJson with an AppId exist from BC 29. On BC 29 the call needs runtime 18.0, which the corpus app does not use (case 0998).
+// @max-al 17
+// NavApp.GetResource, GetResourceAsText and GetResourceAsJson with an AppId exist from BC 29. Runtime tests for BC 29: tests/al-language/lt-ac.
 codeunit 58985 "MNC NavAppRes 0965"
 {
     procedure Run1()

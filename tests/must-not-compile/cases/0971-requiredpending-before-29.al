@@ -1,5 +1,6 @@
 // @expect AL0112 | RequiredPending is not a valid attribute
 // @until 28
+// @max-al 17
 // The RequiredPending attribute exists from BC 29.
 codeunit 59015 "MNC ReqPending 0971"
 {
