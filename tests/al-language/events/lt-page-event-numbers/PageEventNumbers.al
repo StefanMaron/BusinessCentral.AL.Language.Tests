@@ -226,13 +226,6 @@ codeunit 67354 "LT PEN Tests"
         Observer.Expect('AActActOne', 'OnAfterActionEvent - 1230864492');
         Observer.Expect('AActActThree', 'OnAfterActionEvent - 964416274');
         Observer.Expect('AActActTwo', 'OnAfterActionEvent - 325473572');
-        Observer.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT PEN Tests"(CodeUnit 67354).PublishedFunction_ActionEvents_CardPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Observer.Verify();
     end;
 
@@ -248,13 +241,6 @@ AL Callstack:
         Observer.Expect('BActProcess', 'OnAfterActionEvent - 2052478748');
         Observer.Expect('BActRelease', 'OnAfterActionEvent - 709761342');
         Observer.Expect('BActReopen', 'OnAfterActionEvent - 1985144420');
-        Observer.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT PEN Tests"(CodeUnit 67354).PublishedFunction_ActionEvents_ListPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Observer.Verify();
     end;
 
@@ -270,13 +256,6 @@ AL Callstack:
         Observer.Expect('AFldDescCtl', 'OnAfterValidateEvent - 1251029156');
         Observer.Expect('AFldId', 'OnAfterValidateEvent - 1598304267');
         Observer.Expect('AFldNameCtl', 'OnAfterValidateEvent - 785226970');
-        Observer.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT PEN Tests"(CodeUnit 67354).PublishedFunction_FieldValidateEvents_CardPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Observer.Verify();
     end;
 
@@ -292,13 +271,6 @@ AL Callstack:
         Observer.Expect('BFldDescription', 'OnAfterValidateEvent - 593484303');
         Observer.Expect('BFldIdB', 'OnAfterValidateEvent - 2072102672');
         Observer.Expect('BFldName', 'OnAfterValidateEvent - 738282952');
-        Observer.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT PEN Tests"(CodeUnit 67354).PublishedFunction_FieldValidateEvents_ListPage line 5 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Observer.Verify();
     end;
 }

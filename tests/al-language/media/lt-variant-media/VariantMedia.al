@@ -52,13 +52,6 @@ codeunit 67378 "LT VM Tests"
         Observer.Expect('empty_formatLength', '38');
         Observer.Expect('empty_formatEqualsMediaId', 'Yes');
         Observer.Expect('empty_hasValue', 'No');
-        Observer.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT VM Tests"(CodeUnit 67378).Variant_HoldingEmptyMediaField line 11 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Observer.Verify();
     end;
 
@@ -92,13 +85,6 @@ AL Callstack:
         Observer.Expect('imported_formatLength', '38');
         Observer.Expect('imported_formatEqualsMediaId', 'Yes');
         Observer.Expect('imported_hasValue', 'Yes');
-        Observer.Expect('
-AL Callstack:
-"Probe Observer State"(CodeUnit 69163).Raise line 8 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"Probe Observer"(CodeUnit 69160).Finish line 6 - AL Language Coverage Tests by AL Language version 1.0.0.0
-"LT VM Tests"(CodeUnit 67378).Variant_HoldingImportedMediaField line 20 - AL Language Coverage Tests by AL Language version 1.0.0.0
-
-', '');
         Observer.Verify();
     end;
 }
