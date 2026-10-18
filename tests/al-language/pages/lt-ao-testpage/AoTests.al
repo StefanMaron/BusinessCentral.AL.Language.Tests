@@ -78,7 +78,12 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         BgRun(Observer, 'commit');
-        Observer.Finish();
+        Observer.Expect('log', 'done commit ok;');
+        Observer.Expect('rows', '2');
+        Observer.Expect('r1', 'r1');
+        Observer.Expect('r2', 'r2');
+        Observer.Expect('wtx', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -87,7 +92,12 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         BgRun(Observer, 'runok');
-        Observer.Finish();
+        Observer.Expect('log', 'done runok ok;');
+        Observer.Expect('rows', '2');
+        Observer.Expect('r1', 'r1');
+        Observer.Expect('r2', 'r2');
+        Observer.Expect('wtx', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +106,12 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         BgRun(Observer, 'runfail');
-        Observer.Finish();
+        Observer.Expect('log', 'error code=Dialog text=LT AO inner failure;');
+        Observer.Expect('rows', '2');
+        Observer.Expect('r1', 'r1');
+        Observer.Expect('r2', 'r2');
+        Observer.Expect('wtx', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +120,12 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         BgRun(Observer, 'modify');
-        Observer.Finish();
+        Observer.Expect('log', 'error code=DB:ReadOnlySession text=Sorry, the current permissions prevented the action. (TableData 79502 LT AO Row Modify: AL Language Coverage Tests);');
+        Observer.Expect('rows', '2');
+        Observer.Expect('r1', 'r1');
+        Observer.Expect('r2', 'r2');
+        Observer.Expect('wtx', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +134,12 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         BgRun(Observer, 'modifypend');
-        Observer.Finish();
+        Observer.Expect('log', 'error code=DB:ReadOnlySession text=Sorry, the current permissions prevented the action. (TableData 79502 LT AO Row Modify: AL Language Coverage Tests);');
+        Observer.Expect('rows', '2');
+        Observer.Expect('r1', 'r1');
+        Observer.Expect('r2', 'r2');
+        Observer.Expect('wtx', 'Yes');
+        Observer.Verify();
     end;
 
     // ---- item 2: SetValue on an invisible control ----
@@ -130,7 +155,10 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('ok', Format(TrySetHiddenDep(TP)));
         Observer.ObserveError('set');
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('set|text', 'The field with ID = n is not found on the page.');
+        Observer.Expect('set|code', 'TestFieldNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +172,10 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('ok', Format(TrySetHiddenSame(TP)));
         Observer.ObserveError('set');
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('set|text', 'The field with ID = n is not found on the page.');
+        Observer.Expect('set|code', 'TestFieldNotFound');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -188,7 +219,11 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.ObserveError('blank');
         Row.Name := 'x';
         Observer.Observe('set', Format(TryTestFieldName(Row)));
-        Observer.Finish();
+        Observer.Expect('blank', 'No');
+        Observer.Expect('blank|text', 'Name must have a value in LT AO Row: Id=3. It cannot be zero or empty.');
+        Observer.Expect('blank|code', 'TestField');
+        Observer.Expect('set', 'Yes');
+        Observer.Verify();
     end;
 
     // ---- item 4: header SetValue, part line modifies the header, then a card action ----
@@ -240,7 +275,11 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         HeaderChanged(Observer, false);
-        Observer.Finish();
+        Observer.Expect('db1', 'b/0');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'act name=b total=1;');
+        Observer.Expect('db2', 'b/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -249,7 +288,11 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         HeaderChanged(Observer, true);
-        Observer.Finish();
+        Observer.Expect('db1', 'b/0');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'act modified total=1;');
+        Observer.Expect('db2', 'act/1');
+        Observer.Verify();
     end;
 
     // ---- item 7: SetValue of numbers on Text[30] / Code[30] controls ----
@@ -275,7 +318,12 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.Close();
         Row.Get(1);
         Observer.Observe('db', Row.Txt);
-        Observer.Finish();
+        Observer.Expect('i', '14');
+        Observer.Expect('d', '14');
+        Observer.Expect('k', '1234');
+        Observer.Expect('n', '-3');
+        Observer.Expect('db', '-3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -299,7 +347,12 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.Close();
         Row.Get(1);
         Observer.Observe('db', Row.Cd);
-        Observer.Finish();
+        Observer.Expect('i', '14');
+        Observer.Expect('d', '14');
+        Observer.Expect('k', '1234');
+        Observer.Expect('n', '-3');
+        Observer.Expect('db', '-3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -319,7 +372,9 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('log', Log.Take());
         Observer.Observe('v', TP.VTxt.Value());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', '[14];[14];[1234];[-3];');
+        Observer.Expect('v', '-3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,16 +394,43 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('log', Log.Take());
         Observer.Observe('v', TP.VCd.Value());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', '[14];[14];[1234];[-3];');
+        Observer.Expect('v', '-3');
+        Observer.Verify();
     end;
 
     // ---- item 9: Page.Run on a record with SetRange(F, 'A') in filter group 0 or 2, then a new row ----
+
+    [TryFunction]
+    local procedure TryNew(var TP: TestPage "LT AO Row List")
+    begin
+        TP.New();
+    end;
+
+    [TryFunction]
+    local procedure TrySetId(var TP: TestPage "LT AO Row List")
+    begin
+        TP.Id.SetValue(9);
+    end;
+
+    [TryFunction]
+    local procedure TrySetName(var TP: TestPage "LT AO Row List")
+    begin
+        TP.Name.SetValue('n');
+    end;
+
+    [TryFunction]
+    local procedure TryClose(var TP: TestPage "LT AO Row List")
+    begin
+        TP.Close();
+    end;
 
     local procedure FilteredNewRow(var Observer: Codeunit "Probe Observer"; Group: Integer)
     var
         Row: Record "LT AO Row";
         Stored: Record "LT AO Row";
         TP: TestPage "LT AO Row List";
+        Ok: Boolean;
     begin
         Clean();
         AddRow(1, 'A', '');
@@ -358,14 +440,28 @@ codeunit 79590 "LT AO TestPage Probes"
         Row.FilterGroup(0);
         TP.Trap();
         Page.Run(Page::"LT AO Row List", Row);
-        Observer.Observe('rows', ListIds(TP));
-        TP.New();
-        Observer.Observe('newF', TP.F.Value());
-        TP.Id.SetValue(9);
-        TP.Name.SetValue('n');
-        TP.Close();
+        Observer.Observe('flt', '[' + TP.Filter.GetFilter(F) + ']');
+        Observer.Observe('first', Format(TP.First()) + TP.Id.Value());
+        Ok := TryNew(TP);
+        Observer.Observe('new', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('new');
+        Observer.Observe('newF', '[' + TP.F.Value() + ']');
+        Ok := TrySetId(TP);
+        Observer.Observe('id', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('id');
+        Observer.Observe('idF', '[' + TP.F.Value() + ']');
+        Ok := TrySetName(TP);
+        Observer.Observe('nm', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('nm');
+        Ok := TryClose(TP);
+        Observer.Observe('cl', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('cl');
         Observer.Observe('stored', Format(Stored.Get(9)));
-        Observer.Observe('F', Stored.F);
+        Observer.Observe('F', '[' + Stored.F + ']');
     end;
 
     [Test]
@@ -415,7 +511,9 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         RunLinked(Observer, true);
-        Observer.Finish();
+        Observer.Expect('rows', '1,0,');
+        Observer.Expect('flt', '['''']');
+        Observer.Verify();
     end;
 
     [Test]
@@ -424,7 +522,9 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         RunLinked(Observer, false);
-        Observer.Finish();
+        Observer.Expect('rows', '1,0,');
+        Observer.Expect('flt', '['''']');
+        Observer.Verify();
     end;
 
     // ---- item 12: OpenNew on pages with OnFindRecord, table empty or not; xRec in OnNewRecord ----
@@ -440,7 +540,8 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.OpenNew();
         Observer.Observe('log', Log.Take());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'new below=Yes x=0/ rec=0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -456,7 +557,8 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.OpenNew();
         Observer.Observe('log', Log.Take());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'new below=Yes x=2/r2 rec=0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -470,7 +572,8 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.OpenNew();
         Observer.Observe('log', Log.Take());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'new below=Yes x=0/ rec=0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -486,7 +589,8 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.OpenNew();
         Observer.Observe('log', Log.Take());
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'new below=Yes x=2/r2 rec=0;');
+        Observer.Verify();
     end;
 
     // ---- item 13: OpenNew on a card with a part linked on the card key ----
@@ -507,6 +611,7 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('h1', Format(Hdr.Get('H13')));
         Card.Name.SetValue('nm');
         Observer.Observe('d2', '[' + Card.Lines."Doc No.".Value() + ']');
+        Observer.Observe('h2', Format(Hdr.Get('H13')));
         Observer.Observe('lines', Format(Line.Count()));
         Card.Close();
         Observer.Finish();
@@ -537,7 +642,10 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         ListFilterReset(Observer, ' ');
-        Observer.Finish();
+        Observer.Expect('a', '2,');
+        Observer.Expect('flt', '[]');
+        Observer.Expect('rows', '1,2,3,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -546,7 +654,10 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         ListFilterReset(Observer, '');
-        Observer.Finish();
+        Observer.Expect('a', '2,');
+        Observer.Expect('flt', '[]');
+        Observer.Expect('rows', '1,2,3,');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -581,7 +692,8 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         ReqFilterReset(Observer, ' ');
-        Observer.Finish();
+        Observer.Expect('log', 'rp=[A];pre filter= count=3;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -591,7 +703,8 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer: Codeunit "Probe Observer";
     begin
         ReqFilterReset(Observer, '');
-        Observer.Finish();
+        Observer.Expect('log', 'rp=[];pre filter= count=3;');
+        Observer.Verify();
     end;
 
     // ---- item 17: a list action deletes the only row without CurrPage.Update ----
@@ -615,7 +728,13 @@ codeunit 79590 "LT AO TestPage Probes"
         TP.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('rows', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('open', 'agr 1;agr 1;agcr 1;');
+        Observer.Expect('act', 'agr 1;del 1;deleted;agcr 0;agcr 0;agcr 0;');
+        Observer.Expect('id', '[0]');
+        Observer.Expect('read', '');
+        Observer.Expect('close', '');
+        Observer.Expect('rows', '0');
+        Observer.Verify();
     end;
 
     // ---- item 18: an action calls a control add-in procedure on a TestPage ----
@@ -633,6 +752,10 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Observe('ok', Format(TryCallIt(TP)));
         Observer.ObserveError('call');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('call|text', 'A call to Say failed with this message: Object reference not set to an instance of an object.');
+        Observer.Expect('call|code', 'TestWrapped:DotNetInvoke');
+        Observer.Expect('log', 'before;');
+        Observer.Verify();
     end;
 }
