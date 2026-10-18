@@ -203,6 +203,17 @@ codeunit 69850 "LT V Log"
     end;
 }
 
+codeunit 69856 "LT V Event Writer"
+{
+    TableNo = "LT V Event Log";
+    Permissions = tabledata "LT V Event Log" = RI;
+
+    trigger OnRun()
+    begin
+        Rec.Insert();
+    end;
+}
+
 codeunit 69851 "LT V Subs"
 {
     var
@@ -226,7 +237,7 @@ codeunit 69851 "LT V Subs"
         Row."Event Name" := CopyStr(EventName, 1, MaxStrLen(Row."Event Name"));
         Row.Info := CopyStr(Info, 1, MaxStrLen(Row.Info));
         Row."Session Id" := SessionId();
-        if Row.Insert() then;
+        if Codeunit.Run(Codeunit::"LT V Event Writer", Row) then;
     end;
 
     local procedure Note(EventName: Text; Info: Text)
