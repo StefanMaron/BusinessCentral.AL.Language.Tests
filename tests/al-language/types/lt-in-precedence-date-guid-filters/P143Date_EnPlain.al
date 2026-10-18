@@ -27,20 +27,20 @@ codeunit 74650 "LT P143 EnPlain"
         Helper.ProbeDate(Observer, 'd_0117_2027', '01/17/2027');
         Observer.Observe('language_unchanged', Format(GlobalLanguage() = OldLanguage));
         Observer.Expect('d_0117_27_filter', '01/17/27');
-        Observer.Expect('d_0117_27_count', '1');
+        Observer.Expect('d_0117_27_count', Format(1 + Helper.InRows(20270117D, 20270117D)));
         Observer.Expect('d_closing_1018_26_filter', 'C10/18/26');
         Observer.Expect('d_closing_1018_26_count', '1');
         Observer.Expect('d_max_filter', '12/31/9999');
-        Observer.Expect('d_max_count', '1');
+        Observer.Expect('d_max_count', Format(1 + Helper.InRows(99991231D, 99991231D)));
         Observer.Expect('d_1_1_2027_filter', '01/01/27');
-        Observer.Expect('d_1_1_2027_count', '1');
+        Observer.Expect('d_1_1_2027_count', Format(1 + Helper.InRows(20270101D, 20270101D)));
         Observer.Expect('d_empty_filter', '');
         Observer.Expect('d_empty_count', '10');
         Observer.Expect('d_zero_filter', Format(Today(), 0, '<Month,2>/<Day,2>/<Year,2>'));
         // The rows dated Today: row 7, plus a fixed row when Today falls on one of the fixed dates.
         Observer.Expect('d_zero_count', Format(Helper.CountOn(Today())));
         Observer.Expect('d_0117_2027_filter', '01/17/27');
-        Observer.Expect('d_0117_2027_count', '1');
+        Observer.Expect('d_0117_2027_count', Format(1 + Helper.InRows(20270117D, 20270117D)));
         Observer.Expect('language_unchanged', 'Yes');
         Observer.Verify();
     end;

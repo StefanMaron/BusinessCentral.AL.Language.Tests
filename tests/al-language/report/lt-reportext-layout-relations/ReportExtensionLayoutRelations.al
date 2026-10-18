@@ -29,7 +29,7 @@ report 71713 "LT RepExt Rel Base"
         layout(BaseRdlc)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_4.rdlc';
             Caption = 'RepExt rel base';
         }
     }
@@ -42,13 +42,13 @@ reportextension 71714 "LT RepExt Rel Ext" extends "LT RepExt Rel Base"
         layout(RelExtA)
         {
             Type = RDLC;
-            LayoutFile = './ProbeSaveAsDatasetLayout.rdl';
+            LayoutFile = './ProbeSaveAsDatasetLayout_4.rdl';
             Caption = 'RepExt rel ext A';
         }
         layout(RelExtB)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_5.rdlc';
             Caption = 'RepExt rel ext B';
         }
     }
