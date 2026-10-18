@@ -157,8 +157,44 @@ is only a reference.
 | 0868 | AL0208 | QuickEntry takes a boolean constant. |
 | 0869 | AL0844 | BlankZero on a Text field of a page extension (a number property). |
 | 0870 | AL0843 | OptionCaptionML on a Text field. |
+| 0920 | AL0314 | FreezeColumn is a repeater property: a cue group refuses it (an unknown field name does not matter, the container is refused first). |
+| 0921 | AL0591 | GridLayout is a grid property: a cue group refuses it. |
+| 0922 | AL0314 | IndentationColumn is a repeater property: a cue group refuses it. |
+| 0923 | AL0314 | IndentationControls is a repeater property: a cue group refuses it (a field that exists). |
+| 0924 | AL0314 | IndentationControls is a repeater property: a cue group refuses it (a control that does not exist). |
+| 0925 | AL0591 | TreeInitialState is a repeater property: a cue group refuses it. |
+| 0926 | AL0169 | CuegroupLayout has one value, Wide (case does not matter: pages/lt-ab-group-properties/ABLayouts.al compiles Wide and wide). |
+| 0927 | AL0169 | CuegroupLayout has one value, Wide. |
+| 0928 | AL0169 | CuegroupLayout has one value, Wide: any other name is refused. |
+| 0929 | AL0186 | FileUploadAction names an action of the page; an action that does not exist is refused. |
+| 0930 | AL0591 | FileUploadRowAction is a repeater property: a cue group refuses it even when the action exists. |
+| 0931 | AL0591 | CuegroupLayout is a cue group property: a fixed group refuses it. |
+| 0932 | AL0314 | FreezeColumn is a repeater property: a fixed group refuses it. |
+| 0933 | AL0591 | GridLayout is a grid property: a fixed group refuses it. |
+| 0934 | AL0314 | IndentationColumn is a repeater property: a fixed group refuses it. |
+| 0935 | AL0314 | IndentationControls is a repeater property: a fixed group refuses it. |
+| 0936 | AL0591 | TreeInitialState is a repeater property: a fixed group refuses it. |
+| 0937 | AL0186 | FileUploadAction names an action of the page; an action that does not exist is refused. |
+| 0938 | AL0591 | FileUploadRowAction is a repeater property: a fixed group refuses it even when the action exists. |
+| 0939 | AL0591 | CuegroupLayout is a cue group property: a grid refuses it. |
+| 0940 | AL0314 | FreezeColumn is a repeater property: a grid refuses it. |
+| 0941 | AL0314 | IndentationColumn is a repeater property: a grid refuses it. |
+| 0942 | AL0314 | IndentationControls is a repeater property: a grid refuses it. |
+| 0943 | AL0591 | TreeInitialState is a repeater property: a grid refuses it. |
+| 0944 | AL0169 | GridLayout has the values Rows and Columns (pages/lt-ab-group-properties/ABLayouts.al): any other name is refused. |
+| 0945 | AL0186 | FileUploadAction names an action of the page; an action that does not exist is refused. |
+| 0946 | AL0591 | FileUploadRowAction is a repeater property: a grid refuses it even when the action exists. |
+| 0947 | AL0162 | A control add-in trigger of a page field cannot be added to a field through a page extension modify block: OnControlAddIn is not a valid trigger there. |
+| 0948 | AL0162 | A request page extension refuses the trigger OnFindRecord (every other page trigger compiles there: report/lt-ab-request-page-triggers/ABRequestPageExt.al); a page extension refuses the same two (0017, 0018). |
+| 0949 | AL0162 | A request page extension refuses the trigger OnNextRecord (every other page trigger compiles there: report/lt-ab-request-page-triggers/ABRequestPageExt.al); a page extension refuses the same two (0017, 0018). |
+| 0950 | AL0161 | The Rec variable of the base request page is not accessible from a trigger of a request page extension (the base page's own triggers use it: report/lt-ab-request-page-triggers/ABRequestPageFixtures.al). |
+| 0951 | AL0477 | OnValidateUpgradePerCompany and OnValidateUpgradePerDatabase are valid only in a codeunit with Subtype = Upgrade (such a codeunit runs at publish, so the corpus holds none: .github/scripts/check-install-triggers.py). (two diagnostics). |
 | 1040 | AL0175 | A Char minus a Text literal of two characters or of none, and the same literals minus a Char (four diagnostics). A one-character literal compiles. |
 | 1041 | AL0122 | A Char minus a one-character literal is an Integer and cannot be assigned to a Text; a Char plus a two-character literal is a Text and cannot be assigned to an Integer (two diagnostics). |
+| 1050 | AL0124 | XmlPort fieldelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
+| 1051 | AL0124 | XmlPort textelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
+| 1052 | AL0124 | XmlPort tableelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
+| 1053 | AL0169 | XmlPort fieldattribute: Occurrence takes Optional or Required. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
