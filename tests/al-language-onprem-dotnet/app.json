@@ -43,9 +43,13 @@
     {
       "from": 61400,
       "to": 61499
+    },
+    {
+      "from": 99000,
+      "to": 99499
     }
   ],
   "features": [],
-  "runtime": "16.0",
+  "runtime": "18.0",
   "target": "OnPrem"
 }
