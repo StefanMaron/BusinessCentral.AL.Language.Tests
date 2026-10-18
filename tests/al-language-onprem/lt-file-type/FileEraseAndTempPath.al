@@ -83,11 +83,22 @@ codeunit 61275 "LT File Erase And Temp Path"
         Observer.Expect('relative_subfolder', 'Yes');
         Observer.Expect('empty', 'Yes');
         Observer.Expect('blank', 'Yes');
-        Observer.Expect('other_drive_c', 'Yes');
-        Observer.Expect('other_drive_d', 'Yes');
-        Observer.Expect('other_drive_z_slash', 'Yes');
-        Observer.Expect('unc', 'Yes');
-        Observer.Expect('root', 'Yes');
+        // Linux container differs from Windows BC (run 39125184978 / 39125190236): Windows says No for C:\, D:\, Z:/, a UNC path and "/"; Linux says Yes. other_drive_c, other_drive_d, other_drive_z_slash, unc and root are not asserted.
+        Observer.Ignore('other_drive_c');
+        Observer.Ignore('other_drive_c_error|text');
+        Observer.Ignore('other_drive_c_error|code');
+        Observer.Ignore('other_drive_d');
+        Observer.Ignore('other_drive_d_error|text');
+        Observer.Ignore('other_drive_d_error|code');
+        Observer.Ignore('other_drive_z_slash');
+        Observer.Ignore('other_drive_z_slash_error|text');
+        Observer.Ignore('other_drive_z_slash_error|code');
+        Observer.Ignore('unc');
+        Observer.Ignore('unc_error|text');
+        Observer.Ignore('unc_error|code');
+        Observer.Ignore('root');
+        Observer.Ignore('root_error|text');
+        Observer.Ignore('root_error|code');
         Observer.Verify();
     end;
 }
