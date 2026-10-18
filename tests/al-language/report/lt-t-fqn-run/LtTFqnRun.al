@@ -7,6 +7,9 @@
 #if BC28PLUS
 namespace LT.T.Fqn;
 
+using Microsoft.Sales.Customer;
+using Microsoft.Finance.GeneralLedger.Ledger;
+
 table 69383 "LT T Fqn Row"
 {
     DataClassification = SystemMetadata;

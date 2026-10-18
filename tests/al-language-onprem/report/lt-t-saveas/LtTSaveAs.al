@@ -111,10 +111,31 @@ codeunit 98102 "LT T Save As Tests"
                     Full += Head + '|';
                 end;
                 SaveFile.Close();
-                Observer.Observe(Tag + ' text', Full);
+                Observer.Observe(Tag + ' ids', ColumnValues(Full, 'Id'));
+                Observer.Observe(Tag + ' txts', ColumnValues(Full, 'Txt'));
             end;
             Erase(Name);
         end;
+    end;
+
+    local procedure ColumnValues(Source: Text; ColumnName: Text): Text
+    var
+        StartTag: Text;
+        StartAt: Integer;
+        EndAt: Integer;
+        Result: Text;
+    begin
+        StartTag := '<Column name="' + ColumnName + '">';
+        while true do begin
+            StartAt := Source.IndexOf(StartTag);
+            if StartAt = 0 then
+                break;
+            Source := Source.Substring(StartAt + StrLen(StartTag));
+            EndAt := Source.IndexOf('</Column>');
+            Result += Source.Substring(1, EndAt - 1) + ',';
+            Source := Source.Substring(EndAt);
+        end;
+        exit(Result);
     end;
 
     local procedure FilterRows(var Row: Record "LT T Save Row")
@@ -278,7 +299,7 @@ codeunit 98102 "LT T Save As Tests"
     end;
 
     [Test]
-    procedure Instance_SecondUse_Errors()
+    procedure Instance_SecondUse()
     var
         Rpt: Report "LT T Save Report";
         Name: Text;
@@ -289,8 +310,13 @@ codeunit 98102 "LT T Save As Tests"
         Ok := Rpt.SaveAsXml(Name);
         Observer.Observe('first ok', Format(Ok));
         Erase(Name);
-        asserterror Ok := Rpt.SaveAsXml(Name);
-        Observer.ObserveError('second xml');
+        Ok := Rpt.SaveAsXml(Name);
+        Observer.Observe('second same format ok', Format(Ok));
+        Observer.Observe('second same format exists', Format(Exists(Name)));
+        ClearLastError();
+        Ok := Rpt.SaveAsPdf(FileName('pdf'));
+        Observer.Observe('other format ok', Format(Ok));
+        Observer.ObserveError('other format');
         Clear(Rpt);
         Ok := Rpt.SaveAsXml(Name);
         Observer.Observe('after clear ok', Format(Ok));
