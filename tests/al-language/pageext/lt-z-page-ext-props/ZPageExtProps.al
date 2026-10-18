@@ -626,7 +626,14 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         P.Next();
         P.Edit().Invoke();
         P.Close();
-        Observer.Finish();
+        Observer.Expect('ext card page id', '76001');
+        Observer.Expect('ext insert allowed', 'Yes');
+        Observer.Expect('ext modify allowed', 'Yes');
+        Observer.Expect('ext delete allowed', 'Yes');
+        Observer.Expect('card id', '2');
+        Observer.Expect('card name', 'Two');
+        Observer.Expect('card editable', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -642,7 +649,14 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.Observe('name editable', Format(P.Name.Editable()));
         Observer.Observe('delete it visible', Format(P.DeleteIt.Visible()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('ml card page id', '0');
+        Observer.Expect('ml insert allowed', 'Yes');
+        Observer.Expect('ml modify allowed', 'Yes');
+        Observer.Expect('ml delete allowed', 'Yes');
+        Observer.Expect('name', 'One');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('delete it visible', 'Yes');
+        Observer.Verify();
     end;
 
 
@@ -667,7 +681,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('delete');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'No');
+        Observer.Expect('delete ok', 'Yes');
+        Observer.Expect('delete|text', '');
+        Observer.Expect('delete|code', '');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
 
@@ -692,7 +714,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('delete');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('delete ok', 'Yes');
+        Observer.Expect('delete|text', '');
+        Observer.Expect('delete|code', '');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
 
@@ -717,7 +747,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('delete');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('delete ok', 'Yes');
+        Observer.Expect('delete|text', '');
+        Observer.Expect('delete|code', '');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
 
@@ -742,7 +780,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('delete');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'No');
+        Observer.Expect('delete ok', 'Yes');
+        Observer.Expect('delete|text', '');
+        Observer.Expect('delete|code', '');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
 
@@ -769,7 +815,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('new');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'No');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('new ok', 'No');
+        Observer.Expect('new|text', 'New method failed because Insert is not allowed. Page = LT Z XI1 Base, Id = 76106.');
+        Observer.Expect('new|code', 'DB:ClientInsertDenied');
+        Observer.Expect('rows', '2');
+        Observer.Verify();
     end;
 
 
@@ -796,7 +850,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('new');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('rows', '3');
+        Observer.Verify();
     end;
 
 
@@ -823,7 +885,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('new');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('rows', '3');
+        Observer.Verify();
     end;
 
 
@@ -850,7 +920,15 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         Observer.ObserveError('new');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'No');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('new ok', 'No');
+        Observer.Expect('new|text', 'New method failed because Insert is not allowed. Page = LT Z XI4 Base, Id = 76109.');
+        Observer.Expect('new|code', 'DB:ClientInsertDenied');
+        Observer.Expect('rows', '2');
+        Observer.Verify();
     end;
 
 
@@ -858,6 +936,12 @@ codeunit 76160 "LT Z Page Ext Props Tests"
     local procedure TryM1(var P: TestPage "LT Z XM1 Base")
     begin
         P.Name.SetValue('Changed');
+    end;
+
+    [TryFunction]
+    local procedure TryCloseM1(var P: TestPage "LT Z XM1 Base")
+    begin
+        P.Close();
     end;
 
     [Test]
@@ -874,7 +958,9 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         ClearLastError();
         Observer.Observe('edit ok', Format(TryM1(P)));
         Observer.ObserveError('edit');
-        P.Close();
+        ClearLastError();
+        Observer.Observe('close ok', Format(TryCloseM1(P)));
+        Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
         Observer.Finish();
@@ -885,6 +971,12 @@ codeunit 76160 "LT Z Page Ext Props Tests"
     local procedure TryM2(var P: TestPage "LT Z XM2 Base")
     begin
         P.Name.SetValue('Changed');
+    end;
+
+    [TryFunction]
+    local procedure TryCloseM2(var P: TestPage "LT Z XM2 Base")
+    begin
+        P.Close();
     end;
 
     [Test]
@@ -901,10 +993,29 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         ClearLastError();
         Observer.Observe('edit ok', Format(TryM2(P)));
         Observer.ObserveError('edit');
-        P.Close();
+        ClearLastError();
+        Observer.Observe('close ok', Format(TryCloseM2(P)));
+        Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'No');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'No');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('stored name', 'Changed');
+        Observer.Verify();
     end;
 
 
@@ -912,6 +1023,12 @@ codeunit 76160 "LT Z Page Ext Props Tests"
     local procedure TryM3(var P: TestPage "LT Z XM3 Base")
     begin
         P.Name.SetValue('Changed');
+    end;
+
+    [TryFunction]
+    local procedure TryCloseM3(var P: TestPage "LT Z XM3 Base")
+    begin
+        P.Close();
     end;
 
     [Test]
@@ -928,10 +1045,21 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         ClearLastError();
         Observer.Observe('edit ok', Format(TryM3(P)));
         Observer.ObserveError('edit');
-        P.Close();
+        ClearLastError();
+        Observer.Observe('close ok', Format(TryCloseM3(P)));
+        Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page card page id', '0');
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('stored name', 'Changed');
+        Observer.Verify();
     end;
 
 
@@ -939,6 +1067,12 @@ codeunit 76160 "LT Z Page Ext Props Tests"
     local procedure TryM4(var P: TestPage "LT Z XM4 Base")
     begin
         P.Name.SetValue('Changed');
+    end;
+
+    [TryFunction]
+    local procedure TryCloseM4(var P: TestPage "LT Z XM4 Base")
+    begin
+        P.Close();
     end;
 
     [Test]
@@ -955,7 +1089,9 @@ codeunit 76160 "LT Z Page Ext Props Tests"
         ClearLastError();
         Observer.Observe('edit ok', Format(TryM4(P)));
         Observer.ObserveError('edit');
-        P.Close();
+        ClearLastError();
+        Observer.Observe('close ok', Format(TryCloseM4(P)));
+        Observer.ObserveError('close');
         R.Get(1);
         Observer.Observe('stored name', R.Name);
         Observer.Finish();

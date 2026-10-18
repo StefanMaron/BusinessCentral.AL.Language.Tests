@@ -218,7 +218,27 @@ codeunit 76020 "LT Z Page Props Tests"
         P2.Close();
         Meta(Page::"LT Z Search", 'ml');
         Meta(Page::"LT Z Search Terms", 'plain');
-        Observer.Finish();
+        Observer.Expect('ml name', 'One');
+        Observer.Expect('ml caption', 'LT Z Search caption - 1');
+        Observer.Expect('ml name editable', 'No');
+        Observer.Expect('plain name', 'One');
+        Observer.Expect('ml name', 'LT Z Search');
+        Observer.Expect('ml caption', 'LT Z Search caption');
+        Observer.Expect('ml page type', 'Card');
+        Observer.Expect('ml entity name', '');
+        Observer.Expect('ml entity set name', '');
+        Observer.Expect('ml api publisher', '');
+        Observer.Expect('ml api group', '');
+        Observer.Expect('ml api version', 'beta');
+        Observer.Expect('plain name', 'LT Z Search Terms');
+        Observer.Expect('plain caption', 'LT Z Search Terms');
+        Observer.Expect('plain page type', 'Card');
+        Observer.Expect('plain entity name', '');
+        Observer.Expect('plain entity set name', '');
+        Observer.Expect('plain api publisher', '');
+        Observer.Expect('plain api group', '');
+        Observer.Expect('plain api version', 'beta');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -253,7 +273,29 @@ codeunit 76020 "LT Z Page Props Tests"
         Observer.ObserveError('api open view');
         Observer.Observe('apiml open ok', Format(TryOpenMl(P2)));
         Observer.ObserveError('apiml open view');
-        Observer.Finish();
+        Observer.Expect('api name', 'LT Z Api');
+        Observer.Expect('api caption', 'LT Z Api');
+        Observer.Expect('api page type', 'API');
+        Observer.Expect('api entity name', 'ltzRow');
+        Observer.Expect('api entity set name', 'ltzRows');
+        Observer.Expect('api api publisher', 'ltz');
+        Observer.Expect('api api group', 'ltz');
+        Observer.Expect('api api version', 'v1.0');
+        Observer.Expect('apiml name', 'LT Z Api ML');
+        Observer.Expect('apiml caption', 'LT Z Api ML');
+        Observer.Expect('apiml page type', 'API');
+        Observer.Expect('apiml entity name', 'ltzRowMl');
+        Observer.Expect('apiml entity set name', 'ltzRowsMl');
+        Observer.Expect('apiml api publisher', 'ltz');
+        Observer.Expect('apiml api group', 'ltz');
+        Observer.Expect('apiml api version', 'v1.0');
+        Observer.Expect('api open ok', 'Yes');
+        Observer.Expect('api open view|text', '');
+        Observer.Expect('api open view|code', '');
+        Observer.Expect('apiml open ok', 'Yes');
+        Observer.Expect('apiml open view|text', '');
+        Observer.Expect('apiml open view|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +315,10 @@ codeunit 76020 "LT Z Page Props Tests"
         P.A1.Invoke();
         Observer.Observe('log', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('visible', 'Yes');
+        Observer.Expect('enabled', 'Yes');
+        Observer.Expect('log', 'a1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -282,6 +327,30 @@ codeunit 76020 "LT Z Page Props Tests"
         Meta(Page::"LT Z Prompt Prompt", 'prompt');
         Meta(Page::"LT Z Prompt Content", 'content');
         Meta(Page::"LT Z Prompt Generate", 'generate');
-        Observer.Finish();
+        Observer.Expect('prompt name', 'LT Z Prompt Prompt');
+        Observer.Expect('prompt caption', 'LT Z Prompt Prompt');
+        Observer.Expect('prompt page type', '20');
+        Observer.Expect('prompt entity name', '');
+        Observer.Expect('prompt entity set name', '');
+        Observer.Expect('prompt api publisher', '');
+        Observer.Expect('prompt api group', '');
+        Observer.Expect('prompt api version', 'beta');
+        Observer.Expect('content name', 'LT Z Prompt Content');
+        Observer.Expect('content caption', 'LT Z Prompt Content');
+        Observer.Expect('content page type', '20');
+        Observer.Expect('content entity name', '');
+        Observer.Expect('content entity set name', '');
+        Observer.Expect('content api publisher', '');
+        Observer.Expect('content api group', '');
+        Observer.Expect('content api version', 'beta');
+        Observer.Expect('generate name', 'LT Z Prompt Generate');
+        Observer.Expect('generate caption', 'LT Z Prompt Generate');
+        Observer.Expect('generate page type', '20');
+        Observer.Expect('generate entity name', '');
+        Observer.Expect('generate entity set name', '');
+        Observer.Expect('generate api publisher', '');
+        Observer.Expect('generate api group', '');
+        Observer.Expect('generate api version', 'beta');
+        Observer.Verify();
     end;
 }

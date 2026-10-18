@@ -224,7 +224,15 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.ObserveError('assist plain');
         Observer.Observe('log after plain', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('assist modified ok', 'Yes');
+        Observer.Expect('assist modified|text', '');
+        Observer.Expect('assist modified|code', '');
+        Observer.Expect('log', 'assist;');
+        Observer.Expect('assist plain ok', 'No');
+        Observer.Expect('assist plain|text', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('assist plain|code', 'MethodNotSupported');
+        Observer.Expect('log after plain', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,7 +246,10 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('zero plain', P.ZeroPlain.Value());
         Observer.Observe('zero off (base true, ext false)', P.ZeroOff.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('zero (ext true)', '');
+        Observer.Expect('zero plain', '0.00');
+        Observer.Expect('zero off (base true, ext false)', '0.00');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +263,10 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('resolved', P.CapRes.Caption());
         Observer.Observe('plain caption', P.Plain.Caption());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('literal', 'Class caption');
+        Observer.Expect('resolved', 'resolved:resolve me');
+        Observer.Expect('plain caption', 'Name');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -284,7 +298,16 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('stored', Format(R.Dt));
         Observer.Observe('stored is closing date', Format(R.Dt = ClosingDate(20250115D)));
         Observer.Observe('stored normal date', Format(NormalDate(R.Dt), 0, 9));
-        Observer.Finish();
+        Observer.Expect('closing date shown', 'C1/1/2025');
+        Observer.Expect('closing date plain shown', '1/1/2025');
+        Observer.Expect('closing date after set', 'C1/15/2025');
+        Observer.Expect('june ok', 'No');
+        Observer.Expect('june|text', 'Validation error for Field: Dt,  Message = ''In the current company the date you''ve entered is outside the allowed interval (this is determined by the filter ''??11*|??12*|??01*|??02*'', which is defined by the license file). (Select Refresh to discard errors)''');
+        Observer.Expect('june|code', 'TestValidation');
+        Observer.Expect('stored', 'C01/01/25');
+        Observer.Expect('stored is closing date', 'No');
+        Observer.Expect('stored normal date', '2025-01-01');
+        Observer.Verify();
     end;
 
     [Test]
@@ -304,7 +327,10 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('plain while hide true', P.Plain.Value());
         P.Close();
         Log.SetHide(false);
-        Observer.Finish();
+        Observer.Expect('hide false', 'One');
+        Observer.Expect('hide true', '');
+        Observer.Expect('plain while hide true', 'One');
+        Observer.Verify();
     end;
 
     [Test]
@@ -328,7 +354,25 @@ codeunit 76360 "LT Z Modify Controls Tests"
             P.Close();
         end;
         GlobalLanguage(Old);
-        Observer.Finish();
+        Observer.Expect('1033 value', 'Two');
+        Observer.Expect('1033 count', '3');
+        Observer.Expect('1033 option 1', 'One');
+        Observer.Expect('1033 option 2', 'Two');
+        Observer.Expect('1033 option 3', 'Three');
+        Observer.Expect('1033 plain value', 'Beta');
+        Observer.Expect('1031 value', 'Zwei');
+        Observer.Expect('1031 count', '3');
+        Observer.Expect('1031 option 1', 'Eins');
+        Observer.Expect('1031 option 2', 'Zwei');
+        Observer.Expect('1031 option 3', 'Drei');
+        Observer.Expect('1031 plain value', 'Beta');
+        Observer.Expect('1036 value', 'Two');
+        Observer.Expect('1036 count', '3');
+        Observer.Expect('1036 option 1', 'One');
+        Observer.Expect('1036 option 2', 'Two');
+        Observer.Expect('1036 option 3', 'Three');
+        Observer.Expect('1036 plain value', 'Beta');
+        Observer.Verify();
     end;
 
     local procedure LanguageList() Result: List of [Integer]
@@ -357,7 +401,18 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('edm value', P.Edm.Value());
         Observer.Observe('edm visible', Format(P.Edm.Visible()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('qe value', 'One');
+        Observer.Expect('qe visible', 'Yes');
+        Observer.Expect('qe editable', 'Yes');
+        Observer.Expect('sc caption', 'Show caption');
+        Observer.Expect('sc visible', 'Yes');
+        Observer.Expect('sty value', 'One');
+        Observer.Expect('sty visible', 'Yes');
+        Observer.Expect('wid value', 'One');
+        Observer.Expect('wid visible', 'Yes');
+        Observer.Expect('edm value', 'One');
+        Observer.Expect('edm visible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -374,7 +429,10 @@ codeunit 76360 "LT Z Modify Controls Tests"
         P.Close();
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('mand before', 'One');
+        Observer.Expect('mand after empty', '');
+        Observer.Expect('stored name', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -401,7 +459,11 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.ObserveError('lookup');
         Observer.Observe('name after lookup', P.Name.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('lookup ok', 'Yes');
+        Observer.Expect('lookup|text', '');
+        Observer.Expect('lookup|code', '');
+        Observer.Expect('name after lookup', 'One');
+        Observer.Verify();
     end;
 
     [Test]
@@ -415,7 +477,10 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('plain lookup ok', Format(TryLookup(P, 2)));
         Observer.ObserveError('plain lookup');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('plain lookup ok', 'Yes');
+        Observer.Expect('plain lookup|text', '');
+        Observer.Expect('plain lookup|code', '');
+        Observer.Verify();
     end;
 
     local procedure InsertSecond()

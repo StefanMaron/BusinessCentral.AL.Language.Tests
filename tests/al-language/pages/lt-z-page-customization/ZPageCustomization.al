@@ -242,7 +242,12 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.Observe('acta visible', Visible);
         Observer.ObserveError('acta visible read');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('name', 'One');
+        Observer.Expect('acta visible read ok', 'Yes');
+        Observer.Expect('acta visible', 'Yes');
+        Observer.Expect('acta visible read|text', '');
+        Observer.Expect('acta visible read|code', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -265,7 +270,12 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.ObserveError('name read');
         Observer.Observe('actb visible', Format(P.ActB.Visible()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('name read ok', 'Yes');
+        Observer.Expect('name', 'One');
+        Observer.Expect('name read|text', '');
+        Observer.Expect('name read|code', '');
+        Observer.Expect('actb visible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -281,7 +291,11 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.Observe('second', P.Name.Value());
         Observer.Observe('actc visible', Format(P.ActC.Visible()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'One');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('second', 'Two');
+        Observer.Expect('actc visible', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -305,7 +319,14 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.ObserveError('delete');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('delete ok', 'Yes');
+        Observer.Expect('delete|text', '');
+        Observer.Expect('delete|code', '');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -331,7 +352,14 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.ObserveError('new');
         P.Close();
         Observer.Observe('rows', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('rows', '3');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -357,7 +385,15 @@ codeunit 76220 "LT Z Page Customization Tests"
         P.Close();
         R.Get(1);
         Observer.Observe('stored name', R.Name);
-        Observer.Finish();
+        Observer.Expect('page insert allowed', 'Yes');
+        Observer.Expect('page modify allowed', 'Yes');
+        Observer.Expect('page delete allowed', 'Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('stored name', 'Changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -373,7 +409,9 @@ codeunit 76220 "LT Z Page Customization Tests"
         P.A1.Invoke();
         Observer.Observe('log', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('visible', 'Yes');
+        Observer.Expect('log', 'A1;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -421,7 +459,34 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.Observe('stored name', R.Name);
         Observer.Observe('stored date', Format(R.Dt, 0, 9));
         Observer.Observe('stored amount', Format(R.Amount));
-        Observer.Finish();
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('dt editable', 'No');
+        Observer.Expect('amt editable', 'Yes');
+        Observer.Expect('mask value', 'One');
+        Observer.Expect('qe visible', 'Yes');
+        Observer.Expect('wid visible', 'Yes');
+        Observer.Expect('set 1 ok', 'Yes');
+        Observer.Expect('set 1|text', '');
+        Observer.Expect('set 1|code', '');
+        Observer.Expect('set 2 ok', 'Yes');
+        Observer.Expect('set 2|text', '');
+        Observer.Expect('set 2|code', '');
+        Observer.Expect('set 3 ok', 'Yes');
+        Observer.Expect('set 3|text', '');
+        Observer.Expect('set 3|code', '');
+        Observer.Expect('set 4 ok', 'Yes');
+        Observer.Expect('set 4|text', '');
+        Observer.Expect('set 4|code', '');
+        Observer.Expect('set 5 ok', 'Yes');
+        Observer.Expect('set 5|text', '');
+        Observer.Expect('set 5|code', '');
+        Observer.Expect('set 6 ok', 'Yes');
+        Observer.Expect('set 6|text', '');
+        Observer.Expect('set 6|code', '');
+        Observer.Expect('stored name', 'quick');
+        Observer.Expect('stored date', '2025-01-15');
+        Observer.Expect('stored amount', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -437,7 +502,12 @@ codeunit 76220 "LT Z Page Customization Tests"
         Observer.Observe('none', Format(P.None.Visible()));
         Observer.Observe('qe2', Format(P.Qe2.Visible()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('std', 'Yes');
+        Observer.Expect('pro', 'Yes');
+        Observer.Expect('add', 'Yes');
+        Observer.Expect('none', 'Yes');
+        Observer.Expect('qe2', 'Yes');
+        Observer.Verify();
     end;
 }
 
