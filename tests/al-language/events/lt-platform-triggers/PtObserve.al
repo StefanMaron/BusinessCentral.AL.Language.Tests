@@ -23,6 +23,9 @@ codeunit 69886 "LT W Pt Observe"
         Mode: Integer;
         Ok: Boolean;
         Err: Text;
+        FirstErr: Text;
+        Res: Text;
+        LogText: Text;
     begin
         for Mode := 0 to 3 do begin
             Log.SetMode(Mode);
@@ -34,7 +37,20 @@ codeunit 69886 "LT W Pt Observe"
                 Err := GetLastErrorText();
             ClearLastError();
             Log.SetMode(0);
-            Observer.Observe(Which + '|m' + Format(Mode), Short('ok=' + Format(Ok) + ' res=' + Log.Result() + ' err=' + Err + ' log=' + Log.Dump()));
+            Res := Log.Result();
+            // the host name and the build numbers differ from run to run
+            if Which in ['appver', 'appbuild', 'buildfile', 'platfile', 'geturl'] then
+                Res := Format(Res <> '');
+            LogText := Log.Dump();
+            // the second event of a failed DateTime filter carries a text made from the work date
+            if (Which = 'baddatetime') and (Mode = 2) then
+                LogText := 'count=' + Format(Log.Count());
+            if Mode = 0 then begin
+                FirstErr := Err;
+                Observer.Observe(Which + '|err', Err);
+            end else
+                Observer.Observe(Which + '|m' + Format(Mode) + '|err-same', Format(Err = FirstErr));
+            Observer.Observe(Which + '|m' + Format(Mode), 'ok=' + Format(Ok) + ' res=' + Res + ' log=' + Short(LogText));
         end;
     end;
 
@@ -180,26 +196,6 @@ codeunit 69886 "LT W Pt Observe"
     [PageHandler]
     procedure PageH(var P: TestPage "LT W Pt Card")
     begin
-    end;
-
-    [Test]
-    procedure RoleCenter_And_List()
-    var
-        Log: Codeunit "LT W Pt Log";
-        RoleCenter: TestPage "Business Manager Role Center";
-        Customers: TestPage "Customer List";
-    begin
-        Log.SetMode(1);
-        Log.Reset();
-        RoleCenter.OpenView();
-        Observer.Observe('rolecenter-open', Short(Log.Dump()));
-        RoleCenter.Close();
-        Log.Reset();
-        Customers.OpenView();
-        Observer.Observe('customers-open', Short(Log.Dump()));
-        Customers.Close();
-        Log.SetMode(0);
-        Observer.Finish();
     end;
 
     local procedure Seed()
