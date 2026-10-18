@@ -85,15 +85,18 @@ codeunit 60170 "Test Scope Isolation Contracts"
         Initialize();
 
         // Arrange
-        Rec."Entry No." := 1;
+        // The key must stay unique in this codeunit. Test01 and Test02 insert Entry No. 1, so a
+        // rollback to the last commit would restore key 1 whether or not the platform kept this
+        // uncommitted row, and the assertion could not fail (corpus issue 205).
+        Rec."Entry No." := 4004;
         Rec.Insert();
-        Rec.Get(1);
+        Rec.Get(4004);
 
         // Act
         asserterror Error('test');
 
         // Assert
-        Assert.IsTrue(Rec.Get(1), 'Record in caller must still be accessible after asserterror');
+        Assert.IsTrue(Rec.Get(4004), 'An uncommitted Insert made before asserterror Error() must still be readable after it');
     end;
 
     // Test 5: CodeunitRun_ReturnsFalse_ErrorTextAvailable
