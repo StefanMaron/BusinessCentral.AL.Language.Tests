@@ -275,7 +275,7 @@ xmlport 75561 "LT Y XP NoCalc"
     }
 }
 
-xmlport 75562 "LT Y XP Unbound"
+xmlport 75562 "LT Y XP Unbound Attr"
 {
     Format = Xml;
     Direction = Both;
@@ -293,11 +293,50 @@ xmlport 75562 "LT Y XP Unbound"
                 {
                     Unbound = true;
                 }
+                fieldelement(Name; Rw.Name) { }
+            }
+        }
+    }
+}
+
+xmlport 75566 "LT Y XP Unbound Text"
+{
+    Format = Xml;
+    Direction = Both;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT Y Item")
+            {
+                XmlName = 'Item';
+                fieldattribute(Id; Rw.Id) { }
                 textattribute(Tag)
                 {
                     Unbound = true;
                 }
                 fieldelement(Name; Rw.Name) { }
+            }
+        }
+    }
+}
+
+xmlport 75567 "LT Y XP Unbound Elem"
+{
+    Format = Xml;
+    Direction = Both;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT Y Item")
+            {
+                XmlName = 'Item';
+                fieldattribute(Id; Rw.Id) { }
                 fieldelement(Extra; Rw.Qty)
                 {
                     Unbound = true;
@@ -607,13 +646,37 @@ codeunit 75514 "LT Y XmlPort Tests"
     end;
 
     [Test]
-    procedure Unbound_Export_AndImport()
+    procedure Unbound_FieldAttribute_ExportAndImport()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        Export(Observer, 'attr_elem', 75562);
-        Observer.Observe('import', ImportText(75562, '<Root><Item Id="21" Free="f" Tag="t"><Name>twentyone</Name><Extra>99</Extra></Item></Root>'));
+        Export(Observer, 'export', 75562);
+        Observer.Observe('import', ImportText(75562, '<Root><Item Id="21" Free="f"><Name>twentyone</Name></Item></Root>'));
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Unbound_TextAttribute_ExportAndImport()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Export(Observer, 'export', 75566);
+        Observer.Observe('import', ImportText(75566, '<Root><Item Id="22" Tag="t"><Name>twentytwo</Name></Item></Root>'));
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Unbound_FieldElement_ExportAndImport()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Export(Observer, 'export', 75567);
+        Observer.Observe('import', ImportText(75567, '<Root><Item Id="23"><Extra>99</Extra></Item></Root>'));
         Observer.Observe('rows', Rows());
         Observer.Finish();
     end;
