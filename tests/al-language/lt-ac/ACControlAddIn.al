@@ -102,7 +102,10 @@ codeunit 77540 "LT AC ControlAddIn"
         Observer.Expect('set_name|code', 'NSValidationFailed:DotNetControlAddInNotCreated');
         Observer.Verify();
 #else
-        Observer.Finish();
+        Observer.Expect('opened', 'start');
+        Observer.Expect('set_name|text', 'Validation error for Field: NameF,  Message = ''A call to Say failed with this message: Object reference not set to an instance of an object. (Select Refresh to discard errors)''');
+        Observer.Expect('set_name|code', 'TestValidation');
+        Observer.Verify();
 #endif
     end;
 

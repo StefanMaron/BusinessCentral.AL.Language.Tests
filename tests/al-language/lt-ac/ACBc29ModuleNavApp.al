@@ -94,7 +94,8 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Info: ModuleInfo;
     begin
         Observer.Observe('found', Format(NavApp.GetModuleInfo('00000000-0000-0000-0000-000000000001', Info)));
-        Observer.Finish();
+        Observer.Expect('found', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +105,8 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Info: ModuleInfo;
     begin
         Observer.Observe('context_help', Info.ContextSensitiveHelpUrl());
-        Observer.Finish();
+        Observer.Expect('context_help', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +116,8 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Info: ModuleInfo;
     begin
         Observer.Observe('eula', Info.EULA());
-        Observer.Finish();
+        Observer.Expect('eula', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,7 +127,8 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Info: ModuleInfo;
     begin
         Observer.Observe('help', Info.Help());
-        Observer.Finish();
+        Observer.Expect('help', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +138,8 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Info: ModuleInfo;
     begin
         Observer.Observe('privacy', Info.PrivacyStatement());
-        Observer.Finish();
+        Observer.Expect('privacy', '');
+        Observer.Verify();
     end;
 }
 

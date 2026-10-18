@@ -147,7 +147,9 @@ codeunit 61492 "LT AC Dn RunOnClient"
         Observer.Expect('built|code', 'DotNetVariableNotCreated');
         Observer.Verify();
 #else
-        Observer.Finish();
+        Observer.Expect('built|text', 'Cannot create an instance of the following .NET Framework object: assembly System.Runtime, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, type System.Text.StringBuilder.');
+        Observer.Expect('built|code', 'DotNetCreate:NullReference');
+        Observer.Verify();
 #endif
     end;
 
