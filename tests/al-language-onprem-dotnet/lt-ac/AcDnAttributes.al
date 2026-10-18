@@ -46,7 +46,11 @@ codeunit 61490 "LT AC Dn WithEvents"
         Observer.Observe('sender_is_timer', Format(LastSender = Format(Timer)));
         Timer.Dispose();
         Observer.Observe('after_second_dispose', Format(Disposed));
-        Observer.Finish();
+        Observer.Expect('before_dispose', '0');
+        Observer.Expect('after_dispose', '1');
+        Observer.Expect('sender_is_timer', 'Yes');
+        Observer.Expect('after_second_dispose', '2');
+        Observer.Verify();
     end;
 }
 
@@ -66,16 +70,28 @@ codeunit 61491 "LT AC Dn SuppressDispose"
     end;
 
     [Test]
-    procedure AC_DnSuppressDispose_LocalVariable()
+    procedure AC_DnSuppressDispose_Default()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Clear(Disposed);
         WithDefaultDispose();
-        Observer.Observe('default_disposed_at_scope_end', Format(Disposed));
+        Observer.Observe('after_call', Format(Disposed));
+        WithDefaultDispose();
+        Observer.Observe('after_second_call', Format(Disposed));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AC_DnSuppressDispose_Suppressed()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Clear(Disposed);
         WithSuppressedDispose();
-        Observer.Observe('suppressed_disposed_at_scope_end', Format(Disposed));
+        Observer.Observe('after_call', Format(Disposed));
+        WithSuppressedDispose();
+        Observer.Observe('after_second_call', Format(Disposed));
         Observer.Finish();
     end;
 
@@ -116,7 +132,9 @@ codeunit 61492 "LT AC Dn RunOnClient"
             Observer.Observe('built', Text1)
         else
             Observer.ObserveError('built');
-        Observer.Finish();
+        Observer.Expect('built|text', 'A DotNet variable has not been instantiated. Attempting to call System.Text.StringBuilder.Append in CodeUnit LT AC Dn RunOnClient: TryBuild');
+        Observer.Expect('built|code', 'DotNetVariableNotCreated');
+        Observer.Verify();
     end;
 
     [TryFunction]
