@@ -33,7 +33,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1002;R:R1002;A:filter;A:done;R:R1002;F:=>=Yes;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=0;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1002');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -59,7 +67,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1002;R:R1002;A:update;A:done;R:R1002;F:=>=Yes;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1002');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -85,7 +101,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1002;F:==Yes;R:R1002;C:R1002');
+        Observer.Expect('update', 'R:R1002;A:filter;A:done;R:R1002;F:=>=Yes;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=0;R:R1002;N:-1=-1;R:R1001;N:-1=0;R:R1002;F:==Yes;R:R1002;C:R1002');
+        Observer.Expect('current', 'R1002');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', 'R:R1001;F:==Yes;R:R1001;C:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,7 +135,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1002;F:==Yes;R:R1002;C:R1002');
+        Observer.Expect('update', 'R:R1002;A:update;A:done;R:R1002;F:=>=Yes;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1002;N:-1=-1;R:R1001;N:-1=0;R:R1002;F:==Yes;R:R1002;C:R1002');
+        Observer.Expect('current', 'R1002');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', 'R:R1001;F:==Yes;R:R1001;C:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +166,13 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('update', 'R:R1001;A:update;A:done;R:R1001;F:=>=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1001');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +195,13 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('update', 'R:R1001;A:update;A:done;R:R1001;F:=>=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('current', 'R1001');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -183,7 +227,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1002;R:R1002;A:filter;A:done;R:R1002;R:R1002;R:R1003;R:R1004;R:R1002;R:R1001');
+        Observer.Expect('current', 'R1002');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -209,7 +261,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001;R:R1001;C:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1002;R:R1002;C:R1002');
+        Observer.Expect('update', 'R:R1002;A:update;A:done;R:R1002;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1002;R:R1001;R:R1002;R:R1002;C:R1002');
+        Observer.Expect('current', 'R1002');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', 'R:R1001;R:R1001;C:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -235,7 +295,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1002;R:R1002;A:filter;A:done;R:R1003;F:=>=Yes;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003');
+        Observer.Expect('current', 'R1003');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1003');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -261,7 +329,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1002;R:R1002;A:filter;A:done;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003');
+        Observer.Expect('current', 'R1003');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1003');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -287,7 +363,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001;R:R1001;C:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1002;R:R1002;C:R1002');
+        Observer.Expect('update', 'R:R1002;A:filter;A:done;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1003;C:R1003');
+        Observer.Expect('current', 'R1003');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1003');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +397,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1006;R:R1006;A:filter;A:done;N:1=0;N:-1=-1;R:R1005;F:=>=Yes;R:R1005;N:1=0;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1005');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +431,11 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1002;F:==Yes;R:R1002;C:R1002;R:R1003;F:==Yes;R:R1003;C:R1003;R:R1004;F:==Yes;R:R1004;C:R1004;R:R1005;F:==Yes;R:R1005;C:R1005;R:R1006;F:==Yes;R:R1006;C:R1006');
+        Observer.Expect('update', 'R:R1006;A:filter;A:done;N:1=0;N:-1=-1;R:R1005;F:=>=Yes;R:R1005;N:1=0;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0;R:R1005;F:==Yes;R:R1005;C:R10');
+        Observer.Verify();
     end;
 
     [Test]
@@ -365,7 +461,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1006;R:R1006;A:filter;A:done;R:R1005;F:=>=Yes;R:R1005;R:R1004;R:R1003;R:R1002;R:R1001');
+        Observer.Expect('current', 'R1005');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -391,7 +495,15 @@ codeunit 78860 "LT AI List Update Order"
         Observer.Observe('first_no', P.NoCtl.Value());
         Observer.Observe('after_first', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('update', 'R:R1006;R:R1006;A:filter;A:done;R:R1005;R:R1005;R:R1004;R:R1003;R:R1002;R:R1001');
+        Observer.Expect('current', 'R1005');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Expect('after_first', '');
+        Observer.Verify();
     end;
 }
 
@@ -420,7 +532,14 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next2_log', Log.Dump());
         Observer.Observe('next2_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=0;N:-1=0');
+        Observer.Expect('next1', 'No');
+        Observer.Expect('next1_log', '');
+        Observer.Expect('next1_no', 'R1001');
+        Observer.Expect('next2', 'No');
+        Observer.Expect('next2_log', '');
+        Observer.Expect('next2_no', 'R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -443,7 +562,14 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next2_log', Log.Dump());
         Observer.Observe('next2_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=0;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('next1', 'No');
+        Observer.Expect('next1_log', '');
+        Observer.Expect('next1_no', 'R1001');
+        Observer.Expect('next2', 'No');
+        Observer.Expect('next2_log', '');
+        Observer.Expect('next2_no', 'R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -466,7 +592,14 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next2_log', Log.Dump());
         Observer.Observe('next2_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('next1_log', '');
+        Observer.Expect('next1_no', 'R1002');
+        Observer.Expect('next2', 'No');
+        Observer.Expect('next2_log', '');
+        Observer.Expect('next2_no', 'R1002');
+        Observer.Verify();
     end;
 
     [Test]
@@ -489,7 +622,14 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next2_log', Log.Dump());
         Observer.Observe('next2_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('next1_log', 'R:R1002;F:==Yes;R:R1002;C:R1002');
+        Observer.Expect('next1_no', 'R1002');
+        Observer.Expect('next2', 'No');
+        Observer.Expect('next2_log', '');
+        Observer.Expect('next2_no', 'R1002');
+        Observer.Verify();
     end;
 
     [Test]
@@ -512,7 +652,14 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next2_log', Log.Dump());
         Observer.Observe('next2_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001');
+        Observer.Expect('next1', 'No');
+        Observer.Expect('next1_log', '');
+        Observer.Expect('next1_no', 'R1001');
+        Observer.Expect('next2', 'No');
+        Observer.Expect('next2_log', '');
+        Observer.Expect('next2_no', 'R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -535,7 +682,14 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next2_log', Log.Dump());
         Observer.Observe('next2_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1001;R:R1002;R:R1001;R:R1001;C:R1001');
+        Observer.Expect('next1', 'Yes');
+        Observer.Expect('next1_log', 'R:R1002;R:R1002;C:R1002');
+        Observer.Expect('next1_no', 'R1002');
+        Observer.Expect('next2', 'No');
+        Observer.Expect('next2_log', '');
+        Observer.Expect('next2_no', 'R1002');
+        Observer.Verify();
     end;
 
     [Test]
@@ -553,7 +707,10 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next', Format(P.Next()));
         Observer.Observe('next_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=No');
+        Observer.Expect('next', 'No');
+        Observer.Expect('next_log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -577,7 +734,13 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next', Format(P.Next()));
         Observer.Observe('next_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('current', 'R1004');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -601,7 +764,13 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next', Format(P.Next()));
         Observer.Observe('next_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1002;F:==Yes;R:R1002;C:R1002;R:R1003;F:==Yes;R:R1003;C:R1003;R:R1004;F:==Yes;R:R1004;C:R1004');
+        Observer.Expect('current', 'R1004');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', 'R:R1005;F:==Yes;R:R1005;C:R1005');
+        Observer.Verify();
     end;
 
     [Test]
@@ -622,7 +791,11 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('first_log', Log.Dump());
         Log.SetStartKey('');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1004');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -642,7 +815,10 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('current', P.NoCtl.Value());
         Log.SetStartKey('');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current', 'R1005');
+        Observer.Verify();
     end;
 
     [Test]
@@ -663,7 +839,11 @@ codeunit 78861 "LT AI List Navigation Order"
         Observer.Observe('next_log', Log.Dump());
         Log.SetStartKey('');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'R:R1006;N:1=0;N:-1=-1;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1006');
+        Observer.Expect('next', 'No');
+        Observer.Expect('next_log', '');
+        Observer.Verify();
     end;
 }
 
@@ -699,7 +879,12 @@ codeunit 78862 "LT AI List Paging Order"
         Log.Clear();
         Row.Get('R1005');
         Page.Run(Page::"LT AI List", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'F:=>=Yes;R:R1005;N:1=1;R:R1006;N:1=1;R:R1007;N:1=1;R:R1008;N:1=1;R:R1009;N:1=1;R:R1010;N:1=1;R:R1011;N:1=1;R:R1012;N:1=0;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1005');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current2', 'R1006');
+        Observer.Verify();
     end;
 
     [Test]
@@ -714,7 +899,12 @@ codeunit 78862 "LT AI List Paging Order"
         Row.SetFilter(Qty, '>=%1', 3);
         Row.Get('R1005');
         Page.Run(Page::"LT AI List", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'F:=>=Yes;R:R1005;N:1=1;R:R1006;N:1=1;R:R1007;N:1=1;R:R1008;N:1=1;R:R1009;N:1=1;R:R1010;N:1=1;R:R1011;N:1=1;R:R1012;N:1=0;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=0');
+        Observer.Expect('current', 'R1005');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current2', 'R1006');
+        Observer.Verify();
     end;
 
     [Test]
@@ -728,7 +918,8 @@ codeunit 78862 "LT AI List Paging Order"
         P.OpenView();
         Observer.Observe('open', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=1;R:R1007;N:1=1;R:R1008;N:1=1;R:R1009;N:1=1;R:R1010;N:1=1;R:R1011;N:1=1;R:R1012;N:1=1;R:R1013;N:1=1;R:R1014;N:1=1;R:R1015;N:1=1;R:R1016;N:1=1;R:R1017;N:1=1;R:R1018;N:1=1;R:R1019;N:1=1;R:R1020;R:R1001;N:-1=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -745,7 +936,10 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('next_log', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current', 'R1002');
+        Observer.Verify();
     end;
 
     [Test]
@@ -762,7 +956,10 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('last_log', Log.Dump());
         Observer.Observe('last_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('last', 'Yes');
+        Observer.Expect('last_log', 'R:R1020;N:1=1;R:R1021;N:1=1;R:R1022;N:1=1;R:R1023;N:1=1;R:R1024;N:1=1;R:R1025;N:1=0');
+        Observer.Expect('last_no', 'R1025');
+        Observer.Verify();
     end;
 
     [Test]
@@ -780,7 +977,10 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('first_log', Log.Dump());
         Observer.Observe('first_no', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_log', '');
+        Observer.Expect('first_no', 'R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -797,7 +997,10 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('goto_log', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', 'R:R1019;R:R1020;N:1=1;R:R1021;N:1=1;R:R1022;N:1=1;R:R1023;N:1=1;R:R1024;N:1=1;R:R1025;N:1=0');
+        Observer.Expect('current', 'R1021');
+        Observer.Verify();
     end;
 
     [Test]
@@ -816,7 +1019,13 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('end', P.NoCtl.Value());
         Observer.Observe('end_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('atR1022', '');
+        Observer.Expect('atR1023', '');
+        Observer.Expect('atR1024', '');
+        Observer.Expect('atR1025', '');
+        Observer.Expect('end', 'R1025');
+        Observer.Expect('end_log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -834,7 +1043,9 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('update', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('update', 'R:R1021;R:R1021;A:update;A:done;R:R1021;F:=>=Yes;R:R1021;N:1=1;R:R1022;N:1=1;R:R1023;N:1=1;R:R1024;N:1=1;R:R1025;N:1=0;R:R1021;N:-1=-1;R:R1020;N:-1=-1;R:R1019;N:-1=-1;R:R1018;N:-1=-1;R:R1017;N:-1=-1;R:R1016;N:-1=-1;R:R1015;N:-1=-1;R:R1014;N:-1=-1;R:R1013;N:-1=-1;R:R1012;N:-1=-1;R:R1011;N:-1=-1;R:R1010;N:-1=-1;R:R1009;N:-1=-1;R:R1008;N:-1=-1;R:R1007;N:-1=-1;R:R1006;N:-1=-1;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001');
+        Observer.Expect('current', 'R1021');
+        Observer.Verify();
     end;
 
     [Test]
@@ -852,6 +1063,8 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('update', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('update', 'R:R1021;R:R1021;A:update;A:done;R:R1021;R:R1021;R:R1022;R:R1023;R:R1024;R:R1025;R:R1021;R:R1020;R:R1019;R:R1018;R:R1017;R:R1016;R:R1015;R:R1014;R:R1013;R:R1012;R:R1011;R:R1010;R:R1009;R:R1008;R:R1007;R:R1006;R:R1005;R:R1004;R:R1003;R:R1002;R:R1001');
+        Observer.Expect('current', 'R1021');
+        Observer.Verify();
     end;
 }
