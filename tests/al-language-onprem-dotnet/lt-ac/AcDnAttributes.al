@@ -142,9 +142,13 @@ codeunit 61492 "LT AC Dn RunOnClient"
             Observer.Observe('built', Text1)
         else
             Observer.ObserveError('built');
+#if BC28PLUS
         Observer.Expect('built|text', 'A DotNet variable has not been instantiated. Attempting to call System.Text.StringBuilder.Append in CodeUnit LT AC Dn RunOnClient: TryBuild');
         Observer.Expect('built|code', 'DotNetVariableNotCreated');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [TryFunction]

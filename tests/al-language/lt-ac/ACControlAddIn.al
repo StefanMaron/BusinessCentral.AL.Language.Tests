@@ -96,10 +96,14 @@ codeunit 77540 "LT AC ControlAddIn"
         Observer.Observe('opened', TP.NameF.Value());
         asserterror TP.NameF.SetValue('changed');
         Observer.ObserveError('set_name');
+#if BC28PLUS
         Observer.Expect('opened', 'start');
         Observer.Expect('set_name|text', 'The control add-in on control Ctl on page LT AC Addin Card has not been instantiated.');
         Observer.Expect('set_name|code', 'NSValidationFailed:DotNetControlAddInNotCreated');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
 }
