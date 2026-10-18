@@ -150,7 +150,8 @@ codeunit 77532 "LT AC Attributes"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('required_pending', RequiredPendingProc());
-        Observer.Finish();
+        Observer.Expect('required_pending', 'required_pending_ran');
+        Observer.Verify();
     end;
 
     [RequiredPending('Use the new procedure', '29.0')]
