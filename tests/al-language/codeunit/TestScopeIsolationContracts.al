@@ -85,18 +85,20 @@ codeunit 60170 "Test Scope Isolation Contracts"
         Initialize();
 
         // Arrange
-        // The key must stay unique in this codeunit. Test01 and Test02 insert Entry No. 1, so a
-        // rollback to the last commit would restore key 1 whether or not the platform kept this
-        // uncommitted row, and the assertion could not fail (corpus issue 205).
+        // MEASURED on real BC (CI of corpus issue 205, BC 27.0): an Insert that was not committed
+        // is rolled back when asserterror catches an error, so the row is gone afterwards. The
+        // earlier version of this test inserted Entry No. 1, which Test01 and Test02 also insert,
+        // so a rollback to the last commit restored key 1 and the assertion could not fail.
+        // The key must stay unique in this codeunit, or the test stops discriminating.
         Rec."Entry No." := 4004;
         Rec.Insert();
-        Rec.Get(4004);
+        Assert.IsTrue(Rec.Get(4004), 'The inserted row must be readable before asserterror');
 
         // Act
         asserterror Error('test');
 
         // Assert
-        Assert.IsTrue(Rec.Get(4004), 'An uncommitted Insert made before asserterror Error() must still be readable after it');
+        Assert.IsFalse(Rec.Get(4004), 'An Insert not yet committed is rolled back when asserterror catches an error');
     end;
 
     // Test 5: CodeunitRun_ReturnsFalse_ErrorTextAvailable
