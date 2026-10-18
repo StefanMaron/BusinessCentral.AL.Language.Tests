@@ -8,6 +8,8 @@
 //      system action). The subscribers also write a row into the table LT V Event Log (no company), so an event raised before the test session started is visible too.
 //   3. Reporting Triggers raised by Report.SaveAs / RunRequestPage / Execute, and what a subscriber that changes each var argument does.
 // Note: the PDF, Word and Excel renders of Report.SaveAs run on the Linux tier of the CI (the 'Test Report SaveAs Pdf Body' test explains why they can refuse); their rows record what that tier raises.
+// Not pinned: the PDF, Word and Excel renders and Report.Execute. The Linux tier of the CI stubs the RDLC renderer (it refuses with 'RDLC report rendering is not implemented on Linux BC'),
+// so the events after the refusal are the stub's, not Business Central's. Only the Xml path and the request page are asserted.
 // BC versions: 27 - 29
 
 codeunit 69852 "LT V Platform Event Tests"
@@ -341,18 +343,6 @@ codeunit 69852 "LT V Platform Event Tests"
     end;
 
     [Test]
-    procedure SaveAs_Pdf_RaisedEvents()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        Log.Start();
-        Run(Observer, 'pdf', Report::"LT V Report A", ReportFormat::Pdf);
-        Log.Stop();
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure SaveAs_Xml_RaisedEvents()
     var
         Observer: Codeunit "Probe Observer";
@@ -364,40 +354,10 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Finish();
     end;
 
-    [Test]
-    procedure SaveAs_Word_RaisedEvents()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        Log.Start();
-        Run(Observer, 'word', Report::"LT V Report A", ReportFormat::Word);
-        Log.Stop();
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure SaveAs_Excel_RaisedEvents()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        Log.Start();
-        Run(Observer, 'excel', Report::"LT V Report A", ReportFormat::Excel);
-        Log.Stop();
-        Observer.Finish();
-    end;
-
     [TryFunction]
     local procedure TryRunRequestPage(var Parameters: Text)
     begin
         Parameters := Report.RunRequestPage(Report::"LT V Report A");
-    end;
-
-    [TryFunction]
-    local procedure TryExecute()
-    begin
-        Report.Execute(Report::"LT V Report A", '');
     end;
 
     [RequestPageHandler]
@@ -408,7 +368,7 @@ codeunit 69852 "LT V Platform Event Tests"
 
     [Test]
     [HandlerFunctions('RequestPageA')]
-    procedure RunRequestPageAndExecute_RaisedEvents()
+    procedure RunRequestPage_RaisedEvents()
     var
         Observer: Codeunit "Probe Observer";
         Parameters: Text;
@@ -418,9 +378,6 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Observe('request page ok', Format(TryRunRequestPage(Parameters)));
         Observer.ObserveError('request page error');
         Observer.Observe('request page log', Log.Take());
-        Observer.Observe('execute ok', Format(TryExecute()));
-        Observer.ObserveError('execute error');
-        Observer.Observe('execute log', Log.Take());
         Log.Stop();
         Observer.Finish();
     end;
@@ -444,54 +401,54 @@ codeunit 69852 "LT V Platform Event Tests"
     end;
 
     [Test]
-    procedure ChangeVarArguments_PdfSaveAs_First()
+    procedure ChangeVarArguments_XmlSaveAs_First()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ChangeOne(Observer, 'HasCustomLayout', ReportFormat::Pdf);
-        ChangeOne(Observer, 'SelectedBuiltinLayoutType', ReportFormat::Pdf);
-        ChangeOne(Observer, 'SelectReportLayoutCode', ReportFormat::Pdf);
+        ChangeOne(Observer, 'HasCustomLayout', ReportFormat::Xml);
+        ChangeOne(Observer, 'SelectedBuiltinLayoutType', ReportFormat::Xml);
+        ChangeOne(Observer, 'SelectReportLayoutCode', ReportFormat::Xml);
         Observer.Finish();
     end;
 
     [Test]
-    procedure ChangeVarArguments_PdfSaveAs_Second()
+    procedure ChangeVarArguments_XmlSaveAs_Second()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ChangeOne(Observer, 'FetchReportLayoutByCode', ReportFormat::Pdf);
-        ChangeOne(Observer, 'CustomDocumentMergerEx', ReportFormat::Pdf);
-        ChangeOne(Observer, 'OnDocumentReady', ReportFormat::Pdf);
+        ChangeOne(Observer, 'FetchReportLayoutByCode', ReportFormat::Xml);
+        ChangeOne(Observer, 'CustomDocumentMergerEx', ReportFormat::Xml);
+        ChangeOne(Observer, 'OnDocumentReady', ReportFormat::Xml);
         Observer.Finish();
     end;
 
     [Test]
-    procedure ChangeVarArguments_PdfSaveAs_Third()
+    procedure ChangeVarArguments_XmlSaveAs_Third()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ChangeOne(Observer, 'OnIntermediateDocumentReady', ReportFormat::Pdf);
-        ChangeOne(Observer, 'OnDocumentPrintReady', ReportFormat::Pdf);
-        ChangeOne(Observer, 'OnDocumentDownload', ReportFormat::Pdf);
-        ChangeOne(Observer, 'GetPrinterName', ReportFormat::Pdf);
+        ChangeOne(Observer, 'OnIntermediateDocumentReady', ReportFormat::Xml);
+        ChangeOne(Observer, 'OnDocumentPrintReady', ReportFormat::Xml);
+        ChangeOne(Observer, 'OnDocumentDownload', ReportFormat::Xml);
+        ChangeOne(Observer, 'GetPrinterName', ReportFormat::Xml);
         Observer.Finish();
     end;
 
     [Test]
-    procedure ChangeVarArguments_PdfSaveAs_Fourth()
+    procedure ChangeVarArguments_XmlSaveAs_Fourth()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        ChangeOne(Observer, 'GetPaperTrayForReport', ReportFormat::Pdf);
-        ChangeOne(Observer, 'ScheduleReport', ReportFormat::Pdf);
-        ChangeOne(Observer, 'SetupPrinters', ReportFormat::Pdf);
-        ChangeOne(Observer, 'SelectReportLayoutUI', ReportFormat::Pdf);
-        ChangeOne(Observer, 'ApplicationReportMergeStrategy', ReportFormat::Pdf);
-        ChangeOne(Observer, 'WordDocumentMergerAppMode', ReportFormat::Pdf);
+        ChangeOne(Observer, 'GetPaperTrayForReport', ReportFormat::Xml);
+        ChangeOne(Observer, 'ScheduleReport', ReportFormat::Xml);
+        ChangeOne(Observer, 'SetupPrinters', ReportFormat::Xml);
+        ChangeOne(Observer, 'SelectReportLayoutUI', ReportFormat::Xml);
+        ChangeOne(Observer, 'ApplicationReportMergeStrategy', ReportFormat::Xml);
+        ChangeOne(Observer, 'WordDocumentMergerAppMode', ReportFormat::Xml);
         Observer.Finish();
     end;
 }
