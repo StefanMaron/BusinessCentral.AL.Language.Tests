@@ -225,6 +225,12 @@ python3 run-bc-tests.py --ids "60100..60199"
 
 Default local credentials: `BCRUNNER` / `Admin123!`
 
+To compile with `alc` directly and trust the result, run it through `scripts/check-alc-output.sh`
+(for example `scripts/check-alc-output.sh alc /project:. /packagecachepath:pkgs /out:out.app`).
+`alc | grep ': error'` can call a broken build clean: errors can print at column 0, and an empty
+package cache can fail with no diagnostics. The script requires the start and end lines, exit
+code 0, and no `error ALnnnn` line in either shape.
+
 ---
 
 ## Running CI locally
