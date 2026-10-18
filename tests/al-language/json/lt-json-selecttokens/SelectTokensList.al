@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunits 78800, 78801
 // Probe: JsonObject.SelectTokens and JsonArray.SelectTokens with a List of [JsonToken]; the methods need app runtime 17 (BC 28 and 29; on BC 27 the app runs on 16.1 and the compiler refuses them: must-not-compile cases 0364 and 0640).
-// Facts: result, list content, list pre-filled, no match, several matches, invalid path
+// Facts: result, list content, list pre-filled, no match (true, empty list), several matches, invalid path (false, last error InvalidOperation, no exception)
 // BC versions: 28, 29
 
 #if BC28PLUS
@@ -56,7 +56,19 @@ codeunit 78800 "LT S Array SelectTokens"
         B := A.SelectTokens('$[1:3]', L);
         Observer.Observe('slice_result', Format(B));
         Observer.Observe('slice_list', Render(L));
-        Observer.Finish();
+        Observer.Expect('single_result', 'Yes');
+        Observer.Expect('single_list', '1:1|');
+        Observer.Expect('nomatch_result', 'Yes');
+        Observer.Expect('nomatch_list', '0:');
+        Observer.Expect('wild_result', 'Yes');
+        Observer.Expect('wild_list', '2:1|2|');
+        Observer.Expect('recursive_result', 'Yes');
+        Observer.Expect('recursive_list', '4:1|"deep"|2|4|');
+        Observer.Expect('root_result', 'Yes');
+        Observer.Expect('root_list', '1:[{"a":1,"n":{"a":"deep"}},{"a":2},{"b":3},[{"a":4}]]|');
+        Observer.Expect('slice_result', 'Yes');
+        Observer.Expect('slice_list', '2:{"a":2}|{"b":3}|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -77,7 +89,11 @@ codeunit 78800 "LT S Array SelectTokens"
         B := A.SelectTokens('$[9]', L);
         Observer.Observe('prefilled_nomatch_result', Format(B));
         Observer.Observe('prefilled_nomatch_list', Render(L));
-        Observer.Finish();
+        Observer.Expect('prefilled_match_result', 'Yes');
+        Observer.Expect('prefilled_match_list', '1:2|');
+        Observer.Expect('prefilled_nomatch_result', 'Yes');
+        Observer.Expect('prefilled_nomatch_list', '0:');
+        Observer.Verify();
     end;
 
     var
@@ -108,7 +124,12 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad1', '$[');
-        Observer.Finish();
+        Observer.Expect('bad1_noexception', 'Yes');
+        Observer.Expect('bad1_result', 'No');
+        Observer.Expect('bad1|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad1|code', 'InvalidOperation');
+        Observer.Expect('bad1_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,7 +139,12 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad2', '$.a[?(@.x');
-        Observer.Finish();
+        Observer.Expect('bad2_noexception', 'Yes');
+        Observer.Expect('bad2_result', 'No');
+        Observer.Expect('bad2|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad2|code', 'InvalidOperation');
+        Observer.Expect('bad2_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +154,12 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad3', '');
-        Observer.Finish();
+        Observer.Expect('bad3_noexception', 'Yes');
+        Observer.Expect('bad3_result', 'Yes');
+        Observer.Expect('bad3|text', '');
+        Observer.Expect('bad3|code', '');
+        Observer.Expect('bad3_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +169,12 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad4', 'a..[');
-        Observer.Finish();
+        Observer.Expect('bad4_noexception', 'Yes');
+        Observer.Expect('bad4_result', 'No');
+        Observer.Expect('bad4|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad4|code', 'InvalidOperation');
+        Observer.Expect('bad4_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +184,12 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad5', '$.a.[');
-        Observer.Finish();
+        Observer.Expect('bad5_noexception', 'Yes');
+        Observer.Expect('bad5_result', 'No');
+        Observer.Expect('bad5|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad5|code', 'InvalidOperation');
+        Observer.Expect('bad5_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +199,12 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad6', '$[?(');
-        Observer.Finish();
+        Observer.Expect('bad6_noexception', 'Yes');
+        Observer.Expect('bad6_result', 'No');
+        Observer.Expect('bad6|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad6|code', 'InvalidOperation');
+        Observer.Expect('bad6_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,7 +216,9 @@ codeunit 78800 "LT S Array SelectTokens"
     begin
         Observer.Observe('empty', Format(EmptyDoc.SelectTokens('$[*]', L)));
         Observer.Observe('empty_list', Render(L));
-        Observer.Finish();
+        Observer.Expect('empty', 'Yes');
+        Observer.Expect('empty_list', '0:');
+        Observer.Verify();
     end;
 }
 
@@ -227,7 +275,21 @@ codeunit 78801 "LT S Object SelectTokens"
         B := O.SelectTokens('$.*', L);
         Observer.Observe('allprops_result', Format(B));
         Observer.Observe('allprops_count', Format(L.Count()));
-        Observer.Finish();
+        Observer.Expect('single_result', 'Yes');
+        Observer.Expect('single_list', '1:1|');
+        Observer.Expect('nomatch_result', 'Yes');
+        Observer.Expect('nomatch_list', '0:');
+        Observer.Expect('wild_result', 'Yes');
+        Observer.Expect('wild_list', '2:10|20|');
+        Observer.Expect('recursive_result', 'Yes');
+        Observer.Expect('recursive_list', '3:10|20|40|');
+        Observer.Expect('recursive_a_result', 'Yes');
+        Observer.Expect('recursive_a_list', '2:1|"deep"|');
+        Observer.Expect('filter_result', 'Yes');
+        Observer.Expect('filter_list', '1:{"id":20}|');
+        Observer.Expect('allprops_result', 'Yes');
+        Observer.Expect('allprops_count', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -248,7 +310,11 @@ codeunit 78801 "LT S Object SelectTokens"
         B := O.SelectTokens('$.nope', L);
         Observer.Observe('prefilled_nomatch_result', Format(B));
         Observer.Observe('prefilled_nomatch_list', Render(L));
-        Observer.Finish();
+        Observer.Expect('prefilled_match_result', 'Yes');
+        Observer.Expect('prefilled_match_list', '1:1|');
+        Observer.Expect('prefilled_nomatch_result', 'Yes');
+        Observer.Expect('prefilled_nomatch_list', '0:');
+        Observer.Verify();
     end;
 
     var
@@ -279,7 +345,12 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad1', '$[');
-        Observer.Finish();
+        Observer.Expect('bad1_noexception', 'Yes');
+        Observer.Expect('bad1_result', 'No');
+        Observer.Expect('bad1|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad1|code', 'InvalidOperation');
+        Observer.Expect('bad1_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -289,7 +360,12 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad2', '$.a[?(@.x');
-        Observer.Finish();
+        Observer.Expect('bad2_noexception', 'Yes');
+        Observer.Expect('bad2_result', 'No');
+        Observer.Expect('bad2|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad2|code', 'InvalidOperation');
+        Observer.Expect('bad2_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -299,7 +375,12 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad3', '');
-        Observer.Finish();
+        Observer.Expect('bad3_noexception', 'Yes');
+        Observer.Expect('bad3_result', 'Yes');
+        Observer.Expect('bad3|text', '');
+        Observer.Expect('bad3|code', '');
+        Observer.Expect('bad3_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,7 +390,12 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad4', 'a..[');
-        Observer.Finish();
+        Observer.Expect('bad4_noexception', 'Yes');
+        Observer.Expect('bad4_result', 'No');
+        Observer.Expect('bad4|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad4|code', 'InvalidOperation');
+        Observer.Expect('bad4_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -319,7 +405,12 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad5', '$.a.[');
-        Observer.Finish();
+        Observer.Expect('bad5_noexception', 'Yes');
+        Observer.Expect('bad5_result', 'No');
+        Observer.Expect('bad5|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad5|code', 'InvalidOperation');
+        Observer.Expect('bad5_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,7 +420,12 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Doc(Subject);
         Probe(Observer, 'bad6', '$[?(');
-        Observer.Finish();
+        Observer.Expect('bad6_noexception', 'Yes');
+        Observer.Expect('bad6_result', 'No');
+        Observer.Expect('bad6|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('bad6|code', 'InvalidOperation');
+        Observer.Expect('bad6_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -341,7 +437,9 @@ codeunit 78801 "LT S Object SelectTokens"
     begin
         Observer.Observe('empty', Format(EmptyDoc.SelectTokens('$.*', L)));
         Observer.Observe('empty_list', Render(L));
-        Observer.Finish();
+        Observer.Expect('empty', 'Yes');
+        Observer.Expect('empty_list', '0:');
+        Observer.Verify();
     end;
 }
 #endif
