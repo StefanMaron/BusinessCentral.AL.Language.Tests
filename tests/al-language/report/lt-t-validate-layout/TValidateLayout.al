@@ -144,13 +144,13 @@ codeunit 69366 "LT T Validate Layout Tests"
 #if BC28PLUS
         Observer.Expect('static unknown report|text', 'You tried to invoke the Report object with the ID 71999 from the object LT T Validate Layout Tests. An object with that ID does not exist in the current application compiled with emit version n.');
 #else
-        Observer.Expect('static unknown report|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt.. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('static unknown report|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
 #endif
         Observer.Expect('static unknown report|code', 'AL:MetadataNotFound');
 #if BC28PLUS
         Observer.Expect('static report 0|text', 'You tried to invoke the Report object with the ID 0 from the object LT T Validate Layout Tests. An object with that ID does not exist in the current application compiled with emit version n.');
 #else
-        Observer.Expect('static report 0|text', 'You tried to invoke the Report object with the ID 0 from the object Test Runner - Mgt.. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('static report 0|text', 'You tried to invoke the Report object with the ID 0 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
 #endif
         Observer.Expect('static report 0|code', 'AL:MetadataNotFound');
         Observer.Verify();
