@@ -62,6 +62,15 @@ codeunit 78108 "LT AD Plat Rows License"
         Observer: Codeunit "Probe Observer";
     begin
         Dump(Observer, 'License Permission', 0, 8);
-        Observer.Finish();
+        Observer.Expect('License Permission id', '2000000043');
+        Observer.Expect('License Permission row 1', 'Object Type=TableData|Object Number=0|Read Permission= |Insert Permission= |Modify Permission= |Delete Permission= |Execute Permission= |Limited Usage Permission= |');
+        Observer.Expect('License Permission row 2', 'Object Type=TableData|Object Number=1|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Expect('License Permission row 3', 'Object Type=TableData|Object Number=2|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Expect('License Permission row 4', 'Object Type=TableData|Object Number=3|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Expect('License Permission row 5', 'Object Type=TableData|Object Number=4|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Expect('License Permission row 6', 'Object Type=TableData|Object Number=5|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Expect('License Permission row 7', 'Object Type=TableData|Object Number=6|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Expect('License Permission row 8', 'Object Type=TableData|Object Number=7|Read Permission=Yes|Insert Permission=Yes|Modify Permission=Yes|Delete Permission=Yes|Execute Permission=Yes|Limited Usage Permission= |');
+        Observer.Verify();
     end;
 }

@@ -62,7 +62,12 @@ codeunit 78109 "LT AD Plat Rows Layout"
         Observer: Codeunit "Probe Observer";
     begin
         Dump(Observer, 'Tenant Report Layout Selection', 0, 10);
-        Observer.Finish();
+        Observer.Expect('Tenant Report Layout Selection id', '2000000233');
+        Observer.Expect('Tenant Report Layout Selection row 1', 'Report ID=1302|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardSalesProFormaInv.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|Header Part Name=|Theme Part Name=|');
+        Observer.Expect('Tenant Report Layout Selection row 2', 'Report ID=1303|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardDraftSalesInvoiceBlue.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|Header Part Name=|Theme Part Name=|');
+        Observer.Expect('Tenant Report Layout Selection row 3', 'Report ID=1304|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardSalesQuoteBlue.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|Header Part Name=|Theme Part Name=|');
+        Observer.Expect('Tenant Report Layout Selection row 4', 'Report ID=1306|Company Name=|User ID={00000000-0000-0000-0000-000000000000}|Layout Name=StandardSalesInvoiceBlueSimple.docx|App ID={437DBF0E-84FF-417A-965D-ED2BB9650972}|Header Part Name=|Theme Part Name=|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,6 +81,8 @@ codeunit 78109 "LT AD Plat Rows Layout"
         Observer.Observe('id', Format(Id));
         RR.Open(Id);
         Observer.Observe('count', Format(RR.Count()));
-        Observer.Finish();
+        Observer.Expect('id', '2000000233');
+        Observer.Expect('count', '4');
+        Observer.Verify();
     end;
 }

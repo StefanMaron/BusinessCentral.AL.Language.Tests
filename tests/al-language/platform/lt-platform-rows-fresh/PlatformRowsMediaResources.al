@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: the count and the first 5 rows, with every column, of the platform table MediaResources on the fresh tenant of a test container (read through RecordRef by table name).
+// Probe: the count and every row, in 4 tests of 12 rows each,, with every column, of the platform table MediaResources on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78110.
 
 codeunit 78110 "LT AD Plat Rows Media"
@@ -59,11 +59,38 @@ codeunit 78110 "LT AD Plat Rows Media"
     end;
 
     [Test]
-    procedure Rows_MediaResources()
+    procedure Rows_MediaResources_01()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources', 0, 5);
+        Dump(Observer, 'MediaResources', 0, 12);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_MediaResources_02()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'MediaResources', 12, 12);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_MediaResources_03()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'MediaResources', 24, 12);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_MediaResources_04()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'MediaResources', 36, 12);
         Observer.Finish();
     end;
 
