@@ -185,7 +185,8 @@ jobs:
               [ "$v" -le "$MAJOR" ] || break
               SYMS="${SYMS:+$SYMS,}BC${v}PLUS"
             done
-            JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','preprocessor_symbols':'$SYMS'}]}))")
+            case "$MAJOR" in 27) RT=16.1;; 28) RT=17.1;; *) RT=18.0;; esac
+            JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','runtime':'$RT','preprocessor_symbols':'$SYMS'}]}))")
           else
             # al-runtime-rs-staging only: the newest minor of each major (al-runtime-rs reads only these as its oracle).
             # Master keeps every minor from 27.0 to 29.0 (the AL Runner project reads that matrix).
