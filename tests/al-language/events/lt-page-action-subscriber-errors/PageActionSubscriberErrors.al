@@ -10,7 +10,7 @@
 // opens and closes, the failing mode makes no difference). For RunObject = Codeunit only OnAfterActionEvent fires, after the codeunit ran, and an error in it reaches Invoke; the before event does not fire.
 // BC versions: 27.0 to 29.0
 
-table 71770 "LT PS Row"
+table 71770 "LT PAS Row"
 {
     DataClassification = CustomerContent;
 
@@ -23,7 +23,7 @@ table 71770 "LT PS Row"
     keys { key(PK; Id) { Clustered = true; } }
 }
 
-codeunit 71771 "LT PS Log"
+codeunit 71771 "LT PAS Log"
 {
     SingleInstance = true;
 
@@ -66,62 +66,62 @@ codeunit 71771 "LT PS Log"
     end;
 }
 
-codeunit 71772 "LT PS Subs"
+codeunit 71772 "LT PAS Subs"
 {
-    [EventSubscriber(ObjectType::Page, Page::"LT PS Card", 'OnBeforeActionEvent', 'Act', false, false)]
+    [EventSubscriber(ObjectType::Page, Page::"LT PAS Card", 'OnBeforeActionEvent', 'Act', false, false)]
     local procedure BeforeAct()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('before-Act');
         if Log.Fails('before') then
             Error('PS before-Act failed');
     end;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT PS Card", 'OnAfterActionEvent', 'Act', false, false)]
+    [EventSubscriber(ObjectType::Page, Page::"LT PAS Card", 'OnAfterActionEvent', 'Act', false, false)]
     local procedure AfterAct()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('after-Act');
         if Log.Fails('after') then
             Error('PS after-Act failed');
     end;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT PS Card", 'OnBeforeActionEvent', 'RunPg', false, false)]
+    [EventSubscriber(ObjectType::Page, Page::"LT PAS Card", 'OnBeforeActionEvent', 'RunPg', false, false)]
     local procedure BeforeRunPg()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('before-RunPg');
         if Log.Fails('before') then
             Error('PS before-RunPg failed');
     end;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT PS Card", 'OnAfterActionEvent', 'RunPg', false, false)]
+    [EventSubscriber(ObjectType::Page, Page::"LT PAS Card", 'OnAfterActionEvent', 'RunPg', false, false)]
     local procedure AfterRunPg()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('after-RunPg');
         if Log.Fails('after') then
             Error('PS after-RunPg failed');
     end;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT PS Card", 'OnBeforeActionEvent', 'RunCu', false, false)]
+    [EventSubscriber(ObjectType::Page, Page::"LT PAS Card", 'OnBeforeActionEvent', 'RunCu', false, false)]
     local procedure BeforeRunCu()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('before-RunCu');
         if Log.Fails('before') then
             Error('PS before-RunCu failed');
     end;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT PS Card", 'OnAfterActionEvent', 'RunCu', false, false)]
+    [EventSubscriber(ObjectType::Page, Page::"LT PAS Card", 'OnAfterActionEvent', 'RunCu', false, false)]
     local procedure AfterRunCu()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('after-RunCu');
         if Log.Fails('after') then
@@ -129,20 +129,20 @@ codeunit 71772 "LT PS Subs"
     end;
 }
 
-codeunit 71776 "LT PS Run"
+codeunit 71776 "LT PAS Run"
 {
     trigger OnRun()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('codeunit-OnRun');
     end;
 }
 
-page 71774 "LT PS Target"
+page 71774 "LT PAS Target"
 {
     PageType = Card;
-    SourceTable = "LT PS Row";
+    SourceTable = "LT PAS Row";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -156,23 +156,23 @@ page 71774 "LT PS Target"
 
     trigger OnOpenPage()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('target-OnOpenPage');
     end;
 
     trigger OnClosePage()
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('target-OnClosePage');
     end;
 }
 
-page 71773 "LT PS Card"
+page 71773 "LT PAS Card"
 {
     PageType = Card;
-    SourceTable = "LT PS Row";
+    SourceTable = "LT PAS Row";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -194,7 +194,7 @@ page 71773 "LT PS Card"
 
                 trigger OnAction()
                 var
-                    Log: Codeunit "LT PS Log";
+                    Log: Codeunit "LT PAS Log";
                 begin
                     Log.Add('OnAction-Act');
                 end;
@@ -202,12 +202,12 @@ page 71773 "LT PS Card"
             action(RunPg)
             {
                 ApplicationArea = All;
-                RunObject = Page "LT PS Target";
+                RunObject = Page "LT PAS Target";
             }
             action(RunCu)
             {
                 ApplicationArea = All;
-                RunObject = Codeunit "LT PS Run";
+                RunObject = Codeunit "LT PAS Run";
             }
         }
     }
@@ -220,8 +220,8 @@ codeunit 71775 "LT Page Action Sub Errors"
 
     local procedure Seed(FailMode: Text)
     var
-        Row: Record "LT PS Row";
-        Log: Codeunit "LT PS Log";
+        Row: Record "LT PAS Row";
+        Log: Codeunit "LT PAS Log";
     begin
         Row.DeleteAll(false);
         Row.Id := 1;
@@ -231,9 +231,9 @@ codeunit 71775 "LT Page Action Sub Errors"
     end;
 
     [PageHandler]
-    procedure TargetHandler(var Target: TestPage "LT PS Target")
+    procedure TargetHandler(var Target: TestPage "LT PAS Target")
     var
-        Log: Codeunit "LT PS Log";
+        Log: Codeunit "LT PAS Log";
     begin
         Log.Add('handler');
     end;
@@ -242,8 +242,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure Act_BeforeSubscriberRaises()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('before');
         Card.OpenEdit();
@@ -266,8 +266,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure Act_AfterSubscriberRaises()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('after');
         Card.OpenEdit();
@@ -290,8 +290,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure Act_BothSubscribersRaise()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('both');
         Card.OpenEdit();
@@ -311,8 +311,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure RunPage_EventOrder()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('');
         Card.OpenEdit();
@@ -330,8 +330,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure RunPage_AfterSubscriberConfiguredToRaise()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('after');
         Card.OpenEdit();
@@ -347,8 +347,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure RunCodeunit_EventOrder()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('');
         Card.OpenEdit();
@@ -365,8 +365,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure RunCodeunit_BeforeSubscriberConfiguredToRaise()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('before');
         Card.OpenEdit();
@@ -382,8 +382,8 @@ codeunit 71775 "LT Page Action Sub Errors"
     procedure RunCodeunit_AfterSubscriberRaises()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT PS Log";
-        Card: TestPage "LT PS Card";
+        Log: Codeunit "LT PAS Log";
+        Card: TestPage "LT PAS Card";
     begin
         Seed('after');
         Card.OpenEdit();
