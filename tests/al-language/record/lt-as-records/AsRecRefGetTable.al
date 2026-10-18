@@ -1,0 +1,120 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-gettable-method
+// Scope: in-scope
+// Fixtures used: Probe Observer (codeunit 69160), AsFixtures.al (tables 79902, 79904, helper 79913)
+// Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced (corpus issue 644, item 2).
+// Facts: B.GetTable(A) with A a RecordRef: A open on a filtered table with a found row (what B holds, and whether a later change of A's
+//   field value, filter or current row shows in B); A not open; B already open on another table.
+// BC versions: 27-29
+
+codeunit 79921 "LT AS RecRef GetTable Ref"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Helper: Codeunit "LT AS Helper";
+
+    local procedure OpenA(var A: RecordRef)
+    begin
+        Helper.SeedRows();
+        A.Open(Database::"LT AS Row");
+        A.Field(2).SetFilter('<>beta');
+        A.FindLast();
+    end;
+
+    [Test]
+    procedure FromFilteredFoundRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: RecordRef;
+        B: RecordRef;
+    begin
+        OpenA(A);
+        B.GetTable(A);
+        Observer.Observe('number', Format(B.Number));
+        Observer.Observe('filters', B.GetFilters());
+        Observer.Observe('row', Format(B.Field(1).Value));
+        Observer.Observe('count', Format(B.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ChangeValueOfA_ReadB()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: RecordRef;
+        B: RecordRef;
+    begin
+        OpenA(A);
+        B.GetTable(A);
+        A.Field(2).Value := 'changed';
+        Observer.Observe('b_name', Format(B.Field(2).Value));
+        B.Field(3).Value := 42;
+        Observer.Observe('a_amount', Format(A.Field(3).Value));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ChangeFilterAndRowOfA_ReadB()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: RecordRef;
+        B: RecordRef;
+    begin
+        OpenA(A);
+        B.GetTable(A);
+        A.Field(2).SetRange();
+        A.FindFirst();
+        Observer.Observe('b_filters', B.GetFilters());
+        Observer.Observe('b_row', Format(B.Field(1).Value));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ModifyThroughB_ReadA()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: RecordRef;
+        B: RecordRef;
+    begin
+        OpenA(A);
+        B.GetTable(A);
+        B.Field(2).Value := 'via b';
+        B.Modify();
+        Observer.Observe('a_name', Format(A.Field(2).Value));
+        A.Find('=');
+        Observer.Observe('a_name_refind', Format(A.Field(2).Value));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure FromNotOpen()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: RecordRef;
+        B: RecordRef;
+    begin
+        Helper.SeedRows();
+        ClearLastError();
+        asserterror B.GetTable(A);
+        Observer.Observe('error', Helper.LastError());
+        Observer.Observe('b_open', Format(B.Number));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure IntoRefOpenOnOtherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: RecordRef;
+        B: RecordRef;
+    begin
+        OpenA(A);
+        B.Open(Database::"LT AS Other");
+        B.GetTable(A);
+        Observer.Observe('number', Format(B.Number));
+        Observer.Observe('row', Format(B.Field(1).Value));
+        Observer.Observe('filters', B.GetFilters());
+        Observer.Finish();
+    end;
+}
