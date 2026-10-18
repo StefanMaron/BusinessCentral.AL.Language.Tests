@@ -98,6 +98,7 @@ codeunit 61289 "LT S Http Client After Config"
     end;
 
     [Test]
+    [HandlerFunctions('Handler')]
     procedure RequestAfterEachConfiguration()
     var
         Observer: Codeunit "Probe Observer";

@@ -54,13 +54,18 @@ codeunit 61285 "LT S Media Files"
         exit(L);
     end;
 
+    local procedure BaseOf(Name: Text): Text
+    begin
+        exit(CopyStr(Name, StrLen(TemporaryPath()) + 1));
+    end;
+
     local procedure Cleanup(Name: Text)
     begin
         if File.Exists(Name) then
             File.Erase(Name);
     end;
 
-    local procedure DescribeTenant(Id: Guid): Text
+    local procedure DescribeTenant(Id: Guid; BaseName: Text): Text
     var
         Tenant: Record "Tenant Media";
     begin
@@ -112,17 +117,18 @@ codeunit 61285 "LT S Media Files"
         Observer.Observe('import_id_null', Format(IsNullGuid(Id)));
         Observer.Observe('import_id_is_media_id', Format(Id = Row.Pic.MediaId()));
         Observer.Observe('hasvalue', Format(Row.Pic.HasValue()));
-        Observer.Observe('tenant_3args', DescribeTenant(Id));
+        Observer.Observe('tenant_3args', DescribeTenant(Id, BaseOf(Src)));
         Row.Code := 'B';
         Id2 := Row.Pic.ImportFile(Src, 'second');
         Row.Insert();
-        Observer.Observe('tenant_2args', DescribeTenant(Id2));
+        Observer.Observe('tenant_2args', DescribeTenant(Id2, BaseOf(Src)));
         Row.Code := 'C';
         Id2 := Row.Pic.ImportFile(Src, 'third', 'text/plain');
         Row.Insert();
-        Observer.Observe('tenant_other_mime', DescribeTenant(Id2));
+        Observer.Observe('tenant_other_mime', DescribeTenant(Id2, BaseOf(Src)));
         Row.Get('A');
         Observer.Observe('export_return', Format(Row.Pic.ExportFile(Dst)));
+        Observer.Observe('source_len', Format(LenOf(Src)));
         Observer.Observe('export_exists', Format(File.Exists(Dst)));
         if File.Exists(Dst) then begin
             Observer.Observe('export_len', Format(LenOf(Dst)));
@@ -145,6 +151,7 @@ codeunit 61285 "LT S Media Files"
         Observer: Codeunit "Probe Observer";
         Row: Record "LT S Media File Row";
         Dst: Text;
+        Missing: Text;
         Id: Guid;
         Ok: Boolean;
     begin
@@ -156,9 +163,10 @@ codeunit 61285 "LT S Media Files"
         Observer.Observe('empty_export', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
         Observer.Observe('empty_export_file', Format(File.Exists(Dst)));
         ClearLastError();
-        Ok := TryImport(Row, TemporaryPath() + 'ltsmedia-missing-' + DelChr(Format(CreateGuid()), '=', '{}-') + '.png', Id);
+        Missing := TemporaryPath() + 'ltsmedia-missing-' + DelChr(Format(CreateGuid()), '=', '{}-') + '.png';
+        Ok := TryImport(Row, Missing, Id);
         Observer.Observe('missing_import', Format(Ok) + ' [' + GetLastErrorCode() + ']');
-        Observer.Observe('missing_import_text_head', CopyStr(GetLastErrorText(), 1, 40));
+        Observer.Observe('missing_import_text', GetLastErrorText().Replace(Missing, '<path>'));
         ClearLastError();
         Ok := TryImport(Row, '', Id);
         Observer.Observe('empty_import', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
@@ -192,6 +200,8 @@ codeunit 61285 "LT S Media Files"
         Id: Guid;
         Id2: Guid;
         Count: Integer;
+        Found: Integer;
+        Marker: Text;
     begin
         Row.DeleteAll();
         Src := TempName('.png');
@@ -206,21 +216,26 @@ codeunit 61285 "LT S Media Files"
         Observer.Observe('set_count_after_two', Format(Row.Pics.Count()));
         Observer.Observe('set_import_ids_equal', Format(Id = Id2));
         Observer.Observe('set_id_is_media_id', Format(Id2 = Row.Pics.MediaId()));
-        Observer.Observe('item1', DescribeTenant(Row.Pics.Item(1)));
-        Observer.Observe('item2', DescribeTenant(Row.Pics.Item(2)));
+        Observer.Observe('item1', DescribeTenant(Row.Pics.Item(1), BaseOf(Src)));
+        Observer.Observe('item2', DescribeTenant(Row.Pics.Item(2), BaseOf(Src)));
         Row.Get('S');
         Dir := TemporaryPath() + 'ltsmediaset' + DelChr(Format(CreateGuid()), '=', '{}-');
         Prefix := Dir + '-';
+        Marker := Dir;
         Count := Row.Pics.ExportFile(Prefix);
         Observer.Observe('export_count', Format(Count));
         FileMgt.GetServerDirectoryFilesList(Names, TemporaryPath());
-        Names.SetFilter(Value, StrSubstNo('%1*', Prefix));
-        Observer.Observe('exported_files', Format(Names.Count()));
+        Observer.Observe('files_in_temp_dir_any', Format(Names.Count() > 0));
         if Names.FindSet() then
             repeat
-                Observer.Observe('exported_name_' + Format(Names.ID), CopyStr(Names.Value, StrLen(Prefix) + 1));
-                File.Erase(Names.Value);
+                if StrPos(Names.Value, Marker) > 0 then begin
+                    Found += 1;
+                    Observer.Observe('exported_name_' + Format(Found), Names.Value.Replace(Marker, '<prefix>').Replace(TemporaryPath(), '<tmp>'));
+                    File.Erase(Names.Value);
+                end;
             until Names.Next() = 0;
+        Observer.Observe('exported_files_found', Format(Found));
+        Observer.Observe('prefix_itself_exists', Format(File.Exists(Prefix)));
         Cleanup(Src);
         Observer.Finish();
     end;

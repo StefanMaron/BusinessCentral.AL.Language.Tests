@@ -61,7 +61,7 @@ codeunit 61288 "LT S Query SaveAs File"
         exit(TemporaryPath() + 'ltsqfile' + DelChr(Format(CreateGuid()), '=', '{}-') + Suffix);
     end;
 
-    local procedure ObserveFile(var Observer: Codeunit "Probe Observer"; Name: Text; Tag: Text)
+    local procedure ObserveFile(var Observer: Codeunit "Probe Observer"; Name: Text; Tag: Text; FromMarker: Text)
     var
         F: File;
         InS: InStream;
@@ -91,10 +91,11 @@ codeunit 61288 "LT S Query SaveAs File"
             InS.Read(Raw, Len);
         F.Close();
         i := 1;
-        while (i <= StrLen(Raw)) and (i < 2800) do begin
-            Observer.Observe(Tag + ' text ' + Format((i div 700) + 1), CopyStr(Raw, i, 700));
-            i += 700;
-        end;
+        if FromMarker <> '' then
+            i := StrPos(Raw, FromMarker);
+        if i = 0 then
+            i := 1;
+        Observer.Observe(Tag + ' text', CopyStr(Raw, i, 700));
         File.Erase(Name);
     end;
 
@@ -104,20 +105,27 @@ codeunit 61288 "LT S Query SaveAs File"
         Observer: Codeunit "Probe Observer";
         Q: Query "LT S QFile Query";
         Name: Text;
+        Ok: Boolean;
     begin
         Seed();
         Name := TempName('.csv');
         Observer.Observe('default ok', Format(Q.SaveAsCsv(Name)));
-        ObserveFile(Observer, Name, 'default');
-        Observer.Observe('format0 ok', Format(Q.SaveAsCsv(Name, 0, '')));
-        ObserveFile(Observer, Name, 'format0');
+        ObserveFile(Observer, Name, 'default', '');
+        Ok := TrySaveCsvFormat(Name, 0);
+        Observer.Observe('format0', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        ObserveFile(Observer, Name, 'format0', '');
+        Ok := TrySaveCsvFormat(Name, 3);
+        Observer.Observe('format3', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        ObserveFile(Observer, Name, 'format3', '');
         Observer.Observe('format1 semicolon ok', Format(Q.SaveAsCsv(Name, 1, ';')));
-        ObserveFile(Observer, Name, 'format1 semicolon');
+        ObserveFile(Observer, Name, 'format1 semicolon', '');
         Observer.Observe('format2 ok', Format(Q.SaveAsCsv(Name, 2, '')));
-        ObserveFile(Observer, Name, 'format2');
+        ObserveFile(Observer, Name, 'format2', '');
         Q.SetFilter(Id, '2');
         Observer.Observe('filtered ok', Format(Q.SaveAsCsv(Name)));
-        ObserveFile(Observer, Name, 'filtered');
+        ObserveFile(Observer, Name, 'filtered', '');
         Observer.Finish();
     end;
 
@@ -130,9 +138,9 @@ codeunit 61288 "LT S Query SaveAs File"
         Seed();
         Name := TempName('.csv');
         Observer.Observe('default ok', Format(Query.SaveAsCsv(61287, Name)));
-        ObserveFile(Observer, Name, 'default');
+        ObserveFile(Observer, Name, 'default', '');
         Observer.Observe('format1 semicolon ok', Format(Query.SaveAsCsv(61287, Name, 1, ';')));
-        ObserveFile(Observer, Name, 'format1 semicolon');
+        ObserveFile(Observer, Name, 'format1 semicolon', '');
         Observer.Finish();
     end;
 
@@ -146,10 +154,18 @@ codeunit 61288 "LT S Query SaveAs File"
         Seed();
         Name := TempName('.xml');
         Observer.Observe('instance ok', Format(Q.SaveAsXml(Name)));
-        ObserveFile(Observer, Name, 'instance');
+        ObserveFile(Observer, Name, 'instance', '<Result>');
         Observer.Observe('by number ok', Format(Query.SaveAsXml(61287, Name)));
-        ObserveFile(Observer, Name, 'by number');
+        ObserveFile(Observer, Name, 'by number', '<Result>');
         Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySaveCsvFormat(Name: Text; FormatKind: Integer)
+    var
+        Q: Query "LT S QFile Query";
+    begin
+        Q.SaveAsCsv(Name, FormatKind, '');
     end;
 
     [TryFunction]

@@ -66,8 +66,12 @@ codeunit 61282 "LT S Write With Secrets"
         Ok := O.WriteWithSecretsTo('password', Secret, Result);
         Observer.Observe('escaped_secret', Format(Ok) + ' ' + Plain(Result));
         Observer.Observe('source_unchanged', Format(O));
-        asserterror Ok := O.WriteWithSecretsTo('bad[', Secret, Result);
-        Observer.ObserveError('invalid_path');
+        Ok := O.WriteWithSecretsTo('bad[', Secret, Result);
+        Observer.Observe('invalid_path_ok', Format(Ok));
+        Observer.Observe('invalid_path_result', Plain(Result));
+        Ok := O.WriteWithSecretsTo('a..b', Secret, Result);
+        Observer.Observe('double_dot_ok', Format(Ok));
+        Observer.Observe('double_dot_result', Plain(Result));
         Observer.Finish();
     end;
 
@@ -101,8 +105,9 @@ codeunit 61282 "LT S Write With Secrets"
         Observer.Observe('source_unchanged', Format(O));
         Clear(Secrets);
         Secrets.Add('bad[', Sec('x'));
-        asserterror Ok := O.WriteWithSecretsTo(Secrets, Result);
-        Observer.ObserveError('invalid_path');
+        Ok := O.WriteWithSecretsTo(Secrets, Result);
+        Observer.Observe('invalid_path_ok', Format(Ok));
+        Observer.Observe('invalid_path_result', Plain(Result));
         Observer.Finish();
     end;
 }
