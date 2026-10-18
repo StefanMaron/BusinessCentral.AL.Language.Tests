@@ -1,0 +1,201 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/query/query-saveascsv-method
+// Scope: in-scope (OnPrem app: the file forms of Query.SaveAsCsv and Query.SaveAsXml are Scope = OnPrem)
+// Fixtures used: Probe Observer (codeunit 69160), self-contained table 61286, query 61287 and codeunit 61288
+// Probe: written against BC 29 (runtime 16); the values are measured on the corpus CI service tiers.
+// Facts: Query.SaveAsCsv and Query.SaveAsXml into a file, as instance and by object number: return value, file text, Format and FormatArgument, errors
+// BC versions: 27, 28, 29
+table 61286 "LT S QFile Row"
+{
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Name; Text[50]) { }
+        field(3; Amt; Decimal) { }
+    }
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+query 61287 "LT S QFile Query"
+{
+    QueryType = Normal;
+    OrderBy = ascending(Id);
+
+    elements
+    {
+        dataitem(Rows; "LT S QFile Row")
+        {
+            column(Id; Id) { }
+            column(Name; Name) { }
+            column(Amt; Amt) { }
+        }
+    }
+}
+
+codeunit 61288 "LT S Query SaveAs File"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Seed()
+    var
+        Row: Record "LT S QFile Row";
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.Id := 1;
+        Row.Name := 'a,b;c "q" <x>';
+        Row.Amt := 12.5;
+        Row.Insert();
+        Row.Init();
+        Row.Id := 2;
+        Row.Name := '';
+        Row.Amt := 0;
+        Row.Insert();
+    end;
+
+    local procedure TempName(Suffix: Text): Text
+    begin
+        exit(TemporaryPath() + 'ltsqfile' + DelChr(Format(CreateGuid()), '=', '{}-') + Suffix);
+    end;
+
+    local procedure ObserveFile(var Observer: Codeunit "Probe Observer"; Name: Text; Tag: Text)
+    var
+        F: File;
+        InS: InStream;
+        Raw: Text;
+        Len: Integer;
+        B: Byte;
+        First3: Text;
+        i: Integer;
+    begin
+        Observer.Observe(Tag + ' exists', Format(File.Exists(Name)));
+        if not File.Exists(Name) then
+            exit;
+        F.Open(Name);
+        Len := F.Len();
+        Observer.Observe(Tag + ' length', Format(Len));
+        F.CreateInStream(InS);
+        for i := 1 to 3 do
+            if not InS.EOS() then begin
+                InS.Read(B);
+                First3 += Format(B) + ' ';
+            end;
+        Observer.Observe(Tag + ' first bytes', First3);
+        F.Close();
+        F.Open(Name);
+        F.CreateInStream(InS);
+        if Len > 0 then
+            InS.Read(Raw, Len);
+        F.Close();
+        i := 1;
+        while (i <= StrLen(Raw)) and (i < 2800) do begin
+            Observer.Observe(Tag + ' text ' + Format((i div 700) + 1), CopyStr(Raw, i, 700));
+            i += 700;
+        end;
+        File.Erase(Name);
+    end;
+
+    [Test]
+    procedure SaveAsCsv_File_Instance()
+    var
+        Observer: Codeunit "Probe Observer";
+        Q: Query "LT S QFile Query";
+        Name: Text;
+    begin
+        Seed();
+        Name := TempName('.csv');
+        Observer.Observe('default ok', Format(Q.SaveAsCsv(Name)));
+        ObserveFile(Observer, Name, 'default');
+        Observer.Observe('format0 ok', Format(Q.SaveAsCsv(Name, 0, '')));
+        ObserveFile(Observer, Name, 'format0');
+        Observer.Observe('format1 semicolon ok', Format(Q.SaveAsCsv(Name, 1, ';')));
+        ObserveFile(Observer, Name, 'format1 semicolon');
+        Observer.Observe('format2 ok', Format(Q.SaveAsCsv(Name, 2, '')));
+        ObserveFile(Observer, Name, 'format2');
+        Q.SetFilter(Id, '2');
+        Observer.Observe('filtered ok', Format(Q.SaveAsCsv(Name)));
+        ObserveFile(Observer, Name, 'filtered');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SaveAsCsv_File_ByNumber()
+    var
+        Observer: Codeunit "Probe Observer";
+        Name: Text;
+    begin
+        Seed();
+        Name := TempName('.csv');
+        Observer.Observe('default ok', Format(Query.SaveAsCsv(61287, Name)));
+        ObserveFile(Observer, Name, 'default');
+        Observer.Observe('format1 semicolon ok', Format(Query.SaveAsCsv(61287, Name, 1, ';')));
+        ObserveFile(Observer, Name, 'format1 semicolon');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SaveAsXml_File_Instance_AndByNumber()
+    var
+        Observer: Codeunit "Probe Observer";
+        Q: Query "LT S QFile Query";
+        Name: Text;
+    begin
+        Seed();
+        Name := TempName('.xml');
+        Observer.Observe('instance ok', Format(Q.SaveAsXml(Name)));
+        ObserveFile(Observer, Name, 'instance');
+        Observer.Observe('by number ok', Format(Query.SaveAsXml(61287, Name)));
+        ObserveFile(Observer, Name, 'by number');
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySaveCsv(Name: Text)
+    var
+        Q: Query "LT S QFile Query";
+    begin
+        Q.SaveAsCsv(Name);
+    end;
+
+    [TryFunction]
+    local procedure TrySaveXml(Name: Text)
+    var
+        Q: Query "LT S QFile Query";
+    begin
+        Q.SaveAsXml(Name);
+    end;
+
+    [TryFunction]
+    local procedure TrySaveByNumber(Number: Integer; Name: Text)
+    begin
+        Query.SaveAsCsv(Number, Name);
+    end;
+
+    [Test]
+    procedure SaveAs_File_BadPaths()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Seed();
+        Ok := TrySaveCsv('');
+        Observer.Observe('csv empty name', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := TrySaveCsv('/no/such/dir/out.csv');
+        Observer.Observe('csv missing dir', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := TrySaveXml('');
+        Observer.Observe('xml empty name', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := TrySaveXml('/no/such/dir/out.xml');
+        Observer.Observe('xml missing dir', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Ok := TrySaveByNumber(61299, TempName('.csv'));
+        Observer.Observe('unknown query number', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        Observer.Finish();
+    end;
+}
