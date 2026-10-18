@@ -1,5 +1,6 @@
-// @expect AL0124 | The property 'DefaultHeaderFooterPart' cannot be used in this context
-// DefaultHeaderFooterPart is a runtime 18 property: BC 27 and 28 compilers do not know it for a report (BC 29 with runtime 16.0: case 0805).
+// @expect AL0666 | 'Subtype' is not available in runtime version '
+// @expect AL0666 | 'DefaultHeaderFooterPart' is not available in runtime version '
+// Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al.
 // @until 28
 report 50800 "MNC Y Report 50800"
 {
@@ -17,9 +18,15 @@ report 50800 "MNC Y Report 50800"
     {
         layout(L1)
         {
-            Type = RDLC;
-            LayoutFile = 'x.rdlc';
+            Type = Word;
+            LayoutFile = 'x.docx';
 
+        }
+        layout(HF1)
+        {
+            Type = Word;
+            Subtype = HeaderFooter;
+            LayoutFile = 'hf.docx';
         }
     }
 }
