@@ -44,12 +44,12 @@ codeunit 79013 "LT AJ Misc"
     TestPermissions = Disabled;
 
     var
+        Observer: Codeunit "Probe Observer";
         LabelValue: Label 'Lbl', Locked = true;
 
     [Test]
     procedure Guid_TextConcatenationAndMaxStrLen()
     var
-        Observer: Codeunit "Probe Observer";
         G: Guid;
         Empty: Guid;
         T: Text;
@@ -79,7 +79,6 @@ codeunit 79013 "LT AJ Misc"
     [Test]
     procedure Option_ComparedWithDecimal()
     var
-        Observer: Codeunit "Probe Observer";
         Opt: Option A,B,C;
         Item: Record "LT AJ Item";
     begin
@@ -106,18 +105,12 @@ codeunit 79013 "LT AJ Misc"
     end;
 
     [Test]
-    procedure OutStream_Write_OtherValueTypes_Bytes()
+    procedure OutStream_Write_Code_Option_Enum_DateFormula()
     var
-        Observer: Codeunit "Probe Observer";
         C: Code[10];
         Opt: Option A,B,C;
         E: Enum "LT AJ Enum";
         DF: DateFormula;
-        RId: RecordId;
-        V: Variant;
-        Bt: BigText;
-        Cu: Record "LT AJ Item";
-        Jo: JsonObject;
         Tmp: Codeunit "Temp Blob";
     begin
         C := 'ab';
@@ -128,20 +121,52 @@ codeunit 79013 "LT AJ Misc"
         Observer.Observe('Enum Seven', Dump(Tmp, 'Enum', E.AsInteger()));
         Evaluate(DF, '<1M>');
         Observer.Observe('DateFormula 1M', Dump(Tmp, 'DateFormula', DF));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure OutStream_Write_RecordId_And_Label()
+    var
+        RId: RecordId;
+        Cu: Record "LT AJ Item";
+        Tmp: Codeunit "Temp Blob";
+    begin
         Cu.Id := 5;
         RId := Cu.RecordId();
         Observer.Observe('RecordId', Dump(Tmp, 'RecordId', RId));
         Clear(RId);
         Observer.Observe('RecordId empty', Dump(Tmp, 'RecordId', RId));
+        Observer.Observe('Label', Dump(Tmp, 'Label', LabelValue));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure OutStream_Write_Variant()
+    var
+        V: Variant;
+        Tmp: Codeunit "Temp Blob";
+    begin
         V := 42;
         Observer.Observe('Variant 42', Dump(Tmp, 'Variant', V));
         V := 'hi';
         Observer.Observe('Variant hi', Dump(Tmp, 'Variant', V));
         V := 1.5;
         Observer.Observe('Variant 1.5', Dump(Tmp, 'Variant', V));
+        V := true;
+        Observer.Observe('Variant true', Dump(Tmp, 'Variant', V));
         Clear(V);
         Observer.Observe('Variant empty', Dump(Tmp, 'Variant', V));
-        Observer.Observe('Label', Dump(Tmp, 'Label', LabelValue));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure OutStream_Write_BigText_Record_JsonObject()
+    var
+        Bt: BigText;
+        Cu: Record "LT AJ Item";
+        Jo: JsonObject;
+        Tmp: Codeunit "Temp Blob";
+    begin
         Bt.AddText('abc');
         Observer.Observe('BigText abc', Dump(Tmp, 'BigText', Bt));
         Cu.Id := 5;
@@ -251,41 +276,66 @@ codeunit 79013 "LT AJ Misc"
     end;
 
     [Test]
-    procedure FieldTable_RowVersionField_OwnTableAndCustomer()
-    var
-        Observer: Codeunit "Probe Observer";
-        Fld: Record Field;
+    procedure FieldTable_OwnTable_AllRows()
     begin
-        Observer.Observe('own Get(0)', Describe(Fld, Database::"LT AJ Ts"));
-        Observer.Observe('Customer Get(0)', Describe(Fld, Database::Customer));
-        Fld.Reset();
-        Fld.SetRange(TableNo, Database::"LT AJ Ts");
-        Fld.SetRange("No.", 0);
-        Observer.Observe('own filter count', Format(Fld.Count()));
-        Fld.SetRange("No.");
-        Observer.Observe('own all count', Format(Fld.Count()));
-        Fld.FindFirst();
-        Observer.Observe('own first no.', Format(Fld."No."));
-        Fld.Reset();
-        Fld.SetRange(TableNo, Database::Customer);
-        Fld.SetRange("No.", 0);
-        Observer.Observe('Customer filter count', Format(Fld.Count()));
-        Fld.Reset();
-        Fld.SetRange(TableNo, Database::Customer);
-        Fld.SetRange(FieldName, 'timestamp');
-        Observer.Observe('Customer by name count', Format(Fld.Count()));
-        Fld.Reset();
-        Fld.SetRange(TableNo, Database::Customer);
-        Fld.FindFirst();
-        Observer.Observe('Customer first no.', Format(Fld."No."));
+        Observer.Observe('Get(0)', Describe(Database::"LT AJ Ts", 0));
+        Observer.Observe('rows', ListRows(Database::"LT AJ Ts", ''));
         Observer.Finish();
     end;
 
-    local procedure Describe(var Fld: Record Field; TableNumber: Integer): Text
+    [Test]
+    procedure FieldTable_Customer_RowVersionField()
+    var
+        Fld: Record Field;
     begin
-        Clear(Fld);
-        if not Fld.Get(TableNumber, 0) then
+        Observer.Observe('Get(0)', Describe(Database::Customer, 0));
+        Observer.Observe('by name timestamp', ListRows(Database::Customer, 'timestamp'));
+        Fld.SetRange(TableNo, Database::Customer);
+        Fld.SetRange("No.", 0);
+        Observer.Observe('No. = 0 count', Format(Fld.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure FieldTable_Customer_FirstRows()
+    var
+        Fld: Record Field;
+        Seen: Text;
+        Index: Integer;
+    begin
+        Fld.SetRange(TableNo, Database::Customer);
+        Fld.SetCurrentKey(TableNo, "No.");
+        if Fld.FindSet() then
+            repeat
+                Index += 1;
+                if Index <= 3 then
+                    Seen += Format(Fld."No.") + ':' + Fld.FieldName + ';';
+            until Fld.Next() = 0;
+        Observer.Observe('first three', Seen);
+        Observer.Finish();
+    end;
+
+    local procedure ListRows(TableNumber: Integer; NameFilter: Text): Text
+    var
+        Fld: Record Field;
+        Result: Text;
+    begin
+        Fld.SetRange(TableNo, TableNumber);
+        if NameFilter <> '' then
+            Fld.SetRange(FieldName, NameFilter);
+        if Fld.FindSet() then
+            repeat
+                Result += Format(Fld."No.") + ':' + Fld.FieldName + ':' + Format(Fld.Type) + ':' + Format(Fld.Class) + ':' + Format(Fld.Len) + ';';
+            until Fld.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure Describe(TableNumber: Integer; FieldNumber: Integer): Text
+    var
+        Fld: Record Field;
+    begin
+        if not Fld.Get(TableNumber, FieldNumber) then
             exit('not found');
-        exit(StrSubstNo('TableNo=%1|No=%2|Name=%3|Type=%4|Class=%5|Len=%6|Enabled=%7|Obsolete=%8|TypeName=%9|FieldCaption=%10', Fld.TableNo, Fld."No.", Fld.FieldName, Fld.Type, Fld.Class, Fld.Len, Fld.Enabled, Fld.ObsoleteState, Fld."Type Name", Fld."Field Caption"));
+        exit(StrSubstNo('TableNo=%1|No=%2|Name=%3|Type=%4|Class=%5|Len=%6|Enabled=%7|Obsolete=%8', Fld.TableNo, Fld."No.", Fld.FieldName, Fld.Type, Fld.Class, Fld.Len, Fld.Enabled, Fld.ObsoleteState));
     end;
 }

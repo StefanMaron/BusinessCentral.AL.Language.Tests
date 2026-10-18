@@ -9,10 +9,12 @@ codeunit 79000 "LT AJ Scalars"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    var
+        Observer: Codeunit "Probe Observer";
+
     [Test]
     procedure Evaluate_Decimal_TextWithLetters()
     var
-        Observer: Codeunit "Probe Observer";
         D: Decimal;
         Ok: Boolean;
         Texts: List of [Text];
@@ -29,17 +31,32 @@ codeunit 79000 "LT AJ Scalars"
             Ok := Evaluate(D, T);
             Observer.Observe(T + ' bool', Format(Ok) + '|' + Format(D));
             D := 99;
-            asserterror Evaluate(D, T);
-            Observer.ObserveError(T);
-            Observer.Observe(T + ' value after', Format(D));
+            ClearLastError();
+            if TryEvaluateDecimal(T, D) then
+                Observer.Observe(T + ' statement', 'no error|' + Format(D))
+            else begin
+                Observer.ObserveError(T + ' statement');
+                Observer.Observe(T + ' value after', Format(D));
+            end;
         end;
         Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryEvaluateDecimal(T: Text; var D: Decimal)
+    begin
+        Evaluate(D, T);
+    end;
+
+    [TryFunction]
+    local procedure TryEvaluateTime(T: Text; var Tm: Time)
+    begin
+        Evaluate(Tm, T);
     end;
 
     [Test]
     procedure Evaluate_Time_FromDateText()
     var
-        Observer: Codeunit "Probe Observer";
         Tm: Time;
         Ok: Boolean;
     begin
@@ -47,8 +64,11 @@ codeunit 79000 "LT AJ Scalars"
         Ok := Evaluate(Tm, '2021-12-19');
         Observer.Observe('date text bool', Format(Ok) + '|' + Format(Tm, 0, 9));
         Tm := 120000T;
-        asserterror Evaluate(Tm, '2021-12-19');
-        Observer.ObserveError('date text');
+        ClearLastError();
+        if TryEvaluateTime('2021-12-19', Tm) then
+            Observer.Observe('date text statement', 'no error|' + Format(Tm, 0, 9))
+        else
+            Observer.ObserveError('date text statement');
         Tm := 120000T;
         Ok := Evaluate(Tm, '2021-12-19', 9);
         Observer.Observe('date text fmt 9', Format(Ok) + '|' + Format(Tm, 0, 9));
@@ -58,44 +78,79 @@ codeunit 79000 "LT AJ Scalars"
         Observer.Finish();
     end;
 
-    [Test]
-    procedure JsonValue_StringAsDecimalAndInteger()
+    local procedure ObserveJsonString(JKey: Text)
     var
-        Observer: Codeunit "Probe Observer";
         Obj: JsonObject;
         Tok: JsonToken;
         Val: JsonValue;
         D: Decimal;
         I: Integer;
-        JKey: Text;
-        JKeys: List of [Text];
     begin
         Obj.ReadFrom('{"a":"100.00","b":"4","c":"abc","d":"","e":" 7 ","f":"1e2","g":"-3.5"}');
-        JKeys.Add('a');
-        JKeys.Add('b');
-        JKeys.Add('c');
-        JKeys.Add('d');
-        JKeys.Add('e');
-        JKeys.Add('f');
-        JKeys.Add('g');
-        foreach JKey in JKeys do begin
-            Obj.Get(JKey, Tok);
-            Val := Tok.AsValue();
-            Observer.Observe(JKey + ' AsText', Val.AsText());
-            D := -1;
-            ClearLastError();
-            if TryDecimal(Val, D) then
-                Observer.Observe(JKey + ' AsDecimal', 'ok ' + Format(D, 0, 9))
-            else
-                Observer.Observe(JKey + ' AsDecimal', GetLastErrorText() + '|' + GetLastErrorCode());
-            I := -1;
-            ClearLastError();
-            if TryInteger(Val, I) then
-                Observer.Observe(JKey + ' AsInteger', 'ok ' + Format(I))
-            else
-                Observer.Observe(JKey + ' AsInteger', GetLastErrorText() + '|' + GetLastErrorCode());
-        end;
+        Obj.Get(JKey, Tok);
+        Val := Tok.AsValue();
+        Observer.Observe(JKey + ' AsText', Val.AsText());
+        D := -1;
         ClearLastError();
+        if TryDecimal(Val, D) then
+            Observer.Observe(JKey + ' AsDecimal', 'ok ' + Format(D, 0, 9))
+        else
+            Observer.Observe(JKey + ' AsDecimal', GetLastErrorText() + '|' + GetLastErrorCode());
+        I := -1;
+        ClearLastError();
+        if TryInteger(Val, I) then
+            Observer.Observe(JKey + ' AsInteger', 'ok ' + Format(I))
+        else
+            Observer.Observe(JKey + ' AsInteger', GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+    end;
+
+    [Test]
+    procedure JsonValue_String_100_00_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('a');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure JsonValue_String_4_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('b');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure JsonValue_String_Letters_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('c');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure JsonValue_String_Empty_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('d');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure JsonValue_String_Padded_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('e');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure JsonValue_String_Exponent_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('f');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure JsonValue_String_Negative_AsDecimalAndInteger()
+    begin
+        ObserveJsonString('g');
         Observer.Finish();
     end;
 
@@ -111,10 +166,8 @@ codeunit 79000 "LT AJ Scalars"
         I := Val.AsInteger();
     end;
 
-    [Test]
-    procedure Format_FillerCharacter_DateTimeDateTime()
+    local procedure ObserveFiller(Kind: Text)
     var
-        Observer: Codeunit "Probe Observer";
         Dt: DateTime;
         D: Date;
         Tm: Time;
@@ -133,11 +186,35 @@ codeunit 79000 "LT AJ Scalars"
         Fmts.Add('<Filler Character,*><Hours12,4>');
         Fmts.Add('<Filler Character,0><Standard Format,0>');
         Fmts.Add('<Day,4><Filler Character,0><Month,4>');
-        foreach F in Fmts do begin
-            Observer.Observe('dt ' + F, TryFormat(Dt, F));
-            Observer.Observe('date ' + F, TryFormat(D, F));
-            Observer.Observe('time ' + F, TryFormat(Tm, F));
-        end;
+        foreach F in Fmts do
+            case Kind of
+                'DateTime':
+                    Observer.Observe(F, TryFormat(Dt, F));
+                'Date':
+                    Observer.Observe(F, TryFormat(D, F));
+                'Time':
+                    Observer.Observe(F, TryFormat(Tm, F));
+            end;
+    end;
+
+    [Test]
+    procedure Format_FillerCharacter_OnDateTime()
+    begin
+        ObserveFiller('DateTime');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Format_FillerCharacter_OnDate()
+    begin
+        ObserveFiller('Date');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Format_FillerCharacter_OnTime()
+    begin
+        ObserveFiller('Time');
         Observer.Finish();
     end;
 
@@ -157,37 +234,74 @@ codeunit 79000 "LT AJ Scalars"
         Result := Format(V, 0, F);
     end;
 
-    [Test]
-    procedure Random_DecimalArgument_RangeOnly()
+    local procedure ObserveRandom(A: Decimal)
     var
-        Observer: Codeunit "Probe Observer";
-        Args: List of [Decimal];
-        A: Decimal;
         Index: Integer;
         R: Integer;
         MinR: Integer;
         MaxR: Integer;
     begin
-        Args.Add(0.4);
-        Args.Add(0.6);
-        Args.Add(1.0);
-        Args.Add(1.4);
-        Args.Add(1.5);
-        Args.Add(1.6);
-        Args.Add(2.5);
-        Args.Add(2.9);
-        foreach A in Args do begin
-            MinR := 1000;
-            MaxR := -1000;
-            for Index := 1 to 600 do begin
-                R := Random(A);
-                if R < MinR then
-                    MinR := R;
-                if R > MaxR then
-                    MaxR := R;
+        MinR := 1000;
+        MaxR := -1000;
+        ClearLastError();
+        for Index := 1 to 600 do begin
+            if not TryRandom(A, R) then begin
+                Observer.ObserveError('Random(' + Format(A) + ') at ' + Format(Index));
+                break;
             end;
-            Observer.Observe('Random(' + Format(A) + ') min|max', Format(MinR) + '|' + Format(MaxR));
+            if R < MinR then
+                MinR := R;
+            if R > MaxR then
+                MaxR := R;
         end;
+        Observer.Observe('Random(' + Format(A) + ') min|max', Format(MinR) + '|' + Format(MaxR));
+    end;
+
+    [TryFunction]
+    local procedure TryRandom(A: Decimal; var R: Integer)
+    begin
+        R := Random(A);
+    end;
+
+    [Test]
+    procedure Random_Decimal_0_4()
+    begin
+        ObserveRandom(0.4);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Random_Decimal_1_0()
+    begin
+        ObserveRandom(1.0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Random_Decimal_1_5()
+    begin
+        ObserveRandom(1.5);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Random_Decimal_2_5()
+    begin
+        ObserveRandom(2.5);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Random_Decimal_2_9()
+    begin
+        ObserveRandom(2.9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Random_Decimal_3_0()
+    begin
+        ObserveRandom(3.0);
         Observer.Finish();
     end;
 }
