@@ -41,15 +41,23 @@ codeunit 67514 "LT PT Services Content"
     local procedure Content(var Observer: Codeunit "Probe Observer"; TableNo: Integer)
     var
         RR: RecordRef;
-        Index: Integer;
     begin
         RR.Open(TableNo);
         Observer.Observe('columns', Columns(RR));
         Observer.Observe('count', Format(RR.Count()));
+    end;
+
+    local procedure Rows(var Observer: Codeunit "Probe Observer"; TableNo: Integer; FromRow: Integer; ToRow: Integer)
+    var
+        RR: RecordRef;
+        Index: Integer;
+    begin
+        RR.Open(TableNo);
         if RR.FindSet() then
             repeat
                 Index += 1;
-                Observer.Observe('row' + Format(Index), Row(RR));
+                if (Index >= FromRow) and (Index <= ToRow) then
+                    Observer.Observe('row' + Format(Index), Row(RR));
             until RR.Next() = 0;
     end;
 
@@ -70,38 +78,53 @@ codeunit 67514 "LT PT Services Content"
         Observer: Codeunit "Probe Observer";
     begin
         Content(Observer, 2000000168);
-        Observer.Expect('columns', '3:Object Type:Option:4:Normal;9:Service Name:Text:250:Normal;6:Object ID:Integer:4:Normal;12:Published:Boolean:4:Normal;13:ExcludeFieldsOutsideRepeater:Boolean:4:Normal;14:ExcludeNonEditableFlowFields:Boolean:4:Normal;');
-        Observer.Expect('count', '64');
-        Observer.Expect('row1', '3=Codeunit;9=WorkflowActionResponse;6=1544;12=Yes;13=No;14=No;');
-        Observer.Expect('row2', '3=Page;9=Chart of Accounts;6=16;12=Yes;13=No;14=No;');
-        Observer.Expect('row3', '3=Page;9=ExcelTemplateAgedAccountsPayable;6=5500;12=Yes;13=No;14=No;');
-        Observer.Expect('row4', '3=Page;9=ExcelTemplateAgedAccountsReceivable;6=5499;12=Yes;13=No;14=No;');
-        Observer.Expect('row5', '3=Page;9=ExcelTemplateBalanceSheet;6=5501;12=Yes;13=No;14=No;');
-        Observer.Expect('row6', '3=Page;9=ExcelTemplateCashFlowStatement;6=5493;12=Yes;13=No;14=No;');
-        Observer.Expect('row7', '3=Page;9=ExcelTemplateIncomeStatement;6=5503;12=Yes;13=No;14=No;');
-        Observer.Expect('row8', '3=Page;9=ExcelTemplateRetainedEarnings;6=5497;12=Yes;13=No;14=No;');
-        Observer.Expect('row9', '3=Page;9=ExcelTemplateTrialBalance;6=5502;12=Yes;13=No;14=No;');
-        Observer.Expect('row10', '3=Page;9=ExcelTemplateViewCompanyInformation;6=1320;12=Yes;13=No;14=No;');
-        Observer.Expect('row11', '3=Page;9=Job List;6=89;12=Yes;13=No;14=No;');
-        Observer.Expect('row12', '3=Page;9=Job Planning Lines;6=1007;12=Yes;13=No;14=No;');
-        Observer.Expect('row13', '3=Page;9=Job Task Lines;6=1002;12=Yes;13=No;14=No;');
-        Observer.Expect('row14', '3=Page;9=Power BI Aged Acc. Payable;6=6307;12=Yes;13=No;14=No;');
-        Observer.Expect('row15', '3=Page;9=Power BI Aged Acc. Receivable;6=6308;12=Yes;13=No;14=No;');
-        Observer.Expect('row16', '3=Page;9=Power BI Aged Inventory Chart;6=6309;12=Yes;13=No;14=No;');
-        Observer.Expect('row17', '3=Page;9=Power BI Job Act. v. Budg. Cost;6=6312;12=Yes;13=No;14=No;');
-        Observer.Expect('row18', '3=Page;9=Power BI Job Act. v. Budg. Price;6=6310;12=Yes;13=No;14=No;');
-        Observer.Expect('row19', '3=Page;9=Power BI Job Profitability;6=6311;12=Yes;13=No;14=No;');
-        Observer.Expect('row20', '3=Page;9=Power BI Sales Pipeline;6=6314;12=Yes;13=No;14=No;');
-        Observer.Expect('row21', '3=Page;9=Power BI Top 5 Opportunities;6=6315;12=Yes;13=No;14=No;');
-        Observer.Expect('row22', '3=Page;9=Power BI WorkDate Calc.;6=6313;12=Yes;13=No;14=No;');
-        Observer.Expect('row23', '3=Page;9=purchaseDocumentLines;6=6405;12=Yes;13=No;14=No;');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
+    [Test]
+    procedure TenantWebService_Rows_1_To_15()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rows(Observer, 2000000168, 1, 15);
+        Observer.Finish();
+    end;
 
+    [Test]
+    procedure TenantWebService_Rows_16_To_30()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rows(Observer, 2000000168, 16, 30);
+        Observer.Finish();
+    end;
 
+    [Test]
+    procedure TenantWebService_Rows_31_To_45()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rows(Observer, 2000000168, 31, 45);
+        Observer.Finish();
+    end;
 
+    [Test]
+    procedure TenantWebService_Rows_46_To_60()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rows(Observer, 2000000168, 46, 60);
+        Observer.Finish();
+    end;
 
+    [Test]
+    procedure TenantWebService_Rows_61_To_64()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rows(Observer, 2000000168, 61, 64);
+        Observer.Finish();
+    end;
 }
 
 codeunit 67518 "LT PT Nas Mutations"

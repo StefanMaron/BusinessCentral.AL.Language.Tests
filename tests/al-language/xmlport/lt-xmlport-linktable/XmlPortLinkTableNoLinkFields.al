@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-linktable-xmlport-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own tables 67503-67504, xmlports 67505-67506, codeunits 67507-67508, 67519; control xmlports 67523 (LinkTable with LinkFields) and 67524 (no LinkTable)
+// Fixtures used: Probe Observer (69160); own tables 67503-67504, xmlports 67505-67506, 67525, codeunits 67507-67508, 67519; control xmlports 67523 (LinkTable with LinkFields) and 67524 (no LinkTable)
 // Probe: a child table element that sets LinkTable to its parent element and has no LinkFields, on temporary table elements (UseTemporary) and with a persistent child table. The XmlPort compiles; export and import observe which rows are visited and written (issue 580 item 2).
 // BC versions: 27+
 
@@ -331,7 +331,64 @@ xmlport 67506 "LT XLT Child Persistent"
         Log: Codeunit "LT XLT Log";
 }
 
-// Runs one import in a codeunit of its own so a failure is observed as text. Rec.Id picks the XmlPort (1 both temporary, 2 persistent child, 3 both temporary with LinkFields, 4 both temporary without LinkTable),
+xmlport 67525 "LT XLT Persistent Both"
+{
+    Direction = Both;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(ParentRow; "LT XLT Parent")
+            {
+                fieldelement(Id; ParentRow.Id) { }
+                tableelement(ChildRow; "LT XLT Child")
+                {
+                    LinkTable = ParentRow;
+                    fieldelement(Id; ChildRow.Id) { }
+                    fieldelement(ParentId; ChildRow."Parent Id") { }
+
+                    trigger OnAfterGetRecord()
+                    begin
+                        Log.Add('export child ' + Format(ChildRow.Id) + ' under parent ' + Format(ParentRow.Id));
+                    end;
+
+                    trigger OnAfterInsertRecord()
+                    begin
+                        Log.Add('import child ' + Format(ChildRow.Id) + ' under parent ' + Format(ParentRow.Id));
+                    end;
+                }
+
+                trigger OnAfterGetRecord()
+                begin
+                    Log.Add('export parent ' + Format(ParentRow.Id));
+                end;
+
+                trigger OnAfterInsertRecord()
+                begin
+                    Log.Add('import parent ' + Format(ParentRow.Id));
+                end;
+            }
+        }
+    }
+
+    trigger OnPreXmlPort()
+    begin
+        if currXMLport.Import() then
+            exit;
+        ParentRow.Init();
+        ParentRow.Id := 1;
+        ParentRow.Insert();
+        ParentRow.Id := 2;
+        ParentRow.Insert();
+    end;
+
+    var
+        Log: Codeunit "LT XLT Log";
+}
+
+// Runs one import in a codeunit of its own so a failure is observed as text. Rec.Id picks the XmlPort (1 both temporary, 2 persistent child, 3 both temporary with LinkFields, 4 both temporary without LinkTable, 5 both persistent with LinkTable only); Rec."Parent Id" 3 is one parent without children,
 // Rec."Parent Id" picks the document (1 one parent with one child, 2 two parents with three children). Not a test codeunit.
 codeunit 67519 "LT XLT Import Runner"
 {
@@ -344,11 +401,14 @@ codeunit 67519 "LT XLT Import Runner"
         PersistentChild: XmlPort "LT XLT Child Persistent";
         Linked: XmlPort "LT XLT Linked";
         NoLink: XmlPort "LT XLT No Link";
+        PersistentBoth: XmlPort "LT XLT Persistent Both";
         OutS: OutStream;
         InS: InStream;
     begin
         TempBlob.CreateOutStream(OutS);
-        if Rec."Parent Id" = 1 then
+        if Rec."Parent Id" = 3 then
+            OutS.WriteText('<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id></ParentRow></Root>')
+        else if Rec."Parent Id" = 1 then
             OutS.WriteText('<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow></ParentRow></Root>')
         else
             OutS.WriteText('<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow></ParentRow></Root>');
@@ -373,6 +433,11 @@ codeunit 67519 "LT XLT Import Runner"
                 begin
                     NoLink.SetSource(InS);
                     NoLink.Import();
+                end;
+            5:
+                begin
+                    PersistentBoth.SetSource(InS);
+                    PersistentBoth.Import();
                 end;
         end;
     end;
@@ -595,6 +660,50 @@ Observer.Finish();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 4, 2);
+        Observer.Finish();
+    end;
+    [Test]
+    procedure BothTemporary_Import_ParentOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 1, 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure NoLinkTable_Import_ParentOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 4, 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PersistentBoth_Import_OneParentOneChild()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 5, 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PersistentBoth_Import_TwoParents()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 5, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PersistentBoth_Import_ParentOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Import(Observer, 5, 3);
         Observer.Finish();
     end;
 }
