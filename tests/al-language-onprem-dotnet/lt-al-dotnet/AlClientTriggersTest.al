@@ -64,7 +64,7 @@ codeunit 99131 "LT AL Client Triggers Test"
         TestPage.Close();
     end;
 
-    local procedure Probe(PageId: Integer)
+    local procedure Probe(PageId: Integer; Refused: Boolean)
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT AL Client Log";
@@ -77,36 +77,45 @@ codeunit 99131 "LT AL Client Triggers Test"
         if not Ok then
             Observer.ObserveError('open_error');
         Observer.Observe('log', Log.Joined());
-        Observer.Finish();
+        if Refused then begin
+            Observer.Expect('open_ok', 'No');
+            Observer.Expect('open_error|text', 'A call to IsAvailable failed with this message: Object reference not set to an instance of an object.');
+            Observer.Expect('open_error|code', 'DotNetInvoke:NullReference');
+            Observer.Expect('log', '');
+        end else begin
+            Observer.Expect('open_ok', 'Yes');
+            Observer.Expect('log', 'open without handlers;');
+        end;
+        Observer.Verify();
     end;
 
     [Test]
     procedure ALClient_NotifierAndUserTours()
     begin
-        Probe(99132);
+        Probe(99132, true);
     end;
 
     [Test]
     procedure ALClient_Tour()
     begin
-        Probe(99133);
+        Probe(99133, true);
     end;
 
     [Test]
     procedure ALClient_Camera()
     begin
-        Probe(99134);
+        Probe(99134, true);
     end;
 
     [Test]
     procedure ALClient_Location()
     begin
-        Probe(99135);
+        Probe(99135, true);
     end;
 
     [Test]
     procedure ALClient_NoHandler()
     begin
-        Probe(99136);
+        Probe(99136, false);
     end;
 }

@@ -58,6 +58,9 @@ codeunit 99101 "LT AL UserAccountHelper"
             Observer.Observe('IsUserDelegatedHelpdesk', Format(R))
         else
             Observer.ObserveError('IsUserDelegatedHelpdesk');
-        Observer.Finish();
+        Observer.Expect('IsDelegatedUser', 'No');
+        Observer.Expect('IsUserDelegatedAdmin', 'No');
+        Observer.Expect('IsUserDelegatedHelpdesk', 'No');
+        Observer.Verify();
     end;
 }

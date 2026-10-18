@@ -53,6 +53,7 @@ codeunit 99100 "LT AL JsonTextWriter"
             Observer.Observe('write', Result)
         else
             Observer.ObserveError('write');
-        Observer.Finish();
+        Observer.Expect('write', '{"name":"Alpha","count":3,"on":true}');
+        Observer.Verify();
     end;
 }

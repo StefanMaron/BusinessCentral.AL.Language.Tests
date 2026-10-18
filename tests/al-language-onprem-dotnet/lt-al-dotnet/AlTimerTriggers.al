@@ -143,7 +143,11 @@ codeunit 99112 "LT AL Timer Triggers"
         Observer.Observe('exception_fired', Format(Host.GetExceptionCount() > 0));
         Observer.Observe('sender_is_dotnet', Host.GetSenderKind());
         Observer.Observe('args_null', Host.GetArgsKind());
-        Observer.Finish();
+        Observer.Expect('elapsed_fired', 'Yes');
+        Observer.Expect('exception_fired', 'No');
+        Observer.Expect('sender_is_dotnet', 'Yes');
+        Observer.Expect('args_null', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,6 +160,7 @@ codeunit 99112 "LT AL Timer Triggers"
         Sleep(500);
         Host.StopTimer();
         Observer.Observe('survived', 'yes');
-        Observer.Finish();
+        Observer.Expect('survived', 'yes');
+        Observer.Verify();
     end;
 }

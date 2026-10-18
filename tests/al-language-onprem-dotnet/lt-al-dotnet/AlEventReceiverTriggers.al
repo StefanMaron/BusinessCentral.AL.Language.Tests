@@ -149,20 +149,13 @@ codeunit 99122 "LT AL Event Receiver Triggers"
         Host.RaiseOwnEvent();
         Host.StopRecording();
         Host.Report(Observer);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure ALEventReceiver_OnPermissionCheckEvent()
-    var
-        Observer: Codeunit "Probe Observer";
-        Host: Codeunit "LT AL Permission Logger Host";
-        Entry: Record "Probe Observer Entry";
-    begin
-        Host.StartLogging();
-        if Entry.FindFirst() then;
-        Host.StopLogging();
-        Host.Report(Observer);
-        Observer.Finish();
+        Observer.Expect('own_event_hits', '1');
+        Observer.Expect('own_event_object_type', '5');
+        Observer.Expect('own_event_object_id', '99120');
+        Observer.Expect('own_event_event_type', '1');
+        Observer.Expect('own_event_calling_method', 'RaiseOwnEvent');
+        Observer.Expect('own_event_session_matches', 'Yes');
+        Observer.Expect('recording_errors', '0');
+        Observer.Verify();
     end;
 }
