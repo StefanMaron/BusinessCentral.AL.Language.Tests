@@ -305,12 +305,13 @@ report 67113 "LT F3 Link Filter Caller"
 report 67114 "LT F3 Request Report"
 {
     ProcessingOnly = true;
-    UseRequestPage = true;
 
     dataset
     {
         dataitem(Parent; "LT F3 RHead")
         {
+            RequestFilterFields = "Code";
+
             trigger OnAfterGetRecord()
             var
                 Log: Codeunit "LT F3 Report Log";

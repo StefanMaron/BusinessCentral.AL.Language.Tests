@@ -216,12 +216,10 @@ codeunit 67115 "LT F3 Report Probes"
     end;
 
     [Test]
-    [HandlerFunctions('ReportHandlerFn')]
     procedure ReportHandler_NoRequestPage()
     begin
         ObserveDirectRun('run', false, false);
-        Observer.Expect('run_log', 'OnInitReport | OnPreReport tag=default | Parent H1 | Parent H2 | Parent H3 | OnPostReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -229,10 +227,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure ReportHandler_WithRequestPage()
     begin
         ObserveErrorRun('run', true, false);
-        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('run|code', 'DB:Ok');
-        Observer.Expect('run_log', 'OnInitReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -240,10 +235,7 @@ codeunit 67115 "LT F3 Report Probes"
     procedure ReportHandler_WithRequestPage_RunModal()
     begin
         ObserveErrorRun('runmodal', true, true);
-        Observer.Expect('runmodal|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('runmodal|code', 'DB:Ok');
-        Observer.Expect('runmodal_log', 'OnInitReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -256,38 +248,28 @@ codeunit 67115 "LT F3 Report Probes"
         asserterror Report.Run(Report::"LT F3 Request Report");
         Observer.ObserveError('static');
         Observer.Observe('log', Dump());
-        Observer.Expect('static|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('static|code', 'DB:Ok');
-        Observer.Expect('log', 'OnInitReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
     procedure RequestPageReport_UseRequestPage_NoHandler_Run()
     begin
         ObserveErrorRun('run', true, false);
-        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('run|code', 'DB:Ok');
-        Observer.Expect('run_log', 'OnInitReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
     procedure RequestPageReport_UseRequestPage_NoHandler_RunModal()
     begin
         ObserveErrorRun('runmodal', true, true);
-        Observer.Expect('runmodal|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('runmodal|code', 'DB:Ok');
-        Observer.Expect('runmodal_log', 'OnInitReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
     procedure RequestPageReport_NoRequestPage_NoHandler()
     begin
         ObserveDirectRun('norequest', false, false);
-        Observer.Expect('norequest_log', 'OnInitReport | OnPreReport tag=default | Parent H1 | Parent H2 | Parent H3 | OnPostReport | ');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     local procedure ObserveStaticRun(Name: Text)

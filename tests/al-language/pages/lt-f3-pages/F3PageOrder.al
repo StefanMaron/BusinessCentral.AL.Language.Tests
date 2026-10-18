@@ -124,7 +124,8 @@ codeunit 67131 "LT F3 Ord Page Run"
         Log.Clear();
         Page.Run(Page::"LT F3 Ord List");
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[] g1=[] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | rows=R5,R4,R3,R6,R1,, | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +140,8 @@ codeunit 67131 "LT F3 Ord Page Run"
         Log.Clear();
         Page.Run(Page::"LT F3 Ord List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[] g1=[] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | rows=R5,R4,R3,R6,R1,, | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +158,8 @@ codeunit 67131 "LT F3 Ord Page Run"
         Row.Ascending(true);
         Page.Run(Page::"LT F3 Ord List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[] g1=[] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | rows=R5,R4,R3,R6,R1,, | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +176,8 @@ codeunit 67131 "LT F3 Ord Page Run"
         Row.Ascending(false);
         Page.Run(Page::"LT F3 Ord List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[] g1=[] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | rows=R5,R4,R3,R6,R1,, | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -189,7 +193,8 @@ codeunit 67131 "LT F3 Ord Page Run"
         Row.SetFilter(Qty, '>=4');
         Page.Run(Page::"LT F3 Ord List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[Qty: >=4] g1=[] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending) WHERE(Qty=FILTER(>=4))] | rows=R5,R4,R6,, | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -205,7 +210,8 @@ codeunit 67131 "LT F3 Ord Page Run"
         Row.SetCurrentKey(Qty);
         Page.Run(Page::"LT F3 Ord List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[] g1=[] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | rows=R5,R4,R3,R6,R1,, | ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -223,6 +229,7 @@ codeunit 67131 "LT F3 Ord Page Run"
         Row.FilterGroup(0);
         Page.Run(Page::"LT F3 Ord List", Row);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', 'open: group-at-open=0 g0=[] g1=[Qty: >=3] g2=[Qty: >=2] g3=[] | key=Grp,Qty asc=No view=[VERSION(1) SORTING(Grp,Qty) ORDER(Descending)] | rows=R5,R4,R6,R1,, | ');
+        Observer.Verify();
     end;
 }
