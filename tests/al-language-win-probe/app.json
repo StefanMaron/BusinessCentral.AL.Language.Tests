@@ -34,6 +34,6 @@
     }
   ],
   "features": [],
-  "runtime": "18.0",
+  "runtime": "16.0",
   "target": "OnPrem"
 }
