@@ -206,7 +206,12 @@ codeunit 76512 "LT AA Part List Tests"
         P.Close();
         Row.Get('A');
         Observer.Observe('stored', Row.Txt);
-        Observer.Finish();
+        Observer.Expect('loads-after-open', '1');
+        Observer.Expect('part-row', 'A');
+        Observer.Expect('loads-after-part-edit', '2');
+        Observer.Expect('host-txt-after-part-edit', 'edited');
+        Observer.Expect('stored', 'edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +233,12 @@ codeunit 76512 "LT AA Part List Tests"
         P.Close();
         Row.Get('A');
         Observer.Observe('stored', Row.Txt);
-        Observer.Finish();
+        Observer.Expect('loads-after-open', '1');
+        Observer.Expect('part-row', 'A');
+        Observer.Expect('loads-after-part-edit', '2');
+        Observer.Expect('host-txt-after-part-edit', 'edited');
+        Observer.Expect('stored', 'edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -250,7 +260,12 @@ codeunit 76512 "LT AA Part List Tests"
         P.Close();
         Row.Get('A');
         Observer.Observe('stored', Row.Txt);
-        Observer.Finish();
+        Observer.Expect('loads-after-open', '1');
+        Observer.Expect('part-row', 'A');
+        Observer.Expect('loads-after-part-edit', '2');
+        Observer.Expect('host-txt-after-part-edit', 'edited');
+        Observer.Expect('stored', 'edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -272,7 +287,9 @@ codeunit 76512 "LT AA Part List Tests"
         Observer.Observe('count', Format(Count));
         Observer.Observe('rows', Rows);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('count', '2');
+        Observer.Expect('rows', 'A1/Root/0,B1/Other root/0,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -295,7 +312,10 @@ codeunit 76512 "LT AA Part List Tests"
         Observer.Observe('rows', Rows);
         Observer.Observe('id-editable', Format(P.Id.Editable()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('count', '4');
+        Observer.Expect('rows', 'A1/Root/0,A2/Child/1,A3/Grandchild/2,B1/Other root/0,');
+        Observer.Expect('id-editable', 'No');
+        Observer.Verify();
     end;
 
     local procedure Seed(var Row: Record "LT AA Row")

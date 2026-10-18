@@ -98,7 +98,10 @@ codeunit 76513 "LT AA System Action Tests"
         Modal: Page "LT AA Prompt Literal";
     begin
         Modal.RunModal();
-        Observer.Finish();
+        Observer.Expect('generate-enabled', 'Yes');
+        Observer.Expect('ok-enabled', 'No');
+        Observer.Expect('cancel-enabled', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +111,9 @@ codeunit 76513 "LT AA System Action Tests"
         Modal: Page "LT AA Prompt Expression";
     begin
         Modal.RunModal();
-        Observer.Finish();
+        Observer.Expect('generate-enabled', 'Yes');
+        Observer.Expect('ok-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]

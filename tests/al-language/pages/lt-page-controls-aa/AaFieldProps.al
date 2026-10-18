@@ -85,7 +85,15 @@ codeunit 76510 "LT AA Field Tests"
         P.Close();
         Row.Get('A');
         Observer.Observe('stored', Row.Txt);
-        Observer.Finish();
+        Observer.Expect('lower-ok', 'abc');
+        Observer.Expect('lower-upper-error|text', 'Validation error for Field: PageLower,  Message = ''The character B is not valid in this field. You can specify the following characters: az. (Select Refresh to discard errors)''');
+        Observer.Expect('lower-upper-error|code', 'TestValidation');
+        Observer.Expect('lower-after', 'xyz');
+        Observer.Expect('digits-ok', '123');
+        Observer.Expect('digits-letter-error|text', 'Validation error for Field: PageDigits,  Message = ''The character a is not valid in this field. You can specify the following characters: 09. (Select Refresh to discard errors)''');
+        Observer.Expect('digits-letter-error|code', 'TestValidation');
+        Observer.Expect('stored', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +121,18 @@ codeunit 76510 "LT AA Field Tests"
             Observer.ObserveError('validate-upper-error');
         Row.Lower := 'QRS';
         Observer.Observe('assign', Row.Lower);
-        Observer.Finish();
+        Observer.Expect('page-lower-ok', 'Yes');
+        Observer.Expect('page-lower-value', 'abc');
+        Observer.Expect('page-upper-ok', 'No');
+        Observer.Expect('page-upper-error|text', 'Validation error for Field: TableLower,  Message = ''The character A is not valid in this field. You can specify the following characters: az. (Select Refresh to discard errors)''');
+        Observer.Expect('page-upper-error|code', 'TestValidation');
+        Observer.Expect('page-upper-value', 'abc');
+        Observer.Expect('stored-after-page', '');
+        Observer.Expect('validate-ok', 'Yes');
+        Observer.Expect('validate-ok-value', 'xyz');
+        Observer.Expect('validate-upper', 'Yes');
+        Observer.Expect('assign', 'QRS');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -148,7 +167,12 @@ codeunit 76510 "LT AA Field Tests"
         P.Close();
         Row.Get('A');
         Observer.Observe('stored', Row."When");
-        Observer.Finish();
+        Observer.Expect('formula-1D', '1D');
+        Observer.Expect('formula-CM+1D', 'CM+1D');
+        Observer.Expect('no-formula', 'text that is no formula');
+        Observer.Expect('plain-1D', '1D');
+        Observer.Expect('stored', '1D');
+        Observer.Verify();
     end;
 
     [Test]
@@ -186,7 +210,23 @@ codeunit 76510 "LT AA Field Tests"
         P.Close();
         Row.Get('A');
         Observer.Observe('stored', Format(Row.Opt, 0, 2));
-        Observer.Finish();
+        Observer.Expect('enu-value', 'One');
+        Observer.Expect('enu-count', '3');
+        Observer.Expect('enu-option-1', 'One');
+        Observer.Expect('enu-option-2', 'Two');
+        Observer.Expect('enu-option-3', 'Three');
+        Observer.Expect('plain-value', 'Alpha');
+        Observer.Expect('deu-value', 'One');
+        Observer.Expect('deu-option-1', 'One');
+        Observer.Expect('deu-option-2', 'Two');
+        Observer.Expect('deu-option-3', 'Three');
+        Observer.Expect('fra-value', 'One');
+        Observer.Expect('fra-option-1', 'One');
+        Observer.Expect('fra-option-2', 'Two');
+        Observer.Expect('fra-option-3', 'Three');
+        Observer.Expect('set-by-caption', 'Gamma');
+        Observer.Expect('stored', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -212,7 +252,14 @@ codeunit 76510 "LT AA Field Tests"
         Observer.Observe('pos-sign2', P.SignTwo.Value());
         P.Close();
         Observer.Observe('format-neg', Format(-5));
-        Observer.Finish();
+        Observer.Expect('neg-plain', '-5.00');
+        Observer.Expect('neg-sign1', '-5.00');
+        Observer.Expect('neg-sign2', '-5.00');
+        Observer.Expect('pos-plain', '7.00');
+        Observer.Expect('pos-sign1', '7.00');
+        Observer.Expect('pos-sign2', '7.00');
+        Observer.Expect('format-neg', '-5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +279,12 @@ codeunit 76510 "LT AA Field Tests"
         Observer.Observe('title-editable', Format(P.TitleField.Editable()));
         Observer.Observe('page-caption', P.Caption());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('title-value', 'Titled');
+        Observer.Expect('title-caption', 'Txt');
+        Observer.Expect('title-visible', 'Yes');
+        Observer.Expect('title-editable', 'Yes');
+        Observer.Expect('page-caption', 'LT AA Field Card - A');
+        Observer.Verify();
     end;
 
     local procedure Seed(var Row: Record "LT AA Row")

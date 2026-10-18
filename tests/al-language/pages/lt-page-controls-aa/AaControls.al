@@ -417,7 +417,11 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('cue-field', P.Cue1.Value());
         Observer.Observe('cue-field-visible', Format(P.Cue1.Visible()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('grid-field', 'in grid');
+        Observer.Expect('grid-field-visible', 'Yes');
+        Observer.Expect('cue-field', '42.00');
+        Observer.Expect('cue-field-visible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -434,7 +438,11 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('right-visible', Format(P.ActSwipeRight.Visible()));
         Observer.Observe('right-enabled', Format(P.ActSwipeRight.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('left-visible', 'Yes');
+        Observer.Expect('left-enabled', 'Yes');
+        Observer.Expect('right-visible', 'Yes');
+        Observer.Expect('right-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -449,7 +457,9 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('none-visible', Format(P.ActNone.Visible()));
         Observer.Observe('none-enabled', Format(P.ActNone.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('none-visible', 'Yes');
+        Observer.Expect('none-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -464,7 +474,9 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('page-scope-visible', Format(P.ActPageScope.Visible()));
         Observer.Observe('page-scope-enabled', Format(P.ActPageScope.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('page-scope-visible', 'Yes');
+        Observer.Expect('page-scope-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -481,7 +493,11 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('false-visible', Format(P.ActEnabledFalse.Visible()));
         Observer.Observe('false-enabled', Format(P.ActEnabledFalse.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('true-visible', 'Yes');
+        Observer.Expect('true-enabled', 'Yes');
+        Observer.Expect('false-visible', 'Yes');
+        Observer.Expect('false-enabled', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -496,7 +512,9 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('ellipsis-visible', Format(P.ActEllipsis.Visible()));
         Observer.Observe('ellipsis-enabled', Format(P.ActEllipsis.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('ellipsis-visible', 'Yes');
+        Observer.Expect('ellipsis-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -513,7 +531,11 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('split-second-visible', Format(P.SplitSecond.Visible()));
         Observer.Observe('split-second-enabled', Format(P.SplitSecond.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('split-first-visible', 'Yes');
+        Observer.Expect('split-first-enabled', 'Yes');
+        Observer.Expect('split-second-visible', 'Yes');
+        Observer.Expect('split-second-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -528,7 +550,9 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('standard-first-visible', Format(P.StandardFirst.Visible()));
         Observer.Observe('standard-first-enabled', Format(P.StandardFirst.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('standard-first-visible', 'Yes');
+        Observer.Expect('standard-first-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -543,7 +567,9 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('after-header-visible', Format(P.AfterHeader.Visible()));
         Observer.Observe('after-header-enabled', Format(P.AfterHeader.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('after-header-visible', 'Yes');
+        Observer.Expect('after-header-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -561,7 +587,10 @@ codeunit 76511 "LT AA Controls Tests"
         P.Toggle.Invoke();
         Observer.Observe('flag-enabled-again', Format(P.ActEnabledFlag.Enabled()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('flag-enabled-before', 'No');
+        Observer.Expect('flag-enabled-after', 'Yes');
+        Observer.Expect('flag-enabled-again', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -585,7 +614,17 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('flag-enabled-after', Format(P.PartByFlag.Enabled()));
         Observer.Observe('flag-editable-after', Format(P.PartByFlag.Editable()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('plain-visible', 'Yes');
+        Observer.Expect('plain-enabled', 'Yes');
+        Observer.Expect('plain-editable', 'Yes');
+        Observer.Expect('disabled-visible', 'Yes');
+        Observer.Expect('disabled-enabled', 'No');
+        Observer.Expect('disabled-editable', 'Yes');
+        Observer.Expect('flag-enabled-before', 'No');
+        Observer.Expect('flag-editable-before', 'Yes');
+        Observer.Expect('flag-enabled-after', 'Yes');
+        Observer.Expect('flag-editable-after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -603,7 +642,9 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('tree-txt', P.TreeTxt.Value());
         Observer.Observe('big-sign', P.BigSign.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('tree-txt', 'tree text');
+        Observer.Expect('big-sign', '-3.00');
+        Observer.Verify();
     end;
 
     local procedure Seed(var Row: Record "LT AA Row")
