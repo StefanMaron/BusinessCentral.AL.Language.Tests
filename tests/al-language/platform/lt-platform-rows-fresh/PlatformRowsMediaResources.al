@@ -22,7 +22,7 @@ codeunit 78110 "LT AD Plat Rows Media"
         exit(-1);
     end;
 
-    local procedure RowText(var RR: RecordRef): Text
+    local procedure RowText(var RR: RecordRef; MaxField: Integer): Text
     var
         FR: FieldRef;
         i: Integer;
@@ -30,7 +30,7 @@ codeunit 78110 "LT AD Plat Rows Media"
     begin
         for i := 1 to RR.FieldCount() do begin
             FR := RR.FieldIndex(i);
-            if FR.Class() = FieldClass::Normal then
+            if (FR.Class() = FieldClass::Normal) and ((MaxField = 0) or (FR.Number() <= MaxField)) then
                 if FR.Type() in [FieldType::Blob, FieldType::Media, FieldType::MediaSet] then
                     Result += FR.Name() + '=<' + Format(FR.Type()) + '>|'
                 else
@@ -39,7 +39,20 @@ codeunit 78110 "LT AD Plat Rows Media"
         exit(Result);
     end;
 
-    local procedure Dump(var Observer: Codeunit "Probe Observer"; TableName: Text; Skip: Integer; Take: Integer)
+    local procedure KeyText(var RR: RecordRef; KeyField: Text): Text
+    var
+        FR: FieldRef;
+        i: Integer;
+    begin
+        for i := 1 to RR.FieldCount() do begin
+            FR := RR.FieldIndex(i);
+            if FR.Name() = KeyField then
+                exit(Format(FR.Value()));
+        end;
+    end;
+
+    // Rows are named by the value of KeyField (not by position), because the rows of a platform table differ between BC versions.
+    local procedure Dump(var Observer: Codeunit "Probe Observer"; TableName: Text; KeyField: Text; MaxField: Integer; Skip: Integer; Take: Integer)
     var
         RR: RecordRef;
         Id: Integer;
@@ -50,11 +63,11 @@ codeunit 78110 "LT AD Plat Rows Media"
         if Id < 0 then
             exit;
         RR.Open(Id);
-                if RR.FindSet() then
+        if RR.FindSet() then
             repeat
                 n += 1;
                 if (n > Skip) and (n <= Skip + Take) then
-                    Observer.Observe(TableName + ' row ' + Format(n), RowText(RR));
+                    Observer.Observe(TableName + ' row ' + KeyText(RR, KeyField), RowText(RR, MaxField));
             until (RR.Next() = 0) or (n >= Skip + Take);
     end;
 
@@ -63,7 +76,7 @@ codeunit 78110 "LT AD Plat Rows Media"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources', 0, 12);
+        Dump(Observer, 'MediaResources', 'Code', 0, 0, 12);
         Observer.Finish();
     end;
 
@@ -72,7 +85,7 @@ codeunit 78110 "LT AD Plat Rows Media"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources', 12, 12);
+        Dump(Observer, 'MediaResources', 'Code', 0, 12, 12);
         Observer.Finish();
     end;
 
@@ -81,7 +94,7 @@ codeunit 78110 "LT AD Plat Rows Media"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources', 24, 12);
+        Dump(Observer, 'MediaResources', 'Code', 0, 24, 12);
         Observer.Finish();
     end;
 
@@ -90,7 +103,7 @@ codeunit 78110 "LT AD Plat Rows Media"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources', 36, 12);
+        Dump(Observer, 'MediaResources', 'Code', 0, 36, 12);
         Observer.Finish();
     end;
 
