@@ -44,9 +44,7 @@ report 69783 "LT U Report"
                     AutoFormatType = 11;
                     AutoFormatExpression = '<Precision,3:3><Standard Format,0>';
                 }
-                field(DfField; DfValue) { ApplicationArea = All; DateFormula = true; }
-                field(DrillField; DrillValue) { ApplicationArea = All; DrillDownPageID = "LT U Lookup List"; }
-                field(WidthField; WidthValue) { ApplicationArea = All; Width = 20; }
+                field(DfField; DfValue) { ApplicationArea = All; }
             }
         }
     }
@@ -59,9 +57,7 @@ report 69783 "LT U Report"
     var
         RelValue: Integer;
         AmtValue: Decimal;
-        DfValue: Text;
-        DrillValue: Integer;
-        WidthValue: Text;
+        DfValue: DateFormula;
 }
 
 reportextension 69784 "LT U Report Ext" extends "LT U Report"

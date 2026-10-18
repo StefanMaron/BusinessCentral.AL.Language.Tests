@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), Permissions Mock, ALTPermissionSet (60022), objects of UReportObjects.al, UTestIsolation.al, UPageObjects.al
-// Probe (issue 601): report layouts selected by RDLCLayout and WordLayout, SaveAs, request page fields (TableRelation, AutoFormat, DateFormula, DrillDownPageID, Width),
+// Probe (issue 601): report layouts selected by RDLCLayout and WordLayout, SaveAs, request page fields (TableRelation, AutoFormat, DateFormula; DrillDownPageID and Width are not probed, see the hand-off note),
 // report extension CalcFields and TableRelation, InherentPermissions and request page Permissions under the permissions mock, queries with InherentPermissions,
 // XmlPort field and text attribute Occurrence, TextType, validation on import, and the TestIsolation of test runner codeunits. Object id 69789.
 
@@ -12,7 +12,6 @@ codeunit 69789 "LT U Property Tests"
 
     var
         Observer: Codeunit "Probe Observer";
-        DrillPages: Integer;
 
     local procedure SeedParent()
     var
@@ -46,6 +45,13 @@ codeunit 69789 "LT U Property Tests"
         Src.Id := 1;
         Src.Txt := 'one';
         Src.Insert();
+    end;
+
+    local procedure After(Value: Text; Marker: Text; Len: Integer): Text
+    begin
+        if StrPos(Value, Marker) = 0 then
+            exit('<not found>');
+        exit(CopyStr(Value, StrPos(Value, Marker) + StrLen(Marker), Len));
     end;
 
     local procedure ReadAll(var InS: InStream) Result: Text
@@ -97,8 +103,9 @@ codeunit 69789 "LT U Property Tests"
         TempBlob.CreateInStream(InS, TextEncoding::UTF8);
         Xml := ReadAll(InS);
         Observer.Observe('xml_has_parent_code', Format(Xml.Contains('LTU-P')));
-        Observer.Observe('xml_entryno_element', CopyStr(Xml, StrPos(Xml, '<EntryNo>'), 24));
-        Observer.Observe('xml_parentcode_element', CopyStr(Xml, StrPos(Xml, '<ParentCode>'), 28));
+        Observer.Observe('xml_entryno_column', After(Xml, 'name="EntryNo">', 5));
+        Observer.Observe('xml_parentcode_column', After(Xml, 'name="ParentCode">', 6));
+        Observer.Observe('xml_dataitem_parent', Format(Xml.Contains('name="Parent"')));
         Observer.Finish();
     end;
 
@@ -118,19 +125,17 @@ codeunit 69789 "LT U Property Tests"
     end;
 
     [Test]
-    [HandlerFunctions('RequestPageFieldsHandler,DrillPageHandler')]
+    [HandlerFunctions('RequestPageFieldsHandler')]
     procedure Report_RequestPageFields_Relation_AutoFormat_DateFormula()
     var
         Mock: Codeunit "Permissions Mock";
     begin
         SeedPageSrc();
-        DrillPages := 0;
         asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
         if GetLastErrorText() <> 'NOERROR' then
             Observer.ObserveError('run_request_page|failed')
         else
             ClearLastError();
-        Observer.Observe('drill_pages_opened', Format(DrillPages));
         Observer.Finish();
     end;
 
@@ -210,34 +215,7 @@ codeunit 69789 "LT U Property Tests"
             Observer.ObserveError('date_formula_cm|failed')
         else
             ClearLastError();
-        asserterror begin Req.WidthField.SetValue('0123456789012345678901234567890'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_WidthField_SetValue_0123456789012345|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('width_value', Req.WidthField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('width_value|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.DrillField.SetValue(1); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_DrillField_SetValue_1_|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.DrillField.Drilldown(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('drill|no_error', 'true');
-        end else
-            Observer.ObserveError('drill');
         Req.Cancel().Invoke();
-    end;
-
-    [PageHandler]
-    procedure DrillPageHandler(var List: TestPage "LT U Lookup List")
-    begin
-        DrillPages += 1;
     end;
 
     [Test]

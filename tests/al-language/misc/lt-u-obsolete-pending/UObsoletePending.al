@@ -113,7 +113,6 @@ codeunit 69799 "LT U Obsolete Pending Tests"
     procedure Pending_QueryReportXmlPort_StillRun()
     var
         Observer: Codeunit "Probe Observer";
-        State: Codeunit "LT U State";
         TempBlob: Codeunit "Temp Blob";
         Src: Record "LT U Page Src";
         Qry: Query "LT U Obsolete Query";
@@ -130,9 +129,7 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Observer.Observe('query_read', Format(Qry.Read()));
         Observer.Observe('query_id', Format(Qry.Id));
         Qry.Close();
-        State.Reset();
         Report.Run(Report::"LT U Obsolete Report", false, false);
-        Observer.Observe('report_state', State.Dump());
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(Xmlport::"LT U Obsolete XmlPort", OutS);
         TempBlob.CreateInStream(InS, TextEncoding::UTF16);

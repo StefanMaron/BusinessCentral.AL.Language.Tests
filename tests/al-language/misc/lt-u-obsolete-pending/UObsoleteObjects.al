@@ -210,9 +210,9 @@ report 69797 "LT U Obsolete Report"
 
     trigger OnPreReport()
     var
-        State: Codeunit "LT U State";
+        Observer: Codeunit "Probe Observer";
     begin
-        State.Add('obsolete report ran');
+        Observer.Observe('report_state', 'obsolete report ran');
     end;
 }
 

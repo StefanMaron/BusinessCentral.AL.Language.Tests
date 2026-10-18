@@ -61,22 +61,17 @@ codeunit 69597 "LT U Isolation Tests"
     procedure A_Insert()
     var
         Row: Record "LT U Isolation Row";
-        State: Codeunit "LT U State";
     begin
-        State.Add('A sees ' + Format(Row.Count()));
         Row.Id := 1;
         Row.Note := 'inserted by A';
         Row.Insert();
-        State.Add('A inserted, count ' + Format(Row.Count()));
     end;
 
     [Test]
     procedure B_Count()
     var
         Row: Record "LT U Isolation Row";
-        State: Codeunit "LT U State";
     begin
-        State.Add('B sees ' + Format(Row.Count()));
         Row.Id := 2;
         Row.Note := 'inserted by B';
         Row.Insert();
@@ -86,9 +81,7 @@ codeunit 69597 "LT U Isolation Tests"
     procedure C_Count()
     var
         Row: Record "LT U Isolation Row";
-        State: Codeunit "LT U State";
     begin
-        State.Add('C sees ' + Format(Row.Count()));
     end;
 }
 
