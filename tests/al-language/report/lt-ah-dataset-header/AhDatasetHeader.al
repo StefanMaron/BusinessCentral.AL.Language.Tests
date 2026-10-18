@@ -95,7 +95,9 @@ codeunit 78603 "LT AH Dataset Header"
         Info.Get();
         Observer.Observe('db', Info.Name + '|' + Info.Address + '|' + Info."Address 2" + '|' + Info.City + '|' + Info."Post Code" + '|' + Info.County + '|' + Info."Country/Region Code");
         Observer.Observe('as_is', AddressLines());
-        Observer.Finish();
+        Observer.Expect('db', '<Company>|5 The Ring|Westminster|London|W2 8HG||GB');
+        Observer.Expect('as_is', '1=[<Company>] 2=[5 The Ring] 3=[Westminster] 4=[London, W2 8HG] 5=[Great Britain] 6=[] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +117,12 @@ codeunit 78603 "LT AH Dataset Header"
         Run(Observer, 'country_code_only', 'Street 1', 'Floor 2', 'Town', 'ZIP 12', '', 'AHX');
         Run(Observer, 'all_five_filled', 'Street 1', 'Floor 2', 'Town', 'ZIP 12', 'Countyshire', 'AHX');
         Run(Observer, 'no_address2', 'Street 1', '', 'Town', 'ZIP 12', 'Countyshire', 'AHX');
-        Observer.Finish();
+        Observer.Expect('all_filled_no_county', '1=[<Company>] 2=[Street 1] 3=[Floor 2] 4=[ZIP 12 Town] 5=[] 6=[] 7=[] 8=[] ');
+        Observer.Expect('all_filled_county', '1=[<Company>] 2=[Street 1] 3=[Floor 2] 4=[ZIP 12 Town] 5=[Countyshire] 6=[] 7=[] 8=[] ');
+        Observer.Expect('country_code_only', '1=[<Company>] 2=[Street 1] 3=[Floor 2] 4=[Town, ZIP 12] 5=[Ahland] 6=[] 7=[] 8=[] ');
+        Observer.Expect('all_five_filled', '1=[<Company>] 2=[Street 1] 3=[Floor 2] 4=[Town, ZIP 12] 5=[Countyshire] 6=[Ahland] 7=[] 8=[] ');
+        Observer.Expect('no_address2', '1=[<Company>] 2=[Street 1] 3=[Town, ZIP 12] 4=[Countyshire] 5=[Ahland] 6=[] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -137,7 +144,12 @@ codeunit 78603 "LT AH Dataset Header"
         Run(Observer, 'all_empty', '', '', '', '', '', '');
         Country.Get('AHX');
         Country.Delete();
-        Observer.Finish();
+        Observer.Expect('only_city', '1=[<Company>] 2=[Town] 3=[] 4=[] 5=[] 6=[] 7=[] 8=[] ');
+        Observer.Expect('only_post_code', '1=[<Company>] 2=[ZIP 12 ] 3=[] 4=[] 5=[] 6=[] 7=[] 8=[] ');
+        Observer.Expect('only_county', '1=[<Company>] 2=[Countyshire] 3=[] 4=[] 5=[] 6=[] 7=[] 8=[] ');
+        Observer.Expect('only_country', '1=[<Company>] 2=[Ahland] 3=[] 4=[] 5=[] 6=[] 7=[] 8=[] ');
+        Observer.Expect('all_empty', '1=[<Company>] 2=[] 3=[] 4=[] 5=[] 6=[] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 }
 #endif

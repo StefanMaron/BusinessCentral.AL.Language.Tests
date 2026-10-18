@@ -284,6 +284,8 @@ codeunit 78630 "LT AH XmlPort Link Tests"
         end;
         if Result.Contains('<?xml') then
             Result := Result.Substring(Result.IndexOf('<?xml'));
+        while Result.Contains('  ') do
+            Result := Result.Replace('  ', '');
         exit(Result);
     end;
 
@@ -315,7 +317,8 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Seed();
         Observer.Observe('xml', ExportText(78633));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>1</ParentId><Name>a10</Name></ChA><ChA><Id>11</Id><ParentId>1</ParentId><Name>a11</Name></ChA><ChB><Id>20</Id><ParentId>1</ParentId><Name>b20</Name></ChB><ChB><Id>21</Id><ParentId>2</ParentId><Name>b21</Name></ChB><ChB><Id>22</Id><ParentId>2</ParentId><Name>b22</Name></ChB></Par><Par><Id>2</Id><Name>p2</Name><ChA><Id>12</Id><ParentId>2</ParentId><Name>a12</Name></ChA><ChB><Id>20</Id><ParentId>1</ParentId><Name>b20</Name></ChB><ChB><Id>21</Id><ParentId>2</ParentId><Name>b21</Name></ChB><ChB><Id>22</Id><ParentId>2</ParentId><Name>b22</Name></ChB></Par></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,7 +328,11 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Wipe();
         ImportObserved(Observer, 'two_parents', 78633, '<Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>99</ParentId><Name>a10</Name></ChA><ChB><Id>20</Id><ParentId>98</ParentId><Name>b20</Name></ChB></Par><Par><Id>2</Id><Name>p2</Name><ChA><Id>12</Id><ParentId>97</ParentId><Name>a12</Name></ChA><ChB><Id>21</Id><ParentId>96</ParentId><Name>b21</Name></ChB><ChB><Id>22</Id><ParentId>95</ParentId><Name>b22</Name></ChB></Par></Root>');
-        Observer.Finish();
+        Observer.Expect('two_parents_ok', 'No');
+        Observer.Expect('two_parents_error|text', 'The data conflicts with the LinkTable and LinkFields setup of Table ChA.');
+        Observer.Expect('two_parents_error|code', 'XmlPortData');
+        Observer.Expect('two_parents_db', 'P1=p1 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -335,7 +342,9 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Wipe();
         ImportObserved(Observer, 'matching', 78633, '<Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>1</ParentId><Name>a10</Name></ChA><ChB><Id>20</Id><ParentId>98</ParentId><Name>b20</Name></ChB></Par><Par><Id>2</Id><Name>p2</Name><ChA><Id>12</Id><ParentId>2</ParentId><Name>a12</Name></ChA><ChB><Id>21</Id><ParentId>96</ParentId><Name>b21</Name></ChB><ChB><Id>22</Id><ParentId>95</ParentId><Name>b22</Name></ChB></Par></Root>');
-        Observer.Finish();
+        Observer.Expect('matching_ok', 'Yes');
+        Observer.Expect('matching_db', 'P1=p1 P2=p2 A10/1=a10 A12/2=a12 B20/98=b20 B21/96=b21 B22/95=b22 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -345,7 +354,9 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Wipe();
         ImportObserved(Observer, 'parent_only', 78633, '<Root><Par><Id>1</Id><Name>p1</Name></Par></Root>');
-        Observer.Finish();
+        Observer.Expect('parent_only_ok', 'Yes');
+        Observer.Expect('parent_only_db', 'P1=p1 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -355,7 +366,8 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Seed();
         Observer.Observe('xml', ExportText(78637));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>1</ParentId><Name>a10</Name><Gr><Id>30</Id><ParentId>10</ParentId><Name>g30</Name></Gr><Gr><Id>31</Id><ParentId>12</ParentId><Name>g31</Name></Gr></ChA><ChA><Id>11</Id><ParentId>1</ParentId><Name>a11</Name><Gr><Id>30</Id><ParentId>10</ParentId><Name>g30</Name></Gr><Gr><Id>31</Id><ParentId>12</ParentId><Name>g31</Name></Gr></ChA></Par><Par><Id>2</Id><Name>p2</Name><ChA><Id>12</Id><ParentId>2</ParentId><Name>a12</Name><Gr><Id>30</Id><ParentId>10</ParentId><Name>g30</Name></Gr><Gr><Id>31</Id><ParentId>12</ParentId><Name>g31</Name></Gr></ChA></Par></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -365,7 +377,9 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Wipe();
         ImportObserved(Observer, 'nested_matching', 78637, '<Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>1</ParentId><Name>a10</Name><Gr><Id>30</Id><ParentId>98</ParentId><Name>g30</Name></Gr></ChA></Par></Root>');
-        Observer.Finish();
+        Observer.Expect('nested_matching_ok', 'Yes');
+        Observer.Expect('nested_matching_db', 'P1=p1 A10/1=a10 G30/98=g30 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -375,7 +389,11 @@ codeunit 78630 "LT AH XmlPort Link Tests"
     begin
         Wipe();
         ImportObserved(Observer, 'nested', 78637, '<Root><Par><Id>1</Id><Name>p1</Name><ChA><Id>10</Id><ParentId>99</ParentId><Name>a10</Name><Gr><Id>30</Id><ParentId>98</ParentId><Name>g30</Name></Gr></ChA></Par></Root>');
-        Observer.Finish();
+        Observer.Expect('nested_ok', 'No');
+        Observer.Expect('nested_error|text', 'The data conflicts with the LinkTable and LinkFields setup of Table ChA.');
+        Observer.Expect('nested_error|code', 'XmlPortData');
+        Observer.Expect('nested_db', 'P1=p1 ');
+        Observer.Verify();
     end;
 }
 
@@ -527,7 +545,11 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunCase(Observer, 'be_nobom_utf16', 'utf-16', 0, false);
-        Observer.Finish();
+        Observer.Expect('be_nobom_utf16_port78634_ok', 'Yes');
+        Observer.Expect('be_nobom_utf16_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('be_nobom_utf16_port78638_ok', 'Yes');
+        Observer.Expect('be_nobom_utf16_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -536,7 +558,11 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunCase(Observer, 'be_nobom_nodecl', '', 0, false);
-        Observer.Finish();
+        Observer.Expect('be_nobom_nodecl_port78634_ok', 'Yes');
+        Observer.Expect('be_nobom_nodecl_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('be_nobom_nodecl_port78638_ok', 'Yes');
+        Observer.Expect('be_nobom_nodecl_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -545,7 +571,15 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunCase(Observer, 'be_nobom_utf8decl', 'utf-8', 0, false);
-        Observer.Finish();
+        Observer.Expect('be_nobom_utf8decl_port78634_ok', 'No');
+        Observer.Expect('be_nobom_utf8decl_port78634_error|text', '''.'', hexadecimal value 0x00, is an invalid character. Line 1, position 39.');
+        Observer.Expect('be_nobom_utf8decl_port78634_error|code', 'XmlPortImport:Xml');
+        Observer.Expect('be_nobom_utf8decl_port78634_row', 'no row');
+        Observer.Expect('be_nobom_utf8decl_port78638_ok', 'No');
+        Observer.Expect('be_nobom_utf8decl_port78638_error|text', '''.'', hexadecimal value 0x00, is an invalid character. Line 1, position 39.');
+        Observer.Expect('be_nobom_utf8decl_port78638_error|code', 'XmlPortImport:Xml');
+        Observer.Expect('be_nobom_utf8decl_port78638_row', 'no row');
+        Observer.Verify();
     end;
 
     [Test]
@@ -554,7 +588,11 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunCase(Observer, 'be_bom_utf16', 'utf-16', 0, true);
-        Observer.Finish();
+        Observer.Expect('be_bom_utf16_port78634_ok', 'Yes');
+        Observer.Expect('be_bom_utf16_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('be_bom_utf16_port78638_ok', 'Yes');
+        Observer.Expect('be_bom_utf16_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -563,7 +601,11 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunCase(Observer, 'le_nobom_utf16', 'utf-16', 1, false);
-        Observer.Finish();
+        Observer.Expect('le_nobom_utf16_port78634_ok', 'Yes');
+        Observer.Expect('le_nobom_utf16_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('le_nobom_utf16_port78638_ok', 'Yes');
+        Observer.Expect('le_nobom_utf16_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -572,7 +614,11 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunCase(Observer, 'le_bom_utf16', 'utf-16', 1, true);
-        Observer.Finish();
+        Observer.Expect('le_bom_utf16_port78634_ok', 'Yes');
+        Observer.Expect('le_bom_utf16_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('le_bom_utf16_port78638_ok', 'Yes');
+        Observer.Expect('le_bom_utf16_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -583,6 +629,22 @@ codeunit 78631 "LT AH XmlPort Utf16 Tests"
         RunCase(Observer, 'utf8_nobom_utf8decl', 'utf-8', 2, false);
         RunCase(Observer, 'utf8_bom_utf8decl', 'utf-8', 2, true);
         RunCase(Observer, 'utf8_nobom_utf16decl', 'utf-16', 2, false);
-        Observer.Finish();
+        Observer.Expect('utf8_nobom_utf8decl_port78634_ok', 'Yes');
+        Observer.Expect('utf8_nobom_utf8decl_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('utf8_nobom_utf8decl_port78638_ok', 'Yes');
+        Observer.Expect('utf8_nobom_utf8decl_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('utf8_bom_utf8decl_port78634_ok', 'Yes');
+        Observer.Expect('utf8_bom_utf8decl_port78634_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('utf8_bom_utf8decl_port78638_ok', 'Yes');
+        Observer.Expect('utf8_bom_utf8decl_port78638_row', 'R1|104,233,108,108,111,32,937,');
+        Observer.Expect('utf8_nobom_utf16decl_port78634_ok', 'No');
+        Observer.Expect('utf8_nobom_utf16decl_port78634_error|text', 'There is no Unicode byte order mark. Cannot switch to Unicode.');
+        Observer.Expect('utf8_nobom_utf16decl_port78634_error|code', 'XmlPortImport:Xml');
+        Observer.Expect('utf8_nobom_utf16decl_port78634_row', 'no row');
+        Observer.Expect('utf8_nobom_utf16decl_port78638_ok', 'No');
+        Observer.Expect('utf8_nobom_utf16decl_port78638_error|text', 'There is no Unicode byte order mark. Cannot switch to Unicode.');
+        Observer.Expect('utf8_nobom_utf16decl_port78638_error|code', 'XmlPortImport:Xml');
+        Observer.Expect('utf8_nobom_utf16decl_port78638_row', 'no row');
+        Observer.Verify();
     end;
 }

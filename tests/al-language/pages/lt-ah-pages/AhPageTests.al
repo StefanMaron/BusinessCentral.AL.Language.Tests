@@ -65,7 +65,13 @@ codeunit 78620 "LT AH Card Tests"
         Observer.Observe('count_before_close', Format(P.ValidationErrorCount()));
         Observer.Observe('qty_value_on_page', P.QtyCtl.Value());
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: QtyCtl,  Message = ''The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('count_before_close', '1');
+        Observer.Expect('qty_value_on_page', '5');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -81,7 +87,12 @@ codeunit 78620 "LT AH Card Tests"
         Observer.ObserveError('refused');
         Observer.Observe('dec_value_on_page', P.DecCtl.Value());
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: DecCtl,  Message = ''The value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('dec_value_on_page', '1.00');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +109,12 @@ codeunit 78620 "LT AH Card Tests"
         P.OtherCtl.SetValue('o1');
         Observer.Observe('qty_value_on_page', P.QtyCtl.Value());
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: QtyCtl,  Message = ''Your entry of ''abc'' is not an acceptable value for ''Qty''. The value "abc" can''t be evaluated into type Integer. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('qty_value_on_page', '5');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +130,12 @@ codeunit 78620 "LT AH Card Tests"
         Observer.ObserveError('refused');
         Observer.Observe('dec_value_on_page', P.DecCtl.Value());
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: DecCtl,  Message = ''Your entry of ''x1'' is not an acceptable value for ''Dec''. ''x1'' is not a part of a valid decimal expression. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('dec_value_on_page', '1.00');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +151,13 @@ codeunit 78620 "LT AH Card Tests"
         Observer.ObserveError('refused');
         P.OtherCtl.SetValue('o1');
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: GuardCtl,  Message = ''LT AH guard refused (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('close_error|text', 'LT AH guard refused');
+        Observer.Expect('close_error|code', 'ClientValidateField:NSValidateField');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +173,11 @@ codeunit 78620 "LT AH Card Tests"
         Observer.ObserveError('refused');
         P.OtherCtl.SetValue('o1');
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: LettersCtl,  Message = ''The character - is not valid in this field. You can specify the following characters: az,AZ,09. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,7 +191,11 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue(99);
         Observer.ObserveError('refused');
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: QtyCtl,  Message = ''The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -178,7 +213,13 @@ codeunit 78620 "LT AH Card Tests"
         Observer.Observe('count_after_valid_retry', Format(P.ValidationErrorCount()));
         P.TxtCtl.SetValue('new');
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused|text', 'Validation error for Field: QtyCtl,  Message = ''The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)''');
+        Observer.Expect('refused|code', 'TestValidation');
+        Observer.Expect('count_after_refusal', '1');
+        Observer.Expect('count_after_valid_retry', '0');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=new|Qty=7|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -196,7 +237,13 @@ codeunit 78620 "LT AH Card Tests"
         Observer.ObserveError('refused_dec');
         P.NameCtl.SetValue('n1');
         CloseObserved(Observer, P);
-        Observer.Finish();
+        Observer.Expect('refused_qty|text', 'Validation error for Field: QtyCtl,  Message = ''The value must be greater than or equal to 1. Value: 0. (Select Refresh to discard errors)''');
+        Observer.Expect('refused_qty|code', 'TestValidation');
+        Observer.Expect('refused_dec|text', 'Validation error for Field: DecCtl,  Message = ''The value must be less than or equal to 100. Value: 101.00. (Select Refresh to discard errors)''');
+        Observer.Expect('refused_dec|code', 'TestValidation');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('stored', 'Txt=orig|Qty=5|Dec=1|Name=n0|Other=o0|Guard=|Letters=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -211,7 +258,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('page_count', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -226,7 +274,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_no_index', P.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('page_no_index', 'The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)\r\nThe value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)\r\nThe character - is not valid in this field. You can specify the following characters: az,AZ,09. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +290,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_1', P.GetValidationError(1));
-        Observer.Finish();
+        Observer.Expect('page_1', 'The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -256,7 +306,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_2', P.GetValidationError(2));
-        Observer.Finish();
+        Observer.Expect('page_2', 'The value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,7 +322,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('page_3', P.GetValidationError(3));
-        Observer.Finish();
+        Observer.Expect('page_3', 'The character - is not valid in this field. You can specify the following characters: az,AZ,09. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -286,22 +338,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_Three_qty_no_index()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        asserterror P.DecCtl.SetValue(-5);
-        asserterror P.LettersCtl.SetValue('a-b');
-        Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('qty_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -316,7 +354,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('qty_1', P.QtyCtl.GetValidationError(1));
-        Observer.Finish();
+        Observer.Expect('qty_1', 'The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -331,22 +370,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('dec_count', Format(P.DecCtl.ValidationErrorCount()));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_Three_dec_no_index()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        asserterror P.DecCtl.SetValue(-5);
-        asserterror P.LettersCtl.SetValue('a-b');
-        Observer.Observe('dec_no_index', P.DecCtl.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('dec_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -361,22 +386,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('dec_1', P.DecCtl.GetValidationError(1));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_Three_letters_no_index()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        asserterror P.DecCtl.SetValue(-5);
-        asserterror P.LettersCtl.SetValue('a-b');
-        Observer.Observe('letters_no_index', P.LettersCtl.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('dec_1', 'The value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -391,7 +402,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('letters_1', P.LettersCtl.GetValidationError(1));
-        Observer.Finish();
+        Observer.Expect('letters_1', 'The character - is not valid in this field. You can specify the following characters: az,AZ,09. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -406,7 +418,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.DecCtl.SetValue(-5);
         asserterror P.LettersCtl.SetValue('a-b');
         Observer.Observe('txt_count', Format(P.TxtCtl.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('txt_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -422,7 +435,9 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.LettersCtl.SetValue('a-b');
         asserterror Observer.Observe('page_4', P.GetValidationError(4));
         Observer.ObserveError('page_4_error');
-        Observer.Finish();
+        Observer.Expect('page_4_error|text', 'Index out of bounds.');
+        Observer.Expect('page_4_error|code', 'IndexOutOfBounds');
+        Observer.Verify();
     end;
 
     [Test]
@@ -437,7 +452,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('page_count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -452,7 +468,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_no_index', P.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('page_no_index', 'Your entry of ''abc'' is not an acceptable value for ''Qty''. The value "abc" can''t be evaluated into type Integer. (Select Refresh to discard errors)\r\nThe value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -467,7 +484,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_1', P.GetValidationError(1));
-        Observer.Finish();
+        Observer.Expect('page_1', 'Your entry of ''abc'' is not an acceptable value for ''Qty''. The value "abc" can''t be evaluated into type Integer. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -482,22 +500,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('page_2', P.GetValidationError(2));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_TwoOnOne_page_3()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        asserterror P.QtyCtl.SetValue('abc');
-        asserterror P.DecCtl.SetValue(-5);
-        Observer.Observe('page_3', P.GetValidationError(3));
-        Observer.Finish();
+        Observer.Expect('page_2', 'The value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -512,22 +516,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_TwoOnOne_qty_no_index()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        asserterror P.QtyCtl.SetValue('abc');
-        asserterror P.DecCtl.SetValue(-5);
-        Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('qty_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -542,22 +532,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('qty_1', P.QtyCtl.GetValidationError(1));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_TwoOnOne_qty_2()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        asserterror P.QtyCtl.SetValue('abc');
-        asserterror P.DecCtl.SetValue(-5);
-        Observer.Observe('qty_2', P.QtyCtl.GetValidationError(2));
-        Observer.Finish();
+        Observer.Expect('qty_1', 'Your entry of ''abc'' is not an acceptable value for ''Qty''. The value "abc" can''t be evaluated into type Integer. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -572,7 +548,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('dec_count', Format(P.DecCtl.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('dec_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -587,7 +564,8 @@ codeunit 78620 "LT AH Card Tests"
         asserterror P.QtyCtl.SetValue('abc');
         asserterror P.DecCtl.SetValue(-5);
         Observer.Observe('dec_1', P.DecCtl.GetValidationError(1));
-        Observer.Finish();
+        Observer.Expect('dec_1', 'The value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -600,7 +578,8 @@ codeunit 78620 "LT AH Card Tests"
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('page_count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -613,7 +592,8 @@ codeunit 78620 "LT AH Card Tests"
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
         Observer.Observe('page_no_index', P.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('page_no_index', 'The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -626,20 +606,8 @@ codeunit 78620 "LT AH Card Tests"
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
         Observer.Observe('page_1', P.GetValidationError(1));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure GVE_One_qty_no_index()
-    var
-        Observer: Codeunit "Probe Observer";
-        P: TestPage "LT AH Card";
-    begin
-        Seed();
-        P.OpenEdit();
-        asserterror P.QtyCtl.SetValue(99);
-        Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('page_1', 'The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -652,7 +620,8 @@ codeunit 78620 "LT AH Card Tests"
         P.OpenEdit();
         asserterror P.QtyCtl.SetValue(99);
         Observer.Observe('qty_1', P.QtyCtl.GetValidationError(1));
-        Observer.Finish();
+        Observer.Expect('qty_1', 'The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -664,7 +633,8 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         Observer.Observe('page_count', Format(P.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('page_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -676,7 +646,8 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         Observer.Observe('page_no_index', P.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('page_no_index', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -688,7 +659,8 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         Observer.Observe('qty_count', Format(P.QtyCtl.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('qty_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -700,7 +672,8 @@ codeunit 78620 "LT AH Card Tests"
         Seed();
         P.OpenEdit();
         Observer.Observe('qty_no_index', P.QtyCtl.GetValidationError());
-        Observer.Finish();
+        Observer.Expect('qty_no_index', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -723,7 +696,16 @@ codeunit 78620 "LT AH Card Tests"
         P.DecCtl.SetValue(3);
         P.LettersCtl.SetValue('abc');
         Observer.Observe('page_count_after_all_fixed', Format(P.ValidationErrorCount()));
-        Observer.Finish();
+        Observer.Expect('refused_qty|text', 'Validation error for Field: QtyCtl,  Message = ''The value must be less than or equal to 10. Value: 99. (Select Refresh to discard errors)''');
+        Observer.Expect('refused_qty|code', 'TestValidation');
+        Observer.Expect('refused_dec|text', 'Validation error for Field: DecCtl,  Message = ''The value must be greater than or equal to 0. Value: -5.00. (Select Refresh to discard errors)''');
+        Observer.Expect('refused_dec|code', 'TestValidation');
+        Observer.Expect('refused_letters|text', 'Validation error for Field: LettersCtl,  Message = ''The character - is not valid in this field. You can specify the following characters: az,AZ,09. (Select Refresh to discard errors)''');
+        Observer.Expect('refused_letters|code', 'TestValidation');
+        Observer.Expect('page_count_after_qty_fix', '2');
+        Observer.Expect('qty_count_after_qty_fix', '0');
+        Observer.Expect('page_count_after_all_fixed', '0');
+        Observer.Verify();
     end;
 }
 
@@ -821,7 +803,14 @@ codeunit 78623 "LT AH CharAllowed Tests"
         Observer.Observe('mixed_with_dash_value', P.ThreeRanges.Value());
         asserterror P.ThreeRanges.SetValue('a b');
         Observer.ObserveError('with_space');
-        Observer.Finish();
+        Observer.Expect('accepted_single_characters', '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
+        Observer.Expect('mixed_ok', 'Yes');
+        Observer.Expect('mixed_value', 'aZ9bY8');
+        Observer.Expect('mixed_with_dash', 'No');
+        Observer.Expect('mixed_with_dash_value', 'aZ9bY8');
+        Observer.Expect('with_space|text', 'Validation error for Field: ThreeRanges,  Message = ''The character   is not valid in this field. You can specify the following characters: az,AZ,09. (Select Refresh to discard errors)''');
+        Observer.Expect('with_space|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -844,7 +833,12 @@ codeunit 78623 "LT AH CharAllowed Tests"
         Observer.Observe('mixed_value', P.SinglesAndRange.Value());
         asserterror P.SinglesAndRange.SetValue('12-_a');
         Observer.ObserveError('with_letter');
-        Observer.Finish();
+        Observer.Expect('accepted_single_characters', '-0123456789_');
+        Observer.Expect('mixed_ok', 'Yes');
+        Observer.Expect('mixed_value', '12-_34');
+        Observer.Expect('with_letter|text', 'Validation error for Field: SinglesAndRange,  Message = ''The character a is not valid in this field. You can specify the following characters: 09,--,__. (Select Refresh to discard errors)''');
+        Observer.Expect('with_letter|code', 'TestValidation');
+        Observer.Verify();
     end;
 
     [Test]
@@ -863,7 +857,8 @@ codeunit 78623 "LT AH CharAllowed Tests"
             if SetUnordered(P, CopyStr(All, I, 1)) then
                 Accepted += CopyStr(All, I, 1);
         Observer.Observe('accepted_single_characters', Accepted);
-        Observer.Finish();
+        Observer.Expect('accepted_single_characters', '5az');
+        Observer.Verify();
     end;
 
     [Test]
@@ -882,7 +877,8 @@ codeunit 78623 "LT AH CharAllowed Tests"
             if SetNonAscii(P, CopyStr(All, I, 1)) then
                 Accepted += CopyStr(All, I, 1);
         Observer.Observe('accepted_single_characters', Accepted);
-        Observer.Finish();
+        Observer.Expect('accepted_single_characters', 'aÄ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -901,7 +897,8 @@ codeunit 78623 "LT AH CharAllowed Tests"
             if SetOneRangeMany(P, CopyStr(All, I, 1)) then
                 Accepted += CopyStr(All, I, 1);
         Observer.Observe('accepted_single_characters', Accepted);
-        Observer.Finish();
+        Observer.Expect('accepted_single_characters', '0123456789ABCDEFabcdef');
+        Observer.Verify();
     end;
 }
 
@@ -986,7 +983,15 @@ codeunit 78621 "LT AH Tree Tests"
         Seed();
         Tag := 'page_run';
         Page.Run(Page::"LT AH Tree");
-        Observer.Finish();
+        Observer.Expect('page_run_rows_initial', 'T1 T5 ');
+        Observer.Expect('page_run_first', 'T1');
+        Observer.Expect('page_run_first_expanded', 'No');
+        Observer.Expect('page_run_first_expanded_after_expand', 'Yes');
+        Observer.Expect('page_run_rows_after_expand', 'T1 T2 T4 T5 ');
+        Observer.Expect('page_run_rows_after_collapse', 'T1 T5 ');
+        Observer.Expect('page_run_goto_child', 'No');
+        Observer.Expect('page_run_last_root_expanded', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -998,7 +1003,15 @@ codeunit 78621 "LT AH Tree Tests"
         Seed();
         Tag := 'variable_run';
         Pg.Run();
-        Observer.Finish();
+        Observer.Expect('variable_run_rows_initial', 'T1 T5 ');
+        Observer.Expect('variable_run_first', 'T1');
+        Observer.Expect('variable_run_first_expanded', 'No');
+        Observer.Expect('variable_run_first_expanded_after_expand', 'Yes');
+        Observer.Expect('variable_run_rows_after_expand', 'T1 T2 T4 T5 ');
+        Observer.Expect('variable_run_rows_after_collapse', 'T1 T5 ');
+        Observer.Expect('variable_run_goto_child', 'No');
+        Observer.Expect('variable_run_last_root_expanded', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1010,7 +1023,15 @@ codeunit 78621 "LT AH Tree Tests"
         Seed();
         Tag := 'variable_runmodal';
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('variable_runmodal_rows_initial', 'T1 T5 ');
+        Observer.Expect('variable_runmodal_first', 'T1');
+        Observer.Expect('variable_runmodal_first_expanded', 'No');
+        Observer.Expect('variable_runmodal_first_expanded_after_expand', 'Yes');
+        Observer.Expect('variable_runmodal_rows_after_expand', 'T1 T2 T4 T5 ');
+        Observer.Expect('variable_runmodal_rows_after_collapse', 'T1 T5 ');
+        Observer.Expect('variable_runmodal_goto_child', 'No');
+        Observer.Expect('variable_runmodal_last_root_expanded', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1020,7 +1041,15 @@ codeunit 78621 "LT AH Tree Tests"
         Seed();
         Tag := 'page_runmodal';
         Page.RunModal(Page::"LT AH Tree");
-        Observer.Finish();
+        Observer.Expect('page_runmodal_rows_initial', 'T1 T5 ');
+        Observer.Expect('page_runmodal_first', 'T1');
+        Observer.Expect('page_runmodal_first_expanded', 'No');
+        Observer.Expect('page_runmodal_first_expanded_after_expand', 'Yes');
+        Observer.Expect('page_runmodal_rows_after_expand', 'T1 T2 T4 T5 ');
+        Observer.Expect('page_runmodal_rows_after_collapse', 'T1 T5 ');
+        Observer.Expect('page_runmodal_goto_child', 'No');
+        Observer.Expect('page_runmodal_last_root_expanded', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1033,7 +1062,15 @@ codeunit 78621 "LT AH Tree Tests"
         P.OpenView();
         Walk(P);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('testpage_rows_initial', 'T1 T5 ');
+        Observer.Expect('testpage_first', 'T1');
+        Observer.Expect('testpage_first_expanded', 'No');
+        Observer.Expect('testpage_first_expanded_after_expand', 'Yes');
+        Observer.Expect('testpage_rows_after_expand', 'T1 T2 T4 T5 ');
+        Observer.Expect('testpage_rows_after_collapse', 'T1 T5 ');
+        Observer.Expect('testpage_goto_child', 'No');
+        Observer.Expect('testpage_last_root_expanded', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -1103,7 +1140,12 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('db_after_edit', DumpRows());
         Host.Close();
         Observer.Observe('db_after_close', DumpRows());
-        Observer.Finish();
+        Observer.Expect('part_rows', 'R2=b ');
+        Observer.Expect('part_value_after_edit', 'viaPart');
+        Observer.Expect('host_value_after_edit', 'b');
+        Observer.Expect('db_after_edit', 'R1=a/1 R2=b/2 R3=c/3 ');
+        Observer.Expect('db_after_close', 'R1=a/1 R2=b/2 R3=c/3 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1124,7 +1166,12 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('part_value_back_on_r2', Host.SamePart.TxtCtl.Value());
         Host.Close();
         Observer.Observe('db_after_close', DumpRows());
-        Observer.Finish();
+        Observer.Expect('db_after_row_change', 'R1=a/1 R2=b/2 R3=c/3 ');
+        Observer.Expect('part_rows_on_r3', 'R3=c ');
+        Observer.Expect('host_value_back_on_r2', 'b');
+        Observer.Expect('part_value_back_on_r2', 'b');
+        Observer.Expect('db_after_close', 'R1=a/1 R2=b/2 R3=c/3 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1143,7 +1190,11 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('host_txt_after_part_edit', Host.TxtCtl.Value());
         Host.Close();
         Observer.Observe('db_after_close', DumpRows());
-        Observer.Finish();
+        Observer.Expect('part_value_after_host_edit', 'b');
+        Observer.Expect('host_qty_after_part_edit', '2');
+        Observer.Expect('host_txt_after_part_edit', 'viaHost');
+        Observer.Expect('db_after_close', 'R1=a/1 R2=viaHost/2 R3=c/3 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1162,7 +1213,12 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('part_error_count', Format(Host.SamePart.ValidationErrorCount()));
         Host.Close();
         Observer.Observe('db_after_close', DumpRows());
-        Observer.Finish();
+        Observer.Expect('part_refused|text', 'Validation error for Field: QtyCtl,  Message = ''The value must be less than or equal to 10. Value: 99.''');
+        Observer.Expect('part_refused|code', 'TestValidation');
+        Observer.Expect('host_error_count', '1');
+        Observer.Expect('part_error_count', '1');
+        Observer.Expect('db_after_close', 'R1=a/1 R2=b/2 R3=c/3 ');
+        Observer.Verify();
     end;
 
     local procedure SeedDocument()
@@ -1244,7 +1300,10 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('db_after_edit', DumpHeadsAndLines());
         Doc.Close();
         Observer.Observe('db_after_close', DumpHeadsAndLines());
-        Observer.Finish();
+        Observer.Expect('lines', '10=first 20=second 0= ');
+        Observer.Expect('db_after_edit', 'H:H1=head H:H2=other head L:H1/10=first/1 L:H1/20=second/2 L:H2/10=foreign/0 ');
+        Observer.Expect('db_after_close', 'H:H1=head H:H2=other head L:H1/10=edited/1 L:H1/20=second/2 L:H2/10=foreign/0 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1263,7 +1322,10 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('db_after_new', DumpHeadsAndLines());
         Doc.Close();
         Observer.Observe('db_after_close', DumpHeadsAndLines());
-        Observer.Finish();
+        Observer.Expect('new_line_no', '15');
+        Observer.Expect('db_after_new', 'H:H1=head H:H2=other head L:H1/10=first/1 L:H1/15=added/0 L:H1/20=second/2 L:H2/10=foreign/0 ');
+        Observer.Expect('db_after_close', 'H:H1=head H:H2=other head L:H1/10=first/1 L:H1/15=added/5 L:H1/20=second/2 L:H2/10=foreign/0 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1282,7 +1344,9 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('db_after_row_change', DumpHeadsAndLines());
         Doc.Close();
         Observer.Observe('db_after_close', DumpHeadsAndLines());
-        Observer.Finish();
+        Observer.Expect('db_after_row_change', 'H:H1=head edited H:H2=other head L:H1/10=first/1 L:H1/20=second/22 L:H2/10=foreign/0 ');
+        Observer.Expect('db_after_close', 'H:H1=head edited H:H2=other head L:H1/10=first/1 L:H1/20=second/22 L:H2/10=foreign/0 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1303,6 +1367,11 @@ codeunit 78622 "LT AH Part Tests"
         Observer.Observe('part_error_count', Format(Doc.Lines.ValidationErrorCount()));
         Doc.Close();
         Observer.Observe('db_after_close', DumpHeadsAndLines());
-        Observer.Finish();
+        Observer.Expect('part_refused|text', 'Validation error for Field: AmountCtl,  Message = ''Your entry of ''abc'' is not an acceptable value for ''Amount''. ''abc'' is not a part of a valid decimal expression.''');
+        Observer.Expect('part_refused|code', 'TestValidation');
+        Observer.Expect('host_error_count', '1');
+        Observer.Expect('part_error_count', '1');
+        Observer.Expect('db_after_close', 'H:H1=head H:H2=other head L:H1/10=first/1 L:H1/20=second/2 L:H2/10=foreign/0 ');
+        Observer.Verify();
     end;
 }
