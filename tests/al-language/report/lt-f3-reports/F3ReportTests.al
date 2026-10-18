@@ -343,4 +343,23 @@ codeunit 67115 "LT F3 Report Probes"
         ObserveErrorRun('variable_runmodal', true, true);
         Observer.Finish();
     end;
+
+    [RequestPageHandler]
+    procedure PlainHandler(var RequestPage: TestRequestPage "LT F3 Request Plain")
+    begin
+        Observer.Observe('rp_tag', RequestPage.TagCtl.Value());
+        RequestPage.OK().Invoke();
+    end;
+
+    [Test]
+    [HandlerFunctions('PlainHandler')]
+    procedure RequestPageReport_PlainTable_Handler_OK()
+    var
+        Data: Codeunit "LT F3 Report Data";
+    begin
+        Data.Seed();
+        Report.Run(Report::"LT F3 Request Plain");
+        Observer.Observe('log', Dump());
+        Observer.Finish();
+    end;
 }
