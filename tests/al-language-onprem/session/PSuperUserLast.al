@@ -1,8 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/user/user-table
 // Scope: in-scope (Target = OnPrem: Environment Info Test Library.SetTestabilitySoftwareAsAService has Scope OnPrem)
 // Fixtures used: Probe Observer (69160), Environment Info Test Library (System Application Test Library)
-// RISKY (data): the test touches the User and Access Control rows of the test user. Both attempts below are expected to fail before anything changes;
-// if the platform lets the change through, the test puts the user back. The environment is switched to "SaaS" only for the attempts.
+// RISKY (data): the test takes the SUPER assignments of other users away and puts them back; the attempts on the test user are expected to fail before anything changes. The environment is switched to "SaaS" only for the attempts.
 //
 // 'There should be at least one enabled 'SUPER' user.': raised when the last user that holds SUPER directly is disabled, or loses the SUPER assignment, while the environment is SaaS.
 // BC versions: 27, 28, 29
@@ -10,19 +9,6 @@ codeunit 61289 "LT P Super User Last"
 {
     Subtype = Test;
     TestPermissions = Disabled;
-
-    [TryFunction]
-    local procedure TryDisable(var User: Record User)
-    begin
-        User.State := User.State::Disabled;
-        User.Modify(true);
-    end;
-
-    [TryFunction]
-    local procedure TryRemoveSuper(var AccessControl: Record "Access Control")
-    begin
-        AccessControl.Delete(true);
-    end;
 
     local procedure SuperFilters(var AccessControl: Record "Access Control")
     begin
@@ -66,7 +52,6 @@ codeunit 61289 "LT P Super User Last"
         User: Record User;
         AccessControl: Record "Access Control";
         Saved: Record "Access Control" temporary;
-        Ok: Boolean;
     begin
         SuperFilters(AccessControl);
         AccessControl.SetRange("User Security ID", UserSecurityId());
@@ -75,15 +60,10 @@ codeunit 61289 "LT P Super User Last"
         KeepOnlyCurrentUserSuper(Saved);
         EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
         ClearLastError();
-        Ok := TryDisable(User);
+        User.State := User.State::Disabled;
+        asserterror User.Modify(true);
         EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
-        Observer.Observe('disable_ok', Format(Ok));
-        if not Ok then
-            Observer.ObserveError('disable_error')
-        else begin
-            User.State := User.State::Enabled;
-            User.Modify(true);
-        end;
+        Observer.ObserveError('disable_error');
         PutBack(Saved);
         User.Get(UserSecurityId());
         Observer.Observe('state_after', Format(User.State));
@@ -97,7 +77,6 @@ codeunit 61289 "LT P Super User Last"
         EnvironmentInfoTestLibrary: Codeunit "Environment Info Test Library";
         AccessControl: Record "Access Control";
         Saved: Record "Access Control" temporary;
-        Ok: Boolean;
     begin
         KeepOnlyCurrentUserSuper(Saved);
         SuperFilters(AccessControl);
@@ -105,14 +84,9 @@ codeunit 61289 "LT P Super User Last"
         Observer.Observe('assignment_found', Format(AccessControl.FindFirst()));
         EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
         ClearLastError();
-        Ok := TryRemoveSuper(AccessControl);
+        asserterror AccessControl.Delete(true);
         EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
-        Observer.Observe('remove_ok', Format(Ok));
-        if not Ok then
-            Observer.ObserveError('remove_error')
-        else begin
-            AccessControl.Insert(false);
-        end;
+        Observer.ObserveError('remove_error');
         PutBack(Saved);
         Observer.Finish();
     end;

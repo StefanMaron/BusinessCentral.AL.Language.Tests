@@ -35,7 +35,10 @@ codeunit 67293 "LT P Empty Statement"
         begin
             ;
         end;
-        Observer.Finish();
+        Observer.Expect('procedure_with_only_empty', 'ran');
+        Observer.Expect('many_empty_then_exit', '7');
+        Observer.Expect('after_lone_semicolon', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -61,7 +64,11 @@ codeunit 67293 "LT P Empty Statement"
             ;
         end;
         Observer.Observe('empty_in_begin_end', Format(N));
-        Observer.Finish();
+        Observer.Expect('if_true_empty_then', '1');
+        Observer.Expect('if_false_empty_else', '1');
+        Observer.Expect('statement_after_empty_if', '2');
+        Observer.Expect('empty_in_begin_end', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +98,9 @@ codeunit 67293 "LT P Empty Statement"
                 ;
         end;
         Observer.Observe('case_single_empty_branch', Format(N));
-        Observer.Finish();
+        Observer.Expect('case_hits', 'two;');
+        Observer.Expect('case_single_empty_branch', '9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,6 +133,12 @@ codeunit 67293 "LT P Empty Statement"
             ;
         until true;
         Observer.Observe('repeat_only_empty', Format(N));
-        Observer.Finish();
+        Observer.Expect('for_empty_body_index', '3');
+        Observer.Expect('for_downto_empty_body_index', '1');
+        Observer.Expect('while_counter', '3');
+        Observer.Expect('while_false_empty', '3');
+        Observer.Expect('repeat_empty_then_count', '2');
+        Observer.Expect('repeat_only_empty', '2');
+        Observer.Verify();
     end;
 }

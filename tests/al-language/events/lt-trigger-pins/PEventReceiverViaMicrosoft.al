@@ -68,7 +68,15 @@ codeunit 67290 "LT P Event Receiver Via MS"
             Observer.Observe('own_event_hit_count', Format(Buffer."Hit Count"));
             Observer.Observe('own_event_session_matches', Format(Buffer."Session ID" = SessionId()));
         end;
-        Observer.Finish();
+        Observer.Expect('record_ok', 'Yes');
+        Observer.Expect('own_event_rows', '1');
+        Observer.Expect('own_event_object_type', 'Codeunit');
+        Observer.Expect('own_event_object_id', '67289');
+        Observer.Expect('own_event_event_type', 'Custom Event');
+        Observer.Expect('own_event_calling_method', 'Raise');
+        Observer.Expect('own_event_hit_count', '1');
+        Observer.Expect('own_event_session_matches', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -89,6 +97,8 @@ codeunit 67290 "LT P Event Receiver Via MS"
             Observer.Observe('own_table_object_type', Format(Buffer."Object Type"));
             Observer.Observe('own_table_read', Format(Buffer."Read Permission"));
         end;
-        Observer.Finish();
+        Observer.Expect('log_ok', 'Yes');
+        Observer.Expect('own_table_rows', '0');
+        Observer.Verify();
     end;
 }

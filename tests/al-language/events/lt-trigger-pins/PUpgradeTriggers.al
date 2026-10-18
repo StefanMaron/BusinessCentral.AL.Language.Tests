@@ -103,9 +103,8 @@ codeunit 67283 "LT P Upgrade Triggers"
         Codeunit.Run(CodeunitId);
     end;
 
-    local procedure RunAndObserve(CodeunitId: Integer)
+    local procedure RunAndObserve(var Observer: Codeunit "Probe Observer"; CodeunitId: Integer)
     var
-        Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT P Trig Log";
         Ok: Boolean;
     begin
@@ -116,18 +115,31 @@ codeunit 67283 "LT P Upgrade Triggers"
         if not Ok then
             Observer.ObserveError('run_error');
         Observer.Observe('log', Log.Joined());
-        Observer.Finish();
     end;
 
     [Test]
     procedure PUpgrade_RunWithTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunAndObserve(Codeunit::"LT P Upgrade Full");
+        RunAndObserve(Observer, Codeunit::"LT P Upgrade Full");
+        Observer.Expect('run_ok', 'No');
+        Observer.Expect('run_error|text', 'Upgrade codeunit ''67281'' cannot be invoked outside the schema synchronization process.');
+        Observer.Expect('run_error|code', 'UpgradeCodeunitOnRunCall');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
     procedure PUpgrade_RunWithoutTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunAndObserve(Codeunit::"LT P Upgrade Empty");
+        RunAndObserve(Observer, Codeunit::"LT P Upgrade Empty");
+        Observer.Expect('run_ok', 'No');
+        Observer.Expect('run_error|text', 'Upgrade codeunit ''67282'' cannot be invoked outside the schema synchronization process.');
+        Observer.Expect('run_error|code', 'UpgradeCodeunitOnRunCall');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 }

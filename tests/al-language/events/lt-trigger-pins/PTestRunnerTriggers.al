@@ -166,7 +166,11 @@ codeunit 67288 "LT P Runner Triggers Test"
     begin
         Log.Reset();
         RunRunner(Observer, Codeunit::"LT P Runner With Triggers");
-        Observer.Finish();
+        Observer.Expect('run_ok', 'No');
+        Observer.Expect('run_error|text', 'You cannot nest the execution of test codeunits. Test codeunit 67285 LT P Runner Subject was called from another test codeunit.');
+        Observer.Expect('run_error|code', 'TestCodeUnitNestedInvocation');
+        Observer.Expect('log', 'runner OnRun;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -180,7 +184,11 @@ codeunit 67288 "LT P Runner Triggers Test"
         Log.SetFlag('FAIL', 'Two');
         RunRunner(Observer, Codeunit::"LT P Runner With Triggers");
         Log.Reset();
-        Observer.Finish();
+        Observer.Expect('run_ok', 'No');
+        Observer.Expect('run_error|text', 'You cannot nest the execution of test codeunits. Test codeunit 67285 LT P Runner Subject was called from another test codeunit.');
+        Observer.Expect('run_error|code', 'TestCodeUnitNestedInvocation');
+        Observer.Expect('log', 'runner OnRun;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -191,6 +199,10 @@ codeunit 67288 "LT P Runner Triggers Test"
     begin
         Log.Reset();
         RunRunner(Observer, Codeunit::"LT P Runner Without Triggers");
-        Observer.Finish();
+        Observer.Expect('run_ok', 'No');
+        Observer.Expect('run_error|text', 'You cannot nest the execution of test codeunits. Test codeunit 67285 LT P Runner Subject was called from another test codeunit.');
+        Observer.Expect('run_error|code', 'TestCodeUnitNestedInvocation');
+        Observer.Expect('log', 'plain runner OnRun;');
+        Observer.Verify();
     end;
 }

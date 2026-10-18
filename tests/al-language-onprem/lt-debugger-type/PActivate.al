@@ -54,6 +54,15 @@ codeunit 61288 "LT P Dbg Activate"
         Note(Observer, 'is_active_after', Ok);
         if Ok then
             Observer.Observe('is_active_after_value', Format(Result));
-        Observer.Finish();
+        Observer.Expect('no_result_ok', 'No');
+        Observer.Expect('no_result_code', 'ObsoleteMethod');
+        Observer.Expect('no_result_text', 'The Activate method is obsolete.');
+        Observer.Expect('with_result_ok', 'No');
+        Observer.Expect('with_result_code', 'ObsoleteMethod');
+        Observer.Expect('with_result_text', 'The Activate method is obsolete.');
+        Observer.Expect('is_active_after_ok', 'No');
+        Observer.Expect('is_active_after_code', 'ObsoleteMethod');
+        Observer.Expect('is_active_after_text', 'The IsActive method is obsolete.');
+        Observer.Verify();
     end;
 }

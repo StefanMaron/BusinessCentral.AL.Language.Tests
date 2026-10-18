@@ -31,7 +31,20 @@ codeunit 67291 "LT P Literal Expressions"
         Observer.Observe('dec_whole', Format(100.0, 0, 9));
         Observer.Observe('dec_many_digits', Format(123456789.123456, 0, 9));
         Observer.Observe('dec_negative', Format(-0.25, 0, 9));
-        Observer.Finish();
+        Observer.Expect('int_42', '42');
+        Observer.Expect('int_0', '0');
+        Observer.Expect('int_max', '2147483647');
+        Observer.Expect('int_negative', '-7');
+        Observer.Expect('big_max', '9223372036854775807');
+        Observer.Expect('big_negative', '-9223372036854775807');
+        Observer.Expect('big_literal_over_int', '2147483648');
+        Observer.Expect('dec_3_14', '3.14');
+        Observer.Expect('dec_0_5', '0.5');
+        Observer.Expect('dec_trailing_zero', '1.1');
+        Observer.Expect('dec_whole', '100');
+        Observer.Expect('dec_many_digits', '123456789.123456');
+        Observer.Expect('dec_negative', '-0.25');
+        Observer.Verify();
     end;
 
     [Test]
@@ -48,7 +61,16 @@ codeunit 67291 "LT P Literal Expressions"
         Observer.Observe('text_space', '[ ]');
         Observer.Observe('text_unicode', 'ä€');
         Observer.Observe('text_unicode_length', Format(StrLen('ä€')));
-        Observer.Finish();
+        Observer.Expect('text_abc', 'abc');
+        Observer.Expect('text_empty_length', '0');
+        Observer.Expect('text_quote', 'it''s');
+        Observer.Expect('text_quote_length', '4');
+        Observer.Expect('text_only_quote', '''');
+        Observer.Expect('text_double_quote', 'say "hi"');
+        Observer.Expect('text_space', '[ ]');
+        Observer.Expect('text_unicode', 'ä€');
+        Observer.Expect('text_unicode_length', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -60,7 +82,11 @@ codeunit 67291 "LT P Literal Expressions"
         Observer.Observe('false', Format(false));
         Observer.Observe('true_xml', Format(true, 0, 9));
         Observer.Observe('false_xml', Format(false, 0, 9));
-        Observer.Finish();
+        Observer.Expect('true', 'Yes');
+        Observer.Expect('false', 'No');
+        Observer.Expect('true_xml', 'true');
+        Observer.Expect('false_xml', 'false');
+        Observer.Verify();
     end;
 
     [Test]
@@ -78,7 +104,17 @@ codeunit 67291 "LT P Literal Expressions"
         Observer.Observe('time_millis', Format(235959.999T, 0, 9));
         Observer.Observe('datetime_ymdhms', Format(CreateDateTime(20260115D, 123456T), 0, 9));
         Observer.Observe('datetime_undefined', Format(0DT, 0, 9));
-        Observer.Finish();
+        Observer.Expect('date_ymd', '2026-01-15');
+        Observer.Expect('date_undefined', '');
+        Observer.Expect('date_undefined_is_zero', 'Yes');
+        Observer.Expect('date_leap_day', '2024-02-29');
+        Observer.Expect('time_hms', '12:34:56');
+        Observer.Expect('time_midnight', '00:00:00');
+        Observer.Expect('time_undefined', '');
+        Observer.Expect('time_millis', '23:59:59.999');
+        Observer.Expect('datetime_ymdhms', '2026-01-15T12:34:56Z');
+        Observer.Expect('datetime_undefined', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,6 +129,10 @@ codeunit 67291 "LT P Literal Expressions"
         Observer.Observe('char_length_as_text', Format(StrLen(Format(C))));
         C := 'B';
         Observer.Observe('char_from_text_literal', Format(C));
-        Observer.Finish();
+        Observer.Expect('char_from_integer', 'A');
+        Observer.Expect('char_equals_65', 'Yes');
+        Observer.Expect('char_length_as_text', '1');
+        Observer.Expect('char_from_text_literal', 'B');
+        Observer.Verify();
     end;
 }
