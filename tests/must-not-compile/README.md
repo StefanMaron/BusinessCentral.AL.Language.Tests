@@ -25,7 +25,7 @@ The expected `AL` code and text are for the compiler of that BC major; where two
 ## How a case is checked
 
 `.github/scripts/check-must-not-compile.py --al "<AL command>" --symbols <dir of .app symbol packages> --bc-major 27 [--al-major 16]` builds for
-each file a project with a generated `app.json` (`runtime` 16.0, platform and application 27.0.0.0 unless `@appjson` says otherwise) and the file as
+each file a project with a generated `app.json` (`runtime` 16.1 for BC 27, 17.1 for BC 28, 18.0 for BC 29, or `--runtime`; platform and application 27.0.0.0 unless `@appjson` says otherwise) and the file as
 `src/case.al`, runs `AL compile /project:... /packagecachepath:... /out:... /define:BC<major>PLUS`, and requires: the compiler exits with errors, no
 package is written, and the `error ALxxxx: text` lines equal the `@expect` lines. `.github/scripts/test-must-not-compile.py` tests the parsing and the
 comparison without a compiler (it runs in the existing self-test job).

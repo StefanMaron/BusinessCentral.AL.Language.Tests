@@ -630,7 +630,7 @@ jobs:
               }
               ($out -join "`n")
             }
-          }
+          } 'probe failed: no license text came back from Get-NAVServerLicenseInformation, Export-NAVServerLicenseInformation -FilePath or Get-NAVServerConfiguration LicenseFile. This says nothing about the license itself.'
           # Keep the whole license dump in the artifact, but put a one-line identity in the table.
           $license | Out-File 'license-information.txt' -Encoding utf8
           $licenseLine = ($license -split "`n" | Where-Object { $_ -match '\S' } | Select-Object -First 6) -join ' / '
