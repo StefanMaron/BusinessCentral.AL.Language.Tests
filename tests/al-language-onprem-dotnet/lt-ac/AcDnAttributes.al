@@ -74,14 +74,14 @@ codeunit 61491 "LT AC Dn SuppressDispose"
     var
         Observer: Codeunit "Probe Observer";
     begin
+        Clear(Kept);
         Clear(Disposed);
+        Observer.Observe('after_clear', Format(Disposed));
         WithDefaultDispose();
         Observer.Observe('after_call', Format(Disposed));
         WithDefaultDispose();
         Observer.Observe('after_second_call', Format(Disposed));
-        Observer.Expect('after_call', '0');
-        Observer.Expect('after_second_call', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -89,14 +89,14 @@ codeunit 61491 "LT AC Dn SuppressDispose"
     var
         Observer: Codeunit "Probe Observer";
     begin
+        Clear(Kept);
         Clear(Disposed);
+        Observer.Observe('after_clear', Format(Disposed));
         WithSuppressedDispose();
         Observer.Observe('after_call', Format(Disposed));
         WithSuppressedDispose();
         Observer.Observe('after_second_call', Format(Disposed));
-        Observer.Expect('after_call', '1');
-        Observer.Expect('after_second_call', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     local procedure WithDefaultDispose()

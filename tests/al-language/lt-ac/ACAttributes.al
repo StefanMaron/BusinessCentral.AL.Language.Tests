@@ -206,7 +206,8 @@ codeunit 77532 "LT AC Attributes"
             Observer.Observe('insert', 'ok')
         else
             Observer.ObserveError('insert');
-        Observer.Finish();
+        Observer.Expect('insert', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -221,7 +222,8 @@ codeunit 77532 "LT AC Attributes"
             Observer.Observe('insert', 'ok')
         else
             Observer.ObserveError('insert');
-        Observer.Finish();
+        Observer.Expect('insert', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -234,7 +236,10 @@ codeunit 77532 "LT AC Attributes"
         asserterror Report.Run(Report::"LT AC Attr Report");
         Observer.ObserveError('run');
         Observer.Observe('notes', ReportState.Text());
-        Observer.Finish();
+        Observer.Expect('run|text', 'Unhandled UI: RequestPage 77530');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Expect('notes', '');
+        Observer.Verify();
     end;
 
     [Test]

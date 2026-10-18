@@ -96,7 +96,6 @@ codeunit 77540 "LT AC ControlAddIn"
         Observer.Observe('opened', TP.NameF.Value());
         asserterror TP.NameF.SetValue('changed');
         Observer.ObserveError('set_name');
-        TP.Close();
         Observer.Finish();
     end;
 

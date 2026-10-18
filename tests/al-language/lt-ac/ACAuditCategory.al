@@ -34,7 +34,26 @@ codeunit 77512 "LT AC Audit Category Format"
         Observer.Observe('text_ProvisioningManagement', Format(AuditCategory::ProvisioningManagement));
         Observer.Observe('text_CustomerFacing', Format(AuditCategory::CustomerFacing));
         Observer.Observe('text_Euii', Format(AuditCategory::Euii));
-        Observer.Finish();
+        Observer.Expect('text_Other', 'Other');
+        Observer.Expect('text_UserManagement', 'UserManagement');
+        Observer.Expect('text_GroupManagement', 'GroupManagement');
+        Observer.Expect('text_Authentication', 'Authentication');
+        Observer.Expect('text_Authorization', 'Authorization');
+        Observer.Expect('text_RoleManagement', 'RoleManagement');
+        Observer.Expect('text_ApplicationManagement', 'ApplicationManagement');
+        Observer.Expect('text_KeyManagement', 'KeyManagement');
+        Observer.Expect('text_DirectoryManagement', 'DirectoryManagement');
+        Observer.Expect('text_ResourceManagement', 'ResourceManagement');
+        Observer.Expect('text_PolicyManagement', 'PolicyManagement');
+        Observer.Expect('text_DeviceManagement', 'DeviceManagement');
+        Observer.Expect('text_EntitlementManagement', 'EntitlementManagement');
+        Observer.Expect('text_PasswordManagement', 'PasswordManagement');
+        Observer.Expect('text_IdentityProtection', 'IdentityProtection');
+        Observer.Expect('text_ObjectManagement', 'ObjectManagement');
+        Observer.Expect('text_ProvisioningManagement', 'ProvisioningManagement');
+        Observer.Expect('text_CustomerFacing', 'CustomerFacing');
+        Observer.Expect('text_Euii', 'Euii');
+        Observer.Verify();
     end;
 
     [Test]
@@ -61,7 +80,26 @@ codeunit 77512 "LT AC Audit Category Format"
         Observer.Observe('ordinal_ProvisioningManagement', Format(AuditCategory::ProvisioningManagement, 0, 2));
         Observer.Observe('ordinal_CustomerFacing', Format(AuditCategory::CustomerFacing, 0, 2));
         Observer.Observe('ordinal_Euii', Format(AuditCategory::Euii, 0, 2));
-        Observer.Finish();
+        Observer.Expect('ordinal_Other', '0');
+        Observer.Expect('ordinal_UserManagement', '1');
+        Observer.Expect('ordinal_GroupManagement', '2');
+        Observer.Expect('ordinal_Authentication', '3');
+        Observer.Expect('ordinal_Authorization', '4');
+        Observer.Expect('ordinal_RoleManagement', '5');
+        Observer.Expect('ordinal_ApplicationManagement', '6');
+        Observer.Expect('ordinal_KeyManagement', '7');
+        Observer.Expect('ordinal_DirectoryManagement', '8');
+        Observer.Expect('ordinal_ResourceManagement', '9');
+        Observer.Expect('ordinal_PolicyManagement', '10');
+        Observer.Expect('ordinal_DeviceManagement', '11');
+        Observer.Expect('ordinal_EntitlementManagement', '12');
+        Observer.Expect('ordinal_PasswordManagement', '13');
+        Observer.Expect('ordinal_IdentityProtection', '14');
+        Observer.Expect('ordinal_ObjectManagement', '15');
+        Observer.Expect('ordinal_ProvisioningManagement', '16');
+        Observer.Expect('ordinal_CustomerFacing', '17');
+        Observer.Expect('ordinal_Euii', '18');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +126,26 @@ codeunit 77512 "LT AC Audit Category Format"
         Observer.Observe('number_ProvisioningManagement', Format(AuditCategory::ProvisioningManagement, 0, 1));
         Observer.Observe('number_CustomerFacing', Format(AuditCategory::CustomerFacing, 0, 1));
         Observer.Observe('number_Euii', Format(AuditCategory::Euii, 0, 1));
-        Observer.Finish();
+        Observer.Expect('number_Other', 'Other');
+        Observer.Expect('number_UserManagement', 'UserManagement');
+        Observer.Expect('number_GroupManagement', 'GroupManagement');
+        Observer.Expect('number_Authentication', 'Authentication');
+        Observer.Expect('number_Authorization', 'Authorization');
+        Observer.Expect('number_RoleManagement', 'RoleManagement');
+        Observer.Expect('number_ApplicationManagement', 'ApplicationManagement');
+        Observer.Expect('number_KeyManagement', 'KeyManagement');
+        Observer.Expect('number_DirectoryManagement', 'DirectoryManagement');
+        Observer.Expect('number_ResourceManagement', 'ResourceManagement');
+        Observer.Expect('number_PolicyManagement', 'PolicyManagement');
+        Observer.Expect('number_DeviceManagement', 'DeviceManagement');
+        Observer.Expect('number_EntitlementManagement', 'EntitlementManagement');
+        Observer.Expect('number_PasswordManagement', 'PasswordManagement');
+        Observer.Expect('number_IdentityProtection', 'IdentityProtection');
+        Observer.Expect('number_ObjectManagement', 'ObjectManagement');
+        Observer.Expect('number_ProvisioningManagement', 'ProvisioningManagement');
+        Observer.Expect('number_CustomerFacing', 'CustomerFacing');
+        Observer.Expect('number_Euii', 'Euii');
+        Observer.Verify();
     end;
 
     [Test]
@@ -426,7 +483,12 @@ codeunit 77513 "LT AC Audit Category Eval"
             Observer.Observe('past_end_ok', Format(V, 0, 2))
         else
             Observer.ObserveError('past_end');
-        Observer.Finish();
+        Observer.Expect('bogus|text', '''Bogus'' is not an option. The existing options are: Other, UserManagement, GroupManagement, Authentication, Authorization, RoleManagement, ApplicationManagement, KeyManagement, DirectoryManagement, ResourceManagement, PolicyManagement, DeviceManagement, EntitlementManagement, PasswordManagement, IdentityProtection, ObjectManagement, ProvisioningManagement, CustomerFacing, Euii');
+        Observer.Expect('bogus|code', 'InvalidOptionString');
+        Observer.Expect('empty_ok', '0');
+        Observer.Expect('past_end|text', '''19'' is not an option. The existing options are: Other, UserManagement, GroupManagement, Authentication, Authorization, RoleManagement, ApplicationManagement, KeyManagement, DirectoryManagement, ResourceManagement, PolicyManagement, DeviceManagement, EntitlementManagement, PasswordManagement, IdentityProtection, ObjectManagement, ProvisioningManagement, CustomerFacing, Euii');
+        Observer.Expect('past_end|code', 'InvalidOptionString');
+        Observer.Verify();
     end;
 
     [Test]
@@ -445,7 +507,11 @@ codeunit 77513 "LT AC Audit Category Eval"
             Observer.Observe('negative_ok', Format(V, 0, 2))
         else
             Observer.ObserveError('negative');
-        Observer.Finish();
+        Observer.Expect('large|text', '''99'' is not an option. The existing options are: Other, UserManagement, GroupManagement, Authentication, Authorization, RoleManagement, ApplicationManagement, KeyManagement, DirectoryManagement, ResourceManagement, PolicyManagement, DeviceManagement, EntitlementManagement, PasswordManagement, IdentityProtection, ObjectManagement, ProvisioningManagement, CustomerFacing, Euii');
+        Observer.Expect('large|code', 'InvalidOptionString');
+        Observer.Expect('negative|text', '''-1'' is not an option. The existing options are: Other, UserManagement, GroupManagement, Authentication, Authorization, RoleManagement, ApplicationManagement, KeyManagement, DirectoryManagement, ResourceManagement, PolicyManagement, DeviceManagement, EntitlementManagement, PasswordManagement, IdentityProtection, ObjectManagement, ProvisioningManagement, CustomerFacing, Euii');
+        Observer.Expect('negative|code', 'InvalidOptionString');
+        Observer.Verify();
     end;
 
     [Test]
@@ -464,6 +530,9 @@ codeunit 77513 "LT AC Audit Category Eval"
             Observer.Observe('decimal_ok', Format(V, 0, 2))
         else
             Observer.ObserveError('decimal');
-        Observer.Finish();
+        Observer.Expect('space_ok', '1');
+        Observer.Expect('decimal|text', '''1.5'' is not an option. The existing options are: Other, UserManagement, GroupManagement, Authentication, Authorization, RoleManagement, ApplicationManagement, KeyManagement, DirectoryManagement, ResourceManagement, PolicyManagement, DeviceManagement, EntitlementManagement, PasswordManagement, IdentityProtection, ObjectManagement, ProvisioningManagement, CustomerFacing, Euii');
+        Observer.Expect('decimal|code', 'InvalidOptionString');
+        Observer.Verify();
     end;
 }
