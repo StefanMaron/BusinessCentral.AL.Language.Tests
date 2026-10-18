@@ -96,6 +96,43 @@ is only a reference.
 | 0111 | AL0130 | this passed to a var parameter of another codeunit. |
 | 0112 | AL0296 | SecretText.Unwrap named from a Cloud app (the method has scope OnPrem). |
 | 0113 | AL0296 | A variable of the File data type in a Cloud app. |
+| 0680 | AL0246 | A page extension cannot change DecimalPlaces of a base field with modify. |
+| 0681 | AL0246 | A page extension cannot change DrillDown of a base field with modify. |
+| 0682 | AL0246 | A page extension cannot change Lookup of a base field with modify. |
+| 0683 | AL0246 | A page extension cannot change ShowFilter of a base part with modify. |
+| 0684 | AL0666 | A page extension cannot change Editable of a base part with modify (runtime 16.0). |
+| 0685 | AL0169 | UpdatePropagation knows Both and SubPart only. |
+| 0686 | AL0246 | A page extension cannot change UpdatePropagation of a base part with modify. |
+| 0687 | AL0223 | DataAccessIntent is allowed on an API page only, and then only with Editable = false. (2 diagnostics) |
+| 0688 | AL0167 | IsPreview is allowed on PromptDialog and ConfigurationDialog pages only. |
+| 0689 | AL0674 | A custom action of type Flow needs a FlowId. |
+| 0690 | AL0169 | CustomActionType takes a known value only. |
+| 0691 | AL0169 | Scope of a file upload action takes Page or Repeater only. |
+| 0692 | AL0825 | MovedFrom on a field of a base table (not of a table extension). |
+| 0693 | AL0734 | MovedFrom takes the id of an app, a GUID. |
+| 0694 | AL0167 | MovedTo needs ObsoleteState PendingMove or Moved. |
+| 0695 | AL0167 | ExternalSchema needs TableType CRM, ExternalSQL or CDS. |
+| 0696 | AL0167 | OptionOrdinalValues needs TableType CRM or CDS and an ExternalType of Picklist, State or Status. (2 diagnostics) |
+| 0697 | AL0447 | TableType ExternalSQL cannot be used for Cloud development (ExternalSchema is meant for it). |
+| 0698 | AL0124 | MaxLength is a modifier of Caption only; on a field it is not a property. |
+| 0699 | AL0829 | MovedTo names the app of the extension itself. |
+| 0700 | AL0456 | OptionOrdinalValues needs one value per option member. |
+| 0701 | AL0124 | Width is not a property of a report column. |
+| 0702 | AL0439 | A report label takes Comment, Locked and MaxLength only; CaptionClass is not one of them. |
+| 0703 | AL0706 | RDLCLayout and WordLayout cannot be used while the report has a rendering section. (2 diagnostics) |
+| 0704 | AL0124 | TableRelation is not a property of an XmlPort field element (the table field carries it). |
+| 0705 | AL0850, AL0296 | Scope = OnPrem on an interface is refused for a Cloud app. (2 diagnostics) |
+| 0706 | AL0223 | TestIsolation is a property of a test runner codeunit; a test codeunit cannot state it. |
+| 0707 | AL0195 | InherentPermissions on a report takes X only. |
+| 0708 | AL0674 | An entitlement of type ConcurrentUserServicePlan needs an Id. (2 diagnostics) |
+| 0709 | AL0169, AL0327 | Removed is not a value of ObsoleteState for these object kinds (it is for table fields). (9 diagnostics) |
+| 0710 | AL0169 | Removed is not a value of ObsoleteState for an enum value or an enum extension value. (2 diagnostics) |
+| 0711 | AL0169 | Removed is not a value of ObsoleteState for a page group, cue group, label, field or separator. (4 diagnostics) |
+| 0712 | AL0169 | Removed is not a value of ObsoleteState for a page extension, or for a group, field or action it adds. (4 diagnostics) |
+| 0713 | AL0223 | ObsoleteReason and ObsoleteTag need ObsoleteState = Pending, on every object kind. (14 diagnostics) |
+| 0714 | AL0169 | RoleType takes Local or Delegated only. |
+| 0715 | AL0674 | An entitlement of type Role needs an Id. |
+| 0716 | AL0223 | RoleType needs Type = Role, and GroupName needs Type = ConcurrentUserServicePlan. (2 diagnostics) |
 | 0722 | AL0284 | A subscriber to Global Triggers.OnGlobalInsert declares its parameter as Integer instead of RecordRef. |
 | 0723 | AL0284 | A subscriber to Environment Triggers.OnAfterCopyEnvironmentPerDatabase declares the environment types as Integer instead of an Option (two diagnostics). |
 | 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
