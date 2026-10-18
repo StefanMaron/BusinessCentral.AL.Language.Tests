@@ -536,7 +536,9 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunReport(Observer, 'obsolete_dataitem_and_requestpage', Report::"LT X Obs Report");
-        Observer.Finish();
+        Observer.Expect('obsolete_dataitem_and_requestpage_columns', '[<Column name="IdCol">1</Column>][<Column name="NameCol">one</Column>][<Column name="IdCol">2</Column>][<Column name="NameCol">two</Column>]');
+        Observer.Expect('obsolete_dataitem_and_requestpage_rows', 'row1/0;row2/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -545,7 +547,9 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunReport(Observer, 'plain', Report::"LT X Obs Report Plain");
-        Observer.Finish();
+        Observer.Expect('plain_columns', '[<Column name="IdCol">1</Column>][<Column name="NameCol">one</Column>][<Column name="IdCol">2</Column>][<Column name="NameCol">two</Column>]');
+        Observer.Expect('plain_rows', 'row1;row2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -554,7 +558,9 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer: Codeunit "Probe Observer";
     begin
         RunReport(Observer, 'obsolete_dataitem', Report::"LT X Obs Report Item");
-        Observer.Finish();
+        Observer.Expect('obsolete_dataitem_columns', '[<Column name="IdCol">1</Column>][<Column name="NameCol">one</Column>][<Column name="IdCol">2</Column>][<Column name="NameCol">two</Column>]');
+        Observer.Expect('obsolete_dataitem_rows', 'row1;row2;');
+        Observer.Verify();
     end;
 }
 

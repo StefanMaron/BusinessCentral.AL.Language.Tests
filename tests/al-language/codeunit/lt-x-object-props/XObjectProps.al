@@ -252,7 +252,9 @@ codeunit 75039 "LT X Object Props Tests"
     begin
         Observer.Observe('none_unittest', CodeunitFacts(Codeunit::"LT X Iso None"));
         Observer.Observe('disabled_integration', CodeunitFacts(Codeunit::"LT X Iso Disabled"));
-        Observer.Finish();
+        Observer.Expect('none_unittest', 'LT X Iso None|subtype=Test|testtype=UnitTest|isolation=None|testtype_ord=1|isolation_ord=0');
+        Observer.Expect('disabled_integration', 'LT X Iso Disabled|subtype=Test|testtype=IntegrationTest|isolation=Disabled|testtype_ord=2|isolation_ord=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,7 +264,9 @@ codeunit 75039 "LT X Object Props Tests"
     begin
         Observer.Observe('codeunit_uncategorized', CodeunitFacts(Codeunit::"LT X Iso Codeunit"));
         Observer.Observe('function_ai', CodeunitFacts(Codeunit::"LT X Iso Function"));
-        Observer.Finish();
+        Observer.Expect('codeunit_uncategorized', 'LT X Iso Codeunit|subtype=Test|testtype=Uncategorized|isolation=Codeunit|testtype_ord=3|isolation_ord=2');
+        Observer.Expect('function_ai', 'LT X Iso Function|subtype=Test|testtype=AITest|isolation=Function|testtype_ord=4|isolation_ord=3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -272,7 +276,9 @@ codeunit 75039 "LT X Object Props Tests"
     begin
         Observer.Observe('defaults', CodeunitFacts(Codeunit::"LT X Iso Default"));
         Observer.Observe('this_codeunit', CodeunitFacts(Codeunit::"LT X Object Props Tests"));
-        Observer.Finish();
+        Observer.Expect('defaults', 'LT X Iso Default|subtype=Test|testtype=UnitTest|isolation=None|testtype_ord=1|isolation_ord=0');
+        Observer.Expect('this_codeunit', 'LT X Object Props Tests|subtype=Test|testtype=UnitTest|isolation=None|testtype_ord=1|isolation_ord=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -415,7 +421,9 @@ codeunit 75039 "LT X Object Props Tests"
         Observer.Observe('enu_plain', QueryFacts(Query::"LT X Api Plain"));
         Observer.Observe('enu_ml', QueryFacts(Query::"LT X Api Ml"));
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('enu_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Expect('enu_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -429,7 +437,9 @@ codeunit 75039 "LT X Object Props Tests"
         Observer.Observe('deu_plain', QueryFacts(Query::"LT X Api Plain"));
         Observer.Observe('deu_ml', QueryFacts(Query::"LT X Api Ml"));
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('deu_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Expect('deu_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -443,7 +453,9 @@ codeunit 75039 "LT X Object Props Tests"
         Observer.Observe('fra_plain', QueryFacts(Query::"LT X Api Plain"));
         Observer.Observe('fra_ml', QueryFacts(Query::"LT X Api Ml"));
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('fra_plain', 'caption=LT X Api Plain Caption|name=LT X Api Plain|entity=ltxPlainItem|set=ltxPlainItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Expect('fra_ml', 'caption=LT X Api Ml|name=LT X Api Ml|entity=ltxMlItem|set=ltxMlItems|publisher=ltx|group=props|version=v1.0');
+        Observer.Verify();
     end;
 
     [Test]
