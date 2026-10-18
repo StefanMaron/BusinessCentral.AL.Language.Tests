@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Small' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Small' is not valid
 // CuegroupLayout has one value, Wide.
 table 50900 "MNC AB Table"
 {

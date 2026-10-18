@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Medium' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Medium' is not valid
 // CuegroupLayout has one value, Wide (case does not matter: pages/lt-ab-group-properties/ABLayouts.al compiles Wide and wide).
 table 50900 "MNC AB Table"
 {

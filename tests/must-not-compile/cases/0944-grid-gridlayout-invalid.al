@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Diagonal' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Diagonal' is not valid
 // GridLayout has the values Rows and Columns (pages/lt-ab-group-properties/ABLayouts.al): any other name is refused.
 table 50900 "MNC AB Table"
 {

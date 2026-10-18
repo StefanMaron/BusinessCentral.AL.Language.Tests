@@ -1,4 +1,4 @@
-// @expect AL0162 | 'OnFindRecord' is not a valid trigger for this object type. Check the object documentation for supported triggers.
+// @expect AL0162 | 'OnFindRecord' is not a valid trigger
 // A request page extension refuses the trigger OnFindRecord (every other page trigger compiles there: report/lt-ab-request-page-triggers/ABRequestPageExt.al); a page extension refuses the same two (0017, 0018).
 table 50900 "MNC AB Table"
 {

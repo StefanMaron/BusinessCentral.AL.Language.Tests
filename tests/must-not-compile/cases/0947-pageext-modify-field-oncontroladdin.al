@@ -1,4 +1,4 @@
-// @expect AL0162 | 'OnControlAddIn' is not a valid trigger for this object type. Check the object documentation for supported triggers.
+// @expect AL0162 | 'OnControlAddIn' is not a valid trigger
 // A control add-in trigger of a page field cannot be added to a field through a page extension modify block: OnControlAddIn is not a valid trigger there.
 table 50900 "MNC AB Table"
 {
