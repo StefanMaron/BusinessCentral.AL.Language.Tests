@@ -254,7 +254,9 @@ codeunit 98306 "LT AQ OP SaveAsXml Tests"
         Content := FileText(DataFile);
         Observer.Observe('schema', Columns(Content));
         Observer.Observe('rows', Rows(Content));
-        Observer.Finish();
+        Observer.Expect('schema', '<xs:element name="CodeC" type="xs:string"|<xs:element name="AmountC" type="xs:decimal"|<xs:element name="AmountCFormat" type="xs:string"|<xs:element name="DayC" msdata:DateTimeMode="Local" type="xs:dateTime"|<xs:element name="FlagC" type="xs:boolean"|<xs:element name="KindC" type="xs:string"|<xs:element name="NameC" type="xs:string"|');
+        Observer.Expect('rows', '<Result>|<CodeC>R1</CodeC>|<AmountC>1234.5</AmountC>|<AmountCFormat>#,##0.00</AmountCFormat>|<DayC>2024-12-25T00:00:00+00:00</DayC>|<FlagC>true</FlagC>|<KindC>Gamma</KindC>|<NameC>n1</NameC>|</Result>|<Result>|<CodeC>R2</CodeC>|<AmountC>0</AmountC>|<AmountCFormat>#,##0.00</AmountCFormat>|<FlagC>false</FlagC>|<KindC>Alpha</KindC>|<NameC />|</Result>|</DataSet>||');
+        Observer.Verify();
     end;
 
     [Test]
@@ -270,7 +272,10 @@ codeunit 98306 "LT AQ OP SaveAsXml Tests"
         Observer.Observe('schema', Columns(Content));
         Observer.Observe('rows', Rows(Content));
         Observer.Observe('full', Content);
-        Observer.Finish();
+        Observer.Expect('schema', '<xs:element name="ParCode" type="xs:string"|<xs:element name="ChiId" type="xs:int"|<xs:element name="ChiNote" type="xs:string"|');
+        Observer.Expect('rows', '<Result>|<ParCode>R1</ParCode>|<ChiId>10</ChiId>|<ChiNote>c10</ChiNote>|</Result>|<Result>|<ParCode>R1</ParCode>|<ChiId>11</ChiId>|<ChiNote>c11</ChiNote>|</Result>|<Result>|<ParCode>R2</ParCode>|</Result>|</DataSet>||');
+        Observer.Expect('full', '<?xml version="1.0" standalone="yes"?>|<DataSet>|  <xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">|    <xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="Result" msdata:Locale="en-US">|      <xs:complexType>|        <xs:choice minOccurs="0" maxOccurs="unbounded">|          <xs:element name="Result" msdata:Locale="en-US">|            <xs:complexType>|              <xs:sequence>|                <xs:element name="ParCode" type="xs:string" minOccurs="0" />|                <xs:element name="ChiId" type="xs:int" minOccurs="0" />|                <xs:element name="ChiNote" type="xs:string" minOccurs="0" />|              </xs:sequence>|            </xs:complexType>|          </xs:element>|        </xs:choice>|      </xs:complexType>|    </xs:element>|  </xs:schema>|  <Result>|    <ParCode>R1</ParCode>|    <ChiId>10</ChiId>|    <ChiNote>c10</ChiNote>|  </Result>|  <Result>|    <ParCode>R1</ParCode>|    <ChiId>11</ChiId>|    <ChiNote>c11</ChiNote>|  </Result>|  <Result>|    <ParCode>R2</ParCode>|  </Result>|</DataSet>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +290,9 @@ codeunit 98306 "LT AQ OP SaveAsXml Tests"
         Content := FileText(DataFile);
         Observer.Observe('schema', Columns(Content));
         Observer.Observe('rows', Rows(Content));
-        Observer.Finish();
+        Observer.Expect('schema', '<xs:element name="ParCode" type="xs:string"|<xs:element name="OthId" type="xs:int"|<xs:element name="OthNote" type="xs:string"|');
+        Observer.Expect('rows', '<Result>|<ParCode>R1</ParCode>|</Result>|<Result>|<ParCode>R2</ParCode>|</Result>|<Result>|<OthId>10</OthId>|<OthNote>c10</OthNote>|</Result>|<Result>|<OthId>11</OthId>|<OthNote>c11</OthNote>|</Result>|</DataSet>||');
+        Observer.Verify();
     end;
 
     [Test]
@@ -306,7 +313,8 @@ codeunit 98306 "LT AQ OP SaveAsXml Tests"
             Xml += Line + '|';
         end;
         Observer.Observe('column', CopyStr(Xml, StrPos(Xml, '<Column '), 30));
-        Observer.Finish();
+        Observer.Expect('column', '<Column name="N">1</Column>|  ');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]

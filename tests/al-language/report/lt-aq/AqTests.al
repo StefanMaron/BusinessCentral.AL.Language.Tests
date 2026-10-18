@@ -97,7 +97,7 @@ codeunit 79750 "LT AQ Report Tests"
         exit(Result);
     end;
 
-    // Per layout of the report: every column of the Report Layout List row except the report id.
+    // Per layout of the report: every column of the Report Layout List row except the report id and the runtime package id (it changes with every build of the app).
     local procedure LayoutRows(ReportId: Integer): Text
     var
         LayoutList: Record "Report Layout List";
@@ -113,7 +113,7 @@ codeunit 79750 "LT AQ Report Tests"
                 Result += '[';
                 for i := 1 to RR.FieldCount() do begin
                     FR := RR.FieldIndex(i);
-                    if (FR.Name <> 'Report ID') and (FR.Class = FieldClass::Normal) and (FR.Type <> FieldType::Blob) and (FR.Type <> FieldType::Media) then
+                    if (FR.Name <> 'Report ID') and (FR.Name <> 'Runtime Package ID') and (FR.Class = FieldClass::Normal) and (FR.Type <> FieldType::Blob) and (FR.Type <> FieldType::Media) then
                         Result += FR.Name + '=' + Format(FR.Value) + ' ';
                 end;
                 Result += ']';
@@ -164,7 +164,10 @@ codeunit 79750 "LT AQ Report Tests"
         Observer.Observe('count', Format(StrLen(First) div 37));
         Observer.Observe('runs equal', Format(First = Second));
         Observer.Observe('equal to row SystemIds', Format(First = Expected));
-        Observer.Finish();
+        Observer.Expect('count', '4');
+        Observer.Expect('runs equal', 'Yes');
+        Observer.Expect('equal to row SystemIds', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -176,7 +179,7 @@ codeunit 79750 "LT AQ Report Tests"
         Seed();
         Xml := DataItemsOf(XmlOf(Report::"LT AQ CalcF Base"));
         Observer.Observe('log', Log.Take());
-        Observer.Observe('xml', Xml);
+        Observer.Observe('has ExtSum column', Format(Xml.Contains('<Column name="ExtSum" decimalformatter="#,##0.00###">5</Column>')));
         Observer.Finish();
     end;
 
@@ -191,7 +194,11 @@ codeunit 79750 "LT AQ Report Tests"
         Observer.Observe('ok', Format(TryXmlOf(Report::"LT AQ CalcF Normal", Xml)));
         Observer.ObserveError('error');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('error|text', 'The Amount field in the LT AQ Row table must be a FlowField.');
+        Observer.Expect('error|code', 'DB:Ok');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -207,7 +214,6 @@ codeunit 79750 "LT AQ Report Tests"
         Observer.Observe('equal', Format(WithProp = Without));
         Observer.Observe('length on', Format(StrLen(WithProp)));
         Observer.Observe('length off', Format(StrLen(Without)));
-        Observer.Observe('on', CopyStr(WithProp, 1, 700));
         Observer.Finish();
     end;
 
@@ -218,7 +224,9 @@ codeunit 79750 "LT AQ Report Tests"
     begin
         Observer.Observe('part', Report.WordXmlPart(Report::"LT AQ Word Xml"));
         Observer.Observe('extended equal', Format(Report.WordXmlPart(Report::"LT AQ Word Xml", true) = Report.WordXmlPart(Report::"LT AQ Word Xml")));
-        Observer.Finish();
+        Observer.Expect('part', '<?xml version="1.0" encoding="utf-16"?>\r\n<NavWordReportXmlPart xmlns="urn:microsoft-dynamics-nav/reports/LT_AQ_Word_Xml/79720/">\r\n  <BCReportInformation>x</BCReportInformation>\r\n  <Par_Item>\r\n    <Amt_x>Amt_x</Amt_x>\r\n    <Par_Code>Par_Code</Par_Code>\r\n    <Sales__x0026__Line_x>\r\n      <Qty_No>Qty_No</Qty_No>\r\n    </Sales__x0026__Line_x>\r\n  </Par_Item>\r\n</NavWordReportXmlPart>');
+        Observer.Expect('extended equal', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +236,9 @@ codeunit 79750 "LT AQ Report Tests"
     begin
         Observer.Observe('part', Report.WordXmlPart(Report::"LT AQ Word Xml Ext Base"));
         Observer.Observe('extended', Report.WordXmlPart(Report::"LT AQ Word Xml Ext Base", true));
-        Observer.Finish();
+        Observer.Expect('part', '<?xml version="1.0" encoding="utf-16"?>\r\n<NavWordReportXmlPart xmlns="urn:microsoft-dynamics-nav/reports/LT_AQ_Word_Xml_Ext_Base/79721/">\r\n  <BCReportInformation>x</BCReportInformation>\r\n  <Base>\r\n    <BCode>BCode</BCode>\r\n    <XName>XName</XName>\r\n    <XEnt>\r\n      <XQty>XQty</XQty>\r\n    </XEnt>\r\n  </Base>\r\n</NavWordReportXmlPart>');
+        Observer.Expect('extended', '<?xml version="1.0" encoding="utf-16"?>\r\n<NavWordReportXmlPart xmlns="urn:microsoft-dynamics-businesscentral/internal/extended/reports/LT_AQ_Word_Xml_Ext_Base/79721/">\r\n  <BCReportInformation>x</BCReportInformation>\r\n  <Tooltips />\r\n  <Base ElementType="DataItem" ElementId="440217728">\r\n    <BCode ElementType="Column" ElementId="1669706382" DataType="Code">BCode</BCode>\r\n    <XName ElementType="Column" ElementId="1999091266" DataType="Text">XName</XName>\r\n    <XEnt ElementType="DataItem" ElementId="810720154">\r\n      <XQty ElementType="Column" ElementId="439971967" DataType="Decimal">XQty</XQty>\r\n    </XEnt>\r\n  </Base>\r\n</NavWordReportXmlPart>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +268,7 @@ codeunit 79751 "LT AQ Req Page Tests"
     TestPermissions = Disabled;
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Req Page";
         SeenCaption: Text;
         SeenValues: Text;
         ActionResults: Text;
@@ -273,7 +283,8 @@ codeunit 79751 "LT AQ Req Page Tests"
         SeenCaption := '';
         Report.Run(Report::"LT AQ Caption");
         Observer.Observe('caption', SeenCaption);
-        Observer.Finish();
+        Observer.Expect('caption', 'LT AQ caption set in OnOpenPage');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -296,7 +307,9 @@ codeunit 79751 "LT AQ Req Page Tests"
         Params := Report.RunRequestPage(Report::"LT AQ Req Page");
         Observer.Observe('results', ActionResults);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'disabled: The action with ID = n is not found on the page. code=TestActionNotFound;hidden: The action with ID = n is not found on the page. code=TestActionNotFound;');
+        Observer.Expect('log', 'OnInit int=0 opt=Alpha;OnOpenPage int=0 opt=Alpha;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -327,7 +340,9 @@ codeunit 79751 "LT AQ Req Page Tests"
         Log.SetMode(0);
         Observer.Observe('handler', SeenValues);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('handler', 'int=9 opt=Gamma');
+        Observer.Expect('log', 'OnInit int=5 opt=Alpha;OnOpenPage int=9 opt=Gamma;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -340,8 +355,8 @@ codeunit 79751 "LT AQ Req Page Tests"
         Log.SetMode(0);
         Log.Take();
         Params := Report.RunRequestPage(Report::"LT AQ Req Page");
-        Observer.Observe('has OptCtl', Format(Params.Contains('name="OptCtl"')));
-        Params := Params.Replace('name="OptCtl"', 'name="GoneOpt"');
+        Observer.Observe('options', CopyStr(Params, StrPos(Params, '<Options>'), StrPos(Params, '</Options>') - StrPos(Params, '<Options>') + 10));
+        Params := Params.Replace('name="OptVal"', 'name="GoneOpt"');
         Log.Take();
         SeenValues := '';
         ClearLastError();
@@ -382,7 +397,10 @@ codeunit 79751 "LT AQ Req Page Tests"
         asserterror Params := Report.RunRequestPage(Report::"LT AQ Req Page");
         Observer.ObserveError('error');
         Observer.Observe('count after', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('error|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('error|code', 'DB:Ok');
+        Observer.Expect('count after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -392,7 +410,8 @@ codeunit 79751 "LT AQ Req Page Tests"
         Row: Record "LT AQ Row";
     begin
         Observer.Observe('count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('count', '0');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -408,7 +427,7 @@ codeunit 79752 "LT AQ Saved Ext Tests"
     TestPermissions = Disabled;
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Saved Ext";
         SeenValues: Text;
 
     [Test]
@@ -420,7 +439,8 @@ codeunit 79752 "LT AQ Saved Ext Tests"
         Log.Take();
         Report.Run(Report::"LT AQ Saved");
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'base=11;ext var=22 ext field=[nm];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -434,7 +454,9 @@ codeunit 79752 "LT AQ Saved Ext Tests"
         Report.Run(Report::"LT AQ Saved");
         Observer.Observe('handler', SeenValues);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('handler', 'base=11 ext var=22 ext field=[nm]');
+        Observer.Expect('log', 'base=11;ext var=22 ext field=[nm];');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -460,7 +482,7 @@ codeunit 79753 "LT AQ Filter Tests"
     TestPermissions = Disabled;
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Filter";
         SeenFilter: Text;
 
     local procedure Seed()
@@ -510,7 +532,14 @@ codeunit 79753 "LT AQ Filter Tests"
         Log.SetMode(0);
         Observer.Observe('plain afterwards page', SeenFilter);
         Observer.Observe('plain afterwards run', Log.Take());
-        Observer.Finish();
+        Observer.Expect('stored A* run', 'pre count=2 filter=[A*];row A1;row A2;');
+        Observer.Expect('SetTableView C* page', '[C*]');
+        Observer.Expect('SetTableView C* run', 'pre count=1 filter=[C*];row C1;');
+        Observer.Expect('RunModal record C* page', '[C*]');
+        Observer.Expect('RunModal record C* run', 'pre count=1 filter=[C*];row C1;');
+        Observer.Expect('plain afterwards page', '[C*]');
+        Observer.Expect('plain afterwards run', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -526,7 +555,9 @@ codeunit 79753 "LT AQ Filter Tests"
         Rep.RunModal();
         Observer.Observe('page', SeenFilter);
         Observer.Observe('run', Log.Take());
-        Observer.Finish();
+        Observer.Expect('page', '[]');
+        Observer.Expect('run', 'pre count=4 filter=[];row A1;row A2;row B1;row C1;');
+        Observer.Verify();
     end;
 
     // Mode 1: set A* and OK. Mode 2: read the filter and OK. Mode 3: read the filter and Cancel.

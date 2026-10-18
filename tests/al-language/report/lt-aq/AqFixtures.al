@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Fixtures used: none; self-contained tables 79700-79701, log codeunit 79702, reports 79710-79726 and report extensions 79740-79742
+// Fixtures used: none; self-contained tables 79700-79701, reports 79710-79726 and report extensions 79740-79742; log codeunits 79702-79705
 // Probe: the objects of the probes in AqTests.al (corpus issue 646).
 // BC versions: 27-29
 
@@ -48,6 +48,7 @@ table 79701 "LT AQ Entry"
     }
 }
 
+// One single-instance log per test codeunit (79702: LT AQ Report Tests, 79703: LT AQ Req Page Tests, 79704: LT AQ Saved Ext Tests, 79705: LT AQ Filter Tests).
 codeunit 79702 "LT AQ Log"
 {
     SingleInstance = true;
@@ -81,7 +82,108 @@ codeunit 79702 "LT AQ Log"
     end;
 }
 
+codeunit 79703 "LT AQ Log Req Page"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
+}
+
+codeunit 79704 "LT AQ Log Saved Ext"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
+}
+
+codeunit 79705 "LT AQ Log Filter"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
+}
+
 // Item 11: CurrReport.Language set to values outside the culture range, in OnPreReport.
+// CurrReport.Language := -2 is left out: on the BC 29 Linux tier it raised an uncatchable 'Unexpected CLR exception thrown.: System.ArgumentOutOfRangeException:
+// culture ('-2') must be a non-negative and non-zero value. (Parameter 'culture')' that the TryFunction did not catch (a Linux suspect, kept as report 79726 without a test).
 report 79710 "LT AQ Lang"
 {
     UsageCategory = None;
@@ -100,7 +202,6 @@ report 79710 "LT AQ Lang"
     begin
         Probe(70000);
         Probe(99998);
-        Probe(-2);
         Log.Add('after=' + Format(CurrReport.Language) + ' global=' + Format(CurrReport.Language = GlobalLanguage()));
     end;
 
@@ -142,7 +243,6 @@ report 79725 "LT AQ Lang Run"
     begin
         Probe(70000);
         Probe(99998);
-        Probe(-2);
         Log.Add('after=' + Format(CurrReport.Language) + ' global=' + Format(CurrReport.Language = GlobalLanguage()));
     end;
 
@@ -163,6 +263,27 @@ report 79725 "LT AQ Lang Run"
 
     var
         Log: Codeunit "LT AQ Log";
+}
+
+// Not run by a test (see report 79710): CurrReport.Language := -2.
+report 79726 "LT AQ Lang Minus Two"
+{
+    UsageCategory = None;
+    UseRequestPage = false;
+    ProcessingOnly = true;
+
+    dataset
+    {
+        dataitem(Row; Integer)
+        {
+            DataItemTableView = where(Number = const(1));
+        }
+    }
+
+    trigger OnPreReport()
+    begin
+        CurrReport.Language := -2;
+    end;
 }
 
 // Item 12: the data item systemId of two SaveAs runs.
@@ -253,7 +374,7 @@ report 79713 "LT AQ Saved"
     end;
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Saved Ext";
         BaseVal: Integer;
 }
 
@@ -277,7 +398,7 @@ reportextension 79740 "LT AQ Saved Ext" extends "LT AQ Saved"
     end;
 
     var
-        ExtLog: Codeunit "LT AQ Log";
+        ExtLog: Codeunit "LT AQ Log Saved Ext";
         ExtVal: Integer;
         ExtRow: Record "LT AQ Row";
 }
@@ -312,7 +433,7 @@ report 79714 "LT AQ Saved Filter"
     }
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Filter";
 }
 
 // Item 17: a report procedure sets a data item filter before RunModal (no SaveValues).
@@ -349,7 +470,7 @@ report 79715 "LT AQ Proc Filter"
     end;
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Filter";
 }
 
 // Item 16: CalcFields on a data item added by a report extension, and CalcFields naming a normal field.
@@ -625,7 +746,7 @@ report 79724 "LT AQ Req Page"
     }
 
     var
-        Log: Codeunit "LT AQ Log";
+        Log: Codeunit "LT AQ Log Req Page";
         IntVal: Integer;
         OptVal: Option Alpha,Beta,Gamma;
 }

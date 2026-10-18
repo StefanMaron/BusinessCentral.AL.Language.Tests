@@ -136,7 +136,9 @@ codeunit 79754 "LT AQ Parts Tests"
     begin
         Observer.Observe('default', Format(Report.DefaultLayout(Report::"LT AQ Parts Default")));
         Observer.Observe('rows', LayoutRows(Report::"LT AQ Parts Default"));
-        Observer.Finish();
+        Observer.Expect('default', 'Word');
+        Observer.Expect('rows', '[AqPartsBody Layout Format=Word Layout Subtype=Default HeaderFooterPart= ThemePart=][AqPartsHf Layout Format=Word Layout Subtype=Header/Footer HeaderFooterPart= ThemePart=][AqPartsTheme Layout Format=Word Layout Subtype=Theme HeaderFooterPart= ThemePart=]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +148,9 @@ codeunit 79754 "LT AQ Parts Tests"
     begin
         Observer.Observe('default', Format(Report.DefaultLayout(Report::"LT AQ Default Is Hf")));
         Observer.Observe('rows', LayoutRows(Report::"LT AQ Default Is Hf"));
-        Observer.Finish();
+        Observer.Expect('default', 'Word');
+        Observer.Expect('rows', '[AqDefHf Layout Format=Word Layout Subtype=Header/Footer HeaderFooterPart= ThemePart=]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +160,9 @@ codeunit 79754 "LT AQ Parts Tests"
     begin
         Observer.Observe('default', Format(Report.DefaultLayout(Report::"LT AQ Default Is Theme")));
         Observer.Observe('rows', LayoutRows(Report::"LT AQ Default Is Theme"));
-        Observer.Finish();
+        Observer.Expect('default', 'Word');
+        Observer.Expect('rows', '[AqDefTheme Layout Format=Word Layout Subtype=Theme HeaderFooterPart= ThemePart=]');
+        Observer.Verify();
     end;
 }
 #endif
