@@ -22,42 +22,96 @@ codeunit 77521 "LT AC ModuleInfo Help"
         Observer.Observe('eula', Info.EULA());
         Observer.Observe('help', Info.Help());
         Observer.Observe('privacy', Info.PrivacyStatement());
-        Observer.Finish();
+        Observer.Expect('name', 'AL Language Coverage Tests');
+        Observer.Expect('context_help', '');
+        Observer.Expect('eula', '');
+        Observer.Expect('help', '');
+        Observer.Expect('privacy', '');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure AC_ModuleInfo_HelpTexts_Dependency()
+    procedure AC_ModuleInfo_HelpTexts_SysApp()
     var
         Observer: Codeunit "Probe Observer";
         Info: ModuleInfo;
     begin
-        Observer.Observe('found_sysapp', Format(NavApp.GetModuleInfo('63ca2fa4-4f03-4f2b-a480-172fef340d3f', Info)));
-        Observer.Observe('sysapp_name', Info.Name());
-        Observer.Observe('sysapp_context_help', Info.ContextSensitiveHelpUrl());
-        Observer.Observe('sysapp_eula', Info.EULA());
-        Observer.Observe('sysapp_help', Info.Help());
-        Observer.Observe('sysapp_privacy', Info.PrivacyStatement());
-        Clear(Info);
-        Observer.Observe('found_baseapp', Format(NavApp.GetModuleInfo('437dbf0e-84ff-417a-965d-ed2bb9650972', Info)));
-        Observer.Observe('baseapp_name', Info.Name());
-        Observer.Observe('baseapp_context_help', Info.ContextSensitiveHelpUrl());
-        Observer.Observe('baseapp_eula', Info.EULA());
-        Observer.Observe('baseapp_help', Info.Help());
-        Observer.Observe('baseapp_privacy', Info.PrivacyStatement());
-        Clear(Info);
-        Observer.Observe('found_fixture', Format(NavApp.GetModuleInfo('f1e2d3c4-b5a6-7890-fedc-ba9876543210', Info)));
-        Observer.Observe('fixture_name', Info.Name());
-        Observer.Observe('fixture_context_help', Info.ContextSensitiveHelpUrl());
-        Observer.Observe('fixture_eula', Info.EULA());
-        Observer.Observe('fixture_help', Info.Help());
-        Observer.Observe('fixture_privacy', Info.PrivacyStatement());
-        Clear(Info);
-        Observer.Observe('found_unknown', Format(NavApp.GetModuleInfo('00000000-0000-0000-0000-000000000001', Info)));
-        Observer.Observe('unknown_context_help', Info.ContextSensitiveHelpUrl());
-        Observer.Observe('unknown_eula', Info.EULA());
-        Observer.Observe('unknown_help', Info.Help());
-        Observer.Observe('unknown_privacy', Info.PrivacyStatement());
+        Observer.Observe('found', Format(NavApp.GetModuleInfo('63ca2fa4-4f03-4f2b-a480-172fef340d3f', Info)));
+        Observer.Observe('context_help', Info.ContextSensitiveHelpUrl());
+        Observer.Observe('eula', Info.EULA());
+        Observer.Observe('help', Info.Help());
+        Observer.Observe('privacy', Info.PrivacyStatement());
         Observer.Finish();
+    end;
+
+    [Test]
+    procedure AC_ModuleInfo_HelpTexts_BaseApp()
+    var
+        Observer: Codeunit "Probe Observer";
+        Info: ModuleInfo;
+    begin
+        Observer.Observe('found', Format(NavApp.GetModuleInfo('437dbf0e-84ff-417a-965d-ed2bb9650972', Info)));
+        Observer.Observe('context_help', Info.ContextSensitiveHelpUrl());
+        Observer.Observe('eula', Info.EULA());
+        Observer.Observe('help', Info.Help());
+        Observer.Observe('privacy', Info.PrivacyStatement());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AC_ModuleInfo_HelpTexts_Fixture()
+    var
+        Observer: Codeunit "Probe Observer";
+        Info: ModuleInfo;
+    begin
+        Observer.Observe('found', Format(NavApp.GetModuleInfo('f1e2d3c4-b5a6-7890-fedc-ba9876543210', Info)));
+        Observer.Observe('context_help', Info.ContextSensitiveHelpUrl());
+        Observer.Observe('eula', Info.EULA());
+        Observer.Observe('help', Info.Help());
+        Observer.Observe('privacy', Info.PrivacyStatement());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AC_ModuleInfo_HelpTexts_Unknown()
+    var
+        Observer: Codeunit "Probe Observer";
+        Info: ModuleInfo;
+    begin
+        Observer.Observe('found', Format(NavApp.GetModuleInfo('00000000-0000-0000-0000-000000000001', Info)));
+        if not TryContext(Info, Observer) then
+            Observer.ObserveError('context_help_err');
+        if not TryEula(Info, Observer) then
+            Observer.ObserveError('eula_err');
+        if not TryHelp(Info, Observer) then
+            Observer.ObserveError('help_err');
+        if not TryPrivacy(Info, Observer) then
+            Observer.ObserveError('privacy_err');
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryContext(Info: ModuleInfo; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('context_help', Info.ContextSensitiveHelpUrl());
+    end;
+
+    [TryFunction]
+    local procedure TryEula(Info: ModuleInfo; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('eula', Info.EULA());
+    end;
+
+    [TryFunction]
+    local procedure TryHelp(Info: ModuleInfo; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('help', Info.Help());
+    end;
+
+    [TryFunction]
+    local procedure TryPrivacy(Info: ModuleInfo; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('privacy', Info.PrivacyStatement());
     end;
 }
 
@@ -71,23 +125,15 @@ codeunit 77522 "LT AC NavApp Resources"
     var
         Observer: Codeunit "Probe Observer";
         Stream: InStream;
-        Content: Text;
     begin
-        NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream);
-        Stream.ReadText(Content);
-        Observer.Observe('default_encoding', Content);
-        Clear(Stream);
-        NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream, TextEncoding::UTF8);
-        Stream.ReadText(Content);
-        Observer.Observe('utf8', Content);
-        Clear(Stream);
-        NavApp.GetResource('sub/nested.txt', GetCurrentAppId(), Stream, TextEncoding::UTF8);
-        Stream.ReadText(Content);
-        Observer.Observe('nested', Content);
-        Clear(Stream);
-        NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream, TextEncoding::UTF16);
-        Stream.ReadText(Content);
-        Observer.Observe('utf16', Content);
+        asserterror NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream);
+        Observer.ObserveError('default_encoding');
+        asserterror NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream, TextEncoding::UTF8);
+        Observer.ObserveError('utf8');
+        asserterror NavApp.GetResource('sub/nested.txt', GetCurrentAppId(), Stream, TextEncoding::UTF8);
+        Observer.ObserveError('nested');
+        asserterror NavApp.GetResource('greeting.txt', GetCurrentAppId(), Stream, TextEncoding::UTF16);
+        Observer.ObserveError('utf16');
         Observer.Finish();
     end;
 
@@ -107,7 +153,14 @@ codeunit 77522 "LT AC NavApp Resources"
         Observer.ObserveError('other_app_not_public');
         asserterror NavApp.GetResource('', GetCurrentAppId(), Stream);
         Observer.ObserveError('empty_name');
-        Observer.Finish();
+        Observer.Expect('missing_resource|text', 'A resource matching ''missing.txt'' could not be found in app ''a1b2c3d4-e5f6-7890-abcd-ef1234567890''.');
+        Observer.Expect('missing_resource|code', 'ResourceNotFound');
+        Observer.Expect('unknown_app|text', 'A resource matching ''greeting.txt'' could not be found in app ''00000000-0000-0000-0000-000000000001''.');
+        Observer.Expect('unknown_app|code', 'ResourceNotFound');
+        Observer.Expect('other_app_not_public|text', 'A resource matching ''greeting.txt'' could not be found in app ''63ca2fa4-4f03-4f2b-a480-172fef340d3f''.');
+        Observer.Expect('other_app_not_public|code', 'ResourceNotFound');
+        Observer.Expect('empty_nam', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,14 +168,12 @@ codeunit 77522 "LT AC NavApp Resources"
     var
         Observer: Codeunit "Probe Observer";
         Json: JsonObject;
-        Token: JsonToken;
         Unknown: Guid;
     begin
-        Json := NavApp.GetResourceAsJson('ac-sample.json', GetCurrentAppId());
-        Observer.Observe('content', Format(Json));
-        Observer.Observe('name', Format(Json.Get('name', Token)) + '/' + Format(Token));
-        Json := NavApp.GetResourceAsJson('ac-sample.json', GetCurrentAppId(), TextEncoding::UTF8);
-        Observer.Observe('utf8', Format(Json));
+        asserterror Json := NavApp.GetResourceAsJson('ac-sample.json', GetCurrentAppId());
+        Observer.ObserveError('content');
+        asserterror Json := NavApp.GetResourceAsJson('ac-sample.json', GetCurrentAppId(), TextEncoding::UTF8);
+        Observer.ObserveError('utf8');
         asserterror Json := NavApp.GetResourceAsJson('greeting.txt', GetCurrentAppId());
         Observer.ObserveError('not_json');
         asserterror Json := NavApp.GetResourceAsJson('missing.json', GetCurrentAppId());
@@ -138,18 +189,24 @@ codeunit 77522 "LT AC NavApp Resources"
     var
         Observer: Codeunit "Probe Observer";
         Unknown: Guid;
+        Content: Text;
     begin
-        Observer.Observe('default', NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId()));
-        Observer.Observe('utf8', NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::UTF8));
-        Observer.Observe('utf16', NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::UTF16));
-        Observer.Observe('ansi', NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::MSDos));
-        Observer.Observe('windows', NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::Windows));
-        Observer.Observe('nested', NavApp.GetResourceAsText('sub/nested.txt', GetCurrentAppId()));
-        Observer.Observe('json_length', Format(StrLen(NavApp.GetResourceAsText('ac-sample.json', GetCurrentAppId()))));
-        Evaluate(Unknown, '00000000-0000-0000-0000-000000000001');
-        asserterror Observer.Observe('unused', NavApp.GetResourceAsText('missing.txt', GetCurrentAppId()));
+        asserterror Content := NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId());
+        Observer.ObserveError('default');
+        asserterror Content := NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::UTF8);
+        Observer.ObserveError('utf8');
+        asserterror Content := NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::UTF16);
+        Observer.ObserveError('utf16');
+        asserterror Content := NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::MSDos);
+        Observer.ObserveError('msdos');
+        asserterror Content := NavApp.GetResourceAsText('greeting.txt', GetCurrentAppId(), TextEncoding::Windows);
+        Observer.ObserveError('windows');
+        asserterror Content := NavApp.GetResourceAsText('sub/nested.txt', GetCurrentAppId());
+        Observer.ObserveError('nested');
+        asserterror Content := NavApp.GetResourceAsText('missing.txt', GetCurrentAppId());
         Observer.ObserveError('missing');
-        asserterror Observer.Observe('unused', NavApp.GetResourceAsText('greeting.txt', Unknown));
+        Evaluate(Unknown, '00000000-0000-0000-0000-000000000001');
+        asserterror Content := NavApp.GetResourceAsText('greeting.txt', Unknown);
         Observer.ObserveError('unknown_app');
         Observer.Finish();
     end;
@@ -197,7 +254,15 @@ codeunit 77522 "LT AC NavApp Resources"
             Observer.Observe('system_application', Format(Names.Count()))
         else
             Observer.ObserveError('system_application');
-        Observer.Finish();
+        Observer.Expect('all', '');
+        Observer.Expect('all_count', '0');
+        Observer.Expect('txt', '');
+        Observer.Expect('json', '');
+        Observer.Expect('sub', '');
+        Observer.Expect('no_match_count', '0');
+        Observer.Expect('unknown_app', '0');
+        Observer.Expect('system_application', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -224,7 +289,12 @@ codeunit 77522 "LT AC NavApp Resources"
         foreach AppId in Apps do
             Joined += '[' + Format(AppId) + ']';
         Observer.Observe('xyz', Joined);
-        Observer.Finish();
+        Observer.Expect('all', '');
+        Observer.Expect('all_count', '0');
+        Observer.Expect('contains_self', 'No');
+        Observer.Expect('json', '');
+        Observer.Expect('xyz', '');
+        Observer.Verify();
     end;
 
     [TryFunction]

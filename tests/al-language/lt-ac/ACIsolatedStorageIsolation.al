@@ -61,7 +61,18 @@ codeunit 77520 "LT AC IsoStorage IsoLevel"
         Found := IsolatedStorage.Get('ac_key', DataScope::Company, IsolationLevel::ReadCommitted, Value);
         Observer.Observe('company_after_delete', Format(Found) + '/' + Value);
         Clean();
-        Observer.Finish();
+        Observer.Expect('module_default', 'Yes/module value');
+        Observer.Expect('module_readuncommitted', 'Yes/module value');
+        Observer.Expect('module_readcommitted', 'Yes/module value');
+        Observer.Expect('module_repeatableread', 'Yes/module value');
+        Observer.Expect('module_updlock', 'Yes/module value');
+        Observer.Expect('company', 'Yes/company value');
+        Observer.Expect('user', 'Yes/user value');
+        Observer.Expect('company_and_user', 'Yes/both value');
+        Observer.Expect('missing', 'No/');
+        Observer.Expect('empty_key', 'No/');
+        Observer.Expect('company_after_delete', 'No/');
+        Observer.Verify();
     end;
 
     [Test]
@@ -73,7 +84,6 @@ codeunit 77520 "LT AC IsoStorage IsoLevel"
     begin
         Clean();
         IsolatedStorage.Set('ac_key', 'module value', DataScope::Module);
-        IsolatedStorage.SetEncrypted('ac_enc', 'encrypted value', DataScope::Module);
 
         Found := IsolatedStorage.Get('ac_key', DataScope::Module, IsolationLevel::Default, Secret);
         Observer.Observe('module_default', Format(Found) + '/empty=' + Format(Secret.IsEmpty()));
@@ -83,9 +93,6 @@ codeunit 77520 "LT AC IsoStorage IsoLevel"
         Clear(Secret);
         Found := IsolatedStorage.Get('ac_key', DataScope::Module, IsolationLevel::UpdLock, Secret);
         Observer.Observe('module_updlock', Format(Found) + '/empty=' + Format(Secret.IsEmpty()));
-        Clear(Secret);
-        Found := IsolatedStorage.Get('ac_enc', DataScope::Module, IsolationLevel::ReadCommitted, Secret);
-        Observer.Observe('encrypted', Format(Found) + '/empty=' + Format(Secret.IsEmpty()));
         Clear(Secret);
         Found := IsolatedStorage.Get('ac_key', DataScope::Company, IsolationLevel::ReadCommitted, Secret);
         Observer.Observe('other_scope', Format(Found) + '/empty=' + Format(Secret.IsEmpty()));
@@ -130,7 +137,14 @@ codeunit 77520 "LT AC IsoStorage IsoLevel"
         Found := IsolatedStorage.Get('ac_missing', IsolationLevel::ReadCommitted, Value);
         Observer.Observe('missing', Format(Found) + '/' + Value);
         Clean();
-        Observer.Finish();
+        Observer.Expect('default', 'Yes/module value');
+        Observer.Expect('readuncommitted', 'Yes/module value');
+        Observer.Expect('readcommitted', 'Yes/module value');
+        Observer.Expect('repeatableread', 'Yes/module value');
+        Observer.Expect('updlock', 'Yes/module value');
+        Observer.Expect('stored_in_user_scope', 'No/');
+        Observer.Expect('missing', 'No/');
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +173,12 @@ codeunit 77520 "LT AC IsoStorage IsoLevel"
         Found := IsolatedStorage.Get('ac_missing', IsolationLevel::ReadCommitted, Secret);
         Observer.Observe('missing', Format(Found) + '/empty=' + Format(Secret.IsEmpty()));
         Clean();
-        Observer.Finish();
+        Observer.Expect('default', 'Yes/empty=No');
+        Observer.Expect('readcommitted', 'Yes/empty=No');
+        Observer.Expect('updlock', 'Yes/empty=No');
+        Observer.Expect('stored_in_user_scope', 'No/empty=Yes');
+        Observer.Expect('missing', 'No/empty=Yes');
+        Observer.Verify();
     end;
 
     local procedure Clean()

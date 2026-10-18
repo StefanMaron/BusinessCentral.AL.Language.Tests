@@ -69,7 +69,22 @@ codeunit 77504 "LT AC Record Is Dirty"
         Row.Get(1);
         Row.Delete();
         Observer.Observe('after_delete', Format(Row.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('fresh', 'No');
+        Observer.Expect('after_init', 'No');
+        Observer.Expect('after_assign_before_insert', 'Yes');
+        Observer.Expect('after_insert', 'No');
+        Observer.Expect('after_get', 'No');
+        Observer.Expect('after_assign', 'Yes');
+        Observer.Expect('after_modify', 'No');
+        Observer.Expect('after_same_value', 'No');
+        Observer.Expect('after_value_restored', 'No');
+        Observer.Expect('after_second_field', 'Yes');
+        Observer.Expect('after_get_again', 'No');
+        Observer.Expect('after_validate', 'Yes');
+        Observer.Expect('copy_dirty', 'Yes');
+        Observer.Expect('after_transferfields', 'No');
+        Observer.Expect('after_delete', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +113,13 @@ codeunit 77504 "LT AC Record Is Dirty"
         Observer.Observe('after_reset', Format(Row.IsDirty()));
         Row.Init();
         Observer.Observe('after_init_again', Format(Row.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_findfirst', 'No');
+        Observer.Expect('assigned', 'Yes');
+        Observer.Expect('after_findlast', 'No');
+        Observer.Expect('after_rename', 'No');
+        Observer.Expect('after_reset', 'Yes');
+        Observer.Expect('after_init_again', 'Yes');
+        Observer.Verify();
     end;
 }
 #endif
