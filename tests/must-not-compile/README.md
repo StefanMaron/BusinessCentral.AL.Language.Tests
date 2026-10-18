@@ -18,6 +18,7 @@ The header is the run of `//` comment lines at the top. A line `// @key value` i
 | `// @depends Base Application,System Application` | the dependencies; this is the default (names are `Base Application` and `System Application`). |
 | `// @appjson {"assemblyProbingPaths": ["./x"]}` | JSON merged into the generated app.json (for diagnostics about app.json). |
 | `// @from 27` / `// @until 28` | the BC majors the verdict holds for (default all). |
+| `// @max-al 17` | the case is skipped with a compiler newer than this AL major (the verdict is that of the AL 16 and 17 compilers; AL 18 and later accept the file). |
 | `// @min-al 18` | the case is skipped with a compiler older than this AL major (AL 16 and 17 report AL0451 for a `dotnet` block before they reach the real error). |
 
 The expected `AL` code and text are for the compiler of that BC major; where two majors differ, write two files (with `@from`/`@until`).

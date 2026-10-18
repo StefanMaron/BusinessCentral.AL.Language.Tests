@@ -69,6 +69,8 @@ def applies(h, bc_major, al_major):
         return False
     if 'min-al' in h and al_major is not None and al_major < int(h['min-al']):
         return False
+    if 'max-al' in h and al_major is not None and al_major > int(h['max-al']):
+        return False
     return True
 
 
