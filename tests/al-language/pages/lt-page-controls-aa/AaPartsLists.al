@@ -304,6 +304,7 @@ codeunit 76512 "LT AA Part List Tests"
         Row.Init();
         Row.Id := 'A';
         Row.Insert();
+        Commit();
     end;
 
     local procedure SeedTree(var Row: Record "LT AA Row")

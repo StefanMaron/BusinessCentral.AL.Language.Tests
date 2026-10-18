@@ -174,11 +174,6 @@ page 76505 "LT AA Controls Card"
                 ApplicationArea = All;
                 Gesture = RightSwipe;
             }
-            action(ActContext)
-            {
-                ApplicationArea = All;
-                Gesture = ContextMenu;
-            }
             action(ActNone)
             {
                 ApplicationArea = All;
@@ -352,6 +347,34 @@ page 76514 "LT AA Lenient Card"
     }
 }
 
+// Gesture = ContextMenu compiles, but the service tier cannot load the page metadata (a CLR exception when the page is opened).
+page 76515 "LT AA ContextMenu Card"
+{
+    PageType = Card;
+    SourceTable = "LT AA Row";
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Id; Rec.Id) { ApplicationArea = All; }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(ActContext)
+            {
+                ApplicationArea = All;
+                Gesture = ContextMenu;
+            }
+        }
+    }
+}
+
 codeunit 76511 "LT AA Controls Tests"
 {
     Subtype = Test;
@@ -389,7 +412,6 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('left-visible', Format(P.ActSwipeLeft.Visible()));
         Observer.Observe('left-enabled', Format(P.ActSwipeLeft.Enabled()));
         Observer.Observe('right-visible', Format(P.ActSwipeRight.Visible()));
-        Observer.Observe('context-visible', Format(P.ActContext.Visible()));
         Observer.Observe('none-visible', Format(P.ActNone.Visible()));
         Observer.Observe('page-scope-visible', Format(P.ActPageScope.Visible()));
         Observer.Observe('true-enabled', Format(P.ActEnabledTrue.Enabled()));
@@ -432,6 +454,19 @@ codeunit 76511 "LT AA Controls Tests"
     end;
 
     [Test]
+    procedure AA_Controls_GestureContextMenuOpen()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT AA ContextMenu Card";
+    begin
+        Seed(Row);
+        asserterror P.OpenEdit();
+        Observer.Observe('error-start', CopyStr(GetLastErrorText(), 1, 100));
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure AA_Controls_LenientValuesOpen()
     var
         Observer: Codeunit "Probe Observer";
@@ -455,5 +490,6 @@ codeunit 76511 "LT AA Controls Tests"
         Row.Init();
         Row.Id := 'A';
         Row.Insert();
+        Commit();
     end;
 }

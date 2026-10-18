@@ -225,5 +225,6 @@ codeunit 76510 "LT AA Field Tests"
         Row.Init();
         Row.Id := 'A';
         Row.Insert();
+        Commit();
     end;
 }
