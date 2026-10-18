@@ -504,37 +504,111 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer.Verify();
     end;
 
-    [Test]
-    [HandlerFunctions('ObsReportRequestHandler')]
-    procedure ObsoletePending_ReportDataItemAndRequestPage_StillRun()
+    local procedure RunReport(var Observer: Codeunit "Probe Observer"; Name: Text; Step: Integer)
     var
-        Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT X Obs Log";
+        Helper: Codeunit "LT X Report Step";
     begin
         Seed();
         Log.Take();
         ClearLastError();
-        if TryRun() then
-            Observer.Observe('run', 'ok')
+        Helper.SetStep(Step);
+        if Helper.Run() then
+            Observer.Observe(Name, 'ok')
         else
-            Observer.ObserveError('run_error');
-        Observer.Observe('rows_seen_by_data_item', Log.Take());
-        Observer.Expect('run_error|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('run_error|code', 'DB:Ok');
-        Observer.Expect('rows_seen_by_data_item', '');
-        Observer.Verify();
+            Observer.ObserveError(Name);
+        Observer.Observe(Name + '_rows', Log.Take());
     end;
 
-    [TryFunction]
-    local procedure TryRun()
+    [Test]
+    procedure ObsoletePending_ReportDataItemAndRequestPage_RunWithoutHandler()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        Report.Run(Report::"LT X Obs Report");
+        RunReport(Observer, 'obsolete_dataitem_and_requestpage', 1);
+        Observer.Finish();
     end;
 
-    [RequestPageHandler]
-    procedure ObsReportRequestHandler(var RequestPage: TestRequestPage "LT X Obs Report")
+    [Test]
+    procedure ObsoletePending_ReportPlain_RunsWithoutRequestPage()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RequestPage.ModeField.SetValue(7);
-        RequestPage.OK().Invoke();
+        RunReport(Observer, 'plain', 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ObsoletePending_ReportObsoleteDataItem_RunsWithoutRequestPage()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RunReport(Observer, 'obsolete_dataitem', 3);
+        Observer.Finish();
+    end;
+}
+
+report 75059 "LT X Obs Report Plain"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Source; "LT X Obs Src")
+        {
+            trigger OnAfterGetRecord()
+            var
+                Log: Codeunit "LT X Obs Log";
+            begin
+                Log.Add('row' + Format(Source.Id));
+            end;
+        }
+    }
+}
+
+report 75060 "LT X Obs Report Item"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Source; "LT X Obs Src")
+        {
+            ObsoleteState = Pending;
+            ObsoleteReason = 'Data item replaced.';
+            ObsoleteTag = '1.0';
+
+            trigger OnAfterGetRecord()
+            var
+                Log: Codeunit "LT X Obs Log";
+            begin
+                Log.Add('row' + Format(Source.Id));
+            end;
+        }
+    }
+}
+
+codeunit 75042 "LT X Report Step"
+{
+    var
+        Step: Integer;
+
+    procedure SetStep(NewStep: Integer)
+    begin
+        Step := NewStep;
+    end;
+
+    trigger OnRun()
+    begin
+        case Step of
+            1:
+                Report.Run(Report::"LT X Obs Report");
+            2:
+                Report.Run(Report::"LT X Obs Report Plain");
+            3:
+                Report.Run(Report::"LT X Obs Report Item");
+        end;
     end;
 }

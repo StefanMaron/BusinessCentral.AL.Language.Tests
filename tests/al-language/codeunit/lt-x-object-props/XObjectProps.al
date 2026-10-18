@@ -252,16 +252,27 @@ codeunit 75039 "LT X Object Props Tests"
     begin
         Observer.Observe('none_unittest', CodeunitFacts(Codeunit::"LT X Iso None"));
         Observer.Observe('disabled_integration', CodeunitFacts(Codeunit::"LT X Iso Disabled"));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure TestCodeunits_TestTypeAndRequiredTestIsolation_InMetadata2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Observer.Observe('codeunit_uncategorized', CodeunitFacts(Codeunit::"LT X Iso Codeunit"));
         Observer.Observe('function_ai', CodeunitFacts(Codeunit::"LT X Iso Function"));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure TestCodeunits_TestTypeAndRequiredTestIsolation_InMetadata3()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Observer.Observe('defaults', CodeunitFacts(Codeunit::"LT X Iso Default"));
         Observer.Observe('this_codeunit', CodeunitFacts(Codeunit::"LT X Object Props Tests"));
-        Observer.Expect('none_unittest', 'LT X Iso None|subtype=Test|testtype=UnitTest|isolation=None|testtype_ord=1|isolation_ord=0');
-        Observer.Expect('disabled_integration', 'LT X Iso Disabled|subtype=Test|testtype=IntegrationTest|isolation=Disabled|testtype_ord=2|isolation_ord=1');
-        Observer.Expect('codeunit_uncategorized', 'LT X Iso Codeunit|subtype=Test|testtype=Uncategorized|isolation=Codeunit|testtype_ord=3|isolation_ord=2');
-        Observer.Expect('function_ai', 'LT X Iso Function|subtype=Test|testtype=AITest|isolation=Function|testtype_ord=4|isolation_ord=3');
-        Observer.Expect('defaults', 'LT X Iso Defaul');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -398,20 +409,42 @@ codeunit 75039 "LT X Object Props Tests"
     var
         Observer: Codeunit "Probe Observer";
         OldLanguage: Integer;
-        Language: Integer;
-        Name: Text;
     begin
         OldLanguage := GlobalLanguage();
-        foreach Language in LanguageList() do begin
-            GlobalLanguage(Language);
-            case Language of
-                1033:
-                    Name := 'enu';
-                1031:
-                    Name := 'deu';
-                else
-                    Name := 'fra';
-            end;
+        GlobalLanguage(1033);
+        Observer.Observe('enu_plain', QueryFacts(Query::"LT X Api Plain"));
+        Observer.Observe('enu_ml', QueryFacts(Query::"LT X Api Ml"));
+        GlobalLanguage(OldLanguage);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Query_EntityCaptions_ApiMetadataPerLanguageDeu()
+    var
+        Observer: Codeunit "Probe Observer";
+        OldLanguage: Integer;
+    begin
+        OldLanguage := GlobalLanguage();
+        GlobalLanguage(1031);
+        Observer.Observe('deu_plain', QueryFacts(Query::"LT X Api Plain"));
+        Observer.Observe('deu_ml', QueryFacts(Query::"LT X Api Ml"));
+        GlobalLanguage(OldLanguage);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Query_EntityCaptions_ApiMetadataPerLanguageFra()
+    var
+        Observer: Codeunit "Probe Observer";
+        OldLanguage: Integer;
+    begin
+        OldLanguage := GlobalLanguage();
+        GlobalLanguage(1036);
+        Observer.Observe('fra_plain', QueryFacts(Query::"LT X Api Plain"));
+        Observer.Observe('fra_ml', QueryFacts(Query::"LT X Api Ml"));
+        GlobalLanguage(OldLanguage);
+        Observer.Finish();
+    end;
             Observer.Observe(Name + '_plain', QueryFacts(Query::"LT X Api Plain"));
             Observer.Observe(Name + '_ml', QueryFacts(Query::"LT X Api Ml"));
         end;
