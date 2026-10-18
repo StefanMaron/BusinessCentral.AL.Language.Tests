@@ -117,6 +117,7 @@ codeunit 69387 "LT T Fqn Tests"
             Row.Txt := 'T' + Format(Index);
             Row.Insert();
         end;
+        Commit();
         FqnLog.Take();
     end;
 
@@ -216,7 +217,7 @@ codeunit 69387 "LT T Fqn Tests"
         Observer.Observe('open fqn plain number', Format(Other.Number));
         Observer.Observe('open fqn plain temporary', Format(Other.IsTemporary()));
         Other.Close();
-        asserterror Other.Open('No Such Table');
+        asserterror Other.Open('LT.T.Fqn.No Such Table');
         Observer.ObserveError('open unknown');
         Observer.Finish();
     end;
@@ -247,11 +248,11 @@ codeunit 69387 "LT T Fqn Tests"
         Observer.Observe('plain execute recref log', FqnLog.Take());
         Report.Execute('LT.T.Fqn.LT T Fqn Report', '');
         Observer.Observe('plain execute log', FqnLog.Take());
-        asserterror Report.Run('No Such Report', false, false);
+        asserterror Report.Run('LT.T.Fqn.No Such Report', false, false);
         Observer.ObserveError('run unknown');
-        asserterror Report.Execute('No Such Report', '');
+        asserterror Report.Execute('LT.T.Fqn.No Such Report', '');
         Observer.ObserveError('execute unknown');
-        asserterror Report.RunModal('No Such Report', false, false, Row);
+        asserterror Report.RunModal('LT.T.Fqn.No Such Report', false, false, Row);
         Observer.ObserveError('runmodal unknown');
         Observer.Finish();
     end;
@@ -322,9 +323,9 @@ codeunit 69387 "LT T Fqn Tests"
         Row.Get(2);
         Result := Page.RunModal('LT.T.Fqn.LT T Fqn Page', Row, Row.Txt);
         Observer.Observe('modal cancel', Format(Result));
-        asserterror Page.Run('No Such Page', Row);
+        asserterror Page.Run('LT.T.Fqn.No Such Page', Row);
         Observer.ObserveError('page run unknown');
-        asserterror Page.RunModal('No Such Page', Row, Row.Txt);
+        asserterror Page.RunModal('LT.T.Fqn.No Such Page', Row, Row.Txt);
         Observer.ObserveError('page runmodal unknown');
         Observer.Finish();
     end;
