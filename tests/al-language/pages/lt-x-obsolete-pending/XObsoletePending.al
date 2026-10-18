@@ -258,6 +258,8 @@ query 75056 "LT X Obs Query"
     {
         dataitem(Source; "LT X Obs Src")
         {
+            column(IdCol; Id) { }
+            column(NameCol; Name) { }
             column(Id; Id)
             {
                 ObsoleteState = Pending;
@@ -277,13 +279,16 @@ query 75056 "LT X Obs Query"
 
 report 75057 "LT X Obs Report"
 {
-    ProcessingOnly = true;
+    ProcessingOnly = false;
+    DefaultLayout = RDLC;
     UseRequestPage = true;
 
     dataset
     {
         dataitem(Source; "LT X Obs Src")
         {
+            column(IdCol; Id) { }
+            column(NameCol; Name) { }
             ObsoleteState = Pending;
             ObsoleteReason = 'Data item replaced.';
             ObsoleteTag = '1.0';
@@ -504,59 +509,69 @@ codeunit 75058 "LT X Obsolete Pending Tests"
         Observer.Verify();
     end;
 
-    local procedure RunReport(var Observer: Codeunit "Probe Observer"; Name: Text; Step: Integer)
+    local procedure RunReport(var Observer: Codeunit "Probe Observer"; Name: Text; ReportId: Integer)
     var
         Log: Codeunit "LT X Obs Log";
-        Helper: Codeunit "LT X Report Step";
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+        InStr: InStream;
+        Line: Text;
+        Result: Text;
     begin
         Seed();
         Log.Take();
-        ClearLastError();
-        Helper.SetStep(Step);
-        if Helper.Run() then
-            Observer.Observe(Name, 'ok')
-        else
-            Observer.ObserveError(Name);
+        TempBlob.CreateOutStream(OutStr);
+        Report.SaveAs(ReportId, '', ReportFormat::Xml, OutStr);
+        TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
+        while not InStr.EOS() do begin
+            InStr.ReadText(Line);
+            if Line.Trim().StartsWith('<Column ') then
+                Result += '[' + Line.Trim() + ']';
+        end;
+        Observer.Observe(Name + '_columns', Result);
         Observer.Observe(Name + '_rows', Log.Take());
     end;
 
     [Test]
-    procedure ObsoletePending_ReportDataItemAndRequestPage_RunWithoutHandler()
+    procedure ObsoletePending_ReportDataItemAndRequestPage_SaveAsXml()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        RunReport(Observer, 'obsolete_dataitem_and_requestpage', 1);
+        RunReport(Observer, 'obsolete_dataitem_and_requestpage', Report::"LT X Obs Report");
         Observer.Finish();
     end;
 
     [Test]
-    procedure ObsoletePending_ReportPlain_RunsWithoutRequestPage()
+    procedure ObsoletePending_ReportPlain_SaveAsXml()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        RunReport(Observer, 'plain', 2);
+        RunReport(Observer, 'plain', Report::"LT X Obs Report Plain");
         Observer.Finish();
     end;
 
     [Test]
-    procedure ObsoletePending_ReportObsoleteDataItem_RunsWithoutRequestPage()
+    procedure ObsoletePending_ReportObsoleteDataItem_SaveAsXml()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        RunReport(Observer, 'obsolete_dataitem', 3);
+        RunReport(Observer, 'obsolete_dataitem', Report::"LT X Obs Report Item");
         Observer.Finish();
     end;
 }
 
 report 75059 "LT X Obs Report Plain"
 {
-    ProcessingOnly = true;
+    ProcessingOnly = false;
+    DefaultLayout = RDLC;
     UseRequestPage = false;
 
     dataset
     {
         dataitem(Source; "LT X Obs Src")
         {
+            column(IdCol; Id) { }
+            column(NameCol; Name) { }
             trigger OnAfterGetRecord()
             var
                 Log: Codeunit "LT X Obs Log";
@@ -569,13 +584,16 @@ report 75059 "LT X Obs Report Plain"
 
 report 75060 "LT X Obs Report Item"
 {
-    ProcessingOnly = true;
+    ProcessingOnly = false;
+    DefaultLayout = RDLC;
     UseRequestPage = false;
 
     dataset
     {
         dataitem(Source; "LT X Obs Src")
         {
+            column(IdCol; Id) { }
+            column(NameCol; Name) { }
             ObsoleteState = Pending;
             ObsoleteReason = 'Data item replaced.';
             ObsoleteTag = '1.0';
@@ -588,27 +606,4 @@ report 75060 "LT X Obs Report Item"
             end;
         }
     }
-}
-
-codeunit 75042 "LT X Report Step"
-{
-    var
-        Step: Integer;
-
-    procedure SetStep(NewStep: Integer)
-    begin
-        Step := NewStep;
-    end;
-
-    trigger OnRun()
-    begin
-        case Step of
-            1:
-                Report.Run(Report::"LT X Obs Report");
-            2:
-                Report.Run(Report::"LT X Obs Report Plain");
-            3:
-                Report.Run(Report::"LT X Obs Report Item");
-        end;
-    end;
 }
