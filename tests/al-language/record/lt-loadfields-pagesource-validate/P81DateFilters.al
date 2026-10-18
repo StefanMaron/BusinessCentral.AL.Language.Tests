@@ -272,11 +272,11 @@ codeunit 70317 "LT P81 Date Filters"
         Observer.Expect('o4[M]', 'ok|filter=12/29/25|rows=');
         Observer.Expect('o5[Y]', 'ok|filter=<workdate>..12/31/26|rows=E2,E3,E4,');
         Observer.Expect('o6[D]', 'ok|filter=<workdate>|rows=E2,');
-        Observer.Expect('o7[CM]', 'ok|filter=' + Format(CalcDate('<CM>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>') + '|rows=');
-        Observer.Expect('o8[CY]', 'ok|filter=' + Format(CalcDate('<CY>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>') + '|rows=');
-        Observer.Expect('o9[CW]', 'ok|filter=' + Format(CalcDate('<CW>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>') + '|rows=');
-        Observer.Expect('o10[-1D]', 'ok|filter=' + Format(CalcDate('<-1D>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>') + '|rows=');
-        Observer.Expect('o11[+1D]', 'ok|filter=' + Format(CalcDate('<+1D>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>') + '|rows=');
+        Observer.Expect('o7[CM]', 'ok|filter=' + Scrub(Format(CalcDate('<CM>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
+        Observer.Expect('o8[CY]', 'ok|filter=' + Scrub(Format(CalcDate('<CY>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
+        Observer.Expect('o9[CW]', 'ok|filter=' + Scrub(Format(CalcDate('<CW>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
+        Observer.Expect('o10[-1D]', 'ok|filter=' + Scrub(Format(CalcDate('<-1D>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
+        Observer.Expect('o11[+1D]', 'ok|filter=' + Scrub(Format(CalcDate('<+1D>', Today()), 0, '<Month,2>/<Day,2>/<Year,2>')) + '|rows=');
         Observer.Expect('o12[T-1D]', 'ok|filter=12/30/25|rows=');
         Observer.Expect('o13[1D]', 'ok|filter=<workdate>|rows=E2,');
         Observer.Verify();
