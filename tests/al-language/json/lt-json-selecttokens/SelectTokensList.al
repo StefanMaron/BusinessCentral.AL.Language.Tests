@@ -95,27 +95,81 @@ codeunit 78800 "LT S Array SelectTokens"
     var
         L: List of [JsonToken];
     begin
+        ClearLastError();
         Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
         Observer.ObserveError(Name);
         Observer.Observe(Name + '_count', Format(L.Count()));
     end;
 
     [Test]
-    procedure SelectTokens_Array_Errors()
+    procedure SelectTokens_Array_Bad1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad1', '$[');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Array_Bad2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad2', '$.a[?(@.x');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Array_Bad3()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad3', '');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Array_Bad4()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad4', 'a..[');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Array_Bad5()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad5', '$.a.[');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Array_Bad6()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad6', '$[?(');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Array_Empty()
     var
         Observer: Codeunit "Probe Observer";
         L: List of [JsonToken];
         EmptyDoc: JsonArray;
     begin
-        Doc(Subject);
-        Probe(Observer, 'bad1', '$[');
-        Probe(Observer, 'bad2', '$.a[?(@.x');
-        Probe(Observer, 'bad3', '');
-        Probe(Observer, 'bad4', 'a..[');
-        Probe(Observer, 'bad5', '$.a.[');
-        Probe(Observer, 'bad6', '$[?(');
-        Observer.Observe('empty_array', Format(EmptyDoc.SelectTokens('$[*]', L)));
-        Observer.Observe('empty_array_list', Render(L));
+        Observer.Observe('empty', Format(EmptyDoc.SelectTokens('$[*]', L)));
+        Observer.Observe('empty_list', Render(L));
         Observer.Finish();
     end;
 }
@@ -212,27 +266,81 @@ codeunit 78801 "LT S Object SelectTokens"
     var
         L: List of [JsonToken];
     begin
+        ClearLastError();
         Observer.Observe(Name + '_ok', Format(TrySelect(Path, L)));
         Observer.ObserveError(Name);
         Observer.Observe(Name + '_count', Format(L.Count()));
     end;
 
     [Test]
-    procedure SelectTokens_Object_Errors()
+    procedure SelectTokens_Object_Bad1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad1', '$[');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Object_Bad2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad2', '$.a[?(@.x');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Object_Bad3()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad3', '');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Object_Bad4()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad4', 'a..[');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Object_Bad5()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad5', '$.a.[');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Object_Bad6()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Doc(Subject);
+        Probe(Observer, 'bad6', '$[?(');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SelectTokens_Object_Empty()
     var
         Observer: Codeunit "Probe Observer";
         L: List of [JsonToken];
         EmptyDoc: JsonObject;
     begin
-        Doc(Subject);
-        Probe(Observer, 'bad1', '$[');
-        Probe(Observer, 'bad2', '$.a[?(@.x');
-        Probe(Observer, 'bad3', '');
-        Probe(Observer, 'bad4', 'a..[');
-        Probe(Observer, 'bad5', '$.a.[');
-        Probe(Observer, 'bad6', '$[?(');
-        Observer.Observe('empty_object', Format(EmptyDoc.SelectTokens('$.*', L)));
-        Observer.Observe('empty_object_list', Render(L));
+        Observer.Observe('empty', Format(EmptyDoc.SelectTokens('$.*', L)));
+        Observer.Observe('empty_list', Render(L));
         Observer.Finish();
     end;
 }
