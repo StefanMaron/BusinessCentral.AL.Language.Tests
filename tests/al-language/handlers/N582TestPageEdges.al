@@ -344,6 +344,16 @@ codeunit 67604 "LT N582 Test Page Edges"
         Observer.Observe('view card flow', Format(Card.Flow.Editable()));
         Observer.Observe('view card id', Format(Card.Id.Editable()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('card flow Editable=false', 'No');
+        Observer.Expect('card flow default', 'Yes');
+        Observer.Expect('card plain Editable=false', 'No');
+        Observer.Expect('card id', 'Yes');
+        Observer.Expect('card flow value', '0.00');
+        Observer.Expect('list flow Editable=false', 'No');
+        Observer.Expect('list flow default', 'Yes');
+        Observer.Expect('list plain Editable=false', 'No');
+        Observer.Expect('view card flow', 'No');
+        Observer.Expect('view card id', 'No');
+        Observer.Verify();
     end;
 }
