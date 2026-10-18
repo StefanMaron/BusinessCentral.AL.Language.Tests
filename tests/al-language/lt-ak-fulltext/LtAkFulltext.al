@@ -1,0 +1,120 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-optimizefortextsearch-property
+// Scope: in-scope (Cloud app)
+// Fixtures used: Assert (60021)
+// Probe: OptimizeForTextSearch on a Text field. The table must install (needs SQL Server full-text search, mssql:2022-fts image), and filters on the field return the rows. Corpus issue 633.
+// BC versions: 27.0+
+table 79200 "LT AK Fts Row"
+{
+    DataClassification = SystemMetadata;
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Txt; Text[100]) { OptimizeForTextSearch = true; }
+        field(3; Plain; Text[100]) { }
+    }
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+codeunit 79201 "LT AK Fts Test"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    var
+        Assert: Codeunit Assert;
+
+    local procedure Seed()
+    var
+        R: Record "LT AK Fts Row";
+    begin
+        R.DeleteAll();
+        Add(1, 'Hello World');
+        Add(2, 'say hello there');
+        Add(3, 'HELLO');
+        Add(4, 'helloworld');
+        Add(5, 'goodbye');
+    end;
+
+    local procedure Add(Id: Integer; Value: Text[100])
+    var
+        R: Record "LT AK Fts Row";
+    begin
+        R.Init();
+        R.Id := Id;
+        R.Txt := Value;
+        R.Plain := Value;
+        R.Insert();
+    end;
+
+    [Test]
+    procedure TableWithOptimizedFieldInstallsAndStores()
+    var
+        R: Record "LT AK Fts Row";
+    begin
+        Seed();
+        Assert.AreEqual(5, R.Count(), 'all rows stored');
+        R.Get(2);
+        Assert.AreEqual('say hello there', R.Txt, 'value round-trips');
+    end;
+
+    [Test]
+    procedure AtContainsFilterMatchesCaseInsensitively()
+    var
+        R: Record "LT AK Fts Row";
+    begin
+        Seed();
+        R.SetFilter(Txt, '@*hello*');
+        Assert.AreEqual(4, R.Count(), '@*hello* on optimized field');
+        R.Reset();
+        R.SetFilter(Plain, '@*hello*');
+        Assert.AreEqual(4, R.Count(), '@*hello* on plain field');
+    end;
+
+    [Test]
+    procedure ContainsFilterWithoutAt()
+    var
+        R: Record "LT AK Fts Row";
+    begin
+        Seed();
+        R.SetFilter(Txt, '*hello*');
+        Assert.AreEqual(4, R.Count(), '*hello* on optimized field');
+        R.Reset();
+        R.SetFilter(Plain, '*hello*');
+        Assert.AreEqual(4, R.Count(), '*hello* on plain field');
+    end;
+
+    [Test]
+    procedure PrefixAndSuffixFilters()
+    var
+        R: Record "LT AK Fts Row";
+    begin
+        Seed();
+        R.SetFilter(Txt, '@hello*');
+        Assert.AreEqual(3, R.Count(), '@hello*');
+        R.SetFilter(Txt, '@*hello');
+        Assert.AreEqual(3, R.Count(), '@*hello');
+        R.SetFilter(Txt, '@*hello there');
+        Assert.AreEqual(1, R.Count(), '@*hello there');
+        R.SetFilter(Txt, '@*world*');
+        Assert.AreEqual(2, R.Count(), '@*world*');
+        R.SetFilter(Txt, '@*nomatch*');
+        Assert.AreEqual(0, R.Count(), 'no match');
+    end;
+
+    [Test]
+    procedure FieldTableReportsOptimizeForTextSearch()
+    var
+        F: Record Field;
+    begin
+        F.SetRange(TableNo, Database::"LT AK Fts Row");
+        F.SetRange("No.", 2);
+        F.FindFirst();
+        Assert.IsTrue(F.OptimizeForTextSearch, 'Txt is optimized');
+        F.SetRange("No.", 3);
+        F.FindFirst();
+        Assert.IsFalse(F.OptimizeForTextSearch, 'Plain is not optimized');
+    end;
+}
