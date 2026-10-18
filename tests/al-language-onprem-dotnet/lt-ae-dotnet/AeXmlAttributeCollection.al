@@ -109,7 +109,12 @@ codeunit 99002 "LT AE XmlAttributeCollection"
         Observer.ObserveError('index -1');
         Attr := Attrs.Item(5);
         Observer.Observe('Item(5) null', Format(IsNull(Attr)));
-        Observer.Finish();
+        Observer.Expect('index 5|text', 'A call to System.Xml.XmlAttributeCollection.ItemOf failed with this message: The index being passed in is out of range.');
+        Observer.Expect('index 5|code', 'DotNetInvoke:IndexOutOfRange');
+        Observer.Expect('index -1|text', 'A call to System.Xml.XmlAttributeCollection.ItemOf failed with this message: The index being passed in is out of range.');
+        Observer.Expect('index -1|code', 'DotNetInvoke:IndexOutOfRange');
+        Observer.Expect('Item(5) null', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]

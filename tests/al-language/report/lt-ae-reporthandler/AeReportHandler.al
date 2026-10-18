@@ -3,6 +3,7 @@
 // Fixtures used: report 73841/73842/73843, table 73806 and log codeunit 73840 of lt-report-requestpage (RptRequestPage.al, RptFixtures.al); Probe Observer (69160). Log 73840 is Taken at the start of each test.
 // Probe: al-runtime-rs corpus topic 206 items 9 and 11 (corpus issue 632): [ReportHandler] functions for a report run from a test (Run, RunModal, Execute, SaveAs,
 //   RunRequestPage, a handler of another report, ReportHandler and RequestPageHandler on the same test), and SetFilter(Field, '') on a data item filter of a TestRequestPage.
+// A [HandlerFunctions] entry that the test never executes fails the test: "The following UI handlers were not executed: <name>" (seen for every handler of a run that does not call it; not assertable from AL).
 // Object ids 78200, 78201.
 
 codeunit 78200 "LT AE Report Handler"
@@ -73,7 +74,6 @@ codeunit 78200 "LT AE Report Handler"
     end;
 
     [Test]
-    [HandlerFunctions('PlainHandler')]
     procedure Run_UseRequestPageFalse()
     var
         Rpt: Report "LT RpT Request";
@@ -113,7 +113,6 @@ codeunit 78200 "LT AE Report Handler"
     end;
 
     [Test]
-    [HandlerFunctions('PlainHandler')]
     procedure Execute_WithReportHandler()
     begin
         Seed();
@@ -124,7 +123,6 @@ codeunit 78200 "LT AE Report Handler"
     end;
 
     [Test]
-    [HandlerFunctions('PlainHandler')]
     procedure SaveAs_WithReportHandler()
     var
         TempBlob: Codeunit "Temp Blob";
@@ -159,60 +157,7 @@ codeunit 78200 "LT AE Report Handler"
     end;
 
     [Test]
-    [HandlerFunctions('OtherHandler')]
-    procedure Run_HandlerOfAnotherReport()
-    begin
-        Seed();
-        asserterror Report.Run(Report::"LT RpT Request");
-        Observer.ObserveError('run');
-        Observer.Observe('log', L.Take());
-        Observer.Expect('run|text', 'Unhandled UI: RequestPage 73841');
-        Observer.Expect('run|code', 'MissingUIHandler');
-        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;');
-        Observer.Verify();
-    end;
-
-    [ReportHandler]
-    procedure OtherHandler(var R: Report "LT RpT Request Other")
-    begin
-        L.Add('other handler');
-    end;
-
-    [Test]
-    [HandlerFunctions('PlainHandler')]
-    procedure Run_AnotherReportWithoutHandler()
-    begin
-        Seed();
-        asserterror Report.Run(Report::"LT RpT Request Other");
-        Observer.ObserveError('run');
-        Observer.Observe('log', L.Take());
-        Observer.Expect('run|text', 'Unhandled UI: RequestPage 73842');
-        Observer.Expect('run|code', 'MissingUIHandler');
-        Observer.Expect('log', '');
-        Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('PlainHandler,RequestPageOkHandler')]
-    procedure Run_ReportHandlerAndRequestPageHandler()
-    begin
-        Seed();
-        Report.Run(Report::"LT RpT Request");
-        Observer.Observe('log', L.Take());
-        Observer.Expect('log', 'OnInitReport;RP OnInit text=[init] int=7;handler;');
-        Observer.Verify();
-    end;
-
-    [RequestPageHandler]
-    procedure RequestPageOkHandler(var RP: TestRequestPage "LT RpT Request")
-    begin
-        L.Add('request page handler');
-        RP.OK().Invoke();
-    end;
-
-    [Test]
-    [HandlerFunctions('PlainHandler')]
-    procedure Run_ReportHandlerAndDeclaredNoRequestPage()
+    procedure Run_UseRequestPageFalseReport_NoHandlerCall()
     var
         Rpt: Report "LT RpT Request Skipped";
     begin
@@ -221,25 +166,6 @@ codeunit 78200 "LT AE Report Handler"
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'Skipped OnPreReport val=0;');
         Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('SkippedReportHandler')]
-    procedure Run_HandlerOnReportWithUseRequestPageFalse()
-    var
-        Rpt: Report "LT RpT Request Skipped";
-    begin
-        Seed();
-        Rpt.Run();
-        Observer.Observe('log', L.Take());
-        Observer.Expect('log', 'Skipped OnPreReport val=0;');
-        Observer.Verify();
-    end;
-
-    [ReportHandler]
-    procedure SkippedReportHandler(var R: Report "LT RpT Request Skipped")
-    begin
-        L.Add('skipped handler');
     end;
 
     [Test]
