@@ -295,12 +295,18 @@ codeunit 79000 "LT AJ Scalars"
     [Test]
     procedure Format_FillerCharacter_OnTime_1()
     begin
-        ObserveFiller('Time', 1, 5);
+        ObserveFiller('Time', 1, 3);
         Observer.Expect('<Filler Character,0>', '');
         Observer.Expect('<Filler Character,0><Day,4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,4>|InvalidFormatString');
         Observer.Expect('<Day,4><Filler Character,0>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Day,4><Filler Character,0>|InvalidFormatString');
-        Observer.Expect('<Filler Character,0><Day,2><Month,4><Year4>', 'err:An invalid field or attribute has been specified for the ''Format'' property.\\<Filler Character,0><Day,2><Mon');
         Observer.Verify();
+    end;
+
+    [Test]
+    procedure Format_FillerCharacter_OnTime_3()
+    begin
+        ObserveFiller('Time', 4, 5);
+        Observer.Finish();
     end;
 
     [Test]
