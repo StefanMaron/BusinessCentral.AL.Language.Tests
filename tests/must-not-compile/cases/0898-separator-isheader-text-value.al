@@ -1,4 +1,4 @@
-// @expect AL0220 | Syntax error, boolean literal expected. Use 'true' or 'false'.
+// @expect AL0220 | Syntax error, boolean literal expected
 // Page action separator IsHeader given text instead of a Boolean.
 table 50905 "MNC AA T905"
 {

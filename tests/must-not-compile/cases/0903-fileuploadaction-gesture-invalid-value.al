@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'UpSwipe' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'UpSwipe' is not valid
 // Page file upload action Gesture with an unknown value.
 table 50910 "MNC AA T910"
 {

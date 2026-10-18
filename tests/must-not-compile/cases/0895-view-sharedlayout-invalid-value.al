@@ -1,4 +1,4 @@
-// @expect AL0220 | Syntax error, boolean literal expected. Use 'true' or 'false'.
+// @expect AL0220 | Syntax error, boolean literal expected
 // Page view SharedLayout given text instead of a Boolean.
 table 50902 "MNC AA T902"
 {

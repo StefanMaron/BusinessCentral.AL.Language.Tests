@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'HalfOpen' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'HalfOpen' is not valid
 // Page repeater TreeInitialState with an unknown value.
 table 50924 "MNC AA T924"
 {

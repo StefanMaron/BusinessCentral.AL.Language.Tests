@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Menu' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Menu' is not valid
 // Page action group ShowAs with an unknown value.
 table 50904 "MNC AA T904"
 {

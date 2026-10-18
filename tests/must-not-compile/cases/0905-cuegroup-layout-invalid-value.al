@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Medium' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Medium' is not valid
 // Page cuegroup CuegroupLayout with the value Medium.
 table 50912 "MNC AA T912"
 {

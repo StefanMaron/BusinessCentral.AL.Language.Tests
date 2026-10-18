@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Row' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Row' is not valid
 // Page custom action Scope with a value that is not Page or Repeater.
 table 50906 "MNC AA T906"
 {

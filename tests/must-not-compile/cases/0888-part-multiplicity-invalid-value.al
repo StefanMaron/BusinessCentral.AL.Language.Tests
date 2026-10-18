@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Several' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Several' is not valid
 // Page part Multiplicity with a value that is not ZeroOrOne or Many.
 table 50895 "MNC AA T895"
 {

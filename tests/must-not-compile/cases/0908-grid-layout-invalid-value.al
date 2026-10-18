@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Cells' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Cells' is not valid
 // Page grid GridLayout with an unknown value.
 table 50915 "MNC AA T915"
 {

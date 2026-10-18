@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Parent' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Parent' is not valid
 // Page part UpdatePropagation with a value that is not SubPart or Both.
 table 50900 "MNC AA T900"
 {

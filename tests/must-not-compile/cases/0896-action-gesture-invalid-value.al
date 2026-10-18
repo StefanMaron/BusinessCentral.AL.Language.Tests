@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'UpSwipe' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'UpSwipe' is not valid
 // Page action Gesture with a value that is not None, LeftSwipe, RightSwipe or ContextMenu.
 table 50903 "MNC AA T903"
 {

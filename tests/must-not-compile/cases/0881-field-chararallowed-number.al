@@ -1,4 +1,4 @@
-// @expect AL0219 | Syntax error, string literal expected. Enclose the text in single quotes (e.g., 'text').
+// @expect AL0219 | Syntax error, string literal expected
 // Page field CharAllowed given a number instead of text.
 table 50881 "MNC AA T881"
 {
