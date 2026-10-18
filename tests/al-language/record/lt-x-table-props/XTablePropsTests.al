@@ -234,11 +234,7 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Finish();
     end;
 
-    [Test]
-    procedure SQLDataType_Code_StoredValueUnchanged()
-    var
-        Observer: Codeunit "Probe Observer";
-        Row: Record "LT X Props Sql";
+    local procedure SeedSql(var Row: Record "LT X Props Sql")
     begin
         Row.DeleteAll();
         Row.Init();
@@ -247,26 +243,34 @@ codeunit 75010 "LT X Table Props Tests"
         Row.AsVarchar := '10';
         Row.AsBigInteger := '10';
         Row.AsDefault := '10';
-        SqlStep(Observer, 'insert_' + Format(Row.Id), Row, 1);
+        Row.Insert();
         Row.Init();
         Row.Id := 2;
         Row.AsInteger := '9';
         Row.AsVarchar := '9';
         Row.AsBigInteger := '9';
         Row.AsDefault := '9';
-        SqlStep(Observer, 'insert_' + Format(Row.Id), Row, 1);
+        Row.Insert();
         Row.Init();
         Row.Id := 3;
         Row.AsVarchar := 'ABC';
         Row.AsDefault := 'ABC';
-        SqlStep(Observer, 'insert_' + Format(Row.Id), Row, 1);
-        Row.Id := 1;
-        SqlStep(Observer, 'get_1_L1', Row, 3);
+        Row.Insert();
+    end;
+
+    // A database error ends the transaction ("An error occurred and the transaction is stopped"), so each step that may fail is its own test.
+    [Test]
+    procedure SQLDataType_Code_ReadRowsAndKeys()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props Sql";
+    begin
+        SeedSql(Row);
+        Row.Get(1);
         Observer.Observe('integer_value', Row.AsInteger);
         Observer.Observe('varchar_value', Row.AsVarchar);
         Observer.Observe('bigint_value', Row.AsBigInteger);
-        Row.Id := 3;
-        SqlStep(Observer, 'get_3_L2', Row, 3);
+        Row.Get(3);
         Observer.Observe('integer_empty_on_row_3', Row.AsInteger);
         Observer.Observe('varchar_text_on_row_3', Row.AsVarchar);
         Row.SetCurrentKey(AsInteger);
@@ -279,20 +283,64 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('first_by_varchar_key', Format(Row.Id));
         Row.FindLast();
         Observer.Observe('last_by_varchar_key', Format(Row.Id));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SQLDataType_Code_GetRow2()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props Sql";
+    begin
+        SeedSql(Row);
         Row.Id := 2;
-        SqlStep(Observer, 'get_2_L3', Row, 3);
+        SqlStep(Observer, 'get_2', Row, 3);
+        Observer.Observe('integer_nine', Row.AsInteger);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SQLDataType_Code_ModifyToZero()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props Sql";
+    begin
+        SeedSql(Row);
+        Row.Get(2);
         Row.AsInteger := '0';
-        SqlStep(Observer, 'modify_' + Format(Row.Id) + '_' + Row.AsInteger, Row, 2);
+        SqlStep(Observer, 'modify_zero', Row, 2);
         Row.Id := 2;
-        SqlStep(Observer, 'get_2_L4', Row, 3);
+        SqlStep(Observer, 'get_after_zero', Row, 3);
         Observer.Observe('integer_zero_stored', Row.AsInteger);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SQLDataType_Code_ModifyToLeadingZero()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props Sql";
+    begin
+        SeedSql(Row);
+        Row.Get(2);
         Row.AsInteger := '007';
-        SqlStep(Observer, 'modify_' + Format(Row.Id) + '_' + Row.AsInteger, Row, 2);
+        SqlStep(Observer, 'modify_007', Row, 2);
         Row.Id := 2;
-        SqlStep(Observer, 'get_2_L5', Row, 3);
+        SqlStep(Observer, 'get_after_007', Row, 3);
         Observer.Observe('integer_leading_zero_stored', Row.AsInteger);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SQLDataType_Code_ModifyToText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props Sql";
+    begin
+        SeedSql(Row);
+        Row.Get(2);
         Row.AsInteger := 'ABC';
-        SqlStep(Observer, 'integer_text_modify', Row, 2);
+        SqlStep(Observer, 'modify_text', Row, 2);
         Observer.Finish();
     end;
 
