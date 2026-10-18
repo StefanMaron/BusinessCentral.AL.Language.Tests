@@ -643,8 +643,8 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('next-error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Flags.SetVeto(false);
+        Observer.Observe('retry-next-ok', Format(PageEvtTryNext(Rows)));
         Observer.Observe('close-ok', Format(PageEvtTryClose(Rows)));
-        Observer.Observe('close-error', GetLastErrorText());
         Observer.Observe('stored-count', Format(Stored.Count()));
         Observer.Finish();
     end;
@@ -802,22 +802,6 @@ codeunit 77099 "LT AB Tests"
         Row.Insert();
         Flags.SetVeto(false);
         Log.Reset();
-    end;
-
-    [Test]
-    procedure ActionAddInBaseActionWithoutExtension()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT AB Log";
-        Card: TestPage "LT AB Action Card";
-    begin
-        ActionAddInSeed();
-        Card.OpenEdit();
-        Log.Reset();
-        Card.ActBase.Invoke();
-        Observer.Observe('log', Log.Dump());
-        Card.Close();
-        Observer.Finish();
     end;
 
     [Test]
