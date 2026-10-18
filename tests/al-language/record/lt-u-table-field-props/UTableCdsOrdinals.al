@@ -67,18 +67,10 @@ codeunit 69782 "LT U Cds Option Tests"
         Observer.Observe('assign_20_format', Format(Rec.Opt));
         Rec.Opt := 5;
         Observer.Observe('assign_5_format', Format(Rec.Opt));
-        asserterror begin Rec.Opt := 1; Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('assign_1|no_error', 'true');
-        end else
-            Observer.ObserveError('assign_1');
-        asserterror begin Rec.Opt := 2; Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('assign_2|no_error', 'true');
-        end else
-            Observer.ObserveError('assign_2');
+        Rec.Opt := 1;
+        Observer.Observe('assign_1|no_error', 'true');
+        Rec.Opt := 2;
+        Observer.Observe('assign_2|no_error', 'true');
 
         Observer.Observe('evaluate_name_ok', Format(Evaluate(Rec.Opt, 'Gamma')));
         Observer.Observe('evaluate_name_format', Format(Rec.Opt));
@@ -107,12 +99,8 @@ codeunit 69782 "LT U Cds Option Tests"
         Observer.Observe('filter_names_text', Rec.GetFilter(Opt));
         Rec.SetFilter(Opt, '10');
         Observer.Observe('filter_ordinal_10_text', Rec.GetFilter(Opt));
-        asserterror begin Rec.SetFilter(Opt, '1'); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('filter_ordinal_1|no_error', 'true');
-        end else
-            Observer.ObserveError('filter_ordinal_1');
+        Rec.SetFilter(Opt, '1');
+        Observer.Observe('filter_ordinal_1|no_error', 'true');
         Rec.SetFilter(Opt, '>=10');
         Observer.Observe('filter_ge_10_text', Rec.GetFilter(Opt));
         Rec.Reset();
@@ -138,24 +126,15 @@ codeunit 69782 "LT U Cds Option Tests"
         Observer.Observe('temp_insert_count', Format(Rec.Count()));
         Observer.Observe('temp_find_first', Format(Rec.FindFirst()));
         Observer.Observe('temp_find_first_value', Format(Rec.Opt));
-        asserterror begin Plain.Init(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('plain_init|no_error', 'true');
-        end else
-            Observer.ObserveError('plain_init');
-        asserterror begin Plain.Insert(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('plain_insert|no_error', 'true');
-        end else
-            Observer.ObserveError('plain_insert');
-        asserterror begin Plain.FindFirst(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('plain_find_first|no_error', 'true');
-        end else
-            Observer.ObserveError('plain_find_first');
+        asserterror Plain.Init();
+        Observer.Observe('plain_init_failed', Format(GetLastErrorText() <> ''));
+        ClearLastError();
+        asserterror Plain.Insert();
+        Observer.Observe('plain_insert_failed', Format(GetLastErrorText() <> ''));
+        ClearLastError();
+        asserterror Plain.FindFirst();
+        Observer.Observe('plain_find_first_failed', Format(GetLastErrorText() <> ''));
+        ClearLastError();
         Observer.Finish();
     end;
 }

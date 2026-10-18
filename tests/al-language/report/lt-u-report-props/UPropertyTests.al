@@ -131,11 +131,8 @@ codeunit 69789 "LT U Property Tests"
         Mock: Codeunit "Permissions Mock";
     begin
         SeedPageSrc();
-        asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('run_request_page|failed')
-        else
-            ClearLastError();
+        asserterror Report.Run(Report::"LT U Report", true, false);
+        Observer.ObserveError('run_request_page');
         Observer.Finish();
     end;
 
@@ -143,78 +140,22 @@ codeunit 69789 "LT U Property Tests"
     procedure RequestPageFieldsHandler(var Req: TestRequestPage "LT U Report")
     var
     begin
-        asserterror begin Req.RelField.SetValue(9999); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('rel_missing|no_error', 'true');
-        end else
-            Observer.ObserveError('rel_missing');
-        asserterror begin Req.RelField.SetValue(1); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_RelField_SetValue_1_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('rel_existing', Req.RelField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('rel_existing|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.ExtRelField.SetValue(9999); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('ext_rel_missing|no_error', 'true');
-        end else
-            Observer.ObserveError('ext_rel_missing');
-        asserterror begin Req.ExtRelField.SetValue(1); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_ExtRelField_SetValue_1_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_rel_existing', Req.ExtRelField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_rel_existing|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.AmtField.SetValue(1234.5); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_AmtField_SetValue_1234_5_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('amount_value', Req.AmtField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('amount_value|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.DfField.SetValue('1D'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_DfField_SetValue_1D_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('date_formula_1d', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_1d|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.DfField.SetValue('<1W>'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_DfField_SetValue_1W_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('date_formula_1w', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_1w|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.DfField.SetValue('CM+1D'); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_DfField_SetValue_CM_1D_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('date_formula_cm', Req.DfField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('date_formula_cm|failed')
-        else
-            ClearLastError();
+        asserterror Req.RelField.SetValue(9999);
+        Observer.ObserveError('rel_missing');
+        Req.RelField.SetValue(1);
+        Observer.Observe('rel_existing', Req.RelField.Value);
+        asserterror Req.ExtRelField.SetValue(9999);
+        Observer.ObserveError('ext_rel_missing');
+        Req.ExtRelField.SetValue(1);
+        Observer.Observe('ext_rel_existing', Req.ExtRelField.Value);
+        Req.AmtField.SetValue(1234.5);
+        Observer.Observe('amount_value', Req.AmtField.Value);
+        Req.DfField.SetValue('1D');
+        Observer.Observe('date_formula_1d', Req.DfField.Value);
+        Req.DfField.SetValue('<1W>');
+        Observer.Observe('date_formula_1w', Req.DfField.Value);
+        Req.DfField.SetValue('CM+1D');
+        Observer.Observe('date_formula_cm', Req.DfField.Value);
         Req.Cancel().Invoke();
     end;
 
@@ -236,31 +177,16 @@ codeunit 69789 "LT U Property Tests"
         if not WasStarted then
             Mock.Start();
         Mock.Set('ALTPermissionSet');
-        asserterror begin Src.FindFirst(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('direct_read_of_src|no_error', 'true');
-        end else
-            Observer.ObserveError('direct_read_of_src');
-        asserterror begin Report.Run(Report::"LT U Report Plain", false, false); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('plain_report_run|no_error', 'true');
-        end else
-            Observer.ObserveError('plain_report_run');
+        asserterror Src.FindFirst();
+        Observer.ObserveError('direct_read_of_src');
+        Report.Run(Report::"LT U Report Plain", false, false);
+        Observer.Observe('plain_report_run|no_error', 'true');
         Observer.Observe('state_after_plain', State.Dump());
         TempBlob.CreateOutStream(OutS);
-        asserterror begin Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('saveas_inherent|failed')
-        else
-            ClearLastError();
+        asserterror Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS);
+        Observer.ObserveError('saveas_inherent');
         Observer.Observe('inherent_report_saveas_length_positive', Format(TempBlob.Length() > 0));
-        asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('run_request_page_permissions|failed')
-        else
-            ClearLastError();
+        Report.Run(Report::"LT U Report", true, false);
         Mock.ClearAssignments();
         if not WasStarted then
             Mock.Stop();
@@ -271,22 +197,10 @@ codeunit 69789 "LT U Property Tests"
     procedure PermissionedRequestHandler(var Req: TestRequestPage "LT U Report")
     var
     begin
-        asserterror begin Req.RelField.SetValue(1); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Req_RelField_SetValue_1_|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('request_page_rel_with_permissions|failed')
-        else
-            ClearLastError();
-        asserterror begin Req.ExtRelField.SetValue(1); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('request_page_ext_rel|no_error', 'true');
-        end else
-            Observer.ObserveError('request_page_ext_rel');
+        Req.RelField.SetValue(1);
+        Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value);
+        asserterror Req.ExtRelField.SetValue(1);
+        Observer.ObserveError('request_page_ext_rel');
         Req.Cancel().Invoke();
     end;
 

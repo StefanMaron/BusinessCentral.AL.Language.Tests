@@ -31,8 +31,6 @@ report 69783 "LT U Report"
 
     requestpage
     {
-        Permissions = tabledata "LT U Page Src" = r;
-
         layout
         {
             area(Content)

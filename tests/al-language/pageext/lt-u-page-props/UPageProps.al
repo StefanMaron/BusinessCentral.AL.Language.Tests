@@ -38,71 +38,21 @@ codeunit 69592 "LT U Page Props Tests"
     begin
         Seed();
         Card.OpenEdit();
-        asserterror begin Observer.Observe('base_group_visible_field_visible', Format(Card.InVisibleGroup.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_group_visible_field_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_group_editable_field_editable', Format(Card.InEditableGroup.Editable())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_group_editable_field_editable|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_group_editable_field_visible', Format(Card.InEditableGroup.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_group_editable_field_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_group_hidden_field_visible', Format(Card.ExtInHidden.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_group_hidden_field_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_group_readonly_field_editable', Format(Card.ExtInReadOnly.Editable())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_group_readonly_field_editable|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_group_readonly_field_visible', Format(Card.ExtInReadOnly.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_group_readonly_field_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('modify_field_enabled_off', Format(Card.EnabledField.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('modify_field_enabled_off|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('modify_field_enabled_off_editable', Format(Card.EnabledField.Editable())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('modify_field_enabled_off_editable|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_field_enabled_off', Format(Card.ExtEnabledOff.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_field_enabled_off|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_field_enabled_off_editable', Format(Card.ExtEnabledOff.Editable())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_field_enabled_off_editable|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_field_default_enabled', Format(Card.ExtDec.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_field_default_enabled|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('label_enabled_after_modify', Format(Card.Lbl.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('label_enabled_after_modify|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('label_visible', Format(Card.Lbl.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('label_visible|failed')
-        else
-            ClearLastError();
+        asserterror Observer.Observe('base_group_visible_field_visible', Format(Card.InVisibleGroup.Visible()));
+        Observer.ObserveError('base_group_visible_field_visible');
+        Observer.Observe('base_group_editable_field_editable', Format(Card.InEditableGroup.Editable()));
+        Observer.Observe('base_group_editable_field_visible', Format(Card.InEditableGroup.Visible()));
+        asserterror Observer.Observe('ext_group_hidden_field_visible', Format(Card.ExtInHidden.Visible()));
+        Observer.ObserveError('ext_group_hidden_field_visible');
+        Observer.Observe('ext_group_readonly_field_editable', Format(Card.ExtInReadOnly.Editable()));
+        Observer.Observe('ext_group_readonly_field_visible', Format(Card.ExtInReadOnly.Visible()));
+        Observer.Observe('modify_field_enabled_off', Format(Card.EnabledField.Enabled()));
+        Observer.Observe('modify_field_enabled_off_editable', Format(Card.EnabledField.Editable()));
+        Observer.Observe('ext_field_enabled_off', Format(Card.ExtEnabledOff.Enabled()));
+        Observer.Observe('ext_field_enabled_off_editable', Format(Card.ExtEnabledOff.Editable()));
+        Observer.Observe('ext_field_default_enabled', Format(Card.ExtDec.Enabled()));
+        Observer.Observe('label_enabled_after_modify', Format(Card.Lbl.Enabled()));
+        Observer.Observe('label_visible', Format(Card.Lbl.Visible()));
         Card.Close();
         Observer.Finish();
     end;
@@ -135,30 +85,14 @@ codeunit 69592 "LT U Page Props Tests"
     begin
         Seed();
         Card.OpenEdit();
-        asserterror begin Card.DrillOn.Drilldown(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('base_on|no_error', 'true');
-        end else
-            Observer.ObserveError('base_on');
-        asserterror begin Card.DrillOff.Drilldown(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('base_off|no_error', 'true');
-        end else
-            Observer.ObserveError('base_off');
-        asserterror begin Card.ExtDrillOn.Drilldown(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('ext_on|no_error', 'true');
-        end else
-            Observer.ObserveError('ext_on');
-        asserterror begin Card.ExtDrillOff.Drilldown(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('ext_off|no_error', 'true');
-        end else
-            Observer.ObserveError('ext_off');
+        asserterror Card.DrillOn.Drilldown();
+        Observer.ObserveError('base_on');
+        asserterror Card.DrillOff.Drilldown();
+        Observer.ObserveError('base_off');
+        asserterror Card.ExtDrillOn.Drilldown();
+        Observer.ObserveError('ext_on');
+        asserterror Card.ExtDrillOff.Drilldown();
+        Observer.ObserveError('ext_off');
         Card.Close();
         Observer.Finish();
     end;
@@ -173,26 +107,14 @@ codeunit 69592 "LT U Page Props Tests"
         Seed();
         Card.OpenEdit();
         LookupOpened := 0;
-        asserterror begin Card.LookupField.Lookup(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Card_LookupField_Lookup_|failed')
-        else
-            ClearLastError();
+        Card.LookupField.Lookup();
         Observer.Observe('base_lookup_pages_opened', Format(LookupOpened));
         LookupOpened := 0;
-        asserterror begin Card.ExtLookupOn.Lookup(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Card_ExtLookupOn_Lookup_|failed')
-        else
-            ClearLastError();
+        Card.ExtLookupOn.Lookup();
         Observer.Observe('ext_on_pages_opened', Format(LookupOpened));
         LookupOpened := 0;
-        asserterror begin Card.ExtLookupOff.Lookup(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('ext_off|no_error', 'true');
-        end else
-            Observer.ObserveError('ext_off');
+        Card.ExtLookupOff.Lookup();
+        Observer.Observe('ext_off|no_error', 'true');
         Observer.Observe('ext_off_pages_opened', Format(LookupOpened));
         Card.Close();
         Observer.Finish();
@@ -213,88 +135,25 @@ codeunit 69592 "LT U Page Props Tests"
     begin
         Seed();
         Card.OpenEdit();
-        asserterror begin Observer.Observe('base_enabled_modified_off', Format(Card.ActEnabled.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_enabled_modified_off|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_enabled_modified_off_visible', Format(Card.ActEnabled.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_enabled_modified_off_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_visible_modified_off', Format(Card.ActVisible.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_visible_modified_off|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_visible_modified_off_enabled', Format(Card.ActVisible.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_visible_modified_off_enabled|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_scope_page', Format(Card.ActScope.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_scope_page|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('base_footer_false', Format(Card.ActFooter.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('base_footer_false|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('actionref_hidden_modified_visible', Format(Card.ActRefTarget.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('actionref_hidden_modified_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_enabled_off', Format(Card.ExtActEnabledOff.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_enabled_off|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_enabled_off_visible', Format(Card.ExtActEnabledOff.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_enabled_off_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_visible_off', Format(Card.ExtActVisibleOff.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_visible_off|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_visible_off_enabled', Format(Card.ExtActVisibleOff.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_visible_off_enabled|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_scope_repeater_visible', Format(Card.ExtActScope.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_scope_repeater_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_scope_repeater_enabled', Format(Card.ExtActScope.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_scope_repeater_enabled|failed')
-        else
-            ClearLastError();
-        asserterror begin Card.ExtActScope.Invoke(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Card_ExtActScope_Invoke_|failed')
-        else
-            ClearLastError();
+        Observer.Observe('base_enabled_modified_off', Format(Card.ActEnabled.Enabled()));
+        Observer.Observe('base_enabled_modified_off_visible', Format(Card.ActEnabled.Visible()));
+        Observer.Observe('base_visible_modified_off', Format(Card.ActVisible.Visible()));
+        Observer.Observe('base_visible_modified_off_enabled', Format(Card.ActVisible.Enabled()));
+        Observer.Observe('base_scope_page', Format(Card.ActScope.Visible()));
+        Observer.Observe('base_footer_false', Format(Card.ActFooter.Visible()));
+        Observer.Observe('actionref_hidden_modified_visible', Format(Card.ActRefTarget.Visible()));
+        Observer.Observe('ext_enabled_off', Format(Card.ExtActEnabledOff.Enabled()));
+        Observer.Observe('ext_enabled_off_visible', Format(Card.ExtActEnabledOff.Visible()));
+        Observer.Observe('ext_visible_off', Format(Card.ExtActVisibleOff.Visible()));
+        Observer.Observe('ext_visible_off_enabled', Format(Card.ExtActVisibleOff.Enabled()));
+        Observer.Observe('ext_scope_repeater_visible', Format(Card.ExtActScope.Visible()));
+        Observer.Observe('ext_scope_repeater_enabled', Format(Card.ExtActScope.Enabled()));
+        Card.ExtActScope.Invoke();
         Observer.Observe('ext_scope_repeater_invoked', 'ok');
-        asserterror begin Card.ExtActEnabledOff.Invoke(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('ext_enabled_off_invoke|no_error', 'true');
-        end else
-            Observer.ObserveError('ext_enabled_off_invoke');
-        asserterror begin Card.Close(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('close|failed')
-        else
-            ClearLastError();
+        asserterror Card.ExtActEnabledOff.Invoke();
+        Observer.ObserveError('ext_enabled_off_invoke');
+        asserterror Card.Close();
+        Observer.ObserveError('close');
         Observer.Finish();
     end;
 
@@ -373,42 +232,14 @@ codeunit 69592 "LT U Page Props Tests"
     begin
         Seed();
         Api.OpenView();
-        asserterror begin Observer.Observe('first', Format(Api.First())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('first|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('txt', Api.txt.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('txt|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('txt_editable', Format(Api.txt.Editable())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('txt_editable|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('lines_visible', Format(Api.lines.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('lines_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('lines_row_txt', Api.lines.Txt.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('lines_row_txt|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('page_caption', Api.Caption()); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('page_caption|failed')
-        else
-            ClearLastError();
-        asserterror begin Api.txt.SetValue('changed'); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('set_on_read_only|no_error', 'true');
-        end else
-            Observer.ObserveError('set_on_read_only');
+        Observer.Observe('first', Format(Api.First()));
+        Observer.Observe('txt', Api.txt.Value);
+        Observer.Observe('txt_editable', Format(Api.txt.Editable()));
+        Observer.Observe('lines_visible', Format(Api.lines.Visible()));
+        Observer.Observe('lines_row_txt', Api.lines.Txt.Value);
+        Observer.Observe('page_caption', Api.Caption());
+        Api.txt.SetValue('changed');
+        Observer.Observe('set_on_read_only|no_error', 'true');
         Api.Close();
         Observer.Finish();
     end;
@@ -420,12 +251,8 @@ codeunit 69592 "LT U Page Props Tests"
         Api: TestPage "LT U Api Page";
     begin
         Seed();
-        asserterror begin Api.OpenEdit(); Error('NOERROR'); end;
-        if GetLastErrorText() = 'NOERROR' then begin
-            ClearLastError();
-            Observer.Observe('open_edit|no_error', 'true');
-        end else
-            Observer.ObserveError('open_edit');
+        Api.OpenEdit();
+        Observer.Observe('open_edit|no_error', 'true');
         Observer.Finish();
     end;
 

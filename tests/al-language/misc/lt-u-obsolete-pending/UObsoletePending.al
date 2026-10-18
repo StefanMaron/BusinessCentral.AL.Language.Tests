@@ -51,61 +51,19 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Src.Txt := 'one';
         Src.Insert();
         Card.OpenView();
-        asserterror begin Observer.Observe('group_field', Card.InObsGroup.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('group_field|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('group_field_visible', Format(Card.InObsGroup.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('group_field_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('cue_field', Card.InObsCue.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('cue_field|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('label_visible', Format(Card.ObsLabel.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('label_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('action_enabled', Format(Card.ObsAction.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('action_enabled|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_field_visible', Format(Card.ObsExtField.Visible())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_field_visible|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_group_field', Card.InObsExtGroup.Value); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_group_field|failed')
-        else
-            ClearLastError();
-        asserterror begin Observer.Observe('ext_action_enabled', Format(Card.ObsExtAction.Enabled())); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('ext_action_enabled|failed')
-        else
-            ClearLastError();
-        asserterror begin Card.ObsAction.Invoke(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Card_ObsAction_Invoke_|failed')
-        else
-            ClearLastError();
-        asserterror begin Card.ObsExtAction.Invoke(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('Card_ObsExtAction_Invoke_|failed')
-        else
-            ClearLastError();
-        asserterror begin Card.Close(); Error('NOERROR'); end;
-        if GetLastErrorText() <> 'NOERROR' then
-            Observer.ObserveError('close|failed')
-        else
-            ClearLastError();
+        Observer.Observe('group_field', Card.InObsGroup.Value);
+        Observer.Observe('group_field_visible', Format(Card.InObsGroup.Visible()));
+        Observer.Observe('cue_field', Card.InObsCue.Value);
+        Observer.Observe('label_visible', Format(Card.ObsLabel.Visible()));
+        Observer.Observe('action_enabled', Format(Card.ObsAction.Enabled()));
+        Observer.Observe('ext_field_visible', Format(Card.ObsExtField.Visible()));
+        Observer.Observe('ext_group_field', Card.InObsExtGroup.Value);
+        Observer.Observe('ext_action_enabled', Format(Card.ObsExtAction.Enabled()));
+        Card.ObsAction.Invoke();
+        asserterror Card.ObsExtAction.Invoke();
+        Observer.ObserveError('Card_ObsExtAction_Invoke_');
+        asserterror Card.Close();
+        Observer.ObserveError('close');
         Observer.Finish();
     end;
 
