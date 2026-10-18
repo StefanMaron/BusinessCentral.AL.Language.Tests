@@ -661,6 +661,32 @@ codeunit 69881 "LT W Pt Subs"
         end;
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"System Action Triggers", 'GetCopilotCapabilityInfo', '', false, false)]
+    local procedure GetCopilotCapabilityInfo(Capability: Integer; AppId: Guid; var CapabilityInfo: JsonObject)
+    var
+        Log: Codeunit "LT W Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('GetCopilotCapabilityInfo(' + 'Capability=' + Format(Capability) + ',' + 'AppId=' + Format(AppId) + ',' + 'CapabilityInfo=' + Txt(CapabilityInfo) + ')');
+        if Log.Mode() = 2 then begin
+            CapabilityInfo.Add('W', 'set');
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"System Action Triggers", 'GetPageSummary', '', false, false)]
+    local procedure GetPageSummary(PageId: Integer; Bookmark: Text; var Summary: Text)
+    var
+        Log: Codeunit "LT W Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('GetPageSummary(' + 'PageId=' + Format(PageId) + ',' + 'Bookmark=' + Bookmark + ',' + 'Summary=' + Summary + ')');
+        if Log.Mode() = 2 then begin
+            Summary := 'W:Summary';
+        end;
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"System Action Triggers", 'OnCopilotFeedbackProperties', '', false, false)]
     local procedure OnCopilotFeedbackProperties(CustomDimensions: JsonObject)
     var
