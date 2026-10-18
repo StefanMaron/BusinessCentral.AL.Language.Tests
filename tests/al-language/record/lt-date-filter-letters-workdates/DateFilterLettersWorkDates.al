@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setfilter-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 70316 "LT P81 DF" (record/lt-loadfields-pagesource-validate/P81DateFilters.al)
-// Probe: the date filter letters TODAY, WORKDATE, M, Y, D, CM, CY, CW, -1D, +1D, T-1D and 1D set with Record.SetFilter, each under four fixed work dates, so
+// Probe: the date filter letters TODAY, WORKDATE, M, Y, D, CM, CY, CW, -1D, +1D, T-1D and 1D set with Record.SetFilter, each under five fixed work dates, so
 // that the filter text shows which letters follow the work date and which follow Today(). Moved here from P81DateFilters.al (test
 // SetFilter_Date_OtherKeywordLetters, which asserted dates of the day it was written). Object id 78000.
 
@@ -98,9 +98,8 @@ codeunit 78000 "LT AD Date Filter Letters"
             Observer.Observe(Prefix + Texts.Get(i), Apply(Texts.Get(i)));
     end;
 
-    local procedure RunFor(WorkDay: Date; Part: Integer)
+    local procedure RunFor(var Observer: Codeunit "Probe Observer"; WorkDay: Date; Part: Integer)
     var
-        Observer: Codeunit "Probe Observer";
         SavedWorkDate: Date;
     begin
         SavedWorkDate := WorkDate();
@@ -108,12 +107,10 @@ codeunit 78000 "LT AD Date Filter Letters"
         Seed(WorkDay);
         ObserveLetters(Observer, 'w' + Format(WorkDay, 0, '<Year4>-<Month,2>-<Day,2>') + ' ', Part);
         WorkDate(SavedWorkDate);
-        Observer.Finish();
     end;
 
-    local procedure RunOriginal(Part: Integer)
+    local procedure RunOriginal(var Observer: Codeunit "Probe Observer"; Part: Integer)
     var
-        Observer: Codeunit "Probe Observer";
         SavedWorkDate: Date;
     begin
         SavedWorkDate := WorkDate();
@@ -121,55 +118,96 @@ codeunit 78000 "LT AD Date Filter Letters"
         SeedOriginal();
         ObserveLetters(Observer, 'o ', Part);
         WorkDate(SavedWorkDate);
-        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_Original_A()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunOriginal(1);
+        RunOriginal(Observer, 1);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_Original_B()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunOriginal(2);
+        RunOriginal(Observer, 2);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_March18_A()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunFor(20260318D, 1);
+        RunFor(Observer, 20260318D, 1);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_March18_B()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunFor(20260318D, 2);
+        RunFor(Observer, 20260318D, 2);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_July1_A()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunFor(20260701D, 1);
+        RunFor(Observer, 20260701D, 1);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_July1_B()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunFor(20260701D, 2);
+        RunFor(Observer, 20260701D, 2);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_Dec31_A()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunFor(20261231D, 1);
+        RunFor(Observer, 20261231D, 1);
+        Observer.Finish();
     end;
 
     [Test]
     procedure Letters_Dec31_B()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        RunFor(20261231D, 2);
+        RunFor(Observer, 20261231D, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Letters_2030_A()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RunFor(Observer, 20300515D, 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Letters_2030_B()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RunFor(Observer, 20300515D, 2);
+        Observer.Finish();
     end;
 
     [Test]

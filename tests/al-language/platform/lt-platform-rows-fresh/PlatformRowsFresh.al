@@ -38,7 +38,7 @@ codeunit 78100 "LT AD Platform Rows"
         exit(Result);
     end;
 
-    local procedure Dump(var Observer: Codeunit "Probe Observer"; TableName: Text)
+    local procedure Dump(var Observer: Codeunit "Probe Observer"; TableName: Text; Skip: Integer; Take: Integer)
     var
         RR: RecordRef;
         Id: Integer;
@@ -53,8 +53,9 @@ codeunit 78100 "LT AD Platform Rows"
         if RR.FindSet() then
             repeat
                 n += 1;
-                Observer.Observe(TableName + ' row ' + Format(n), RowText(RR));
-            until RR.Next() = 0;
+                if (n > Skip) and (n <= Skip + Take) then
+                    Observer.Observe(TableName + ' row ' + Format(n), RowText(RR));
+            until (RR.Next() = 0) or (n >= Skip + Take);
     end;
 
     [Test]
@@ -62,7 +63,7 @@ codeunit 78100 "LT AD Platform Rows"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'Language Selection');
+        Dump(Observer, 'Language Selection', 0, 3);
         Observer.Finish();
     end;
 
@@ -71,7 +72,7 @@ codeunit 78100 "LT AD Platform Rows"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'License Permission');
+        Dump(Observer, 'License Permission', 0, 8);
         Observer.Finish();
     end;
 
@@ -80,7 +81,7 @@ codeunit 78100 "LT AD Platform Rows"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'Tenant Report Layout Selection');
+        Dump(Observer, 'Tenant Report Layout Selection', 0, 8);
         Observer.Finish();
     end;
 
@@ -89,7 +90,7 @@ codeunit 78100 "LT AD Platform Rows"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources');
+        Dump(Observer, 'MediaResources', 0, 8);
         Observer.Finish();
     end;
 
@@ -98,7 +99,7 @@ codeunit 78100 "LT AD Platform Rows"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'Tenant Web Service');
+        Dump(Observer, 'Tenant Web Service', 0, 8);
         Observer.Finish();
     end;
 }

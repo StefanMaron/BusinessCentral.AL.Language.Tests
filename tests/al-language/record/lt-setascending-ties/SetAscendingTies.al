@@ -20,6 +20,7 @@ table 78007 "LT AD Tie Row"
     {
         key(PK; Id) { Clustered = true; }
         key(ByGrp; Grp) { }
+        key(ByGrpId; Grp, Id) { }
     }
 }
 
@@ -83,6 +84,21 @@ codeunit 78008 "LT AD SetAscending Ties"
     end;
 
     [TryFunction]
+    local procedure TrySetAscendingId(var Row: Record "LT AD Tie Row"; Asc: Boolean)
+    begin
+        Row.SetAscending(Id, Asc);
+    end;
+
+    local procedure IdCase(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT AD Tie Row"; Asc: Boolean)
+    begin
+        ClearLastError();
+        if TrySetAscendingId(Row, Asc) then
+            Observer.Observe(Name, 'ok|' + All(Row))
+        else
+            Observer.Observe(Name, 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [TryFunction]
     local procedure TrySetAscending(var Row: Record "LT AD Tie Row"; Asc: Boolean)
     begin
         Row.SetAscending(Qty, Asc);
@@ -122,17 +138,37 @@ codeunit 78008 "LT AD SetAscending Ties"
         Row.Reset();
         Row.SetCurrentKey(Grp);
         Row.Ascending(false);
-        Row.SetAscending(Id, true);
-        Observer.Observe('desc_then_id_asc', All(Row));
+        IdCase(Observer, 'desc_then_id_asc', Row, true);
         Row.Reset();
         Row.SetCurrentKey(Grp);
-        Row.SetAscending(Id, false);
-        Observer.Observe('id_desc_only', All(Row));
+        IdCase(Observer, 'id_desc_only', Row, false);
         Row.Reset();
         Row.SetCurrentKey(Grp);
         Row.SetAscending(Grp, false);
-        Row.SetAscending(Id, true);
+        IdCase(Observer, 'grp_desc_id_asc', Row, true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Ties_ExplicitPrimaryKeyInKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AD Tie Row";
+    begin
+        Seed();
+        Row.SetCurrentKey(Grp, Id);
+        Row.SetAscending(Grp, false);
         Observer.Observe('grp_desc_id_asc', All(Row));
+        Row.Reset();
+        Row.SetCurrentKey(Grp, Id);
+        Row.SetAscending(Grp, true);
+        Row.SetAscending(Id, false);
+        Observer.Observe('grp_asc_id_desc', All(Row));
+        Row.Reset();
+        Row.SetCurrentKey(Grp, Id);
+        Row.Ascending(false);
+        Row.SetAscending(Id, true);
+        Observer.Observe('all_desc_id_asc', All(Row));
         Observer.Finish();
     end;
 
