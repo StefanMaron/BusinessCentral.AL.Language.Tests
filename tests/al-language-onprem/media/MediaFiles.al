@@ -72,7 +72,7 @@ codeunit 61285 "LT S Media Files"
         if not Tenant.Get(Id) then
             exit('no tenant media row');
         Tenant.CalcFields(Content);
-        exit('description=[' + Tenant.Description + '] mime=[' + Tenant."Mime Type" + '] filename=[' + Tenant."File Name" + '] width=' + Format(Tenant.Width) + ' height=' + Format(Tenant.Height) + ' hascontent=' + Format(Tenant.Content.HasValue()));
+        exit('description=[' + Tenant.Description + '] mime=[' + Tenant."Mime Type" + '] filename_contains_source_name=' + Format(StrPos(Tenant."File Name", BaseName) > 0) + ' filename_longer_than_name=' + Format(StrLen(Tenant."File Name") > StrLen(BaseName)) + ' width=' + Format(Tenant.Width) + ' height=' + Format(Tenant.Height) + ' hascontent=' + Format(Tenant.Content.HasValue()));
     end;
 
     [TryFunction]
@@ -166,7 +166,7 @@ codeunit 61285 "LT S Media Files"
         Missing := TemporaryPath() + 'ltsmedia-missing-' + DelChr(Format(CreateGuid()), '=', '{}-') + '.png';
         Ok := TryImport(Row, Missing, Id);
         Observer.Observe('missing_import', Format(Ok) + ' [' + GetLastErrorCode() + ']');
-        Observer.Observe('missing_import_text', GetLastErrorText().Replace(Missing, '<path>'));
+        Observer.Observe('missing_import_text', Format(GetLastErrorText().StartsWith('File ')) + ' ' + Format(GetLastErrorText().EndsWith(' was not found.')) + ' ' + Format(StrPos(GetLastErrorText(), BaseOf(Missing)) > 0));
         ClearLastError();
         Ok := TryImport(Row, '', Id);
         Observer.Observe('empty_import', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
@@ -192,16 +192,12 @@ codeunit 61285 "LT S Media Files"
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT S Media File Row";
-        Names: Record "Name/Value Buffer" temporary;
-        FileMgt: Codeunit "File Management";
         Src: Text;
         Prefix: Text;
         Dir: Text;
         Id: Guid;
         Id2: Guid;
         Count: Integer;
-        Found: Integer;
-        Marker: Text;
     begin
         Row.DeleteAll();
         Src := TempName('.png');
@@ -221,20 +217,8 @@ codeunit 61285 "LT S Media Files"
         Row.Get('S');
         Dir := TemporaryPath() + 'ltsmediaset' + DelChr(Format(CreateGuid()), '=', '{}-');
         Prefix := Dir + '-';
-        Marker := Dir;
         Count := Row.Pics.ExportFile(Prefix);
         Observer.Observe('export_count', Format(Count));
-        FileMgt.GetServerDirectoryFilesList(Names, TemporaryPath());
-        Observer.Observe('files_in_temp_dir_any', Format(Names.Count() > 0));
-        if Names.FindSet() then
-            repeat
-                if StrPos(Names.Value, Marker) > 0 then begin
-                    Found += 1;
-                    Observer.Observe('exported_name_' + Format(Found), Names.Value.Replace(Marker, '<prefix>').Replace(TemporaryPath(), '<tmp>'));
-                    File.Erase(Names.Value);
-                end;
-            until Names.Next() = 0;
-        Observer.Observe('exported_files_found', Format(Found));
         Observer.Observe('prefix_itself_exists', Format(File.Exists(Prefix)));
         Cleanup(Src);
         Observer.Finish();
