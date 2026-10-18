@@ -121,7 +121,10 @@ codeunit 78008 "LT AD SetAscending Ties"
         Row.SetCurrentKey(Grp);
         Row.SetAscending(Grp, false);
         Observer.Observe('key_grp_setascending_grp_false', All(Row));
-        Observer.Finish();
+        Observer.Expect('key_grp', '1,2,3,4,5,6,|back=6,5,4,3,2,1,|first=1|last=6|view=VERSION(1) SORTING(Field2)');
+        Observer.Expect('key_grp_ascending_false', '6,5,4,3,2,1,|back=1,2,3,4,5,6,|first=6|last=1|view=VERSION(1) SORTING(Field2) ORDER(1)');
+        Observer.Expect('key_grp_setascending_grp_false', '4,5,6,1,2,3,|back=3,2,1,6,5,4,|first=4|last=3|view=VERSION(1) SORTING(Field2) ORDER(1)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,7 +149,11 @@ codeunit 78008 "LT AD SetAscending Ties"
         Row.SetCurrentKey(Grp);
         Row.SetAscending(Grp, false);
         IdCase(Observer, 'grp_desc_id_asc', Row, true);
-        Observer.Finish();
+        Observer.Expect('desc_then_grp_asc', '3,2,1,6,5,4,|back=4,5,6,1,2,3,|first=3|last=4|view=VERSION(1) SORTING(Field2)');
+        Observer.Expect('desc_then_id_asc', 'error:The specified sorting could not be set on field ''Id'' with the key consisting of ''Grp''.|InvalidSortingFields');
+        Observer.Expect('id_desc_only', 'error:The specified sorting could not be set on field ''Id'' with the key consisting of ''Grp''.|InvalidSortingFields');
+        Observer.Expect('grp_desc_id_asc', 'ok|4,5,6,1,2,3,|back=3,2,1,6,5,4,|first=4|last=3|view=VERSION(1) SORTING(Field2) ORDER(1)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +170,10 @@ codeunit 78008 "LT AD SetAscending Ties"
         Row.SetCurrentKey(Grp, Id);
         Row.Ascending(false);
         Observer.Observe('key_grp_id_all_desc', All(Row));
-        Observer.Finish();
+        Observer.Expect('key_grp_id_plain', '1,2,3,4,5,6,|back=6,5,4,3,2,1,|first=1|last=6|view=VERSION(1) SORTING(Field2)');
+        Observer.Expect('key_grp_id_id_desc', 'error:The specified sorting could not be set on field ''Id'' with the key consisting of ''Grp''.|InvalidSortingFields');
+        Observer.Expect('key_grp_id_all_desc', '6,5,4,3,2,1,|back=1,2,3,4,5,6,|first=6|last=1|view=VERSION(1) SORTING(Field2) ORDER(1)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -180,7 +190,8 @@ codeunit 78008 "LT AD SetAscending Ties"
             Observer.Observe('qty_asc', 'ok|' + All(Row))
         else
             Observer.Observe('qty_asc', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('qty_asc', 'error:Cannot call SetAscending on field Qty because it is not part of the current sorting.|DB:Ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,6 +209,8 @@ codeunit 78008 "LT AD SetAscending Ties"
         Row.SetRange(Grp, 2);
         Row.Ascending(false);
         Observer.Observe('grp_desc_range2', All(Row));
-        Observer.Finish();
+        Observer.Expect('pk_desc_grp1', '3,2,1,|back=1,2,3,|first=3|last=1|view=VERSION(1) SORTING(Field1) ORDER(1) WHERE(Field2=1(1))');
+        Observer.Expect('grp_desc_range2', '6,5,4,|back=4,5,6,|first=6|last=4|view=VERSION(1) SORTING(Field2) ORDER(1) WHERE(Field2=1(2))');
+        Observer.Verify();
     end;
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: the count and the first 10 rows, with every column, of the platform table Tenant Report Layout Selection on the fresh tenant of a test container (read through RecordRef by table name).
+// Probe: the count and every row (4), with every column, of the platform table Tenant Report Layout Selection on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78109.
 
 codeunit 78109 "LT AD Plat Rows Layout"

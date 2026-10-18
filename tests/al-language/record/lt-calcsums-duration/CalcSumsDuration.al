@@ -100,7 +100,10 @@ codeunit 78003 "LT AD CalcSums Duration"
             Observer.Observe('two_fields', 'ok|' + State(Row))
         else
             Observer.Observe('two_fields', Failed());
-        Observer.Finish();
+        Observer.Expect('fresh_record', 'ok|id=0|dur=6 seconds|ms=P0DT0H0M6.0S|dec=0|plain=P0DT0H0M0.0S');
+        Observer.Expect('preset_record', 'ok|id=99|dur=6 seconds|ms=P0DT0H0M6.0S|dec=5|plain=P0DT0H0M0.888S');
+        Observer.Expect('two_fields', 'ok|id=0|dur=6 seconds|ms=P0DT0H0M6.0S|dec=6|plain=P0DT0H0M0.0S');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +133,10 @@ codeunit 78003 "LT AD CalcSums Duration"
             Observer.Observe('after_get', 'ok|' + State(Row))
         else
             Observer.Observe('after_get', Failed());
-        Observer.Finish();
+        Observer.Expect('range_2_3', 'ok|id=0|dur=5 seconds|ms=P0DT0H0M5.0S|dec=0|plain=P0DT0H0M0.0S');
+        Observer.Expect('empty_set', 'ok|id=0|dur=|ms=P0DT0H0M0.0S|dec=0|plain=P0DT0H0M0.0S');
+        Observer.Expect('after_get', 'ok|id=3|dur=6 seconds|ms=P0DT0H0M6.0S|dec=3|plain=P0DT0H3M0.0S');
+        Observer.Verify();
     end;
 
     [Test]
@@ -146,6 +152,7 @@ codeunit 78003 "LT AD CalcSums Duration"
             Observer.Observe('plain', 'ok|' + State(Row))
         else
             Observer.Observe('plain', Failed());
-        Observer.Finish();
+        Observer.Expect('plain', 'ok|id=0|dur=|ms=P0DT0H0M0.0S|dec=0|plain=P0DT0H6M0.0S');
+        Observer.Verify();
     end;
 }

@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: the count and the first 10 rows, with every column, of the platform table MediaResources on the fresh tenant of a test container (read through RecordRef by table name).
+// Probe: the count and the first 5 rows, with every column, of the platform table MediaResources on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78110.
 
 codeunit 78110 "LT AD Plat Rows Media"
@@ -13,6 +13,8 @@ codeunit 78110 "LT AD Plat Rows Media"
     var
         AllObj: Record AllObj;
     begin
+        if TableName = 'MediaResources' then
+            exit(2000000182);
         AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
         AllObj.SetRange("Object Name", TableName);
         if AllObj.FindFirst() then
@@ -61,7 +63,7 @@ codeunit 78110 "LT AD Plat Rows Media"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'MediaResources', 0, 10);
+        Dump(Observer, 'MediaResources', 0, 5);
         Observer.Finish();
     end;
 

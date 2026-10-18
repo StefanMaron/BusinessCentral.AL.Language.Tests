@@ -68,7 +68,11 @@ codeunit 78104 "LT AD Media Find Empty"
         Observer.Observe('blob_length', Format(FR.Length()));
         FR := RR.Field(5);
         Observer.Observe('guid_length', Format(FR.Length()));
-        Observer.Finish();
+        Observer.Expect('media_length', '16');
+        Observer.Expect('mediaset_length', '16');
+        Observer.Expect('blob_length', '8');
+        Observer.Expect('guid_length', '16');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -121,7 +125,12 @@ codeunit 78104 "LT AD Media Find Empty"
         CodeCase(Observer, '-', 'ABC');
         CodeCase(Observer, '+', 'ABC');
         CodeCase(Observer, '', '');
-        Observer.Finish();
+        Observer.Expect('code ABC find()', 'ok:No|key=ABC');
+        Observer.Expect('code ABC find(=)', 'ok:No|key=ABC');
+        Observer.Expect('code ABC find(-)', 'ok:No|key=ABC');
+        Observer.Expect('code ABC find(+)', 'ok:No|key=ABC');
+        Observer.Expect('code  find()', 'ok:No|key=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,6 +143,11 @@ codeunit 78104 "LT AD Media Find Empty"
         IntCase(Observer, '-', 5);
         IntCase(Observer, '+', 5);
         IntCase(Observer, '', 0);
-        Observer.Finish();
+        Observer.Expect('int 5 find()', 'ok:No|key=5');
+        Observer.Expect('int 5 find(=)', 'ok:No|key=5');
+        Observer.Expect('int 5 find(-)', 'ok:No|key=5');
+        Observer.Expect('int 5 find(+)', 'ok:No|key=5');
+        Observer.Expect('int 0 find()', 'ok:No|key=0');
+        Observer.Verify();
     end;
 }

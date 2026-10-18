@@ -44,7 +44,21 @@ codeunit 78001 "LT AD Date Formula Signed WD"
     begin
         ObserveFormula(Observer, '+1WD');
         ObserveFormula(Observer, '<+1WD>');
-        Observer.Finish();
+        Observer.Expect('+1WD fri', 'ok:2024-01-13');
+        Observer.Expect('+1WD sat', 'ok:2024-01-14');
+        Observer.Expect('+1WD sun', 'ok:2024-01-15');
+        Observer.Expect('+1WD mon', 'ok:2024-01-16');
+        Observer.Expect('+1WD q-end', 'ok:2024-04-01');
+        Observer.Expect('+1WD y-end', 'ok:2025-01-01');
+        Observer.Expect('+1WD mid', 'ok:2026-05-19');
+        Observer.Expect('<+1WD> fri', 'ok:2024-01-13');
+        Observer.Expect('<+1WD> sat', 'ok:2024-01-14');
+        Observer.Expect('<+1WD> sun', 'ok:2024-01-15');
+        Observer.Expect('<+1WD> mon', 'ok:2024-01-16');
+        Observer.Expect('<+1WD> q-end', 'ok:2024-04-01');
+        Observer.Expect('<+1WD> y-end', 'ok:2025-01-01');
+        Observer.Expect('<+1WD> mid', 'ok:2026-05-19');
+        Observer.Verify();
     end;
 
     [Test]
@@ -54,7 +68,21 @@ codeunit 78001 "LT AD Date Formula Signed WD"
     begin
         ObserveFormula(Observer, '-1WD');
         ObserveFormula(Observer, '<-1WD>');
-        Observer.Finish();
+        Observer.Expect('-1WD fri', 'ok:2024-01-11');
+        Observer.Expect('-1WD sat', 'ok:2024-01-12');
+        Observer.Expect('-1WD sun', 'ok:2024-01-13');
+        Observer.Expect('-1WD mon', 'ok:2024-01-14');
+        Observer.Expect('-1WD q-end', 'ok:2024-03-30');
+        Observer.Expect('-1WD y-end', 'ok:2024-12-30');
+        Observer.Expect('-1WD mid', 'ok:2026-05-17');
+        Observer.Expect('<-1WD> fri', 'ok:2024-01-11');
+        Observer.Expect('<-1WD> sat', 'ok:2024-01-12');
+        Observer.Expect('<-1WD> sun', 'ok:2024-01-13');
+        Observer.Expect('<-1WD> mon', 'ok:2024-01-14');
+        Observer.Expect('<-1WD> q-end', 'ok:2024-03-30');
+        Observer.Expect('<-1WD> y-end', 'ok:2024-12-30');
+        Observer.Expect('<-1WD> mid', 'ok:2026-05-17');
+        Observer.Verify();
     end;
 
     [Test]
@@ -64,7 +92,21 @@ codeunit 78001 "LT AD Date Formula Signed WD"
     begin
         ObserveFormula(Observer, '<%Q>');
         ObserveFormula(Observer, '%Q');
-        Observer.Finish();
+        Observer.Expect('<%Q> fri', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('<%Q> sat', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('<%Q> sun', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('<%Q> mon', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('<%Q> q-end', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('<%Q> y-end', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('<%Q> mid', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q fri', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q sat', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q sun', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q mon', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q q-end', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q y-end', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Expect('%Q mid', 'error:The date formula ''%Q'' should include a number.|Evaluate');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,6 +116,20 @@ codeunit 78001 "LT AD Date Formula Signed WD"
     begin
         ObserveFormula(Observer, '<%Y>');
         ObserveFormula(Observer, '%Y');
-        Observer.Finish();
+        Observer.Expect('<%Y> fri', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('<%Y> sat', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('<%Y> sun', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('<%Y> mon', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('<%Y> q-end', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('<%Y> y-end', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('<%Y> mid', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y fri', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y sat', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y sun', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y mon', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y q-end', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y y-end', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Expect('%Y mid', 'error:The date formula ''%Y'' should include a number.|Evaluate');
+        Observer.Verify();
     end;
 }

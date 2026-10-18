@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-class
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
-// Probe: the count and the first 10 rows, with every column, of the platform table Tenant Web Service on the fresh tenant of a test container (read through RecordRef by table name).
+// Probe: the count and every row, in 8 tests of 9 rows each,, with every column, of the platform table Tenant Web Service on the fresh tenant of a test container (read through RecordRef by table name).
 // First rows of the platform tables are also pinned in platform/lt-platform-tables/PtCloudTables.al. Object id 78111.
 
 codeunit 78111 "LT AD Plat Rows WebSvc"
@@ -57,11 +57,74 @@ codeunit 78111 "LT AD Plat Rows WebSvc"
     end;
 
     [Test]
-    procedure Rows_TenantWebService()
+    procedure Rows_TenantWebService_01()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Dump(Observer, 'Tenant Web Service', 0, 10);
+        Dump(Observer, 'Tenant Web Service', 0, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_02()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 9, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_03()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 18, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_04()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 27, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_05()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 36, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_06()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 45, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_07()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 54, 9);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Rows_TenantWebService_08()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Dump(Observer, 'Tenant Web Service', 63, 9);
         Observer.Finish();
     end;
 

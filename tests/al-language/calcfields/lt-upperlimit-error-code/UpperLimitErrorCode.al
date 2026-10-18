@@ -104,7 +104,13 @@ codeunit 78006 "LT AD UL Error Code"
         Probe(Observer, 'less_than', Header);
         Header.SetFilter("Date Filter", '..01/03/24');
         Probe(Observer, 'single_range_ok', Header);
-        Observer.Finish();
+        Observer.Expect('open_end', 'error:The filter expression "01/03/24.." applied to the field Date Filter in the LT AD UL Header table results in more than one range.|DB:NotIntervalFilter|hasError=Yes');
+        Observer.Expect('or_list', 'error:The filter expression "01/02/24|01/04/24" applied to the field Date Filter in the LT AD UL Header table results in more than one range.|DB:NotIntervalFilter|hasError=Yes');
+        Observer.Expect('not_equal', 'error:The filter expression "<>01/03/24" applied to the field Date Filter in the LT AD UL Header table results in more than one range.|DB:NotIntervalFilter|hasError=Yes');
+        Observer.Expect('greater_than', 'error:The filter expression ">01/03/24" applied to the field Date Filter in the LT AD UL Header table results in more than one range.|DB:NotIntervalFilter|hasError=Yes');
+        Observer.Expect('less_than', 'error:The filter expression "<01/03/24" applied to the field Date Filter in the LT AD UL Header table results in more than one range.|DB:NotIntervalFilter|hasError=Yes');
+        Observer.Expect('single_range_ok', 'ok:0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -122,6 +128,8 @@ codeunit 78006 "LT AD UL Error Code"
         Observer.Observe('code_after_failure', Code1);
         ClearLastError();
         Observer.Observe('code_after_clear', GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('code_after_failure', 'DB:NotIntervalFilter');
+        Observer.Expect('code_after_clear', '');
+        Observer.Verify();
     end;
 }

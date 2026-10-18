@@ -98,7 +98,12 @@ codeunit 78107 "LT AD Relation Blank Option"
     begin
         Seed();
         Check(Observer, 2, 'blank_idx1');
-        Observer.Finish();
+        Observer.Expect('blank_idx1 A1', 'error:The field ToBlank of table LT AD Rel Source contains a value (A1) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('blank_idx1 A2', 'ok');
+        Observer.Expect('blank_idx1 A3', 'error:The field ToBlank of table LT AD Rel Source contains a value (A3) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('blank_idx1 A4', 'ok');
+        Observer.Expect('blank_idx1 ', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +113,12 @@ codeunit 78107 "LT AD Relation Blank Option"
     begin
         Seed();
         Check(Observer, 3, 'blank_idx0');
-        Observer.Finish();
+        Observer.Expect('blank_idx0 A1', 'ok');
+        Observer.Expect('blank_idx0 A2', 'error:The field ToBlank0 of table LT AD Rel Source contains a value (A2) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('blank_idx0 A3', 'error:The field ToBlank0 of table LT AD Rel Source contains a value (A3) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('blank_idx0 A4', 'ok');
+        Observer.Expect('blank_idx0 ', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,6 +128,11 @@ codeunit 78107 "LT AD Relation Blank Option"
     begin
         Seed();
         Check(Observer, 4, 'third');
-        Observer.Finish();
+        Observer.Expect('third A1', 'error:The field ToThird of table LT AD Rel Source contains a value (A1) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('third A2', 'error:The field ToThird of table LT AD Rel Source contains a value (A2) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('third A3', 'ok');
+        Observer.Expect('third A4', 'error:The field ToThird of table LT AD Rel Source contains a value (A4) that cannot be found in the related table (LT AD Rel Target).|DB:NothingInsideFilter');
+        Observer.Expect('third ', 'ok');
+        Observer.Verify();
     end;
 }
