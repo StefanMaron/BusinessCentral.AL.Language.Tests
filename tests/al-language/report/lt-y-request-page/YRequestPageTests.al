@@ -23,6 +23,7 @@ codeunit 75512 "LT Y Request Page Tests"
         InsertLine('A', 10000, 'first');
         InsertLine('A', 20000, 'second');
         InsertLine('B', 10000, 'other');
+        Commit();
     end;
 
     local procedure InsertLine(DocNo: Code[10]; LineNo: Integer; Descr: Text[30])

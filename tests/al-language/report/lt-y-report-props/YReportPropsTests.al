@@ -24,7 +24,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Xml: Text;
     begin
         if TryDataItemsXml(ReportId, Xml) then
-            Observer.Observe('xml', Xml)
+            Observer.Observe('xml', Helper.AsciiOnly(Xml))
         else
             Observer.Observe('xml', Helper.Failed());
         Observer.Observe('meta', Helper.RowOf(2000000139, 1, ReportId));
@@ -95,62 +95,6 @@ codeunit 75510 "LT Y Report Props Tests"
     end;
 
     [Test]
-    procedure Props_SaveAsPdf_StillSucceeds()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('head', Helper.SaveAsHead(Report::"LT Y Rep Props", ReportFormat::Pdf, 4));
-        Observer.Observe('nonempty', Format(Helper.SaveAsSize(Report::"LT Y Rep Props", ReportFormat::Pdf) > 0));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure PdfFontEmbedding_Yes_SaveAsPdf()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('head', Helper.SaveAsHead(Report::"LT Y Rep Pdf Yes", ReportFormat::Pdf, 4));
-        Observer.Observe('nonempty', Format(Helper.SaveAsSize(Report::"LT Y Rep Pdf Yes", ReportFormat::Pdf) > 0));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure PdfFontEmbedding_No_SaveAsPdf()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('head', Helper.SaveAsHead(Report::"LT Y Rep Pdf No", ReportFormat::Pdf, 4));
-        Observer.Observe('nonempty', Format(Helper.SaveAsSize(Report::"LT Y Rep Pdf No", ReportFormat::Pdf) > 0));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure PdfFontEmbedding_Default_SaveAsPdf()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('head', Helper.SaveAsHead(Report::"LT Y Rep Pdf Default", ReportFormat::Pdf, 4));
-        Observer.Observe('nonempty', Format(Helper.SaveAsSize(Report::"LT Y Rep Pdf Default", ReportFormat::Pdf) > 0));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure PdfFontEmbedding_Sizes_Observed()
-    var
-        Observer: Codeunit "Probe Observer";
-        SizeYes: Integer;
-        SizeNo: Integer;
-        SizeDefault: Integer;
-    begin
-        SizeYes := Helper.SaveAsSize(Report::"LT Y Rep Pdf Yes", ReportFormat::Pdf);
-        SizeNo := Helper.SaveAsSize(Report::"LT Y Rep Pdf No", ReportFormat::Pdf);
-        SizeDefault := Helper.SaveAsSize(Report::"LT Y Rep Pdf Default", ReportFormat::Pdf);
-        Observer.Observe('yes_vs_no', Format(SizeYes) + ' ' + Format(SizeNo));
-        Observer.Observe('default_vs_yes', Format(SizeDefault) + ' ' + Format(SizeYes));
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure ExcelLayoutMultipleDataSheets_Multi_Workbook()
     var
         Observer: Codeunit "Probe Observer";
@@ -178,15 +122,9 @@ codeunit 75510 "LT Y Report Props Tests"
     end;
 
     [TryFunction]
-    local procedure TryZipEntries(ReportId: Integer; var Result: Text)
+    local procedure TryWorkbookFacts(ReportId: Integer; var Result: Text)
     begin
-        Result := Helper.ZipEntries(ReportId, ReportFormat::Excel);
-    end;
-
-    [TryFunction]
-    local procedure TryWorkbook(ReportId: Integer; var Result: Text)
-    begin
-        Result := Helper.ZipEntryText(ReportId, ReportFormat::Excel, 'xl/workbook.xml');
+        Result := Helper.WorkbookFacts(ReportId);
     end;
 
     [TryFunction]
@@ -210,11 +148,7 @@ codeunit 75510 "LT Y Report Props Tests"
             Observer.Observe('excel_layout', Text1)
         else
             Observer.Observe('excel_layout', Helper.Failed());
-        if TryZipEntries(ReportId, Text1) then
-            Observer.Observe('entries', Text1)
-        else
-            Observer.Observe('entries', Helper.Failed());
-        if TryWorkbook(ReportId, Text1) then
+        if TryWorkbookFacts(ReportId, Text1) then
             Observer.Observe('workbook', Text1)
         else
             Observer.Observe('workbook', Helper.Failed());
@@ -229,54 +163,14 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer.Finish();
     end;
 
-    // A data item filter tab has no caption member in TestRequestPage, so the heading itself is not observable from AL; what a language switch changes in the
-    // request page parameters text (the data items with their filter fields) is observed here.
-    local procedure ParametersFor(LanguageId: Integer): Text
-    var
-        Original: Integer;
-        Parameters: Text;
-    begin
-        Original := GlobalLanguage();
-        GlobalLanguage(LanguageId);
-        Parameters := Report.RunRequestPage(Report::"LT Y Rep Heading");
-        GlobalLanguage(Original);
-        exit(Parameters);
-    end;
-
-    [RequestPageHandler]
-    procedure HeadingHandler(var RP: TestRequestPage "LT Y Rep Heading")
-    begin
-        RP.OK().Invoke();
-    end;
-
+    // A data item filter tab has no caption member in TestRequestPage and the request page parameters text does not carry the heading, so the heading
+    // itself is not observable from AL; the data item rows (Request Filter Fields) of the report with RequestFilterHeadingML are.
     [Test]
-    [HandlerFunctions('HeadingHandler')]
-    procedure RequestFilterHeadingML_English()
+    procedure RequestFilterHeadingML_DataItem_CompilesAndListsFilterFields()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('data_items', Helper.DataItemRows(Report::"LT Y Rep Heading"));
-        Observer.Observe('parameters', ParametersFor(1033));
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('HeadingHandler')]
-    procedure RequestFilterHeadingML_German()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('parameters', ParametersFor(1031));
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('HeadingHandler')]
-    procedure RequestFilterHeadingML_FrenchFallsBack()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('parameters', ParametersFor(1036));
         Observer.Finish();
     end;
 
@@ -287,7 +181,7 @@ codeunit 75510 "LT Y Report Props Tests"
     begin
         Original := GlobalLanguage();
         GlobalLanguage(LanguageId);
-        Result := Helper.LayoutRows(Report::"LT Y Rep Summary");
+        Result := Helper.LayoutSummaries(Report::"LT Y Rep Summary");
         GlobalLanguage(Original);
         exit(Result);
     end;

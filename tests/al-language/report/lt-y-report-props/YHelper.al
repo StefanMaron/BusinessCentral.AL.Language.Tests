@@ -84,30 +84,8 @@ codeunit 75500 "LT Y Helper"
         exit(Head);
     end;
 
-    // Entry names of the zip file a SaveAs Excel or Word writes, in the order the archive lists them.
-    procedure ZipEntries(ReportId: Integer; Format: ReportFormat): Text
-    var
-        TempBlob: Codeunit "Temp Blob";
-        DataCompression: Codeunit "Data Compression";
-        OutS: OutStream;
-        InS: InStream;
-        Names: List of [Text];
-        Name: Text;
-        Result: Text;
-    begin
-        TempBlob.CreateOutStream(OutS);
-        Report.SaveAs(ReportId, '', Format, OutS);
-        TempBlob.CreateInStream(InS);
-        DataCompression.OpenZipArchive(InS, false);
-        DataCompression.GetEntryList(Names);
-        DataCompression.CloseZipArchive();
-        foreach Name in Names do
-            Result += Name + ';';
-        exit(Result);
-    end;
-
-    // Text of one entry of a zip file written by SaveAs.
-    procedure ZipEntryText(ReportId: Integer; Format: ReportFormat; EntryName: Text): Text
+    // Facts of the zip file a SaveAs Excel writes: number of worksheet entries, and the sheet names of xl/workbook.xml in order.
+    procedure WorkbookFacts(ReportId: Integer): Text
     var
         TempBlob: Codeunit "Temp Blob";
         Entry: Codeunit "Temp Blob";
@@ -116,22 +94,82 @@ codeunit 75500 "LT Y Helper"
         InS: InStream;
         EntryOut: OutStream;
         EntryIn: InStream;
+        Names: List of [Text];
+        Name: Text;
+        Workbook: Text;
         Line: Text;
-        Result: Text;
+        Sheets: Text;
+        Rest: Text;
+        Sheet: Integer;
         Length: Integer;
+        Count: Integer;
+        At: Integer;
+        Marker: Text;
     begin
         TempBlob.CreateOutStream(OutS);
-        Report.SaveAs(ReportId, '', Format, OutS);
+        Report.SaveAs(ReportId, '', ReportFormat::Excel, OutS);
         TempBlob.CreateInStream(InS);
         DataCompression.OpenZipArchive(InS, false);
+        DataCompression.GetEntryList(Names);
+        foreach Name in Names do
+            if Name.StartsWith('xl/worksheets/sheet') and not Name.Contains('_rels') then
+                Count += 1;
         Entry.CreateOutStream(EntryOut);
-        DataCompression.ExtractEntry(EntryName, EntryOut, Length);
+        DataCompression.ExtractEntry('xl/workbook.xml', EntryOut, Length);
         DataCompression.CloseZipArchive();
         Entry.CreateInStream(EntryIn);
         while not EntryIn.EOS() do begin
             EntryIn.ReadText(Line);
-            Result += Line + '|';
+            Workbook += Line;
         end;
+        for Sheet := 1 to 2 do begin
+            if Sheet = 1 then
+                Marker := '<x:sheet '
+            else
+                Marker := '<sheet ';
+            Rest := Workbook;
+            At := StrPos(Rest, Marker);
+            while At > 0 do begin
+                Rest := CopyStr(Rest, At + StrLen(Marker));
+                At := StrPos(Rest, 'name="');
+                Rest := CopyStr(Rest, At + 6);
+                Sheets += CopyStr(Rest, 1, StrPos(Rest, '"') - 1) + ',';
+                At := StrPos(Rest, Marker);
+            end;
+        end;
+        exit('worksheet_entries=' + Format(Count) + ' sheets=' + Sheets);
+    end;
+
+    // Every character above 126 written as \uXXXX, so a value survives the test result file unchanged.
+    procedure AsciiOnly(Value: Text): Text
+    var
+        i: Integer;
+        Code: Integer;
+        Hex: Text;
+        Result: Text;
+    begin
+        Hex := '0123456789ABCDEF';
+        for i := 1 to StrLen(Value) do begin
+            Code := Value[i];
+            if Code > 126 then
+                Result += '\u' + CopyStr(Hex, (Code div 4096) + 1, 1) + CopyStr(Hex, ((Code div 256) mod 16) + 1, 1) + CopyStr(Hex, ((Code div 16) mod 16) + 1, 1) + CopyStr(Hex, (Code mod 16) + 1, 1)
+            else
+                Result += CopyStr(Value, i, 1);
+        end;
+        exit(Result);
+    end;
+
+    // Name=Summary (the Description column of Report Layout List) of the layouts of one report, in the language of the session.
+    procedure LayoutSummaries(ReportId: Integer): Text
+    var
+        LayoutList: Record "Report Layout List";
+        Result: Text;
+    begin
+        LayoutList.SetRange("Report ID", ReportId);
+        if LayoutList.FindSet() then
+            repeat
+                Result += LayoutList.Name + '=' + LayoutList.Description + ';';
+            until LayoutList.Next() = 0;
         exit(Result);
     end;
 

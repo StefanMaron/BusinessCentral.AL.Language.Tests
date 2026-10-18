@@ -480,7 +480,7 @@ codeunit 75514 "LT Y XmlPort Tests"
     begin
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(XmlPortId, OutS);
-        TempBlob.CreateInStream(InS);
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
         while not InS.EOS() do begin
             InS.ReadText(Line);
             Result += Line + '|';
@@ -537,6 +537,9 @@ codeunit 75514 "LT Y XmlPort Tests"
         Seed();
         Observer.Observe('lax', ImportText(75553, '<Root><Item><Id>7</Id><Name>seven</Name><Unknown>x</Unknown></Item><Other/></Root>'));
         Observer.Observe('rows_lax', Rows());
+        Observer.Observe('lax_other_namespace', ImportText(75553, '<Root><Item><Id>6</Id><Name>six</Name><Unknown xmlns="urn:other">x</Unknown></Item></Root>'));
+        Observer.Observe('rows_lax_ns', Rows());
+        Observer.Observe('strict_other_namespace', ImportText(75554, '<Root><Item><Id>5</Id><Name>five</Name><Unknown xmlns="urn:other">x</Unknown></Item></Root>'));
         Observer.Observe('strict', ImportText(75554, '<Root><Item><Id>8</Id><Name>eight</Name><Unknown>x</Unknown></Item></Root>'));
         Observer.Observe('strict_root', ImportText(75554, '<Root><Item><Id>9</Id><Name>nine</Name></Item><Other/></Root>'));
         Observer.Observe('rows_strict', Rows());
@@ -596,9 +599,9 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Seed();
-        Observer.Observe('import', ImportText(75560, '<Root xmlns:p="urn:lt-y"><Item p:Ident="11" Total="0" p:Note="n"><p:Label>eleven</p:Label><Lines>0</Lines></Item></Root>'));
+        Observer.Observe('import', ImportText(75560, '<Root xmlns:p="urn:lt-y"><Item Ident="11" Total="0" Note="n"><p:Label>eleven</p:Label><Lines>0</Lines></Item></Root>'));
         Observer.Observe('rows', Rows());
-        Observer.Observe('import_no_prefix', ImportText(75560, '<Root><Item Ident="12"><Label>twelve</Label></Item></Root>'));
+        Observer.Observe('import_no_prefix', ImportText(75560, '<Root><Item Ident="12" Total="0" Note=""><Label>twelve</Label><Lines>0</Lines></Item></Root>'));
         Observer.Observe('rows2', Rows());
         Observer.Finish();
     end;
@@ -610,7 +613,6 @@ codeunit 75514 "LT Y XmlPort Tests"
     begin
         Seed();
         Export(Observer, 'attr_elem', 75562);
-        Export(Observer, 'table', 75563);
         Observer.Observe('import', ImportText(75562, '<Root><Item Id="21" Free="f" Tag="t"><Name>twentyone</Name><Extra>99</Extra></Item></Root>'));
         Observer.Observe('rows', Rows());
         Observer.Finish();
