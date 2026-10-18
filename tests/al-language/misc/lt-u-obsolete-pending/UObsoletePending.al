@@ -51,16 +51,56 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Src.Txt := 'one';
         Src.Insert();
         Card.OpenView();
-        Observer.Observe('group_field', Card.InObsGroup.Value);
-        Observer.Observe('group_field_visible', Format(Card.InObsGroup.Visible()));
-        Observer.Observe('cue_field', Card.InObsCue.Value);
-        Observer.Observe('label_visible', Format(Card.ObsLabel.Visible()));
-        Observer.Observe('action_enabled', Format(Card.ObsAction.Enabled()));
-        Observer.Observe('ext_field_visible', Format(Card.ObsExtField.Visible()));
-        Observer.Observe('ext_group_field', Card.InObsExtGroup.Value);
-        Observer.Observe('ext_action_enabled', Format(Card.ObsExtAction.Enabled()));
-        Card.ObsAction.Invoke();
-        Card.ObsExtAction.Invoke();
+        asserterror begin Observer.Observe('group_field', Card.InObsGroup.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('group_field|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('group_field_visible', Format(Card.InObsGroup.Visible())); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('group_field_visible|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('cue_field', Card.InObsCue.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('cue_field|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('label_visible', Format(Card.ObsLabel.Visible())); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('label_visible|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('action_enabled', Format(Card.ObsAction.Enabled())); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('action_enabled|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('ext_field_visible', Format(Card.ObsExtField.Visible())); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('ext_field_visible|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('ext_group_field', Card.InObsExtGroup.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('ext_group_field|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('ext_action_enabled', Format(Card.ObsExtAction.Enabled())); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('ext_action_enabled|failed')
+        else
+            ClearLastError();
+        asserterror begin Card.ObsAction.Invoke(); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Card_ObsAction_Invoke_|failed')
+        else
+            ClearLastError();
+        asserterror begin Card.ObsExtAction.Invoke(); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Card_ObsExtAction_Invoke_|failed')
+        else
+            ClearLastError();
         Card.Close();
         Observer.Finish();
     end;
@@ -76,6 +116,7 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         OutS: OutStream;
         InS: InStream;
         Xml: Text;
+        Line: Text;
     begin
         Src.DeleteAll();
         Src.Init();
@@ -90,8 +131,11 @@ codeunit 69799 "LT U Obsolete Pending Tests"
         Observer.Observe('report_state', State.Dump());
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(Xmlport::"LT U Obsolete XmlPort", OutS);
-        TempBlob.CreateInStream(InS);
-        InS.ReadText(Xml);
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Xml += Line + '\n';
+        end;
         Observer.Observe('xmlport_export', Xml);
         Observer.Finish();
     end;

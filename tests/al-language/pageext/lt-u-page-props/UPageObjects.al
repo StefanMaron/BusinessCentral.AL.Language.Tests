@@ -110,16 +110,13 @@ page 69594 "LT U Api Page"
     {
         area(Content)
         {
-            repeater(Rows)
+            field(id; Rec.SystemId) { }
+            field(txt; Rec.Txt) { }
+            part(lines; "LT U Part Page")
             {
-                field(id; Rec.SystemId) { }
-                field(txt; Rec.Txt) { }
-                part(lines; "LT U Part Page")
-                {
-                    EntityName = 'ltuLine';
-                    EntitySetName = 'ltuLines';
-                    SubPageLink = Id = field(Id);
-                }
+                EntityName = 'ltuLine';
+                EntitySetName = 'ltuLines';
+                SubPageLink = Id = field(Id);
             }
         }
     }

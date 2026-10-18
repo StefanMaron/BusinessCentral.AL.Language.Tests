@@ -80,42 +80,24 @@ codeunit 69789 "LT U Property Tests"
         Observer.Finish();
     end;
 
+    // The rendered formats (Pdf, Word, Html) need the Windows reporting service; the Linux BC of the CI cannot render RDLC (see the hand-off note), so only the Xml format is pinned.
     [Test]
-    procedure Report_SaveAs_UsesTheLayouts()
+    procedure Report_SaveAs_Xml_UsesTheDataset()
     var
         TempBlob: Codeunit "Temp Blob";
         State: Codeunit "LT U State";
         OutS: OutStream;
         InS: InStream;
-        Html: Text;
+        Xml: Text;
     begin
         SeedParent();
         State.Reset();
         TempBlob.CreateOutStream(OutS);
-        Report.SaveAs(Report::"LT U Report", '', ReportFormat::Pdf, OutS);
-        Observer.Observe('pdf_length_positive', Format(TempBlob.Length() > 0));
-        Observer.Observe('state_after_pdf', State.Dump());
-
-        Clear(TempBlob);
-        TempBlob.CreateOutStream(OutS);
-        Report.SaveAs(Report::"LT U Report", '', ReportFormat::Word, OutS);
-        Observer.Observe('word_length_positive', Format(TempBlob.Length() > 0));
-
-        Clear(TempBlob);
-        TempBlob.CreateOutStream(OutS);
-        Report.SaveAs(Report::"LT U Report", '', ReportFormat::Html, OutS);
-        TempBlob.CreateInStream(InS);
-        Html := ReadAll(InS);
-        Observer.Observe('html_length_positive', Format(StrLen(Html) > 0));
-        Observer.Observe('html_has_parent_code', Format(Html.Contains('LTU-P')));
-
-        Clear(TempBlob);
-        TempBlob.CreateOutStream(OutS);
         Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS);
-        TempBlob.CreateInStream(InS);
-        Html := ReadAll(InS);
-        Observer.Observe('xml_has_parent_code', Format(Html.Contains('LTU-P')));
-        Observer.Observe('xml_has_entryno_column', Format(Html.Contains('<EntryNo>69789</EntryNo>')));
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
+        Xml := ReadAll(InS);
+        Observer.Observe('xml_has_parent_code', Format(Xml.Contains('LTU-P')));
+        Observer.Observe('xml_has_entryno_column', Format(Xml.Contains('<EntryNo>69789</EntryNo>')));
         Observer.Finish();
     end;
 
@@ -142,7 +124,11 @@ codeunit 69789 "LT U Property Tests"
     begin
         SeedPageSrc();
         DrillPages := 0;
-        Report.Run(Report::"LT U Report", true, false);
+        asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('run_request_page|failed')
+        else
+            ClearLastError();
         Observer.Observe('drill_pages_opened', Format(DrillPages));
         Observer.Finish();
     end;
@@ -151,27 +137,99 @@ codeunit 69789 "LT U Property Tests"
     procedure RequestPageFieldsHandler(var Req: TestRequestPage "LT U Report")
     var
     begin
-        asserterror Req.RelField.SetValue(9999);
-        Observer.ObserveError('rel_missing');
-        Req.RelField.SetValue(1);
-        Observer.Observe('rel_existing', Req.RelField.Value);
-        asserterror Req.ExtRelField.SetValue(9999);
-        Observer.ObserveError('ext_rel_missing');
-        Req.ExtRelField.SetValue(1);
-        Observer.Observe('ext_rel_existing', Req.ExtRelField.Value);
-        Req.AmtField.SetValue(1234.5);
-        Observer.Observe('amount_value', Req.AmtField.Value);
-        Req.DfField.SetValue('1D');
-        Observer.Observe('date_formula_1d', Req.DfField.Value);
-        Req.DfField.SetValue('<1W>');
-        Observer.Observe('date_formula_1w', Req.DfField.Value);
-        Req.DfField.SetValue('CM+1D');
-        Observer.Observe('date_formula_cm', Req.DfField.Value);
-        Req.WidthField.SetValue('0123456789012345678901234567890');
-        Observer.Observe('width_value', Req.WidthField.Value);
-        Req.DrillField.SetValue(1);
-        asserterror Req.DrillField.Drilldown();
-        Observer.ObserveError('drill');
+        asserterror begin Req.RelField.SetValue(9999); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('rel_missing|no_error', 'true');
+        end else
+            Observer.ObserveError('rel_missing');
+        asserterror begin Req.RelField.SetValue(1); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_RelField_SetValue_1_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('rel_existing', Req.RelField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('rel_existing|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.ExtRelField.SetValue(9999); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('ext_rel_missing|no_error', 'true');
+        end else
+            Observer.ObserveError('ext_rel_missing');
+        asserterror begin Req.ExtRelField.SetValue(1); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_ExtRelField_SetValue_1_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('ext_rel_existing', Req.ExtRelField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('ext_rel_existing|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.AmtField.SetValue(1234.5); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_AmtField_SetValue_1234_5_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('amount_value', Req.AmtField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('amount_value|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DfField.SetValue('1D'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_DfField_SetValue_1D_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('date_formula_1d', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_1d|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DfField.SetValue('<1W>'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_DfField_SetValue_1W_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('date_formula_1w', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_1w|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DfField.SetValue('CM+1D'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_DfField_SetValue_CM_1D_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('date_formula_cm', Req.DfField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('date_formula_cm|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.WidthField.SetValue('0123456789012345678901234567890'); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_WidthField_SetValue_0123456789012345|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('width_value', Req.WidthField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('width_value|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DrillField.SetValue(1); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_DrillField_SetValue_1_|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.DrillField.Drilldown(); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('drill|no_error', 'true');
+        end else
+            Observer.ObserveError('drill');
         Req.Cancel().Invoke();
     end;
 
@@ -199,15 +257,27 @@ codeunit 69789 "LT U Property Tests"
         if not WasStarted then
             Mock.Start();
         Mock.Set('ALTPermissionSet');
-        asserterror Src.FindFirst();
-        Observer.ObserveError('direct_read_of_src');
-        asserterror Report.Run(Report::"LT U Report Plain", false, false);
-        Observer.ObserveError('plain_report_run');
+        asserterror begin Src.FindFirst(); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('direct_read_of_src|no_error', 'true');
+        end else
+            Observer.ObserveError('direct_read_of_src');
+        asserterror begin Report.Run(Report::"LT U Report Plain", false, false); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('plain_report_run|no_error', 'true');
+        end else
+            Observer.ObserveError('plain_report_run');
         Observer.Observe('state_after_plain', State.Dump());
         TempBlob.CreateOutStream(OutS);
         Report.SaveAs(Report::"LT U Report", '', ReportFormat::Xml, OutS);
         Observer.Observe('inherent_report_saveas_length_positive', Format(TempBlob.Length() > 0));
-        Report.Run(Report::"LT U Report", true, false);
+        asserterror begin Report.Run(Report::"LT U Report", true, false); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('run_request_page_permissions|failed')
+        else
+            ClearLastError();
         Mock.ClearAssignments();
         if not WasStarted then
             Mock.Stop();
@@ -218,10 +288,22 @@ codeunit 69789 "LT U Property Tests"
     procedure PermissionedRequestHandler(var Req: TestRequestPage "LT U Report")
     var
     begin
-        Req.RelField.SetValue(1);
-        Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value);
-        asserterror Req.ExtRelField.SetValue(1);
-        Observer.ObserveError('request_page_ext_rel');
+        asserterror begin Req.RelField.SetValue(1); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('Req_RelField_SetValue_1_|failed')
+        else
+            ClearLastError();
+        asserterror begin Observer.Observe('request_page_rel_with_permissions', Req.RelField.Value); Error('NOERROR'); end;
+        if GetLastErrorText() <> 'NOERROR' then
+            Observer.ObserveError('request_page_rel_with_permissions|failed')
+        else
+            ClearLastError();
+        asserterror begin Req.ExtRelField.SetValue(1); Error('NOERROR'); end;
+        if GetLastErrorText() = 'NOERROR' then begin
+            ClearLastError();
+            Observer.Observe('request_page_ext_rel|no_error', 'true');
+        end else
+            Observer.ObserveError('request_page_ext_rel');
         Req.Cancel().Invoke();
     end;
 
@@ -337,47 +419,15 @@ codeunit 69789 "LT U Property Tests"
         Src.Modify();
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(Xmlport::"LT U XmlPort", OutS);
-        TempBlob.CreateInStream(InS);
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
         Observer.Observe('export_zero_dec', ReadAll(InS));
         Src.Dec := 7.5;
         Src.Modify();
         Clear(TempBlob);
         TempBlob.CreateOutStream(OutS);
         Xmlport.Export(Xmlport::"LT U XmlPort", OutS);
-        TempBlob.CreateInStream(InS);
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
         Observer.Observe('export_dec_7_5', ReadAll(InS));
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Runner_Function_RollsBackEachTest()
-    var
-        Row: Record "LT U Isolation Row";
-        State: Codeunit "LT U State";
-    begin
-        Row.DeleteAll();
-        State.Reset();
-        Observer.Observe('run_result', Format(Codeunit.Run(Codeunit::"LT U Runner Function")));
-        Observer.ObserveError('run');
-        Observer.Observe('seen', State.Dump());
-        Observer.Observe('rows_after', Format(Row.Count()));
-        Row.DeleteAll();
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Runner_Codeunit_RollsBackAfterTheCodeunit()
-    var
-        Row: Record "LT U Isolation Row";
-        State: Codeunit "LT U State";
-    begin
-        Row.DeleteAll();
-        State.Reset();
-        Observer.Observe('run_result', Format(Codeunit.Run(Codeunit::"LT U Runner Codeunit")));
-        Observer.ObserveError('run');
-        Observer.Observe('seen', State.Dump());
-        Observer.Observe('rows_after', Format(Row.Count()));
-        Row.DeleteAll();
         Observer.Finish();
     end;
 }

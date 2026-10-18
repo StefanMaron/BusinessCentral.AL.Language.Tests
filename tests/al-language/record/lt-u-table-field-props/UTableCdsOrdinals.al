@@ -42,7 +42,7 @@ codeunit 69782 "LT U Cds Option Tests"
     procedure OptionOrdinalValues_Format_Assign_Evaluate()
     var
         Observer: Codeunit "Probe Observer";
-        Rec: Record "LT U Cds Option";
+        Rec: Record "LT U Cds Option" temporary;
         Ordinal: Integer;
         Parsed: Option Alpha,Beta,Gamma;
     begin
@@ -88,7 +88,8 @@ codeunit 69782 "LT U Cds Option Tests"
     procedure OptionOrdinalValues_FieldRef_Filters()
     var
         Observer: Codeunit "Probe Observer";
-        Rec: Record "LT U Cds Option";
+        Rec: Record "LT U Cds Option" temporary;
+        Plain: Record "LT U Cds Option";
         RecRef: RecordRef;
         FieldRef: FieldRef;
     begin
@@ -120,10 +121,16 @@ codeunit 69782 "LT U Cds Option Tests"
         Observer.Observe('fieldref_validate_10_value', Format(FieldRef.Value));
 
         Observer.Observe('is_temporary', Format(Rec.IsTemporary()));
-        asserterror Rec.Insert();
-        Observer.ObserveError('insert');
-        asserterror Rec.FindFirst();
-        Observer.ObserveError('find_first');
+        Rec.Insert();
+        Observer.Observe('temp_insert_count', Format(Rec.Count()));
+        Observer.Observe('temp_find_first', Format(Rec.FindFirst()));
+        Observer.Observe('temp_find_first_value', Format(Rec.Opt));
+        asserterror Plain.Init();
+        Observer.ObserveError('plain_init');
+        asserterror Plain.Insert();
+        Observer.ObserveError('plain_insert');
+        asserterror Plain.FindFirst();
+        Observer.ObserveError('plain_find_first');
         Observer.Finish();
     end;
 }
