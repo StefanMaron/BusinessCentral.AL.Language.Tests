@@ -7,7 +7,8 @@
 // Not pinned: report 79253 (RDLC layout). The Linux tier of the CI stubs the RDLC renderer: SaveAs returns false with no output for Pdf, Word,
 // Excel and Html, so nothing it does after the refusal is Business Central's. It gets tests once the corpus CI runs with BC_RDLC_RENDERER=mono.
 // Word layout to Excel and Excel layout to Pdf return false without an error and without OnPreRendering on every leg (27.5, 28.5, 29.0);
-// these two rows are worth a look on the Windows nightly.
+// these two rows are worth a look on the Windows nightly. The generated Word layout has no content controls, so neither the request value nor
+// a column value appears in the Word, Html or PDF output; the Excel layout writes both into its data sheet.
 // BC versions: 27 - 29
 
 codeunit 79255 "LT AM Report Output Tests"
@@ -183,7 +184,16 @@ codeunit 79255 "LT AM Report Output Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, Report::"LT AM Word Rpt", ReportFormat::Word);
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79251,SaveAs,req=Yes);OnPreRendering();OnDocumentReady(79251,keys=19,documenttype=application/vnd.openxmlformats-officedocument.wordprocessingml.document,layoutmimetype=Application/ReportLayout/Word,layoutname=LtAmWordLayout,objectname=LT AM Word Rpt,success=No);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('has_output', 'Yes');
+        Observer.Expect('kind', 'zip');
+        Observer.Expect('main_part', 'Yes/No');
+        Observer.Expect('entries_with_request_value', '');
+        Observer.Expect('entries_with_constant_column', '');
+        Observer.Expect('unreadable_parts', '');
+        Observer.Verify();
     end;
 
     [Test]
