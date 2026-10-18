@@ -10,7 +10,7 @@
 // opens and closes, the failing mode makes no difference). For RunObject = Codeunit only OnAfterActionEvent fires, after the codeunit ran, and an error in it reaches Invoke; the before event does not fire.
 // BC versions: 27.0 to 29.0
 
-table 71770 "LT PS Row"
+table 71770 "LT PAS Row"
 {
     DataClassification = CustomerContent;
 
@@ -142,7 +142,7 @@ codeunit 71776 "LT PS Run"
 page 71774 "LT PS Target"
 {
     PageType = Card;
-    SourceTable = "LT PS Row";
+    SourceTable = "LT PAS Row";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -172,7 +172,7 @@ page 71774 "LT PS Target"
 page 71773 "LT PS Card"
 {
     PageType = Card;
-    SourceTable = "LT PS Row";
+    SourceTable = "LT PAS Row";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -220,7 +220,7 @@ codeunit 71775 "LT Page Action Sub Errors"
 
     local procedure Seed(FailMode: Text)
     var
-        Row: Record "LT PS Row";
+        Row: Record "LT PAS Row";
         Log: Codeunit "LT PS Log";
     begin
         Row.DeleteAll(false);
