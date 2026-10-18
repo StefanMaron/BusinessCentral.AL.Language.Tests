@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/variant/variant-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); self-contained table 67220 (also used by the OnPrem app), codeunit 67221
+// Fixtures used: Probe Observer (codeunit 69160); self-contained table 67220 (also used by the OnPrem app), codeunits 67221 and 67222
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
 // Facts: Variant.IsDataClassificationType and Variant.IsSecurityFiltering over many value kinds;
 // Database.CopyCompany (destination company, copied rows, errors for a missing source and an existing destination).
@@ -60,10 +60,12 @@ codeunit 67221 "LT O Small Builtins"
         Observer.Finish();
     end;
 
-    [TryFunction]
-    local procedure TryCopyCompany(Source: Text; Destination: Text)
+    local procedure CopyIt(Source: Text; Destination: Text): Boolean
+    var
+        Runner: Codeunit "LT O Copy Runner";
     begin
-        Database.CopyCompany(Source, Destination);
+        Runner.Setup(Source, Destination);
+        exit(Runner.Run());
     end;
 
     [Test]
@@ -72,16 +74,16 @@ codeunit 67221 "LT O Small Builtins"
         Observer: Codeunit "Probe Observer";
         Company: Record Company;
     begin
-        if TryCopyCompany('LT O No Such Company', 'LT O Copy Target') then
+        if CopyIt('LT O No Such Company', 'LT O Copy Target') then
             Observer.Observe('missing source', 'no error')
         else
             Observer.ObserveError('missing source');
         Observer.Observe('missing source|destination exists', Format(Company.Get('LT O Copy Target')));
-        if TryCopyCompany(CompanyName(), CompanyName()) then
+        if CopyIt(CompanyName(), CompanyName()) then
             Observer.Observe('existing destination', 'no error')
         else
             Observer.ObserveError('existing destination');
-        if TryCopyCompany(CompanyName(), 'LT O Copy Target') then
+        if CopyIt(CompanyName(), 'LT O Copy Target') then
             Observer.Observe('copy', 'no error')
         else
             Observer.ObserveError('copy');
@@ -89,5 +91,23 @@ codeunit 67221 "LT O Small Builtins"
         if Company.Get('LT O Copy Target') then
             Company.Delete();
         Observer.Finish();
+    end;
+}
+
+codeunit 67222 "LT O Copy Runner"
+{
+    var
+        SourceName: Text;
+        DestinationName: Text;
+
+    procedure Setup(Source: Text; Destination: Text)
+    begin
+        SourceName := Source;
+        DestinationName := Destination;
+    end;
+
+    trigger OnRun()
+    begin
+        Database.CopyCompany(SourceName, DestinationName);
     end;
 }

@@ -39,11 +39,11 @@ codeunit 61236 "LT O Blob File"
         Row.Data.CreateOutStream(Out);
         Out.WriteText('blob content 123');
         if TryExport(Row, Path, Result) then
-            Observer.Observe('export', 'return=' + Result)
+            Observer.Observe('export', 'return ends with file name=' + Format(Result.EndsWith('lt-o-blob-roundtrip.bin')))
         else
             Observer.ObserveError('export');
         if TryImport(Back, Path, Result) then
-            Observer.Observe('import', 'return=' + Result)
+            Observer.Observe('import', 'return ends with file name=' + Format(Result.EndsWith('lt-o-blob-roundtrip.bin')))
         else
             Observer.ObserveError('import');
         Observer.Observe('imported length', Format(Back.Data.Length()));
@@ -52,6 +52,18 @@ codeunit 61236 "LT O Blob File"
         Observer.Observe('imported content', Content);
         if Erase(Path) then;
         Observer.Finish();
+    end;
+
+    // The error text holds the service tier's temporary folder: observe its start and end only.
+    local procedure ObservePathError(var Observer: Codeunit "Probe Observer"; Tag: Text)
+    var
+        Text: Text;
+    begin
+        Text := GetLastErrorText();
+        Observer.Observe(Tag + '|starts', CopyStr(Text, 1, 5));
+        Observer.Observe(Tag + '|ends', CopyStr(Text, StrLen(Text) - 18, 19));
+        Observer.Observe(Tag + '|code', GetLastErrorCode());
+        ClearLastError();
     end;
 
     [Test]
@@ -65,13 +77,13 @@ codeunit 61236 "LT O Blob File"
         Row.Data.CreateOutStream(Out);
         Out.WriteText('x');
         if TryExport(Row, TemporaryPath() + 'lt-o-no-such-folder/sub/file.bin', Result) then
-            Observer.Observe('export invalid path', 'return=' + Result)
+            Observer.Observe('export invalid path', 'return ends with file name=' + Format(Result.EndsWith('file.bin')))
         else
             Observer.ObserveError('export invalid path');
         if TryImport(Row, TemporaryPath() + 'lt-o-missing-file.bin', Result) then
             Observer.Observe('import missing', 'return=' + Result)
         else
-            Observer.ObserveError('import missing');
+            ObservePathError(Observer, 'import missing');
         Observer.Observe('blob length after failed import', Format(Row.Data.Length()));
         if TryExport(Row, '', Result) then
             Observer.Observe('export blank', 'return=' + Result)
@@ -126,6 +138,8 @@ codeunit 61257 "LT O Session Misc"
         Used := SessionInformation.AITokensUsed();
         Observer.Observe('value', Format(Count));
         Observer.Observe('is integer', Format(Used.IsInteger()));
+        Observer.Observe('is decimal', Format(Used.IsDecimal()));
+        Observer.Observe('is biginteger', Format(Used.IsBigInteger()));
         Observer.Finish();
     end;
 

@@ -166,19 +166,6 @@ codeunit 61259 "LT O Encryption Files"
         ImportEncryptionKey(Path, Password);
     end;
 
-    [TryFunction]
-    local procedure TryStream(var Url: Text; Minutes: Integer)
-    var
-        Blob: Record "LT O Blob Row";
-        Out: OutStream;
-        Inn: InStream;
-    begin
-        Blob.Data.CreateOutStream(Out);
-        Out.WriteText('stream content');
-        Blob.Data.CreateInStream(Inn);
-        Url := ImportStreamWithUrlAccess(Inn, 'lt-o-stream.txt', Minutes);
-    end;
-
     [Test]
     procedure O_EncryptionKey_Export_Import()
     var
@@ -199,7 +186,12 @@ codeunit 61259 "LT O Encryption Files"
         if TryImportKey(TemporaryPath() + 'lt-o-missing.key', 'LT O key password 1') then
             Observer.Observe('import missing file', 'no error')
         else
-            Observer.ObserveError('import missing file');
+            begin
+                Observer.Observe('import missing file|starts', CopyStr(GetLastErrorText(), 1, 5));
+                Observer.Observe('import missing file|ends', CopyStr(GetLastErrorText(), StrLen(GetLastErrorText()) - 21, 22));
+                Observer.Observe('import missing file|code', GetLastErrorCode());
+                ClearLastError();
+            end;
         if TryExportKey('LT O key password 1', Result) then
             if TryImportKey(Result, 'LT O wrong password') then
                 Observer.Observe('import wrong password', 'no error')
@@ -213,20 +205,53 @@ codeunit 61259 "LT O Encryption Files"
     procedure O_ImportStreamWithUrlAccess()
     var
         Observer: Codeunit "Probe Observer";
-        Url: Text;
+        Runner: Codeunit "LT O Stream Runner";
+        Minutes: Integer;
     begin
-        if TryStream(Url, 5) then
-            Observer.Observe('five minutes', 'url blank=' + Format(Url = '') + ' length>0=' + Format(StrLen(Url) > 0))
-        else
-            Observer.ObserveError('five minutes');
-        if TryStream(Url, 0) then
-            Observer.Observe('zero minutes', 'url blank=' + Format(Url = ''))
-        else
-            Observer.ObserveError('zero minutes');
-        if TryStream(Url, -1) then
-            Observer.Observe('negative minutes', 'url blank=' + Format(Url = ''))
-        else
-            Observer.ObserveError('negative minutes');
+        foreach Minutes in Minutes5() do begin
+            Runner.Setup(Minutes);
+            if Runner.Run() then
+                Observer.Observe(Format(Minutes) + ' minutes', 'url blank=' + Format(Runner.GetUrl() = '') + ' starts with http=' + Format(Runner.GetUrl().StartsWith('http')))
+            else
+                Observer.ObserveError(Format(Minutes) + ' minutes');
+        end;
         Observer.Finish();
+    end;
+
+    local procedure Minutes5() Result: List of [Integer]
+    begin
+        Result.Add(5);
+        Result.Add(0);
+        Result.Add(-1);
+    end;
+}
+
+codeunit 61282 "LT O Stream Runner"
+{
+    var
+        MinutesToExpire: Integer;
+        Url: Text;
+
+    procedure Setup(Minutes: Integer)
+    begin
+        MinutesToExpire := Minutes;
+        Url := '';
+    end;
+
+    procedure GetUrl(): Text
+    begin
+        exit(Url);
+    end;
+
+    trigger OnRun()
+    var
+        Blob: Record "LT O Blob Row";
+        Out: OutStream;
+        Inn: InStream;
+    begin
+        Blob.Data.CreateOutStream(Out);
+        Out.WriteText('stream content');
+        Blob.Data.CreateInStream(Inn);
+        Url := ImportStreamWithUrlAccess(Inn, 'lt-o-stream.txt', MinutesToExpire);
     end;
 }
