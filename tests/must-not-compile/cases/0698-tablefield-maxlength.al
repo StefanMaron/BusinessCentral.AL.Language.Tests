@@ -1,4 +1,4 @@
-// @expect AL0124 | The property 'MaxLength' cannot be used in this context. Verify the property is available for the current object type.
+// @expect AL0124 | The property 'MaxLength' cannot be used in this context
 // MaxLength is a modifier of Caption only; on a field it is not a property.
 table 59698 "MNC U 698"
 {

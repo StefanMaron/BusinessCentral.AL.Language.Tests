@@ -1,12 +1,12 @@
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0169 | The option value 'Removed' is not valid. Check the enum definition for valid values.
-// @expect AL0327 | Missing file 'x.js'.
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0169 | The option value 'Removed' is not valid
+// @expect AL0327 | Missing file 'x.js'
 // Removed is not a value of ObsoleteState for these object kinds (it is for table fields).
 codeunit 59709 "MNC U CU 709" { ObsoleteState = Removed; ObsoleteReason = 'r'; ObsoleteTag = '1.0'; }
 enum 59710 "MNC U Enum 709" { ObsoleteState = Removed; ObsoleteReason = 'r'; ObsoleteTag = '1.0'; value(0; A) { } }

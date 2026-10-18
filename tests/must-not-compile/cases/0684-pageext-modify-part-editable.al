@@ -1,4 +1,4 @@
-// @expect AL0666 | 'Modifying Editable from Extensions' is not available in runtime version '16.0'. The supported runtime versions are: '1.0' until, but not including '10.1'.
+// @expect AL0666 | 'Modifying Editable from Extensions' is not available in runtime version '16.0'. The supported runtime versions are: '1.0' until, but not including '10.1'
 // A page extension cannot change Editable of a base part with modify (runtime 16.0).
 table 59684 "MNC U 684"
 {

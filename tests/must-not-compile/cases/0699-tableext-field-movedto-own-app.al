@@ -1,4 +1,4 @@
-// @expect AL0829 | Symbol of kind Field 'MncMoved' cannot be moved to its own app.
+// @expect AL0829 | Symbol of kind Field 'MncMoved' cannot be moved to its own app
 // MovedTo names the app of the extension itself.
 tableextension 59699 "MNC U Ext 699" extends Customer
 {

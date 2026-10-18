@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'None' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'None' is not valid
 // UpdatePropagation knows Both and SubPart only.
 table 59685 "MNC U 685"
 {

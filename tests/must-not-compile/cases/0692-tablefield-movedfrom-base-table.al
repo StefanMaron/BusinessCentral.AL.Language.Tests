@@ -1,4 +1,4 @@
-// @expect AL0825 | It is not possible to move the field 'Txt' (2) to a base table.
+// @expect AL0825 | It is not possible to move the field 'Txt' (2) to a base table
 // MovedFrom on a field of a base table (not of a table extension).
 table 59692 "MNC U 692"
 {

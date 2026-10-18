@@ -1,4 +1,4 @@
-// @expect AL0246 | The property 'UpdatePropagation' cannot be customized. This property is read-only in the current context.
+// @expect AL0246 | The property 'UpdatePropagation' cannot be customized
 // A page extension cannot change UpdatePropagation of a base part with modify.
 table 59686 "MNC U 686"
 {

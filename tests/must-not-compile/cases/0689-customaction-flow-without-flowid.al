@@ -1,4 +1,4 @@
-// @expect AL0674 | The property 'FlowId' is required when property 'CustomActionType' is set to 'Flow'.
+// @expect AL0674 | The property 'FlowId' is required when property 'CustomActionType' is set to 'Flow'
 // A custom action of type Flow needs a FlowId.
 table 59689 "MNC U 689"
 {

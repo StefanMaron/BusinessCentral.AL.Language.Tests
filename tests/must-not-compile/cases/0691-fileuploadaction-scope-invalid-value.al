@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Everywhere' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Everywhere' is not valid
 // Scope of a file upload action takes Page or Repeater only.
 table 59691 "MNC U 691"
 {

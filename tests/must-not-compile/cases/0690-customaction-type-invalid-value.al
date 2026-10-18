@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Mystery' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Mystery' is not valid
 // CustomActionType takes a known value only.
 table 59690 "MNC U 690"
 {

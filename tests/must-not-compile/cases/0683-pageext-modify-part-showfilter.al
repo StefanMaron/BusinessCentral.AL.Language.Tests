@@ -1,4 +1,4 @@
-// @expect AL0246 | The property 'ShowFilter' cannot be customized. This property is read-only in the current context.
+// @expect AL0246 | The property 'ShowFilter' cannot be customized
 // A page extension cannot change ShowFilter of a base part with modify.
 table 59683 "MNC U 683"
 {

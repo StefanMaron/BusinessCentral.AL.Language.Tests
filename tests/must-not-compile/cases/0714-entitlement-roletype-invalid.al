@@ -1,4 +1,4 @@
-// @expect AL0169 | The option value 'Wrong' is not valid. Check the enum definition for valid values.
+// @expect AL0169 | The option value 'Wrong' is not valid
 // RoleType takes Local or Delegated only.
 permissionset 59714 "MNC U PS 714" { Permissions = codeunit "Mnc U CU 714" = X; }
 codeunit 59715 "Mnc U CU 714" { }

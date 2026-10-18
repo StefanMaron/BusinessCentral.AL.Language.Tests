@@ -1,4 +1,4 @@
-// @expect AL0246 | The property 'DecimalPlaces' cannot be customized. This property is read-only in the current context.
+// @expect AL0246 | The property 'DecimalPlaces' cannot be customized
 // A page extension cannot change DecimalPlaces of a base field with modify.
 table 59680 "MNC U 680"
 {
