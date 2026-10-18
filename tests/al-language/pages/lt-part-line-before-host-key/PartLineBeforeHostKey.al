@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); own tables 67573 and 67576, pages 67577 and 67578, log codeunit 67579, test codeunit 67582
 // Probe: a document page (header "No." is the key) with a lines ListPart linked by SourceTableLink. A line is entered while the header key is still blank, then the key is typed. Which table triggers run (header and line: OnInsert, OnValidate), in which order, which page triggers run, what the card and the part show afterwards and what is stored. The same with the key typed first, for comparison (issue 581 item 2).
-// BC versions: 27+
+// BC versions: 27+ (the key-typed-after-a-line test: 28+; BC 27 raises an uncatchable NullReferenceException there)
 
 table 67573 "LT DL Header"
 {
@@ -319,7 +319,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Observe(Name + '_part_quantity', '[' + Host.Lines.Quantity.Value() + ']');
     end;
 
-#if BC28PLUS // BC 27 raises an uncatchable CLR exception when the key is typed after a line was entered (see the BC 27 test below)
+#if BC28PLUS // BC 27 raises an uncatchable CLR exception when the key is typed after a line was entered (a NullReferenceException that neither a TryFunction nor asserterror catches, so BC 27 cannot be pinned here)
     [Test]
     procedure PartLine_EnteredBeforeHostKey_ThenKeyTyped()
     var
@@ -374,34 +374,6 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|20000|first|3]');
         Observer.Verify();
-    end;
-#endif
-
-#if not BC28PLUS
-    [Test]
-    procedure PartLine_EnteredBeforeHostKey_ThenKeyTyped_BC27()
-    var
-        Observer: Codeunit "Probe Observer";
-        Host: TestPage "LT DL Document";
-    begin
-        Seed();
-        Step(Observer, 'open_new', TryOpenNew(Host));
-        Step(Observer, 'new_line', TryNewLine(Host));
-        Step(Observer, 'description_before_key', TryDescription(Host, 'first'));
-        Step(Observer, 'quantity_before_key', TryQuantity(Host, 3));
-        Stored(Observer, 'before_key');
-        asserterror Host."No.".SetValue('D1');
-        Observer.ObserveError('type_key');
-        Observer.Observe('type_key_log', LogDump());
-        Stored(Observer, 'after_key');
-        Observer.Finish();
-    end;
-
-    local procedure LogDump(): Text
-    var
-        Log: Codeunit "LT DL Log";
-    begin
-        exit(Log.Dump());
     end;
 #endif
 
