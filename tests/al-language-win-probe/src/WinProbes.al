@@ -63,66 +63,6 @@ codeunit 79901 "WC File Download"
     end;
 }
 
-codeunit 79911 "WC Evaluate PageStyle"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure Evaluate_PageStyle()
-    var
-        Observer: Codeunit "Probe Observer";
-        V: PageStyle;
-        R: Boolean;
-    begin
-        R := Evaluate(V, 'Strong');
-        Observer.Observe('evaluate_Strong', Format(R) + ' value=' + Format(V));
-        R := Evaluate(V, 'NoSuchStyle');
-        Observer.Observe('evaluate_bad', Format(R) + ' value=' + Format(V));
-        Observer.Finish();
-    end;
-}
-
-codeunit 79912 "WC Evaluate HttpRequestType"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure Evaluate_HttpRequestType()
-    var
-        Observer: Codeunit "Probe Observer";
-        V: HttpRequestType;
-        R: Boolean;
-    begin
-        R := Evaluate(V, 'Get');
-        Observer.Observe('evaluate_Get', Format(R) + ' value=' + Format(V));
-        R := Evaluate(V, 'NoSuchType');
-        Observer.Observe('evaluate_bad', Format(R) + ' value=' + Format(V));
-        Observer.Finish();
-    end;
-}
-
-codeunit 79913 "WC Evaluate PBT ErrorLevel"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure Evaluate_PageBackgroundTaskErrorLevel()
-    var
-        Observer: Codeunit "Probe Observer";
-        V: PageBackgroundTaskErrorLevel;
-        R: Boolean;
-    begin
-        R := Evaluate(V, 'Warning');
-        Observer.Observe('evaluate_Warning', Format(R) + ' value=' + Format(V));
-        R := Evaluate(V, 'NoSuchLevel');
-        Observer.Observe('evaluate_bad', Format(R) + ' value=' + Format(V));
-        Observer.Finish();
-    end;
-}
-
 table 79920 "WC Flow Parent"
 {
     DataClassification = SystemMetadata;

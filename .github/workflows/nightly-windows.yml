@@ -679,7 +679,7 @@ jobs:
 
           # Order matters: the fixture is a dependency of al-language, which is in turn a
           # dependency of al-language-onprem.
-          $apps = @('tests/al-language-win-probe', 'tests/al-language-win-probe-fts')
+          $apps = @('tests/al-language-win-probe', 'tests/al-language-win-probe-fts', 'tests/al-language-win-probe-evps', 'tests/al-language-win-probe-ehttp', 'tests/al-language-win-probe-epbt')
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
@@ -729,6 +729,9 @@ jobs:
 
           $probe = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe/app.json') -Raw | ConvertFrom-Json
           $fts = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-fts/app.json') -Raw | ConvertFrom-Json
+          $evps = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-evps/app.json') -Raw | ConvertFrom-Json
+          $ehttp = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-ehttp/app.json') -Raw | ConvertFrom-Json
+          $epbt = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-epbt/app.json') -Raw | ConvertFrom-Json
           # One run per test function, so a crashed session loses only that probe.
           $runs = @(
             @{ id = $probe.id; cu = 79901; fn = 'Download_File' },
@@ -737,9 +740,9 @@ jobs:
             @{ id = $probe.id; cu = 67582; fn = 'PartLine_EnteredBeforeHostKey_ThenKeyTyped' },
             @{ id = $probe.id; cu = 79923; fn = 'TestPage_SetValue_FlowField' },
             @{ id = $probe.id; cu = 79931; fn = 'Page_GestureContextMenu_Opens' },
-            @{ id = $probe.id; cu = 79911; fn = 'Evaluate_PageStyle' },
-            @{ id = $probe.id; cu = 79912; fn = 'Evaluate_HttpRequestType' },
-            @{ id = $probe.id; cu = 79913; fn = 'Evaluate_PageBackgroundTaskErrorLevel' },
+            @{ id = $evps.id; cu = 79911; fn = 'Evaluate_PageStyle' },
+            @{ id = $ehttp.id; cu = 79912; fn = 'Evaluate_HttpRequestType' },
+            @{ id = $epbt.id; cu = 79913; fn = 'Evaluate_PageBackgroundTaskErrorLevel' },
             @{ id = $probe.id; cu = 61275; fn = 'IsPathTemporary_Paths' },
             @{ id = $probe.id; cu = 61275; fn = 'Erase_EmptyName_FullErrorText' },
             @{ id = $probe.id; cu = 61258; fn = 'O_Database_ExportData_ImportData_Files' },
