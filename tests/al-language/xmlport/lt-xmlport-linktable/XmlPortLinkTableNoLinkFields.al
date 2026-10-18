@@ -538,7 +538,9 @@ codeunit 67507 "LT XLT Tests"
         Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
+        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
+        Observer.Verify();
     end;
 
 
@@ -560,7 +562,9 @@ codeunit 67507 "LT XLT Tests"
         Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
+        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
+        Observer.Verify();
     end;
 
 
@@ -571,11 +575,11 @@ codeunit 67507 "LT XLT Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 1);
-Observer.Expect('result', 'Yes||');
-Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
-Observer.Expect('persistent_child_rows', '');
-Observer.Expect('persistent_parent_count', '0');
-Observer.Verify();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -584,11 +588,11 @@ Observer.Verify();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 1, 2);
-Observer.Expect('result', 'Yes||');
-Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
-Observer.Expect('persistent_child_rows', '');
-Observer.Expect('persistent_parent_count', '0');
-Observer.Verify();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
+        Observer.Expect('persistent_child_rows', '');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -597,11 +601,11 @@ Observer.Verify();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 2, 1);
-Observer.Expect('result', 'Yes||');
-Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
-Observer.Expect('persistent_child_rows', '10/1 ');
-Observer.Expect('persistent_parent_count', '0');
-Observer.Verify();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;');
+        Observer.Expect('persistent_child_rows', '10/1 ');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -610,11 +614,11 @@ Observer.Verify();
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 2, 2);
-Observer.Expect('result', 'Yes||');
-Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
-Observer.Expect('persistent_child_rows', '10/1 11/1 20/2 ');
-Observer.Expect('persistent_parent_count', '0');
-Observer.Verify();
+        Observer.Expect('result', 'Yes||');
+        Observer.Expect('log', 'import parent 1;import child 10 under parent 1;import child 11 under parent 1;import parent 2;import child 20 under parent 2;');
+        Observer.Expect('persistent_child_rows', '10/1 11/1 20/2 ');
+        Observer.Expect('persistent_parent_count', '0');
+        Observer.Verify();
     end;
     [Test]
     procedure Linked_Export()
@@ -632,7 +636,9 @@ Observer.Verify();
         Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow></ParentRow></Root>');
+        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export parent 2;export child 20 under parent 2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -651,7 +657,9 @@ Observer.Verify();
         Log.SetSeeding(false);
         Observer.Observe('xml', ReadAll(TempBlob));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-16" standalone="no"?><Root><ParentRow><Id>1</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow><ParentRow><Id>2</Id><ChildRow><Id>10</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>11</Id><ParentId>1</ParentId></ChildRow><ChildRow><Id>20</Id><ParentId>2</ParentId></ChildRow><ChildRow><Id>30</Id><ParentId>0</ParentId></ChildRow></ParentRow></Root>');
+        Observer.Expect('log', 'export parent 1;export child 10 under parent 1;export child 11 under parent 1;export child 20 under parent 1;export child 30 under parent 1;export parent 2;export child 10 under parent 2;export child 11 under parent 2;export child 20 under parent 2;export child 30 under parent 2;');
+        Observer.Verify();
     end;
 
     [Test]
