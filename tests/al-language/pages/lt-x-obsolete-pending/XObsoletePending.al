@@ -491,9 +491,19 @@ codeunit 75058 "LT X Obsolete Pending Tests"
     begin
         Seed();
         Log.Take();
-        Report.Run(Report::"LT X Obs Report");
+        ClearLastError();
+        if TryRun() then
+            Observer.Observe('run', 'ok')
+        else
+            Observer.ObserveError('run_error');
         Observer.Observe('rows_seen_by_data_item', Log.Take());
         Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryRun()
+    begin
+        Report.Run(Report::"LT X Obs Report");
     end;
 
     [RequestPageHandler]

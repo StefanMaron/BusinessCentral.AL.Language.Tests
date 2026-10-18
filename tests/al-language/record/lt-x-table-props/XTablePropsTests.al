@@ -24,6 +24,66 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Insert();
     end;
 
+    local procedure Check(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT X Props"; FieldNumber: Integer; Value: Text)
+    begin
+        ClearLastError();
+        if TryValidate(Row, FieldNumber, Value) then
+            Observer.Observe(Name, 'no error: ' + Value)
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    [TryFunction]
+    local procedure TryValidate(var Row: Record "LT X Props"; FieldNumber: Integer; Value: Text)
+    begin
+        case FieldNumber of
+            Row.FieldNo(Digits):
+                Row.Validate(Digits, CopyStr(Value, 1, 20));
+            Row.FieldNo(Picky):
+                Row.Validate(Picky, CopyStr(Value, 1, 20));
+            Row.FieldNo(DateText):
+                Row.Validate(DateText, CopyStr(Value, 1, 30));
+        end;
+    end;
+
+    local procedure SqlStep(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT X Props Sql"; Step: Integer)
+    begin
+        ClearLastError();
+        if TrySql(Row, Step) then
+            Observer.Observe(Name, 'ok')
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    [TryFunction]
+    local procedure TrySql(var Row: Record "LT X Props Sql"; Step: Integer)
+    begin
+        case Step of
+            1:
+                Row.Insert();
+            2:
+                Row.Modify();
+            3:
+                Row.Get(Row.Id);
+        end;
+    end;
+
+    local procedure LinkedCount(var Observer: Codeunit "Probe Observer"; var Row: Record "LT X Props Linked")
+    begin
+        ClearLastError();
+        if TryCount(Row) then
+            Observer.Observe('count', Format(Row.Count()))
+        else
+            Observer.ObserveError('count_error');
+    end;
+
+    [TryFunction]
+    local procedure TryCount(var Row: Record "LT X Props Linked")
+    begin
+        if Row.Count() < 0 then
+            Error('unreachable');
+    end;
+
     [Test]
     procedure CharAllowed_Validate_AllowedAndDisallowed()
     var
@@ -34,18 +94,14 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Id := 1;
         Row.Validate(Digits, '123');
         Observer.Observe('digits_allowed', Row.Digits);
-        asserterror Row.Validate(Digits, '12A');
-        Observer.ObserveError('digits_disallowed');
+        Check(Observer, 'digits_disallowed', Row, Row.FieldNo(Digits), '12A');
         Row.Digits := '12A';
         Observer.Observe('digits_assigned_not_checked', Row.Digits);
         Row.Validate(Picky, 'abmpz');
         Observer.Observe('picky_allowed', Row.Picky);
-        asserterror Row.Validate(Picky, 'abe');
-        Observer.ObserveError('picky_e_between_ranges');
-        asserterror Row.Validate(Picky, 'A');
-        Observer.ObserveError('picky_uppercase');
-        asserterror Row.Validate(Picky, 'abq');
-        Observer.ObserveError('picky_q');
+        Check(Observer, 'picky_e_between_ranges', Row, Row.FieldNo(Picky), 'abe');
+        Check(Observer, 'picky_uppercase', Row, Row.FieldNo(Picky), 'A');
+        Check(Observer, 'picky_q', Row, Row.FieldNo(Picky), 'abq');
         Observer.Finish();
     end;
 
@@ -79,8 +135,7 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('validate_1M', Row.DateText);
         Row.Validate(DateText, '<CM+1D>');
         Observer.Observe('validate_CM_1D', Row.DateText);
-        asserterror Row.Validate(DateText, 'not a formula');
-        Observer.ObserveError('validate_garbage');
+        Check(Observer, 'validate_garbage', Row, Row.FieldNo(DateText), 'not a formula');
         Row.DateText := 'not a formula';
         Row.Modify();
         Observer.Observe('assigned_garbage', Row.DateText);
@@ -206,24 +261,26 @@ codeunit 75010 "LT X Table Props Tests"
         Row.AsVarchar := '10';
         Row.AsBigInteger := '10';
         Row.AsDefault := '10';
-        Row.Insert();
+        SqlStep(Observer, 'insert_' + Format(Row.Id), Row, 1);
         Row.Init();
         Row.Id := 2;
         Row.AsInteger := '9';
         Row.AsVarchar := '9';
         Row.AsBigInteger := '9';
         Row.AsDefault := '9';
-        Row.Insert();
+        SqlStep(Observer, 'insert_' + Format(Row.Id), Row, 1);
         Row.Init();
         Row.Id := 3;
         Row.AsVarchar := 'ABC';
         Row.AsDefault := 'ABC';
-        Row.Insert();
-        Row.Get(1);
+        SqlStep(Observer, 'insert_' + Format(Row.Id), Row, 1);
+        Row.Id := 1;
+        SqlStep(Observer, 'get_1_L1', Row, 3);
         Observer.Observe('integer_value', Row.AsInteger);
         Observer.Observe('varchar_value', Row.AsVarchar);
         Observer.Observe('bigint_value', Row.AsBigInteger);
-        Row.Get(3);
+        Row.Id := 3;
+        SqlStep(Observer, 'get_3_L2', Row, 3);
         Observer.Observe('integer_empty_on_row_3', Row.AsInteger);
         Observer.Observe('varchar_text_on_row_3', Row.AsVarchar);
         Row.SetCurrentKey(AsInteger);
@@ -236,18 +293,20 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('first_by_varchar_key', Format(Row.Id));
         Row.FindLast();
         Observer.Observe('last_by_varchar_key', Format(Row.Id));
-        Row.Get(2);
+        Row.Id := 2;
+        SqlStep(Observer, 'get_2_L3', Row, 3);
         Row.AsInteger := '0';
-        Row.Modify();
-        Row.Get(2);
+        SqlStep(Observer, 'modify_' + Format(Row.Id) + '_' + Row.AsInteger, Row, 2);
+        Row.Id := 2;
+        SqlStep(Observer, 'get_2_L4', Row, 3);
         Observer.Observe('integer_zero_stored', Row.AsInteger);
         Row.AsInteger := '007';
-        Row.Modify();
-        Row.Get(2);
+        SqlStep(Observer, 'modify_' + Format(Row.Id) + '_' + Row.AsInteger, Row, 2);
+        Row.Id := 2;
+        SqlStep(Observer, 'get_2_L5', Row, 3);
         Observer.Observe('integer_leading_zero_stored', Row.AsInteger);
         Row.AsInteger := 'ABC';
-        asserterror Row.Modify();
-        Observer.ObserveError('integer_text_modify');
+        SqlStep(Observer, 'integer_text_modify', Row, 2);
         Observer.Finish();
     end;
 
@@ -394,12 +453,15 @@ codeunit 75010 "LT X Table Props Tests"
         Observer.Observe('page_value', Card.OptCap.Value);
         Card.OptCap.SetValue('Tres');
         Observer.Observe('page_after_set_caption', Card.OptCap.Value);
-        asserterror Card.OptCap.SetValue('Two');
-        Observer.ObserveError('page_set_replaced_base_caption');
         Card.Close();
         Row.Get(1);
         Observer.Observe('record_after_page', Format(Row.OptCap, 0, 2));
-        Observer.Finish();
+                Seed();
+        Card.OpenEdit();
+        asserterror Card.OptCap.SetValue('Two');
+        Observer.ObserveError('page_set_replaced_base_caption');
+        Card.Close();
+Observer.Finish();
     end;
 
     [Test]
@@ -522,7 +584,7 @@ codeunit 75010 "LT X Table Props Tests"
         Row.Insert();
         Row.CalcSums(Amount);
         Observer.Observe('sum', Format(Row.Amount));
-        Observer.Observe('count', Format(Row.Count()));
+        LinkedCount(Observer, Row);
         Row.Get(2);
         Observer.Observe('row2_amount', Format(Row.Amount));
         Row.Amount := 21;
@@ -547,7 +609,7 @@ codeunit 75010 "LT X Table Props Tests"
             Observer.Observe('insert_ok', 'yes')
         else
             Observer.Observe('insert_ok', 'no');
-        Observer.Observe('count', Format(Row.Count()));
+        LinkedCount(Observer, Row);
         ClearLastError();
         Row.Id := 2;
         asserterror Row.Insert(true);
