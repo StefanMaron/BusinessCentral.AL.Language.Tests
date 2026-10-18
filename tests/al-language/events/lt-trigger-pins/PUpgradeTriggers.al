@@ -97,8 +97,13 @@ codeunit 67283 "LT P Upgrade Triggers"
     Subtype = Test;
     TestPermissions = Disabled;
 
-    [Test]
-    procedure PUpgrade_RunWithTriggers()
+    [TryFunction]
+    local procedure TryRun(CodeunitId: Integer)
+    begin
+        Codeunit.Run(CodeunitId);
+    end;
+
+    local procedure RunAndObserve(CodeunitId: Integer)
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT P Trig Log";
@@ -106,7 +111,7 @@ codeunit 67283 "LT P Upgrade Triggers"
     begin
         Log.Reset();
         ClearLastError();
-        Ok := Codeunit.Run(Codeunit::"LT P Upgrade Full");
+        Ok := TryRun(CodeunitId);
         Observer.Observe('run_ok', Format(Ok));
         if not Ok then
             Observer.ObserveError('run_error');
@@ -115,19 +120,14 @@ codeunit 67283 "LT P Upgrade Triggers"
     end;
 
     [Test]
-    procedure PUpgrade_RunWithoutTriggers()
-    var
-        Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT P Trig Log";
-        Ok: Boolean;
+    procedure PUpgrade_RunWithTriggers()
     begin
-        Log.Reset();
-        ClearLastError();
-        Ok := Codeunit.Run(Codeunit::"LT P Upgrade Empty");
-        Observer.Observe('run_ok', Format(Ok));
-        if not Ok then
-            Observer.ObserveError('run_error');
-        Observer.Observe('log', Log.Joined());
-        Observer.Finish();
+        RunAndObserve(Codeunit::"LT P Upgrade Full");
+    end;
+
+    [Test]
+    procedure PUpgrade_RunWithoutTriggers()
+    begin
+        RunAndObserve(Codeunit::"LT P Upgrade Empty");
     end;
 }

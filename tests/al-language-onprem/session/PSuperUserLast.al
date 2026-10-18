@@ -24,20 +24,38 @@ codeunit 61289 "LT P Super User Last"
         AccessControl.Delete(true);
     end;
 
-    local procedure DistinctSuperUsers(): Integer
-    var
-        AccessControl: Record "Access Control";
-        Seen: List of [Guid];
+    local procedure SuperFilters(var AccessControl: Record "Access Control")
     begin
         AccessControl.SetRange("Role ID", 'SUPER');
         AccessControl.SetRange(Scope, AccessControl.Scope::System);
         AccessControl.SetFilter("Company Name", '''''');
+    end;
+
+    // Takes the SUPER assignments of every other user away (SaaS checks off) and keeps them to put back.
+    local procedure KeepOnlyCurrentUserSuper(var Saved: Record "Access Control" temporary)
+    var
+        AccessControl: Record "Access Control";
+    begin
+        SuperFilters(AccessControl);
+        AccessControl.SetFilter("User Security ID", '<>%1', UserSecurityId());
         if AccessControl.FindSet() then
             repeat
-                if not Seen.Contains(AccessControl."User Security ID") then
-                    Seen.Add(AccessControl."User Security ID");
+                Saved := AccessControl;
+                Saved.Insert();
             until AccessControl.Next() = 0;
-        exit(Seen.Count());
+        AccessControl.DeleteAll(false);
+    end;
+
+    local procedure PutBack(var Saved: Record "Access Control" temporary)
+    var
+        AccessControl: Record "Access Control";
+    begin
+        if Saved.FindSet() then
+            repeat
+                AccessControl := Saved;
+                if AccessControl.Insert(false) then;
+            until Saved.Next() = 0;
+        Saved.DeleteAll();
     end;
 
     [Test]
@@ -46,24 +64,29 @@ codeunit 61289 "LT P Super User Last"
         Observer: Codeunit "Probe Observer";
         EnvironmentInfoTestLibrary: Codeunit "Environment Info Test Library";
         User: Record User;
+        AccessControl: Record "Access Control";
+        Saved: Record "Access Control" temporary;
         Ok: Boolean;
     begin
-        Observer.Observe('super_users', Format(DistinctSuperUsers()));
+        SuperFilters(AccessControl);
+        AccessControl.SetRange("User Security ID", UserSecurityId());
+        Observer.Observe('current_user_has_super', Format(not AccessControl.IsEmpty()));
         Observer.Observe('user_found', Format(User.Get(UserSecurityId())));
-        if User.Get(UserSecurityId()) and (DistinctSuperUsers() = 1) then begin
-            EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
-            ClearLastError();
-            Ok := TryDisable(User);
-            EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
-            Observer.Observe('disable_ok', Format(Ok));
-            if not Ok then
-                Observer.ObserveError('disable_error')
-            else begin
-                User.State := User.State::Enabled;
-                User.Modify(true);
-            end;
-            Observer.Observe('state_after', Format(User.State));
+        KeepOnlyCurrentUserSuper(Saved);
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
+        ClearLastError();
+        Ok := TryDisable(User);
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
+        Observer.Observe('disable_ok', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('disable_error')
+        else begin
+            User.State := User.State::Enabled;
+            User.Modify(true);
         end;
+        PutBack(Saved);
+        User.Get(UserSecurityId());
+        Observer.Observe('state_after', Format(User.State));
         Observer.Finish();
     end;
 
@@ -73,23 +96,24 @@ codeunit 61289 "LT P Super User Last"
         Observer: Codeunit "Probe Observer";
         EnvironmentInfoTestLibrary: Codeunit "Environment Info Test Library";
         AccessControl: Record "Access Control";
+        Saved: Record "Access Control" temporary;
         Ok: Boolean;
     begin
+        KeepOnlyCurrentUserSuper(Saved);
+        SuperFilters(AccessControl);
         AccessControl.SetRange("User Security ID", UserSecurityId());
-        AccessControl.SetRange("Role ID", 'SUPER');
-        AccessControl.SetRange(Scope, AccessControl.Scope::System);
-        AccessControl.SetFilter("Company Name", '''''');
         Observer.Observe('assignment_found', Format(AccessControl.FindFirst()));
-        if AccessControl.FindFirst() and (DistinctSuperUsers() = 1) then begin
-            EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
-            ClearLastError();
-            Ok := TryRemoveSuper(AccessControl);
-            EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
-            Observer.Observe('remove_ok', Format(Ok));
-            if not Ok then
-                Observer.ObserveError('remove_error');
-            Observer.Observe('assignment_after', Format(AccessControl.FindFirst()));
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
+        ClearLastError();
+        Ok := TryRemoveSuper(AccessControl);
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
+        Observer.Observe('remove_ok', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('remove_error')
+        else begin
+            AccessControl.Insert(false);
         end;
+        PutBack(Saved);
         Observer.Finish();
     end;
 }
