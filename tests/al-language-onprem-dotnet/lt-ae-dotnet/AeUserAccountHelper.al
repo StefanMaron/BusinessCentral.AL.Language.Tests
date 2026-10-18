@@ -5,19 +5,6 @@
 //   calls the DotNet class Microsoft.Dynamics.Nav.NavUserAccount.NavUserAccountHelper, called from a test session. The class itself cannot be declared here:
 //   the CI compile finds no assembly named Microsoft.Dynamics.Nav.NavUserAccount in its probing paths (AL0451).
 // BC versions: 27, 28, 29
-codeunit 99000
-// Probe: al-runtime-rs corpus topic 203 item 3 (corpus issue 632): the System Application codeunit "Azure AD Graph User" (IsUserDelegatedAdmin, IsUserDelegatedHelpdesk), which
-//   calls the DotNet class Microsoft.Dynamics.Nav.NavUserAccount.NavUserAccountHelper, called from a test session. The class itself cannot be declared here:
-//   the CI compile finds no assembly named Microsoft.Dynamics.Nav.NavUserAccount in its probing paths (AL0451).
-// BC versions: 27, 28, 29
-dotnet
-{
-    assembly("Microsoft.Dynamics.Nav.NavUserAccount")
-    {
-        type("Microsoft.Dynamics.Nav.NavUserAccount.NavUserAccountHelper"; LtAeUah) { }
-    }
-}
-
 codeunit 99000 "LT AE UserAccountHelper"
 {
     Subtype = Test;
