@@ -44,7 +44,11 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         Observer.Observe('filters', B.GetFilters());
         Observer.Observe('row', Format(B.Field(1).Value));
         Observer.Observe('count', Format(B.Count()));
-        Observer.Finish();
+        Observer.Expect('number', '79902');
+        Observer.Expect('filters', 'Name: <>beta');
+        Observer.Expect('row', 'C');
+        Observer.Expect('count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -60,7 +64,9 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         Observer.Observe('b_name', Format(B.Field(2).Value));
         B.Field(3).Value := 42;
         Observer.Observe('a_amount', Format(A.Field(3).Value));
-        Observer.Finish();
+        Observer.Expect('b_name', 'gamma');
+        Observer.Expect('a_amount', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,7 +82,9 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         A.FindFirst();
         Observer.Observe('b_filters', B.GetFilters());
         Observer.Observe('b_row', Format(B.Field(1).Value));
-        Observer.Finish();
+        Observer.Expect('b_filters', 'Name: <>beta');
+        Observer.Expect('b_row', 'C');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +101,9 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         Observer.Observe('a_name', Format(A.Field(2).Value));
         A.Find('=');
         Observer.Observe('a_name_refind', Format(A.Field(2).Value));
-        Observer.Finish();
+        Observer.Expect('a_name', 'gamma');
+        Observer.Expect('a_name_refind', 'via b');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +118,9 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         asserterror GetTableOf(B, A);
         Observer.Observe('error', Helper.LastError());
         Observer.Observe('b_open', Format(B.Number));
-        Observer.Finish();
+        Observer.Expect('error', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavRecordRef to Microsoft.Dynamics.Nav.Runtime.INavRecordHandle.|Conversion');
+        Observer.Expect('b_open', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,6 +136,9 @@ codeunit 79921 "LT AS RecRef GetTable Ref"
         Observer.Observe('number', Format(B.Number));
         Observer.Observe('row', Format(B.Field(1).Value));
         Observer.Observe('filters', B.GetFilters());
-        Observer.Finish();
+        Observer.Expect('number', '79902');
+        Observer.Expect('row', 'C');
+        Observer.Expect('filters', 'Name: <>beta');
+        Observer.Verify();
     end;
 }

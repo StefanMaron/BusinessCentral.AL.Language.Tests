@@ -46,7 +46,12 @@ codeunit 79924 "LT AS RecRef Copy Record"
         Observer.Observe('filters', Ref.GetFilters());
         Observer.Observe('row', Format(Ref.Field(1).Value));
         Observer.Observe('ascending', Format(Ref.Ascending()));
-        Observer.Finish();
+        Observer.Expect('copy', 'Both target and source tables must refer to the same table.|Argument');
+        Observer.Expect('number', '79904');
+        Observer.Expect('filters', '');
+        Observer.Expect('row', 'K');
+        Observer.Expect('ascending', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -63,7 +68,9 @@ codeunit 79924 "LT AS RecRef Copy Record"
         else
             Observer.Observe('copy', Helper.LastError());
         Observer.Observe('number', Format(Ref.Number));
-        Observer.Finish();
+        Observer.Expect('copy', 'The record is not open.|RecordNotOpened');
+        Observer.Expect('number', '0');
+        Observer.Verify();
     end;
 
     [TryFunction]

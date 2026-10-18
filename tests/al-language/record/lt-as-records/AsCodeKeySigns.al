@@ -55,7 +55,8 @@ codeunit 79925 "LT AS Code Key Signs"
     begin
         Seed();
         Observer.Observe('asc', List(K));
-        Observer.Finish();
+        Observer.Expect('asc', '+5 -+5 +A 0 -0 5 -5 --5 A -A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -67,7 +68,8 @@ codeunit 79925 "LT AS Code Key Signs"
         Seed();
         K.Ascending(false);
         Observer.Observe('desc', List(K));
-        Observer.Finish();
+        Observer.Expect('desc', '-A A --5 -5 5 -0 0 +A -+5 +5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -81,7 +83,9 @@ codeunit 79925 "LT AS Code Key Signs"
         Observer.Observe('range_plus5_0', List(K));
         K.SetRange("Code", '-0', 'A');
         Observer.Observe('range_minus0_A', List(K));
-        Observer.Finish();
+        Observer.Expect('range_plus5_0', '+5 -+5 +A 0');
+        Observer.Expect('range_minus0_A', '-0 5 -5 --5 A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +99,9 @@ codeunit 79925 "LT AS Code Key Signs"
         Observer.Observe('lt_minusA', List(K));
         K.SetFilter("Code", '>%1', '-+5');
         Observer.Observe('gt_minusplus5', List(K));
-        Observer.Finish();
+        Observer.Expect('lt_minusA', '+5 -+5 +A 0 -0 5 -5 --5 A');
+        Observer.Expect('gt_minusplus5', '+A 0 -0 5 -5 --5 A -A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,6 +119,10 @@ codeunit 79925 "LT AS Code Key Signs"
         Observer.Observe('wild_minus', List(K));
         K.SetFilter("Code", '+*');
         Observer.Observe('wild_plus', List(K));
-        Observer.Finish();
+        Observer.Expect('literal_minusplus5', '-+5');
+        Observer.Expect('arg_minus0', '-0');
+        Observer.Expect('wild_minus', '-+5 -0 -5 --5 -A');
+        Observer.Expect('wild_plus', '+5 +A');
+        Observer.Verify();
     end;
 }

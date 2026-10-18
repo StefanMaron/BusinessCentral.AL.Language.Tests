@@ -2,8 +2,8 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), AsFixtures.al (tables 79900, 79901, helper 79913)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced (corpus issue 644, item 15).
-// Facts: DataTransfer.AddDestinationFilter from a test (outside upgrade and install code): a valid and an unknown destination field number,
-//   then CopyFields and CopyRows (the error text and whether any destination row changed).
+// Facts: DataTransfer.AddDestinationFilter from a test (outside upgrade and install code): SetTables raises there, then AddDestinationFilter, CopyFields
+//   and CopyRows (error texts, and no destination row changes); an unknown and a zero field number without tables.
 // BC versions: 28-29 (AddDestinationFilter needs runtime 17; the runtime 16 refusal is must-not-compile case 0365)
 
 #if BC28PLUS
@@ -73,58 +73,40 @@ codeunit 79931 "LT AS DataTransfer DestFilter"
         exit(Helper.LastError());
     end;
 
-    [Test]
-    procedure ValidFilter_CopyFields()
-    var
-        Observer: Codeunit "Probe Observer";
-        DT: DataTransfer;
-        I: Record "LT AS Int Key";
-        B: Record "LT AS Big Key";
+    [TryFunction]
+    local procedure TrySetTables(var DT: DataTransfer)
     begin
-        Seed();
-        ClearLastError();
         DT.SetTables(Database::"LT AS Int Key", Database::"LT AS Big Key");
-        DT.AddFieldValue(I.FieldNo(Name), B.FieldNo(Name));
-        DT.AddJoin(I.FieldNo(Id), B.FieldNo(Id));
-        Observer.Observe('add', Outcome(TryAddFilter(DT, B.FieldNo(Id))));
-        Observer.Observe('copyfields', Outcome(TryCopyFields(DT)));
-        Observer.Observe('targets', Targets());
-        Observer.Finish();
     end;
 
+    // SetTables itself raises outside upgrade and install code, so the destination filter, CopyFields and CopyRows only meet a DataTransfer
+    // without tables. Which destination rows a destination filter keeps needs an upgrade or install context (not reachable from a test).
     [Test]
-    procedure ValidFilter_CopyRows()
+    procedure SetTables_ThenDestinationFilter_CopyFields_CopyRows()
     var
         Observer: Codeunit "Probe Observer";
         DT: DataTransfer;
-        I: Record "LT AS Int Key";
-        B: Record "LT AS Big Key";
     begin
         Seed();
         ClearLastError();
-        DT.SetTables(Database::"LT AS Int Key", Database::"LT AS Big Key");
-        DT.AddFieldValue(I.FieldNo(Name), B.FieldNo(Name));
-        Observer.Observe('add', Outcome(TryAddFilter(DT, B.FieldNo(Id))));
+        Observer.Observe('settables', Outcome(TrySetTables(DT)));
+        Observer.Observe('add_valid', Outcome(TryAddFilter(DT, 1)));
+        Observer.Observe('copyfields', Outcome(TryCopyFields(DT)));
         Observer.Observe('copyrows', Outcome(TryCopyRows(DT)));
         Observer.Observe('targets', Targets());
         Observer.Finish();
     end;
 
     [Test]
-    procedure UnknownFieldNo()
+    procedure UnknownFieldNo_WithoutTables()
     var
         Observer: Codeunit "Probe Observer";
         DT: DataTransfer;
-        I: Record "LT AS Int Key";
-        B: Record "LT AS Big Key";
     begin
         Seed();
         ClearLastError();
-        DT.SetTables(Database::"LT AS Int Key", Database::"LT AS Big Key");
-        DT.AddFieldValue(I.FieldNo(Name), B.FieldNo(Name));
-        DT.AddJoin(I.FieldNo(Id), B.FieldNo(Id));
         Observer.Observe('add999', Outcome(TryAddFilter(DT, 999)));
-        Observer.Observe('copyfields', Outcome(TryCopyFields(DT)));
+        Observer.Observe('add_zero', Outcome(TryAddFilter(DT, 0)));
         Observer.Finish();
     end;
 
@@ -137,7 +119,8 @@ codeunit 79931 "LT AS DataTransfer DestFilter"
         Seed();
         ClearLastError();
         Observer.Observe('add_no_tables', Outcome(TryAddFilter(DT, 1)));
-        Observer.Finish();
+        Observer.Expect('add_no_tables', 'SetTables must first be called before calling other methods on DataTransfer.|DB:Ok');
+        Observer.Verify();
     end;
 }
 #endif

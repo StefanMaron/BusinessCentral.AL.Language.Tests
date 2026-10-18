@@ -28,7 +28,9 @@ codeunit 79922 "LT AS GetTable IsDirty"
         Ref.GetTable(Row);
         Observer.Observe('dirty', Format(Ref.IsDirty()));
         Observer.Observe('name', Format(Ref.Field(2).Value));
-        Observer.Finish();
+        Observer.Expect('dirty', 'Yes');
+        Observer.Expect('name', 'changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -44,7 +46,8 @@ codeunit 79922 "LT AS GetTable IsDirty"
         Row.Name := 'alpha';
         Ref.GetTable(Row);
         Observer.Observe('dirty', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('dirty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -58,7 +61,8 @@ codeunit 79922 "LT AS GetTable IsDirty"
         Row.Get('A');
         Ref.GetTable(Row);
         Observer.Observe('dirty', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('dirty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,7 +78,9 @@ codeunit 79922 "LT AS GetTable IsDirty"
         Ref.GetTable(Row);
         Observer.Observe('dirty', Format(Ref.IsDirty()));
         Observer.Observe('name', Format(Ref.Field(2).Value));
-        Observer.Finish();
+        Observer.Expect('dirty', 'Yes');
+        Observer.Expect('name', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +101,9 @@ codeunit 79922 "LT AS GetTable IsDirty"
         Row.Name := 'stored';
         Ref.GetTable(Row);
         Observer.Observe('dirty_equal_stored', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('dirty_unchanged', 'No');
+        Observer.Expect('dirty_equal_stored', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +123,9 @@ codeunit 79922 "LT AS GetTable IsDirty"
         Row.Init();
         Ref.GetTable(Row);
         Observer.Observe('dirty_init', Format(Ref.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('dirty_same_as_stored', 'Yes');
+        Observer.Expect('dirty_init', 'Yes');
+        Observer.Verify();
     end;
 }
 #endif

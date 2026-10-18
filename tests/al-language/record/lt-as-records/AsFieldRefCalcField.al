@@ -58,7 +58,12 @@ codeunit 79929 "LT AS FieldRef CalcField"
         Ref.SetTable(Back);
         Observer.Observe('hasvalue_after', Format(Back.Data.HasValue()));
         Observer.Observe('text_after', BlobText(Back));
-        Observer.Finish();
+        Observer.Expect('rec_hasvalue_before', 'Yes');
+        Observer.Expect('text_before', '');
+        Observer.Expect('value_after', '*');
+        Observer.Expect('hasvalue_after', 'Yes');
+        Observer.Expect('text_after', 'blob text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -75,7 +80,8 @@ codeunit 79929 "LT AS FieldRef CalcField"
             Observer.Observe('code', 'ok:' + Format(Ref.Field(5).Value))
         else
             Observer.Observe('code', Helper.LastError());
-        Observer.Finish();
+        Observer.Expect('code', 'The Cd field in the LT AS Row table must be a FlowField.|DB:Ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +99,9 @@ codeunit 79929 "LT AS FieldRef CalcField"
         Observer.Observe('before', Format(Ref.Field(6).Value));
         Ref.Field(6).CalcField();
         Observer.Observe('after', Format(Ref.Field(6).Value));
-        Observer.Finish();
+        Observer.Expect('before', '0');
+        Observer.Expect('after', '2');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -141,7 +149,10 @@ codeunit 79929 "LT AS FieldRef CalcField"
         else
             Observer.Observe('validate_p2', Helper.LastError());
         Observer.Observe('flow_after', Format(Head.LineCount));
-        Observer.Finish();
+        Observer.Expect('flow_before', '0');
+        Observer.Expect('validate_p2', 'ok:P2');
+        Observer.Expect('flow_after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +169,9 @@ codeunit 79929 "LT AS FieldRef CalcField"
         else
             Observer.Observe('validate_p0', Helper.LastError());
         Observer.Observe('flow_after', Format(Head.LineCount));
-        Observer.Finish();
+        Observer.Expect('validate_p0', 'The field RelCode of table LT AS Flow Head contains a value (P0) that cannot be found in the related table (LT AS Rel Parent).|DB:NothingInsideFilter');
+        Observer.Expect('flow_after', '0');
+        Observer.Verify();
     end;
 
     [TryFunction]

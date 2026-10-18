@@ -35,7 +35,9 @@ codeunit 79923 "LT AS Marked DeleteAll"
         Row.DeleteAll();
         Observer.Observe('remain', Helper.Rows());
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('remain', 'B');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -50,7 +52,9 @@ codeunit 79923 "LT AS Marked DeleteAll"
         Observer.Observe('count', Format(Row.Count()));
         Row.DeleteAll();
         Observer.Observe('remain', Helper.Rows());
-        Observer.Finish();
+        Observer.Expect('count', '1');
+        Observer.Expect('remain', 'BC');
+        Observer.Verify();
     end;
 
     [Test]
@@ -65,7 +69,9 @@ codeunit 79923 "LT AS Marked DeleteAll"
         Row.DeleteAll(true);
         Observer.Observe('remain', Helper.Rows());
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('remain', 'B');
+        Observer.Expect('log', 'OnDelete A,OnDelete C');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,6 +88,9 @@ codeunit 79923 "LT AS Marked DeleteAll"
         Observer.Observe('remain', Helper.Rows());
         Observer.Observe('log', Log.Dump());
         Observer.Observe('marks_left', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('remain', 'AB');
+        Observer.Expect('log', 'OnDelete C');
+        Observer.Expect('marks_left', '0');
+        Observer.Verify();
     end;
 }

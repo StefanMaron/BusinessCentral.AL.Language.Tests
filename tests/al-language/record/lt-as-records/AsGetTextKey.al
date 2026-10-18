@@ -79,7 +79,10 @@ codeunit 79920 "LT AS Get Text Key"
         Observer.Observe('format5', IntOutcome(Format(5)));
         Observer.Observe('literal', Format(I.Get('5')) + ':' + I.Name);
         Observer.Observe('spaces', IntOutcome(' 5 '));
-        Observer.Finish();
+        Observer.Expect('format5', 'Yes:five');
+        Observer.Expect('literal', 'Yes:five');
+        Observer.Expect('spaces', 'Yes:five');
+        Observer.Verify();
     end;
 
     [Test]
@@ -89,7 +92,12 @@ codeunit 79920 "LT AS Get Text Key"
     begin
         Seed();
         Observer.Observe('x', IntOutcome('x'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('x', 'error:The value "x" can''t be evaluated into type Integer.|Evaluate:Format');
+#else
+        Observer.Expect('x', 'error:The type NavInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -99,7 +107,12 @@ codeunit 79920 "LT AS Get Text Key"
     begin
         Seed();
         Observer.Observe('empty', IntOutcome(''));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('empty', 'error:The value "" can''t be evaluated into type Integer.|Evaluate:Format');
+#else
+        Observer.Expect('empty', 'error:The type NavInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +122,8 @@ codeunit 79920 "LT AS Get Text Key"
     begin
         Seed();
         Observer.Observe('seven', IntOutcome('7'));
-        Observer.Finish();
+        Observer.Expect('seven', 'No:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -122,7 +136,10 @@ codeunit 79920 "LT AS Get Text Key"
         Observer.Observe('format5', BigOutcome(Format(5)));
         Observer.Observe('literal', Format(B.Get('5')) + ':' + B.Name);
         Observer.Observe('spaces', BigOutcome(' 5 '));
-        Observer.Finish();
+        Observer.Expect('format5', 'Yes:big five');
+        Observer.Expect('literal', 'Yes:big five');
+        Observer.Expect('spaces', 'Yes:big five');
+        Observer.Verify();
     end;
 
     [Test]
@@ -132,7 +149,12 @@ codeunit 79920 "LT AS Get Text Key"
     begin
         Seed();
         Observer.Observe('x', BigOutcome('x'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('x', 'error:The value "x" can''t be evaluated into type BigInteger.|Evaluate:Format');
+#else
+        Observer.Expect('x', 'error:The type NavBigInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,6 +164,11 @@ codeunit 79920 "LT AS Get Text Key"
     begin
         Seed();
         Observer.Observe('empty', BigOutcome(''));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('empty', 'error:The value "" can''t be evaluated into type BigInteger.|Evaluate:Format');
+#else
+        Observer.Expect('empty', 'error:The type NavBigInteger is unknown.|NotSupportedType');
+#endif
+        Observer.Verify();
     end;
 }

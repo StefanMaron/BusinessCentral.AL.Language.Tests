@@ -38,7 +38,12 @@ codeunit 79926 "LT AS TestField Texts"
         B := 10;
         asserterror NumRef(Row).TestField(B);
         Observer.Observe('byte10', Helper.LastError());
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('byte10', 'Num Cap must be equal to ''\n''  in AS TF Caption: Id Cap=1. Current value is ''7''.|TestField');
+#else
+        Observer.Expect('byte10', 'Num Cap must be equal to ''10''  in AS TF Caption: Id Cap=1. Current value is ''7''.|TestField');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -52,7 +57,13 @@ codeunit 79926 "LT AS TestField Texts"
         B := 200;
         asserterror NumRef(Row).TestField(B);
         Observer.Observe('byte200', Helper.LastError());
-        Observer.Finish();
+#if BC28PLUS
+        // Linux suspect (not asserted): the BC 28 and 29 Linux tiers write Byte 200 as U+02DC, not as U+00C8; checked on the Windows nightly first.
+        Observer.Ignore('byte200');
+#else
+        Observer.Expect('byte200', 'Num Cap must be equal to ''200''  in AS TF Caption: Id Cap=1. Current value is ''7''.|TestField');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +80,8 @@ codeunit 79926 "LT AS TestField Texts"
             Observer.Observe('byte7', 'ok')
         else
             Observer.Observe('byte7', Helper.LastError());
-        Observer.Finish();
+        Observer.Expect('byte7', 'ok');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -97,7 +109,8 @@ codeunit 79926 "LT AS TestField Texts"
         Seed(Row);
         asserterror Row.TestField(Kind, Row.Kind::Alpha);
         Observer.Observe('enum', Helper.LastError());
-        Observer.Finish();
+        Observer.Expect('enum', 'Kind Cap must be equal to ''Alpha Cap''  in AS TF Caption: Id Cap=1. Current value is ''Nothing Cap''.|TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +122,8 @@ codeunit 79926 "LT AS TestField Texts"
         Seed(Row);
         asserterror Row.TestField(Kind);
         Observer.Observe('enum_blank', Helper.LastError());
-        Observer.Finish();
+        Observer.Expect('enum_blank', 'Kind Cap must not be Nothing Cap in AS TF Caption: Id Cap=1|TestField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +137,12 @@ codeunit 79926 "LT AS TestField Texts"
         Evaluate(G, '{11111111-2222-3333-4444-555555555555}');
         asserterror Row.TestField(Cd, G);
         Observer.Observe('guid', Helper.LastError());
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('guid', 'Cd Cap must be equal to ''{11111111-2222-3333-4444-555555555555}''  in AS TF Caption: Id Cap=1. Current value is ''ABC''.|TestField');
+#else
+        Observer.Expect('guid', 'Cd Cap must be equal to ''11111111-2222-3333-4444-555555555555''  in AS TF Caption: Id Cap=1. Current value is ''ABC''.|TestField');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,7 +160,12 @@ codeunit 79926 "LT AS TestField Texts"
             Observer.Observe('guid_same', 'ok')
         else
             Observer.Observe('guid_same', Helper.LastError());
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('guid_same', 'Cd Cap must be equal to ''{11111111-2222-3333-4444-555555555555}''  in AS TF Caption: Id Cap=1. Current value is ''{11111111-2222-3333-4444-555555555555}''.|TestField');
+#else
+        Observer.Expect('guid_same', 'Cd Cap must be equal to ''11111111-2222-3333-4444-555555555555''  in AS TF Caption: Id Cap=1. Current value is ''{11111111-2222-3333-4444-555555555555}''.|TestField');
+#endif
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -157,11 +181,9 @@ codeunit 79926 "LT AS TestField Texts"
         P: Record "LT AS Caption PK";
     begin
         P.DeleteAll();
-        ClearLastError();
-        if TryModifyAllKey(P) then
-            Observer.Observe('zero', 'ok')
-        else
-            Observer.Observe('zero', Helper.LastError());
+        // ModifyAll is not allowed inside a TryFunction, so the call is made directly: an error fails the test with its text.
+        P.ModifyAll("Key Code", 'K2');
+        Observer.Observe('zero', 'ok');
         Observer.Finish();
     end;
 
@@ -176,13 +198,8 @@ codeunit 79926 "LT AS TestField Texts"
         P.Insert();
         asserterror P.ModifyAll("Key Code", 'K2');
         Observer.Observe('one', Helper.LastError());
-        Observer.Finish();
-    end;
-
-    [TryFunction]
-    local procedure TryModifyAllKey(var P: Record "LT AS Caption PK")
-    begin
-        P.ModifyAll("Key Code", 'K2');
+        Observer.Expect('one', 'The MODIFYALL function cannot be used on the Key Caption field in the AS PK Table Cap table because it is part of the primary key.|DB:Ok');
+        Observer.Verify();
     end;
 
     local procedure DateFilter(Text: Text): Text
@@ -201,7 +218,10 @@ codeunit 79926 "LT AS TestField Texts"
         Observer.Observe('y29', DateFilter('01/02/29'));
         Observer.Observe('y30', DateFilter('01/02/30'));
         Observer.Observe('y39', DateFilter('01/02/39'));
-        Observer.Finish();
+        Observer.Expect('y29', '2029-2029 01/02/29');
+        Observer.Expect('y30', '2030-2030 01/02/30');
+        Observer.Expect('y39', '2039-2039 01/02/39');
+        Observer.Verify();
     end;
 
     [Test]
@@ -212,7 +232,10 @@ codeunit 79926 "LT AS TestField Texts"
         Observer.Observe('y45', DateFilter('01/02/45'));
         Observer.Observe('y49', DateFilter('01/02/49'));
         Observer.Observe('y50', DateFilter('01/02/50'));
-        Observer.Finish();
+        Observer.Expect('y45', '2045-2045 01/02/45');
+        Observer.Expect('y49', '2049-2049 01/02/49');
+        Observer.Expect('y50', '1950-1950 01/02/50');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,6 +245,8 @@ codeunit 79926 "LT AS TestField Texts"
     begin
         Observer.Observe('r39_49', DateFilter('01/02/39..12/30/49'));
         Observer.Observe('digits', DateFilter('010239'));
-        Observer.Finish();
+        Observer.Expect('r39_49', '2039-2049 01/02/39..12/30/49');
+        Observer.Expect('digits', '2039-2039 01/02/39');
+        Observer.Verify();
     end;
 }
