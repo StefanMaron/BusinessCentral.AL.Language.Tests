@@ -287,7 +287,12 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('stored', Format(R.Dt));
         Observer.Observe('stored is closing date', Format(R.Dt = ClosingDate(20250101D)));
         Observer.Observe('stored normal date', Format(NormalDate(R.Dt), 0, 9));
-        Observer.Finish();
+        Observer.Expect('closing date shown', 'C1/1/2025');
+        Observer.Expect('closing date plain shown', '1/1/2025');
+        Observer.Expect('stored', 'C01/01/25');
+        Observer.Expect('stored is closing date', 'Yes');
+        Observer.Expect('stored normal date', '2025-01-01');
+        Observer.Verify();
     end;
 
     [Test]

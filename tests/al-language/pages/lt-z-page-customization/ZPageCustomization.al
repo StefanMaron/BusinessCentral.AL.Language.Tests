@@ -458,7 +458,30 @@ codeunit 76220 "LT Z Page Customization Tests"
         R.Get(1);
         Observer.Observe('stored name', R.Name);
         Observer.Observe('stored amount', Format(R.Amount));
-        Observer.Finish();
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('dt editable', 'No');
+        Observer.Expect('amt editable', 'Yes');
+        Observer.Expect('mask value', 'One');
+        Observer.Expect('qe visible', 'Yes');
+        Observer.Expect('wid visible', 'Yes');
+        Observer.Expect('set 1 ok', 'Yes');
+        Observer.Expect('set 1|text', '');
+        Observer.Expect('set 1|code', '');
+        Observer.Expect('set 3 ok', 'Yes');
+        Observer.Expect('set 3|text', '');
+        Observer.Expect('set 3|code', '');
+        Observer.Expect('set 4 ok', 'Yes');
+        Observer.Expect('set 4|text', '');
+        Observer.Expect('set 4|code', '');
+        Observer.Expect('set 5 ok', 'Yes');
+        Observer.Expect('set 5|text', '');
+        Observer.Expect('set 5|code', '');
+        Observer.Expect('set 6 ok', 'Yes');
+        Observer.Expect('set 6|text', '');
+        Observer.Expect('set 6|code', '');
+        Observer.Expect('stored name', 'quick');
+        Observer.Expect('stored amount', '5');
+        Observer.Verify();
     end;
 
     [Test]
