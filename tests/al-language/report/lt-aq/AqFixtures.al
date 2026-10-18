@@ -48,139 +48,6 @@ table 79701 "LT AQ Entry"
     }
 }
 
-// One single-instance log per test codeunit (79702: LT AQ Report Tests, 79703: LT AQ Req Page Tests, 79704: LT AQ Saved Ext Tests, 79705: LT AQ Filter Tests).
-codeunit 79702 "LT AQ Log"
-{
-    SingleInstance = true;
-
-    var
-        Lines: Text;
-        CurrentMode: Integer;
-
-    procedure Add(Line: Text)
-    begin
-        Lines += Line + ';';
-    end;
-
-    procedure Take(): Text
-    var
-        Result: Text;
-    begin
-        Result := Lines;
-        Lines := '';
-        exit(Result);
-    end;
-
-    procedure SetMode(NewMode: Integer)
-    begin
-        CurrentMode := NewMode;
-    end;
-
-    procedure Mode(): Integer
-    begin
-        exit(CurrentMode);
-    end;
-}
-
-codeunit 79703 "LT AQ Log Req Page"
-{
-    SingleInstance = true;
-
-    var
-        Lines: Text;
-        CurrentMode: Integer;
-
-    procedure Add(Line: Text)
-    begin
-        Lines += Line + ';';
-    end;
-
-    procedure Take(): Text
-    var
-        Result: Text;
-    begin
-        Result := Lines;
-        Lines := '';
-        exit(Result);
-    end;
-
-    procedure SetMode(NewMode: Integer)
-    begin
-        CurrentMode := NewMode;
-    end;
-
-    procedure Mode(): Integer
-    begin
-        exit(CurrentMode);
-    end;
-}
-
-codeunit 79704 "LT AQ Log Saved Ext"
-{
-    SingleInstance = true;
-
-    var
-        Lines: Text;
-        CurrentMode: Integer;
-
-    procedure Add(Line: Text)
-    begin
-        Lines += Line + ';';
-    end;
-
-    procedure Take(): Text
-    var
-        Result: Text;
-    begin
-        Result := Lines;
-        Lines := '';
-        exit(Result);
-    end;
-
-    procedure SetMode(NewMode: Integer)
-    begin
-        CurrentMode := NewMode;
-    end;
-
-    procedure Mode(): Integer
-    begin
-        exit(CurrentMode);
-    end;
-}
-
-codeunit 79705 "LT AQ Log Filter"
-{
-    SingleInstance = true;
-
-    var
-        Lines: Text;
-        CurrentMode: Integer;
-
-    procedure Add(Line: Text)
-    begin
-        Lines += Line + ';';
-    end;
-
-    procedure Take(): Text
-    var
-        Result: Text;
-    begin
-        Result := Lines;
-        Lines := '';
-        exit(Result);
-    end;
-
-    procedure SetMode(NewMode: Integer)
-    begin
-        CurrentMode := NewMode;
-    end;
-
-    procedure Mode(): Integer
-    begin
-        exit(CurrentMode);
-    end;
-}
-
 // Item 11: CurrReport.Language set to values outside the culture range, in OnPreReport.
 // CurrReport.Language := -2 is left out: on the BC 29 Linux tier it raised an uncatchable 'Unexpected CLR exception thrown.: System.ArgumentOutOfRangeException:
 // culture ('-2') must be a non-negative and non-zero value. (Parameter 'culture')' that the TryFunction did not catch (a Linux suspect, kept as report 79726 without a test).
@@ -749,4 +616,137 @@ report 79724 "LT AQ Req Page"
         Log: Codeunit "LT AQ Log Req Page";
         IntVal: Integer;
         OptVal: Option Alpha,Beta,Gamma;
+}
+
+// One single-instance log per test codeunit (79702: LT AQ Report Tests, 79703: LT AQ Req Page Tests, 79704: LT AQ Saved Ext Tests, 79705: LT AQ Filter Tests).
+codeunit 79702 "LT AQ Log"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
+}
+
+codeunit 79703 "LT AQ Log Req Page"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
+}
+
+codeunit 79704 "LT AQ Log Saved Ext"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
+}
+
+codeunit 79705 "LT AQ Log Filter"
+{
+    SingleInstance = true;
+
+    var
+        Lines: Text;
+        CurrentMode: Integer;
+
+    procedure Add(Line: Text)
+    begin
+        Lines += Line + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Lines;
+        Lines := '';
+        exit(Result);
+    end;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        CurrentMode := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(CurrentMode);
+    end;
 }

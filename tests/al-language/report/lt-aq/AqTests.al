@@ -97,7 +97,8 @@ codeunit 79750 "LT AQ Report Tests"
         exit(Result);
     end;
 
-    // Per layout of the report: every column of the Report Layout List row except the report id and the runtime package id (it changes with every build of the app).
+    // Per layout of the report: the Name, Layout Format, Description and User Defined columns of the Report Layout List row, and every column whose name holds
+    // Subtype (Layout Subtype exists from BC 29 only; BC 28 adds Layout Status and BC 29 HeaderFooterPart and ThemePart, not asserted).
     local procedure LayoutRows(ReportId: Integer): Text
     var
         LayoutList: Record "Report Layout List";
@@ -113,7 +114,7 @@ codeunit 79750 "LT AQ Report Tests"
                 Result += '[';
                 for i := 1 to RR.FieldCount() do begin
                     FR := RR.FieldIndex(i);
-                    if (FR.Name <> 'Report ID') and (FR.Name <> 'Runtime Package ID') and (FR.Class = FieldClass::Normal) and (FR.Type <> FieldType::Blob) and (FR.Type <> FieldType::Media) then
+                    if (FR.Name in ['Name', 'Layout Format', 'Description', 'User Defined']) or FR.Name.Contains('Subtype') then
                         Result += FR.Name + '=' + Format(FR.Value) + ' ';
                 end;
                 Result += ']';
@@ -131,7 +132,8 @@ codeunit 79750 "LT AQ Report Tests"
         Seed();
         XmlOf(Report::"LT AQ Lang");
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', '70000 error=An unsupported language was selected (''70000'' - ''Requested culture is not supported by the current platform''). code=ReportLanguageNotFound;99998 error=An unsupported language was selected (''99998'' - ''Requested culture is not supported by the current platform''). code=ReportLanguageNotFound;after=1033 global=Yes;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +144,8 @@ codeunit 79750 "LT AQ Report Tests"
         Seed();
         Report.Run(Report::"LT AQ Lang Run");
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', '70000 error=An unsupported language was selected (''70000'' - ''Requested culture is not supported by the current platform''). code=ReportLanguageNotFound;99998 error=An unsupported language was selected (''99998'' - ''Requested culture is not supported by the current platform''). code=ReportLanguageNotFound;after=1033 global=Yes;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,9 +167,16 @@ codeunit 79750 "LT AQ Report Tests"
         Observer.Observe('count', Format(StrLen(First) div 37));
         Observer.Observe('runs equal', Format(First = Second));
         Observer.Observe('equal to row SystemIds', Format(First = Expected));
+#if BC28PLUS
         Observer.Expect('count', '4');
         Observer.Expect('runs equal', 'Yes');
         Observer.Expect('equal to row SystemIds', 'Yes');
+#else
+        // BC 27 writes no systemId attribute.
+        Observer.Expect('count', '0');
+        Observer.Expect('runs equal', 'Yes');
+        Observer.Expect('equal to row SystemIds', 'No');
+#endif
         Observer.Verify();
     end;
 
@@ -179,8 +189,8 @@ codeunit 79750 "LT AQ Report Tests"
         Seed();
         Xml := DataItemsOf(XmlOf(Report::"LT AQ CalcF Base"));
         Observer.Observe('log', Log.Take());
-        Observer.Observe('has ExtSum column', Format(Xml.Contains('<Column name="ExtSum" decimalformatter="#,##0.00###">5</Column>')));
-        Observer.Finish();
+        Observer.Expect('log', 'ext A1 sum=5 cnt=2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,7 +224,16 @@ codeunit 79750 "LT AQ Report Tests"
         Observer.Observe('equal', Format(WithProp = Without));
         Observer.Observe('length on', Format(StrLen(WithProp)));
         Observer.Observe('length off', Format(StrLen(Without)));
-        Observer.Finish();
+        Observer.Expect('equal', 'Yes');
+#if BC28PLUS
+        // BC 28 adds the tableId and systemId attributes to every DataItem element.
+        Observer.Expect('length on', '1717');
+        Observer.Expect('length off', '1717');
+#else
+        Observer.Expect('length on', '1260');
+        Observer.Expect('length off', '1260');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -248,7 +267,13 @@ codeunit 79750 "LT AQ Report Tests"
     begin
         Observer.Observe('default', Format(Report.DefaultLayout(Report::"LT AQ Excel Legacy")));
         Observer.Observe('rows', LayoutRows(Report::"LT AQ Excel Legacy"));
-        Observer.Finish();
+        Observer.Expect('default', 'RDLC');
+#if BC29PLUS
+        Observer.Expect('rows', '[Name=./report/lt-aq/LtAqExcelLegacy.xlsx Layout Format=Excel Description=./report/lt-aq/LtAqExcelLegacy.xlsx User Defined=No Layout Subtype=Default ]');
+#else
+        Observer.Expect('rows', '[Name=./report/lt-aq/LtAqExcelLegacy.xlsx Layout Format=Excel Description=./report/lt-aq/LtAqExcelLegacy.xlsx User Defined=No ]');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +283,13 @@ codeunit 79750 "LT AQ Report Tests"
     begin
         Observer.Observe('default', Format(Report.DefaultLayout(Report::"LT AQ No Subtype")));
         Observer.Observe('rows', LayoutRows(Report::"LT AQ No Subtype"));
-        Observer.Finish();
+        Observer.Expect('default', 'Word');
+#if BC29PLUS
+        Observer.Expect('rows', '[Name=AqRdlcFirst Layout Format=RDLC Description=AqRdlcFirst User Defined=No Layout Subtype=Default ][Name=AqWordNoSub Layout Format=Word Description=AqWordNoSub User Defined=No Layout Subtype=Default ]');
+#else
+        Observer.Expect('rows', '[Name=AqRdlcFirst Layout Format=RDLC Description=AqRdlcFirst User Defined=No ][Name=AqWordNoSub Layout Format=Word Description=AqWordNoSub User Defined=No ]');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -366,7 +397,12 @@ codeunit 79751 "LT AQ Req Page Tests"
         Observer.ObserveError('error');
         Observer.Observe('handler', SeenValues);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('options', '<Options><Field name="IntVal">9</Field><Field name="OptVal">2</Field></Options>');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('handler', 'int=9 opt=Alpha');
+        Observer.Expect('log', 'OnInit int=0 opt=Alpha;OnOpenPage int=9 opt=Alpha;');
+        Observer.Verify();
     end;
 
     // The first RunRequestPage of a test (no value seeded) sets IntCtl 9 and OptCtl Gamma; the second one reads them.
@@ -382,8 +418,8 @@ codeunit 79751 "LT AQ Req Page Tests"
         RP.OK().Invoke();
     end;
 
+    // RunRequestPage is refused before the request page opens, so the test declares no handler.
     [Test]
-    [HandlerFunctions('CancelHandler')]
     procedure PendingInsert_RunRequestPage_InTheTest()
     var
         Observer: Codeunit "Probe Observer";
@@ -412,12 +448,6 @@ codeunit 79751 "LT AQ Req Page Tests"
         Observer.Observe('count', Format(Row.Count()));
         Observer.Expect('count', '0');
         Observer.Verify();
-    end;
-
-    [RequestPageHandler]
-    procedure CancelHandler(var RP: TestRequestPage "LT AQ Req Page")
-    begin
-        RP.Cancel().Invoke();
     end;
 }
 
