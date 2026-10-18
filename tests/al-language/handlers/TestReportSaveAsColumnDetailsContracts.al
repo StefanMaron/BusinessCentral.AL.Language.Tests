@@ -63,7 +63,7 @@ report 69131 "Probe SD Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeSdLayout.rdl';
+            LayoutFile = './ProbeSdLayout_4.rdl';
             Caption = 'Probe layout';
         }
     }
@@ -89,7 +89,7 @@ report 69132 "Probe SD Empty Report"
         layout(Rdlc)
         {
             Type = RDLC;
-            LayoutFile = './ProbeSdLayout.rdl';
+            LayoutFile = './ProbeSdLayout_5.rdl';
             Caption = 'Probe layout';
         }
     }
