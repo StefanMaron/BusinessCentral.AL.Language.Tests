@@ -279,6 +279,8 @@ jobs:
       # runtests exited 1 with no results" (corpus #561). Remove this once an al tool lists
       # debugger 9.0.
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
+      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
   # The Target = OnPrem DotNet test app (tests/al-language-onprem-dotnet), in a job of its own for the same
   # one-test-app-per-invocation reason as test-onprem above. Its dotnet declarations need an AL compiler of 18.0 or
@@ -304,6 +306,8 @@ jobs:
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
+      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
     # Optional: supply a base64-encoded BC developer license.
     # Without this, BC boots with the public Cronus license (sufficient
