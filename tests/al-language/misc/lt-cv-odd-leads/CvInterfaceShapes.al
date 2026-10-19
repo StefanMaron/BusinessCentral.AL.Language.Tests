@@ -258,7 +258,13 @@ codeunit 85363 "LT CV Interface Shape Tests"
         I := R.KindFf;
         Observer.Observe('no_target|ff', Format(R.KindFf));
         Observer.Observe('no_target|name', I.Name());
-        Observer.Finish();
+        Observer.Expect('no_calcfields|ff', 'Alpha');
+        Observer.Expect('no_calcfields|name', 'A');
+        Observer.Expect('calcfields|ff', 'Beta');
+        Observer.Expect('calcfields|name', 'B');
+        Observer.Expect('no_target|ff', 'Alpha');
+        Observer.Expect('no_target|name', 'A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -279,7 +285,14 @@ codeunit 85363 "LT CV Interface Shape Tests"
         Ok := TryAssignAndCall(R.Kind);
         Observer.Observe('assign_call|ok', Format(Ok));
         Observer.ObserveError('assign_call');
-        Observer.Finish();
+        Observer.Expect('ordinal', '5');
+        Observer.Expect('assign|ok', 'No');
+        Observer.Expect('assign|text', 'Enum does not contain value 5.');
+        Observer.Expect('assign|code', 'ArgumentOutOfRange');
+        Observer.Expect('assign_call|ok', 'No');
+        Observer.Expect('assign_call|text', 'Enum does not contain value 5.');
+        Observer.Expect('assign_call|code', 'ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -297,7 +310,12 @@ codeunit 85363 "LT CV Interface Shape Tests"
         I := Enum::"LT CV Shape Kind"::Beta;
         Observer.Observe('b|direct_id', Format(I.GetRec(5).Id));
         Observer.Observe('b|direct_name', I.GetRec(5).Name);
-        Observer.Finish();
+        Observer.Expect('a|id', '5');
+        Observer.Expect('a|name', 'from A');
+        Observer.Expect('a|kind', 'Beta');
+        Observer.Expect('b|direct_id', '105');
+        Observer.Expect('b|direct_name', 'from B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -316,7 +334,11 @@ codeunit 85363 "LT CV Interface Shape Tests"
         Observer.Observe('page|var', P.GetTag());
         I := Enum::"LT CV Shape Kind"::Beta;
         Observer.Observe('page|direct', I.GetPage('q').GetTag());
-        Observer.Finish();
+        Observer.Expect('cu|var', 'A:x');
+        Observer.Expect('cu|direct', 'A:y');
+        Observer.Expect('page|var', 'A:p');
+        Observer.Expect('page|direct', 'B:q');
+        Observer.Verify();
     end;
 
     [Test]
@@ -328,7 +350,9 @@ codeunit 85363 "LT CV Interface Shape Tests"
         H := Level1('t');
         Observer.Observe('levels|var', H.GetTag());
         Observer.Observe('levels|direct', Level1('u').GetTag());
-        Observer.Finish();
+        Observer.Expect('levels|var', 'B:t12');
+        Observer.Expect('levels|direct', 'B:u12');
+        Observer.Verify();
     end;
 
     [Test]
@@ -348,6 +372,12 @@ codeunit 85363 "LT CV Interface Shape Tests"
         Observer.Observe('b|istemp_inside', I.Fill(TempBuf));
         Observer.Observe('b|temp_count', Format(TempBuf.Count()));
         Observer.Observe('b|db_count', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('a|istemp_inside', 'Yes');
+        Observer.Expect('a|temp_count', '2');
+        Observer.Expect('a|db_count', '0');
+        Observer.Expect('b|istemp_inside', 'Yes');
+        Observer.Expect('b|temp_count', '3');
+        Observer.Expect('b|db_count', '0');
+        Observer.Verify();
     end;
 }

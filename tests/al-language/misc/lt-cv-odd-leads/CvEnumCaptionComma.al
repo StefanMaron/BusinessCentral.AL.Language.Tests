@@ -78,7 +78,15 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
         Observer.Observe('eval|name', TryEvaluate('Diamond'));
         Observer.Observe('eval|second_half', TryEvaluate('with bonus'));
         Observer.Observe('eval|first_half', TryEvaluate('Diamond Level'));
-        Observer.Finish();
+        Observer.Expect('format', 'Diamond Level, with bonus');
+        Observer.Expect('format_9', '1');
+        Observer.Expect('format_2', '1');
+        Observer.Expect('names', 'Diamond');
+        Observer.Expect('eval|caption', 'Yes|1');
+        Observer.Expect('eval|name', 'Yes|1');
+        Observer.Expect('eval|second_half', 'Yes|2');
+        Observer.Expect('eval|first_half', 'No|3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -94,31 +102,49 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
         Observer.Observe('optionmembers', FldRef.OptionMembers());
         FldRef.Value := Enum::"LT CV Tier"::Diamond;
         Observer.Observe('fieldref_format', Format(FldRef.Value));
-        Observer.Finish();
+        Observer.Expect('optioncaption', 'Plain,Diamond Level, with bonus,with bonus,Silver');
+        Observer.Expect('optionmembers', 'Plain,Diamond,Gold,Silver');
+        Observer.Expect('fieldref_format', 'Diamond Level, with bonus');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TrySetValue(var Card: TestPage "LT CV Tier Card"; NewValue: Text)
+    begin
+        Card.Tier.SetValue(NewValue);
+    end;
+
+    local procedure SetOnFreshPage(var Observer: Codeunit "Probe Observer"; Name: Text; NewValue: Text)
+    var
+        Row: Record "LT CV Tier Row";
+        Card: TestPage "LT CV Tier Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Tier := Row.Tier::Silver;
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        ClearLastError();
+        Observer.Observe(Name + '|ok', Format(TrySetValue(Card, NewValue)));
+        Observer.ObserveError(Name);
+        Observer.Observe(Name + '|validation', Card.Tier.GetValidationError());
+        Observer.Observe(Name + '|value', Card.Tier.Value());
+        Card.Close();
+        Row.Get(1);
+        Observer.Observe(Name + '|stored', Format(Row.Tier.AsInteger()));
     end;
 
     [Test]
     procedure TestPageSetValueByCaption()
     var
-        Row: Record "LT CV Tier Row";
-        Card: TestPage "LT CV Tier Card";
         Observer: Codeunit "Probe Observer";
     begin
-        Row.DeleteAll();
-        Row.Id := 1;
-        Row.Insert();
-        Card.OpenEdit();
-        Card.GoToRecord(Row);
-        Card.Tier.SetValue('Diamond Level, with bonus');
-        Observer.Observe('setvalue_caption|value', Card.Tier.Value());
-        Card.Tier.SetValue('Silver');
-        Card.Tier.SetValue(Enum::"LT CV Tier"::Diamond);
-        Observer.Observe('setvalue_enum|value', Card.Tier.Value());
-        Card.Tier.SetValue('with bonus');
-        Observer.Observe('setvalue_second|value', Card.Tier.Value());
-        Card.Close();
-        Row.Get(1);
-        Observer.Observe('stored', Format(Row.Tier.AsInteger()));
+        SetOnFreshPage(Observer, 'caption_with_comma', 'Diamond Level, with bonus');
+        SetOnFreshPage(Observer, 'second_half', 'with bonus');
+        SetOnFreshPage(Observer, 'first_half', 'Diamond Level');
+        SetOnFreshPage(Observer, 'name', 'Diamond');
+        SetOnFreshPage(Observer, 'plain_caption', 'Plain');
         Observer.Finish();
     end;
 }

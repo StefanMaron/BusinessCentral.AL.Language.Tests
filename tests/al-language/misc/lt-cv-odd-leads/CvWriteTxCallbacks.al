@@ -70,7 +70,13 @@ codeunit 85369 "LT CV Write Tx Callback Tests"
         Observer.Observe('after|count', Format(Row.Count()));
         Row.Get(1);
         Observer.Observe('after|name', Row.Name);
-        Observer.Finish();
+        Observer.Expect('confirm', 'Yes');
+        Observer.Expect('strmenu', '2');
+        Observer.Expect('runmodal', 'LookupOK');
+        Observer.Expect('handler_saw', 'written');
+        Observer.Expect('after|count', '1');
+        Observer.Expect('after|name', 'modified');
+        Observer.Verify();
     end;
 
     [ConfirmHandler]

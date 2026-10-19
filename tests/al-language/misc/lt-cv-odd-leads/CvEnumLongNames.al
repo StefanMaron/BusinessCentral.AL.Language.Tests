@@ -87,7 +87,17 @@ codeunit 85366 "LT CV Enum Long Name Tests"
         Observer.Observe('two|evaluate', Format(Ok) + '|' + Format(Two.AsInteger()));
         Ok := Evaluate(One, 'Gamma Two');
         Observer.Observe('one|evaluate_other', Format(Ok) + '|' + Format(One.AsInteger()));
-        Observer.Finish();
+        Observer.Expect('one|format', 'Second One');
+        Observer.Expect('two|format', 'Beta Two');
+        Observer.Expect('one|int', '7');
+        Observer.Expect('two|int', '3');
+        Observer.Expect('one|names', 'First,Second,');
+        Observer.Expect('two|names', 'Alpha,Beta,Gamma,');
+        Observer.Expect('one|ordinals', '0,7,');
+        Observer.Expect('two|ordinals', '0,3,4,');
+        Observer.Expect('two|evaluate', 'Yes|4');
+        Observer.Expect('one|evaluate_other', 'No|7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,6 +111,10 @@ codeunit 85366 "LT CV Enum Long Name Tests"
         Observer.Observe('two|members', RecRef.Field(3).OptionMembers());
         Observer.Observe('one|captions', RecRef.Field(2).OptionCaption());
         Observer.Observe('two|captions', RecRef.Field(3).OptionCaption());
-        Observer.Finish();
+        Observer.Expect('one|members', 'First,Second');
+        Observer.Expect('two|members', 'Alpha,Beta,Gamma');
+        Observer.Expect('one|captions', 'First One,Second One');
+        Observer.Expect('two|captions', 'Alpha Two,Beta Two,Gamma Two');
+        Observer.Verify();
     end;
 }

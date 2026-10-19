@@ -58,7 +58,14 @@ codeunit 85370 "LT CV Read Isolation Tests"
         Observer.Observe('transferfields|target', Format(Other.ReadIsolation));
         Clear(Rec);
         Observer.Observe('after_clear', Format(Rec.ReadIsolation));
-        Observer.Finish();
+        Observer.Expect('after_reset', 'Default');
+        Observer.Expect('after_init', 'ReadUncommitted');
+        Observer.Expect('after_locktable', 'Default');
+        Observer.Expect('copy|target', 'ReadCommitted');
+        Observer.Expect('assign|target', 'Default');
+        Observer.Expect('transferfields|target', 'Default');
+        Observer.Expect('after_clear', 'Default');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,6 +89,9 @@ codeunit 85370 "LT CV Read Isolation Tests"
         Observer.Observe('total', Format(Curr.Total));
         Observer.Observe('curr_iso', Format(Curr.ReadIsolation));
         Observer.Observe('locker_iso', Format(Locker.ReadIsolation));
-        Observer.Finish();
+        Observer.Expect('total', '6.5');
+        Observer.Expect('curr_iso', 'ReadUncommitted');
+        Observer.Expect('locker_iso', 'Default');
+        Observer.Verify();
     end;
 }

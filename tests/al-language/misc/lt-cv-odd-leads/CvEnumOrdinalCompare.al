@@ -67,7 +67,17 @@ codeunit 85364 "LT CV Enum Ordinal Tests"
         Row.Level := Row.Level::Middle;
         Observer.Observe('ext_field_lt_surplus', Format(Row.Level < Row.Level::Surplus));
         Observer.Observe('names', Format(Enum::"LT CV Level".Names().Count()) + ':' + Enum::"LT CV Level".Names().Get(1) + ',' + Enum::"LT CV Level".Names().Get(4));
-        Observer.Finish();
+        Observer.Expect('high_vs_low', 'No|Yes|No|Yes');
+        Observer.Expect('low_vs_surplus', 'Yes|No|Yes|No');
+        Observer.Expect('surplus_vs_high', 'Yes|No|Yes|No');
+        Observer.Expect('surplus_vs_surplus', 'No|No|Yes|Yes');
+        Observer.Expect('middle_vs_low', 'No|Yes|No|Yes');
+        Observer.Expect('middle_vs_surplus', 'Yes|No|Yes|No');
+        Observer.Expect('field_lt_surplus', 'No');
+        Observer.Expect('field_gt_surplus', 'Yes');
+        Observer.Expect('ext_field_lt_surplus', 'Yes');
+        Observer.Expect('names', '4:High,Middle');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +106,14 @@ codeunit 85364 "LT CV Enum Ordinal Tests"
         Observer.Observe('opt_one', Format(Row.Level));
         Row.Level := Enum::"LT CV Level".FromInteger(Row.Int + 2);
         Observer.Observe('frominteger_field', Format(Row.Level));
-        Observer.Finish();
+        Observer.Expect('int_field_10', 'Surplus');
+        Observer.Expect('int_field_5', 'Middle');
+        Observer.Expect('int_field_3|format', '3');
+        Observer.Expect('int_field_3|ordinal', '3');
+        Observer.Expect('int_var_20', 'High');
+        Observer.Expect('opt_one', 'Low');
+        Observer.Expect('frominteger_field', 'Middle');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,6 +145,11 @@ codeunit 85364 "LT CV Enum Ordinal Tests"
             else
                 Observer.Observe('case_20', 'else');
         end;
-        Observer.Finish();
+        Observer.Expect('if_eq', 'Yes');
+        Observer.Expect('if_ne', 'No');
+        Observer.Expect('asinteger_eq', 'Yes');
+        Observer.Expect('case_5', 'Middle');
+        Observer.Expect('case_20', 'High');
+        Observer.Verify();
     end;
 }
