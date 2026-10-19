@@ -138,7 +138,14 @@ codeunit 84409 "LT CF Query Leads"
         end;
         Q.Close();
         Observer.Observe('rows', Format(N));
-        Observer.Finish();
+        Observer.Expect('1 date', '0/0/0');
+        Observer.Expect('1 datetime', '0/0/0');
+        Observer.Expect('1 count', '1');
+        Observer.Expect('2 date', '17/3/2024');
+        Observer.Expect('2 datetime', '9/11/2023');
+        Observer.Expect('2 count', '1');
+        Observer.Expect('rows', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +170,20 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Observe('qty caption', Q.ColumnCaption(Q.Qty));
         Observer.Observe('values', StrSubstNo('%1 %2 %3 %4', Q.MinQty, Q.MaxQty, Q.SumQty, Q.Qty));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('before open min name', 'MinQty');
+        Observer.Expect('before open min caption', 'MinQty');
+        Observer.Expect('before open qty name', 'Qty');
+        Observer.Expect('before open qty caption', 'Qty');
+        Observer.Expect('min name', 'MinQty');
+        Observer.Expect('min caption', 'MinQty');
+        Observer.Expect('max name', 'MaxQty');
+        Observer.Expect('max caption', 'MaxQty');
+        Observer.Expect('sum name', 'SumQty');
+        Observer.Expect('sum caption', 'SumQty');
+        Observer.Expect('qty name', 'Qty');
+        Observer.Expect('qty caption', 'Qty');
+        Observer.Expect('values', '-2 5 3 -2');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -202,7 +222,22 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Observe('after read len', Format(Len));
         Observer.ObserveError('after read');
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('before open ok', 'No');
+        Observer.Expect('before open len', '0');
+        Observer.Expect('before open|text', 'You have not yet retrieved a data row for this query. The value for column ''Department'' can only be accessed after a row is retrieved with a call to the READ function.');
+        Observer.Expect('before open|code', 'QueryNoDataSet');
+        Observer.Expect('setfilter before open ok', 'No');
+        Observer.Expect('setfilter before open|text', 'You have not yet retrieved a data row for this query. The value for column ''Department'' can only be accessed after a row is retrieved with a call to the READ function.');
+        Observer.Expect('setfilter before open|code', 'QueryNoDataSet');
+        Observer.Expect('after open ok', 'No');
+        Observer.Expect('after open len', '0');
+        Observer.Expect('after open|text', 'You have not yet retrieved a data row for this query. The value for column ''Department'' can only be accessed after a row is retrieved with a call to the READ function.');
+        Observer.Expect('after open|code', 'QueryNoDataSet');
+        Observer.Expect('after read ok', 'Yes');
+        Observer.Expect('after read len', '30');
+        Observer.Expect('after read|text', '');
+        Observer.Expect('after read|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +264,17 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Observe('column name', Q.ColumnName(Q.Counter));
         Observer.Observe('column caption', Q.ColumnCaption(Q.Counter));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('read', 'Yes');
+        Observer.Expect('is integer', 'Yes');
+        Observer.Expect('is biginteger', 'No');
+        Observer.Expect('is decimal', 'No');
+        Observer.Expect('format', '2');
+        Observer.Expect('format 9', '2');
+        Observer.Expect('as integer', '2');
+        Observer.Expect('as biginteger', '2');
+        Observer.Expect('column name', 'Counter');
+        Observer.Expect('column caption', 'Counter');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -252,6 +297,10 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Observe('ok', Format(TryReadReverseText(Q, Got)));
         Observer.Observe('rows', Got);
         Observer.ObserveError('read');
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows', '');
+        Observer.Expect('read|text', 'Cannot calculate a Sum or Average because the field is not a numeric field (Decimal, BigInteger, Integer or Duration data type). Review the FlowField, query, or analysis view that calculates this value.');
+        Observer.Expect('read|code', 'DB:SumOnNoneNumeric');
+        Observer.Verify();
     end;
 }

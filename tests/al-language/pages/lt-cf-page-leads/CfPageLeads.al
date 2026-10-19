@@ -113,6 +113,12 @@ codeunit 84439 "LT CF Page Leads"
     end;
 
     [TryFunction]
+    local procedure TryApiFalseOpenNew(var P: TestPage "LT CF P Api False")
+    begin
+        P.OpenNew();
+    end;
+
+    [TryFunction]
     local procedure TryApiFalseClose(var P: TestPage "LT CF P Api False")
     begin
         P.Close();
@@ -123,6 +129,12 @@ codeunit 84439 "LT CF Page Leads"
     begin
         P.id.SetValue(Id);
         P.name.SetValue(Name);
+    end;
+
+    [TryFunction]
+    local procedure TryApiTrueOpenNew(var P: TestPage "LT CF P Api True")
+    begin
+        P.OpenNew();
     end;
 
     [TryFunction]
@@ -140,7 +152,10 @@ codeunit 84439 "LT CF Page Leads"
         Row.DeleteAll();
         Log.Reset();
         ClearLastError();
-        P.OpenNew();
+        Observer.Observe('open new ok', Format(TryApiFalseOpenNew(P)));
+        Observer.ObserveError('open new');
+        Observer.Observe('after open log', Log.Text());
+        Observer.Observe('after open rows', ApiRows());
         Observer.Observe('set ok', Format(TryApiFalseSet(P, 1, 'One')));
         Observer.ObserveError('set');
         Observer.Observe('after set log', Log.Text());
@@ -161,7 +176,10 @@ codeunit 84439 "LT CF Page Leads"
         Row.DeleteAll();
         Log.Reset();
         ClearLastError();
-        P.OpenNew();
+        Observer.Observe('open new ok', Format(TryApiTrueOpenNew(P)));
+        Observer.ObserveError('open new');
+        Observer.Observe('after open log', Log.Text());
+        Observer.Observe('after open rows', ApiRows());
         Observer.Observe('set ok', Format(TryApiTrueSet(P, 2, 'Two')));
         Observer.ObserveError('set');
         Observer.Observe('after set log', Log.Text());
@@ -215,7 +233,23 @@ codeunit 84439 "LT CF Page Leads"
         Observer.ObserveError('close');
         Observer.Observe('after close log', Log.Text());
         Observer.Observe('after close rows', DocRows());
-        Observer.Finish();
+        Observer.Expect('open ok', 'Yes');
+        Observer.Expect('open|text', '');
+        Observer.Expect('open|code', '');
+        Observer.Expect('after open log', 'OnNewRecord,Doc.OnInsert:DOC1');
+        Observer.Expect('after open rows', '[DOC1/]');
+        Observer.Expect('after open no', 'DOC1');
+        Observer.Expect('set ok', 'No');
+        Observer.Expect('set|text', 'Validation error for Field: Description,  Message = ''This field cannot be validated since the key fields are not valid.''');
+        Observer.Expect('set|code', 'TestValidation');
+        Observer.Expect('after set log', 'OnNewRecord,Doc.OnInsert:DOC1,OnInsertRecord:DOC1,Doc.OnInsert:DOC1');
+        Observer.Expect('after set rows', '[DOC1/]');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('after close log', 'OnNewRecord,Doc.OnInsert:DOC1,OnInsertRecord:DOC1,Doc.OnInsert:DOC1');
+        Observer.Expect('after close rows', '[DOC1/]');
+        Observer.Verify();
     end;
 
     // ---------- item 86 ----------
@@ -245,7 +279,19 @@ codeunit 84439 "LT CF Page Leads"
         Observer.Observe('filtered amount', P.Amount.Value());
         Observer.Observe('filtered page filter', P.Filter.GetFilter("Date Filter"));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('code', 'R1');
+        Observer.Expect('date filter', '');
+        Observer.Expect('ext date filter', '');
+        Observer.Expect('amount', '30.00');
+        Observer.Expect('date filter editable', 'No');
+        Observer.Expect('date filter visible', 'Yes');
+        Observer.Expect('filtered first', 'Yes');
+        Observer.Expect('filtered date filter', '');
+        Observer.Expect('filtered ext date filter', '');
+        Observer.Expect('filtered amount', '10.00');
+        Observer.Expect('filtered page filter', '01/10/24');
+        Observer.Verify();
     end;
 
     // ---------- item 88 ----------
@@ -278,7 +324,18 @@ codeunit 84439 "LT CF Page Leads"
         P.Close();
         Line.Get('H1', 10000);
         Observer.Observe('db item', Line.Item);
-        Observer.Finish();
+        Observer.Expect('open doc', 'H1');
+        Observer.Expect('open vendor', 'V1');
+        Observer.Expect('goto vendor', 'V1');
+        Observer.Expect('set other vendor item ok', 'No');
+        Observer.Expect('set other vendor item|text', 'Validation error for Field: Item,  Message = ''The field Item of table LT CF P Line contains a value (I2) that cannot be found in the related table (LT CF P Item). (Select Refresh to discard errors)''');
+        Observer.Expect('set other vendor item|code', 'TestValidation');
+        Observer.Expect('set same vendor item ok', 'Yes');
+        Observer.Expect('set same vendor item|text', '');
+        Observer.Expect('set same vendor item|code', '');
+        Observer.Expect('item value', 'I1');
+        Observer.Expect('db item', 'I1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -302,7 +359,18 @@ codeunit 84439 "LT CF Page Leads"
         P.Close();
         Observer.Observe('db exists', Format(Line.Get('H1', 20000)));
         Observer.Observe('db item', Line.Item);
-        Observer.Finish();
+        Observer.Expect('new vendor', '');
+        Observer.Expect('after key vendor', '');
+        Observer.Expect('set other vendor item ok', 'No');
+        Observer.Expect('set other vendor item|text', 'Validation error for Field: Item,  Message = ''The field Item of table LT CF P Line contains a value (I2) that cannot be found in the related table (LT CF P Item). (Select Refresh to discard errors)''');
+        Observer.Expect('set other vendor item|code', 'TestValidation');
+        Observer.Expect('set same vendor item ok', 'Yes');
+        Observer.Expect('set same vendor item|text', '');
+        Observer.Expect('set same vendor item|code', '');
+        Observer.Expect('item value', 'I1');
+        Observer.Expect('db exists', 'Yes');
+        Observer.Expect('db item', 'I1');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -333,7 +401,8 @@ codeunit 84439 "LT CF Page Leads"
         P.Item.Lookup();
         Observer.Observe('lookup', LookupSeen);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('lookup', 'filter=V1 rows=[I1]');
+        Observer.Verify();
     end;
 
     // ---------- item 89 ----------
@@ -376,7 +445,21 @@ codeunit 84439 "LT CF Page Leads"
         Row.Get('R1');
         Row.CalcFields(Amount);
         Observer.Observe('db amount', Format(Row.Amount));
-        Observer.Finish();
+        Observer.Expect('amount', '30.00');
+        Observer.Expect('amount editable', 'Yes');
+        Observer.Expect('set ok', 'Yes');
+        Observer.Expect('set|text', '');
+        Observer.Expect('set|code', '');
+        Observer.Expect('after set log', 'Amount.OnValidate:50/30,Entry.OnInsert');
+        Observer.Expect('after set amount', '50.00');
+        Observer.Expect('after set entries', '[1/R1/10][2/R1/20][3/R1/20]');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('after close log', 'Amount.OnValidate:50/30,Entry.OnInsert,OnModifyRecord,Row.OnModify');
+        Observer.Expect('after close entries', '[1/R1/10][2/R1/20][3/R1/20]');
+        Observer.Expect('db amount', '50');
+        Observer.Verify();
     end;
 
     // ---------- item 90 ----------
@@ -410,7 +493,17 @@ codeunit 84439 "LT CF Page Leads"
         Observer.Observe('setrange value', Format(Row."Date Filter", 0, 9));
         Row.CalcFields(Amount);
         Observer.Observe('setrange amount', Format(Row.Amount));
-        Observer.Finish();
+        Observer.Expect('no filter amount', '30');
+        Observer.Expect('assigned value', '2024-01-10');
+        Observer.Expect('assigned getfilter', '');
+        Observer.Expect('assigned amount', '30');
+        Observer.Expect('validated log', 'DateFilter.OnValidate');
+        Observer.Expect('validated value', '2024-02-10');
+        Observer.Expect('validated getfilter', '');
+        Observer.Expect('validated amount', '30');
+        Observer.Expect('setrange value', '');
+        Observer.Expect('setrange amount', '20');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -440,6 +533,15 @@ codeunit 84439 "LT CF Page Leads"
         Observer.Observe('after set amount', P.Amount.Value());
         Observer.Observe('after set page filter', P.Filter.GetFilter("Date Filter"));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('amount', '30.00');
+        Observer.Expect('date filter editable', 'Yes');
+        Observer.Expect('set ok', 'Yes');
+        Observer.Expect('set|text', '');
+        Observer.Expect('set|code', '');
+        Observer.Expect('after set log', 'DateFilter.OnValidate');
+        Observer.Expect('after set date filter', '1/10/2024');
+        Observer.Expect('after set amount', '30.00');
+        Observer.Expect('after set page filter', '');
+        Observer.Verify();
     end;
 }
