@@ -148,6 +148,39 @@ page 68435 "Probe ClearAll Page"
         PageGlobal: Integer;
 }
 
+// Corpus issue 670 (writer CY): a plain codeunit that holds the SingleInstance codeunit above in a global and calls ClearAll().
+codeunit 85540 "LT CY ClearAll Holder"
+{
+    var
+        Single: Codeunit "Probe ClearAll Single";
+        Own: Integer;
+
+    procedure BumpSingle()
+    begin
+        Single.Bump();
+    end;
+
+    procedure SetOwn(Value: Integer)
+    begin
+        Own := Value;
+    end;
+
+    procedure ClearAllHere()
+    begin
+        ClearAll();
+    end;
+
+    procedure ReadSingle(): Integer
+    begin
+        exit(Single.Current());
+    end;
+
+    procedure ReadOwn(): Integer
+    begin
+        exit(Own);
+    end;
+}
+
 codeunit 68436 "Probe ClearAll TxType"
 {
     Subtype = Test;
@@ -250,5 +283,35 @@ codeunit 68436 "Probe ClearAll TxType"
         CurrentTransactionType(TransactionType::Snapshot);
 
         Assert.AreEqual('Update', Format(CurrentTransactionType()), 'a set after a write changes nothing and raises nothing');
+    end;
+
+    // Corpus issue 670: docs say ClearAll does not change the variables of single-instance codeunits. Object A (a plain codeunit)
+    // holds single-instance codeunit B in a global, B has state, A calls ClearAll(): what A's own global, A's B variable and
+    // a second B variable read afterwards; and ClearAll() in the test procedure while a local B variable holds state.
+    [Test]
+    procedure CY_ClearAll_InOtherObject_SingleInstanceStateKept()
+    var
+        Observer: Codeunit "Probe Observer";
+        Holder: Codeunit "LT CY ClearAll Holder";
+        Single: Codeunit "Probe ClearAll Single";
+        Second: Codeunit "Probe ClearAll Single";
+    begin
+        Single.Reset();
+        Holder.BumpSingle();
+        Holder.BumpSingle();
+        Holder.SetOwn(7);
+        Observer.Observe('before holder single', Format(Holder.ReadSingle()));
+        Observer.Observe('before second', Format(Second.Current()));
+        Holder.ClearAllHere();
+        Observer.Observe('after holder own', Format(Holder.ReadOwn()));
+        Observer.Observe('after holder single', Format(Holder.ReadSingle()));
+        Observer.Observe('after second', Format(Second.Current()));
+        Single.Bump();
+        Observer.Observe('local bump', Format(Single.Current()));
+        ClearAll();
+        Observer.Observe('after test clearall local', Format(Single.Current()));
+        Observer.Observe('after test clearall second', Format(Second.Current()));
+        Single.Reset();
+        Observer.Finish();
     end;
 }
