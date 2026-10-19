@@ -577,4 +577,25 @@ codeunit 72008 "LT RcB CalcSums"
         Observer.Expect('sum', '99999999999.375');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 60 (writer br): CalcSums of a field that is a SumIndexField of another key but not of the current key.
+    [Test]
+    procedure CalcSums_FieldNotInCurrentKeySumIndexFields()
+    var
+        Rec: Record "LT RcB Sums";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Rec.CalcSums(Big);
+        Observer.Observe('pk current, Big', Format(Rec.Big));
+        Rec.SetRange(Grp, 'G1');
+        Rec.CalcSums(Big);
+        Observer.Observe('pk current, Big, Grp G1', Format(Rec.Big));
+        Rec.Reset();
+        Rec.SetCurrentKey(Grp);
+        Rec.SetRange(Id, 2, 4);
+        Rec.CalcSums(Amt, Big);
+        Observer.Observe('grp current, Amt Big, Id 2..4', Format(Rec.Amt) + '|' + Format(Rec.Big));
+        Observer.Finish();
+    end;
 }

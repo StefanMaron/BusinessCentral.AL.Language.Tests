@@ -243,4 +243,48 @@ codeunit 68540 "Test Key RowVersion Removed"
         Assert.AreEqual(1, CountKeysNamingField(Database::Item, 68541),
             'the tableextension''s key(KRVLiveKey; "KRV Live Value") must be in Item''s key list exactly once');
     end;
+
+    // ── (3) CurrentKeyIndex with Removed keys (corpus issue 668 item 51, writer br) ─────────────
+
+    local procedure BrKeyIndexOfField(var TableRef: RecordRef; FieldNo: Integer): Integer
+    var
+        KeyReference: KeyRef;
+        KeyNo: Integer;
+    begin
+        for KeyNo := 1 to TableRef.KeyCount() do begin
+            KeyReference := TableRef.KeyIndex(KeyNo);
+            if KeyReference.FieldCount() = 1 then
+                if KeyReference.FieldIndex(1).Number() = FieldNo then
+                    exit(KeyNo);
+        end;
+        exit(0);
+    end;
+
+    [Test]
+    procedure CurrentKeyIndex_WithRemovedKeys_MatchesKeyIndexNumbering()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "KRV Row";
+        Item: Record Item;
+        TableRef: RecordRef;
+        LiveIndex: Integer;
+    begin
+        Row.SetCurrentKey("Live Value");
+        TableRef.GetTable(Row);
+        LiveIndex := BrKeyIndexOfField(TableRef, 2);
+        Observer.Observe('row keycount', Format(TableRef.KeyCount()));
+        Observer.Observe('row live keyindex', Format(LiveIndex));
+        Observer.Observe('row currentkeyindex after SetCurrentKey', Format(TableRef.CurrentKeyIndex()));
+        TableRef.CurrentKeyIndex(LiveIndex);
+        Observer.Observe('row currentkey after CurrentKeyIndex(live)', TableRef.CurrentKey());
+        TableRef.Close();
+
+        Item.SetCurrentKey("KRV Live Value");
+        TableRef.GetTable(Item);
+        LiveIndex := BrKeyIndexOfField(TableRef, 68541);
+        Observer.Observe('item currentkeyindex equals keyindex', Format(TableRef.CurrentKeyIndex() = LiveIndex));
+        TableRef.CurrentKeyIndex(LiveIndex);
+        Observer.Observe('item currentkey after CurrentKeyIndex(live)', TableRef.CurrentKey());
+        Observer.Finish();
+    end;
 }

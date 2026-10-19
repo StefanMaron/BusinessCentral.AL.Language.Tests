@@ -303,4 +303,49 @@ codeunit 73023 "LT RfT Views"
         Observer.Expect('hasfilter', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 52 (writer br): RecordRef.LockTable with the Wait and VersionCheck arguments.
+    [Test]
+    procedure LockTable_WaitArgument_Overloads()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        RecRef.LockTable(true);
+        Observer.Observe('wait true', 'ok');
+        RecRef.LockTable(true, true);
+        Observer.Observe('wait true versioncheck true', 'ok');
+        RecRef.LockTable(true, false);
+        Observer.Observe('wait true versioncheck false', 'ok');
+        asserterror RecRef.LockTable(false);
+        Observer.ObserveError('wait false');
+        asserterror RecRef.LockTable(false, true);
+        Observer.ObserveError('wait false versioncheck true');
+        asserterror RecRef.LockTable(false, false);
+        Observer.ObserveError('wait false versioncheck false');
+        Observer.Finish();
+    end;
+
+    // Corpus issue 668 item 55 (writer br): GetView after SetView and a later filter change on the same RecordRef.
+    [Test]
+    procedure View_SetViewThenFilterChange_GetView()
+    var
+        Observer: Codeunit "Probe Observer";
+        Helper: Codeunit "LT RfT Helper";
+        RecRef: RecordRef;
+    begin
+        Helper.Seed();
+        RecRef.Open(73001);
+        RecRef.SetView('SORTING(Int) WHERE(Int=FILTER(>=20))');
+        Observer.Observe('after setview', RecRef.GetView());
+        RecRef.Field(3).SetRange(30);
+        Observer.Observe('after setrange same field', RecRef.GetView());
+        RecRef.Field(2).SetFilter('Text*');
+        Observer.Observe('after setfilter other field', RecRef.GetView());
+        Observer.Observe('count', Format(RecRef.Count()));
+        RecRef.Field(3).SetRange();
+        Observer.Observe('after clearing int', RecRef.GetView(false));
+        Observer.Finish();
+    end;
 }

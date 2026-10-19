@@ -141,6 +141,51 @@ codeunit 60068 "Test RecordRef CRUD"
         RecRef.Close();
     end;
 
+    // Corpus issue 668 item 50 (writer br): RecordRef.Modify and Delete act on the held record although the RecordRef's filter and
+    // current key exclude it; the result and error of both once the row no longer exists.
+    [Test]
+    procedure RecordRef_ModifyDelete_FilterExcludesHeldRecord()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "ALT Universal";
+        RecRef: RecordRef;
+        i: Integer;
+        Ok: Boolean;
+    begin
+        Initialize();
+        for i := 1 to 3 do begin
+            Rec."Entry No." := i;
+            Rec."Text Field" := 'row ' + Format(i);
+            Rec."Integer Field" := 10 * i;
+            Rec.Insert();
+        end;
+        RecRef.Open(60000);
+        RecRef.FindFirst();
+        RecRef.Field(1).SetRange(2, 3);
+        RecRef.Field(3).SetRange(20, 30);
+        Observer.Observe('key count', Format(RecRef.KeyCount()));
+        RecRef.Field(6).Value := 'changed';
+        Ok := RecRef.Modify(false);
+        Observer.Observe('modify returns', Format(Ok));
+        Rec.Get(1);
+        Observer.Observe('row 1 text', Rec."Text Field");
+        Observer.Observe('count under filter', Format(RecRef.Count()));
+        Ok := RecRef.Delete(false);
+        Observer.Observe('delete returns', Format(Ok));
+        Rec.Reset();
+        Observer.Observe('row 1 exists', Format(Rec.Get(1)));
+        Observer.Observe('rows left', Format(Rec.Count()));
+        Ok := RecRef.Delete(false);
+        Observer.Observe('delete again returns', Format(Ok));
+        Ok := RecRef.Modify(false);
+        Observer.Observe('modify missing returns', Format(Ok));
+        asserterror RecRef.Delete(false);
+        Observer.ObserveError('delete missing statement');
+        asserterror RecRef.Modify(false);
+        Observer.ObserveError('modify missing statement');
+        Observer.Finish();
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();

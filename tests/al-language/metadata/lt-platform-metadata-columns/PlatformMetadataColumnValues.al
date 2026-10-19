@@ -265,4 +265,44 @@ codeunit 71394 "LT PM Values Tests"
         Observer.Expect('cust ledger entry field4 Posting Date', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 46 (writer br): Field."App Package ID" and "App Runtime Package ID" after Get, after FindFirst and after
+    // Next(1); Next(-1), for an own table and a Base Application table, compared with AllObj of the same table.
+    local procedure BrPackageIds(var F: Record Field; TableId: Integer): Text
+    var
+        AllObj: Record AllObj;
+    begin
+        AllObj.Get(AllObj."Object Type"::Table, TableId);
+        exit(
+            'pkgnull=' + Format(IsNullGuid(F."App Package ID")) +
+            ' rtnull=' + Format(IsNullGuid(F."App Runtime Package ID")) +
+            ' pkg=allobj:' + Format(F."App Package ID" = AllObj."App Package ID") +
+            ' rt=allobj:' + Format(F."App Runtime Package ID" = AllObj."App Runtime Package ID"));
+    end;
+
+    local procedure BrObservePackageIds(var Observer: Codeunit "Probe Observer"; Prefix: Text; TableId: Integer)
+    var
+        F: Record Field;
+    begin
+        F.Get(TableId, 1);
+        Observer.Observe(Prefix + ' get', BrPackageIds(F, TableId));
+        Clear(F);
+        F.SetRange(TableNo, TableId);
+        F.FindFirst();
+        Observer.Observe(Prefix + ' findfirst', BrPackageIds(F, TableId));
+        F.Get(TableId, 1);
+        if F.Next(1) <> 0 then
+            F.Next(-1);
+        Observer.Observe(Prefix + ' next back', BrPackageIds(F, TableId) + ' no=' + Format(F."No."));
+    end;
+
+    [Test]
+    procedure FieldTable_AppPackageIds_AfterGetFindAndNext()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        BrObservePackageIds(Observer, 'own', 71390);
+        BrObservePackageIds(Observer, 'item', Database::Item);
+        Observer.Finish();
+    end;
 }

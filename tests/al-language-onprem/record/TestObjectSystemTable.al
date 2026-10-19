@@ -257,6 +257,63 @@ codeunit 61202 "Test Object Sys Table"
             StrSubstNo('Object must hold no row for id %1 (%2); found %3.', ObjectId, Description, Found));
     end;
 
+    // Corpus issue 668 item 70 (writer br): a filter on the Name field (type OemText in the platform) of "Object", and the same filter on
+    // AllObj and AllObjWithCaption: no error, or the error text and code.
+    [TryFunction]
+    local procedure BrTryNameFilter(Which: Integer; var Result: Text)
+    var
+        Obj: Record "Object";
+        AllObj: Record AllObj;
+        AllObjWithCaption: Record AllObjWithCaption;
+    begin
+        case Which of
+            1:
+                begin
+                    Obj.SetFilter(Name, 'Test Object Sys*');
+                    Result := Format(Obj.Count());
+                end;
+            2:
+                begin
+                    Obj.SetRange(Name, 'Test Object Sys Table');
+                    Result := Format(Obj.FindFirst());
+                end;
+            3:
+                begin
+                    AllObj.SetRange("Object Type", AllObj."Object Type"::Codeunit);
+                    AllObj.SetFilter("Object Name", 'Test Object Sys*');
+                    Result := Format(AllObj.Count());
+                end;
+            4:
+                begin
+                    AllObjWithCaption.SetRange("Object Type", AllObjWithCaption."Object Type"::Codeunit);
+                    AllObjWithCaption.SetFilter("Object Name", 'Test Object Sys*');
+                    Result := Format(AllObjWithCaption.Count());
+                end;
+        end;
+    end;
+
+    local procedure BrNameFilter(Which: Integer): Text
+    var
+        Result: Text;
+    begin
+        ClearLastError();
+        if BrTryNameFilter(Which, Result) then
+            exit('ok:' + Result);
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure Object_FilterOnOemTextName()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('object setfilter name', BrNameFilter(1));
+        Observer.Observe('object setrange name findfirst', BrNameFilter(2));
+        Observer.Observe('allobj setfilter object name', BrNameFilter(3));
+        Observer.Observe('allobjwithcaption setfilter object name', BrNameFilter(4));
+        Observer.Finish();
+    end;
+
     local procedure Initialize()
     begin
         // "Object" is a read-only platform table in the application database, not written by
