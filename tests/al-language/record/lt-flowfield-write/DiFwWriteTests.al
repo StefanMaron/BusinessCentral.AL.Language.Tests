@@ -6,6 +6,13 @@
 // Modify(true) when only a FlowField changed (OnModify, xRec, SystemRowVersion, SystemModifiedAt),
 // RecordRef/FieldRef Value, Validate and Modify, TransferFields and record assignment, Init/Clear/Reset/Find/Next/Get, SetAutoCalcFields,
 // temporary records, Exist (Boolean) and Lookup (Text) FlowFields, assignment to a FlowFilter field, CalcFields after an assignment.
+// Results: an assigned value stays in the variable until Get/Find/Next/Init/Clear (Reset keeps it); Modify and Insert accept it, write
+// nothing (SystemRowVersion and SystemModifiedAt unchanged) and Get returns 0; Modify(true) still runs OnModify, with xRec = Rec.
+// Validate on a Count, Exist or Lookup FlowField raises FlowFieldValidation ("The type of the <field> FlowField in the <table> table must be
+// Decimal."), from Record.Validate and FieldRef.Validate, before OnValidate runs. Validate on a Sum FlowField inserts a row into the
+// CalcFormula source table: next Entry No., the where-field set, Amount = new value - current sum (no row when they are equal), the
+// Date Filter value (or the start of a range) in the field it filters. TransferFields and := copy FlowField values within the same table, not
+// to or from normal fields of another table. CalcFields replaces an assigned value. ModifyAll on a FlowField does not compile (AL0779).
 // Every test also reads the CalcFormula source table (LT DI FW Child) and the trigger log before and after the write ('src' and 'log').
 // A call that may raise runs as `asserterror begin <call>; Error(NoErrorTok); end;` so both outcomes are observed; when it did not raise,
 // the call runs again outside asserterror (asserterror rolls the database back to the Commit() just before it).
@@ -168,7 +175,18 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('src after', Src());
         Observer.Observe('parents', Parents());
         Observer.Observe('log', TakeLog());
-        Observer.Finish();
+        Observer.Expect('src before', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Expect('after Get', '0');
+        Observer.Expect('read at once', '7/99');
+        Observer.Expect('Modify()', 'ok');
+        Observer.Expect('after Modify', '7/99');
+        Observer.Expect('other var Get', '0/0');
+        Observer.Expect('same var Get', '0/0');
+        Observer.Expect('CalcFields', '3/60');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Expect('parents', 'n=3;1|P1;2|P2;3|P3');
+        Observer.Expect('log', 'n=0');
+        Observer.Verify();
     end;
 
     // ---- item 2: assignment on a new record, then Insert, Get and CalcFields ----
@@ -207,7 +225,15 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('CalcFields', Format(Other."Child Count") + '/' + Format(Other."Child Amount") + '/' + Format(Other."Has Children") + '/' + Other."First Child Code");
         Observer.Observe('src after', Src());
         Observer.Observe('parents', Parents());
-        Observer.Finish();
+        Observer.Expect('src before', 'n=5;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;5|10|E|1|2026-01-01');
+        Observer.Expect('Insert(true)', 'ok');
+        Observer.Expect('after Insert', '7/99/No/ZZ');
+        Observer.Expect('log', 'n=1;OnInsert Child Count=7');
+        Observer.Expect('Get', '0/0/No/');
+        Observer.Expect('CalcFields', '1/1/Yes/E');
+        Observer.Expect('src after', 'n=5;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;5|10|E|1|2026-01-01');
+        Observer.Expect('parents', 'n=4;1|P1;2|P2;3|P3;10|P10');
+        Observer.Verify();
     end;
 
     // ---- item 3: Validate on a FlowField (Count with an OnValidate trigger, Sum without one) ----
@@ -255,7 +281,17 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('log after modify', TakeLog());
         Observer.Observe('stored', StoredCount(1) + ' calc ' + CalcCount(1));
         Observer.Observe('src after', Src());
-        Observer.Finish();
+        Observer.Expect('Validate count', 'error:The type of the Child Count FlowField in the LT DI FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('log in asserterror', 'n=0');
+        Observer.Expect('count after', '0');
+        Observer.Expect('log', 'n=0');
+        Observer.Expect('Validate amount', 'ok');
+        Observer.Expect('amount after', '99');
+        Observer.Expect('Modify(true)', 'ok');
+        Observer.Expect('log after modify', 'n=1;OnModify Rec.Child Count=0 xRec.Child Count=0 Rec.Name=P1 xRec.Name=P1');
+        Observer.Expect('stored', '0 calc 4');
+        Observer.Expect('src after', 'n=5;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;5|1||39|');
+        Observer.Verify();
     end;
 
     // item 4 (ModifyAll on a FlowField) does not compile: AL0779, must-not-compile cases 1370 and 1888.
@@ -329,7 +365,16 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('d changed', ChangedRows(Versions, Stamps));
         Observer.Observe('d log', TakeLog());
         Observer.Observe('src after', Src());
-        Observer.Finish();
+        Observer.Expect('a changed', '1:rv No at No;2:rv No at No;3:rv No at No;');
+        Observer.Expect('a log', 'n=1;OnModify Rec.Child Count=7 xRec.Child Count=7 Rec.Name=P1 xRec.Name=P1');
+        Observer.Expect('b changed', '1:rv No at No;2:rv No at No;3:rv No at No;');
+        Observer.Expect('b log', 'n=1;OnModify Rec.Child Count=7 xRec.Child Count=7 Rec.Name=P1 xRec.Name=P1');
+        Observer.Expect('c changed', '1:rv No at No;2:rv No at No;3:rv No at No;');
+        Observer.Expect('c log', 'n=1;OnModify Rec.Child Count=0 xRec.Child Count=0 Rec.Name=P1 xRec.Name=P1');
+        Observer.Expect('d changed', '1:rv No at No;2:rv No at No;3:rv No at No;');
+        Observer.Expect('d log', 'n=0');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Verify();
     end;
 
     // ---- item 6: RecordRef / FieldRef on a FlowField: Class, Value :=, Validate, RecRef.Modify ----
@@ -384,7 +429,20 @@ codeunit 86264 "LT DI FW Write Tests"
         FRef.CalcField();
         Observer.Observe('CalcField', Format(FRef.Value()));
         Observer.Observe('src after', Src());
-        Observer.Finish();
+        Observer.Expect('class', 'FlowField/FlowField/FlowFilter');
+        Observer.Expect('value before', '0');
+        Observer.Expect('Value :=', 'ok');
+        Observer.Expect('value after', '7/7');
+        Observer.Expect('RecRef.Modify', 'ok');
+        Observer.Expect('value after modify', '7');
+        Observer.Expect('stored', '0 calc 3');
+        Observer.Expect('Validate(8)', 'error:The type of the Child Count FlowField in the LT DI FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('log in asserterror', 'n=0');
+        Observer.Expect('value after validate', '7');
+        Observer.Expect('log', 'n=0');
+        Observer.Expect('CalcField', '3');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Verify();
     end;
 
     // ---- item 7: TransferFields and record assignment with an assigned and with a calculated FlowField ----
@@ -445,7 +503,19 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('normal to flow', Format(Target."No.") + '/' + Format(Target."Child Count") + '/' + Format(Target."Child Amount"));
         Observer.Observe('src after', Src());
         Observer.Observe('parents', Parents());
-        Observer.Finish();
+        Observer.Expect('assigned TF', '1/7');
+        Observer.Expect('assigned Init TF', '1/7');
+        Observer.Expect('assigned TF false', '2/7');
+        Observer.Expect('assigned :=', '1/7');
+        Observer.Expect('assigned to normal', '1/0');
+        Observer.Expect('calc TF', '1/3/60');
+        Observer.Expect('calc Init TF', '1/3/60');
+        Observer.Expect('calc :=', '1/3/60');
+        Observer.Expect('calc to normal', '1/0/0');
+        Observer.Expect('normal to flow', '5/0/0');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Expect('parents', 'n=3;1|P1;2|P2;3|P3');
+        Observer.Verify();
     end;
 
     // ---- item 8: an assigned FlowField value after Init, Clear, Reset, Find, Next, Get and SetAutoCalcFields ----
@@ -502,7 +572,20 @@ codeunit 86264 "LT DI FW Write Tests"
         Parent.Modify();
         Observer.Observe('auto after Modify', Format(Parent."Child Count"));
         Observer.Observe('src after', Src());
-        Observer.Finish();
+        Observer.Expect('Init', '1/0');
+        Observer.Expect('Clear', '0/0');
+        Observer.Expect('Reset', '1/7');
+        Observer.Expect('Find', '1/0');
+        Observer.Expect('Next', '2/0');
+        Observer.Expect('Get', '1/0');
+        Observer.Expect('Get other', '3/0');
+        Observer.Expect('auto assigned', '7');
+        Observer.Expect('auto Get', '3');
+        Observer.Expect('auto FindFirst', '1/3');
+        Observer.Expect('auto Next', '2/0');
+        Observer.Expect('auto after Modify', '7');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Verify();
     end;
 
     // ---- item 9: a temporary record: assignment, Modify, Get, CalcFields ----
@@ -540,7 +623,17 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('log', TakeLog());
         Observer.Observe('src after', Src());
         Observer.Observe('parents', Parents());
-        Observer.Finish();
+        Observer.Expect('insert then Get', '0');
+        Observer.Expect('after Modify', '7');
+        Observer.Expect('after Get', '7');
+        Observer.Expect('after FindFirst', '7');
+        Observer.Expect('CalcFields', '3');
+        Observer.Expect('Get after CalcFields', '7');
+        Observer.Expect('row 2 CalcFields', '0');
+        Observer.Expect('log', 'n=0');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Expect('parents', 'n=3;1|P1;2|P2;3|P3');
+        Observer.Verify();
     end;
 
     // ---- item 10: Exist (Boolean) and Lookup (Text) FlowFields with an assigned value ----
@@ -590,7 +683,17 @@ codeunit 86264 "LT DI FW Write Tests"
         end;
         Observer.Observe('Validate lookup', Outcome());
         Observer.Observe('src after', Src());
-        Observer.Finish();
+        Observer.Expect('Get', 'No/');
+        Observer.Expect('read at once', 'No/ZZ');
+        Observer.Expect('row 2 assigned', 'Yes/YY');
+        Observer.Expect('Modify()', 'ok');
+        Observer.Expect('after Modify', 'Yes/YY');
+        Observer.Expect('after Get', 'No/');
+        Observer.Expect('CalcFields', 'No/');
+        Observer.Expect('Validate exist', 'error:The type of the Has Children FlowField in the LT DI FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('Validate lookup', 'error:The type of the First Child Code FlowField in the LT DI FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Verify();
     end;
 
     // ---- item 11: assignment to a FlowFilter field, then Modify, Get and CalcFields ----
@@ -628,7 +731,17 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('CalcFields with SetRange', Format(Parent."Child Amount") + ' field=' + Format(Parent."Date Filter", 0, 9));
         Observer.Observe('src after', Src());
         Observer.Observe('parents', Parents());
-        Observer.Finish();
+        Observer.Expect('no filter', '60');
+        Observer.Expect('read at once', '2026-01-10 getfilter=');
+        Observer.Expect('CalcFields with assigned', '60');
+        Observer.Expect('Modify()', 'ok');
+        Observer.Expect('after Modify', '2026-01-10');
+        Observer.Expect('after Get', '');
+        Observer.Expect('CalcFields after Get', '60');
+        Observer.Expect('CalcFields with SetRange', '10 field=');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Expect('parents', 'n=3;1|P1;2|P2;3|P3');
+        Observer.Verify();
     end;
 
     // ---- item 13: CalcFields on a record whose FlowField was assigned, then Modify ----
@@ -656,7 +769,14 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('after Modify', Format(Parent."Child Count") + '/' + Format(Parent."Child Amount"));
         Observer.Observe('stored', StoredCount(1) + ' calc ' + CalcCount(1));
         Observer.Observe('src after', Src());
-        Observer.Finish();
+        Observer.Expect('CalcFields one', '3/99');
+        Observer.Expect('CalcFields both', '3/60');
+        Observer.Expect('changed', '1:rv No at No;2:rv No at No;3:rv No at No;');
+        Observer.Expect('log', 'n=1;OnModify Rec.Child Count=3 xRec.Child Count=3 Rec.Name=P1 xRec.Name=P1');
+        Observer.Expect('after Modify', '3/60');
+        Observer.Expect('stored', '0 calc 3');
+        Observer.Expect('src after', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Verify();
     end;
 
     // ---- item 3 (continued): Validate on a Sum FlowField writes a row into the CalcFormula source table ----
@@ -695,6 +815,15 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('p3 range src', Src());
         Observer.Observe('log', TakeLog());
         Observer.Observe('parents', Parents());
-        Observer.Finish();
+        Observer.Expect('p2 value', '7');
+        Observer.Expect('p2 src', 'n=6;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;100|3|X|1|2026-01-15;101|2||7|2026-04-01');
+        Observer.Expect('p2 CalcFields', '7');
+        Observer.Expect('p1 value', '70');
+        Observer.Expect('p1 src', 'n=7;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;100|3|X|1|2026-01-15;101|2||7|2026-04-01;102|1||10|');
+        Observer.Expect('p1 same src', 'n=7;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;100|3|X|1|2026-01-15;101|2||7|2026-04-01;102|1||10|');
+        Observer.Expect('p3 range src', 'n=8;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;100|3|X|1|2026-01-15;101|2||7|2026-04-01;102|1||10|;103|3||-4|2026-01-01');
+        Observer.Expect('log', 'n=0');
+        Observer.Expect('parents', 'n=3;1|P1;2|P2;3|P3');
+        Observer.Verify();
     end;
 }
