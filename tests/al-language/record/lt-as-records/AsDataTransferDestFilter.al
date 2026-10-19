@@ -127,7 +127,9 @@ codeunit 79931 "LT AS DataTransfer DestFilter"
         ClearLastError();
         Observer.Observe('settables', Outcome(TrySetTables(DT)));
         Observer.Observe('add999', Outcome(TryAddFilter(DT, 999)));
-        Observer.Finish();
+        Observer.Expect('settables', 'ok');
+        Observer.Expect('add999', 'DataTransfer is only usable during upgrade and installation code.|DB:Ok');
+        Observer.Verify();
     end;
 
     [Test]
