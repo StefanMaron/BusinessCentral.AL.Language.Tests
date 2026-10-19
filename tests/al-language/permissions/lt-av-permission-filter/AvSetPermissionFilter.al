@@ -3,8 +3,9 @@
 // Fixtures used: Probe Observer (69160), Permissions Mock (System Application Test Library); self-contained table 80206 and test codeunit 80207
 // Probe: corpus issue 647 item 21 (writer AV). RISKY (own codeunit, one test): the test narrows its permissions with Permissions Mock to a tenant permission set
 //   it creates (read on table 80206 with a security filter) and restores them before it reports.
-// Facts: whether Permissions Mock accepts a tenant permission set with a security filter; then Record.SetPermissionFilter and RecordRef.SetPermissionFilter:
-//   the filter text and the rows returned, compared with a read without it.
+// Facts: the text form Evaluate accepts for a Security Filter; Permissions Mock.Set refuses a tenant permission set ("The Permission Set does not exist.",
+//   DB:RecordNotFound) and leaves the test without read permission on the table, so a security filter cannot be put on the test session this way (the
+//   item's question, rows under a security filter, stays open); Record.SetPermissionFilter and RecordRef.SetPermissionFilter once the mock is stopped.
 // BC versions: 27, 28, 29
 table 80206 "LT AV Secured Row"
 {
@@ -139,17 +140,17 @@ codeunit 80207 "LT AV Set Permission Filter"
         else
             Observer.ObserveError('mock set');
         Ok := TryReadAll(Result);
-        ObserveTry(Observer, 'plain read', Ok, Result);
-        Ok := TryRecordFilter(Result);
-        ObserveTry(Observer, 'record SetPermissionFilter', Ok, Result);
-        Ok := TryRecordRefFilter(Result);
-        ObserveTry(Observer, 'recordref SetPermissionFilter', Ok, Result);
+        Observer.Observe('plain read under the mock', Format(Ok));
+        Observer.Observe('plain read under the mock|code', GetLastErrorCode());
+        ClearLastError();
         PermissionsMock.ClearAssignments();
         if not WasStarted then
             PermissionsMock.Stop();
 
         Ok := TryRecordFilter(Result);
         ObserveTry(Observer, 'record SetPermissionFilter after the mock stopped', Ok, Result);
+        Ok := TryRecordRefFilter(Result);
+        ObserveTry(Observer, 'recordref SetPermissionFilter after the mock stopped', Ok, Result);
         TenantPermission.Delete();
         TenantPermissionSet.Delete();
         Row.DeleteAll();

@@ -47,6 +47,16 @@ codeunit 80204 "LT AV Decrypt After Key Delete"
         NewCipher := Encrypt('lt av secret');
         Observer.Observe('new cipher differs', Format(NewCipher <> OldCipher));
         ObserveDecrypt(Observer, 'new text under the new key', NewCipher);
-        Observer.Finish();
+        Observer.Expect('with the old key', 'ok:lt av secret');
+        Observer.Expect('key exists after delete', 'No');
+        Observer.Expect('old text after delete|text', 'An encryption key is required to complete the request.');
+        Observer.Expect('old text after delete|code', 'EncryptionNotCreated');
+        Observer.Expect('empty text after delete', 'ok:');
+        Observer.Expect('key exists after create', 'Yes');
+        Observer.Expect('old text under the new key|text', 'Unable to decrypt data. The data was encrypted using a different key.');
+        Observer.Expect('old text under the new key|code', 'Encryption:OpenSslCryptographic');
+        Observer.Expect('new cipher differs', 'Yes');
+        Observer.Expect('new text under the new key', 'ok:lt av secret');
+        Observer.Verify();
     end;
 }

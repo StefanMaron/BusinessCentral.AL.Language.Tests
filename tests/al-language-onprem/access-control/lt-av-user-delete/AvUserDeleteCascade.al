@@ -78,7 +78,10 @@ codeunit 98401 "LT AV User Delete Cascade"
         Observer.Observe('subscribers', Watcher.Seen());
         Observer.Observe('after delete', Watcher.Rows(Sid, Name));
         Cleanup();
-        Observer.Finish();
+        Observer.Expect('before delete', 'property=1 personalization=1 access=1 plan=1 setup=1');
+        Observer.Expect('subscribers', 'OnBeforeDelete(property=1 personalization=0 access=1 plan=1 setup=1) OnAfterDelete(property=0 personalization=0 access=0 plan=0 setup=1) ');
+        Observer.Expect('after delete', 'property=0 personalization=0 access=0 plan=0 setup=1');
+        Observer.Verify();
     end;
 
     [Test]

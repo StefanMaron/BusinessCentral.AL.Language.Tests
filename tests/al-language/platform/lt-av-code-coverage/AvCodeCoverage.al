@@ -117,7 +117,15 @@ codeunit 80203 "LT AV Code Coverage"
         Observer.Observe('hit lines after the second refresh', HitsAfterSecond);
         Observer.Observe('rows after logging stopped', Format(TargetRows()));
         Observer.Observe('hit lines after logging stopped', TargetHitLines());
-        Observer.Finish();
+        Observer.Expect('rows before the first refresh', '0');
+        Observer.Expect('rows after the first refresh', '16');
+        Observer.Expect('hit lines after the first refresh', 'L13=1 L14=1');
+        Observer.Expect('rows before the second refresh', '16');
+        Observer.Expect('rows after the second refresh', '16');
+        Observer.Expect('hit lines after the second refresh', 'L13=2 L14=1 L15=1 L23=1 L24=3 L25=1');
+        Observer.Expect('rows after logging stopped', '16');
+        Observer.Expect('hit lines after logging stopped', 'L13=2 L14=1 L15=1 L23=1 L24=3 L25=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,6 +165,12 @@ codeunit 80203 "LT AV Code Coverage"
         Observer.Observe('method id equal', Format(OwnId = TwinId));
         Observer.Observe('method id zero', Format(OwnId = 0));
         Observer.Observe('test id twin minus own', Format(TwinTest - OwnTest));
-        Observer.Finish();
+        Observer.Expect('rows named TwinMethod', '2');
+        Observer.Expect('own row', 'Yes');
+        Observer.Expect('twin row', 'Yes');
+        Observer.Expect('method id equal', 'Yes');
+        Observer.Expect('method id zero', 'No');
+        Observer.Expect('test id twin minus own', '0');
+        Observer.Verify();
     end;
 }

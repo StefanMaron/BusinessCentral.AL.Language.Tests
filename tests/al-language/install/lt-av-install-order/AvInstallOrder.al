@@ -6,6 +6,7 @@
 // Facts: how many companies OnInstallAppPerCompany ran in, whether OnInstallAppPerDatabase ran before or after it (SystemRowVersion is one counter for the whole
 //   database, so it orders rows of different tables and companies), what CompanyName() answered inside each per-company run, and the same order for the
 //   "Extension Triggers" events (AutoIncrement Id of LT V Event Log).
+// Measured: OnInstallAppPerCompany ran once in each of the two companies (session company first) and BEFORE OnInstallAppPerDatabase, in one session; the same on 27.5, 28.5, 29.0.
 // BC versions: 27, 28, 29
 codeunit 80200 "LT AV Install Order"
 {
@@ -52,7 +53,19 @@ codeunit 80200 "LT AV Install Order"
             until Company.Next() = 0;
         Observer.Observe('companies', Format(Companies));
         Observer.Observe('first per-company run', SessionFirst);
-        Observer.Finish();
+        Observer.Expect('database row', 'Yes');
+        Observer.Expect('database rows', '1');
+        Observer.Expect('session company seed rows', '2');
+        Observer.Expect('session company per-company after per-database', 'No');
+        Observer.Expect('session company env rows', '1');
+        Observer.Expect('session company CompanyName() inside per-company is this company', 'Yes');
+        Observer.Expect('other company seed rows', '2');
+        Observer.Expect('other company per-company after per-database', 'No');
+        Observer.Expect('other company env rows', '1');
+        Observer.Expect('other company CompanyName() inside per-company is this company', 'Yes');
+        Observer.Expect('companies', '2');
+        Observer.Expect('first per-company run', 'session company');
+        Observer.Verify();
     end;
 
     [Test]
@@ -86,6 +99,8 @@ codeunit 80200 "LT AV Install Order"
         end;
         Observer.Observe('sequence', Sequence);
         Observer.Observe('one session', Format(SameSession));
-        Observer.Finish();
+        Observer.Expect('sequence', 'company(session company);company(other company);database;');
+        Observer.Expect('one session', 'Yes');
+        Observer.Verify();
     end;
 }

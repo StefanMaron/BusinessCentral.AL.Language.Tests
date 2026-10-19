@@ -51,7 +51,9 @@ codeunit 98400 "LT AV User Insert Errors"
         NewUser(UserRec, 'LTAV-NOAT', 'ltav.no.at.example.com');
         asserterror UserRec.Insert(true);
         Observer.ObserveError('insert');
-        Observer.Finish();
+        Observer.Expect('insert|text', 'You must specify a valid email address.');
+        Observer.Expect('insert|code', 'CannotSpecifyAuthenticationEmail');
+        Observer.Verify();
     end;
 
     [Test]
@@ -68,7 +70,9 @@ codeunit 98400 "LT AV User Insert Errors"
         asserterror Second.Insert(true);
         Observer.ObserveError('insert');
         Cleanup();
-        Observer.Finish();
+        Observer.Expect('insert|text', 'The specified authentication email address ''ltav.taken@example.com'' is already being used by another user. You must specify a unique email address.');
+        Observer.Expect('insert|code', 'UserTableAuthEmailMustBeUnique');
+        Observer.Verify();
     end;
 
     [Test]
@@ -87,7 +91,9 @@ codeunit 98400 "LT AV User Insert Errors"
         asserterror Second.Modify(true);
         Observer.ObserveError('modify');
         Cleanup();
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The user name must be unique.');
+        Observer.Expect('modify|code', 'UserTableUserNameMustBeUnique');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +114,9 @@ codeunit 98400 "LT AV User Insert Errors"
         end;
         Observer.ObserveError('insert');
         Cleanup();
-        Observer.Finish();
+        Observer.Expect('insert|text', 'The user name must be unique.');
+        Observer.Expect('insert|code', 'UserTableUserNameMustBeUnique');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,6 +135,9 @@ codeunit 98400 "LT AV User Insert Errors"
         UserRec.Get(Sid);
         UserRec.Delete(true);
         Observer.Observe('after delete', Rows(Sid));
-        Observer.Finish();
+        Observer.Expect('before insert', 'user property=0 user personalization=0 access control=0');
+        Observer.Expect('after insert', 'user property=1 user personalization=0 access control=0');
+        Observer.Expect('after delete', 'user property=0 user personalization=0 access control=0');
+        Observer.Verify();
     end;
 }

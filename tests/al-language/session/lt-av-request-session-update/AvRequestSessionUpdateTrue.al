@@ -49,7 +49,19 @@ codeunit 80205 "LT AV Request Session Update"
         if HadRow then
             Saved.Insert();
         Observer.Observe('row restored', Format(UserPers.Get(UserSecurityId()) = HadRow));
-        Observer.Finish();
+        Observer.Expect('row at start', 'Yes');
+        Observer.Expect('row after delete', 'No');
+        Observer.Expect('settings company is the session company', 'Yes');
+        Observer.Expect('handler calls', '1');
+        Observer.Expect('row inside the handler', 'Yes');
+        Observer.Expect('row after the request', 'Yes');
+        Observer.Expect('row company equals settings', 'Yes');
+        Observer.Expect('row profile equals settings', 'Yes');
+        Observer.Expect('row language equals settings', 'Yes');
+        Observer.Expect('row locale equals settings', 'Yes');
+        Observer.Expect('row time zone equals settings', 'Yes');
+        Observer.Expect('row restored', 'Yes');
+        Observer.Verify();
     end;
 
     [SessionSettingsHandler]
