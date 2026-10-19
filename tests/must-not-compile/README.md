@@ -279,6 +279,13 @@ is only a reference.
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
+| 1530 | AL0369 | A for loop over an Integer control variable with a BigInteger literal end bound above the Integer range. |
+| 1531, 1532, 1533 | AL0172 | Unary minus on an Option variable, on an Option table field, and on an Enum. |
+| 1534 | AL0530 | A Code[2049] variable (Code[1025] to Code[2048] compile). |
+| 1535, 1536 | AL0154 | A Code[2049] and a Text[2049] table field. |
+| 1537 | AL0581 | A Code[0] variable. |
+| 1538 | AL0133 | A Code[20] variable passed to a var Text parameter. |
+| 1539 | AL0133 | A Text[100] table field passed to a var Code[20] parameter. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
