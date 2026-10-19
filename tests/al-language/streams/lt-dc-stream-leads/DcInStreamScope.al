@@ -3,7 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160), table 74200 "LT StT Rec" (temporary only), self-contained codeunit 85782
 // Probe: corpus issue 671 item 60 (microsoft/AL issues 1201, 7172, 7329, 7575, 7990): an InStream returned or passed back from a procedure whose
 //   local Temp Blob, local temporary record with a Blob field or local temporary Tenant Media record goes out of scope.
-// Facts: what reading the stream gives after the owner is gone (text read, Length, EOS).
+// Facts: the stream reads as empty (Length 0, EOS true, no error) once its owner is out of scope; a stream of a Temp Blob that stays in scope reads the text.
 // BC versions: 27, 28, 29
 
 codeunit 85782 "LT DC InStream Scope"
@@ -105,7 +105,15 @@ codeunit 85782 "LT DC InStream Scope"
         InS2 := FromTempBlob('second');
         Observer.Observe('two_first', ReadAll(InS));
         Observer.Observe('two_second', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('control_in_scope', 'hello in scope');
+        Observer.Expect('kept_blob_text', 'hello kept blob');
+        Observer.Expect('return_length', '0');
+        Observer.Expect('return_text', '');
+        Observer.Expect('return_eos', 'Yes');
+        Observer.Expect('var_text', '');
+        Observer.Expect('two_first', '');
+        Observer.Expect('two_second', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,6 +125,8 @@ codeunit 85782 "LT DC InStream Scope"
         Observer.Observe('record_text', ReadAll(InS));
         InS := FromTenantMedia('hello media');
         Observer.Observe('media_text', ReadAll(InS));
-        Observer.Finish();
+        Observer.Expect('record_text', '');
+        Observer.Expect('media_text', '');
+        Observer.Verify();
     end;
 }
