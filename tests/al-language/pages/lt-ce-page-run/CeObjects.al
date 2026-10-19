@@ -294,18 +294,6 @@ pageextension 84358 "LT CE Vis Ext" extends "LT CE Vis Card"
     end;
 }
 
-// microsoft/AL issue 6720: Editable of a base field changed from a page extension to an expression over a FlowField of Rec.
-pageextension 84359 "LT CE Item Card Ext" extends "Item Card"
-{
-    layout
-    {
-        modify("Replenishment System")
-        {
-            Editable = not Rec."Stockkeeping Unit Exists";
-        }
-    }
-}
-
 // The two logs stay at the end of the file: each is used by one test codeunit only (check-singleinstance-fixture-owners.py).
 codeunit 84361 "LT CE Log"
 {
