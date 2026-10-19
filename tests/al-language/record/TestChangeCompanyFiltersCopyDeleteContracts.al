@@ -139,6 +139,160 @@ codeunit 68391 "Probe Chg Company Arm"
 
         DeleteCompany();
     end;
+
+    // Corpus issue 668 items 17, 22 and 23 (writer BQ), in this codeunit so the company is created once more only. Fixtures:
+    // record/lt-bq-odd-leads/BqObjects.al (LT BQ Chg Row logs CompanyName() in its triggers and in OnValidate of Name; its OnModify inserts a
+    // row into LT BQ Chg Empty in the company LT BQ Log names; LT BQ Chg Sub logs CompanyName() / Rec.CurrentCompany() in the database events
+    // and writes a LT BQ Chg Side row through a plain record variable). The session company's name is shown as HOME.
+    local procedure BqCleanBothCompanies()
+    var
+        Row: Record "LT BQ Chg Row";
+        Side: Record "LT BQ Chg Side";
+        Empty: Record "LT BQ Chg Empty";
+    begin
+        Row.DeleteAll();
+        Side.DeleteAll();
+        Empty.DeleteAll();
+        Row.ChangeCompany(CompanyTok);
+        Row.DeleteAll();
+        Side.ChangeCompany(CompanyTok);
+        Side.DeleteAll();
+        Empty.ChangeCompany(CompanyTok);
+        Empty.DeleteAll();
+    end;
+
+    local procedure BqTake(Home: Text): Text
+    var
+        Log: Codeunit "LT BQ Log";
+    begin
+        exit(Log.Take().Replace(Home, 'HOME'));
+    end;
+
+    local procedure BqSideRows(Company: Text[30]): Text
+    var
+        Side: Record "LT BQ Chg Side";
+        Result: Text;
+    begin
+        if Company <> '' then
+            Side.ChangeCompany(Company);
+        if Side.FindSet() then
+            repeat
+                Result += Side.Txt + ';';
+            until Side.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure ChangeCompany_TriggerCompany_VariantAndInsertIntoEmptyTable_BQ()
+    var
+        Row: Record "LT BQ Chg Row";
+        HomeRow: Record "LT BQ Chg Row";
+        FromVariant: Record "LT BQ Chg Row";
+        Empty: Record "LT BQ Chg Empty";
+        Sub: Codeunit "LT BQ Chg Sub";
+        Log: Codeunit "LT BQ Log";
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+        V: Variant;
+        Home: Text;
+    begin
+        InsertCompany();
+        Home := CompanyName();
+        BqCleanBothCompanies();
+        Commit();
+        Log.SetTarget('');
+        BqTake(Home);
+        BindSubscription(Sub);
+
+        // item 17: triggers, OnValidate and database-event subscribers of a record moved with ChangeCompany
+        Row.ChangeCompany(CompanyTok);
+        Row.Init();
+        Row.Id := 1;
+        Row.Name := 'a';
+        Row.Insert(true);
+        Observer.Observe('insertTrue', BqTake(Home));
+        Row.Validate(Name, 'b');
+        Observer.Observe('validate', BqTake(Home));
+        Row.Modify(true);
+        Observer.Observe('modifyTrue', BqTake(Home));
+        Row.Modify(false);
+        Observer.Observe('modifyFalse', BqTake(Home));
+        Row.Id := 2;
+        Row.Insert(false);
+        Observer.Observe('insertFalse', BqTake(Home));
+        Row.Reset();
+        Row.ModifyAll(Name, 'c', true);
+        Observer.Observe('modifyAllTrue', BqTake(Home));
+        Row.Get(2);
+        Row.Delete(true);
+        Observer.Observe('deleteTrue', BqTake(Home));
+        RecRef.Open(Database::"LT BQ Chg Row");
+        RecRef.ChangeCompany(CompanyTok);
+        RecRef.Init();
+        RecRef.Field(1).Value := 3;
+        RecRef.Insert(true);
+        Observer.Observe('recRefInsertTrue', BqTake(Home));
+        RecRef.Close();
+        UnbindSubscription(Sub);
+        Observer.Observe('sideRowsHome', BqSideRows(''));
+        Observer.Observe('sideRowsOther', BqSideRows(CompanyTok));
+        Row.Reset();
+        Observer.Observe('rowsOther', Format(Row.Count()));
+        HomeRow.Reset();
+        Observer.Observe('rowsHome', Format(HomeRow.Count()));
+
+        // item 22: a record moved with ChangeCompany, assigned to a Variant
+        Row.Get(1);
+        V := Row;
+        RecRef.GetTable(V);
+        Observer.Observe('variantGetTableCompany', RecRef.CurrentCompany().Replace(Home, 'HOME'));
+        Observer.Observe('variantGetTableCount', Format(RecRef.Count()));
+        RecRef.Close();
+        FromVariant := V;
+        Observer.Observe('variantToRecordCompany', FromVariant.CurrentCompany().Replace(Home, 'HOME'));
+        Observer.Observe('variantToRecordCount', Format(FromVariant.Count()));
+        RecRef.GetTable(Row);
+        Observer.Observe('directGetTableCompany', RecRef.CurrentCompany().Replace(Home, 'HOME'));
+        RecRef.Close();
+
+        // item 23: an OnModify trigger in the session company inserts into the empty table of the other company (microsoft/AL issue 5618)
+        HomeRow.Init();
+        HomeRow.Id := 5;
+        HomeRow.Insert(false);
+        BqTake(Home);
+        Log.SetTarget(CompanyTok);
+        HomeRow.Modify(true);
+        Observer.Observe('emptyInsertFromOnModify', BqTake(Home));
+        Log.SetTarget('');
+        Empty.ChangeCompany(CompanyTok);
+        Observer.Observe('emptyRowsOther', Format(Empty.Count()));
+        Empty.ChangeCompany(CompanyName());
+        Observer.Observe('emptyRowsHome', Format(Empty.Count()));
+
+        BqCleanBothCompanies();
+        DeleteCompany();
+        Observer.Expect('insertTrue', 'I:HOME,SI:HOME/PRB CHGCO ARM');
+        Observer.Expect('validate', 'V:HOME');
+        Observer.Expect('modifyTrue', 'M:HOME,SM:HOME/PRB CHGCO ARM');
+        Observer.Expect('modifyFalse', 'SM:HOME/PRB CHGCO ARM');
+        Observer.Expect('insertFalse', 'SI:HOME/PRB CHGCO ARM');
+        Observer.Expect('modifyAllTrue', 'M:HOME,SM:HOME/PRB CHGCO ARM,M:HOME,SM:HOME/PRB CHGCO ARM');
+        Observer.Expect('deleteTrue', 'D:HOME,SD:HOME/PRB CHGCO ARM');
+        Observer.Expect('recRefInsertTrue', 'I:HOME,SI:HOME/PRB CHGCO ARM');
+        Observer.Expect('sideRowsHome', 'SI 1;SM 1;SM 1;SI 2;SM 1;SM 2;SD 2;SI 3;');
+        Observer.Expect('sideRowsOther', '');
+        Observer.Expect('rowsOther', '2');
+        Observer.Expect('rowsHome', '0');
+        Observer.Expect('variantGetTableCompany', 'HOME');
+        Observer.Expect('variantGetTableCount', '0');
+        Observer.Expect('variantToRecordCompany', 'HOME');
+        Observer.Expect('variantToRecordCount', '0');
+        Observer.Expect('directGetTableCompany', 'PRB CHGCO ARM');
+        Observer.Expect('emptyInsertFromOnModify', 'M:HOME,emptyInsert:ok:PRB CHGCO ARM');
+        Observer.Expect('emptyRowsOther', '1');
+        Observer.Expect('emptyRowsHome', '0');
+        Observer.Verify();
+    end;
 }
 
 codeunit 68392 "Probe Chg Company Rename"
