@@ -109,6 +109,7 @@ codeunit 60277 "Test SessionSettings"
         Assert: Codeunit Assert;
         HandlerCallCount: Integer;
         HandlerSawTimeZone: Text;
+        HandlerSawCompany: Text;
 
     // ---------------------------------------------------------------------------------------
     // 1 + 2. Round-tripping, and independence of the accessors.
@@ -648,5 +649,37 @@ codeunit 60277 "Test SessionSettings"
         Assert.AreEqual(Pristine, Settings, 'After Clear() a settings object must match a freshly declared one');
         Assert.AreNotEqual(Populated, Settings, 'After Clear() a settings object must no longer match its populated self');
         Assert.AreEqual('', Settings.Company(), 'Clear() must reset Company to empty');
+    end;
+
+    // corpus issue 669 (writer CO): a company name with no company behind it is not refused when it is set (see
+    // SessionSettings_Company_SetterAcceptsCompanyThatDoesNotExist) and not when the update is requested either: under a test the
+    // request goes to the SessionSettings handler, which receives the unknown name, and the running session keeps its company.
+    [Test]
+    [HandlerFunctions('SessionSettingsCompanyHandler')]
+    procedure SessionSettings_RequestSessionUpdate_UnknownCompanyReachesTheHandler_CO()
+    var
+        Settings: SessionSettings;
+        CompanyBefore: Text;
+    begin
+        CompanyBefore := CompanyName();
+        HandlerCallCount := 0;
+        HandlerSawCompany := '';
+        Settings.Init();
+        Settings.Company('LT CO No Such Company');
+
+        Settings.RequestSessionUpdate(true);
+
+        Assert.AreEqual(1, HandlerCallCount, 'The handler must be invoked once');
+        Assert.AreEqual('LT CO No Such Company', HandlerSawCompany, 'The handler must receive the unknown company name');
+        Assert.AreEqual(CompanyBefore, CompanyName(), 'The running session must keep its company');
+        Assert.AreEqual('LT CO No Such Company', Settings.Company(), 'The settings object must keep the unknown company name');
+    end;
+
+    [SessionSettingsHandler]
+    procedure SessionSettingsCompanyHandler(var TheSettings: SessionSettings): Boolean
+    begin
+        HandlerCallCount += 1;
+        HandlerSawCompany := TheSettings.Company();
+        exit(true);
     end;
 }
