@@ -256,6 +256,7 @@ codeunit 85060 "LT CQ Odd Leads"
         Flow: Record "LT CQ Flow";
     begin
         // asserterror rolls back the inserted rows, so every step inserts them again first.
+#if BC29PLUS
         SetupFlowRows(Flow);
         Flow.Id := 2;
         Flow.CalcFields(SumInt);
@@ -270,6 +271,18 @@ codeunit 85060 "LT CQ Odd Leads"
         Observer.Expect('sum small', '11');
         Observer.Expect('sum 4000000001|text', 'Arithmetic operation resulted in an overflow.');
         Observer.Expect('sum 4000000001|code', 'AL:Overflow');
+#else
+        // BC 27.5 and 28.5 publish the FlowField but refuse to calculate it, also for a small sum.
+        SetupFlowRows(Flow);
+        Flow.Id := 2;
+        asserterror begin
+            Flow.CalcFields(SumInt);
+            Error('no error: %1', Flow.SumInt);
+        end;
+        Observer.ObserveError('sum small');
+        Observer.Expect('sum small|text', 'The following fields must have the same type:\\Field: SumInt <-- Id\Table: LT CQ Flow <-- LT CQ Src\Type: Integer <-- BigInteger');
+        Observer.Expect('sum small|code', 'DB:TypeMisMatch');
+#endif
         Observer.Verify();
     end;
 
