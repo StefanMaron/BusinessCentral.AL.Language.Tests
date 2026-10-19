@@ -83,7 +83,8 @@ codeunit 84886 "LT CN TF Modify"
         R1.TransferFields(R2);
         R1.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'mem/2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -99,7 +100,8 @@ codeunit 84886 "LT CN TF Modify"
         R1.Name := 'changed';
         R1.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'changed/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +117,8 @@ codeunit 84886 "LT CN TF Modify"
         R2.Modify();
         Commit();
         R1.Name := 'stale';
-        R1.Modify();
+        asserterror R1.Modify();
+        Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
         Observer.Finish();
     end;
@@ -136,7 +139,8 @@ codeunit 84886 "LT CN TF Modify"
         R1.Qty := 9;
         R1.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'second/9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +157,8 @@ codeunit 84886 "LT CN TF Modify"
         Commit();
         R1.TransferFields(R2, false);
         R1.Qty := 9;
-        R1.Modify();
+        asserterror R1.Modify();
+        Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
         Observer.Finish();
     end;
@@ -174,7 +179,8 @@ codeunit 84886 "LT CN TF Modify"
         R1.Qty := 9;
         R1.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'second/9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -195,6 +201,7 @@ codeunit 84886 "LT CN TF Modify"
         R1.TransferFields(O);
         R1.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
     end;
 }

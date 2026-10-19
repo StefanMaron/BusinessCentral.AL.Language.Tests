@@ -32,7 +32,14 @@ codeunit 84894 "LT CN Task User"
         Observer.Observe('run codeunit', Format(Task."Run Codeunit" = Codeunit::"LT CN Noop"));
         Observer.Observe('is ready', Format(Task."Is Ready"));
         TaskScheduler.CancelTask(TaskId);
-        Observer.Finish();
+        Observer.Expect('row', 'Yes');
+        Observer.Expect('user id is session user', 'Yes');
+        Observer.Expect('user name is UserId', 'Yes');
+        Observer.Expect('user name empty', 'No');
+        Observer.Expect('company is current', 'Yes');
+        Observer.Expect('run codeunit', 'Yes');
+        Observer.Expect('is ready', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -55,7 +62,9 @@ codeunit 84895 "LT CN TypeHelper UTC"
         After := CurrentDateTime();
         Observer.Observe('not before', Format(Utc - Before > -1000));
         Observer.Observe('not after', Format(After - Utc > -1000));
-        Observer.Finish();
+        Observer.Expect('not before', 'Yes');
+        Observer.Expect('not after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -77,7 +86,15 @@ codeunit 84895 "LT CN TypeHelper UTC"
         Observer.Observe('iso Z', CopyStr(Iso, 20, 1));
         Observer.Observe('iso evaluates', Format(Evaluate(IsoDt, Iso, 9)));
         Observer.Observe('iso near now', Format(Abs(CurrentDateTime() - IsoDt) < 5000));
-        Observer.Finish();
+        Observer.Expect('as text len', '29');
+        Observer.Expect('as text ends GMT', 'Yes');
+        Observer.Expect('as text comma', ', ');
+        Observer.Expect('iso len', '20');
+        Observer.Expect('iso T', 'T');
+        Observer.Expect('iso Z', 'Z');
+        Observer.Expect('iso evaluates', 'Yes');
+        Observer.Expect('iso near now', 'Yes');
+        Observer.Verify();
     end;
 
     // Item 54, the test-session half: the session time zone and the DateTime conversions in it.
@@ -94,7 +111,11 @@ codeunit 84895 "LT CN TypeHelper UTC"
         Observer.Observe('format 9', Format(DT, 0, 9));
         Observer.Observe('dt2date', Format(DT2Date(DT), 0, 9));
         Observer.Observe('dt2time', Format(DT2Time(DT), 0, 9));
-        Observer.Finish();
+        Observer.Expect('time zone', 'UTC');
+        Observer.Expect('format 9', '2024-06-01T12:00:00Z');
+        Observer.Expect('dt2date', '2024-06-01');
+        Observer.Expect('dt2time', '12:00:00');
+        Observer.Verify();
     end;
 }
 
@@ -118,7 +139,10 @@ codeunit 84896 "LT CN OData Edm"
         E.Description := 'y';
         Observer.Observe('modify', Format(E.Modify()));
         Observer.Observe('delete', Format(E.Delete()));
-        Observer.Finish();
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('delete', 'Yes');
+        Observer.Verify();
     end;
 }
 
@@ -135,6 +159,8 @@ codeunit 84897 "LT CN Upgrade Run Var"
     begin
         asserterror U.Run();
         Observer.ObserveError('run');
-        Observer.Finish();
+        Observer.Expect('run|text', 'Upgrade codeunit ''67282'' cannot be invoked outside the schema synchronization process.');
+        Observer.Expect('run|code', 'UpgradeCodeunitOnRunCall');
+        Observer.Verify();
     end;
 }

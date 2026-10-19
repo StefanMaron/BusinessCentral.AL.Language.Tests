@@ -106,7 +106,10 @@ codeunit 84888 "LT CN BgTask Iso"
         asserterror RunTask('set', Observer);
         Observer.ObserveError('set');
         Observer.Observe('contains after', Format(IsolatedStorage.Contains('LTCNbg', DataScope::Module)));
-        Observer.Finish();
+        Observer.Expect('set|text', 'Sorry, the current permissions prevented the action. (TableData 2000000107 Isolated Storage Insert: AL Language Coverage Tests)');
+        Observer.Expect('set|code', 'DB:ReadOnlySession');
+        Observer.Expect('contains after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +123,10 @@ codeunit 84888 "LT CN BgTask Iso"
         asserterror RunTask('delete', Observer);
         Observer.ObserveError('delete');
         Observer.Observe('contains after', Format(IsolatedStorage.Contains('LTCNbg', DataScope::Module)));
-        Observer.Finish();
+        Observer.Expect('delete|text', 'Sorry, the current permissions prevented the action. (TableData 2000000107 Isolated Storage Delete: AL Language Coverage Tests)');
+        Observer.Expect('delete|code', 'DB:ReadOnlySession');
+        Observer.Expect('contains after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -133,7 +139,10 @@ codeunit 84888 "LT CN BgTask Iso"
         asserterror RunTask('insert', Observer);
         Observer.ObserveError('insert');
         Observer.Observe('row after', Format(Row.Get(77)));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'Sorry, the current permissions prevented the action. (TableData 84884 LT CN TF Row Insert: AL Language Coverage Tests)');
+        Observer.Expect('insert|code', 'DB:ReadOnlySession');
+        Observer.Expect('row after', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -159,7 +168,12 @@ codeunit 84899 "LT CN BgTask Iso Get"
         Card.Close();
         foreach K in Results.Keys() do
             Observer.Observe(K, Results.Get(K));
-        Observer.Finish();
+        Observer.Expect('InWriteTx', 'false');
+        Observer.Expect('Contains', 'false');
+        Observer.Expect('Ret', 'false');
+        Observer.Expect('Value', '');
+        Observer.Expect('InWriteTxAfter', 'false');
+        Observer.Verify();
     end;
 }
 
@@ -235,7 +249,13 @@ codeunit 84892 "LT CN Iso WriteTx"
         Commit();
         Observer.Observe('contains', Format(IsolatedStorage.Contains('LTCNtx', DataScope::User)));
         Observer.Observe('after contains', Format(Database.IsInWriteTransaction()));
-        Observer.Finish();
+        Observer.Expect('before', 'No');
+        Observer.Expect('after set user', 'Yes');
+        Observer.Expect('after set module', 'Yes');
+        Observer.Expect('after delete', 'Yes');
+        Observer.Expect('contains', 'Yes');
+        Observer.Expect('after contains', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,7 +267,9 @@ codeunit 84892 "LT CN Iso WriteTx"
         IsolatedStorage.Set('LTCNtx', 'v', DataScope::User);
         asserterror Observer.Observe('run', Format(Codeunit.Run(Codeunit::"LT CN Noop")));
         Observer.ObserveError('run');
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +281,8 @@ codeunit 84892 "LT CN Iso WriteTx"
         IsolatedStorage.Set('LTCNtx', 'v', DataScope::User);
         Commit();
         Observer.Observe('run', Format(Codeunit.Run(Codeunit::"LT CN Noop")));
-        Observer.Finish();
+        Observer.Expect('run', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +296,9 @@ codeunit 84892 "LT CN Iso WriteTx"
         IsolatedStorage.Set('LTCNtx', 'v', DataScope::User);
         Observer.Observe('action', Format(Page.RunModal(Page::"LT CN Modal Page")));
         Observer.Observe('handler calls', Format(ModalSeen));
-        Observer.Finish();
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Expect('handler calls', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +310,8 @@ codeunit 84892 "LT CN Iso WriteTx"
         IsolatedStorage.Set('LTCNtx', 'v', DataScope::User);
         Report.RunModal(Report::"LT CN Proc Report", false);
         Observer.Observe('reached', 'yes');
-        Observer.Finish();
+        Observer.Expect('reached', 'yes');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -331,7 +357,8 @@ codeunit 84893 "LT CN SetEncrypted Len"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('encryption enabled', Format(EncryptionEnabled()));
-        Observer.Finish();
+        Observer.Expect('encryption enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -340,10 +367,14 @@ codeunit 84893 "LT CN SetEncrypted Len"
         Observer: Codeunit "Probe Observer";
     begin
         SetAndReadBack(PadStr('', 214, 'a'), Observer);
-        Observer.Finish();
+        Observer.Expect('ret', 'Yes');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('same back', 'Yes');
+        Observer.Verify();
     end;
 
-    [Test]
+    // Not a test (Linux suspect, queued for the Windows check): on the Linux BC container 215 ASCII characters fail with 'Unknown error',
+    // code UnknownEncryption:OpenSslCryptographic (an OpenSSL exception), while 216 and more fail with BC's own length check. The docs give 215 as the limit.
     procedure SetEncrypted_215Ascii()
     var
         Observer: Codeunit "Probe Observer";
@@ -358,7 +389,10 @@ codeunit 84893 "LT CN SetEncrypted Len"
         Observer: Codeunit "Probe Observer";
     begin
         SetFails(PadStr('', 216, 'a'), Observer);
-        Observer.Finish();
+        Observer.Expect('set|text', 'Unable to encrypt data. The provided string is too long.');
+        Observer.Expect('set|code', 'EncryptionDataTooLong');
+        Observer.Expect('contains', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -367,7 +401,10 @@ codeunit 84893 "LT CN SetEncrypted Len"
         Observer: Codeunit "Probe Observer";
     begin
         SetAndReadBack(PadStr('', 107, 'é'), Observer);
-        Observer.Finish();
+        Observer.Expect('ret', 'Yes');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('same back', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -376,7 +413,10 @@ codeunit 84893 "LT CN SetEncrypted Len"
         Observer: Codeunit "Probe Observer";
     begin
         SetFails(PadStr('', 108, 'é'), Observer);
-        Observer.Finish();
+        Observer.Expect('set|text', 'Unable to encrypt data. The provided string is too long.');
+        Observer.Expect('set|code', 'EncryptionDataTooLong');
+        Observer.Expect('contains', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -390,6 +430,8 @@ codeunit 84893 "LT CN SetEncrypted Len"
         IsolatedStorage.Get('LTCNenc', DataScope::Module, Back);
         Observer.Observe('len back', Format(StrLen(Back)));
         Clean();
-        Observer.Finish();
+        Observer.Expect('ret', 'Yes');
+        Observer.Expect('len back', '1000');
+        Observer.Verify();
     end;
 }
