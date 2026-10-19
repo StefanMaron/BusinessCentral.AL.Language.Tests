@@ -90,7 +90,10 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('one', Outcome(TryBigToOption(1, R), R));
         Observer.Observe('seven', Outcome(TryBigToOption(7, R), R));
         Observer.Observe('minus1', Outcome(TryBigToOption(-1, R), R));
-        Observer.Finish();
+        Observer.Expect('one', 'ok B|1');
+        Observer.Expect('seven', 'ok 7|7');
+        Observer.Expect('minus1', 'ok -1|-1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -102,7 +105,10 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('max', Outcome(TryBigToOption(2147483647L, R), R));
         Observer.Observe('max_plus_1', Outcome(TryBigToOption(2147483648L, R), R));
         Observer.Observe('min_minus_1', Outcome(TryBigToOption(-2147483649L, R), R));
-        Observer.Finish();
+        Observer.Expect('max', 'ok 2147483647|2147483647');
+        Observer.Expect('max_plus_1', 'error Overflow under conversion of System.Int64 value 2147483648 to System.Int32. code=ConversionCast');
+        Observer.Expect('min_minus_1', 'error Overflow under conversion of System.Int64 value -2147483649 to System.Int32. code=ConversionCast');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +120,10 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('lacking', Outcome(TryBigToEnum(7, R), R));
         Observer.Observe('max_plus_1', Outcome(TryBigToEnum(2147483648L, R), R));
         Observer.Observe('min_minus_1', Outcome(TryBigToEnum(-2147483649L, R), R));
-        Observer.Finish();
+        Observer.Expect('lacking', 'ok 7|7');
+        Observer.Expect('max_plus_1', 'error Overflow under conversion of System.Int64 value 2147483648 to System.Int32. code=ConversionCast');
+        Observer.Expect('min_minus_1', 'error Overflow under conversion of System.Int64 value -2147483649 to System.Int32. code=ConversionCast');
+        Observer.Verify();
     end;
 #endif
 
@@ -157,7 +166,9 @@ codeunit 80150 "LT AU Edge Tests"
         V := B;
         Observer.Observe('call', Outcome(TryVarText(V, R), R));
         Observer.Observe('after', VariantKind(V) + ' ' + Format(V));
-        Observer.Finish();
+        Observer.Expect('call', 'error The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value. code=TypeConversion');
+        Observer.Expect('after', 'BigInteger 3000000000');
+        Observer.Verify();
     end;
 
     [Test]
@@ -172,7 +183,9 @@ codeunit 80150 "LT AU Edge Tests"
         V := D;
         Observer.Observe('call', Outcome(TryVarText(V, R), R));
         Observer.Observe('after', VariantKind(V) + ' ' + Format(V));
-        Observer.Finish();
+        Observer.Expect('call', 'error The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value. code=TypeConversion');
+        Observer.Expect('after', 'Decimal 1.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +200,9 @@ codeunit 80150 "LT AU Edge Tests"
         V := T;
         Observer.Observe('call', Outcome(TryVarText(V, R), R));
         Observer.Observe('after', VariantKind(V) + ' ' + Format(V));
-        Observer.Finish();
+        Observer.Expect('call', 'ok [abx]');
+        Observer.Expect('after', 'Text abx');
+        Observer.Verify();
     end;
 
     // ---------------- item 15: Dictionary keys after two removes and two adds ----------------
@@ -225,7 +240,9 @@ codeunit 80150 "LT AU Edge Tests"
         E.Add('y', 7);
         E.Add('z', 8);
         Observer.Observe('remove_k4_k2_add3', JoinKeys(E));
-        Observer.Finish();
+        Observer.Expect('remove_k2_k4', 'k1,y,k3,x,k5,');
+        Observer.Expect('remove_k4_k2_add3', 'k1,x,k3,y,k5,z,');
+        Observer.Verify();
     end;
 
     // ---------------- item 17: BigText.Write of other characters ----------------
@@ -258,7 +275,9 @@ codeunit 80150 "LT AU Edge Tests"
         BT.Write(Outs);
         Observer.Observe('len', Format(BT.Length()));
         Observer.Observe('bytes', BlobHex(TempBlob));
-        Observer.Finish();
+        Observer.Expect('len', '8');
+        Observer.Expect('bytes', '82E1C34F3F3F3FFF');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +292,8 @@ codeunit 80150 "LT AU Edge Tests"
         TempBlob.CreateOutStream(Outs, TextEncoding::Windows);
         BT.Write(Outs);
         Observer.Observe('bytes', BlobHex(TempBlob));
-        Observer.Finish();
+        Observer.Expect('bytes', 'E9DF934F3F3F3FA0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -292,7 +312,9 @@ codeunit 80150 "LT AU Edge Tests"
         TempBlob2.CreateOutStream(Outs, TextEncoding::UTF16);
         BT.Write(Outs);
         Observer.Observe('utf16', BlobHex(TempBlob2));
-        Observer.Finish();
+        Observer.Expect('msdos', '82E1C34F3F3F3FFF');
+        Observer.Expect('utf16', 'E900DF001C20A9032D4E3DD800DEA000');
+        Observer.Verify();
     end;
 
     // ---------------- item 18: rows of arrays ----------------
@@ -321,7 +343,8 @@ codeunit 80150 "LT AU Edge Tests"
             for j := 1 to 2 do
                 T += Format(Bo[i, j]) + '/' + Format(Da[i, j], 0, 9) + '/' + Co[i, j] + ',';
         Observer.Observe('cells', T);
-        Observer.Finish();
+        Observer.Expect('cells', 'No/2020-01-01/,No/2020-02-01/,Yes//C21,Yes//C22,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -334,6 +357,7 @@ codeunit 80150 "LT AU Edge Tests"
         Bi: array[2, 2] of BigInteger;
         i: Integer;
         j: Integer;
+        CharCode: Integer;
         T: Text;
     begin
         for i := 1 to 2 do
@@ -348,10 +372,14 @@ codeunit 80150 "LT AU Edge Tests"
         Clear(Op[2]);
         Clear(Bi[1]);
         for i := 1 to 2 do
-            for j := 1 to 2 do
-                T += Format(IsNullGuid(Gu[i, j])) + '/' + Format(Ch[i, j], 0, 2) + '/' + Format(Op[i, j]) + '/' + Format(Bi[i, j]) + ',';
+            for j := 1 to 2 do begin
+                // The Char as its code: a cleared Char is character 0, which the CI's JUnit file showed as \u0000.
+                CharCode := Ch[i, j];
+                T += Format(IsNullGuid(Gu[i, j])) + '/' + Format(CharCode) + '/' + Format(Op[i, j]) + '/' + Format(Bi[i, j]) + ',';
+            end;
         Observer.Observe('cells', T);
-        Observer.Finish();
+        Observer.Expect('cells', 'No/0/C/0,No/0/C/0,Yes/67/A/10000000002,Yes/67/A/10000000002,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -381,8 +409,11 @@ codeunit 80150 "LT AU Edge Tests"
             for j := 1 to 3 do
                 T += Format(A[i, j]) + ',';
         Observer.Observe('cells_after_short', T);
-        CopyArray(S, A[2], 2);
-        Observer.Observe('row_into_1d', Format(S[1]) + ',' + Format(S[2]) + ',' + Format(S[3]));
+        // A row tail (2 cells from position 2) into the 3-element S: BC 27.5, 28.5 and 29.0 raise
+        // "CopyArray: The length parameter 2 does not match the length of the destination array 3." (corpus CI, 2026-10-19).
+        asserterror CopyArray(S, A[2], 2);
+        Observer.ObserveError('row_tail_into_1d');
+        Observer.Observe('s_after', Format(S[1]) + ',' + Format(S[2]) + ',' + Format(S[3]));
         Observer.Finish();
     end;
 
@@ -432,7 +463,11 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('clear_2_1', Dump4(A));
         Clear(A[1]);
         Observer.Observe('clear_1', Dump4(A));
-        Observer.Finish();
+        Observer.Expect('len', '24,12,6,3');
+        Observer.Expect('clear_1_2_1', '123|123|000|123|123|123|123|123|');
+        Observer.Expect('clear_2_1', '123|123|000|123|000|000|123|123|');
+        Observer.Expect('clear_1', '000|000|000|000|000|000|123|123|');
+        Observer.Verify();
     end;
 
     // ---------------- item 19: case on a Variant, case with only else ----------------
@@ -462,7 +497,9 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('integer', Outcome(TryCaseVariant(V, R), R));
         V := 'a';
         Observer.Observe('text', Outcome(TryCaseVariant(V, R), R));
-        Observer.Finish();
+        Observer.Expect('integer', 'error Unable to compare operands of type NavVariant with NavVariant. code=InvalidComparison');
+        Observer.Expect('text', 'error Unable to compare operands of type NavVariant with NavVariant. code=InvalidComparison');
+        Observer.Verify();
     end;
 
     local procedure ElseOnly(X: Integer): Text
@@ -495,7 +532,10 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('variant_unassigned', Outcome(TryElseOnlyVariant(V, R), R));
         V := 1;
         Observer.Observe('variant_integer', Outcome(TryElseOnlyVariant(V, R), R));
-        Observer.Finish();
+        Observer.Expect('integer', 'else 3');
+        Observer.Expect('variant_unassigned', 'ok else');
+        Observer.Expect('variant_integer', 'ok else');
+        Observer.Verify();
     end;
 
     // ---------------- item 9: control add-in events and calls without a client; Business Chart Buffer ----------------
@@ -524,7 +564,9 @@ codeunit 80150 "LT AU Edge Tests"
         TP.NameF.SetValue('two');
         TP.Close();
         Observer.Observe('closed', LogText());
-        Observer.Finish();
+        Observer.Expect('opened', 'OnOpenPage;');
+        Observer.Expect('closed', 'OnOpenPage;');
+        Observer.Verify();
     end;
 
     // Not a test: on a test page (BC 29, Linux container) invoking the action that calls CurrPage.Ctl.Ping('hello') gave "A call to Ping failed with this message: Object reference not set to an instance of an object.",
@@ -576,7 +618,13 @@ codeunit 80150 "LT AU Edge Tests"
         Observer.Observe('xcaption', Buffer.GetXCaption());
         Observer.Observe('measure_after', Format(Buffer.FindFirstMeasure(Map)) + ' ' + Format(Map.Index) + ' ' + Map.Name);
         Observer.Observe('column_after', Format(Buffer.FindFirstColumn(Map)) + ' ' + Format(Map.Index) + ' ' + Map.Name + ' ' + Map."Value String");
-        Observer.Finish();
+        Observer.Expect('measure', 'No');
+        Observer.Expect('column', 'No');
+        Observer.Expect('value', '7');
+        Observer.Expect('xcaption', 'Month');
+        Observer.Expect('measure_after', 'Yes 0 Count');
+        Observer.Expect('column_after', 'Yes 0 Jan Jan');
+        Observer.Verify();
     end;
 }
 

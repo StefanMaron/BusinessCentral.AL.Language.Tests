@@ -94,7 +94,10 @@ codeunit 98350 "LT AU File Write Bytes"
         Observer.Observe('text_mode', WriteCase(TextEncoding::UTF8, true, false));
         Observer.Observe('text_mode_text10', WriteCase(TextEncoding::UTF8, true, true));
         Observer.Observe('binary_text10', WriteCase(TextEncoding::UTF8, false, true));
-        Observer.Finish();
+        Observer.Expect('text_mode', 'ok [61C3A90D0A]');
+        Observer.Expect('text_mode_text10', 'ok [61C3A90D0A]');
+        Observer.Expect('binary_text10', 'ok [61C3A900]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +108,10 @@ codeunit 98350 "LT AU File Write Bytes"
         Observer.Observe('text_mode', WriteCase(TextEncoding::Windows, true, false));
         Observer.Observe('text_mode_text10', WriteCase(TextEncoding::Windows, true, true));
         Observer.Observe('binary_text10', WriteCase(TextEncoding::Windows, false, true));
-        Observer.Finish();
+        Observer.Expect('text_mode', 'ok [61E90D0A]');
+        Observer.Expect('text_mode_text10', 'ok [61E90D0A]');
+        Observer.Expect('binary_text10', 'ok [61E9000000000000000000]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,7 +122,10 @@ codeunit 98350 "LT AU File Write Bytes"
         Observer.Observe('text_mode', WriteCase(TextEncoding::UTF16, true, false));
         Observer.Observe('text_mode_text10', WriteCase(TextEncoding::UTF16, true, true));
         Observer.Observe('binary_text10', WriteCase(TextEncoding::UTF16, false, true));
-        Observer.Finish();
+        Observer.Expect('text_mode', 'ok [6100E9000D000A00]');
+        Observer.Expect('text_mode_text10', 'ok [6100E9000D000A00]');
+        Observer.Expect('binary_text10', 'ok [6100E9000000]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,6 +135,8 @@ codeunit 98350 "LT AU File Write Bytes"
     begin
         Observer.Observe('utf8', WriteCase(TextEncoding::UTF8, false, false));
         Observer.Observe('utf16', WriteCase(TextEncoding::UTF16, false, false));
-        Observer.Finish();
+        Observer.Expect('utf8', 'error WRITE is not supported for Text without a maximum length. code=StreamWideTextMaxLength []');
+        Observer.Expect('utf16', 'error WRITE is not supported for Text without a maximum length. code=StreamWideTextMaxLength []');
+        Observer.Verify();
     end;
 }
