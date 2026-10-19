@@ -35,7 +35,12 @@ codeunit 85180 "LT CS Collections"
         Arr[1].Add('b', true);
         Observer.Observe('arr 1 after add', JsonText(Arr[1]));
         Observer.Observe('arr 2 after add', JsonText(Arr[2]));
-        Observer.Finish();
+        Observer.Expect('arr 1', '{"a":1}');
+        Observer.Expect('arr 2', '{"a":2}');
+        Observer.Expect('arr 3', '{"a":3}');
+        Observer.Expect('arr 1 after add', '{"a":1,"b":true}');
+        Observer.Expect('arr 2 after add', '{"a":2}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -58,7 +63,11 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('list 3', JsonText(L.Get(3)));
         J1.Add('b', true);
         Observer.Observe('list 1 after source add', JsonText(L.Get(1)));
-        Observer.Finish();
+        Observer.Expect('list 1', '{"a":1}');
+        Observer.Expect('list 2', '{"a":2}');
+        Observer.Expect('list 3', '{"a":3}');
+        Observer.Expect('list 1 after source add', '{"a":1,"b":true}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,7 +91,12 @@ codeunit 85180 "LT CS Collections"
         L.Add(J);
         Observer.Observe('clear then add 1', JsonText(L.Get(1)));
         Observer.Observe('clear then add 4', JsonText(L.Get(4)));
-        Observer.Finish();
+        Observer.Expect('reuse 1', '{"a":3}');
+        Observer.Expect('reuse 2', '{"a":3}');
+        Observer.Expect('reuse 3', '{"a":3}');
+        Observer.Expect('clear then add 1', '{"a":3}');
+        Observer.Expect('clear then add 4', '{"c":1}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +119,10 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('set 1', JsonText(L.Get(1)));
         Observer.Observe('set 2', JsonText(L.Get(2)));
         Observer.Observe('set 3', JsonText(L.Get(3)));
-        Observer.Finish();
+        Observer.Expect('set 1', '{"a":3}');
+        Observer.Expect('set 2', '{"a":3}');
+        Observer.Expect('set 3', '{"a":3}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -132,7 +149,15 @@ codeunit 85180 "LT CS Collections"
         if not DT.Get('missing', V) then;
         Observer.Observe('after real error text', GetLastErrorText());
         Observer.Observe('after real error code', GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('int get text', '');
+        Observer.Expect('int get code', '');
+        Observer.Expect('text get text', '');
+        Observer.Expect('text get code', '');
+        Observer.Expect('contains', 'No');
+        Observer.Expect('contains text', '');
+        Observer.Expect('after real error text', 'LT CS first error');
+        Observer.Expect('after real error code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,7 +183,13 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('xml after real error', GetLastErrorText());
         if R.Get(4711) then;
         Observer.Observe('rec after real error', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('xml text', '');
+        Observer.Expect('xml code', '');
+        Observer.Expect('rec text', '');
+        Observer.Expect('rec code', '');
+        Observer.Expect('xml after real error', 'LT CS first error');
+        Observer.Expect('rec after real error', 'LT CS first error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +216,24 @@ codeunit 85180 "LT CS Collections"
         Observer.ObserveError('removerange');
         Observer.Observe('count after', Format(L.Count()));
         Observer.Observe('get 3', Format(L.Get(3)));
-        Observer.Finish();
+        Observer.Expect('count', '3');
+        Observer.Expect('reverse|text', 'The requested operation is not supported.');
+        Observer.Expect('reverse|code', 'NotSupportedOperation');
+        Observer.Expect('add|text', 'The requested operation is not supported.');
+        Observer.Expect('add|code', 'NotSupportedOperation');
+        Observer.Expect('removeat|text', 'The requested operation is not supported.');
+        Observer.Expect('removeat|code', 'NotSupportedOperation');
+        Observer.Expect('insert|text', 'The requested operation is not supported.');
+        Observer.Expect('insert|code', 'NotSupportedOperation');
+        Observer.Expect('set|text', 'The requested operation is not supported.');
+        Observer.Expect('set|code', 'NotSupportedOperation');
+        Observer.Expect('remove|text', 'The requested operation is not supported.');
+        Observer.Expect('remove|code', 'NotSupportedOperation');
+        Observer.Expect('removerange|text', 'The requested operation is not supported.');
+        Observer.Expect('removerange|code', 'NotSupportedOperation');
+        Observer.Expect('count after', '3');
+        Observer.Expect('get 3', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -197,7 +245,9 @@ codeunit 85180 "LT CS Collections"
         L := Enum::"LT ClT Color".Names();
         Observer.Observe('count', Format(L.Count()));
         Observer.Observe('get 3', L.Get(3));
-        Observer.Finish();
+        Observer.Expect('count', '3');
+        Observer.Expect('get 3', 'Blue');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,10 +263,19 @@ codeunit 85180 "LT CS Collections"
         Observer.ObserveError('names add');
         asserterror L.Set(1, 'x');
         Observer.ObserveError('names set');
-        Observer.Finish();
+        Observer.Expect('names reverse|text', 'The requested operation is not supported.');
+        Observer.Expect('names reverse|code', 'NotSupportedOperation');
+        Observer.Expect('names add|text', 'The requested operation is not supported.');
+        Observer.Expect('names add|code', 'NotSupportedOperation');
+        Observer.Expect('names set|text', 'The requested operation is not supported.');
+        Observer.Expect('names set|code', 'NotSupportedOperation');
+        Observer.Verify();
     end;
 
-    [Test]
+    // Linux suspect (corpus issue 670 item 7, microsoft/AL#6696), no [Test] attribute until the Windows check: GetRange on the list from
+    // Enum.Names()/Ordinals() gives on Linux BC 29.0 an uncatchable 'Unexpected CLR exception thrown.: System.InvalidCastException: Unable to
+    // cast object of type 'System.Collections.ObjectModel.ReadOnlyCollection`1[...]' to type 'System.Collections.Generic.List`1[...]'.'
+    // (asserterror does not catch it). Queued in the Windows queue.
     procedure EnumNames_GetRange()
     var
         Observer: Codeunit "Probe Observer";
@@ -244,10 +303,14 @@ codeunit 85180 "LT CS Collections"
         C.Reverse();
         C.Add('x');
         Observer.Observe('loop copy', C.Get(1) + ',' + Format(C.Count()));
-        Observer.Finish();
+        Observer.Expect('loop copy', 'Blue,4');
+        Observer.Verify();
     end;
 
-    [Test]
+    // Linux suspect (corpus issue 670 item 7, microsoft/AL#6696), no [Test] attribute until the Windows check: GetRange on the list from
+    // Enum.Names()/Ordinals() gives on Linux BC 29.0 an uncatchable 'Unexpected CLR exception thrown.: System.InvalidCastException: Unable to
+    // cast object of type 'System.Collections.ObjectModel.ReadOnlyCollection`1[...]' to type 'System.Collections.Generic.List`1[...]'.'
+    // (asserterror does not catch it). Queued in the Windows queue.
     procedure EnumOrdinals_GetRangeCopy()
     var
         Observer: Codeunit "Probe Observer";
@@ -286,7 +349,11 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('third', BaseList.Get(3).Name());
         EmptyList.AddRange(EmptyList);
         Observer.Observe('empty to empty', Format(EmptyList.Count()));
-        Observer.Finish();
+        Observer.Expect('after empty', '1');
+        Observer.Expect('after other', '3');
+        Observer.Expect('third', 'square');
+        Observer.Expect('empty to empty', '0');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -339,7 +406,16 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('contains equal contents', Outcome(TryContains(L, Same, R), R));
         Observer.Observe('remove second', Outcome(TryRemove(L, D2, R), R));
         Observer.Observe('count', Format(L.Count()));
-        Observer.Finish();
+        Observer.Expect('contains same', 'Yes');
+        Observer.Expect('contains second', 'error: Unable to compare operands of type NavDictionary`2 with NavDictionary`2. code: InvalidComparison');
+        Observer.Expect('indexof same', '1');
+        Observer.Expect('indexof second', 'error: Unable to compare operands of type NavDictionary`2 with NavDictionary`2. code: InvalidComparison');
+        Observer.Expect('contains empty other', 'error: Unable to compare operands of type NavDictionary`2 with NavDictionary`2. code: InvalidComparison');
+        Observer.Expect('indexof empty other', 'error: Unable to compare operands of type NavDictionary`2 with NavDictionary`2. code: InvalidComparison');
+        Observer.Expect('contains equal contents', 'error: Unable to compare operands of type NavDictionary`2 with NavDictionary`2. code: InvalidComparison');
+        Observer.Expect('remove second', 'error: Unable to compare operands of type NavDictionary`2 with NavDictionary`2. code: InvalidComparison');
+        Observer.Expect('count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -364,7 +440,14 @@ codeunit 85180 "LT CS Collections"
         asserterror Evaluate(Target, V);
         Observer.ObserveError('evaluate plain');
         Observer.Observe('target count', Format(Target.Count()));
-        Observer.Finish();
+        Observer.Expect('back get', 'one');
+        Observer.Expect('source count after back add', '2');
+        Observer.Expect('evaluate used|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('evaluate used|code', 'TypeConversion');
+        Observer.Expect('evaluate plain|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('evaluate plain|code', 'TypeConversion');
+        Observer.Expect('target count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +469,11 @@ codeunit 85180 "LT CS Collections"
         asserterror TargetList := V;
         Observer.ObserveError('int list to text list');
         Observer.Observe('target after failed', Format(TargetList.Count()));
-        Observer.Finish();
+        Observer.Expect('source count', '2');
+        Observer.Expect('int list to text list|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavList`1[System.Int32] to Microsoft.Dynamics.Nav.Runtime.NavList`1[Microsoft.Dynamics.Nav.Runtime.NavText].');
+        Observer.Expect('int list to text list|code', 'Conversion');
+        Observer.Expect('target after failed', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -410,12 +497,14 @@ codeunit 85180 "LT CS Collections"
         Observer.ObserveError('to other codeunit');
         asserterror D := V;
         Observer.ObserveError('to dictionary');
-        Finish(Observer);
-    end;
-
-    local procedure Finish(var Observer: Codeunit "Probe Observer")
-    begin
-        Observer.Finish();
+        Observer.Expect('is codeunit', 'Yes');
+        Observer.Expect('back name', 'circleV');
+        Observer.Expect('back after source retag', 'circleW');
+        Observer.Expect('to other codeunit|text', 'The requested operation is not supported.');
+        Observer.Expect('to other codeunit|code', 'NotSupportedOperation');
+        Observer.Expect('to dictionary|text', 'Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Codeunit74600 to Microsoft.Dynamics.Nav.Runtime.NavDictionary`2[System.Int32,Microsoft.Dynamics.Nav.Runtime.NavText].');
+        Observer.Expect('to dictionary|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -438,7 +527,15 @@ codeunit 85180 "LT CS Collections"
         Vals := D.Values();
         Observer.Observe('values', Format(Vals.Get(1).AsInteger()) + ',' + Format(Vals.Get(2).AsInteger()));
         Observer.Observe('values contains', Format(Vals.Contains(Enum::"LT ClT Color"::Red)));
-        Observer.Finish();
+        Observer.Expect('get out', 'Yes');
+        Observer.Expect('get out value', '1');
+        Observer.Expect('get missing', 'No');
+        Observer.Expect('value after missing', '1');
+        Observer.Expect('after set', 'Blue Caption');
+        Observer.Expect('contains', 'Yes');
+        Observer.Expect('values', '5,0');
+        Observer.Expect('values contains', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -459,7 +556,10 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('source inner count', Format(Inner.Count()));
         Copy.Add(Inner);
         Observer.Observe('outer count', Format(Outer.Count()));
-        Observer.Finish();
+        Observer.Expect('outer inner count', '2');
+        Observer.Expect('source inner count', '2');
+        Observer.Expect('outer count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -488,6 +588,13 @@ codeunit 85180 "LT CS Collections"
         RR.Close();
         Observer.Observe('isempty after source close', Format(ListOfRecRefs.Get(1).IsEmpty()));
         Observer.Observe('number after source close', Format(ListOfRecRefs.Get(1).Number()));
-        Observer.Finish();
+        Observer.Expect('empty count', '0');
+        Observer.Expect('count', '1');
+        Observer.Expect('number', '74603');
+        Observer.Expect('name', 'first');
+        Observer.Expect('name after source change', 'changed');
+        Observer.Expect('isempty after source close', 'No');
+        Observer.Expect('number after source close', '74603');
+        Observer.Verify();
     end;
 }

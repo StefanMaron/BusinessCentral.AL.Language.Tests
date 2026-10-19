@@ -50,6 +50,13 @@ codeunit 85182 "LT CS Dict Interface"
         Observer.Observe('checked found', Format(GetShapeChecked('c', Got)));
         Observer.Observe('checked found name', Got.Name());
         Observer.Observe('checked missing', Format(GetShapeChecked('x', Got)));
-        Observer.Finish();
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('found name', 'circleK');
+        Observer.Expect('missing', 'No');
+        Observer.Expect('missing keeps value', 'square');
+        Observer.Expect('checked found', 'Yes');
+        Observer.Expect('checked found name', 'circleK');
+        Observer.Expect('checked missing', 'No');
+        Observer.Verify();
     end;
 }
