@@ -79,6 +79,7 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.Observe(Prefix + '-shown', Card.NameCtl.Value());
     end;
 
+    // CurrPage.Editable(false) in OnOpenPage: the page and Rec controls read not editable, yet SetValue raises nothing and the value is saved.
     [Test]
     procedure Item49_LockCard_OpenView()
     var
@@ -89,7 +90,13 @@ codeunit 84282 "LT CD TestPage Leads"
         ObserveLockCard('view', Card);
         Card.Close();
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('view-pageEd', 'No');
+        Observer.Expect('view-nameEd', 'No');
+        Observer.Expect('view-noteEd', 'Yes');
+        Observer.Expect('view-setvalue-err', '');
+        Observer.Expect('view-shown', 'typed');
+        Observer.Expect('rows', '1:typed::,2:n3::,3:n2::,4:n4::,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +116,12 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.Observe('new-setname-err', GetLastErrorText());
         Card.Close();
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('new-pageEd', 'Yes');
+        Observer.Expect('new-idEd', 'No');
+        Observer.Expect('new-setid-err', '');
+        Observer.Expect('new-setname-err', '');
+        Observer.Expect('rows', '1:n1::,2:n3::,3:n2::,4:n4::,9:typed::,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +139,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.NameCtl.SetValue('typed');
         Card.Close();
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('new-err', '');
+        Observer.Expect('new-idEd', 'No');
+        Observer.Expect('rows', '1:n1::,2:n3::,3:n2::,4:n4::,8:typed::,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +155,13 @@ codeunit 84282 "LT CD TestPage Leads"
         Row.Get(1);
         Page.Run(Page::"LT CD Lock Card", Row);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('run-pageEd', 'No');
+        Observer.Expect('run-nameEd', 'No');
+        Observer.Expect('run-noteEd', 'No');
+        Observer.Expect('run-setvalue-err', '');
+        Observer.Expect('run-shown', 'typed');
+        Observer.Expect('rows', '1:typed::,2:n3::,3:n2::,4:n4::,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +174,13 @@ codeunit 84282 "LT CD TestPage Leads"
         Row.Get(1);
         Page.RunModal(Page::"LT CD Lock Card", Row);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('runmodal-pageEd', 'No');
+        Observer.Expect('runmodal-nameEd', 'No');
+        Observer.Expect('runmodal-noteEd', 'No');
+        Observer.Expect('runmodal-setvalue-err', '');
+        Observer.Expect('runmodal-shown', 'typed');
+        Observer.Expect('rows', '1:typed::,2:n3::,3:n2::,4:n4::,');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -193,7 +220,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.OpenNew();
         Observer.Observe('new', Card.Caption());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'CD NoCap - C1');
+        Observer.Expect('second', 'CD NoCap - C2');
+        Observer.Expect('new', 'New - CD NoCap');
+        Observer.Verify();
     end;
 
     // ---- Item 51: Visible over page variables, changed by an action after the page opened ------------------------------------
@@ -218,7 +248,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.Previous();
         ObserveVis('after-move', Card);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'field=Yes groupfield=Yes action=Yes');
+        Observer.Expect('after-action', 'field=Yes groupfield=No action=No');
+        Observer.Expect('after-move', 'field=Yes groupfield=No action=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -231,7 +264,8 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.HideAllUpdate.Invoke();
         ObserveVis('after-action-update', Card);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('after-action-update', 'field=Yes groupfield=No action=No');
+        Observer.Verify();
     end;
 
     // ---- Item 52: Validate of a table field with Editable = false ------------------------------------------------------------
@@ -252,7 +286,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Row.Locked := 'set-by-assign';
         Row.Modify(true);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err', '');
+        Observer.Expect('log', 'locked-onvalidate:set-by-validate;');
+        Observer.Expect('rows', '1:n1:set-by-assign:,2:n3::,3:n2::,4:n4::,');
+        Observer.Verify();
     end;
 
     // ---- Item 54: Editable after an action that changes Status ---------------------------------------------------------------
@@ -278,7 +315,11 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.ReleaseUpdate.Invoke();
         ObserveStatusEd('after-release-update', Card);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'status=Open byVar=Yes byRec=Yes');
+        Observer.Expect('after-release', 'status=Released byVar=No byRec=No');
+        Observer.Expect('after-reopen-update', 'status=Open byVar=Yes byRec=Yes');
+        Observer.Expect('after-release-update', 'status=Released byVar=No byRec=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -292,7 +333,9 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.ReleaseUpdate.Invoke();
         ObserveStatusEd('after-release-update', Card);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'status=Open byVar=No byRec=No');
+        Observer.Expect('after-release-update', 'status=Released byVar=No byRec=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -312,7 +355,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.Observe('setvalue-err', GetLastErrorText());
         Card.Close();
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('open-released', 'status=Released byVar=No byRec=No');
+        Observer.Expect('setvalue-err', '');
+        Observer.Expect('rows', '1:typed::,2:n3::,3:n2::,4:n4::,');
+        Observer.Verify();
     end;
 
     // ---- Item 55: a page-variable control on a card opened with OpenView -----------------------------------------------------
@@ -331,7 +377,11 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.Observe('err', GetLastErrorText());
         Observer.Observe('shown', Card.NoteCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('pageEd', 'No');
+        Observer.Expect('noteEd', 'Yes');
+        Observer.Expect('err', '');
+        Observer.Expect('shown', 'typed note');
+        Observer.Verify();
     end;
 
     // ---- Item 56: ValuesAllowed = '', 'A', 'N' on a Code[1] table field -------------------------------------------------------
@@ -349,7 +399,11 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.ObserveError('set-empty');
         Observer.Observe('after-empty', Card.C1Ctl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('after-a', 'A');
+        Observer.Expect('set-empty|text', 'Validation error for Field: C1Ctl,  Message = ''Value '''' is not a valid value. The following values can be used: ;A;N. (Select Refresh to discard errors)''');
+        Observer.Expect('set-empty|code', 'TestValidation');
+        Observer.Expect('after-empty', 'A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -362,9 +416,12 @@ codeunit 84282 "LT CD TestPage Leads"
         asserterror Card.C1Ctl.SetValue('X');
         Observer.ObserveError('set-x');
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('set-x|text', 'Validation error for Field: C1Ctl,  Message = ''Value ''X'' is not a valid value. The following values can be used: ;A;N. (Select Refresh to discard errors)''');
+        Observer.Expect('set-x|code', 'TestValidation');
+        Observer.Verify();
     end;
 
+    // ValuesAllowed is checked by TestPage SetValue (error 'Value '' is not a valid value...') but not by Validate in code.
     [Test]
     procedure Item56_ValuesAllowed_ValidateInCode()
     var
@@ -379,7 +436,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Row.Validate(C1, 'X');
         Observer.Observe('validate-x-err', GetLastErrorText());
         Observer.Observe('after-x', Row.C1);
-        Observer.Finish();
+        Observer.Expect('after-empty', '');
+        Observer.Expect('validate-x-err', '');
+        Observer.Expect('after-x', 'X');
+        Observer.Verify();
     end;
 
     // ---- Item 53: area(Prompting) actions -------------------------------------------------------------------------------------
@@ -399,7 +459,12 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.Observe('invoke-err', GetLastErrorText());
         Observer.Observe('log', Log.Take());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('no-run', 'visible=Yes enabled=Yes');
+        Observer.Expect('with-run', 'visible=Yes enabled=Yes');
+        Observer.Expect('plain', 'visible=Yes');
+        Observer.Expect('invoke-err', '');
+        Observer.Expect('log', 'prompt-no-run;');
+        Observer.Verify();
     end;
 
     // ---- Item 57: NavigatePage labels with Visible expressions ----------------------------------------------------------------
@@ -421,7 +486,9 @@ codeunit 84282 "LT CD TestPage Leads"
         Nav.OkCtl.SetValue(true);
         ObserveNav('after-ok', Nav);
         Nav.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'const=No var=Yes grouped=Yes');
+        Observer.Expect('after-ok', 'const=No var=Yes grouped=No');
+        Observer.Verify();
     end;
 
     // ---- Item 58: SourceTableView with const(0D), filter(0D) and other const values ------------------------------------------
@@ -446,7 +513,8 @@ codeunit 84282 "LT CD TestPage Leads"
         List.OpenView();
         Observer.Observe('ids', ShownIds0D(List));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('ids', '1,2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -463,7 +531,8 @@ codeunit 84282 "LT CD TestPage Leads"
             until not List.Next();
         Observer.Observe('ids', Result);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('ids', '1,2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -487,7 +556,8 @@ codeunit 84282 "LT CD TestPage Leads"
             until not List.Next();
         Observer.Observe('ids', Result);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('ids', '1,2,4,');
+        Observer.Verify();
     end;
 
     // ---- Items 59, 64: a part linked through an enum field ---------------------------------------------------------------------
@@ -529,7 +599,11 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.Lines.First();
         Card.Close();
         Observer.Observe('lines', LineRows());
-        Observer.Finish();
+        Observer.Expect('part-first', 'Second/second line');
+        Observer.Expect('part-next', 'Yes');
+        Observer.Expect('new-kind-shown', 'Second');
+        Observer.Expect('lines', 'First/10000/first line,Second/10000/second line,Second/30000/typed line,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -541,11 +615,13 @@ codeunit 84282 "LT CD TestPage Leads"
         Card.OpenView();
         Card.Close();
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'part-onopenpage:;part-aftergetcurr:g4=Kind: Second;');
+        Observer.Verify();
     end;
 
     // ---- Item 61: RunPageLink on an enum key field, new row ---------------------------------------------------------------------
 
+    // RunPageLink Kind = field(Kind): TestPage Filter.GetFilter gives the enum ordinal ('2'); with const(Second) it gives the name. A new row gets the link value.
     [Test]
     procedure Item61_RunPageLinkEnumKey_ByField_New()
     var
@@ -564,7 +640,10 @@ codeunit 84282 "LT CD TestPage Leads"
         List.Close();
         Card.Close();
         Observer.Observe('lines', LineRows());
-        Observer.Finish();
+        Observer.Expect('filter', '2');
+        Observer.Expect('new-kind-shown', 'Third');
+        Observer.Expect('lines', 'First/10000/first line,Second/10000/second line,Third/5/typed,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -585,7 +664,10 @@ codeunit 84282 "LT CD TestPage Leads"
         List.Close();
         Card.Close();
         Observer.Observe('lines', LineRows());
-        Observer.Finish();
+        Observer.Expect('filter', 'Second');
+        Observer.Expect('new-kind-shown', 'Second');
+        Observer.Expect('lines', 'First/10000/first line,Second/5/typed,Second/10000/second line,');
+        Observer.Verify();
     end;
 
     // ---- Item 60: SetSelectionFilter on a list sorted descending -----------------------------------------------------------------
@@ -602,7 +684,9 @@ codeunit 84282 "LT CD TestPage Leads"
         List.Sel.Invoke();
         Observer.Observe('log', Log.Take());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('first-shown', '4');
+        Observer.Expect('log', 'filters=Id: 2 count=1 markedonly=No asc=Yes;marked=2,;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -617,11 +701,14 @@ codeunit 84282 "LT CD TestPage Leads"
         List.Sel.Invoke();
         Observer.Observe('log', Log.Take());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('first-shown', '4');
+        Observer.Expect('log', 'filters=Id: 3 count=1 markedonly=No asc=Yes;marked=3,;');
+        Observer.Verify();
     end;
 
     // ---- Item 62: TestPage Filter against filters set in OnOpenPage in filter groups 2 and 4 -----------------------------------
 
+    // TestPage Filter cannot remove a filter set in filter group 2 or 4 in OnOpenPage: GetFilter still answers it and a second filter combines with it.
     [Test]
     procedure Item62_FilterGroup2_TestPageFilter()
     var
@@ -635,7 +722,10 @@ codeunit 84282 "LT CD TestPage Leads"
         List.Filter.SetFilter(Grp, 'B');
         Observer.Observe('set-b', FG2Ids(List) + ' filter=' + List.Filter.GetFilter(Grp));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'ids=1,3, filter=A');
+        Observer.Expect('cleared', 'ids=1,3, filter=A');
+        Observer.Expect('set-b', 'ids= filter=A');
+        Observer.Verify();
     end;
 
     local procedure FG2Ids(var List: TestPage "LT CD FG2 List"): Text
@@ -662,7 +752,10 @@ codeunit 84282 "LT CD TestPage Leads"
         List.Filter.SetFilter(Grp, 'B');
         Observer.Observe('set-b', FG4Ids(List) + ' filter=' + List.Filter.GetFilter(Grp));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'ids=1,3, filter=A');
+        Observer.Expect('cleared', 'ids=1,3, filter=A');
+        Observer.Expect('set-b', 'ids= filter=A');
+        Observer.Verify();
     end;
 
     local procedure FG4Ids(var List: TestPage "LT CD FG4 List"): Text
@@ -678,6 +771,7 @@ codeunit 84282 "LT CD TestPage Leads"
 
     // ---- Item 63: FilterGroup(-1) and FilterGroup(4) with two SetRange calls in OnOpenPage ------------------------------------
 
+    // FilterGroup(-1) filters set in OnOpenPage: the record counts 3 rows (OR) inside the trigger, but the page shows all 4 rows.
     [Test]
     procedure Item63_FilterGroupMinus1_InOnOpenPage()
     var
@@ -693,7 +787,9 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.Observe('ids', Result);
         Observer.Observe('log', Log.Take());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('ids', '1,2,3,4,');
+        Observer.Expect('log', 'g-1=Name: n3, Grp: A count=3;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -714,11 +810,13 @@ codeunit 84282 "LT CD TestPage Leads"
             until not List.Next();
         Observer.Observe('ids', Result);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('ids', '3,');
+        Observer.Verify();
     end;
 
     // ---- Item 64: SetCurrentKey on a two-field key, then SetAscending on the second field, in OnOpenPage ----------------------
 
+    // SetAscending(Id, false) after SetCurrentKey(Grp, Id) in OnOpenPage: the page shows the key ascending (SetAscending has no effect on the page).
     [Test]
     procedure Item64_SetAscendingInOnOpenPage_TwoFieldKey()
     var
@@ -733,6 +831,7 @@ codeunit 84282 "LT CD TestPage Leads"
             until not List.Next();
         Observer.Observe('ids', Result);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('ids', '1,3,2,4,');
+        Observer.Verify();
     end;
 }
