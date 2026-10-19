@@ -293,6 +293,9 @@ jobs:
       # adds ~550 MB to the SQL pull. Only this job runs Company-insert tests (67947);
       # test-onprem does not, so it keeps the default image.
       sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      # The default job timeout is 45 minutes. With about 2500 test codeunits the BC 27.5 "Run AL tests" step takes 37 to
+      # 40 minutes on a loaded runner, so the 27.5 job was cancelled at 45 minutes twice (run 39269527543, both attempts).
+      timeout_minutes:      70
 
   # The Target = OnPrem test app, in a job of its own.
   #
