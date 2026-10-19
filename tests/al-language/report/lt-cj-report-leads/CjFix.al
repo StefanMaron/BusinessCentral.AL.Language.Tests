@@ -126,12 +126,13 @@ codeunit 84643 "LT CJ Helper"
         exit(Result);
     end;
 
-    // The first bytes of the stream as character codes, e.g. '37,80,68,70' for %PDF.
+    // The first four bytes of the stream as numbers, e.g. '37,80,68,70,' for %PDF and '80,75,3,4,' for a zip package.
     procedure Head(var TempBlob: Codeunit "Temp Blob"): Text
     var
         InS: InStream;
         B: Byte;
         I: Integer;
+        Code: Integer;
         Result: Text;
     begin
         if TempBlob.Length() = 0 then
@@ -140,7 +141,8 @@ codeunit 84643 "LT CJ Helper"
         for I := 1 to 4 do
             if not InS.EOS() then begin
                 InS.Read(B);
-                Result += Format(B) + ',';
+                Code := B;
+                Result += Format(Code) + ',';
             end;
         exit(Result);
     end;
