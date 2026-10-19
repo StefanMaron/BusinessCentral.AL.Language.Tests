@@ -12,6 +12,9 @@ codeunit 72024 "LT HtT Request"
 
     var
         Observer: Codeunit "Probe Observer";
+        BmContent: HttpContent;
+        BmRequest: HttpRequestMessage;
+        BmClient: HttpClient;
 
     [Test]
     procedure FreshRequest()
@@ -286,4 +289,74 @@ codeunit 72024 "LT HtT Request"
         Observer.Expect('freshResp', 'No');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 36: HttpContent, HttpClient, HttpRequestMessage, HttpHeaders and HttpResponseMessage compile as return types
+    // (AL 30 beta). This records whether the returned value is the holder's instance or a copy (no network call is made).
+    [Test]
+    procedure BM_HttpTypes_AsReturnValues()
+    var
+        Obs: Codeunit "Probe Observer";
+        C: HttpContent;
+        R: HttpRequestMessage;
+        H: HttpHeaders;
+        H2: HttpHeaders;
+        Cl: HttpClient;
+        Resp: HttpResponseMessage;
+        T: Text;
+    begin
+        BmContent.WriteFrom('holder');
+        C := BmGetContent();
+        C.ReadAs(T);
+        Obs.Observe('content_read', T);
+        C.WriteFrom('changed');
+        BmContent.ReadAs(T);
+        Obs.Observe('content_holder_after_write', T);
+        BmRequest.Method := 'GET';
+        R := BmGetRequest();
+        Obs.Observe('request_method', R.Method());
+        R.Method := 'PUT';
+        Obs.Observe('request_holder_method_after_set', BmRequest.Method());
+        H := BmGetRequestHeaders();
+        H.Add('X-BM', '1');
+        BmRequest.GetHeaders(H2);
+        Obs.Observe('headers_holder_contains_added', Format(H2.Contains('X-BM')));
+        Cl := BmGetClient();
+        Cl.Timeout := 5000;
+        Obs.Observe('client_holder_timeout', Format(BmClient.Timeout()));
+        Resp := BmGetResponse();
+        Obs.Observe('response_status', Format(Resp.HttpStatusCode()));
+        Obs.Observe('response_success', Format(Resp.IsSuccessStatusCode()));
+        Obs.Finish();
+    end;
+
+    local procedure BmGetContent(): HttpContent
+    begin
+        exit(BmContent);
+    end;
+
+    local procedure BmGetRequest(): HttpRequestMessage
+    begin
+        exit(BmRequest);
+    end;
+
+    local procedure BmGetRequestHeaders(): HttpHeaders
+    var
+        H: HttpHeaders;
+    begin
+        BmRequest.GetHeaders(H);
+        exit(H);
+    end;
+
+    local procedure BmGetClient(): HttpClient
+    begin
+        exit(BmClient);
+    end;
+
+    local procedure BmGetResponse(): HttpResponseMessage
+    var
+        Resp: HttpResponseMessage;
+    begin
+        exit(Resp);
+    end;
 }
+

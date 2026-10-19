@@ -299,6 +299,9 @@ is only a reference.
 | 1387 | AL0165, AL0750, AL0118 | Trigger called directly; chained enum value; "17".DeleteAll and Customer.Count without a variable (corpus #664 items 30, 32, 33). |
 | 1388 | AL0185, AL0851 | 'as' with a target that is not an interface (corpus #664 item 19). |
 | 1389 | AL0159 | Blob and TestPage as return types; the other complex types and the Http types compile (corpus #664 items 35, 36). |
+| 1570 to 1572 | AL0187 (and AL0666 on BC 27 and 28) | [RequiredPending] on an interface method; one case per BC major (corpus #664 item 19). |
+| 1573 | AL0625 | #define after the first token of a file (corpus #664 item 29). |
+| 1574 to 1576 | AL0629, AL0631 | Preprocessor operators that do not exist: '!', '&&', '== true' (corpus #664 item 29). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

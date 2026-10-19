@@ -23,6 +23,127 @@ table 71160 "LT P69 Ret Row"
     keys { key(PK; "Code") { Clustered = true; } }
 }
 
+// Corpus #664 item 35: a procedure returning a complex type. The holder returns its own global variables; the test changes the returned
+// value and reads the global back, which shows whether the returned value is a copy or the same instance.
+interface "LT BM IRet Counter"
+{
+    procedure Bump();
+    procedure Value(): Integer;
+}
+
+codeunit 81951 "LT BM Ret Counter" implements "LT BM IRet Counter"
+{
+    var
+        N: Integer;
+
+    procedure Bump()
+    begin
+        N += 1;
+    end;
+
+    procedure Value(): Integer
+    begin
+        exit(N);
+    end;
+}
+
+codeunit 81952 "LT BM Ret Holder"
+{
+    var
+        Json: JsonObject;
+        Tb: TextBuilder;
+        Dict: Dictionary of [Text, Integer];
+        Lst: List of [Integer];
+        Counter: Codeunit "LT BM Ret Counter";
+        Row: Record "LT P69 Ret Row";
+        TempRow: Record "LT P69 Ret Row" temporary;
+
+    procedure GetJson(): JsonObject
+    begin
+        exit(Json);
+    end;
+
+    procedure JsonText(): Text
+    var
+        T: Text;
+    begin
+        Json.WriteTo(T);
+        exit(T);
+    end;
+
+    procedure GetTb(): TextBuilder
+    begin
+        exit(Tb);
+    end;
+
+    procedure TbText(): Text
+    begin
+        exit(Tb.ToText());
+    end;
+
+    procedure GetDict(): Dictionary of [Text, Integer]
+    begin
+        exit(Dict);
+    end;
+
+    procedure DictCount(): Integer
+    begin
+        exit(Dict.Count());
+    end;
+
+    procedure GetList(): List of [Integer]
+    begin
+        exit(Lst);
+    end;
+
+    procedure ListCount(): Integer
+    begin
+        exit(Lst.Count());
+    end;
+
+    procedure GetCounter(): Codeunit "LT BM Ret Counter"
+    begin
+        exit(Counter);
+    end;
+
+    procedure GetCounterInterface(): Interface "LT BM IRet Counter"
+    var
+        I: Interface "LT BM IRet Counter";
+    begin
+        I := Counter;
+        exit(I);
+    end;
+
+    procedure CounterValue(): Integer
+    begin
+        exit(Counter.Value());
+    end;
+
+    procedure GetFilteredRow(): Record "LT P69 Ret Row"
+    begin
+        Row.SetRange(Code, 'A');
+        Row.SetFilter(Qty, '>1');
+        exit(Row);
+    end;
+
+    procedure RowFilters(): Text
+    begin
+        exit(Row.GetFilters());
+    end;
+
+    procedure GetTempRow(): Record "LT P69 Ret Row" temporary
+    begin
+        TempRow.Code := 'H1';
+        if TempRow.Insert() then;
+        exit(TempRow);
+    end;
+
+    procedure TempRowCount(): Integer
+    begin
+        exit(TempRow.Count());
+    end;
+}
+
 codeunit 71161 "LT P69 Proc Result Field"
 {
     Subtype = Test;
@@ -197,4 +318,55 @@ codeunit 71161 "LT P69 Proc Result Field"
         Observer.Expect('rowcount_missing', '1');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 35 (see the holder codeunit above): copy or same instance for each returned type.
+    [Test]
+    procedure BM_ProcResult_ComplexTypes_CopyOrShared()
+    var
+        Observer: Codeunit "Probe Observer";
+        Holder: Codeunit "LT BM Ret Holder";
+        J: JsonObject;
+        T: TextBuilder;
+        D: Dictionary of [Text, Integer];
+        L: List of [Integer];
+        C: Codeunit "LT BM Ret Counter";
+        I: Interface "LT BM IRet Counter";
+        R: Record "LT P69 Ret Row";
+        TR: Record "LT P69 Ret Row" temporary;
+    begin
+        Seed();
+        J := Holder.GetJson();
+        J.Add('k', 1);
+        Observer.Observe('json_holder_after_add', Holder.JsonText());
+        T := Holder.GetTb();
+        T.Append('x');
+        Observer.Observe('textbuilder_holder_after_append', '[' + Holder.TbText() + ']');
+        D := Holder.GetDict();
+        D.Add('a', 1);
+        Observer.Observe('dictionary_holder_count', Format(Holder.DictCount()));
+        L := Holder.GetList();
+        L.Add(1);
+        Observer.Observe('list_holder_count', Format(Holder.ListCount()));
+        C := Holder.GetCounter();
+        C.Bump();
+        Observer.Observe('codeunit_holder_after_bump', Format(Holder.CounterValue()));
+        I := Holder.GetCounterInterface();
+        I.Bump();
+        Observer.Observe('interface_holder_after_bump', Format(Holder.CounterValue()));
+        Observer.Observe('interface_value', Format(I.Value()));
+        R := Holder.GetFilteredRow();
+        Observer.Observe('record_filters', R.GetFilters());
+        Observer.Observe('record_count', Format(R.Count()));
+        R.SetRange(Code);
+        Observer.Observe('holder_filters_after_caller_reset', Holder.RowFilters());
+        TR := Holder.GetTempRow();
+        Observer.Observe('temp_is_temporary', Format(TR.IsTemporary()));
+        Observer.Observe('temp_count', Format(TR.Count()));
+        TR.Code := 'C1';
+        TR.Insert();
+        Observer.Observe('temp_caller_count', Format(TR.Count()));
+        Observer.Observe('temp_holder_count', Format(Holder.TempRowCount()));
+        Observer.Finish();
+    end;
 }
+

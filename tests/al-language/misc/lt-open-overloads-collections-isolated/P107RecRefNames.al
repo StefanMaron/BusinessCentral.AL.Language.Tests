@@ -251,4 +251,44 @@ codeunit 72697 "LT P107 RecRef Names"
         Observer.Expect('wrong_table_false|code', 'TableIdMismatch');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 12: RecordRef.Open with a Variant argument. The compiler gives warning AL0916 and picks Open(Integer) (AL 30 beta,
+    // runtime 18.0); this records what that call does with a Variant that holds an Integer, a BigInteger, a numeric Text and a table name.
+    [Test]
+    procedure BM_OpenVariantArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        V: Variant;
+        Big: BigInteger;
+    begin
+        V := 72694;
+        Observer.Observe('integer', TryOpenVariant(V));
+        Big := 72694;
+        V := Big;
+        Observer.Observe('biginteger', TryOpenVariant(V));
+        V := '72694';
+        Observer.Observe('numeric_text', TryOpenVariant(V));
+        V := 'LT P107 Rec';
+        Observer.Observe('table_name_text', TryOpenVariant(V));
+        V := 0;
+        Observer.Observe('zero', TryOpenVariant(V));
+        Observer.Finish();
+    end;
+
+    local procedure TryOpenVariant(V: Variant): Text
+    var
+        RecRef: RecordRef;
+    begin
+        ClearLastError();
+        if TryOpen(RecRef, V) then
+            exit('ok|' + Format(RecRef.Number()) + '|' + RecRef.Name());
+        exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [TryFunction]
+    local procedure TryOpen(var RecRef: RecordRef; V: Variant)
+    begin
+        RecRef.Open(V);
+    end;
 }
+

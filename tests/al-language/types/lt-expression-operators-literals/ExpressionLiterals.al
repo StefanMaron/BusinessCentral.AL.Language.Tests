@@ -223,4 +223,37 @@ codeunit 72788 "LT Literals"
         Observer.Expect('enum-from-ordinal', 'Ninth Value');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 25: a backslash in a Text literal is not an escape character; '\q' and '\n' compile with no AL0630 (AL 30 beta).
+    // This records the length and characters of such literals, and the text of an Error raised with one.
+    [Test]
+    procedure BM_Literal_BackslashSequences()
+    var
+        Observer: Codeunit "Probe Observer";
+        T: Text;
+    begin
+        T := 'a\qb';
+        Observer.Observe('aqb_len', Format(StrLen(T)));
+        Observer.Observe('aqb_char2', Format(CodeAt(T, 2)));
+        Observer.Observe('aqb_value', T);
+        T := '\n';
+        Observer.Observe('n_len', Format(StrLen(T)));
+        Observer.Observe('n_char1', Format(CodeAt(T, 1)));
+        Observer.Observe('n_char2', Format(CodeAt(T, 2)));
+        Observer.Observe('n_equals_backslash_n', Format(T = '\' + 'n'));
+        Observer.Observe('lone_backslash_len', Format(StrLen('\')));
+        asserterror Error('x\ty');
+        Observer.ObserveError('error_backslash_t');
+        asserterror Error('line1\line2');
+        Observer.ObserveError('error_backslash_line');
+        Observer.Finish();
+    end;
+
+    local procedure CodeAt(T: Text; Pos: Integer): Integer
+    var
+        C: Integer;
+    begin
+        C := T[Pos];
+        exit(C);
+    end;
 }

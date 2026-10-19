@@ -156,4 +156,31 @@ codeunit 70901 "LT P140 TextConst Lang"
         Observer.Expect('restored_equal', 'Yes');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 26: Text methods called on a TextConst compile (AL 30 beta) and read the text of the current language.
+    // Methods on a Text literal and on a Label are pinned in text/lt-label-textbuilder/TxCLabel.al (Label_Constant_Methods).
+    [Test]
+    procedure BM_TextConst_Methods()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: TextConst ENU = 'test', DEU = 'Prüfung';
+        Orig: Integer;
+    begin
+        Observer.Observe('contains_e', Format(C.Contains('e')));
+        Observer.Observe('contains_x', Format(C.Contains('x')));
+        Observer.Observe('upper', C.ToUpper());
+        Observer.Observe('startswith', Format(C.StartsWith('te')));
+        Observer.Observe('indexof', Format(C.IndexOf('s')));
+        Observer.Observe('substring', C.Substring(2, 2));
+        Observer.Observe('strlen', Format(StrLen(C)));
+        Observer.Observe('only_deu_contains', Format(OnlyDeu.Contains('Deutsch')));
+        Orig := GlobalLanguage();
+        GlobalLanguage(1031);
+        Observer.Observe('deu_upper', C.ToUpper());
+        Observer.Observe('deu_contains_e', Format(C.Contains('e')));
+        Observer.Observe('deu_contains_u_umlaut', Format(C.Contains('ü')));
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
 }
+
