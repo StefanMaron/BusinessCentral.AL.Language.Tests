@@ -116,8 +116,13 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Verify();
     end;
 
+    // Held (publisher, bump 29): this test depends on third-party hosts (badssl.com, httpbin.org, github.com) that the corpus CI
+    // cannot control; httpbin answered 502 for one redirect in the full run 39315232637 (BC 28.5). Not a test until the hosts are
+    // replaced by something the CI owns. Define LT_HELD_EXTERNAL_HOSTS to run it.
+#if LT_HELD_EXTERNAL_HOSTS
     [Test]
     [HandlerFunctions('AllowOnceHandler')]
+#endif
     procedure CertificateValidation()
     var
         Observer: Codeunit "Probe Observer";
@@ -233,8 +238,13 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Verify();
     end;
 
+    // Held (publisher, bump 29): this test depends on third-party hosts (badssl.com, httpbin.org, github.com) that the corpus CI
+    // cannot control; httpbin answered 502 for one redirect in the full run 39315232637 (BC 28.5). Not a test until the hosts are
+    // replaced by something the CI owns. Define LT_HELD_EXTERNAL_HOSTS to run it.
+#if LT_HELD_EXTERNAL_HOSTS
     [Test]
     [HandlerFunctions('AllowOnceHandler')]
+#endif
     procedure EchoedRequestHeaders()
     var
         Observer: Codeunit "Probe Observer";
@@ -275,8 +285,13 @@ codeunit 85601 "LT CZ Http Outbound"
         exit('ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' auth=' + Format(Body.Contains('"Authorization": "Bearer visible"')));
     end;
 
+    // Held (publisher, bump 29): this test depends on third-party hosts (badssl.com, httpbin.org, github.com) that the corpus CI
+    // cannot control; httpbin answered 502 for one redirect in the full run 39315232637 (BC 28.5). Not a test until the hosts are
+    // replaced by something the CI owns. Define LT_HELD_EXTERNAL_HOSTS to run it.
+#if LT_HELD_EXTERNAL_HOSTS
     [Test]
     [HandlerFunctions('AllowOnceHandler')]
+#endif
     procedure Redirects()
     var
         Observer: Codeunit "Probe Observer";
