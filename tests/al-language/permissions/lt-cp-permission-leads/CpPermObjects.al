@@ -3,7 +3,7 @@
 // Fixtures used: none (own objects; Permissions Mock from the dependency).
 // Objects for CpPermLeads.al (corpus issue 669, items 76 to 89): tables, permission sets with direct and indirect grants, codeunits with and
 // without a Permissions property, an event subscriber with a Permissions property, and methods with the InherentPermissions attribute.
-// Object ids 85000-85018.
+// Object ids 85000-85016; tests in 85018-85023.
 
 table 85000 "LT CP Ledger"
 {
@@ -251,15 +251,5 @@ codeunit 85016 "LT CP Secret Reader"
         Secret: Record "LT CP Secret";
     begin
         exit(Secret.Count());
-    end;
-}
-
-codeunit 85017 "LT CP CalcFields Run"
-{
-    TableNo = "LT CP Flow Host";
-
-    trigger OnRun()
-    begin
-        Rec.CalcFields("Ledger Count");
     end;
 }

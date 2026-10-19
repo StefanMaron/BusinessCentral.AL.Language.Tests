@@ -41,7 +41,9 @@ codeunit 85019 "LT CP TestPerm Restrictive"
             Observer.Observe('delete', 'true')
         else
             Observer.ObserveError('delete');
-        Observer.Finish();
+        Observer.Expect('insert', 'true');
+        Observer.Expect('delete', 'true');
+        Observer.Verify();
     end;
 }
 
@@ -79,7 +81,9 @@ codeunit 85020 "LT CP TestPerm NonRestrictive"
             Observer.Observe('delete', 'true')
         else
             Observer.ObserveError('delete');
-        Observer.Finish();
+        Observer.Expect('insert', 'true');
+        Observer.Expect('delete', 'true');
+        Observer.Verify();
     end;
 }
 
@@ -117,7 +121,9 @@ codeunit 85021 "LT CP TestPerm Disabled"
             Observer.Observe('delete', 'true')
         else
             Observer.ObserveError('delete');
-        Observer.Finish();
+        Observer.Expect('insert', 'true');
+        Observer.Expect('delete', 'true');
+        Observer.Verify();
     end;
 }
 
@@ -154,7 +160,9 @@ codeunit 85022 "LT CP TestPerm None"
             Observer.Observe('delete', 'true')
         else
             Observer.ObserveError('delete');
-        Observer.Finish();
+        Observer.Expect('insert', 'true');
+        Observer.Expect('delete', 'true');
+        Observer.Verify();
     end;
 }
 
@@ -192,6 +200,8 @@ codeunit 85023 "LT CP TestPerm Inherit"
             Observer.Observe('delete', 'true')
         else
             Observer.ObserveError('delete');
-        Observer.Finish();
+        Observer.Expect('insert', 'true');
+        Observer.Expect('delete', 'true');
+        Observer.Verify();
     end;
 }
