@@ -243,7 +243,9 @@ codeunit 70905 "LT P170 LoadFields"
         Gone.Delete();
         asserterror Observer.Observe('name', R.Name);
         Observer.ObserveError('name');
-        Observer.Finish();
+        Observer.Expect('name|text', 'JIT loading of field(s): ''Name'' failed for table: ''LT BQ Ret Row'' identification values: ''Id=''1''''');
+        Observer.Expect('name|code', 'JustInTimeFieldLoad');
+        Observer.Verify();
     end;
 
     [Test]
@@ -260,7 +262,9 @@ codeunit 70905 "LT P170 LoadFields"
         Gone.Delete();
         asserterror Observer.Observe('extNote', R.ExtNote);
         Observer.ObserveError('extNote');
-        Observer.Finish();
+        Observer.Expect('extNote|text', 'JIT loading of field(s): ''ExtNote'' failed for table: ''LT BQ Ret Row'' identification values: ''Id=''1''''');
+        Observer.Expect('extNote|code', 'JustInTimeFieldLoad');
+        Observer.Verify();
     end;
 
     [Test]

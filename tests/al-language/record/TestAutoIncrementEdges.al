@@ -574,7 +574,9 @@ codeunit 67826 "Test AutoInc Counter Edge"
         BqSeedAutoIncPlain();
         asserterror P.ModifyAll(Seq, 99999);
         Observer.ObserveError('modifyAll');
-        Observer.Finish();
+        Observer.Expect('modifyAll|text', 'You cannot change the value of the Seq field.\\Table: LT BQ AutoInc Plain');
+        Observer.Expect('modifyAll|code', 'DB:Ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -591,6 +593,9 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Observer.Observe('seqTaken', Format(P.Seq = Other.Seq));
         asserterror P.Modify();
         Observer.ObserveError('modify');
-        Observer.Finish();
+        Observer.Expect('seqTaken', 'Yes');
+        Observer.Expect('modify|text', 'You cannot change the value of an AutoIncrement field.\\Field: Seq\Table: LT BQ AutoInc Plain\\Identification fields and values:\Id=''1''');
+        Observer.Expect('modify|code', 'DB:ModifyOnIdentityField');
+        Observer.Verify();
     end;
 }

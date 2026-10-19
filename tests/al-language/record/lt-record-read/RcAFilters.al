@@ -885,7 +885,9 @@ codeunit 71504 "LT RcA SetFilter"
         Observer.Observe('guidUnknown', BqTokenOutcome(2, '%BQNONE'));
         Observer.Observe('textUnknown', BqTokenOutcome(3, '%BQNONE'));
         UnbindSubscription(TokenSub);
-        Observer.Finish();
+        Observer.Expect('guidUnknown', 'error:The filter "%BQNONE" is not valid for the G field on the LT BQ Flt Row table. The variable "%BQNONE" was not understood.|Filter:CSide log=');
+        Observer.Expect('textUnknown', 'error:The filter "%BQNONE" is not valid for the Txt field on the LT BQ Flt Row table. The variable "%BQNONE" was not understood.|Filter:CSide log=token:BQNONE');
+        Observer.Verify();
     end;
 
     // SetRange on a DateTime field with an upper bound of 23:59:59.999/.998/.997 the day before a value stored at midnight (microsoft/AL
