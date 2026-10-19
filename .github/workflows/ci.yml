@@ -218,7 +218,11 @@ jobs:
       # and 18.0.43.1464 stop at 7.0, 30.0.42.60748-beta at 8.0, so every codeunit ended "al
       # runtests exited 1 with no results" (corpus #561). Remove this once an al tool lists
       # debugger 9.0.
-      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # 27.5 is pinned to build 27.5.46862.56495 (all three jobs). Build 46862.56533 (first seen 2026-10-19) fails
+      # tests that pass on 56495: Xmlport.Run of an import xmlport without a source sometimes errors with "AL File
+      # function" not supported (also on the unchanged staging db082fc4, run 39214718319), and in a full run the
+      # decimal format of Y FormatRegion_* and AN An01 changes (they pass when run alone). Unpin after those are settled.
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || (matrix.bc_version == '27.5' && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/27.5.46862.56495/w1' || '') }}
       # Creating a company creates its tables, including Base Application's
       # OptimizeForTextSearch indexes, so a test that inserts a Company needs SQL Server
       # Full-Text Search. No official SQL Server Linux image ships it; this tag adds it
@@ -281,7 +285,7 @@ jobs:
       # and 18.0.43.1464 stop at 7.0, 30.0.42.60748-beta at 8.0, so every codeunit ended "al
       # runtests exited 1 with no results" (corpus #561). Remove this once an al tool lists
       # debugger 9.0.
-      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || (matrix.bc_version == '27.5' && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/27.5.46862.56495/w1' || '') }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
       sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
@@ -311,7 +315,7 @@ jobs:
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
-      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || (matrix.bc_version == '27.5' && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/27.5.46862.56495/w1' || '') }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
       sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
