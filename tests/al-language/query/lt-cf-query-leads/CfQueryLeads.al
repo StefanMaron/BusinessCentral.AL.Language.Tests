@@ -7,7 +7,7 @@
 //   92: ColumnName and ColumnCaption of a column with Method = Min / Max / Sum (the docs name the result "Min_Quantity"), before Open and after Read.
 //   93: MaxStrLen of a query column (Text[30]) before Open, after Open and after Read (microsoft/AL issue 8037).
 //   95: the run-time type of a column with Method = Count (microsoft/AL issue 7413: the designer showed type None).
-//   96: a column over a Text field with ReverseSign = true compiles; what it returns at run time.
+//   96: a column over a Text field with ReverseSign = true compiles; what it returns at run time (BC 29 only, see the test).
 //   OrderBy naming one column twice and a column over a FlowFilter field do not compile: must-not-compile cases 1640 and 1641.
 // BC versions: 27, 28, 29 by CI
 
@@ -277,6 +277,10 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Verify();
     end;
 
+    // BC 27.5 and 28.5 on the Linux CI container end this read with "An unexpected error occurred after a database command was cancelled."
+    // which a TryFunction does not catch; BC 29 raises the catchable DB:SumOnNoneNumeric error asserted below. The 27/28 outcome is queued for
+    // the Windows check (Linux suspect), so the test runs on BC 29 only until then.
+#if BC29PLUS
     [TryFunction]
     local procedure TryReadReverseText(var Q: Query "LT CF Q Reverse Text"; var Got: Text)
     begin
@@ -303,4 +307,5 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Expect('read|code', 'DB:SumOnNoneNumeric');
         Observer.Verify();
     end;
+#endif
 }
