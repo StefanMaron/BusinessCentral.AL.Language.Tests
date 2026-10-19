@@ -67,7 +67,8 @@ codeunit 74657 "LT P143 DeFormulas"
         GlobalLanguage(LanguageId);
     end;
 
-    // The date a formula gives, as days from Today() and from WorkDate() (BqRunFormulas sets WorkDate to Today() - 10), so no value depends
+    // The date a formula gives: days from Today() when it is within one day of Today(), else days from WorkDate(). BqRunFormulas sets the
+    // work date to 10 January 2024 (a Wednesday), so a formula that resolves against the work date (or a weekday near it) does not depend
     // on the run date. Prefix is '..' for an open range.
     local procedure BqProbe(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper"; Name: Text; FilterText: Text; Prefix: Text)
     var
@@ -80,7 +81,10 @@ codeunit 74657 "LT P143 DeFormulas"
             exit;
         end;
         if (CopyStr(Got, 1, StrLen(Prefix)) = Prefix) and Evaluate(D, CopyStr(Got, StrLen(Prefix) + 1)) then
-            Observer.Observe(Name, 'ok ' + Prefix + 'today' + Format(D - Today()) + ' workdate' + Format(D - WorkDate()))
+            if Abs(D - Today()) <= 1 then
+                Observer.Observe(Name, 'ok ' + Prefix + 'today' + Format(D - Today()))
+            else
+                Observer.Observe(Name, 'ok ' + Prefix + 'workdate' + Format(D - WorkDate()))
         else
             Observer.Observe(Name, 'ok not a single date');
     end;
@@ -92,7 +96,7 @@ codeunit 74657 "LT P143 DeFormulas"
         OldWorkDate: Date;
     begin
         OldWorkDate := WorkDate();
-        WorkDate(Today() - 10);
+        WorkDate(20240110D);
         if (First <= 1) and (Last >= 1) then
             BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1d', '..t-1d', '..');
         if (First <= 2) and (Last >= 2) then
@@ -116,10 +120,10 @@ codeunit 74657 "LT P143 DeFormulas"
     begin
         Helper.Seed();
         BqRunFormulas(Observer, Helper, 'en', 1, 6);
-        Observer.Expect('en_dotdot_t_minus_1d', 'ok ..today-1 workdate9');
+        Observer.Expect('en_dotdot_t_minus_1d', 'ok ..today-1');
         Observer.Expect('en_dotdot_t_minus_1t_err|text', 'The filter "..t-1t" is not valid for the D field on the LT P143 Row table. The format of the Date ''t-1t'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
         Observer.Expect('en_dotdot_t_minus_1t_err|code', 'Filter:CSide');
-        Observer.Expect('en_t_plus_1d', 'ok today1 workdate11');
+        Observer.Expect('en_t_plus_1d', 'ok today1');
         Observer.Expect('en_h_err|text', 'The filter "h" is not valid for the D field on the LT P143 Row table. The format of the Date ''h'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
         Observer.Expect('en_h_err|code', 'Filter:CSide');
         Observer.Expect('en_a_err|text', 'The filter "a" is not valid for the D field on the LT P143 Row table. The format of the Date ''a'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
