@@ -330,6 +330,12 @@ codeunit 74946 "LT Relation Where Multi"
         BsProbeName('key_value_not_name', 'C1', Observer);
         BsProbeName('blank', '', Observer);
         Target.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('one_match', 'Yes|||value=Alpha');
+        Observer.Expect('other_case', 'No|DB:NothingInsideFilter|The field RefName of table LT BS NK Source contains a value (ALPHA) that cannot be found in the related table (LT BS NK Target).|value=');
+        Observer.Expect('two_matches', 'Yes|||value=Beta');
+        Observer.Expect('no_match', 'No|DB:NothingInsideFilter|The field RefName of table LT BS NK Source contains a value (Gamma) that cannot be found in the related table (LT BS NK Target).|value=');
+        Observer.Expect('key_value_not_name', 'No|DB:NothingInsideFilter|The field RefName of table LT BS NK Source contains a value (C1) that cannot be found in the related table (LT BS NK Target).|value=');
+        Observer.Expect('blank', 'Yes|||value=');
+        Observer.Verify();
     end;
 }

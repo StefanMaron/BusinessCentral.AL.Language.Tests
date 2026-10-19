@@ -451,7 +451,9 @@ codeunit 68678 "W2 Ext Tests"
         Observer.Observe('extension_control_visible', Format(Card.BsExtA.Visible()));
         Card.Close();
         Base.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('base_control_visible', 'No');
+        Observer.Expect('extension_control_visible', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -463,6 +465,7 @@ codeunit 68678 "W2 Ext Tests"
         Card: Page "LT BS Card";
     begin
         Observer.Observe('protected_label', Card.BsGetProtectedLabel());
-        Observer.Finish();
+        Observer.Expect('protected_label', 'LT BS protected label');
+        Observer.Verify();
     end;
 }

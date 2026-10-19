@@ -251,7 +251,20 @@ codeunit 60827 "Test TableExt Field Relation"
         BsProbe(Observer, 'ref_none', Base.Kind::X, 5, 'NONE');
         FieldRec.Get(Database::"LT BS Base", 5);
         Observer.Observe('ref_relation_table_no', Format(FieldRec.RelationTableNo));
-        Observer.Finish();
+        Observer.Expect('ref_only_a', 'Yes');
+        Observer.Expect('ref_only_a|text', '');
+        Observer.Expect('ref_only_a|code', '');
+        Observer.Expect('ref_only_b', 'No');
+        Observer.Expect('ref_only_b|text', 'The field Ref of table LT BS Ext Caption contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ref_only_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ref_both', 'Yes');
+        Observer.Expect('ref_both|text', '');
+        Observer.Expect('ref_both|code', '');
+        Observer.Expect('ref_none', 'No');
+        Observer.Expect('ref_none|text', 'The field Ref of table LT BS Ext Caption contains a value (NONE) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ref_none|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ref_relation_table_no', '83151');
+        Observer.Verify();
     end;
 
     [Test]
@@ -266,6 +279,21 @@ codeunit 60827 "Test TableExt Field Relation"
         BsProbe(Observer, 'y_only_a', Base.Kind::Y, 7, 'ONLYA');
         BsProbe(Observer, 'y_only_b', Base.Kind::Y, 7, 'ONLYB');
         BsProbe(Observer, 'z_none', Base.Kind::Z, 7, 'NONE');
-        Observer.Finish();
+        Observer.Expect('x_only_a', 'Yes');
+        Observer.Expect('x_only_a|text', '');
+        Observer.Expect('x_only_a|code', '');
+        Observer.Expect('x_only_b', 'No');
+        Observer.Expect('x_only_b|text', 'The field Cond of table LT BS Ext Caption contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('x_only_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('y_only_a', 'No');
+        Observer.Expect('y_only_a|text', 'The field Cond of table LT BS Ext Caption contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('y_only_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('y_only_b', 'Yes');
+        Observer.Expect('y_only_b|text', '');
+        Observer.Expect('y_only_b|code', '');
+        Observer.Expect('z_none', 'Yes');
+        Observer.Expect('z_none|text', '');
+        Observer.Expect('z_none|code', '');
+        Observer.Verify();
     end;
 }

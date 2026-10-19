@@ -422,7 +422,11 @@ codeunit 60331 "TableExt Keys And InitValue"
         Base.SetCurrentKey(E1);
         Observer.Observe('current_key_ext_sum_key', Base.CurrentKey());
         Observer.Observe('key_list', BsKeyList(Database::"LT BS Base"));
-        Observer.Finish();
+        Observer.Expect('current_key', 'A,Name');
+        Observer.Expect('order', '4;2;3;1;');
+        Observer.Expect('current_key_ext_sum_key', 'E1');
+        Observer.Expect('key_list', '1:1:Id,;2:2:A,Name,;3:1:E1,;4:1:$systemId,;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -447,7 +451,12 @@ codeunit 60331 "TableExt Keys And InitValue"
         Base.SetRange(A, 10);
         Base.CalcSums(B);
         Observer.Observe('a_10_sum_b', Format(Base.B, 0, 9));
-        Observer.Finish();
+        Observer.Expect('e1_1_sum_b', '3.75');
+        Observer.Expect('e1_1_sum_e2', '30');
+        Observer.Expect('e1_2_sum_b', '12');
+        Observer.Expect('e1_2_sum_e2', '120');
+        Observer.Expect('a_10_sum_b', '10.25');
+        Observer.Verify();
     end;
 
     [Test]
@@ -479,6 +488,10 @@ codeunit 60331 "TableExt Keys And InitValue"
         Wide.SetCurrentKey(F20, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F2);
         Observer.Observe('current_key_19', Wide.CurrentKey());
         Observer.Observe('key_list', BsKeyList(Database::"LT BS Wide Key"));
-        Observer.Finish();
+        Observer.Expect('current_key_17', 'F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18');
+        Observer.Expect('order_17', '3;2;1;');
+        Observer.Expect('current_key_19', 'F20,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,F19,F2');
+        Observer.Expect('key_list', '1:1:F1,;2:17:F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,;3:19:F20,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,F19,F2,;4:1:$systemId,;');
+        Observer.Verify();
     end;
 }

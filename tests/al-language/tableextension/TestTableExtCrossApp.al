@@ -130,7 +130,12 @@ codeunit 60203 "Test TableExt Cross App"
         Base.Get(7);
         Observer.Observe('stored_e1_e3', Format(Base.E1) + '|' + Format(Base.E3));
         Base.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('lower_calls_higher', 'one>two:70');
+        Observer.Expect('e3_after_lower_call', '70');
+        Observer.Expect('higher_calls_lower', 'two>one:8');
+        Observer.Expect('e1_after_higher_call', '8');
+        Observer.Expect('stored_e1_e3', '8|70');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,7 +166,11 @@ codeunit 60203 "Test TableExt Cross App"
         RecRef.Close();
         Same.DeleteAll();
         Target.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('table_get', 'table row');
+        Observer.Expect('extended_get', 'extension value');
+        Observer.Expect('recordref_open_83153_name', 'LT BS Same Id');
+        Observer.Expect('recordref_open_83153_count', '1');
+        Observer.Verify();
     end;
 
     local procedure BsSeedDelete()
@@ -221,6 +230,10 @@ codeunit 60203 "Test TableExt Cross App"
         Observer.Observe('both_filters_true', BsIds());
         Base.Reset();
         Base.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('base_filter_true', '2;4;');
+        Observer.Expect('ext_filter_true', '1;4;');
+        Observer.Expect('ext_filter_false', '1;2;');
+        Observer.Expect('both_filters_true', '1;2;3;');
+        Observer.Verify();
     end;
 }

@@ -283,7 +283,20 @@ codeunit 70728 "LT P68 Transfer Enum Opt"
         Row.Reset();
         Observer.Observe('setfilter_name_unknown', Outcome(BsTrySetFilter(Row, 'M9')));
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('stored_16_format', '16');
+        Observer.Expect('stored_16_ordinal', '16');
+        Observer.Expect('setrange_16_count', '1');
+        Observer.Expect('setrange_16_getfilter', '16');
+        Observer.Expect('setrange_6_count', '0');
+        Observer.Expect('setrange_2_16_count', '3');
+        Observer.Expect('setrange_2_16_getfilter', 'M2..16');
+        Observer.Expect('setfilter_16', 'ok');
+        Observer.Expect('setfilter_16_count', '1');
+        Observer.Expect('setfilter_16_getfilter', '16');
+        Observer.Expect('setfilter_m5_or_16', 'ok');
+        Observer.Expect('setfilter_m5_or_16_count', '2');
+        Observer.Expect('setfilter_name_unknown', 'error:The filter "M9" is not valid for the Opt field on the LT BS Opt Row table. ''M9'' is not an option. The existing options are: M0,M1,M2,M3,M4,M5|Filter:CSide');
+        Observer.Verify();
     end;
 
     [Test]
@@ -306,6 +319,15 @@ codeunit 70728 "LT P68 Transfer Enum Opt"
         Observer.Observe('evaluate_6_value', Format(Row.Opt, 0, 2));
         Row.Init();
         Observer.Observe('evaluate_name_unknown', Outcome(BsTryEvaluate(Row, 'M9')));
-        Observer.Finish();
+        Observer.Expect('validate_16', 'ok');
+        Observer.Expect('validate_16_value', '16');
+        Observer.Expect('validate_minus_1', 'ok');
+        Observer.Expect('validate_minus_1_value', '-1');
+        Observer.Expect('evaluate_16', 'ok');
+        Observer.Expect('evaluate_16_value', '16');
+        Observer.Expect('evaluate_6', 'ok');
+        Observer.Expect('evaluate_6_value', '6');
+        Observer.Expect('evaluate_name_unknown', 'error:''M9'' is not an option. The existing options are: M0,M1,M2,M3,M4,M5|InvalidOptionString');
+        Observer.Verify();
     end;
 }

@@ -178,6 +178,9 @@ codeunit 60433 "TXT Table Trigger Tests"
         Base.Modify(true);
         Observer.Observe('xrec_in_ext_trigger', Log.Take());
         Base.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('rec_to_codeunit', '5:unsaved:9');
+        Observer.Expect('var_array', 'unsaved|5|base:5');
+        Observer.Expect('xrec_in_ext_trigger', 'after modify xRec=after Rec=after');
+        Observer.Verify();
     end;
 }

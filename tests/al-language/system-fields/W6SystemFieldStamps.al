@@ -236,7 +236,15 @@ codeunit 67306 "W6 System Field Stamps"
         RecRef.GetTable(TempRow);
         BsSystemNameFields(RecRef, 'temporary_', Observer);
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('normal_SystemCreatedByUserName', '2000000005|FlowField|Text|50|is_user_id=Yes|is_full_name=No|blank=No');
+        Observer.Expect('normal_SystemCreatedByFullName', '2000000006|FlowField|Text|80|is_user_id=No|is_full_name=Yes|blank=No');
+        Observer.Expect('normal_SystemModifiedByUserName', '2000000007|FlowField|Text|50|is_user_id=Yes|is_full_name=No|blank=No');
+        Observer.Expect('normal_SystemModifiedByFullName', '2000000008|FlowField|Text|80|is_user_id=No|is_full_name=Yes|blank=No');
+        Observer.Expect('temporary_SystemCreatedByUserName', '2000000005|FlowField|Text|50|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Expect('temporary_SystemCreatedByFullName', '2000000006|FlowField|Text|80|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Expect('temporary_SystemModifiedByUserName', '2000000007|FlowField|Text|50|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Expect('temporary_SystemModifiedByFullName', '2000000008|FlowField|Text|80|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Verify();
     end;
 #endif
 }

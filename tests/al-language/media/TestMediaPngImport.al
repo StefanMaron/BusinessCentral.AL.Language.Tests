@@ -325,7 +325,12 @@ codeunit 60130 "Test Media Png Import"
         Observer.Observe('row2_has_value', Format(Row2.Picture.HasValue()));
         Row2.Delete();
         Observer.Observe('old_media_after_row2_delete', Format(TenantMedia.Get(First)));
-        Observer.Finish();
+        Observer.Expect('row2_shares_id', 'Yes');
+        Observer.Expect('old_media_after_replace', 'Yes');
+        Observer.Expect('row2_still_same_id', 'Yes');
+        Observer.Expect('row2_has_value', 'Yes');
+        Observer.Expect('old_media_after_row2_delete', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -362,6 +367,12 @@ codeunit 60130 "Test Media Png Import"
         Row.Delete();
         Observer.Observe('removed_item_after_delete', Format(TenantMedia.Get(Item1)));
         Observer.Observe('kept_item_after_delete', Format(TenantMedia.Get(Item2)));
-        Observer.Finish();
+        Observer.Expect('remove_result', 'Yes');
+        Observer.Expect('count_after_remove', '1');
+        Observer.Expect('removed_item_in_tenant_media', 'Yes');
+        Observer.Expect('kept_item_in_tenant_media', 'Yes');
+        Observer.Expect('removed_item_after_delete', 'Yes');
+        Observer.Expect('kept_item_after_delete', 'No');
+        Observer.Verify();
     end;
 }

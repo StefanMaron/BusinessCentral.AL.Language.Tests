@@ -250,6 +250,12 @@ codeunit 67322 "W6 AllObj Probe"
             Observer.Observe('row_67320', Format(AllObjRec."Object Type", 0, 2) + '|' + Format(AllObjRec."Object Type"))
         else
             Observer.Observe('row_67320', 'none');
-        Observer.Finish();
+        Observer.Expect('allobj_tableextension', '15|TableExtension');
+        Observer.Expect('allobj_pageextension', '14|PageExtension');
+        Observer.Expect('withcaption_tableextension', '15|TableExtension');
+        Observer.Expect('withcaption_pageextension', '14|PageExtension');
+        Observer.Expect('row_67318', '15|TableExtension');
+        Observer.Expect('row_67320', '14|PageExtension');
+        Observer.Verify();
     end;
 }

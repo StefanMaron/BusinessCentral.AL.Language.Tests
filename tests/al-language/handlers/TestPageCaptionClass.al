@@ -127,6 +127,10 @@ codeunit 60930 "TPCC Tests"
         RecRef.Open(Database::"TPCC Row");
         Observer.Observe('fieldref_caption', RecRef.Field(83180).Caption());
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('page_control_no_class', 'LT BS Added Field Class');
+        Observer.Expect('page_control_with_class', 'LT BS Page Class');
+        Observer.Expect('field_caption', 'LT BS Added Field Class');
+        Observer.Expect('fieldref_caption', 'LT BS Added Field Class');
+        Observer.Verify();
     end;
 }

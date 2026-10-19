@@ -150,7 +150,9 @@ codeunit 60500 "TableExt Field Modify"
         Observer.Observe('field_table_caption_modified', FieldRec."Field Caption");
         FieldRec.Get(60506, 11);
         Observer.Observe('field_table_caption_untouched', FieldRec."Field Caption");
-        Observer.Finish();
+        Observer.Expect('field_table_caption_modified', 'Extension Overridden Caption');
+        Observer.Expect('field_table_caption_untouched', 'Original Untouched Caption');
+        Observer.Verify();
     end;
 
     [Test]
@@ -171,7 +173,11 @@ codeunit 60500 "TableExt Field Modify"
         Observer.Observe('allobj_table_caption', AllObj."Object Caption");
         AllObj.Get(AllObj."Object Type"::TableExtension, 83150);
         Observer.Observe('allobj_tableextension_caption', AllObj."Object Caption");
-        Observer.Finish();
+        Observer.Expect('table_caption', 'LT BS Ext Caption');
+        Observer.Expect('recordref_caption', 'LT BS Ext Caption');
+        Observer.Expect('allobj_table_caption', 'LT BS Ext Caption');
+        Observer.Expect('allobj_tableextension_caption', 'LT BS Base Ext One');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,6 +208,14 @@ codeunit 60500 "TableExt Field Modify"
         Observer.Observe('filter_count', Format(Base.Count()));
         Observer.Observe('get_filters', Base.GetFilters());
         Base.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('value', '42');
+        Observer.Expect('field_name', 'LT BS Field Name Longer Than Thirty');
+        Observer.Expect('field_caption', 'LT BS Field Name Longer Than Thirty');
+        Observer.Expect('fieldref_name', 'LT BS Field Name Longer Than Thirty');
+        Observer.Expect('field_table_name', 'LT BS Field Name Longer Than T');
+        Observer.Expect('field_table_name_length', '30');
+        Observer.Expect('filter_count', '1');
+        Observer.Expect('get_filters', 'LT BS Field Name Longer Than Thirty: 42');
+        Observer.Verify();
     end;
 }
