@@ -5,7 +5,8 @@
 // the same codeunit, reads GetLastErrorText, GetLastErrorCode and GetLastErrorCallStack as its first statements and gets ''. The
 // cross-codeunit form is "LT BH Last Error Next Codeunit" (81451): its only test reads the last error first, after the last test
 // of this codeunit (C) trapped one, and gets ''.
-// Measured: Windows BC 28.4 and Linux BC 27.x clear the last error between test methods (corpus CI run 36806781933).
+// Measured: every assertion below holds on corpus CI BC 27.5, 28.5 and 29.0 (Linux, 2026-10-19) and on the Windows BC 28.4
+// container (CI run 36806781933): the last error is cleared between test methods and between test codeunits.
 // BC versions: 27.0 and later
 
 codeunit 81450 "LT BH Last Error Across Tests"
