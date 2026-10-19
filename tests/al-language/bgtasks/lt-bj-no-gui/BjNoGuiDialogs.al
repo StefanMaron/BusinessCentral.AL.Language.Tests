@@ -5,6 +5,8 @@
 //   under TestIsolation, see tests/al-language/session/TestStartSessionRecord.al; TaskScheduler.CanCreateTask is false in a test), so the probe runs
 //   the calls in a page background task worker: what GuiAllowed answers there, what Message and Confirm (default true and false) do, and whether
 //   the test's MessageHandler and ConfirmHandler see them. Both ways in: TestPage.RunPageBackgroundTask and CurrPage.EnqueueBackgroundTask.
+// Facts (CI, 28.5 and 29.0): GuiAllowed is false in the worker (true in the test session); Message returns without an error and reaches no
+//   MessageHandler; Confirm raises CallbackNotAllowed whatever its default, and reaches no ConfirmHandler.
 // BC versions: 27, 28, 29
 
 table 81680 "LT BJ NoGui Row"
@@ -169,9 +171,17 @@ codeunit 81684 "LT BJ NoGui Tests"
         HandlerLog := '';
         Results := Pg.RunPageBackgroundTask(Codeunit::"LT BJ NoGui Worker", Params, false);
         Observer.Observe('results', Dump(Results));
+        // The listed handlers must run once each or the test fails, so the test session calls Message and Confirm itself after the task:
+        // the log shows only these two calls, none from the worker.
+        Message('LT BJ message from the test');
+        if not Confirm('LT BJ confirm from the test') then
+            HandlerLog += 'reply false;';
         Observer.Observe('handlers', HandlerLog);
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('test session gui', 'Yes');
+        Observer.Expect('results', 'gui=No;message=returned;confirm default true=error: Microsoft Dynamics 365 Business Central Server attempted to issue a client callback to show a confirmation dialog box: LT BJ confirm from the worker (CodeUnit 81681 LT BJ NoGui Worker). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Server. code=CallbackNotAllowed;confirm default false=error: Microsoft Dynamics 365 Business Central Server attempted to issue a client callback to show a confirmation dialog box: LT BJ confirm from the worker (CodeUnit 81681 LT BJ NoGui Worker). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Server. code=CallbackNotAllowed;');
+        Observer.Expect('handlers', 'message handler: LT BJ message from the test;confirm handler: LT BJ confirm from the test;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -184,9 +194,16 @@ codeunit 81684 "LT BJ NoGui Tests"
         HandlerLog := '';
         Pg.OpenView();
         Observer.Observe('completion log', NoGuiLog.Take());
+        // The listed handlers must run once each or the test fails, so the test session calls Message and Confirm itself after the task:
+        // the log shows only these two calls, none from the worker.
+        Message('LT BJ message from the test');
+        if not Confirm('LT BJ confirm from the test') then
+            HandlerLog += 'reply false;';
         Observer.Observe('handlers', HandlerLog);
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('completion log', 'gui=No;message=returned;confirm default true=error: Microsoft Dynamics 365 Business Central Server attempted to issue a client callback to show a confirmation dialog box: LT BJ confirm from the worker (CodeUnit 81681 LT BJ NoGui Worker). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Server. code=CallbackNotAllowed;confirm default false=error: Microsoft Dynamics 365 Business Central Server attempted to issue a client callback to show a confirmation dialog box: LT BJ confirm from the worker (CodeUnit 81681 LT BJ NoGui Worker). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Server. code=CallbackNotAllowed;');
+        Observer.Expect('handlers', 'message handler: LT BJ message from the test;confirm handler: LT BJ confirm from the test;');
+        Observer.Verify();
     end;
 
     [MessageHandler]
@@ -239,6 +256,7 @@ codeunit 81685 "LT BJ NoGui Tests NoHandler"
         Results := Pg.RunPageBackgroundTask(Codeunit::"LT BJ NoGui Worker", Params, false);
         Observer.Observe('results', Dump(Results));
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('results', 'gui=No;message=returned;confirm default true=error: Microsoft Dynamics 365 Business Central Server attempted to issue a client callback to show a confirmation dialog box: LT BJ confirm from the worker (CodeUnit 81681 LT BJ NoGui Worker). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Server. code=CallbackNotAllowed;confirm default false=error: Microsoft Dynamics 365 Business Central Server attempted to issue a client callback to show a confirmation dialog box: LT BJ confirm from the worker (CodeUnit 81681 LT BJ NoGui Worker). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Server. code=CallbackNotAllowed;');
+        Observer.Verify();
     end;
 }

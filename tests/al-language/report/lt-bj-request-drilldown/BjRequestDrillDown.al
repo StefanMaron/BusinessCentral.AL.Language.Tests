@@ -4,6 +4,9 @@
 // Probe: corpus issue 601 item 8. DrillDownPageID on a request page field: which page a TestRequestPage drill-down opens for a FlowField control
 //   with DrillDownPageId (page property) and without it (the DrillDownPageID of the FlowField's source table), the rows that page shows,
 //   and a drill-down on a request page control over a plain variable that has DrillDownPageId.
+// Facts (CI, 28.5 and 29.0): TestRequestPage Drilldown on a control with DrillDownPageId returns without an error and opens no page (no page
+//   handler is listed, so an opened page would fail the test); on a FlowField control without it, Drilldown raises
+//   'The NavDrilldownAction method is not supported.' (MethodNotSupported). The page handlers below are kept unlisted, as probe source.
 // BC versions: 27, 28, 29
 
 table 81660 "LT BJ Dd Line"
@@ -209,13 +212,25 @@ codeunit 81666 "LT BJ Dd Tests"
     end;
 
     [Test]
-    [HandlerFunctions('DrillRequestHandler,ListAHandler,ListBHandler,ListAModal,ListBModal')]
+    [HandlerFunctions('DrillRequestHandler')]
     procedure RequestPage_DrillDownPageId()
     begin
         Seed();
         Report.Run(Report::"LT BJ Dd Report", true, false);
         Observer.Observe('log after run', DdLog.Take());
-        Observer.Finish();
+        Observer.Expect('override value', '2');
+        Observer.Expect('default value', '11');
+        Observer.Expect('override drilldown|text', 'NOERROR');
+        Observer.Expect('override drilldown|code', 'Dialog');
+        Observer.Expect('override opened', '');
+        Observer.Expect('default drilldown|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('default drilldown|code', 'MethodNotSupported');
+        Observer.Expect('default opened', '');
+        Observer.Expect('plain variable drilldown|text', 'NOERROR');
+        Observer.Expect('plain variable drilldown|code', 'Dialog');
+        Observer.Expect('plain variable opened', '');
+        Observer.Expect('log after run', '');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]

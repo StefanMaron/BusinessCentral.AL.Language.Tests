@@ -105,7 +105,11 @@ codeunit 81653 "LT BJ Fqn Page Run Tests"
         Page.Run('LT.BJ.Fqn.LT BJ Fqn Card', Row, 2);
         Observer.Observe('card fieldno 2', Seen);
         Observer.Observe('record after', Format(Row.Id) + '/' + Row.Txt);
-        Observer.Finish();
+        Observer.Expect('card fieldno', '3/T3/30;');
+        Observer.Expect('card fieldno 0', '3/T3/30;');
+        Observer.Expect('card fieldno 2', '3/T3/30;');
+        Observer.Expect('record after', '3/T3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +127,10 @@ codeunit 81653 "LT BJ Fqn Page Run Tests"
         end;
         Observer.ObserveError('card fieldno 99');
         Observer.Observe('card fieldno 99 seen', Seen);
-        Observer.Finish();
+        Observer.Expect('card fieldno 99|text', 'The supplied field number ''99'' cannot be found in the ''LT BJ Fqn Row'' table.');
+        Observer.Expect('card fieldno 99|code', 'FieldNotFound');
+        Observer.Expect('card fieldno 99 seen', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -143,7 +150,10 @@ codeunit 81653 "LT BJ Fqn Page Run Tests"
         Page.Run('LT.BJ.Fqn.LT BJ Fqn List', Row, Row.FieldNo(Qty));
         Observer.Observe('list filtered', Seen);
         Observer.Observe('filters after', Row.GetFilters());
-        Observer.Finish();
+        Observer.Expect('list fieldno', 'cur=2 rows=12340;');
+        Observer.Expect('list filtered', 'cur=4 rows=340;');
+        Observer.Expect('filters after', 'Id: 3|4');
+        Observer.Verify();
     end;
 
     [PageHandler]
