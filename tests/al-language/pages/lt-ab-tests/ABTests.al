@@ -1072,7 +1072,11 @@ codeunit 77099 "LT AB Tests"
         Observer.Observe('saveas-pdf error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Observer.Observe('has-output', Format(TempBlob.Length() > 0));
-        Observer.Finish();
+        Observer.Expect('saveas-pdf ok', 'Yes');
+        Observer.Expect('saveas-pdf error', '');
+        Observer.Expect('log', 'plain OnPreReport | plain ext OnPreRendering keys=0');
+        Observer.Expect('has-output', 'Yes');
+        Observer.Verify();
 #else
         asserterror Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
         Observer.ObserveError('saveas-pdf');

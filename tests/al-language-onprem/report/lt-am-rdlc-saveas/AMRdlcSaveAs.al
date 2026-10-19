@@ -527,7 +527,25 @@ codeunit 98603 "LT AM OP SaveAs Tests"
             Rows('instance', Fmt, false);
             Rows('instance', Fmt, true);
         end;
-        Observer.Finish();
+        // Every form reads the dataset before rendering: all four rows, or rows 3 and 4 with the Record filter (Id >= 3).
+        // Html is refused before the dataset is read (no rows). BC 29 measured locally; BC 27 and 28 in the corpus CI.
+        Observer.Expect('static pdf rows', '1,2,3,4,');
+        Observer.Expect('static pdf filtered rows', '3,4,');
+        Observer.Expect('instance pdf rows', '1,2,3,4,');
+        Observer.Expect('instance pdf filtered rows', '3,4,');
+        Observer.Expect('static docx rows', '1,2,3,4,');
+        Observer.Expect('static docx filtered rows', '3,4,');
+        Observer.Expect('instance docx rows', '1,2,3,4,');
+        Observer.Expect('instance docx filtered rows', '3,4,');
+        Observer.Expect('static xlsx rows', '1,2,3,4,');
+        Observer.Expect('static xlsx filtered rows', '3,4,');
+        Observer.Expect('instance xlsx rows', '1,2,3,4,');
+        Observer.Expect('instance xlsx filtered rows', '3,4,');
+        Observer.Expect('static html rows', '');
+        Observer.Expect('static html filtered rows', '');
+        Observer.Expect('instance html rows', '');
+        Observer.Expect('instance html filtered rows', '');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
