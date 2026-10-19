@@ -645,8 +645,14 @@ jobs:
             Write-Host "::endgroup::"
 
             Write-Host "::group::publish $folder"
+            # THROUGH THE DEV ENDPOINT, as the test user (#376). ci.yml (MsDyn365Bc.On.Linux) publishes through the dev
+            # endpoint, so the install triggers run as the user who publishes (ADMIN, SUPER, client type SOAP).
+            # Publish-NAVApp/Install-NAVApp (the default of Publish-BcContainerApp) run them as SYSTEM: no User row, not
+            # SUPER, client type Background (measured on BC 27.5 and 29.0, runs 39223200014, 39223203793, 39223208230).
+            # With the cmdlets, cu 60589 TestInstall_SessionUserIsSuperDuringInstall failed on Windows only because the
+            # two tiers installed the app in two different ways.
             Publish-BcContainerApp -containerName $c -credential $cred `
-              -appFile $appFile -skipVerification -sync -install
+              -appFile $appFile -skipVerification -sync -install -useDevEndpoint
             Write-Host "::endgroup::"
           }
 
