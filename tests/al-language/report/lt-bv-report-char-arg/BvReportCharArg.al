@@ -4,8 +4,9 @@
 // Probe: writer BV (2026-10-19, Windows check 3 item BB, from writer BB's probe of corpus issue 653 item 2). The report values were measured on Windows BC 27.5
 // and 29.0 (official containers) and on the Linux tiers; every literal asserted below is what those tiers produced.
 // Facts: a Char VARIABLE passed to a report procedure Bump(A: Integer) fails with 'Unable to convert from System.Char to System.Int32.' (code Conversion),
-// caught by a TryFunction, both when a report extension adds an overload Bump(A: Text) and on a report without an extension. The same call to a codeunit
-// procedure Bump(A: Integer) converts the Char to its code (control).
+// caught by a TryFunction, both when a report extension adds an overload Bump(A: Text) and on a report without an extension (both measured on Windows too).
+// A procedure Bump(A: Integer) of ANOTHER codeunit fails the same way (measured on the Linux tiers only, queued for the Windows nightly); a local procedure of
+// the calling codeunit is the control.
 // BC versions: 27, 28, 29
 
 table 83756 "LT BV Char Row"
@@ -117,18 +118,54 @@ codeunit 83761 "LT BV Report Char Arg"
         Observer.Observe('ok', Format(TryBumpPlain(R, Ch, Result)));
         Observer.Observe('result', Result);
         Observer.ObserveError('char var');
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('result', '-');
+        Observer.Expect('char var|text', 'Unable to convert from System.Char to System.Int32.');
+        Observer.Expect('char var|code', 'Conversion');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryBumpCodeunit(var Target: Codeunit "LT BV Char Target"; Ch: Char; var Result: Text)
+    begin
+        Result := Target.Bump(Ch);
+    end;
+
+    local procedure LocalBump(A: Integer): Text
+    begin
+        exit('local integer ' + Format(A));
     end;
 
     [Test]
-    procedure Codeunit_CharVariableToInteger_Control()
+    procedure OtherCodeunit_CharVariableToInteger()
     var
         Observer: Codeunit "Probe Observer";
         Target: Codeunit "LT BV Char Target";
         Ch: Char;
+        Result: Text;
     begin
         Ch := 'q';
-        Observer.Observe('result', Target.Bump(Ch));
-        Observer.Finish();
+        Result := '-';
+        ClearLastError();
+        Observer.Observe('ok', Format(TryBumpCodeunit(Target, Ch, Result)));
+        Observer.Observe('result', Result);
+        Observer.ObserveError('char var');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('result', '-');
+        Observer.Expect('char var|text', 'Unable to convert from System.Char to System.Int32.');
+        Observer.Expect('char var|code', 'Conversion');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure LocalProcedure_CharVariableToInteger_Control()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ch: Char;
+    begin
+        Ch := 'q';
+        Observer.Observe('result', LocalBump(Ch));
+        Observer.Expect('result', 'local integer 113');
+        Observer.Verify();
     end;
 }

@@ -6,8 +6,9 @@
 // BC versions: 29 (27 and 28 by CI)
 // Added by writer BV (2026-10-19, Windows check 3 item AQ): CurrReport.Language := -2 raises 'Unexpected CLR exception thrown.: System.ArgumentOutOfRangeException:
 // culture (''-2'') must be a non-negative and non-zero value. (Parameter ''culture'')' on real BC (Windows 27.5 and 29.0) and on the Linux tiers. Neither asserterror
-// around Report.Run nor a TryFunction around the assignment catches it: a test that does it ends with that error. Report 83754 and codeunit 83755 run it
-// inside Codeunit.Run, the only catch left (test Language_MinusTwo_CodeunitRun).
+// around Report.Run nor a TryFunction around the assignment catches it: a test that does it ends with that error. Codeunit.Run does not catch it either
+// (Linux BC 29.0, corpus CI run 39233212960: the test ended with the same CLR text). So no passing test can show it; report 83754 and codeunit 83755 are kept as
+// the probe source, and Language_MinusTwo_CodeunitRun has no [Test] attribute (a runtime models -2 as an error no AL statement catches).
 
 codeunit 71142 "LT PnC Log 3"
 {
@@ -192,7 +193,7 @@ codeunit 71107 "LT PnC Report Language"
         Observer.Verify();
     end;
 
-    [Test]
+    // Not a [Test]: ends with the uncatchable CLR error (see the header).
     procedure Language_MinusTwo_CodeunitRun()
     var
         Observer: Codeunit "Probe Observer";
