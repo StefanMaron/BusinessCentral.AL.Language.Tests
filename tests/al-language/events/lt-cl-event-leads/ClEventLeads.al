@@ -16,7 +16,8 @@
 //   - CurrFieldNo is 0 for code-driven Validate, Insert and Modify; on a TestPage it is the field number in the field's own OnValidate (also a
 //     table extension field) and in the validate event parameter, 0 in OnInsert/OnModify and their table extension triggers.
 //   - Order on TestPage open: page trigger, page extension A, page extension B, then the page event subscriber, for each trigger.
-//   - A page event subscriber with Rec or Handled without var: the assignment does not reach the page. Action subscribers bind
+//   - A page event subscriber (OnAfterGetCurrRecordEvent) with Rec, or a page publisher subscriber with Handled, without var: the
+//     assignment does not reach the page (with var Rec the page shows it; nothing is stored). Action subscribers bind
 //     the action name in any letter case. The Event Subscription rows of these subscribers are Active with no Error Information.
 // BC versions: 27, 28, 29
 
@@ -551,7 +552,10 @@ codeunit 84790 "LT CL Event Leads"
         R.Get(1);
         O.Observe('stored', R.Name);
         R.DeleteAll();
-        O.Finish();
+        O.Expect('shown', 'stored');
+        O.Expect('log', 'byValue in=stored;');
+        O.Expect('stored', 'stored');
+        O.Verify();
     end;
 
     // Item 17 contrast: the same with var Rec.
@@ -578,7 +582,10 @@ codeunit 84790 "LT CL Event Leads"
         R.Get(1);
         O.Observe('stored', R.Name);
         R.DeleteAll();
-        O.Finish();
+        O.Expect('shown', 'fromVar');
+        O.Expect('log', 'var in=stored;');
+        O.Expect('stored', 'stored');
+        O.Verify();
     end;
 
     // Item 17: a page publisher with var Handled; the subscriber takes Handled without var and assigns true.

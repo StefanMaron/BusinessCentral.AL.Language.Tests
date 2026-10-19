@@ -322,6 +322,10 @@ is only a reference.
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
+| 1688 | AL0284 | Subscriber parameter types: Record Vendor for Record Customer, a Codeunit for a Record, Decimal for Integer. |
+| 1689 | AL0271 | An action subscriber names the action by its caption (with and without the ampersand) or by an unknown name. |
+| 1690 | AL0155 | A page has an action group and an action with the same name. |
+| 1691 | AL0132, AL0161 | A table event subscriber reads `Rec.CurrFieldNo` (a table of another app, a table of the same app). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
