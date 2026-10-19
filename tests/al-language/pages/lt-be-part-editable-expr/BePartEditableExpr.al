@@ -8,6 +8,10 @@
 //   and Enabled(), and whether SetValue on it raises (error text and code) and what is stored. Also a ListPart whose repeater and field have
 //   Editable = <expression> of the subpage (from the line row), shown in a part control with no Editable property.
 //   Microsoft's ERM Sales Quotes test BlankSalesQuoteLinesUneditable (codeunit 134379) expects SalesQuote.SalesLines.Description.Editable() = false.
+// Measured (BC 27.5, 28.5, 29.0): the part control's Editable expression reaches the subpage field's Editable() (false while the variable is
+//   false, true while true, and it follows the host when it moves); its Enabled expression reaches Enabled() the same way; Editable and Enabled are
+//   independent. SetValue through the part does not raise in any of these cases, not even with the literal Editable = false or a subpage field whose
+//   own Editable() is false: the value is written and stored. A page's own Editable property takes no expression (must-not-compile 1290, AL0220).
 // Corpus issue: StefanMaron/BusinessCentral.AL.Language.Tests#660 item 2.
 // BC versions: all (CI)
 

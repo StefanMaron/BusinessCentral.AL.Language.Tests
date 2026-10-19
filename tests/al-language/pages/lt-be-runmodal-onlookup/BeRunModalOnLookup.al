@@ -15,6 +15,11 @@
 //   table whose LookupPageId is another page; a filter on a key field, on a non-key field and none; LookupMode(false) + RunModal(); and a
 //   handler that only walks the rows (as handlers/TestPageModalNewRowLine_Tests.al does) next to one that also invokes OK(); the same list
 //   without its OnOpenPage trigger, and with only one field and no trigger (the shape of the pages in TestPageModalNewRowLine_Objects.al).
+// Measured (BC 27.5, 28.5, 29.0): every Page.RunModal(PageId, Rec) here opens the page in lookup mode (CurrPage.LookupMode = Yes,
+//   TestPage.Editable() = No, no new-row line, Next() at the last row = No), from an OnLookup trigger, from an action and from test code alike,
+//   whatever the table's LookupPageId, the filter or the page's triggers; RunModal returns LookupOK after OK() and LookupCancel when the handler
+//   only walks. Only LookupMode(false) + RunModal() shows the new-row line (and returns OK). Note: handlers/TestPageModalNewRowLine_Tests.al measures
+//   a new-row line for Page.RunModal(id, Rec) on its plain page; the shape that separates the two is not found yet.
 // Corpus issue: StefanMaron/BusinessCentral.AL.Language.Tests#660 item 3.
 // BC versions: all (CI)
 

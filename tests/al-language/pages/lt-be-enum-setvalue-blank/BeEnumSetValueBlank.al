@@ -10,6 +10,11 @@
 //   treats differently: through a Variant parameter of a helper, a Text variable, an Integer variable, or a literal written in the SetValue call.
 //   Each input runs on a freshly opened page (start = value 0) and after SetValue of a Text variable 'Beta' (start = value 2). Per input: whether SetValue raised and its error text/code, the control's Value afterwards,
 //   the ordinals the control's OnValidate saw (log), and for a field control the stored ordinal after Close.
+// Measured (BC 27.5, 28.5, 29.0): an Integer (variable, literal or in a Variant) selects the value by ordinal on every control, so SetValue(0)
+//   selects " " and the control shows ' '; an ordinal that is not a value fails with 'Your entry of '<old ordinal>' is not an acceptable value'.
+//   A Text variable or literal goes by caption: ' ' selects the value whose caption is ' ' (Enum and Option), '' and '1' are refused; on the
+//   Enum whose value 0 has the caption 'Zero', ' ' is refused too. A Text inside a Variant parameter goes by ordinal digits ('1' selects Alpha) and
+//   other text fails to evaluate; that error text differs on BC 27 (see the #if blocks). AssignmentCompatibility makes no difference.
 // Corpus issue: StefanMaron/BusinessCentral.AL.Language.Tests#660 item 1.
 // BC versions: all (CI)
 
