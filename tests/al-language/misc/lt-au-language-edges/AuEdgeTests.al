@@ -414,7 +414,13 @@ codeunit 80150 "LT AU Edge Tests"
         asserterror CopyArray(S, A[2], 2);
         Observer.ObserveError('row_tail_into_1d');
         Observer.Observe('s_after', Format(S[1]) + ',' + Format(S[2]) + ',' + Format(S[3]));
-        Observer.Finish();
+        Observer.Expect('cells', '0,0,0,1,2,3,');
+        Observer.Expect('short_into_row', 'error CopyArray: The length parameter 2 does not match the length of the destination array 3. code=ArrayLengthMismatch');
+        Observer.Expect('cells_after_short', '0,0,0,1,2,3,');
+        Observer.Expect('row_tail_into_1d|text', 'CopyArray: The length parameter 2 does not match the length of the destination array 3.');
+        Observer.Expect('row_tail_into_1d|code', 'ArrayLengthMismatch');
+        Observer.Expect('s_after', '1,2,3');
+        Observer.Verify();
     end;
 
     [TryFunction]
