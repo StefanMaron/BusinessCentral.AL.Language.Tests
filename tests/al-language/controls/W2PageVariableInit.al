@@ -1,5 +1,6 @@
 // Probe: a Page variable constructs the page at first use (OnInit), a second run of the same variable, setters between runs, and Clear of Page and TestPage variables in every state.
 // Settles: md:273 (second run, setter between runs, construct-on-first-call), md:274 (Clear of a closed, open and trapping variable; the part-page case cannot be written, see the manifest).
+// Corpus issue 667 (writer CE): after Run() (not modal) the variable is a fresh page again (GetStep runs OnInit and reads 100), a second Run() runs OnInit again without error, SetTableView then RunModal a second time raises no error, LookupMode() of a fresh variable is false (and constructs the page).
 
 codeunit 68674 "W2 Init Log"
 {
@@ -317,6 +318,117 @@ codeunit 68675 "W2 Init Tests"
         Observer.Expect('log', 'OnInit;OnOpenPage(step=100);');
         Observer.Expect('read_trapped|ok', 'Yes');
         Observer.Verify();
+    end;
+
+    // ---- corpus issue 667 (writer CE): Run against RunModal on the same Page variable ----
+
+    [Test]
+    [HandlerFunctions('CardPageHandler')]
+    procedure PageVariable_RunThenGetter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Init Log";
+        Pg: Page "W2 Init Card";
+    begin
+        Log.Take();
+        Pg.SetStep(5);
+        Pg.Run();
+        Observer.Observe('run', Log.Take());
+        Observer.Observe('step_after', Format(Pg.GetStep()));
+        Observer.Observe('getter', Log.Take());
+        Observer.Expect('run', 'OnInit;SetStep(5);OnOpenPage(step=5);PageHandler(step=5);');
+        Observer.Expect('step_after', '100');
+        Observer.Expect('getter', 'OnInit;GetStep;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('CardPageHandler')]
+    procedure PageVariable_RunTwice()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Init Log";
+        Pg: Page "W2 Init Card";
+        Ok: Boolean;
+    begin
+        Log.Take();
+        Pg.Run();
+        Observer.Observe('first_run', Log.Take());
+        Ok := RunAgain(Pg);
+        Observer.Observe('second_run|ok', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('second_run');
+        Observer.Observe('second_run', Log.Take());
+        Observer.Expect('first_run', 'OnInit;OnOpenPage(step=100);PageHandler(step=100);');
+        Observer.Expect('second_run|ok', 'Yes');
+        Observer.Expect('second_run', 'OnInit;OnOpenPage(step=100);PageHandler(step=100);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('CardHandler')]
+    procedure PageVariable_SetTableViewBetweenRunModal()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Init Log";
+        Row: Record "W2 Value Row";
+        Pg: Page "W2 Init Card";
+        Ok: Boolean;
+    begin
+        Log.Take();
+        Row.SetRange(Id, 1);
+        Pg.SetTableView(Row);
+        Pg.RunModal();
+        Observer.Observe('first_run', Log.Take());
+        Row.SetRange(Id, 2);
+        Ok := SetViewAndRunModal(Pg, Row);
+        Observer.Observe('second_run|ok', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('second_run');
+        Observer.Observe('second_run', Log.Take());
+        Observer.Expect('first_run', 'OnInit;OnOpenPage(step=100);Handler(step=100);');
+        Observer.Expect('second_run|ok', 'Yes');
+        Observer.Expect('second_run', 'OnOpenPage(step=100);Handler(step=100);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PageVariable_LookupModeDefault()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Init Log";
+        Pg: Page "W2 Init Card";
+    begin
+        Log.Take();
+        Observer.Observe('default', Format(Pg.LookupMode()));
+        Observer.Observe('log', Log.Take());
+        Pg.LookupMode(true);
+        Observer.Observe('after_set', Format(Pg.LookupMode()));
+        Observer.Expect('default', 'No');
+        Observer.Expect('log', 'OnInit;');
+        Observer.Expect('after_set', 'Yes');
+        Observer.Verify();
+    end;
+
+    [PageHandler]
+    procedure CardPageHandler(var Pg: TestPage "W2 Init Card")
+    var
+        Log: Codeunit "W2 Init Log";
+    begin
+        Log.Add('PageHandler(step=' + Pg.StepCtl.Value() + ')');
+    end;
+
+    [TryFunction]
+    local procedure RunAgain(var Pg: Page "W2 Init Card")
+    begin
+        Pg.Run();
+    end;
+
+    [TryFunction]
+    local procedure SetViewAndRunModal(var Pg: Page "W2 Init Card"; var Row: Record "W2 Value Row")
+    begin
+        Pg.SetTableView(Row);
+        Pg.RunModal();
     end;
 
     [ModalPageHandler]
