@@ -452,6 +452,66 @@ is only a reference.
 | 1735 | AL0103 | `InitValue = 3000000000` on an Integer field. |
 | 1832 | AL0133 | A BigText passed to "Base64 Convert".FromBase64: no overload takes a BigText. |
 | 1833 | AL0122 | A BigText assigned to a Text variable: no implicit conversion. |
+| 1430 | AL0528 | API page field control names with a space or a quoted special character (digit inside, leading digit, underscore compile). (two diagnostics) |
+| 1431 | AL0666 | Importance = Optional on a page field: not available in the app runtime. |
+| 1432 | AL0298 | StyleExpr set to a PageStyle variable. |
+| 1433 | AL0155 | A page field and a page action with the same name. (two diagnostics) |
+| 1434 | AL0155 | An action group and an action inside it with the same name. (two diagnostics) |
+| 1435 | AL0844 | BlankZero on a Guid table field and on a page control bound to it. (two diagnostics) |
+| 1436 | AL0843 | DecimalPlaces on page fields whose source is an Integer variable or the literal 0 (0.0 compiles). (two diagnostics) |
+| 1437 | AL0114 | AutoFormatType set to a value of the enum "Auto Format" (integer literal expected). |
+| 1438 | AL0204 | RunPageLink from a Text field to an Option field and to an Enum field. (two diagnostics) |
+| 1439 | AL0255 | A request page action with RunObject = page and RunPageView. |
+| 1440 | AL0107 | XMLport FieldValidate = true / false (each also AL0116; Yes, No, Undefined compile). (four diagnostics) |
+| 1441 | AL0397 | A report column named like the hidden format column of a Decimal column (AmountFormat). |
+| 1442 | AL0196 | System.GetUrl with a Variant record argument: ambiguous between the Table and RecordRef overloads. |
+| 1443 | AL0676 | A codeunit with a protected var section. |
+| 1444 | AL0371 | BigInteger assigned a product of Integer literals that overflows Integer. |
+| 1445 | AL0198 | `internal interface` (access modifier before the keyword). |
+| 1446 | AL0118 | A page field whose source is the bare name SystemId, with the feature NoImplicitWith. |
+| 1450 | AL0166 | Record.SetRange with one argument that is an enum or option value, not a field. |
+| 1451 | AL0118 | Record.SetCurrentKey with the name of a key instead of its fields. |
+| 1452 | AL0779 | Record.ModifyAll on a FlowField (own FlowField and Customer."Balance (LCY)"). |
+| 1453 | AL0224, AL0104 | Record.Get with an empty argument in the middle of the key values. |
+| 1470 | AL0827 | Record.CalcSums with a Sum FlowField as the only argument and as the second argument. (two diagnostics) |
+| 1471 | AL0223 | OptimizeForTextSearch = true on a Lookup FlowField of type Text. |
+| 1472 | AL0223 | OptimizeForTextSearch = true on a FlowFilter field of type Text. |
+| 1473 | AL0124 | TableIDExpr on a TableFilter field of a table. |
+| 1510 | AL0175 | An Integer on the left of + with a Date on the right (Date + Integer compiles). (three diagnostics) |
+| 1511 | AL0175 | An Integer minus a Date. |
+| 1512 | AL0175 | An Integer on the left of + and - with a Time or a DateTime on the right. (four diagnostics) |
+| 1600 | AL0245 | A local UI handler procedure (ModalPageHandler, MessageHandler). (two diagnostics) |
+| 1601 | AL0192 | TestPage.OK() and Cancel() as plain statements: the TestAction return value must be used. (two diagnostics) |
+| 1602 | AL0132 | A TestPage has no Delete or DeleteRow method. (two diagnostics) |
+| 1608 | AL0518 | a [ModalPageHandler] and a [MessageHandler] with the same name (overloads) in one test codeunit (a handler plus a plain same-name procedure compiles) |
+| 1609 | AL0499 | [HandlerFunctions] names a handler declared in another test codeunit |
+| 1610 | AL0378 | an OnAction trigger on an action of a Role Center page (a RunObject action compiles) |
+| 1632 | AL0132 | A TestPage of the base page names a procedure that a page extension adds. |
+| 1633 | AL0666 | BC 27 only: Page.Run, Page.RunModal and Report.Run with a RecordRef in the place of the record. (three diagnostics) |
+| 1634 | AL0133 | BC 28 and 29: Page.Run, Page.RunModal and Report.Run with a RecordRef in the place of the record. (three diagnostics) |
+| 1640 | AL0350 | A query OrderBy names the same column twice. |
+| 1641 | AL0815, AL0353 | A query column whose source is a FlowFilter field. |
+| 1648 | AL0347 | A query column with Method = Min over a Code field. |
+| 1649 | AL0347 | A query column with Method = Max over a Date field. |
+| 1656 | AL0161 | A report trigger calls a procedure of a part of its request page (from the request page OnOpenPage it compiles). |
+| 1672 | AL0162 | A report extension modify() of a base data item declares OnAfterGetRecord. |
+| 1736 | AL0133 | Text[100] field passed to a var Code[20] parameter |
+| 1752 | AL0831 | A [TryFunction] procedure as the implementation of an interface method. |
+| 1784 | AL0133 | A Record passed to a var Variant parameter. |
+| 1785 | AL0777 | A Guid (variable or SystemId) assigned to a Code[20]. (two diagnostics) |
+| 1786 | AL0133 | BC 28 and 29: Codeunit.Run(Id, RecordRef): no overload takes a RecordRef. |
+| 1787 | AL0666 | BC 27 only: Codeunit.Run(Id, RecordRef) matches an overload that needs runtime 17.0. |
+| 1788 | AL0157 | A variable of type Blob. |
+| 1792 | AL0175 | `FieldRef.Value = Text`: '=' between Joker and Text. |
+| 1793 | AL0175 | `FieldRef.Value = 2`: '=' between Joker and Integer. |
+| 1794 | AL0175 | A Variant compared with a Text using '='. |
+| 1800 | AL0884 | TestHttpResponseMessage status codes 300 and 304: redirect codes are not permitted. (two diagnostics) |
+| 1801 | AL0883 | TestHttpResponseMessage status codes 399, 99, 600, 599 and 0: not valid HTTP status codes. (five diagnostics) |
+| 1816 | AL0132 | JsonObject has no RemoveAll method. |
+| 1817 | AL0132 | JsonArray has no RemoveAll method. |
+| 1818 | AL0132 | JsonObject has no Clear method (Clear(variable) empties it). |
+| 1819 | AL0132 | JsonArray has no Clear method (Clear(variable) empties it). |
+| 1824 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
