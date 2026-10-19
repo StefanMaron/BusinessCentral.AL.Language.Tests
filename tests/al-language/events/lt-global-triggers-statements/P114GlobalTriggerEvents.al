@@ -461,7 +461,7 @@ page 86150 "LT PW CCT Card"
 
 codeunit 86149 "LT PW CCT Subs"
 {
-    SingleInstance = true;
+    // Manual and not SingleInstance: the state lives in the instance a PW test binds.
     EventSubscriberInstance = Manual;
 
     var
