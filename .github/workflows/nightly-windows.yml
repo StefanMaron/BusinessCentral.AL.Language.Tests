@@ -500,16 +500,17 @@ jobs:
             try { Invoke-KeyCodeunit 'Verify'; $true } catch { Write-Host "verify: $($_.Exception.Message)"; $false }
           }
 
-          Write-Host ("after install: " + (Get-KeyState))
+          # Measured (runs 39223200014, 39223203793, 39223208230: BC 29.0 sandbox, 29.0 onprem, 27.5 onprem): the install
+          # trigger creates the key and Verify passes. The second attempt below is a fallback that has not been needed yet.
           $ok = Test-Key
           if (-not $ok) {
+            Write-Host ("after install: " + (Get-KeyState))
             # Still no usable key: run the same creation once more, from a session of its own.
             try { Invoke-KeyCodeunit '' } catch { Write-Host "invoke OnRun raised: $($_.Exception.Message)" }
-            Write-Host ("after invoke: " + (Get-KeyState))
             $ok = Test-Key
           }
-          $state = Get-KeyState
-          Write-Host "final: $state"
+          $state = if ($ok) { 'verified' } else { Get-KeyState }
+          Write-Host "tenant encryption key: $state"
 
           # Remove the helper app again; the key belongs to the tenant and stays. Not fatal: an
           # installed helper app changes nothing the corpus asserts.
