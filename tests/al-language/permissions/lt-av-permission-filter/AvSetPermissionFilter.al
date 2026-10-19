@@ -154,6 +154,14 @@ codeunit 80207 "LT AV Set Permission Filter"
         TenantPermission.Delete();
         TenantPermissionSet.Delete();
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('evaluate table form', 'Yes');
+        Observer.Expect('security filter text', 'LT AV Secured Row: Category=A');
+        Observer.Expect('mock set|text', 'The Permission Set does not exist. Identification fields and values: Role ID=''LTAVSECFILTER''');
+        Observer.Expect('mock set|code', 'DB:RecordNotFound');
+        Observer.Expect('plain read under the mock', 'No');
+        Observer.Expect('plain read under the mock|code', 'DB:ClientReadDenied');
+        Observer.Expect('record SetPermissionFilter after the mock stopped', 'filters=[] count=3 1A 2B 3A');
+        Observer.Expect('recordref SetPermissionFilter after the mock stopped', 'filters=[] count=3');
+        Observer.Verify();
     end;
 }
