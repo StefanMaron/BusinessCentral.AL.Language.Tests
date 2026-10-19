@@ -510,13 +510,6 @@ is only a reference.
 | 1818 | AL0132 | JsonObject has no Clear method (Clear(variable) empties it). |
 | 1819 | AL0132 | JsonArray has no Clear method (Clear(variable) empties it). |
 | 1824 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
-| 1776 | AL0612 | An interface that declares a trigger: an interface member must be a procedure. |
-| 1777 | AL0675 | DefaultImplementation that lists the same interface twice. |
-| 1778 | AL0675 | An enum value's Implementation that lists the same interface twice. |
-| 1779 | AL0187, AL0919 | [Scope('Cloud')] on an interface member. |
-| 1780 | AL0132 | BC 29: a default interface method called on a codeunit variable whose codeunit does not declare it. |
-| 1781 | AL0922 | BC 29: a [Scope('OnPrem')] procedure overrides a default interface method. |
-| 1782 | AL0231 | An enumextension of Base Application "Sales Line Type" reuses an ordinal of the base enum (ordinal 6 compiles). |
 | 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
 | 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
 | 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |
