@@ -5,6 +5,7 @@
 // Settles GitHub issue #69 (Inferred behaviors waiting for a pin): overload choice, exact type versus Variant
 // Facts: which overload runs for a RecordRef, Integer, Text, Record, Decimal, BigInteger argument, observed through a returned tag
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 74): enums 83869, 83870 and BN3_Overload_DifferOnlyByEnumType; an Integer argument is ambiguous (must-not-compile 1560).
 
 table 71158 "LT P69 Row"
 {
@@ -323,7 +324,12 @@ codeunit 71159 "LT P69 Overloads"
         Observer.Observe('EA variable', BN3_Pick(A));
         Observer.Observe('EB variable', BN3_Pick(B));
         Observer.Observe('EA and EB', BN3_Pick(A, B));
-        Observer.Finish();
+        Observer.Expect('EA literal', 'EA:A1');
+        Observer.Expect('EB literal', 'EB:B0');
+        Observer.Expect('EA variable', 'EA:A1');
+        Observer.Expect('EB variable', 'EB:B1');
+        Observer.Expect('EA and EB', 'EA+EB:A1,B1');
+        Observer.Verify();
     end;
 }
 

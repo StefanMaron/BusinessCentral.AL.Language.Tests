@@ -3,6 +3,7 @@
 // Fixtures used: own enum 72292, table 72291, codeunit 72293
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 39): table 83850 and BN3_ValuesAllowed_DecimalSpaceAfterMinus (ValuesAllowed on a Decimal field is not checked by Validate).
 
 enum 72292 "LT P123 Kind"
 {
@@ -98,7 +99,18 @@ codeunit 72293 "LT P123 TValuesAllowed Tests"
         T.Init();
         T.Spaced := 0.7;
         Observer.Observe('assign spaced 0.7', Format(T.Spaced));
-        Observer.Finish();
+        Observer.Expect('spaced -0.5', 'ok|-0.5');
+        Observer.Expect('plain -0.5', 'ok|-0.5');
+        Observer.Expect('spaced 1', 'ok|1');
+        Observer.Expect('plain 1', 'ok|1');
+        Observer.Expect('spaced 0.5', 'ok|0.5');
+        Observer.Expect('plain 0.5', 'ok|0.5');
+        Observer.Expect('spaced 0.7', 'ok|0.7');
+        Observer.Expect('plain 0.7', 'ok|0.7');
+        Observer.Expect('spaced 0', 'ok|0');
+        Observer.Expect('plain 0', 'ok|0');
+        Observer.Expect('assign spaced 0.7', '0.7');
+        Observer.Verify();
     end;
 }
 

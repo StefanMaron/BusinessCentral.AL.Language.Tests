@@ -4,6 +4,7 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: P67 Enum assigned to an Option variable and field
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 68): tables 83866, 83867 and BN3_CalcFormulaOptionAgainstEnum (CalcFormula field() between Option and Enum).
 
 codeunit 70195 "LT P67 Enum To Option"
 {
@@ -162,7 +163,10 @@ codeunit 70195 "LT P67 Enum To Option"
         Hdr.Modify();
         Hdr.CalcFields(OptByEnum, EnumByOpt);
         Observer.Observe('Kind Dos / Opt A', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
-        Observer.Finish();
+        Observer.Expect('Kind Uno / Opt B', '2|2');
+        Observer.Expect('Kind Tres / Opt C', '1|1');
+        Observer.Expect('Kind Dos / Opt A', '0|0');
+        Observer.Verify();
     end;
 }
 

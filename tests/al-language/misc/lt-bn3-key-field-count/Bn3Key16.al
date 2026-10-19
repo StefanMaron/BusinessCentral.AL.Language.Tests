@@ -70,6 +70,11 @@ codeunit 83862 "LT BN3 Key16 Tests"
         Observer.Observe('key count', Format(RecRef.KeyCount()));
         KRef := RecRef.KeyIndex(2);
         Observer.Observe('second key field count', Format(KRef.FieldCount()));
-        Observer.Finish();
+        Observer.Expect('first', '2');
+        Observer.Expect('last', '1');
+        Observer.Expect('current key', 'F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17');
+        Observer.Expect('key count', '3');
+        Observer.Expect('second key field count', '16');
+        Observer.Verify();
     end;
 }

@@ -4,6 +4,7 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Codeunit.Run result and rollback of its writes, Commit in a test, Clear and ClearAll on variables and records.
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 45): table 83856, codeunit 83857, report 83858, page 83859 and BN3_OwnProcedureNamedClearAll (an own procedure named ClearAll).
 
 table 72520 "LT SyT Row"
 {
@@ -515,7 +516,15 @@ codeunit 72519 "LT SyT Clear"
         Pg.ClearAll();
         Observer.Observe('page outside', Pg.GetMarker());
         Observer.Observe('page inside', Pg.CallInside());
-        Observer.Finish();
+        Observer.Expect('table outside', '[table own]');
+        Observer.Expect('table inside', '[table own]');
+        Observer.Expect('codeunit outside', '[codeunit own]');
+        Observer.Expect('codeunit inside', '[codeunit own]');
+        Observer.Expect('report outside', '[report own]');
+        Observer.Expect('report inside', '[report own]');
+        Observer.Expect('page outside', '[page own]');
+        Observer.Expect('page inside', '[page own]');
+        Observer.Verify();
     end;
 }
 

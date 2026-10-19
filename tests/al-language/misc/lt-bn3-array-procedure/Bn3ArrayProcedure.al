@@ -72,6 +72,9 @@ codeunit 83855 "LT BN3 Array Tests"
             Observer.Observe('array false', R)
         else
             Observer.Observe('array false', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('other', '7');
+        Observer.Expect('array true', 'Yes|[1,2]');
+        Observer.Expect('array false', 'No|{"a":1}');
+        Observer.Verify();
     end;
 }

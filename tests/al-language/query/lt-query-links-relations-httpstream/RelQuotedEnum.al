@@ -4,6 +4,7 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: TableRelation where(F = filter(A | "B C")) with a quoted identifier inside filter(): Validate of a value whose F is each member, outside the filter, unknown and blank; error text start and code via TryFunction
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 72): table 83868 and BN3_Validate_EnumConstAndFieldRelation (TableRelation where(F = const/field) on an Enum).
 
 enum 70772 "LT P100 Letter"
 {
@@ -204,7 +205,15 @@ codeunit 70776 "LT P100 Rel Quoted En"
         Observer.Observe('field MyF=A: ID', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefField), 'ID'));
         Observer.Observe('field MyF=D: ID', BN3_Outcome("LT P100 Letter"::D, R.FieldNo(RefField), 'ID'));
         Observer.Observe('field MyF="B C": IBC', BN3_Outcome("LT P100 Letter"::"B C", R.FieldNo(RefField), 'IBC'));
-        Observer.Finish();
+        Observer.Expect('const D: ID', 'ok');
+        Observer.Expect('const D: IA', 'error:The field RefConst of table LT BN3 Rel En2 contains a value (IA) that cannot be found in the related table (LT P100 Item En).|DB:NothingInsideFilter');
+        Observer.Expect('const "B C": IBC', 'ok');
+        Observer.Expect('const "B C": ID', 'error:The field RefConstQuoted of table LT BN3 Rel En2 contains a value (ID) that cannot be found in the related table (LT P100 Item En).|DB:NothingInsideFilter');
+        Observer.Expect('field MyF=A: IA', 'ok');
+        Observer.Expect('field MyF=A: ID', 'error:The field RefField of table LT BN3 Rel En2 contains a value (ID) that cannot be found in the related table (LT P100 Item En).|DB:NothingInsideFilter');
+        Observer.Expect('field MyF=D: ID', 'ok');
+        Observer.Expect('field MyF="B C": IBC', 'ok');
+        Observer.Verify();
     end;
 }
 

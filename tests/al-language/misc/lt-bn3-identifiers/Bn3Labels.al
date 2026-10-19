@@ -78,6 +78,14 @@ codeunit 83853 "LT BN3 Labels Tests"
         Observer.Observe('local variable', Format(Helper.LocalLabels()));
         Labels := 'global';
         Observer.Observe('global variable', Labels);
-        Observer.Finish();
+        Observer.Expect('field', '21');
+        Observer.Expect('field via procedure', '42');
+        Observer.Expect('filter', '21|1');
+        Observer.Expect('field caption', 'Labels');
+        Observer.Expect('procedure true', 'No/1');
+        Observer.Expect('procedure false', 'Yes/2');
+        Observer.Expect('local variable', '42');
+        Observer.Expect('global variable', 'global');
+        Observer.Verify();
     end;
 }
