@@ -97,6 +97,10 @@ codeunit 79450 "LT AN TestPage Tests"
         P: TestPage "LT AN Card";
     begin
         Seed();
+        // The decimal places of the value in the message follow General Ledger Setup "Amount Decimal Places" as the session first
+        // read it (diagnostic runs 39255002308 and 39256045991); SelectLatestVersion makes the test independent of earlier tests
+        // that set '2:5' and roll it back (bump 27: 'Value: 1.234.' on BC 27.5 after such a test).
+        SelectLatestVersion();
         OpenCard(P);
         Dec(Observer, P, 'below1.234', 1.234);
         Dec(Observer, P, 'below1.996', 1.996);

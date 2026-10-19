@@ -219,6 +219,10 @@ codeunit 79750 "LT AQ Report Tests"
         Without: Text;
     begin
         Seed();
+        // The decimalformatter of the EQty column follows General Ledger Setup "Amount Decimal Places" as the session first read
+        // it (diagnostic runs 39255002308 and 39256045991, BC 27.5, 28.5 and 29.0); SelectLatestVersion makes it independent of
+        // earlier tests that set '2:5' and roll it back.
+        SelectLatestVersion();
         WithProp := DataItemsOf(XmlOf(Report::"LT AQ WM On"));
         Without := DataItemsOf(XmlOf(Report::"LT AQ WM Off"));
         Observer.Observe('equal', Format(WithProp = Without));
@@ -226,9 +230,9 @@ codeunit 79750 "LT AQ Report Tests"
         Observer.Observe('length off', Format(StrLen(Without)));
         Observer.Expect('equal', 'Yes');
 #if BC28PLUS
-        // BC 28 adds the tableId and systemId attributes to every DataItem element.
-        Observer.Expect('length on', '1717');
-        Observer.Expect('length off', '1717');
+        // BC 28 adds the tableId and systemId attributes to every DataItem element (64 characters each, 7 elements).
+        Observer.Expect('length on', '1708');
+        Observer.Expect('length off', '1708');
 #else
         Observer.Expect('length on', '1260');
         Observer.Expect('length off', '1260');
