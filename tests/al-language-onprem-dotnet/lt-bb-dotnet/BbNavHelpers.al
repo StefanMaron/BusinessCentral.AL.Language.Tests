@@ -10,6 +10,9 @@
 //       The install-codeunit half of the item is not probed: the corpus apps may not carry install codeunits (check-install-triggers.py);
 //   13. NavTenantSettingsHelper.TryGetStringTenantSetting(Name, Value) for TENANTID, DISPLAYNAME, AADTENANTID and an unknown name:
 //       the Boolean and the out value.
+//   Observed on the corpus CI matrix (single-tenant Linux container, tenant 'default'): an unset application setting reads as empty text,
+//   also for an empty name; IsInTestMode is true in OnRun and in a test method; TENANTID = default, DISPLAYNAME = empty (found),
+//   AADTENANTID = common, an unknown name gives false and clears the out value.
 // BC versions: 27, 28, 29
 dotnet
 {
@@ -97,7 +100,10 @@ codeunit 99221 "LT BB Nav Helpers"
         ObserveAppSetting('LtBbNeverSet');
         ObserveAppSetting('LT BB NEVER SET 2');
         ObserveAppSetting('');
-        Observer.Finish();
+        Observer.Expect('app setting LtBbNeverSet', '[]');
+        Observer.Expect('app setting LT BB NEVER SET 2', '[]');
+        Observer.Expect('app setting ', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -112,7 +118,9 @@ codeunit 99221 "LT BB Nav Helpers"
             Observer.Observe('in test method', Shown)
         else
             Observer.ObserveError('in test method');
-        Observer.Finish();
+        Observer.Expect('in OnRun', 'Yes');
+        Observer.Expect('in test method', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -122,6 +130,11 @@ codeunit 99221 "LT BB Nav Helpers"
         ObserveTenantSetting('DISPLAYNAME');
         ObserveTenantSetting('AADTENANTID');
         ObserveTenantSetting('LTBBNOSUCHSETTING');
-        Observer.Finish();
+        // The out value of an unknown name is cleared: 'unchanged' before the call, empty after it.
+        Observer.Expect('tenant setting TENANTID', 'Yes|[default]');
+        Observer.Expect('tenant setting DISPLAYNAME', 'Yes|[]');
+        Observer.Expect('tenant setting AADTENANTID', 'Yes|[common]');
+        Observer.Expect('tenant setting LTBBNOSUCHSETTING', 'No|[]');
+        Observer.Verify();
     end;
 }

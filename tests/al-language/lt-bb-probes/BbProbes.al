@@ -35,7 +35,9 @@ codeunit 80860 "LT BB Probes"
     end;
 
     // A Char variable binds to the base Bump(Integer) at compile time, but the call fails at run time.
-    [Test]
+    // Linux suspect, not asserted (not a [Test]): on the Linux BC container (27.5, 28.5, 29.0) the call raised
+    // 'Unable to convert from System.Char to System.Int32.' with code Conversion, a CLR conversion text. Verify on the Windows nightly
+    // before pinning it as BC behavior.
     procedure ReportExt_OverloadCharVariable()
     var
         R: Report "LT BB Base Report";
