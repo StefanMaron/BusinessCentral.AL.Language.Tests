@@ -110,27 +110,27 @@ codeunit 80606 "LT AZ Error Texts"
     procedure CodeunitRun_MissingId_RawText()
     var
         Ok: Boolean;
-        Expected: Text;
+        Prefix: Text;
+        Txt: Text;
+        Number: Text;
     begin
         ClearLastError();
         Ok := true;
         asserterror Ok := Codeunit.Run(80748);
-#if BC29PLUS
-        Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 29022.';
-#else
-#if BC28PLUS
-        Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 28015.';
-#else
-        Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 27025.';
-#endif
-#endif
         if not Ok then
             Error('Codeunit.Run assigned its return value');
         // Same code on BC 27.5, 28.5 and 29.0.
         if GetLastErrorCode() <> 'AL:MetadataNotFound' then
             Error('expected code [AL:MetadataNotFound] but was [%1]', GetLastErrorCode());
-        if GetLastErrorText() <> Expected then
-            Error('expected [%1] but was [%2]', Expected, GetLastErrorText());
+        // The emit version number changes with every BC build (seen: 27025 on 27.5, 28015 on 28.5, 29022 on 29.0), so it is masked:
+        // the rest of the text is exact and a number must be there.
+        Prefix := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version ';
+        Txt := GetLastErrorText();
+        if (StrLen(Txt) <= StrLen(Prefix) + 1) or (CopyStr(Txt, 1, StrLen(Prefix)) <> Prefix) or (CopyStr(Txt, StrLen(Txt), 1) <> '.') then
+            Error('expected [%1<number>.] but was [%2]', Prefix, Txt);
+        Number := CopyStr(Txt, StrLen(Prefix) + 1, StrLen(Txt) - StrLen(Prefix) - 1);
+        if DelChr(Number, '=', '0123456789') <> '' then
+            Error('expected a number after "emit version " but was [%1]', Number);
     end;
 
     // ---- item 14: GetLastErrorCode after asserterror TestPage action Invoke ----
