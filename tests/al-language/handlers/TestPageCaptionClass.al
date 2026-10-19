@@ -103,4 +103,30 @@ codeunit 60930 "TPCC Tests"
         Assert.ExpectedError('Sep 2026');
         Card.Close();
     end;
+
+    // ── Added by writer bs (corpus issue #668, item 99): tableextension 83160 and pageextension 83162 in
+    //    tableextension/lt-bs-tableext-leads/BsObjects.al ──
+
+    [Test]
+    procedure TestPageField_Caption_TableExtensionFieldCaptionClass()
+    // CLAIM (issue #668 item 99): a field that a tableextension ADDS declares CaptionClass = '3,LT BS Added Field Class' (and a Caption).
+    // A page extension control on it without its own CaptionClass: does the table field's CaptionClass apply? A second control on the same
+    // field with CaptionClass = '3,LT BS Page Class': which wins? What do FieldCaption and FieldRef.Caption give?
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "TPCC Card";
+        Row: Record "TPCC Row";
+        RecRef: RecordRef;
+    begin
+        Initialize();
+        OpenCard(Card);
+        Observer.Observe('page_control_no_class', Card.BsCapNew.Caption());
+        Observer.Observe('page_control_with_class', Card.BsCapNewPageClass.Caption());
+        Card.Close();
+        Observer.Observe('field_caption', Row.FieldCaption(BsCapNew));
+        RecRef.Open(Database::"TPCC Row");
+        Observer.Observe('fieldref_caption', RecRef.Field(83180).Caption());
+        RecRef.Close();
+        Observer.Finish();
+    end;
 }

@@ -284,4 +284,52 @@ codeunit 74946 "LT Relation Where Multi"
         Observer.Expect('excluded_by_a', 'No|DB:RecordNotFound|The field ThreeKeyOnly of table LT RM Line contains a value (C3) that cannot be found in the related table (LT RM Key Rel).');
         Observer.Verify();
     end;
+
+    // ---- Added by writer bs (corpus issue #668, item 78): tables 83155 and 83156 in tableextension/lt-bs-tableext-leads/BsObjects.al ----
+    // LT BS NK Source.RefName has TableRelation = "LT BS NK Target".Name, a field in no key of the target. It compiles; what does Validate do?
+
+    [TryFunction]
+    local procedure BsTryValidateName(var Src: Record "LT BS NK Source"; Value: Text[30])
+    begin
+        Src.Validate(RefName, Value);
+    end;
+
+    local procedure BsProbeName(Name: Text; Value: Text[30]; var Observer: Codeunit "Probe Observer")
+    var
+        Src: Record "LT BS NK Source";
+        Ok: Boolean;
+    begin
+        Src.Init();
+        Src.Id := 1;
+        ClearLastError();
+        Ok := BsTryValidateName(Src, Value);
+        Observer.Observe(Name, Format(Ok) + '|' + GetLastErrorCode() + '|' + GetLastErrorText() + '|value=' + Src.RefName);
+        ClearLastError();
+    end;
+
+    [Test]
+    procedure RelationToNonKeyField_Validate()
+    var
+        Target: Record "LT BS NK Target";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Target.DeleteAll();
+        Target.Code := 'C1';
+        Target.Name := 'Alpha';
+        Target.Insert();
+        Target.Code := 'C2';
+        Target.Name := 'Beta';
+        Target.Insert();
+        Target.Code := 'C3';
+        Target.Name := 'Beta';
+        Target.Insert();
+        BsProbeName('one_match', 'Alpha', Observer);
+        BsProbeName('other_case', 'ALPHA', Observer);
+        BsProbeName('two_matches', 'Beta', Observer);
+        BsProbeName('no_match', 'Gamma', Observer);
+        BsProbeName('key_value_not_name', 'C1', Observer);
+        BsProbeName('blank', '', Observer);
+        Target.DeleteAll();
+        Observer.Finish();
+    end;
 }

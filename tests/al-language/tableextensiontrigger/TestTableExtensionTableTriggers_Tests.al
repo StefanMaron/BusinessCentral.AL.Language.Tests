@@ -148,4 +148,36 @@ codeunit 60433 "TXT Table Trigger Tests"
         Assert.AreEqual('', Trace(),
           'Insert(false) must run no tableextension trigger at all');
     end;
+
+    // ── Added by writer bs (corpus issue #668, item 98): objects in tableextension/lt-bs-tableext-leads/BsObjects.al ──
+
+    [Test]
+    procedure TableExt_Procedure_RecIsTheExtendedRow_PassedOnAndXRec()
+    // CLAIM (issue #668 item 98): inside a procedure of a tableextension, Rec is the current row of the extended table: passing it to a
+    // codeunit's var Record parameter shows that row's values, a var array parameter is filled from it, and in the extension's
+    // OnAfterModify xRec holds the stored row and Rec the new values.
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+        Log: Codeunit "LT BS Ext Log";
+        Arr: array[3] of Text;
+    begin
+        Base.DeleteAll();
+        Log.Take();
+        Base.Init();
+        Base.Id := 5;
+        Base.Name := 'before';
+        Base.E1 := 9;
+        Base.Insert();
+        Base.Name := 'unsaved';
+        Observer.Observe('rec_to_codeunit', Base.BsRecToSink());
+        Base.BsFillArray(Arr);
+        Observer.Observe('var_array', Arr[1] + '|' + Arr[2] + '|' + Arr[3]);
+        Base.Get(5);
+        Base.Name := 'after';
+        Base.Modify(true);
+        Observer.Observe('xrec_in_ext_trigger', Log.Take());
+        Base.DeleteAll();
+        Observer.Finish();
+    end;
 }

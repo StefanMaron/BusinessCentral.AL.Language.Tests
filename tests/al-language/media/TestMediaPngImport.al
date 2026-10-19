@@ -278,4 +278,90 @@ codeunit 60130 "Test Media Png Import"
     begin
         Cleanup.Initialize();
     end;
+
+    // ── Added by writer bs (corpus issue #668, item 75): orphan deletion when media is replaced, MediaSet.Remove ──
+    // record/lt-ar-records/ArRecordProbes.al (writer ar, Media_ImportStream_OnFilledField) pins that a replaced Media is deleted from Tenant Media on Modify.
+
+    local procedure BsPngIn(var TempBlob: Codeunit "Temp Blob"; var InStr: InStream)
+    var
+        Base64Convert: Codeunit "Base64 Convert";
+        OutStr: OutStream;
+    begin
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutStr);
+        Base64Convert.FromBase64(ValidPngBase64, OutStr);
+        TempBlob.CreateInStream(InStr);
+    end;
+
+    [Test]
+    procedure Media_Replace_WhileAnotherRowSharesTheMedia()
+    // CLAIM (issue #668 item 75): row 2 gets row 1's Media by assignment (same MediaId). Row 1 then imports a new picture and is modified:
+    // is the old media object kept in Tenant Media because row 2 still references it, and what does row 2 read?
+    var
+        Observer: Codeunit "Probe Observer";
+        Row1: Record "ALT Media";
+        Row2: Record "ALT Media";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        First: Guid;
+    begin
+        Initialize();
+        ImportBase64(Row1, 'BS1', ValidPngBase64);
+        Row1.Get('BS1');
+        First := Row1.Picture.MediaId();
+        Row2.Init();
+        Row2.Code := 'BS2';
+        Row2.Picture := Row1.Picture;
+        Row2.Insert();
+        Row2.Get('BS2');
+        Observer.Observe('row2_shares_id', Format(Row2.Picture.MediaId() = First));
+        BsPngIn(TempBlob, InStr);
+        Row1.Picture.ImportStream(InStr, 'replacement');
+        Row1.Modify();
+        Observer.Observe('old_media_after_replace', Format(TenantMedia.Get(First)));
+        Row2.Get('BS2');
+        Observer.Observe('row2_still_same_id', Format(Row2.Picture.MediaId() = First));
+        Observer.Observe('row2_has_value', Format(Row2.Picture.HasValue()));
+        Row2.Delete();
+        Observer.Observe('old_media_after_row2_delete', Format(TenantMedia.Get(First)));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure MediaSet_Remove_KeepsTheTenantMediaRow()
+    // CLAIM (issue #668 item 75): the docs say MediaSet.Remove only removes the association. After Remove and Modify, is the removed item's
+    // row still in Tenant Media? And after the record is deleted?
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        Item1: Guid;
+        Item2: Guid;
+    begin
+        Initialize();
+        Row.Init();
+        Row.Code := 'BS3';
+        Row.Insert();
+        BsPngIn(TempBlob, InStr);
+        Row.Images.ImportStream(InStr, 'one');
+        BsPngIn(TempBlob, InStr);
+        Row.Images.ImportStream(InStr, 'two');
+        Row.Modify();
+        Row.Get('BS3');
+        Item1 := Row.Images.Item(1);
+        Item2 := Row.Images.Item(2);
+        Observer.Observe('remove_result', Format(Row.Images.Remove(Item1)));
+        Row.Modify();
+        Row.Get('BS3');
+        Observer.Observe('count_after_remove', Format(Row.Images.Count()));
+        Observer.Observe('removed_item_in_tenant_media', Format(TenantMedia.Get(Item1)));
+        Observer.Observe('kept_item_in_tenant_media', Format(TenantMedia.Get(Item2)));
+        Row.Delete();
+        Observer.Observe('removed_item_after_delete', Format(TenantMedia.Get(Item1)));
+        Observer.Observe('kept_item_after_delete', Format(TenantMedia.Get(Item2)));
+        Observer.Finish();
+    end;
 }

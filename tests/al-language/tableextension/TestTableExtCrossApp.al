@@ -107,4 +107,120 @@ codeunit 60203 "Test TableExt Cross App"
         Cleanup.Initialize();
         InternalRec.DeleteAll(false);
     end;
+
+    // ── Added by writer bs (corpus issue #668, items 89, 92, 93): objects in lt-bs-tableext-leads/BsObjects.al ──
+
+    [Test]
+    procedure TableExt_TwoExtensionsOfOneTable_CallEachOther()
+    // CLAIM (issue #668 item 92): two tableextensions of one table in one app (83150 and 83151) compile when each one uses a field and calls
+    // a procedure of the other. What do the calls return at run time, and are the assigned fields kept on the record?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+    begin
+        Base.DeleteAll();
+        Base.Init();
+        Base.Id := 7;
+        Base.Insert();
+        Observer.Observe('lower_calls_higher', Base.BsCallTwo());
+        Observer.Observe('e3_after_lower_call', Format(Base.E3));
+        Observer.Observe('higher_calls_lower', Base.BsCallOne());
+        Observer.Observe('e1_after_higher_call', Format(Base.E1));
+        Base.Modify();
+        Base.Get(7);
+        Observer.Observe('stored_e1_e3', Format(Base.E1) + '|' + Format(Base.E3));
+        Base.DeleteAll();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Table_And_TableExtension_SameObjectId_BothWork()
+    // CLAIM (issue #668 item 89): table 83153 "LT BS Same Id" and tableextension 83153 (of table 83151 "LT BS Target A") in one app
+    // compile. After publish, do Insert and Get work on both tables, and does the extension field store a value?
+    var
+        Observer: Codeunit "Probe Observer";
+        Same: Record "LT BS Same Id";
+        Target: Record "LT BS Target A";
+        RecRef: RecordRef;
+    begin
+        Same.DeleteAll();
+        Target.DeleteAll();
+        Same.Id := 1;
+        Same.Txt := 'table row';
+        Same.Insert();
+        Target.Code := 'T1';
+        Target.SameIdExt := 'extension value';
+        Target.Insert();
+        Same.Get(1);
+        Observer.Observe('table_get', Same.Txt);
+        Target.Get('T1');
+        Observer.Observe('extended_get', Target.SameIdExt);
+        RecRef.Open(83153);
+        Observer.Observe('recordref_open_83153_name', RecRef.Name());
+        Observer.Observe('recordref_open_83153_count', Format(RecRef.Count()));
+        RecRef.Close();
+        Same.DeleteAll();
+        Target.DeleteAll();
+        Observer.Finish();
+    end;
+
+    local procedure BsSeedDelete()
+    var
+        Base: Record "LT BS Base";
+        Index: Integer;
+    begin
+        Base.DeleteAll();
+        for Index := 1 to 4 do begin
+            Base.Init();
+            Base.Id := Index;
+            Base.A := Index mod 2;
+            Base.E1 := Index;
+            Base.Insert();
+        end;
+    end;
+
+    local procedure BsIds(): Text
+    var
+        Base: Record "LT BS Base";
+        Result: Text;
+    begin
+        if Base.FindSet() then
+            repeat
+                Result += Format(Base.Id) + ';';
+            until Base.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure TableExt_DeleteAllWithFilters_OnExtendedTable()
+    // CLAIM (issue #668 item 93): DeleteAll(true) and DeleteAll(false) with a filter on a base field and with a filter on an extension field
+    // of a table that two tableextensions extend (its rows have companion rows): which rows remain, and is there an error?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+    begin
+        BsSeedDelete();
+        Base.SetRange(A, 1);
+        Base.DeleteAll(true);
+        Observer.Observe('base_filter_true', BsIds());
+        BsSeedDelete();
+        Base.Reset();
+        Base.SetRange(E1, 2, 3);
+        Base.DeleteAll(true);
+        Observer.Observe('ext_filter_true', BsIds());
+        BsSeedDelete();
+        Base.Reset();
+        Base.SetFilter(E1, '>%1', 2);
+        Base.DeleteAll(false);
+        Observer.Observe('ext_filter_false', BsIds());
+        BsSeedDelete();
+        Base.Reset();
+        Base.SetRange(A, 0);
+        Base.SetRange(E1, 4);
+        Base.DeleteAll(true);
+        Observer.Observe('both_filters_true', BsIds());
+        Base.Reset();
+        Base.DeleteAll();
+        Observer.Finish();
+    end;
 }
