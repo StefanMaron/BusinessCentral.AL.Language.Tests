@@ -10,12 +10,26 @@ codeunit 80972 "BC Implicit Areas"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    local procedure Setup()
+    var
+        Row: Record "BC Implicit Row";
+    begin
+        Row.DeleteAll();
+        Row.Number := 3;
+        Row.Insert();
+        Row.Number := 5;
+        Row.Insert();
+        Row.Number := 7;
+        Row.Insert();
+    end;
+
     [Test]
     procedure FactBoxes_NotDeclared_OpenView_Closes()
     var
         Card: TestPage "BC Implicit FB Card";
     begin
         // The repro of al-runtime-rs #252.
+        Setup();
         Card.OpenView();
         Card.Close();
     end;
@@ -26,6 +40,7 @@ codeunit 80972 "BC Implicit Areas"
         Observer: Codeunit "Probe Observer";
         Card: TestPage "BC Implicit FB Card";
     begin
+        Setup();
         Card.OpenView();
         Card.GoToKey(5);
         Observer.Observe('card number', Card.Number.Value());
@@ -48,6 +63,7 @@ codeunit 80972 "BC Implicit Areas"
         Observer: Codeunit "Probe Observer";
         Card: TestPage "BC No Layout Card";
     begin
+        Setup();
         Card.OpenView();
         Card.GoToKey(3);
         Observer.Observe('number', Card.BCNumber.Value());

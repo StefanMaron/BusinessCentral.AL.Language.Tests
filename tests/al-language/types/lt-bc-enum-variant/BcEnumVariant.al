@@ -91,7 +91,16 @@ codeunit 80954 "BC Enum Variant Tests"
         Observer.Observe('fromint extension value', Flags(V));
         V := Kind::Other.AsInteger();
         Observer.Observe('asinteger', Flags(V));
-        Observer.Finish();
+        Observer.Expect('literal normal', 'Option,|0|0|Normal');
+        Observer.Expect('literal other', 'Option,|1|1|Other');
+        Observer.Expect('default variable', 'Option,|0|0|Normal');
+        Observer.Expect('variable other', 'Option,|1|1|Other');
+        Observer.Expect('internal literal other', 'Option,|1|1|Other');
+        Observer.Expect('internal variable normal', 'Option,|0|0|Normal');
+        Observer.Expect('extension value', 'Option,|80950|80950|Extra');
+        Observer.Expect('fromint extension value', 'Option,|80950|80950|Extra');
+        Observer.Expect('asinteger', 'Integer,|1|1|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +137,17 @@ codeunit 80954 "BC Enum Variant Tests"
         Observer.Observe('ext extensible field extra', Flags(V));
         V := Line.Type;
         Observer.Observe('base enum field Type', Flags(V));
-        Observer.Finish();
+        Observer.Expect('ext field default', 'Option,|0|0|Normal');
+        Observer.Expect('assert same default', 'Yes|Yes');
+        Observer.Expect('assert differs', 'Yes|No');
+        Observer.Expect('ext internal field default', 'Option,|0|0|Normal');
+        Observer.Expect('ext extensible field default', 'Option,|0|0|Normal');
+        Observer.Expect('ext field other', 'Option,|1|1|Other');
+        Observer.Expect('assert same other', 'Yes|Yes');
+        Observer.Expect('ext internal field other', 'Option,|1|1|Other');
+        Observer.Expect('ext extensible field extra', 'Option,|80950|80950|Extra');
+        Observer.Expect('base enum field Type', 'Option,|0|0| ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,7 +183,16 @@ codeunit 80954 "BC Enum Variant Tests"
         Observer.Observe('extensible field extra', Flags(V));
         V := Row.Opt;
         Observer.Observe('option field two', Flags(V));
-        Observer.Finish();
+        Observer.Expect('field default', 'Option,|0|0|Normal');
+        Observer.Expect('assert same default', 'Yes|Yes');
+        Observer.Expect('internal field default', 'Option,|0|0|Normal');
+        Observer.Expect('option field default', 'Option,|0|0|Zero');
+        Observer.Expect('assert enum vs option', 'Yes|Yes');
+        Observer.Expect('field other', 'Option,|1|1|Other');
+        Observer.Expect('internal field other', 'Option,|1|1|Other');
+        Observer.Expect('extensible field extra', 'Option,|80950|80950|Extra');
+        Observer.Expect('option field two', 'Option,|2|2|Two');
+        Observer.Verify();
     end;
 
     [Test]
@@ -183,6 +211,8 @@ codeunit 80954 "BC Enum Variant Tests"
         Observer.Observe('fieldref value', Flags(V));
         V := RecRef.Field(Row.FieldNo(Kind));
         Observer.Observe('fieldref itself', Flags(V));
-        Observer.Finish();
+        Observer.Expect('fieldref value', 'Option,|1|1|Other');
+        Observer.Expect('fieldref itself', 'FieldRef,|1|1|Other');
+        Observer.Verify();
     end;
 }

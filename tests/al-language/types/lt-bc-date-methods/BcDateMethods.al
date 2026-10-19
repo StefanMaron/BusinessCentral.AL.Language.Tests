@@ -57,8 +57,18 @@ codeunit 80960 "BC Date Methods"
         Both(Observer, '2024-12-30 week 1', 20241230D);
         Both(Observer, '2023-01-01 sunday', 20230101D);
         Both(Observer, '9999-12-31', 99991231D);
-        Both(Observer, '0001-01-01', 00010101D);
         Both(Observer, 'closing 2025-12-31', ClosingDate(20251231D));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure DateMethods_MinDateLiteral()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        // Passing the literal 00010101D as an argument already fails (as in P93Date.al DayMonthYear_Normal), before any method runs.
+        asserterror Both(Observer, '0001-01-01', 00010101D);
+        Observer.ObserveError('min literal');
         Observer.Finish();
     end;
 

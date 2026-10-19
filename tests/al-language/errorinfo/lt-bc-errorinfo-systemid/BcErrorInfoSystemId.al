@@ -54,7 +54,16 @@ codeunit 80985 "BC ErrorInfo SystemId"
         Observer.Observe('original after copy cleared', Format(Info.SystemId()));
         Clear(Info);
         Observer.Observe('after clear', Format(Info.SystemId()));
-        Observer.Finish();
+        Observer.Expect('fresh var', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('after create', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('after set', '{6A2F1C3E-0000-4000-8000-000000000001}');
+        Observer.Expect('property reads same', 'Yes');
+        Observer.Expect('tableid after set', '0');
+        Observer.Expect('recordid after set', '');
+        Observer.Expect('copy cleared', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('original after copy cleared', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Expect('after clear', '{00000000-0000-0000-0000-000000000000}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,7 +88,14 @@ codeunit 80985 "BC ErrorInfo SystemId"
         Observer.Observe('recordid setter sets sysid', Format(Info.SystemId() = Row.SystemId));
         Observer.Observe('recordid setter sysid null', Format(IsNullGuid(Info.SystemId())));
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('create record sysid equal', 'Yes');
+        Observer.Expect('create record tableid', '80953');
+        Observer.Expect('create record recordid', 'Yes');
+        Observer.Expect('create record field sysid equal', 'Yes');
+        Observer.Expect('create record field fieldno', '2');
+        Observer.Expect('recordid setter sets sysid', 'No');
+        Observer.Expect('recordid setter sysid null', 'Yes');
+        Observer.Verify();
     end;
 
     [ErrorBehavior(ErrorBehavior::Collect)]
@@ -115,7 +131,10 @@ codeunit 80985 "BC ErrorInfo SystemId"
         Observer: Codeunit "Probe Observer";
     begin
         CollectAndRead(Observer);
-        Observer.Finish();
+        Observer.Expect('collected count', '1');
+        Observer.Expect('collected message', 'bc collected');
+        Observer.Expect('collected sysid', '{6A2F1C3E-0000-4000-8000-000000000001}');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -138,6 +157,11 @@ codeunit 80985 "BC ErrorInfo SystemId"
         Observer.ObserveError('last error');
         asserterror TryRaise(Fixed());
         Observer.ObserveError('asserterror');
-        Observer.Finish();
+        Observer.Expect('try result', 'No');
+        Observer.Expect('last error|text', 'bc raised');
+        Observer.Expect('last error|code', 'Dialog');
+        Observer.Expect('asserterror|text', 'bc raised');
+        Observer.Expect('asserterror|code', 'Dialog');
+        Observer.Verify();
     end;
 }

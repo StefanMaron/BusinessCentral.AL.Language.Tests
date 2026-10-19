@@ -9,6 +9,9 @@ codeunit 80979 "BC Xml Blob"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    var
+        ValidPngBase64: Label 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', Locked = true;
+
     local procedure Dataset(ReportId: Integer): Text
     var
         TempBlob: Codeunit "Temp Blob";
@@ -34,13 +37,38 @@ codeunit 80979 "BC Xml Blob"
         At := All.IndexOf('<DataItems>');
         if At = 0 then
             exit('no DataItems: ' + All);
-        exit(All.Substring(At));
+        exit(MaskSystemIds(All.Substring(At)));
     end;
 
-    [TryFunction]
-    local procedure TryImport(var Row: Record "BC Blob Row"; InS: InStream)
+    // The systemId attribute of each DataItem is the SystemId of a row inserted by the test, new on every run: only its shape is kept.
+    local procedure MaskSystemIds(T: Text): Text
+    var
+        Marker: Text;
+        Result: Text;
+        At: Integer;
     begin
-        Row.Pic.ImportStream(InS, 'bc probe');
+        Marker := 'systemId="';
+        At := T.IndexOf(Marker);
+        while At > 0 do begin
+            Result += T.Substring(1, At - 1) + Marker;
+            T := T.Substring(At + StrLen(Marker));
+            if (StrLen(T) > 36) and (T[37] = '"') then begin
+                Result += '<guid36>';
+                T := T.Substring(37);
+            end;
+            At := T.IndexOf(Marker);
+        end;
+        exit(Result + T);
+    end;
+
+    local procedure PngStream(var TempBlob: Codeunit "Temp Blob"; var InS: InStream)
+    var
+        Base64: Codeunit "Base64 Convert";
+        OutS: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        Base64.FromBase64(ValidPngBase64, OutS);
+        TempBlob.CreateInStream(InS);
     end;
 
     local procedure Setup()
@@ -115,16 +143,24 @@ codeunit 80979 "BC Xml Blob"
     var
         Observer: Codeunit "Probe Observer";
         Company: Record "Company Information";
+        Base64: Codeunit "Base64 Convert";
+        InS: InStream;
         Text: Text;
+        Expected: Text;
     begin
-        // The repro of al-runtime-rs #253: the dataset is written; the picture column depends on the company's picture, so only its shape is asserted.
+        // The repro of al-runtime-rs #253: the dataset is written. The picture is the company's own (it depends on the database), so the test
+        // compares the column with the Base64 text of that picture instead of a fixed value.
         Company.Get();
         Company.CalcFields(Picture);
-        Observer.Observe('company has picture', Format(Company.Picture.HasValue()));
+        Expected := '<Column name="CompanyPicture"></Column>';
+        if Company.Picture.HasValue() then begin
+            Company.Picture.CreateInStream(InS);
+            Expected := '<Column name="CompanyPicture">' + Base64.ToBase64(InS) + '</Column>';
+        end;
         Text := Dataset(Report::"BC Xml Company Picture");
         Observer.Observe('saved', Format(Text.StartsWith('<DataItems>')));
-        Observer.Observe('has picture column', Format(Text.Contains('CompanyPicture')));
-        Observer.Observe('dataset', Text);
+        Observer.Observe('picture column is base64 of the picture', Format(Text.Contains(Expected)));
+        Observer.Observe('num column', Format(Text.Contains('<Column name="Num">1</Column>')));
         Observer.Finish();
     end;
 
@@ -134,32 +170,42 @@ codeunit 80979 "BC Xml Blob"
         Observer: Codeunit "Probe Observer";
         Row: Record "BC Blob Row";
         TempBlob: Codeunit "Temp Blob";
-        OutS: OutStream;
         InS: InStream;
         Text: Text;
-        MediaId: Guid;
+        SetId: Guid;
     begin
         Row.DeleteAll();
         Row.Init();
         Row.Id := 4;
         Row.Note := 'media';
-        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
-        OutS.WriteText('not an image');
-        TempBlob.CreateInStream(InS);
-        ClearLastError();
-        if TryImport(Row, InS) then;
-        Observer.Observe('import error', GetLastErrorText());
-        MediaId := Row.Pic.MediaId();
-        Observer.Observe('media has value', Format(Row.Pic.HasValue()));
         Row.Insert();
+        PngStream(TempBlob, InS);
+        Row.Pic.ImportStream(InS, 'bc probe');
+        PngStream(TempBlob, InS);
+        Row.Pics.ImportStream(InS, 'bc probe set');
+        Row.Modify();
+        SetId := Row.Pics.MediaId();
+        Observer.Observe('media has value', Format(Row.Pic.HasValue()));
+        Observer.Observe('media set count', Format(Row.Pics.Count()));
         Text := Dataset(Report::"BC Xml Blob Columns");
-        if not IsNullGuid(MediaId) then begin
-            Text := Text.Replace(Format(MediaId), '<media-id>');
-            Text := Text.Replace(DelChr(Format(MediaId), '=', '{}'), '<media-id-bare>');
-            Text := Text.Replace(LowerCase(DelChr(Format(MediaId), '=', '{}')), '<media-id-lower>');
-        end;
+        // Media and MediaSet ids are new on every run: they are replaced by placeholders in every spelling the dataset could use.
+        Text := Mask(Text, Row.Pic.MediaId(), 'media');
+        Text := Mask(Text, SetId, 'mediaset');
+        Text := Mask(Text, Row.Pics.Item(1), 'mediaset-item');
         Observer.Observe('dataset', Text);
         Row.DeleteAll();
         Observer.Finish();
+    end;
+
+    local procedure Mask(T: Text; Id: Guid; Name: Text): Text
+    var
+        Bare: Text;
+    begin
+        if IsNullGuid(Id) then
+            exit(T);
+        Bare := DelChr(Format(Id), '=', '{}');
+        T := T.Replace(Format(Id), '<' + Name + '-braced>');
+        T := T.Replace(Bare, '<' + Name + '-upper>');
+        exit(T.Replace(LowerCase(Bare), '<' + Name + '-lower>'));
     end;
 }

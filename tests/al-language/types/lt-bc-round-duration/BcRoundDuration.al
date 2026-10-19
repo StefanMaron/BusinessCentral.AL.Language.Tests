@@ -77,7 +77,14 @@ codeunit 80980 "BC Round Duration"
         Observer.Observe('1234567', Row(D));
         D := 1;
         Observer.Observe('1', Row(D));
-        Observer.Finish();
+        Observer.Expect('zero', '0 ; 0 ; 0 ; 0 ; 0 ; 0 ; 0');
+        Observer.Expect('1500', '1500 ; 2000 ; 1000 ; 2000 ; 2000 ; 1500 ; 0');
+        Observer.Expect('2500', '2500 ; 3000 ; 2000 ; 3000 ; 3000 ; 2500 ; 0');
+        Observer.Expect('-1500', '-1500 ; -2000 ; -1000 ; -2000 ; -2000 ; -1500 ; 0');
+        Observer.Expect('-2500', '-2500 ; -3000 ; -2000 ; -3000 ; -3000 ; -2500 ; 0');
+        Observer.Expect('1234567', '1234567 ; 1235000 ; 1234000 ; 1235000 ; 1235000 ; 1234567 ; 1260000');
+        Observer.Expect('1', '1 ; 0 ; 0 ; 1000 ; 0 ; 1 ; 0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,7 +100,12 @@ codeunit 80980 "BC Round Duration"
         Observer.Observe('precision 0', Rnd(D, 0, ''));
         Observer.Observe('precision -1000', Rnd(D, -1000, ''));
         Observer.Observe('direction x', Rnd(D, 1000, 'x'));
-        Observer.Finish();
+        Observer.Expect('no precision 1499', '1499');
+        Observer.Expect('no precision 1500', '1500');
+        Observer.Expect('precision 0', 'error:The value of ROUND parameter 2 is outside of the permitted range. The current value is: 0. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('precision -1000', 'error:The value of ROUND parameter 2 is outside of the permitted range. The current value is: 1,000. The permitted range is: from 1 to 2,147,483,647.|OutsidePermittedRange');
+        Observer.Expect('direction x', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,6 +130,15 @@ codeunit 80980 "BC Round Duration"
         Observer.Observe('to duration 1 by 0.3', RndDur(D, 0.3));
         D := -3723004;
         Observer.Observe('to duration -3723004 by 60000', RndDur(D, 60000));
-        Observer.Finish();
+        Observer.Expect('is decimal', 'Yes');
+        Observer.Expect('is duration', 'No');
+        Observer.Expect('is integer', 'No');
+        Observer.Expect('is biginteger', 'No');
+        Observer.Expect('as decimal', '3000');
+        Observer.Expect('to duration 2500 by 1000', '3 seconds = P0DT0H0M3.0S');
+        Observer.Expect('to duration 2500 by 1', '2 seconds 500 milliseconds = P0DT0H0M2.5S');
+        Observer.Expect('to duration 1 by 0.3', 'error:Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 0.9 to System.Int64.|ConversionCast');
+        Observer.Expect('to duration -3723004 by 60000', '-1 hour 2 minutes = -P0DT1H2M0.0S');
+        Observer.Verify();
     end;
 }
