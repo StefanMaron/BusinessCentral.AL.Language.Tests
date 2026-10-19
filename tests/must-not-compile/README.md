@@ -322,9 +322,6 @@ is only a reference.
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
-| 1712, 1713 | AL0296 | A permission set in a Cloud app names tabledata or the table object of the Scope = OnPrem table `User Property`. |
-| 1714 | AL0161 | A permission set names a codeunit that is Access = Internal in a dependency (System Application `Agent Impl.`). |
-| 1715 to 1718 | AL0195 | AccessByPermission with any kind other than X on a table, page, codeunit, report, query or xmlport object (tabledata takes RIMD). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
