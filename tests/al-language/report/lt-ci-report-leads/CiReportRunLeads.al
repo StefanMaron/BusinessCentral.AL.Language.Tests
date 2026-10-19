@@ -418,9 +418,9 @@ codeunit 84592 "LT CI Report Run Leads"
         RP.OK().Invoke();
     end;
 
-    // Item 143: Report.Run with and without a request page while the test has an uncommitted write.
+    // Item 143: Report.Run with and without a request page while the test has an uncommitted write. With the request page the call fails before
+    // the page opens: a request page handler is never called (the test runner then reports it as not executed), so these tests declare none.
     [Test]
-    [HandlerFunctions('TxOkHandler')]
     procedure PendingWrite_ReportRun_WithRequestPage()
     var
         Observer: Codeunit "Probe Observer";
@@ -440,7 +440,6 @@ codeunit 84592 "LT CI Report Run Leads"
     end;
 
     [Test]
-    [HandlerFunctions('TxOkHandler')]
     procedure PendingWrite_ReportRun_WithRequestPage_AssertError()
     var
         Observer: Codeunit "Probe Observer";
@@ -485,7 +484,6 @@ codeunit 84592 "LT CI Report Run Leads"
     end;
 
     [Test]
-    [HandlerFunctions('TxOkHandler')]
     procedure PendingWrite_ReportRunModal_WithRequestPage()
     var
         Observer: Codeunit "Probe Observer";
@@ -516,12 +514,6 @@ codeunit 84592 "LT CI Report Run Leads"
         Report.RunModal(Report::"LT CI Tx Rpt", RequestWindow, false, Row);
     end;
 
-    [RequestPageHandler]
-    procedure TxOkHandler(var RP: TestRequestPage "LT CI Tx Rpt")
-    begin
-        L.Add('tx handler');
-        RP.OK().Invoke();
-    end;
 
     // Item 135: SetTableView with a record of a table that is no data item of the report.
     [Test]
@@ -533,14 +525,15 @@ codeunit 84592 "LT CI Report Run Leads"
         Rpt: Report "LT CI Tx Rpt";
     begin
         Start(0);
+        Other.SetRange("Report ID", 1);
+        asserterror Rpt.SetTableView(Other);
+        Observer.ObserveError('settableview');
+        // The rows are inserted after asserterror, which rolls back the writes made before it.
         Row.DeleteAll();
         Row.Id := 1;
         Row.Insert();
         Row.Id := 2;
         Row.Insert();
-        Other.SetRange("Report ID", 1);
-        asserterror Rpt.SetTableView(Other);
-        Observer.ObserveError('settableview');
         Rpt.UseRequestPage(false);
         Outcome(Observer, 'run', TryRunVariable(Rpt));
         Observer.Expect('settableview|text', 'The LT CI Tx Rpt report does not have a DataItem that uses the table (Table 9651 Report Layout Selection) specified in the function SetTableView.');
@@ -548,7 +541,7 @@ codeunit 84592 "LT CI Report Run Leads"
         Observer.Expect('run', 'Yes');
         Observer.Expect('run|text', '');
         Observer.Expect('run|code', '');
-        Observer.Expect('run log', 'pre filter=[];');
+        Observer.Expect('run log', 'pre filter=[];row 1;row 2;');
         Observer.Verify();
     end;
 
