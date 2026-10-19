@@ -2,8 +2,11 @@
 // Scope: in-scope
 // Fixtures used: Upgrade Tag (codeunit 9999, System Application), Probe Observer (69160); own codeunit 84836 (manual subscriber).
 // Facts: corpus issue 669 (odd AL behavior leads, part D), item 44. Upgrade Tag called from a test session: HasUpgradeTag before and after
-//   SetUpgradeTag, SetUpgradeTag twice, HasUpgradeTag for another company, SetAllUpgradeTags with a bound OnGetPerCompanyUpgradeTags
-//   subscriber, and a company inserted while that subscriber is bound.
+//   SetUpgradeTag, HasUpgradeTag for another company and for the database (''), SetAllUpgradeTags with a bound OnGetPerCompanyUpgradeTags
+//   subscriber, and a company inserted while that subscriber is bound. Every test uses a new tag (a GUID), because the Upgrade Tags
+//   table is internal to the System Application and rows left by an earlier run cannot be removed.
+//   Not asserted: SetUpgradeTag twice. The duplicate insert is buffered: asserterror around the second call saw no error, and the
+//   error "The record in table Upgrade Tags already exists. Identification fields and values: Tag='...',Company='...'" came later.
 // BC versions: 27, 28, 29
 
 codeunit 84835 "LT CM Upgrade Tag"
@@ -11,27 +14,30 @@ codeunit 84835 "LT CM Upgrade Tag"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    local procedure NewTag(): Code[250]
+    begin
+        exit(CopyStr('LT-CM-' + DelChr(Format(CreateGuid()), '=', '{}-'), 1, 250));
+    end;
+
     [Test]
     procedure Item44_HasAndSetUpgradeTag()
     var
         UpgradeTag: Codeunit "Upgrade Tag";
         Observer: Codeunit "Probe Observer";
+        Tag: Code[250];
     begin
-        Observer.Observe('has before set', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1')));
-        UpgradeTag.SetUpgradeTag('LT-CM-TAG-1');
-        Observer.Observe('has after set', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1')));
-        Observer.Observe('has for own company', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1', CopyStr(CompanyName(), 1, 30))));
-        Observer.Observe('has for other company', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1', 'LT CM NO SUCH CO')));
-        Observer.Observe('has for database', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1', '')));
-        // A second SetUpgradeTag with the same tag raises no error (BC 29 local run: asserterror failed with "An error was expected").
-        UpgradeTag.SetUpgradeTag('LT-CM-TAG-1');
-        Observer.Observe('has after second set', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1')));
+        Tag := NewTag();
+        Observer.Observe('has before set', Format(UpgradeTag.HasUpgradeTag(Tag)));
+        UpgradeTag.SetUpgradeTag(Tag);
+        Observer.Observe('has after set', Format(UpgradeTag.HasUpgradeTag(Tag)));
+        Observer.Observe('has for own company', Format(UpgradeTag.HasUpgradeTag(Tag, CopyStr(CompanyName(), 1, 30))));
+        Observer.Observe('has for other company', Format(UpgradeTag.HasUpgradeTag(Tag, 'LT CM NO SUCH CO')));
+        Observer.Observe('has for database', Format(UpgradeTag.HasUpgradeTag(Tag, '')));
         Observer.Expect('has before set', 'No');
         Observer.Expect('has after set', 'Yes');
         Observer.Expect('has for own company', 'Yes');
         Observer.Expect('has for other company', 'No');
         Observer.Expect('has for database', 'No');
-        Observer.Expect('has after second set', 'Yes');
         Observer.Verify();
     end;
 
@@ -41,14 +47,17 @@ codeunit 84835 "LT CM Upgrade Tag"
         UpgradeTag: Codeunit "Upgrade Tag";
         Subs: Codeunit "LT CM Upgrade Tag Subs";
         Observer: Codeunit "Probe Observer";
+        Tag: Code[250];
     begin
+        Tag := NewTag();
+        Subs.SetTag(Tag);
         UpgradeTag.SetAllUpgradeTags();
-        Observer.Observe('unbound: has after SetAllUpgradeTags', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2')));
+        Observer.Observe('unbound: has after SetAllUpgradeTags', Format(UpgradeTag.HasUpgradeTag(Tag)));
         BindSubscription(Subs);
         UpgradeTag.SetAllUpgradeTags();
-        Observer.Observe('bound: has after SetAllUpgradeTags', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2')));
+        Observer.Observe('bound: has after SetAllUpgradeTags', Format(UpgradeTag.HasUpgradeTag(Tag)));
         UpgradeTag.SetAllUpgradeTags();
-        Observer.Observe('bound: SetAllUpgradeTags again', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2')));
+        Observer.Observe('bound: SetAllUpgradeTags again', Format(UpgradeTag.HasUpgradeTag(Tag)));
         UnbindSubscription(Subs);
         Observer.Expect('unbound: has after SetAllUpgradeTags', 'No');
         Observer.Expect('bound: has after SetAllUpgradeTags', 'Yes');
@@ -63,14 +72,19 @@ codeunit 84835 "LT CM Upgrade Tag"
         Subs: Codeunit "LT CM Upgrade Tag Subs";
         Company: Record Company;
         Observer: Codeunit "Probe Observer";
+        Tag: Code[250];
+        NewName: Text[30];
     begin
+        Tag := NewTag();
+        NewName := CopyStr('LT CM ' + CopyStr(Tag, 7, 20), 1, 30);
+        Subs.SetTag(Tag);
         BindSubscription(Subs);
         Company.Init();
-        Company.Name := 'LT CM NEW CO';
+        Company.Name := NewName;
         Company.Insert();
         UnbindSubscription(Subs);
-        Observer.Observe('new company has the tag', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2', 'LT CM NEW CO')));
-        Observer.Observe('own company has the tag', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2')));
+        Observer.Observe('new company has the tag', Format(UpgradeTag.HasUpgradeTag(Tag, NewName)));
+        Observer.Observe('own company has the tag', Format(UpgradeTag.HasUpgradeTag(Tag)));
         Observer.Expect('new company has the tag', 'Yes');
         Observer.Expect('own company has the tag', 'No');
         Observer.Verify();
@@ -81,9 +95,17 @@ codeunit 84836 "LT CM Upgrade Tag Subs"
 {
     EventSubscriberInstance = Manual;
 
+    var
+        TagToAdd: Code[250];
+
+    procedure SetTag(Tag: Code[250])
+    begin
+        TagToAdd := Tag;
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Upgrade Tag", OnGetPerCompanyUpgradeTags, '', false, false)]
     local procedure AddTag(var PerCompanyUpgradeTags: List of [Code[250]])
     begin
-        PerCompanyUpgradeTags.Add('LT-CM-TAG-2');
+        PerCompanyUpgradeTags.Add(TagToAdd);
     end;
 }

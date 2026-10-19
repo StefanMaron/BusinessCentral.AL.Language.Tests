@@ -50,7 +50,17 @@ codeunit 84840 "LT CM Install Leads"
         Observer.Observe('Message', Seed('MESSAGE'));
         Observer.Observe('Commit', Seed('COMMIT'));
         Observer.Observe('after Commit', Seed('AFTER COMMIT'));
-        Observer.Finish();
+        // Linux suspect, not asserted (queued for the Windows check): 'if Codeunit.Run' and 'Page.RunModal' gave the generic text
+        // "An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance." with code DB:Ok.
+        Observer.Ignore('if Codeunit.Run');
+        Observer.Ignore('Page.RunModal');
+        Observer.Expect('GuiAllowed', 'No');
+        Observer.Expect('Codeunit.Run statement', 'ok');
+        Observer.Expect('Confirm', 'error: Microsoft Dynamics 365 Business Central Data Services attempted to issue a client callback to show a confirmation dialog box: LT CM install confirm (CodeUnit 84838 LT CM Install). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Data Services. | code: CallbackNotAllowed');
+        Observer.Expect('Message', 'ok');
+        Observer.Expect('Commit', 'ok');
+        Observer.Expect('after Commit', 'reached');
+        Observer.Verify();
     end;
 
     [Test]

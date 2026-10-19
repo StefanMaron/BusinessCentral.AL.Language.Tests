@@ -3,6 +3,20 @@
 // Scope: in-scope
 // Fixtures used: CmTriggerObjects.al in this folder (84820-84829, 84831-84833), Probe Observer (69160).
 // Facts: corpus issue 669 (odd AL behavior leads, part D), items 31, 33 to 40.
+//   31: CurrFieldNo := 10 in a table extension procedure, then Modify(true): the base OnModify reads 10 (Rec.CurrFieldNo: AL0161, case 1696).
+//   33: a value missing from the related table fails before OnValidate runs (Rec.Validate, FieldRef.Validate(v), FieldRef.Validate());
+//       the field keeps its old value. ValidateTableRelation = false: no error, OnValidate runs.
+//   34: no property and = true both check (table and tableextension fields), = false does not.
+//   35: Insert(true) runs the extension's OnBeforeInsert, OnInsert, OnAfterInsert; what OnAfterInsert sets is in the variable but not
+//       stored until a later Modify. Insert(false) and Insert() run none of them.
+//   36: in OnInsert the SystemId is set; a row inserted with it by Insert(false, true) is found by GetBySystemId in the same trigger;
+//       TransferFields does not copy the SystemId.
+//   37: triggers of a temporary record run and write to and delete from real tables; DeleteAll() on it leaves real rows alone.
+//   38: xRec in OnValidate is the value before Validate and does not follow assignments to Rec or a nested Validate; the nested
+//       Validate's xRec is the outer xRec. In OnModify called from code, xRec equals Rec.
+//   39: in code, OnBeforeModify / OnAfterModify see xRec = Rec (Get+assign, never read, Validate); after a TestPage edit xRec is the stored row.
+//   40: TestPage New on a list filtered Id 1..5 with key 7: TestValidation error "The view is filtered, and the entry is outside the
+//       filter. Some actions may not work." after OnInsertRecord ran; the row is stored. No filter, or key 3: no error.
 // BC versions: 27, 28, 29
 
 codeunit 84830 "LT CM Trigger Leads"
