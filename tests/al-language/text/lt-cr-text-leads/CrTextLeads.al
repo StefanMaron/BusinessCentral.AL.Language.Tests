@@ -449,6 +449,46 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Verify();
     end;
 
+    [TryFunction]
+    local procedure TrySelect(N: Integer; S: Text; var Res: Text)
+    begin
+        Res := SelectStr(N, S);
+    end;
+
+    local procedure Select(N: Integer; S: Text): Text
+    var
+        Res: Text;
+    begin
+        if TrySelect(N, S, Res) then
+            exit('ok:' + Format(StrLen(Res)) + ':' + CopyStr(Res, 1, 20));
+        exit('error:' + CopyStr(GetLastErrorText(), 1, 60) + '|' + GetLastErrorCode());
+    end;
+
+    // Item 48 (SelectStr: quotes and the 391 character limit). Already pinned: text/lt-text-functions/SelectStr.Codeunit.al (trailing and
+    // leading commas, empty items, index errors). New here: double quotes inside the list and long lists. Values: ok:<length>:<first 20>.
+    [Test]
+    procedure SelectStr_QuotesAndLongList()
+    var
+        Obs: Codeunit "Probe Observer";
+        Long: Text;
+    begin
+        Obs.Observe('quote_3', Select(3, 'a,b,"c,d",e'));
+        Obs.Observe('quote_4', Select(4, 'a,b,"c,d",e'));
+        Obs.Observe('quote_5', Select(5, 'a,b,"c,d",e'));
+        Obs.Observe('quote_6', Select(6, 'a,b,"c,d",e'));
+        Long := PadStr('', 391, 'x');
+        Obs.Observe('one_391', Select(1, Long));
+        Long := PadStr('', 392, 'x');
+        Obs.Observe('one_392', Select(1, Long));
+        Long := PadStr('', 1000, 'x');
+        Obs.Observe('one_1000', Select(1, Long));
+        Long := PadStr('', 394, 'x') + ',' + PadStr('', 5, 'y');
+        Obs.Observe('two_400', Select(2, Long));
+        Long := PadStr('', 394, 'x') + ',' + PadStr('', 5, 'y') + ',,,';
+        Obs.Observe('two_trailing', Select(2, Long));
+        Obs.Finish();
+    end;
+
     // Item 61 (Split with a Char returned by a procedure). The lead's case has the procedure in another app (not pinnable in one app); here
     // the procedure is in another codeunit of the same app. The multi-character separator is already pinned: text/lt-text-instance/
     // Split1.Codeunit.al:105.
