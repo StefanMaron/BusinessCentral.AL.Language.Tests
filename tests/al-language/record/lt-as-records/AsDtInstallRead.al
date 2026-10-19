@@ -5,6 +5,7 @@
 //   CopyRows with a source filter, mapped fields and a constant; CopyFields joined on the key with a source filter; CopyFields within one table;
 //   CopyFields with a destination filter (BC 28+). Source rows: A(10, alpha, 1.5, kind 1), B(20, beta, 2.5, kind 2), C(30, gamma, 3.5, kind 1),
 //   D(0, delta, 0, kind 2).
+// Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced (27.5, 28.5, 29.0: identical).
 // BC versions: 27.5+ (S4 28+)
 
 codeunit 79939 "LT AS DT Install Read"
@@ -89,7 +90,10 @@ codeunit 79939 "LT AS DT Install Read"
         Observer.Observe('ctx', ObsText('CTX'));
         Observer.Observe('done', ObsText('DONE'));
         Observer.Observe('src', SrcRows());
-        Observer.Finish();
+        Observer.Expect('ctx', 'Install');
+        Observer.Expect('done', 'ok');
+        Observer.Expect('src', 'A|10|alpha|1.5|1;B|20|beta|2.5|2;C|30|gamma|3.5|1;D|0|delta|0|2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -99,7 +103,9 @@ codeunit 79939 "LT AS DT Install Read"
     begin
         Observer.Observe('outcome', ObsText('S1'));
         Observer.Observe('rows', RowsRows());
-        Observer.Finish();
+        Observer.Expect('outcome', 'ok');
+        Observer.Expect('rows', 'B|20|beta|copied|0;C|30|gamma|copied|0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +115,9 @@ codeunit 79939 "LT AS DT Install Read"
     begin
         Observer.Observe('outcome', ObsText('S2'));
         Observer.Observe('rows', FieldsRows());
-        Observer.Finish();
+        Observer.Expect('outcome', 'ok');
+        Observer.Expect('rows', 'A|alpha|10|joined;B|old|-1|seed;E|old|-1|seed;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,7 +127,9 @@ codeunit 79939 "LT AS DT Install Read"
     begin
         Observer.Observe('outcome', ObsText('S3'));
         Observer.Observe('rows', SelfRows());
-        Observer.Finish();
+        Observer.Expect('outcome', 'ok');
+        Observer.Expect('rows', 'X|5|-1|seed;Y|15|15|self;Z|25|25|self;');
+        Observer.Verify();
     end;
 
 #if BC28PLUS
@@ -130,7 +140,9 @@ codeunit 79939 "LT AS DT Install Read"
     begin
         Observer.Observe('outcome', ObsText('S4'));
         Observer.Observe('rows', DestFRows());
-        Observer.Finish();
+        Observer.Expect('outcome', 'ok');
+        Observer.Expect('rows', 'A|alpha|1;B|old|2;C|gamma|1;');
+        Observer.Verify();
     end;
 #endif
 }
