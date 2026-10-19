@@ -890,7 +890,13 @@ codeunit 70303 "LT P81 LoadFields"
         Row.SetLoadFields(ExtNote);
         Row.Get(2);
         Observer.Observe('extension text field', BrLoaded(Row));
-        Observer.Finish();
+        Observer.Expect('note only', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=Yes RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('flowfield using Grp', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('conditional relation on Kind', 'Kind=Yes No=Yes Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('relation filtered by Grp', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=Yes ExtNote=No ExtRel=No');
+        Observer.Expect('extension relation field', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=Yes');
+        Observer.Expect('extension text field', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=Yes ExtRel=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -936,7 +942,15 @@ codeunit 70303 "LT P81 LoadFields"
         else
             Observer.Observe('validate RelFiltered T2 Grp G1', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
         Observer.Observe('after relfiltered', BrLoaded(Row));
-        Observer.Finish();
+        Observer.Expect('before', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=Yes RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('validate O1 on Kind Other', 'ok|O1');
+        Observer.Expect('after', 'Kind=Yes No=Yes Grp=Yes Cnt=Yes Note=Yes RelFiltered=Yes ExtNote=Yes ExtRel=Yes');
+        Observer.Expect('validate T1 on Kind Target', 'ok|T1');
+        Observer.Expect('validate O1 on Kind Target', 'error|The field No. of table LT BR LF Row contains a value (O1) that cannot be found in the related table (LT BR LF Target).|DB:PrimRecordNotFound');
+        Observer.Expect('validate RelFiltered T1 Grp G1', 'ok|T1');
+        Observer.Expect('validate RelFiltered T2 Grp G1', 'error|The field RelFiltered of table LT BR LF Row contains a value (T2) that cannot be found in the related table (LT BR LF Target).|DB:NothingInsideFilter');
+        Observer.Expect('after relfiltered', 'Kind=Yes No=Yes Grp=Yes Cnt=Yes Note=Yes RelFiltered=Yes ExtNote=Yes ExtRel=Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -1001,7 +1015,16 @@ codeunit 70303 "LT P81 LoadFields"
         Clear(Row);
         Ok := Row.SetLoadFields();
         Observer.Observe('set none', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('set flowfield', 'Yes');
+        Observer.Expect('set flowfield loaded', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('set flowfilter', 'Yes');
+        Observer.Expect('set normal and flowfield', 'Yes');
+        Observer.Expect('set normal', 'Yes');
+        Observer.Expect('add flowfield', 'ok|No');
+        Observer.Expect('add flowfilter', 'ok|No');
+        Observer.Expect('add normal', 'ok|No');
+        Observer.Expect('set none', 'Yes');
+        Observer.Verify();
     end;
 }
 

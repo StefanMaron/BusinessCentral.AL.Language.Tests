@@ -946,6 +946,9 @@ codeunit 69677 "TGL Record Variable Tests"
         Observer.Observe('row counter after GetTable', Format(Row.GetCounter()));
         RecRef.SetTable(Row);
         Observer.Observe('row after SetTable back', Format(Row.GetCounter()) + '|' + Format(Row.Payload));
-        Observer.Finish();
+        Observer.Expect('seen by OnInsert through the RecordRef', '1|V7');
+        Observer.Expect('row counter after GetTable', '2');
+        Observer.Expect('row after SetTable back', '2|7');
+        Observer.Verify();
     end;
 }

@@ -101,7 +101,9 @@ codeunit 82968 "LT BR Record Size"
             Observer.Observe('read back', Format(StrLen(Row.T1)) + '|' + Format(StrLen(Row.T5)) + '|' + CopyStr(Row.T5, 2048, 1))
         else
             Observer.Observe('read back', 'no row');
-        Observer.Finish();
+        Observer.Expect('insert', 'ok');
+        Observer.Expect('read back', '2048|2048|e');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,6 +123,10 @@ codeunit 82968 "LT BR Record Size"
             Observer.Observe('after modify', CopyStr(Row.E3, 1, 1) + '|' + Format(StrLen(Row.E3)));
         end else
             Observer.Observe('read back', 'no row');
-        Observer.Finish();
+        Observer.Expect('insert', 'ok');
+        Observer.Expect('read back', '1900|2048|2048|d');
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('after modify', 'z|2048');
+        Observer.Verify();
     end;
 }

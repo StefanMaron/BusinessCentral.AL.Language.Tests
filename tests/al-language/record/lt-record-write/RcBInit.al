@@ -431,7 +431,13 @@ codeunit 72002 "LT RcB Init"
         Observer.Observe('count', Format(Rec.Count()));
         Rec.Color := Rec.Color::Blue;
         Observer.Observe('modify', Format(Rec.Modify()));
-        Observer.Finish();
+        Observer.Expect('init value', 'Red|Red');
+        Observer.Expect('validate green', 'Green');
+        Observer.Expect('validate red (ordinal 0)', 'no error|Dialog');
+        Observer.Expect('insert ordinal 0 key and field', 'Yes');
+        Observer.Expect('count', '1');
+        Observer.Expect('modify', 'Yes');
+        Observer.Verify();
     end;
 }
 

@@ -116,7 +116,15 @@ codeunit 60067 "Test RecordRef Open"
         TempRef.Open(Database::"ALT Universal", true);
         Observer.Observe('open temp number', Format(TempRef.Number()));
         Observer.Observe('open temp name', TempRef.Name());
-        Observer.Finish();
+        Observer.Expect('gettable istemporary', 'Yes');
+        Observer.Expect('gettable number', '60000');
+        Observer.Expect('record recordid tableno', '60000');
+        Observer.Expect('record recordid text', 'ALT Universal: 7');
+        Observer.Expect('recordref recordid tableno', '60000');
+        Observer.Expect('record tablecaption', 'ALT Universal');
+        Observer.Expect('open temp number', '60000');
+        Observer.Expect('open temp name', 'ALT Universal');
+        Observer.Verify();
     end;
 
     local procedure Initialize()

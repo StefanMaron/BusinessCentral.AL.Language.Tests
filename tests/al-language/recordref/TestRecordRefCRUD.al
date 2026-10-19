@@ -179,11 +179,23 @@ codeunit 60068 "Test RecordRef CRUD"
         Observer.Observe('delete again returns', Format(Ok));
         Ok := RecRef.Modify(false);
         Observer.Observe('modify missing returns', Format(Ok));
-        asserterror RecRef.Delete(false);
-        Observer.ObserveError('delete missing statement');
-        asserterror RecRef.Modify(false);
-        Observer.ObserveError('modify missing statement');
+        // First CI run: one of the two statement forms below raised no error (asserterror failed), so each one now ends with a marker error.
+        Observer.Observe('delete missing statement', StatementOutcome(RecRef, true));
+        Observer.Observe('modify missing statement', StatementOutcome(RecRef, false));
         Observer.Finish();
+    end;
+
+    local procedure StatementOutcome(var RecRef: RecordRef; DoDelete: Boolean): Text
+    begin
+        ClearLastError();
+        asserterror begin
+            if DoDelete then
+                RecRef.Delete(false)
+            else
+                RecRef.Modify(false);
+            Error('no error');
+        end;
+        exit(GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
     local procedure Initialize()

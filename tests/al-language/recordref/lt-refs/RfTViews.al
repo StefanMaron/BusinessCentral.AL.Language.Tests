@@ -311,20 +311,70 @@ codeunit 73023 "LT RfT Views"
         Observer: Codeunit "Probe Observer";
         RecRef: RecordRef;
     begin
+        // First CI run: 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.' ended the test
+        // outside every asserterror below, so each call now runs in its own asserterror block with a marker error after it.
         RecRef.Open(73001);
-        RecRef.LockTable(true);
-        Observer.Observe('wait true', 'ok');
-        RecRef.LockTable(true, true);
-        Observer.Observe('wait true versioncheck true', 'ok');
-        RecRef.LockTable(true, false);
-        Observer.Observe('wait true versioncheck false', 'ok');
-        asserterror RecRef.LockTable(false);
-        Observer.ObserveError('wait false');
-        asserterror RecRef.LockTable(false, true);
-        Observer.ObserveError('wait false versioncheck true');
-        asserterror RecRef.LockTable(false, false);
-        Observer.ObserveError('wait false versioncheck false');
+        Observer.Observe('wait true', LockOutcome(RecRef, 1));
+        Observer.Observe('wait true versioncheck true', LockOutcome(RecRef, 2));
+        Observer.Observe('wait true versioncheck false', LockOutcome(RecRef, 3));
         Observer.Finish();
+    end;
+
+    // Corpus issue 668 item 52 (writer br): each Wait = false form alone on a fresh RecordRef (no earlier LockTable in the test).
+    [Test]
+    procedure LockTable_WaitFalse_OneArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        Observer.Observe('wait false', LockOutcome(RecRef, 4));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure LockTable_WaitFalse_VersionCheckTrue()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        Observer.Observe('wait false versioncheck true', LockOutcome(RecRef, 5));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure LockTable_WaitFalse_VersionCheckFalse()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        Observer.Observe('wait false versioncheck false', LockOutcome(RecRef, 6));
+        Observer.Finish();
+    end;
+
+    local procedure LockOutcome(var RecRef: RecordRef; Arm: Integer): Text
+    begin
+        ClearLastError();
+        asserterror begin
+            case Arm of
+                1:
+                    RecRef.LockTable(true);
+                2:
+                    RecRef.LockTable(true, true);
+                3:
+                    RecRef.LockTable(true, false);
+                4:
+                    RecRef.LockTable(false);
+                5:
+                    RecRef.LockTable(false, true);
+                6:
+                    RecRef.LockTable(false, false);
+            end;
+            Error('no error');
+        end;
+        exit(GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
     // Corpus issue 668 item 55 (writer br): GetView after SetView and a later filter change on the same RecordRef.
@@ -346,6 +396,11 @@ codeunit 73023 "LT RfT Views"
         Observer.Observe('count', Format(RecRef.Count()));
         RecRef.Field(3).SetRange();
         Observer.Observe('after clearing int', RecRef.GetView(false));
-        Observer.Finish();
+        Observer.Expect('after setview', 'VERSION(1) SORTING(Int,Txt Caption) WHERE(Int=FILTER(>=20))');
+        Observer.Expect('after setrange same field', 'VERSION(1) SORTING(Int,Txt Caption) WHERE(Int=FILTER(30))');
+        Observer.Expect('after setfilter other field', 'VERSION(1) SORTING(Int,Txt Caption) WHERE(Txt Caption=FILTER(Text*),Int=FILTER(30))');
+        Observer.Expect('count', '1');
+        Observer.Expect('after clearing int', 'VERSION(1) SORTING(Field3,Field2) WHERE(Field2=1(Text*))');
+        Observer.Verify();
     end;
 }

@@ -133,6 +133,10 @@ codeunit 68962 "Probe RecordId GetRecord"
 
         Fetched.Open(Database::"Probe GetRecord Table");
         Observer.Observe('recordref get', Format(Fetched.Get(Rid)) + '|' + BrSystemIdState(Fetched, Expected));
-        Observer.Finish();
+        Observer.Expect('getrecord', 'null=Yes same=No');
+        Observer.Expect('loadfields', 'ok|null=Yes same=No|txt=');
+        Observer.Expect('setrecfilter findfirst', 'Yes|null=No same=Yes|txt=hello');
+        Observer.Expect('recordref get', 'Yes|null=No same=Yes');
+        Observer.Verify();
     end;
 }

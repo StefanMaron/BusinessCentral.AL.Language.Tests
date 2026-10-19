@@ -311,7 +311,11 @@ codeunit 61202 "Test Object Sys Table"
         Observer.Observe('object setrange name findfirst', BrNameFilter(2));
         Observer.Observe('allobj setfilter object name', BrNameFilter(3));
         Observer.Observe('allobjwithcaption setfilter object name', BrNameFilter(4));
-        Observer.Finish();
+        Observer.Expect('object setfilter name', 'ok:0');
+        Observer.Expect('object setrange name findfirst', 'ok:No');
+        Observer.Expect('allobj setfilter object name', 'ok:1');
+        Observer.Expect('allobjwithcaption setfilter object name', 'ok:1');
+        Observer.Verify();
     end;
 
     local procedure Initialize()

@@ -393,7 +393,14 @@ codeunit 67604 "LT N582 Test Page Edges"
         List.OpenEdit();
         Observer.Observe('list edit amtfilter', Format(List.AmtFilter.Editable()));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('card edit amtfilter', 'Yes');
+        Observer.Expect('card edit datefilter', 'Yes');
+        Observer.Expect('card edit total', 'No');
+        Observer.Expect('card edit amt', 'Yes');
+        Observer.Expect('card edit amtfilter value', '');
+        Observer.Expect('card view amtfilter', 'No');
+        Observer.Expect('list edit amtfilter', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -418,7 +425,9 @@ codeunit 67604 "LT N582 Test Page Edges"
         else
             Observer.Observe('setvalue 7', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('total before', '12.00');
+        Observer.Expect('setvalue 7', 'ok|7.00|total=12.00');
+        Observer.Verify();
     end;
 }
 

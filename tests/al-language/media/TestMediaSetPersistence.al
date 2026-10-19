@@ -322,7 +322,14 @@ codeunit 60951 "Test MediaSet Persistence"
         Rec.Modify();
         Rec.Get('BR1');
         Observer.Observe('after modify get', Format(Rec.Images.Count()) + '|' + Format(Rec.Images.Item(1) = I2) + '|' + Format(Rec.Images.Item(2) = I3));
-        Observer.Finish();
+        Observer.Expect('count', '3');
+        Observer.Expect('distinct', 'Yes');
+        Observer.Expect('remove first', 'Yes');
+        Observer.Expect('count after remove', '2');
+        Observer.Expect('item1 is old item2', 'Yes');
+        Observer.Expect('item2 is old item3', 'Yes');
+        Observer.Expect('after modify get', '2|Yes|Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -353,7 +360,9 @@ codeunit 60951 "Test MediaSet Persistence"
         Target.Modify();
         Target.Get('BR3');
         Observer.Observe('stored', Format(Target.Images.Count()) + '|' + Format(Target.Images.Item(1) = Source.Images.Item(1)) + '|' + Format(Target.Images.MediaId() = Source.Images.MediaId()));
-        Observer.Finish();
+        Observer.Expect('assigned count', '1');
+        Observer.Expect('stored', '1|Yes|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -379,7 +388,9 @@ codeunit 60951 "Test MediaSet Persistence"
         Target.Modify();
         Target.Get('BR4');
         Observer.Observe('stored', Format(Target.Images.Count()));
-        Observer.Finish();
+        Observer.Expect('assign', 'ok|1');
+        Observer.Expect('stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -405,7 +416,9 @@ codeunit 60951 "Test MediaSet Persistence"
         Target.Modify();
         Target.Get('BR5');
         Observer.Observe('stored', Format(Target.Other.Count()));
-        Observer.Finish();
+        Observer.Expect('assign', 'ok|1');
+        Observer.Expect('stored', '1');
+        Observer.Verify();
     end;
 
     local procedure Initialize()

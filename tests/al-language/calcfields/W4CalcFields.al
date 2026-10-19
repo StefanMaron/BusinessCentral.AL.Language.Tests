@@ -308,7 +308,10 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Observe('5 chars into Text[20]', BrCalc(Host, 1));
         Host.Get(3);
         Observer.Observe('20 chars into Text[20]', BrCalc(Host, 1));
-        Observer.Finish();
+        Observer.Expect('40 chars into Text[20]', 'ok:[ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ len=40]');
+        Observer.Expect('5 chars into Text[20]', 'ok:[short len=5]');
+        Observer.Expect('20 chars into Text[20]', 'ok:[exactly twenty chars len=20]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -327,10 +330,16 @@ codeunit 68042 "W4 CalcFields Tests"
         Src.Reset();
         Src.SetRange(En, 1);
         Observer.Observe('setrange enum 1', Format(Src.Count()) + '|' + Src.GetFilter(En));
-        Observer.Finish();
+        Observer.Expect('count option const(1)', 'ok:[2]');
+        Observer.Expect('count enum const(1)', 'ok:[2]');
+        Observer.Expect('setrange option 1', '2|B');
+        Observer.Expect('setrange enum 1', '2|One');
+        Observer.Verify();
     end;
 
-    [Test]
+    // Not a [Test] (Linux suspect, queued for the Windows check): on the Linux BC container, 27.5, 28.5 and 29.0, CalcFields on a FlowField
+    // without CalcFormula ends the test with the uncatchable 'Unexpected CLR exception thrown.: System.NullReferenceException: Object
+    // reference not set to an instance of an object.' (the TryFunction in BrTryCalc does not catch it). Kept as the probe source.
     procedure BR_FlowFieldWithoutCalcFormula()
     var
         Observer: Codeunit "Probe Observer";
@@ -354,7 +363,8 @@ codeunit 68042 "W4 CalcFields Tests"
         BrSeed();
         Host.Get(1);
         Observer.Observe('sum where entry type const(1)', BrCalc(Host, 6));
-        Observer.Finish();
+        Observer.Expect('sum where entry type const(1)', 'ok:[16]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -371,7 +381,13 @@ codeunit 68042 "W4 CalcFields Tests"
         Host.SetRange(FltDate, 20200101D);
         Observer.Observe('value after setrange', Format(Host.FltDate, 0, 9));
         Observer.Observe('getfilter after setrange', Host.GetFilter(FltDate));
-        Observer.Finish();
+        Observer.Expect('declared', '2018-01-01');
+        Observer.Expect('after init', '2018-01-01');
+        Observer.Expect('after init format', '01/01/18');
+        Observer.Expect('getfilter after init', '');
+        Observer.Expect('value after setrange', '2018-01-01');
+        Observer.Expect('getfilter after setrange', '01/01/20');
+        Observer.Verify();
     end;
 }
 

@@ -580,7 +580,8 @@ codeunit 74204 "LT StT Media"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('foo', BrImportOutcome('foo'));
-        Observer.Finish();
+        Observer.Expect('foo', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=foo');
+        Observer.Verify();
     end;
 
     [Test]
@@ -589,7 +590,8 @@ codeunit 74204 "LT StT Media"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('empty', BrImportOutcome(''));
-        Observer.Finish();
+        Observer.Expect('empty', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=image/png');
+        Observer.Verify();
     end;
 
     [Test]
@@ -598,7 +600,8 @@ codeunit 74204 "LT StT Media"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('image/jpeg', BrImportOutcome('image/jpeg'));
-        Observer.Finish();
+        Observer.Expect('image/jpeg', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=image/jpeg');
+        Observer.Verify();
     end;
 
     [Test]
@@ -607,6 +610,7 @@ codeunit 74204 "LT StT Media"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('text/plain', BrImportOutcome('text/plain'));
-        Observer.Finish();
+        Observer.Expect('text/plain', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=text/plain');
+        Observer.Verify();
     end;
 }

@@ -303,6 +303,12 @@ codeunit 71394 "LT PM Values Tests"
     begin
         BrObservePackageIds(Observer, 'own', 71390);
         BrObservePackageIds(Observer, 'item', Database::Item);
-        Observer.Finish();
+        Observer.Expect('own get', 'pkgnull=Yes rtnull=Yes pkg=allobj:No rt=allobj:No');
+        Observer.Expect('own findfirst', 'pkgnull=No rtnull=No pkg=allobj:Yes rt=allobj:Yes');
+        Observer.Expect('own next back', 'pkgnull=No rtnull=No pkg=allobj:Yes rt=allobj:Yes no=1');
+        Observer.Expect('item get', 'pkgnull=No rtnull=No pkg=allobj:Yes rt=allobj:Yes');
+        Observer.Expect('item findfirst', 'pkgnull=No rtnull=No pkg=allobj:Yes rt=allobj:Yes');
+        Observer.Expect('item next back', 'pkgnull=No rtnull=No pkg=allobj:Yes rt=allobj:Yes no=1');
+        Observer.Verify();
     end;
 }

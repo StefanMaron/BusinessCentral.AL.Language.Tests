@@ -596,6 +596,9 @@ codeunit 72008 "LT RcB CalcSums"
         Rec.SetRange(Id, 2, 4);
         Rec.CalcSums(Amt, Big);
         Observer.Observe('grp current, Amt Big, Id 2..4', Format(Rec.Amt) + '|' + Format(Rec.Big));
-        Observer.Finish();
+        Observer.Expect('pk current, Big', '150000000000');
+        Observer.Expect('pk current, Big, Grp G1', '90000000000');
+        Observer.Expect('grp current, Amt Big, Id 2..4', '13.5|90000000000');
+        Observer.Verify();
     end;
 }

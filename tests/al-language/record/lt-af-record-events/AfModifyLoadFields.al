@@ -179,7 +179,10 @@ codeunit 78307 "LT AF Modify LoadFields"
         Observer.Observe('caller c', Format(Row.C, 0, 9));
         Row.Get(1);
         Observer.Observe('stored', Format(Row.B) + '|' + Format(Row.C, 0, 9));
-        Observer.Finish();
+        Observer.Expect('subscribers', 'before xrec loadedC=Yes B=11 C=1.5; before rec loadedC=Yes B=11 C=1.5; after xrec loadedC=Yes B=11 C=1.5; after rec loadedC=Yes B=11 C=1.5; ');
+        Observer.Expect('caller c', '1.5');
+        Observer.Expect('stored', '11|1.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -199,7 +202,9 @@ codeunit 78307 "LT AF Modify LoadFields"
         Observer.Observe('subscribers', BrSubscribers.Take());
         Row.Get(1);
         Observer.Observe('stored', Format(Row.B) + '|' + Format(Row.C, 0, 9));
-        Observer.Finish();
+        Observer.Expect('subscribers', 'reload find=Yes; before xrec loadedC=Yes B=10 C=1.5; before rec loadedC=Yes B=12 C=1.5; after xrec loadedC=Yes B=10 C=1.5; after rec loadedC=Yes B=12 C=1.5; ');
+        Observer.Expect('stored', '12|1.5');
+        Observer.Verify();
     end;
 
     local procedure BrSeed()

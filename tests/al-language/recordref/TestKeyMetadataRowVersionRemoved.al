@@ -285,6 +285,12 @@ codeunit 68540 "Test Key RowVersion Removed"
         Observer.Observe('item currentkeyindex equals keyindex', Format(TableRef.CurrentKeyIndex() = LiveIndex));
         TableRef.CurrentKeyIndex(LiveIndex);
         Observer.Observe('item currentkey after CurrentKeyIndex(live)', TableRef.CurrentKey());
-        Observer.Finish();
+        Observer.Expect('row keycount', '6');
+        Observer.Expect('row live keyindex', '5');
+        Observer.Expect('row currentkeyindex after SetCurrentKey', '5');
+        Observer.Expect('row currentkey after CurrentKeyIndex(live)', 'Live Value');
+        Observer.Expect('item currentkeyindex equals keyindex', 'Yes');
+        Observer.Expect('item currentkey after CurrentKeyIndex(live)', 'KRV Live Value');
+        Observer.Verify();
     end;
 }

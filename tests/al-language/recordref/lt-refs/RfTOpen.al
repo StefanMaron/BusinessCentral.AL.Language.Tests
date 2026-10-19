@@ -625,6 +625,13 @@ codeunit 73020 "LT RfT Open"
         Observer.Observe('isempty', BrOpenZeroMember(5));
         Observer.Observe('istemporary', BrOpenZeroMember(6));
         Observer.Observe('count', BrOpenZeroMember(7));
-        Observer.Finish();
+        Observer.Expect('number', 'ok:0');
+        Observer.Expect('name', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('fieldcount', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('keycount', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('isempty', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('istemporary', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('count', 'error:The record is not open.|RecordNotOpened');
+        Observer.Verify();
     end;
 }
