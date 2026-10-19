@@ -40,7 +40,13 @@ codeunit 80424 "LT AX Duration DateTime"
         Observer.Observe('Format(30000/Dec)', Format(D / Divisor));
         Divisor := 7;
         Observer.Observe('Format(30000/Dec7)', Format(D / Divisor));
-        Observer.Finish();
+        Observer.Expect('26820000/60000', '447');
+        Observer.Expect('30000/60000', '0.5');
+        Observer.Expect('26820000/Dec60000', '447');
+        Observer.Expect('Format(D/Dec)', '447');
+        Observer.Expect('Format(30000/Dec)', '0.5');
+        Observer.Expect('Format(30000/Dec7)', '4,285.71428571428571');
+        Observer.Verify();
     end;
 
     [Test]
@@ -58,7 +64,10 @@ codeunit 80424 "LT AX Duration DateTime"
             Observer.ObserveError('zero');
             Observer.Observe('after', Format(Dec, 0, 9));
         end;
-        Observer.Finish();
+        Observer.Expect('zero|text', 'Attempted to divide by zero.');
+        Observer.Expect('zero|code', 'AL:DivideByZero');
+        Observer.Expect('after', '42');
+        Observer.Verify();
     end;
 
     [Test]
@@ -74,7 +83,12 @@ codeunit 80424 "LT AX Duration DateTime"
         Observer.Observe('7*1.5', Format(D * 1.5, 0, 9));
         Observer.Observe('7/2.5', Format(D / 2.5, 0, 9));
         Observer.Observe('7*1.5 plain', Format(D * 1.5));
-        Observer.Finish();
+        Observer.Expect('90000*1.5', '135000');
+        Observer.Expect('90000/2.5', '36000');
+        Observer.Expect('7*1.5', '10.5');
+        Observer.Expect('7/2.5', '2.8');
+        Observer.Expect('7*1.5 plain', '10.5');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -118,7 +132,13 @@ codeunit 80424 "LT AX Duration DateTime"
             Observer.ObserveError('dur D1/big7');
             Observer.Observe('dur after', Format(D, 0, 9));
         end;
-        Observer.Finish();
+        Observer.Expect('dec D1/7', '12857.1428571428571');
+        Observer.Expect('dec D1/big7', '12857.1428571428571');
+        Observer.Expect('dur D1/big4', 'P0DT0H0M22.5S');
+        Observer.Expect('dur D1/big7|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 12857.1428571428571 to System.Int64.');
+        Observer.Expect('dur D1/big7|code', 'ConversionCast');
+        Observer.Expect('dur after', 'P0DT0H0M0.001S');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,7 +161,12 @@ codeunit 80424 "LT AX Duration DateTime"
             Observer.Observe('1500.5', Format(D, 0, 9))
         else
             Observer.ObserveError('1500.5');
-        Observer.Finish();
+        Observer.Expect('1E19|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 10000000000000000000 to System.Int64.');
+        Observer.Expect('1E19|code', 'ConversionCast');
+        Observer.Expect('after', 'P0DT0H0M0.001S');
+        Observer.Expect('1500.5|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 1500.5 to System.Int64.');
+        Observer.Expect('1500.5|code', 'ConversionCast');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -164,6 +189,7 @@ codeunit 80424 "LT AX Duration DateTime"
         exit(Format(DT, 0, 9) + '|same as CreateDateTime ' + Format(DT = CreateDateTime(D, 0T)) + '|0DT ' + Format(DT = 0DT));
     end;
 
+    // The Format(DT, 0, 9) texts are UTC; the CI container's session time zone is UTC, so a date at midnight shows as T00:00:00Z.
     [Test]
     procedure Date_AssignedTo_DateTime()
     var
@@ -174,7 +200,10 @@ codeunit 80424 "LT AX Duration DateTime"
         Observer.Observe('defined', DateToDT(D));
         Observer.Observe('blank', DateToDT(0D));
         Observer.Observe('closing', DateToDT(ClosingDate(D)));
-        Observer.Finish();
+        Observer.Expect('defined', '2024-03-15T00:00:00Z|same as CreateDateTime Yes|0DT No');
+        Observer.Expect('blank', '|same as CreateDateTime Yes|0DT Yes');
+        Observer.Expect('closing', '2024-03-15T23:59:59Z|same as CreateDateTime Yes|0DT No');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -214,6 +243,12 @@ codeunit 80424 "LT AX Duration DateTime"
         Observer.Observe('T-day', TimeBig(120000T, 86400000, true));
         Observer.Observe('T+3e9', TimeBig(120000T, 3000000000L, false));
         Observer.Observe('0T-1', TimeBig(0T, 1, true));
-        Observer.Finish();
+        Observer.Expect('T-1500', 'ok:11:59:58.5');
+        Observer.Expect('T+1500', 'ok:12:00:01.5');
+        Observer.Expect('T--1500', 'ok:12:00:01.5');
+        Observer.Expect('T-day', 'ok:12:00:00');
+        Observer.Expect('T+3e9', 'error:Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast');
+        Observer.Expect('0T-1', 'error:Adding to an undefined (0T) time.|InvalidTime');
+        Observer.Verify();
     end;
 }

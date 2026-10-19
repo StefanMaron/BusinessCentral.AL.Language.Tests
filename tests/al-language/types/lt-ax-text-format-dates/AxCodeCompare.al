@@ -84,7 +84,13 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Observe('1E3/1000', All('1E3', '1000'));
         Observer.Observe('+1/1', All('+1', '1'));
         Observer.Observe('1,5/10', All('1,5', '10'));
-        Observer.Finish();
+        Observer.Expect('1.5/10', 'cc>! ct<! tc<! ff>!');
+        Observer.Expect('-1/1', 'cc>! ct<! tc<! ff>!');
+        Observer.Expect('1E3/999', 'cc>! ct<! tc<! ff>!');
+        Observer.Expect('1E3/1000', 'cc>! ct>! tc>! ff>!');
+        Observer.Expect('+1/1', 'cc>! ct<! tc<! ff>!');
+        Observer.Expect('1,5/10', 'cc>! ct<! tc<! ff>!');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +104,13 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Observe('1/+1', All('1', '+1'));
         Observer.Observe('10/1,5', All('10', '1,5'));
         Observer.Observe('1e3/999 text', 'ct' + CT('1E3', '1e3') + ' tc' + TC('1e3', '999'));
-        Observer.Finish();
+        Observer.Expect('10/1.5', 'cc<! ct>! tc>! ff<!');
+        Observer.Expect('1/-1', 'cc<! ct>! tc>! ff<!');
+        Observer.Expect('1000/1E3', 'cc<! ct<! tc<! ff<!');
+        Observer.Expect('1/+1', 'cc<! ct>! tc>! ff<!');
+        Observer.Expect('10/1,5', 'cc<! ct>! tc>! ff<!');
+        Observer.Expect('1e3/999 text', 'ct>! tc<!');
+        Observer.Verify();
     end;
 
     local procedure CF(A: Code[20]; B: Code[20]): Text
@@ -123,7 +135,19 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Observe('9/1 2', CF('9', '1 2'));
         Observer.Observe('9/1_2', CF('9', '1_2'));
         Observer.Observe('9/1.2', CF('9', '1.2'));
-        Observer.Finish();
+        Observer.Expect('1 2/12', 'cc>! ff>!');
+        Observer.Expect('1_2/12', 'cc>! ff>!');
+        Observer.Expect('1.2/12', 'cc>! ff>!');
+        Observer.Expect('1 2/9', 'cc>! ff>!');
+        Observer.Expect('1_2/9', 'cc>! ff>!');
+        Observer.Expect('1.2/9', 'cc>! ff>!');
+        Observer.Expect('10 5/9', 'cc>! ff>!');
+        Observer.Expect('10_5/9', 'cc>! ff>!');
+        Observer.Expect('10.5/9', 'cc>! ff>!');
+        Observer.Expect('9/1 2', 'cc<! ff<!');
+        Observer.Expect('9/1_2', 'cc<! ff<!');
+        Observer.Expect('9/1.2', 'cc<! ff<!');
+        Observer.Verify();
     end;
 
     [Test]
@@ -137,7 +161,13 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Observe('1 2/1_2', CF('1 2', '1_2'));
         Observer.Observe('1.2/1_2', CF('1.2', '1_2'));
         Observer.Observe('1 2/1.2', CF('1 2', '1.2'));
-        Observer.Finish();
+        Observer.Expect('1 2/102', 'cc>! ff>!');
+        Observer.Expect('1_2/102', 'cc>! ff>!');
+        Observer.Expect('1.2/102', 'cc>! ff>!');
+        Observer.Expect('1 2/1_2', 'cc<! ff<!');
+        Observer.Expect('1.2/1_2', 'cc>! ff>!');
+        Observer.Expect('1 2/1.2', 'cc<! ff<!');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,6 +200,18 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Observe('Tk in[a..z]', Format(TVal in ['a' .. 'z']));
         Observer.Observe('Tk in[A..Z]', Format(TVal in ['A' .. 'Z']));
         Observer.Observe('Tk in[CodeVal]', Format(TVal in [CVal]));
-        Observer.Finish();
+        Observer.Expect('CK in[Ca..Cz]', 'Yes');
+        Observer.Expect('CK in[Ta..Tz]', 'Yes');
+        Observer.Expect('CK in[A..z]', 'Yes');
+        Observer.Expect('CK in[a..Z]', 'Yes');
+        Observer.Expect('TK in[Ca..Cz]', 'Yes');
+        Observer.Expect('TK in[Ta..Tz]', 'Yes');
+        Observer.Expect('TK in[A..z]', 'Yes');
+        Observer.Expect('TK in[a..Z]', 'Yes');
+        Observer.Expect('Tk in[Ca..Cz]', 'Yes');
+        Observer.Expect('Tk in[a..z]', 'Yes');
+        Observer.Expect('Tk in[A..Z]', 'Yes');
+        Observer.Expect('Tk in[CodeVal]', 'No');
+        Observer.Verify();
     end;
 }

@@ -73,7 +73,11 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         Observer.Observe('Character', Fmt(I, '<Integer,4><Filler Character,0>'));
         Observer.Observe('Char*', Fmt(I, '<Integer,4><Filler Char,*>'));
         Observer.Observe('none', Fmt(I, '<Integer,4>'));
-        Observer.Finish();
+        Observer.Expect('Char', '[0005]');
+        Observer.Expect('Character', '[0005]');
+        Observer.Expect('Char*', '[***5]');
+        Observer.Expect('none', '[   5]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -87,7 +91,11 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         Observer.Observe('Character', Fmt(D, '<Integer,4><Filler Character,0><Decimals>'));
         Observer.Observe('Char*', Fmt(D, '<Integer,4><Filler Char,*><Decimals>'));
         Observer.Observe('none', Fmt(D, '<Integer,4><Decimals>'));
-        Observer.Finish();
+        Observer.Expect('Char', '[0005.25]');
+        Observer.Expect('Character', '[0005.25]');
+        Observer.Expect('Char*', '[***5.25]');
+        Observer.Expect('none', '[   5.25]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -102,7 +110,12 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         Observer.Observe('Char*', Fmt(T, '<Text,5><Filler Char,*>'));
         Observer.Observe('none', Fmt(T, '<Text,5>'));
         Observer.Observe('plain', Fmt(T, '<Text>'));
-        Observer.Finish();
+        Observer.Expect('Char', '[ab000]');
+        Observer.Expect('Character', '[ab000]');
+        Observer.Expect('Char*', '[ab***]');
+        Observer.Expect('none', '[ab   ]');
+        Observer.Expect('plain', '[ab]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +128,10 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         Observer.Observe('int', '[' + Format(5, 0, '<Integer,4><Filler Char,0>') + ']');
         Observer.Observe('dec', '[' + Format(5.25, 0, '<Integer,4><Filler Char,0><Decimals>') + ']');
         Observer.Observe('text', '[' + Format(T, 0, '<Text,5><Filler Char,0>') + ']');
-        Observer.Finish();
+        Observer.Expect('int', '[0005]');
+        Observer.Expect('dec', '[0005.25]');
+        Observer.Expect('text', '[ab000]');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -146,7 +162,9 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         TB50.Capacity(50);
         Observer.Observe('empty16', Ensure(TB16));
         Observer.Observe('empty50', Ensure(TB50));
-        Observer.Finish();
+        Observer.Expect('empty16', 'cap 16 ok No cap 16 len 0');
+        Observer.Expect('empty50', 'cap 50 ok No cap 50 len 0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,7 +179,9 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         TB50.Append('abc');
         Observer.Observe('abc16', Ensure(TB16));
         Observer.Observe('abc50', Ensure(TB50));
-        Observer.Finish();
+        Observer.Expect('abc16', 'cap 16 ok No cap 16 len 3');
+        Observer.Expect('abc50', 'cap 50 ok No cap 50 len 3');
+        Observer.Verify();
     end;
 
     local procedure AllFields(var R: Record "LT AX AutoFormat"): Text
@@ -193,7 +213,10 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         R.Dec4 := -7;
         R.Dec5 := -7;
         Observer.Observe('-7', AllFields(R));
-        Observer.Finish();
+        Observer.Expect('1234.56789', '1,234.56789|1,234.57|1,234.56789|1,234.57|1,234.56789');
+        Observer.Expect('0.5', '0.5|0.50|0.50|0.50|0.50');
+        Observer.Expect('-7', '-7|-7.00|-7.00|-7.00|-7.00');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,6 +239,9 @@ codeunit 80423 "LT AX Filler Builder AutoFmt"
         Observer.Observe('fieldref', S);
         Observer.Observe('format9', Format(R.Dec1, 0, 9) + '|' + Format(R.Dec2, 0, 9) + '|' + Format(R.Dec4, 0, 9) + '|' + Format(R.Dec5, 0, 9));
         Observer.Observe('format1', Format(R.Dec1, 0, 1) + '|' + Format(R.Dec2, 0, 1) + '|' + Format(R.Dec5, 0, 1));
-        Observer.Finish();
+        Observer.Expect('fieldref', '1,234.56789|1,234.56789|1,234.56789|1,234.56789|1,234.56789|');
+        Observer.Expect('format9', '1234.57|1234.56789|1234.57|1234.56789');
+        Observer.Expect('format1', '1234.57|1234.56789|1234.56789');
+        Observer.Verify();
     end;
 }
