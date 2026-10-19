@@ -577,6 +577,18 @@ codeunit 86264 "LT DI FW Write Tests"
         Parent."First Child Code" := 'YY';
         Parent.CalcFields("Has Children", "First Child Code");
         Observer.Observe('CalcFields', Format(Parent."Has Children") + '/' + Parent."First Child Code");
+        Commit();
+        asserterror begin
+            Parent.Validate("Has Children", true);
+            Error(NoErrorTok);
+        end;
+        Observer.Observe('Validate exist', Outcome());
+        Commit();
+        asserterror begin
+            Parent.Validate("First Child Code", 'QQ');
+            Error(NoErrorTok);
+        end;
+        Observer.Observe('Validate lookup', Outcome());
         Observer.Observe('src after', Src());
         Observer.Finish();
     end;
@@ -644,6 +656,45 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('after Modify', Format(Parent."Child Count") + '/' + Format(Parent."Child Amount"));
         Observer.Observe('stored', StoredCount(1) + ' calc ' + CalcCount(1));
         Observer.Observe('src after', Src());
+        Observer.Finish();
+    end;
+
+    // ---- item 3 (continued): Validate on a Sum FlowField writes a row into the CalcFormula source table ----
+    [Test]
+    procedure DI_ValidateSumFlowFieldSourceRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parent: Record "LT DI FW Parent";
+    begin
+        Seed();
+        AddChild(100, 3, 'X', 1, 20260115D);
+        // parent 2 has no rows; a Date Filter value is set
+        Parent.Get(2);
+        Parent.SetRange("Date Filter", 20260401D);
+        Parent.Validate("Child Amount", 7);
+        Observer.Observe('p2 value', Format(Parent."Child Amount"));
+        Observer.Observe('p2 src', Src());
+        Parent.CalcFields("Child Amount");
+        Observer.Observe('p2 CalcFields', Format(Parent."Child Amount"));
+        // parent 1: an assigned value in memory, then Validate
+        Parent.Reset();
+        Parent.Get(1);
+        Parent."Child Amount" := 1000;
+        Parent.Validate("Child Amount", 70);
+        Observer.Observe('p1 value', Format(Parent."Child Amount"));
+        Observer.Observe('p1 src', Src());
+        // parent 1: the value it already has
+        Parent.Get(1);
+        Parent.CalcFields("Child Amount");
+        Parent.Validate("Child Amount", 70);
+        Observer.Observe('p1 same src', Src());
+        // parent 3: a Date Filter range
+        Parent.Get(3);
+        Parent.SetRange("Date Filter", 20260101D, 20260131D);
+        Parent.Validate("Child Amount", 2);
+        Observer.Observe('p3 range src', Src());
+        Observer.Observe('log', TakeLog());
+        Observer.Observe('parents', Parents());
         Observer.Finish();
     end;
 }
