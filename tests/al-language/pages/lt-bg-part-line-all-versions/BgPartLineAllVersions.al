@@ -1,10 +1,233 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); tables 67573 "LT DL Header" and 67576 "LT DL Line", page 67577 "LT DL Document" with its lines part and log codeunit 67579 "LT DL Log" from pages/lt-part-line-before-host-key/PartLineBeforeHostKey.al; test codeunit 81350
+// Fixtures used: Probe Observer (69160); own tables 81354 "LT BG Header" and 81355 "LT BG Line", log codeunit 81356 "LT BG Log", pages 81357 "LT BG Lines" and 81358 "LT BG Document": copies of the DL fixtures in pages/lt-part-line-before-host-key/PartLineBeforeHostKey.al (same triggers, same log texts), so no SingleInstance log is shared with "LT DL Tests"; test codeunit 81350
 // Probe: a line is entered in the lines part of a document page while the header key is blank, then the key is typed. Typing the key renames the header, and the test client answers the rename Confirm with its default.
 // The same scenario as PartLine_EnteredBeforeHostKey_ThenKeyTyped in PartLineBeforeHostKey.al, which is pinned from BC 28 only. This file pins it on every version: BC 27.5 on an official Windows container gave
 // exactly these values (corpus run 39125184978), and the Linux image gives them since MsDyn365Bc.On.Linux PR #127 (before, BC 27 on Linux ended the session with a NullReferenceException).
 // BC versions: 27, 28, 29
+table 81354 "LT BG Header"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "No."; Code[20])
+        {
+            DataClassification = SystemMetadata;
+
+            trigger OnValidate()
+            var
+                Log: Codeunit "LT BG Log";
+            begin
+                Log.Add('H.OnValidate(No.):' + "No.");
+            end;
+        }
+        field(2; Name; Text[30])
+        {
+            DataClassification = SystemMetadata;
+
+            trigger OnValidate()
+            var
+                Log: Codeunit "LT BG Log";
+            begin
+                Log.Add('H.OnValidate(Name):' + Name + ' key=' + "No.");
+            end;
+        }
+    }
+
+    keys
+    {
+        key(PK; "No.") { Clustered = true; }
+    }
+
+    trigger OnInsert()
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('H.OnInsert:' + "No.");
+    end;
+
+    trigger OnModify()
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('H.OnModify:' + "No.");
+    end;
+}
+
+table 81355 "LT BG Line"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Document No."; Code[20])
+        {
+            DataClassification = SystemMetadata;
+            TableRelation = "LT BG Header";
+
+            trigger OnValidate()
+            var
+                Log: Codeunit "LT BG Log";
+            begin
+                Log.Add('L.OnValidate(Document No.):' + "Document No.");
+            end;
+        }
+        field(2; "Line No."; Integer)
+        {
+            DataClassification = SystemMetadata;
+        }
+        field(3; Description; Text[30])
+        {
+            DataClassification = SystemMetadata;
+
+            trigger OnValidate()
+            var
+                Log: Codeunit "LT BG Log";
+            begin
+                Log.Add('L.OnValidate(Description):' + Description + ' key=' + "Document No." + '/' + Format("Line No."));
+            end;
+        }
+        field(4; Quantity; Decimal)
+        {
+            DataClassification = SystemMetadata;
+
+            trigger OnValidate()
+            var
+                Log: Codeunit "LT BG Log";
+            begin
+                Log.Add('L.OnValidate(Quantity):' + Format(Quantity) + ' key=' + "Document No." + '/' + Format("Line No."));
+            end;
+        }
+    }
+
+    keys
+    {
+        key(PK; "Document No.", "Line No.") { Clustered = true; }
+    }
+
+    trigger OnInsert()
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('L.OnInsert:' + "Document No." + '/' + Format("Line No."));
+    end;
+
+    trigger OnModify()
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('L.OnModify:' + "Document No." + '/' + Format("Line No."));
+    end;
+}
+
+codeunit 81356 "LT BG Log"
+{
+    SingleInstance = true;
+
+    var
+        Lines: List of [Text];
+
+    procedure Reset()
+    begin
+        Clear(Lines);
+    end;
+
+    procedure Add(Line: Text)
+    begin
+        Lines.Add(Line);
+    end;
+
+    procedure Dump(): Text
+    var
+        Line: Text;
+        Result: Text;
+    begin
+        foreach Line in Lines do begin
+            if Result <> '' then
+                Result += ' | ';
+            Result += Line;
+        end;
+        exit('[' + Result + ']');
+    end;
+}
+
+page 81357 "LT BG Lines"
+{
+    PageType = ListPart;
+    SourceTable = "LT BG Line";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Description; Rec.Description) { ApplicationArea = All; }
+                field(Quantity; Rec.Quantity) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('LP.OnNewRecord:' + Rec."Document No.");
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('LP.OnInsertRecord:' + Rec."Document No." + '/' + Format(Rec."Line No."));
+        exit(true);
+    end;
+}
+
+page 81358 "LT BG Document"
+{
+    PageType = Document;
+    SourceTable = "LT BG Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+            part(Lines; "LT BG Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('HP.OnNewRecord');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        Log: Codeunit "LT BG Log";
+    begin
+        Log.Add('HP.OnInsertRecord:' + Rec."No.");
+        exit(true);
+    end;
+}
+
 codeunit 81350 "LT BG Part Line All Versions"
 {
     Subtype = Test;
@@ -12,9 +235,9 @@ codeunit 81350 "LT BG Part Line All Versions"
 
     local procedure Seed()
     var
-        Header: Record "LT DL Header";
-        Line: Record "LT DL Line";
-        Log: Codeunit "LT DL Log";
+        Header: Record "LT BG Header";
+        Line: Record "LT BG Line";
+        Log: Codeunit "LT BG Log";
     begin
         Line.DeleteAll();
         Header.DeleteAll();
@@ -22,44 +245,44 @@ codeunit 81350 "LT BG Part Line All Versions"
     end;
 
     [TryFunction]
-    local procedure TryOpenNew(var Host: TestPage "LT DL Document")
+    local procedure TryOpenNew(var Host: TestPage "LT BG Document")
     begin
         Host.OpenNew();
     end;
 
     [TryFunction]
-    local procedure TryNewLine(var Host: TestPage "LT DL Document")
+    local procedure TryNewLine(var Host: TestPage "LT BG Document")
     begin
         Host.Lines.New();
     end;
 
     [TryFunction]
-    local procedure TryDescription(var Host: TestPage "LT DL Document"; Value: Text)
+    local procedure TryDescription(var Host: TestPage "LT BG Document"; Value: Text)
     begin
         Host.Lines.Description.SetValue(Value);
     end;
 
     [TryFunction]
-    local procedure TryQuantity(var Host: TestPage "LT DL Document"; Value: Decimal)
+    local procedure TryQuantity(var Host: TestPage "LT BG Document"; Value: Decimal)
     begin
         Host.Lines.Quantity.SetValue(Value);
     end;
 
     [TryFunction]
-    local procedure TryKey(var Host: TestPage "LT DL Document"; Value: Text)
+    local procedure TryKey(var Host: TestPage "LT BG Document"; Value: Text)
     begin
         Host."No.".SetValue(Value);
     end;
 
     [TryFunction]
-    local procedure TryName(var Host: TestPage "LT DL Document"; Value: Text)
+    local procedure TryName(var Host: TestPage "LT BG Document"; Value: Text)
     begin
         Host.Name.SetValue(Value);
     end;
 
     local procedure Step(var Observer: Codeunit "Probe Observer"; Name: Text; Ok: Boolean)
     var
-        Log: Codeunit "LT DL Log";
+        Log: Codeunit "LT BG Log";
     begin
         Observer.Observe(Name, Format(Ok));
         if not Ok then
@@ -70,8 +293,8 @@ codeunit 81350 "LT BG Part Line All Versions"
 
     local procedure Stored(var Observer: Codeunit "Probe Observer"; Name: Text)
     var
-        Header: Record "LT DL Header";
-        Line: Record "LT DL Line";
+        Header: Record "LT BG Header";
+        Line: Record "LT BG Line";
         Rows: Text;
     begin
         Observer.Observe(Name + '_headers', Format(Header.Count()));
@@ -89,7 +312,7 @@ codeunit 81350 "LT BG Part Line All Versions"
         Observer.Observe(Name + '_line_rows', Rows);
     end;
 
-    local procedure Card(var Observer: Codeunit "Probe Observer"; Name: Text; var Host: TestPage "LT DL Document")
+    local procedure Card(var Observer: Codeunit "Probe Observer"; Name: Text; var Host: TestPage "LT BG Document")
     begin
         Observer.Observe(Name + '_card_no', '[' + Host."No.".Value() + ']');
         Observer.Observe(Name + '_card_name', '[' + Host.Name.Value() + ']');
@@ -101,7 +324,7 @@ codeunit 81350 "LT BG Part Line All Versions"
     procedure BG_PartLine_EnteredBeforeHostKey_ThenKeyTyped_AllVersions()
     var
         Observer: Codeunit "Probe Observer";
-        Host: TestPage "LT DL Document";
+        Host: TestPage "LT BG Document";
     begin
         Seed();
         Step(Observer, 'open_new', TryOpenNew(Host));
@@ -154,7 +377,7 @@ codeunit 81350 "LT BG Part Line All Versions"
     end;
 
     [TryFunction]
-    local procedure TryClose(var Host: TestPage "LT DL Document")
+    local procedure TryClose(var Host: TestPage "LT BG Document")
     begin
         Host.Close();
     end;
