@@ -81,4 +81,38 @@ codeunit 69553 "PS Caption Probe"
         Observer.Expect('area3_empty_text', '[]');
         Observer.Verify();
     end;
+
+    // Corpus issue 670 (writer CY): the docs say CaptionClassTranslate caches per session and SelectLatestVersion clears the cache.
+    // The same expression is translated twice, then once more after SelectLatestVersion(); the subscriber log shows whether the
+    // OnResolveCaptionClass event ran each time. The expressions are used by no other test.
+    [Test]
+    procedure CY_CaptionClassTranslate_Cache_And_SelectLatestVersion()
+    var
+        Subscriber: Codeunit "PS Caption Subscriber";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Subscriber.Take();
+        Observer.Observe('first', CaptionClassTranslate('PSCC,CY cache one'));
+        Observer.Observe('first_events', Subscriber.Take());
+        Observer.Observe('second', CaptionClassTranslate('PSCC,CY cache one'));
+        Observer.Observe('second_events', Subscriber.Take());
+        Observer.Observe('unclaimed_first', CaptionClassTranslate('ZZ,CY cache two'));
+        Observer.Observe('unclaimed_first_events', Subscriber.Take());
+        Observer.Observe('unclaimed_second', CaptionClassTranslate('ZZ,CY cache two'));
+        Observer.Observe('unclaimed_second_events', Subscriber.Take());
+        SelectLatestVersion();
+        Observer.Observe('after_select_latest', CaptionClassTranslate('PSCC,CY cache one'));
+        Observer.Observe('after_select_latest_events', Subscriber.Take());
+        Observer.Expect('first', 'resolved:CY cache one');
+        Observer.Expect('first_events', 'resolve(PSCC|CY cache one|lang=session)');
+        Observer.Expect('second', 'resolved:CY cache one');
+        Observer.Expect('second_events', '');
+        Observer.Expect('unclaimed_first', 'ZZ,CY cache two');
+        Observer.Expect('unclaimed_first_events', 'resolve(ZZ|CY cache two|lang=session)');
+        Observer.Expect('unclaimed_second', 'ZZ,CY cache two');
+        Observer.Expect('unclaimed_second_events', '');
+        Observer.Expect('after_select_latest', 'resolved:CY cache one');
+        Observer.Expect('after_select_latest_events', 'resolve(PSCC|CY cache one|lang=session)');
+        Observer.Verify();
+    end;
 }

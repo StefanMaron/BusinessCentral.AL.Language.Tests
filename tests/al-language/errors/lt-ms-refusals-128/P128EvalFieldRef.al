@@ -110,4 +110,80 @@ codeunit 73178 "LT P128 Eval FieldRef"
         Observer.Expect('option text', 'No|One');
         Observer.Verify();
     end;
+
+    // Corpus issue 670 (AL issue 812): an Option field read through a FieldRef, its Format compared against text and evaluated from empty text,
+    // and Type Helper GetOptionNo on the field's OptionMembers and OptionCaption. Writer CY.
+    [TryFunction]
+    local procedure TryCompare(var FldRef: FieldRef; Txt: Text; var Equal: Boolean)
+    begin
+        // FldRef.Value = Txt does not compile (AL0175, must-not-compile case 1792): the text form of the value is compared.
+        Equal := Format(FldRef.Value) = Txt;
+    end;
+
+    local procedure CompareText(var Observer: Codeunit "Probe Observer"; Name: Text; Txt: Text)
+    var
+        Row: Record "LT P128 Eval Fld";
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        Equal: Boolean;
+    begin
+        Row.Id := 1;
+        Row.Opt := Row.Opt::Two;
+        RecRef.GetTable(Row);
+        FldRef := RecRef.Field(7);
+        ClearLastError();
+        if TryCompare(FldRef, Txt, Equal) then
+            Observer.Observe(Name, Format(Equal))
+        else
+            Observer.Observe(Name, 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure CY_OptionFieldRef_CompareWithText_Evaluate_GetOptionNo()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT P128 Eval Fld";
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        TypeHelper: Codeunit "Type Helper";
+    begin
+        CompareText(Observer, 'compare member name', 'Two');
+        CompareText(Observer, 'compare other member', 'One');
+        CompareText(Observer, 'compare lower case', 'two');
+        CompareText(Observer, 'compare ordinal text', '2');
+        CompareText(Observer, 'compare empty', '');
+        CompareText(Observer, 'compare not a member', 'Three');
+        EvalInto(Observer, 'evaluate lower case', 7, 'two');
+        EvalInto(Observer, 'evaluate prefix', 7, 'Tw');
+        EvalInto(Observer, 'evaluate space', 7, ' ');
+        Row.Id := 1;
+        RecRef.GetTable(Row);
+        FldRef := RecRef.Field(7);
+        Observer.Observe('members', FldRef.OptionMembers);
+        Observer.Observe('caption', FldRef.OptionCaption);
+        Observer.Observe('getoptionno member', Format(TypeHelper.GetOptionNo('Two', FldRef.OptionMembers)));
+        Observer.Observe('getoptionno caption', Format(TypeHelper.GetOptionNo('Two', FldRef.OptionCaption)));
+        Observer.Observe('getoptionno lower case', Format(TypeHelper.GetOptionNo('two', FldRef.OptionCaption)));
+        Observer.Observe('getoptionno empty', Format(TypeHelper.GetOptionNo('', FldRef.OptionCaption)));
+        Observer.Observe('getoptionno not a member', Format(TypeHelper.GetOptionNo('Three', FldRef.OptionCaption)));
+        Observer.Observe('getoptionno first', Format(TypeHelper.GetOptionNo('Zero', FldRef.OptionCaption)));
+        Observer.Expect('compare member name', 'Yes');
+        Observer.Expect('compare other member', 'No');
+        Observer.Expect('compare lower case', 'No');
+        Observer.Expect('compare ordinal text', 'No');
+        Observer.Expect('compare empty', 'No');
+        Observer.Expect('compare not a member', 'No');
+        Observer.Expect('evaluate lower case', 'Yes|Two');
+        Observer.Expect('evaluate prefix', 'No|One');
+        Observer.Expect('evaluate space', 'No|One');
+        Observer.Expect('members', 'Zero,One,Two');
+        Observer.Expect('caption', 'Zero,One,Two');
+        Observer.Expect('getoptionno member', '2');
+        Observer.Expect('getoptionno caption', '2');
+        Observer.Expect('getoptionno lower case', '2');
+        Observer.Expect('getoptionno empty', '-1');
+        Observer.Expect('getoptionno not a member', '-1');
+        Observer.Expect('getoptionno first', '0');
+        Observer.Verify();
+    end;
 }
