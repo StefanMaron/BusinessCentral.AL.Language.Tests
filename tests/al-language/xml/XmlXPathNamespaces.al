@@ -764,6 +764,16 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Observer.Observe('open_close', Format(Root.SelectSingleNode('value/text()', N)));
         Root.SelectSingleNode('value', N);
         Observer.Observe('element_inner', '[' + N.AsXmlElement().InnerText() + ']|' + Format(N.AsXmlElement().GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('key_text', 'Yes|Yes|KEYNAME');
+        Observer.Expect('self_closing', 'No');
+        Observer.Expect('self_closing_node_kind', 'Yes|No');
+        Observer.Expect('self_closing_value_ok', 'Yes|[KEYNAME]');
+        Observer.Expect('self_closing_value|text', '');
+        Observer.Expect('self_closing_value|code', '');
+        Observer.Expect('self_closing_unused|text', 'The XPath query ''value/text()'' does not match any nodes.');
+        Observer.Expect('self_closing_unused|code', 'InvalidXPathSelection');
+        Observer.Expect('open_close', 'No');
+        Observer.Expect('element_inner', '[]|0');
+        Observer.Verify();
     end;
 }
