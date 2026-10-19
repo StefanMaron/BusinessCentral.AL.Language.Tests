@@ -19,6 +19,8 @@ ALLOWED = {
     'tests/al-language/types/TestBlankEnumInitInstaller.Codeunit.al',
     'tests/al-language/install/TestInstallStartSessionProbe.al',
     'tests/al-language/events/lt-trigger-pins/PUpgradeTriggers.al',
+    # corpus issue 661 (writer BF): writes only `if Insert() then;` into a DataPerCompany = false log; reads that can fail run in a TryFunction.
+    'tests/al-language/install/lt-bf-install-probes/BfInstallFixtures.al',
 }
 PATTERN = re.compile(r'^\s*Subtype\s*=\s*(Install|Upgrade)\s*;', re.M | re.I)
 
