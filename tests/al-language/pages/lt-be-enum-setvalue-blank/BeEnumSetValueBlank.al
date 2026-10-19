@@ -567,7 +567,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -763,7 +791,40 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -964,7 +1025,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -1160,7 +1249,40 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -1361,7 +1483,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Zero]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Zero]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Zero]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -1561,7 +1711,40 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -1770,7 +1953,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -1978,7 +2189,40 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
 #endif
     end;
 
@@ -2178,7 +2422,30 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -2351,7 +2618,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -2529,7 +2824,30 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -2702,7 +3020,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -2880,7 +3226,30 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Zero]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Zero]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Zero]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -3057,7 +3426,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -3243,7 +3640,30 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
@@ -3428,7 +3848,35 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
+        // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Ignore('space-err|text');
+        Observer.Ignore('space-err|code');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Ignore('empty-err|text');
+        Observer.Ignore('empty-err|code');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Ignore('capAlpha-err|text');
+        Observer.Ignore('capAlpha-err|code');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
 #endif
     end;
 
