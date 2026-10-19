@@ -569,10 +569,6 @@ codeunit 69852 "LT V Platform Event Tests"
         case Which of
             'requestpage static':
                 Parameters := Report.RunRequestPage(Report::"LT V Report A");
-            'execute static':
-                Report.Execute(Report::"LT V Report A", Parameters);
-            'execute var':
-                Rep.Execute(Parameters);
             'saveas var xml':
                 Rep.SaveAs('', ReportFormat::Xml, OutStr);
             'saveas static params xml':
@@ -626,17 +622,14 @@ codeunit 69852 "LT V Platform Event Tests"
     // Linux BC'), so they are not probed here (windows-queue.md); the processing-only report has no layout to render.
     [Test]
     [HandlerFunctions('RequestPageA')]
-    procedure PW_RaisedEvents_RequestPageAndExecute()
+    procedure PW_RaisedEvents_RequestPage()
     var
         Observer: Codeunit "Probe Observer";
         Parameters: Text;
     begin
         Seed();
+        // Execute of this RDLC report also ends in the Linux tier's RDLC stub (windows-queue.md).
         PwCall(Observer, 'requestpage static', Parameters);
-        PwCall(Observer, 'execute static', Parameters);
-        PwCall(Observer, 'execute var', Parameters);
-        Parameters := '';
-        PwCall(Observer, 'execute var', Parameters);
         Observer.Finish();
     end;
 
@@ -714,7 +707,6 @@ codeunit 69852 "LT V Platform Event Tests"
         PwArgs(Observer, 'requestpage static', Parameters);
         PwArgs(Observer, 'saveas static params xml', Parameters);
         PwArgs(Observer, 'saveas static record xml', Parameters);
-        PwArgs(Observer, 'execute var', Parameters);
         Observer.Finish();
     end;
 }
