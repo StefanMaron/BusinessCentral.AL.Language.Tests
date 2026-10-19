@@ -366,11 +366,13 @@ codeunit 85311 "LT CU Commit Tests"
         Initialize();
         InsertRow(13, 'before try');
         asserterror Ok := TryCommit();
-        Observer.ObserveError('try');
+        Observer.Observe('try|text', MaskRunnerScope(GetLastErrorText()));
+        Observer.Observe('try|code', GetLastErrorCode());
+        ClearLastError();
         Observer.Observe('ok', Format(Ok));
         asserterror Error('unrelated');
         Observer.Observe('rows', Rows());
-        Observer.Expect('try|text', 'Call to the function ''COMMIT'' is not allowed inside the call to ''RootMethodScope'' when it is used as a TryFunction.');
+        Observer.Expect('try|text', 'Call to the function ''COMMIT'' is not allowed inside the call to ''<scope>'' when it is used as a TryFunction.');
         Observer.Expect('try|code', 'TryFunctionWrite');
         Observer.Expect('ok', 'No');
         Observer.Expect('rows', '[]');
@@ -427,5 +429,25 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.Observe('rows', Rows());
         Observer.Expect('rows', '[22;]');
         Observer.Verify();
+    end;
+
+    // The error names the outermost method of the test runner, not anything in this app: 'RunTests' ("Test Runner - Mgt.",
+    // the classic runner; BC 27.5 full run 39322214364) or 'RootMethodScope' (the TestRunnerHub runner; BC 28.5/29.0).
+    // The scope name is masked so the pin holds under either runner (publisher, bump 29).
+    local procedure MaskRunnerScope(ErrorText: Text): Text
+    var
+        Marker: Text;
+        StartPos: Integer;
+        EndPos: Integer;
+    begin
+        Marker := 'inside the call to ''';
+        StartPos := ErrorText.IndexOf(Marker);
+        if StartPos = 0 then
+            exit(ErrorText);
+        StartPos += StrLen(Marker);
+        EndPos := ErrorText.Substring(StartPos).IndexOf('''');
+        if EndPos = 0 then
+            exit(ErrorText);
+        exit(ErrorText.Substring(1, StartPos - 1) + '<scope>' + ErrorText.Substring(StartPos + EndPos - 1));
     end;
 }
