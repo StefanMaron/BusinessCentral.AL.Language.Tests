@@ -34,6 +34,7 @@ tableextension 84641 "LT CJ Row Ext" extends "LT CJ Row"
     }
 }
 
+// Used only by the reports of CjDataset.al and its test codeunit 84650 (SingleInstance: one test codeunit per log).
 codeunit 84642 "LT CJ Log"
 {
     SingleInstance = true;
@@ -61,10 +62,8 @@ codeunit 84643 "LT CJ Helper"
     procedure Seed()
     var
         Row: Record "LT CJ Row";
-        Log: Codeunit "LT CJ Log";
     begin
         Row.DeleteAll();
-        Log.Take();
         Add(1, 0D, 'One', 'A');
         Add(2, DMY2Date(1, 2, 2024), 'Two', 'B');
         Add(3, 0D, 'Three', '');

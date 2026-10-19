@@ -170,6 +170,12 @@ codeunit 84650 "LT CJ Dataset Tests"
         Helper: Codeunit "LT CJ Helper";
         Log: Codeunit "LT CJ Log";
 
+    local procedure Seed()
+    begin
+        Helper.Seed();
+        Log.Take();
+    end;
+
     local procedure FillTemp(var Temp: Record "LT CJ Row" temporary)
     begin
         Temp.Id := 101;
@@ -189,7 +195,7 @@ codeunit 84650 "LT CJ Dataset Tests"
         Xml: Text;
     begin
         // Item 149: the report compiles; the Xml dataset run is observed.
-        Helper.Seed();
+        Seed();
         TempBlob.CreateOutStream(OutS);
         ClearLastError();
         Observer.Observe('saved', Format(Report.SaveAs(Report::"LT CJ Zero Date View Rep", '', ReportFormat::Xml, OutS)));
@@ -214,7 +220,7 @@ codeunit 84650 "LT CJ Dataset Tests"
         Xml: Text;
     begin
         // Items 150 and 153.
-        Helper.Seed();
+        Seed();
         TempBlob.CreateOutStream(OutS);
         ClearLastError();
         Observer.Observe('saved', Format(Report.SaveAs(Report::"LT CJ Scope Rep", '', ReportFormat::Xml, OutS)));
@@ -243,7 +249,7 @@ codeunit 84650 "LT CJ Dataset Tests"
         TempBlob: Codeunit "Temp Blob";
         OutS: OutStream;
     begin
-        Helper.Seed();
+        Seed();
         FillTemp(Temp);
         Rpt.SetTableView(Temp);
         TempBlob.CreateOutStream(OutS);
@@ -265,7 +271,7 @@ codeunit 84650 "LT CJ Dataset Tests"
         TempBlob: Codeunit "Temp Blob";
         OutS: OutStream;
     begin
-        Helper.Seed();
+        Seed();
         FillTemp(Temp);
         RecRef.GetTable(Temp);
         Observer.Observe('recref temporary', Format(RecRef.IsTemporary()));
@@ -289,7 +295,7 @@ codeunit 84650 "LT CJ Dataset Tests"
         TempBlob: Codeunit "Temp Blob";
         OutS: OutStream;
     begin
-        Helper.Seed();
+        Seed();
         FillTemp(Temp);
         Rpt.SetRows(Temp);
         TempBlob.CreateOutStream(OutS);
@@ -322,7 +328,7 @@ codeunit 84650 "LT CJ Dataset Tests"
         Shared: Report "LT CJ Temp Shared Rep";
         Caller: Report "LT CJ Temp Caller Rep";
     begin
-        Helper.Seed();
+        Seed();
         FillTemp(Temp);
         Shared.SetRows(Temp);
         ClearLastError();
