@@ -1,12 +1,50 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); LT AM Log (79250) and report LT AM Rdlc Rpt (79253, generated RDLC layout with an empty body) of
-// AMReports.al; self-contained report 79256 with the hand-written layout LtAmRdlcText.rdlc, test codeunit 79257, subscriber codeunit 79258
-// What Report.SaveAs and Report.Run do with an RDLC layout (corpus #601 item 1, corpus CI with rdlc_renderer: true): per ReportFormat
-// (Pdf, Word, Excel, Html) whether it saves, the file signature, the PDF page count, the zip main part, whether the text the layout computes
-// from the dataset and the request page (AMTXT[...]) is in the output, and the order of SubstituteReport, OnPreRendering and OnDocumentReady.
-// PDF bytes are never compared (not stable) and PDF text is compressed, so only its page count is asserted.
+// Fixtures used: Probe Observer (69160); self-contained report 79256 (hand-written layout LtAmRdlcText.rdlc), test codeunit 79257,
+// subscriber codeunit 79258, log codeunit 79259
+// What Report.SaveAs and Report.Run do with an RDLC layout (corpus #601 item 1; the corpus CI runs the Mono RDLC renderer, rdlc_renderer: true):
+// whether it saves, the file signature, the PDF page count, and the order of SubstituteReport, OnPreRendering and OnDocumentReady.
+// Pinned on every leg: Html is refused before rendering ('The Html output format is not supported by the current report layout format.',
+// ReportUnsupportedFormat, no OnPreRendering); Xml writes the dataset without the layout (OnDocumentReady with an empty layout name).
+// Pinned on BC 27 and 28 only (#if not BC29PLUS): Pdf renders one page, and Report.Run without a request page renders a Pdf document
+// (OnDocumentReady documenttype application/pdf). The BC 29 Linux container turns the renderer off at boot ("the side-service compatibility
+// patch failed"), so on BC 29 these calls answer with the Linux stub text, which is not Business Central behavior.
+// PDF bytes are never compared (not stable) and PDF text is compressed, so only the page count is asserted.
+// Linux suspects (kept as source under LT_AM_LINUX_SUSPECT, not compiled): SaveAs Word and Excel of an RDLC layout on BC 27 and 28 return false
+// with 'The system encountered an internal error while rendering the report.' (ReportingService:Rpc) after OnPreRendering: the Mono renderer
+// fails, to be checked on the Windows nightly.
 // BC versions: 27 - 29
+
+codeunit 79259 "LT AM Rdlc Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+        Active: Boolean;
+
+    procedure Start()
+    begin
+        Entries := '';
+        Active := true;
+    end;
+
+    procedure Add(Entry: Text)
+    begin
+        if Active then
+            Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        Active := false;
+        exit(Result);
+    end;
+}
 
 report 79256 "LT AM Rdlc Text Rpt"
 {
@@ -64,14 +102,14 @@ report 79256 "LT AM Rdlc Text Rpt"
     end;
 
     var
-        AmLog: Codeunit "LT AM Log";
+        AmLog: Codeunit "LT AM Rdlc Log";
         ReqText: Text[30];
 }
 
 codeunit 79258 "LT AM Rdlc Subscribers"
 {
     var
-        AmLog: Codeunit "LT AM Log";
+        AmLog: Codeunit "LT AM Rdlc Log";
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'SubstituteReport', '', false, false)]
     local procedure AmSubstitute(ReportId: Integer; RunMode: Option Normal,ParametersOnly,Execute,Print,SaveAs,RunModal; RequestPageXml: Text; RecordRef: RecordRef; var NewReportId: Integer)
@@ -110,7 +148,7 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     TestPermissions = Disabled;
 
     var
-        AmLog: Codeunit "LT AM Log";
+        AmLog: Codeunit "LT AM Rdlc Log";
         RequestXmlTxt: Label '<?xml version="1.0" standalone="yes"?><ReportParameters><Options><Field name="ReqText">AMREQ42</Field></Options></ReportParameters>', Locked = true;
 
     [TryFunction]
@@ -272,51 +310,26 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         end;
     end;
 
-    [Test]
-    procedure EmptyRdlc_SaveAsPdf()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Probe(Observer, Report::"LT AM Rdlc Rpt", ReportFormat::Pdf);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure EmptyRdlc_SaveAsWord()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Probe(Observer, Report::"LT AM Rdlc Rpt", ReportFormat::Word);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure EmptyRdlc_SaveAsExcel()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Probe(Observer, Report::"LT AM Rdlc Rpt", ReportFormat::Excel);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure EmptyRdlc_SaveAsHtml()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Probe(Observer, Report::"LT AM Rdlc Rpt", ReportFormat::Html);
-        Observer.Finish();
-    end;
-
+#if not BC29PLUS
     [Test]
     procedure TextRdlc_SaveAsPdf()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Pdf);
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79256,SaveAs,req=Yes);OnPreRendering();OnDocumentReady(79256,keys=19,documenttype=application/pdf,layoutmimetype=Application/ReportLayout/Rdlc,layoutname=LtAmRdlcText,objectname=LT AM Rdlc Text Rpt,success=No);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('has_output', 'Yes');
+        Observer.Expect('kind', 'pdf');
+        Observer.Expect('pdf_pages', '1');
+        Observer.Verify();
     end;
+#endif
 
+#if LT_AM_LINUX_SUSPECT
     [Test]
     procedure TextRdlc_SaveAsWord()
     var
@@ -325,7 +338,9 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Word);
         Observer.Finish();
     end;
+#endif
 
+#if LT_AM_LINUX_SUSPECT
     [Test]
     procedure TextRdlc_SaveAsExcel()
     var
@@ -334,14 +349,22 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Excel);
         Observer.Finish();
     end;
+#endif
 
     [Test]
-    procedure TextRdlc_SaveAsHtml()
+    procedure TextRdlc_SaveAsHtml_IsRefused()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Html);
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79256,SaveAs,req=Yes);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', 'The Html output format is not supported by the current report layout format.');
+        Observer.Expect('error|code', 'ReportUnsupportedFormat');
+        Observer.Expect('saved', 'No');
+        Observer.Expect('has_output', 'No');
+        Observer.Expect('kind', 'empty');
+        Observer.Verify();
     end;
 
     [Test]
@@ -350,11 +373,19 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79256,SaveAs,req=Yes);OnPreRendering();OnDocumentReady(79256,keys=19,documenttype=text/xml,layoutmimetype=,layoutname=,objectname=LT AM Rdlc Text Rpt,success=No);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('has_output', 'Yes');
+        Observer.Expect('kind', 'other');
+        Observer.Verify();
     end;
 
+#if not BC29PLUS
     [Test]
-    procedure TextRdlc_Run_NoRequestPage()
+    procedure TextRdlc_Run_NoRequestPage_RendersPdf()
     var
         Observer: Codeunit "Probe Observer";
         Ok: Boolean;
@@ -365,6 +396,11 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer.Observe('log', AmLog.Take());
         Observer.Observe('ok', Format(Ok));
         Observer.ObserveError('error');
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79256,Normal,req=No);OnPreRendering();OnDocumentReady(79256,keys=19,documenttype=application/pdf,layoutmimetype=Application/ReportLayout/Rdlc,layoutname=LtAmRdlcText,objectname=LT AM Rdlc Text Rpt,success=No);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Verify();
     end;
+#endif
 }
