@@ -279,6 +279,26 @@ is only a reference.
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
+| 1370 | AL0779 | ModifyAll on a FlowField (Sum, Lookup); ModifyAll on a FlowFilter and assignments to either compile (corpus #664 item 4). |
+| 1371 | AL0777 | A Guid assigned to Text[10] or Code[20] overflows; Code[50] and Text take it (corpus #664 item 5). |
+| 1372 | AL0774 | exit(false) / exit(true) in a [TryFunction]; a bare exit compiles (corpus #664 item 6). |
+| 1373 | AL0896 | FlowFields whose CalcFormula forms a cycle, directly or through a second FlowField (corpus #664 item 9). |
+| 1374 | AL0873 | continue outside a loop (corpus #664 item 11). |
+| 1375 | AL0855, AL0155, AL0379 | A variable named ""; a query data item and column named "" (corpus #664 item 13). |
+| 1376 | AL0926, AL0104 | Table fields and keys after a procedure, on BC 27, 28 and 29 alike (corpus #664 item 15). |
+| 1377 | AL0582, AL0922 | A local procedure, and a Scope OnPrem procedure, as an interface implementation (corpus #664 item 19). |
+| 1378 | AL0104, AL0107 | '?' or '*' in a variable name (corpus #664 item 22). |
+| 1379 | AL0224, AL0111, AL0104, AL0198 | Nested block comments; braces used as a comment in a procedure body (corpus #664 items 23, 24). |
+| 1380 | AL0353, AL0815 | A query column whose source is a FlowFilter (corpus #664 item 5). |
+| 1381 | AL0190 | Time literals with fewer than six digits: 2359T, 1130T, 12T, 123T (corpus #664 item 27). |
+| 1382 | AL0111, AL0224, AL0104 | Lower-case literal suffixes 0d, 0t, 0dt, 20200101d, 120000t; DMY2Date(1, , 2020) (corpus #664 items 28, 34). |
+| 1383 | AL0623, AL0622 | A #region that starts outside an #if and ends inside it (corpus #664 item 29). |
+| 1384 | AL0831, AL0582 | A [TryFunction] as an interface implementation (corpus #664 item 6). |
+| 1385 | AL0806 | Record "18": a quoted object id (corpus #664 item 31). |
+| 1386 | AL0870, AL0224, AL0111 | @ not followed by a quote (corpus #664 item 11). |
+| 1387 | AL0165, AL0750, AL0118 | Trigger called directly; chained enum value; "17".DeleteAll and Customer.Count without a variable (corpus #664 items 30, 32, 33). |
+| 1388 | AL0185, AL0851 | 'as' with a target that is not an interface (corpus #664 item 19). |
+| 1389 | AL0159 | Blob and TestPage as return types; the other complex types and the Http types compile (corpus #664 items 35, 36). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
