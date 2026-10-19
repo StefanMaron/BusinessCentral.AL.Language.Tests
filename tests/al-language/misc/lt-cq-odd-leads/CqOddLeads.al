@@ -196,9 +196,11 @@ codeunit 85060 "LT CQ Odd Leads"
         Observer: Codeunit "Probe Observer";
         Rec: Record "LT CQ Dec";
     begin
-        asserterror Rec.D3040 := 1.5;
-        Observer.ObserveError('assign 30:40');
-        Observer.Observe('value after', Format(Rec.D3040));
+        Rec.D3040 := 1.5;
+        Observer.Observe('value = 1.5', Format(Rec.D3040 = 1.5));
+        Observer.Observe('format 9', Format(Rec.D3040, 0, 9));
+        asserterror Observer.Observe('format', Format(Rec.D3040));
+        Observer.ObserveError('format');
         Observer.Finish();
     end;
 
@@ -206,8 +208,54 @@ codeunit 85060 "LT CQ Odd Leads"
     procedure Item38_BigIntegerIntoIntegerAndEnumFlowFields()
     var
         Observer: Codeunit "Probe Observer";
-        Src: Record "LT CQ Src";
         Flow: Record "LT CQ Flow";
+    begin
+        // asserterror rolls back the inserted rows, so every step inserts them again first.
+        SetupFlowRows(Flow);
+        Flow.Id := 2;
+        Flow.CalcFields(LookupInt, SumInt);
+        Observer.Observe('lookup small', Format(Flow.LookupInt));
+        Observer.Observe('sum small', Format(Flow.SumInt));
+        Flow.Big := 1;
+        Flow.CalcFields(Cnt2);
+        Observer.Observe('count int = 1', Format(Flow.Cnt2));
+        Flow.Big := 0;
+        Flow.CalcFields(Cnt2);
+        Observer.Observe('count int = 0', Format(Flow.Cnt2));
+        SetupFlowRows(Flow);
+        Flow.Id := 1;
+        asserterror begin
+            Flow.CalcFields(LookupInt);
+            Error('no error: %1', Flow.LookupInt);
+        end;
+        Observer.ObserveError('lookup 3000000000');
+        SetupFlowRows(Flow);
+        Flow.Id := 3;
+        asserterror begin
+            Flow.CalcFields(SumInt);
+            Error('no error: %1', Flow.SumInt);
+        end;
+        Observer.ObserveError('sum 4000000001');
+        SetupFlowRows(Flow);
+        Flow.Big := 1;
+        asserterror begin
+            Flow.CalcFields(CntEnum);
+            Error('no error: %1', Flow.CntEnum);
+        end;
+        Observer.ObserveError('count enum = 1');
+        SetupFlowRows(Flow);
+        Flow.Big := 3000000000L;
+        asserterror begin
+            Flow.CalcFields(Cnt2);
+            Error('no error: %1', Flow.Cnt2);
+        end;
+        Observer.ObserveError('count int = 3000000000');
+        Observer.Finish();
+    end;
+
+    local procedure SetupFlowRows(var Flow: Record "LT CQ Flow")
+    var
+        Src: Record "LT CQ Src";
     begin
         Src.DeleteAll();
         Flow.DeleteAll();
@@ -219,41 +267,6 @@ codeunit 85060 "LT CQ Odd Leads"
         Flow.Init();
         Flow.Id := 1;
         Flow.Insert();
-        asserterror begin
-            Flow.CalcFields(LookupInt);
-            Error('no error: %1', Flow.LookupInt);
-        end;
-        Observer.ObserveError('lookup 3000000000');
-        Flow.Id := 2;
-        Flow.CalcFields(LookupInt, SumInt);
-        Observer.Observe('lookup small', Format(Flow.LookupInt));
-        Observer.Observe('sum small', Format(Flow.SumInt));
-        Flow.Id := 3;
-        asserterror begin
-            Flow.CalcFields(SumInt);
-            Error('no error: %1', Flow.SumInt);
-        end;
-        Observer.ObserveError('sum 4000000001');
-        Flow.Big := 1;
-        Flow.CalcFields(Cnt2);
-        Observer.Observe('count int = 1', Format(Flow.Cnt2));
-        asserterror begin
-            Flow.CalcFields(CntEnum);
-            Error('no error: %1', Flow.CntEnum);
-        end;
-        Observer.ObserveError('count enum = 1');
-        Flow.Big := 3000000000L;
-        asserterror begin
-            Flow.CalcFields(Cnt2);
-            Error('no error: %1', Flow.Cnt2);
-        end;
-        Observer.ObserveError('count int = 3000000000');
-        asserterror begin
-            Flow.CalcFields(CntEnum);
-            Error('no error: %1', Flow.CntEnum);
-        end;
-        Observer.ObserveError('count enum = 3000000000');
-        Observer.Finish();
     end;
 
     local procedure AddSrc(Id: BigInteger; Other: Integer; En: Enum "LT CQ E"; Int: Integer)
