@@ -164,7 +164,7 @@ codeunit 81959 "LT BM FlowField Conversions"
     end;
 
     // The other direction, a BigInteger field = field(Integer), gives no compile diagnostic. On BC 28.5 CalcFields then raised
-    // "The following fields must have the same type: ... Type: BigInteger <-- Integer" (CI run 39253469275); on BC 29.0 it counted.
+    // "The following fields must have the same type: ... Type: BigInteger <-- Integer" (also on BC 27.5, CI run 39257493772); BC 29.0 counts.
     [Test]
     procedure BM_CalcFormula_BigIntegerFilterFromInteger()
     var
@@ -173,7 +173,17 @@ codeunit 81959 "LT BM FlowField Conversions"
         Seed();
         Observer.Observe('id_1', CountBigById(1));
         Observer.Observe('id_none', CountBigById(3000000));
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('id_1', '1');
+#else
+        Observer.Expect('id_1', 'error|The following fields must have the same type:\\Field: Big <-- Id\Table: LT BM FF Source <-- LT BM FF Host\Type: BigInteger <-- Integer|DB:TypeMisMatch');
+#endif
+#if BC29PLUS
+        Observer.Expect('id_none', '0');
+#else
+        Observer.Expect('id_none', 'error|The following fields must have the same type:\\Field: Big <-- Id\Table: LT BM FF Source <-- LT BM FF Host\Type: BigInteger <-- Integer|DB:TypeMisMatch');
+#endif
+        Observer.Verify();
     end;
 
     local procedure CountBigById(HostId: Integer): Text
