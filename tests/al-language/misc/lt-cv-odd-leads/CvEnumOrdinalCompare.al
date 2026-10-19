@@ -6,6 +6,7 @@
 //   enumextension of the same app; an Integer or Option field assigned to an enum field (warning AL0603 only); `if E = Enum::X.FromInteger(n)`
 //   and `case Enum::X.FromInteger(n) of` compile and run.
 // Leads: microsoft/AL issues 5893, 5800, 5774, 5830, 5811.
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 enum 85364 "LT CV Level"
 {

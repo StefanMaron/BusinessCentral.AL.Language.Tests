@@ -4,6 +4,7 @@
 // Facts: corpus issue 670 (odd AL behavior leads, part E): the Record.ReadIsolation getter after Reset, Init, LockTable, Clear, Copy,
 //   record assignment and TransferFields, and a CalcFields of a FlowField on a record instance with ReadUncommitted after another
 //   instance took LockTable. What the lock does to a second session is not run here (it needs two sessions).
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 table 85370 "LT CV Iso Row"
 {

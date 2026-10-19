@@ -5,6 +5,7 @@
 //   The procedures below are declared in an order that is neither alphabetic nor the reverse; each appends its name to a log table
 //   (the default TransactionModel commits at the end of each test), and the last declared test reads the log.
 // Leads: microsoft/AL issues 4417, 2711.
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 table 85368 "LT CV Run Order Log"
 {

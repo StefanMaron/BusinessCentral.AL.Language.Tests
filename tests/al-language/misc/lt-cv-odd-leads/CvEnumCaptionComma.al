@@ -4,6 +4,9 @@
 // Facts: corpus issue 670 (odd AL behavior leads, part E): an enum value whose Caption contains a comma ('Diamond Level, with bonus'):
 //   Format, Evaluate from the caption and from the name, FieldRef.OptionCaption and OptionMembers of a field of that enum, and
 //   TestPage SetValue by caption (Learn warns that a comma in a caption can select the wrong value).
+//   The compiler gives warning AL0649 for the comma. Format and Evaluate use the whole caption; TestPage SetValue splits the caption list at
+//   every comma, so the whole caption is refused and its halves select other values.
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 enum 85365 "LT CV Tier"
 {
@@ -144,6 +147,31 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
         SetOnFreshPage(Observer, 'first_half', 'Diamond Level');
         SetOnFreshPage(Observer, 'name', 'Diamond');
         SetOnFreshPage(Observer, 'plain_caption', 'Plain');
-        Observer.Finish();
+        Observer.Expect('caption_with_comma|ok', 'No');
+        Observer.Expect('caption_with_comma|text', 'Validation error for Field: Tier,  Message = ''Your entry of ''Diamond ...th bonus'' is not an acceptable value for ''Tier''. (Select Refresh to discard errors)''');
+        Observer.Expect('caption_with_comma|code', 'TestValidation');
+        Observer.Expect('caption_with_comma|value', '3');
+        Observer.Expect('caption_with_comma|stored', '3');
+        Observer.Expect('second_half|ok', 'Yes');
+        Observer.Expect('second_half|text', '');
+        Observer.Expect('second_half|code', '');
+        Observer.Expect('second_half|value', ' with bonus');
+        Observer.Expect('second_half|stored', '2');
+        Observer.Expect('first_half|ok', 'Yes');
+        Observer.Expect('first_half|text', '');
+        Observer.Expect('first_half|code', '');
+        Observer.Expect('first_half|value', 'Diamond Level');
+        Observer.Expect('first_half|stored', '1');
+        Observer.Expect('name|ok', 'No');
+        Observer.Expect('name|text', 'Validation error for Field: Tier,  Message = ''Your entry of ''Diamond'' is not an acceptable value for ''Tier''. (Select Refresh to discard errors)''');
+        Observer.Expect('name|code', 'TestValidation');
+        Observer.Expect('name|value', '3');
+        Observer.Expect('name|stored', '3');
+        Observer.Expect('plain_caption|ok', 'Yes');
+        Observer.Expect('plain_caption|text', '');
+        Observer.Expect('plain_caption|code', '');
+        Observer.Expect('plain_caption|value', 'Plain');
+        Observer.Expect('plain_caption|stored', '0');
+        Observer.Verify();
     end;
 }

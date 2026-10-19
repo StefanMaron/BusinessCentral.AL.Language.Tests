@@ -5,6 +5,7 @@
 //   (the compiler gives warning AL0659, no error). The app publishes; Format, Evaluate, AsInteger, Names, Ordinals and FieldRef option strings
 //   of each enum are its own.
 // Leads: microsoft/AL issues 6740, 6691.
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 enum 85366 "LT CV Long Enum Name Shared Prefix One"
 {

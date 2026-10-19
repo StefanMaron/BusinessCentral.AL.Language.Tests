@@ -5,6 +5,7 @@
 //   before any Commit, each answered by its handler: no error is raised, the write is still there afterwards, and the handler's page sees it.
 //   What the web client does with a client callback inside a write transaction cannot be run in a headless test.
 // Leads: microsoft/AL issues 4930, 5028.
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 table 85369 "LT CV Tx Row"
 {

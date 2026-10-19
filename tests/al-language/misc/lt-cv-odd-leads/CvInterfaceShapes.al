@@ -7,6 +7,7 @@
 //   Compile-time halves: must-not-compile cases 1768 (implementation drops `temporary`: AL0582), 1769 (interface from an enum that does not
 //   implement it: AL0122), 1770 (`case` over a Record: AL0698).
 // Leads: microsoft/AL issues 5926, 6647, 6652, 6679, 6156, 5675.
+// Probe: values observed on a local BC 29.0 tier; 27.5 and 28.5 checked by the corpus CI.
 // BC versions: 27, 28, 29
 interface "LT CV I Shapes"
 {
