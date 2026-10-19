@@ -247,10 +247,14 @@ codeunit 60907 "Test All Profile Table"
     end;
 
     // ---------------------------------------------------------------------------------------
-    // Probe (writer BX, 2026-10-19): "Default Role Center" on a fresh corpus tenant, read
-    // directly and through the path Conf./Personalization Mgt. GetDefaultProfileID takes
-    // (user plans, then the row marked "Default Role Center", then DefaultRoleCenterID(), then
-    // the first row). The experience-tier tests 60700 and 60702 pass on BC through that path.
+    // "Default Role Center" on a fresh corpus tenant (writer BX, 2026-10-19; CI runs 39236990456,
+    // 39237024989, 39237057632 on BC 27.5, 28.5, 29.0, same values on all three), read directly
+    // and through the path Conf./Personalization Mgt. GetDefaultProfileID takes: user plans
+    // (none for the test user), then the row marked "Default Role Center" (no row is marked),
+    // then DefaultRoleCenterID() (9022, Business Manager Role Center) with FindFirst on
+    // "Role Center ID" = 9022, which is BUSINESS MANAGER (Base Application). The test user has
+    // a User Personalization row on BUSINESS MANAGER. The experience-tier tests 60700 and
+    // 60702 pass on BC through this path.
     // ---------------------------------------------------------------------------------------
 
     local procedure DescribeProfile(var AllProfile: Record "All Profile"): Text
@@ -289,7 +293,12 @@ codeunit 60907 "Test All Profile Table"
                 Rows += DescribeProfile(AllProfile) + ';';
             until AllProfile.Next() = 0;
         Observer.Observe('role center 9022 rows', Rows);
-        Observer.Finish();
+        Observer.Expect('default rows count', '0');
+        Observer.Expect('default rows', '');
+        Observer.Expect('fixture profile', 'Tenant|AL Language Coverage Tests|ALT ALLPROFILE ROW|60904|No|ALT AllProfile Row Fixture');
+        Observer.Expect('role center 9022 count', '3');
+        Observer.Expect('role center 9022 rows', 'Tenant|Base Application|BUSINESS MANAGER|9022|No|Business Manager;Tenant|Base Application|BUSINESS MANAGER EVALUATION|9022|No|Business Manager Evaluation;Tenant|Base Application|O365 SALES|9022|No|O365 Sales Activities;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -321,6 +330,15 @@ codeunit 60907 "Test All Profile Table"
 
         Observer.Observe('current profile found', Format(ConfPersonalizationMgt.GetCurrentProfileNoError(CurrentProfile)));
         Observer.Observe('current profile', DescribeProfile(CurrentProfile));
-        Observer.Finish();
+        Observer.Expect('plan role centers of user', '0');
+        Observer.Expect('DefaultRoleCenterID', '9022');
+        Observer.Expect('user personalization', 'row|BUSINESS MANAGER|Tenant');
+        Observer.Expect('try result', 'Yes');
+        Observer.Expect('default profile', 'Tenant|Base Application|BUSINESS MANAGER|9022|No|Business Manager');
+        Observer.Expect('default profile filter Default Role Center', '');
+        Observer.Expect('default profile filter Role Center ID', '9022');
+        Observer.Expect('current profile found', 'Yes');
+        Observer.Expect('current profile', 'Tenant|Base Application|BUSINESS MANAGER|9022|No|Business Manager');
+        Observer.Verify();
     end;
 }

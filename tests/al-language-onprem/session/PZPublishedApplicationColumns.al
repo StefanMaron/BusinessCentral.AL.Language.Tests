@@ -60,8 +60,11 @@ codeunit 61262 "PZ Published App Columns"
         Observer.Verify();
     end;
 
-    // Probe (writer BX, 2026-10-19): the exact "Tenant ID" (field 12) of the corpus apps and of Microsoft's apps. Microsoft code only
-    // filters it with '' | TenantId(), which a blank also passes.
+    // "Tenant ID" (field 12) of the corpus apps and of Microsoft's apps (writer BX, 2026-10-19; CI runs 39236990456, 39237024989,
+    // 39237057632 on BC 27.5, 28.5, 29.0, same values on all three). Microsoft code only filters it with '' | TenantId(), which a
+    // blank also passes. The corpus apps carry TenantId() ('default'): they are published through the dev endpoint, which publishes
+    // a per-tenant app. Microsoft's apps are global and carry a blank. Like "Runtime Package ID" (see TestPublishedApplicationSysTable),
+    // the corpus apps' value may depend on the publish route; it is queued for the Windows check.
     local procedure TenantIdOf(AppId: Guid): Text
     var
         App: Record "Published Application";
@@ -79,6 +82,7 @@ codeunit 61262 "PZ Published App Columns"
         Observer: Codeunit "Probe Observer";
         ThisModule: ModuleInfo;
         Id: Guid;
+        NonBlank: Integer;
     begin
         NavApp.GetCurrentModuleInfo(ThisModule);
         Observer.Observe('TenantId()', TenantId());
@@ -89,13 +93,24 @@ codeunit 61262 "PZ Published App Columns"
         Observer.Observe('base application', TenantIdOf(Id));
         Evaluate(Id, '63ca2fa4-4f03-4f2b-a480-172fef340d3f');
         Observer.Observe('system application', TenantIdOf(Id));
+        // How many apps carry a tenant id depends on how many corpus apps the leg publishes (8 on 27.5, 6 on 28.5 and 29.0),
+        // so only the relation is asserted: every non-blank tenant id is TenantId().
         App.SetFilter("Tenant ID", '<>%1', '');
-        Observer.Observe('rows with a non-blank tenant id', Format(App.Count()));
+        NonBlank := App.Count();
+        Observer.Observe('some rows carry a tenant id', Format(NonBlank > 0));
         App.SetRange("Tenant ID", TenantId());
-        Observer.Observe('rows with tenant id = TenantId()', Format(App.Count()));
+        Observer.Observe('every non-blank tenant id is TenantId()', Format(App.Count() = NonBlank));
         App.SetFilter("Tenant ID", '%1|%2', '', TenantId());
         Observer.Observe('rows passing blank or TenantId() equals all rows', Format(App.Count() = AllRows()));
-        Observer.Finish();
+        Observer.Expect('TenantId()', 'default');
+        Observer.Expect('this onprem app', '[default] rows=1');
+        Observer.Expect('cloud coverage app', '[default] rows=1');
+        Observer.Expect('base application', '[] rows=1');
+        Observer.Expect('system application', '[] rows=1');
+        Observer.Expect('some rows carry a tenant id', 'Yes');
+        Observer.Expect('every non-blank tenant id is TenantId()', 'Yes');
+        Observer.Expect('rows passing blank or TenantId() equals all rows', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure AllRows(): Integer
