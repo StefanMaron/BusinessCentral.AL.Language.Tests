@@ -1,21 +1,19 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testhandlercontext/testhandlercontext-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own objects 81580 - 81587
-// Corpus issues 627 items 14-19, 626 item 10, 629 item 16 (BC 29 test framework): a test codeunit that names a test handler
-// (codeunit property TestHandlers, an enum value of the system enum TestHandler that implements ITestHandler) and a data-driven
-// test ([TestDataSource] naming a codeunit that implements ITestDataSource; the test procedure takes an Interface ITestContext).
-// Observed: which ITestHandler callbacks run, in which order, and what TestHandlerContext.CodeunitId, CodeunitName,
-// ProcedureName, TestCaseName and (in the After callbacks) Success return in each; the effect of Skip(Reason) called in
-// OnBeforeTestProcedureRun; the rows (test cases) that reach the data-driven test; and DataSourceContext.CodeunitId inside
-// ListTestCases and GetTestCase. The types are declared by the BC 29 System app (namespaces System.Testability and System.Test).
-// Probe: observed values.
+// Fixtures used: Probe Observer (69160); own objects 81580, 81583 - 81585
+// Corpus issue 627 items 14-19 (BC 29 test framework): a test codeunit that names a test handler (codeunit property
+// TestHandlers, an enum value of the system enum TestHandler that implements ITestHandler). Observed: which ITestHandler callbacks
+// run and in which order, what TestHandlerContext.CodeunitId, CodeunitName, ProcedureName, TestCaseName and (in the After
+// callbacks) Success return in each, and the effect of Skip(Reason) called in OnBeforeTestProcedureRun: the test is reported as
+// skipped, its body does not run and OnAfterTestProcedureRun is not called for it. The types are declared by the BC 29 System app
+// (namespaces System.Testability and System.Test). Data-driven tests ([TestDataSource]) are in BiTestDataSource.al (not run:
+// they end the session on the Linux CI). Not covered: Success() after a failing test (it needs a test that fails), and
+// OnAfterTestCodeunitRun (it runs after the last test, so no test of the codeunit can see it; a SingleInstance log read by a
+// second test codeunit came back empty in run 39225437143).
+// Probe: observed values; every literal asserted below is what the BC tier produced (corpus CI job test-testlibraries,
+// run 39225437143 on BC 29.0).
 // BC versions: 29
 #if BC29PLUS
-
-interface "LT BI TF Case Data"
-{
-    procedure CaseText(): Text;
-}
 
 codeunit 81580 "LT BI TF Log"
 {
@@ -36,46 +34,6 @@ codeunit 81580 "LT BI TF Log"
         Result := Entries;
         Entries := '';
         exit(Result);
-    end;
-}
-
-codeunit 81581 "LT BI TF Case" implements ITestContext, "LT BI TF Case Data"
-{
-    var
-        Value: Text;
-
-    procedure SetText(NewValue: Text)
-    begin
-        Value := NewValue;
-    end;
-
-    procedure CaseText(): Text
-    begin
-        exit(Value);
-    end;
-}
-
-codeunit 81582 "LT BI TF Source" implements ITestDataSource
-{
-    procedure ListTestCases(DataSetIdentifier: Text; context: DataSourceContext): List of [Text]
-    var
-        Log: Codeunit "LT BI TF Log";
-        Cases: List of [Text];
-    begin
-        Log.Add('list(set=' + DataSetIdentifier + ',cu=' + Format(context.CodeunitId()) + ')');
-        Cases.Add('alpha');
-        Cases.Add('beta');
-        exit(Cases);
-    end;
-
-    procedure GetTestCase(DataSetIdentifier: Text; TestCaseIndex: Integer; TestCaseIdentifier: Text; context: DataSourceContext): Interface ITestContext
-    var
-        Log: Codeunit "LT BI TF Log";
-        TestCase: Codeunit "LT BI TF Case";
-    begin
-        Log.Add('get(set=' + DataSetIdentifier + ',index=' + Format(TestCaseIndex) + ',id=' + TestCaseIdentifier + ',cu=' + Format(context.CodeunitId()) + ')');
-        TestCase.SetText(TestCaseIdentifier + '#' + Format(TestCaseIndex));
-        exit(TestCase);
     end;
 }
 
@@ -155,16 +113,6 @@ codeunit 81585 "LT BI TF Tests"
         Log.Add('body B');
     end;
 
-    [TestDataSource(81582, 'Set1')]
-    procedure BiTf_C_Cases(Context: Interface ITestContext)
-    var
-        Log: Codeunit "LT BI TF Log";
-        CaseData: Interface "LT BI TF Case Data";
-    begin
-        CaseData := Context as "LT BI TF Case Data";
-        Log.Add('body C ' + CaseData.CaseText());
-    end;
-
     // Runs last in this codeunit: everything logged so far, from the first callback on.
     [Test]
     procedure BiTf_D_Observe()
@@ -173,25 +121,10 @@ codeunit 81585 "LT BI TF Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        // BiTf_B_SkipMe: 'body B' is missing and no afterProc follows its beforeProc (JUnit reports it as skipped).
+        Observer.Expect('log', 'beforeCodeunit(cu=81585,name=LT BI TF Tests,proc=,case=);beforeProc(cu=81585,name=LT BI TF Tests,proc=BiTf_A_Plain,case=);body A;afterProc(cu=81585,name=LT BI TF Tests,proc=BiTf_A_Plain,case=,success=Yes);beforeProc(cu=81585,name=LT BI TF Tests,proc=BiTf_B_SkipMe,case=);beforeProc(cu=81585,name=LT BI TF Tests,proc=BiTf_D_Observe,case=);');
+        Observer.Verify();
     end;
 }
 
-// A second test codeunit without test handlers, run after 81585: the callbacks logged after BiTf_D_Observe
-// (its OnAfterTestProcedureRun and the codeunit's OnAfterTestCodeunitRun), if the SingleInstance log survives.
-codeunit 81586 "LT BI TF Tests After"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-
-    [Test]
-    procedure BiTf_E_ObserveAfter()
-    var
-        Log: Codeunit "LT BI TF Log";
-        Observer: Codeunit "Probe Observer";
-    begin
-        Observer.Observe('log', Log.Take());
-        Observer.Finish();
-    end;
-}
 #endif
