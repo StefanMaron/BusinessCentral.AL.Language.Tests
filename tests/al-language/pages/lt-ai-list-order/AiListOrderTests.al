@@ -1069,6 +1069,8 @@ codeunit 78862 "LT AI List Paging Order"
     // Writer BE (corpus #660, asked by al-runtime-rs assumption list-open-full-window-rows-before): the open read of a list whose
     // first window of 20 rows is full and that has rows before its first row (40 rows, opened on R1010), with OnFindRecord,
     // OnNextRecord and OnAfterGetRecord, without OnAfterGetCurrRecord (LT AI List, LT AI List Pos) and with it (LT AI List Curr).
+    // Measured (BC 29.0): 20 rows forward, then back from the first row one row at a time until OnNextRecord(-1) answers 0 or 20 rows
+    // are read back; without OnAfterGetCurrRecord the read ends there (no OnFindRecord('=')), with it it ends 'R;F:=;R;C' on the first row.
     [PageHandler]
     procedure RunCurrHandler(var P: TestPage "LT AI List Curr")
     var
@@ -1158,6 +1160,11 @@ codeunit 78862 "LT AI List Paging Order"
         Log.Clear();
         Row.Get('R1030');
         Page.Run(Page::"LT AI List", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'F:=>=Yes;R:R1030;N:1=1;R:R1031;N:1=1;R:R1032;N:1=1;R:R1033;N:1=1;R:R1034;N:1=1;R:R1035;N:1=1;R:R1036;N:1=1;R:R1037;N:1=1;R:R1038;N:1=1;R:R1039;N:1=1;R:R1040;N:1=1;R:R1041;N:1=1;R:R1042;N:1=1;R:R1043;N:1=1;R:R1044;N:1=1;R:R1045;N:1=1;R:R1046;N:1=1;R:R1047;N:1=1;R:R1048;N:1=1;R:R1049;R:R1030;N:-1=-1;R:R1029;N:-1=-1;R:R1028;N:-1=-1;R:R1027;N:-1=-1;R:R1026;N:-1=-1;R:R1025;N:-1=-1;R:R1024;N:-1=-1;R:R1023;N:-1=-1;R:R1022;N:-1=-1;R:R1021;N:-1=-1;R:R1020;N:-1=-1;R:R1019;N:-1=-1;R:R1018;N:-1=-1;R:R1017;N:-1=-1;R:R1016;N:-1=-1;R:R1015;N:-1=-1;R:R1014;N:-1=-1;R:R1013;N:-1=-1;R:R1012;N:-1=-1;R:R1011;N:-1=-1;R:R1010');
+        Observer.Expect('current', 'R1030');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current2', 'R1031');
+        Observer.Verify();
     end;
 }

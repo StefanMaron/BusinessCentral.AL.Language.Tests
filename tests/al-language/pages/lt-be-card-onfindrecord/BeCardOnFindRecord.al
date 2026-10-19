@@ -8,6 +8,11 @@
 //   exits true without touching Rec, and without OnFindRecord. The caller hands a temporary record (one row, Descr = 'passed'), and for
 //   the database cards also the stored row (Descr = 'stored').
 //   Shape of Microsoft's page 554 "Analysis by Dimensions" (sets Rec."Account Filter" in OnOpenPage without Modify).
+// Measured (BC 29.0): with OnFindRecord the card is asked OnFindRecord('=') once (not '=>'), after OnOpenPage, with Rec as OnOpenPage left it;
+//   the field OnOpenPage set shows in the control, in OnAfterGetRecord and in the action, for a temporary and a database card and for a
+//   temporary or a stored record passed in. Without OnFindRecord the row is read again: the field OnOpenPage set is blank, and the card
+//   shows what the passed record held (Descr 'passed' or 'stored'). After the action: OnAfterGetRecord, then (with the trigger) OnFindRecord('=')
+//   and OnAfterGetRecord again.
 // Asked by al-runtime-rs (assumption page-run-record-onfindrecord-card).
 // Corpus issue: StefanMaron/BusinessCentral.AL.Language.Tests#660.
 // BC versions: all (CI)

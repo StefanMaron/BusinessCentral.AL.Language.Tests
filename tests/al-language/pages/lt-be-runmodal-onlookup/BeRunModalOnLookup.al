@@ -15,11 +15,16 @@
 //   table whose LookupPageId is another page; a filter on a key field, on a non-key field and none; LookupMode(false) + RunModal(); and a
 //   handler that only walks the rows (as handlers/TestPageModalNewRowLine_Tests.al does) next to one that also invokes OK(); the same list
 //   without its OnOpenPage trigger, and with only one field and no trigger (the shape of the pages in TestPageModalNewRowLine_Objects.al).
-// Measured (BC 27.5, 28.5, 29.0): every Page.RunModal(PageId, Rec) here opens the page in lookup mode (CurrPage.LookupMode = Yes,
-//   TestPage.Editable() = No, no new-row line, Next() at the last row = No), from an OnLookup trigger, from an action and from test code alike,
-//   whatever the table's LookupPageId, the filter or the page's triggers; RunModal returns LookupOK after OK() and LookupCancel when the handler
-//   only walks. Only LookupMode(false) + RunModal() shows the new-row line (and returns OK). Note: handlers/TestPageModalNewRowLine_Tests.al measures
-//   a new-row line for Page.RunModal(id, Rec) on its plain page; the shape that separates the two is not found yet.
+// Measured (BC 27.5, 28.5, 29.0): every Page.RunModal(PageId, Rec) here whose return value is used opens the page in lookup mode
+//   (CurrPage.LookupMode = Yes, TestPage.Editable() = No, no new-row line, Next() at the last row = No), from an OnLookup trigger, from an
+//   action and from test code alike, whatever the table's LookupPageId, the filter or the page's triggers; RunModal returns LookupOK after OK()
+//   and LookupCancel when the handler only walks. Only LookupMode(false) + RunModal() shows the new-row line (and returns OK).
+// Measured (BC 29.0, the Shape_* tests): the deciding input is whether the caller uses the return value of Page.RunModal(PageId, Rec) or
+//   Page.RunModal(0, Rec). Used (assigned, passed to Format, compared in an if): lookup mode as above. Called as a statement: not lookup mode
+//   (CurrPage.LookupMode = No, Editable() = Yes, new-row line), as handlers/TestPageModalNewRowLine_Tests.al Plain_RunModalById_HasTheNewRowLine
+//   measures (it calls it as a statement; its own page 60299 with the return value used is in lookup mode here). DataClassification
+//   (CustomerContent or SystemMetadata) and a LookupPageId naming an Editable = false page change nothing. A Page variable's RunModal() with no
+//   LookupMode call is not lookup mode whether its return value is used or not.
 // Corpus issue: StefanMaron/BusinessCentral.AL.Language.Tests#660 item 3.
 // BC versions: all (CI)
 
@@ -1071,7 +1076,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         LkList.SetTableView(Row);
         Log.Add('action=' + Format(LkList.RunModal()));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=Yes,rows=[U2][U3][],action=OK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1087,7 +1093,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         LkList.SetTableView(Row);
         LkList.RunModal();
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=Yes,rows=[U2][U3][]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1100,7 +1107,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Seed();
         Log.Add('action=' + Format(Page.RunModal(0, Row)));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'lookupMode=Yes,editable=No,rows=[S1][S2],action=LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1113,7 +1121,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Seed();
         Page.RunModal(0, Row);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'lookupMode=No,editable=Yes,rows=[S1][S2][]');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
