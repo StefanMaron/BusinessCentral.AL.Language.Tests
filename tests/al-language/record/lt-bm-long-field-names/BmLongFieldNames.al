@@ -71,6 +71,18 @@ codeunit 81956 "LT BM Long Field Names"
         Observer.Observe('fieldref_name_31', RecRef.Field(3).Name());
         Observer.Observe('fieldref_length_name_40', Format(StrLen(RecRef.Field(4).Name())));
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('read_30', '30');
+        Observer.Expect('read_31', '31');
+        Observer.Expect('read_40', 'forty');
+        Observer.Expect('filter_31_count', '1');
+        Observer.Expect('filter_31_text', 'Abcdefghij Abcdefghij Abcdefghi: 62');
+        Observer.Expect('sorted_by_40_first', '2');
+        Observer.Expect('calcsums_31', '93');
+        Observer.Expect('modifyall_31_count', '2');
+        Observer.Expect('fieldname_40', 'Abcdefghij Abcdefghij Abcdefghij Abcdefg');
+        Observer.Expect('fieldcaption_40', 'Abcdefghij Abcdefghij Abcdefghij Abcdefg');
+        Observer.Expect('fieldref_name_31', 'Abcdefghij Abcdefghij Abcdefghi');
+        Observer.Expect('fieldref_length_name_40', '40');
+        Observer.Verify();
     end;
 }

@@ -148,7 +148,15 @@ codeunit 81959 "LT BM FlowField Conversions"
         Host.Id := 1;
         Host.CalcFields("Count Big By Id");
         Observer.Observe('count_big_by_id_1', Format(Host."Count Big By Id"));
-        Observer.Finish();
+        Observer.Expect('big_5', '2');
+        Observer.Expect('big_minus_1', '1');
+        Observer.Expect('big_int_max', '0');
+        Observer.Expect('big_3e9', 'error|Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast');
+        Observer.Expect('big_2pow32_plus_5', 'error|Overflow under conversion of System.Int64 value 4294967301 to System.Int32.|ConversionCast');
+        Observer.Expect('big_2pow32_minus_1', 'error|Overflow under conversion of System.Int64 value 4294967295 to System.Int32.|ConversionCast');
+        Observer.Expect('count_big_by_id_none', '0');
+        Observer.Expect('count_big_by_id_1', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +171,13 @@ codeunit 81959 "LT BM FlowField Conversions"
         Observer.Observe('short_empty', Lookup(4, 5));
         Observer.Observe('short_no_row', Lookup(99, 5));
         Observer.Observe('long_30_chars', Lookup(3, 6));
-        Observer.Finish();
+        Observer.Expect('short_5_chars', '[short] len 5');
+        Observer.Expect('short_10_chars', '[ABCDEFGHIJ] len 10');
+        Observer.Expect('short_30_chars', '[ABCDEFGHIJKLMNOPQRSTUVWXYZ0123] len 30');
+        Observer.Expect('short_empty', '[] len 0');
+        Observer.Expect('short_no_row', '[] len 0');
+        Observer.Expect('long_30_chars', '[ABCDEFGHIJKLMNOPQRSTUVWXYZ0123] len 30');
+        Observer.Verify();
     end;
 
     local procedure BigOf(Millions: Integer; Rest: Integer): BigInteger

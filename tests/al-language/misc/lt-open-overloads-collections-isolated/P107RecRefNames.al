@@ -277,18 +277,25 @@ codeunit 72697 "LT P107 RecRef Names"
 
     local procedure TryOpenVariant(V: Variant): Text
     var
-        RecRef: RecordRef;
+        Opened: Text;
     begin
         ClearLastError();
-        if TryOpen(RecRef, V) then
-            exit('ok|' + Format(RecRef.Number()) + '|' + RecRef.Name());
-        exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        if TryOpen(V, Opened) then
+            exit('ok|' + Opened);
+        exit('error|' + Opened + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
+    // The first version passed the RecordRef out of the try function; on BC 29.0 the test then stopped with "The record is not open."
+    // (the caller read Number after the try function returned true), so the number and name are now read inside the try function, next to the Open call.
     [TryFunction]
-    local procedure TryOpen(var RecRef: RecordRef; V: Variant)
+    local procedure TryOpen(V: Variant; var Opened: Text)
+    var
+        RecRef: RecordRef;
     begin
+        Opened := 'before open';
         RecRef.Open(V);
+        Opened := 'opened';
+        Opened := Format(RecRef.IsTemporary()) + '|' + Format(RecRef.Number()) + '|' + RecRef.Name();
     end;
 }
 

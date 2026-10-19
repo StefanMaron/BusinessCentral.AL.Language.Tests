@@ -180,7 +180,18 @@ codeunit 70901 "LT P140 TextConst Lang"
         Observer.Observe('deu_contains_e', Format(C.Contains('e')));
         Observer.Observe('deu_contains_u_umlaut', Format(C.Contains('ü')));
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('contains_e', 'Yes');
+        Observer.Expect('contains_x', 'No');
+        Observer.Expect('upper', 'TEST');
+        Observer.Expect('startswith', 'Yes');
+        Observer.Expect('indexof', '3');
+        Observer.Expect('substring', 'es');
+        Observer.Expect('strlen', '4');
+        Observer.Expect('only_deu_contains', 'Yes');
+        Observer.Expect('deu_upper', 'PRÜFUNG');
+        Observer.Expect('deu_contains_e', 'Nein');
+        Observer.Expect('deu_contains_u_umlaut', 'Ja');
+        Observer.Verify();
     end;
 }
 

@@ -326,7 +326,15 @@ codeunit 72024 "LT HtT Request"
         Resp := BmGetResponse();
         Obs.Observe('response_status', Format(Resp.HttpStatusCode()));
         Obs.Observe('response_success', Format(Resp.IsSuccessStatusCode()));
-        Obs.Finish();
+        Obs.Expect('content_read', 'holder');
+        Obs.Expect('content_holder_after_write', 'holder');
+        Obs.Expect('request_method', 'GET');
+        Obs.Expect('request_holder_method_after_set', 'PUT');
+        Obs.Expect('headers_holder_contains_added', 'Yes');
+        Obs.Expect('client_holder_timeout', '5 seconds');
+        Obs.Expect('response_status', '200');
+        Obs.Expect('response_success', 'Yes');
+        Obs.Verify();
     end;
 
     local procedure BmGetContent(): HttpContent

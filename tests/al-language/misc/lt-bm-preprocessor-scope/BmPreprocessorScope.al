@@ -25,7 +25,17 @@ codeunit 81961 "LT BM Pp Scope"
         Observer.Observe('file1_lower_case_symbol', Def.CaseOfSymbol());
         Observer.Observe('file2_sees_define_of_file1', File2Defined());
         Observer.Observe('file2_app_symbol', File2AppSymbol());
-        Observer.Finish();
+        Observer.Expect('file1_defined_here', 'defined');
+        Observer.Expect('file1_defined_then_undefined', 'not defined');
+        Observer.Expect('file1_app_symbol_undefined', 'not defined');
+        Observer.Expect('file1_and_not', 'true');
+        Observer.Expect('file1_or', 'false');
+        Observer.Expect('file1_parentheses', 'true');
+        Observer.Expect('file1_elif_chain', 'elif2');
+        Observer.Expect('file1_lower_case_symbol', 'not defined');
+        Observer.Expect('file2_sees_define_of_file1', 'not defined');
+        Observer.Expect('file2_app_symbol', 'defined');
+        Observer.Verify();
     end;
 
     local procedure File2Defined(): Text

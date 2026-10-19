@@ -116,6 +116,9 @@ codeunit 72467 "LT P194 Access Test"
         Observer.Observe('via_interface', Acc.Describe());
         Observer.Observe('direct', Impl.Describe());
         Observer.Observe('is', Format(Acc is "LT BM IInternalImpl"));
-        Observer.Finish();
+        Observer.Expect('via_interface', 'internal impl');
+        Observer.Expect('direct', 'internal impl');
+        Observer.Expect('is', 'Yes');
+        Observer.Verify();
     end;
 }

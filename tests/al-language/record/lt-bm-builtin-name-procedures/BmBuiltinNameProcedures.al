@@ -105,7 +105,25 @@ codeunit 81955 "LT BM Builtin Names"
         Observer.Observe('note_after_modify_false', Row.Note);
         Observer.Observe('stored_note_after_modify_false', StoredNote(2));
         Check.Close();
-        Observer.Finish();
+        Observer.Expect('isempty_on_empty_table', 'No');
+        Observer.Expect('count_on_empty_table', '-42');
+        Observer.Expect('note_after_insert', 'own Insert');
+        Observer.Expect('stored_rows_after_insert', '0');
+        Observer.Expect('insert_true_result', 'Yes');
+        Observer.Expect('stored_rows_after_insert_true', '1');
+        Observer.Expect('count_after_inserts', '-42');
+        Observer.Expect('isempty_after_inserts', 'No');
+        Observer.Expect('findfirst_result', 'No');
+        Observer.Expect('note_after_findfirst', '[own FindFirst] id 2');
+        Observer.Expect('get_noarg_result', 'No');
+        Observer.Expect('note_after_get_noarg', '[own Get]');
+        Observer.Expect('get_key_result', 'Yes');
+        Observer.Expect('note_after_get_key', '[caller]');
+        Observer.Expect('note_after_modify', 'own Modify');
+        Observer.Expect('stored_note_after_modify', 'caller');
+        Observer.Expect('modify_false_result', 'No');
+        Observer.Expect('note_after_modify_false', 'own Modify(Bo');
+        Observer.Verify();
     end;
 
     local procedure StoredNote(Id: Integer): Text

@@ -246,7 +246,19 @@ codeunit 72788 "LT Literals"
         Observer.ObserveError('error_backslash_t');
         asserterror Error('line1\line2');
         Observer.ObserveError('error_backslash_line');
-        Observer.Finish();
+        Observer.Expect('aqb_len', '4');
+        Observer.Expect('aqb_char2', '92');
+        Observer.Expect('aqb_value', 'a\qb');
+        Observer.Expect('n_len', '2');
+        Observer.Expect('n_char1', '92');
+        Observer.Expect('n_char2', '110');
+        Observer.Expect('n_equals_backslash_n', 'Yes');
+        Observer.Expect('lone_backslash_len', '1');
+        Observer.Expect('error_backslash_t|text', 'x\ty');
+        Observer.Expect('error_backslash_t|code', 'Dialog');
+        Observer.Expect('error_backslash_line|text', 'line1\line2');
+        Observer.Expect('error_backslash_line|code', 'Dialog');
+        Observer.Verify();
     end;
 
     local procedure CodeAt(T: Text; Pos: Integer): Integer

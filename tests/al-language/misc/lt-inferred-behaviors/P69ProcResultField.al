@@ -366,7 +366,21 @@ codeunit 71161 "LT P69 Proc Result Field"
         TR.Insert();
         Observer.Observe('temp_caller_count', Format(TR.Count()));
         Observer.Observe('temp_holder_count', Format(Holder.TempRowCount()));
-        Observer.Finish();
+        Observer.Expect('json_holder_after_add', '{"k":1}');
+        Observer.Expect('textbuilder_holder_after_append', '[x]');
+        Observer.Expect('dictionary_holder_count', '1');
+        Observer.Expect('list_holder_count', '1');
+        Observer.Expect('codeunit_holder_after_bump', '1');
+        Observer.Expect('interface_holder_after_bump', '2');
+        Observer.Expect('interface_value', '2');
+        Observer.Expect('record_filters', '');
+        Observer.Expect('record_count', '1');
+        Observer.Expect('holder_filters_after_caller_reset', 'Code: A, Qty: >1');
+        Observer.Expect('temp_is_temporary', 'Yes');
+        Observer.Expect('temp_count', '0');
+        Observer.Expect('temp_caller_count', '1');
+        Observer.Expect('temp_holder_count', '1');
+        Observer.Verify();
     end;
 }
 
