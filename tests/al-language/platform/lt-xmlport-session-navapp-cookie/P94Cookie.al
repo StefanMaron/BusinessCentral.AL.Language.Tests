@@ -346,8 +346,9 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Verify();
     end;
 
-    // Corpus issue #671 (odd AL behavior leads, part F) item 24: the setter form as a statement (the AL 30 compiler of the corpus CI
-    // accepts it with no AL0192) and the value it returns when it is used as an expression.
+    // Corpus issue #671 (odd AL behavior leads, part F) item 24: the value the setter form returns when it is used as an expression.
+    // As a statement (C.Name('n');) the AL 30.0.42.60748-beta compiler accepts it, but publishing to BC 29.0 fails with
+    // "error AL0192: The return value must be used for the method 'Name'" (and 'Value'), so it cannot be in this app.
     [Test]
     procedure Setter_ReturnValue()
     var
@@ -366,9 +367,6 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('valueNow', '[' + C.Value() + ']');
         Observer.Observe('inExpression', C.Name('n3') + '|' + C.Value('v3'));
         Observer.Observe('afterExpression', C.Name() + '=' + C.Value());
-        C.Name('statement');
-        C.Value('form');
-        Observer.Observe('afterStatement', C.Name() + '=' + C.Value());
         Observer.Finish();
     end;
 }
