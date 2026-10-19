@@ -430,24 +430,13 @@ codeunit 70583 "LT PnH UseRp Tests"
         Observer.Verify();
     end;
     // Writer PW: docs/probes-needed.md "Report runs and SaveAs": the static Report.RunModal(id, true / false) on a report that declares
-    // UseRequestPage = false (only Report.Run(id, true) is pinned: NoRP_Static_Run_RunModal_ShowNoPage), without and with a RequestPageHandler.
-    [RequestPageHandler]
-    procedure PwNoRpHandler(var RP: TestRequestPage "LT PnH NoRP")
-    begin
-        L.Add('handler');
-        RP.OK().Invoke();
-    end;
-
+    // UseRequestPage = false (only Report.Run(id, true) is pinned: NoRP_Static_Run_RunModal_ShowNoPage). With a RequestPageHandler for the
+    // report the outcome was the same on BC 29.0 and the test then failed with 'The following UI handlers were not executed', so that form
+    // is not a test here.
     [TryFunction]
     local procedure PwTryStaticRunModal(RequestWindow: Boolean)
     begin
         Report.RunModal(Report::"LT PnH NoRP", RequestWindow);
-    end;
-
-    [TryFunction]
-    local procedure PwTryStaticRun(RequestWindow: Boolean)
-    begin
-        Report.Run(Report::"LT PnH NoRP", RequestWindow);
     end;
 
     [Test]
@@ -470,37 +459,6 @@ codeunit 70583 "LT PnH UseRp Tests"
         Observer.Expect('runmodal false|text', '');
         Observer.Expect('runmodal false|code', '');
         Observer.Expect('runmodal false log', 'init;pre note=[];row 1;row 2;row 3;post;');
-        Observer.Verify();
-    end;
-
-    [Test]
-    [HandlerFunctions('PwNoRpHandler')]
-    procedure PW_NoRP_StaticRunModal_RequestWindow_WithHandler()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Start();
-        Observer.Observe('runmodal true', Format(PwTryStaticRunModal(true)));
-        Observer.ObserveError('runmodal true');
-        Observer.Observe('runmodal true log', L.Take());
-        Observer.Observe('runmodal false', Format(PwTryStaticRunModal(false)));
-        Observer.ObserveError('runmodal false');
-        Observer.Observe('runmodal false log', L.Take());
-        Observer.Observe('run true', Format(PwTryStaticRun(true)));
-        Observer.ObserveError('run true');
-        Observer.Observe('run true log', L.Take());
-        Observer.Expect('runmodal true', 'No');
-        Observer.Expect('runmodal true|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('runmodal true|code', 'DB:Ok');
-        Observer.Expect('runmodal true log', 'init;');
-        Observer.Expect('runmodal false', 'Yes');
-        Observer.Expect('runmodal false|text', '');
-        Observer.Expect('runmodal false|code', '');
-        Observer.Expect('runmodal false log', 'init;pre note=[];row 1;row 2;row 3;post;');
-        Observer.Expect('run true', 'No');
-        Observer.Expect('run true|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('run true|code', 'DB:Ok');
-        Observer.Expect('run true log', 'init;');
         Observer.Verify();
     end;
 
