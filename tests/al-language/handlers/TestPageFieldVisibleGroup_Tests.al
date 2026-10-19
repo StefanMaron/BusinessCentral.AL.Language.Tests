@@ -235,6 +235,12 @@ codeunit 60961 "Test Page Field Visible Tests"
         Observer.Observe('action with update own', Format(Card.OwnVisible.Visible()));
         Observer.Observe('action with update set in OnOpenPage', Format(Card.SetInOpen.Visible()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('open own', 'No');
+        Observer.Expect('open set in OnOpenPage', 'Yes');
+        Observer.Expect('action without update own', 'No');
+        Observer.Expect('action without update set in OnOpenPage', 'Yes');
+        Observer.Expect('action with update own', 'No');
+        Observer.Expect('action with update set in OnOpenPage', 'Yes');
+        Observer.Verify();
     end;
 }

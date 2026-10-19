@@ -139,6 +139,8 @@ codeunit 72497 "LT P194 QueryCat Test"
         List.Close();
         Observer.Observe('rows', Rows);
         Observer.Observe('length', Format(StrLen('Category Name That Is Longer Than Thirty Chars')));
-        Observer.Finish();
+        Observer.Expect('rows', 'A:one,');
+        Observer.Expect('length', '46');
+        Observer.Verify();
     end;
 }

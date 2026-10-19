@@ -522,6 +522,10 @@ codeunit 71061 "LT OjT Procedures"
         Observer.Observe('overload interface argument', Caller.CallMy(Some));
         Observer.Observe('case arm 1', Caller.CaseWithCodeunitResult(1));
         Observer.Observe('case else', Caller.CaseWithCodeunitResult(7));
-        Observer.Finish();
+        Observer.Expect('overload codeunit argument', 'ISome:some');
+        Observer.Expect('overload interface argument', 'ISome:some');
+        Observer.Expect('case arm 1', 'some-one');
+        Observer.Expect('case else', 'some-else');
+        Observer.Verify();
     end;
 }

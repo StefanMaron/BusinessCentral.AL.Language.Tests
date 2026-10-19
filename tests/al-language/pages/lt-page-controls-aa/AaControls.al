@@ -686,7 +686,11 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Observe('bare editable', Format(P.SystemId.Editable()));
         Observer.Observe('bare caption', P.SystemId.Caption());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('bare', '<lower id>');
+        Observer.Expect('rec', '<lower id>');
+        Observer.Expect('bare editable', 'No');
+        Observer.Expect('bare caption', 'System ID');
+        Observer.Verify();
     end;
     local procedure Seed(var Row: Record "LT AA Row")
     begin

@@ -642,7 +642,37 @@ codeunit 72410 "LT P106 Run Static"
         Observer.Observe('field other name ok', Format(TryRunModal(Item, Other, 2, Act)));
         Observer.ObserveError('field other name');
         Report(Observer, 'field other name', Act);
+        Observer.Expect('field named FieldId ok', 'No');
+        Observer.Expect('field named FieldId|text', 'The supplied field number ''40'' cannot be found in the ''LT P106 Item'' table.');
+        Observer.Expect('field named FieldId|code', 'FieldNotFound');
+        Observer.Expect('field named FieldId_action', 'None');
+        Observer.Expect('field named FieldId_h', '');
+        Observer.Expect('field named FieldId_log', '');
+        Observer.Expect('field other name ok', 'No');
+        Observer.Expect('field other name|text', 'The supplied field number ''41'' cannot be found in the ''LT P106 Item'' table.');
+        Observer.Expect('field other name|code', 'FieldNotFound');
+        Observer.Expect('field other name_action', 'None');
+        Observer.Expect('field other name_h', '');
+        Observer.Expect('field other name_log', '');
+        Observer.Verify();
+    end;
+
+    // Writer BP2 (corpus issue 664, microsoft/AL issue 5209): the same call with the value 2 copied into an Integer variable first.
+    [Test]
+    [HandlerFunctions('ListH')]
+    procedure P106_BP_RunModal_IntegerVariableFromAnotherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT P106 Item";
+        Other: Record "LT BP P106 Other";
+        Act: Action;
+    begin
+        Log.Seed();
+        Mode := 0;
+        Other.PickFieldId := 2;
+        Other.PickPlain := 2;
         Item.Get('B');
+        ClearLastError();
         Observer.Observe('integer variable ok', Format(TryRunModal(Item, Other, 3, Act)));
         Observer.ObserveError('integer variable');
         Report(Observer, 'integer variable', Act);

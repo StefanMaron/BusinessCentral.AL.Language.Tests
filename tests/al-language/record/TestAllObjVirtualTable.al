@@ -800,6 +800,23 @@ codeunit 60802 "Test AllObj Virtual Table"
             'A second permissionsetextension must report ITS target, not the first one''s.');
     end;
 
+    // Writer BP2 (corpus issue 664, microsoft/AL issue 3019): how BC registers codeunit 82557 "LT BP Lower Subtype", whose Subtype is
+    // written in lower case (`Subtype = test;`), next to a codeunit with `Subtype = Test;` and a normal codeunit.
+    [Test]
+    procedure AllObj_LowerCaseSubtypeCodeunit_ObjectSubtype_BP()
+    var
+        Observer: Codeunit "Probe Observer";
+        AllObj: Record AllObjWithCaption;
+    begin
+        AllObj.Get(AllObj."Object Type"::Codeunit, 82557);
+        Observer.Observe('lower case test', AllObj."Object Subtype");
+        AllObj.Get(AllObj."Object Type"::Codeunit, Codeunit::"Test AllObj Virtual Table");
+        Observer.Observe('Subtype = Test', AllObj."Object Subtype");
+        AllObj.Get(AllObj."Object Type"::Codeunit, Codeunit::"LT BP DataScope Holder");
+        Observer.Observe('normal codeunit', AllObj."Object Subtype");
+        Observer.Finish();
+    end;
+
     local procedure Initialize()
     begin
         // AllObj and AllObjWithCaption are read-only system virtual tables -- nothing to

@@ -109,7 +109,7 @@ codeunit 68324 "Probe Interface Is As"
         IA: Interface "Probe IA";
     begin
         IA := ImplAB;
-        Assert.AreEqual('b', (IA as "Probe IB").B(), 'a method called on the as expression runs on the instance');
-        Assert.AreEqual('a', (IA as "Probe IA").A(), 'as to the declared interface of the variable');
+        Assert.AreEqual('ab-b', (IA as "Probe IB").B(), 'a method called on the as expression runs on the instance');
+        Assert.AreEqual('ab-a', (IA as "Probe IA").A(), 'as to the declared interface of the variable');
     end;
 }

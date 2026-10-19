@@ -128,6 +128,10 @@ codeunit 72307 "LT P123 CaptionClass Tests"
         Observer.Observe('modify page caption', P.Id.Caption());
         Observer.Observe('new field page caption', P.StyleCode.Caption());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('modify FieldCaption', 'Stand in 1');
+        Observer.Expect('new field FieldCaption', 'Stand in 82554');
+        Observer.Expect('modify page caption', 'Stand in 1');
+        Observer.Expect('new field page caption', 'Stand in 82554');
+        Observer.Verify();
     end;
 }

@@ -249,6 +249,11 @@ codeunit 60179 "Test xRec Contracts"
         Observer.Observe('external after Validate', Row.ReadXRec());
         Row.Modify();
         Observer.Observe('external after Modify', Row.ReadXRec());
-        Observer.Finish();
+        Observer.Expect('external after Get', 'xRec=/ Rec=A/stored CurrFieldNo=0');
+        Observer.Expect('external after assignment', 'xRec=/ Rec=A/assigned CurrFieldNo=0');
+        Observer.Expect('internal from OnValidate', 'internal xRec=A/stored Rec=A/validated CurrFieldNo=0');
+        Observer.Expect('external after Validate', 'xRec=/ Rec=A/validated CurrFieldNo=0');
+        Observer.Expect('external after Modify', 'xRec=/ Rec=A/validated CurrFieldNo=0');
+        Observer.Verify();
     end;
 }

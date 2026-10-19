@@ -254,6 +254,10 @@ codeunit 70063 "LT ScT Mixed Defaults"
         Observer.Observe('is company', Format(Holder.GetScope() = DataScope::Company));
         Holder.SetScope(DataScope::User);
         Observer.Observe('reassigned', Format(Holder.GetScope()));
-        Observer.Finish();
+        Observer.Expect('default', 'Module');
+        Observer.Expect('assigned', 'Company');
+        Observer.Expect('is company', 'Yes');
+        Observer.Expect('reassigned', 'User');
+        Observer.Verify();
     end;
 }

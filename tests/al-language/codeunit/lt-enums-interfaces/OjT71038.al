@@ -276,6 +276,11 @@ codeunit 71042 "LT OjT Enum Basics"
         Observer.Observe('variable AsInteger', Format(I));
         Arr[Enum::"LT OjT Color"::"Dark Blue".AsInteger] := 'five';
         Observer.Observe('array index', Arr[5]);
-        Observer.Finish();
+        Observer.Expect('names', 'Red,Green,Dark Blue,Yellow,');
+        Observer.Expect('ordinals', '0,1,5,10,');
+        Observer.Expect('static AsInteger', '5');
+        Observer.Expect('variable AsInteger', '10');
+        Observer.Expect('array index', 'five');
+        Observer.Verify();
     end;
 }

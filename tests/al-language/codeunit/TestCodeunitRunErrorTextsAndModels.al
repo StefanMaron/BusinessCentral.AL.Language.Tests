@@ -278,8 +278,10 @@ codeunit 68100 "Probe Codeunit Run Texts"
     begin
         Initialize();
 
+        // The error is not trapped by the Boolean result of Codeunit.Run: it reaches the caller (asserterror catches it).
         ClearLastError();
-        Ok := Codeunit.Run(Codeunit::"Probe TableNo Runner", Composite);
+        Ok := true;
+        asserterror Ok := Codeunit.Run(Codeunit::"Probe TableNo Runner", Composite);
         Observer.Observe('guarded result', Format(Ok));
         Observer.ObserveError('guarded');
 

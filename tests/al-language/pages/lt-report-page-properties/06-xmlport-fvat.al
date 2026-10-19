@@ -146,6 +146,9 @@ codeunit 72148 "LT P121 XP FieldValAttr Test"
                 Rows += Format(Row.Id) + ':' + Row.Other + ':' + Row.Txt + ',';
             until Row.Next() = 0;
         Observer.Observe('rows', Rows);
-        Observer.Finish();
+        Observer.Expect('new row', 'val Rec=7/o7/t7 xRec=7/o7/t7 CurrFieldNo=0;');
+        Observer.Expect('autoupdate row', 'val Rec=5/new other/new xRec=5/new other/new CurrFieldNo=0;');
+        Observer.Expect('rows', '5:new other:new,7:o7:t7,');
+        Observer.Verify();
     end;
 }

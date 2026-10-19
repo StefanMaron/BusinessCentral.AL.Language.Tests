@@ -451,7 +451,9 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Observe('area 3', P.Mask.Caption());
         Observer.Observe('resolved', P.DtPlain.Caption());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('area 3', 'From procedure 2');
+        Observer.Expect('resolved', 'resolved:from procedure');
+        Observer.Verify();
     end;
 
     [TryFunction]
