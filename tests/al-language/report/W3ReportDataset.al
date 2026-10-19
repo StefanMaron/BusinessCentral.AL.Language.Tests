@@ -452,6 +452,7 @@ codeunit 67755 "W3 Dataset Probe"
 #endif
         Observer.Verify();
     end;
+#if BC29PLUS
     // Writer PW: the raw text of the "W3 Hdr Plain" dataset split at line feeds (a CR shows as \r), the lines Header_RawText_LineEndsAndIndentation
     // counts CR bytes in. failure-triage "dataset raw line counts" (67755 Header_RawText_LineEndsAndIndentation).
     // A line longer than 200 characters (the base64 company logo) is shown as its first 40 characters and its length.
@@ -593,4 +594,6 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Expect('l72', '      <CompanyGiroNoCaption>Giro No.</CompanyGiroNoCaption>');
         Observer.Verify();
     end;
+#endif
+
 }

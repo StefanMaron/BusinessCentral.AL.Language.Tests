@@ -471,6 +471,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('filterUntouched', '1');
         Obs.Verify();
     end;
+#if BC29PLUS
     // Writer PW: the whole Xml dataset of "LT PnB Rep", line by line (lines as ReadText gives them, systemId attributes taken out, the
     // header values that change from run to run scrubbed by the Probe Observer). docs/probes-needed.md "Report runs and SaveAs":
     // "The Xml dataset of LT PnB Rep on BC 29 has 113 lines, the runtime writes 107".
@@ -687,6 +688,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('l113', '</ReportDataSet>');
         Obs.Verify();
     end;
+#endif
 
     // Writer PW: GetLastErrorText and GetLastErrorCode after Ok := Rep.SaveAs(..) answered false because OnPreReport raised an error
     // (docs/probes-needed.md "Report runs and SaveAs": only false and no error are pinned, TriggerError_InPreReport).
