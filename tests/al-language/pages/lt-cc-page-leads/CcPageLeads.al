@@ -145,7 +145,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('log', Log.Take());
         asserterror ReadQcCard(P);
         Observer.Observe('read_after_close', Outcome());
-        Observer.Finish();
+        Observer.Expect('close', 'ok');
+        Observer.Expect('log', 'card OnQueryClosePage OK;card OnClosePage;');
+        Observer.Expect('read_after_close', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +165,9 @@ codeunit 84275 "LT CC Page Leads"
         Ac := Page.RunModal(Page::"LT CC QC Card", Row);
         Observer.Observe('result', Format(Ac));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('log', 'card OnQueryClosePage LookupOK;card OnClosePage;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -182,7 +187,9 @@ codeunit 84275 "LT CC Page Leads"
         Ac := Page.RunModal(Page::"LT CC QC Dialog");
         Observer.Observe('result', Format(Ac));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('log', 'dialog OnQueryClosePage LookupOK;dialog OnClosePage;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -202,7 +209,9 @@ codeunit 84275 "LT CC Page Leads"
         Ac := Page.RunModal(Page::"LT CC QC Dialog");
         Observer.Observe('result', Format(Ac));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('result', 'LookupCancel');
+        Observer.Expect('log', 'dialog OnQueryClosePage LookupCancel;dialog OnClosePage;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -240,7 +249,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('log', Log.Take());
         asserterror ReadPlain(P);
         Observer.Observe('read_after_close', Outcome());
-        Observer.Finish();
+        Observer.Expect('close', 'ok');
+        Observer.Expect('log', 'ext OnQueryClosePage OK;plain OnClosePage;');
+        Observer.Expect('read_after_close', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -257,7 +269,9 @@ codeunit 84275 "LT CC Page Leads"
         Ac := Page.RunModal(Page::"LT CC QC Plain", Row);
         Observer.Observe('result', Format(Ac));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('log', 'ext OnQueryClosePage LookupOK;plain OnClosePage;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -283,7 +297,9 @@ codeunit 84275 "LT CC Page Leads"
         P.Close();
         Observer.Observe('row1', NameOf(1));
         Observer.Observe('row2', NameOf(2));
-        Observer.Finish();
+        Observer.Expect('row1', 'x');
+        Observer.Expect('row2', 'b');
+        Observer.Verify();
     end;
 
     local procedure ModifyWithMode(Mode: Integer; var Observer: Codeunit "Probe Observer")
@@ -310,7 +326,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ModifyWithMode(1, Observer);
-        Observer.Finish();
+        Observer.Expect('log', 'OnModifyRecord mode=1 name=x;');
+        Observer.Expect('row1', 'a');
+        Observer.Expect('row2', 'b');
+        Observer.Verify();
     end;
 
     [Test]
@@ -319,7 +338,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ModifyWithMode(2, Observer);
-        Observer.Finish();
+        Observer.Expect('log', 'OnModifyRecord mode=2 name=x;');
+        Observer.Expect('row1', 'a');
+        Observer.Expect('row2', 'b');
+        Observer.Verify();
     end;
 
     [Test]
@@ -328,7 +350,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ModifyWithMode(3, Observer);
-        Observer.Finish();
+        Observer.Expect('log', 'OnModifyRecord mode=3 name=x;');
+        Observer.Expect('row1', 'x');
+        Observer.Expect('row2', 'b');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- page background tasks
@@ -347,7 +372,9 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('log_open', Log.Take());
         P.Close();
         Observer.Observe('log_close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log_open', 'done 1;enqueue 1;done 2;enqueue 2;done 3;enqueue 3;done 1;enqueue 1;');
+        Observer.Expect('log_close', '');
+        Observer.Verify();
     end;
 
     local procedure OpenBg(var P: TestPage "LT CC Bg List")
@@ -369,7 +396,9 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('open', Outcome());
         Observer.Observe('log', Log.Take());
         Log.SetMode(0);
-        Observer.Finish();
+        Observer.Expect('open', 'ok');
+        Observer.Expect('log', 'done 1;updated 1;enqueue 1;');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- errors in page triggers
@@ -467,7 +496,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnInit', 0, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: LT CC failure in OnInit [Dialog]');
+        Observer.Expect('log', 'hit OnInit;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -476,7 +509,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnOpenPage', 0, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: LT CC failure in OnOpenPage [Dialog]');
+        Observer.Expect('log', 'hit OnOpenPage;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -485,7 +522,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnFindRecord', 0, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: Page LT CC Err Card has to close. [FormAbort:Dialog]');
+        Observer.Expect('log', 'hit OnFindRecord;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -494,7 +535,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnAfterGetRecord', 0, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: Page LT CC Err Card has to close. [FormAbort:Dialog]');
+        Observer.Expect('log', 'hit OnAfterGetRecord;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -503,7 +548,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnAfterGetCurrRecord', 0, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: Page LT CC Err Card has to close. [FormAbort:Dialog]');
+        Observer.Expect('log', 'hit OnAfterGetCurrRecord;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -512,7 +561,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnNextRecord', 1, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: Page LT CC Err Card - 1 has to close. [FormAbort:Dialog]');
+        Observer.Expect('log', 'hit OnNextRecord;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -521,7 +574,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnNewRecord', 2, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'ok');
+        Observer.Expect('log', 'hit OnNewRecord;');
+        Observer.Expect('read_after', 'ok');
+        Observer.Expect('close_after', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -530,7 +587,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnInsertRecord', 3, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: Validation error for Field: ,  Message = ''LT CC failure in OnInsertRecord'' [TestValidation]');
+        Observer.Expect('log', 'hit OnInsertRecord;');
+        Observer.Expect('read_after', 'ok');
+        Observer.Expect('close_after', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -539,7 +600,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnModifyRecord', 4, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'ok');
+        Observer.Expect('log', 'hit OnModifyRecord;');
+        Observer.Expect('read_after', 'ok');
+        Observer.Expect('close_after', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -548,7 +613,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnQueryClosePage', 5, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: Unhandled UI: Message LT CC failure in OnQueryClosePage [MissingUIHandler]');
+        Observer.Expect('log', 'hit OnQueryClosePage;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -557,7 +626,11 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ErrCase('OnClosePage', 5, Observer);
-        Observer.Finish();
+        Observer.Expect('step', 'error: One or more errors occurred while closing the page.\n\nLT CC failure in OnClosePage [TestWrapped]');
+        Observer.Expect('log', 'hit OnClosePage;');
+        Observer.Expect('read_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Expect('close_after', 'error: The TestPage is not open. [TestPageNotOpened]');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- CurrFieldNo
@@ -576,7 +649,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('after_set_name', Log.Take());
         P.Close();
         Observer.Observe('after_close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('after_set_id', '');
+        Observer.Expect('after_set_name', 'ext OnBeforeInsert cur=0;OnInsert cur=0;ext OnAfterInsert cur=0;Name.OnValidate cur=2;ext Name.OnAfterValidate cur=2;');
+        Observer.Expect('after_close', 'OnModify cur=0;ext OnAfterModify cur=0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -597,7 +673,9 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('after_set_name', Log.Take());
         P.Close();
         Observer.Observe('after_close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('after_set_name', 'Name.OnValidate cur=2;ext Name.OnAfterValidate cur=2;');
+        Observer.Expect('after_close', 'OnModify cur=0;ext OnAfterModify cur=0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -616,7 +694,10 @@ codeunit 84275 "LT CC Page Leads"
         Row.Validate(Name, 'w');
         Row.Modify(true);
         Observer.Observe('after_modify', Log.Take());
-        Observer.Finish();
+        Observer.Expect('after_validate', 'Name.OnValidate cur=0;ext Name.OnAfterValidate cur=0;');
+        Observer.Expect('after_insert', 'ext OnBeforeInsert cur=0;OnInsert cur=0;ext OnAfterInsert cur=0;');
+        Observer.Expect('after_modify', 'Name.OnValidate cur=0;ext Name.OnAfterValidate cur=0;OnModify cur=0;ext OnAfterModify cur=0;');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- FlowFields on OpenView
@@ -638,7 +719,9 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('log', Log.Take());
         Observer.Observe('shown_control', P.FlowShown.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'shown=5 hidden=0 absent=0;');
+        Observer.Expect('shown_control', '5.00');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- control expressions
@@ -677,7 +760,8 @@ codeunit 84275 "LT CC Page Leads"
             Observer.Observe('editable_flag_false', Format(P.Name.Editable()));
             P.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('open', 'error: Error compiling dynamic control expression: ''GetRow().Flag'' at index ''8''. The error is: The type of function ''GetRow'' is unknown.. [Expression:Parse]');
+        Observer.Verify();
     end;
 
     local procedure OpenBigInt(var P: TestPage "LT CC Expr BigInt")
@@ -714,7 +798,10 @@ codeunit 84275 "LT CC Page Leads"
             Observer.Observe('enabled_big_5', Format(P.DoIt.Enabled()));
             P.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('open', 'ok');
+        Observer.Expect('enabled_big_0', 'No');
+        Observer.Expect('enabled_big_5', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure OpenDate(var P: TestPage "LT CC Expr Date")
@@ -751,7 +838,8 @@ codeunit 84275 "LT CC Page Leads"
             Observer.Observe('editable_date_set', Format(P.Name.Editable()));
             P.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('open', 'error: Error compiling dynamic control expression: ''D = 0D'' at index ''4''. The error is: Not a valid number. [Expression:Parse]');
+        Observer.Verify();
     end;
 
     local procedure OpenGlobal(var P: TestPage "LT CC Expr Global")
@@ -784,7 +872,8 @@ codeunit 84275 "LT CC Page Leads"
             Observer.Observe('enabled_grp_2', Format(P.DoIt.Enabled()));
             P.Close();
         end;
-        Observer.Finish();
+        Observer.Expect('open', 'error: The identifier ''GlobalRow.Grp'' could not be found. [Expression]');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- long ToolTip
@@ -800,7 +889,8 @@ codeunit 84275 "LT CC Page Leads"
         P.OpenView();
         Observer.Observe('name', P.Name.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('name', 'a');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- Rec.Reset + CurrPage.Update(false) with SourceTableView
@@ -845,7 +935,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ViewResetCase(true, Observer);
-        Observer.Finish();
+        Observer.Expect('rows_before', '[1][2][0]');
+        Observer.Expect('log', 'after reset filters=[];after update filters=[];');
+        Observer.Expect('rows_after', '[1][2][3][0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -854,7 +947,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer: Codeunit "Probe Observer";
     begin
         ViewResetCase(false, Observer);
-        Observer.Finish();
+        Observer.Expect('rows_before', '[1][2]');
+        Observer.Expect('log', 'after reset filters=[];after update filters=[];');
+        Observer.Expect('rows_after', '[1][2][3]');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- FactBox field with only OnLookup
@@ -887,7 +983,11 @@ codeunit 84275 "LT CC Page Leads"
         asserterror FactLookup(P);
         Observer.Observe('lookup', Outcome());
         Observer.Observe('lookup_log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('drilldown', 'error: The NavDrilldownAction method is not supported. [MethodNotSupported]');
+        Observer.Expect('drilldown_log', '');
+        Observer.Expect('lookup', 'ok');
+        Observer.Expect('lookup_log', 'fact Name OnLookup;');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- CurrPage.Editable(false) in OnOpenPage, then Editable(true)
@@ -907,6 +1007,10 @@ codeunit 84275 "LT CC Page Leads"
         Observer.Observe('page_after', Format(P.Editable()));
         Observer.Observe('name_after', Format(P.Name.Editable()));
         P.Close();
-        Observer.Finish();
+        Observer.Expect('page_before', 'No');
+        Observer.Expect('name_before', 'No');
+        Observer.Expect('page_after', 'No');
+        Observer.Expect('name_after', 'No');
+        Observer.Verify();
     end;
 }

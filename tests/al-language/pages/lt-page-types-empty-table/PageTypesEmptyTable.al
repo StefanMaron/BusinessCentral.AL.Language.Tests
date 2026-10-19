@@ -1,10 +1,12 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpage-openedit-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); table 74865, log 74896, pages 74865-74867, test codeunit 74895
+// Fixtures used: Probe Observer (codeunit 69160); table 74865, log 74896, pages 74865-74867 and 84249 (List, added by writer CC), test codeunit 74895
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
 // Facts: a Card, a Document and a ListPlus page over a table without rows, opened with TestPage.OpenEdit and OpenView: the order of OnOpenPage, OnNewRecord,
 //   OnAfterGetRecord and OnAfterGetCurrRecord (each logs the Rec fields it sees) and the control values the TestPage shows afterwards. The same pages over a
 //   table with one row as the contrast. Settles the assumption listplus-blank-record-on-empty-view.
+//   Writer CC (corpus issue 667, "Triggers repeat in edit mode on empty page"): a List page over the empty table runs OnNewRecord and
+//   OnAfterGetCurrRecord twice on OpenEdit and neither on OpenView (OnInit and OnOpenPage once each).
 // BC versions: all (CI)
 
 table 74865 "LT PTE Row"
@@ -453,7 +455,10 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('code', TP."Code".Value());
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInit;OnOpenPage code=[] name=[init];OnNewRecord code=[] name=[init];OnAfterGetCurrRecord code=[] name=[init];OnNewRecord code=[] name=[init];OnAfterGetCurrRecord code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -468,6 +473,9 @@ codeunit 74895 "LT PTE Tests"
         Observer.Observe('code', TP."Code".Value());
         TP.Close();
         Observer.Observe('logClose', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'OnInit;OnOpenPage code=[] name=[init];');
+        Observer.Expect('code', '');
+        Observer.Expect('logClose', '');
+        Observer.Verify();
     end;
 }
