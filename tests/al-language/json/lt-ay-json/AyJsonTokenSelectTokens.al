@@ -7,11 +7,13 @@
 // The method needs app runtime 17: on BC 27 (runtime 16.1) the compiler refuses it (must-not-compile case 1200), so the tests are BC28PLUS.
 // BC versions: 28, 29 (corpus CI)
 
+// The whole codeunit is BC 28+ (JsonToken.SelectTokens needs runtime 17): on BC 27 a Subtype = Test codeunit without test methods
+// reports no result and fails the leg (bump 28 staging run 39285388937).
+#if BC28PLUS
 codeunit 80505 "LT AY JsonToken SelectTokens"
 {
     Subtype = Test;
     TestPermissions = Disabled;
-#if BC28PLUS
 
     [TryFunction]
     local procedure TrySelect(T: JsonToken; Path: Text; var L: List of [JsonToken]; var Ret: Boolean)
@@ -147,5 +149,5 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         Observer.Expect('unclosed_prefilled', 'No n=1:"old"@; last=The requested operation cannot be performed in this context.|InvalidOperation');
         Observer.Verify();
     end;
-#endif
 }
+#endif
