@@ -387,6 +387,10 @@ def main():
         'more than MAX_FILES': ({'tests/main/gen/T%d.al' % i: 'codeunit %d "G%d"\n{\n}\n' % (50100 + i, i)
                                  for i in range(st.MAX_FILES + 1)}, 'more than'),
     }
+    r = make(dict(touch('tests/main/T1.al'), **{'.github/nightly-windows/run.ps1': 'x',
+                                                '.github/workflows/nightly-windows.yml': 'on: push'}))
+    check('nightly-windows files are ignored', r['mode'] == 'subset' and ids(r, 'tests/main') == [50010]
+          and sorted(r['ignored_files']) == ['.github/nightly-windows/run.ps1', '.github/workflows/nightly-windows.yml'], r)
     for name, (changes, needle) in fulls.items():
         r = make(changes)
         check('full run: %s' % name, r['mode'] == 'full' and any(needle in x for x in r['reasons']), r['reasons'])
