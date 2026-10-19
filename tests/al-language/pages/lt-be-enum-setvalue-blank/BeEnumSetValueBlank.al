@@ -502,7 +502,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FCompat', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FCompat', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''0'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -515,7 +533,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FCompat', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FCompat', false, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -527,7 +571,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FCompat', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FCompat', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of '''' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -538,7 +602,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FCompat', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FCompat', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''0'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -549,7 +627,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FCompat', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FCompat', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''0'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -561,7 +653,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FCompat', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FCompat', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of '''' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -573,7 +685,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FCompat', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FCompat', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''2'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -586,7 +720,38 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FCompat', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FCompat', true, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -598,7 +763,31 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FCompat', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FCompat', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of '''' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -609,7 +798,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FCompat', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FCompat', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''2'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -620,7 +826,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FCompat', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FCompat', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''2'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -632,7 +855,31 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FCompat', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FCompat', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of '''' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''ECompat''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -644,7 +891,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FStrict', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FStrict', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''0'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -657,7 +922,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FStrict', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FStrict', false, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -669,7 +960,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FStrict', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FStrict', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of '''' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -680,7 +991,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FStrict', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FStrict', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''0'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -691,7 +1016,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FStrict', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FStrict', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''0'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -703,7 +1042,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FStrict', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FStrict', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of '''' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -715,7 +1074,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FStrict', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FStrict', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''2'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -728,7 +1109,38 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FStrict', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FStrict', true, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -740,7 +1152,31 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FStrict', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FStrict', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of '''' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -751,7 +1187,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FStrict', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FStrict', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''2'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -762,7 +1215,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FStrict', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FStrict', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''2'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -774,7 +1244,31 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FStrict', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FStrict', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of '''' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''EStrict''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -786,7 +1280,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FPlain', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FPlain', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''0'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -799,7 +1311,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FPlain', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FPlain', false, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Zero]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Zero]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Zero]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -811,7 +1349,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FPlain', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FPlain', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('space-err|code', 'TestValidation');
+        Observer.Expect('space-value', '[0]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '''' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -822,7 +1382,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FPlain', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FPlain', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''0'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -833,7 +1407,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FPlain', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FPlain', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[Zero]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''0'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -845,7 +1433,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FPlain', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FPlain', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'No');
+        Observer.Expect('litSpace-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('litSpace-err|code', 'TestValidation');
+        Observer.Expect('litSpace-value', '[0]');
+        Observer.Expect('litSpace-log', '[]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '''' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -857,7 +1467,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FPlain', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FPlain', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''2'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -870,7 +1502,38 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FPlain', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FPlain', true, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -882,7 +1545,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FPlain', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FPlain', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('space-err|code', 'TestValidation');
+        Observer.Expect('space-value', '[2]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '''' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -893,7 +1582,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FPlain', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FPlain', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''2'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -904,7 +1610,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FPlain', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FPlain', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[Zero]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''2'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -916,7 +1639,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FPlain', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FPlain', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'No');
+        Observer.Expect('litSpace-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('litSpace-err|code', 'TestValidation');
+        Observer.Expect('litSpace-value', '[2]');
+        Observer.Expect('litSpace-log', '[]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of '''' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''EPlain''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -930,7 +1679,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FOpt', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FOpt', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''0'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -945,7 +1712,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FOpt', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FOpt', false, 'member0', 'V', OptZero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '0');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -959,7 +1752,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FOpt', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FOpt', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -972,7 +1785,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FOpt', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FOpt', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''0'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -985,7 +1812,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FOpt', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FOpt', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''0'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -999,7 +1840,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FOpt', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FOpt', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1013,7 +1874,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'FOpt', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'FOpt', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int2-stored', '2');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1028,7 +1911,38 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FOpt', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FOpt', true, 'member0', 'V', OptZero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('space-stored', '2');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '2');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('digit1-stored', '1');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('capAlpha-stored', '2');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Expect('member0-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1042,7 +1956,31 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'FOpt', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'FOpt', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('space-stored', '0');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('empty-stored', '0');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('digit1-stored', '0');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Expect('capAlpha-stored', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1055,7 +1993,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'FOpt', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'FOpt', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int0-stored', '0');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int1-stored', '1');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Expect('int5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1068,7 +2023,24 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'FOpt', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'FOpt', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit0-stored', '0');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit1-stored', '1');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Expect('lit5-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1082,7 +2054,31 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'FOpt', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'FOpt', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litSpace-stored', '0');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litEmpty-stored', '0');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litAlpha-stored', '1');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: FOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Opt''. (Select Refresh to discard errors)''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Expect('litDigit1-stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1094,7 +2090,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VCompat', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VCompat', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''0'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1107,7 +2117,28 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VCompat', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VCompat', false, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1119,7 +2150,23 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VCompat', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VCompat', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of '''' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1130,7 +2177,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VCompat', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VCompat', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''0'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1141,7 +2199,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VCompat', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VCompat', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''0'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1153,7 +2222,23 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VCompat', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VCompat', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of '''' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1165,7 +2250,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VCompat', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VCompat', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''2'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1178,7 +2281,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VCompat', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VCompat', true, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1190,7 +2319,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VCompat', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VCompat', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of '''' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1201,7 +2350,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VCompat', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VCompat', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''2'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1212,7 +2375,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VCompat', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VCompat', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''2'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1224,7 +2401,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VCompat', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VCompat', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of '''' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VCompat,  Message = ''Your entry of ''1'' is not an acceptable value for ''Compat Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1236,7 +2433,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VStrict', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VStrict', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''0'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1249,7 +2460,28 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VStrict', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VStrict', false, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1261,7 +2493,23 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VStrict', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VStrict', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of '''' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1272,7 +2520,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VStrict', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VStrict', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''0'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1283,7 +2542,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VStrict', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VStrict', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''0'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1295,7 +2565,23 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VStrict', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VStrict', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of '''' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1307,7 +2593,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VStrict', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VStrict', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''2'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1320,7 +2624,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VStrict', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VStrict', true, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1332,7 +2662,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VStrict', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VStrict', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of '''' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1343,7 +2693,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VStrict', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VStrict', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''2'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1354,7 +2718,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VStrict', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VStrict', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''2'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1366,7 +2744,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VStrict', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VStrict', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of '''' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VStrict,  Message = ''Your entry of ''1'' is not an acceptable value for ''Strict Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1378,7 +2776,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VPlain', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VPlain', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''0'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1391,7 +2803,28 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VPlain', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VPlain', false, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Zero]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Zero]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Zero]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1403,7 +2836,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VPlain', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VPlain', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('space-err|code', 'TestValidation');
+        Observer.Expect('space-value', '[0]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '''' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1414,7 +2865,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VPlain', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VPlain', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''0'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1425,7 +2887,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VPlain', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VPlain', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[Zero]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''0'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1437,7 +2910,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VPlain', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VPlain', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'No');
+        Observer.Expect('litSpace-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('litSpace-err|code', 'TestValidation');
+        Observer.Expect('litSpace-value', '[0]');
+        Observer.Expect('litSpace-log', '[]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '''' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1449,7 +2940,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VPlain', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VPlain', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''2'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1462,7 +2971,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VPlain', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VPlain', true, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[Zero]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1474,7 +3009,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VPlain', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VPlain', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('space-err|code', 'TestValidation');
+        Observer.Expect('space-value', '[2]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '''' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1485,7 +3042,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VPlain', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VPlain', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[Zero]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''2'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1496,7 +3067,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VPlain', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VPlain', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[Zero]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''2'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1508,7 +3093,29 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VPlain', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VPlain', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'No');
+        Observer.Expect('litSpace-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '' '' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('litSpace-err|code', 'TestValidation');
+        Observer.Expect('litSpace-value', '[2]');
+        Observer.Expect('litSpace-log', '[]');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of '''' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VPlain,  Message = ''Your entry of ''1'' is not an acceptable value for ''Plain Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1522,7 +3129,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VOpt', false, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VOpt', false, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''0'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1537,7 +3158,28 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VOpt', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VOpt', false, 'member0', 'V', OptZero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[ ]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[ ]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1551,7 +3193,23 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VOpt', false, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VOpt', false, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[0]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[0]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1564,7 +3222,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VOpt', false, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VOpt', false, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''0'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[0]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1577,7 +3246,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VOpt', false, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VOpt', false, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''0'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[0]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1591,7 +3271,23 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VOpt', false, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VOpt', false, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[0]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[0]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1605,7 +3301,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'int1', 'V', 1, '', 0, '');
         RunCase(Observer, 'VOpt', true, 'int2', 'V', 2, '', 0, '');
         RunCase(Observer, 'VOpt', true, 'int5', 'V', 5, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int2-start', '[Beta]');
+        Observer.Expect('int2', 'Yes');
+        Observer.Expect('int2-value', '[Beta]');
+        Observer.Expect('int2-log', '[2]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1620,7 +3334,33 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VOpt', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VOpt', true, 'member0', 'V', OptZero, '', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'No');
+        Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
+        Observer.Expect('space-err|code', 'Evaluate:Format');
+        Observer.Expect('space-value', '[Beta]');
+        Observer.Expect('space-log', '[]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'The value "" can''t be evaluated into type Option.');
+        Observer.Expect('empty-err|code', 'Evaluate:Format');
+        Observer.Expect('empty-value', '[Beta]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'Yes');
+        Observer.Expect('digit1-value', '[Alpha]');
+        Observer.Expect('digit1-log', '[1]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'No');
+        Observer.Expect('capAlpha-err|text', 'The value "Alpha" can''t be evaluated into type Option.');
+        Observer.Expect('capAlpha-err|code', 'Evaluate:Format');
+        Observer.Expect('capAlpha-value', '[Beta]');
+        Observer.Expect('capAlpha-log', '[]');
+        Observer.Expect('member0-start', '[Beta]');
+        Observer.Expect('member0', 'Yes');
+        Observer.Expect('member0-value', '[ ]');
+        Observer.Expect('member0-log', '[0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1634,7 +3374,27 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'empty', 'T', 0, '', 0, '');
         RunCase(Observer, 'VOpt', true, 'digit1', 'T', 0, '1', 0, '');
         RunCase(Observer, 'VOpt', true, 'capAlpha', 'T', 0, 'Alpha', 0, '');
-        Observer.Finish();
+        Observer.Expect('space-start', '[Beta]');
+        Observer.Expect('space', 'Yes');
+        Observer.Expect('space-value', '[ ]');
+        Observer.Expect('space-log', '[0]');
+        Observer.Expect('empty-start', '[Beta]');
+        Observer.Expect('empty', 'No');
+        Observer.Expect('empty-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('empty-err|code', 'TestValidation');
+        Observer.Expect('empty-value', '[2]');
+        Observer.Expect('empty-log', '[]');
+        Observer.Expect('digit1-start', '[Beta]');
+        Observer.Expect('digit1', 'No');
+        Observer.Expect('digit1-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('digit1-err|code', 'TestValidation');
+        Observer.Expect('digit1-value', '[2]');
+        Observer.Expect('digit1-log', '[]');
+        Observer.Expect('capAlpha-start', '[Beta]');
+        Observer.Expect('capAlpha', 'Yes');
+        Observer.Expect('capAlpha-value', '[Alpha]');
+        Observer.Expect('capAlpha-log', '[1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1647,7 +3407,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'int0', 'I', 0, '', 0, '');
         RunCase(Observer, 'VOpt', true, 'int1', 'I', 0, '', 1, '');
         RunCase(Observer, 'VOpt', true, 'int5', 'I', 0, '', 5, '');
-        Observer.Finish();
+        Observer.Expect('int0-start', '[Beta]');
+        Observer.Expect('int0', 'Yes');
+        Observer.Expect('int0-value', '[ ]');
+        Observer.Expect('int0-log', '[0]');
+        Observer.Expect('int1-start', '[Beta]');
+        Observer.Expect('int1', 'Yes');
+        Observer.Expect('int1-value', '[Alpha]');
+        Observer.Expect('int1-log', '[1]');
+        Observer.Expect('int5-start', '[Beta]');
+        Observer.Expect('int5', 'No');
+        Observer.Expect('int5-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('int5-err|code', 'TestValidation');
+        Observer.Expect('int5-value', '[2]');
+        Observer.Expect('int5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1660,7 +3434,21 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'lit0', 'L', 0, '', 0, 'lit0');
         RunCase(Observer, 'VOpt', true, 'lit1', 'L', 0, '', 0, 'lit1');
         RunCase(Observer, 'VOpt', true, 'lit5', 'L', 0, '', 0, 'lit5');
-        Observer.Finish();
+        Observer.Expect('lit0-start', '[Beta]');
+        Observer.Expect('lit0', 'Yes');
+        Observer.Expect('lit0-value', '[ ]');
+        Observer.Expect('lit0-log', '[0]');
+        Observer.Expect('lit1-start', '[Beta]');
+        Observer.Expect('lit1', 'Yes');
+        Observer.Expect('lit1-value', '[Alpha]');
+        Observer.Expect('lit1-log', '[1]');
+        Observer.Expect('lit5-start', '[Beta]');
+        Observer.Expect('lit5', 'No');
+        Observer.Expect('lit5-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''2'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('lit5-err|code', 'TestValidation');
+        Observer.Expect('lit5-value', '[2]');
+        Observer.Expect('lit5-log', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1674,6 +3462,26 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'litEmpty', 'L', 0, '', 0, 'litEmpty');
         RunCase(Observer, 'VOpt', true, 'litAlpha', 'L', 0, '', 0, 'litAlpha');
         RunCase(Observer, 'VOpt', true, 'litDigit1', 'L', 0, '', 0, 'litDigit1');
-        Observer.Finish();
+        Observer.Expect('litSpace-start', '[Beta]');
+        Observer.Expect('litSpace', 'Yes');
+        Observer.Expect('litSpace-value', '[ ]');
+        Observer.Expect('litSpace-log', '[0]');
+        Observer.Expect('litEmpty-start', '[Beta]');
+        Observer.Expect('litEmpty', 'No');
+        Observer.Expect('litEmpty-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of '''' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('litEmpty-err|code', 'TestValidation');
+        Observer.Expect('litEmpty-value', '[2]');
+        Observer.Expect('litEmpty-log', '[]');
+        Observer.Expect('litAlpha-start', '[Beta]');
+        Observer.Expect('litAlpha', 'Yes');
+        Observer.Expect('litAlpha-value', '[Alpha]');
+        Observer.Expect('litAlpha-log', '[1]');
+        Observer.Expect('litDigit1-start', '[Beta]');
+        Observer.Expect('litDigit1', 'No');
+        Observer.Expect('litDigit1-err|text', 'Validation error for Field: VOpt,  Message = ''Your entry of ''1'' is not an acceptable value for ''Option Filter''.''');
+        Observer.Expect('litDigit1-err|code', 'TestValidation');
+        Observer.Expect('litDigit1-value', '[2]');
+        Observer.Expect('litDigit1-log', '[]');
+        Observer.Verify();
     end;
 }
