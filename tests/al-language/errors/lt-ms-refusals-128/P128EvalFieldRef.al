@@ -167,6 +167,23 @@ codeunit 73178 "LT P128 Eval FieldRef"
         Observer.Observe('getoptionno empty', Format(TypeHelper.GetOptionNo('', FldRef.OptionCaption)));
         Observer.Observe('getoptionno not a member', Format(TypeHelper.GetOptionNo('Three', FldRef.OptionCaption)));
         Observer.Observe('getoptionno first', Format(TypeHelper.GetOptionNo('Zero', FldRef.OptionCaption)));
-        Observer.Finish();
+        Observer.Expect('compare member name', 'Yes');
+        Observer.Expect('compare other member', 'No');
+        Observer.Expect('compare lower case', 'No');
+        Observer.Expect('compare ordinal text', 'No');
+        Observer.Expect('compare empty', 'No');
+        Observer.Expect('compare not a member', 'No');
+        Observer.Expect('evaluate lower case', 'Yes|Two');
+        Observer.Expect('evaluate prefix', 'No|One');
+        Observer.Expect('evaluate space', 'No|One');
+        Observer.Expect('members', 'Zero,One,Two');
+        Observer.Expect('caption', 'Zero,One,Two');
+        Observer.Expect('getoptionno member', '2');
+        Observer.Expect('getoptionno caption', '2');
+        Observer.Expect('getoptionno lower case', '2');
+        Observer.Expect('getoptionno empty', '-1');
+        Observer.Expect('getoptionno not a member', '-1');
+        Observer.Expect('getoptionno first', '0');
+        Observer.Verify();
     end;
 }

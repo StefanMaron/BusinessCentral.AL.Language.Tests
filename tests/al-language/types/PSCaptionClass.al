@@ -103,6 +103,16 @@ codeunit 69553 "PS Caption Probe"
         SelectLatestVersion();
         Observer.Observe('after_select_latest', CaptionClassTranslate('PSCC,CY cache one'));
         Observer.Observe('after_select_latest_events', Subscriber.Take());
-        Observer.Finish();
+        Observer.Expect('first', 'resolved:CY cache one');
+        Observer.Expect('first_events', 'resolve(PSCC|CY cache one|lang=session)');
+        Observer.Expect('second', 'resolved:CY cache one');
+        Observer.Expect('second_events', '');
+        Observer.Expect('unclaimed_first', 'ZZ,CY cache two');
+        Observer.Expect('unclaimed_first_events', 'resolve(ZZ|CY cache two|lang=session)');
+        Observer.Expect('unclaimed_second', 'ZZ,CY cache two');
+        Observer.Expect('unclaimed_second_events', '');
+        Observer.Expect('after_select_latest', 'resolved:CY cache one');
+        Observer.Expect('after_select_latest_events', 'resolve(PSCC|CY cache one|lang=session)');
+        Observer.Verify();
     end;
 }

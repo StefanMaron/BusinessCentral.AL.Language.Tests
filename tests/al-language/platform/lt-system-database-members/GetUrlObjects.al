@@ -175,6 +175,16 @@ codeunit 73981 "LT P95 GetUrl Objects"
         OneTypeOnly(Observer, 'web_page_no_id', ClientType::Web, ObjectType::Page);
         OneTypeOnly(Observer, 'web_report_no_id', ClientType::Web, ObjectType::Report);
         OneTypeOnly(Observer, 'soap_page_no_id', ClientType::SOAP, ObjectType::Page);
-        Observer.Finish();
+        Observer.Expect('web_filters', 'Yes|Yes|Yes|Yes|No|No|No|?company=<Company>&page=21&filter=%27No.%27%20IS%20%27CYA..CYZ%27');
+        Observer.Expect('soap_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('soap_nofilters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('odata_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('odatav4_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('api_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('web_table_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('web_page_no_id', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('web_report_no_id', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('soap_page_no_id', 'No|No|No|No|No|No|No|noquery');
+        Observer.Verify();
     end;
 }

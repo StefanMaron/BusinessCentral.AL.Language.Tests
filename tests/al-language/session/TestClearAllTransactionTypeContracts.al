@@ -312,6 +312,14 @@ codeunit 68436 "Probe ClearAll TxType"
         Observer.Observe('after test clearall local', Format(Single.Current()));
         Observer.Observe('after test clearall second', Format(Second.Current()));
         Single.Reset();
-        Observer.Finish();
+        Observer.Expect('before holder single', '2');
+        Observer.Expect('before second', '2');
+        Observer.Expect('after holder own', '0');
+        Observer.Expect('after holder single', '2');
+        Observer.Expect('after second', '2');
+        Observer.Expect('local bump', '3');
+        Observer.Expect('after test clearall local', '3');
+        Observer.Expect('after test clearall second', '3');
+        Observer.Verify();
     end;
 }

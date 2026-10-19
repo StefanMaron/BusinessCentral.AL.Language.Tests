@@ -4,6 +4,9 @@
 // Probe: corpus issue 670 (AL issues 5730, 4862, 6499): which globals ClearAll() resets when it runs in a table extension, in the base
 // table, and in a page extension's OnAfterGetRecord (after the base page's OnAfterGetRecord). The base object and its extension are in
 // the same app; the case of an extension from a second app is not covered (it needs a second app).
+// Facts (BC 29 local): ClearAll() in a table extension procedure resets the base table's globals and the extension's, and keeps the
+// fields (also the extension field); ClearAll() in the base table resets the extension's globals too. ClearAll() in a page extension's
+// OnAfterGetRecord resets the base page's globals (set in its OnOpenPage and OnAfterGetRecord) and keeps Rec.
 // BC versions: 27.5, 28.5, 29.0
 table 85541 "LT CY CA Row"
 {
@@ -151,7 +154,13 @@ codeunit 85545 "LT CY ClearAll Extensions"
         Observer.Observe('in base: base glob', Format(Row.GetBase()));
         Observer.Observe('in base: ext glob', Format(Row.GetExt()));
         Observer.Observe('in base: fields', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.ExtNo));
-        Observer.Finish();
+        Observer.Expect('in ext: base glob', '0');
+        Observer.Expect('in ext: ext glob', '0');
+        Observer.Expect('in ext: fields', '1|n|4');
+        Observer.Expect('in base: base glob', '0');
+        Observer.Expect('in base: ext glob', '0');
+        Observer.Expect('in base: fields', '1|n|4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,6 +182,11 @@ codeunit 85545 "LT CY ClearAll Extensions"
         Observer.Observe('ext seen', Card.ExtSeenCtl.Value());
         Observer.Observe('rec', Card.IdCtl.Value() + '|' + Card.NameCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('page glob', '0');
+        Observer.Expect('page open glob', '0');
+        Observer.Expect('ext glob', '0');
+        Observer.Expect('ext seen', '1');
+        Observer.Expect('rec', '1|n');
+        Observer.Verify();
     end;
 }

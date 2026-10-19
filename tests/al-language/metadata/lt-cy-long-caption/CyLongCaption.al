@@ -3,6 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160), self-contained table 85547, test codeunit 85548
 // Probe: corpus issue 670 (AL issue 6303): a table whose Caption is 120 characters long. What TableMetadata.Caption (a Text[80] field),
 // AllObjWithCaption."Object Caption" (Text[249]) and RecordRef.Caption return: the length and the text.
+// Facts (BC 29 local): all three return the full 120 characters; TableMetadata.Caption is not cut to 80.
 // BC versions: 27.5, 28.5, 29.0
 table 85547 "LT CY Long Caption"
 {
@@ -52,6 +53,9 @@ codeunit 85548 "LT CY Long Caption Probe"
         RecRef.Open(Database::"LT CY Long Caption");
         Observer.Observe('recordref', Format(StrLen(RecRef.Caption())) + '|' + RecRef.Caption());
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('table metadata', '120|CY long caption abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcd');
+        Observer.Expect('allobjwithcaption', '120|CY long caption abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcd');
+        Observer.Expect('recordref', '120|CY long caption abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcd');
+        Observer.Verify();
     end;
 }
