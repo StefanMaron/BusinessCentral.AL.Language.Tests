@@ -17,9 +17,9 @@ acceptable is a stub that never calls the API at all (see the Verification
 Checklist).
 
 This repo has no "out of scope" list of its own. What a downstream consumer
-(the AL Runner project, which vendors this repo as a submodule to check its
-own emulation) can or cannot execute is that project's concern, tracked in
-its own repository — it does not shrink what gets tested here.
+(al-runtime-rs, which pins this repo as a submodule and uses the JUnit files of
+its CI as its oracle) can or cannot execute is that project's concern, tracked
+in its own repository — it does not shrink what gets tested here.
 
 ### Secondary goal — Language surface coverage
 
@@ -27,18 +27,22 @@ Over time, cover the full in-scope AL language surface documented in
 `al-surface-inscope.json`. Every in-scope method should have at least one
 positive and one negative test.
 
-### The contributor path — runner gaps
+### Branches
 
-If you encounter a feature that the AL Runner handles incorrectly or does not
-support, the right step is:
+`master` is the default branch. A ruleset protects it: changes come only
+through a pull request whose required checks are green (the `BC <ver> / test`,
+`BC OnPrem <ver> / test` and `BC OnPrem DotNet <ver> / test` legs for 27.5,
+28.5 and 29.0, and `Object IDs must be unique and in range`). Pull requests are
+merged with a merge commit.
 
-1. Write a test here that proves the **correct** Cloud behavior.
-2. The test becomes an executable spec the runner must pass.
-3. Once the runner is fixed, promote the test to `tests/bucket-*/` in the
-   runner repo as a regression guard.
+Probe tests written for al-runtime-rs go through `al-runtime-rs-staging`:
+writers branch from it, a publisher merges green writer branches into a bump
+branch made from it and opens a bump pull request to `master`. After the merge,
+staging is fast-forwarded to `master`.
 
-A test that passes here but fails on the runner is a **runner bug to fix**.
-A test that passes on the runner but fails here means the **runner has a gap**.
+A test that passes here but fails in a downstream consumer is a bug of that
+consumer, not a reason to change the test. A test changes only when real BC
+does something else.
 
 ---
 
@@ -208,7 +212,7 @@ The full claim must be readable from the procedure name alone.
 
 ## Version Compatibility
 
-All tests must pass on all versions in the CI matrix (currently 27.5 and 28.1).
+All tests must pass on all versions in the CI matrix (currently 27.5, 28.5 and 29.0).
 
 For features that only exist from a specific BC version onwards, wrap the
 test in a preprocessor guard:
@@ -227,6 +231,7 @@ Preprocessor symbols are defined in the workflow per version:
 |-----------|--------------------------------|
 | BC27PLUS  | Available from BC 27.0 onwards |
 | BC28PLUS  | Available from BC 28.0 onwards |
+| BC29PLUS  | Available from BC 29.0 onwards |
 
 Add a comment explaining why the guard exists:
 

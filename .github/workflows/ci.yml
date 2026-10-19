@@ -1,8 +1,9 @@
 name: AL Language Test Suite
 
-# Runs the full AL language coverage suite against a real BC Cloud sandbox on
-# every BC minor from 27.0 to 29.0 — the same floor and ceiling AL Runner's own
-# matrix enforces, so a green verdict here means what a consumer needs it to mean.
+# Runs the AL language coverage suite against a BC service tier on the newest
+# minor of each supported major (27.5, 28.5, 29.0). al-runtime-rs
+# (StefanMaron/al-runtime-rs) reads the JUnit files of these legs as its oracle.
+# The bc_version input runs one other minor on request.
 # All matrix legs boot BC on Linux (no Windows runner required) via
 # StefanMaron/MsDyn365Bc.On.Linux.
 #
@@ -40,7 +41,7 @@ on:
 # matrix and nothing ever cancelled the one it replaced. Measured on 2026-09-05: four PRs merged
 # in a row started four full master runs, none superseded — 32 legs where 8 would do. Three had
 # to be cancelled by hand. GitHub Actions concurrency is per ACCOUNT, not per repository, so
-# those legs also sit in front of StefanMaron/BusinessCentral.AL.Runner's own matrix.
+# those legs also sit in front of the other workflows of the account.
 #
 # THE GROUP KEY includes the event name as well as the ref, which is one step beyond the usual
 # `workflow-ref` pairing, and it is load-bearing here rather than decorative:
@@ -48,7 +49,7 @@ on:
 #   * pull_request  -> refs/pull/<n>/merge, already unique per PR.
 #   * push          -> refs/heads/master. This is the project's health check: a green master run
 #                      is the signal that the corpus still matches what a real BC service tier
-#                      does, and AL Runner's autonomous cycle reads it as exactly that.
+#                      does.
 #   * workflow_dispatch on master would otherwise share the push group and could CANCEL that
 #     health-check run. A manual dispatch is normally someone bisecting a red master with the
 #     bc_version override; killing the automatic run to serve it, or the reverse, loses the one
@@ -70,8 +71,9 @@ on:
 #   * Recovering the per-commit answer costs one workflow_dispatch on a branch pointing at the
 #     suspect commit — precisely the run the group key above protects from the next merge.
 #
-# This changes no job's `if:` and adds no skips. The eight `BC <version> / test` legs are this
-# repository's required status contexts; a cancelled run reports them as cancelled, never as
+# This changes no job's `if:` and adds no skips. The required checks of the master ruleset are
+# the `BC <version> / test`, `BC OnPrem <version> / test` and `BC OnPrem DotNet <version> / test`
+# legs for 27.5, 28.5 and 29.0, plus the object-id gate; a cancelled run reports them as cancelled, never as
 # skipped, so a superseded run can never satisfy a required check. ci.yml is the only workflow
 # registered here (the object-id gate is a job inside it), so this block covers everything.
 concurrency:
@@ -251,8 +253,8 @@ jobs:
             case "$MAJOR" in 27) RT=16.1;; 28) RT=17.1;; *) RT=18.0;; esac
             JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','runtime':'$RT','preprocessor_symbols':'$SYMS'}]}))")
           else
-            # al-runtime-rs-staging only: the newest minor of each major (al-runtime-rs reads only these as its oracle).
-            # Master keeps every minor from 27.0 to 29.0 (the AL Runner project reads that matrix).
+            # The newest minor of each major: al-runtime-rs reads these legs as its oracle.
+            # Use the bc_version input to run another minor.
             JSON='{"include":[{"bc_version":"27.5","runtime":"16.1","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.5","runtime":"17.1","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"29.0","runtime":"18.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}]}'
           fi
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
@@ -323,8 +325,8 @@ jobs:
   # extra cost - that is the preferred end state, and this job is the way to have the
   # tests actually adjudicated until then.
   #
-  # This job's checks are named "BC OnPrem <ver> / test", so the eight required
-  # "BC <ver> / test" contexts are untouched.
+  # This job's checks are named "BC OnPrem <ver> / test". They are required checks of the
+  # master ruleset, like the "BC <ver> / test" checks of the job above.
   test-onprem:
     name: BC OnPrem ${{ matrix.bc_version }}
     needs: prepare

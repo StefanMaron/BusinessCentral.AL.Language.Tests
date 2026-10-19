@@ -15,7 +15,6 @@ Thank you for contributing! This repo is an executable specification proving AL 
 - [Running CI locally](#running-ci-locally)
 - [Test selection in CI](#test-selection-in-ci)
 - [Pull request checklist](#pull-request-checklist)
-- [Runner gap path](#runner-gap-path)
 
 ---
 
@@ -24,8 +23,6 @@ Thank you for contributing! This repo is an executable specification proving AL 
 **Positive tests** — prove an AL language feature works correctly in BC Cloud. This is the primary contribution type. See the in-scope list in [CLAUDE.md](CLAUDE.md#in-scope-and-out-of-scope) for what belongs here.
 
 **Negative tests (out-of-scope)** — prove that Cloud-restricted features throw the expected error. One test per surface area, placed in `tests/al-language/out-of-scope/`. Do not add more than one per feature.
-
-**Runner gap tests** — prove the correct Cloud behavior for something `BusinessCentral.AL.Runner` gets wrong. Write the test here; once the runner is fixed the test is promoted to its regression suite.
 
 If you are unsure whether something is in scope, open an issue first and describe what you want to test.
 
@@ -165,6 +162,7 @@ The CI matrix defines these symbols per version:
 |--------|---------|
 | `BC27PLUS` | Available from BC 27.0 onwards (always defined) |
 | `BC28PLUS` | Available from BC 28.0 onwards |
+| `BC29PLUS` | Available from BC 29.0 onwards |
 
 The guard comment must explain **why** the guard exists — which API or behavior changed.
 
@@ -335,16 +333,4 @@ Before opening a PR, verify:
 - [ ] Out-of-scope tests are in `out-of-scope/` and confirm the error only
 - [ ] Version-gated code uses `#if BC28PLUS` (or equivalent) with an explanatory comment
 - [ ] The test fails for the right reason (remove the assertion and confirm it passes; restore it and confirm it fails)
-- [ ] CI passes on your branch
-
----
-
-## Runner gap path
-
-If `BusinessCentral.AL.Runner` handles a feature incorrectly:
-
-1. Write a test here that **passes** against BC Cloud and documents the correct behavior
-2. Open a PR referencing the AL Runner issue (link it in the PR description)
-3. Once [BusinessCentral.AL.Runner](https://github.com/StefanMaron/BusinessCentral.AL.Runner) is fixed, the test is promoted to its regression suite
-
-A test that passes here but fails on the runner is a runner bug to fix, not a test to delete.
+- [ ] CI passes on your pull request (all required checks)
