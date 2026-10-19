@@ -138,4 +138,49 @@ codeunit 70506 "LT TxB SelectStr"
         Obs.Verify();
     end;
 
+    // Corpus issue 672 (odd AL behavior leads, part G), item 48: Learn says SelectStr does not honor quotes ('a,b,"c,d",e' has
+    // five elements and element 4 is 'd"') and that the string may be at most 391 characters long.
+    [Test]
+    procedure LT_BU_SelectStr_QuotesAndLength()
+    var
+        Observer: Codeunit "Probe Observer";
+        Long: Text;
+        R: Text;
+    begin
+        Observer.Observe('quoted 3', SelectStr(3, 'a,b,"c,d",e'));
+        Observer.Observe('quoted 4', SelectStr(4, 'a,b,"c,d",e'));
+        Observer.Observe('quoted 5', SelectStr(5, 'a,b,"c,d",e'));
+        Observer.Observe('single quotes 3', SelectStr(3, 'a,b,''c,d'',e'));
+        Long := PadStr('', 391, 'x');
+        ClearLastError();
+        if TrySelectStr(1, Long, R) then
+            Observer.Observe('391 chars', Format(StrLen(R)))
+        else
+            Observer.Observe('391 chars', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Long := PadStr('', 392, 'x');
+        ClearLastError();
+        if TrySelectStr(1, Long, R) then
+            Observer.Observe('392 chars', Format(StrLen(R)))
+        else
+            Observer.Observe('392 chars', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Long := PadStr('', 394, 'x') + ',' + 'tail';
+        ClearLastError();
+        if TrySelectStr(2, Long, R) then
+            Observer.Observe('comma at 395 element 2', R)
+        else
+            Observer.Observe('comma at 395 element 2', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Long := PadStr('', 2000, 'y');
+        ClearLastError();
+        if TrySelectStr(1, Long, R) then
+            Observer.Observe('2000 chars', Format(StrLen(R)))
+        else
+            Observer.Observe('2000 chars', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySelectStr(Number: Integer; Value: Text; var R: Text)
+    begin
+        R := SelectStr(Number, Value);
+    end;
 }

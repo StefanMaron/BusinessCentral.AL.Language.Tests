@@ -233,4 +233,50 @@ codeunit 70513 "LT TxB TextAssign"
         Obs.Verify();
     end;
 
+    // Corpus issue 672 (odd AL behavior leads, part G), item 56: a Text[100] value longer than 20 characters passed to a
+    // Code[20] value parameter, against assigning it to a Code[20] variable. Passing it to a var Code[20] parameter does not
+    // compile (AL0133, tests/must-not-compile/cases/1539).
+    [Test]
+    procedure LT_BU_TextAssign_LongTextToCode20Parameter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record Item;
+        T100: Text[100];
+        C20: Code[20];
+        R: Text;
+    begin
+        Item.Description := 'abcdefghijklmnopqrstu';
+        T100 := 'abcdefghijklmnopqrstu';
+        ClearLastError();
+        if TryTakeCode20(Item.Description, R) then
+            Observer.Observe('field to code20 param', R)
+        else
+            Observer.Observe('field to code20 param', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TryTakeCode20(T100, R) then
+            Observer.Observe('text100 to code20 param', R)
+        else
+            Observer.Observe('text100 to code20 param', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Item.Description := 'abcdefghijklmnopqrst';
+        ClearLastError();
+        if TryTakeCode20(Item.Description, R) then
+            Observer.Observe('field 20 chars to code20 param', R)
+        else
+            Observer.Observe('field 20 chars to code20 param', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Item.Description := ' abcdefghijklmnopqrst ';
+        ClearLastError();
+        if TryTakeCode20(Item.Description, R) then
+            Observer.Observe('field 20 chars with blanks to code20 param', R)
+        else
+            Observer.Observe('field 20 chars with blanks to code20 param', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        asserterror C20 := T100;
+        Observer.ObserveError('text100 to code20 variable');
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryTakeCode20(Value: Code[20]; var R: Text)
+    begin
+        R := Value + '|' + Format(StrLen(Value));
+    end;
 }

@@ -120,4 +120,60 @@ codeunit 70509 "LT TxB CaseConv"
         Obs.Verify();
     end;
 
+    // Corpus issue 672 (odd AL behavior leads, part G), item 54: Learn says LowerCase and UpperCase follow the culture while
+    // Text.ToLower and ToUpper do not. With GlobalLanguage set to Turkish (1055) and Greek (1032): the Turkish I and i,
+    // the Greek final sigma, and the German sharp s. GlobalLanguage is restored at the end.
+    [Test]
+    procedure LT_BU_CaseConv_TurkishGreekLanguage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+    begin
+        Saved := GlobalLanguage();
+        ObserveCases(Observer, 'default');
+        ClearLastError();
+        if TrySetLanguage(1055) then
+            ObserveCases(Observer, 'tr')
+        else
+            Observer.Observe('tr', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TrySetLanguage(1032) then
+            ObserveCases(Observer, 'el')
+        else
+            Observer.Observe('el', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        GlobalLanguage(Saved);
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySetLanguage(Language: Integer)
+    begin
+        GlobalLanguage(Language);
+    end;
+
+    local procedure ObserveCases(var Observer: Codeunit "Probe Observer"; Prefix: Text)
+    begin
+        Observer.Observe(Prefix + ' language', Format(GlobalLanguage()));
+        Observer.Observe(Prefix + ' LowerCase I', LowerCase('I'));
+        Observer.Observe(Prefix + ' ToLower I', TextToLower('I'));
+        Observer.Observe(Prefix + ' UpperCase i', UpperCase('i'));
+        Observer.Observe(Prefix + ' ToUpper i', TextToUpper('i'));
+        Observer.Observe(Prefix + ' LowerCase dotted I', LowerCase('İ'));
+        Observer.Observe(Prefix + ' UpperCase dotless i', UpperCase('ı'));
+        Observer.Observe(Prefix + ' LowerCase ΑΣ', LowerCase('ΑΣ'));
+        Observer.Observe(Prefix + ' ToLower ΑΣ', TextToLower('ΑΣ'));
+        Observer.Observe(Prefix + ' UpperCase ας', UpperCase('ας'));
+        Observer.Observe(Prefix + ' UpperCase ß', UpperCase('ß'));
+        Observer.Observe(Prefix + ' ToUpper ß', TextToUpper('ß'));
+    end;
+
+    local procedure TextToLower(Value: Text): Text
+    begin
+        exit(Value.ToLower());
+    end;
+
+    local procedure TextToUpper(Value: Text): Text
+    begin
+        exit(Value.ToUpper());
+    end;
 }

@@ -771,4 +771,61 @@ codeunit 72516 "LT SyT Exit Recursion"
         Observer.Expect('accumulate', '32100123');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 36: the end bound of a for loop is converted to the type of the
+    // control variable. A BigInteger end bound above the Integer range on an Integer control variable, and a loop that ends at
+    // the largest Integer (a safety counter stops it after 5 rounds).
+    [Test]
+    procedure LT_BU_ForLoop_BigIntegerEndBoundOnInteger()
+    var
+        Observer: Codeunit "Probe Observer";
+        i: Integer;
+        Rounds: Integer;
+    begin
+        ClearLastError();
+        if TryLoopToBig(100000000000000L, i, Rounds) then
+            Observer.Observe('end 10^14', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('end 10^14', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryLoopToBig(2147483648L, i, Rounds) then
+            Observer.Observe('end max+1', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('end max+1', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryLoopToBig(5L, i, Rounds) then
+            Observer.Observe('end 5', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('end 5', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryLoopToIntMax(i, Rounds) then
+            Observer.Observe('to int max', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('to int max', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryLoopToBig(EndBound: BigInteger; var i: Integer; var Rounds: Integer)
+    begin
+        i := 0;
+        Rounds := 0;
+        for i := 1000 to EndBound do begin
+            Rounds += 1;
+            if Rounds = 5 then
+                exit;
+        end;
+    end;
+
+    [TryFunction]
+    local procedure TryLoopToIntMax(var i: Integer; var Rounds: Integer)
+    begin
+        i := 0;
+        Rounds := 0;
+        for i := 2147483646 to 2147483647 do begin
+            Rounds += 1;
+            if Rounds = 5 then
+                exit;
+        end;
+    end;
 }

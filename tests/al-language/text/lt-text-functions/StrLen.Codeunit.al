@@ -85,4 +85,26 @@ codeunit 70500 "LT TxB StrLen"
         Obs.Verify();
     end;
 
+    // Corpus issue 672 (odd AL behavior leads, part G), item 43: Learn says a Code variable holds at most 1024 characters; the
+    // compiler accepts up to Code[2048] (Code[2049] is AL0530, tests/must-not-compile/cases/1534). How much does each hold?
+    [Test]
+    procedure LT_BU_StrLen_LongCodeVariables()
+    var
+        Observer: Codeunit "Probe Observer";
+        C1025: Code[1025];
+        C2048: Code[2048];
+    begin
+        C1025 := PadStr('', 1025, 'a');
+        Observer.Observe('code1025 len', Format(StrLen(C1025)));
+        Observer.Observe('code1025 max', Format(MaxStrLen(C1025)));
+        Observer.Observe('code1025 upper', Format(C1025 = PadStr('', 1025, 'A')));
+        C2048 := PadStr('', 2048, 'b');
+        Observer.Observe('code2048 len', Format(StrLen(C2048)));
+        Observer.Observe('code2048 max', Format(MaxStrLen(C2048)));
+        C2048 := ' ' + PadStr('', 2046, 'c') + ' ';
+        Observer.Observe('code2048 trimmed len', Format(StrLen(C2048)));
+        asserterror C1025 := PadStr('', 1026, 'a');
+        Observer.ObserveError('code1025 overflow');
+        Observer.Finish();
+    end;
 }

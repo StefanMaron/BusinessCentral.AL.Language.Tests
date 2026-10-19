@@ -123,4 +123,28 @@ codeunit 69540 "PR Option Integer Probe"
         Observer.Expect('evaluate_member_text', 'YesC');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 42: unary minus on an Option does not compile (AL0172, see
+    // tests/must-not-compile/cases/1531 to 1533); the forms that do compile: -1 * Option, 0 - Option and the literal -1.
+    [Test]
+    procedure LT_BU_Option_NegatedByMultiplication()
+    var
+        Opt: Option A,B,C;
+        Opt2: Option A,B,C;
+        I: Integer;
+        Observer: Codeunit "Probe Observer";
+    begin
+        Opt := Opt::B;
+        Opt2 := -1 * Opt;
+        Observer.Observe('minus one times option', '[' + Format(Opt2) + ']' + Format(Opt2, 0, 1));
+        I := -1 * Opt;
+        Observer.Observe('minus one times option into integer', Format(I));
+        Opt2 := 0 - Opt;
+        Observer.Observe('zero minus option', '[' + Format(Opt2) + ']' + Format(Opt2, 0, 1));
+        Opt2 := -1;
+        Observer.Observe('literal minus one', '[' + Format(Opt2) + ']' + Format(Opt2, 0, 1));
+        Observer.Observe('negative option = -1', Format(Opt2 = -1));
+        Observer.Observe('negative option < A', Format(Opt2 < Opt2::A));
+        Observer.Finish();
+    end;
 }

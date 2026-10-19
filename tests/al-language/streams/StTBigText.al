@@ -427,4 +427,39 @@ codeunit 74205 "LT StT BigText"
         Observer.Expect('eos', 'Yes');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 51: the BigText boundary cases that AddTextPositionErrors,
+    // GetSubTextForms and TextPosForms above leave open: AddText far past the end, AddText of an empty text, and what
+    // GetSubText returns for a position past the end.
+    [Test]
+    procedure LT_BU_BigText_MoreBoundaries()
+    var
+        Big: BigText;
+        Observer: Codeunit "Probe Observer";
+        T: Text;
+        N: Integer;
+    begin
+        Big.AddText('abc');
+        Big.AddText('x', 999);
+        Big.GetSubText(T, 1);
+        Observer.Observe('add at 999', T + '|' + Format(Big.Length()));
+        Big.AddText('', 1);
+        Big.GetSubText(T, 1);
+        Observer.Observe('add empty at 1', T + '|' + Format(Big.Length()));
+        T := 'old';
+        N := Big.GetSubText(T, 5);
+        Observer.Observe('subtext past end', '[' + T + ']|' + Format(N));
+        T := 'old';
+        N := Big.GetSubText(T, 4, 10);
+        Observer.Observe('subtext last char long length', '[' + T + ']|' + Format(N));
+        T := 'old';
+        N := Big.GetSubText(T, 2, 0);
+        Observer.Observe('subtext length 0', '[' + T + ']|' + Format(N));
+        Clear(Big);
+        T := 'old';
+        N := Big.GetSubText(T, 1);
+        Observer.Observe('subtext of empty', '[' + T + ']|' + Format(N));
+        Observer.Observe('textpos in empty', Format(Big.TextPos('a')));
+        Observer.Finish();
+    end;
 }

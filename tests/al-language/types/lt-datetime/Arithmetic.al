@@ -566,4 +566,49 @@ codeunit 73802 "LT DtT Arithmetic"
         Observer.Expect('cleared variant to time|code', 'InvalidType');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 34: a Time variable left at its default against 0T and 000000T,
+    // and what Evaluate of '00:00:00' gives. Item 35: 0T - 0T.
+    [Test]
+    procedure LT_BU_Time_DefaultAgainst0TAndMidnight()
+    var
+        Observer: Codeunit "Probe Observer";
+        Time1: Time;
+        Evaluated: Time;
+        Ok: Boolean;
+    begin
+        Observer.Observe('default = 0T', Format(Time1 = 0T));
+        Observer.Observe('default = 000000T', Format(Time1 = 000000T));
+        Observer.Observe('default <> 0T', Format(Time1 <> 0T));
+        Observer.Observe('default <> 000000T', Format(Time1 <> 000000T));
+        Observer.Observe('0T <> 000000T', Format(0T <> 000000T));
+        Observer.Observe('default format', '[' + Format(Time1) + ']');
+        Observer.Observe('midnight format', '[' + Format(000000T) + ']');
+        Ok := Evaluate(Evaluated, '00:00:00');
+        Observer.Observe('evaluate 00:00:00 ok', Format(Ok));
+        Observer.Observe('evaluate 00:00:00 = 0T', Format(Evaluated = 0T));
+        Observer.Observe('evaluate 00:00:00 = 000000T', Format(Evaluated = 000000T));
+        Ok := Evaluate(Evaluated, '');
+        Observer.Observe('evaluate empty ok', Format(Ok));
+        Observer.Observe('evaluate empty = 0T', Format(Evaluated = 0T));
+        Time1 := 000000T;
+        Observer.Observe('assigned midnight = 0T', Format(Time1 = 0T));
+        Time1 := 0T;
+        Observer.Observe('assigned 0T = 000000T', Format(Time1 = 000000T));
+        ClearLastError();
+        if TryTimeDifference(0T, 0T, Ok) then
+            Observer.Observe('0T - 0T', 'no error')
+        else
+            Observer.Observe('0T - 0T', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryTimeDifference(A: Time; B: Time; var Dummy: Boolean)
+    var
+        D: Integer;
+    begin
+        D := A - B;
+        Dummy := D = 0;
+    end;
 }

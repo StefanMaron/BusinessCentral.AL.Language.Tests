@@ -84,4 +84,52 @@ codeunit 70512 "LT TxB MaxStrLen"
         Obs.Verify();
     end;
 
+    // Corpus issue 672 (odd AL behavior leads, part G), item 45: MaxStrLen of a Text parameter. Reported as 2147483647 for a
+    // var Text parameter on BC 16 to 19 (NAV 2018 gave the length of the argument). A Code[20] argument for a var Text
+    // parameter does not compile (AL0133, tests/must-not-compile/cases/1538).
+    [Test]
+    procedure LT_BU_MaxStrLen_TextParameters()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record Item;
+        T30: Text[30];
+        T: Text;
+        C20: Code[20];
+    begin
+        Observer.Observe('var text with field text100', Format(MaxOfVarText(Item.Description)));
+        Observer.Observe('var text with text30', Format(MaxOfVarText(T30)));
+        Observer.Observe('var text with text', Format(MaxOfVarText(T)));
+        Observer.Observe('var text30 with field text100', Format(MaxOfVarText30(Item.Description)));
+        Observer.Observe('var text30 with text30', Format(MaxOfVarText30(T30)));
+        Observer.Observe('text with field text100', Format(MaxOfText(Item.Description)));
+        Observer.Observe('text with code20', Format(MaxOfText(C20)));
+        Observer.Observe('text30 with field text100', Format(MaxOfText30(Item.Description)));
+        Observer.Observe('var code30 with code20', Format(MaxOfVarCode30(C20)));
+        Observer.Finish();
+    end;
+
+    local procedure MaxOfVarText(var s: Text): Integer
+    begin
+        exit(MaxStrLen(s));
+    end;
+
+    local procedure MaxOfVarText30(var s: Text[30]): Integer
+    begin
+        exit(MaxStrLen(s));
+    end;
+
+    local procedure MaxOfText(s: Text): Integer
+    begin
+        exit(MaxStrLen(s));
+    end;
+
+    local procedure MaxOfText30(s: Text[30]): Integer
+    begin
+        exit(MaxStrLen(s));
+    end;
+
+    local procedure MaxOfVarCode30(var s: Code[30]): Integer
+    begin
+        exit(MaxStrLen(s));
+    end;
 }

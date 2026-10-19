@@ -307,4 +307,88 @@ codeunit 72789 "LT Binary Operators"
         Observer.Expect('date-in-range', 'Yes');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 39: an expression of Integer operands is computed as Integer even
+    // when its result goes to a BigInteger (60*10 * 120*10 * 80*10 * 4 = 2,304,000,000 is above the Integer range).
+    [Test]
+    procedure LT_BU_Binary_IntegerProductIntoBigInteger()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: Integer;
+        L: Integer;
+        W: Integer;
+        Q: Integer;
+        Big: BigInteger;
+        Dec: Decimal;
+        Txt: Text;
+    begin
+        H := 60;
+        L := 120;
+        W := 80;
+        Q := 4;
+        ClearLastError();
+        if TryIntegerProductToBig(H, L, W, Q, Big) then
+            Observer.Observe('assign', Format(Big))
+        else
+            Observer.Observe('assign', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TryIntegerProductAsBigParameter(H, L, W, Q, Big) then
+            Observer.Observe('biginteger parameter', Format(Big))
+        else
+            Observer.Observe('biginteger parameter', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TryIntegerProductToJson(H, L, W, Q, Txt) then
+            Observer.Observe('json add', Txt)
+        else
+            Observer.Observe('json add', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Big := H;
+        Big := (Big * 10) * (L * 10) * (W * 10) * Q;
+        Observer.Observe('first operand biginteger', Format(Big));
+        Dec := (H * 10.0) * (L * 10) * (W * 10) * Q;
+        Observer.Observe('decimal literal operand', Format(Dec, 0, 9));
+        Big := H * 10;
+        Big := Big * (L * 10) * (W * 10) * Q;
+        Observer.Observe('biginteger left to right', Format(Big));
+        ClearLastError();
+        if TryIntegerProductLateBig(H, L, W, Q, Big) then
+            Observer.Observe('biginteger last operand', Format(Big))
+        else
+            Observer.Observe('biginteger last operand', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryIntegerProductToBig(H: Integer; L: Integer; W: Integer; Q: Integer; var Big: BigInteger)
+    begin
+        Big := (H * 10) * (L * 10) * (W * 10) * Q;
+    end;
+
+    [TryFunction]
+    local procedure TryIntegerProductAsBigParameter(H: Integer; L: Integer; W: Integer; Q: Integer; var Big: BigInteger)
+    begin
+        Big := TakeBig((H * 10) * (L * 10) * (W * 10) * Q);
+    end;
+
+    local procedure TakeBig(Value: BigInteger): BigInteger
+    begin
+        exit(Value);
+    end;
+
+    [TryFunction]
+    local procedure TryIntegerProductToJson(H: Integer; L: Integer; W: Integer; Q: Integer; var Txt: Text)
+    var
+        Json: JsonObject;
+    begin
+        Json.Add('v', (H * 10) * (L * 10) * (W * 10) * Q);
+        Json.WriteTo(Txt);
+    end;
+
+    [TryFunction]
+    local procedure TryIntegerProductLateBig(H: Integer; L: Integer; W: Integer; Q: Integer; var Big: BigInteger)
+    var
+        BigQ: BigInteger;
+    begin
+        BigQ := Q;
+        Big := (H * 10) * (L * 10) * (W * 10) * BigQ;
+    end;
 }

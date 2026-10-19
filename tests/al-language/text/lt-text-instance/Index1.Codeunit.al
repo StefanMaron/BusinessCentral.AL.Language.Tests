@@ -284,4 +284,86 @@ codeunit 70040 "LT TxA Index 1"
         Observer.Expect('label_oob_err|code', 'ArgumentOutOfRange');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 52: writing a character by index into a Code variable at its
+    // length + 1 and further (the Text forms are in Index_Write_Variable and Index_Write_TextWithLength above).
+    [Test]
+    procedure LT_BU_Index_Write_Code()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: Code[10];
+        C3: Code[3];
+    begin
+        C := 'abc';
+        ClearLastError();
+        if TrySetCodeChar(C, 4, 'd') then
+            Observer.Observe('code len+1', C + '|' + Format(StrLen(C)))
+        else
+            Observer.Observe('code len+1', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        C := 'abc';
+        ClearLastError();
+        if TrySetCodeChar(C, 6, 'x') then
+            Observer.Observe('code len+3', C + '|' + Format(StrLen(C)))
+        else
+            Observer.Observe('code len+3', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        C3 := 'abc';
+        ClearLastError();
+        if TrySetCode3Char(C3, 4, 'd') then
+            Observer.Observe('code3 past declared', C3)
+        else
+            Observer.Observe('code3 past declared', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        C := 'abc';
+        ClearLastError();
+        if TrySetCodeChar(C, 2, ' ') then
+            Observer.Observe('code blank inside', '[' + C + ']|' + Format(StrLen(C)))
+        else
+            Observer.Observe('code blank inside', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        C := 'abc';
+        ClearLastError();
+        if TrySetCodeChar(C, 3, ' ') then
+            Observer.Observe('code blank last', '[' + C + ']|' + Format(StrLen(C)))
+        else
+            Observer.Observe('code blank last', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySetCodeChar(var C: Code[10]; Pos: Integer; Ch: Char)
+    begin
+        C[Pos] := Ch;
+    end;
+
+    [TryFunction]
+    local procedure TrySetCode3Char(var C: Code[3]; Pos: Integer; Ch: Char)
+    begin
+        C[Pos] := Ch;
+    end;
+
+    // Corpus issue 672, item 60: Text is UTF-16 like .NET strings. CopyStr that splits a surrogate pair, and case
+    // conversion of a letter outside the Basic Multilingual Plane (U+10428 DESERET SMALL LETTER LONG I, upper U+10400).
+    [Test]
+    procedure LT_BU_Index_SurrogatePairs()
+    var
+        Observer: Codeunit "Probe Observer";
+        T: Text;
+        Part: Text;
+        Code1: Integer;
+    begin
+        T := '😀a';
+        Part := CopyStr(T, 1, 1);
+        Code1 := Part[1];
+        Observer.Observe('copystr first half', Format(StrLen(Part)) + '|' + Format(Code1));
+        Part := CopyStr(T, 2);
+        Code1 := Part[1];
+        Observer.Observe('copystr second half', Format(StrLen(Part)) + '|' + Format(Code1));
+        Observer.Observe('copystr whole pair', Format(CopyStr(T, 1, 2) = '😀'));
+        T := '𐐨';
+        Observer.Observe('deseret len', Format(StrLen(T)));
+        Observer.Observe('uppercase deseret', Format(UpperCase(T) = '𐐀'));
+        Observer.Observe('toupper deseret', Format(T.ToUpper() = '𐐀'));
+        Observer.Observe('lowercase deseret', Format(LowerCase('𐐀') = '𐐨'));
+        Observer.Observe('strpos emoji', Format(StrPos('x😀a', 'a')));
+        Observer.Observe('delstr half pair', Format(StrLen(DelStr('😀a', 1, 1))));
+        Observer.Finish();
+    end;
 }

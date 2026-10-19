@@ -811,4 +811,22 @@ codeunit 69800 "PA Scalar Contracts"
         O.Expect('code_index_assign', '[AXC]');
         O.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 57: StrCheckSum without a weight string, on an empty string and
+    // on a non-digit, and the Learn example StrCheckSum('4378', '1234', 7).
+    [Test]
+    procedure LT_BU_StrCheckSum_DefaultWeightEdges()
+    var
+        O: Codeunit "Probe Observer";
+        R: Integer;
+    begin
+        O.Observe('empty no weight', Format(StrCheckSum('')));
+        O.Observe('4378 w1234 mod7', Format(StrCheckSum('4378', '1234', 7)));
+        O.Observe('12345 no weight', Format(StrCheckSum('12345')));
+        asserterror R := StrCheckSum('12a');
+        O.ObserveError('12a no weight');
+        asserterror R := StrCheckSum(' 1');
+        O.ObserveError('leading blank');
+        O.Finish();
+    end;
 }
