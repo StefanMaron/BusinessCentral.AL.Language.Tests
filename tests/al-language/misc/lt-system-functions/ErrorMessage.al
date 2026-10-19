@@ -609,6 +609,15 @@ codeunit 72513 "LT SyT Message"
         asserterror Error('A: \' + 'B:%1\' + 'C:%2', n, t);
         Observer.Observe('error backslash args', GetLastErrorText());
         Observer.Observe('appendline length', Format(StrLen(TB.ToText())));
-        Observer.Finish();
+        Observer.Expect('message', 'A: \B:5\C:x');
+        Observer.Expect('message', 'one\two');
+        Observer.Expect('message', 'arg\with\backslash');
+        Observer.Expect('message', 'line1\line2\line3');
+        Observer.Expect('message', 'line1\line2\line3');
+        Observer.Expect('error text', 'line1\line2\line3');
+        Observer.Expect('error text length', '17');
+        Observer.Expect('error backslash args', 'A: \B:5\C:x');
+        Observer.Expect('appendline length', '19');
+        Observer.Verify();
     end;
 }

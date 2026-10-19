@@ -145,6 +145,12 @@ codeunit 69540 "PR Option Integer Probe"
         Observer.Observe('literal minus one', '[' + Format(Opt2) + ']' + Format(Opt2, 0, 1));
         Observer.Observe('negative option = -1', Format(Opt2 = -1));
         Observer.Observe('negative option < A', Format(Opt2 < Opt2::A));
-        Observer.Finish();
+        Observer.Expect('minus one times option', '[-1]-1');
+        Observer.Expect('minus one times option into integer', '-1');
+        Observer.Expect('zero minus option', '[-1]-1');
+        Observer.Expect('literal minus one', '[-1]-1');
+        Observer.Expect('negative option = -1', 'Yes');
+        Observer.Expect('negative option < A', 'Yes');
+        Observer.Verify();
     end;
 }

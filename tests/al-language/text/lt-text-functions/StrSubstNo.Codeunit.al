@@ -254,6 +254,11 @@ codeunit 70511 "LT TxB StrSubstNo"
         Observer.Observe('%2%1%3%1%4%1', StrSubstNo('%2%1%3%1%4%1', ';', '1', '2', '3'));
         Observer.Observe('%3 only', StrSubstNo('%3-%3', 'a', 'b', 'c'));
         Observer.Observe('#1 form', StrSubstNo('#1 #2 #1', 'x', 'y'));
-        Observer.Finish();
+        Observer.Expect('learn example', 'Test 555 777 555');
+        Observer.Expect('%1%2%1', '909');
+        Observer.Expect('%2%1%3%1%4%1', '1;2;3;');
+        Observer.Expect('%3 only', 'c-c');
+        Observer.Expect('#1 form', 'x  y  x ');
+        Observer.Verify();
     end;
 }

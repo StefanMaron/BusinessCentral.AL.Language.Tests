@@ -286,6 +286,7 @@ is only a reference.
 | 1537 | AL0581 | A Code[0] variable. |
 | 1538 | AL0133 | A Code[20] variable passed to a var Text parameter. |
 | 1539 | AL0133 | A Text[100] table field passed to a var Code[20] parameter. |
+| 1540, 1541, 1542 | AL0204 | BC 27/28 only (AL 16 and 17): a CalcFormula or TableRelation where clause that filters an Integer or Enum field by a BigInteger field (AL 18 and later warn, AL0662/AL0663). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

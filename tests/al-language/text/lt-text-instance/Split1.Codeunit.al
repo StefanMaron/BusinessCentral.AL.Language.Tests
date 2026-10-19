@@ -334,6 +334,8 @@ codeunit 70030 "LT TxA Split 1"
         Observer.Observe('char from other app', Join(Parts));
         Parts := 'Alpha::Bravo::Charlie'.Split('::');
         Observer.Observe('two char separator', Join(Parts));
-        Observer.Finish();
+        Observer.Expect('char from other app', '3:[Alpha][Bravo][Charlie]');
+        Observer.Expect('two char separator', '3:[Alpha][Bravo][Charlie]');
+        Observer.Verify();
     end;
 }

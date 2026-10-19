@@ -165,6 +165,14 @@ quoted';
         Observer.Observe('escaped quote', T3);
         Observer.Observe('single line', T4);
         Observer.Observe('split lf', Format(T.Split(Format(T[2])).Count()));
-        Observer.Finish();
+        Observer.Expect('two lines', 'a\nb');
+        Observer.Expect('two lines len', '3');
+        Observer.Expect('char 2 code', '10');
+        Observer.Expect('indented', 'first\n    second');
+        Observer.Expect('indented len', '16');
+        Observer.Expect('escaped quote', 'it''s\nquoted');
+        Observer.Expect('single line', 'single line');
+        Observer.Expect('split lf', '2');
+        Observer.Verify();
     end;
 }

@@ -600,7 +600,22 @@ codeunit 73802 "LT DtT Arithmetic"
             Observer.Observe('0T - 0T', 'no error')
         else
             Observer.Observe('0T - 0T', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('default = 0T', 'Yes');
+        Observer.Expect('default = 000000T', 'No');
+        Observer.Expect('default <> 0T', 'No');
+        Observer.Expect('default <> 000000T', 'Yes');
+        Observer.Expect('0T <> 000000T', 'Yes');
+        Observer.Expect('default format', '[]');
+        Observer.Expect('midnight format', '[12:00:00 AM]');
+        Observer.Expect('evaluate 00:00:00 ok', 'Yes');
+        Observer.Expect('evaluate 00:00:00 = 0T', 'No');
+        Observer.Expect('evaluate 00:00:00 = 000000T', 'Yes');
+        Observer.Expect('evaluate empty ok', 'Yes');
+        Observer.Expect('evaluate empty = 0T', 'Yes');
+        Observer.Expect('assigned midnight = 0T', 'No');
+        Observer.Expect('assigned 0T = 000000T', 'No');
+        Observer.Expect('0T - 0T', 'no error');
+        Observer.Verify();
     end;
 
     [TryFunction]

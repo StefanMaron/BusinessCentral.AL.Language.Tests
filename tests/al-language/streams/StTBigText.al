@@ -460,6 +460,13 @@ codeunit 74205 "LT StT BigText"
         N := Big.GetSubText(T, 1);
         Observer.Observe('subtext of empty', '[' + T + ']|' + Format(N));
         Observer.Observe('textpos in empty', Format(Big.TextPos('a')));
-        Observer.Finish();
+        Observer.Expect('add at 999', 'abcx|4');
+        Observer.Expect('add empty at 1', 'abcx|4');
+        Observer.Expect('subtext past end', '[]|0');
+        Observer.Expect('subtext last char long length', '[x]|1');
+        Observer.Expect('subtext length 0', '[]|0');
+        Observer.Expect('subtext of empty', '[]|0');
+        Observer.Expect('textpos in empty', '0');
+        Observer.Verify();
     end;
 }

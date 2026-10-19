@@ -271,7 +271,13 @@ codeunit 70513 "LT TxB TextAssign"
             Observer.Observe('field 20 chars with blanks to code20 param', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
         asserterror C20 := T100;
         Observer.ObserveError('text100 to code20 variable');
-        Observer.Finish();
+        Observer.Expect('field to code20 param', 'error:The length of the string is 21, but it must be less than or equal to 20 characters. Value: abcdefghijklmnopqrstu|StringLengthExceeded');
+        Observer.Expect('text100 to code20 param', 'error:The length of the string is 21, but it must be less than or equal to 20 characters. Value: abcdefghijklmnopqrstu|StringLengthExceeded');
+        Observer.Expect('field 20 chars to code20 param', 'ABCDEFGHIJKLMNOPQRST|20');
+        Observer.Expect('field 20 chars with blanks to code20 param', 'ABCDEFGHIJKLMNOPQRST|20');
+        Observer.Expect('text100 to code20 variable|text', 'The length of the string is 21, but it must be less than or equal to 20 characters. Value: abcdefghijklmnopqrstu');
+        Observer.Expect('text100 to code20 variable|code', 'StringLengthExceeded');
+        Observer.Verify();
     end;
 
     [TryFunction]

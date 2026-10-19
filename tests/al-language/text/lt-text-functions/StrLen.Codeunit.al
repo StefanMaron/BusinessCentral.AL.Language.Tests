@@ -105,6 +105,14 @@ codeunit 70500 "LT TxB StrLen"
         Observer.Observe('code2048 trimmed len', Format(StrLen(C2048)));
         asserterror C1025 := PadStr('', 1026, 'a');
         Observer.ObserveError('code1025 overflow');
-        Observer.Finish();
+        Observer.Expect('code1025 len', '1025');
+        Observer.Expect('code1025 max', '1025');
+        Observer.Expect('code1025 upper', 'Yes');
+        Observer.Expect('code2048 len', '2048');
+        Observer.Expect('code2048 max', '2048');
+        Observer.Expect('code2048 trimmed len', '2046');
+        Observer.Expect('code1025 overflow|text', 'The length of the string is 1026, but it must be less than or equal to 1025 characters. Value: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...');
+        Observer.Expect('code1025 overflow|code', 'StringLengthExceeded');
+        Observer.Verify();
     end;
 }

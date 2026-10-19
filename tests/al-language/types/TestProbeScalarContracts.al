@@ -827,6 +827,13 @@ codeunit 69800 "PA Scalar Contracts"
         O.ObserveError('12a no weight');
         asserterror R := StrCheckSum(' 1');
         O.ObserveError('leading blank');
-        O.Finish();
+        O.Expect('empty no weight', '0');
+        O.Expect('4378 w1234 mod7', '0');
+        O.Expect('12345 no weight', '5');
+        O.Expect('12a no weight|text', 'The value string must be numeric.');
+        O.Expect('12a no weight|code', 'ALSystemString');
+        O.Expect('leading blank|text', 'The value string must be numeric.');
+        O.Expect('leading blank|code', 'ALSystemString');
+        O.Verify();
     end;
 }

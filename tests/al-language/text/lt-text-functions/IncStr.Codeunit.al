@@ -272,6 +272,14 @@ codeunit 70505 "LT TxB IncStr"
         Observer.Observe('1,5', IncStr('1,5'));
         Observer.Observe('-1', IncStr('-1'));
         Observer.Observe('1.5 minus 1', IncStr('1.5', -1));
-        Observer.Finish();
+        Observer.Expect('a99.99b', 'a99.100b');
+        Observer.Expect('1.5', '1.6');
+        Observer.Expect('a99.99', 'a99.100');
+        Observer.Expect('-1.5', '-1.6');
+        Observer.Expect('1.9', '1.10');
+        Observer.Expect('1,5', '1,6');
+        Observer.Expect('-1', '-2');
+        Observer.Expect('1.5 minus 1', '1.4');
+        Observer.Verify();
     end;
 }

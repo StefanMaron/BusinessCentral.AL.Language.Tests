@@ -31,6 +31,11 @@ third';
         Observer.Observe('char 2 code', Format(Code2));
         Observer.Observe('three lines', T2);
         Observer.Observe('three lines len', Format(StrLen(T2)));
-        Observer.Finish();
+        Observer.Expect('two lines', 'a\r\nb');
+        Observer.Expect('two lines len', '4');
+        Observer.Expect('char 2 code', '13');
+        Observer.Expect('three lines', 'first\r\n    second\r\nthird');
+        Observer.Expect('three lines len', '24');
+        Observer.Verify();
     end;
 }

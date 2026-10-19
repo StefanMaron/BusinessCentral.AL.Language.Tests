@@ -105,7 +105,16 @@ codeunit 70512 "LT TxB MaxStrLen"
         Observer.Observe('text with code20', Format(MaxOfText(C20)));
         Observer.Observe('text30 with field text100', Format(MaxOfText30(Item.Description)));
         Observer.Observe('var code30 with code20', Format(MaxOfVarCode30(C20)));
-        Observer.Finish();
+        Observer.Expect('var text with field text100', '100');
+        Observer.Expect('var text with text30', '30');
+        Observer.Expect('var text with text', '2147483647');
+        Observer.Expect('var text30 with field text100', '100');
+        Observer.Expect('var text30 with text30', '30');
+        Observer.Expect('text with field text100', '2147483647');
+        Observer.Expect('text with code20', '2147483647');
+        Observer.Expect('text30 with field text100', '30');
+        Observer.Expect('var code30 with code20', '20');
+        Observer.Verify();
     end;
 
     local procedure MaxOfVarText(var s: Text): Integer

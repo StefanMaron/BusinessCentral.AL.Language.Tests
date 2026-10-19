@@ -175,7 +175,15 @@ codeunit 70506 "LT TxB SelectStr"
             Observer.Observe('2000 chars', Format(StrLen(R)))
         else
             Observer.Observe('2000 chars', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('quoted 3', '"c');
+        Observer.Expect('quoted 4', 'd"');
+        Observer.Expect('quoted 5', 'e');
+        Observer.Expect('single quotes 3', '''c');
+        Observer.Expect('391 chars', '391');
+        Observer.Expect('392 chars', '392');
+        Observer.Expect('comma at 395 element 2', 'tail');
+        Observer.Expect('2000 chars', '2000');
+        Observer.Verify();
     end;
 
     [TryFunction]

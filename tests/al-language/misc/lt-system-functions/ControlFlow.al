@@ -802,7 +802,11 @@ codeunit 72516 "LT SyT Exit Recursion"
             Observer.Observe('to int max', 'no error|' + Format(i) + '|' + Format(Rounds))
         else
             Observer.Observe('to int max', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
-        Observer.Finish();
+        Observer.Expect('end 10^14', 'error:Overflow under conversion of System.Int64 value 100000000000000 to System.Int32.|ConversionCast|1000|0');
+        Observer.Expect('end max+1', 'error:Overflow under conversion of System.Int64 value 2147483648 to System.Int32.|ConversionCast|1000|0');
+        Observer.Expect('end 5', 'no error|1000|0');
+        Observer.Expect('to int max', 'no error|2147483647|2');
+        Observer.Verify();
     end;
 
     [TryFunction]

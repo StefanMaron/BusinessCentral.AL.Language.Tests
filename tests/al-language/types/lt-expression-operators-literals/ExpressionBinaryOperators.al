@@ -354,7 +354,14 @@ codeunit 72789 "LT Binary Operators"
             Observer.Observe('biginteger last operand', Format(Big))
         else
             Observer.Observe('biginteger last operand', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('assign', 'error:Arithmetic operation resulted in an overflow.|AL:Overflow');
+        Observer.Expect('biginteger parameter', 'error:Arithmetic operation resulted in an overflow.|AL:Overflow');
+        Observer.Expect('json add', 'error:Arithmetic operation resulted in an overflow.|AL:Overflow');
+        Observer.Expect('first operand biginteger', '2304000000');
+        Observer.Expect('decimal literal operand', '2304000000');
+        Observer.Expect('biginteger left to right', '2304000000');
+        Observer.Expect('biginteger last operand', '2304000000');
+        Observer.Verify();
     end;
 
     [TryFunction]

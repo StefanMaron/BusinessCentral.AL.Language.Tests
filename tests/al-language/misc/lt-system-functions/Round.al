@@ -276,7 +276,32 @@ codeunit 72507 "LT SyT Round"
         ObserveDefaultRounds(Observer, 'p0');
         SetAmountRoundingPrecision(Saved);
         ObserveDefaultRounds(Observer, 'restored');
-        Observer.Finish();
+        Observer.Expect('saved precision', '0.01');
+        Observer.Expect('start 1.55', '1.55');
+        Observer.Expect('start 2.5', '2.5');
+        Observer.Expect('start -2.5', '-2.5');
+        Observer.Expect('start 1.23456', '1.23');
+        Observer.Expect('p1 1.55', '1.55');
+        Observer.Expect('p1 2.5', '2.5');
+        Observer.Expect('p1 -2.5', '-2.5');
+        Observer.Expect('p1 1.23456', '1.23');
+        Observer.Expect('p0.1 1.55', '1.55');
+        Observer.Expect('p0.1 2.5', '2.5');
+        Observer.Expect('p0.1 -2.5', '-2.5');
+        Observer.Expect('p0.1 1.23456', '1.23');
+        Observer.Expect('p0.001 1.55', '1.55');
+        Observer.Expect('p0.001 2.5', '2.5');
+        Observer.Expect('p0.001 -2.5', '-2.5');
+        Observer.Expect('p0.001 1.23456', '1.23');
+        Observer.Expect('p0 1.55', '1.55');
+        Observer.Expect('p0 2.5', '2.5');
+        Observer.Expect('p0 -2.5', '-2.5');
+        Observer.Expect('p0 1.23456', '1.23');
+        Observer.Expect('restored 1.55', '1.55');
+        Observer.Expect('restored 2.5', '2.5');
+        Observer.Expect('restored -2.5', '-2.5');
+        Observer.Expect('restored 1.23456', '1.23');
+        Observer.Verify();
     end;
 
     local procedure SetAmountRoundingPrecision(Precision: Decimal)
@@ -329,7 +354,17 @@ codeunit 72507 "LT SyT Round"
         Observer.Observe('1234.56789 p100', Format(Round(1234.56789, 100), 0, 9));
         Observer.Observe('-1234.56789 p1 down', Format(Round(-1234.56789, 1, '<'), 0, 9));
         Observer.Observe('-1234.56789 p1 up', Format(Round(-1234.56789, 1, '>'), 0, 9));
-        Observer.Finish();
+        Observer.Expect('-1234.56789 p1', '-1235');
+        Observer.Expect('-1234.56789 p10', '-1230');
+        Observer.Expect('-1234.56789 p100', '-1200');
+        Observer.Expect('-1234.56789 p0.01', '-1234.57');
+        Observer.Expect('-1234.56789 p0.001', '-1234.568');
+        Observer.Expect('1234.56789 p1', '1235');
+        Observer.Expect('1234.56789 p10', '1230');
+        Observer.Expect('1234.56789 p100', '1200');
+        Observer.Expect('-1234.56789 p1 down', '-1234');
+        Observer.Expect('-1234.56789 p1 up', '-1235');
+        Observer.Verify();
     end;
 
     // Corpus issue 672, item 40: Power gives a Decimal; does it keep the last digits of large results (2^63 - 1 against 2^63 - 5)?
@@ -359,6 +394,17 @@ codeunit 72507 "LT SyT Round"
         Observer.Observe('2^62-1 to biginteger', Format(B));
         B := Power(2, 53) + 1;
         Observer.Observe('2^53+1 to biginteger', Format(B));
-        Observer.Finish();
+        Observer.Expect('2^63-1 = 2^63-5', 'Yes');
+        Observer.Expect('2^63-1 <> 2^63-5', 'No');
+        Observer.Expect('2^63 - (2^63-1)', '0');
+        Observer.Expect('2^63 - (2^63-5)', '0');
+        Observer.Expect('2^53+1 - 2^53', '1');
+        Observer.Expect('2^60 = literal', 'Yes');
+        Observer.Expect('2^60 - (2^60 - 1)', '0');
+        Observer.Expect('3^40 - (3^40 - 1)', '0');
+        Observer.Expect('2^62 to biginteger', '4611686018427387900');
+        Observer.Expect('2^62-1 to biginteger', '4611686018427387900');
+        Observer.Expect('2^53+1 to biginteger', '9007199254740993');
+        Observer.Verify();
     end;
 }

@@ -324,7 +324,12 @@ codeunit 70040 "LT TxA Index 1"
             Observer.Observe('code blank last', '[' + C + ']|' + Format(StrLen(C)))
         else
             Observer.Observe('code blank last', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('code len+1', 'ABCD|4');
+        Observer.Expect('code len+3', 'error:The value of INDEXING parameter 1 is outside of the permitted range. The current value is: 6. The permitted range is: from 1 to 3.|OutsidePermittedRange');
+        Observer.Expect('code3 past declared', 'error:The length of the string is 4, but it must be less than or equal to 3 characters. Value: ABCd|StringLengthExceeded');
+        Observer.Expect('code blank inside', '[A C]|3');
+        Observer.Expect('code blank last', '[AB]|2');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -364,6 +369,15 @@ codeunit 70040 "LT TxA Index 1"
         Observer.Observe('lowercase deseret', Format(LowerCase('𐐀') = '𐐨'));
         Observer.Observe('strpos emoji', Format(StrPos('x😀a', 'a')));
         Observer.Observe('delstr half pair', Format(StrLen(DelStr('😀a', 1, 1))));
-        Observer.Finish();
+        Observer.Expect('copystr first half', '1|55357');
+        Observer.Expect('copystr second half', '2|56832');
+        Observer.Expect('copystr whole pair', 'Yes');
+        Observer.Expect('deseret len', '2');
+        Observer.Expect('uppercase deseret', 'Yes');
+        Observer.Expect('toupper deseret', 'Yes');
+        Observer.Expect('lowercase deseret', 'Yes');
+        Observer.Expect('strpos emoji', '4');
+        Observer.Expect('delstr half pair', '2');
+        Observer.Verify();
     end;
 }
