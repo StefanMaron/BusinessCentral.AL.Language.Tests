@@ -446,6 +446,7 @@ codeunit 72003 "LT RcB TestField"
         Stored: Record "LT RcB TF";
         Observer: Codeunit "Probe Observer";
     begin
+        // Not committed: the failed TestField rolls back the Insert made before the asserterror, the variable keeps its values.
         Rec.DeleteAll();
         Rec.Init();
         Rec.Id := 16;
@@ -455,7 +456,11 @@ codeunit 72003 "LT RcB TestField"
         asserterror Rec.TestField(Cod);
         Observer.ObserveError('memory only');
         Observer.Observe('memory only var', Rec.Txt);
-        Observer.Observe('memory only stored', Format(Stored.Get(16)) + ' ' + Stored.Txt);
+        Observer.Observe('memory only stored', Format(Stored.Get(16)));
+        // Committed row, then Modify and a failed TestField: the Modify is rolled back, the variable keeps the modified value.
+        Rec.Txt := 'orig';
+        Rec.Insert();
+        Commit();
         Rec.Txt := 'modified';
         Rec.Modify();
         asserterror Rec.TestField(Cod);
@@ -463,7 +468,8 @@ codeunit 72003 "LT RcB TestField"
         Observer.Observe('after modify var', Rec.Txt);
         Clear(Stored);
         Observer.Observe('after modify stored', Format(Stored.Get(16)) + ' ' + Stored.Txt);
-        Observer.Observe('count', Format(Stored.Count()));
+        Rec.DeleteAll();
+        Commit();
         Observer.Finish();
     end;
 }
@@ -652,7 +658,21 @@ codeunit 72004 "LT RcB FieldError"
         Rec.Txt := '';
         asserterror Rec.FieldError(Txt);
         Observer.ObserveError('empty value');
-        Observer.Finish();
+        Observer.Expect('ends in period|text', 'Txt is wrong. in RcB TF Caption Id=''21''.');
+        Observer.Expect('ends in period|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('two periods|text', 'Txt is wrong.. in RcB TF Caption Id=''21''.');
+        Observer.Expect('two periods|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('only period|text', 'Txt . in RcB TF Caption Id=''21''.');
+        Observer.Expect('only period|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('backslash|text', 'Txt first\second in RcB TF Caption Id=''21''.');
+        Observer.Expect('backslash|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('trailing backslash|text', 'Txt ends in backslash\ in RcB TF Caption Id=''21''.');
+        Observer.Expect('trailing backslash|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('value ends in period|text', 'Txt must not be value. in RcB TF Caption Id=''21''.');
+        Observer.Expect('value ends in period|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('empty value|text', 'You must specify Txt in RcB TF Caption Id=''21''.');
+        Observer.Expect('empty value|code', 'NCLCSRTS:TableErrorStr');
+        Observer.Verify();
     end;
 
     var

@@ -177,7 +177,11 @@ codeunit 85240 "LT CT Error Leads"
         Observer.ObserveError('plain callee');
         asserterror CallThenMark(true);
         Observer.ObserveError('collect callee');
-        Observer.Finish();
+        Observer.Expect('plain callee|text', 'Commit is prohibited in the current scope. The operation cannot continue. Contact your system administrator.');
+        Observer.Expect('plain callee|code', 'DB:Ok');
+        Observer.Expect('collect callee|text', 'Commit is prohibited in the current scope. The operation cannot continue. Contact your system administrator.');
+        Observer.Expect('collect callee|code', 'DB:Ok');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 19
@@ -197,7 +201,12 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('row after commit', Format(Row.Get(1919)));
         Row.DeleteAll();
         Commit();
-        Observer.Finish();
+        Observer.Expect('run', 'No');
+        Observer.Expect('run error|text', 'x');
+        Observer.Expect('run error|code', 'Dialog');
+        Observer.Expect('committed row', 'Yes after asserterror: ');
+        Observer.Expect('row after commit', 'No');
+        Observer.Verify();
     end;
 
     local procedure ConfirmThenMark()
@@ -214,7 +223,9 @@ codeunit 85240 "LT CT Error Leads"
     begin
         asserterror ConfirmThenMark();
         Observer.ObserveError('confirm');
-        Observer.Finish();
+        Observer.Expect('confirm|text', 'Unhandled UI: Confirm Proceed?');
+        Observer.Expect('confirm|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 20
@@ -232,7 +243,11 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('message no args', Captured);
         Message('\Lead');
         Observer.Observe('message leading', Captured);
-        Observer.Finish();
+        Observer.Expect('message labels', '7\Second\Tx\');
+        Observer.Expect('message literals', '7\Second\Tx\');
+        Observer.Expect('message no args', 'A\B\C');
+        Observer.Expect('message leading', '\Lead');
+        Observer.Verify();
     end;
 
     [Test]
@@ -245,6 +260,8 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('confirm labels', Captured);
         if Confirm('%1\' + 'Second\' + '%2\', false, 7, 'Tx') then;
         Observer.Observe('confirm literals', Captured);
+        if Confirm('Value %1 and %2', false, 7, 'Tx') then;
+        Observer.Observe('confirm no backslash', Captured);
         Observer.Finish();
     end;
 
@@ -257,7 +274,11 @@ codeunit 85240 "LT CT Error Leads"
         Observer.ObserveError('error labels');
         asserterror Error('%1\' + 'Second\' + '%2\', 7, 'Tx');
         Observer.ObserveError('error literals');
-        Observer.Finish();
+        Observer.Expect('error labels|text', '7\Second\Tx\');
+        Observer.Expect('error labels|code', 'Dialog');
+        Observer.Expect('error literals|text', '7\Second\Tx\');
+        Observer.Expect('error literals|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [MessageHandler]
@@ -292,7 +313,15 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('text after true', GetLastErrorText(true));
         Observer.Observe('code after', GetLastErrorCode());
         Observer.Observe('stack after', GetLastErrorCallStack());
-        Observer.Finish();
+        Observer.Expect('run', 'No');
+        Observer.Expect('text before', 'run failed');
+        Observer.Expect('code before', 'Dialog');
+        Observer.Expect('stack before empty', 'No');
+        Observer.Expect('text after', '');
+        Observer.Expect('text after true', '');
+        Observer.Expect('code after', '');
+        Observer.Expect('stack after', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -337,7 +366,15 @@ codeunit 85240 "LT CT Error Leads"
         CollectThenClearLastError(Log);
         Observer.Observe('collect log', Log);
         Observer.Observe('after collect', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('try returns', 'Yes');
+        Observer.Expect('try log', 'inside before=inner;inside after=|;');
+        Observer.Expect('after try', '');
+        Observer.Expect('clear then raise', 'No');
+        Observer.Expect('clear then raise|text', 'raised after clear');
+        Observer.Expect('clear then raise|code', 'Dialog');
+        Observer.Expect('collect log', 'collected text=|;after clear text= has=Yes;');
+        Observer.Expect('after collect', '');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 24
@@ -348,7 +385,8 @@ codeunit 85240 "LT CT Error Leads"
         Errors: List of [ErrorInfo];
         Info: ErrorInfo;
     begin
-        Row.Name := Mode;
+        Row.Name := CopyStr(Mode, 1, MaxStrLen(Row.Name));
+        ClearLastError();
         if not Codeunit.Run(Codeunit::"LT CT Run Target", Row) then
             Log += 'run false;'
         else
@@ -418,7 +456,14 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('scope end second row', Format(Row.Get(251)));
         Row.DeleteAll();
         Commit();
-        Observer.Finish();
+        Observer.Expect('clear log', 'continued has=Yes;cleared has=No;');
+        Observer.Expect('row after clear', 'Yes');
+        Observer.Expect('scope end run', 'No');
+        Observer.Expect('scope end|text', 'left collected');
+        Observer.Expect('scope end|code', 'Dialog');
+        Observer.Expect('scope end first row', 'No');
+        Observer.Expect('scope end second row', 'No');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 26
@@ -461,7 +506,23 @@ codeunit 85240 "LT CT Error Leads"
         Result := DoWorkText();
         Observer.Observe('text assign', Format(Result));
         Observer.ObserveError('text assign');
-        Observer.Finish();
+        Observer.Expect('empty bare|text', '');
+        Observer.Expect('empty bare|code', 'Dialog');
+        Observer.Expect('empty assign', 'No');
+        Observer.Expect('empty assign|text', '');
+        Observer.Expect('empty assign|code', 'Dialog');
+        Observer.Expect('empty if', 'false');
+        Observer.Expect('empty if|text', '');
+        Observer.Expect('empty if|code', 'Dialog');
+        Observer.Expect('empty if not', 'false');
+        Observer.Expect('empty if not|text', '');
+        Observer.Expect('empty if not|code', 'Dialog');
+        Observer.Expect('text bare|text', 'work failed');
+        Observer.Expect('text bare|code', 'Dialog');
+        Observer.Expect('text assign', 'No');
+        Observer.Expect('text assign|text', 'work failed');
+        Observer.Expect('text assign|code', 'Dialog');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 27
@@ -486,20 +547,53 @@ codeunit 85240 "LT CT Error Leads"
         RunArgumentMode('try argument if', 'if', Observer);
         RunArgumentMode('try argument assign', 'assign', Observer);
         RunArgumentMode('try argument bare', 'bare', Observer);
-        Observer.Finish();
+        Observer.Expect('if run', 'Yes');
+        Observer.Expect('if name', 'returned false: argument failed continued');
+        Observer.Expect('if|text', 'argument failed');
+        Observer.Expect('if|code', 'Dialog');
+        Observer.Expect('assign run', 'Yes');
+        Observer.Expect('assign name', 'assigned No: argument failed continued');
+        Observer.Expect('assign|text', 'argument failed');
+        Observer.Expect('assign|code', 'Dialog');
+        Observer.Expect('bare run', 'No');
+        Observer.Expect('bare name', 'try argument bare');
+        Observer.Expect('bare|text', 'argument failed');
+        Observer.Expect('bare|code', 'Dialog');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 29
-    // [TryFunction] on a [Test] procedure compiles on BC 27, 28 and 29 (AL 30 compiler); the test raises an error in its body.
+    // [TryFunction] on a [Test] procedure compiles on BC 27, 28 and 29 (AL 30 compiler). A local BC 29.0 run showed that the test runner
+    // ignores the attribute: the same procedure raising Error in its body fails as a test (not asserted: a failing test is no oracle).
+    // Called from code, the procedure behaves as a try function: it returns false and the error text is kept.
     [Test]
     [TryFunction]
-    procedure Item29_TryFunctionOnTest_Raises()
+    procedure Item29_TryFunctionOnTest()
     begin
-        Error('ct item 29 raised');
+        if Item29Raise then
+            Error('ct item 29 raised');
+    end;
+
+    [Test]
+    procedure Item29_TryFunctionOnTest_CalledFromCode()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Item29Raise := true;
+        Ok := Item29_TryFunctionOnTest();
+        Item29Raise := false;
+        Observer.Observe('raising call', Format(Ok));
+        Observer.ObserveError('raising call');
+        Ok := Item29_TryFunctionOnTest();
+        Observer.Observe('quiet call', Format(Ok));
+        Observer.Finish();
     end;
 
     var
         Captured: Text;
+        Item29Raise: Boolean;
         OneArgBackslashLbl: Label '%1\', Locked = true;
         SecondBackslashLbl: Label 'Second\', Locked = true;
         TwoArgBackslashLbl: Label '%2\', Locked = true;
