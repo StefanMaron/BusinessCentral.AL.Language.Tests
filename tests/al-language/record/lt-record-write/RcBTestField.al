@@ -436,6 +436,36 @@ codeunit 72003 "LT RcB TestField"
         Observer.Expect('caption in error|code', 'TestField');
         Observer.Verify();
     end;
+
+    // Corpus issue 670 item 16 (writer CT): what a failed TestField inside asserterror leaves in the record variable and in the
+    // database, for a field assigned in memory only and for a field changed by Modify before the failing TestField.
+    [Test]
+    procedure TestField_Failed_RecordStateAfterwards()
+    var
+        Rec: Record "LT RcB TF";
+        Stored: Record "LT RcB TF";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rec.DeleteAll();
+        Rec.Init();
+        Rec.Id := 16;
+        Rec.Txt := 'orig';
+        Rec.Insert();
+        Rec.Txt := 'in memory';
+        asserterror Rec.TestField(Cod);
+        Observer.ObserveError('memory only');
+        Observer.Observe('memory only var', Rec.Txt);
+        Observer.Observe('memory only stored', Format(Stored.Get(16)) + ' ' + Stored.Txt);
+        Rec.Txt := 'modified';
+        Rec.Modify();
+        asserterror Rec.TestField(Cod);
+        Observer.ObserveError('after modify');
+        Observer.Observe('after modify var', Rec.Txt);
+        Clear(Stored);
+        Observer.Observe('after modify stored', Format(Stored.Get(16)) + ' ' + Stored.Txt);
+        Observer.Observe('count', Format(Stored.Count()));
+        Observer.Finish();
+    end;
 }
 
 codeunit 72004 "LT RcB FieldError"
@@ -595,6 +625,34 @@ codeunit 72004 "LT RcB FieldError"
     begin
         Info := ErrorInfo.Create('collected field error', true);
         Rec.FieldError(Txt, Info);
+    end;
+
+    // Corpus issue 670 item 21 (writer CT): FieldError with a text that already ends in a period, with a backslash, with only a
+    // period, and on a field whose value ends in a period.
+    [Test]
+    procedure FieldError_PeriodAndBackslash()
+    var
+        Rec: Record "LT RcB TF";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rec.Id := 21;
+        asserterror Rec.FieldError(Txt, 'is wrong.');
+        Observer.ObserveError('ends in period');
+        asserterror Rec.FieldError(Txt, 'is wrong..');
+        Observer.ObserveError('two periods');
+        asserterror Rec.FieldError(Txt, '.');
+        Observer.ObserveError('only period');
+        asserterror Rec.FieldError(Txt, 'first\second');
+        Observer.ObserveError('backslash');
+        asserterror Rec.FieldError(Txt, 'ends in backslash\');
+        Observer.ObserveError('trailing backslash');
+        Rec.Txt := 'value.';
+        asserterror Rec.FieldError(Txt);
+        Observer.ObserveError('value ends in period');
+        Rec.Txt := '';
+        asserterror Rec.FieldError(Txt);
+        Observer.ObserveError('empty value');
+        Observer.Finish();
     end;
 
     var
