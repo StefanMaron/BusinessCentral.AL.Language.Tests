@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Probe: written against a BC service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // BC versions: 27 to 29 (CI matrix)
-// Fixtures used: Probe Observer (codeunit 69160); table "LT AB Row" (77000), codeunit "LT AB Log" (77050), layout file FixtureLayout.rdlc of the app root; own report 77090, report extension 77091, test codeunit 77092
+// Fixtures used: Probe Observer (codeunit 69160); table "LT AB Row" (77000), codeunit "LT AB Log" (77050), layout files FixtureLayout_12.rdlc (report) and FixtureLayout_13.rdlc (report extension) of the app root, copies of FixtureLayout.rdlc; own report 77090, report extension 77091, test codeunit 77092
 // Facts: OnPreRendering of a report extension: whether and when it runs (against the OnPreReport of the report and the rendering), its RenderingPayload argument, and whether a change to the argument reaches the output.
 
 report 77090 "LT AB Render Report"
@@ -26,7 +26,7 @@ report 77090 "LT AB Render Report"
         layout(RdlcLayout)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_12.rdlc';
         }
     }
 
@@ -77,7 +77,7 @@ report 77093 "LT AB Render Plain Report"
         layout(RdlcLayout)
         {
             Type = RDLC;
-            LayoutFile = './FixtureLayout.rdlc';
+            LayoutFile = './FixtureLayout_13.rdlc';
         }
     }
 
