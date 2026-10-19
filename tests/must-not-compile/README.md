@@ -467,10 +467,6 @@ is only a reference.
 | 1444 | AL0371 | BigInteger assigned a product of Integer literals that overflows Integer. |
 | 1445 | AL0198 | `internal interface` (access modifier before the keyword). |
 | 1446 | AL0118 | A page field whose source is the bare name SystemId, with the feature NoImplicitWith. |
-| 1450 | AL0166 | Record.SetRange with one argument that is an enum or option value, not a field. |
-| 1451 | AL0118 | Record.SetCurrentKey with the name of a key instead of its fields. |
-| 1452 | AL0779 | Record.ModifyAll on a FlowField (own FlowField and Customer."Balance (LCY)"). |
-| 1453 | AL0224, AL0104 | Record.Get with an empty argument in the middle of the key values. |
 | 1470 | AL0827 | Record.CalcSums with a Sum FlowField as the only argument and as the second argument. (two diagnostics) |
 | 1471 | AL0223 | OptimizeForTextSearch = true on a Lookup FlowField of type Text. |
 | 1472 | AL0223 | OptimizeForTextSearch = true on a FlowFilter field of type Text. |
