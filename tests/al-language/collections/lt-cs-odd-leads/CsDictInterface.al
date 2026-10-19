@@ -3,7 +3,10 @@
 // Fixtures used: Probe Observer, collections/Fixtures.al (interface "LT ClT Shape", codeunits 74600/74601)
 // Probe: corpus issue 670 item 5 (microsoft/AL#8247): Dictionary.Get(Key, var Value) where Value is a var Interface parameter, in an exit statement.
 //   Every literal asserted below is what BC produced; the CI matrix checks BC 27.5, 28.5 and 29.0.
-// BC versions: 27, 28, 29
+// BC versions: 29. On Linux BC 28.5 running this codeunit kills the test session twice ("hub connection closed"), and the 27.5 run gave no
+//   JUnit file at all (microsoft/AL#8247 reports a server compile error CS1503 for this code). The codeunit is compiled only from BC 29;
+//   the 27.5 and 28.5 result is queued for the Windows check.
+#if BC29PLUS
 
 codeunit 85182 "LT CS Dict Interface"
 {
@@ -60,3 +63,4 @@ codeunit 85182 "LT CS Dict Interface"
         Observer.Verify();
     end;
 }
+#endif
