@@ -326,7 +326,12 @@ codeunit 85180 "LT CS Collections"
         Observer.Finish();
     end;
 
+    // Corpus issue 670 item 8 (microsoft/AL#8241): on BC 29 AddRange of an empty interface list does nothing (asserted). On Linux BC 27.5 and 28.5
+    // it gives an uncatchable 'Unexpected CLR exception thrown.: System.NullReferenceException: Object reference not set to an instance of an
+    // object.' in SharedNavObjectList`1.AddRange and the session dies, so the test runs only from BC 29; the 27/28 result is queued for the Windows check.
+#if BC29PLUS
     [Test]
+#endif
     procedure InterfaceList_AddRange()
     var
         Observer: Codeunit "Probe Observer";
