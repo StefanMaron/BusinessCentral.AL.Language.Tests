@@ -4,6 +4,16 @@
 // Fixtures used: CkEventObjects.al and CkEventPermObjects.al in this folder (84700-84711), shared Assert (60021), Permissions Mock.
 // Facts: corpus issue 669 (odd AL behavior leads, part D), items 3, 4, 5, 8, 9, 10, 11, 12, 14, 15. Each test binds its own
 //   manual subscriber codeunit, raises one event and asserts one result string with what BC returned.
+//   - Enum received as Option keeps the ordinal (C = 5 formats as '5'); an Option received as an Option with other members keeps the ordinal.
+//   - Text[30] subscriber of a Text[100] event: 50 characters raise StringLengthExceeded before the subscriber runs; 20 characters arrive.
+//   - A subscriber without var on a var parameter sees the value on entry; its assignment does not reach the publisher.
+//   - GlobalVarAccess: the subscriber reads the global by name, and a var parameter writes it back.
+//   - Parameters in another order, names in another case, a subset: all bind; var Rec writes back.
+//   - Scope OnPrem subscriber (warning AL0635) on a Cloud publisher in a Cloud app: it runs, no error.
+//   - Isolated event, failing subscriber: its var argument change and SingleInstance member are kept, its table write is rolled
+//     back, GetLastErrorText holds its error.
+//   - Permissions Mock with a set that grants no Execute on the subscriber codeunit: the subscriber runs with
+//     SkipOnMissingPermission false and true alike.
 // BC versions: 27, 28, 29
 
 codeunit 84712 "LT CK Event Leads"
