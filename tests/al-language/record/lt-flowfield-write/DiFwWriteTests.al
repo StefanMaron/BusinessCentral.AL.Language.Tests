@@ -3,7 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160), tables 86260..86263 (DiFwTables.al)
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
 // Facts: writing a value into a FlowField (corpus issue #665): assignment then Modify/Get/CalcFields, assignment then Insert, Validate,
-// ModifyAll (with and without triggers), Modify(true) when only a FlowField changed (OnModify, xRec, SystemRowVersion, SystemModifiedAt),
+// Modify(true) when only a FlowField changed (OnModify, xRec, SystemRowVersion, SystemModifiedAt),
 // RecordRef/FieldRef Value, Validate and Modify, TransferFields and record assignment, Init/Clear/Reset/Find/Next/Get, SetAutoCalcFields,
 // temporary records, Exist (Boolean) and Lookup (Text) FlowFields, assignment to a FlowFilter field, CalcFields after an assignment.
 // Every test also reads the CalcFormula source table (LT DI FW Child) and the trigger log before and after the write ('src' and 'log').
@@ -253,49 +253,7 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Finish();
     end;
 
-    // ---- item 4: ModifyAll on a FlowField, without and with triggers ----
-    [Test]
-    procedure DI_ModifyAllFlowField()
-    var
-        Observer: Codeunit "Probe Observer";
-        Parent: Record "LT DI FW Parent";
-        Versions: Dictionary of [Integer, BigInteger];
-        Stamps: Dictionary of [Integer, DateTime];
-        Result: Text;
-        Changed: Text;
-    begin
-        Seed();
-        Snap(Versions, Stamps);
-        Sleep(30);
-        asserterror begin
-            Parent.ModifyAll("Child Count", 7);
-            Error(NoErrorTok);
-        end;
-        Result := Outcome();
-        Observer.Observe('ModifyAll', Result);
-        if Result = 'ok' then
-            Parent.ModifyAll("Child Count", 7);
-        Changed := ChangedRows(Versions, Stamps);
-        Observer.Observe('changed rows', Changed);
-        Observer.Observe('log', TakeLog());
-        Observer.Observe('stored', StoredCount(1) + '/' + StoredCount(2) + ' calc ' + CalcCount(1) + '/' + CalcCount(2));
-        Snap(Versions, Stamps);
-        Sleep(30);
-        asserterror begin
-            Parent.ModifyAll("Child Count", 8, true);
-            Error(NoErrorTok);
-        end;
-        Result := Outcome();
-        Observer.Observe('ModifyAll true', Result);
-        if Result = 'ok' then
-            Parent.ModifyAll("Child Count", 8, true);
-        Observer.Observe('changed rows true', ChangedRows(Versions, Stamps));
-        Observer.Observe('log true', TakeLog());
-        Observer.Observe('stored true', StoredCount(1) + '/' + StoredCount(2) + ' calc ' + CalcCount(1) + '/' + CalcCount(2));
-        Observer.Observe('parents', Parents());
-        Observer.Observe('src after', Src());
-        Observer.Finish();
-    end;
+    // item 4 (ModifyAll on a FlowField) does not compile: AL0779, must-not-compile cases 1370 and 1888.
 
     local procedure Snap(var Versions: Dictionary of [Integer, BigInteger]; var Stamps: Dictionary of [Integer, DateTime])
     var
