@@ -198,7 +198,9 @@ codeunit 86030 "LT DG XmlPort Leads"
         SeedTwoTables();
         Observer.Observe('getter', '[' + Xp.TableSeparator() + ']');
         Observer.Observe('export', ExportText(Xmlport::"LT DG Csv Two Default", TextEncoding::MSDos));
-        Observer.Finish();
+        Observer.Expect('getter', '[\r\n\r\n]');
+        Observer.Expect('export', '"1","Alpha"\r\n"2","Beta"\r\n\r\n"7","L7"\r\n"8","L8"');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +212,9 @@ codeunit 86030 "LT DG XmlPort Leads"
         SeedTwoTables();
         Observer.Observe('getter', '[' + Xp.TableSeparator() + ']');
         Observer.Observe('export', ExportText(Xmlport::"LT DG Csv Two NewLine", TextEncoding::MSDos));
-        Observer.Finish();
+        Observer.Expect('getter', '[\r\n]');
+        Observer.Expect('export', '"1","Alpha"\r\n"2","Beta"\r\n"7","L7"\r\n"8","L8"');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +236,15 @@ codeunit 86030 "LT DG XmlPort Leads"
         Observer.Observe('xml_1031', ExportText(Xmlport::"LT DG Xml Bool Xml", TextEncoding::UTF16));
         Observer.Observe('csv_1031', ExportText(Xmlport::"LT DG Csv Bool", TextEncoding::MSDos));
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('format_1033', 'Yes/No');
+        Observer.Expect('legacy_1033', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\r\n<Root>\r\n  <Item>\r\n    <Id>1</Id>\r\n    <Flag>Yes</Flag>\r\n  </Item>\r\n  <Item>\r\n    <Id>2</Id>\r\n    <Flag>No</Flag>\r\n  </Item>\r\n</Root>');
+        Observer.Expect('xml_1033', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\r\n<Root>\r\n  <Item>\r\n    <Id>1</Id>\r\n    <Flag>true</Flag>\r\n  </Item>\r\n  <Item>\r\n    <Id>2</Id>\r\n    <Flag>false</Flag>\r\n  </Item>\r\n</Root>');
+        Observer.Expect('csv_1033', '"1","Yes"\r\n"2","No"');
+        Observer.Expect('format_1031', 'Ja/Nein');
+        Observer.Expect('legacy_1031', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\r\n<Root>\r\n  <Item>\r\n    <Id>1</Id>\r\n    <Flag>Ja</Flag>\r\n  </Item>\r\n  <Item>\r\n    <Id>2</Id>\r\n    <Flag>Nein</Flag>\r\n  </Item>\r\n</Root>');
+        Observer.Expect('xml_1031', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\r\n<Root>\r\n  <Item>\r\n    <Id>1</Id>\r\n    <Flag>true</Flag>\r\n  </Item>\r\n  <Item>\r\n    <Id>2</Id>\r\n    <Flag>false</Flag>\r\n  </Item>\r\n</Root>');
+        Observer.Expect('csv_1031', '"1","Ja"\r\n"2","Nein"');
+        Observer.Verify();
     end;
 
     [Test]
@@ -253,7 +265,15 @@ codeunit 86030 "LT DG XmlPort Leads"
         Observer.Observe('csv_1031', ImportBoolRow(Xmlport::"LT DG Csv Bool"));
         Observer.Observe('legacy_1031_yes', ImportText(Xmlport::"LT DG Xml Bool Legacy", '<Root><Item><Id>1</Id><Flag>Yes</Flag></Item></Root>'));
         GlobalLanguage(OldLanguage);
-        Observer.Finish();
+        Observer.Expect('legacy_1033', 'Yes=true;No=false;Ja=err Evaluate;Nein=err Evaluate;true=true;false=false;1=true;0=false;');
+        Observer.Expect('xml_1033', 'Yes=err Evaluate;No=err Evaluate;Ja=err Evaluate;Nein=err Evaluate;true=true;false=false;1=true;0=false;');
+        Observer.Expect('csv_1033', 'Yes=true;No=false;Ja=err Evaluate;Nein=err Evaluate;true=true;false=false;1=true;0=false;');
+        Observer.Expect('legacy_1033_ja', 'error:The value "Ja" can''t be evaluated into type Boolean.|Evaluate');
+        Observer.Expect('legacy_1031', 'Yes=err Evaluate;No=err Evaluate;Ja=true;Nein=false;true=true;false=false;1=true;0=false;');
+        Observer.Expect('xml_1031', 'Yes=err Evaluate;No=err Evaluate;Ja=err Evaluate;Nein=err Evaluate;true=true;false=false;1=true;0=false;');
+        Observer.Expect('csv_1031', 'Yes=err Evaluate;No=err Evaluate;Ja=true;Nein=false;true=true;false=false;1=true;0=false;');
+        Observer.Expect('legacy_1031_yes', 'error:Der Wert „Yes“ kann nicht in Typ Boolean ausgewertet werden.|Evaluate');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,6 +287,19 @@ codeunit 86030 "LT DG XmlPort Leads"
         Item.Insert();
         Observer.Observe('empty_prefix', TryExportText(Xmlport::"LT DG Ns Empty Prefix"));
         Observer.Observe('undeclared', TryExportText(Xmlport::"LT DG Ns Undeclared"));
+        Observer.Finish();
+    end;
+
+    // Linux suspect, queued for the Windows check (not a [Test]): on Linux BC 29.0 this export ends the test with an uncatchable
+    // 'Unexpected CLR exception thrown.: System.NullReferenceException' in NavXmlPortXmlAdapter.GetNamespaceUriStringFromDefinedNamespaces.
+    procedure Item108_PrefixWithoutNamespacesProbe()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT DG Item";
+    begin
+        Item.DeleteAll();
+        Item.Id := 9;
+        Item.Insert();
         Observer.Observe('no_namespaces', TryExportText(Xmlport::"LT DG Ns No Namespaces"));
         Observer.Finish();
     end;
@@ -282,7 +315,8 @@ codeunit 86030 "LT DG XmlPort Leads"
         Item.Name := 'ASDF';
         Item.Insert();
         Observer.Observe('export', ExportText(Xmlport::"LT DG Soap", TextEncoding::UTF8));
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\r\n<Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.xmlsoap.org/soap/envelope/">\r\n  <soap:Body>\r\n    <ValidateLicense xmlns="http://tempuri.org/">\r\n      <session>ASDF</session>\r\n      <instance>3</instance>\r\n    </ValidateLicense>\r\n  </soap:Body>\r\n</Envelope>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,7 +328,11 @@ codeunit 86030 "LT DG XmlPort Leads"
         Observer.Observe('txt_2049', ImportLongTxt(2049));
         Observer.Observe('txt_4096', ImportLongTxt(4096));
         Observer.Observe('txt_5000', ImportLongTxt(5000));
-        Observer.Finish();
+        Observer.Expect('txt_2048', 'ok length=2048');
+        Observer.Expect('txt_2049', 'error:The value ''1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123...567890123456789012345678901234567890123456789012345678901234567890123456789'' has a length 2049, which exceeds the maximum size of the destination type Text.|XmlPortTypeSizeExceeded length=0');
+        Observer.Expect('txt_4096', 'error:The value ''1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123...234567890123456789012345678901234567890123456789012345678901234567890123456'' has a length 4096, which exceeds the maximum size of the destination type Text.|XmlPortTypeSizeExceeded length=0');
+        Observer.Expect('txt_5000', 'error:The value ''1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123...678901234567890123456789012345678901234567890123456789012345678901234567890'' has a length 5000, which exceeds the maximum size of the destination type Text.|XmlPortTypeSizeExceeded length=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +343,10 @@ codeunit 86030 "LT DG XmlPort Leads"
         Observer.Observe('field_2048', ImportLongField(2048));
         Observer.Observe('field_2049', ImportLongField(2049));
         Observer.Observe('field_5000', ImportLongField(5000));
-        Observer.Finish();
+        Observer.Expect('field_2048', 'ok stored=2048');
+        Observer.Expect('field_2049', 'error:The length of the string is 2049, but it must be less than or equal to 2048 characters. Value: 1234567890123456789...567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890...|StringLengthExceeded stored=none');
+        Observer.Expect('field_5000', 'error:The length of the string is 5000, but it must be less than or equal to 2048 characters. Value: 1234567890123456789...567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890...|StringLengthExceeded stored=none');
+        Observer.Verify();
     end;
 
     [Test]
@@ -331,7 +372,8 @@ codeunit 86030 "LT DG XmlPort Leads"
         Xp.SetSource(InS);
         Xp.Import();
         Observer.Observe('flag', FlagOf(4));
-        Observer.Finish();
+        Observer.Expect('flag', 'true');
+        Observer.Verify();
     end;
 
     [Test]
@@ -349,6 +391,11 @@ codeunit 86030 "LT DG XmlPort Leads"
         asserterror Xmlport.Import(Xmlport::"LT DG Xml Bool Xml", InS);
         Observer.ObserveError('static');
         Observer.Observe('rows', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('instance|text', 'Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.');
+        Observer.Expect('instance|code', 'NotInitialized');
+        Observer.Expect('static|text', 'Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.');
+        Observer.Expect('static|code', 'NotInitialized');
+        Observer.Expect('rows', '0');
+        Observer.Verify();
     end;
 }
