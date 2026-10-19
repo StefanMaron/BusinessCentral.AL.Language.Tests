@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); table, log and helper of CjFix.al; own reports 84647-84649 and 84659 (84648 and 84649 with a generated Word layout), test codeunit 84650
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
-// Facts (corpus issue 667): DataItemTableView = where(Date field = const(0D)) compiles and filters (item 149); a procedure Foo() defined on both the report and the
+// Facts (corpus issue 667): DataItemTableView = where(Date field = const(0D)) compiles, but the run fails before OnPreReport with an Evaluate error on the date '''' (item 149); a procedure Foo() defined on both the report and the
 //   data item table: which one an unqualified call in a data item trigger, a report trigger and a column source expression runs (item 150); a table extension field used
 //   without a record prefix in a data item trigger (item 153); rows of a temporary record of the caller (SetTableView, the RecordRef overload of SaveAs, and a
 //   UseTemporary data item that shares the caller's temporary table) in the Xml dataset and in Execute (item 157).
@@ -197,7 +197,12 @@ codeunit 84650 "LT CJ Dataset Tests"
         Xml := Helper.ReadAll(TempBlob);
         Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('saved', 'No');
+        Observer.Expect('save err|text', 'The format of the Date '''''''' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('save err|code', 'Evaluate');
+        Observer.Expect('RowId', '');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -219,7 +224,14 @@ codeunit 84650 "LT CJ Dataset Tests"
         Observer.Observe('FooCol', Helper.Values(Xml, 'FooCol'));
         Observer.Observe('ExtCol', Helper.Values(Xml, 'ExtCol'));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('save err|text', '');
+        Observer.Expect('save err|code', '');
+        Observer.Expect('RowId', '1,2,3,');
+        Observer.Expect('FooCol', 'table 1,table 2,table 3,');
+        Observer.Expect('ExtCol', 'A,B,,');
+        Observer.Expect('log', 'prereport foo=report;view=VERSION(1) SORTING(Field1);row 1 foo=table 1 ext=A same ext=1;row 2 foo=table 2 ext=B same ext=1;row 3 foo=table 3 ext= same ext=1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,7 +250,10 @@ codeunit 84650 "LT CJ Dataset Tests"
         Observer.Observe('saved', Format(Rpt.SaveAs('', ReportFormat::Xml, OutS)));
         Observer.Observe('RowId', Helper.Values(Helper.ReadAll(TempBlob), 'RowId'));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('RowId', '1,2,3,');
+        Observer.Expect('log', 'istemporary=No;row 1;row 2;row 3;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +273,11 @@ codeunit 84650 "LT CJ Dataset Tests"
         Observer.Observe('saved', Format(Report.SaveAs(Report::"LT CJ Temp Caller Rep", '', ReportFormat::Xml, OutS, RecRef)));
         Observer.Observe('RowId', Helper.Values(Helper.ReadAll(TempBlob), 'RowId'));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('recref temporary', 'Yes');
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('RowId', '1,2,3,');
+        Observer.Expect('log', 'istemporary=No;row 1;row 2;row 3;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -277,7 +296,10 @@ codeunit 84650 "LT CJ Dataset Tests"
         Observer.Observe('saved', Format(Rpt.SaveAs('', ReportFormat::Xml, OutS)));
         Observer.Observe('TmpId', Helper.Values(Helper.ReadAll(TempBlob), 'TmpId'));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('TmpId', '101,102,');
+        Observer.Expect('log', 'count=2;tmp 101;tmp 102;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -311,6 +333,14 @@ codeunit 84650 "LT CJ Dataset Tests"
         Observer.Observe('caller execute', Format(TryExecuteCaller(Caller)));
         Observer.ObserveError('caller execute err');
         Observer.Observe('caller log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('shared execute', 'Yes');
+        Observer.Expect('shared execute err|text', '');
+        Observer.Expect('shared execute err|code', '');
+        Observer.Expect('shared log', 'count=2;tmp 101;tmp 102;');
+        Observer.Expect('caller execute', 'Yes');
+        Observer.Expect('caller execute err|text', '');
+        Observer.Expect('caller execute err|code', '');
+        Observer.Expect('caller log', 'istemporary=No;row 1;row 2;row 3;');
+        Observer.Verify();
     end;
 }

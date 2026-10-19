@@ -546,7 +546,9 @@ codeunit 73838 "LT RpT Filters"
         Ok := Helper.Save(Report::"LT CJ RpT Leaf PrintOnly", '', Xml);
         Observer.Observe('saved', Format(Ok));
         Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('RowId', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -561,6 +563,9 @@ codeunit 73838 "LT RpT Filters"
         Observer.Observe('saved', Format(Ok));
         Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
         Observer.Observe('ChildId', Helper.Values(Xml, 'ChildId'));
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('RowId', '1,2,3,4,');
+        Observer.Expect('ChildId', '');
+        Observer.Verify();
     end;
 }

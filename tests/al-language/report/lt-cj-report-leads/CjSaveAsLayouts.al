@@ -100,7 +100,32 @@ codeunit 84646 "LT CJ SaveAs Layout Tests"
         One(Observer, Report::"LT CJ Word Only", 'Excel', ReportFormat::Excel);
         One(Observer, Report::"LT CJ Word Only", 'Html', ReportFormat::Html);
         One(Observer, Report::"LT CJ Word Only", 'Xml', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('Pdf completed', 'Yes');
+        Observer.Expect('Pdf returned', 'Yes');
+        Observer.Expect('Pdf err|text', '');
+        Observer.Expect('Pdf err|code', '');
+        Observer.Expect('Pdf head', '37,80,68,70,');
+        Observer.Expect('Word completed', 'Yes');
+        Observer.Expect('Word returned', 'Yes');
+        Observer.Expect('Word err|text', '');
+        Observer.Expect('Word err|code', '');
+        Observer.Expect('Word head', '80,75,3,4,');
+        Observer.Expect('Excel completed', 'Yes');
+        Observer.Expect('Excel returned', 'No');
+        Observer.Expect('Excel err|text', 'The Excel output format is not supported by the current report layout format.');
+        Observer.Expect('Excel err|code', 'ReportUnsupportedFormat');
+        Observer.Expect('Excel head', 'empty');
+        Observer.Expect('Html completed', 'Yes');
+        Observer.Expect('Html returned', 'Yes');
+        Observer.Expect('Html err|text', '');
+        Observer.Expect('Html err|code', '');
+        Observer.Expect('Html head', '60,104,116,109,');
+        Observer.Expect('Xml completed', 'Yes');
+        Observer.Expect('Xml returned', 'Yes');
+        Observer.Expect('Xml err|text', '');
+        Observer.Expect('Xml err|code', '');
+        Observer.Expect('Xml head', '239,187,191,60,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +138,32 @@ codeunit 84646 "LT CJ SaveAs Layout Tests"
         One(Observer, Report::"LT CJ Excel Only", 'Excel', ReportFormat::Excel);
         One(Observer, Report::"LT CJ Excel Only", 'Html', ReportFormat::Html);
         One(Observer, Report::"LT CJ Excel Only", 'Xml', ReportFormat::Xml);
-        Observer.Finish();
+        Observer.Expect('Pdf completed', 'Yes');
+        Observer.Expect('Pdf returned', 'No');
+        Observer.Expect('Pdf err|text', 'The Pdf output format is not supported by the current report layout format.');
+        Observer.Expect('Pdf err|code', 'ReportUnsupportedFormat');
+        Observer.Expect('Pdf head', 'empty');
+        Observer.Expect('Word completed', 'Yes');
+        Observer.Expect('Word returned', 'No');
+        Observer.Expect('Word err|text', 'The Word output format is not supported by the current report layout format.');
+        Observer.Expect('Word err|code', 'ReportUnsupportedFormat');
+        Observer.Expect('Word head', 'empty');
+        Observer.Expect('Excel completed', 'Yes');
+        Observer.Expect('Excel returned', 'Yes');
+        Observer.Expect('Excel err|text', '');
+        Observer.Expect('Excel err|code', '');
+        Observer.Expect('Excel head', '80,75,3,4,');
+        Observer.Expect('Html completed', 'Yes');
+        Observer.Expect('Html returned', 'No');
+        Observer.Expect('Html err|text', 'The Html output format is not supported by the current report layout format.');
+        Observer.Expect('Html err|code', 'ReportUnsupportedFormat');
+        Observer.Expect('Html head', 'empty');
+        Observer.Expect('Xml completed', 'Yes');
+        Observer.Expect('Xml returned', 'Yes');
+        Observer.Expect('Xml err|text', '');
+        Observer.Expect('Xml err|code', '');
+        Observer.Expect('Xml head', '239,187,191,60,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +184,10 @@ codeunit 84646 "LT CJ SaveAs Layout Tests"
             Result := 'true';
         Observer.Observe('if not', Result);
         Observer.ObserveError('if not err');
-        Observer.Finish();
+        Observer.Expect('if not', 'false');
+        Observer.Expect('if not err|text', 'The Excel output format is not supported by the current report layout format.');
+        Observer.Expect('if not err|code', 'ReportUnsupportedFormat');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,6 +210,10 @@ codeunit 84646 "LT CJ SaveAs Layout Tests"
             until LayoutList.Next() = 0;
         Observer.Observe('layout list', Rows);
         Observer.Observe('default layout', Format(Report.DefaultLayout(Report::"LT CJ Word Only")));
-        Observer.Finish();
+        Observer.Expect('custom layouts', '0');
+        Observer.Expect('custom built-in layouts', '0');
+        Observer.Expect('layout list', 'CjWordLayout Word;');
+        Observer.Expect('default layout', 'Word');
+        Observer.Verify();
     end;
 }

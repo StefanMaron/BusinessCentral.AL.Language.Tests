@@ -133,7 +133,12 @@ codeunit 84658 "LT CJ Word Sections Tests"
         Observer: Codeunit "Probe Observer";
     begin
         One(Observer, Report::"LT CJ Word Sections Merge", 'Word', ReportFormat::Word);
-        Observer.Finish();
+        Observer.Expect('Word completed', 'Yes');
+        Observer.Expect('Word returned', 'No');
+        Observer.Expect('Word err|text', 'You cannot save this report to Word or html formats because the Microsoft Word layout contains section breaks that conflict with the sections in the report. Remove the section breaks from the report layout, and then run the report.');
+        Observer.Expect('Word err|code', 'ReportRendering:OfficeDocumentMerge');
+        Observer.Expect('Word head', 'empty');
+        Observer.Verify();
     end;
 
     // Linux suspect, not a test (queued for the Windows nightly in windows-queue.md): on the Linux tier of BC 29.0 the Pdf save of the merge report
@@ -154,6 +159,17 @@ codeunit 84658 "LT CJ Word Sections Tests"
     begin
         One(Observer, Report::"LT CJ Word Sections Plain", 'Word', ReportFormat::Word);
         One(Observer, Report::"LT CJ Word Sections Plain", 'Pdf', ReportFormat::Pdf);
-        Observer.Finish();
+        Observer.Expect('Word completed', 'Yes');
+        Observer.Expect('Word returned', 'Yes');
+        Observer.Expect('Word err|text', '');
+        Observer.Expect('Word err|code', '');
+        Observer.Expect('Word head', '80,75,3,4,');
+        Observer.Expect('Word sections', '2');
+        Observer.Expect('Pdf completed', 'Yes');
+        Observer.Expect('Pdf returned', 'Yes');
+        Observer.Expect('Pdf err|text', '');
+        Observer.Expect('Pdf err|code', '');
+        Observer.Expect('Pdf head', '37,80,68,70,');
+        Observer.Verify();
     end;
 }

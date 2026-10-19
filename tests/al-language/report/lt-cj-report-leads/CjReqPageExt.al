@@ -97,7 +97,9 @@ codeunit 84653 "LT CJ ReqPage Ext Tests"
         Log.Take();
         Observer.Observe('parameters empty', Format(Rpt.RunRequestPage() = ''));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('parameters empty', 'Yes');
+        Observer.Expect('log', 'open hide=No;base visible=Yes ext visible=Yes;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,6 +113,8 @@ codeunit 84653 "LT CJ ReqPage Ext Tests"
         Rpt.SetHideExt(true);
         Observer.Observe('parameters empty', Format(Rpt.RunRequestPage() = ''));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('parameters empty', 'Yes');
+        Observer.Expect('log', 'open hide=Yes;base visible=Yes ext visible=No;');
+        Observer.Verify();
     end;
 }
