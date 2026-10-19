@@ -349,4 +349,154 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Expect('count', '0');
         Observer.Verify();
     end;
+    // Writer PW: trust-refusals probe list "CaptionClassTranslate arguments and result": what a subscriber that sets Translation changes (the
+    // LT P114 Glob Subs subscribers never change it). LT PW CCT Subs sets Translation to 'T[' + CaptionExpr + ']' in mode set and to '' in mode
+    // blank, and counts its calls. A first run showed that an expression translated once in the session is not raised again (the earlier tests
+    // of this codeunit translate '3,Foo' and the captions of LT P114 Glob Card), so each expression here carries a tag made new per run (shown
+    // as <tag>). Only results and counts are observed (the order of the two subscribers is not).
+    local procedure PwOne(var Subs: Codeunit "LT PW CCT Subs"; Tag: Text; Expr: Text): Text
+    var
+        R: Text;
+    begin
+        R := CaptionClassTranslate(Expr);
+        exit(R.Replace(Tag, '<tag>') + ' calls=' + Format(Subs.TakeCalls()));
+    end;
+
+    local procedure PwTranslate(Mode: Text): Text
+    var
+        Subs: Codeunit "LT PW CCT Subs";
+        Tag: Text;
+        R: Text;
+    begin
+        Tag := DelChr(Format(CreateGuid()), '=', '{}-');
+        Subs.SetMode(Mode);
+        R := 'area3=' + PwOne(Subs, Tag, '3,' + Tag);
+        R += ' | area3Again=' + PwOne(Subs, Tag, '3,' + Tag);
+        R += ' | unclaimed=' + PwOne(Subs, Tag, 'PW' + Tag + ',Foo');
+        R += ' | noComma=' + PwOne(Subs, Tag, 'PW no comma ' + Tag);
+        R += ' | area1=' + PwOne(Subs, Tag, '1,1,' + Tag);
+        R += ' | leadingComma=' + PwOne(Subs, Tag, ',' + Tag);
+        R += ' | lastSeen=' + Subs.LastSeen().Replace(Tag, '<tag>');
+        R += ' | empty=' + PwOne(Subs, Tag, '');
+        R += ' | area3Empty=' + PwOne(Subs, Tag, '3,');
+        Subs.SetMode('');
+        exit(R);
+    end;
+
+    [Test]
+    procedure PW_CaptionClassTranslate_SubscriberSetsTranslation()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('set', PwTranslate('set'));
+        Observer.Observe('blank', PwTranslate('blank'));
+        Observer.Observe('none', PwTranslate('none'));
+        Observer.Expect('set', 'area3=T[3,<tag>] calls=1 | area3Again=T[3,<tag>] calls=0 | unclaimed=T[PW<tag>,Foo] calls=1 | noComma=T[PW no comma <tag>] calls=1 | area1=T[1,1,<tag>] calls=1 | leadingComma=T[,<tag>] calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=1');
+        Observer.Expect('blank', 'area3= calls=1 | area3Again= calls=0 | unclaimed= calls=1 | noComma= calls=1 | area1= calls=1 | leadingComma= calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=0');
+        Observer.Expect('none', 'area3=<tag> calls=1 | area3Again=<tag> calls=0 | unclaimed=PW<tag>,Foo calls=1 | noComma=PW no comma <tag> calls=1 | area1=1,1,<tag> calls=1 | leadingComma=,<tag> calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_CaptionClassTranslate_SubscriberSetsTranslation_OnPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Subs: Codeunit "LT PW CCT Subs";
+        Card: TestPage "LT PW CCT Card";
+    begin
+        Seed();
+        Subs.SetMode('set');
+        Card.OpenView();
+        Observer.Observe('calls after open', Format(Subs.TakeCalls()));
+        Observer.Observe('claimed caption', Card.PwClaimed.Caption());
+        Observer.Observe('area3 caption', Card.PwArea3.Caption());
+        Observer.Observe('calls after captions', Format(Subs.TakeCalls()));
+        Card.Close();
+        Subs.SetMode('blank');
+        Card.OpenView();
+        Observer.Observe('second open calls', Format(Subs.TakeCalls()));
+        Observer.Observe('second open claimed caption', Card.PwClaimed.Caption());
+        Observer.Observe('second open area3 caption', Card.PwArea3.Caption());
+        Card.Close();
+        Subs.SetMode('');
+        Observer.Expect('calls after open', '2');
+        Observer.Expect('claimed caption', 'T[PWCC1,Hello]');
+        Observer.Expect('area3 caption', 'T[3,PW plain caption]');
+        Observer.Expect('calls after captions', '0');
+        Observer.Expect('second open calls', '0');
+        Observer.Expect('second open claimed caption', 'T[PWCC1,Hello]');
+        Observer.Expect('second open area3 caption', 'T[3,PW plain caption]');
+        Observer.Verify();
+    end;
+}
+
+page 86150 "LT PW CCT Card"
+{
+    PageType = Card;
+    SourceTable = "LT P114 Glob Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(PwClaimed; Rec.Descr)
+            {
+                ApplicationArea = All;
+                CaptionClass = 'PWCC1,Hello';
+            }
+            field(PwArea3; Rec.Tag)
+            {
+                ApplicationArea = All;
+                CaptionClass = '3,PW plain caption';
+            }
+        }
+    }
+}
+
+codeunit 86149 "LT PW CCT Subs"
+{
+    SingleInstance = true;
+
+    var
+        Mode: Text;
+        Calls: Integer;
+        Seen: Text;
+
+    procedure SetMode(NewMode: Text)
+    begin
+        Mode := NewMode;
+        Calls := 0;
+        Seen := '';
+    end;
+
+    procedure TakeCalls(): Integer
+    var
+        N: Integer;
+    begin
+        N := Calls;
+        Calls := 0;
+        exit(N);
+    end;
+
+    procedure LastSeen(): Text
+    begin
+        exit(Seen);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"UI Helper Triggers", 'CaptionClassTranslate', '', false, false)]
+    local procedure PwCaptionClassTranslate(Language: Integer; CaptionExpr: Text[1024]; var Translation: Text[1024])
+    begin
+        if Mode = '' then
+            exit;
+        Calls += 1;
+        Seen := 'lang_is_session=' + Format(Language = GlobalLanguage()) + ',expr=' + CaptionExpr;
+        case Mode of
+            'set':
+                Translation := 'T[' + CaptionExpr + ']';
+            'blank':
+                Translation := '';
+        end;
+    end;
 }

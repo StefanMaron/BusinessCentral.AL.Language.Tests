@@ -210,4 +210,78 @@ codeunit 72601 "LT PnE Http Content"
         Observer.Expect('method', 'GET');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Values and builtins": HttpContent.ReadAs with its result used, on a copy in a variable of the content of a
+    // request that has none (Req.Content.ReadAs(T) with the result used answers false, network/lt-http/HttpRequest.al:220; as a statement it
+    // raises NotInitialized, RequestWithoutContent), and ReadAs(InStream) on such a content, with the result used and as a statement.
+    [TryFunction]
+    local procedure PwTryCopyReadAsText(var Answer: Boolean; var T: Text)
+    var
+        Req: HttpRequestMessage;
+        Content: HttpContent;
+    begin
+        Content := Req.Content;
+        Answer := Content.ReadAs(T);
+    end;
+
+    [TryFunction]
+    local procedure PwTryReadAsStreamUsed(var Answer: Boolean)
+    var
+        Req: HttpRequestMessage;
+        Ins: InStream;
+    begin
+        Answer := Req.Content.ReadAs(Ins);
+    end;
+
+    [TryFunction]
+    local procedure PwTryReadAsStreamStatement()
+    var
+        Req: HttpRequestMessage;
+        Ins: InStream;
+    begin
+        Req.Content.ReadAs(Ins);
+    end;
+
+    [TryFunction]
+    local procedure PwTryCopyReadAsStreamUsed(var Answer: Boolean)
+    var
+        Req: HttpRequestMessage;
+        Content: HttpContent;
+        Ins: InStream;
+    begin
+        Content := Req.Content;
+        Answer := Content.ReadAs(Ins);
+    end;
+
+    [Test]
+    procedure PW_RequestWithoutContent_CopyAndStream()
+    var
+        Observer: Codeunit "Probe Observer";
+        Answer: Boolean;
+        T: Text;
+    begin
+        T := 'kept';
+        Observer.Observe('copyTextUsed', Format(PwTryCopyReadAsText(Answer, T)) + ' answer=' + Format(Answer) + ' text=' + T);
+        Observer.ObserveError('copyTextUsed');
+        Answer := true;
+        Observer.Observe('streamUsed', Format(PwTryReadAsStreamUsed(Answer)) + ' answer=' + Format(Answer));
+        Observer.ObserveError('streamUsed');
+        Observer.Observe('streamStatement', Format(PwTryReadAsStreamStatement()));
+        Observer.ObserveError('streamStatement');
+        Answer := true;
+        Observer.Observe('copyStreamUsed', Format(PwTryCopyReadAsStreamUsed(Answer)) + ' answer=' + Format(Answer));
+        Observer.ObserveError('copyStreamUsed');
+        Observer.Expect('copyTextUsed', 'Yes answer=No text=kept');
+        Observer.Expect('copyTextUsed|text', '');
+        Observer.Expect('copyTextUsed|code', '');
+        Observer.Expect('streamUsed', 'Yes answer=No');
+        Observer.Expect('streamUsed|text', '');
+        Observer.Expect('streamUsed|code', '');
+        Observer.Expect('streamStatement', 'No');
+        Observer.Expect('streamStatement|text', 'Microsoft.Dynamics.Nav.Runtime.NavHttpContent variable not initialized.');
+        Observer.Expect('streamStatement|code', 'NotInitialized');
+        Observer.Expect('copyStreamUsed', 'Yes answer=No');
+        Observer.Expect('copyStreamUsed|text', '');
+        Observer.Expect('copyStreamUsed|code', '');
+        Observer.Verify();
+    end;
 }

@@ -80,3 +80,21 @@ query 70126 "LT PnA Q Agg2"
         }
     }
 }
+
+// Writer PW: filter elements before, between and after the columns, column names that differ from the field names (GetFilters order probe).
+query 86143 "LT PW Q Mixed"
+{
+    QueryType = Normal;
+
+    elements
+    {
+        dataitem(S; "LT PnA Q Src")
+        {
+            filter(FGrp; Grp) { }
+            column(Qty; Qty) { }
+            column(Entry; Entry) { }
+            filter(FAmt; Amt) { }
+            column(Txt; Name) { }
+        }
+    }
+}
