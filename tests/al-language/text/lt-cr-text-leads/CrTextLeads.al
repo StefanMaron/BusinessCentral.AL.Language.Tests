@@ -486,7 +486,16 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('two_400', Select(2, Long));
         Long := PadStr('', 394, 'x') + ',' + PadStr('', 5, 'y') + ',,,';
         Obs.Observe('two_trailing', Select(2, Long));
-        Obs.Finish();
+        Obs.Expect('quote_3', 'ok:2:"c');
+        Obs.Expect('quote_4', 'ok:2:d"');
+        Obs.Expect('quote_5', 'ok:1:e');
+        Obs.Expect('quote_6', 'error:The SELECTSTR comma-string a,b,"c,d",e does not contain a va|InvalidStringFormat');
+        Obs.Expect('one_391', 'ok:391:xxxxxxxxxxxxxxxxxxxx');
+        Obs.Expect('one_392', 'ok:392:xxxxxxxxxxxxxxxxxxxx');
+        Obs.Expect('one_1000', 'ok:1000:xxxxxxxxxxxxxxxxxxxx');
+        Obs.Expect('two_400', 'ok:5:yyyyy');
+        Obs.Expect('two_trailing', 'ok:5:yyyyy');
+        Obs.Verify();
     end;
 
     // Item 61 (Split with a Char returned by a procedure). The lead's case has the procedure in another app (not pinnable in one app); here
