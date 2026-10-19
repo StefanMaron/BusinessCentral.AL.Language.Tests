@@ -469,7 +469,12 @@ codeunit 81070 "BD Region Tests"
         Observer.Observe('run ok', Format(Ok));
         Observer.ObserveError('run');
         Observer.Observe('run log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('handler', 'handler log=init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[]; amount=1.234.567,89 saveasxml ok=Yes error= code= log=');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [TryFunction]
