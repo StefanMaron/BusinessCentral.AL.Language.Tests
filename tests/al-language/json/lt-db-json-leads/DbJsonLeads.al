@@ -22,8 +22,8 @@ codeunit 85722 "LT DB Json Leads"
         A.WriteTo(Result);
     end;
 
-    // Each step ends in Error('ok: ...') so that asserterror also catches a Decimal range error (a [TryFunction] does not: the range error
-    // ended the test through a TryFunction on BC 29).
+    // Each step ends in Error('ok: ...') and runs under asserterror: in a first draft on a local BC 29 tier the Decimal range error of GetDecimal
+    // ended the test although the call was inside a [TryFunction] (not asserted here).
     local procedure StepRead(Json: Text)
     var
         O: JsonObject;
@@ -174,9 +174,17 @@ codeunit 85722 "LT DB Json Leads"
         ReadDecimal(Observer, 'min', '{"d":-999999999999999.99}');
         ReadDecimal(Observer, 'max', '{"d":999999999999999.99}');
         ReadDecimal(Observer, 'min_more_digit', '{"d":-9999999999999999.99}');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure DecimalRange_ReadFrom_Beyond()
+    // Issue 671 item 38: numbers beyond the Decimal range.
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         ReadDecimal(Observer, 'max_more_digit', '{"d":9999999999999999.99}');
         ReadDecimal(Observer, 'net_max', '{"d":79228162514264337593543950335}');
-        ReadDecimal(Observer, 'beyond_net', '{"d":79228162514264337593543950336}');
         ReadDecimal(Observer, 'exp40', '{"d":1e40}');
         Observer.Finish();
     end;
@@ -197,7 +205,17 @@ codeunit 85722 "LT DB Json Leads"
         Observer.ObserveError('add_max');
         asserterror StepMoreDigitLiteral();
         Observer.ObserveError('more_digit_literal');
-        Observer.Finish();
+        Observer.Expect('setvalue_min|text', 'ok: -999999999999999.99 back -999999999999999.99');
+        Observer.Expect('setvalue_min|code', 'Dialog');
+        Observer.Expect('setvalue_max|text', 'ok: 999999999999999.99 back 999999999999999.99');
+        Observer.Expect('setvalue_max|code', 'Dialog');
+        Observer.Expect('add_min|text', 'ok: {"d":-999999999999999.99} get -999999999999999.99');
+        Observer.Expect('add_min|code', 'Dialog');
+        Observer.Expect('add_max|text', 'ok: {"d":999999999999999.99} get 999999999999999.99');
+        Observer.Expect('add_max|code', 'Dialog');
+        Observer.Expect('more_digit_literal|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: -9,999,999,999,999,999.99. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('more_digit_literal|code', 'OutsidePermittedRange');
+        Observer.Verify();
     end;
 
     [Test]
