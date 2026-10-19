@@ -16,14 +16,14 @@ codeunit 98940 "LT DA Http Handler Odd"
         StatusToSet: Integer;
         Seen: Text;
 
-    local procedure Describe(Ok: Boolean; var Resp: HttpResponseMessage): Text
+    local procedure Describe(OkText: Text; var Resp: HttpResponseMessage): Text
     var
         Body: Text;
         ReadOk: Boolean;
     begin
         Body := 'preset';
         ReadOk := TryRead(Resp, Body);
-        exit('ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' reason=[' + Resp.ReasonPhrase + '] success=' + Format(Resp.IsSuccessStatusCode) +
+        exit('ok=' + OkText + ' status=' + Format(Resp.HttpStatusCode) + ' reason=[' + Resp.ReasonPhrase + '] success=' + Format(Resp.IsSuccessStatusCode) +
           ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' read=' + Format(ReadOk) + ' body=[' + Body + '] keys=' + Format(Resp.Headers.Keys().Count()));
     end;
 
@@ -56,8 +56,8 @@ codeunit 98940 "LT DA Http Handler Odd"
     begin
         ClearLastError();
         if TryGet(Url, Resp, Ok) then
-            exit(Describe(Ok, Resp));
-        exit('E[' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(false, Resp));
+            exit(Describe(Format(Ok), Resp));
+        exit('E[' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe('-', Resp));
     end;
 
     local procedure GetStatementDescribed(Url: Text): Text
@@ -66,8 +66,8 @@ codeunit 98940 "LT DA Http Handler Odd"
     begin
         ClearLastError();
         if TryGetStatement(Url, Resp) then
-            exit('no error ' + Describe(true, Resp));
-        exit('E[' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(false, Resp));
+            exit('no error ' + Describe('-', Resp));
+        exit('E[' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe('-', Resp));
     end;
 
     [HttpClientHandler]
@@ -191,9 +191,9 @@ codeunit 98940 "LT DA Http Handler Odd"
         Client.SetBaseAddress('https://example.invalid/api/');
         Client.DefaultRequestHeaders.Add('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.e30.abc');
         Ok := Client.Get('https://example.invalid/api/items', Resp);
-        Observer.Observe('absolute', Describe(Ok, Resp));
+        Observer.Observe('absolute', Describe(Format(Ok), Resp));
         Ok := Client.Get('items?x=1', Resp);
-        Observer.Observe('relative', Describe(Ok, Resp));
+        Observer.Observe('relative', Describe(Format(Ok), Resp));
         Observer.Observe('seen', Seen);
         Observer.Finish();
     end;

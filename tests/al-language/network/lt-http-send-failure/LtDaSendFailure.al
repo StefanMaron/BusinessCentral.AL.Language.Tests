@@ -10,14 +10,14 @@ codeunit 85660 "LT DA Send Failure"
     Subtype = Test;
     TestPermissions = Disabled;
 
-    local procedure Describe(Ok: Boolean; var Resp: HttpResponseMessage): Text
+    local procedure Describe(OkText: Text; var Resp: HttpResponseMessage): Text
     var
         Body: Text;
         ReadOk: Boolean;
     begin
         Body := 'preset';
         ReadOk := TryRead(Resp, Body);
-        exit('ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' reason=[' + Resp.ReasonPhrase + '] success=' + Format(Resp.IsSuccessStatusCode) +
+        exit('ok=' + OkText + ' status=' + Format(Resp.HttpStatusCode) + ' reason=[' + Resp.ReasonPhrase + '] success=' + Format(Resp.IsSuccessStatusCode) +
           ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' read=' + Format(ReadOk) + ' body=[' + Body + '] keys=' + Format(Resp.Headers.Keys().Count()));
     end;
 
@@ -37,7 +37,7 @@ codeunit 85660 "LT DA Send Failure"
     begin
         ClearLastError();
         Ok := Client.Get('https://lt-da.invalid/get', Resp);
-        Observer.Observe('get', Describe(Ok, Resp));
+        Observer.Observe('get', Describe(Format(Ok), Resp));
         Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
         Observer.Finish();
     end;
@@ -56,7 +56,7 @@ codeunit 85660 "LT DA Send Failure"
         Req.Method := 'POST';
         Req.Content.WriteFrom('body');
         Ok := Client.Send(Req, Resp);
-        Observer.Observe('send', Describe(Ok, Resp));
+        Observer.Observe('send', Describe(Format(Ok), Resp));
         Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
         Observer.Finish();
     end;
@@ -70,7 +70,7 @@ codeunit 85660 "LT DA Send Failure"
     begin
         asserterror Client.Get('https://lt-da.invalid/statement', Resp);
         Observer.ObserveError('get');
-        Observer.Observe('after', Describe(false, Resp));
+        Observer.Observe('after', Describe('-', Resp));
         Observer.Finish();
     end;
 
@@ -85,7 +85,7 @@ codeunit 85660 "LT DA Send Failure"
         Req.SetRequestUri('https://lt-da.invalid/statement');
         asserterror Client.Send(Req, Resp);
         Observer.ObserveError('send');
-        Observer.Observe('after', Describe(false, Resp));
+        Observer.Observe('after', Describe('-', Resp));
         Observer.Finish();
     end;
 
@@ -112,7 +112,7 @@ codeunit 85660 "LT DA Send Failure"
             Req.Method := M;
             Req.SetRequestUri('https://lt-da.invalid/method');
             Ok := Client.Send(Req, Resp);
-            Observer.Observe(M, Describe(Ok, Resp) + ' method=' + Req.Method + ' err=' + GetLastErrorText());
+            Observer.Observe(M, Describe(Format(Ok), Resp) + ' method=' + Req.Method + ' err=' + GetLastErrorText());
         end;
         Observer.Finish();
     end;
