@@ -20,16 +20,30 @@ codeunit 80860 "LT BB Probes"
         R: Report "LT BB Base Report";
         T: Text;
         C: Code[10];
-        Ch: Char;
     begin
         T := 'abc';
         C := 'CODE';
-        Ch := 'q';
         Observer.Observe('int', R.Bump(7));
         Observer.Observe('text', R.Bump(T));
         Observer.Observe('code', R.Bump(C));
         Observer.Observe('char literal', R.Bump('x'));
-        Observer.Observe('char var', R.Bump(Ch));
+        Observer.Expect('int', 'base integer 7');
+        Observer.Expect('text', 'extension text abc');
+        Observer.Expect('code', 'extension text CODE');
+        Observer.Expect('char literal', 'extension text x');
+        Observer.Verify();
+    end;
+
+    // A Char variable binds to the base Bump(Integer) at compile time, but the call fails at run time.
+    [Test]
+    procedure ReportExt_OverloadCharVariable()
+    var
+        R: Report "LT BB Base Report";
+        Ch: Char;
+    begin
+        Ch := 'q';
+        asserterror R.Bump(Ch);
+        Observer.ObserveError('char var');
         Observer.Finish();
     end;
 
@@ -46,7 +60,10 @@ codeunit 80860 "LT BB Probes"
         Observer.Observe('integer', Format(I));
         Observer.Observe('biginteger', Format(BI));
         Observer.Observe('decimal', Format(D));
-        Observer.Finish();
+        Observer.Expect('integer', '120');
+        Observer.Expect('biginteger', '120');
+        Observer.Expect('decimal', '120');
+        Observer.Verify();
     end;
 
     local procedure Take(B: Enum "LT BB Enum B"): Text
@@ -74,7 +91,10 @@ codeunit 80860 "LT BB Probes"
             Observer.Observe('five', Shown)
         else
             Observer.ObserveError('five');
-        Observer.Finish();
+        // An ordinal that B lacks is passed on unchanged: AsInteger 5, Format shows the ordinal.
+        Observer.Expect('one', '1|One');
+        Observer.Expect('five', '5|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,6 +113,9 @@ codeunit 80860 "LT BB Probes"
         Observer.Observe('txt', TP.Txt.Value());
         Observer.Observe('id visible', Format(TP.Id.Visible()));
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('id', '3');
+        Observer.Expect('txt', 'three');
+        Observer.Expect('id visible', 'Yes');
+        Observer.Verify();
     end;
 }

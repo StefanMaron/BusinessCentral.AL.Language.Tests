@@ -3,7 +3,9 @@
 // Fixtures used: Probe Observer (69160), from the AL Language Coverage Tests app; self-contained codeunit 99220
 // Probe: corpus issue 653 items 14 and 15: GetDotNetType of an unassigned DotNet String, Char, Byte, Int32, StringBuilder and Type variable;
 //   of a Variant holding a Byte, Char, Time, Option, Enum and closing Date; of an AL Enum and a DateFormula; and of an unassigned DotNet Type,
-//   Object and Exception variable. Each test records Type.FullName and Format(Type), or the error text and code.
+//   Object and Exception variable. Each test asserts Type.FullName and Format(Type), or the error text and code. Notable: an unassigned DotNet
+//   String gives System.Object (Char, Byte, Int32, StringBuilder, Type, Exception give their own type); a Variant holding a Char gives
+//   System.Byte; Option, Enum and an AL Enum give System.Int32; a DateFormula is refused (NotSupportedType).
 //   Variant holding Integer ... Duration: DotNetTypeVariant.al; scalars: DotNetTypeScalars.al (lt-dotnet-interop).
 // BC versions: 27, 28, 29
 dotnet
@@ -34,13 +36,14 @@ codeunit 99220 "LT BB GetDotNetType"
         exit(T.FullName() + '|' + Format(T));
     end;
 
-    local procedure Run(Name: Text; Ok: Boolean; Shown: Text)
+    local procedure Run(Name: Text; Ok: Boolean; Shown: Text; Expected: Text)
     begin
         if Ok then
             Observer.Observe(Name, Shown)
         else
             Observer.ObserveError(Name);
-        Observer.Finish();
+        Observer.Expect(Name, Expected);
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -227,7 +230,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedString', TryUnassignedString(Shown), Shown);
+        Run('UnassignedString', TryUnassignedString(Shown), Shown, 'System.Object|System.Object');
     end;
 
     [Test]
@@ -236,7 +239,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedChar', TryUnassignedChar(Shown), Shown);
+        Run('UnassignedChar', TryUnassignedChar(Shown), Shown, 'System.Char|System.Char');
     end;
 
     [Test]
@@ -245,7 +248,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedByte', TryUnassignedByte(Shown), Shown);
+        Run('UnassignedByte', TryUnassignedByte(Shown), Shown, 'System.Byte|System.Byte');
     end;
 
     [Test]
@@ -254,7 +257,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedInt32', TryUnassignedInt32(Shown), Shown);
+        Run('UnassignedInt32', TryUnassignedInt32(Shown), Shown, 'System.Int32|System.Int32');
     end;
 
     [Test]
@@ -263,7 +266,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedStringBuilder', TryUnassignedStringBuilder(Shown), Shown);
+        Run('UnassignedStringBuilder', TryUnassignedStringBuilder(Shown), Shown, 'System.Text.StringBuilder|System.Text.StringBuilder');
     end;
 
     [Test]
@@ -272,7 +275,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedType', TryUnassignedType(Shown), Shown);
+        Run('UnassignedType', TryUnassignedType(Shown), Shown, 'System.Type|System.Type');
     end;
 
     [Test]
@@ -281,7 +284,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('VariantByte', TryVariantByte(Shown), Shown);
+        Run('VariantByte', TryVariantByte(Shown), Shown, 'System.Byte|System.Byte');
     end;
 
     [Test]
@@ -290,7 +293,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('VariantChar', TryVariantChar(Shown), Shown);
+        Run('VariantChar', TryVariantChar(Shown), Shown, 'System.Byte|System.Byte');
     end;
 
     [Test]
@@ -299,7 +302,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('VariantTime', TryVariantTime(Shown), Shown);
+        Run('VariantTime', TryVariantTime(Shown), Shown, 'System.DateTime|System.DateTime');
     end;
 
     [Test]
@@ -308,7 +311,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('VariantOption', TryVariantOption(Shown), Shown);
+        Run('VariantOption', TryVariantOption(Shown), Shown, 'System.Int32|System.Int32');
     end;
 
     [Test]
@@ -317,7 +320,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('VariantEnum', TryVariantEnum(Shown), Shown);
+        Run('VariantEnum', TryVariantEnum(Shown), Shown, 'System.Int32|System.Int32');
     end;
 
     [Test]
@@ -326,7 +329,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('VariantClosingDate', TryVariantClosingDate(Shown), Shown);
+        Run('VariantClosingDate', TryVariantClosingDate(Shown), Shown, 'System.DateTime|System.DateTime');
     end;
 
     [Test]
@@ -335,7 +338,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('AlEnum', TryAlEnum(Shown), Shown);
+        Run('AlEnum', TryAlEnum(Shown), Shown, 'System.Int32|System.Int32');
     end;
 
     [Test]
@@ -344,7 +347,12 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('DateFormula', TryDateFormula(Shown), Shown);
+        Observer.Observe('ok', Format(TryDateFormula(Shown)));
+        Observer.ObserveError('DateFormula');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('DateFormula|text', 'GetDotNetType() does not support the type Microsoft.Dynamics.Nav.Runtime.NavDateFormula.');
+        Observer.Expect('DateFormula|code', 'NotSupportedType');
+        Observer.Verify();
     end;
 
     [Test]
@@ -353,7 +361,7 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedPlainObject', TryUnassignedPlainObject(Shown), Shown);
+        Run('UnassignedPlainObject', TryUnassignedPlainObject(Shown), Shown, 'System.Object|System.Object');
     end;
 
     [Test]
@@ -362,6 +370,6 @@ codeunit 99220 "LT BB GetDotNetType"
         Shown: Text;
     begin
         ClearLastError();
-        Run('UnassignedPlainException', TryUnassignedPlainException(Shown), Shown);
+        Run('UnassignedPlainException', TryUnassignedPlainException(Shown), Shown, 'System.Exception|System.Exception');
     end;
 }
