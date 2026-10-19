@@ -617,6 +617,10 @@ codeunit 85180 "LT CS Collections"
         Observer.Observe('source after add through dictionary', T);
         D.Add('', J);
         Observer.Observe('empty key count', Format(D.Count()));
-        Observer.Finish();
+        Observer.Expect('stored uninitialized', '{}');
+        Observer.Expect('keys count', '0');
+        Observer.Expect('source after add through dictionary', '{"a":1}');
+        Observer.Expect('empty key count', '2');
+        Observer.Verify();
     end;
 }
