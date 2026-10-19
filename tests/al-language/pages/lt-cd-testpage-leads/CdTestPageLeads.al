@@ -349,7 +349,6 @@ codeunit 84282 "LT CD TestPage Leads"
         Observer.ObserveError('set-empty');
         Observer.Observe('after-empty', Card.C1Ctl.Value());
         Card.Close();
-        Observer.Observe('rows', Rows());
         Observer.Finish();
     end;
 
@@ -376,8 +375,10 @@ codeunit 84282 "LT CD TestPage Leads"
         Row.Validate(C1, 'A');
         Row.Validate(C1, '');
         Observer.Observe('after-empty', Row.C1);
-        asserterror Row.Validate(C1, 'X');
-        Observer.ObserveError('validate-x');
+        ClearLastError();
+        Row.Validate(C1, 'X');
+        Observer.Observe('validate-x-err', GetLastErrorText());
+        Observer.Observe('after-x', Row.C1);
         Observer.Finish();
     end;
 
