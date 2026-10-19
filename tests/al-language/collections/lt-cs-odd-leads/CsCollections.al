@@ -597,4 +597,26 @@ codeunit 85180 "LT CS Collections"
         Observer.Expect('number after source close', '74603');
         Observer.Verify();
     end;
+
+    [Test]
+    procedure Dictionary_JsonObjectValue_Uninitialized()
+    var
+        Observer: Codeunit "Probe Observer";
+        D: Dictionary of [Text, JsonObject];
+        J: JsonObject;
+        Got: JsonObject;
+        T: Text;
+    begin
+        D.Add('k', J);
+        Got := D.Get('k');
+        Got.WriteTo(T);
+        Observer.Observe('stored uninitialized', T);
+        Observer.Observe('keys count', Format(Got.Keys().Count()));
+        Got.Add('a', 1);
+        J.WriteTo(T);
+        Observer.Observe('source after add through dictionary', T);
+        D.Add('', J);
+        Observer.Observe('empty key count', Format(D.Count()));
+        Observer.Finish();
+    end;
 }
