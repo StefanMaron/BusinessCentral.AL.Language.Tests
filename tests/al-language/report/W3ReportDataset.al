@@ -454,6 +454,14 @@ codeunit 67755 "W3 Dataset Probe"
     end;
     // Writer PW: the raw text of the "W3 Hdr Plain" dataset split at line feeds (a CR shows as \r), the lines Header_RawText_LineEndsAndIndentation
     // counts CR bytes in. failure-triage "dataset raw line counts" (67755 Header_RawText_LineEndsAndIndentation).
+    // A line longer than 200 characters (the base64 company logo) is shown as its first 40 characters and its length.
+    local procedure PwShort(Line: Text): Text
+    begin
+        if StrLen(Line) <= 200 then
+            exit(Line);
+        exit(CopyStr(Line, 1, 40) + '...<length ' + Format(StrLen(Line)) + '>');
+    end;
+
     local procedure PwDumpPlain(First: Integer; Last: Integer; var Observer: Codeunit "Probe Observer")
     var
         Xml: Text;
@@ -467,7 +475,7 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Observe('length', Format(StrLen(Xml)));
         for i := First to Last do
             if i <= Lines.Count() then
-                Observer.Observe('l' + Format(i), Lines.Get(i));
+                Observer.Observe('l' + Format(i), PwShort(Lines.Get(i)));
     end;
 
     [Test]

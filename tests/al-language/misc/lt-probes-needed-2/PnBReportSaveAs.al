@@ -474,6 +474,14 @@ codeunit 70535 "LT PnB SaveAs Xml"
     // Writer PW: the whole Xml dataset of "LT PnB Rep", line by line (lines as ReadText gives them, systemId attributes taken out, the
     // header values that change from run to run scrubbed by the Probe Observer). docs/probes-needed.md "Report runs and SaveAs":
     // "The Xml dataset of LT PnB Rep on BC 29 has 113 lines, the runtime writes 107".
+    // A line longer than 200 characters (the base64 company logo) is shown as its first 40 characters and its length.
+    local procedure PwShort(Line: Text): Text
+    begin
+        if StrLen(Line) <= 200 then
+            exit(Line);
+        exit(CopyStr(Line, 1, 40) + '...<length ' + Format(StrLen(Line)) + '>');
+    end;
+
     local procedure PwDump(First: Integer; Last: Integer; var Obs: Codeunit "Probe Observer")
     var
         Rep: Report "LT PnB Rep";
@@ -484,7 +492,7 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Observe('lines', Format(Lines.Count()));
         for i := First to Last do
             if i <= Lines.Count() then
-                Obs.Observe('l' + Format(i), Lines.Get(i));
+                Obs.Observe('l' + Format(i), PwShort(Lines.Get(i)));
     end;
 
     [Test]
