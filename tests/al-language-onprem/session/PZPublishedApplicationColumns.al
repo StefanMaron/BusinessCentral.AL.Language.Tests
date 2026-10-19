@@ -59,4 +59,49 @@ codeunit 61262 "PZ Published App Columns"
         Observer.Expect('this app description text', '[Ground-up test suite covering the in-sco]');
         Observer.Verify();
     end;
+
+    // Probe (writer BX, 2026-10-19): the exact "Tenant ID" (field 12) of the corpus apps and of Microsoft's apps. Microsoft code only
+    // filters it with '' | TenantId(), which a blank also passes.
+    local procedure TenantIdOf(AppId: Guid): Text
+    var
+        App: Record "Published Application";
+    begin
+        App.SetRange(ID, AppId);
+        if not App.FindFirst() then
+            exit('no row');
+        exit('[' + App."Tenant ID" + '] rows=' + Format(App.Count()));
+    end;
+
+    [Test]
+    procedure TenantId_OfCorpusAndMicrosoftApps()
+    var
+        App: Record "Published Application";
+        Observer: Codeunit "Probe Observer";
+        ThisModule: ModuleInfo;
+        Id: Guid;
+    begin
+        NavApp.GetCurrentModuleInfo(ThisModule);
+        Observer.Observe('TenantId()', TenantId());
+        Observer.Observe('this onprem app', TenantIdOf(ThisModule.Id()));
+        Evaluate(Id, 'a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+        Observer.Observe('cloud coverage app', TenantIdOf(Id));
+        Evaluate(Id, '437dbf0e-84ff-417a-965d-ed2bb9650972');
+        Observer.Observe('base application', TenantIdOf(Id));
+        Evaluate(Id, '63ca2fa4-4f03-4f2b-a480-172fef340d3f');
+        Observer.Observe('system application', TenantIdOf(Id));
+        App.SetFilter("Tenant ID", '<>%1', '');
+        Observer.Observe('rows with a non-blank tenant id', Format(App.Count()));
+        App.SetRange("Tenant ID", TenantId());
+        Observer.Observe('rows with tenant id = TenantId()', Format(App.Count()));
+        App.SetFilter("Tenant ID", '%1|%2', '', TenantId());
+        Observer.Observe('rows passing blank or TenantId() equals all rows', Format(App.Count() = AllRows()));
+        Observer.Finish();
+    end;
+
+    local procedure AllRows(): Integer
+    var
+        App: Record "Published Application";
+    begin
+        exit(App.Count());
+    end;
 }

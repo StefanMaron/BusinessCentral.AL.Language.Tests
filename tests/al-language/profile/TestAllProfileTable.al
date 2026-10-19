@@ -245,4 +245,82 @@ codeunit 60907 "Test All Profile Table"
             ReadBack.Get(ReadBack.Scope::Tenant, EmptyGuid, ProfileIdTok),
             'The tenant-owned profile must be gone after Delete');
     end;
+
+    // ---------------------------------------------------------------------------------------
+    // Probe (writer BX, 2026-10-19): "Default Role Center" on a fresh corpus tenant, read
+    // directly and through the path Conf./Personalization Mgt. GetDefaultProfileID takes
+    // (user plans, then the row marked "Default Role Center", then DefaultRoleCenterID(), then
+    // the first row). The experience-tier tests 60700 and 60702 pass on BC through that path.
+    // ---------------------------------------------------------------------------------------
+
+    local procedure DescribeProfile(var AllProfile: Record "All Profile"): Text
+    begin
+        exit(Format(AllProfile.Scope) + '|' + AllProfile."App Name" + '|' + AllProfile."Profile ID" + '|' + Format(AllProfile."Role Center ID") + '|' + Format(AllProfile."Default Role Center") + '|' + AllProfile.Caption);
+    end;
+
+    [Test]
+    procedure AllProfile_DefaultRoleCenter_FreshTenant_RowsMarkedDefault()
+    var
+        AllProfile: Record "All Profile";
+        ThisModule: ModuleInfo;
+        Observer: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        NavApp.GetCurrentModuleInfo(ThisModule);
+
+        AllProfile.SetRange("Default Role Center", true);
+        Observer.Observe('default rows count', Format(AllProfile.Count()));
+        if AllProfile.FindSet() then
+            repeat
+                Rows += DescribeProfile(AllProfile) + ';';
+            until AllProfile.Next() = 0;
+        Observer.Observe('default rows', Rows);
+
+        AllProfile.Reset();
+        AllProfile.Get(AllProfile.Scope::Tenant, ThisModule.Id(), RowFixtureProfileIdTok);
+        Observer.Observe('fixture profile', DescribeProfile(AllProfile));
+
+        AllProfile.Reset();
+        AllProfile.SetRange("Role Center ID", 9022);
+        Observer.Observe('role center 9022 count', Format(AllProfile.Count()));
+        Rows := '';
+        if AllProfile.FindSet() then
+            repeat
+                Rows += DescribeProfile(AllProfile) + ';';
+            until AllProfile.Next() = 0;
+        Observer.Observe('role center 9022 rows', Rows);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure AllProfile_DefaultProfileForCurrentUser_IsTheRowGetDefaultProfileIDPicks()
+    var
+        AllProfile: Record "All Profile";
+        CurrentProfile: Record "All Profile";
+        UserPersonalization: Record "User Personalization";
+        ConfPersonalizationMgt: Codeunit "Conf./Personalization Mgt.";
+        RoleCenterFromPlans: Query "Role Center from Plans";
+        Observer: Codeunit "Probe Observer";
+        Plans: Integer;
+    begin
+        RoleCenterFromPlans.SetRange(User_Security_ID, UserSecurityId());
+        if RoleCenterFromPlans.Open() then
+            while RoleCenterFromPlans.Read() do
+                Plans += 1;
+        Observer.Observe('plan role centers of user', Format(Plans));
+        Observer.Observe('DefaultRoleCenterID', Format(ConfPersonalizationMgt.DefaultRoleCenterID()));
+        if UserPersonalization.Get(UserSecurityId()) then
+            Observer.Observe('user personalization', 'row|' + UserPersonalization."Profile ID" + '|' + Format(UserPersonalization.Scope))
+        else
+            Observer.Observe('user personalization', 'no row');
+
+        Observer.Observe('try result', Format(ConfPersonalizationMgt.TryGetDefaultProfileForCurrentUser(AllProfile)));
+        Observer.Observe('default profile', DescribeProfile(AllProfile));
+        Observer.Observe('default profile filter Default Role Center', AllProfile.GetFilter("Default Role Center"));
+        Observer.Observe('default profile filter Role Center ID', AllProfile.GetFilter("Role Center ID"));
+
+        Observer.Observe('current profile found', Format(ConfPersonalizationMgt.GetCurrentProfileNoError(CurrentProfile)));
+        Observer.Observe('current profile', DescribeProfile(CurrentProfile));
+        Observer.Finish();
+    end;
 }
