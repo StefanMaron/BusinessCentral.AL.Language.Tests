@@ -11,7 +11,7 @@ table 84837 "LT CM Install Seed"
     fields
     {
         field(1; Code; Code[30]) { }
-        field(2; Txt; Text[250]) { }
+        field(2; Txt; Text[2048]) { }
     }
 
     keys { key(PK; Code) { Clustered = true; } }
@@ -25,7 +25,7 @@ table 84841 "LT CM Install Seed Db"
     fields
     {
         field(1; Code; Code[30]) { }
-        field(2; Txt; Text[250]) { }
+        field(2; Txt; Text[2048]) { }
     }
 
     keys { key(PK; Code) { Clustered = true; } }
@@ -82,7 +82,7 @@ codeunit 84838 "LT CM Install"
     begin
         if Ok then
             exit('ok');
-        exit(CopyStr('error: ' + GetLastErrorText() + ' | code: ' + GetLastErrorCode(), 1, 250));
+        exit(CopyStr('error: ' + GetLastErrorText() + ' | code: ' + GetLastErrorCode(), 1, 2048));
     end;
 
     [TryFunction]

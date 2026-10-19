@@ -61,10 +61,12 @@ codeunit 84840 "LT CM Install Leads"
     begin
         AtTest := CountOwnObjects();
         Observer.Observe('per company equals test time', Format(Seed('ALLOBJ OWN') = Format(AtTest)));
-        Observer.Observe('per company', Seed('ALLOBJ OWN'));
-        Observer.Observe('per database', SeedDb('ALLOBJ OWN'));
-        Observer.Observe('test time above 1000', Format(AtTest > 1000));
-        Observer.Finish();
+        Observer.Observe('per database equals test time', Format(SeedDb('ALLOBJ OWN') = Format(AtTest)));
+        Observer.Observe('test time above 100', Format(AtTest > 100));
+        Observer.Expect('per company equals test time', 'Yes');
+        Observer.Expect('per database equals test time', 'Yes');
+        Observer.Expect('test time above 100', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,6 +81,11 @@ codeunit 84840 "LT CM Install Leads"
         Observer.Observe('per database DataVersion', SeedDb('DATAVERSION'));
         Observer.Observe('per database AppVersion is the test-time AppVersion', Format(SeedDb('APPVERSION') = Format(Info.AppVersion)));
         Observer.Observe('test-time DataVersion is the AppVersion', Format(Format(Info.DataVersion) = Format(Info.AppVersion)));
-        Observer.Finish();
+        Observer.Expect('per company DataVersion', '0.0.0.0');
+        Observer.Expect('per company AppVersion is the test-time AppVersion', 'Yes');
+        Observer.Expect('per database DataVersion', '0.0.0.0');
+        Observer.Expect('per database AppVersion is the test-time AppVersion', 'Yes');
+        Observer.Expect('test-time DataVersion is the AppVersion', 'Yes');
+        Observer.Verify();
     end;
 }

@@ -23,9 +23,16 @@ codeunit 84835 "LT CM Upgrade Tag"
         Observer.Observe('has for own company', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1', CopyStr(CompanyName(), 1, 30))));
         Observer.Observe('has for other company', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1', 'LT CM NO SUCH CO')));
         Observer.Observe('has for database', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1', '')));
-        asserterror UpgradeTag.SetUpgradeTag('LT-CM-TAG-1');
-        Observer.ObserveError('set twice');
-        Observer.Finish();
+        // A second SetUpgradeTag with the same tag raises no error (BC 29 local run: asserterror failed with "An error was expected").
+        UpgradeTag.SetUpgradeTag('LT-CM-TAG-1');
+        Observer.Observe('has after second set', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-1')));
+        Observer.Expect('has before set', 'No');
+        Observer.Expect('has after set', 'Yes');
+        Observer.Expect('has for own company', 'Yes');
+        Observer.Expect('has for other company', 'No');
+        Observer.Expect('has for database', 'No');
+        Observer.Expect('has after second set', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -43,7 +50,10 @@ codeunit 84835 "LT CM Upgrade Tag"
         UpgradeTag.SetAllUpgradeTags();
         Observer.Observe('bound: SetAllUpgradeTags again', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2')));
         UnbindSubscription(Subs);
-        Observer.Finish();
+        Observer.Expect('unbound: has after SetAllUpgradeTags', 'No');
+        Observer.Expect('bound: has after SetAllUpgradeTags', 'Yes');
+        Observer.Expect('bound: SetAllUpgradeTags again', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -61,7 +71,9 @@ codeunit 84835 "LT CM Upgrade Tag"
         UnbindSubscription(Subs);
         Observer.Observe('new company has the tag', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2', 'LT CM NEW CO')));
         Observer.Observe('own company has the tag', Format(UpgradeTag.HasUpgradeTag('LT-CM-TAG-2')));
-        Observer.Finish();
+        Observer.Expect('new company has the tag', 'Yes');
+        Observer.Expect('own company has the tag', 'No');
+        Observer.Verify();
     end;
 }
 

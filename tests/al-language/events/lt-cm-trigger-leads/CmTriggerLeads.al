@@ -66,7 +66,8 @@ codeunit 84830 "LT CM Trigger Leads"
         Row.Get(1);
         Row.CmAssignCurrFieldNoThenModify(10);
         Observer.Observe('modify after ext assigns 10', Log.Take());
-        Observer.Finish();
+        Observer.Expect('modify after ext assigns 10', 'T.OnModify rec=n x=n cur=10;T.OnModify after-assign xnote=;');
+        Observer.Verify();
     end;
 
     // Item 33: Rec.Validate on a field with a TableRelation and an OnValidate trigger, value not in the related table.
@@ -82,7 +83,11 @@ codeunit 84830 "LT CM Trigger Leads"
         Observer.ObserveError('validate NOPE');
         Observer.Observe('log', Log.Take());
         Observer.Observe('value after', Row.Rel);
-        Observer.Finish();
+        Observer.Expect('validate NOPE|text', 'The field Rel of table LT CM Row contains a value (NOPE) that cannot be found in the related table (LT CM Parent).');
+        Observer.Expect('validate NOPE|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('log', '');
+        Observer.Expect('value after', '');
+        Observer.Verify();
     end;
 
     // Item 33: the same through FieldRef.Validate(Value), and FieldRef.Validate() without a value on an assigned bad value.
@@ -115,7 +120,17 @@ codeunit 84830 "LT CM Trigger Leads"
         Fld.Validate('NOPE3');
         Observer.Observe('log 4 relation false', Log.Take());
         Observer.Observe('value 4', Format(Fld.Value));
-        Observer.Finish();
+        Observer.Expect('fieldref validate NOPE|text', 'The field Rel of table LT CM Row contains a value (NOPE) that cannot be found in the related table (LT CM Parent).');
+        Observer.Expect('fieldref validate NOPE|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('log 1', '');
+        Observer.Expect('fieldref validate() on NOPE2|text', 'The field Rel of table LT CM Row contains a value (NOPE2) that cannot be found in the related table (LT CM Parent).');
+        Observer.Expect('fieldref validate() on NOPE2|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('log 2', '');
+        Observer.Expect('log 3 good value', 'Rel.OnValidate rec=P1;');
+        Observer.Expect('value 3', 'P1');
+        Observer.Expect('log 4 relation false', 'RelFalse.OnValidate rec=NOPE3;');
+        Observer.Expect('value 4', 'NOPE3');
+        Observer.Verify();
     end;
 
     // Item 34: ValidateTableRelation = true and = false on a table field, and the three forms on a tableextension field.
@@ -138,7 +153,15 @@ codeunit 84830 "LT CM Trigger Leads"
         Observer.ObserveError('ext true');
         InsRow.Validate("Ext Rel False", 'NOPE');
         Observer.Observe('ext false value', InsRow."Ext Rel False");
-        Observer.Finish();
+        Observer.Expect('table true|text', 'The field Rel True of table LT CM Row contains a value (NOPE) that cannot be found in the related table (LT CM Parent).');
+        Observer.Expect('table true|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('table false value', 'NOPE');
+        Observer.Expect('ext default|text', 'The field Ext Rel of table LT CM Ins Row contains a value (NOPE) that cannot be found in the related table (LT CM Parent).');
+        Observer.Expect('ext default|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ext true|text', 'The field Ext Rel True of table LT CM Ins Row contains a value (NOPE) that cannot be found in the related table (LT CM Parent).');
+        Observer.Expect('ext true|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ext false value', 'NOPE');
+        Observer.Verify();
     end;
 
     // Item 35: fields set by a table extension's OnBeforeInsert, OnInsert and OnAfterInsert; in memory and in the database.
@@ -180,7 +203,13 @@ codeunit 84830 "LT CM Trigger Leads"
         InsRow.Modify();
         Stored.Get(4);
         Observer.Observe('true then modify stored', Stored."Set By Before" + '|' + Stored."Set By Insert" + '|' + Stored."Set By After");
-        Observer.Finish();
+        Observer.Expect('true memory', 'before|insert|after');
+        Observer.Expect('true stored', 'before|insert|');
+        Observer.Expect('false memory', '||');
+        Observer.Expect('false stored', '||');
+        Observer.Expect('no argument stored', '||');
+        Observer.Expect('true then modify stored', 'before|insert|after');
+        Observer.Verify();
     end;
 
     // Item 36: inside OnInsert, a row of another table inserted with the SystemId of the row being inserted, found by GetBySystemId.
@@ -203,7 +232,13 @@ codeunit 84830 "LT CM Trigger Leads"
             Backup.Get(Mode);
             Observer.Observe('mode ' + Format(Mode) + ' stored same sysid', Format(Backup.SystemId = Src.SystemId));
         end;
-        Observer.Finish();
+        Observer.Expect('mode 1', 'src.sysid_null=No;backup.same_sysid=Yes;getbysystemid=Yes;found.name=n1;');
+        Observer.Expect('mode 1 stored same sysid', 'Yes');
+        Observer.Expect('mode 2', 'src.sysid_null=No;backup.same_sysid=No;getbysystemid=No;');
+        Observer.Expect('mode 2 stored same sysid', 'No');
+        Observer.Expect('mode 3', 'src.sysid_null=No;backup.same_sysid=No;getbysystemid=No;');
+        Observer.Expect('mode 3 stored same sysid', 'No');
+        Observer.Verify();
     end;
 
     // Item 37: triggers of a temporary record write to a real table and delete a real related row.
@@ -247,7 +282,14 @@ codeunit 84830 "LT CM Trigger Leads"
         TempRow.DeleteAll();
         Observer.Observe('real rows after temp DeleteAll()', Format(RealRow.Count()));
         Observer.Observe('temp rows after DeleteAll()', Format(TempRow.Count()));
-        Observer.Finish();
+        Observer.Expect('real log after insert, modify, delete (true)', 'OnInsert 1 temp=Yes;OnModify 1;OnDelete 1;');
+        Observer.Expect('real parents after delete(true)', '2,3,');
+        Observer.Expect('real parents after delete(false)', '2,3,');
+        Observer.Expect('real log after DeleteAll(true)', 'OnInsert 1 temp=Yes;OnModify 1;OnDelete 1;OnDelete 3;');
+        Observer.Expect('real parents after DeleteAll(true)', '2,');
+        Observer.Expect('real rows after temp DeleteAll()', '1');
+        Observer.Expect('temp rows after DeleteAll()', '0');
+        Observer.Verify();
     end;
 
     local procedure ParentCodes() Result: Text
@@ -278,7 +320,12 @@ codeunit 84830 "LT CM Trigger Leads"
         Observer.Observe('after modify', Row.Note);
         Row.Get(1);
         Observer.Observe('stored after modify', Row.Name + '|' + Row.Note);
-        Observer.Finish();
+        Observer.Expect('validate log', 'Name.OnValidate rec=new x=old xnote=oldnote;Name.after-assign xnote=oldnote;Note.OnValidate rec=nested x=oldnote xname=old;Name.after-nested x=old xnote=oldnote note=nested;');
+        Observer.Expect('after validate', 'new|nested');
+        Observer.Expect('modify log', 'T.OnModify rec=new x=new cur=0;T.OnModify after-assign xnote=nested;');
+        Observer.Expect('after modify', 'set-in-modify');
+        Observer.Expect('stored after modify', 'new|set-in-modify');
+        Observer.Verify();
     end;
 
     // Item 39: Rec and xRec in OnBeforeModify / OnAfterModify subscribers and the OnModify trigger.
@@ -310,7 +357,10 @@ codeunit 84830 "LT CM Trigger Leads"
         Row.Modify(true);
         Observer.Observe('c validate then modify', Log.Take());
         UnbindSubscription(Subs);
-        Observer.Finish();
+        Observer.Expect('a get assign modify', 'S.BeforeModify rec=a x=a;T.OnModify rec=a x=a cur=0;T.OnModify after-assign xnote=;S.AfterModify rec=a x=a;');
+        Observer.Expect('b never read', 'S.BeforeModify rec=b x=b;T.OnModify rec=b x=b cur=0;T.OnModify after-assign xnote=;S.AfterModify rec=b x=b;');
+        Observer.Expect('c validate then modify', 'S.BeforeModify rec=c x=c;T.OnModify rec=c x=c cur=0;T.OnModify after-assign xnote=set-in-modify;S.AfterModify rec=c x=c;');
+        Observer.Verify();
     end;
 
     // Item 39: the same events for an edit through a card TestPage.
@@ -332,7 +382,8 @@ codeunit 84830 "LT CM Trigger Leads"
         Card.Close();
         UnbindSubscription(Subs);
         Observer.Observe('page edit', Log.Take());
-        Observer.Finish();
+        Observer.Expect('page edit', 'Name.OnValidate rec=pg x=stored xnote=;Name.after-assign xnote=;Note.OnValidate rec=nested x= xname=stored;Name.after-nested x=stored xnote= note=nested;S.BeforeModify rec=pg x=stored;T.OnModify rec=pg x=stored cur=0;T.OnModify after-assign xnote=;S.AfterModify rec=pg x=stored;');
+        Observer.Verify();
     end;
 
     // Item 40: a new row through a list TestPage, without a filter, with a filter the new key is outside, and inside.
@@ -355,7 +406,22 @@ codeunit 84830 "LT CM Trigger Leads"
         Observer.ObserveError('filter 1..5, key 3');
         Observer.Observe('filter 1..5, key 3 log', Log.Take());
         Observer.Observe('filter 1..5, key 3 stored', Format(Row.Get(3)));
-        Observer.Finish();
+        Observer.Expect('no filter', 'Yes');
+        Observer.Expect('no filter|text', '');
+        Observer.Expect('no filter|code', '');
+        Observer.Expect('no filter log', 'P.OnInsertRecord id=9 filters=;P.OnModifyRecord id=9;T.OnModify rec= x= cur=0;T.OnModify after-assign xnote=;');
+        Observer.Expect('no filter stored', 'Yes');
+        Observer.Expect('filter 1..5, key 7', 'No');
+        Observer.Expect('filter 1..5, key 7|text', 'Validation error for Field: ,  Message = ''The view is filtered, and the entry is outside the filter. Some actions may not work.''');
+        Observer.Expect('filter 1..5, key 7|code', 'TestValidation');
+        Observer.Expect('filter 1..5, key 7 log', 'P.OnInsertRecord id=7 filters=Id: 1..5;P.OnModifyRecord id=7;T.OnModify rec= x= cur=0;T.OnModify after-assign xnote=;');
+        Observer.Expect('filter 1..5, key 7 stored', 'Yes');
+        Observer.Expect('filter 1..5, key 3', 'Yes');
+        Observer.Expect('filter 1..5, key 3|text', '');
+        Observer.Expect('filter 1..5, key 3|code', '');
+        Observer.Expect('filter 1..5, key 3 log', 'P.OnInsertRecord id=3 filters=Id: 1..5;P.OnModifyRecord id=3;T.OnModify rec= x= cur=0;T.OnModify after-assign xnote=;');
+        Observer.Expect('filter 1..5, key 3 stored', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
