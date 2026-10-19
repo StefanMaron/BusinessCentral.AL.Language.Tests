@@ -591,15 +591,25 @@ codeunit 85180 "LT CS Collections"
         RR.Field(2).Value := 'changed';
         Observer.Observe('name after source change', Format(ListOfRecRefs.Get(1).Field(2).Value()));
         RR.Close();
+#if BC28PLUS
         Observer.Observe('isempty after source close', Format(ListOfRecRefs.Get(1).IsEmpty()));
         Observer.Observe('number after source close', Format(ListOfRecRefs.Get(1).Number()));
+#else
+        // BC 27.5: the list item is closed with the source (CI run 39316326127).
+        asserterror if ListOfRecRefs.Get(1).IsEmpty() then;
+        Observer.Observe('isempty after source close error', GetLastErrorText());
+#endif
         Observer.Expect('empty count', '0');
         Observer.Expect('count', '1');
         Observer.Expect('number', '74603');
         Observer.Expect('name', 'first');
         Observer.Expect('name after source change', 'changed');
+#if BC28PLUS
         Observer.Expect('isempty after source close', 'No');
         Observer.Expect('number after source close', '74603');
+#else
+        Observer.Expect('isempty after source close error', 'The record is not open.');
+#endif
         Observer.Verify();
     end;
 
