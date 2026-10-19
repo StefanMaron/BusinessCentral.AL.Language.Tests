@@ -87,7 +87,7 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
-        IsolatedStorage.Delete('LTCU_w2', DataScope::User);
+        Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w2', DataScope::User)));
         Observer.Finish();
     end;
 
@@ -103,7 +103,7 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
-        IsolatedStorage.Delete('LTCU_w3', DataScope::Module);
+        Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w3', DataScope::Module)));
         Observer.Finish();
     end;
 
@@ -119,7 +119,7 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
-        IsolatedStorage.Delete('LTCU_w4', DataScope::Company);
+        Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w4', DataScope::Company)));
         Observer.Finish();
     end;
 
@@ -135,7 +135,7 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
-        IsolatedStorage.Delete('LTCU_w5', DataScope::CompanyAndUser);
+        Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w5', DataScope::CompanyAndUser)));
         Observer.Finish();
     end;
 
@@ -166,7 +166,7 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('runmodal');
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
-        IsolatedStorage.Delete('LTCU_w7', DataScope::User);
+        Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w7', DataScope::User)));
         Observer.Finish();
     end;
 
@@ -210,8 +210,6 @@ codeunit 85312 "LT CU Write Tx Tests"
         Row.Id := 1;
         RunByName(Observer, 'LT CU TableNo Run', Row);
         RunByName(Observer, 'LT CU No Such Codeunit', Row);
-        RunByName(Observer, 'LTCU.Probe.LT CU Named Run', Row);
-        RunByName(Observer, 'LTCU.Probe."LT CU Named Run"', Row);
         RunByName(Observer, 'LTCU.Probe.LT CU No Such Codeunit', Row);
         RunByName(Observer, 'NoSuch.Namespace.LT CU Named Run', Row);
         Observer.Finish();

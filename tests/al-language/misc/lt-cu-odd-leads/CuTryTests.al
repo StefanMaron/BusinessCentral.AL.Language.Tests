@@ -192,7 +192,7 @@ codeunit 85310 "LT CU Try Tests"
         asserterror IsolatedStorage.Get('LTCU_s3', DataScope::Module, Value);
         Observer.ObserveError('get');
         Observer.Observe('value', Value);
-        IsolatedStorage.Delete('LTCU_s3', DataScope::Module);
+        Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_s3', DataScope::Module)));
         Observer.Finish();
     end;
 }
