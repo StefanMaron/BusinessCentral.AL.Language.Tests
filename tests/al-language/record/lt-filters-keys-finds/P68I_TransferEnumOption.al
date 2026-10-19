@@ -219,4 +219,115 @@ codeunit 70728 "LT P68 Transfer Enum Opt"
         Observer.Expect('back-opt-text', 'O4');
         Observer.Verify();
     end;
+
+    // ---- Added by writer bs (corpus issue #668, item 76): table 83157 "LT BS Opt Row" (Option with 6 members M0..M5) in
+    //      tableextension/lt-bs-tableext-leads/BsObjects.al. `Rec.Opt := 16` compiles (runtimes 16.1, 17.1, 18.0). ----
+
+    [TryFunction]
+    local procedure BsTrySetFilter(var Row: Record "LT BS Opt Row"; Filter: Text)
+    begin
+        Row.SetFilter(Opt, Filter);
+    end;
+
+    [TryFunction]
+    local procedure BsTryValidate(var Row: Record "LT BS Opt Row"; Value: Integer)
+    begin
+        Row.Validate(Opt, Value);
+    end;
+
+    [TryFunction]
+    local procedure BsTryEvaluate(var Row: Record "LT BS Opt Row"; Value: Text)
+    begin
+        Evaluate(Row.Opt, Value);
+    end;
+
+    local procedure BsInsert(Id: Integer; Value: Integer)
+    var
+        Row: Record "LT BS Opt Row";
+    begin
+        Row.Init();
+        Row.Id := Id;
+        Row.Opt := Value;
+        Row.Insert();
+    end;
+
+    [Test]
+    procedure OptionField_OrdinalNotAMember_AssignStoreAndFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BS Opt Row";
+    begin
+        Row.DeleteAll();
+        BsInsert(1, 2);
+        BsInsert(2, 5);
+        BsInsert(3, 16);
+        Row.Get(3);
+        Observer.Observe('stored_16_format', Format(Row.Opt));
+        Observer.Observe('stored_16_ordinal', Format(Row.Opt, 0, 2));
+        Row.Reset();
+        Row.SetRange(Opt, 16);
+        Observer.Observe('setrange_16_count', Format(Row.Count()));
+        Observer.Observe('setrange_16_getfilter', Row.GetFilter(Opt));
+        Row.SetRange(Opt, 6);
+        Observer.Observe('setrange_6_count', Format(Row.Count()));
+        Row.SetRange(Opt, 2, 16);
+        Observer.Observe('setrange_2_16_count', Format(Row.Count()));
+        Observer.Observe('setrange_2_16_getfilter', Row.GetFilter(Opt));
+        Row.Reset();
+        Observer.Observe('setfilter_16', Outcome(BsTrySetFilter(Row, '16')));
+        Observer.Observe('setfilter_16_count', Format(Row.Count()));
+        Observer.Observe('setfilter_16_getfilter', Row.GetFilter(Opt));
+        Row.Reset();
+        Observer.Observe('setfilter_m5_or_16', Outcome(BsTrySetFilter(Row, 'M5|16')));
+        Observer.Observe('setfilter_m5_or_16_count', Format(Row.Count()));
+        Row.Reset();
+        Observer.Observe('setfilter_name_unknown', Outcome(BsTrySetFilter(Row, 'M9')));
+        Row.DeleteAll();
+        Observer.Expect('stored_16_format', '16');
+        Observer.Expect('stored_16_ordinal', '16');
+        Observer.Expect('setrange_16_count', '1');
+        Observer.Expect('setrange_16_getfilter', '16');
+        Observer.Expect('setrange_6_count', '0');
+        Observer.Expect('setrange_2_16_count', '3');
+        Observer.Expect('setrange_2_16_getfilter', 'M2..16');
+        Observer.Expect('setfilter_16', 'ok');
+        Observer.Expect('setfilter_16_count', '1');
+        Observer.Expect('setfilter_16_getfilter', '16');
+        Observer.Expect('setfilter_m5_or_16', 'ok');
+        Observer.Expect('setfilter_m5_or_16_count', '2');
+        Observer.Expect('setfilter_name_unknown', 'error:The filter "M9" is not valid for the Opt field on the LT BS Opt Row table. ''M9'' is not an option. The existing options are: M0,M1,M2,M3,M4,M5|Filter:CSide');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure OptionField_OrdinalNotAMember_ValidateAndEvaluate()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BS Opt Row";
+    begin
+        Row.Init();
+        Observer.Observe('validate_16', Outcome(BsTryValidate(Row, 16)));
+        Observer.Observe('validate_16_value', Format(Row.Opt, 0, 2));
+        Row.Init();
+        Observer.Observe('validate_minus_1', Outcome(BsTryValidate(Row, -1)));
+        Observer.Observe('validate_minus_1_value', Format(Row.Opt, 0, 2));
+        Row.Init();
+        Observer.Observe('evaluate_16', Outcome(BsTryEvaluate(Row, '16')));
+        Observer.Observe('evaluate_16_value', Format(Row.Opt, 0, 2));
+        Row.Init();
+        Observer.Observe('evaluate_6', Outcome(BsTryEvaluate(Row, '6')));
+        Observer.Observe('evaluate_6_value', Format(Row.Opt, 0, 2));
+        Row.Init();
+        Observer.Observe('evaluate_name_unknown', Outcome(BsTryEvaluate(Row, 'M9')));
+        Observer.Expect('validate_16', 'ok');
+        Observer.Expect('validate_16_value', '16');
+        Observer.Expect('validate_minus_1', 'ok');
+        Observer.Expect('validate_minus_1_value', '-1');
+        Observer.Expect('evaluate_16', 'ok');
+        Observer.Expect('evaluate_16_value', '16');
+        Observer.Expect('evaluate_6', 'ok');
+        Observer.Expect('evaluate_6_value', '6');
+        Observer.Expect('evaluate_name_unknown', 'error:''M9'' is not an option. The existing options are: M0,M1,M2,M3,M4,M5|InvalidOptionString');
+        Observer.Verify();
+    end;
 }

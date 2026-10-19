@@ -216,4 +216,46 @@ codeunit 67322 "W6 AllObj Probe"
 #endif
         Observer.Verify();
     end;
+
+    // ---- Added by writer bs (corpus issue #668, item 101) ----
+
+    [Test]
+    procedure ObjectType_ExtensionMembers_OrdinalAndCaption()
+    // CLAIM (issue #668 item 101): the "Object Type" option of AllObj and AllObjWithCaption: the ordinal and the caption of the
+    // TableExtension and PageExtension members (docs 2018: page extension 14, table extension 15), and the Object Type of the AllObj rows
+    // of this file's table extension 67318 and page extension 67320 read back as ordinal and text.
+    var
+        AllObjRec: Record AllObj;
+        WithCaption: Record AllObjWithCaption;
+        Observer: Codeunit "Probe Observer";
+    begin
+        AllObjRec."Object Type" := AllObjRec."Object Type"::TableExtension;
+        Observer.Observe('allobj_tableextension', Format(AllObjRec."Object Type", 0, 2) + '|' + Format(AllObjRec."Object Type"));
+        AllObjRec."Object Type" := AllObjRec."Object Type"::PageExtension;
+        Observer.Observe('allobj_pageextension', Format(AllObjRec."Object Type", 0, 2) + '|' + Format(AllObjRec."Object Type"));
+        WithCaption."Object Type" := WithCaption."Object Type"::TableExtension;
+        Observer.Observe('withcaption_tableextension', Format(WithCaption."Object Type", 0, 2) + '|' + Format(WithCaption."Object Type"));
+        WithCaption."Object Type" := WithCaption."Object Type"::PageExtension;
+        Observer.Observe('withcaption_pageextension', Format(WithCaption."Object Type", 0, 2) + '|' + Format(WithCaption."Object Type"));
+        AllObjRec.Reset();
+        AllObjRec.SetRange("Object ID", 67318);
+        AllObjRec.SetRange("Object Name", 'W6 AO Table Ext');
+        if AllObjRec.FindFirst() then
+            Observer.Observe('row_67318', Format(AllObjRec."Object Type", 0, 2) + '|' + Format(AllObjRec."Object Type"))
+        else
+            Observer.Observe('row_67318', 'none');
+        AllObjRec.SetRange("Object ID", 67320);
+        AllObjRec.SetRange("Object Name", 'W6 AO Page Ext');
+        if AllObjRec.FindFirst() then
+            Observer.Observe('row_67320', Format(AllObjRec."Object Type", 0, 2) + '|' + Format(AllObjRec."Object Type"))
+        else
+            Observer.Observe('row_67320', 'none');
+        Observer.Expect('allobj_tableextension', '15|TableExtension');
+        Observer.Expect('allobj_pageextension', '14|PageExtension');
+        Observer.Expect('withcaption_tableextension', '15|TableExtension');
+        Observer.Expect('withcaption_pageextension', '14|PageExtension');
+        Observer.Expect('row_67318', '15|TableExtension');
+        Observer.Expect('row_67320', '14|PageExtension');
+        Observer.Verify();
+    end;
 }
