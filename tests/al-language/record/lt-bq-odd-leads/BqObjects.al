@@ -1,7 +1,7 @@
 // Scope: in-scope
 // Fixtures for corpus issue 668 ("Odd AL behavior leads", part C), writer BQ. The tests that use them were added to the existing test
 // codeunits of their areas (record/lt-record-read, record/lt-record-write, record/lt-set-current-key, filters, ...); this file holds only
-// the tables, enums and helper codeunits they need. Object ids 82750-82799.
+// the tables, enums and helper codeunits they need. Object ids 82750-82773.
 
 table 82750 "LT BQ Flt Row"
 {
@@ -30,7 +30,7 @@ codeunit 82751 "LT BQ Token Sub"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Tokens", 'OnResolveTextFilterToken', '', true, true)]
     local procedure ResolveToken(TextToken: Text; var TextFilter: Text; var Handled: Boolean)
     var
-        Log: Codeunit "LT BQ Log";
+        Log: Codeunit "LT BQ Token Log";
     begin
         Log.Add('token:' + TextToken);
         case UpperCase(TextToken) of
@@ -48,6 +48,7 @@ codeunit 82751 "LT BQ Token Sub"
     end;
 }
 
+// Log of the ChangeCompany tests (codeunit 68391 "Probe Chg Company Arm" only: a SingleInstance fixture has one test codeunit owner).
 codeunit 82752 "LT BQ Log"
 {
     SingleInstance = true;
@@ -398,7 +399,7 @@ codeunit 82767 "LT BQ TRV Sub"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"LT BQ TRV Pub", 'OnByValue', '', false, false)]
     local procedure ByValue(R: Record "LT TRV Row")
     var
-        Log: Codeunit "LT BQ Log";
+        Log: Codeunit "LT BQ TRV Log";
     begin
         Log.Add('temp=' + Format(R.IsTemporary()) + ' count=' + Format(R.Count()));
     end;
@@ -541,6 +542,56 @@ codeunit 82771 "LT BQ Seed"
             repeat
                 Result += Format(R.Id) + ' ';
             until R.Next() = 0;
+        exit(Result);
+    end;
+}
+
+// Log of the custom filter token tests (codeunit 71504 "LT RcA SetFilter" only), written by "LT BQ Token Sub".
+codeunit 82772 "LT BQ Token Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        if Entries <> '' then
+            Entries += ',';
+        Entries += Entry;
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
+}
+
+// Log of the record-by-value event tests (codeunit 74886 "LT TRV Tests" only), written by "LT BQ TRV Sub".
+codeunit 82773 "LT BQ TRV Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        if Entries <> '' then
+            Entries += ',';
+        Entries += Entry;
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
         exit(Result);
     end;
 }

@@ -826,7 +826,7 @@ codeunit 71504 "LT RcA SetFilter"
     local procedure BqTokenOutcome(FieldNo: Integer; FilterText: Text): Text
     var
         R: Record "LT BQ Flt Row";
-        Log: Codeunit "LT BQ Log";
+        Log: Codeunit "LT BQ Token Log";
         BqSeed: Codeunit "LT BQ Seed";
         Result: Text;
     begin

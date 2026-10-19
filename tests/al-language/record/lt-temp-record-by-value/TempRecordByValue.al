@@ -225,7 +225,7 @@ codeunit 74886 "LT TRV Tests"
         Temp: Record "LT TRV Row" temporary;
         Pub: Codeunit "LT BQ TRV Pub";
         Sub: Codeunit "LT BQ TRV Sub";
-        Log: Codeunit "LT BQ Log";
+        Log: Codeunit "LT BQ TRV Log";
         Observer: Codeunit "Probe Observer";
     begin
         Seed(Temp);
