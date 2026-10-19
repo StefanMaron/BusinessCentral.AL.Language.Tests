@@ -770,6 +770,15 @@ codeunit 71507 "LT RcA Position View"
         exit(Result);
     end;
 
+    // With a key that holds SystemId, which row Find('=') finds after SetPosition (and so the id and name) differed between runs: only
+    // the outcome, the filters and the key are kept.
+    local procedure BqNoFindPart(Result: Text): Text
+    begin
+        if (CopyStr(Result, 1, 3) <> 'ok ') or (StrPos(Result, ' find=') = 0) then
+            exit(Result);
+        exit('ok' + CopyStr(Result, StrPos(Result, ' filters='), StrPos(Result, ' find=') - StrPos(Result, ' filters=')));
+    end;
+
     [Test]
     procedure SetPosition_After_Loop_And_SetView_BQ()
     var
@@ -782,16 +791,16 @@ codeunit 71507 "LT RcA Position View"
         P.SetCurrentKey(Grp, SystemId);
         P.Get(3);
         Observer.Observe('position', P.GetPosition());
-        Observer.Observe('systemIdKey', BqLoopAndRestore(P));
+        Observer.Observe('systemIdKey', BqNoFindPart(BqLoopAndRestore(P)));
         P.Reset();
         P.SetCurrentKey(Grp, SystemId);
         P.SetRange(Grp, 1);
         P.FindFirst();
-        Observer.Observe('systemIdKeyFiltered', BqLoopAndRestore(P));
+        Observer.Observe('systemIdKeyFiltered', BqNoFindPart(BqLoopAndRestore(P)));
         Observer.Expect('primaryKey', 'ok id=2 filters= key=Id find=Yes name=p2');
         Observer.Expect('position', 'Id=CONST(3)');
-        Observer.Expect('systemIdKey', 'ok id=3 filters= key=Grp,System ID find=Yes name=p3');
-        Observer.Expect('systemIdKeyFiltered', 'ok id=1 filters=Grp: 1 key=Grp,System ID find=No name=p3');
+        Observer.Expect('systemIdKey', 'ok filters= key=Grp,System ID');
+        Observer.Expect('systemIdKeyFiltered', 'ok filters=Grp: 1 key=Grp,System ID');
         Observer.Verify();
     end;
 }

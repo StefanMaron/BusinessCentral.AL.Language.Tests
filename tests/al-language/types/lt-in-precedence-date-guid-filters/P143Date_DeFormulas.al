@@ -183,7 +183,12 @@ codeunit 74657 "LT P143 DeFormulas"
         Observer: Codeunit "Probe Observer";
     begin
         BqGerman(Observer, 1, 3);
-        Observer.Finish();
+        Observer.Expect('de_dotdot_t_minus_1d_err|text', 'Der Filter ''..t-1d'' ist für das Feld ''D'' der Tabelle ''LT P143 Row'' nicht gültig. Das Format Date „t-1d“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.');
+        Observer.Expect('de_dotdot_t_minus_1d_err|code', 'Filter:CSide');
+        Observer.Expect('de_dotdot_t_minus_1t', 'ok ..today-1');
+        Observer.Expect('de_t_plus_1d_err|text', 'Der Filter ''t+1d'' ist für das Feld ''D'' der Tabelle ''LT P143 Row'' nicht gültig. Das Format Date „t+1d“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.');
+        Observer.Expect('de_t_plus_1d_err|code', 'Filter:CSide');
+        Observer.Verify();
     end;
 
     [Test]
@@ -192,7 +197,10 @@ codeunit 74657 "LT P143 DeFormulas"
         Observer: Codeunit "Probe Observer";
     begin
         BqGerman(Observer, 4, 6);
-        Observer.Finish();
+        Observer.Expect('de_h', 'ok today0');
+        Observer.Expect('de_a', 'ok workdate0');
+        Observer.Expect('de_j', 'ok today0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -201,7 +209,14 @@ codeunit 74657 "LT P143 DeFormulas"
         Observer: Codeunit "Probe Observer";
     begin
         BqFrenchCanada(Observer, 1, 3);
-        Observer.Finish();
+        Observer.Expect('frca_language', 'ok');
+        Observer.Expect('frca_dotdot_t_minus_1d_err|text', 'The filter "..t-1d" is not valid for the D field on the LT P143 Row table. The format of the Date ''t-1d'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('frca_dotdot_t_minus_1d_err|code', 'Filter:CSide');
+        Observer.Expect('frca_dotdot_t_minus_1t', 'ok ..today-1Q');
+        Observer.Expect('frca_t_plus_1d_err|text', 'The filter "t+1d" is not valid for the D field on the LT P143 Row table. The format of the Date ''t+1d'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('frca_t_plus_1d_err|code', 'Filter:CSide');
+        Observer.Expect('language_restored', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,6 +225,11 @@ codeunit 74657 "LT P143 DeFormulas"
         Observer: Codeunit "Probe Observer";
     begin
         BqFrenchCanada(Observer, 4, 6);
-        Observer.Finish();
+        Observer.Expect('frca_language', 'ok');
+        Observer.Expect('frca_h', 'ok today-1');
+        Observer.Expect('frca_a', 'ok today0');
+        Observer.Expect('frca_j', 'ok workdate1');
+        Observer.Expect('language_restored', 'Yes');
+        Observer.Verify();
     end;
 }
