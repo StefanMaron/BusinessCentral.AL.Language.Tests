@@ -450,8 +450,6 @@ is only a reference.
 | 1733 | AL0369 | The same for loop with the BigInteger literal 100000000000000L as end bound. |
 | 1734 | AL0427 | An Enum lookup FlowField over a BigInteger field. |
 | 1735 | AL0103 | `InitValue = 3000000000` on an Integer field. |
-| 1832 | AL0133 | A BigText passed to "Base64 Convert".FromBase64: no overload takes a BigText. |
-| 1833 | AL0122 | A BigText assigned to a Text variable: no implicit conversion. |
 | 1430 | AL0528 | API page field control names with a space or a quoted special character (digit inside, leading digit, underscore compile). (two diagnostics) |
 | 1431 | AL0666 | Importance = Optional on a page field: not available in the app runtime. |
 | 1432 | AL0298 | StyleExpr set to a PageStyle variable. |
