@@ -97,7 +97,9 @@ codeunit 81871 "LT BL Wildcard GetFilter"
         Row.SetFilter("No.", '<>*');
         Observer.Observe('getfilter', Row.GetFilter("No."));
         Observer.Observe('equal', Format(Row.GetFilter("No.") = '<>*'));
-        Observer.Finish();
+        Observer.Expect('getfilter', '<>*');
+        Observer.Expect('equal', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +122,20 @@ codeunit 81871 "LT BL Wildcard GetFilter"
         OnNo(Observer, Row, '@*a*');
         OnNo(Observer, Row, '<>''''&<>*');
         OnNo(Observer, Row, 'a*');
-        Observer.Finish();
+        Observer.Expect('No <>*', '<>* | No.: <>* | {}');
+        Observer.Expect('No *', '* | No.: * | {[][A1][AB][B1][XA]}');
+        Observer.Expect('No <>A*', '<>A* | No.: <>A* | {[][B1][XA]}');
+        Observer.Expect('No *A*', '*A* | No.: *A* | {[A1][AB][XA]}');
+        Observer.Expect('No <>*A*', '<>*A* | No.: <>*A* | {[][B1]}');
+        Observer.Expect('No A*|B*', 'A*|B* | No.: A*|B* | {[A1][AB][B1]}');
+        Observer.Expect('No <>A1&<>B1', '<>A1&<>B1 | No.: <>A1&<>B1 | {[][AB][XA]}');
+        Observer.Expect('No ?', '? | No.: ? | {}');
+        Observer.Expect('No <>?', '<>? | No.: <>? | {[][A1][AB][B1][XA]}');
+        Observer.Expect('No ??', '?? | No.: ?? | {[A1][AB][B1][XA]}');
+        Observer.Expect('No @*a*', '@*A* | No.: @*A* | {[A1][AB][XA]}');
+        Observer.Expect('No <>''''&<>*', '<>''''&<>* | No.: <>''''&<>* | {}');
+        Observer.Expect('No a*', 'A* | No.: A* | {[A1][AB]}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +157,19 @@ codeunit 81871 "LT BL Wildcard GetFilter"
         OnName(Observer, Row, '@*A*');
         OnName(Observer, Row, '<>@a*');
         OnName(Observer, Row, '<>''''&<>*');
-        Observer.Finish();
+        Observer.Expect('Name <>*', '<>* | Name: <>* | {}');
+        Observer.Expect('Name *', '* | Name: * | {[][A1][AB][B1][XA]}');
+        Observer.Expect('Name <>a*', '<>a* | Name: <>a* | {[][AB][B1][XA]}');
+        Observer.Expect('Name *a*', '*a* | Name: *a* | {[A1][AB][B1][XA]}');
+        Observer.Expect('Name <>*a*', '<>*a* | Name: <>*a* | {[]}');
+        Observer.Expect('Name a*|b*', 'a*|b* | Name: a*|b* | {[A1][B1]}');
+        Observer.Expect('Name <>apple&<>xa', '<>apple&<>xa | Name: <>apple&<>xa | {[][AB][B1]}');
+        Observer.Expect('Name ??', '?? | Name: ?? | {[XA]}');
+        Observer.Expect('Name <>??', '<>?? | Name: <>?? | {[][A1][AB][B1]}');
+        Observer.Expect('Name @*A*', '@*A* | Name: @*A* | {[A1][AB][B1][XA]}');
+        Observer.Expect('Name <>@a*', '<>@a* | Name: <>@a* | {[][B1][XA]}');
+        Observer.Expect('Name <>''''&<>*', '<>''''&<>* | Name: <>''''&<>* | {}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -166,7 +193,12 @@ codeunit 81871 "LT BL Wildcard GetFilter"
         Row.Reset();
         Row.SetFilter(Name, '%1&<>%2', '*a*', 'xa');
         Observer.Observe('Name %1&<>%2', Row.GetFilter(Name) + ' | ' + Kept(Row));
-        Observer.Finish();
+        Observer.Expect('No <>%1 *', '<>''*'' | {[][A1][AB][B1][XA]}');
+        Observer.Expect('No %1 A*', 'A* | {[A1][AB]}');
+        Observer.Expect('No <>%1* A', '<>%1* | {[][A1][AB][B1][XA]}');
+        Observer.Expect('Name <>%1 *', '<>''*'' | {[][A1][AB][B1][XA]}');
+        Observer.Expect('Name %1&<>%2', '*a*&<>xa | {[A1][AB][B1]}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -183,6 +215,9 @@ codeunit 81871 "LT BL Wildcard GetFilter"
         Copy.Reset();
         Copy.CopyFilters(Row);
         Observer.Observe('copyfilters getfilter', Copy.GetFilter("No."));
-        Observer.Finish();
+        Observer.Expect('view', 'VERSION(1) SORTING(Field1) WHERE(Field1=1(<>*))');
+        Observer.Expect('copy getfilter', '<>*');
+        Observer.Expect('copyfilters getfilter', '<>*');
+        Observer.Verify();
     end;
 }

@@ -77,7 +77,9 @@ codeunit 81861 "LT BL Sql Counters"
     begin
         Observer.Observe('statements >= 0', Format(SessionInformation.SqlStatementsExecuted() >= 0));
         Observer.Observe('rows >= 0', Format(SessionInformation.SqlRowsRead() >= 0));
-        Observer.Finish();
+        Observer.Expect('statements >= 0', 'Yes');
+        Observer.Expect('rows >= 0', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -92,7 +94,11 @@ codeunit 81861 "LT BL Sql Counters"
         V := SessionInformation.SqlRowsRead();
         Observer.Observe('rows isbiginteger', Format(V.IsBigInteger()));
         Observer.Observe('rows isinteger', Format(V.IsInteger()));
-        Observer.Finish();
+        Observer.Expect('statements isbiginteger', 'Yes');
+        Observer.Expect('statements isinteger', 'No');
+        Observer.Expect('rows isbiginteger', 'Yes');
+        Observer.Expect('rows isinteger', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -106,7 +112,9 @@ codeunit 81861 "LT BL Sql Counters"
         Mark();
         X := 1 + 2;
         Note(Observer, 'arithmetic only');
-        Observer.Finish();
+        Observer.Expect('two reads', 'statements same, rows same');
+        Observer.Expect('arithmetic only', 'statements same, rows same');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +148,13 @@ codeunit 81861 "LT BL Sql Counters"
         Mark();
         Row.Delete();
         Note(Observer, 'delete');
-        Observer.Finish();
+        Observer.Expect('get', 'statements increased, rows increased');
+        Observer.Expect('findset loop', 'statements increased, rows increased');
+        Observer.Expect('count', 'statements same, rows same');
+        Observer.Expect('insert', 'statements same, rows same');
+        Observer.Expect('modify', 'statements increased, rows increased');
+        Observer.Expect('delete', 'statements increased, rows same');
+        Observer.Verify();
     end;
 
     [Test]
@@ -178,6 +192,12 @@ codeunit 81861 "LT BL Sql Counters"
         Mark();
         Row.Delete();
         Note(Observer, 'delete');
-        Observer.Finish();
+        Observer.Expect('get', 'statements same, rows same');
+        Observer.Expect('findset loop', 'statements same, rows same');
+        Observer.Expect('count', 'statements same, rows same');
+        Observer.Expect('insert', 'statements same, rows same');
+        Observer.Expect('modify', 'statements same, rows same');
+        Observer.Expect('delete', 'statements same, rows same');
+        Observer.Verify();
     end;
 }

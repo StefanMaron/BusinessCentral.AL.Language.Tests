@@ -70,7 +70,9 @@ codeunit 81876 "LT BL Invalid Decimal Filter"
     begin
         asserterror Row.SetFilter(Amount, 'NOT-A-NUMBER');
         Observer.ObserveError('not-a-number');
-        Observer.Finish();
+        Observer.Expect('not-a-number|text', 'The filter "NOT-A-NUMBER" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "NOT-A-NUMBER" can''t be evaluated into type Decimal.');
+        Observer.Expect('not-a-number|code', 'Filter:CSide');
+        Observer.Verify();
     end;
 
     [Test]
@@ -81,7 +83,9 @@ codeunit 81876 "LT BL Invalid Decimal Filter"
     begin
         asserterror Row.SetFilter(Amount, 'NOT-A-NUMBER');
         Observer.ObserveError('not-a-number');
-        Observer.Finish();
+        Observer.Expect('not-a-number|text', 'The filter "NOT-A-NUMBER" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "NOT-A-NUMBER" can''t be evaluated into type Decimal.');
+        Observer.Expect('not-a-number|code', 'Filter:CSide');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +108,22 @@ codeunit 81876 "LT BL Invalid Decimal Filter"
         Probe(Observer, 2, '''abc''');
         Probe(Observer, 2, '*');
         Probe(Observer, 2, '-');
-        Observer.Finish();
+        Observer.Expect('2 abc', 'error [The filter "abc" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "abc" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 1..x', 'error [The filter "1..x" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "x" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 x..1', 'error [The filter "x..1" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "x" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 1|abc', 'error [The filter "1|abc" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "abc" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 >abc', 'error [The filter ">abc" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "abc" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 <>abc', 'error [The filter "<>abc" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "abc" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 1;5', 'error [The filter "1;5" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "1;5" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 1,5', 'ok [Amount: 15]');
+        Observer.Expect('2 1e3', 'ok [Amount: 1,000]');
+        Observer.Expect('2 1.2.3', 'error [The filter "1.2.3" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "1.2.3" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 1..', 'ok [Amount: 1..]');
+        Observer.Expect('2 ..1', 'ok [Amount: ..1]');
+        Observer.Expect('2 ''abc''', 'error [The filter "''abc''" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "abc" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 *', 'error [The filter "*" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "*" can''t be evaluated into type Decimal.] [Filter:CSide]');
+        Observer.Expect('2 -<MORE>', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +136,12 @@ codeunit 81876 "LT BL Invalid Decimal Filter"
         Probe(Observer, 5, 'NOT-A-NUMBER');
         Probe(Observer, 6, 'NOT-A-NUMBER');
         Probe(Observer, 7, 'NOT-A-NUMBER');
-        Observer.Finish();
+        Observer.Expect('3 NOT-A-NUMBER', 'error [The filter "NOT-A-NUMBER" is not valid for the Big field on the LT BL Bad Filter Row table. The value "NOT-A-NUMBER" can''t be evaluated into type BigInteger.] [Filter:CSide]');
+        Observer.Expect('4 NOT-A-NUMBER', 'error [The filter "NOT-A-NUMBER" is not valid for the Dur field on the LT BL Bad Filter Row table. The value "NOT-A-NUMBER" can''t be evaluated into type Duration.] [Filter:CSide]');
+        Observer.Expect('5 NOT-A-NUMBER', 'error [The filter "NOT-A-NUMBER" is not valid for the Dt field on the LT BL Bad Filter Row table. The format of the Date ''NOT-A-NUMBER'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.] [Filter:CSide]');
+        Observer.Expect('6 NOT-A-NUMBER', 'error [The filter "NOT-A-NUMBER" is not valid for the Tm field on the LT BL Bad Filter Row table. The value "NOT-A-NUMBER" can''t be evaluated into type Time.] [Filter:CSide]');
+        Observer.Expect('7 NOT-A-NUMBER', 'error [The filter "NOT-A-NUMBER" is not valid for the Gd field on the LT BL Bad Filter Row table. Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.] [Filter:CSide]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,6 +163,9 @@ codeunit 81876 "LT BL Invalid Decimal Filter"
             Observer.Observe('second setfilter', 'error');
         Observer.Observe('getfilter after', Row.GetFilter(Amount));
         Observer.Observe('count after', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('second setfilter', 'error');
+        Observer.Expect('getfilter after', '5');
+        Observer.Expect('count after', '1');
+        Observer.Verify();
     end;
 }

@@ -40,7 +40,9 @@ codeunit 81865 "LT BL Evaluate Lists"
         else
             Observer.Observe('if', 'false');
         Observer.Observe('number', Format(Number, 0, 9));
-        Observer.Finish();
+        Observer.Expect('if', 'false');
+        Observer.Expect('number', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -58,7 +60,21 @@ codeunit 81865 "LT BL Evaluate Lists"
             Ok := Evaluate(D, T);
             Observer.Observe('[' + T + ']', Format(Ok) + ' ' + Format(D, 0, 9));
         end;
-        Observer.Finish();
+        Observer.Expect('[1;5;10]', 'No -1');
+        Observer.Expect('[1;5]', 'No -1');
+        Observer.Expect('[1;]', 'No -1');
+        Observer.Expect('[;1]', 'No -1');
+        Observer.Expect('[;]', 'No -1');
+        Observer.Expect('[1|5|10]', 'No -1');
+        Observer.Expect('[1:5]', 'No -1');
+        Observer.Expect('[1/5]', 'No -1');
+        Observer.Expect('[1..10]', 'No -1');
+        Observer.Expect('[1 5 10]', 'No -1');
+        Observer.Expect('[1-5]', 'No -1');
+        Observer.Expect('[1&5]', 'No -1');
+        Observer.Expect('[1;5.5]', 'No -1');
+        Observer.Expect('[ 1 ; 5 ]', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -76,7 +92,21 @@ codeunit 81865 "LT BL Evaluate Lists"
             Ok := Evaluate(I, T);
             Observer.Observe('[' + T + ']', Format(Ok) + ' ' + Format(I, 0, 9));
         end;
-        Observer.Finish();
+        Observer.Expect('[1;5;10]', 'No -1');
+        Observer.Expect('[1;5]', 'No -1');
+        Observer.Expect('[1;]', 'No -1');
+        Observer.Expect('[;1]', 'No -1');
+        Observer.Expect('[;]', 'No -1');
+        Observer.Expect('[1|5|10]', 'No -1');
+        Observer.Expect('[1:5]', 'No -1');
+        Observer.Expect('[1/5]', 'No -1');
+        Observer.Expect('[1..10]', 'No -1');
+        Observer.Expect('[1 5 10]', 'No -1');
+        Observer.Expect('[1-5]', 'No -1');
+        Observer.Expect('[1&5]', 'No -1');
+        Observer.Expect('[1;5.5]', 'No -1');
+        Observer.Expect('[ 1 ; 5 ]', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -94,7 +124,21 @@ codeunit 81865 "LT BL Evaluate Lists"
             Ok := Evaluate(B, T);
             Observer.Observe('[' + T + ']', Format(Ok) + ' ' + Format(B, 0, 9));
         end;
-        Observer.Finish();
+        Observer.Expect('[1;5;10]', 'No -1');
+        Observer.Expect('[1;5]', 'No -1');
+        Observer.Expect('[1;]', 'No -1');
+        Observer.Expect('[;1]', 'No -1');
+        Observer.Expect('[;]', 'No -1');
+        Observer.Expect('[1|5|10]', 'No -1');
+        Observer.Expect('[1:5]', 'No -1');
+        Observer.Expect('[1/5]', 'No -1');
+        Observer.Expect('[1..10]', 'No -1');
+        Observer.Expect('[1 5 10]', 'No -1');
+        Observer.Expect('[1-5]', 'No -1');
+        Observer.Expect('[1&5]', 'No -1');
+        Observer.Expect('[1;5.5]', 'No -1');
+        Observer.Expect('[ 1 ; 5 ]', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,6 +160,14 @@ codeunit 81865 "LT BL Evaluate Lists"
         B := -1;
         asserterror Evaluate(B, '1|5');
         Observer.ObserveError('biginteger pipe');
-        Observer.Finish();
+        Observer.Expect('decimal|text', 'The value "1;5;10" can''t be evaluated into type Decimal.');
+        Observer.Expect('decimal|code', 'Evaluate');
+        Observer.Expect('decimal value', '-1');
+        Observer.Expect('integer|text', 'The value "1;5;10" can''t be evaluated into type Integer.');
+        Observer.Expect('integer|code', 'Evaluate');
+        Observer.Expect('integer value', '-1');
+        Observer.Expect('biginteger pipe|text', 'The value "1|5" can''t be evaluated into type BigInteger.');
+        Observer.Expect('biginteger pipe|code', 'Evaluate');
+        Observer.Verify();
     end;
 }

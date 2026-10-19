@@ -20,7 +20,8 @@ codeunit 81891 "LT BL Implicit Creation"
         List.OpenView();
         List.Close();
         Observer.Observe('opened and closed', 'yes');
-        Observer.Finish();
+        Observer.Expect('opened and closed', 'yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -37,7 +38,10 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.ProbeAction.Invoke();
         Observer.Observe('OpenView log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenView ProbeAction visible', 'Yes');
+        Observer.Expect('OpenView ProbeAction enabled', 'Yes');
+        Observer.Expect('OpenView log', 'ProbeAction;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -54,7 +58,10 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.ProbeAction.Invoke();
         Observer.Observe('OpenEdit log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenEdit ProbeAction visible', 'Yes');
+        Observer.Expect('OpenEdit ProbeAction enabled', 'Yes');
+        Observer.Expect('OpenEdit log', 'ProbeAction;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,7 +78,10 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.ProbeAction.Invoke();
         Observer.Observe('OpenNew log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenNew ProbeAction visible', 'Yes');
+        Observer.Expect('OpenNew ProbeAction enabled', 'Yes');
+        Observer.Expect('OpenNew log', 'ProbeAction;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -97,7 +107,16 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.RepLast.Invoke();
         Observer.Observe('OpenView log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenView CreFirst visible', 'Yes');
+        Observer.Expect('OpenView CreFirst enabled', 'Yes');
+        Observer.Expect('OpenView ProcLast visible', 'Yes');
+        Observer.Expect('OpenView ProcLast enabled', 'Yes');
+        Observer.Expect('OpenView NavFirst visible', 'Yes');
+        Observer.Expect('OpenView NavFirst enabled', 'Yes');
+        Observer.Expect('OpenView RepLast visible', 'Yes');
+        Observer.Expect('OpenView RepLast enabled', 'Yes');
+        Observer.Expect('OpenView log', 'CreFirst;ProcLast;NavFirst;RepLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +142,16 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.RepLast.Invoke();
         Observer.Observe('OpenEdit log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenEdit CreFirst visible', 'Yes');
+        Observer.Expect('OpenEdit CreFirst enabled', 'Yes');
+        Observer.Expect('OpenEdit ProcLast visible', 'Yes');
+        Observer.Expect('OpenEdit ProcLast enabled', 'Yes');
+        Observer.Expect('OpenEdit NavFirst visible', 'Yes');
+        Observer.Expect('OpenEdit NavFirst enabled', 'Yes');
+        Observer.Expect('OpenEdit RepLast visible', 'Yes');
+        Observer.Expect('OpenEdit RepLast enabled', 'Yes');
+        Observer.Expect('OpenEdit log', 'CreFirst;ProcLast;NavFirst;RepLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +177,16 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.RepLast.Invoke();
         Observer.Observe('OpenNew log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenNew CreFirst visible', 'Yes');
+        Observer.Expect('OpenNew CreFirst enabled', 'Yes');
+        Observer.Expect('OpenNew ProcLast visible', 'Yes');
+        Observer.Expect('OpenNew ProcLast enabled', 'Yes');
+        Observer.Expect('OpenNew NavFirst visible', 'Yes');
+        Observer.Expect('OpenNew NavFirst enabled', 'Yes');
+        Observer.Expect('OpenNew RepLast visible', 'Yes');
+        Observer.Expect('OpenNew RepLast enabled', 'Yes');
+        Observer.Expect('OpenNew log', 'CreFirst;ProcLast;NavFirst;RepLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -169,7 +206,12 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.CreLast.Invoke();
         Observer.Observe('OpenView log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenView BaseProc visible', 'Yes');
+        Observer.Expect('OpenView BaseProc enabled', 'Yes');
+        Observer.Expect('OpenView CreLast visible', 'Yes');
+        Observer.Expect('OpenView CreLast enabled', 'Yes');
+        Observer.Expect('OpenView log', 'BaseProc;CreLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -189,7 +231,12 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.CreLast.Invoke();
         Observer.Observe('OpenEdit log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenEdit BaseProc visible', 'Yes');
+        Observer.Expect('OpenEdit BaseProc enabled', 'Yes');
+        Observer.Expect('OpenEdit CreLast visible', 'Yes');
+        Observer.Expect('OpenEdit CreLast enabled', 'Yes');
+        Observer.Expect('OpenEdit log', 'BaseProc;CreLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -209,7 +256,12 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.CreLast.Invoke();
         Observer.Observe('OpenNew log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenNew BaseProc visible', 'Yes');
+        Observer.Expect('OpenNew BaseProc enabled', 'Yes');
+        Observer.Expect('OpenNew CreLast visible', 'Yes');
+        Observer.Expect('OpenNew CreLast enabled', 'Yes');
+        Observer.Expect('OpenNew log', 'BaseProc;CreLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -226,7 +278,10 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.WsCreLast.Invoke();
         Observer.Observe('OpenView log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenView WsCreLast visible', 'Yes');
+        Observer.Expect('OpenView WsCreLast enabled', 'Yes');
+        Observer.Expect('OpenView log', 'WsCreLast;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -243,23 +298,20 @@ codeunit 81891 "LT BL Implicit Creation"
         Pg.WsCreLast.Invoke();
         Observer.Observe('OpenEdit log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('OpenEdit WsCreLast visible', 'Yes');
+        Observer.Expect('OpenEdit WsCreLast enabled', 'Yes');
+        Observer.Expect('OpenEdit log', 'WsCreLast;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Worksheet_OpenNew()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT BL Creation Log";
         Pg: TestPage "LT BL Creation Worksheet";
     begin
-        Log.Take();
-        Pg.OpenNew();
-        Observer.Observe('OpenNew WsCreLast visible', Format(Pg.WsCreLast.Visible()));
-        Observer.Observe('OpenNew WsCreLast enabled', Format(Pg.WsCreLast.Enabled()));
-        Pg.WsCreLast.Invoke();
-        Observer.Observe('OpenNew log', Log.Take());
-        Pg.Close();
+        asserterror Pg.OpenNew();
+        Observer.ObserveError('OpenNew');
         Observer.Finish();
     end;
 }

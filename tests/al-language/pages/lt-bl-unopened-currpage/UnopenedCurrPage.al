@@ -34,7 +34,8 @@ codeunit 81855 "LT BL Unopened CurrPage"
         P: Page "LT BL Unopened Part";
     begin
         Observer.Observe('log', P.Act('update-false'));
-        Observer.Finish();
+        Observer.Expect('log', 'start end');
+        Observer.Verify();
     end;
 
     [Test]
@@ -44,7 +45,8 @@ codeunit 81855 "LT BL Unopened CurrPage"
         P: Page "LT BL Unopened Part";
     begin
         Observer.Observe('log', P.Act('update-true'));
-        Observer.Finish();
+        Observer.Expect('log', 'start end');
+        Observer.Verify();
     end;
 
     [Test]
@@ -56,7 +58,9 @@ codeunit 81855 "LT BL Unopened CurrPage"
         Seed();
         Observer.Observe('first', P.Act('update-false'));
         Observer.Observe('second', P.Act('update-true'));
-        Observer.Finish();
+        Observer.Expect('first', 'start end');
+        Observer.Expect('second', 'start end');
+        Observer.Verify();
     end;
 
     local procedure RunPart(var Observer: Codeunit "Probe Observer"; Op: Text)
@@ -94,7 +98,18 @@ codeunit 81855 "LT BL Unopened CurrPage"
         RunPart(Observer, 'editable-set');
         RunPart(Observer, 'selection');
         RunPart(Observer, 'rec');
-        Observer.Finish();
+        Observer.Expect('update-false', 'ok start end');
+        Observer.Expect('update-true', 'ok start end');
+        Observer.Expect('saverecord', 'ok start end');
+        Observer.Expect('activate', 'ok start end');
+        Observer.Expect('activate-true', 'ok start end');
+        Observer.Expect('caption-get', 'ok start [LT BL Unopened Part] end');
+        Observer.Expect('caption-set', 'ok start [LT BL Set Caption] end');
+        Observer.Expect('editable-get', 'ok start Yes end');
+        Observer.Expect('editable-set', 'ok start No end');
+        Observer.Expect('selection', 'ok start [Number: 0] 1 end');
+        Observer.Expect('rec', 'ok start [0] [] end');
+        Observer.Verify();
     end;
 
     local procedure RunList(var Observer: Codeunit "Probe Observer"; Op: Text)
@@ -132,7 +147,18 @@ codeunit 81855 "LT BL Unopened CurrPage"
         RunList(Observer, 'editable-set');
         RunList(Observer, 'selection');
         RunList(Observer, 'rec');
-        Observer.Finish();
+        Observer.Expect('update-false', 'ok start end');
+        Observer.Expect('update-true', 'ok start end');
+        Observer.Expect('saverecord', 'ok start end');
+        Observer.Expect('activate', 'ok start end');
+        Observer.Expect('activate-true', 'ok start end');
+        Observer.Expect('caption-get', 'ok start [LT BL Unopened List] end');
+        Observer.Expect('caption-set', 'ok start [LT BL Set Caption] end');
+        Observer.Expect('editable-get', 'ok start Yes end');
+        Observer.Expect('editable-set', 'ok start No end');
+        Observer.Expect('selection', 'ok start [Id: 0] 0 end');
+        Observer.Expect('rec', 'ok start [0] [] end');
+        Observer.Verify();
     end;
 
     local procedure RunCard(var Observer: Codeunit "Probe Observer"; Op: Text)
@@ -170,7 +196,18 @@ codeunit 81855 "LT BL Unopened CurrPage"
         RunCard(Observer, 'editable-set');
         RunCard(Observer, 'selection');
         RunCard(Observer, 'rec');
-        Observer.Finish();
+        Observer.Expect('update-false', 'ok start end');
+        Observer.Expect('update-true', 'ok start end');
+        Observer.Expect('saverecord', 'ok start end');
+        Observer.Expect('activate', 'ok start end');
+        Observer.Expect('activate-true', 'ok start end');
+        Observer.Expect('caption-get', 'ok start [LT BL Unopened Card] end');
+        Observer.Expect('caption-set', 'ok start [LT BL Set Caption] end');
+        Observer.Expect('editable-get', 'ok start Yes end');
+        Observer.Expect('editable-set', 'ok start No end');
+        Observer.Expect('selection', 'ok start [Id: 0] 0 end');
+        Observer.Expect('rec', 'ok start [0] [] end');
+        Observer.Verify();
     end;
 
     [Test]
@@ -186,7 +223,10 @@ codeunit 81855 "LT BL Unopened CurrPage"
         Observer.Observe('rec-before', P.Act('rec'));
         Observer.Observe('update-false', P.Act('update-false'));
         Observer.Observe('rec-after', P.Act('rec'));
-        Observer.Finish();
+        Observer.Expect('rec-before', 'start [2] [] end');
+        Observer.Expect('update-false', 'start end');
+        Observer.Expect('rec-after', 'start [2] [] end');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +242,10 @@ codeunit 81855 "LT BL Unopened CurrPage"
         Observer.Observe('rec-before', P.Act('rec'));
         Observer.Observe('update-true', P.Act('update-true'));
         Observer.Observe('rec-after', P.Act('rec'));
-        Observer.Finish();
+        Observer.Expect('rec-before', 'start [0] [Id: 2] end');
+        Observer.Expect('update-true', 'start end');
+        Observer.Expect('rec-after', 'start [0] [Id: 2] end');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -212,23 +255,60 @@ codeunit 81855 "LT BL Unopened CurrPage"
         P.Close();
     end;
 
+    [ModalPageHandler]
+    procedure ReadCardModalNoClose(var P: TestPage "LT BL Unopened Card")
+    begin
+        HandlerSeen := 'card id=' + P.KeyCtl.Value();
+    end;
+
+    [TryFunction]
+    local procedure TryRunModal(var P: Page "LT BL Unopened Card"; var Result: Action)
+    begin
+        Result := P.RunModal();
+    end;
+
+    // The handler closes the TestPage itself.
     [Test]
     [HandlerFunctions('ReadCardModal')]
-    procedure Update_Then_RunModal_Card()
+    procedure Update_Then_RunModal_Card_HandlerCloses()
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT BL Unopened Row";
         P: Page "LT BL Unopened Card";
-        Action: Action;
     begin
         Seed();
         Row.Get(2);
         P.SetRecord(Row);
         Observer.Observe('update-false', P.Act('update-false'));
         HandlerSeen := '';
-        Action := P.RunModal();
+        asserterror P.RunModal();
+        Observer.ObserveError('runmodal');
         Observer.Observe('handler', HandlerSeen);
-        Observer.Observe('action', Format(Action));
+        Observer.Observe('rec-after-close', P.Act('rec'));
+        Observer.Finish();
+    end;
+
+    // The handler only reads; the page closes when the handler returns.
+    [Test]
+    [HandlerFunctions('ReadCardModalNoClose')]
+    procedure Update_Then_RunModal_Card_HandlerReads()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BL Unopened Row";
+        P: Page "LT BL Unopened Card";
+        Result: Action;
+    begin
+        Seed();
+        Row.Get(2);
+        P.SetRecord(Row);
+        Observer.Observe('update-true', P.Act('update-true'));
+        HandlerSeen := '';
+        ClearLastError();
+        if TryRunModal(P, Result) then
+            Observer.Observe('runmodal', 'ok ' + Format(Result))
+        else
+            Observer.Observe('runmodal', 'error [' + GetLastErrorText() + '] [' + GetLastErrorCode() + ']');
+        Observer.Observe('handler', HandlerSeen);
         Observer.Observe('rec-after-close', P.Act('rec'));
         Observer.Finish();
     end;
