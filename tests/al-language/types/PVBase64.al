@@ -291,7 +291,16 @@ codeunit 69339 "PV Base64 Probe"
         Observer.Expect('zip stream', 'UEsDBBQAAAAIAI1jd1n/AA==|Yes|16');
         Observer.Verify();
 #else
-        Observer.Finish();
+        // BC 27.5: ToBase64(Text, TextEncoding::Windows) writes the text as UTF-8 (U+2030 from byte 0x89 comes back as E2 80 B0).
+        Observer.Expect('png utf8', '77+9UE5HDQoaCgAAAA1JSERSAAAAAQAAAAEIAAAAADp+77+9VQAAAAtJREFUeO+/vWNk77+9DwABBQEBJxjvv71mAAAAAElFTkTvv71CYO+/vQ==|No|68');
+        Observer.Expect('png utf8 first codes', '65533 80 78 71 13 10 26 10 ');
+        Observer.Expect('png windows', 'No|68');
+        Observer.Expect('png windows back', '4oCwUE5HDQoaCgAAAA1JSERSAAAAAQAAAAEIAAAAADp+4oC6VQAAAAtJREFUeMOaY2TDuA8AAQUBAScYw6NmAAAAAElFTkTCrkJg4oCa');
+        Observer.Expect('zip utf8', 'UEsDBBQAAAAIAO+/vWN3We+/vQA=|No|16');
+        Observer.Expect('zip windows', 'UEsDBBQAAAAIAMKNY3dZw78A|No|16');
+        Observer.Expect('png stream', 'Yes|68');
+        Observer.Expect('zip stream', 'UEsDBBQAAAAIAI1jd1n/AA==|Yes|16');
+        Observer.Verify();
 #endif
     end;
 }
