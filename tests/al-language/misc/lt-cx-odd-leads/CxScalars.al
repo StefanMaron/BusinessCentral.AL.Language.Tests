@@ -116,7 +116,20 @@ codeunit 85481 "LT CX Scalars"
         RecRef.Open(Database::"LT CX Row");
         Observer.Observe('option_members', RecRef.Field(2).OptionMembers());
         Observer.Observe('option_caption', RecRef.Field(2).OptionCaption());
-        Observer.Finish();
+        Observer.Expect('const_11', 'E|11|11');
+        Observer.Expect('const_5', 'C|5|5');
+        Observer.Expect('const_3', 'A|3|3');
+        Observer.Expect('const_1_blank', '1|1|1');
+        Observer.Expect('const_12', '12|12|12');
+        Observer.Expect('member_E', 'E|11|11');
+        Observer.Expect('member_D', 'D|10|10');
+        Observer.Expect('var_10', 'ok:D|10|10');
+        Observer.Expect('var_7_blank', 'ok:7|7|7');
+        Observer.Expect('var_12', 'ok:12|12|12');
+        Observer.Expect('var_minus_1', 'ok:-1|-1|-1');
+        Observer.Expect('option_members', ' ,,,A,B,C,,,,,D,E');
+        Observer.Expect('option_caption', ' ,,,A,B,C,,,,,D,E');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -204,7 +217,16 @@ codeunit 85481 "LT CX Scalars"
         Observer.Observe('g_vs_garbage', Compare(G, 'garbage'));
         Observer.Observe('g_vs_empty', Compare(G, ''));
         Observer.Observe('null_vs_garbage', Compare(Null, 'garbage'));
-        Observer.Finish();
+        Observer.Expect('null_vs_empty', 'eq error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.|ne error:InvalidGuidFormat|text_first error:InvalidGuidFormat');
+        Observer.Expect('null_vs_null_text', 'eq=Yes|ne=No|text_first=Yes');
+        Observer.Expect('g_vs_braced', 'eq=Yes|ne=No|text_first=Yes');
+        Observer.Expect('g_vs_no_braces', 'eq=Yes|ne=No|text_first=Yes');
+        Observer.Expect('g_vs_lower', 'eq=Yes|ne=No|text_first=Yes');
+        Observer.Expect('g_vs_other', 'eq=No|ne=Yes|text_first=No');
+        Observer.Expect('g_vs_garbage', 'eq error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.|ne error:InvalidGuidFormat|text_first error:InvalidGuidFormat');
+        Observer.Expect('g_vs_empty', 'eq error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.|ne error:InvalidGuidFormat|text_first error:InvalidGuidFormat');
+        Observer.Expect('null_vs_garbage', 'eq error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.|ne error:InvalidGuidFormat|text_first error:InvalidGuidFormat');
+        Observer.Verify();
     end;
 
     [Test]
@@ -235,7 +257,13 @@ codeunit 85481 "LT CX Scalars"
         Ok := TryFieldEmpty(Row, Result);
         Observer.Observe('field_eq_empty_literal', Outcome(Ok, Result));
         Observer.Observe('field_vs_text', Compare(Row.G, '0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d'));
-        Observer.Finish();
+        Observer.Expect('null_ne_empty_literal', 'error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('g_ne_empty_literal', 'error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('g_eq_abc_literal', 'error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('null_field_eq_empty_literal', 'error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('field_eq_empty_literal', 'error:InvalidGuidFormat:Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('field_vs_text', 'eq=Yes|ne=No|text_first=Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -264,7 +292,14 @@ codeunit 85481 "LT CX Scalars"
         Observer.Observe('maxstrlen_after', Format(MaxStrLen(C)));
         C := CopyStr(Format(G), 1, MaxStrLen(C));
         Observer.Observe('copystr_strlen', Format(StrLen(C)));
-        Observer.Finish();
+        Observer.Expect('maxstrlen_before', '20');
+        Observer.Expect('assign_ok', 'No');
+        Observer.Expect('assign_error', 'StringLengthExceeded:The length of the string is 38, but it must be less than or equal to 20 characters. Value: {0A1B2C3D-4E5F-6A7B-8C9D-0E1F2A3B4C5D}');
+        Observer.Expect('after_value', 'BEFORE');
+        Observer.Expect('strlen_after', '6');
+        Observer.Expect('maxstrlen_after', '20');
+        Observer.Expect('copystr_strlen', '20');
+        Observer.Verify();
     end;
 
     [Test]
@@ -306,7 +341,21 @@ codeunit 85481 "LT CX Scalars"
         Observer.Observe('byte_times_byte', Show(By * By2));
         Observer.Observe('byte_plus_integer', Show(By + I));
         Observer.Observe('char_plus_text', Show(Ch + T));
-        Observer.Finish();
+        Observer.Expect('char_plus_1', 'Integer:66');
+        Observer.Expect('char_plus_char', 'Integer:131');
+        Observer.Expect('char_minus_char', 'Integer:1');
+        Observer.Expect('text_plus_code', 'Text:textAB');
+        Observer.Expect('code_plus_text', 'Text:ABtext');
+        Observer.Expect('code_plus_code', 'Text:ABCD');
+        Observer.Expect('code_plus_lower_literal', 'Text:ABxy');
+        Observer.Expect('integer_plus_decimal', 'Decimal:3.5');
+        Observer.Expect('option_plus_integer', 'Integer:3');
+        Observer.Expect('option_times_integer', 'Integer:6');
+        Observer.Expect('byte_plus_byte', 'Integer:300');
+        Observer.Expect('byte_times_byte', 'Integer:20000');
+        Observer.Expect('byte_plus_integer', 'Integer:203');
+        Observer.Expect('char_plus_text', 'Text:Atext');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -354,6 +403,15 @@ codeunit 85481 "LT CX Scalars"
         Observer.Observe('option', FieldToText(RecRef, 9));
         Observer.Observe('integer', FieldToText(RecRef, 10));
         Observer.Observe('guid', FieldToText(RecRef, 3));
-        Observer.Finish();
+        Observer.Expect('post_code_direct', 'xAB-123');
+        Observer.Expect('code', 'ok:AB-123|concat:xAB-123');
+        Observer.Expect('text', 'ok:Mixed Case|concat:xMixed Case');
+        Observer.Expect('decimal', 'ok:1,234.5|concat:x1,234.5');
+        Observer.Expect('date', 'ok:04/03/21|concat:x04/03/21');
+        Observer.Expect('boolean', 'ok:Yes|concat:xYes');
+        Observer.Expect('option', 'ok:Beta Two|concat:xBeta Two');
+        Observer.Expect('integer', 'ok:42|concat:x42');
+        Observer.Expect('guid', 'ok:{00000000-0000-0000-0000-000000000000}|concat:x{00000000-0000-0000-0000-000000000000}');
+        Observer.Verify();
     end;
 }

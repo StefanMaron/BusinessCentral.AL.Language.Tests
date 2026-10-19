@@ -155,7 +155,14 @@ codeunit 85484 "LT CX Variants"
         ClearLastError();
         Ok := TryIntegerBranch('Foo', Result);
         Observer.Observe('integer_branch_holds_text', Out(Ok, Result));
-        Observer.Finish();
+        Observer.Expect('text_first_holds_integer', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('text_first_holds_text', 'ok:Text:Foo');
+        Observer.Expect('text_first_holds_code', 'ok:Text:CD');
+        Observer.Expect('variant_first_not_taken', 'ok:Text:Bar');
+        Observer.Expect('variant_first_taken_integer', 'ok:Integer:1234');
+        Observer.Expect('integer_branch_holds_integer', 'ok:Integer:1234');
+        Observer.Expect('integer_branch_holds_text', 'error:TypeConversion:Format:The expression Variant cannot be type-converted to a Integer value.');
+        Observer.Verify();
     end;
 
     local procedure RefInfo(RR: RecordRef): Text
@@ -192,7 +199,16 @@ codeunit 85484 "LT CX Variants"
         Observer.Observe('first_ref_after_second_change', Format(RR.Field(2).Value));
         RR.SetTable(Back);
         Observer.Observe('settable', Format(Back.Id) + '|' + Back.Name);
-        Observer.Finish();
+        Observer.Expect('assigned', '85482|2|2');
+        Observer.Expect('assigned_filters', 'Id: 2..3');
+        Observer.Expect('param', '85482|2|2');
+        Observer.Expect('record_after_ref_change', 'two');
+        Observer.Expect('ref_after_record_change', 'changed');
+        Observer.Expect('variant_kind', 'RecordRef');
+        Observer.Expect('variant_back', '85482|2|2');
+        Observer.Expect('first_ref_after_second_change', 'via variant');
+        Observer.Expect('settable', '2|via variant');
+        Observer.Verify();
     end;
 
     local procedure FilterThroughVariant(var V: Variant)
@@ -248,7 +264,15 @@ codeunit 85484 "LT CX Variants"
         Observer.Observe('to_other_table_ok', Format(TryToOther(V, Other)));
         Observer.Observe('to_other_table_error', GetLastErrorCode() + ':' + GetLastErrorText());
         Observer.Observe('to_other_table_value', Other.Code + '|' + Other.Descr);
-        Observer.Finish();
+        Observer.Expect('written_back_values', '3|set in callee');
+        Observer.Expect('written_back_filters', '');
+        Observer.Expect('written_back_count', '3');
+        Observer.Expect('no_write_back_values', '2|two');
+        Observer.Expect('no_write_back_filters', '');
+        Observer.Expect('to_other_table_ok', 'No');
+        Observer.Expect('to_other_table_error', 'NotSupportedOperation:The requested operation is not supported.');
+        Observer.Expect('to_other_table_value', '|');
+        Observer.Verify();
     end;
 
     local procedure GetInCallee(RR: RecordRef; RowKey: Integer)
@@ -342,7 +366,16 @@ codeunit 85484 "LT CX Variants"
         RR.FindFirst();
         CloseInCallee(RR);
         Observer.Observe('after_close', Info(RR));
-        Observer.Finish();
+        Observer.Expect('start', '1|1');
+        Observer.Expect('after_get', '1|3');
+        Observer.Expect('after_get_through_variant', '1|2');
+        Observer.Expect('original_after_duplicate_get', '1|2');
+        Observer.Expect('duplicate_after_get', '1|1');
+        Observer.Expect('after_open_other', '1|2');
+        Observer.Expect('after_open_other_through_variant', '1|1');
+        Observer.Expect('after_gettable_other', '0|X');
+        Observer.Expect('after_close', '1|1');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -430,7 +463,14 @@ codeunit 85484 "LT CX Variants"
             Observer.Observe('text_to_element', 'ok')
         else
             Observer.Observe('text_to_element', Err());
-        Observer.Finish();
+        Observer.Expect('document_back', 'ok:<?xml version="1.0" encoding="utf-16"?>\r\n<root>\r\n  <a />\r\n  <added />\r\n</root>');
+        Observer.Expect('element_back', 'ok:<el k="v" />');
+        Observer.Expect('nsmgr_back', 'ok:p');
+        Observer.Expect('element_to_document', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavXmlDocument value.');
+        Observer.Expect('document_to_element', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavXmlElement value.');
+        Observer.Expect('nsmgr_to_document', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavXmlDocument value.');
+        Observer.Expect('text_to_element', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavXmlElement value.');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -482,6 +522,9 @@ codeunit 85484 "LT CX Variants"
             Observer.Observe('integer_variant_to_field', 'ok:' + BlobText(Target))
         else
             Observer.Observe('integer_variant_to_field', Err());
-        Observer.Finish();
+        Observer.Expect('blob_variant_to_field', 'ok:blob content');
+        Observer.Expect('text_variant_to_field', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavBLOB value.');
+        Observer.Expect('integer_variant_to_field', 'error:TypeConversion:The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavBLOB value.');
+        Observer.Verify();
     end;
 }
