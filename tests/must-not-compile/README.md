@@ -316,6 +316,7 @@ is only a reference.
 | 1051 | AL0124 | XmlPort textelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
 | 1052 | AL0124 | XmlPort tableelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
 | 1053 | AL0169 | XmlPort fieldattribute: Occurrence takes Optional or Required. |
+| 1150 | AL0122 | A Text character by index plus or minus a one-character literal is an Integer: it does not assign to a Text (three statements). |
 | 1060 | AL0316 | A tree repeater whose IndentationColumn is a Decimal field. |
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
