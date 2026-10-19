@@ -432,6 +432,14 @@ is only a reference.
 | 1406 | AL0122 | `V := Cond ? CurrentDateTime() : Today()` into a Variant: the Date branch does not convert to DateTime. |
 | 1407 | AL0666 | BC 27 and 28: a bare IsDirty() in a TableNo codeunit's OnRun binds to Record.IsDirty (runtime 18.0) before the local procedure. |
 | 1408 | AL0757 | BC 27: a global variable `_operator` and a procedure `Operator`: error on the variable, only warning AL0758 on the procedure. |
+| 1680 | AL0757 | Two event publishers, and two event subscribers, named `Foo Bar` and `Foo_Bar` in one codeunit. |
+| 1681 | AL0155 | Two event publishers with one name and different parameter types; an event publisher named `Run` in a codeunit. |
+| 1682 | AL0286, AL0283, AL0287 | An event publisher with a statement, a return value, a local variable, a local Label. |
+| 1683 | AL0132 | An event subscriber with `ObjectType::TableExtension`. |
+| 1684 | AL0118 | A table event subscriber naming the table with `Table::Customer` instead of `Database::Customer`. |
+| 1685 | AL0288 | A subscriber declares `var` on a parameter the publisher passes by value. |
+| 1686 | AL0284 | Subscriber parameter types: Enum as Integer, Option as Integer or Enum, a GlobalVarAccess global as Text, RunTrigger as Integer. |
+| 1687 | AL0282 | Subscriber parameters matching no publisher parameter: RunTrigger on OnAfterValidateEvent, `Record` instead of `Rec`, an unknown global. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
