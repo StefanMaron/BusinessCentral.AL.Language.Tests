@@ -81,6 +81,12 @@ codeunit 85181 "LT CS Record Get"
             PermissionsMock.Stop();
         Observer.Observe('after restore', Format(Row.Get(851810)));
         Row.Delete();
-        Observer.Finish();
+        Observer.Expect('existing row, result assigned', 'error: Sorry, the current permissions prevented the action. (TableData 60590 ALT No Subscriber Table Read: AL Language Coverage Tests) code: DB:ClientReadDenied');
+        Observer.Expect('missing row, result assigned', 'result No');
+        Observer.Expect('existing row, if Get', 'error: Sorry, the current permissions prevented the action. (TableData 60590 ALT No Subscriber Table Read: AL Language Coverage Tests) code: DB:ClientReadDenied');
+        Observer.Expect('plain get', 'error: Sorry, the current permissions prevented the action. (TableData 60590 ALT No Subscriber Table Read: AL Language Coverage Tests) code: DB:ClientReadDenied');
+        Observer.Expect('findfirst', 'error: Sorry, the current permissions prevented the action. (TableData 60590 ALT No Subscriber Table Read: AL Language Coverage Tests) code: DB:ClientReadDenied');
+        Observer.Expect('after restore', 'Yes');
+        Observer.Verify();
     end;
 }
