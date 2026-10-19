@@ -547,4 +547,199 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Expect('next', '19|R19;F(=);R19;C;');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Page row window" item 7: a find list that opens on its LAST row with rows above it. Is the opening
+    // row read (OnAfterGetRecord) before OnNextRecord(-1)? Trigger log (O = OnOpenPage) at open, then of Next and Previous; current row.
+    // Pages 86151 (with OnAfterGetCurrRecord) and 86152 (without) position in OnOpenPage with FindLast; LT PnF FL Asc is opened on a handed
+    // last row (SetRecord, Run, trapped).
+    local procedure PwOpenLast(Rows: Integer; WithCurr: Boolean; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P1: TestPage "LT PW FL Last Curr";
+        P2: TestPage "LT PW FL Last Plain";
+    begin
+        Seed(Rows);
+        Log.Take();
+        if WithCurr then begin
+            P1.OpenView();
+            Observer.Observe('open', P1.Id.Value() + '|' + Log.Take());
+            Observer.Observe('next', Format(P1.Next()) + '|' + P1.Id.Value() + '|' + Log.Take());
+            Observer.Observe('previous', Format(P1.Previous()) + '|' + P1.Id.Value() + '|' + Log.Take());
+            P1.Close();
+        end else begin
+            P2.OpenView();
+            Observer.Observe('open', P2.Id.Value() + '|' + Log.Take());
+            Observer.Observe('next', Format(P2.Next()) + '|' + P2.Id.Value() + '|' + Log.Take());
+            Observer.Observe('previous', Format(P2.Previous()) + '|' + P2.Id.Value() + '|' + Log.Take());
+            P2.Close();
+        end;
+        Log.Take();
+    end;
+
+    [Test]
+    procedure PW_OpenOnLastRow_WithCurrRecord_3Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwOpenLast(3, true, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_OpenOnLastRow_WithCurrRecord_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwOpenLast(25, true, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_OpenOnLastRow_NoCurrRecord_3Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwOpenLast(3, false, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_OpenOnLastRow_NoCurrRecord_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwOpenLast(25, false, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_OpenOnHandedLastRow_3Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        Row: Record "LT PnF FL Row";
+        Pg: Page "LT PnF FL Asc";
+        P: TestPage "LT PnF FL Asc";
+    begin
+        Seed(3);
+        Row.Get(3);
+        Log.Take();
+        P.Trap();
+        Pg.SetRecord(Row);
+        Pg.Run();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+        Observer.Finish();
+    end;
+}
+
+// Writer PW: an OnFindRecord / OnNextRecord / OnAfterGetRecord list that positions itself on the last row in OnOpenPage (with OnAfterGetCurrRecord).
+page 86151 "LT PW FL Last Curr"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT PnF FL Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('O');
+        if Rec.FindLast() then;
+    end;
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('F(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('N(' + Format(Steps) + ')');
+        exit(Rec.Next(Steps));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('C');
+    end;
+}
+
+// Writer PW: an OnFindRecord / OnNextRecord / OnAfterGetRecord list that positions itself on the last row in OnOpenPage (no OnAfterGetCurrRecord).
+page 86152 "LT PW FL Last Plain"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT PnF FL Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('O');
+        if Rec.FindLast() then;
+    end;
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('F(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('N(' + Format(Steps) + ')');
+        exit(Rec.Next(Steps));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
+    end;
 }
