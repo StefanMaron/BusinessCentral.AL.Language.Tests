@@ -294,7 +294,12 @@ codeunit 85969 "LT DF XmlPort Leads"
             repeat
                 Observer.Observe('row' + Format(Row.Id), 'type=' + Format(Row.Type) + ' ' + Row.Note);
             until Row.Next() = 0;
-        Observer.Finish();
+        Observer.Expect('imported', 'Yes');
+        Observer.Expect('import|text', '');
+        Observer.Expect('import|code', '');
+        Observer.Expect('row1', 'type=Alpha assign=[Beta] field=[Alpha] insert=[Beta]');
+        Observer.Expect('row2', 'type=Gamma assign=[Gamma] field=[Alpha] insert=[Gamma]');
+        Observer.Verify();
     end;
 
     local procedure StreamText(var TempBlob: Codeunit "Temp Blob"): Text
