@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-pages
 // Scope: in-scope
 // Fixtures for the probes of corpus issue 667 (odd AL behavior leads, part B: pages), items 1 to 16 (writer CA):
-// table 84100, log codeunit 84101, pages 84100-84104. The tests are in CaTestPageTests.al (84110) and CaNotificationTests.al (84111).
+// table 84100, log codeunits 84101 (CaTestPageTests.al only) and 84102 (CaNotificationTests.al only), pages 84100-84103. The tests are in CaTestPageTests.al (84110) and CaNotificationTests.al (84111).
 
 table 84100 "LT CA Row"
 {
@@ -176,4 +176,27 @@ page 84103 "LT CA Role Center"
             }
         }
     }
+}
+
+// The log of CaNotificationTests.al (84111) only: a SingleInstance codeunit has one owner test codeunit.
+codeunit 84102 "LT CA Notif Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        R: Text;
+    begin
+        R := Entries;
+        Entries := '';
+        exit(R);
+    end;
 }
