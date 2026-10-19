@@ -92,4 +92,25 @@ codeunit 85600 "LT CZ Http No Network"
         Observer.Observe('keys', Format(Client.DefaultRequestHeaders().Keys().Count()));
         Observer.Finish();
     end;
+
+    [Test]
+    procedure DefaultRequestHeaders_Reference_ValidationTrueOnFreshClient()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Headers: HttpHeaders;
+    begin
+        Headers := Client.DefaultRequestHeaders();
+        Client.UseServerCertificateValidation(true);
+        Headers.Add('X-Test', '1');
+        Observer.Observe('client_sees_after_true', Format(Client.DefaultRequestHeaders().Contains('X-Test')));
+        Headers := Client.DefaultRequestHeaders();
+        Client.UseServerCertificateValidation(false);
+        Client.UseServerCertificateValidation(false);
+        Headers.Add('X-Again', '1');
+        Observer.Observe('client_sees_after_false_twice', Format(Client.DefaultRequestHeaders().Contains('X-Again')));
+        Client.DefaultRequestHeaders().Add('X-Direct', '1');
+        Observer.Observe('direct_add_after_false', Format(Client.DefaultRequestHeaders().Contains('X-Direct')));
+        Observer.Finish();
+    end;
 }

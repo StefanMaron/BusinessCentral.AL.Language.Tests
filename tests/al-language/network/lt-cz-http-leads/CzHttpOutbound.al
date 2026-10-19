@@ -7,13 +7,9 @@ codeunit 85601 "LT CZ Http Outbound"
     Subtype = Test;
     TestPermissions = Disabled;
 
-    var
-        Prompts: Integer;
-
     [StrMenuHandler]
     procedure AllowOnceHandler(Options: Text; var Choice: Integer; Instruction: Text)
     begin
-        Prompts += 1;
         Choice := 2; // "Allow Once" -- the outbound-connection approval prompt
     end;
 
@@ -65,6 +61,16 @@ codeunit 85601 "LT CZ Http Outbound"
         exit('raised=' + Format(Raised) + ' ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' err=[' + Short(Err) + '] code=[' + GetLastErrorCode() + ']');
     end;
 
+    local procedure Brief(var Client: HttpClient; Url: Text): Text
+    var
+        Resp: HttpResponseMessage;
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Ok := Client.Get(Url, Resp);
+        exit('ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' code=' + GetLastErrorCode());
+    end;
+
     [Test]
     [HandlerFunctions('AllowOnceHandler')]
     procedure InternalAddresses()
@@ -72,18 +78,17 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer: Codeunit "Probe Observer";
         Client: HttpClient;
     begin
-        Prompts := 0;
         Client.Timeout := 5000;
         Observer.Observe('loopback', GetOutcome(Client, 'http://127.0.0.1:1/'));
-        Observer.Observe('localhost', GetOutcome(Client, 'http://localhost:1/'));
-        Observer.Observe('loopback_other', GetOutcome(Client, 'http://127.10.20.30/'));
-        Observer.Observe('ipv6_loopback', GetOutcome(Client, 'http://[::1]:1/'));
-        Observer.Observe('ten', GetOutcome(Client, 'http://10.255.255.1/'));
-        Observer.Observe('lan', GetOutcome(Client, 'http://192.168.255.1/'));
-        Observer.Observe('lan172', GetOutcome(Client, 'http://172.16.255.1/'));
-        Observer.Observe('imds', GetOutcome(Client, 'http://169.254.169.254/metadata/instance'));
-        Observer.Observe('zero', GetOutcome(Client, 'http://0.0.0.0:1/'));
-        Observer.Observe('prompts', Format(Prompts));
+        Observer.Observe('localhost', Brief(Client, 'http://localhost:1/'));
+        Observer.Observe('loopback_other', Brief(Client, 'http://127.10.20.30/'));
+        Observer.Observe('ipv6_loopback', Brief(Client, 'http://[::1]:1/'));
+        Observer.Observe('ten', Brief(Client, 'http://10.255.255.1/'));
+        Observer.Observe('lan', Brief(Client, 'http://192.168.255.1/'));
+        Observer.Observe('lan172', Brief(Client, 'http://172.16.255.1/'));
+        Observer.Observe('imds', Brief(Client, 'http://169.254.169.254/metadata/instance'));
+        Observer.Observe('zero', Brief(Client, 'http://0.0.0.0:1/'));
+        Observer.Observe('public', Brief(Client, 'https://example.com/'));
         Observer.Finish();
     end;
 
@@ -95,7 +100,6 @@ codeunit 85601 "LT CZ Http Outbound"
         Client: HttpClient;
         Loose: HttpClient;
     begin
-        Prompts := 0;
         Observer.Observe('expired', GetOutcome(Client, 'https://expired.badssl.com/'));
         Observer.Observe('wrong_host', GetOutcome(Client, 'https://wrong.host.badssl.com/'));
         Observer.Observe('self_signed', GetOutcome(Client, 'https://self-signed.badssl.com/'));
@@ -104,7 +108,6 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('off_expired', GetOutcome(Loose, 'https://expired.badssl.com/'));
         Observer.Observe('off_wrong_host', GetOutcome(Loose, 'https://wrong.host.badssl.com/'));
         Observer.Observe('off_self_signed', GetOutcome(Loose, 'https://self-signed.badssl.com/'));
-        Observer.Observe('prompts', Format(Prompts));
         Observer.Finish();
     end;
 
