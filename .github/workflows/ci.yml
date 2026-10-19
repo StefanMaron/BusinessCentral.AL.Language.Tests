@@ -259,9 +259,14 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      # The quoted range after || is this job's full range: widen it there. On a pull request the prepare job may pass
+      # The quoted range after || is this job's full range. Every job's full range is 50000..99999, every id a test app
+      # can use, so a new id block never needs an edit here (the runner reads the Subtype = Test codeunits of the test
+      # app's own .app and intersects them with this range; the other apps' ids in the span cost nothing). Left out:
+      # 75020..75024, Subtype = Test codeunits WITHOUT test methods (fixtures whose TestType and RequiredTestIsolation
+      # metadata codeunit/lt-x-object-props/XObjectProps.al reads); a codeunit in the range that reports no result at all
+      # fails the leg ("5 codeunit(s) produced NO result", run 39203765648). On a pull request the prepare job may pass
       # only the selected codeunits instead (CONTRIBUTING.md, "Test selection in CI"); the same holds for the jobs below.
-      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language'] || '50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999' }}
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language'] || '50000..75019|75025..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -324,7 +329,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem"
-      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem'] || '61200..61299|98000..98999' }}
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem'] || '50000..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -356,7 +361,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem-dotnet"
-      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem-dotnet'] || '61400..61499|99000..99499' }}
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem-dotnet'] || '50000..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
