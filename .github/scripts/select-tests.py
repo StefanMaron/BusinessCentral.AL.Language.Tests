@@ -12,8 +12,9 @@ What is selected, per test job of .github/workflows/ci.yml:
   * every test codeunit that references a changed object, directly or through other objects: an object that names a
     changed object by name or id is itself treated as changed, until nothing new is found. An extension object
     (tableextension, pageextension, enumextension, ...) also counts as a change of the object it extends.
-  * a job whose test app has nothing selected runs one small test codeunit (the sentinel): the reusable workflow fails a
-    leg that ran no test at all, and the leg still compiles and publishes every app.
+  * every job also runs one small test codeunit outside any #if (the sentinel): the reusable workflow fails a leg that
+    ran no test at all, and a selected codeunit can be compiled out on an older BC version. The leg still compiles and
+    publishes every app.
 Only codeunits inside the job's own codeunit_range are selected, so a codeunit the full run leaves out stays out.
 
 A full run is chosen instead when the change touches something a reference scan cannot follow (the rules are in
@@ -62,6 +63,12 @@ SUBTYPE = re.compile(r'\bSubtype\s*=\s*(\w+)\s*;', re.I)
 TEST_ATTR = re.compile(r'\[\s*Test\s*\]', re.I)
 HANDLER_ATTR = re.compile(r'\[\s*HandlerFunctions\s*\(', re.I)
 SUBSCRIBER_ATTR = re.compile(r'\[\s*EventSubscriber\s*\(', re.I)
+PREPROCESSOR_IF = re.compile(r'^\s*#if\b', re.I | re.M)
+
+
+def has_code(text):
+    """False for a file of comments and blank lines only."""
+    return any(not (t.startswith('//') or t.startswith('/*') or t.isspace()) for t in (m.group(0) for m in LEX.finditer(text)))
 
 
 def unquote(name):
@@ -73,7 +80,7 @@ def unquote(name):
 
 class Obj:
     __slots__ = ('path', 'kind', 'id', 'name', 'display', 'target', 'subtype', 'tests', 'handlers', 'subscriber', 'size',
-                 'tokens', 'aliases')
+                 'tokens', 'aliases', 'conditional')
 
     def keys(self):
         """What other objects use to name this one."""
@@ -96,6 +103,7 @@ def parse_al(path, text):
     depth = 0
     header = []
     body = []
+    conditional = bool(PREPROCESSOR_IF.search(text))
     for m in LEX.finditer(text):
         t = m.group(0)
         if t.startswith('//') or t.startswith('/*'):
@@ -111,7 +119,7 @@ def parse_al(path, text):
                 for hm in HEADER.finditer(head_text):
                     pass
                 o = Obj()
-                o.path, o.aliases = path, set()
+                o.path, o.aliases, o.conditional = path, set(), conditional
                 if hm is not None:
                     o.kind, o.id, o.name = hm.group(1).lower(), hm.group(2), unquote(hm.group(3))
                     o.display = hm.group(3).strip().strip('"')
@@ -365,7 +373,7 @@ def select(git, base, head, merge_base=False, ci_text=None):
             versions = [(objs[n], 'head') for n in by_path.get(f, [])]
             if f in base_texts:
                 versions += [(o, 'base') for o in parse_al(f, base_texts[f])]
-            if f in texts and not by_path.get(f):
+            if f in texts and not by_path.get(f) and has_code(texts[f]):
                 reasons.append('no AL object found in %s' % f)
             for o, side in versions:
                 if o.kind is None:
@@ -377,7 +385,7 @@ def select(git, base, head, merge_base=False, ci_text=None):
                 elif o.kind in PERMISSION_KINDS:
                     reasons.append('%s in %s' % (o.kind, f))
             here = by_path.get(f, [])
-            if f in texts:
+            if f in texts and here:
                 seeds.append(('changed: %s' % f, set(), here, True))
             gone = {o.name for o, side in versions if side == 'base'} - {objs[n].name for n in here}
             if gone:
@@ -432,13 +440,16 @@ def select(git, base, head, merge_base=False, ci_text=None):
         entry = {'codeunits': [{'id': int(objs[n].id), 'name': objs[n].display, 'file': objs[n].path, 'why': why[n]}
                                for n in picked],
                  'test_codeunits_in_app': sum(1 for n in range(len(objs)) if runnable(n) == app)}
-        if not picked:
-            s = sentinel(objs, [n for n in range(len(objs)) if runnable(n) == app])
-            if s is None:
-                return full(result, 'no test codeunit in %s to keep its leg alive' % app)
-            entry['codeunits'] = [{'id': int(objs[s].id), 'name': objs[s].display, 'file': objs[s].path,
-                                   'why': 'sentinel: nothing in this app is affected; the leg needs one test result'}]
-            entry['sentinel'] = True
+        # One test codeunit outside any #if always runs too: the test workflow fails a leg that runs no codeunit, and a
+        # selected codeunit can be compiled out on an older BC version.
+        s = sentinel(objs, [n for n in range(len(objs)) if runnable(n) == app and not objs[n].conditional])
+        if s is None:
+            return full(result, 'no test codeunit without #if in %s to keep its leg running' % app)
+        if s not in picked:
+            entry['codeunits'].append({'id': int(objs[s].id), 'name': objs[s].display, 'file': objs[s].path,
+                                       'why': 'sentinel: one small codeunit every leg runs, so that no leg runs zero codeunits',
+                                       'sentinel': True})
+        entry['sentinel'] = not picked
         result['apps'][app] = entry
     result['unwired_jobs'] = unwired
     return result
@@ -523,13 +534,14 @@ def summary(result):
         out.append('Every test codeunit in every job runs. Why:\n')
         out.extend('- %s' % r for r in result['reasons'])
     else:
-        n = sum(len(e['codeunits']) for e in result['apps'].values() if not e.get('sentinel'))
+        n = sum(1 for e in result['apps'].values() for c in e['codeunits'] if not c.get('sentinel'))
         out.append('## Test selection: %d test codeunit%s\n' % (n, '' if n == 1 else 's'))
         out.append('Only the test codeunits that the change can affect run. Every app is still compiled and published. '
                    'Rules: CONTRIBUTING.md, "Test selection in CI". Add the label `full-run` to a pull request and '
                    're-run all jobs to run everything.\n')
         for app, e in result['apps'].items():
-            label = 'sentinel only' if e.get('sentinel') else '%d of %d' % (len(e['codeunits']), e['test_codeunits_in_app'])
+            own = sum(1 for c in e['codeunits'] if not c.get('sentinel'))
+            label = 'nothing affected, sentinel only' if e.get('sentinel') else '%d of %d' % (own, e['test_codeunits_in_app'])
             out.append('- `%s`: %s' % (app, label))
         if result.get('unwired_jobs'):
             out.append('- jobs that always run their full range: %s' % ', '.join(result['unwired_jobs']))
@@ -580,10 +592,10 @@ def main(argv=None):
         if os.environ.get('GITHUB_OUTPUT'):
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                 f.write('subset=%s\n' % json.dumps(subset_output(result), separators=(',', ':')))
-        n = sum(len(e['codeunits']) for e in result['apps'].values())
+        n = sum(1 for e in result['apps'].values() for c in e['codeunits'] if not c.get('sentinel'))
         print('::notice title=Test selection::%s' % (
             'full run: ' + '; '.join(result['reasons'])[:900] if result['mode'] == 'full'
-            else '%d test codeunit(s) selected; see the prepare job summary' % n))
+            else '%d test codeunit(s) selected; the prepare job summary says which and why' % n))
     return 0
 
 

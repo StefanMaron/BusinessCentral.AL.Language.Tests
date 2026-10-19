@@ -103,7 +103,11 @@ def make(changes, base_files=None):
 
 
 def ids(result, app):
-    return [c['id'] for c in result['apps'][app]['codeunits']]
+    return [c['id'] for c in result['apps'][app]['codeunits'] if not c.get('sentinel')]
+
+
+def sentinels(result, app):
+    return [c['id'] for c in result['apps'][app]['codeunits'] if c.get('sentinel')]
 
 
 FAILED = []
@@ -122,10 +126,24 @@ def touch(path):
 def main():
     r = make(touch('tests/main/T1.al'))
     check('changed test codeunit runs alone', r['mode'] == 'subset' and ids(r, 'tests/main') == [50010], r)
-    check('app with nothing selected runs one sentinel', r['apps']['tests/onprem'].get('sentinel')
-          and ids(r, 'tests/onprem') == [60011], r['apps'].get('tests/onprem'))
-    check('subset output is {app: "ids"}', st.subset_output(r) == {'tests/main': '50010', 'tests/onprem': '60011'},
+    check('app with nothing selected runs only its sentinel', r['apps']['tests/onprem'].get('sentinel')
+          and ids(r, 'tests/onprem') == [] and sentinels(r, 'tests/onprem') == [60011], r['apps'].get('tests/onprem'))
+    check('every app also runs one sentinel: the smallest codeunit with one test and no #if',
+          sentinels(r, 'tests/main') == [50014], r['apps']['tests/main'])
+    check('subset output is {app: "ids"}', st.subset_output(r) == {'tests/main': '50010,50014', 'tests/onprem': '60011'},
           st.subset_output(r))
+
+    with_if = dict(BASE_FILES)
+    with_if['tests/main/Tiny.al'] = '#if BC29PLUS\ncodeunit 50016 Tiny\n{\n    Subtype = Test;\n    [Test]\n    procedure A() begin end;\n}\n#endif\n'
+    r = make(touch('tests/main/T1.al'), with_if)
+    check('a codeunit in #if is never the sentinel', sentinels(r, 'tests/main') == [50014], r['apps']['tests/main'])
+
+    comment_only = dict(BASE_FILES)
+    comment_only['tests/main/Notes.al'] = '// placeholder, no object yet\n'
+    r = make({'tests/main/Notes.al': '// placeholder, still no object\n', 'tests/main/T1.al': BASE_FILES['tests/main/T1.al'] + '\n'},
+             comment_only)
+    check('a file with only comments selects nothing and is no reason for a full run', r['mode'] == 'subset'
+          and ids(r, 'tests/main') == [50010], r['reasons'])
 
     r = make(touch('tests/main/Probe.Table.al'))
     check('changed table: users, users through a helper, other apps; not out of range, not without [Test], '
