@@ -127,7 +127,10 @@ codeunit 86104 "LT DH PgAct Tests"
         Pg.Footer.Invoke();
         Pg.Close();
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('visible', 'Yes');
+        Observer.Expect('enabled', 'Yes');
+        Observer.Expect('log', 'Footer;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +155,12 @@ codeunit 86104 "LT DH PgAct Tests"
         Row.Get(1);
         Observer.Observe('stored', Row.Name);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('value', 'one');
+        Observer.Expect('editable', 'Yes');
+        Observer.Expect('visible', 'Yes');
+        Observer.Expect('stored', 'two');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,6 +178,8 @@ codeunit 86104 "LT DH PgAct Tests"
         Pg.OpenEdit();
         asserterror Pg.Name.AssistEdit();
         Observer.ObserveError('assistedit');
+        asserterror Pg.Id.AssistEdit();
+        Observer.ObserveError('assistedit_plain_field');
         Observer.Observe('log', Log.Take());
         Observer.Finish();
     end;

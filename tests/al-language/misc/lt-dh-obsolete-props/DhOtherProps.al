@@ -6,7 +6,7 @@
 // - item 10: Width on an XMLport fieldattribute (and fieldelement) of an XML port: what an export writes for a value longer than Width.
 // - item 13: EntityName and EntitySetName on a system part compile and the page opens. SubPageLink and SubPageView on a system part do not compile
 //   (AL0171, must-not-compile case 1865); a TestPage cannot reach a system part (AL0132, case 1864).
-// - item 15: Permissions on a request page: the code of the request page and of the report under a permission set with indirect insert only.
+// - item 15: Permissions on a request page, for a user whose permission set has indirect insert only: request page triggers and the report's own trigger.
 // Object ids 86090-86099.
 
 table 86090 "LT DH Props Row"
@@ -106,6 +106,15 @@ report 86095 "LT DH Props Rp With Perms"
             Target.Id := 1;
             Target.Insert();
         end;
+
+        trigger OnQueryClosePage(CloseAction: Action): Boolean
+        var
+            Target: Record "LT DH Props Rp Target";
+        begin
+            Target.Id := 4;
+            Target.Insert();
+            exit(true);
+        end;
     }
 
     trigger OnPreReport()
@@ -123,12 +132,13 @@ report 86096 "LT DH Props Rp No Perms"
 
     requestpage
     {
-        trigger OnOpenPage()
+        trigger OnQueryClosePage(CloseAction: Action): Boolean
         var
             Target: Record "LT DH Props Rp Target";
         begin
             Target.Id := 3;
             Target.Insert();
+            exit(true);
         end;
     }
 }
@@ -158,7 +168,11 @@ codeunit 86097 "LT DH Other Props Tests"
         RecRef.GetTable(Row);
         Observer.Observe('fieldref_value', Format(RecRef.Field(2).Value));
         Observer.Observe('strlen', Format(StrLen(Row.Secret)));
-        Observer.Finish();
+        Observer.Expect('format', 'pw-1');
+        Observer.Expect('format_0_9', 'pw-1');
+        Observer.Expect('fieldref_value', 'pw-1');
+        Observer.Expect('strlen', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -187,7 +201,8 @@ codeunit 86097 "LT DH Other Props Tests"
             Result += Line + '|';
         end;
         Observer.Observe('export', Result);
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row Short="abcdefgh" Wide="abcdefgh">|    <Element>abcdefgh</Element>|  </Row>|  <Row Short="ab" Wide="ab">|    <Element>ab</Element>|  </Row>|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,18 +218,37 @@ codeunit 86097 "LT DH Other Props Tests"
         Pg.OpenView();
         Observer.Observe('id', Pg.Id.Value);
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('id', '7');
+        Observer.Verify();
     end;
 
     [Test]
     [HandlerFunctions('RequestOk')]
-    procedure RequestPagePermissions_IndirectOnlyUser()
+    procedure RequestPagePermissions_WithPermissions_IndirectOnlyUser()
     var
         Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('run', RunUnderMock(Report::"LT DH Props Rp With Perms"));
+        Observer.Observe('target_ids', TargetIds());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestOkNoPerms')]
+    procedure RequestPagePermissions_WithoutPermissions_IndirectOnlyUser()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('run', RunUnderMock(Report::"LT DH Props Rp No Perms"));
+        Observer.Observe('target_ids', TargetIds());
+        Observer.Finish();
+    end;
+
+    local procedure RunUnderMock(ReportId: Integer) Result: Text
+    var
         Mock: Codeunit "Permissions Mock";
         Target: Record "LT DH Props Rp Target";
         WasStarted: Boolean;
-        Ids: Text;
     begin
         Target.DeleteAll();
         Commit();
@@ -222,17 +256,20 @@ codeunit 86097 "LT DH Other Props Tests"
         if not WasStarted then
             Mock.Start();
         Mock.Set(SetTok);
-        Observer.Observe('with_perms', RunReport(Report::"LT DH Props Rp With Perms"));
-        Observer.Observe('no_perms', RunReport(Report::"LT DH Props Rp No Perms"));
+        Result := RunReport(ReportId);
         Mock.ClearAssignments();
         if not WasStarted then
             Mock.Stop();
+    end;
+
+    local procedure TargetIds() Ids: Text
+    var
+        Target: Record "LT DH Props Rp Target";
+    begin
         if Target.FindSet() then
             repeat
                 Ids += Format(Target.Id) + ';';
             until Target.Next() = 0;
-        Observer.Observe('target_ids', Ids);
-        Observer.Finish();
     end;
 
     local procedure RunReport(ReportId: Integer): Text
@@ -247,6 +284,12 @@ codeunit 86097 "LT DH Other Props Tests"
 
     [RequestPageHandler]
     procedure RequestOk(var RP: TestRequestPage "LT DH Props Rp With Perms")
+    begin
+        RP.OK().Invoke();
+    end;
+
+    [RequestPageHandler]
+    procedure RequestOkNoPerms(var RP: TestRequestPage "LT DH Props Rp No Perms")
     begin
         RP.OK().Invoke();
     end;

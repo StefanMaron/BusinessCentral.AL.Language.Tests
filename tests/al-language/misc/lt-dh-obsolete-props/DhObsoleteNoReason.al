@@ -138,7 +138,9 @@ codeunit 86086 "LT DH Obs NoReason Tests"
         Row.Get(2);
         Observer.Observe('name_after_modify', Row.Name);
         Observer.Observe('count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('name_after_modify', 'changed');
+        Observer.Expect('count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -156,7 +158,9 @@ codeunit 86086 "LT DH Obs NoReason Tests"
         Pg.Close();
         Row.Get(1);
         Observer.Observe('stored_name', Row.Name);
-        Observer.Finish();
+        Observer.Expect('page_name', 'one');
+        Observer.Expect('stored_name', 'edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -172,7 +176,8 @@ codeunit 86086 "LT DH Obs NoReason Tests"
             Rows += Format(Q.Id) + '=' + Q.Name + ';';
         Q.Close();
         Observer.Observe('rows', Rows);
-        Observer.Finish();
+        Observer.Expect('rows', '1=one;2=two;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +190,8 @@ codeunit 86086 "LT DH Obs NoReason Tests"
         Log.Take();
         Report.Run(Report::"LT DH Obs NoReason Report");
         Observer.Observe('report_rows', Log.Take());
-        Observer.Finish();
+        Observer.Expect('report_rows', '1;2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -204,6 +210,8 @@ codeunit 86086 "LT DH Obs NoReason Tests"
             Grant := 'no row';
         Observer.Observe('grant', Grant);
         Observer.Observe('rows', Format(Declared.Count()));
-        Observer.Finish();
+        Observer.Expect('grant', 'R=Yes I=Yes M= ');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 }
