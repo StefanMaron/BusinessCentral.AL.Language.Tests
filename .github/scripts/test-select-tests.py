@@ -200,6 +200,31 @@ def main():
     check('unwired job runs its full range', r['mode'] == 'subset' and 'tests/onprem' not in r['apps']
           and r['unwired_jobs'] == ['test-onprem'], r)
 
+    # a ci.yml change that only edits codeunit_range values (a "CI range edit") is selected as usual, not a full run
+    wider = CI.replace("'50000..50099|50200..50299'", "'50000..50099|50200..50299|50300..50399'")
+    r = make(dict(touch('tests/main/T1.al'), **{'.github/workflows/ci.yml': wider}))
+    check('CI range edit: selected as usual', r['mode'] == 'subset' and ids(r, 'tests/main') == [50010]
+          and r.get('ci_range_edit') == ['.github/workflows/ci.yml'], r)
+    into_range = CI.replace("'50000..50099|50200..50299'", "'50000..50199|50200..50299'")
+    r = make(dict(touch('tests/main/T1.al'), **{'.github/workflows/ci.yml': into_range}))
+    check('CI range edit: a test codeunit the edit brings into the range runs too', r['mode'] == 'subset'
+          and ids(r, 'tests/main') == [50010, 50150], r)
+    r = make({'.github/workflows/ci.yml': wider})
+    check('CI range edit alone: full run (nothing in the test apps changed)', r['mode'] == 'full'
+          and any('no changed file in the test apps' in x for x in r['reasons']), r['reasons'])
+    more = wider.replace('  test-onprem:\n', '  # a comment\n  test-onprem:\n')
+    r = make(dict(touch('tests/main/T1.al'), **{'.github/workflows/ci.yml': more}))
+    check('ci.yml edit beyond codeunit_range lines: full run', r['mode'] == 'full'
+          and any('CI configuration' in x for x in r['reasons']), r['reasons'])
+    rewired = CI.replace("['tests/onprem'] || '60000..60099'", "['tests/main'] || '60000..60099'")
+    r = make(dict(touch('tests/main/T1.al'), **{'.github/workflows/ci.yml': rewired}))
+    check('codeunit_range edit that changes the subset key: full run', r['mode'] == 'full'
+          and any('CI configuration' in x for x in r['reasons']), r['reasons'])
+    other_key = CI.replace('      test_app_dirs:        "tests/onprem"', '      test_app_dirs:        "tests/other"')
+    r = make(dict(touch('tests/main/T1.al'), **{'.github/workflows/ci.yml': other_key}))
+    check('ci.yml edit of another with: key: full run', r['mode'] == 'full'
+          and any('CI configuration' in x for x in r['reasons']), r['reasons'])
+
     # the parser: several objects per file, braces in strings, quoted and namespaced names
     objs = st.parse_al('x.al', BASE_FILES['tests/main/Rep.al'] + BASE_FILES['tests/main/CustExt.al'])
     check('parse_al reads every object', [(o.kind, o.id, o.name, o.target) for o in objs] == [

@@ -17,6 +17,9 @@ What is selected, per test job of .github/workflows/ci.yml:
     publishes every app.
 Only codeunits inside the job's own codeunit_range are selected, so a codeunit the full run leaves out stays out.
 
+A change to ci.yml that edits nothing but the values of codeunit_range lines (a "CI range edit") is no reason for a
+full run: the selection is made as usual, plus every test codeunit the edit brings into its job's range.
+
 A full run is chosen instead when the change touches something a reference scan cannot follow (the rules are in
 FULL_RULES below and in CONTRIBUTING.md, "Test selection in CI"). Any error in this script also means a full run.
 
@@ -270,6 +273,29 @@ def lines_in_with(lines, i):
     return False
 
 
+RANGE_LINE = re.compile(r'^      codeunit_range:\s*(.*?)\s*$')
+
+
+def range_line_key(lines, i):
+    """For a codeunit_range line of a test job: ('key', subset key or None). None when line i is not one."""
+    m = RANGE_LINE.match(lines[i])
+    if not m or not lines_in_with(lines, i):
+        return None
+    k = RANGE_EXPR.match(m.group(1))
+    return ('key', k.group(1) if k else None)
+
+
+def ci_range_edit(base_text, head_text):
+    """True when ci.yml changed, but only in the values of codeunit_range lines (a "CI range edit"): same lines
+    otherwise, and every changed codeunit_range line still reads the same subset key (or still none)."""
+    b, h = base_text.split('\n'), head_text.split('\n')
+    if len(b) != len(h):
+        return False
+    diff = [i for i, (x, y) in enumerate(zip(b, h)) if x != y]
+    return bool(diff) and all(range_line_key(b, i) is not None and range_line_key(b, i) == range_line_key(h, i)
+                              for i in diff)
+
+
 def spans(expr):
     out = []
     for part in expr.replace('|', ',').split(','):
@@ -322,12 +348,16 @@ def select(git, base, head, merge_base=False, ci_text=None):
         return full(result, 'no changed files between %s and %s' % (base[:10], head[:10]))
 
     all_files = git.files(head)
+    ci_texts = git.read(base, [CI_YML]), git.read(head, [CI_YML])
+    range_edit = CI_YML in changed and ci_range_edit(ci_texts[0].get(CI_YML, ''), ci_texts[1].get(CI_YML, ''))
     app_resources = resource_dirs(git, head, ci_apps)
     relevant, ignored = [], []
     reasons = []
     for f in changed:
         app = app_of(f, ci_apps)
-        if f.startswith('.github/'):
+        if f == CI_YML and range_edit:
+            result['ci_range_edit'] = [f]  # only codeunit_range values changed: select as usual
+        elif f.startswith('.github/'):
             reasons.append('CI configuration changed: %s' % f)
         elif app is None:
             if any(p.search(f) for p in IGNORED_OUTSIDE_APPS) or test_app_outside_ci(f, all_files, ci_apps):
@@ -430,6 +460,16 @@ def select(git, base, head, merge_base=False, ci_text=None):
                 why[n] = describe(objs, v, desc)
     if reasons:
         return full(result, *reasons)
+    if range_edit:
+        # a test codeunit the CI range edit brings into its job's range has never run in CI: run it too
+        base_ranges = {}
+        for j in parse_ci(ci_texts[0].get(CI_YML, '')):
+            for d in j['test_app_dirs']:
+                base_ranges.setdefault(d, []).extend(spans(j['range']))
+        for n in range(len(objs)):
+            app = runnable(n)
+            if app and n not in why and not in_spans(base_ranges.get(app, []), int(objs[n].id)):
+                why[n] = 'brought into codeunit_range by the CI range edit in %s' % CI_YML
     if not why:
         return full(result, 'nothing selected')
 
@@ -543,6 +583,8 @@ def summary(result):
             own = sum(1 for c in e['codeunits'] if not c.get('sentinel'))
             label = 'nothing affected, sentinel only' if e.get('sentinel') else '%d of %d' % (own, e['test_codeunits_in_app'])
             out.append('- `%s`: %s' % (app, label))
+        if result.get('ci_range_edit'):
+            out.append('- `%s`: only `codeunit_range` values changed (CI range edit), so no full run' % CI_YML)
         if result.get('unwired_jobs'):
             out.append('- jobs that always run their full range: %s' % ', '.join(result['unwired_jobs']))
         out.append('\n| App | Codeunit | Name | Why |\n|---|---|---|---|')
