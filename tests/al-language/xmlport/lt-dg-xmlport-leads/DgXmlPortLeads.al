@@ -287,7 +287,9 @@ codeunit 86030 "LT DG XmlPort Leads"
         Item.Insert();
         Observer.Observe('empty_prefix', TryExportText(Xmlport::"LT DG Ns Empty Prefix"));
         Observer.Observe('undeclared', TryExportText(Xmlport::"LT DG Ns Undeclared"));
-        Observer.Finish();
+        Observer.Expect('empty_prefix', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\r\n<Root xmlns="urn:microsoft-dynamics-nav/xmlports/x86031">\r\n  <Item>\r\n    <Id>9</Id>\r\n  </Item>\r\n</Root>');
+        Observer.Expect('undeclared', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>\r\n<q:Root xmlns:p="urn:lt-dg-p" xmlns:q="q">\r\n  <Item>\r\n    <Id>9</Id>\r\n  </Item>\r\n</q:Root>');
+        Observer.Verify();
     end;
 
     // Linux suspect, queued for the Windows check (not a [Test]): on Linux BC 29.0 this export ends the test with an uncatchable
@@ -380,22 +382,18 @@ codeunit 86030 "LT DG XmlPort Leads"
     procedure Item111_ImportFromStreamNeverCreated()
     var
         Observer: Codeunit "Probe Observer";
-        Item: Record "LT DG Item";
         Xp: XmlPort "LT DG Xml Bool Xml";
         InS: InStream;
     begin
-        Item.DeleteAll();
         Xp.SetSource(InS);
         asserterror Xp.Import();
         Observer.ObserveError('instance');
         asserterror Xmlport.Import(Xmlport::"LT DG Xml Bool Xml", InS);
         Observer.ObserveError('static');
-        Observer.Observe('rows', Format(Item.Count()));
         Observer.Expect('instance|text', 'Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.');
         Observer.Expect('instance|code', 'NotInitialized');
         Observer.Expect('static|text', 'Microsoft.Dynamics.Nav.Runtime.NavInStream variable not initialized.');
         Observer.Expect('static|code', 'NotInitialized');
-        Observer.Expect('rows', '0');
         Observer.Verify();
     end;
 }

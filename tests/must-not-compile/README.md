@@ -322,6 +322,8 @@ is only a reference.
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
+| 1856 | AL0107 | An XmlPort Namespaces entry with the empty prefix written as `''` (the quoted identifier `""` compiles). |
+| 1857 | AL0107 | An XmlPort Namespaces property written as one string `'soap=http://...'`. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
