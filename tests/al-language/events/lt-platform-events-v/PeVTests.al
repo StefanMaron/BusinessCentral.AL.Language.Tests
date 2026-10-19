@@ -696,8 +696,10 @@ codeunit 69852 "LT V Platform Event Tests"
 
     local procedure PwArgs(var Observer: Codeunit "Probe Observer"; Which: Text; var Parameters: Text)
     var
+        ArgSubs: Codeunit "LT PW V Arg Subs";
         Ok: Boolean;
     begin
+        BindSubscription(ArgSubs);
         Log.Start();
         Log.SetValue('pwcollect', 'yes');
         Ok := PwTryCall(Which, Parameters);
@@ -707,6 +709,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Observe(Which, Format(Ok) + '|' + Log.GetValue('pwargs'));
         Log.Take();
         Log.Stop();
+        UnbindSubscription(ArgSubs);
     end;
 
     [Test]
@@ -731,9 +734,11 @@ codeunit 69852 "LT V Platform Event Tests"
 }
 
 // Writer PW: a second subscriber to SubstituteReport and OnDocumentReady that records the arguments the LT V Subs subscribers do not log.
-// It writes only into the 'pwargs' setting of LT V Log and only while a PW test set 'pwcollect', so the logs of the other tests stay as they are.
+// It writes only into the 'pwargs' setting of LT V Log, only while bound (manual subscription) by a PW test that set 'pwcollect'.
 codeunit 86146 "LT PW V Arg Subs"
 {
+    EventSubscriberInstance = Manual;
+
     var
         Log: Codeunit "LT V Log";
 

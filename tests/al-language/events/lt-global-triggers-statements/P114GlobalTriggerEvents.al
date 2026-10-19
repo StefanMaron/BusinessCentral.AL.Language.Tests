@@ -369,6 +369,7 @@ codeunit 74244 "LT P114 Global Events"
         R: Text;
     begin
         Tag := DelChr(Format(CreateGuid()), '=', '{}-');
+        BindSubscription(Subs);
         Subs.SetMode(Mode);
         R := 'area3=' + PwOne(Subs, Tag, '3,' + Tag);
         R += ' | area3Again=' + PwOne(Subs, Tag, '3,' + Tag);
@@ -380,6 +381,7 @@ codeunit 74244 "LT P114 Global Events"
         R += ' | empty=' + PwOne(Subs, Tag, '');
         R += ' | area3Empty=' + PwOne(Subs, Tag, '3,');
         Subs.SetMode('');
+        UnbindSubscription(Subs);
         exit(R);
     end;
 
@@ -405,6 +407,7 @@ codeunit 74244 "LT P114 Global Events"
         Card: TestPage "LT PW CCT Card";
     begin
         Seed();
+        BindSubscription(Subs);
         Subs.SetMode('set');
         Card.OpenView();
         Observer.Observe('calls after open', Format(Subs.TakeCalls()));
@@ -419,6 +422,7 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Observe('second open area3 caption', Card.PwArea3.Caption());
         Card.Close();
         Subs.SetMode('');
+        UnbindSubscription(Subs);
         Observer.Expect('calls after open', '2');
         Observer.Expect('claimed caption', 'T[PWCC1,Hello]');
         Observer.Expect('area3 caption', 'T[3,PW plain caption]');
@@ -458,6 +462,7 @@ page 86150 "LT PW CCT Card"
 codeunit 86149 "LT PW CCT Subs"
 {
     SingleInstance = true;
+    EventSubscriberInstance = Manual;
 
     var
         Mode: Text;
