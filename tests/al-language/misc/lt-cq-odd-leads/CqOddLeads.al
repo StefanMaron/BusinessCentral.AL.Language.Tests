@@ -103,10 +103,11 @@ codeunit 85060 "LT CQ Odd Leads"
         B: Time;
         I: Integer;
     begin
-        asserterror I := A - B;
-        Observer.ObserveError('0T - 0T');
-        asserterror I := 0T - 0T;
-        Observer.ObserveError('0T - 0T literal');
+        I := A - B;
+        Observer.Observe('0T - 0T', Format(I));
+        I := 0T - 0T;
+        Observer.Observe('0T - 0T literal', Format(I));
+        Observer.Observe('0T - 0T = 0', Format(A - B = 0));
         Observer.Finish();
     end;
 
@@ -180,14 +181,24 @@ codeunit 85060 "LT CQ Odd Leads"
         Observer.Observe('D20', Format(Rec.D20));
         Rec.D25 := 1;
         Observer.Observe('D25 one', Format(Rec.D25));
-        Rec.D3040 := 1.5;
-        Observer.Observe('D3040', Format(Rec.D3040));
         Rec.Insert();
         Rec.Get(1);
         Observer.Observe('D2 read back', Format(Rec.D2));
         Observer.Observe('D2 read back = 2.34567', Format(Rec.D2 = 2.34567));
         Observer.Observe('D25 read back', Format(Rec.D25));
         Observer.Observe('D25 format 9', Format(Rec.D25, 0, 9));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Item37_DecimalPlacesAbove28()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "LT CQ Dec";
+    begin
+        asserterror Rec.D3040 := 1.5;
+        Observer.ObserveError('assign 30:40');
+        Observer.Observe('value after', Format(Rec.D3040));
         Observer.Finish();
     end;
 
@@ -224,15 +235,13 @@ codeunit 85060 "LT CQ Odd Leads"
         end;
         Observer.ObserveError('sum 4000000001');
         Flow.Big := 1;
-        Flow.CalcFields(Cnt2, CntEnum);
+        Flow.CalcFields(Cnt2);
         Observer.Observe('count int = 1', Format(Flow.Cnt2));
-        Observer.Observe('count enum = 1', Format(Flow.CntEnum));
-        Flow.Big := 7;
         asserterror begin
             Flow.CalcFields(CntEnum);
             Error('no error: %1', Flow.CntEnum);
         end;
-        Observer.ObserveError('count enum = 7');
+        Observer.ObserveError('count enum = 1');
         Flow.Big := 3000000000L;
         asserterror begin
             Flow.CalcFields(Cnt2);
@@ -378,7 +387,10 @@ codeunit 85060 "LT CQ Odd Leads"
         Observer.Observe('2048 len', Format(StrLen(C2048)));
         Observer.Observe('2048 max', Format(MaxStrLen(C2048)));
         asserterror C2048 := PadStr('', 2049, 'c');
-        Observer.ObserveError('2049 into 2048');
+        Observer.Observe('2049 into 2048 text start', CopyStr(GetLastErrorText(), 1, 100));
+        Observer.Observe('2049 into 2048 text length', Format(StrLen(GetLastErrorText())));
+        Observer.Observe('2049 into 2048 code', GetLastErrorCode());
+        ClearLastError();
         Observer.Finish();
     end;
 
@@ -456,6 +468,7 @@ codeunit 85060 "LT CQ Odd Leads"
         Observer.Observe('message backslash codes', Codes(LastMessage));
         TB.AppendLine('L1');
         TB.AppendLine('L2');
+        Observer.Observe('textbuilder codes', Codes(TB.ToText()));
         Message(TB.ToText());
         Observer.Observe('message appendline codes', Codes(LastMessage));
         Message('%1', TB.ToText());
