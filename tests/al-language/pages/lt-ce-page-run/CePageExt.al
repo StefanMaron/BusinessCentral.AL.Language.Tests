@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-ext-object
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clearall-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); objects in CeObjects.al (84340 to 84359); Base Application pages 30 "Item Card" and
+// Fixtures used: Probe Observer (69160); objects in CeObjects.al (84340 to 84364); Base Application pages 30 "Item Card" and
 //   302 "Customer Entry Statistics"
 // Corpus issue 667 (part B), writer CE: ClearAll in a base page and the globals of a page extension (microsoft/AL issue 6499),
 // Visible of an extension action from a variable set in the extension's OnOpenPage (issue 4684), Editable of a base field
@@ -31,7 +31,7 @@ codeunit 84363 "LT CE Page Ext Tests"
     procedure ClearAll_InOwnBasePage_ExtensionGlobal()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT CE Log";
+        Log: Codeunit "LT CE Ext Log";
         Card: TestPage "LT CE ClearAll Card";
     begin
         SeedOne();
@@ -47,7 +47,7 @@ codeunit 84363 "LT CE Page Ext Tests"
     procedure ClearAll_InBaseAppPage_ExtensionGlobal()
     var
         Observer: Codeunit "Probe Observer";
-        Log: Codeunit "LT CE Log";
+        Log: Codeunit "LT CE Ext Log";
         Cust: Record Customer;
         Stat: TestPage "Customer Entry Statistics";
         Trace: Text;

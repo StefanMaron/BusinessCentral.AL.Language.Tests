@@ -3,7 +3,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-settableview-method
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-sourcetableview-pages-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); objects in CeObjects.al (84340 to 84359)
+// Fixtures used: Probe Observer (69160); objects in CeObjects.al (84340 to 84364)
 // Corpus issue 667 (part B), writer CE: Page.RunModal with an Enum or Option filter, OpenView of a descending list with OnFindRecord,
 // Page.Run(0, Rec) and a page id that does not exist, SetTableView on a page with a SourceTableView, Page.Run and Report.Run with a
 // Variant that holds a RecordRef.

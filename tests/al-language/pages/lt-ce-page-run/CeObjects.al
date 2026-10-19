@@ -46,28 +46,6 @@ table 84341 "LT CE Plain Row"
     }
 }
 
-codeunit 84361 "LT CE Log"
-{
-    SingleInstance = true;
-
-    var
-        Entries: Text;
-
-    procedure Add(Entry: Text)
-    begin
-        Entries += Entry + ';';
-    end;
-
-    procedure Take(): Text
-    var
-        Result: Text;
-    begin
-        Result := Entries;
-        Entries := '';
-        exit(Result);
-    end;
-}
-
 page 84344 "LT CE List"
 {
     PageType = List;
@@ -191,7 +169,7 @@ page 84348 "LT CE ClearAll Card"
 
     trigger OnAfterGetRecord()
     var
-        Log: Codeunit "LT CE Log";
+        Log: Codeunit "LT CE Ext Log";
     begin
         Log.Add('base AGR before ClearAll flag=' + Format(BaseFlag));
         ClearAll();
@@ -211,7 +189,7 @@ pageextension 84356 "LT CE ClearAll Ext" extends "LT CE ClearAll Card"
 
     trigger OnAfterGetRecord()
     var
-        Log: Codeunit "LT CE Log";
+        Log: Codeunit "LT CE Ext Log";
     begin
         Log.Add('ext AGR flag=' + Format(ExtFlag));
     end;
@@ -225,7 +203,7 @@ pageextension 84357 "LT CE Cust Entry Stat Ext" extends "Customer Entry Statisti
 
     trigger OnOpenPage()
     var
-        Log: Codeunit "LT CE Log";
+        Log: Codeunit "LT CE Ext Log";
     begin
         ExtFlag := true;
         Log.Add('ext OnOpenPage');
@@ -233,7 +211,7 @@ pageextension 84357 "LT CE Cust Entry Stat Ext" extends "Customer Entry Statisti
 
     trigger OnAfterGetRecord()
     var
-        Log: Codeunit "LT CE Log";
+        Log: Codeunit "LT CE Ext Log";
     begin
         Log.Add('ext AGR flag=' + Format(ExtFlag));
     end;
@@ -326,4 +304,50 @@ pageextension 84359 "LT CE Item Card Ext" extends "Item Card"
             Editable = not Rec."Stockkeeping Unit Exists";
         }
     }
+}
+
+// The two logs stay at the end of the file: each is used by one test codeunit only (check-singleinstance-fixture-owners.py).
+codeunit 84361 "LT CE Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
+}
+
+// Separate from "LT CE Log": a SingleInstance log is used by one test codeunit only.
+codeunit 84364 "LT CE Ext Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
 }
