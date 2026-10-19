@@ -206,7 +206,10 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999"
+      # 75020..75024 are left out: they are Subtype = Test codeunits WITHOUT test methods (fixtures whose TestType and
+      # RequiredTestIsolation metadata codeunit/lt-x-object-props/XObjectProps.al reads). A codeunit in the range that
+      # reports no result at all fails the leg ("5 codeunit(s) produced NO result", run 39203765648).
+      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..75019|75025..97999|99500..99999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
