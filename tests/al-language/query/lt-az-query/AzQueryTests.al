@@ -231,6 +231,9 @@ codeunit 80670 "LT AZ Query Tests"
         HeadA: Record "LT AZ Q Head";
         HeadB: Record "LT AZ Q Head";
         R: Text;
+        TextOk: Boolean;
+        TextErr: Text;
+        TextCode: Text;
     begin
         SeedRefs(HeadA, HeadB);
         Observer.Observe('format_a', Format(HeadA.RecordId));
@@ -251,9 +254,16 @@ codeunit 80670 "LT AZ Query Tests"
         Observer.Observe('notblank_rows', R);
         Observer.ObserveError('notblank');
         R := '';
-        Observer.Observe('text_ok', Format(TryReadRidPlain('abc', R)));
+        // A filter text that is not a record id: BC 28.5 and 29.0 accept it and return no rows; BC 27.5 raises an error.
+        ClearLastError();
+        TextOk := TryReadRidPlain('abc', R);
+        TextErr := GetLastErrorText();
+        TextCode := GetLastErrorCode();
+#if BC28PLUS
+        Observer.Observe('text_ok', Format(TextOk));
         Observer.Observe('text_rows', R);
         Observer.ObserveError('text');
+#endif
         Observer.Expect('format_a', 'LT AZ Q Head: A');
         Observer.Expect('eq_ok', 'Yes');
         Observer.Expect('eq_rows', '1;3;');
@@ -271,11 +281,17 @@ codeunit 80670 "LT AZ Query Tests"
         Observer.Expect('notblank_rows', '1;2;3;');
         Observer.Expect('notblank|text', '');
         Observer.Expect('notblank|code', '');
+#if BC28PLUS
         Observer.Expect('text_ok', 'Yes');
         Observer.Expect('text_rows', '');
         Observer.Expect('text|text', '');
         Observer.Expect('text|code', '');
+#endif
         Observer.Verify();
+#if BC28PLUS
+#else
+        Error('RAW27 ok=%1 rows=%2 code=%3 text=%4', TextOk, R, TextCode, TextErr);
+#endif
     end;
 
     [Test]

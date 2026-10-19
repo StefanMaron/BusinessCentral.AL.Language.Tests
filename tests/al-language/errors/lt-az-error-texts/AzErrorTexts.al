@@ -121,11 +121,14 @@ codeunit 80606 "LT AZ Error Texts"
 #if BC28PLUS
         Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 28015.';
 #else
-        Error('RAW27 ok=%1 code=%2 text=%3', Ok, GetLastErrorCode(), GetLastErrorText());
+        Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 27025.';
 #endif
 #endif
         if not Ok then
             Error('Codeunit.Run assigned its return value');
+        // BC 27.5 run: code AL:MetadataNotFound.
+        if GetLastErrorCode() <> 'AL:MetadataNotFound' then
+            Error('expected code [AL:MetadataNotFound] but was [%1]', GetLastErrorCode());
         if GetLastErrorText() <> Expected then
             Error('expected [%1] but was [%2]', Expected, GetLastErrorText());
     end;
