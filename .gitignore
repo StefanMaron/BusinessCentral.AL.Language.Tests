@@ -3,6 +3,8 @@ tests/al-language/*.app
 tests/al-language/.alpackages/
 tests/al-language-onprem/*.app
 tests/al-language-onprem/.alpackages/
+tests/al-language-onprem-dotnet/*.app
+tests/al-language-onprem-dotnet/.alpackages/
 
 # Test run artifacts (committed selectively when updating baseline)
 tests/al-language/bc-full-results.json

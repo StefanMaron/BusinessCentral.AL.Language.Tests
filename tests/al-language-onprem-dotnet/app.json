@@ -1,0 +1,55 @@
+{
+  "id": "7b2e4d90-5a13-4c68-9f0e-1d3a6c8b2e47",
+  "name": "AL Language Coverage Tests (OnPrem DotNet)",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "Executable proof for how AL sees DotNet values; needs a Target = OnPrem app and an AL compiler 18.0 or newer.",
+  "description": "A third small test app. It carries the DotNet probes (value kinds, Format, enum operators, foreach, CopyStream). It is separate from the OnPrem app because its dotnet declarations need the compiler to find mscorlib and System: the AL compilers 16.x and 17.x (the ones the CI picks for BC 27 and 28) report AL0451 \"An assembly named mscorlib ... could not be found in the assembly probing paths\", while 18.0.39 and newer find them. CI does not compile this app until the workflow selects a compiler of 18.0 or newer or passes /assemblyprobingpaths.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "application": "27.0.0.0",
+  "dependencies": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "AL Language Coverage Tests",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
+    },
+    {
+      "id": "63ca2fa4-4f03-4f2b-a480-172fef340d3f",
+      "name": "System Application",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    },
+    {
+      "id": "437dbf0e-84ff-417a-965d-ed2bb9650972",
+      "name": "Base Application",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    },
+    {
+      "id": "9856ae4f-d1a7-46ef-89bb-6ef056398228",
+      "name": "System Application Test Library",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    }
+  ],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 61400,
+      "to": 61499
+    },
+    {
+      "from": 99000,
+      "to": 99499
+    }
+  ],
+  "features": [],
+  "runtime": "18.0",
+  "target": "OnPrem"
+}

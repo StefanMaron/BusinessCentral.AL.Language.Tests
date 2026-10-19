@@ -1,0 +1,449 @@
+// Probe: pages with OnFindRecord / OnNextRecord. CurrPage.Update on such a page (what the client asks next, what a control reads before the next move), and a row deleted by an action when the page serves only one row at a time while the table holds more.
+// Settles: md:276 (CurrPage.Update on a page with OnFindRecord / OnNextRecord; trace and control values afterwards), md:277 (one-row window over a view with more rows).
+
+codeunit 68733 "W2 Update Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
+}
+
+page 68734 "W2 Find Update List"
+{
+    PageType = List;
+    ApplicationArea = All;
+    SourceTable = "W2 Below Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(UpdateFalse)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Log: Codeunit "W2 Update Log";
+                begin
+                    Log.Add('ActionBegin');
+                    CurrPage.Update(false);
+                    Log.Add('ActionEnd');
+                end;
+            }
+            action(UpdateTrue)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Log: Codeunit "W2 Update Log";
+                begin
+                    Log.Add('ActionBegin');
+                    CurrPage.Update(true);
+                    Log.Add('ActionEnd');
+                end;
+            }
+            // The stored row changes behind the page's back, then the page is told to refresh.
+            action(ChangeStoredRowAndUpdate)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Log: Codeunit "W2 Update Log";
+                    Other: Record "W2 Below Row";
+                begin
+                    Log.Add('ActionBegin');
+                    Other.Get(Rec.Id);
+                    Other.Name := 'stored';
+                    Other.Modify();
+                    CurrPage.Update(false);
+                    Log.Add('ActionEnd');
+                end;
+            }
+            // Rec changes in memory, then Update(true) saves it.
+            action(ChangeRecAndUpdateTrue)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Log: Codeunit "W2 Update Log";
+                begin
+                    Log.Add('ActionBegin');
+                    Rec.Name := 'memory';
+                    CurrPage.Update(true);
+                    Log.Add('ActionEnd');
+                end;
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('Find(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "W2 Update Log";
+        Moved: Integer;
+    begin
+        Moved := Rec.Next(Steps);
+        Log.Add('Next(' + Format(Steps) + ')=' + Format(Moved));
+        exit(Moved);
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('AGR(' + Format(Rec.Id) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('AGCR(' + Format(Rec.Id) + ')');
+    end;
+}
+
+// Serves one row per window: OnNextRecord never moves.
+page 68736 "W2 One Row List"
+{
+    PageType = List;
+    ApplicationArea = All;
+    SourceTable = "W2 Below Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(DeleteCurrent)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Log: Codeunit "W2 Update Log";
+                begin
+                    Log.Add('ActionBegin');
+                    Rec.Delete();
+                    Log.Add('ActionEnd');
+                end;
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('Find(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('Next(' + Format(Steps) + ')=0');
+        exit(0);
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('AGR(' + Format(Rec.Id) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "W2 Update Log";
+    begin
+        Log.Add('AGCR(' + Format(Rec.Id) + ')');
+    end;
+}
+
+codeunit 68735 "W2 Update Tests"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Seed()
+    var
+        Row: Record "W2 Below Row";
+        Log: Codeunit "W2 Update Log";
+    begin
+        Row.DeleteAll();
+        Row.Id := 10;
+        Row.Name := 'ten';
+        Row.Insert();
+        Row.Id := 20;
+        Row.Name := 'twenty';
+        Row.Insert();
+        Row.Id := 30;
+        Row.Name := 'thirty';
+        Row.Insert();
+        Log.Take();
+    end;
+
+    local procedure AfterActionEnd(Trace: Text): Text
+    var
+        Position: Integer;
+    begin
+        Position := StrPos(Trace, 'ActionEnd;');
+        if Position = 0 then
+            exit('<no ActionEnd>');
+        exit(CopyStr(Trace, Position + StrLen('ActionEnd;')));
+    end;
+
+    // ---- md:276 ----
+
+    [Test]
+    procedure Update_False_OnOpenedPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Pg: TestPage "W2 Find Update List";
+        Trace: Text;
+    begin
+        Seed();
+        Pg.OpenEdit();
+        Pg.GoToKey(20);
+        Log.Take();
+        Pg.UpdateFalse.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('during_action', CopyStr(Trace, 1, StrPos(Trace, 'ActionEnd;') + 9));
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('id_after', Pg.Id.Value());
+        Observer.Observe('name_after', Pg.Name.Value());
+        Pg.Close();
+        Observer.Expect('during_action', 'AGR(20);ActionBegin;ActionEnd;');
+        Observer.Expect('after_action', 'AGR(20);Find(=>);AGR(20);Next(1)=1;AGR(30);Next(1)=0;AGR(20);Next(-1)=-1;AGR(10);Next(-1)=0;AGR(20);Find(=);AGR(20);AGCR(20);');
+        Observer.Expect('id_after', '20');
+        Observer.Expect('name_after', 'twenty');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Update_True_OnOpenedPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Pg: TestPage "W2 Find Update List";
+        Trace: Text;
+    begin
+        Seed();
+        Pg.OpenEdit();
+        Pg.GoToKey(20);
+        Log.Take();
+        Pg.UpdateTrue.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('during_action', CopyStr(Trace, 1, StrPos(Trace, 'ActionEnd;') + 9));
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('id_after', Pg.Id.Value());
+        Pg.Close();
+        Observer.Expect('during_action', 'AGR(20);ActionBegin;ActionEnd;');
+        Observer.Expect('after_action', 'AGR(20);Find(=>);AGR(20);Next(1)=1;AGR(30);Next(1)=0;AGR(20);Next(-1)=-1;AGR(10);Next(-1)=0;AGR(20);Find(=);AGR(20);AGCR(20);');
+        Observer.Expect('id_after', '20');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Update_StoredRowChangedBehindThePage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Pg: TestPage "W2 Find Update List";
+        Trace: Text;
+    begin
+        Seed();
+        Pg.OpenEdit();
+        Pg.GoToKey(20);
+        Log.Take();
+        Pg.ChangeStoredRowAndUpdate.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('during_action', CopyStr(Trace, 1, StrPos(Trace, 'ActionEnd;') + 9));
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('name_read_directly_after', Pg.Name.Value());
+        Observer.Observe('id_after', Pg.Id.Value());
+        Pg.Next();
+        Observer.Observe('after_next', Log.Take());
+        Pg.Previous();
+        Observer.Observe('name_after_moving_back', Pg.Name.Value());
+        Pg.Close();
+        Observer.Expect('during_action', 'AGR(20);ActionBegin;ActionEnd;');
+        Observer.Expect('after_action', 'AGR(20);Find(=>);AGR(20);Next(1)=1;AGR(30);Next(1)=0;AGR(20);Next(-1)=-1;AGR(10);Next(-1)=0;AGR(20);Find(=);AGR(20);AGCR(20);');
+        Observer.Expect('name_read_directly_after', 'stored');
+        Observer.Expect('id_after', '20');
+        Observer.Expect('after_next', 'AGR(30);Find(=);AGR(30);AGCR(30);');
+        Observer.Expect('name_after_moving_back', 'stored');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Update_True_AfterRecChangedInMemory()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Row: Record "W2 Below Row";
+        Pg: TestPage "W2 Find Update List";
+        Trace: Text;
+    begin
+        Seed();
+        Pg.OpenEdit();
+        Pg.GoToKey(20);
+        Log.Take();
+        Pg.ChangeRecAndUpdateTrue.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('during_action', CopyStr(Trace, 1, StrPos(Trace, 'ActionEnd;') + 9));
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('name_read_directly_after', Pg.Name.Value());
+        Pg.Close();
+        Row.Get(20);
+        Observer.Observe('name_stored', Row.Name);
+        Observer.Expect('during_action', 'AGR(20);ActionBegin;ActionEnd;');
+        Observer.Expect('after_action', 'AGR(20);Find(=>);AGR(20);Next(1)=1;AGR(30);Next(1)=0;AGR(20);Next(-1)=-1;AGR(10);Next(-1)=0;AGR(20);Find(=);AGR(20);AGCR(20);');
+        Observer.Expect('name_read_directly_after', 'memory');
+        Observer.Expect('name_stored', 'memory');
+        Observer.Verify();
+    end;
+
+    // ---- md:277 ----
+
+    [Test]
+    procedure OneRowWindow_DeleteFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Pg: TestPage "W2 One Row List";
+        Trace: Text;
+    begin
+        Seed();
+        Log.Take();
+        Pg.OpenEdit();
+        Observer.Observe('open', Log.Take());
+        Observer.Observe('id_at_open', Pg.Id.Value());
+        Pg.DeleteCurrent.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('id_after', Pg.Id.Value());
+        Pg.Close();
+        Observer.Expect('open', 'Find(=><);AGR(10);Next(1)=0;Next(-1)=0;Find(=);AGR(10);AGCR(10);');
+        Observer.Expect('id_at_open', '10');
+        Observer.Expect('after_action', 'Next(1)=0;Next(-1)=0;AGCR(0);AGR(10);Find(=>);AGR(20);Next(1)=0;Next(-1)=0;Find(=);AGR(20);AGCR(20);AGCR(0);');
+        Observer.Expect('id_after', '0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure OneRowWindow_DeleteAfterGoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Pg: TestPage "W2 One Row List";
+        Trace: Text;
+        Ok: Boolean;
+        Found: Boolean;
+    begin
+        Seed();
+        Pg.OpenEdit();
+        Found := false;
+        Ok := TryGoTo(Pg, Found);
+        Observer.Observe('goto|ok', Format(Ok));
+        if not Ok then
+            Observer.ObserveError('goto');
+        Observer.Observe('goto|found', Format(Found));
+        Observer.Observe('id_at_goto', Pg.Id.Value());
+        Log.Take();
+        Pg.DeleteCurrent.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('id_after', Pg.Id.Value());
+        Pg.Close();
+        Observer.Expect('goto|ok', 'Yes');
+        Observer.Expect('goto|found', 'No');
+        Observer.Expect('id_at_goto', '10');
+        Observer.Expect('after_action', 'Next(1)=0;Next(-1)=0;AGCR(0);AGR(10);Find(=>);AGR(20);Next(1)=0;Next(-1)=0;Find(=);AGR(20);AGCR(20);AGCR(0);');
+        Observer.Expect('id_after', '0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure OneRowWindow_DeleteLastRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Update Log";
+        Pg: TestPage "W2 One Row List";
+        Trace: Text;
+    begin
+        Seed();
+        Pg.OpenEdit();
+        Pg.Last();
+        Observer.Observe('id_at_last', Pg.Id.Value());
+        Log.Take();
+        Pg.DeleteCurrent.Invoke();
+        Trace := Log.Take();
+        Observer.Observe('after_action', AfterActionEnd(Trace));
+        Observer.Observe('id_after', Pg.Id.Value());
+        Pg.Close();
+        Observer.Expect('id_at_last', '10');
+        Observer.Expect('after_action', 'Next(1)=0;Next(-1)=0;AGCR(0);AGR(10);Find(=>);AGR(20);Next(1)=0;Next(-1)=0;Find(=);AGR(20);AGCR(20);AGCR(0);');
+        Observer.Expect('id_after', '0');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryGoTo(var Pg: TestPage "W2 One Row List"; var Found: Boolean)
+    begin
+        Found := Pg.GoToKey(20);
+    end;
+}

@@ -74,6 +74,39 @@ codeunit 60341 "Test Code Coverage Table"
         Assert.IsFalse(CodeCoverage.IsEmpty(), 'recording must leave a hit code line for the codeunit that ran.');
     end;
 
+    // The line rows are numbered by the object's source text, so a row's "Line No." is a line
+    // of THIS file. DoubleIfAboveOne sits at lines 33-38; if it moves, move these numbers with it.
+    [Test]
+    procedure CodeCoverage_AfterRecording_LineRowsFollowTheSource()
+    var
+        CodeCoverage: Record "Code Coverage";
+    begin
+        Initialize();
+
+        // [GIVEN] DoubleIfAboveOne(3) ran while recording: line 36 runs, line 37 does not
+        CodeCoverageLog(true, false);
+        Assert.AreEqual(6, DoubleIfAboveOne(3), 'the recorded procedure must run.');
+        CodeCoverageLog(false, false);
+
+        // [THEN] the procedure's declaration line is its Trigger/Function row
+        Assert.IsTrue(CodeCoverage.Get(CodeCoverage."Object Type"::Codeunit, Codeunit::"Test Code Coverage Table", 33),
+            'line 33, the declaration of DoubleIfAboveOne, must have a row.');
+        Assert.AreEqual(Format(CodeCoverage."Line Type"::"Trigger/Function"), Format(CodeCoverage."Line Type"),
+            'line 33 must be the Trigger/Function row of DoubleIfAboveOne.');
+
+        // [THEN] the executed statement is a Code row that was hit
+        Assert.IsTrue(CodeCoverage.Get(CodeCoverage."Object Type"::Codeunit, Codeunit::"Test Code Coverage Table", 36),
+            'line 36, exit(Value * 2), must have a row.');
+        Assert.AreEqual(Format(CodeCoverage."Line Type"::Code), Format(CodeCoverage."Line Type"), 'line 36 must be a Code row.');
+        Assert.IsTrue(CodeCoverage."No. of Hits" > 0, 'line 36 ran, so its row must count a hit.');
+
+        // [THEN] the statement that did not run is a Code row with no hits
+        Assert.IsTrue(CodeCoverage.Get(CodeCoverage."Object Type"::Codeunit, Codeunit::"Test Code Coverage Table", 37),
+            'line 37, exit(Value), must have a row.');
+        Assert.AreEqual(Format(CodeCoverage."Line Type"::Code), Format(CodeCoverage."Line Type"), 'line 37 must be a Code row.');
+        Assert.AreEqual(0, CodeCoverage."No. of Hits", 'line 37 did not run, so its row must count no hits.');
+    end;
+
     [Test]
     procedure CodeCoverage_DeleteAll_AfterRecording_LeavesTableEmpty()
     var

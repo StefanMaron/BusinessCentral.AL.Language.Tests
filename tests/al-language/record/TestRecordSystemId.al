@@ -123,6 +123,62 @@ codeunit 60061 "Test Record SystemId"
     end;
 
     [Test]
+    procedure Record_Insert_DuplicateSystemId_ErrorNamesFieldByCaption()
+    // CLAIM: the unique-index error for a duplicate SystemId lists the field by its CAPTION
+    // (FieldCaption(SystemId)), followed by =' and the value, the way BC formats every other
+    // key field list. It does not list it by its name.
+    var
+        First: Record "ALT Universal";
+        Second: Record "ALT Universal";
+        DuplicateId: Guid;
+    begin
+        Initialize();
+        DuplicateId := CreateGuid();
+        First."Entry No." := 1;
+        First.SystemId := DuplicateId;
+        First.Insert(false, true);
+
+        Second."Entry No." := 2;
+        Second.SystemId := DuplicateId;
+        asserterror Second.Insert(false, true);
+        Assert.ExpectedError('unique index');
+        Assert.ExpectedError(StrSubstNo('the following fields: %1=''', First.FieldCaption(SystemId)));
+    end;
+
+    [Test]
+    procedure Record_Insert_DuplicateSystemId_ErrorQuotesTheFormattedValue()
+    // CLAIM: the field list in the duplicate-SystemId error is exactly
+    // <FieldCaption(SystemId)>='<Format(SystemId)>', so the value is quoted and rendered the
+    // way Format renders a Guid.
+    var
+        First: Record "ALT Universal";
+        Second: Record "ALT Universal";
+        DuplicateId: Guid;
+    begin
+        Initialize();
+        DuplicateId := CreateGuid();
+        First."Entry No." := 1;
+        First.SystemId := DuplicateId;
+        First.Insert(false, true);
+
+        Second."Entry No." := 2;
+        Second.SystemId := DuplicateId;
+        asserterror Second.Insert(false, true);
+        Assert.ExpectedError(
+            StrSubstNo('the following fields: %1=''%2''', First.FieldCaption(SystemId), Format(DuplicateId)));
+    end;
+
+    [Test]
+    procedure Record_SystemId_FieldCaption_IsSystemID()
+    // CLAIM: the caption of the platform SystemId field is 'System ID' (en-US), not its name
+    // 'SystemId'. The duplicate-SystemId errors above list the field by this caption.
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Assert.AreEqual('System ID', Rec.FieldCaption(SystemId), 'FieldCaption(SystemId)');
+    end;
+
+    [Test]
     procedure Record_Modify_KeepsOriginalSystemId()
     // CLAIM: Modify() never changes an existing row's SystemId, even when the record
     // buffer's SystemId slot no longer carries the original value (e.g. because the
@@ -326,6 +382,394 @@ codeunit 60061 "Test Record SystemId"
         Clear(Fetched);
         Assert.IsTrue(Fetched.GetBySystemId(ReusedId), 'a SystemId freed by DeleteAll must be usable again');
         Assert.AreEqual(99, Fetched."Entry No.", 'GetBySystemId must return the re-inserted row');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemId()
+    // CLAIM: a record read as row 1, whose primary key is then set to row 2's before
+    // Modify(), modifies row 2 — and row 2 keeps ITS OWN SystemId. The buffer still
+    // carries row 1's SystemId, but $systemId is never part of an UPDATE, so no two
+    // rows can end up sharing one.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstId: Guid;
+        SecondId: Guid;
+    begin
+        Initialize();
+        InsertTwoRows(FirstId, SecondId);
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        AssertRowsKeepTheirSystemIds(FirstId, SecondId);
+        Fetched.Get(2);
+        Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterLockedGetAndKeySetToAnotherRow_TargetKeepsItsOwnSystemId()
+    // CLAIM: same as Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemId,
+    // with the row read under LockTable() first.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstId: Guid;
+        SecondId: Guid;
+    begin
+        Initialize();
+        InsertTwoRows(FirstId, SecondId);
+
+        Rec.LockTable();
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        AssertRowsKeepTheirSystemIds(FirstId, SecondId);
+        Fetched.Get(2);
+        Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemCreatedAt()
+    // CLAIM: in the shape above, row 2 keeps the SystemCreatedAt it was inserted with,
+    // and row 1's is untouched. The buffer still carries row 1's SystemCreatedAt.
+    // Format(_, 0, 9) keeps millisecond resolution; the rows are inserted 200 ms apart.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstCreatedAt: Text;
+        SecondCreatedAt: Text;
+    begin
+        Initialize();
+        InsertTwoRowsApart(FirstCreatedAt, SecondCreatedAt);
+        Assert.AreNotEqual(FirstCreatedAt, SecondCreatedAt, 'the two rows must have distinct SystemCreatedAt values');
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        Fetched.Get(2);
+        Assert.AreEqual(42, Fetched."Integer Field", 'Modify must have written to the row the key now names');
+        Assert.AreEqual(SecondCreatedAt, Format(Fetched.SystemCreatedAt, 0, 9),
+            'row 2 must keep its own SystemCreatedAt, not take the one read from row 1');
+        Fetched.Get(1);
+        Assert.AreEqual(FirstCreatedAt, Format(Fetched.SystemCreatedAt, 0, 9), 'row 1 must keep its own SystemCreatedAt');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetKeepsItsOwnSystemCreatedBy()
+    // CLAIM: in the same shape, row 2's SystemCreatedBy is the one it was inserted with.
+    // Both rows are inserted by the same user, so this pins the value, not which row it
+    // was taken from.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstCreatedAt: Text;
+        SecondCreatedAt: Text;
+        SecondCreatedBy: Guid;
+    begin
+        Initialize();
+        InsertTwoRowsApart(FirstCreatedAt, SecondCreatedAt);
+        Fetched.Get(2);
+        SecondCreatedBy := Fetched.SystemCreatedBy;
+        Assert.IsFalse(IsNullGuid(SecondCreatedBy), 'SystemCreatedBy must be set on insert');
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        Fetched.Get(2);
+        Assert.AreEqual(SecondCreatedBy, Fetched.SystemCreatedBy, 'row 2 must keep its own SystemCreatedBy');
+    end;
+
+    [Test]
+    procedure Record_Modify_AfterKeySetToAnotherRow_TargetGetsAFreshSystemModifiedAt()
+    // CLAIM: in the same shape, row 2's SystemModifiedAt moves past the value it had
+    // before the Modify, and SystemModifiedBy is still set. One user inserts and modifies
+    // here, so the SystemModifiedBy check cannot tell which row the value came from.
+    var
+        Rec: Record "ALT Universal";
+        Fetched: Record "ALT Universal";
+        FirstCreatedAt: Text;
+        SecondCreatedAt: Text;
+        SecondModifiedAt: DateTime;
+        SecondModifiedBy: Guid;
+    begin
+        Initialize();
+        InsertTwoRowsApart(FirstCreatedAt, SecondCreatedAt);
+        Fetched.Get(2);
+        SecondModifiedAt := Fetched.SystemModifiedAt;
+        SecondModifiedBy := Fetched.SystemModifiedBy;
+        Assert.IsFalse(IsNullGuid(SecondModifiedBy), 'SystemModifiedBy must be set on insert');
+        Sleep(200);
+
+        Rec.Get(1);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 42;
+        Rec.Modify();
+
+        Fetched.Get(2);
+        Assert.IsTrue(Fetched.SystemModifiedAt > SecondModifiedAt,
+            StrSubstNo('row 2''s SystemModifiedAt must move past %1, was %2',
+                Format(SecondModifiedAt, 0, 9), Format(Fetched.SystemModifiedAt, 0, 9)));
+        Assert.AreEqual(SecondModifiedBy, Fetched.SystemModifiedBy, 'SystemModifiedBy must still be the one user of this session');
+    end;
+
+    local procedure InsertTwoRowsApart(var FirstCreatedAt: Text; var SecondCreatedAt: Text)
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 1;
+        Rec.Insert();
+        Rec.Get(1);
+        FirstCreatedAt := Format(Rec.SystemCreatedAt, 0, 9);
+        Sleep(200);
+        Clear(Rec);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 2;
+        Rec.Insert();
+        Rec.Get(2);
+        SecondCreatedAt := Format(Rec.SystemCreatedAt, 0, 9);
+    end;
+
+    local procedure InsertTwoRows(var FirstId: Guid; var SecondId: Guid)
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 1;
+        Rec.Insert();
+        FirstId := Rec.SystemId;
+        Clear(Rec);
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 2;
+        Rec.Insert();
+        SecondId := Rec.SystemId;
+    end;
+
+    local procedure AssertRowsKeepTheirSystemIds(FirstId: Guid; SecondId: Guid)
+    var
+        Fetched: Record "ALT Universal";
+    begin
+        Assert.AreNotEqual(FirstId, SecondId, 'the two inserted rows must have distinct SystemIds');
+        Fetched.Get(1);
+        Assert.AreEqual(FirstId, Fetched.SystemId, 'row 1 must keep its own SystemId');
+        Fetched.Get(2);
+        Assert.AreEqual(SecondId, Fetched.SystemId, 'row 2 must keep its own SystemId, not take the one read from row 1');
+        Clear(Fetched);
+        Assert.IsTrue(Fetched.GetBySystemId(SecondId), 'row 2''s SystemId must still resolve');
+        Assert.AreEqual(2, Fetched."Entry No.", 'row 2''s SystemId must resolve to row 2');
+        Clear(Fetched);
+        Fetched.SetRange(SystemId, FirstId);
+        Assert.AreEqual(1, Fetched.Count(), 'exactly one row may carry row 1''s SystemId');
+    end;
+
+    // ── Rename and Modify: when the Modified pair moves (AlRunner#5209) ─────────
+    // The platform stamps SystemModifiedAt and SystemModifiedBy on a write that modifies at
+    // least one field. A rename modifies the primary key fields, so the Modified pair moves
+    // with it; SystemCreatedAt/By and SystemId do not.
+
+    [Test]
+    procedure Record_Rename_MovesSystemModifiedAtPastItsPreRenameValue()
+    // CLAIM: Rename(newKey) stamps SystemModifiedAt, so the renamed row's value is later than
+    // the one the row had before the rename.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('Rename must move SystemModifiedAt past %1, was %2',
+                Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9)));
+    end;
+
+    [Test]
+    procedure Record_Rename_StampsSystemModifiedByWithUserSecurityId()
+    // CLAIM: a renamed row's SystemModifiedBy is the renaming user's UserSecurityId().
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Sleep(200);
+
+        Rec.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.AreEqual(UserSecurityId(), Rec.SystemModifiedBy, 'SystemModifiedBy must be the renaming user''s UserSecurityId()');
+    end;
+
+    [Test]
+    procedure Record_Rename_KeepsSystemCreatedAtAndSystemId()
+    // CLAIM: a rename does not touch the Created pair or SystemId: the row keeps the
+    // values it was inserted with, and its SystemModifiedAt moves past its SystemCreatedAt.
+    var
+        Rec: Record "ALT Universal";
+        CreatedAt: Text;
+        CreatedBy: Guid;
+        RowId: Guid;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        CreatedAt := Format(Rec.SystemCreatedAt, 0, 9);
+        CreatedBy := Rec.SystemCreatedBy;
+        RowId := Rec.SystemId;
+        Sleep(200);
+
+        Rec.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.AreEqual(CreatedAt, Format(Rec.SystemCreatedAt, 0, 9), 'Rename must keep SystemCreatedAt');
+        Assert.AreEqual(CreatedBy, Rec.SystemCreatedBy, 'Rename must keep SystemCreatedBy');
+        Assert.AreEqual(RowId, Rec.SystemId, 'Rename must keep SystemId');
+        Assert.IsTrue(Rec.SystemModifiedAt > Rec.SystemCreatedAt, 'Rename must leave SystemModifiedAt later than SystemCreatedAt');
+    end;
+
+    [Test]
+    procedure RecordRef_Rename_MovesSystemModifiedAtPastItsPreRenameValue()
+    // CLAIM: RecordRef.Rename stamps the Modified pair the same way Record.Rename does.
+    var
+        Rec: Record "ALT Universal";
+        RecRef: RecordRef;
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        RecRef.GetTable(Rec);
+        RecRef.Rename(505);
+
+        Clear(Rec);
+        Rec.Get(505);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('RecordRef.Rename must move SystemModifiedAt past %1, was %2',
+                Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9)));
+        Assert.AreEqual(UserSecurityId(), Rec.SystemModifiedBy, 'SystemModifiedBy must be the renaming user''s UserSecurityId()');
+    end;
+
+    [Test]
+    procedure Record_Modify_WithNoFieldChanged_LeavesSystemModifiedAt()
+    // CLAIM: a Modify that changes no field does not stamp: SystemModifiedAt keeps the value
+    // the row had. Control: Record_Modify_WithAChangedField_MovesSystemModifiedAt.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec."Integer Field" := 7;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec.Modify();
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.AreEqual(Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9),
+            'a Modify that changes no field must leave SystemModifiedAt alone');
+    end;
+
+    [Test]
+    procedure Record_Modify_FieldAssignedItsCurrentValue_LeavesSystemModifiedAt()
+    // CLAIM: assigning a field the value it already holds changes nothing, so Modify does not
+    // stamp either.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec."Integer Field" := 7;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec."Integer Field" := 7;
+        Rec.Modify();
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.AreEqual(Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9),
+            'a Modify that assigns a field its current value must leave SystemModifiedAt alone');
+    end;
+
+    [Test]
+    procedure Record_Modify_WithAChangedField_MovesSystemModifiedAt()
+    // CLAIM (control for the two above): a Modify that really changes a field moves
+    // SystemModifiedAt past its pre-Modify value.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec."Integer Field" := 7;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec."Integer Field" := 8;
+        Rec.Modify();
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('a changing Modify must move SystemModifiedAt past %1, was %2',
+                Format(Before, 0, 9), Format(Rec.SystemModifiedAt, 0, 9)));
+    end;
+
+    [Test]
+    procedure Record_Rename_ToTheSameKey_MovesSystemModifiedAt()
+    // CLAIM: renaming a row to the key it already has still stamps: RenameRecordAsync does not
+    // optimise the key fields away the way ModifyRecordAsync optimises unchanged fields.
+    var
+        Rec: Record "ALT Universal";
+        Before: DateTime;
+    begin
+        Initialize();
+        Rec."Entry No." := 504;
+        Rec.Insert();
+        Rec.Get(504);
+        Before := Rec.SystemModifiedAt;
+        Sleep(200);
+
+        Rec.Rename(504);
+
+        Clear(Rec);
+        Rec.Get(504);
+        Assert.IsTrue(Rec.SystemModifiedAt > Before,
+            StrSubstNo('same-key Rename left SystemModifiedAt at %1 (was %2)',
+                Format(Rec.SystemModifiedAt, 0, 9), Format(Before, 0, 9)));
     end;
 
     local procedure Initialize()

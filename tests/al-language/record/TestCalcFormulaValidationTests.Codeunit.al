@@ -12,7 +12,8 @@
 //   * that it is average()-specific          -- excluded here by pinning sum() as well
 //   * that only widening is refused          -- excluded by pinning Decimal -> Integer
 //   * that Decimal vs Integer is the issue   -- excluded by pinning Duration -> Decimal
-//                                               and Integer -> BigInteger
+//                                               and Integer -> BigInteger (BC 27/28;
+//                                               BC 29 accepts Integer -> BigInteger)
 //   * that CalcFields refuses lazily, field  -- excluded by pinning that a valid FlowField
 //     by field                                  named alongside an invalid one is not
 //                                               calculated either
@@ -201,12 +202,20 @@ codeunit 60443 "CFM Validation Tests"
     procedure Record_CalcFields_Sum_IntegerSourceIntoBigInteger_Throws()
     var
         CfmHeader: Record "CFM Header";
+#if BC29PLUS
+        ExpectedSum: BigInteger;
+#else
         ErrorText: Text;
+#endif
     begin
         // [GIVEN] "Bad Sum Qty BigInt" sums the INTEGER "CFM Line".Quantity into a
         // BIGINTEGER FlowField. Both are integer types and a BigInteger can hold every
         // Integer, so nothing can be lost -- this is the case that shows "the same type"
         // means the type itself, not a type that is merely compatible.
+        //
+        // BC 29 relaxed exactly this pair: FlowFieldsHelper.CanCoerce now accepts an Integer
+        // source into a BigInteger FlowField (and BigInteger into Integer), so on 29 the
+        // field calculates. The name keeps the _Throws suffix it has on 27/28.
         Initialize();
         CfmHeader.Get('D1');
 
@@ -215,6 +224,15 @@ codeunit 60443 "CFM Validation Tests"
         CfmHeader.CalcFields("Line Count");
         Assert.AreEqual(4, CfmHeader."Line Count", 'precondition: count() must calculate');
 
+#if BC29PLUS
+        // [WHEN]
+        CfmHeader.CalcFields("Bad Sum Qty BigInt");
+
+        // [THEN] the sum of D1's quantities, 3 + 4 + 6 + 8. A BigInteger expected value,
+        // because an Integer 21 never equals a BigInteger in Assert.AreEqual.
+        ExpectedSum := 21;
+        Assert.AreEqual(ExpectedSum, CfmHeader."Bad Sum Qty BigInt", 'BC 29 sums an Integer source into a BigInteger FlowField');
+#else
         // [WHEN]
         asserterror CfmHeader.CalcFields("Bad Sum Qty BigInt");
 
@@ -223,6 +241,7 @@ codeunit 60443 "CFM Validation Tests"
         Assert.ExpectedError('The following fields must have the same type');
         Assert.ExpectedMessage('Field: Bad Sum Qty BigInt <-- Quantity', ErrorText);
         Assert.ExpectedMessage('Type: BigInteger <-- Integer', ErrorText);
+#endif
     end;
 
     [Test]

@@ -74,6 +74,49 @@ codeunit 60172 "Test BC System Field Contracts"
         Assert.IsFalse(IsNullGuid(Rec.SystemModifiedBy), 'SystemModifiedBy must remain non-null after Modify');
     end;
 
+    // The audit "By" fields record WHO wrote the row: the session user's security id, the
+    // value UserSecurityId() answers in the same session -- not merely some non-null GUID.
+
+    [Test]
+    procedure SystemCreatedBy_AfterInsert_IsUserSecurityId()
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec.Insert();
+        Rec.Get(1);
+        Assert.AreEqual(UserSecurityId(), Rec.SystemCreatedBy, 'SystemCreatedBy must be the inserting user''s UserSecurityId()');
+    end;
+
+    [Test]
+    procedure SystemModifiedBy_AfterInsert_IsUserSecurityId()
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec.Insert();
+        Rec.Get(1);
+        Assert.AreEqual(UserSecurityId(), Rec.SystemModifiedBy, 'SystemModifiedBy must be the inserting user''s UserSecurityId()');
+    end;
+
+    [Test]
+    procedure SystemModifiedBy_AfterModify_IsUserSecurityId()
+    var
+        Rec: Record "ALT Universal";
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec.Insert();
+        Rec.Get(1);
+        Rec."Integer Field" := 7;
+        Rec.Modify();
+        Rec.Get(1);
+        Assert.AreEqual(UserSecurityId(), Rec.SystemModifiedBy, 'SystemModifiedBy must be the modifying user''s UserSecurityId()');
+        Assert.AreEqual(UserSecurityId(), Rec.SystemCreatedBy, 'SystemCreatedBy must still be the inserting user''s UserSecurityId() after Modify');
+    end;
+
     [Test]
     procedure SystemCreatedAt_IsLessOrEqualToModifiedAt()
     var

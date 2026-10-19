@@ -10,6 +10,8 @@
 // when the page closes, and the table's OnInsert does not run a second time. And a part saving
 // its own row saves nothing on behalf of the host, whose pending edit is still written at close.
 //
+// The New() arms (leaving an edited row by starting another) were filed from AlRunner#4632.
+//
 // Filed from AlRunner#4577 (Microsoft's Tests-SINGLESERVER "Prepayments Plan-based E2E" orders
 // lost their unit price this way: "Sales Order Subform" saves the line when Quantity is
 // validated, and "Unit Price" is typed after).
@@ -131,5 +133,100 @@ codeunit 60412 "PSR Page Saved Row Tests"
         Header.Get('H2');
         Assert.AreEqual(1, Header."Insert Runs", 'OnInsert must run once for a row the page saved.');
         Assert.AreEqual('Second', Header.Descr, 'The value typed after the save must reach the row.');
+    end;
+
+    local procedure InsertLine(HeaderCode: Code[20]; LineNo: Integer; SavedValue: Text[30])
+    var
+        Line: Record "PSR Line";
+    begin
+        Line.Init();
+        Line."Header Code" := HeaderCode;
+        Line."Line No." := LineNo;
+        Line."Saved Field" := SavedValue;
+        Line.Insert();
+    end;
+
+    local procedure LaterFieldOf(HeaderCode: Code[20]; SavedValue: Text[30]): Text
+    var
+        Line: Record "PSR Line";
+    begin
+        Line.SetRange("Header Code", HeaderCode);
+        Line.SetRange("Saved Field", SavedValue);
+        Line.FindFirst();
+        exit(Line."Later Field");
+    end;
+
+    // CLAIM: New() leaves the row the cursor was on, and an edit made to that existing row is
+    // saved, exactly as when the cursor leaves it by moving to another row. (AlRunner#4632)
+    [Test]
+    procedure ExistingPartRowEdit_IsSavedWhenNewLeavesIt()
+    var
+        Header: Record "PSR Header";
+        Card: TestPage "PSR Header Card";
+    begin
+        Initialize(Header);
+        InsertLine('H1', 10000, 'X');
+
+        Card.OpenEdit();
+        Card.GoToRecord(Header);
+        Card.Lines.First();
+        Card.Lines."Later Field".SetValue('E');
+        Card.Lines.New();
+        Card.Lines."Later Field".SetValue('N');
+        Card.OK().Invoke();
+
+        Assert.AreEqual(2, CountLines('H1'), 'The existing row and the new row must both be in the table.');
+        Assert.AreEqual('E', LaterFieldOf('H1', 'X'),
+            'The edit to the existing row must be saved when New() leaves it.');
+        Assert.AreEqual('N', LaterFieldOf('H1', ''), 'The new row must be saved with its own value.');
+    end;
+
+    // CONTRAST: the same edit to the existing row, left by moving the cursor instead of New().
+    [Test]
+    procedure ExistingPartRowEdit_IsSavedWhenNextLeavesIt()
+    var
+        Header: Record "PSR Header";
+        Card: TestPage "PSR Header Card";
+    begin
+        Initialize(Header);
+        InsertLine('H1', 10000, 'X');
+        InsertLine('H1', 20000, 'Y');
+
+        Card.OpenEdit();
+        Card.GoToRecord(Header);
+        Card.Lines.First();
+        Card.Lines."Later Field".SetValue('E');
+        Card.Lines.Next();
+        Card.OK().Invoke();
+
+        Assert.AreEqual('E', LaterFieldOf('H1', 'X'),
+            'The edit to the existing row must be saved when Next() leaves it.');
+        Assert.AreEqual('', LaterFieldOf('H1', 'Y'), 'The row that was not edited must stay as it was.');
+    end;
+
+    // CLAIM: a new row the part's own trigger saved is an existing row from then on, so a value
+    // typed after the save is kept when New() leaves the row for another one. (AlRunner#4632)
+    [Test]
+    procedure PartRowSavedByItsOwnTrigger_KeepsTheLaterValueWhenNewLeavesIt()
+    var
+        Header: Record "PSR Header";
+        Card: TestPage "PSR Header Card";
+    begin
+        Initialize(Header);
+
+        Card.OpenEdit();
+        Card.GoToRecord(Header);
+        Card.Lines.New();
+        Card.Lines."Saved Field".SetValue('A');
+        Card.Lines."Later Field".SetValue('B');
+        Card.Lines.New();
+        Card.Lines."Saved Field".SetValue('C');
+        Card.Lines."Later Field".SetValue('D');
+        Card.OK().Invoke();
+
+        Assert.AreEqual(2, CountLines('H1'), 'Each row must be saved once.');
+        Assert.AreEqual('B', LaterFieldOf('H1', 'A'),
+            'The value typed after the page saved the first row must be kept when New() leaves it.');
+        Assert.AreEqual('D', LaterFieldOf('H1', 'C'), 'The second row must keep its later value.');
     end;
 }

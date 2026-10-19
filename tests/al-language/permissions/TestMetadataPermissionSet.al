@@ -13,7 +13,8 @@
 //   - "Role ID" is the permission set OBJECT NAME, and "Name" is its Caption -- two
 //     different strings, not one repeated.
 //   - "App ID" is really part of the primary key, so SUPER is not reachable under
-//     some other app's id.
+//     some other app's id (BC 27/28). BC 29 maps any App ID to the null guid for SUPER
+//     and SECURITY before the lookup, so there the key is pinned with an app-declared role.
 //   - "Assignable" carries both values, and every listed permission set carries a
 //     non-blank Name -- a Caption-less permission set is listed with its Role ID
 //     substituted for Name, not a blank string.
@@ -85,15 +86,44 @@ codeunit 60290 "Test Metadata Perm. Set"
     // CLAIM: "App ID" really participates in the key. Asking for SUPER under some other
     // app id must NOT find the row that lives under the null guid -- an implementation
     // that keyed on the Role ID alone would wrongly return it.
+    //
+    // BC 29 changed this for SUPER and SECURITY only. Its lookup replaces the requested
+    // App ID with the null guid for those two roles before it looks the row up
+    // (NavAppGroup.TryGetPermissionSetSummary -> GetPermissionSetAppId), so SUPER is found
+    // under any app id and comes back carrying the null App ID. Every other role is still
+    // keyed on (App ID, Role ID), so on 29 the claim is pinned with an app-declared role.
     var
         MetadataPermissionSet: Record "Metadata Permission Set";
         ForeignAppId: Guid;
+#if BC29PLUS
+        NullAppId: Guid;
+        OwningAppId: Guid;
+#endif
     begin
         Initialize();
         ForeignAppId := CreateGuid();
 
+#if BC29PLUS
+        // SUPER under a foreign app id is found, and is the null-App-ID row.
+        MetadataPermissionSet.Get(ForeignAppId, SuperRoleTok);
+        Assert.AreEqual(SuperRoleTok, MetadataPermissionSet."Role ID", 'Role ID of the row SUPER resolves to under a foreign app id');
+        Assert.AreEqual(NullAppId, MetadataPermissionSet."App ID", 'BC 29 answers the null-App-ID SUPER row whatever App ID was asked for');
+
+        // An app-declared role is still keyed on its owning app id.
+        MetadataPermissionSet.Reset();
+        MetadataPermissionSet.SetRange("Role ID", 'D365 BASIC');
+        Assert.IsTrue(MetadataPermissionSet.FindFirst(), 'Base Application declares the D365 BASIC permission set');
+        OwningAppId := MetadataPermissionSet."App ID";
+        MetadataPermissionSet.Reset();
+        MetadataPermissionSet.Get(OwningAppId, 'D365 BASIC');
+        Assert.AreEqual(OwningAppId, MetadataPermissionSet."App ID", 'D365 BASIC is found under its owning app id');
+
+        asserterror MetadataPermissionSet.Get(ForeignAppId, 'D365 BASIC');
+        Assert.ExpectedErrorCannotFind(Database::"Metadata Permission Set");
+#else
         asserterror MetadataPermissionSet.Get(ForeignAppId, SuperRoleTok);
         Assert.ExpectedErrorCannotFind(Database::"Metadata Permission Set");
+#endif
     end;
 
     [Test]

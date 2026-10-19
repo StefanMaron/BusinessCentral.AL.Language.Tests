@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-runobject-property
 // Scope: in-scope
 // Fixtures used: TPAROKP Probe (60584), Assert (60021) -- and Base Application pages
-//                116 "G/L Registers", 99000798 "Routing Links", 5925 "Fault Areas"
+//                116 "G/L Registers", 99000798 "Routing Links", 5925 "Fault Areas",
+//                570 "Chart of Accounts (G/L)", 5726 "Catalog Item List"
 //
 // The same three RunObject kinds codeunit 60559 pins, reached through actions on pages that
 // ship PRECOMPILED in Base Application instead of pages this app compiles.
@@ -18,8 +19,14 @@
 //   Routing Links  "Routing Sheet"                      -> report 99000787 "Routing Sheet"
 //   Fault Areas    "Import IRIS to Area/Symptom Code"   -> xmlport 5900
 //
+// The last two arms name an object that TWO kinds answer in Base Application, so the name alone
+// cannot say which one the action runs; only the kind the AL wrote after RunObject can:
+//
+//   Chart of Accounts (G/L)  "Receivables-Payables"  -> page 159 (report 5 has the same name)
+//   Catalog Item List        "Item Substitutions"    -> report 5701 (page 5720 has the same name)
+//
 // Written by agent stma-auto2-5, an automated implementation agent acting on the account
-// holder's behalf, for AL Runner issue 4582.
+// holder's behalf, for AL Runner issues 4582 and 4622.
 
 codeunit 60571 "TPAROKP Tests"
 {
@@ -28,6 +35,7 @@ codeunit 60571 "TPAROKP Tests"
 
     var
         Assert: Codeunit Assert;
+        ReceivablesPayablesOpened: Integer;
 
     // CODEUNIT. The host is parked on a register this test inserted, between two others, so
     // the register number the codeunit reports can only be the host's current row: a codeunit
@@ -82,6 +90,45 @@ codeunit 60571 "TPAROKP Tests"
         asserterror Host."Import IRIS to Area/Symptom Code".Invoke();
 
         Assert.ExpectedError('The method RunXmlPort is not supported for TestPages.');
+    end;
+
+    // SHARED NAME, PAGE. "Receivables-Payables" is page 159 and report 5; the action says Page.
+    // Page 159 is a ListPlus, so it opens as an ordinary form and reaches a [PageHandler]. A
+    // client that ran the report instead would raise "The method RunReport is not supported
+    // for TestPages." here and the handler would never be called.
+    [Test]
+    [HandlerFunctions('ReceivablesPayablesPageHandler')]
+    procedure PrecompiledPageRunObjectNamingASharedNameAsAPageOpensThePage()
+    var
+        Host: TestPage "Chart of Accounts (G/L)";
+    begin
+        ReceivablesPayablesOpened := 0;
+
+        Host.OpenView();
+        Host."Receivables-Payables".Invoke();
+
+        Assert.AreEqual(1, ReceivablesPayablesOpened,
+            'a RunObject action naming page "Receivables-Payables" must open that page, although report 5 has the same name');
+    end;
+
+    // SHARED NAME, REPORT. "Item Substitutions" is report 5701 and page 5720; the action says
+    // Report, so the TestPage surface refuses it with the report's message. A client that opened
+    // the page instead would not raise this error.
+    [Test]
+    procedure PrecompiledPageRunObjectNamingASharedNameAsAReportIsRefusedAsAReport()
+    var
+        Host: TestPage "Catalog Item List";
+    begin
+        Host.OpenView();
+        asserterror Host."Item Substitutions".Invoke();
+
+        Assert.ExpectedError('The method RunReport is not supported for TestPages.');
+    end;
+
+    [PageHandler]
+    procedure ReceivablesPayablesPageHandler(var ReceivablesPayables: TestPage "Receivables-Payables")
+    begin
+        ReceivablesPayablesOpened += 1;
     end;
 
     local procedure InsertRegister(No: Integer)

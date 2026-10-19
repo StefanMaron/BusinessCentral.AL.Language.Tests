@@ -176,13 +176,15 @@ codeunit 60562 "ALT Page Save Data Layer"
     // Nothing was put in its place, and that is a finding rather than an omission. Every
     // replacement was measured and each failed for its own reason:
     //
-    //   - A strict '>' on the same field. The gap between the seed insert and the page save is
-    //     1-2 ms on a warm path -- measured 0 or 1 ms across ten iterations -- so the two writes
-    //     routinely land in one millisecond. One formulation of this failed 3 times in 10 runs.
-    //     A flaky corpus test is expensive well beyond this file.
-    //   - Widening that gap with filler writes between the two. It does not widen: 40 inserts
-    //     between the seed and the page save still left 0-1 ms, because the cost is in the page
-    //     machinery either side, not between them.
+    //   - A strict '>' on the same field. The gap between the seed insert and the page save
+    //     depends on how fast the tier is, so an assertion on it holds on a slow tier and not
+    //     on a fast one. (Re-measured later, the gap was about 180 ms on the tier used; an
+    //     earlier note here claimed 0-1 ms and that figure did not reproduce, corpus issue
+    //     393.) One formulation of this failed 3 times in 10 runs, which is a separate
+    //     observation. An assertion that holds only when the tier is slow enough is not worth
+    //     having at any gap size.
+    //   - Widening that gap with filler writes between the two. Not pursued: it would still
+    //     make the assertion depend on tier speed.
     //   - Two consecutive page saves, comparing the second against the first. Worse -- the
     //     second save is the faster one, and the two collided 9 times in 16.
     //   - SystemRowVersion instead, which is clock-free and advanced on 16 of 16 page saves.

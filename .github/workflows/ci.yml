@@ -1,14 +1,14 @@
 name: AL Language Test Suite
 
 # Runs the full AL language coverage suite against a real BC Cloud sandbox on
-# every BC minor from 27.0 to 28.5 — the same floor and ceiling AL Runner's own
+# every BC minor from 27.0 to 29.0 — the same floor and ceiling AL Runner's own
 # matrix enforces, so a green verdict here means what a consumer needs it to mean.
 # All matrix legs boot BC on Linux (no Windows runner required) via
 # StefanMaron/MsDyn365Bc.On.Linux.
 #
 # Adding a new BC version:
 #   1. In the prepare job, add an include entry to the else-branch JSON:
-#      {"bc_version":"29.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}
+#      {"bc_version":"29.0","runtime":"18.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}
 #   2. If new API/keywords only exist from that version, guard tests with
 #      #if BC29PLUS and define the symbol in the include entry above.
 #   al_tool_version and runtime_version are auto-derived from bc_version
@@ -133,6 +133,10 @@ jobs:
       # This tree against master, and against itself.
       - run: python3 .github/scripts/check-object-ids.py .
 
+      # An install/upgrade trigger that raises breaks the publish of the corpus app on every BC version.
+      - run: python3 .github/scripts/test-install-triggers.py
+      - run: python3 .github/scripts/check-install-triggers.py .
+
       # This PR against every OTHER open PR. Blocking: two PRs that each add the
       # same id both pass the step above, and break master on the second merge.
       - name: Cross-PR object id collisions
@@ -177,13 +181,16 @@ jobs:
           if [ -n "$OVERRIDE" ]; then
             MAJOR=$(echo "$OVERRIDE" | cut -d. -f1)
             SYMS=""
-            for v in 27 28; do
+            for v in 27 28 29; do
               [ "$v" -le "$MAJOR" ] || break
               SYMS="${SYMS:+$SYMS,}BC${v}PLUS"
             done
-            JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','preprocessor_symbols':'$SYMS'}]}))")
+            case "$MAJOR" in 27) RT=16.1;; 28) RT=17.1;; *) RT=18.0;; esac
+            JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','runtime':'$RT','preprocessor_symbols':'$SYMS'}]}))")
           else
-            JSON='{"include":[{"bc_version":"27.0","preprocessor_symbols":"BC27PLUS"},{"bc_version":"27.3","preprocessor_symbols":"BC27PLUS"},{"bc_version":"27.5","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.0","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.1","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.2","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.3","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.4","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"28.5","preprocessor_symbols":"BC27PLUS,BC28PLUS"}]}'
+            # al-runtime-rs-staging only: the newest minor of each major (al-runtime-rs reads only these as its oracle).
+            # Master keeps every minor from 27.0 to 29.0 (the AL Runner project reads that matrix).
+            JSON='{"include":[{"bc_version":"27.5","runtime":"16.1","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.5","runtime":"17.1","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"29.0","runtime":"18.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}]}'
           fi
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
 
@@ -199,8 +206,23 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "60000..60999"
+      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
+      # Pinned to the 29.0 build before 29.0.54011.55892 (published 2026-10-07). That build
+      # reports debugger protocol 9.0, and no published al tool supports it yet: 18.0.37.11445-beta
+      # and 18.0.43.1464 stop at 7.0, 30.0.42.60748-beta at 8.0, so every codeunit ended "al
+      # runtests exited 1 with no results" (corpus #561). Remove this once an al tool lists
+      # debugger 9.0.
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # Creating a company creates its tables, including Base Application's
+      # OptimizeForTextSearch indexes, so a test that inserts a Company needs SQL Server
+      # Full-Text Search. No official SQL Server Linux image ships it; this tag adds it
+      # (MsDyn365Bc.On.Linux issue #20, KNOWN-LIMITATIONS.md). Opt-in there because it
+      # adds ~550 MB to the SQL pull. Only this job runs Company-insert tests (67947);
+      # test-onprem does not, so it keeps the default image.
+      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
   # The Target = OnPrem test app, in a job of its own.
   #
@@ -247,8 +269,45 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem"
-      codeunit_range:       "61200..61299"
+      codeunit_range:       "61200..61299|98000..98999"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
+      # Pinned to the 29.0 build before 29.0.54011.55892 (published 2026-10-07). That build
+      # reports debugger protocol 9.0, and no published al tool supports it yet: 18.0.37.11445-beta
+      # and 18.0.43.1464 stop at 7.0, 30.0.42.60748-beta at 8.0, so every codeunit ended "al
+      # runtests exited 1 with no results" (corpus #561). Remove this once an al tool lists
+      # debugger 9.0.
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
+      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+
+  # The Target = OnPrem DotNet test app (tests/al-language-onprem-dotnet), in a job of its own for the same
+  # one-test-app-per-invocation reason as test-onprem above. Its dotnet declarations need an AL compiler of 18.0 or
+  # newer: the compilers the default policy picks for BC 27 (16.x) and BC 28 (17.x) report AL0451 (mscorlib not found
+  # in the assembly probing paths). al_tool_version pins 18.0.43.1464 for every BC version; a newer compiler accepts the
+  # app's runtime 16.0.
+  test-onprem-dotnet:
+    name: BC OnPrem DotNet ${{ matrix.bc_version }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    with:
+      bc_version:           ${{ matrix.bc_version }}
+      bc_country:           "w1"
+      app_dirs: |
+        tests/al-language-internals-fixture
+        tests/al-language
+      test_app_dirs:        "tests/al-language-onprem-dotnet"
+      codeunit_range:       "61400..61499|99000..99499"
+      preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
+      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
 
     # Optional: supply a base64-encoded BC developer license.
     # Without this, BC boots with the public Cronus license (sufficient
