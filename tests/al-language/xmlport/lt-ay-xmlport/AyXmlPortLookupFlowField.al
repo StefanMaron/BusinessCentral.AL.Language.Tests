@@ -3,8 +3,8 @@
 // Fixtures used: Probe Observer (69160); own tables 80510-80511, xmlports 80512-80513, codeunit 80514
 // Probe: observe probe; every literal asserted below is what the corpus CI service tiers produced.
 // Facts: an Xml XmlPort with a fieldelement over a Lookup FlowField: the exported text with AutoCalcField default (true) and false, each with and
-// without CalcFields on the row in OnAfterGetRecord; an import of the same element: the value the row holds in OnBeforeInsertRecord, the result of
-// Import and the stored row (the FlowField before and after CalcFields). XmlPortFlowFieldSumCount.al and XmlPortFlowFieldElement.al pin Sum and Count.
+// without CalcFields on the row in OnAfterGetRecord; an import of the same element: the value the row holds in OnBeforeInsertRecord, the run of
+// Import (statement form) and the stored row (the FlowField before and after CalcFields). XmlPortFlowFieldSumCount.al and XmlPortFlowFieldElement.al pin Sum and Count.
 // BC versions: 27, 28, 29 (corpus CI)
 
 table 80510 "LT AY Lk Master"
@@ -283,7 +283,12 @@ codeunit 80514 "LT AY Lk FlowField Tests"
     begin
         asserterror Import(Observer, true);
         Observer.ObserveError('end');
-        Observer.Finish();
+        Observer.Expect('seen', 'before-insert=;');
+        Observer.Expect('stored', 'A/');
+        Observer.Expect('stored_calc', 'Alpha');
+        Observer.Expect('end|text', 'FINISHED');
+        Observer.Expect('end|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -293,6 +298,11 @@ codeunit 80514 "LT AY Lk FlowField Tests"
     begin
         asserterror Import(Observer, false);
         Observer.ObserveError('end');
-        Observer.Finish();
+        Observer.Expect('seen', 'before-insert=;');
+        Observer.Expect('stored', 'A/');
+        Observer.Expect('stored_calc', 'Alpha');
+        Observer.Expect('end|text', 'FINISHED');
+        Observer.Expect('end|code', 'Dialog');
+        Observer.Verify();
     end;
 }

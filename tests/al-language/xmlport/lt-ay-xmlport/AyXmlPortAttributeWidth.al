@@ -247,6 +247,9 @@ codeunit 80523 "LT AY Width Tests"
     begin
         asserterror DoImport(Observer);
         Observer.ObserveError('end');
-        Observer.Finish();
+        Observer.Expect('rows', '7|WXYZ|abcdef;8|Q|g;');
+        Observer.Expect('end|text', 'FINISHED');
+        Observer.Expect('end|code', 'Dialog');
+        Observer.Verify();
     end;
 }

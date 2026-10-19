@@ -355,7 +355,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'pre', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;');
+        Observer.Expect('rows', '');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -365,7 +368,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'pre', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;');
+        Observer.Expect('rows', '');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -375,7 +381,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'pre', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;');
+        Observer.Expect('rows', '');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -385,7 +394,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'head', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;post;');
+        Observer.Expect('rows', '');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -395,7 +407,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'head', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;init3;assign3;beforeinsert3;afterinsert3;post;');
+        Observer.Expect('rows', '1=a,2=b,3=c,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -405,7 +420,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'head', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;');
+        Observer.Expect('rows', '');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -415,7 +433,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'init', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;post;');
+        Observer.Expect('rows', '1=a,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -425,7 +446,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'init', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;init3;assign3;beforeinsert3;afterinsert3;post;');
+        Observer.Expect('rows', '1=a,2=b,3=c,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -435,7 +459,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'init', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;');
+        Observer.Expect('rows', '1=a,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -445,7 +472,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'assign', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;init3;assign3;beforeinsert3;afterinsert3;post;');
+        Observer.Expect('rows', '1=a,2=b,3=c,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -455,7 +485,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'assign', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;init3;assign3;beforeinsert3;afterinsert3;post;');
+        Observer.Expect('rows', '1=a,2=b,3=c,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -465,7 +498,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'assign', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;');
+        Observer.Expect('rows', '1=a,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -475,7 +511,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'beforeinsert', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;post;');
+        Observer.Expect('rows', '1=a,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -485,7 +524,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'beforeinsert', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;init3;assign3;beforeinsert3;afterinsert2;post;');
+        Observer.Expect('rows', '1=a,3=c,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -495,7 +537,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'beforeinsert', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;');
+        Observer.Expect('rows', '1=a,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -505,7 +550,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'afterinsert', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;post;');
+        Observer.Expect('rows', '1=a,2=b,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -515,7 +563,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'afterinsert', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;init3;assign3;beforeinsert3;afterinsert3;post;');
+        Observer.Expect('rows', '1=a,2=b,3=c,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -525,7 +576,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoImport(Observer, 'afterinsert', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('log', 'pre1;head1;init1;assign1;beforeinsert1;afterinsert1;init2;assign2;beforeinsert2;afterinsert2;');
+        Observer.Expect('rows', '1=a,2=b,');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
