@@ -551,4 +551,215 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('WordDocumentMergerAppMode', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Verify();
     end;
+    // ---- Writer PW: which Reporting Triggers events the other report calls raise (trust-refusals probe list: Report.Run, RunModal, Execute,
+    // the variable SaveAs, non-Xml formats; docs/probes-needed.md "Report runs and SaveAs": SubstituteReport and OnDocumentReady on calls
+    // other than the pinned static Xml SaveAs, the RequestPageXml and RecordRef arguments, the OnDocumentReady payload keys and stream). ----
+
+    [TryFunction]
+    local procedure PwTryCall(Which: Text; var Parameters: Text)
+    var
+        Rep: Report "LT V Report A";
+        ProcOnly: Report "LT PW V ProcOnly";
+        Parent: Record "Probe Rep Parent";
+        TempBlob: Codeunit "Temp Blob";
+        RecRef: RecordRef;
+        OutStr: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutStr);
+        case Which of
+            'run static nopage':
+                Report.Run(Report::"LT V Report A", false);
+            'runmodal static nopage':
+                Report.RunModal(Report::"LT V Report A", false);
+            'run var nopage':
+                begin
+                    Rep.UseRequestPage(false);
+                    Rep.Run();
+                end;
+            'runmodal var nopage':
+                begin
+                    Rep.UseRequestPage(false);
+                    Rep.RunModal();
+                end;
+            'requestpage static':
+                Parameters := Report.RunRequestPage(Report::"LT V Report A");
+            'execute static':
+                Report.Execute(Report::"LT V Report A", Parameters);
+            'execute var':
+                Rep.Execute(Parameters);
+            'saveas var xml':
+                Rep.SaveAs('', ReportFormat::Xml, OutStr);
+            'saveas static params xml':
+                Report.SaveAs(Report::"LT V Report A", Parameters, ReportFormat::Xml, OutStr);
+            'saveas static record xml':
+                begin
+                    Parent.SetRange(Id, 1);
+                    RecRef.GetTable(Parent);
+                    Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Xml, OutStr, RecRef);
+                end;
+            'saveas static pdf':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Pdf, OutStr);
+            'saveas static word':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Word, OutStr);
+            'saveas static excel':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Excel, OutStr);
+            'saveas static html':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Html, OutStr);
+            'procOnly run nopage':
+                Report.Run(Report::"LT PW V ProcOnly", false);
+            'procOnly execute var':
+                ProcOnly.Execute('');
+            'procOnly saveas xml':
+                Report.SaveAs(Report::"LT PW V ProcOnly", '', ReportFormat::Xml, OutStr);
+        end;
+    end;
+
+    local procedure PwCall(var Observer: Codeunit "Probe Observer"; Which: Text; var Parameters: Text)
+    var
+        Ok: Boolean;
+        Err: Text;
+    begin
+        Log.Start();
+        Ok := PwTryCall(Which, Parameters);
+        if not Ok then
+            Err := ' error=' + GetLastErrorCode() + ':' + CopyStr(GetLastErrorText(), 1, 120);
+        ClearLastError();
+        Observer.Observe(Which, Format(Ok) + Err + '|' + Log.Take());
+        Log.Stop();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_RaisedEvents_RunRunModalExecute()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'run static nopage', Parameters);
+        PwCall(Observer, 'runmodal static nopage', Parameters);
+        PwCall(Observer, 'run var nopage', Parameters);
+        PwCall(Observer, 'runmodal var nopage', Parameters);
+        PwCall(Observer, 'requestpage static', Parameters);
+        PwCall(Observer, 'execute static', Parameters);
+        PwCall(Observer, 'execute var', Parameters);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_RaisedEvents_SaveAsForms()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'saveas var xml', Parameters);
+        PwCall(Observer, 'requestpage static', Parameters);
+        PwCall(Observer, 'saveas static params xml', Parameters);
+        PwCall(Observer, 'saveas static record xml', Parameters);
+        PwCall(Observer, 'procOnly run nopage', Parameters);
+        PwCall(Observer, 'procOnly execute var', Parameters);
+        PwCall(Observer, 'procOnly saveas xml', Parameters);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_RaisedEvents_OtherFormats()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'saveas static pdf', Parameters);
+        PwCall(Observer, 'saveas static word', Parameters);
+        PwCall(Observer, 'saveas static excel', Parameters);
+        PwCall(Observer, 'saveas static html', Parameters);
+        Observer.Finish();
+    end;
+
+    local procedure PwArgs(var Observer: Codeunit "Probe Observer"; Which: Text; var Parameters: Text)
+    var
+        Ok: Boolean;
+    begin
+        Log.Start();
+        Log.SetValue('pwcollect', 'yes');
+        Ok := PwTryCall(Which, Parameters);
+        ClearLastError();
+        Observer.Observe(Which, Format(Ok) + '|' + Log.GetValue('pwargs'));
+        Log.Take();
+        Log.Stop();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_SubstituteReport_Arguments_And_DocumentReadyPayload()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        Parameters := '';
+        PwArgs(Observer, 'saveas var xml', Parameters);
+        PwArgs(Observer, 'requestpage static', Parameters);
+        PwArgs(Observer, 'saveas static params xml', Parameters);
+        PwArgs(Observer, 'saveas static record xml', Parameters);
+        PwArgs(Observer, 'execute var', Parameters);
+        Observer.Finish();
+    end;
+}
+
+// Writer PW: a second subscriber to SubstituteReport and OnDocumentReady that records the arguments the LT V Subs subscribers do not log.
+// It writes only into the 'pwargs' setting of LT V Log and only while a PW test set 'pwcollect', so the logs of the other tests stay as they are.
+codeunit 86146 "LT PW V Arg Subs"
+{
+    var
+        Log: Codeunit "LT V Log";
+
+    local procedure Append(Entry: Text)
+    begin
+        Log.SetValue('pwargs', Log.GetValue('pwargs') + Entry + ';');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'SubstituteReport', '', false, false)]
+    local procedure PwSubstitute(ReportId: Integer; RunMode: Option Normal,ParametersOnly,Execute,Print,SaveAs,RunModal; RequestPageXml: Text; RecordRef: RecordRef; var NewReportId: Integer)
+    begin
+        if not Log.Has('pwcollect') then
+            exit;
+        Append('Sub(' + Format(RunMode) + ',xmlLen>0=' + Format(StrLen(RequestPageXml) > 0) + ',xmlHasDataItem=' + Format(RequestPageXml.Contains('<DataItem')) +
+            ',xmlHasPrefix=' + Format(RequestPageXml.Contains('Prefix')) + ',recNo=' + Format(RecordRef.Number()) + ')');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'OnDocumentReady', '', false, false)]
+    local procedure PwDocumentReady(ObjectId: Integer; ObjectPayload: JsonObject; DocumentStream: InStream; var TargetStream: OutStream; var Success: Boolean)
+    var
+        Keys: Text;
+        K: Text;
+        Head: Text;
+        Tok: JsonToken;
+        DocType: Text;
+    begin
+        if not Log.Has('pwcollect') then
+            exit;
+        foreach K in ObjectPayload.Keys() do
+            Keys += K + ',';
+        if ObjectPayload.Get('documenttype', Tok) then
+            DocType := Tok.AsValue().AsText();
+        DocumentStream.ReadText(Head, 40);
+        Append('Ready(keys=' + Keys + ' documenttype=' + DocType + ' head=' + Head + ')');
+    end;
+}
+
+// Writer PW: a processing-only report with a request page, for the Reporting Triggers probes.
+report 86147 "LT PW V ProcOnly"
+{
+    UsageCategory = None;
+    ProcessingOnly = true;
+
+    dataset
+    {
+        dataitem(P; "Probe Rep Parent")
+        {
+        }
+    }
 }

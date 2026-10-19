@@ -342,4 +342,143 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Expect('plain25_first', 'R25;R25;C;');
         Observer.Verify();
     end;
+    // Writer PW: trust-refusals probe list "descending find list step back": the open of the descending OnFindRecord list (with
+    // OnAfterGetCurrRecord) at 1, 2, 19, 20 and 21 rows (3 and 25 are pinned above), and the ascending list at 19, 20 and 21 rows.
+    [Test]
+    procedure PW_FindList_Descending_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesDesc(1, 'desc1_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Descending_2Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesDesc(2, 'desc2_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Descending_19Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesDesc(19, 'desc19_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Descending_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesDesc(20, 'desc20_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Descending_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesDesc(21, 'desc21_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Ascending_19Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesAsc(19, 'asce19_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Ascending_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesAsc(20, 'asce20_', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_FindList_Ascending_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MovesAsc(21, 'asce21_', Observer);
+        Observer.Finish();
+    end;
+
+    // Writer PW: trust-refusals probe list "rows a GoToKey past a full 20-row window reads": GoToKey on the OnFindRecord lists after the open
+    // read a full window. Each step's trigger log.
+    local procedure PwGoToAsc(Rows: Integer; K1: Integer; K2: Integer; K3: Integer; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT PnF FL Asc";
+        Row: Record "LT PnF FL Row";
+    begin
+        Seed(Rows);
+        Log.Take();
+        P.OpenView();
+        Log.Take();
+        Row.Get(K1);
+        Observer.Observe('goto' + Format(K1), Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('goToKey' + Format(K2), Format(P.GoToKey(K2)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('goToKey' + Format(K3), Format(P.GoToKey(K3)) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Next();
+        Observer.Observe('next', P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+    end;
+
+    local procedure PwGoToDesc(Rows: Integer; K1: Integer; K2: Integer; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT PnF FL Desc";
+    begin
+        Seed(Rows);
+        Log.Take();
+        P.OpenView();
+        Log.Take();
+        Observer.Observe('goToKey' + Format(K1), Format(P.GoToKey(K1)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('goToKey' + Format(K2), Format(P.GoToKey(K2)) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Next();
+        Observer.Observe('next', P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+    end;
+
+    [Test]
+    procedure PW_GoToKey_Ascending_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwGoToAsc(25, 23, 5, 25, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_GoToKey_Ascending_45Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwGoToAsc(45, 40, 21, 45, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_GoToKey_Descending_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwGoToDesc(25, 3, 20, Observer);
+        Observer.Finish();
+    end;
 }

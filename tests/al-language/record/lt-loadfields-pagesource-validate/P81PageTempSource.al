@@ -489,4 +489,185 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Expect('temp_has_pn', 'No');
         Observer.Verify();
     end;
+    // Writer PW: RunModal_TempRecord_ShowsTempRows again, later in the codeunit (does the first page run of the codeunit differ?). failure-triage "blank new line for a temp record" (70310 RunModal_TempRecord_ShowsTempRows, corpus #642 item 5).
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_ThreeRows_Again()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: two temporary rows, positioned on the first.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_TwoRows()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.Get('T3');
+        Temp.Delete();
+        Temp.FindFirst();
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: one temporary row.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_OneRow()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.Get('T3');
+        Temp.Delete();
+        Temp.Get('T2');
+        Temp.Delete();
+        Temp.FindFirst();
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: three temporary rows, positioned on the last.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_PositionedOnLast()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.FindLast();
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: three temporary rows, the record holds a key before every row.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_KeyBeforeAllRows()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.Init();
+        Temp.Code := 'A0';
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: three temporary rows, the record holds a key after every row.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_KeyAfterAllRows()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.Init();
+        Temp.Code := 'Z9';
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: three temporary rows, the stored table empty.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_TableEmpty()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Row.DeleteAll();
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: three temporary rows, a filter that keeps all three.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_FilterKeepsAll()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.SetFilter(Qty, '>=1');
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: three temporary rows, a filter on the key that keeps all three.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_KeyFilterKeepsAll()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Temp.SetFilter(Code, 'T*');
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
+        Observer.Observe('temp_count', Format(Temp.Count()));
+        Observer.Observe('db_count', Format(Row.Count()));
+        Observer.Finish();
+    end;
+
+    // Writer PW: the stored table with three rows (D1, D2, D3), no filter: RunModal_NonTempRecord_ShowsDbRows has two and shows the new line.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_NonTempRunModal_ThreeRows()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Row.Code := 'D3';
+        Row.Name := 'db-three';
+        Row.Qty := 30;
+        Row.Insert();
+        Row.FindFirst();
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Row)));
+        Observer.Finish();
+    end;
+
+    // Writer PW: Page.Run (not modal) of the same three temporary rows.
+    [Test]
+    [HandlerFunctions('NonModalHandler')]
+    procedure PW_TempRun_ThreeRows()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+    begin
+        Seed(Temp);
+        Page.Run(Page::"LT P81 PG List", Temp);
+        Observer.Finish();
+    end;
 }

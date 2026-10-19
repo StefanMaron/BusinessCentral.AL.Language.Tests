@@ -140,4 +140,69 @@ codeunit 73193 "LT P163 AllObj Namespace"
         Observer.Expect('base_app_sales_post_BaseApp', '[Microsoft.Sales.Posting]');
         Observer.Verify();
     end;
+    // Writer PW: failure-triage "AllObj TableData rows" (73193 P163_AllObj_FilterOnALNamespace counts 4 rows in the namespace of a table, a
+    // codeunit and a page). The rows of the namespace one by one, and which tables have an AllObj / AllObjWithCaption row of type TableData.
+    local procedure PwRows(var AllObjRec: Record AllObj): Text
+    var
+        Result: Text;
+    begin
+        if AllObjRec.FindSet() then
+            repeat
+                Result += Format(AllObjRec."Object Type") + ' ' + Format(AllObjRec."Object ID") + ' ' + AllObjRec."Object Name" + ';';
+            until AllObjRec.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure PwTableData(TableId: Integer): Text
+    var
+        AllObjRec: Record AllObj;
+        TableRow: Record AllObj;
+        Caption: Record AllObjWithCaption;
+        Result: Text;
+    begin
+        if not AllObjRec.Get(AllObjRec."Object Type"::TableData, TableId) then
+            Result := 'allobj=<no row>'
+        else begin
+            Result := 'allobj=' + AllObjRec."Object Name" + ' ns=[' + AllObjRec."AL Namespace" + ']';
+            if TableRow.Get(TableRow."Object Type"::Table, TableId) then
+                Result += ' samePackage=' + Format(TableRow."App Package ID" = AllObjRec."App Package ID") + ' sameRuntimePackage=' + Format(TableRow."App Runtime Package ID" = AllObjRec."App Runtime Package ID");
+        end;
+        if not Caption.Get(Caption."Object Type"::TableData, TableId) then
+            Result += ' caption=<no row>'
+        else
+            Result += ' caption=' + Caption."Object Caption" + ' subtype=[' + Caption."Object Subtype" + ']';
+        exit(Result);
+    end;
+
+    [Test]
+    procedure PW_AllObj_RowsOfTheNamespace()
+    var
+        AllObjRec: Record AllObj;
+        Observer: Codeunit "Probe Observer";
+    begin
+        AllObjRec.SetRange("AL Namespace", 'P163Probe.Names');
+        Observer.Observe('rows', PwRows(AllObjRec));
+        AllObjRec.SetRange("Object Type", AllObjRec."Object Type"::TableData);
+        Observer.Observe('tabledata_rows', Format(AllObjRec.Count()));
+        AllObjRec.Reset();
+        AllObjRec.SetRange("Object ID", Database::"LT P163 NS Table");
+        Observer.Observe('rows_with_the_table_id', PwRows(AllObjRec));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_AllObj_TableDataRowPerTableKind()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('namespaced_table', PwTableData(Database::"LT P163 NS Table"));
+        Observer.Observe('global_namespace_table', PwTableData(Database::"LT P163 PM Row"));
+        Observer.Observe('tabletype_temporary', PwTableData(60025));
+        Observer.Observe('base_app_customer', PwTableData(18));
+        Observer.Observe('platform_company', PwTableData(Database::Company));
+        Observer.Observe('virtual_integer', PwTableData(Database::Integer));
+        Observer.Observe('virtual_allobj', PwTableData(Database::AllObj));
+        Observer.Observe('no_such_table', PwTableData(73199));
+        Observer.Finish();
+    end;
 }

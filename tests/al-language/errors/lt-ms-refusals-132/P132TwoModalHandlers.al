@@ -67,6 +67,7 @@ codeunit 73727 "LT P132 Two Modals"
 
     var
         Log: Codeunit "LT P132 Modal Log";
+        PwLastB: Text;
 
     [ModalPageHandler]
     procedure HandlerA(var P: TestPage "LT P132 Modal A")
@@ -232,5 +233,206 @@ codeunit 73727 "LT P132 Two Modals"
         Observer.Expect('af210|code', 'TestActionNotFound');
         Observer.Expect('log', 'A;A;B;');
         Observer.Verify();
+    end;
+    // Writer PW: failure-triage "Cancel not found after a page ran twice" (73727 P132_TwoHandlers_ARunTwiceThenB). The probe handlers try
+    // Cancel first; when it raises they log the error code and close the page with OK, then with Close if OK raises too.
+    [TryFunction]
+    local procedure PwTryCancelA(var P: TestPage "LT P132 Modal A")
+    begin
+        P.Cancel().Invoke();
+    end;
+
+    [TryFunction]
+    local procedure PwTryOkA(var P: TestPage "LT P132 Modal A")
+    begin
+        P.OK().Invoke();
+    end;
+
+    [TryFunction]
+    local procedure PwTryCancelB(var P: TestPage "LT P132 Modal B")
+    begin
+        P.Cancel().Invoke();
+    end;
+
+    [TryFunction]
+    local procedure PwTryOkB(var P: TestPage "LT P132 Modal B")
+    begin
+        P.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure PwProbeA(var P: TestPage "LT P132 Modal A")
+    begin
+        if PwTryCancelA(P) then begin
+            Log.Add('A cancel');
+            exit;
+        end;
+        Log.Add('A cancel ' + GetLastErrorCode());
+        ClearLastError();
+        if PwTryOkA(P) then begin
+            Log.Add('A ok');
+            exit;
+        end;
+        Log.Add('A ok ' + GetLastErrorCode());
+        ClearLastError();
+        P.Close();
+    end;
+
+    [ModalPageHandler]
+    procedure PwProbeB(var P: TestPage "LT P132 Modal B")
+    begin
+        if PwTryCancelB(P) then begin
+            Log.Add('B cancel');
+            exit;
+        end;
+        Log.Add('B cancel ' + GetLastErrorCode());
+        ClearLastError();
+        if PwTryOkB(P) then begin
+            Log.Add('B ok');
+            exit;
+        end;
+        Log.Add('B ok ' + GetLastErrorCode());
+        ClearLastError();
+        P.Close();
+    end;
+
+    local procedure PwRunA(): Text
+    begin
+        exit(Format(Page.RunModal(Page::"LT P132 Modal A")) + ',');
+    end;
+
+    local procedure PwRunB(): Text
+    begin
+        exit(Format(Page.RunModal(Page::"LT P132 Modal B")) + ',');
+    end;
+
+    [Test]
+    [HandlerFunctions('HandlerA,PwProbeB')]
+    procedure PW_ARunTwice_ThenProbeB()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunA() + PwRunA() + PwRunB();
+        Observer.Observe('results', R);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('HandlerA,PwProbeB')]
+    procedure PW_AOnce_ThenProbeB()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunA() + PwRunB();
+        Observer.Observe('results', R);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('HandlerA,PwProbeB')]
+    procedure PW_AThrice_ThenProbeB()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunA() + PwRunA() + PwRunA() + PwRunB();
+        Observer.Observe('results', R);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('HandlerA,PwProbeB')]
+    procedure PW_ABAB_ProbeB()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunA() + PwRunB() + PwRunA() + PwRunB();
+        Observer.Observe('results', R);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeB')]
+    procedure PW_ProbeB_ThreeTimes()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunB() + PwRunB() + PwRunB();
+        Observer.Observe('results', R);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeA')]
+    procedure PW_ProbeA_ThreeTimes()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunA() + PwRunA() + PwRunA();
+        Observer.Observe('results', R);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeA,HandlerB')]
+    procedure PW_ProbeA_Twice_ThenB()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Log.Take();
+        R := PwRunA() + PwRunA();
+        Observer.Observe('results', R);
+        if TryRunB() then
+            Observer.Observe('b', PwLastB)
+        else
+            Observer.Observe('b', 'error ' + GetLastErrorCode());
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryRunB()
+    begin
+        PwLastB := PwRunB();
+    end;
+
+    [Test]
+    [HandlerFunctions('HandlerA,HandlerB')]
+    procedure PW_ARunTwice_ThenB_ThenB()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Log.Take();
+        PwRunA();
+        PwRunA();
+        if TryRunB() then
+            Observer.Observe('b1', PwLastB)
+        else
+            Observer.Observe('b1', 'error ' + GetLastErrorCode());
+        ClearLastError();
+        if TryRunB() then
+            Observer.Observe('b2', PwLastB)
+        else
+            Observer.Observe('b2', 'error ' + GetLastErrorCode());
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
     end;
 }

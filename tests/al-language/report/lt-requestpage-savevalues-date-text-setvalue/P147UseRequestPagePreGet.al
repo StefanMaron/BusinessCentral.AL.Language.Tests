@@ -79,6 +79,46 @@ codeunit 70272 "LT P147 Urp PreGet Test"
         Observer.Expect('trace', 'OnInitReport;OnPreReport;get=No;');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Report runs and SaveAs": CurrReport.UseRequestPage() in OnPreReport of a static Report.RunModal with
+    // RequestWindow false (P147_Urp_PreGet_RunWithoutRequestPage pins the static Report.Run).
+    [TryFunction]
+    local procedure PwTryRunModalId(WithRequestPage: Boolean; TwoArguments: Boolean)
+    begin
+        if TwoArguments then
+            Report.RunModal(Report::"LT P147 Urp PreGet", WithRequestPage)
+        else
+            Report.RunModal(Report::"LT P147 Urp PreGet", WithRequestPage, false);
+    end;
+
+    [TryFunction]
+    local procedure PwTryRunVarNoRp()
+    var
+        Rep: Report "LT P147 Urp PreGet";
+    begin
+        Rep.UseRequestPage(false);
+        Rep.RunModal();
+    end;
+
+    [Test]
+    procedure PW_Urp_PreGet_RunModalWithoutRequestPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT P147 Trace Log 3";
+    begin
+        Log.Clear();
+        Observer.Observe('runmodal(id, false, false)', Format(PwTryRunModalId(false, false)));
+        Observer.ObserveError('runmodal(id, false, false)');
+        Observer.Observe('trace 1', Log.Get());
+        Log.Clear();
+        Observer.Observe('runmodal(id, false)', Format(PwTryRunModalId(false, true)));
+        Observer.ObserveError('runmodal(id, false)');
+        Observer.Observe('trace 2', Log.Get());
+        Log.Clear();
+        Observer.Observe('variable UseRequestPage(false) RunModal', Format(PwTryRunVarNoRp()));
+        Observer.ObserveError('variable');
+        Observer.Observe('trace 3', Log.Get());
+        Observer.Finish();
+    end;
 }
 
 codeunit 70282 "LT P147 Trace Log 3"

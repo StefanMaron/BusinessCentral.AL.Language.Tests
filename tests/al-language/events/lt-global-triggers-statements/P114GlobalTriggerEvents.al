@@ -349,4 +349,107 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Expect('count', '0');
         Observer.Verify();
     end;
+    // Writer PW: trust-refusals probe list "CaptionClassTranslate arguments and result": what a subscriber that sets Translation changes (the
+    // LT P114 Glob Subs subscribers never change it). LT PW CCT Subs sets Translation to 'T[' + CaptionExpr + ']' in mode set, to '' in mode
+    // blank, and counts its calls. Only results and counts are observed (the order of the two subscribers is not).
+    local procedure PwTranslate(Mode: Text): Text
+    var
+        Subs: Codeunit "LT PW CCT Subs";
+        R: Text;
+    begin
+        Subs.SetMode(Mode);
+        R := 'area3=' + CaptionClassTranslate('3,Foo') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | unclaimed=' + CaptionClassTranslate('P114ZZ,Foo') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | noComma=' + CaptionClassTranslate('P114 no comma') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | empty=' + CaptionClassTranslate('') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | area3Empty=' + CaptionClassTranslate('3,') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | leadingComma=' + CaptionClassTranslate(',Foo') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | area1=' + CaptionClassTranslate('1,1,1') + ' calls=' + Format(Subs.TakeCalls());
+        R += ' | lastSeen=' + Subs.LastSeen();
+        Subs.SetMode('');
+        exit(R);
+    end;
+
+    [Test]
+    procedure PW_CaptionClassTranslate_SubscriberSetsTranslation()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('set', PwTranslate('set'));
+        Observer.Observe('blank', PwTranslate('blank'));
+        Observer.Observe('keep', PwTranslate('keep'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_CaptionClassTranslate_SubscriberSetsTranslation_OnPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Subs: Codeunit "LT PW CCT Subs";
+        Card: TestPage "LT P114 Glob Card";
+    begin
+        Seed();
+        Subs.SetMode('set');
+        Card.OpenView();
+        Card.First();
+        Observer.Observe('calls after open', Format(Subs.TakeCalls()));
+        Observer.Observe('claimed caption', Card.ClaimedCaption.Caption());
+        Observer.Observe('area3 caption', Card.AreaThree.Caption());
+        Observer.Observe('calls after captions', Format(Subs.TakeCalls()));
+        Card.Close();
+        Subs.SetMode('blank');
+        Card.OpenView();
+        Card.First();
+        Observer.Observe('blank claimed caption', Card.ClaimedCaption.Caption());
+        Observer.Observe('blank area3 caption', Card.AreaThree.Caption());
+        Card.Close();
+        Subs.SetMode('');
+        Observer.Finish();
+    end;
+}
+
+codeunit 86149 "LT PW CCT Subs"
+{
+    SingleInstance = true;
+
+    var
+        Mode: Text;
+        Calls: Integer;
+        Seen: Text;
+
+    procedure SetMode(NewMode: Text)
+    begin
+        Mode := NewMode;
+        Calls := 0;
+        Seen := '';
+    end;
+
+    procedure TakeCalls(): Integer
+    var
+        N: Integer;
+    begin
+        N := Calls;
+        Calls := 0;
+        exit(N);
+    end;
+
+    procedure LastSeen(): Text
+    begin
+        exit(Seen);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"UI Helper Triggers", 'CaptionClassTranslate', '', false, false)]
+    local procedure PwCaptionClassTranslate(Language: Integer; CaptionExpr: Text[1024]; var Translation: Text[1024])
+    begin
+        if Mode = '' then
+            exit;
+        Calls += 1;
+        Seen := 'lang_is_session=' + Format(Language = GlobalLanguage()) + ',expr=' + CaptionExpr;
+        case Mode of
+            'set':
+                Translation := 'T[' + CaptionExpr + ']';
+            'blank':
+                Translation := '';
+        end;
+    end;
 }

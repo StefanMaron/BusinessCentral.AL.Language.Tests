@@ -45,4 +45,46 @@ codeunit 74799 "LT CRL Columns"
         Observer.Expect('primaryKey', 'Yes');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Values and builtins" (documentation-only assumption): RecordRef.FieldIndex over a table with FlowFilter
+    // fields between normal fields and a FlowField (Columns_Schema above pins only FlowFields after the others).
+    [Test]
+    procedure PW_FieldIndex_FlowFilterAmongNormalFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        RR: RecordRef;
+        FR: FieldRef;
+        i: Integer;
+        Order: Text;
+    begin
+        RR.Open(Database::"LT PW FI Row");
+        Observer.Observe('fieldCount', Format(RR.FieldCount()));
+        for i := 1 to RR.FieldCount() do begin
+            FR := RR.FieldIndex(i);
+            Order += Format(FR.Number()) + ':' + Format(FR.Class()) + ';';
+        end;
+        Observer.Observe('order', Order);
+        Observer.Finish();
+    end;
+}
+
+// Writer PW: fields in id order: normal, FlowFilter, normal, FlowField, normal, FlowFilter, Blob, FlowField.
+table 86148 "LT PW FI Row"
+{
+    DataClassification = SystemMetadata;
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; FilterA; Integer) { FieldClass = FlowFilter; }
+        field(3; Name; Text[20]) { }
+        field(4; CntA; Integer) { FieldClass = FlowField; CalcFormula = count("LT PW FI Row"); }
+        field(5; Amt; Decimal) { }
+        field(6; FilterB; Date) { FieldClass = FlowFilter; }
+        field(7; Data; Blob) { }
+        field(8; CntB; Integer) { FieldClass = FlowField; CalcFormula = count("LT PW FI Row" where(Id = field(FilterA))); }
+        field(20; Late; Code[10]) { }
+    }
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
 }

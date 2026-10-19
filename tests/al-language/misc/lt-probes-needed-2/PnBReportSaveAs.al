@@ -471,4 +471,115 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('filterUntouched', '1');
         Obs.Verify();
     end;
+    // Writer PW: the whole Xml dataset of "LT PnB Rep", line by line (lines as ReadText gives them, systemId attributes taken out, the
+    // header values that change from run to run scrubbed by the Probe Observer). docs/probes-needed.md "Report runs and SaveAs":
+    // "The Xml dataset of LT PnB Rep on BC 29 has 113 lines, the runtime writes 107".
+    local procedure PwDump(First: Integer; Last: Integer)
+    var
+        Obs: Codeunit "Probe Observer";
+        Rep: Report "LT PnB Rep";
+        i: Integer;
+    begin
+        Seed();
+        Render(Rep, '', ReportFormat::Xml);
+        Obs.Observe('lines', Format(Lines.Count()));
+        for i := First to Last do
+            if i <= Lines.Count() then
+                Obs.Observe('l' + Format(i), Lines.Get(i));
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines001To016()
+    begin
+        PwDump(1, 16);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines017To032()
+    begin
+        PwDump(17, 32);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines033To048()
+    begin
+        PwDump(33, 48);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines049To064()
+    begin
+        PwDump(49, 64);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines065To080()
+    begin
+        PwDump(65, 80);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines081To096()
+    begin
+        PwDump(81, 96);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines097To112()
+    begin
+        PwDump(97, 112);
+    end;
+
+    [Test]
+    procedure PW_Dump_Lines113To128()
+    begin
+        PwDump(113, 128);
+    end;
+
+    // Writer PW: GetLastErrorText and GetLastErrorCode after Ok := Rep.SaveAs(..) answered false because OnPreReport raised an error
+    // (docs/probes-needed.md "Report runs and SaveAs": only false and no error are pinned, TriggerError_InPreReport).
+    [Test]
+    procedure PW_TriggerError_InPreReport_LastError()
+    var
+        Obs: Codeunit "Probe Observer";
+        Rep: Report "LT PnB Rep";
+    begin
+        Seed();
+        ClearLastError();
+        Rep.SetFailPre();
+        Obs.Observe('ok', Format(Render(Rep, '', ReportFormat::Xml)));
+        Obs.Observe('text', GetLastErrorText());
+        Obs.Observe('code', GetLastErrorCode());
+        Obs.Observe('len>0', Format(StrLen(RawText) > 0));
+        Obs.Finish();
+    end;
+
+    // Writer PW: the code of "The object has been run. Use the function CLEAR(Report)." after a second SaveAs on one variable, once after a
+    // first SaveAs that worked (Xml) and once after one that failed (Html without a layout).
+    [Test]
+    procedure PW_SecondSaveAs_LastErrorCode()
+    var
+        Obs: Codeunit "Probe Observer";
+        Rep: Report "LT PnB Rep";
+        Rep2: Report "LT PnB Rep";
+    begin
+        Seed();
+        ClearLastError();
+        Obs.Observe('xml1', Format(Render(Rep, '', ReportFormat::Xml)));
+        Obs.Observe('xml1.text', GetLastErrorText());
+        Obs.Observe('xml1.code', GetLastErrorCode());
+        Obs.Observe('xml2', Format(Render(Rep, '', ReportFormat::Xml)));
+        Obs.Observe('xml2.text', GetLastErrorText());
+        Obs.Observe('xml2.code', GetLastErrorCode());
+        ClearLastError();
+        Obs.Observe('html1', Format(Render(Rep2, '', ReportFormat::Html)));
+        Obs.Observe('html1.text', GetLastErrorText());
+        Obs.Observe('html1.code', GetLastErrorCode());
+        ClearLastError();
+        Obs.Observe('xmlAfterHtml', Format(Render(Rep2, '', ReportFormat::Xml)));
+        Obs.Observe('xmlAfterHtml.text', GetLastErrorText());
+        Obs.Observe('xmlAfterHtml.code', GetLastErrorCode());
+        Obs.Finish();
+    end;
 }

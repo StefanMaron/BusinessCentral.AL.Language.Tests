@@ -441,4 +441,40 @@ codeunit 70000 "LT TxA Search 1"
         Observer.Expect('any_start12_err', 'no error');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Values and builtins": Text.LastIndexOf('', 0) on an empty text (LastIndexOf('', 1) is 1 above), and the
+    // neighbors: an empty value with start 0 and -1 on an empty and a non-empty text.
+    [TryFunction]
+    local procedure PwTryLastIndexOf(T: Text; Value: Text; StartIndex: Integer; var Result: Integer)
+    begin
+        Result := T.LastIndexOf(Value, StartIndex);
+    end;
+
+    local procedure PwLastIndexOf(T: Text; Value: Text; StartIndex: Integer): Text
+    var
+        Result: Integer;
+        Outcome: Text;
+    begin
+        ClearLastError();
+        if PwTryLastIndexOf(T, Value, StartIndex, Result) then
+            exit(Format(Result));
+        Outcome := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Outcome);
+    end;
+
+    [Test]
+    procedure PW_LastIndexOf_EmptyValue_StartZero()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('empty_text_empty_value_0', PwLastIndexOf('', '', 0));
+        Observer.Observe('empty_text_empty_value_minus1', PwLastIndexOf('', '', -1));
+        Observer.Observe('empty_text_empty_value_2', PwLastIndexOf('', '', 2));
+        Observer.Observe('hello_empty_value_0', PwLastIndexOf('hello', '', 0));
+        Observer.Observe('hello_empty_value_1', PwLastIndexOf('hello', '', 1));
+        Observer.Observe('hello_empty_value_5', PwLastIndexOf('hello', '', 5));
+        Observer.Observe('hello_empty_value_6', PwLastIndexOf('hello', '', 6));
+        Observer.Observe('hello_empty_value_7', PwLastIndexOf('hello', '', 7));
+        Observer.Finish();
+    end;
 }

@@ -86,3 +86,145 @@ codeunit 72551 "LT PnE Media Import"
 #endif
 }
 #endif
+
+// Writer PW: docs/probes-needed.md "Values and builtins": Media.ImportStream on a field of a record from a stream on a Blob field of that
+// same record whose content an Insert stored. ImportStream_ThreeArguments_ForComparison (above, BC 29 only) used a PNG one byte short (the
+// IDAT checksum has 3 bytes); these use a valid 1x1 PNG (70 bytes, all chunk checksums right) and the short one, on every major.
+codeunit 86144 "LT PW Media Own Blob"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure HexVal(c: Char): Integer
+    begin
+        exit(StrPos('0123456789ABCDEF', UpperCase(Format(c))) - 1);
+    end;
+
+    local procedure ValidPng(): Text
+    begin
+        exit('89504E470D0A1A0A0000000D49484452000000010000000108060000001F15C489' +
+             '0000000D4944415478DA636460F85F0F0002870180EB47BA920000000049454E44AE426082');
+    end;
+
+    local procedure ShortPng(): Text
+    begin
+        exit('89504E470D0A1A0A0000000D4948445200000001000000010806000000' +
+             '1F15C4890000000D49444154789C63F8FFFF3F0005FE02FEA7358184' +
+             '0000000049454E44AE426082');
+    end;
+
+    local procedure WriteHex(var Out: OutStream; Hex: Text)
+    var
+        B: Byte;
+        i: Integer;
+    begin
+        i := 1;
+        while i < StrLen(Hex) do begin
+            B := HexVal(Hex[i]) * 16 + HexVal(Hex[i + 1]);
+            Out.Write(B);
+            i += 2;
+        end;
+    end;
+
+    local procedure TenantMediaText(Id: Guid): Text
+    var
+        TM: Record "Tenant Media";
+    begin
+        if IsNullGuid(Id) then
+            exit('null id');
+        if not TM.Get(Id) then
+            exit('no row');
+        TM.CalcFields(Content);
+        exit('row|Description=' + TM.Description + '|Mime=' + TM."Mime Type" + '|Length=' + Format(TM.Content.Length()));
+    end;
+
+    // Insert stores the Blob, CalcFields (optionally after a Get), then ImportStream from the record's own Blob.
+    local procedure OwnBlob(Hex: Text; GetFirst: Boolean; ModifyAfter: Boolean): Text
+    var
+        Rec: Record "LT PnE Media Rec";
+        Again: Record "LT PnE Media Rec";
+        Out: OutStream;
+        Ins: InStream;
+        Id: Guid;
+        Result: Text;
+    begin
+        Rec.DeleteAll();
+        Rec.Init();
+        Rec.Id := 1;
+        Rec.Blob.CreateOutStream(Out);
+        WriteHex(Out, Hex);
+        Rec.Insert();
+        if GetFirst then
+            Rec.Get(1);
+        Rec.CalcFields(Blob);
+        Result := 'blobLength=' + Format(Rec.Blob.Length());
+        Rec.Blob.CreateInStream(Ins);
+        Id := Rec.Pic.ImportStream(Ins, 'desc', 'image/png');
+        Result += ' hasValue=' + Format(Rec.Pic.HasValue()) + ' returned=' + TenantMediaText(Id) + ' field=' + TenantMediaText(Rec.Pic.MediaId());
+        if ModifyAfter then begin
+            Rec.Modify();
+            Again.Get(1);
+            Result += ' afterModify hasValue=' + Format(Again.Pic.HasValue());
+        end;
+        Rec.DeleteAll();
+        exit(Result);
+    end;
+
+    // ImportStream from a stream on a Blob of another record (the control shape).
+    local procedure OtherBlob(Hex: Text): Text
+    var
+        Rec: Record "LT PnE Media Rec";
+        Src: Record "LT PnE Media Rec";
+        Out: OutStream;
+        Ins: InStream;
+        Id: Guid;
+        Result: Text;
+    begin
+        Rec.DeleteAll();
+        Src.Init();
+        Src.Id := 2;
+        Src.Blob.CreateOutStream(Out);
+        WriteHex(Out, Hex);
+        Src.Insert();
+        Src.CalcFields(Blob);
+        Src.Blob.CreateInStream(Ins);
+        Rec.Init();
+        Rec.Id := 1;
+        Rec.Insert();
+        Id := Rec.Pic.ImportStream(Ins, 'desc', 'image/png');
+        Result := 'hasValue=' + Format(Rec.Pic.HasValue()) + ' returned=' + TenantMediaText(Id) + ' field=' + TenantMediaText(Rec.Pic.MediaId());
+        Rec.DeleteAll();
+        exit(Result);
+    end;
+
+    [Test]
+    procedure PW_OwnBlob_ValidPng()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('valid', OwnBlob(ValidPng(), false, false));
+        Observer.Observe('validGetFirst', OwnBlob(ValidPng(), true, false));
+        Observer.Observe('validModify', OwnBlob(ValidPng(), false, true));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_OwnBlob_ShortPng()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('short', OwnBlob(ShortPng(), false, false));
+        Observer.Observe('shortGetFirst', OwnBlob(ShortPng(), true, false));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_OtherBlob_ValidAndShortPng()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('valid', OtherBlob(ValidPng()));
+        Observer.Observe('short', OtherBlob(ShortPng()));
+        Observer.Finish();
+    end;
+}
