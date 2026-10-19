@@ -254,4 +254,16 @@ codeunit 69771 "PW XmlPort FmtEval Probe"
         Observer.Expect('legacy_enum_name', 'imported=Yes error=[] code=[] stored=[Tm= Dur= Opt=Alpha cap En=One cap Dec=0 Bl=No Dtm=]');
         Observer.Verify();
     end;
+
+    // Corpus issue 671 item 105 (microsoft/AL#5284, "Requested value ... was not found"): an Enum field element on import
+    // given a value that is no member name, ordinal or caption of the enum.
+    [Test]
+    procedure Import_Xml_Enum_Invalid()
+    begin
+        ImportOne(Xmlport::"PW FE Xml", 'En', 'Two', 'enum_unknown_name');
+        ImportOne(Xmlport::"PW FE Xml", 'En', '7', 'enum_unknown_ordinal');
+        ImportOne(Xmlport::"PW FE Xml", 'En', 'one', 'enum_name_lower_case');
+        ImportOne(Xmlport::"PW FE Xml", 'En', '', 'enum_empty');
+        Observer.Finish();
+    end;
 }

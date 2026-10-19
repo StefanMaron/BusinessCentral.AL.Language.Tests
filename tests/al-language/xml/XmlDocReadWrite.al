@@ -719,4 +719,99 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Expect('cleared_root', 'No');
         Observer.Verify();
     end;
+
+    local procedure Kinds(Root: XmlElement): Text
+    var
+        Nodes: XmlNodeList;
+        N: XmlNode;
+        R: Text;
+    begin
+        Nodes := Root.GetChildNodes();
+        R := Format(Nodes.Count()) + ':';
+        foreach N in Nodes do
+            if N.IsXmlElement() then
+                R += 'element ' + N.AsXmlElement().Name() + ';'
+            else
+                if N.IsXmlText() then
+                    R += 'text [' + N.AsXmlText().Value() + '];'
+                else
+                    R += 'other;';
+        exit(R);
+    end;
+
+    // Corpus issue 671 item 91 (microsoft/AL#5881): the line breaks and indentation between elements of a document built with
+    // TextBuilder.AppendLine, after ReadFrom without options and with PreserveWhitespace true and false.
+    [Test]
+    procedure ReadFrom_AppendLine_Whitespace_Nodes()
+    var
+        Doc: XmlDocument;
+        Opt: XmlReadOptions;
+        Root: XmlElement;
+        TB: TextBuilder;
+    begin
+        TB.AppendLine('<root>');
+        TB.AppendLine('  <a>1</a>');
+        TB.AppendLine('  <b/>');
+        TB.Append('</root>');
+        XmlDocument.ReadFrom(TB.ToText(), Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('no_options', Kinds(Root));
+        Opt.PreserveWhitespace(true);
+        XmlDocument.ReadFrom(TB.ToText(), Opt, Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('preserve_true', Kinds(Root));
+        Opt.PreserveWhitespace(false);
+        XmlDocument.ReadFrom(TB.ToText(), Opt, Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('preserve_false', Kinds(Root));
+        Observer.Observe('inner_text', Root.InnerText());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryWriteText(Doc: XmlDocument; var Result: Text)
+    begin
+        Doc.WriteTo(Result);
+    end;
+
+    [TryFunction]
+    local procedure TryWriteStream(Doc: XmlDocument; var Length: Integer)
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        Doc.WriteTo(OutS);
+        Length := TempBlob.Length();
+    end;
+
+    local procedure WriteBadChar(Name: Text; Code: Integer)
+    var
+        Doc: XmlDocument;
+        C: Text[1];
+        Txt: Text;
+        Length: Integer;
+    begin
+        C[1] := Code;
+        Doc := XmlDocument.Create();
+        Doc.Add(XmlElement.Create('a', '', 'x' + C + 'y'));
+        ClearLastError();
+        Observer.Observe(Name + '_text_ok', Format(TryWriteText(Doc, Txt)));
+        Observer.ObserveError(Name + '_text');
+        Observer.Observe(Name + '_text', Txt);
+        Observer.Observe(Name + '_stream_ok', Format(TryWriteStream(Doc, Length)));
+        Observer.ObserveError(Name + '_stream');
+        Observer.Observe(Name + '_stream_length', Format(Length));
+    end;
+
+    // Corpus issue 671 item 93 (microsoft/AL#8082): XmlDocument.WriteTo when element text holds a character XML 1.0 does not allow.
+    [Test]
+    procedure WriteTo_Char_Not_Allowed_In_Xml()
+    begin
+        WriteBadChar('char1', 1);
+        WriteBadChar('char11', 11);
+        WriteBadChar('lone_surrogate', 55296);
+        WriteBadChar('tab_allowed', 9);
+        Observer.Finish();
+    end;
 }

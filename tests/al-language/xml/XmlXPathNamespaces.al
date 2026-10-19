@@ -624,4 +624,86 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Observer.Expect('ns', '[]');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure TryIsText(N: XmlNode; var Result: Boolean)
+    begin
+        Result := N.IsXmlText();
+    end;
+
+    [TryFunction]
+    local procedure TryWriteNode(N: XmlNode; var Result: Text)
+    begin
+        N.WriteTo(Result);
+    end;
+
+    // Corpus issue 671 item 94 (microsoft/AL#5267): a backslash path is no valid XPath. The call with its result unused, and inside 'if'.
+    [Test]
+    procedure SelectNodes_Backslash_Path()
+    var
+        Doc: XmlDocument;
+        L: XmlNodeList;
+        N: XmlNode;
+    begin
+        Load('<root><contract>1</contract></root>', Doc);
+        asserterror Doc.SelectNodes('\\contract', L);
+        Observer.ObserveError('nodes_unused');
+        ClearLastError();
+        if Doc.SelectNodes('\\contract', L) then
+            Observer.Observe('nodes_if', 'true')
+        else
+            Observer.Observe('nodes_if', 'false');
+        Observer.ObserveError('nodes_if');
+        Observer.Observe('nodes_if_count', Format(L.Count()));
+        asserterror Doc.SelectSingleNode('\\contract', N);
+        Observer.ObserveError('single_unused');
+        ClearLastError();
+        Observer.Observe('single_if', Format(Doc.SelectSingleNode('\\contract', N)));
+        Observer.ObserveError('single_if');
+        Observer.Observe('forward_slashes', Format(Doc.SelectNodes('//contract', L)) + '|' + Format(L.Count()));
+        Observer.Finish();
+    end;
+
+    // Corpus issue 671 item 100 (microsoft/AL#554): SelectSingleNode that finds nothing, into a node variable that was never assigned.
+    [Test]
+    procedure SelectSingleNode_Missing_Into_Unassigned()
+    var
+        Doc: XmlDocument;
+        N: XmlNode;
+        IsText: Boolean;
+        Txt: Text;
+    begin
+        Load('<a><b>1</b></a>', Doc);
+        Observer.Observe('found', Format(Doc.SelectSingleNode('/a/zz', N)));
+        Observer.Observe('is_text_ok', Format(TryIsText(N, IsText)));
+        Observer.ObserveError('is_text');
+        Observer.Observe('is_text', Format(IsText));
+        Observer.Observe('write_ok', Format(TryWriteNode(N, Txt)));
+        Observer.ObserveError('write');
+        Observer.Observe('write', '[' + Txt + ']');
+        Observer.Finish();
+    end;
+
+    // Corpus issue 671 item 101 (microsoft/AL#7955): from a node that SelectNodes returned, a path with a leading slash starts at the
+    // document root, not at the node.
+    [Test]
+    procedure SelectSingleNode_From_Node_Leading_Slash()
+    var
+        Doc: XmlDocument;
+        L: XmlNodeList;
+        Line: XmlNode;
+        N: XmlNode;
+    begin
+        Load('<Header><Lines><Line><LineNumber>1</LineNumber></Line><Line><LineNumber>2</LineNumber></Line></Lines></Header>', Doc);
+        Doc.SelectNodes('/Header/Lines/Line', L);
+        Observer.Observe('lines', Format(L.Count()));
+        L.Get(2, Line);
+        Observer.Observe('abs_from_line', Format(Line.SelectSingleNode('/Line/LineNumber', N)));
+        Observer.Observe('dot_rel', Format(Line.SelectSingleNode('./LineNumber', N)) + '|' + N.AsXmlElement().InnerText());
+        Observer.Observe('plain_rel', Format(Line.SelectSingleNode('LineNumber', N)) + '|' + N.AsXmlElement().InnerText());
+        Observer.Observe('abs_full', Format(Line.SelectSingleNode('/Header/Lines/Line/LineNumber', N)) + '|' + N.AsXmlElement().InnerText());
+        Observer.Observe('descendant', Format(Line.SelectSingleNode('//LineNumber', N)) + '|' + N.AsXmlElement().InnerText());
+        Observer.Observe('abs_nodes_from_line', Format(Line.SelectNodes('/Line/LineNumber', L)) + '|' + Format(L.Count()));
+        Observer.Finish();
+    end;
 }

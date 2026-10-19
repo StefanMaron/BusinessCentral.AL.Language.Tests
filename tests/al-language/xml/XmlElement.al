@@ -849,4 +849,40 @@ codeunit 73401 "LT XmT Element"
         Observer.Expect('add_default|code', 'NotInitialized');
         Observer.Verify();
     end;
+
+    // Corpus issue 671 item 97 (microsoft/AL#5851): in XmlElement.Create(Name, Text) the second text is the namespace URI, also when
+    // it is no URI.
+    [Test]
+    procedure Create_Second_Text_Is_Namespace()
+    var
+        E: XmlElement;
+    begin
+        E := XmlElement.Create('name', 'content');
+        Observer.Observe('two_texts_out', Str(E));
+        Observer.Observe('two_texts_ns', '[' + E.NamespaceUri() + ']');
+        Observer.Observe('two_texts_inner', '[' + E.InnerText() + ']');
+        E := XmlElement.Create('name', 'content', 'x');
+        Observer.Observe('three_texts_out', Str(E));
+        E := XmlElement.Create('name', XmlText.Create('content'));
+        Observer.Observe('xmltext_out', Str(E));
+        Observer.Finish();
+    end;
+
+    // Corpus issue 671 item 95 (microsoft/AL#961): XmlNode.AsXmlElement().Add(XmlText) changes the element behind the node.
+    [Test]
+    procedure AsXmlElement_Add_Text_Via_Node()
+    var
+        E: XmlElement;
+        N: XmlNode;
+    begin
+        E := XmlElement.Create('e');
+        N := E.AsXmlNode();
+        N.AsXmlElement().Add(XmlText.Create('x'));
+        Observer.Observe('empty_then_add', Str(E) + '|' + E.InnerText());
+        Load('<a>old</a>', E);
+        N := E.AsXmlNode();
+        N.AsXmlElement().Add(XmlText.Create('new'));
+        Observer.Observe('text_then_add', Str(E) + '|' + E.InnerText() + '|' + Format(E.GetChildNodes().Count()));
+        Observer.Finish();
+    end;
 }
