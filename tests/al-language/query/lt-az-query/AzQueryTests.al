@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-query-object
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); objects 80660-80669 (AzQueryObjects.al)
-// Probe: corpus issue 651 (queries and event subscribers), items 1, 3, 5, 7 and 8, writer AZ.
+// Probe: corpus issue 651 (queries and event subscribers), items 1, 3, 5 and 8, writer AZ (item 7 is a Linux suspect, see FilterElement_ReadInQueryProcedure).
 // Already pinned: items 2, 4 and 6 (query/lt-query-live-write, query/lt-query-read-to-end, query/PRQueryOpenColumn.al); Method = Count on a
 // field column does not compile (must-not-compile case 0102).
 // BC versions: 27, 28, 29
@@ -66,7 +66,9 @@ codeunit 80670 "LT AZ Query Tests"
         AddRow(2, 'A', 'Z', 1, '');
         AddRow(3, 'B', 'A', 4, '');
         Observer.Observe('b_first', ReadTwoGroups());
-        Observer.Finish();
+        Observer.Expect('z_first', 'A/B=2;A/Z=9;B/A=4;');
+        Observer.Expect('b_first', 'A/B=2;A/Z=1;B/A=4;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,7 +81,8 @@ codeunit 80670 "LT AZ Query Tests"
         AddRow(2, 'A', 'Y', 5, '');
         AddRow(3, 'C', 'X', 5, '');
         Observer.Observe('order', ReadOneGroup());
-        Observer.Finish();
+        Observer.Expect('order', 'A=5/1;B=5/1;C=5/1;');
+        Observer.Verify();
     end;
 
     // ---- item 3: Sum over a count FlowField, filtered and unfiltered ----
@@ -162,7 +165,16 @@ codeunit 80670 "LT AZ Query Tests"
         Observer.Observe('all_k1', ReadSumCountAll('K1', ''));
         Observer.Observe('all_cat_a', ReadSumCountAll('', 'A'));
         Observer.Observe('all_cat_c', ReadSumCountAll('', 'C'));
-        Observer.Finish();
+        Observer.Expect('perrow', 'A=3;B=1;C=0;');
+        Observer.Expect('perrow_k1', 'A=2;B=0;C=0;');
+        Observer.Expect('grouped', 'G1=4/2;G2=0/1;');
+        Observer.Expect('grouped_k1', 'G1=2/2;G2=0/1;');
+        Observer.Expect('grouped_k2', 'G1=2/2;G2=0/1;');
+        Observer.Expect('all', '4;');
+        Observer.Expect('all_k1', '2;');
+        Observer.Expect('all_cat_a', '3;');
+        Observer.Expect('all_cat_c', '0;');
+        Observer.Verify();
     end;
 
     // ---- item 5: a RecordId column: grouping, OrderBy, SetFilter and SaveAsCsv ----
@@ -209,7 +221,8 @@ codeunit 80670 "LT AZ Query Tests"
         while Q.Read() do
             R += Format(Q.Ref) + '=' + Format(Q.N) + ';';
         Observer.Observe('groups', R);
-        Observer.Finish();
+        Observer.Expect('groups', 'LT AZ Q Head: B=1;LT AZ Q Head: A=2;=1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +254,28 @@ codeunit 80670 "LT AZ Query Tests"
         Observer.Observe('text_ok', Format(TryReadRidPlain('abc', R)));
         Observer.Observe('text_rows', R);
         Observer.ObserveError('text');
-        Observer.Finish();
+        Observer.Expect('format_a', 'LT AZ Q Head: A');
+        Observer.Expect('eq_ok', 'Yes');
+        Observer.Expect('eq_rows', '1;3;');
+        Observer.Expect('eq|text', '');
+        Observer.Expect('eq|code', '');
+        Observer.Expect('quoted_ok', 'Yes');
+        Observer.Expect('quoted_rows', '1;3;');
+        Observer.Expect('quoted|text', '');
+        Observer.Expect('quoted|code', '');
+        Observer.Expect('blank_ok', 'Yes');
+        Observer.Expect('blank_rows', '4;');
+        Observer.Expect('blank|text', '');
+        Observer.Expect('blank|code', '');
+        Observer.Expect('notblank_ok', 'Yes');
+        Observer.Expect('notblank_rows', '1;2;3;');
+        Observer.Expect('notblank|text', '');
+        Observer.Expect('notblank|code', '');
+        Observer.Expect('text_ok', 'Yes');
+        Observer.Expect('text_rows', '');
+        Observer.Expect('text|text', '');
+        Observer.Expect('text|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +299,9 @@ codeunit 80670 "LT AZ Query Tests"
             R += Line + '|';
         end;
         Observer.Observe('csv', R);
-        Observer.Finish();
+        Observer.Expect('save', 'Yes');
+        Observer.Expect('csv', 'Id,Ref|1,LT AZ Q Head: A|2,LT AZ Q Head: B|3,LT AZ Q Head: A|4,|');
+        Observer.Verify();
     end;
 
     // ---- item 7: a query procedure that reads a filter element by its bare name ----
@@ -286,7 +322,9 @@ codeunit 80670 "LT AZ Query Tests"
         Observer.ObserveError(Name);
     end;
 
-    [Test]
+    // Linux suspect (not asserted, kept as probe source; no [Test] attribute): on BC 29.0 the first call of ReadKindF (no filter, query not
+    // open) ended the test with an uncatchable "Unexpected CLR exception thrown.: System.InvalidCastException: Unable to cast object of type
+    // 'Microsoft.Dynamics.Nav.Runtime.NavInteger' to type 'Microsoft.Dynamics.Nav.Runtime.NavCode'." raised in Query80668.ReadKindF().
     procedure FilterElement_ReadInQueryProcedure()
     var
         Q: Query "LT AZ Q Filter Proc";
@@ -343,7 +381,20 @@ codeunit 80670 "LT AZ Query Tests"
         Q2.TopNumberOfRows(1);
         ObserveRead(Q2, 'after_first_read');
         Observer.Observe('top_value', Format(Q2.TopNumberOfRows()));
-        Observer.Finish();
+        Observer.Expect('before_first_read_ok', 'No');
+        Observer.Expect('before_first_read_rows', '');
+        Observer.Expect('before_first_read|text', 'The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function.');
+        Observer.Expect('before_first_read|code', 'Query');
+        Observer.Expect('reopen_ok', 'Yes');
+        Observer.Expect('reopen_rows', '1;2;');
+        Observer.Expect('reopen|text', '');
+        Observer.Expect('reopen|code', '');
+        Observer.Expect('after_first_read_ok', 'No');
+        Observer.Expect('after_first_read_rows', '');
+        Observer.Expect('after_first_read|text', 'The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function.');
+        Observer.Expect('after_first_read|code', 'Query');
+        Observer.Expect('top_value', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -361,6 +412,15 @@ codeunit 80670 "LT AZ Query Tests"
         Q2.SecurityFiltering(SecurityFilter::Ignored);
         ObserveRead(Q2, 'after_first_read');
         Observer.Observe('value', Format(Q2.SecurityFiltering()));
-        Observer.Finish();
+        Observer.Expect('before_first_read_ok', 'Yes');
+        Observer.Expect('before_first_read_rows', '1;2;3;4;');
+        Observer.Expect('before_first_read|text', '');
+        Observer.Expect('before_first_read|code', '');
+        Observer.Expect('after_first_read_ok', 'No');
+        Observer.Expect('after_first_read_rows', '');
+        Observer.Expect('after_first_read|text', 'The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function.');
+        Observer.Expect('after_first_read|code', 'Query');
+        Observer.Expect('value', 'Ignored');
+        Observer.Verify();
     end;
 }

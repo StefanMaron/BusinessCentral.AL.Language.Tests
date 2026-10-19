@@ -102,7 +102,11 @@ codeunit 80627 "LT AZ Handler Tests"
     begin
         Reset('strmenu');
         ObserveMessage('m');
-        Observer.Finish();
+        Observer.Expect('m_ok', 'Yes');
+        Observer.Expect('m_log', 'msgh(az outer message);strmenuh(A,B,C);inner strmenu=2;');
+        Observer.Expect('m|text', '');
+        Observer.Expect('m|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,7 +115,11 @@ codeunit 80627 "LT AZ Handler Tests"
     begin
         Reset('strmenu');
         ObserveMessage('m');
-        Observer.Finish();
+        Observer.Expect('m_ok', 'No');
+        Observer.Expect('m_log', 'msgh(az outer message);');
+        Observer.Expect('m|text', 'Unhandled UI: StrMenu A,B,C');
+        Observer.Expect('m|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +128,12 @@ codeunit 80627 "LT AZ Handler Tests"
     begin
         Reset('confirm');
         ObserveConfirm('c');
-        Observer.Finish();
+        Observer.Expect('c_ok', 'Yes');
+        Observer.Expect('c_answer', 'Yes');
+        Observer.Expect('c_log', 'confh(az outer confirm);confh(az inner confirm);inner confirm=Yes;');
+        Observer.Expect('c|text', '');
+        Observer.Expect('c|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -129,7 +142,12 @@ codeunit 80627 "LT AZ Handler Tests"
     begin
         Reset('strmenu');
         ObserveConfirm('c');
-        Observer.Finish();
+        Observer.Expect('c_ok', 'Yes');
+        Observer.Expect('c_answer', 'Yes');
+        Observer.Expect('c_log', 'confh(az outer confirm);strmenuh(A,B,C);inner strmenu=2;');
+        Observer.Expect('c|text', '');
+        Observer.Expect('c|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +156,12 @@ codeunit 80627 "LT AZ Handler Tests"
     begin
         Reset('strmenu');
         ObserveConfirm('c');
-        Observer.Finish();
+        Observer.Expect('c_ok', 'No');
+        Observer.Expect('c_answer', 'No');
+        Observer.Expect('c_log', 'confh(az outer confirm);');
+        Observer.Expect('c|text', 'Unhandled UI: StrMenu A,B,C');
+        Observer.Expect('c|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     // ---- item 2: Message and Confirm in the OnRun of a codeunit started with Codeunit.Run, no handler in the test ----
@@ -152,13 +175,19 @@ codeunit 80627 "LT AZ Handler Tests"
         Observer.Observe('run', Format(Cu.Run()));
         Observer.Observe('result', Cu.GetResult());
         Observer.ObserveError('run');
-        Observer.Finish();
+        Observer.Expect('run', 'No');
+        Observer.Expect('result', ' answer=No');
+        Observer.Expect('run|text', 'Unhandled UI: Confirm az confirm from onrun');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     // ---- item 3: two MessageHandlers in one HandlerFunctions list ----
     // Not asserted here (a test with this list cannot pass): it compiles; on BC 29.0 the first listed handler received every Message() and
     // the test then failed with "The following UI handlers were not executed: <second handler>". See the writer AZ report.
 
+    // Linux suspect (not asserted): without the Commit() after SeedRows, Report.Run with a request page ended in "An error occurred and the
+    // transaction is stopped. Contact your administrator or partner for further assistance." (code DB:Ok) before the handler ran.
     // ---- items 4 and 5: a RequestPageHandler that neither OKs nor cancels, and one that inserts a row before OK ----
 
     [RequestPageHandler]
@@ -193,7 +222,8 @@ codeunit 80627 "LT AZ Handler Tests"
         SeedRows();
         Commit();
         Reset('');
-        Report.Run(Report::"LT AZ Hnd Report");
+        asserterror Report.Run(Report::"LT AZ Hnd Report");
+        Observer.ObserveError('run');
         Observer.Observe('log', Log.Take());
         Observer.Observe('row99', Format(Row.Get(99)));
         Observer.Observe('count', Format(Row.Count()));
@@ -228,7 +258,14 @@ codeunit 80627 "LT AZ Handler Tests"
     begin
         Reset('');
         ObserveFpb('n');
-        Observer.Finish();
+        Observer.Expect('n_ok', 'Yes');
+        Observer.Expect('n_result', 'No');
+        Observer.Expect('n_view', 'VERSION(1) SORTING(Id) WHERE(Id=FILTER(1..5))');
+        Observer.Expect('n_view_captions', 'VERSION(1) SORTING(Field1) WHERE(Field1=1(1..5))');
+        Observer.Expect('n_log', '');
+        Observer.Expect('n|text', 'Unhandled UI: FilterPage 9598');
+        Observer.Expect('n|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     // ---- item 9: Dialog.Update without arguments on a closed dialog, Update of a number missing from the template ----
@@ -276,6 +313,33 @@ codeunit 80627 "LT AZ Handler Tests"
         D.Close();
         Observer.Observe('after_close_noargs', Format(TryUpdateNoArgs(D)));
         Observer.ObserveError('after_close_noargs');
-        Observer.Finish();
+        Observer.Expect('closed_noargs', 'No');
+        Observer.Expect('closed_noargs|text', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('closed_noargs|code', 'Dialog');
+        Observer.Expect('closed_one', 'No');
+        Observer.Expect('closed_one|text', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('closed_one|code', 'Dialog');
+        Observer.Expect('open', 'Yes');
+        Observer.Expect('open|text', '');
+        Observer.Expect('open|code', '');
+        Observer.Expect('open_noargs', 'Yes');
+        Observer.Expect('open_noargs|text', '');
+        Observer.Expect('open_noargs|code', '');
+        Observer.Expect('open_hash', 'Yes');
+        Observer.Expect('open_hash|text', '');
+        Observer.Expect('open_hash|code', '');
+        Observer.Expect('open_at', 'Yes');
+        Observer.Expect('open_at|text', '');
+        Observer.Expect('open_at|code', '');
+        Observer.Expect('open_missing', 'No');
+        Observer.Expect('open_missing|text', 'No parameter with index ''3'' was found in the format string ''Name %s\Progress %d''.');
+        Observer.Expect('open_missing|code', 'FormatStringParameterNotFound');
+        Observer.Expect('open_at_text', 'Yes');
+        Observer.Expect('open_at_text|text', '');
+        Observer.Expect('open_at_text|code', '');
+        Observer.Expect('after_close_noargs', 'No');
+        Observer.Expect('after_close_noargs|text', 'The operation failed because the dialog box is not open.');
+        Observer.Expect('after_close_noargs|code', 'Dialog');
+        Observer.Verify();
     end;
 }

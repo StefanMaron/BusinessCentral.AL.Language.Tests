@@ -25,7 +25,8 @@ codeunit 80709 "LT AZ Event Tests"
         Log.Start();
         Rep.Run();
         Observer.Observe('log', Log.Stop());
-        Observer.Finish();
+        Observer.Expect('log', 'nosender N=7;withsender N=7 mark=m1;');
+        Observer.Verify();
     end;
 
     // ---- item 11: GetDatabaseTableTriggerSetup and OnDatabaseInsert when the table is written in a second company ----
@@ -57,7 +58,11 @@ codeunit 80709 "LT AZ Event Tests"
             Row.Insert(true);
             Observer.Observe('first_again', Log.Stop().Replace(CompanyName(), '<current>'));
         end;
-        Observer.Finish();
+        Observer.Expect('other_company_found', 'Yes');
+        Observer.Expect('first_company', 'setup company=<current>;oninsert id=1 recrefcompany=<current> company=<current>;');
+        Observer.Expect('second_company', 'oninsert id=2 recrefcompany=<other> company=<current>;');
+        Observer.Expect('first_again', 'oninsert id=3 recrefcompany=<current> company=<current>;');
+        Observer.Verify();
     end;
 
     // ---- item 13: the number after the page event name in Event Subscription rows ----
@@ -86,6 +91,24 @@ codeunit 80709 "LT AZ Event Tests"
         Observer.Observe('val_same_name_other_page_equal', Format(Published('OneValX') = Published('TwoValX')));
         Observer.Observe('val_other_order_equal', Format(Published('OneValX') = Published('ThreeValX')));
         Observer.Observe('val_other_name_equal', Format(Published('OneValX') = Published('OneValY')));
-        Observer.Finish();
+        Observer.Expect('OneActX', 'OnAfterActionEvent - 363211597');
+        Observer.Expect('OneActY', 'OnAfterActionEvent - 274485020');
+        Observer.Expect('TwoActX', 'OnAfterActionEvent - 2065181460');
+        Observer.Expect('TwoActY', 'OnAfterActionEvent - 1592089219');
+        Observer.Expect('ThreeActX', 'OnAfterActionEvent - 1874278911');
+        Observer.Expect('ThreeActY', 'OnAfterActionEvent - 1236582294');
+        Observer.Expect('OneValX', 'OnAfterValidateEvent - 1633924696');
+        Observer.Expect('OneValY', 'OnAfterValidateEvent - 996228079');
+        Observer.Expect('TwoValX', 'OnAfterValidateEvent - 289487247');
+        Observer.Expect('TwoValY', 'OnAfterValidateEvent - 927183864');
+        Observer.Expect('ThreeValX', 'OnAfterValidateEvent - 1847725402');
+        Observer.Expect('ThreeValY', 'OnAfterValidateEvent - 1809545277');
+        Observer.Expect('act_same_name_other_page_equal', 'No');
+        Observer.Expect('act_other_order_equal', 'No');
+        Observer.Expect('act_other_name_equal', 'No');
+        Observer.Expect('val_same_name_other_page_equal', 'No');
+        Observer.Expect('val_other_order_equal', 'No');
+        Observer.Expect('val_other_name_equal', 'No');
+        Observer.Verify();
     end;
 }

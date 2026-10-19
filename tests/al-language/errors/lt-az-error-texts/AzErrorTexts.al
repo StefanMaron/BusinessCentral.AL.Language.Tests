@@ -136,7 +136,13 @@ codeunit 80606 "LT AZ Error Texts"
         asserterror Card.PlainError.Invoke();
         Observer.ObserveError('plain');
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('get_missing|text', 'The LT AZ Err Row does not exist. Identification fields and values: Id=''-77''');
+        Observer.Expect('get_missing|code', 'TestWrapped:CSideRecordNotFound');
+        Observer.Expect('testfield|text', 'Name must have a value in LT AZ Err Row: Id=1. It cannot be zero or empty.');
+        Observer.Expect('testfield|code', 'TestWrapped:TestField');
+        Observer.Expect('plain|text', 'az plain');
+        Observer.Expect('plain|code', 'TestWrapped:Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +159,9 @@ codeunit 80606 "LT AZ Error Texts"
         Card.GoToRecord(Row);
         asserterror Card.DupInsert.Invoke();
         Observer.ObserveError('dup');
-        Observer.Finish();
+        Observer.Expect('dup|text', 'The record in table LT AZ Err Row already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('dup|code', 'TestWrapped:CSideDuplicateKey');
+        Observer.Verify();
     end;
 
     // ---- item 15: a Variant holding a non-text value passed to a by-value Text or Code parameter, languages 1036 and 1031 ----
@@ -226,62 +234,206 @@ codeunit 80606 "LT AZ Error Texts"
     procedure VariantToText_Language1033_IntDec()
     begin
         ProbeVariants(1033, 'en_', 1);
-        Observer.Finish();
+        Observer.Expect('en_int_text_ok', 'No');
+        Observer.Expect('en_int_text_r', '-');
+        Observer.Expect('en_int_text|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('en_int_text|code', 'TypeConversion');
+        Observer.Expect('en_int_code_ok', 'No');
+        Observer.Expect('en_int_code_r', '-');
+        Observer.Expect('en_int_code|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Observer.Expect('en_int_code|code', 'TypeConversion');
+        Observer.Expect('en_dec_text_ok', 'No');
+        Observer.Expect('en_dec_text_r', '-');
+        Observer.Expect('en_dec_text|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('en_dec_text|code', 'TypeConversion');
+        Observer.Expect('en_dec_code_ok', 'No');
+        Observer.Expect('en_dec_code_r', '-');
+        Observer.Expect('en_dec_code|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Observer.Expect('en_dec_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1033_BoolDate()
     begin
         ProbeVariants(1033, 'en_', 2);
-        Observer.Finish();
+        Observer.Expect('en_bool_text_ok', 'No');
+        Observer.Expect('en_bool_text_r', '-');
+        Observer.Expect('en_bool_text|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('en_bool_text|code', 'TypeConversion');
+        Observer.Expect('en_bool_code_ok', 'No');
+        Observer.Expect('en_bool_code_r', '-');
+        Observer.Expect('en_bool_code|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Observer.Expect('en_bool_code|code', 'TypeConversion');
+        Observer.Expect('en_date_text_ok', 'No');
+        Observer.Expect('en_date_text_r', '-');
+        Observer.Expect('en_date_text|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('en_date_text|code', 'TypeConversion');
+        Observer.Expect('en_date_code_ok', 'No');
+        Observer.Expect('en_date_code_r', '-');
+        Observer.Expect('en_date_code|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Observer.Expect('en_date_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1033_EnumOption()
     begin
         ProbeVariants(1033, 'en_', 3);
-        Observer.Finish();
+        Observer.Expect('en_enum_text_ok', 'No');
+        Observer.Expect('en_enum_text_r', '-');
+        Observer.Expect('en_enum_text|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('en_enum_text|code', 'TypeConversion');
+        Observer.Expect('en_enum_code_ok', 'No');
+        Observer.Expect('en_enum_code_r', '-');
+        Observer.Expect('en_enum_code|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Observer.Expect('en_enum_code|code', 'TypeConversion');
+        Observer.Expect('en_opt_text_ok', 'No');
+        Observer.Expect('en_opt_text_r', '-');
+        Observer.Expect('en_opt_text|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('en_opt_text|code', 'TypeConversion');
+        Observer.Expect('en_opt_code_ok', 'No');
+        Observer.Expect('en_opt_code_r', '-');
+        Observer.Expect('en_opt_code|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Observer.Expect('en_opt_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1036_IntDec()
     begin
         ProbeVariants(1036, 'fr_', 1);
-        Observer.Finish();
+        Observer.Expect('fr_int_text_ok', 'Non');
+        Observer.Expect('fr_int_text_r', '-');
+        Observer.Expect('fr_int_text|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('fr_int_text|code', 'TypeConversion');
+        Observer.Expect('fr_int_code_ok', 'Non');
+        Observer.Expect('fr_int_code_r', '-');
+        Observer.Expect('fr_int_code|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavCode.');
+        Observer.Expect('fr_int_code|code', 'TypeConversion');
+        Observer.Expect('fr_dec_text_ok', 'Non');
+        Observer.Expect('fr_dec_text_r', '-');
+        Observer.Expect('fr_dec_text|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('fr_dec_text|code', 'TypeConversion');
+        Observer.Expect('fr_dec_code_ok', 'Non');
+        Observer.Expect('fr_dec_code_r', '-');
+        Observer.Expect('fr_dec_code|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavCode.');
+        Observer.Expect('fr_dec_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1036_BoolDate()
     begin
         ProbeVariants(1036, 'fr_', 2);
-        Observer.Finish();
+        Observer.Expect('fr_bool_text_ok', 'Non');
+        Observer.Expect('fr_bool_text_r', '-');
+        Observer.Expect('fr_bool_text|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('fr_bool_text|code', 'TypeConversion');
+        Observer.Expect('fr_bool_code_ok', 'Non');
+        Observer.Expect('fr_bool_code_r', '-');
+        Observer.Expect('fr_bool_code|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavCode.');
+        Observer.Expect('fr_bool_code|code', 'TypeConversion');
+        Observer.Expect('fr_date_text_ok', 'Non');
+        Observer.Expect('fr_date_text_r', '-');
+        Observer.Expect('fr_date_text|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('fr_date_text|code', 'TypeConversion');
+        Observer.Expect('fr_date_code_ok', 'Non');
+        Observer.Expect('fr_date_code_r', '-');
+        Observer.Expect('fr_date_code|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavCode.');
+        Observer.Expect('fr_date_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1036_EnumOption()
     begin
         ProbeVariants(1036, 'fr_', 3);
-        Observer.Finish();
+        Observer.Expect('fr_enum_text_ok', 'Non');
+        Observer.Expect('fr_enum_text_r', '-');
+        Observer.Expect('fr_enum_text|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('fr_enum_text|code', 'TypeConversion');
+        Observer.Expect('fr_enum_code_ok', 'Non');
+        Observer.Expect('fr_enum_code_r', '-');
+        Observer.Expect('fr_enum_code|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavCode.');
+        Observer.Expect('fr_enum_code|code', 'TypeConversion');
+        Observer.Expect('fr_opt_text_ok', 'Non');
+        Observer.Expect('fr_opt_text_r', '-');
+        Observer.Expect('fr_opt_text|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('fr_opt_text|code', 'TypeConversion');
+        Observer.Expect('fr_opt_code_ok', 'Non');
+        Observer.Expect('fr_opt_code_r', '-');
+        Observer.Expect('fr_opt_code|text', 'L''expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue ne peut pas être convertie vers une valeur de type Microsoft.Dynamics.Nav.Runtime.NavCode.');
+        Observer.Expect('fr_opt_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1031_IntDec()
     begin
         ProbeVariants(1031, 'de_', 1);
-        Observer.Finish();
+        Observer.Expect('de_int_text_ok', 'Nein');
+        Observer.Expect('de_int_text_r', '-');
+        Observer.Expect('de_int_text|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavText-Wert typkonvertiert werden.');
+        Observer.Expect('de_int_text|code', 'TypeConversion');
+        Observer.Expect('de_int_code_ok', 'Nein');
+        Observer.Expect('de_int_code_r', '-');
+        Observer.Expect('de_int_code|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavCode-Wert typkonvertiert werden.');
+        Observer.Expect('de_int_code|code', 'TypeConversion');
+        Observer.Expect('de_dec_text_ok', 'Nein');
+        Observer.Expect('de_dec_text_r', '-');
+        Observer.Expect('de_dec_text|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavText-Wert typkonvertiert werden.');
+        Observer.Expect('de_dec_text|code', 'TypeConversion');
+        Observer.Expect('de_dec_code_ok', 'Nein');
+        Observer.Expect('de_dec_code_r', '-');
+        Observer.Expect('de_dec_code|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavCode-Wert typkonvertiert werden.');
+        Observer.Expect('de_dec_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1031_BoolDate()
     begin
         ProbeVariants(1031, 'de_', 2);
-        Observer.Finish();
+        Observer.Expect('de_bool_text_ok', 'Nein');
+        Observer.Expect('de_bool_text_r', '-');
+        Observer.Expect('de_bool_text|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavText-Wert typkonvertiert werden.');
+        Observer.Expect('de_bool_text|code', 'TypeConversion');
+        Observer.Expect('de_bool_code_ok', 'Nein');
+        Observer.Expect('de_bool_code_r', '-');
+        Observer.Expect('de_bool_code|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavCode-Wert typkonvertiert werden.');
+        Observer.Expect('de_bool_code|code', 'TypeConversion');
+        Observer.Expect('de_date_text_ok', 'Nein');
+        Observer.Expect('de_date_text_r', '-');
+        Observer.Expect('de_date_text|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavText-Wert typkonvertiert werden.');
+        Observer.Expect('de_date_text|code', 'TypeConversion');
+        Observer.Expect('de_date_code_ok', 'Nein');
+        Observer.Expect('de_date_code_r', '-');
+        Observer.Expect('de_date_code|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavCode-Wert typkonvertiert werden.');
+        Observer.Expect('de_date_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 
     [Test]
     procedure VariantToText_Language1031_EnumOption()
     begin
         ProbeVariants(1031, 'de_', 3);
-        Observer.Finish();
+        Observer.Expect('de_enum_text_ok', 'Nein');
+        Observer.Expect('de_enum_text_r', '-');
+        Observer.Expect('de_enum_text|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavText-Wert typkonvertiert werden.');
+        Observer.Expect('de_enum_text|code', 'TypeConversion');
+        Observer.Expect('de_enum_code_ok', 'Nein');
+        Observer.Expect('de_enum_code_r', '-');
+        Observer.Expect('de_enum_code|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavCode-Wert typkonvertiert werden.');
+        Observer.Expect('de_enum_code|code', 'TypeConversion');
+        Observer.Expect('de_opt_text_ok', 'Nein');
+        Observer.Expect('de_opt_text_r', '-');
+        Observer.Expect('de_opt_text|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavText-Wert typkonvertiert werden.');
+        Observer.Expect('de_opt_text|code', 'TypeConversion');
+        Observer.Expect('de_opt_code_ok', 'Nein');
+        Observer.Expect('de_opt_code_r', '-');
+        Observer.Expect('de_opt_code|text', 'Der Ausdruck Microsoft.Dynamics.Nav.Runtime.NavIndirectValue kann nicht in einen Microsoft.Dynamics.Nav.Runtime.NavCode-Wert typkonvertiert werden.');
+        Observer.Expect('de_opt_code|code', 'TypeConversion');
+        Observer.Verify();
     end;
 }

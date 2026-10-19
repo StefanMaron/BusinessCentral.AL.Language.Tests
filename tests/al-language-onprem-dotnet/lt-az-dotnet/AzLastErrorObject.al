@@ -133,6 +133,40 @@ codeunit 99473 "LT AZ Lek Tests"
         RunMode(5, Exc, Observer, 'intoverflow');
         RunMode(6, Exc, Observer, 'fielderror');
         RunMode(7, Exc, Observer, 'errorinfo_nocreate');
+        Observer.Expect('dupinsert_ran', 'No');
+        Observer.Expect('dupinsert_code', 'DB:RecordExists');
+        Observer.Expect('dupinsert_text', 'The record in table LT AZ Lek Row already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('dupinsert_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideDuplicateKeyException');
+        Observer.Expect('dupinsert_message', 'The record in table LT AZ Lek Row already exists. Identification fields and values: Id=''1''');
+        Observer.Expect('textoverflow_ran', 'No');
+        Observer.Expect('textoverflow_code', 'StringLengthExceeded');
+        Observer.Expect('textoverflow_text', 'The length of the string is 6, but it must be less than or equal to 3 characters. Value: abcdef');
+        Observer.Expect('textoverflow_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLStringLengthExceededException');
+        Observer.Expect('textoverflow_message', 'The length of the string is 6, but it must be less than or equal to 3 characters. Value: abcdef');
+        Observer.Expect('intoverflow_ran', 'No');
+        Observer.Expect('intoverflow_code', 'AL:Overflow');
+        Observer.Expect('intoverflow_text', 'Arithmetic operation resulted in an overflow.');
+        Observer.Expect('intoverflow_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavALException');
+        Observer.Expect('intoverflow_message', 'Arithmetic operation resulted in an overflow.');
+        Observer.Expect('fielderror_ran', 'No');
+        Observer.Expect('fielderror_code', 'NCLCSRTS:TableErrorStr');
+        Observer.Expect('fielderror_text', 'Name is wrong in LT AZ Lek Row Id=''7''.');
+        Observer.Expect('fielderror_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideException');
+        Observer.Expect('fielderror_message', 'Name is wrong in LT AZ Lek Row Id=''7''.');
+        Observer.Expect('errorinfo_nocreate_ran', 'No');
+        Observer.Expect('errorinfo_nocreate_code', 'Dialog');
+        Observer.Expect('errorinfo_nocreate_text', 'LT AZ errorinfo without create');
+        Observer.Expect('errorinfo_nocreate_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('errorinfo_nocreate_message', 'LT AZ errorinfo without create');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Kinds_GetMissing()
+    var
+        Observer: Codeunit "Probe Observer";
+        Exc: DotNet LtAzExc;
+    begin
         RunMode(8, Exc, Observer, 'getmissing');
         Observer.Finish();
     end;
@@ -146,7 +180,14 @@ codeunit 99473 "LT AZ Lek Tests"
         RunMode(1, Exc, Observer, 'nested');
         Observer.Observe('nested_tostring', Exc.ToString());
         Observer.Observe('nested_format', Format(Exc));
-        Observer.Finish();
+        Observer.Expect('nested_ran', 'No');
+        Observer.Expect('nested_code', 'Dialog');
+        Observer.Expect('nested_text', 'LT AZ nested error');
+        Observer.Expect('nested_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('nested_message', 'LT AZ nested error');
+        Observer.Expect('nested_tostring', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT AZ nested error\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.Nested()\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.OnRunAsync(INavRecordHandle εrec)\n   at Microsoft.Dynamics.Nav.Runtime.NavCodeunit.DoRunAsync(DataError errorLevel, NavRecord record)');
+        Observer.Expect('nested_format', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT AZ nested error\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.Nested()\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.OnRunAsync(INavRecordHandle εrec)\n   at Microsoft.Dynamics.Nav.Runtime.NavCodeunit.DoRunAsync(DataError errorLevel, NavRecord record)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -157,7 +198,13 @@ codeunit 99473 "LT AZ Lek Tests"
     begin
         RunMode(2, Exc, Observer, 'deep');
         Observer.Observe('deep_tostring', Exc.ToString());
-        Observer.Finish();
+        Observer.Expect('deep_ran', 'No');
+        Observer.Expect('deep_code', 'Dialog');
+        Observer.Expect('deep_text', 'LT AZ deep error');
+        Observer.Expect('deep_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('deep_message', 'LT AZ deep error');
+        Observer.Expect('deep_tostring', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT AZ deep error\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99471.Raise()\n   at Microsoft.Dynamics.Nav.Types.ValueTaskExtensions.ManualResetValueTaskSource`1.GetResult(Int16 token)\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.OnRunAsync(INavRecordHandle εrec)\n   at Microsoft.Dynamics.Nav.Runtime.NavCodeunit.DoRunAsync(DataError errorLevel, NavRecord record)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -177,6 +224,15 @@ codeunit 99473 "LT AZ Lek Tests"
         Same := Exc;
         Observer.Observe('equals_self_as_object', Format(Exc.Equals(Same)));
         Observer.Observe('object_equals_exception', Format(Same.Equals(Exc)));
-        Observer.Finish();
+        Observer.Expect('nested_ran', 'No');
+        Observer.Expect('nested_code', 'Dialog');
+        Observer.Expect('nested_text', 'LT AZ nested error');
+        Observer.Expect('nested_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
+        Observer.Expect('nested_message', 'LT AZ nested error');
+        Observer.Expect('equals_string_of_message', 'No');
+        Observer.Expect('equals_new_object', 'No');
+        Observer.Expect('equals_self_as_object', 'Yes');
+        Observer.Expect('object_equals_exception', 'Yes');
+        Observer.Verify();
     end;
 }
