@@ -552,4 +552,21 @@ codeunit 84790 "LT CL Event Leads"
         R.DeleteAll();
         O.Finish();
     end;
+
+    // Items 19, 20 and 30: the Event Subscription rows of the subscriber codeunits 84776 and 84781 (Active and Error Information).
+    [Test]
+    procedure EventSubscriptionRows_ClSubscribers()
+    var
+        Sub: Record "Event Subscription";
+        O: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        Sub.SetFilter("Subscriber Codeunit ID", '%1|%2', Codeunit::"LT CL Subs", Codeunit::"LT CL CFN Subs");
+        if Sub.FindSet() then
+            repeat
+                Rows += Format(Sub."Subscriber Codeunit ID") + ' ' + Sub."Subscriber Function" + ' -> ' + Sub."Published Function" + ' active=' + Format(Sub.Active) + ' error=' + Sub."Error Information" + ';';
+            until Sub.Next() = 0;
+        O.Observe('rows', Rows);
+        O.Finish();
+    end;
 }

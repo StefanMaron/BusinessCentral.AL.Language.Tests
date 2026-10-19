@@ -694,6 +694,22 @@ codeunit 84781 "LT CL CFN Subs"
         L.Add('sub.B param=' + Format(CurrFieldNo));
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterValidateEvent', 'B', false, false)]
+    local procedure AfterValidateBNoCurrFieldNo(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row")
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.B(no CurrFieldNo)');
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnBeforeValidateEvent', 'B', false, false)]
+    local procedure BeforeValidateB(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.beforeB param=' + Format(CurrFieldNo));
+    end;
+
     [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterInsertEvent', '', false, false)]
     local procedure AfterInsert(var Rec: Record "LT CL CFN Row"; RunTrigger: Boolean)
     var
