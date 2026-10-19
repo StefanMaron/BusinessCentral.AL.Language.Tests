@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-triggers
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); table, log and helper of CjFix.al; own reports 84647-84649 (84648 and 84649 with a generated Word layout), test codeunit 84650
+// Fixtures used: Probe Observer (codeunit 69160); table, log and helper of CjFix.al; own reports 84647-84649 and 84659 (84648 and 84649 with a generated Word layout), test codeunit 84650
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts (corpus issue 667): DataItemTableView = where(Date field = const(0D)) compiles and filters (item 149); a procedure Foo() defined on both the report and the
 //   data item table: which one an unqualified call in a data item trigger, a report trigger and a column source expression runs (item 150); a table extension field used
@@ -17,8 +17,6 @@ report 84647 "LT CJ Scope Rep"
     {
         dataitem(Row; "LT CJ Row")
         {
-            DataItemTableView = where("My Date" = const(0D));
-
             column(RowId; Id) { }
             column(FooCol; Foo()) { }
             column(ExtCol; "LT CJ Ext Code") { }
@@ -46,6 +44,35 @@ report 84647 "LT CJ Scope Rep"
     procedure Foo(): Text
     begin
         exit('report');
+    end;
+
+    var
+        Log: Codeunit "LT CJ Log";
+}
+
+report 84659 "LT CJ Zero Date View Rep"
+{
+    UsageCategory = None;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; "LT CJ Row")
+        {
+            DataItemTableView = where("My Date" = const(0D));
+
+            column(RowId; Id) { }
+
+            trigger OnPreDataItem()
+            begin
+                Log.Add('view=' + Row.GetView(false));
+            end;
+        }
+    }
+
+    trigger OnPreReport()
+    begin
+        Log.Add('prereport');
     end;
 
     var
@@ -154,13 +181,34 @@ codeunit 84650 "LT CJ Dataset Tests"
     end;
 
     [Test]
-    procedure ZeroDateView_Scope_ExtensionField()
+    procedure ZeroDateView_ConstZeroDate_SaveAsXml()
     var
         Observer: Codeunit "Probe Observer";
         TempBlob: Codeunit "Temp Blob";
         OutS: OutStream;
         Xml: Text;
     begin
+        // Item 149: the report compiles; the Xml dataset run is observed.
+        Helper.Seed();
+        TempBlob.CreateOutStream(OutS);
+        ClearLastError();
+        Observer.Observe('saved', Format(Report.SaveAs(Report::"LT CJ Zero Date View Rep", '', ReportFormat::Xml, OutS)));
+        Observer.ObserveError('save err');
+        Xml := Helper.ReadAll(TempBlob);
+        Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SameNameProcedure_ExtensionField_SaveAsXml()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        Xml: Text;
+    begin
+        // Items 150 and 153.
         Helper.Seed();
         TempBlob.CreateOutStream(OutS);
         ClearLastError();
