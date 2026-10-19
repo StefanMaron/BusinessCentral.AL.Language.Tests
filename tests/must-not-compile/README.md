@@ -334,6 +334,40 @@ is only a reference.
 | 1538 | AL0133 | A Code[20] variable passed to a var Text parameter. |
 | 1539 | AL0133 | A Text[100] table field passed to a var Code[20] parameter. |
 | 1540, 1541, 1542 | AL0204 | BC 27/28 only (AL 16 and 17): a CalcFormula or TableRelation where clause that filters an Integer or Enum field by a BigInteger field (AL 18 and later warn, AL0662/AL0663). |
+| 1080 | AL0777 | Guid assigned to Text[10]. |
+| 1120 | AL0132 | A TestRequestPage data item (TestFilter) has no SetRange, GetRangeMin or GetRangeMax. |
+| 1121 | AL0721 | A report rendering section without DefaultRenderingLayout. |
+| 1122 | AL0379 | A report column name with a space. |
+| 1160, 1161 | AL0196 | A Decimal variable and a Decimal literal passed to a procedure whose only overloads take Integer and BigInteger. |
+| 1162 | AL0193 | CopyArray with a two-dimensional destination and a one-dimensional source. |
+| 1170 | AL0132 | CommitBehavior with a member other than Ignore and Error. |
+| 1171 | AL0238 | The CommitBehavior attribute without its argument. |
+| 1172 | AL0433 | The removed User Group Member table. |
+| 1180 | AL0169 | A report layout with ObsoleteState = Removed (a layout takes only No and Pending). |
+| 1190, 1191 | AL0122 | A Boolean assigned to a Text and to a Code variable. |
+| 1192 | AL0111 | A number literal with an exponent (1e19) is a syntax error. |
+| 1193 | AL0122 | A Date assigned to a DateTime variable. |
+| 1240 | AL0296 | OnPrem-scoped platform tables of BC 28 and 29 used from a Cloud app (the BC 27 list is 0020 to 0024). |
+| 1241 | AL0162 | Triggers of other object types (OnRun, OnInsert, OnValidate, OnAction, OnPreReport, OnBeforeOpen, ...) in a page extension. |
+| 1242 | AL0440 | Foo(var A: Integer) next to Foo(A: Integer): var does not make a different signature. |
+| 1243 | AL0440 | Two procedures with the same name and parameter types in a table, a page and a report. |
+| 1244 | AL0124 | assemblyProbingPaths in app.json of a Target = OnPrem app at runtime 16.0. |
+| 1245 | AL0124 | assemblyProbingPaths in app.json of a Cloud app at runtime 18.0. |
+| 1246 | AL0132 | An unknown field of a table that has a table extension, and of a table of a dependency app. |
+| 1247 | AL0118 | A bare call of an unknown name in a report extension, a table extension, a query trigger and an xmlport trigger. |
+| 1248 | AL0197 | Two table extensions and two report extensions of one name. |
+| 1249 | AL0133 | An enum value passed by value to a parameter of another enum type without AssignmentCompatibility. |
+| 1250 | AL0122 | Integer from a Text variable, Code from an Integer, Text from an Integer expression. |
+| 1251 | AL0122 | A two-character literal assigned to a BigInteger and to a Decimal. |
+| 1252 to 1258 | AL0591, AL0314 | Cue group, file upload, freeze column, grid, indentation and tree properties on a plain group. |
+| 1259, 1260 | AL0591 | CuegroupLayout and GridLayout on a repeater. |
+| 1261 | AL0171 | SubPageLink on a system part. |
+| 1262 | AL0171 | SubPageView on a system part. |
+| 1263 | AL0543 | ContextSensitiveHelpPage on a page extension without the manifest property contextSensitiveHelpUrl. |
+| 1264 | AL1150 | A contextSensitiveHelpUrl in app.json that is not a URL. |
+| 1310 | AL0296 | File.IsPathTemporary from a Cloud app. |
+| 1311 | AL0296 | File.Download from a Cloud app. |
+| 1312 | AL0296 | Database.DataFileInformation from a Cloud app. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
