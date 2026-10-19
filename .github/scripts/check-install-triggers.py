@@ -19,6 +19,7 @@ ALLOWED = {
     'tests/al-language/types/TestBlankEnumInitInstaller.Codeunit.al',
     'tests/al-language/install/TestInstallStartSessionProbe.al',
     'tests/al-language/events/lt-trigger-pins/PUpgradeTriggers.al',
+    'tests/al-language/record/lt-as-records/AsDtInstaller.al',
 }
 PATTERN = re.compile(r'^\s*Subtype\s*=\s*(Install|Upgrade)\s*;', re.M | re.I)
 
