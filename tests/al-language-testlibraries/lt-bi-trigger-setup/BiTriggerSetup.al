@@ -16,7 +16,11 @@
 //   OnAfter subscriber (row 3), or set only Insert true and the rest false in the "Global Triggers" subscriber (row 4).
 // Every write runs with RunTrigger true (tests/al-language/events/lt-table-trigger-setup-calls/TableTriggerSetupCalls.al:
 // without it the setup is not asked).
-// Probe: observed values.
+// Probe: observed values; every literal asserted below is what the BC tier produced (corpus CI job test-testlibraries,
+// run 39223234414 on BC 29.0; 27.5 and 28.5 by the CI matrix).
+// Facts seen: GetGlobalTableTriggerMask is asked first (inbound mask 0); then Base Application's "Global Triggers" subscriber runs
+// (with 130011 before this app's OnAfter subscriber, which receives YesYesYesYes), then this app's "Global Triggers" subscriber,
+// which receives what the OnAfter chain left (YesYesYesYes, as on Windows per PeVFixtures.al). The last assignment wins.
 // BC versions: 27, 28, 29
 
 table 81570 "LT BI TS Row 1"
@@ -233,7 +237,11 @@ codeunit 81577 "LT BI Trigger Setup"
         Observer.Observe('rename', L.Take());
         R.Delete(true);
         Observer.Observe('delete', L.Take());
-        Observer.Finish();
+        Observer.Expect('insert', 'mask1 in=0;after1 in=YesYesYesYes;setup1 in=YesYesYesYes;dbinsert1;');
+        Observer.Expect('modify', 'dbmodify1;');
+        Observer.Expect('rename', 'dbrename1;');
+        Observer.Expect('delete', 'dbdelete1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +262,11 @@ codeunit 81577 "LT BI Trigger Setup"
         Observer.Observe('rename', L.Take());
         R.Delete(true);
         Observer.Observe('delete', L.Take());
-        Observer.Finish();
+        Observer.Expect('insert', 'mask2 in=0;after2 in=YesYesYesYes;setup2 in=YesYesYesYes;');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -275,7 +287,11 @@ codeunit 81577 "LT BI Trigger Setup"
         Observer.Observe('rename', L.Take());
         R.Delete(true);
         Observer.Observe('delete', L.Take());
-        Observer.Finish();
+        Observer.Expect('insert', 'mask3 in=0;after3 in=YesYesYesYes;setup3 in=NoNoNoNo;');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -296,6 +312,10 @@ codeunit 81577 "LT BI Trigger Setup"
         Observer.Observe('rename', L.Take());
         R.Delete(true);
         Observer.Observe('delete', L.Take());
-        Observer.Finish();
+        Observer.Expect('insert', 'mask4 in=0;after4 in=YesYesYesYes;setup4 in=YesYesYesYes;dbinsert4;');
+        Observer.Expect('modify', '');
+        Observer.Expect('rename', '');
+        Observer.Expect('delete', '');
+        Observer.Verify();
     end;
 }

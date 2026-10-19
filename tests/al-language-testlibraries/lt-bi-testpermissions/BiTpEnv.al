@@ -8,7 +8,8 @@
 //   Management", and 132553 "Block Changes to System Tables" (Test Stability Tools app);
 // - whether the app 'Data Archive' and 'Tests-TestLibraries' are installed (NAV App Installed App);
 // - whether 130453's subscribers run between tests: an application area set by the first test is gone in the second one.
-// Probe: observed values.
+// Probe: observed values; every literal asserted below is what the BC tier produced (corpus CI job test-testlibraries,
+// run 39223234414 on BC 29.0; 27.5 and 28.5 by the CI matrix).
 // BC versions: 27, 28, 29
 codeunit 81552 "LT BI TP Env"
 {
@@ -26,7 +27,10 @@ codeunit 81552 "LT BI TP Env"
         Observer.Observe('installed', Installed('130450,130451,130452,130453,130454,130455,130301,130302,132218,132217,130011,132553,130440'));
         Observer.Observe('apps', InstalledApps());
         Observer.Observe('runner', Probe.RunnerFrames());
-        Observer.Finish();
+        Observer.Expect('installed', '130450=yes 130451=yes 130452=yes 130453=yes 130454=yes 130455=yes 130301=yes 130302=yes 132218=yes 132217=yes 130011=yes 132553=no 130440=yes ');
+        Observer.Expect('apps', 'Tests-TestLibraries=yes Data Archive=yes Permissions Mock=yes Test Stability Tools=no ');
+        Observer.Expect('runner', '130450,130454,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -38,7 +42,8 @@ codeunit 81552 "LT BI TP Env"
         Message('LT BI');
         ApplicationArea('#Basic');
         Observer.Observe('area', ApplicationArea());
-        Observer.Finish();
+        Observer.Expect('area', '#Basic');
+        Observer.Verify();
     end;
 
     [Test]
@@ -50,7 +55,8 @@ codeunit 81552 "LT BI TP Env"
         Message('LT BI');
         Observer.Observe('area', ApplicationArea());
         ApplicationArea('');
-        Observer.Finish();
+        Observer.Expect('area', '');
+        Observer.Verify();
     end;
 
     local procedure Installed(IdList: Text): Text
