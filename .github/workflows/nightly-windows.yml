@@ -25,22 +25,15 @@ name: Nightly Windows (official MS BC container)
 # not available, rather than running unpinned), and the license, region, container OS, generic
 # image and BC build are all written into an artifact next to the results.
 #
-# THE TENANT ENCRYPTION KEY IS CREATED HERE, AND ONLY HERE (#248).
+# THE TENANT ENCRYPTION KEY IS CREATED HERE, AND ONLY HERE (#248, #282).
 # A BcContainerHelper container has no tenant encryption key, so IsolatedStorage.SetEncrypted
-# and AL's ENCRYPT/DECRYPT refuse outright. A step below creates a real one with BC's own
-# New-NAVEncryptionKey and FAILS THE RUN if it cannot -- same reasoning as the culture pin:
-# a nightly that continues without it re-reports cu 60378 forever until everyone ignores it.
-# ci.yml's Linux image instead installs a pass-through fake (StartupHook Patch #26) that makes
-# Encrypt() return its plaintext input, so a green there says nothing about encryption. This
-# is therefore the only tier in the repository where that surface is genuinely measured.
-#
-# THAT STEP HAS NOT YET RUN SUCCESSFULLY (#255). As merged in #253 it passed three parameters
-# the cmdlets do not have, so it could not bind and failed on every run. #255 corrects the
-# invocation and makes the precheck validate PARAMETER names rather than cmdlet names, which
-# is what would have caught it. The correction is verified against the cmdlet metadata of all
-# eight BC versions in the matrix, but it is NOT yet verified by execution -- the first green
-# nightly is what will establish that, and until then "the encryption surface is measured
-# here" is the design, not an observation.
+# and AL's ENCRYPT/DECRYPT refuse outright. A step below creates the TENANT key from AL
+# (CreateEncryptionKey(), app .github/nightly-windows/encryption-key), verifies it with an
+# Encrypt/Decrypt round trip at the scope AL reads, and FAILS THE RUN if it cannot -- same
+# reasoning as the culture pin: a nightly that continues without it re-reports cu 60378 forever
+# until everyone ignores it. The earlier version used New-NAVEncryptionKey/Import-NAVEncryptionKey,
+# which load the key of the server instance, not of the tenant: its check passed while AL had no
+# key (run 38858383715, #282).
 #
 # HOW TO READ THE SUMMARY THIS PRODUCES (#249).
 # The job summary opens with "Failed on THIS run" -- that section, and nothing else in the
@@ -445,153 +438,91 @@ jobs:
           Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
 
       # ---------------------------------------------------------------------------------
-      # Create a tenant encryption key (#248).
+      # Create a tenant encryption key (#248, #282).
       #
       # WHY THIS STEP EXISTS. `IsolatedStorage.SetEncrypted`, AL's ENCRYPT/DECRYPT and Data
       # Encryption Management all resolve their key through the same call chain
       # (TenantEncryptionProviderFactory -> TenantRsaEncryptionProvider). A container created
       # by New-BcContainer has no tenant encryption key, so BC correctly refuses with
-      # "An encryption key is required to complete the request." and cu 60378's
-      # IsolatedStorage_SetEncrypted_GetRoundTripsPlaintext fails. That is a property of the
-      # tier, not a BC divergence -- so the tier is what gets fixed.
+      # "An encryption key is required to complete the request." and cu 60378's two encryption
+      # tests (and cu 72522 Decrypt_EmptyText) fail. That is a property of the tier, not a BC
+      # divergence -- so the tier is what gets fixed.
       #
-      # This is also the only tier in this repository that exercises REAL cryptography here.
-      # ci.yml's Linux image installs StartupHook Patch #26, a pass-through fake that reports
-      # "encryption present" and makes Encrypt() return its plaintext input unchanged. So a
-      # green on Linux says nothing about encryption; a green here, with a real RSA key
-      # created by BC's own cmdlet, does.
+      # WHY NOT THE NAV CMDLETS (#282). The earlier version of this step ran New-NAVEncryptionKey and
+      # Import-NAVEncryptionKey -ServerInstance BC, and verified with Export-NAVEncryptionKey. That
+      # loads the key of the SERVER INSTANCE (the one that protects the database password). AL reads
+      # the key of the TENANT, so the export succeeded (1680 bytes) while AL still had no key: run
+      # 38858383715 (BC 29.0) failed both cu 60378 encryption tests with the step green.
       #
-      # WHY THE CMDLETS ARE BC'S AND NOT BcContainerHelper'S. BcContainerHelper ships no
-      # encryption-key cmdlet at all -- there is no New-BcContainerTenantEncryptionKey. The
-      # three that exist are BC's own, in Microsoft.Dynamics.Nav.Management.dll:
-      # New-NAVEncryptionKey, Import-NAVEncryptionKey, Export-NAVEncryptionKey. There is no
-      # Get-, which is why the verification below is Export- succeeding rather than a query.
+      # WHAT IT DOES NOW. It creates the tenant key the way BC itself does (the "Data Encryption
+      # Management" page): AL's CreateEncryptionKey(), from a small app in
+      # .github/nightly-windows/encryption-key. The install trigger creates the key; if it is still
+      # missing, Invoke-NAVCodeunit runs the same code once more. Neither runs inside a test
+      # transaction (creating a key inside a nested transaction fails). Then it VERIFIES AT THE
+      # SCOPE AL READS: Invoke-NAVCodeunit runs Verify(), which raises unless EncryptionEnabled()
+      # and EncryptionKeyExists() are true and Decrypt(Encrypt(x)) = x with a ciphertext that is not
+      # x. Afterwards the app is unpublished again (the key stays), so the corpus runs on the same
+      # set of apps as before.
       #
-      # WHY IT THROWS RATHER THAN WARNING. Same reasoning the culture pin already uses above:
-      # a nightly that silently continues without a key re-reports cu 60378 forever, and
-      # everyone learns to ignore a failure that is really a setup defect. If the key cannot
-      # be created, that is a fact about this run that must stop it, not a footnote.
+      # WHY IT THROWS RATHER THAN WARNING. A nightly that silently continues without a key
+      # re-reports cu 60378 forever, and everyone learns to ignore a failure that is really a
+      # setup defect. If the key cannot be created, that is a fact about this run that must stop it.
       - name: Create a tenant encryption key
         run: |
           $ErrorActionPreference = 'Stop'
           Import-Module BcContainerHelper -DisableNameChecking
           $c = $env:CONTAINER_NAME
+          $cred = Import-Clixml (Join-Path $env:RUNNER_TEMP 'bccred.xml')
+          $folder = Join-Path $env:GITHUB_WORKSPACE '.github/nightly-windows/encryption-key'
+          $outDir = Join-Path $env:GITHUB_WORKSPACE '.output-encryption-key'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $appJson = Get-Content (Join-Path $folder 'app.json') -Raw | ConvertFrom-Json
 
-          $keyPassword = [guid]::NewGuid().ToString() + 'aA1!'
+          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+            -appProjectFolder $folder -appOutputFolder $outDir `
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -UpdateSymbols -failOn 'error'
+          # The install trigger (OnInstallAppPerDatabase) creates the key.
+          Publish-BcContainerApp -containerName $c -credential $cred `
+            -appFile $appFile -skipVerification -sync -install
 
-          $result = Invoke-ScriptInBcContainer -containerName $c -argumentList $keyPassword -scriptblock {
-            param($keyPassword)
-            $ErrorActionPreference = 'Stop'
-            $secure = ConvertTo-SecureString $keyPassword -AsPlainText -Force
-
-            # PRECHECK ON PARAMETERS, NOT ON NAMES (#255).
-            #
-            # The previous version of this step looped over the three cmdlet NAMES with
-            # Get-Command and passed -- while passing three parameters that do not exist, so
-            # every call failed to bind and the step failed on every run. The names were never
-            # the risk: they have been stable since NAV. What varies, and what actually broke
-            # here, is the PARAMETER SET. So probe the parameters themselves, and name the
-            # cmdlet and the missing parameter when one is absent.
-            $required = @{
-              'New-NAVEncryptionKey'    = @('KeyPath', 'Password', 'Force')
-              'Import-NAVEncryptionKey' = @('ServerInstance', 'KeyPath', 'Password', 'Force',
-                                            'ApplicationDatabaseServer', 'ApplicationDatabaseName')
-              'Export-NAVEncryptionKey' = @('ServerInstance', 'KeyPath', 'Password', 'Force')
-              # Not an encryption cmdlet, but this step now depends on its -KeyName spelling
-              # to derive the database coordinates below, so it is checked on the same terms.
-              'Get-NAVServerConfiguration' = @('ServerInstance', 'KeyName')
-            }
-            foreach ($cmd in $required.Keys) {
-              $g = Get-Command $cmd -ErrorAction SilentlyContinue
-              if (-not $g) {
-                throw "$cmd is not available in this container's NAV management module. Cannot create a tenant encryption key."
-              }
-              $missing = $required[$cmd] | Where-Object { -not $g.Parameters.ContainsKey($_) }
-              if ($missing) {
-                throw ("$cmd exists but does not accept: {0}. This BC build's parameter set differs from the one this step was written against (verified identical on 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3, 28.4). Refusing to guess -- see corpus issue #255." -f ($missing -join ', '))
-              }
-            }
-
-            # DERIVE THE DATABASE COORDINATES, DO NOT HARDCODE THEM (#255).
-            #
-            # Import-NAVEncryptionKey takes the application database as two MANDATORY
-            # parameters, ApplicationDatabaseServer and ApplicationDatabaseName. Inside a
-            # BcContainerHelper container these are conventionally localhost\SQLEXPRESS and
-            # CRONUS, but "conventionally" is not "always" -- a container pointed at an
-            # external SQL host, or built from a differently-named database, has neither. A
-            # hardcoded pair that happens to work today is the next silent breakage, so read
-            # the values the service instance is ACTUALLY configured with.
-            #
-            # HOW THIS READS THEM, and why -KeyName rather than parsing the whole document.
-            # Get-NAVServerConfiguration has three output shapes, and only one of them needs no
-            # assumption about object structure (decompiled from
-            # Microsoft.BusinessCentral.Management.dll, GetNavServerConfiguration, BC 28.1):
-            #   -KeyName X  -> writes the bare `value` ATTRIBUTE as a string. One value, no shape.
-            #   -AsXml      -> writes a single XmlNode for the whole configuration document.
-            #   (neither)   -> writes a STREAM of `add` XmlNodes, each carrying key/value.
-            # The last two would each need a property path that is right about how PowerShell
-            # adapts an XmlNode; -KeyName returns the string itself, so there is nothing to get
-            # wrong. It is also the spelling this workflow already uses for LicenseFile below.
-            $dbServer   = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseServer
-            $dbInstance = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseInstance
-            $dbName     = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseName
-
-            # Check before combining, so a missing value is reported as itself rather than as a
-            # confusing half-built server string.
-            if ([string]::IsNullOrWhiteSpace($dbServer) -or [string]::IsNullOrWhiteSpace($dbName)) {
-              throw "Could not read DatabaseServer/DatabaseName from Get-NAVServerConfiguration -ServerInstance BC (got server='$dbServer' instance='$dbInstance' name='$dbName'). Import-NAVEncryptionKey needs both and this step will not guess them."
-            }
-
-            # DatabaseInstance is a SEPARATE setting from DatabaseServer, and SQL addresses a
-            # named instance as SERVER\INSTANCE. This mirrors BC's own rule rather than
-            # inventing one: ServerUserSettings.CombineDatabaseServerAndInstance (decompiled
-            # from Microsoft.Dynamics.Nav.Types.dll, BC 28.1) trims a trailing backslash off
-            # the server and appends \<instance> only when DatabaseInstance is non-empty. An
-            # empty DatabaseInstance means the default instance, where the bare name is right.
-            $dbServerFull = $dbServer.TrimEnd([char]92)
-            if (-not [string]::IsNullOrEmpty($dbInstance)) { $dbServerFull = "$dbServerFull\$dbInstance" }
-
-            Write-Host "application database: $dbServerFull / $dbName"
-
-            $keyPath = Join-Path $env:TEMP 'tenant-encryption.key'
-            if (Test-Path $keyPath) { Remove-Item $keyPath -Force }
-
-            # -Force: the instance is stopped and restarted around key generation by the
-            # cmdlet itself; without it the cmdlet prompts and a non-interactive session hangs.
-            # No -ServerInstance: this cmdlet does not have one. It writes a key FILE and does
-            # not talk to an instance at all -- the instance only enters at Import- below.
-            New-NAVEncryptionKey -KeyPath $keyPath -Password $secure -Force
-            if (-not (Test-Path $keyPath)) {
-              throw "New-NAVEncryptionKey reported success but wrote no key file at $keyPath."
-            }
-            Import-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure `
-              -ApplicationDatabaseServer $dbServerFull -ApplicationDatabaseName $dbName -Force
-
-            # VERIFY, do not assume. There is no Get-NAVEncryptionKey, so the check is that
-            # the tier can now EXPORT a key -- which it can only do if one is loaded.
-            $verifyPath = Join-Path $env:TEMP 'tenant-encryption-verify.key'
-            if (Test-Path $verifyPath) { Remove-Item $verifyPath -Force }
-            Export-NAVEncryptionKey -ServerInstance BC -KeyPath $verifyPath -Password $secure -Force
-            if (-not (Test-Path $verifyPath)) {
-              throw "Export-NAVEncryptionKey wrote no file: the service instance has no usable tenant encryption key after import."
-            }
-            $bytes = (Get-Item $verifyPath).Length
-            Remove-Item $verifyPath -Force -ErrorAction SilentlyContinue
-
-            "OK key exported, $bytes bytes"
+          $company = (Get-CompanyInBcContainer -containerName $c | Select-Object -First 1).CompanyName
+          Write-Host "company for Invoke-NAVCodeunit: $company"
+          function Invoke-KeyCodeunit([string]$method) {
+            $p = @{ containerName = $c; CompanyName = $company; CodeunitId = 81849 }
+            if ($method) { $p['MethodName'] = $method }
+            Invoke-NavContainerCodeunit @p
+          }
+          function Get-KeyState {
+            # Report() always raises; its message is the state and the log of every attempt.
+            try { Invoke-KeyCodeunit 'Report'; 'Report did not raise' } catch { $_.Exception.Message }
+          }
+          function Test-Key {
+            try { Invoke-KeyCodeunit 'Verify'; $true } catch { Write-Host "verify: $($_.Exception.Message)"; $false }
           }
 
-          # $result is the scriptblock's whole output stream, and the NAV cmdlets can emit
-          # objects of their own onto it, so match the sentinel ANYWHERE in it rather than
-          # anchoring at the start -- an anchored test would throw on a successful run whose
-          # output merely had something printed ahead of the sentinel.
-          $resultText = ($result | Out-String)
-          Write-Host "tenant encryption key step returned:"
-          Write-Host $resultText
-          if ($resultText -notmatch 'OK key exported, \d+ bytes') {
-            throw "Tenant encryption key setup did not confirm success. Refusing to run: cu 60378's SetEncrypted test would then fail for a setup reason and be read as a BC divergence. Output was: $resultText"
+          Write-Host ("after install: " + (Get-KeyState))
+          $ok = Test-Key
+          if (-not $ok) {
+            # Still no usable key: run the same creation once more, from a session of its own.
+            try { Invoke-KeyCodeunit '' } catch { Write-Host "invoke OnRun raised: $($_.Exception.Message)" }
+            Write-Host ("after invoke: " + (Get-KeyState))
+            $ok = Test-Key
           }
-          "TENANT_ENCRYPTION_KEY=created (New-NAVEncryptionKey, verified by Export-NAVEncryptionKey)" |
+          $state = Get-KeyState
+          Write-Host "final: $state"
+
+          # Remove the helper app again; the key belongs to the tenant and stays. Not fatal: an
+          # installed helper app changes nothing the corpus asserts.
+          try {
+            $u = @{ containerName = $c; appName = $appJson.name; publisher = $appJson.publisher; version = $appJson.version; uninstall = $true }
+            if ((Get-Command Unpublish-BcContainerApp).Parameters.ContainsKey('doNotSaveData')) { $u['doNotSaveData'] = $true }
+            Unpublish-BcContainerApp @u
+          } catch { Write-Host "::warning::could not unpublish the encryption key app: $($_.Exception.Message)" }
+
+          if (-not $ok) {
+            throw "No working tenant encryption key (Verify failed). Refusing to run: cu 60378's encryption tests would then fail for a setup reason and be read as a BC divergence. $state"
+          }
+          "TENANT_ENCRYPTION_KEY=created (CreateEncryptionKey from AL, verified by an Encrypt/Decrypt round trip)" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
       # ---------------------------------------------------------------------------------
