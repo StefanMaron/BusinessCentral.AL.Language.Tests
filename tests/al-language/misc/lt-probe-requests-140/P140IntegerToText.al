@@ -314,6 +314,20 @@ codeunit 70903 "LT P140 Integer ToText"
         Observer.Observe('nld_bool', Format(true));
         GlobalLanguage(Orig);
         Observer.Observe('restored_equal', Format(GlobalLanguage() = Orig));
-        Observer.Finish();
+        Observer.Expect('enu_dec_format', '1,234.5');
+        Observer.Expect('enu_date_format', '02/05/24');
+        Observer.Expect('enu_date_month_text', 'February');
+        Observer.Expect('enu_date_weekday_text', 'Monday');
+        Observer.Expect('nld_global_language', '1043');
+        Observer.Expect('nld_dec_format', '1,234.5');
+        Observer.Expect('nld_dec_totext', '1,234.5');
+        Observer.Expect('nld_dec_format_1', '1234.5');
+        Observer.Expect('nld_date_format', '02/05/24');
+        Observer.Expect('nld_date_format_4', 'februari 5, 2024');
+        Observer.Expect('nld_date_month_text', 'februari');
+        Observer.Expect('nld_date_weekday_text', 'maandag');
+        Observer.Expect('nld_bool', 'Ja');
+        Observer.Expect('restored_equal', 'Yes');
+        Observer.Verify();
     end;
 }

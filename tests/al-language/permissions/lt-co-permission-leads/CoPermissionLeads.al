@@ -115,6 +115,17 @@ permissionset 84947 "LT CO Perm User M"
         codeunit "LT CO Sub NoPerm" = X;
 }
 
+// Read plus INDIRECT modify on the ledger: the right that an object's Permissions property needs to lift.
+permissionset 84951 "LT CO Perm User Ind"
+{
+    Assignable = true;
+    Permissions =
+        tabledata "LT CO Perm Src" = RIMD,
+        tabledata "LT CO Perm Ledger" = Rm,
+        codeunit "LT CO Sub NoPerm" = X,
+        codeunit "LT CO Sub WithPerm" = X;
+}
+
 codeunit 84948 "LT CO Task Noop"
 {
     trigger OnRun()
@@ -138,8 +149,8 @@ page 84949 "LT CO ABP Facts"
         {
             repeater(Rows)
             {
-                field(ID; Rec.ID) { AccessByPermission = tabledata "Table Metadata" = R; }
-                field(Name; Rec.Name) { AccessByPermission = tabledata "LT CO Perm Ledger" = D; }
+                field(IdCtl; Rec.ID) { AccessByPermission = tabledata "Table Metadata" = R; }
+                field(NameCtl; Rec.Name) { AccessByPermission = tabledata "LT CO Perm Ledger" = D; }
             }
         }
     }
@@ -167,6 +178,7 @@ codeunit 84950 "LT CO Permission Leads"
     var
         UserSetTok: Label 'LT CO Perm User', Locked = true;
         UserMSetTok: Label 'LT CO Perm User M', Locked = true;
+        UserIndSetTok: Label 'LT CO Perm User Ind', Locked = true;
         DoneTok: Label 'LT CO done', Locked = true;
         LedgerValueSeen: Integer;
 
@@ -242,7 +254,10 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'Sorry, the current permissions prevented the action. (TableData 84941 LT CO Perm Ledger Modify: AL Language Coverage Tests)');
+        Observer.Expect('insert|code', 'DB:ClientModifyDenied');
+        Observer.Expect('ledger value seen', '-1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,7 +277,10 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'Sorry, the current permissions prevented the action. (TableData 84941 LT CO Perm Ledger IndirectModify: AL Language Coverage Tests)');
+        Observer.Expect('insert|code', 'DB:ClientModifyDenied');
+        Observer.Expect('ledger value seen', '-1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -282,7 +300,10 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'Sorry, the current permissions prevented the action. (TableData 84941 LT CO Perm Ledger Modify: AL Language Coverage Tests)');
+        Observer.Expect('insert|code', 'DB:ClientModifyDenied');
+        Observer.Expect('ledger value seen', '-1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -302,7 +323,10 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'LT CO done');
+        Observer.Expect('insert|code', 'Dialog');
+        Observer.Expect('ledger value seen', '10');
+        Observer.Verify();
     end;
 
     [Test]
@@ -317,7 +341,10 @@ codeunit 84950 "LT CO Permission Leads"
         Observer.ObserveError('insert');
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'LT CO done');
+        Observer.Expect('insert|code', 'Dialog');
+        Observer.Expect('ledger value seen', '11');
+        Observer.Verify();
     end;
 
     local procedure CreateTaskThenStop()
@@ -345,7 +372,13 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         asserterror CreateTaskThenStop();
         Observer.ObserveError('create, no mock');
-        Observer.Finish();
+        Observer.Expect('can create, no mock', 'No');
+        Observer.Expect('can create, mock', 'No');
+        Observer.Expect('create, mock|text', 'LT CO done id_null=No');
+        Observer.Expect('create, mock|code', 'Dialog');
+        Observer.Expect('create, no mock|text', 'LT CO done id_null=No');
+        Observer.Expect('create, no mock|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -364,32 +397,94 @@ codeunit 84950 "LT CO Permission Leads"
                     ' D=' + Format(MetadataPermission."Delete Permission") + ' X=' + Format(MetadataPermission."Execute Permission") + ';';
             until MetadataPermission.Next() = 0;
         Observer.Observe('rows', Rows);
+        Observer.Expect('row count', '1');
+        Observer.Expect('rows', 'Page 0 R=  I=  M=  D=  X=Yes;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Subscriber_WithPermissionsProperty_UserIndirectModify_CO()
+    var
+        Observer: Codeunit "Probe Observer";
+        Mock: Codeunit "Permissions Mock";
+        Sub: Codeunit "LT CO Sub WithPerm";
+        WasStarted: Boolean;
+    begin
+        Init();
+        BindSubscription(Sub);
+        WasStarted := StartMock(Mock);
+        Mock.Set(UserIndSetTok);
+        asserterror InsertSrcThenStop(12);
+        Observer.ObserveError('insert');
+        RestoreMock(Mock, WasStarted);
+        UnbindSubscription(Sub);
+        Observer.Observe('ledger value seen', Format(LedgerValueSeen));
         Observer.Finish();
+    end;
+
+    [Test]
+    procedure Subscriber_NoPermissionsProperty_UserIndirectModify_CO()
+    var
+        Observer: Codeunit "Probe Observer";
+        Mock: Codeunit "Permissions Mock";
+        Sub: Codeunit "LT CO Sub NoPerm";
+        WasStarted: Boolean;
+    begin
+        Init();
+        BindSubscription(Sub);
+        WasStarted := StartMock(Mock);
+        Mock.Set(UserIndSetTok);
+        asserterror InsertSrcThenStop(13);
+        Observer.ObserveError('insert');
+        RestoreMock(Mock, WasStarted);
+        UnbindSubscription(Sub);
+        Observer.Observe('ledger value seen', Format(LedgerValueSeen));
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryControl(var Facts: TestPage "LT CO ABP Facts"; What: Text; var Result: Text)
+    begin
+        case What of
+            'id value':
+                Result := Facts.IdCtl.Value();
+            'id visible':
+                Result := Format(Facts.IdCtl.Visible());
+            'name value':
+                Result := Facts.NameCtl.Value();
+            'name visible':
+                Result := Format(Facts.NameCtl.Visible());
+            'action visible':
+                Result := Format(Facts.DeleteRight.Visible());
+            'action enabled':
+                Result := Format(Facts.DeleteRight.Enabled());
+        end;
+    end;
+
+    local procedure ControlOutcome(var Facts: TestPage "LT CO ABP Facts"; What: Text): Text
+    var
+        Result: Text;
+    begin
+        ClearLastError();
+        if TryControl(Facts, What, Result) then
+            exit(Result);
+        exit('error: ' + GetLastErrorText());
     end;
 
     [Test]
     procedure AccessByPermission_TestPageControls_CO()
     var
         Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
         Facts: TestPage "LT CO ABP Facts";
-        WasStarted: Boolean;
     begin
         Facts.OpenView();
-        Observer.Observe('no mock: first row', Facts.ID.Value());
-        Observer.Observe('no mock: name visible', Format(Facts.Name.Visible()));
-        Observer.Observe('no mock: action visible', Format(Facts.DeleteRight.Visible()));
-        Observer.Observe('no mock: action enabled', Format(Facts.DeleteRight.Enabled()));
+        Observer.Observe('id value', ControlOutcome(Facts, 'id value'));
+        Observer.Observe('id visible', ControlOutcome(Facts, 'id visible'));
+        Observer.Observe('name value', ControlOutcome(Facts, 'name value'));
+        Observer.Observe('name visible', ControlOutcome(Facts, 'name visible'));
+        Observer.Observe('action visible', ControlOutcome(Facts, 'action visible'));
+        Observer.Observe('action enabled', ControlOutcome(Facts, 'action enabled'));
         Facts.Close();
-        WasStarted := StartMock(Mock);
-        Mock.Set(UserSetTok);
-        Facts.OpenView();
-        Observer.Observe('mock: first row', Facts.ID.Value());
-        Observer.Observe('mock: name visible', Format(Facts.Name.Visible()));
-        Observer.Observe('mock: action visible', Format(Facts.DeleteRight.Visible()));
-        Observer.Observe('mock: action enabled', Format(Facts.DeleteRight.Enabled()));
-        Facts.Close();
-        RestoreMock(Mock, WasStarted);
         Observer.Finish();
     end;
 }

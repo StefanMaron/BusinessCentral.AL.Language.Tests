@@ -177,7 +177,8 @@ codeunit 61257 "LT O Session Misc"
         Observer.Verify();
     end;
 
-    // corpus issue 669 (writer CO): LogSecurityAudit with target type and target name arrays of different lengths, and of equal length.
+    // corpus issue 669 (writer CO): LogSecurityAudit with target type and target name arrays of equal length. Arrays of different lengths
+    // (2 types, 1 name) ended the local Linux BC 29 session ("hub connection closed"): a Linux suspect, queued for Windows, not asserted here.
     [TryFunction]
     local procedure TryAuditTargets(TypeCount: Integer; NameCount: Integer)
     var
@@ -215,8 +216,6 @@ codeunit 61257 "LT O Session Misc"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('two types, one name', AuditTargetsOutcome(2, 1));
-        Observer.Observe('one type, two names', AuditTargetsOutcome(1, 2));
         Observer.Observe('two types, two names', AuditTargetsOutcome(2, 2));
         Observer.Observe('one type, one name', AuditTargetsOutcome(1, 1));
         Observer.Finish();
