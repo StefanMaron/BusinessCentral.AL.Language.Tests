@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-currfieldno-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), self-contained table 71169, codeunits 71170 (log), 71171 and 71172
+// Fixtures used: Probe Observer (codeunit 69160), self-contained table 71169, codeunits 71170 (log), 71171 and 71172, tableextension 82359 (misc/lt-bo2-odd-leads)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles GitHub issue #69 (Inferred behaviors waiting for a pin): CurrFieldNo := FieldNo(X) and CurrFieldNo passed to a var parameter
 // Facts: CurrFieldNo read in OnValidate and OnModify after being assigned in the caller, passed to a var parameter, and reset by a Validate call
@@ -226,6 +226,34 @@ codeunit 71172 "LT P69 Curr Field No"
         Observer.Expect('insert_after_assign', 'insert CurrFieldNo=3;');
         Observer.Expect('validate_then_insert', 'validate Note CurrFieldNo=3;insert CurrFieldNo=3;');
         Observer.Expect('plain_insert', 'insert CurrFieldNo=3;');
+        Observer.Verify();
+    end;
+
+    // Corpus issue #664 item 111: CurrFieldNo := N in a table extension (tableextension 82359, misc/lt-bo2-odd-leads/BoCurrFieldNoExt.al)
+    // compiles and publishes; is the value shared with the base table code of the same record?
+    [Test]
+    procedure CurrFieldNo_InTableExtension()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT P69 Curr Row";
+    begin
+        Seed();
+        Row.Get(1);
+        Observer.Observe('ext default', Format(Row.LtBoReadInExt()));
+        Observer.Observe('ext assign 3', Format(Row.LtBoAssignInExt(3)));
+        Observer.Observe('base reads after ext assign', Format(Row.ReadCurrFieldNo()));
+        Observer.Observe('base assign 2', Format(Row.AssignAndRead(2)));
+        Observer.Observe('ext reads after base assign', Format(Row.LtBoReadInExt()));
+        Row.Validate(LtBoExtNum, 5);
+        Observer.Observe('ext validate', Row.LtBoSeenInValidate());
+        Observer.Observe('after ext validate', Format(Row.ReadCurrFieldNo()));
+        Observer.Expect('ext default', '0');
+        Observer.Expect('ext assign 3', '3');
+        Observer.Expect('base reads after ext assign', '3');
+        Observer.Expect('base assign 2', '2');
+        Observer.Expect('ext reads after base assign', '2');
+        Observer.Expect('ext validate', 'ext validate CurrFieldNo=2 after assign=1');
+        Observer.Expect('after ext validate', '1');
         Observer.Verify();
     end;
 }
