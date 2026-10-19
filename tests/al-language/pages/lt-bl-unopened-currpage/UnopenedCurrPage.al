@@ -285,7 +285,12 @@ codeunit 81855 "LT BL Unopened CurrPage"
         Observer.ObserveError('runmodal');
         Observer.Observe('handler', HandlerSeen);
         Observer.Observe('rec-after-close', P.Act('rec'));
-        Observer.Finish();
+        Observer.Expect('update-false', 'start end');
+        Observer.Expect('runmodal|text', 'The RunModal procedure could not close the page 81853 as it has already been closed.');
+        Observer.Expect('runmodal|code', 'TestCodeUnit');
+        Observer.Expect('handler', 'card id=2');
+        Observer.Expect('rec-after-close', 'start [0] [] end');
+        Observer.Verify();
     end;
 
     // The handler only reads; the page closes when the handler returns.
@@ -310,6 +315,10 @@ codeunit 81855 "LT BL Unopened CurrPage"
             Observer.Observe('runmodal', 'error [' + GetLastErrorText() + '] [' + GetLastErrorCode() + ']');
         Observer.Observe('handler', HandlerSeen);
         Observer.Observe('rec-after-close', P.Act('rec'));
-        Observer.Finish();
+        Observer.Expect('update-true', 'start end');
+        Observer.Expect('runmodal', 'ok OK');
+        Observer.Expect('handler', 'card id=2');
+        Observer.Expect('rec-after-close', 'start [2] [] end');
+        Observer.Verify();
     end;
 }
