@@ -798,9 +798,13 @@ codeunit 84275 "LT CC Page Leads"
             Observer.Observe('enabled_big_5', Format(P.DoIt.Enabled()));
             P.Close();
         end;
+#if BC28PLUS
         Observer.Expect('open', 'ok');
         Observer.Expect('enabled_big_0', 'No');
         Observer.Expect('enabled_big_5', 'Yes');
+#else
+        Observer.Expect('open', 'error: Error compiling dynamic control expression: ''0L <> Big'' at index ''0''. The error is: Not a valid number. [Expression:Parse]');
+#endif
         Observer.Verify();
     end;
 
