@@ -533,6 +533,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FCompat', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FCompat', false, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -560,6 +561,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -720,6 +724,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FCompat', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FCompat', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FCompat', true, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -752,6 +757,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -922,6 +930,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FStrict', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FStrict', false, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -949,6 +958,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -1109,6 +1121,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FStrict', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FStrict', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FStrict', true, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -1141,6 +1154,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -1311,6 +1327,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FPlain', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FPlain', false, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -1338,6 +1355,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -1502,6 +1522,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FPlain', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FPlain', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FPlain', true, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -1534,6 +1555,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -1712,6 +1736,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FOpt', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FOpt', false, 'member0', 'V', OptZero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -1739,6 +1764,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -1911,6 +1939,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'FOpt', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'FOpt', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'FOpt', true, 'member0', 'V', OptZero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -1943,6 +1972,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -2117,6 +2149,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VCompat', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VCompat', false, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -2139,6 +2172,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -2281,6 +2317,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VCompat', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VCompat', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VCompat', true, 'member0', 'V', "LT BE Blank Enum Compat"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -2308,6 +2345,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -2460,6 +2500,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VStrict', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VStrict', false, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -2482,6 +2523,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -2624,6 +2668,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VStrict', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VStrict', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VStrict', true, 'member0', 'V', "LT BE Blank Enum Strict"::" ", '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -2651,6 +2696,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -2803,6 +2851,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VPlain', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VPlain', false, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -2825,6 +2874,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -2971,6 +3023,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VPlain', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VPlain', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VPlain', true, 'member0', 'V', "LT BE Plain Enum"::Zero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -2998,6 +3051,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -3158,6 +3214,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', false, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VOpt', false, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VOpt', false, 'member0', 'V', OptZero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
         Observer.Expect('space-err|code', 'Evaluate:Format');
@@ -3180,6 +3237,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -3334,6 +3394,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         RunCase(Observer, 'VOpt', true, 'digit1', 'V', '1', '', 0, '');
         RunCase(Observer, 'VOpt', true, 'capAlpha', 'V', 'Alpha', '', 0, '');
         RunCase(Observer, 'VOpt', true, 'member0', 'V', OptZero, '', 0, '');
+#if BC28PLUS
         Observer.Expect('space-start', '[Beta]');
         Observer.Expect('space', 'No');
         Observer.Expect('space-err|text', 'The value " " can''t be evaluated into type Option.');
@@ -3361,6 +3422,9 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 
     [Test]

@@ -645,7 +645,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Row.SetRange(Grp, 'G2');
         Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List NoOpen", Row)));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=No,rows=[U2][U3],action=LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -659,7 +660,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Row.SetRange(Grp, 'G2');
         Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List OneField", Row)));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=No,rows=[U2][U3],action=LookupCancel');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
