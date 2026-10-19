@@ -266,6 +266,7 @@ codeunit 85484 "LT CX Variants"
 
     local procedure OpenOtherInCallee(RR: RecordRef)
     begin
+        RR.Close();
         RR.Open(Database::"LT CX VOther");
         RR.FindFirst();
     end;
@@ -275,6 +276,7 @@ codeunit 85484 "LT CX Variants"
         RR2: RecordRef;
     begin
         RR2 := V;
+        RR2.Close();
         RR2.Open(Database::"LT CX VOther");
         RR2.FindFirst();
     end;

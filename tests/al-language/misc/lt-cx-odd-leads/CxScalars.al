@@ -248,23 +248,21 @@ codeunit 85481 "LT CX Scalars"
     procedure GuidText_ToCode20()
     var
         Observer: Codeunit "Probe Observer";
-        Row: Record "LT CX Row";
+        G: Guid;
         C: Code[20];
         Ok: Boolean;
     begin
-        Row.DeleteAll();
-        Row.Id := 1;
-        Row.Insert();
+        Evaluate(G, '{0A1B2C3D-4E5F-6A7B-8C9D-0E1F2A3B4C5D}');
         C := 'BEFORE';
         Observer.Observe('maxstrlen_before', Format(MaxStrLen(C)));
         ClearLastError();
-        Ok := TryToCode20(Format(Row.SystemId), C);
+        Ok := TryToCode20(Format(G), C);
         Observer.Observe('assign_ok', Format(Ok));
         Observer.Observe('assign_error', GetLastErrorCode() + ':' + GetLastErrorText());
         Observer.Observe('after_value', C);
         Observer.Observe('strlen_after', Format(StrLen(C)));
         Observer.Observe('maxstrlen_after', Format(MaxStrLen(C)));
-        C := CopyStr(Format(Row.SystemId), 1, MaxStrLen(C));
+        C := CopyStr(Format(G), 1, MaxStrLen(C));
         Observer.Observe('copystr_strlen', Format(StrLen(C)));
         Observer.Finish();
     end;
