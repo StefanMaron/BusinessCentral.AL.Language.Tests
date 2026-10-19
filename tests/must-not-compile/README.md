@@ -405,6 +405,9 @@ is only a reference.
 | 1501 | AL0246 | a page extension changes `ApplicationArea` of a base part with `modify` (on a field control it compiles) |
 | 1502 | AL0378 | triggers in a page extension of a Role Center page (one diagnostic per trigger) |
 | 1503 | AL0322 | a page extension `modify()` sets `Editable` to a procedure call (a constant or a Boolean variable compiles) |
+| 1200 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
+| 1340 | AL0122 | BC 28 and 29: the result of Page.Run(FullyQualifiedName, Record, FieldNo) assigned; the overload returns nothing. |
+| 1341 | AL0133 | BC 28 and 29: Page.Run with a fully qualified name and a FieldRef (no such overload). |
 | 1570 to 1572 | AL0187 (and AL0666 on BC 27 and 28) | [RequiredPending] on an interface method; one case per BC major (corpus #664 item 19). |
 | 1573 | AL0625 | #define after the first token of a file (corpus #664 item 29). |
 | 1574 to 1576 | AL0629, AL0631 | Preprocessor operators that do not exist: '!', '&&', '== true' (corpus #664 item 29). |
