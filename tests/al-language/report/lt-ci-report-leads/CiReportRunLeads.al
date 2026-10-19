@@ -142,7 +142,6 @@ codeunit 84592 "LT CI Report Run Leads"
     procedure CardModalHandler(var Card: TestPage "LT CI Row Card")
     begin
         L.Add('modal handler');
-        Card.OK().Invoke();
     end;
 
     // Item 133: an Excel layout picked by name through Report Layout Selection, on a report whose default layout is Word.
@@ -328,6 +327,24 @@ codeunit 84592 "LT CI Report Run Leads"
     end;
 
     [Test]
+    [HandlerFunctions('TxOkHandler')]
+    procedure PendingWrite_ReportRun_WithRequestPage_AssertError()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT CI Row";
+    begin
+        Start(0);
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Insert();
+        Row.SetRange(Id, 1);
+        asserterror Report.Run(Report::"LT CI Tx Rpt", true, false, Row);
+        Observer.ObserveError('run');
+        Observer.Observe('run log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure PendingWrite_ReportRun_WithoutRequestPage()
     var
         Observer: Codeunit "Probe Observer";
@@ -394,7 +411,8 @@ codeunit 84592 "LT CI Report Run Leads"
         Row.Id := 2;
         Row.Insert();
         Other.SetRange("Report ID", 1);
-        Rpt.SetTableView(Other);
+        asserterror Rpt.SetTableView(Other);
+        Observer.ObserveError('settableview');
         Rpt.UseRequestPage(false);
         Outcome(Observer, 'run', TryRunVariable(Rpt));
         Observer.Finish();
