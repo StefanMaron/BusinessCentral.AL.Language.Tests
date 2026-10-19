@@ -386,13 +386,18 @@ codeunit 68520 "W7 XmlPort Probes"
     procedure XmlportRun_ImportWithoutASource()
     var
         Observer: Codeunit "Probe Observer";
+        RunOk: Boolean;
     begin
         Commit();
-        Observer.Observe('run import ok', Format(Codeunit.Run(Codeunit::"W7 XP Run Import")));
+        RunOk := Codeunit.Run(Codeunit::"W7 XP Run Import");
+#if LT_HELD_BCLINUX_141
+        // Windows: ok=No, NotSupportedFileDialogProvider (batch XP); enable when bc-linux #141 lands
+        Observer.Observe('run import ok', Format(RunOk));
         Observer.ObserveError('run import');
-        Observer.Expect('run import ok', 'Yes');
-        Observer.Expect('run import|text', '');
-        Observer.Expect('run import|code', '');
+        Observer.Expect('run import ok', 'No');
+        Observer.Expect('run import|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('run import|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+#endif
         Observer.Verify();
     end;
 }

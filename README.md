@@ -81,6 +81,8 @@ Working backlog: [AL Language Coverage Gaps](docs/al-language-coverage-gaps.md)
 
 ## Contributing
 
+CI on a pull request runs only the test codeunits the change can affect; every merge to master runs all of them. The rules are in [CONTRIBUTING.md, Test selection in CI](CONTRIBUTING.md#test-selection-in-ci).
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including:
 
 - How to write a test (the two-rule contract, Initialize, fixture usage)
