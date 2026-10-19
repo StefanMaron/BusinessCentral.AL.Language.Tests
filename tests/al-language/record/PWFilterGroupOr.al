@@ -217,4 +217,76 @@ codeunit 69774 "PW FilterGroup Or Probe"
         Observer.Expect('recref_getfilters', 'A: '''', B: ''''');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 5 (writer BQ): FilterGroup(-1) with a filter on a FlowField (microsoft/AL issue 6486; docs: group -1 does not
+    // support FlowFields). LT BQ FG Owner rows: 1 'one' Total 0, 2 '' Total 5, 3 'three' Total 7 (record/lt-bq-odd-leads/BqObjects.al).
+    [TryFunction]
+    local procedure BqTryOwnerIds(var Owner: Record "LT BQ FG Owner"; var Result: Text)
+    begin
+        Result := '';
+        if Owner.FindSet() then
+            repeat
+                Result += Format(Owner.Id) + ' ';
+            until Owner.Next() = 0;
+        Result += '(count=' + Format(Owner.Count()) + ')';
+    end;
+
+    local procedure BqOwnerIds(var Owner: Record "LT BQ FG Owner"): Text
+    var
+        Result: Text;
+    begin
+        if BqTryOwnerIds(Owner, Result) then
+            exit(Result);
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    [TryFunction]
+    local procedure BqTryFindFirstOwner(var Owner: Record "LT BQ FG Owner")
+    begin
+        Owner.FindFirst();
+    end;
+
+    [Test]
+    procedure OrGroup_FlowFieldFilter_BQ()
+    var
+        Owner: Record "LT BQ FG Owner";
+        BqSeed: Codeunit "LT BQ Seed";
+    begin
+        BqSeed.Owners();
+        Owner.FilterGroup(-1);
+        Owner.SetRange(Name, '');
+        Owner.SetRange(Total, 0);
+        Observer.Observe('getFilters', Owner.GetFilters());
+        Observer.Observe('rows', BqOwnerIds(Owner));
+        Observer.Observe('findFirstOk', Format(BqTryFindFirstOwner(Owner)));
+        Observer.ObserveError('findFirst');
+        Observer.Observe('findFirstId', Format(Owner.Id));
+        Owner.FilterGroup(0);
+        Observer.Observe('rowsGroup0', BqOwnerIds(Owner));
+        Owner.Reset();
+        Owner.FilterGroup(-1);
+        Owner.SetRange(Total, 0);
+        Observer.Observe('flowFieldOnly', BqOwnerIds(Owner));
+        Owner.Reset();
+        Owner.FilterGroup(-1);
+        Owner.SetRange(Name, 'one');
+        Owner.SetFilter(Total, '>6');
+        Observer.Observe('nameOrFlowField', BqOwnerIds(Owner));
+        Owner.Reset();
+        Owner.SetRange(Total, 0);
+        Observer.Observe('group0FlowField', BqOwnerIds(Owner));
+        Observer.Expect('getFilters', 'Name: ''''');
+        Observer.Expect('rows', '2 (count=1)');
+        Observer.Expect('findFirstOk', 'Yes');
+        Observer.Expect('findFirst|text', '');
+        Observer.Expect('findFirst|code', '');
+        Observer.Expect('findFirstId', '2');
+        Observer.Expect('rowsGroup0', '2 (count=1)');
+        Observer.Expect('flowFieldOnly', '1 2 3 (count=3)');
+        Observer.Expect('nameOrFlowField', '1 (count=1)');
+        Observer.Expect('group0FlowField', '1 (count=1)');
+        Observer.Verify();
+    end;
 }
