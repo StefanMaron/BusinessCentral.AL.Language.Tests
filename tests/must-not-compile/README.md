@@ -322,6 +322,7 @@ is only a reference.
 | 1361 | AL0193 | SetFilter on a Decimal field with a %1 placeholder whose value is a Text constant. |
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
+| 1696 | AL0161 | Rec.CurrFieldNo in a table extension procedure is inaccessible; the unqualified CurrFieldNo := 10 compiles. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
