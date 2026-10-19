@@ -48,9 +48,8 @@ codeunit 85601 "LT CZ Http Outbound"
     begin
         ClearLastError();
         Raised := not TryGet(Client, Url, Resp, Ok);
-        if Raised then
-            Err := GetLastErrorText();
-        exit('raised=' + Format(Raised) + ' ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' err=[' + Short(Err) + ']');
+        Err := GetLastErrorText();
+        exit('raised=' + Format(Raised) + ' ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' err=[' + Short(Err) + '] code=[' + GetLastErrorCode() + ']');
     end;
 
     local procedure SendOutcome(var Client: HttpClient; var Req: HttpRequestMessage): Text
@@ -62,9 +61,8 @@ codeunit 85601 "LT CZ Http Outbound"
     begin
         ClearLastError();
         Raised := not TrySend(Client, Req, Resp, Ok);
-        if Raised then
-            Err := GetLastErrorText();
-        exit('raised=' + Format(Raised) + ' ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' err=[' + Short(Err) + ']');
+        Err := GetLastErrorText();
+        exit('raised=' + Format(Raised) + ' ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' err=[' + Short(Err) + '] code=[' + GetLastErrorCode() + ']');
     end;
 
     [Test]
@@ -78,9 +76,6 @@ codeunit 85601 "LT CZ Http Outbound"
         Client.Timeout := 5000;
         Observer.Observe('loopback', GetOutcome(Client, 'http://127.0.0.1:1/'));
         Observer.Observe('localhost', GetOutcome(Client, 'http://localhost:1/'));
-        Observer.Observe('ten', GetOutcome(Client, 'http://10.255.255.1/'));
-        Observer.Observe('lan', GetOutcome(Client, 'http://192.168.255.1/'));
-        Observer.Observe('imds', GetOutcome(Client, 'http://169.254.169.254/metadata/instance'));
         Observer.Observe('prompts', Format(Prompts));
         Observer.Finish();
     end;

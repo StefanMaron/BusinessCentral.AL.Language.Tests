@@ -20,8 +20,13 @@ codeunit 85600 "LT CZ Http No Network"
         Values: List of [Text];
         Body: Text;
         CT: Text;
+        SecretBody: SecretText;
     begin
-        Content.ReadAs(Body);
+        if Content.IsSecretContent() then begin
+            Content.ReadAs(SecretBody);
+            Body := '<secret empty=' + Format(SecretBody.IsEmpty()) + '>';
+        end else
+            Content.ReadAs(Body);
         Content.GetHeaders(Headers);
         if Headers.GetValues('Content-Type', Values) then
             CT := Values.Get(1);
