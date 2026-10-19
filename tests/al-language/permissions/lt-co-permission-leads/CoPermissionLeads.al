@@ -149,7 +149,6 @@ page 84949 "LT CO ABP Facts"
         {
             repeater(Rows)
             {
-                field(PlainCtl; Rec.ID) { }
                 field(IdCtl; Rec.ID) { AccessByPermission = tabledata "Table Metadata" = R; }
                 field(NameCtl; Rec.Name) { AccessByPermission = tabledata "LT CO Perm Ledger" = D; }
             }
@@ -161,6 +160,41 @@ page 84949 "LT CO ABP Facts"
         area(Processing)
         {
             action(DeleteRight)
+            {
+                AccessByPermission = tabledata "LT CO Perm Ledger" = D;
+                trigger OnAction()
+                begin
+                end;
+            }
+        }
+    }
+}
+
+// The same AccessByPermission on a page over a normal table, for what a TestPage reports with and without the right.
+page 84952 "LT CO ABP Ledger"
+{
+    PageType = List;
+    SourceTable = "LT CO Perm Ledger";
+    Editable = false;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(PlainCtl; Rec."Entry No.") { }
+                field(GuardedCtl; Rec.Value) { AccessByPermission = tabledata "LT CO Perm Ledger" = D; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(GuardedAction)
             {
                 AccessByPermission = tabledata "LT CO Perm Ledger" = D;
                 trigger OnAction()
@@ -444,27 +478,23 @@ codeunit 84950 "LT CO Permission Leads"
     end;
 
     [TryFunction]
-    local procedure TryControl(var Facts: TestPage "LT CO ABP Facts"; What: Text; var Result: Text)
+    local procedure TryControl(var Facts: TestPage "LT CO ABP Ledger"; What: Text; var Result: Text)
     begin
         case What of
             'plain value':
                 Result := Facts.PlainCtl.Value();
-            'id value':
-                Result := Facts.IdCtl.Value();
-            'id visible':
-                Result := Format(Facts.IdCtl.Visible());
-            'name value':
-                Result := Facts.NameCtl.Value();
-            'name visible':
-                Result := Format(Facts.NameCtl.Visible());
+            'guarded value':
+                Result := Facts.GuardedCtl.Value();
+            'guarded visible':
+                Result := Format(Facts.GuardedCtl.Visible());
             'action visible':
-                Result := Format(Facts.DeleteRight.Visible());
+                Result := Format(Facts.GuardedAction.Visible());
             'action enabled':
-                Result := Format(Facts.DeleteRight.Enabled());
+                Result := Format(Facts.GuardedAction.Enabled());
         end;
     end;
 
-    local procedure ControlOutcome(var Facts: TestPage "LT CO ABP Facts"; What: Text): Text
+    local procedure ControlOutcome(var Facts: TestPage "LT CO ABP Ledger"; What: Text): Text
     var
         Result: Text;
     begin
@@ -474,21 +504,42 @@ codeunit 84950 "LT CO Permission Leads"
         exit('error: ' + GetLastErrorText());
     end;
 
+    local procedure ObserveControls(var Observer: Codeunit "Probe Observer"; Prefix: Text)
+    var
+        Facts: TestPage "LT CO ABP Ledger";
+    begin
+        ClearLastError();
+        if not TryOpen(Facts) then begin
+            Observer.Observe(Prefix + 'open', 'error: ' + GetLastErrorText());
+            exit;
+        end;
+        Observer.Observe(Prefix + 'plain value', ControlOutcome(Facts, 'plain value'));
+        Observer.Observe(Prefix + 'guarded value', ControlOutcome(Facts, 'guarded value'));
+        Observer.Observe(Prefix + 'guarded visible', ControlOutcome(Facts, 'guarded visible'));
+        Observer.Observe(Prefix + 'action visible', ControlOutcome(Facts, 'action visible'));
+        Observer.Observe(Prefix + 'action enabled', ControlOutcome(Facts, 'action enabled'));
+        Facts.Close();
+    end;
+
+    [TryFunction]
+    local procedure TryOpen(var Facts: TestPage "LT CO ABP Ledger")
+    begin
+        Facts.OpenView();
+    end;
+
     [Test]
     procedure AccessByPermission_TestPageControls_CO()
     var
         Observer: Codeunit "Probe Observer";
-        Facts: TestPage "LT CO ABP Facts";
+        Mock: Codeunit "Permissions Mock";
+        WasStarted: Boolean;
     begin
-        Facts.OpenView();
-        Observer.Observe('plain value', ControlOutcome(Facts, 'plain value'));
-        Observer.Observe('id value', ControlOutcome(Facts, 'id value'));
-        Observer.Observe('id visible', ControlOutcome(Facts, 'id visible'));
-        Observer.Observe('name value', ControlOutcome(Facts, 'name value'));
-        Observer.Observe('name visible', ControlOutcome(Facts, 'name visible'));
-        Observer.Observe('action visible', ControlOutcome(Facts, 'action visible'));
-        Observer.Observe('action enabled', ControlOutcome(Facts, 'action enabled'));
-        Facts.Close();
+        Init();
+        ObserveControls(Observer, 'super: ');
+        WasStarted := StartMock(Mock);
+        Mock.Set(UserSetTok);
+        ObserveControls(Observer, 'read only: ');
+        RestoreMock(Mock, WasStarted);
         Observer.Finish();
     end;
 }
