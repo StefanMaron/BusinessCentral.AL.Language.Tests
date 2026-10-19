@@ -36,8 +36,9 @@ through a pull request whose required checks are green (the `BC <ver> / test`,
 merged with a merge commit.
 
 Probe tests written for al-runtime-rs go through `al-runtime-rs-staging`:
-writers branch from it, a publisher merges green writer branches into it, and a
-bump pull request moves the result to `master`.
+writers branch from it, a publisher merges green writer branches into a bump
+branch made from it and opens a bump pull request to `master`. After the merge,
+staging is fast-forwarded to `master`.
 
 A test that passes here but fails in a downstream consumer is a bug of that
 consumer, not a reason to change the test. A test changes only when real BC
