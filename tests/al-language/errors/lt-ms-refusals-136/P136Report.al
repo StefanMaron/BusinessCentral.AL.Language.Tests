@@ -318,4 +318,78 @@ codeunit 74352 "LT P136 Report Tests"
         Observer.Expect('keyQtyFiltered', 'ok|I:c;I:b;');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure BN3_TryRunZeroDate()
+    begin
+        Report.Run(Report::"LT BN3 Rp ZeroDate", false);
+    end;
+
+    // Corpus #664 item 54: DataItemTableView = where(D = const(0D)) compiles; which rows the data item visits and the filter text it sees.
+    [Test]
+    procedure BN3_Report_DataItemTableViewConstZeroDate()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BN3 Dated";
+        L: Record "LT P136 Log";
+    begin
+        Row.DeleteAll();
+        L.DeleteAll();
+        Row.Id := 1;
+        Row.D := 0D;
+        Row.Insert();
+        Row.Id := 2;
+        Row.D := DMY2Date(1, 1, 2020);
+        Row.Insert();
+        Row.Id := 3;
+        Row.D := 0D;
+        Row.Insert();
+        Observer.Observe('run', Outcome(BN3_TryRunZeroDate()));
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 54 (microsoft/AL issue 6898): a report data item whose DataItemTableView filters a Date field with const(0D).
+table 83863 "LT BN3 Dated"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; D; Date) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+report 83864 "LT BN3 Rp ZeroDate"
+{
+    ProcessingOnly = true;
+    UsageCategory = None;
+
+    dataset
+    {
+        dataitem(Rows; "LT BN3 Dated")
+        {
+            DataItemTableView = where(D = const(0D));
+
+            trigger OnPreDataItem()
+            var
+                L: Record "LT P136 Log";
+            begin
+                L.Add('filters=' + Rows.GetFilters());
+            end;
+
+            trigger OnAfterGetRecord()
+            var
+                L: Record "LT P136 Log";
+            begin
+                L.Add('row ' + Format(Rows.Id));
+            end;
+        }
+    }
 }

@@ -487,4 +487,182 @@ codeunit 72519 "LT SyT Clear"
         Observer.Expect('twice', '[]');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 45: a procedure named ClearAll in a table, codeunit, report and page compiles and publishes. Called from outside on a
+    // variable and called without qualifier inside the object: which one runs is seen through the object's Marker global.
+    [Test]
+    procedure BN3_OwnProcedureNamedClearAll()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BN3 ClearAll Row";
+        Cu: Codeunit "LT BN3 ClearAll Cu";
+        Rp: Report "LT BN3 ClearAll Rp";
+        Pg: Page "LT BN3 ClearAll Pg";
+    begin
+        Row.SetMarker('x');
+        Row.ClearAll();
+        Observer.Observe('table outside', Row.GetMarker());
+        Observer.Observe('table inside', Row.CallInside());
+        Cu.SetMarker('x');
+        Cu.ClearAll();
+        Observer.Observe('codeunit outside', Cu.GetMarker());
+        Observer.Observe('codeunit inside', Cu.CallInside());
+        Rp.SetMarker('x');
+        Rp.ClearAll();
+        Observer.Observe('report outside', Rp.GetMarker());
+        Observer.Observe('report inside', Rp.CallInside());
+        Pg.SetMarker('x');
+        Pg.ClearAll();
+        Observer.Observe('page outside', Pg.GetMarker());
+        Observer.Observe('page inside', Pg.CallInside());
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 45 (microsoft/AL issue 5470): objects that declare their own procedure named ClearAll. Each keeps a global Marker:
+// the built-in ClearAll would reset it to '', the own procedure sets it to '<object> own'.
+table 83856 "LT BN3 ClearAll Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+
+    var
+        Marker: Text;
+
+    procedure ClearAll()
+    begin
+        Marker := 'table own';
+    end;
+
+    procedure SetMarker(Value: Text)
+    begin
+        Marker := Value;
+    end;
+
+    procedure GetMarker(): Text
+    begin
+        exit('[' + Marker + ']');
+    end;
+
+    procedure CallInside(): Text
+    begin
+        Marker := 'before';
+        ClearAll();
+        exit('[' + Marker + ']');
+    end;
+}
+
+codeunit 83857 "LT BN3 ClearAll Cu"
+{
+    var
+        Marker: Text;
+
+    procedure ClearAll()
+    begin
+        Marker := 'codeunit own';
+    end;
+
+    procedure SetMarker(Value: Text)
+    begin
+        Marker := Value;
+    end;
+
+    procedure GetMarker(): Text
+    begin
+        exit('[' + Marker + ']');
+    end;
+
+    procedure CallInside(): Text
+    begin
+        Marker := 'before';
+        ClearAll();
+        exit('[' + Marker + ']');
+    end;
+}
+
+report 83858 "LT BN3 ClearAll Rp"
+{
+    ProcessingOnly = true;
+    UsageCategory = None;
+
+    dataset
+    {
+        dataitem(Num; Integer)
+        {
+            DataItemTableView = where(Number = const(1));
+        }
+    }
+
+    var
+        Marker: Text;
+
+    procedure ClearAll()
+    begin
+        Marker := 'report own';
+    end;
+
+    procedure SetMarker(Value: Text)
+    begin
+        Marker := Value;
+    end;
+
+    procedure GetMarker(): Text
+    begin
+        exit('[' + Marker + ']');
+    end;
+
+    procedure CallInside(): Text
+    begin
+        Marker := 'before';
+        ClearAll();
+        exit('[' + Marker + ']');
+    end;
+}
+
+page 83859 "LT BN3 ClearAll Pg"
+{
+    PageType = Card;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(MarkerField; Marker) { ApplicationArea = All; }
+        }
+    }
+
+    var
+        Marker: Text;
+
+    procedure ClearAll()
+    begin
+        Marker := 'page own';
+    end;
+
+    procedure SetMarker(Value: Text)
+    begin
+        Marker := Value;
+    end;
+
+    procedure GetMarker(): Text
+    begin
+        exit('[' + Marker + ']');
+    end;
+
+    procedure CallInside(): Text
+    begin
+        Marker := 'before';
+        ClearAll();
+        exit('[' + Marker + ']');
+    end;
 }

@@ -292,4 +292,52 @@ codeunit 71159 "LT P69 Overloads"
         Observer.Expect('integer_literal', 'variant');
         Observer.Verify();
     end;
+
+    local procedure BN3_Pick(A: Enum "LT BN3 EA"; B: Enum "LT BN3 EB"): Text
+    begin
+        exit('EA+EB:' + Format(A) + ',' + Format(B));
+    end;
+
+    local procedure BN3_Pick(A: Enum "LT BN3 EA"): Text
+    begin
+        exit('EA:' + Format(A));
+    end;
+
+    local procedure BN3_Pick(B: Enum "LT BN3 EB"): Text
+    begin
+        exit('EB:' + Format(B));
+    end;
+
+    // Corpus #664 item 74: overloads M(EA; EB), M(EA), M(EB) compile; which one runs for a value of each enum type.
+    [Test]
+    procedure BN3_Overload_DifferOnlyByEnumType()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: Enum "LT BN3 EA";
+        B: Enum "LT BN3 EB";
+    begin
+        A := A::A1;
+        B := B::B1;
+        Observer.Observe('EA literal', BN3_Pick(Enum::"LT BN3 EA"::A1));
+        Observer.Observe('EB literal', BN3_Pick(Enum::"LT BN3 EB"::B0));
+        Observer.Observe('EA variable', BN3_Pick(A));
+        Observer.Observe('EB variable', BN3_Pick(B));
+        Observer.Observe('EA and EB', BN3_Pick(A, B));
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 74 (microsoft/AL issue 4328): two enum types for overloads that differ only by the enum type.
+enum 83869 "LT BN3 EA"
+{
+    Extensible = false;
+    value(0; A0) { }
+    value(1; A1) { }
+}
+
+enum 83870 "LT BN3 EB"
+{
+    Extensible = false;
+    value(0; B0) { }
+    value(1; B1) { }
 }

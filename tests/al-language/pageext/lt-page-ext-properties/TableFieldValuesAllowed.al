@@ -55,4 +55,67 @@ codeunit 72293 "LT P123 TValuesAllowed Tests"
         Observer.Expect('insert disallowed count', '1');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure BN3_TryValidateSpaced(var T: Record "LT BN3 VA Dec"; V: Decimal)
+    begin
+        T.Validate(Spaced, V);
+    end;
+
+    [TryFunction]
+    local procedure BN3_TryValidatePlain(var T: Record "LT BN3 VA Dec"; V: Decimal)
+    begin
+        T.Validate(Plain, V);
+    end;
+
+    local procedure BN3_Outcome(Ok: Boolean; Value: Decimal): Text
+    begin
+        if Ok then
+            exit('ok|' + Format(Value));
+        exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // Corpus #664 item 39: `ValuesAllowed = - 0.5, 1` (space after the minus) compiles; Validate of allowed and other values on that field and on `-0.5, 1`.
+    [Test]
+    procedure BN3_ValuesAllowed_DecimalSpaceAfterMinus()
+    var
+        Observer: Codeunit "Probe Observer";
+        T: Record "LT BN3 VA Dec";
+        Values: List of [Decimal];
+        V: Decimal;
+    begin
+        Values.Add(-0.5);
+        Values.Add(1);
+        Values.Add(0.5);
+        Values.Add(0.7);
+        Values.Add(0);
+        foreach V in Values do begin
+            T.Init();
+            Observer.Observe('spaced ' + Format(V), BN3_Outcome(BN3_TryValidateSpaced(T, V), T.Spaced));
+            T.Init();
+            Observer.Observe('plain ' + Format(V), BN3_Outcome(BN3_TryValidatePlain(T, V), T.Plain));
+        end;
+        T.Init();
+        T.Spaced := 0.7;
+        Observer.Observe('assign spaced 0.7', Format(T.Spaced));
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 39 (microsoft/AL issue 3721): ValuesAllowed on a Decimal field with a space between the minus and the number.
+table 83850 "LT BN3 VA Dec"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Spaced; Decimal) { ValuesAllowed = - 0.5, 1; }
+        field(3; Plain; Decimal) { ValuesAllowed = -0.5, 1; }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
 }

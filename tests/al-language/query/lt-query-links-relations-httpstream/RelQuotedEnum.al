@@ -163,4 +163,76 @@ codeunit 70776 "LT P100 Rel Quoted En"
         Observer.Expect('hand_filter_text', 'A|B C');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure BN3_TryValidate(var R: Record "LT BN3 Rel En2"; FieldNo: Integer; V: Code[10])
+    begin
+        case FieldNo of
+            R.FieldNo(RefConst):
+                R.Validate(RefConst, V);
+            R.FieldNo(RefConstQuoted):
+                R.Validate(RefConstQuoted, V);
+            R.FieldNo(RefField):
+                R.Validate(RefField, V);
+        end;
+    end;
+
+    local procedure BN3_Outcome(MyF: Enum "LT P100 Letter"; FieldNo: Integer; V: Code[10]): Text
+    var
+        R: Record "LT BN3 Rel En2";
+    begin
+        R.Init();
+        R.MyF := MyF;
+        if BN3_TryValidate(R, FieldNo, V) then
+            exit('ok');
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // Corpus #664 item 72: Validate against TableRelation where(F = const(D)), where(F = const("B C")) and where(F = field(MyF)) on an Enum field.
+    [Test]
+    procedure BN3_Validate_EnumConstAndFieldRelation()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Record "LT BN3 Rel En2";
+    begin
+        Seed();
+        Observer.Observe('const D: ID', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefConst), 'ID'));
+        Observer.Observe('const D: IA', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefConst), 'IA'));
+        Observer.Observe('const "B C": IBC', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefConstQuoted), 'IBC'));
+        Observer.Observe('const "B C": ID', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefConstQuoted), 'ID'));
+        Observer.Observe('field MyF=A: IA', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefField), 'IA'));
+        Observer.Observe('field MyF=A: ID', BN3_Outcome("LT P100 Letter"::A, R.FieldNo(RefField), 'ID'));
+        Observer.Observe('field MyF=D: ID', BN3_Outcome("LT P100 Letter"::D, R.FieldNo(RefField), 'ID'));
+        Observer.Observe('field MyF="B C": IBC', BN3_Outcome("LT P100 Letter"::"B C", R.FieldNo(RefField), 'IBC'));
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 72 (microsoft/AL issue 4567): TableRelation where(F = const(enum value)) and where(F = field(enum field)) on an Enum field.
+table 83868 "LT BN3 Rel En2"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; MyF; Enum "LT P100 Letter") { }
+        field(3; RefConst; Code[10])
+        {
+            TableRelation = "LT P100 Item En".Code where(F = const(D));
+        }
+        field(4; RefConstQuoted; Code[10])
+        {
+            TableRelation = "LT P100 Item En".Code where(F = const("B C"));
+        }
+        field(5; RefField; Code[10])
+        {
+            TableRelation = "LT P100 Item En".Code where(F = field(MyF));
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
 }

@@ -122,4 +122,92 @@ codeunit 70195 "LT P67 Enum To Option"
         Observer.Expect('validate_three', '3');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 68: CalcFields of count() FlowFields that filter an Option source field by an Enum field and an Enum source field by an
+    // Option field (the compiler gives warning AL0603 for both).
+    [Test]
+    procedure BN3_CalcFormulaOptionAgainstEnum()
+    var
+        Observer: Codeunit "Probe Observer";
+        Src: Record "LT BN3 CF Src";
+        Hdr: Record "LT BN3 CF Hdr";
+    begin
+        Src.DeleteAll();
+        Hdr.DeleteAll();
+        Src.Id := 1;
+        Src.Opt := Src.Opt::B;
+        Src.Kind := Enum::"LT P67 Dst"::Dos;
+        Src.Insert();
+        Src.Id := 2;
+        Src.Opt := Src.Opt::B;
+        Src.Kind := Enum::"LT P67 Dst"::Uno;
+        Src.Insert();
+        Src.Id := 3;
+        Src.Opt := Src.Opt::D;
+        Src.Kind := Enum::"LT P67 Dst"::Uno;
+        Src.Insert();
+        Hdr.Code := 'H';
+        Hdr.Kind := Enum::"LT P67 Dst"::Uno;
+        Hdr.Opt := Hdr.Opt::B;
+        Hdr.Insert();
+        Hdr.CalcFields(OptByEnum, EnumByOpt);
+        Observer.Observe('Kind Uno / Opt B', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
+        Hdr.Kind := Enum::"LT P67 Dst"::Tres;
+        Hdr.Opt := Hdr.Opt::C;
+        Hdr.Modify();
+        Hdr.CalcFields(OptByEnum, EnumByOpt);
+        Observer.Observe('Kind Tres / Opt C', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
+        Hdr.Kind := Enum::"LT P67 Dst"::Dos;
+        Hdr.Opt := Hdr.Opt::A;
+        Hdr.Modify();
+        Hdr.CalcFields(OptByEnum, EnumByOpt);
+        Observer.Observe('Kind Dos / Opt A', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 68 (microsoft/AL issue 7613): CalcFormula count() whose where(... = field(...)) pairs an Option field with an Enum field.
+// The option members (A,B,C,D) share no names with the enum values (None,Uno,Dos,Tres), so a match by name would find nothing.
+table 83866 "LT BN3 CF Src"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Opt; Option) { OptionMembers = A,B,C,D; }
+        field(3; Kind; Enum "LT P67 Dst") { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+table 83867 "LT BN3 CF Hdr"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Code; Code[10]) { }
+        field(2; Kind; Enum "LT P67 Dst") { }
+        field(3; Opt; Option) { OptionMembers = A,B,C,D; }
+        field(4; OptByEnum; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("LT BN3 CF Src" where(Opt = field(Kind)));
+        }
+        field(5; EnumByOpt; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("LT BN3 CF Src" where(Kind = field(Opt)));
+        }
+    }
+
+    keys
+    {
+        key(PK; Code) { Clustered = true; }
+    }
 }

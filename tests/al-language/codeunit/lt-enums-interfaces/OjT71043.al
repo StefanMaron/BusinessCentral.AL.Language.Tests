@@ -219,4 +219,77 @@ codeunit 71043 "LT OjT Enum Convert"
         Observer.Expect('name', 'Navy');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 67: an enum against Integer values: `in` with an Integer set, `<`/`>`/`=` with an Integer literal, foreach over Ordinals().
+    [Test]
+    procedure BN3_EnumAgainstIntegers()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: Enum "LT OjT Color";
+        Seen: Text;
+    begin
+        C := Enum::"LT OjT Color"::Green;
+        Observer.Observe('Green in [0,1,2]', Format(C in [0, 1, 2]));
+        Observer.Observe('Green in [0,2]', Format(C in [0, 2]));
+        Observer.Observe('Green < 5', Format(C < 5));
+        Observer.Observe('Green > 0', Format(C > 0));
+        Observer.Observe('Green = 1', Format(C = 1));
+        C := Enum::"LT OjT Color"::Yellow;
+        Observer.Observe('Yellow in [10]', Format(C in [10]));
+        Observer.Observe('Yellow > 5', Format(C > 5));
+        Observer.Observe('Yellow < 10', Format(C < 10));
+        foreach C in C.Ordinals() do
+            Seen += Format(C) + '/' + Format(C.AsInteger()) + ';';
+        Observer.Observe('foreach Ordinals', Seen);
+        Observer.Finish();
+    end;
+
+    // Corpus #664 item 67: TestField of an enum field with an Integer value.
+    [Test]
+    procedure BN3_EnumTestFieldWithInteger()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BN3 Enum Row";
+    begin
+        Row.Init();
+        Row.Id := 1;
+        Row.Col := Enum::"LT OjT Color"::"Dark Blue";
+        Row.TestField(Col, 5);
+        Observer.Observe('TestField 5', 'no error');
+        asserterror Row.TestField(Col, 1);
+        Observer.ObserveError('TestField 1');
+        asserterror Row.TestField(Col, 3);
+        Observer.ObserveError('TestField 3');
+        Observer.Finish();
+    end;
+
+    // Corpus #664 item 70: Names and Ordinals without parentheses, on the enum type and on a variable.
+    [Test]
+    procedure BN3_EnumNamesOrdinalsWithoutParentheses()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: Enum "LT OjT Color";
+    begin
+        Observer.Observe('type Names.Get(Ordinals.IndexOf(5))', Enum::"LT OjT Color".Names.Get(Enum::"LT OjT Color".Ordinals.IndexOf(5)));
+        Observer.Observe('variable Names count', Format(C.Names.Count()));
+        Observer.Observe('variable Ordinals last', Format(C.Ordinals.Get(C.Ordinals.Count())));
+        Observer.Finish();
+    end;
+}
+
+// Corpus #664 item 67: a table with a field of enum "LT OjT Color" (OjT71038.al) for TestField with an Integer value.
+table 83865 "LT BN3 Enum Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Col; Enum "LT OjT Color") { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
 }
