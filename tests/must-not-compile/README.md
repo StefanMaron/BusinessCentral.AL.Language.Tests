@@ -322,6 +322,14 @@ is only a reference.
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
+| 1728 | AL0172 | Unary minus on an Option variable (`-Alignment`). |
+| 1729 | AL0172 | Unary minus on an Enum variable. |
+| 1730 | AL0530 | A `Code[2049]` variable: the maximum for a Code variable is 2048 (Code[1025] compiles). |
+| 1731 | AL0154 | A `Code[2049]` table field: the maximum for a Code field is 2048. |
+| 1732 | AL0103 | A for loop over an Integer with the end bound literal 100000000000000. |
+| 1733 | AL0369 | The same for loop with the BigInteger literal 100000000000000L as end bound. |
+| 1734 | AL0427 | An Enum lookup FlowField over a BigInteger field. |
+| 1735 | AL0103 | `InitValue = 3000000000` on an Integer field. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
