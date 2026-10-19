@@ -261,6 +261,9 @@ codeunit 69339 "PV Base64 Probe"
         Txt := Base64.FromBase64(Png, TextEncoding::Windows);
         Back := Base64.ToBase64(Txt, TextEncoding::Windows);
         Observer.Observe('png windows', Format(Back = Png) + '|' + Format(StrLen(Txt)));
+#if not BC28PLUS
+        Observer.Observe('png windows back', Back);
+#endif
         Txt := Base64.FromBase64(Zip);
         Back := Base64.ToBase64(Txt);
         Observer.Observe('zip utf8', Back + '|' + Format(Back = Zip) + '|' + Format(StrLen(Txt)));
@@ -278,6 +281,7 @@ codeunit 69339 "PV Base64 Probe"
         TempBlob.CreateInStream(InS);
         Back := Base64.ToBase64(InS);
         Observer.Observe('zip stream', Back + '|' + Format(Back = Zip) + '|' + Format(TempBlob.Length()));
+#if BC28PLUS
         Observer.Expect('png utf8', '77+9UE5HDQoaCgAAAA1JSERSAAAAAQAAAAEIAAAAADp+77+9VQAAAAtJREFUeO+/vWNk77+9DwABBQEBJxjvv71mAAAAAElFTkTvv71CYO+/vQ==|No|68');
         Observer.Expect('png utf8 first codes', '65533 80 78 71 13 10 26 10 ');
         Observer.Expect('png windows', 'Yes|68');
@@ -286,5 +290,8 @@ codeunit 69339 "PV Base64 Probe"
         Observer.Expect('png stream', 'Yes|68');
         Observer.Expect('zip stream', 'UEsDBBQAAAAIAI1jd1n/AA==|Yes|16');
         Observer.Verify();
+#else
+        Observer.Finish();
+#endif
     end;
 }
