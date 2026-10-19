@@ -581,7 +581,10 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwOpenLast(3, true, Observer);
-        Observer.Finish();
+        Observer.Expect('open', '3|O;F(=>);R3;N(1);N(-1);R2;N(-1);R1;N(-1);R3;F(=);R3;C;');
+        Observer.Expect('next', 'No|3|');
+        Observer.Expect('previous', 'Yes|2|R2;F(=);R2;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -590,7 +593,10 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwOpenLast(25, true, Observer);
-        Observer.Finish();
+        Observer.Expect('open', '25|O;F(=>);R25;N(1);N(-1);R24;N(-1);R23;N(-1);R22;N(-1);R21;N(-1);R20;N(-1);R19;N(-1);R18;N(-1);R17;N(-1);R16;N(-1);R15;N(-1);R14;N(-1);R13;N(-1);R12;N(-1);R11;N(-1);R10;N(-1);R9;N(-1);R8;N(-1);R7;N(-1);R6;N(-1);R5;R25;F(=);R25;C;');
+        Observer.Expect('next', 'No|25|');
+        Observer.Expect('previous', 'Yes|24|R24;F(=);R24;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -599,7 +605,10 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwOpenLast(3, false, Observer);
-        Observer.Finish();
+        Observer.Expect('open', '3|O;F(=>);R3;N(1);N(-1);R2;N(-1);R1;N(-1);');
+        Observer.Expect('next', 'No|3|');
+        Observer.Expect('previous', 'Yes|2|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -608,7 +617,10 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwOpenLast(25, false, Observer);
-        Observer.Finish();
+        Observer.Expect('open', '25|O;F(=>);R25;N(1);N(-1);R24;N(-1);R23;N(-1);R22;N(-1);R21;N(-1);R20;N(-1);R19;N(-1);R18;N(-1);R17;N(-1);R16;N(-1);R15;N(-1);R14;N(-1);R13;N(-1);R12;N(-1);R11;N(-1);R10;N(-1);R9;N(-1);R8;N(-1);R7;N(-1);R6;N(-1);R5;');
+        Observer.Expect('next', 'No|25|');
+        Observer.Expect('previous', 'Yes|24|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -631,7 +643,10 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Log.Take();
-        Observer.Finish();
+        Observer.Expect('open', '3|F(=>);R3;N(1);N(-1);R2;N(-1);R1;N(-1);R3;F(=);R3;C;');
+        Observer.Expect('next', 'Yes|0|C;');
+        Observer.Expect('previous', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Verify();
     end;
 }
 
