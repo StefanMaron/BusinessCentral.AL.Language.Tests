@@ -6,6 +6,8 @@
 //   a column on a FlowField that sums a FlowField, Exist FlowField columns, DataItemLink on a FlowField (AL0910 warning), Date filters in
 //   DataItemTableFilter, filters on Option and Enum columns, a query on a DataPerCompany = false table,
 //   filters, links and joins on table extension fields, Query.SaveAsXml/Csv/Json with an object id that does not exist.
+// Not here: Record.CopyFilter(Field, QueryVar.Column) (#667 item 106) compiles with AL 30.0.42, but publishing the app fails on BC 29.0
+//   with "Unexpected value 'QueryElementAccess' of type 'Microsoft.Dynamics.Nav.CodeAnalysis.BoundKind'", so it cannot be part of this app.
 
 codeunit 84475 "LT CG Query Leads"
 {
@@ -117,10 +119,41 @@ codeunit 84475 "LT CG Query Leads"
         end;
         Q.Close();
         Observer.Observe('rows', Format(N));
-        Observer.Finish();
+        Observer.Expect('A sum', '3 Integer');
+        Observer.Expect('A avg', '1 Integer');
+        Observer.Expect('A avg as int, dec', '1 1');
+        Observer.Expect('A min', '1 Integer');
+        Observer.Expect('A max', '2 Integer');
+        Observer.Expect('A sum big', '3 BigInteger');
+        Observer.Expect('A avg big', '1 BigInteger');
+        Observer.Expect('B sum', '7 Integer');
+        Observer.Expect('B avg', '2 Integer');
+        Observer.Expect('B avg as int, dec', '2 2');
+        Observer.Expect('B min', '2 Integer');
+        Observer.Expect('B max', '3 Integer');
+        Observer.Expect('B sum big', '7 BigInteger');
+        Observer.Expect('B avg big', '2 BigInteger');
+        Observer.Expect('C sum', '4 Integer');
+        Observer.Expect('C avg', '1 Integer');
+        Observer.Expect('C avg as int, dec', '1 1');
+        Observer.Expect('C min', '1 Integer');
+        Observer.Expect('C max', '2 Integer');
+        Observer.Expect('C sum big', '4 BigInteger');
+        Observer.Expect('C avg big', '1 BigInteger');
+        Observer.Expect('D sum', '5 Integer');
+        Observer.Expect('D avg', '1 Integer');
+        Observer.Expect('D avg as int, dec', '1 1');
+        Observer.Expect('D min', '1 Integer');
+        Observer.Expect('D max', '2 Integer');
+        Observer.Expect('D sum big', '5 BigInteger');
+        Observer.Expect('D avg big', '1 BigInteger');
+        Observer.Expect('rows', '4');
+        Observer.Verify();
     end;
 
     // #667 item 100: Day/Month/Year columns over a DateTime and a Date field, also for blank values.
+    // The test session runs in UTC, so this does not tell whether the DateTime columns use UTC or the session time zone;
+    // it pins that they agree with DT2Date in that session (23:30 and 00:30 rows stay on their own day).
     [Test]
     procedure DateMethods_DayMonthYear_OnDateTimeDateAndBlank()
     var
@@ -158,7 +191,18 @@ codeunit 84475 "LT CG Query Leads"
                 Observer.Observe(Q.No + ' local date of datetime', Format(DT2Date(LocalDt), 0, 9));
         end;
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('D1 datetime', '5/3/2024');
+        Observer.Expect('D1 date', '5/3/2024');
+        Observer.Expect('D1 local date of datetime', '2024-03-05');
+        Observer.Expect('D2 datetime', '31/12/2023');
+        Observer.Expect('D2 date', '31/12/2023');
+        Observer.Expect('D2 local date of datetime', '2023-12-31');
+        Observer.Expect('D3 datetime', '1/1/2024');
+        Observer.Expect('D3 date', '1/1/2024');
+        Observer.Expect('D3 local date of datetime', '2024-01-01');
+        Observer.Expect('D4 datetime', '0/0/0');
+        Observer.Expect('D4 date', '0/0/0');
+        Observer.Verify();
     end;
 
     // #667 item 98: a column on a FlowField whose CalcFormula sums a FlowField of another table.
@@ -179,7 +223,10 @@ codeunit 84475 "LT CG Query Leads"
             Observer.Observe('row', Q.No + '|' + Format(Q.DeepSum))
         else
             Observer.ObserveError('error');
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('error|text', 'A flow field is part of the query column list, this is not supported');
+        Observer.Expect('error|code', 'NotSupported');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -205,7 +252,9 @@ codeunit 84475 "LT CG Query Leads"
         while Q.Read() do
             Observer.Observe(Q.No, Format(Q.HasLines) + '|' + Format(Q.NoLines));
         Q.Close();
-        Observer.Finish();
+        Observer.Expect('H1', 'Yes|No');
+        Observer.Expect('H2', 'No|Yes');
+        Observer.Verify();
     end;
 
     // #667 item 99, the literal case of the issue: column(Assembly_BOM; "Assembly BOM") on Item. Every row read must agree with CalcFields.
@@ -229,7 +278,9 @@ codeunit 84475 "LT CG Query Leads"
         Q.Close();
         Observer.Observe('rows equal item count', Format(Rows = Item.Count()));
         Observer.Observe('mismatches', Format(Mismatches));
-        Observer.Finish();
+        Observer.Expect('rows equal item count', 'Yes');
+        Observer.Expect('mismatches', '0');
+        Observer.Verify();
     end;
 
     // #667 item 102: DataItemLink with a FlowField on the parent side (compiles with warning AL0910 below runtime 30.0).
@@ -244,7 +295,9 @@ codeunit 84475 "LT CG Query Leads"
         SeedLinkFlowField();
         asserterror ReadAllParent(Q);
         Observer.ObserveError('parent error');
-        Observer.Finish();
+        Observer.Expect('parent error|text', 'An unexpected error occurred after a database command was cancelled.');
+        Observer.Expect('parent error|code', 'Sql:Sql');
+        Observer.Verify();
     end;
 
     // #667 item 102: DataItemLink with a FlowField on the child side (compiles with warning AL0910 below runtime 30.0).
@@ -258,7 +311,9 @@ codeunit 84475 "LT CG Query Leads"
         SeedLinkFlowField();
         asserterror ReadAllChild(Q);
         Observer.ObserveError('child error');
-        Observer.Finish();
+        Observer.Expect('child error|text', 'An unexpected error occurred after a database command was cancelled.');
+        Observer.Expect('child error|code', 'Sql:Sql');
+        Observer.Verify();
     end;
 
     local procedure SeedLinkFlowField()
@@ -325,7 +380,13 @@ codeunit 84475 "LT CG Query Leads"
             Observer.Observe('literal rows', Rows)
         else
             Observer.ObserveError('literal error');
-        Observer.Finish();
+        Observer.Expect('number ok', 'No');
+        Observer.Expect('number error|text', 'The format of the Date ''29082018'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('number error|code', 'InvalidFilterExpression:Evaluate');
+        Observer.Expect('literal ok', 'No');
+        Observer.Expect('literal error|text', 'The format of the Date ''20180829D'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('literal error|code', 'InvalidFilterExpression:Evaluate');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -371,7 +432,11 @@ codeunit 84475 "LT CG Query Leads"
         Observer.Observe('getfilter', Q.GetFilter(Kind));
         Q.SetRange(Kind, Q.Kind::" ");
         Observer.Observe('blank member', ReadKinds(Q));
-        Observer.Finish();
+        Observer.Expect('quote', 'H1');
+        Observer.Expect('order..invoice', 'H2 H3');
+        Observer.Expect('getfilter', 'Order..Invoice');
+        Observer.Expect('blank member', 'H4');
+        Observer.Verify();
     end;
 
     // #667 items 101 and 104: SetFilter on an Option column with option text, a | list, and an ordinal; SetRange with an Integer ordinal.
@@ -396,7 +461,15 @@ codeunit 84475 "LT CG Query Leads"
         Observer.Observe('setrange integer getfilter', Q.GetFilter(Kind));
         Q.SetFilter(Kind, '<>Quote');
         Observer.Observe('not quote', ReadKinds(Q));
-        Observer.Finish();
+        Observer.Expect('text list', 'H1 H2');
+        Observer.Expect('text list getfilter', 'Quote|Order');
+        Observer.Expect('ordinal text', 'H3');
+        Observer.Expect('ordinal text getfilter', 'Invoice');
+        Observer.Expect('placeholder member', 'H3');
+        Observer.Expect('setrange integer', 'H2');
+        Observer.Expect('setrange integer getfilter', 'Order');
+        Observer.Expect('not quote', 'H2 H3 H4');
+        Observer.Verify();
     end;
 
     // #667 item 104: the same filters on an Enum column.
@@ -417,7 +490,12 @@ codeunit 84475 "LT CG Query Leads"
         Observer.Observe('ordinal text', ReadKinds(Q));
         Q.SetRange(EKind);
         Observer.Observe('cleared', ReadKinds(Q));
-        Observer.Finish();
+        Observer.Expect('enum value', 'H1');
+        Observer.Expect('text list', 'H1 H2');
+        Observer.Expect('text list getfilter', 'Quote|Order');
+        Observer.Expect('ordinal text', 'H3');
+        Observer.Expect('cleared', 'H1 H2 H3 H4');
+        Observer.Verify();
     end;
 
     // #667 item 104: an invalid option text in SetFilter on an Option column.
@@ -435,7 +513,10 @@ codeunit 84475 "LT CG Query Leads"
         Observer.Observe('ok', Format(Ok));
         if not Ok then
             Observer.ObserveError('error');
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('error|text', '''Bogus'' is not an option. The existing options are:  ,Quote,Order,Invoice');
+        Observer.Expect('error|code', 'InvalidFilterExpression:InvalidOptionString');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -470,7 +551,9 @@ codeunit 84475 "LT CG Query Leads"
             Observer.Observe('rows', Rows)
         else
             Observer.ObserveError('error');
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('rows', 'S1:4.5 S2:1 ');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -505,7 +588,9 @@ codeunit 84475 "LT CG Query Leads"
             Rows += Q.No + ':' + Q.ExtCode + ' ';
         Q.Close();
         Observer.Observe('rows with runtime filter on ext column', Rows);
-        Observer.Finish();
+        Observer.Expect('rows', 'H1:X1 H3:X3 ');
+        Observer.Expect('rows with runtime filter on ext column', 'H3:X3 ');
+        Observer.Verify();
     end;
 
     // #667 item 107: DataItemLink between two table extension fields.
@@ -528,7 +613,8 @@ codeunit 84475 "LT CG Query Leads"
             Rows += Q.No + ':' + Format(Q.EntryNo) + ' ';
         Q.Close();
         Observer.Observe('rows', Rows);
-        Observer.Finish();
+        Observer.Expect('rows', 'H1:1 H2:2 H1:3 ');
+        Observer.Verify();
     end;
 
     // #667 item 108: a join with a FlowField column on the parent and two extension field columns on the child.
@@ -553,7 +639,9 @@ codeunit 84475 "LT CG Query Leads"
             Observer.Observe('rows', Rows)
         else
             Observer.ObserveError('error');
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('rows', 'H1:15:1:A1:1.5 H1:15:2:A2:2.5 ');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -588,7 +676,19 @@ codeunit 84475 "LT CG Query Leads"
         Observer.Observe('xml id 0 ok', Format(Ok));
         if not Ok then
             Observer.ObserveError('xml id 0 error');
-        Observer.Finish();
+        Observer.Expect('xml ok', 'No');
+        Observer.Expect('xml error|text', 'You tried to invoke the Query object with the ID 99999999 from the object LT CG Query Leads. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('xml error|code', 'AL:MetadataNotFound');
+        Observer.Expect('csv ok', 'No');
+        Observer.Expect('csv error|text', 'You tried to invoke the Query object with the ID 99999999 from the object LT CG Query Leads. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('csv error|code', 'AL:MetadataNotFound');
+        Observer.Expect('json ok', 'No');
+        Observer.Expect('json error|text', 'You tried to invoke the Query object with the ID 99999999 from the object LT CG Query Leads. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('json error|code', 'AL:MetadataNotFound');
+        Observer.Expect('xml id 0 ok', 'No');
+        Observer.Expect('xml id 0 error|text', 'You tried to invoke the Query object with the ID 0 from the object LT CG Query Leads. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('xml id 0 error|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [TryFunction]
