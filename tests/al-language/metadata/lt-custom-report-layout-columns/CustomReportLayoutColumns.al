@@ -63,7 +63,9 @@ codeunit 74799 "LT CRL Columns"
             Order += Format(FR.Number()) + ':' + Format(FR.Class()) + ';';
         end;
         Observer.Observe('order', Order);
-        Observer.Finish();
+        Observer.Expect('fieldCount', '9');
+        Observer.Expect('order', '1:Normal;3:Normal;5:Normal;7:Normal;20:Normal;2:FlowFilter;6:FlowFilter;4:FlowField;8:FlowField;');
+        Observer.Verify();
     end;
 }
 

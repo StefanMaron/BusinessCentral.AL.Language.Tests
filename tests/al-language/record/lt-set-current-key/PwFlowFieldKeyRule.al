@@ -162,7 +162,17 @@ codeunit 86142 "LT PW FlowField Key Rule"
         Observer.Observe('existOtherLinked', Outcome(10, false));
         Observer.Observe('cntOtherLinkedNoEdit', Outcome(11, false));
         Observer.Observe('sumOtherAll', Outcome(12, false));
-        Observer.Finish();
+        Observer.Expect('cntSelfAll', 'key=CntSelfAll order=1 2 3 ');
+        Observer.Expect('cntSelfLinked', 'key=CntSelfLinked order=1 2 3 ');
+        Observer.Expect('cntOtherAll', 'key=CntOtherAll order=1 2 3 ');
+        Observer.Expect('cntOtherLinked', 'key=CntOtherLinked order=2 3 1 ');
+        Observer.Expect('cntOtherConst', 'key=CntOtherConst order=1 2 3 ');
+        Observer.Expect('cntOtherByFilter', 'key=CntOtherByFilter order=1 2 3 ');
+        Observer.Expect('sumOtherLinked', 'key=SumOtherLinked order=1 3 2 ');
+        Observer.Expect('existOtherLinked', 'key=ExistOtherLinked order=1 3 2 ');
+        Observer.Expect('cntOtherLinkedNoEdit', 'key=CntOtherLinkedNoEdit order=2 3 1 ');
+        Observer.Expect('sumOtherAll', 'key=SumOtherAll order=1 2 3 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -181,7 +191,17 @@ codeunit 86142 "LT PW FlowField Key Rule"
         Observer.Observe('existOtherLinked', Outcome(10, true));
         Observer.Observe('cntOtherLinkedNoEdit', Outcome(11, true));
         Observer.Observe('sumOtherAll', Outcome(12, true));
-        Observer.Finish();
+        Observer.Expect('cntSelfAll', 'answer=Yes key=CntSelfAll order=1 2 3 ');
+        Observer.Expect('cntSelfLinked', 'answer=Yes key=CntSelfLinked order=1 2 3 ');
+        Observer.Expect('cntOtherAll', 'answer=Yes key=CntOtherAll order=1 2 3 ');
+        Observer.Expect('cntOtherLinked', 'answer=Yes key=CntOtherLinked order=2 3 1 ');
+        Observer.Expect('cntOtherConst', 'answer=Yes key=CntOtherConst order=1 2 3 ');
+        Observer.Expect('cntOtherByFilter', 'answer=Yes key=CntOtherByFilter order=1 2 3 ');
+        Observer.Expect('sumOtherLinked', 'answer=Yes key=SumOtherLinked order=1 3 2 ');
+        Observer.Expect('existOtherLinked', 'answer=Yes key=ExistOtherLinked order=1 3 2 ');
+        Observer.Expect('cntOtherLinkedNoEdit', 'answer=Yes key=CntOtherLinkedNoEdit order=2 3 1 ');
+        Observer.Expect('sumOtherAll', 'answer=Yes key=SumOtherAll order=1 2 3 ');
+        Observer.Verify();
     end;
     // records/W4SortKeys.al:459 reads CurrentKey through a by-value Record parameter (Outcome(Ok; R: Record "W4 Key Row")). The key after
     // SetCurrentKey on a FlowField and on a normal field, read on the variable itself, through a by-value parameter, through a var parameter,
@@ -227,6 +247,10 @@ codeunit 86142 "LT PW FlowField Key Rule"
         Observer.Observe('normalField', Copies(Owner3));
         Owner4.SetCurrentKey(CntOtherLinked, Id);
         Observer.Observe('flowFieldThenId', Copies(Owner4));
-        Observer.Finish();
+        Observer.Expect('flowFieldLinked', 'self=CntOtherLinked byValue=Id order=1 2 3  byVar=CntOtherLinked assigned=Id copied=CntOtherLinked');
+        Observer.Expect('flowFieldSelfAll', 'self=CntSelfAll byValue=Id order=1 2 3  byVar=CntSelfAll assigned=Id copied=CntSelfAll');
+        Observer.Expect('normalField', 'self=Name byValue=Id order=1 2 3  byVar=Name assigned=Id copied=Name');
+        Observer.Expect('flowFieldThenId', 'self=CntOtherLinked,Id byValue=Id order=1 2 3  byVar=CntOtherLinked,Id assigned=Id copied=CntOtherLinked,Id');
+        Observer.Verify();
     end;
 }

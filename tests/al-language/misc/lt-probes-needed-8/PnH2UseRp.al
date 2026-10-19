@@ -462,7 +462,15 @@ codeunit 70583 "LT PnH UseRp Tests"
         Observer.Observe('runmodal false', Format(PwTryStaticRunModal(false)));
         Observer.ObserveError('runmodal false');
         Observer.Observe('runmodal false log', L.Take());
-        Observer.Finish();
+        Observer.Expect('runmodal true', 'No');
+        Observer.Expect('runmodal true|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('runmodal true|code', 'DB:Ok');
+        Observer.Expect('runmodal true log', 'init;');
+        Observer.Expect('runmodal false', 'Yes');
+        Observer.Expect('runmodal false|text', '');
+        Observer.Expect('runmodal false|code', '');
+        Observer.Expect('runmodal false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -481,7 +489,19 @@ codeunit 70583 "LT PnH UseRp Tests"
         Observer.Observe('run true', Format(PwTryStaticRun(true)));
         Observer.ObserveError('run true');
         Observer.Observe('run true log', L.Take());
-        Observer.Finish();
+        Observer.Expect('runmodal true', 'No');
+        Observer.Expect('runmodal true|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('runmodal true|code', 'DB:Ok');
+        Observer.Expect('runmodal true log', 'init;');
+        Observer.Expect('runmodal false', 'Yes');
+        Observer.Expect('runmodal false|text', '');
+        Observer.Expect('runmodal false|code', '');
+        Observer.Expect('runmodal false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('run true', 'No');
+        Observer.Expect('run true|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run true|code', 'DB:Ok');
+        Observer.Expect('run true log', 'init;');
+        Observer.Verify();
     end;
 
     // Writer PW: UseRequestPage() after an Execute of a variable whose UseRequestPage was set (only a variable never set is pinned:
@@ -522,6 +542,28 @@ codeunit 70583 "LT PnH UseRp Tests"
         Observer.Observe('withRP never execute', Format(TryExecuteWith(WithNever)));
         Observer.Observe('withRP never getter', Format(WithNever.UseRequestPage()));
         Observer.Observe('withRP never log', L.Take());
-        Observer.Finish();
+        Observer.Expect('noRP true execute', 'Yes');
+        Observer.Expect('noRP true execute|text', '');
+        Observer.Expect('noRP true execute|code', '');
+        Observer.Expect('noRP true getter', 'No');
+        Observer.Expect('noRP true log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('noRP false execute', 'Yes');
+        Observer.Expect('noRP false getter', 'No');
+        Observer.Expect('noRP false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('noRP never execute', 'Yes');
+        Observer.Expect('noRP never getter', 'No');
+        Observer.Expect('noRP never log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('withRP true execute', 'Yes');
+        Observer.Expect('withRP true execute|text', '');
+        Observer.Expect('withRP true execute|code', '');
+        Observer.Expect('withRP true getter', 'No');
+        Observer.Expect('withRP true log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('withRP false execute', 'Yes');
+        Observer.Expect('withRP false getter', 'No');
+        Observer.Expect('withRP false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('withRP never execute', 'Yes');
+        Observer.Expect('withRP never getter', 'No');
+        Observer.Expect('withRP never log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Verify();
     end;
 }

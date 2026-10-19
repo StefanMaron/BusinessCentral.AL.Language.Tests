@@ -152,6 +152,14 @@ codeunit 72038 "LT PnD SetRequestUri"
         Observer.Observe('http:///x', TrySet('http:///x'));
         Observer.Observe('http:\\x', TrySet('http:\\x'));
         Observer.Observe('HTTP:x', TrySet('HTTP:x'));
-        Observer.Finish();
+        Observer.Expect('http:x', 'result=No uri=[]');
+        Observer.Expect('http:/x', 'result=No uri=[]');
+        Observer.Expect('https:x.y', 'result=No uri=[]');
+        Observer.Expect('http:x/p?q=1', 'result=No uri=[]');
+        Observer.Expect('https:/x.y/p', 'result=No uri=[]');
+        Observer.Expect('http:///x', 'result=No uri=[]');
+        Observer.Expect('http:\\x', 'result=Yes uri=[http://x/]');
+        Observer.Expect('HTTP:x', 'result=No uri=[]');
+        Observer.Verify();
     end;
 }

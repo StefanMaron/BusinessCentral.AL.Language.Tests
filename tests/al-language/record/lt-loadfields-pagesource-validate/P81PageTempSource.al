@@ -502,7 +502,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: two temporary rows, positioned on the first.
@@ -520,7 +527,13 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_rows', '2');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '2');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: one temporary row.
@@ -540,7 +553,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_rows', '1');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '1');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: three temporary rows, positioned on the last.
@@ -556,7 +574,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: three temporary rows, the record holds a key before every row.
@@ -573,7 +598,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: three temporary rows, the record holds a key after every row.
@@ -590,7 +622,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: three temporary rows, the stored table empty.
@@ -606,7 +645,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '0');
+        Observer.Verify();
     end;
 
     // Writer PW: three temporary rows, a filter that keeps all three.
@@ -622,7 +668,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: three temporary rows, a filter on the key that keeps all three.
@@ -638,7 +691,14 @@ codeunit 70310 "LT P81 Page Temp Source"
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Temp)));
         Observer.Observe('temp_count', Format(Temp.Count()));
         Observer.Observe('db_count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('temp_count', '3');
+        Observer.Expect('db_count', '2');
+        Observer.Verify();
     end;
 
     // Writer PW: the stored table with three rows (D1, D2, D3), no filter: RunModal_NonTempRecord_ShowsDbRows has two and shows the new line.
@@ -656,7 +716,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Row.Insert();
         Row.FindFirst();
         Observer.Observe('result', Format(Page.RunModal(Page::"LT P81 PG List", Row)));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', 'D3|db-three|30');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'LookupOK');
+        Observer.Verify();
     end;
 
     // Writer PW: Page.Run (not modal) of the same three temporary rows.
@@ -668,7 +733,12 @@ codeunit 70310 "LT P81 Page Temp Source"
     begin
         Seed(Temp);
         Page.Run(Page::"LT P81 PG List", Temp);
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_row4', '||0');
+        Observer.Expect('page_rows', '4');
+        Observer.Verify();
     end;
     // Writer PW: the tests above suggest the new line depends on whether the result of RunModal is used (ShowsTempRows and the PW_ tests use
     // it: no new line; EditWritesToTemp, WithFilter, NonTempRecord_ShowsDbRows run it as a statement: a new line). The same page and rows
@@ -681,7 +751,12 @@ codeunit 70310 "LT P81 Page Temp Source"
     begin
         Seed(Temp);
         Page.RunModal(Page::"LT P81 PG List", Temp);
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_row4', '||0');
+        Observer.Expect('page_rows', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -695,7 +770,12 @@ codeunit 70310 "LT P81 Page Temp Source"
             Observer.Observe('if', 'LookupOK')
         else
             Observer.Observe('if', 'other');
-        Observer.Finish();
+        Observer.Expect('page_row1', 'T1|temp-one|1');
+        Observer.Expect('page_row2', 'T2|temp-two|2');
+        Observer.Expect('page_row3', 'T3|temp-three|3');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('if', 'LookupOK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -712,7 +792,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Row.Insert();
         Row.FindFirst();
         Page.RunModal(Page::"LT P81 PG List", Row);
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', 'D3|db-three|30');
+        Observer.Expect('page_row4', '||0');
+        Observer.Expect('page_rows', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -725,7 +810,12 @@ codeunit 70310 "LT P81 Page Temp Source"
         Seed(Temp);
         Pg.SetTableView(Temp);
         Observer.Observe('result', Format(Pg.RunModal()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'OK');
+        Observer.Verify();
     end;
 
     [Test]
@@ -738,7 +828,11 @@ codeunit 70310 "LT P81 Page Temp Source"
         Seed(Temp);
         Pg.SetTableView(Temp);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -751,7 +845,10 @@ codeunit 70310 "LT P81 Page Temp Source"
         Seed(Temp);
         Pg.LookupMode(true);
         Pg.RunModal();
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_rows', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -764,6 +861,11 @@ codeunit 70310 "LT P81 Page Temp Source"
         Seed(Temp);
         Pg.LookupMode(false);
         Observer.Observe('result', Format(Pg.RunModal()));
-        Observer.Finish();
+        Observer.Expect('page_row1', 'D1|db-one|10');
+        Observer.Expect('page_row2', 'D2|db-two|20');
+        Observer.Expect('page_row3', '||0');
+        Observer.Expect('page_rows', '3');
+        Observer.Expect('result', 'OK');
+        Observer.Verify();
     end;
 }

@@ -576,6 +576,15 @@ codeunit 74616 "LT ClT Ref Semantics"
         Observer.Observe('GetRange', PwRead('GetRange'));
         Observer.Observe('SetSame', PwRead('SetSame'));
         Observer.Observe('SetOther', PwRead('SetOther'));
-        Observer.Finish();
+        Observer.Expect('Count', 'ok visited=1,2,3, last=3');
+        Observer.Expect('Get', 'ok visited=1,2,3, last=3');
+        Observer.Expect('GetVar', 'ok visited=1,2,3, last=3');
+        Observer.Expect('Contains', 'ok visited=1,2,3, last=3');
+        Observer.Expect('IndexOf', 'ok visited=1,2,3, last=3');
+        Observer.Expect('LastIndexOf', 'ok visited=1,2,3, last=3');
+        Observer.Expect('GetRange', 'ok visited=1,2,3, last=3');
+        Observer.Expect('SetSame', 'error:Collection was modified; enumeration operation may not execute.|AL:InvalidOperation visited=1, last=3');
+        Observer.Expect('SetOther', 'error:Collection was modified; enumeration operation may not execute.|AL:InvalidOperation visited=1, last=99');
+        Observer.Verify();
     end;
 }

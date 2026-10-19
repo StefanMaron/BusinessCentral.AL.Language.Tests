@@ -391,7 +391,10 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Observe('set', PwTranslate('set'));
         Observer.Observe('blank', PwTranslate('blank'));
         Observer.Observe('none', PwTranslate('none'));
-        Observer.Finish();
+        Observer.Expect('set', 'area3=T[3,<tag>] calls=1 | area3Again=T[3,<tag>] calls=0 | unclaimed=T[PW<tag>,Foo] calls=1 | noComma=T[PW no comma <tag>] calls=1 | area1=T[1,1,<tag>] calls=1 | leadingComma=T[,<tag>] calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=1');
+        Observer.Expect('blank', 'area3= calls=1 | area3Again= calls=0 | unclaimed= calls=1 | noComma= calls=1 | area1= calls=1 | leadingComma= calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=0');
+        Observer.Expect('none', 'area3=<tag> calls=1 | area3Again=<tag> calls=0 | unclaimed=PW<tag>,Foo calls=1 | noComma=PW no comma <tag> calls=1 | area1=1,1,<tag> calls=1 | leadingComma=,<tag> calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -416,7 +419,14 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Observe('second open area3 caption', Card.PwArea3.Caption());
         Card.Close();
         Subs.SetMode('');
-        Observer.Finish();
+        Observer.Expect('calls after open', '2');
+        Observer.Expect('claimed caption', 'T[PWCC1,Hello]');
+        Observer.Expect('area3 caption', 'T[3,PW plain caption]');
+        Observer.Expect('calls after captions', '0');
+        Observer.Expect('second open calls', '0');
+        Observer.Expect('second open claimed caption', 'T[PWCC1,Hello]');
+        Observer.Expect('second open area3 caption', 'T[3,PW plain caption]');
+        Observer.Verify();
     end;
 }
 

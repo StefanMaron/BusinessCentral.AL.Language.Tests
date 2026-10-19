@@ -284,6 +284,10 @@ codeunit 71037 "LT VaT TextConst"
         Observer.Observe('label', PwShape(V));
         V := 'Hello';
         Observer.Observe('textLiteral', PwShape(V));
-        Observer.Finish();
+        Observer.Expect('assigned', 'flags= more=TextConstant, eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Expect('throughParameterAndReturn', 'flags= more=TextConstant, eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Expect('label', 'flags= more=TextConstant, eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Expect('textLiteral', 'flags=Text, more= eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Verify();
     end;
 }

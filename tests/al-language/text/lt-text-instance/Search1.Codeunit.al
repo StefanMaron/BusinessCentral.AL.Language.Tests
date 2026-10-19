@@ -475,6 +475,14 @@ codeunit 70000 "LT TxA Search 1"
         Observer.Observe('hello_empty_value_5', PwLastIndexOf('hello', '', 5));
         Observer.Observe('hello_empty_value_6', PwLastIndexOf('hello', '', 6));
         Observer.Observe('hello_empty_value_7', PwLastIndexOf('hello', '', 7));
-        Observer.Finish();
+        Observer.Expect('empty_text_empty_value_0', '1');
+        Observer.Expect('empty_text_empty_value_minus1', 'error:Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('empty_text_empty_value_2', 'error:Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('hello_empty_value_0', 'error:Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Expect('hello_empty_value_1', '2');
+        Observer.Expect('hello_empty_value_5', '6');
+        Observer.Expect('hello_empty_value_6', '6');
+        Observer.Expect('hello_empty_value_7', 'error:Index was out of range. Must be non-negative and less than the size of the collection. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Observer.Verify();
     end;
 }

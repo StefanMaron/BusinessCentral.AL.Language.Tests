@@ -205,7 +205,10 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Observe('valid', OwnBlob(ValidPng(), false, false));
         Observer.Observe('validGetFirst', OwnBlob(ValidPng(), true, false));
         Observer.Observe('validModify', OwnBlob(ValidPng(), false, true));
-        Observer.Finish();
+        Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
+        Observer.Expect('validGetFirst', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
+        Observer.Expect('validModify', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70 afterModify hasValue=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -215,7 +218,9 @@ codeunit 86144 "LT PW Media Own Blob"
     begin
         Observer.Observe('short', OwnBlob(ShortPng(), false, false));
         Observer.Observe('shortGetFirst', OwnBlob(ShortPng(), true, false));
-        Observer.Finish();
+        Observer.Expect('short', 'blobLength=69 hasValue=No returned=null id field=null id');
+        Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=No returned=null id field=null id');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,6 +230,8 @@ codeunit 86144 "LT PW Media Own Blob"
     begin
         Observer.Observe('valid', OtherBlob(ValidPng()));
         Observer.Observe('short', OtherBlob(ShortPng()));
-        Observer.Finish();
+        Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
+        Observer.Expect('short', 'hasValue=No returned=null id field=null id');
+        Observer.Verify();
     end;
 }

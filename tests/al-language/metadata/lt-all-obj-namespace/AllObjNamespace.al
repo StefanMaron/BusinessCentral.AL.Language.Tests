@@ -187,7 +187,10 @@ codeunit 73193 "LT P163 AllObj Namespace"
         AllObjRec.Reset();
         AllObjRec.SetRange("Object ID", Database::"LT P163 NS Table");
         Observer.Observe('rows_with_the_table_id', PwRows(AllObjRec));
-        Observer.Finish();
+        Observer.Expect('rows', 'TableData 73191 LT P163 NS Table;Table 73191 LT P163 NS Table;Codeunit 73192 LT P163 NS Codeunit;Page 73194 LT P163 NS Page;');
+        Observer.Expect('tabledata_rows', '1');
+        Observer.Expect('rows_with_the_table_id', 'TableData 73191 LT P163 NS Table;Table 73191 LT P163 NS Table;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,6 +206,14 @@ codeunit 73193 "LT P163 AllObj Namespace"
         Observer.Observe('virtual_integer', PwTableData(Database::Integer));
         Observer.Observe('virtual_allobj', PwTableData(Database::AllObj));
         Observer.Observe('no_such_table', PwTableData(73199));
-        Observer.Finish();
+        Observer.Expect('namespaced_table', 'allobj=LT P163 NS Table ns=[P163Probe.Names] samePackage=Yes sameRuntimePackage=Yes caption=LT P163 NS Table subtype=[Normal]');
+        Observer.Expect('global_namespace_table', 'allobj=LT P163 PM Row ns=[] samePackage=Yes sameRuntimePackage=Yes caption=LT P163 PM Row subtype=[Normal]');
+        Observer.Expect('tabletype_temporary', 'allobj=ALT Temp Only ns=[] samePackage=Yes sameRuntimePackage=Yes caption=ALT Temp Only subtype=[Temporary]');
+        Observer.Expect('base_app_customer', 'allobj=Customer ns=[Microsoft.Sales.Customer] samePackage=Yes sameRuntimePackage=Yes caption=Customer subtype=[Normal]');
+        Observer.Expect('platform_company', 'allobj=Company ns=[System.Environment] samePackage=Yes sameRuntimePackage=Yes caption=Company subtype=[Normal]');
+        Observer.Expect('virtual_integer', 'allobj=Integer ns=[System.Utilities] samePackage=Yes sameRuntimePackage=Yes caption=Integer subtype=[Normal]');
+        Observer.Expect('virtual_allobj', 'allobj=AllObj ns=[System.Reflection] samePackage=Yes sameRuntimePackage=Yes caption=AllObj subtype=[Normal]');
+        Observer.Expect('no_such_table', 'allobj=<no row> caption=<no row>');
+        Observer.Verify();
     end;
 }

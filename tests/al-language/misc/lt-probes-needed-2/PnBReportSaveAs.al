@@ -501,7 +501,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(1, 16, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l1', '<?xml version="1.0" standalone="yes"?>');
+        Obs.Expect('l2', '<ReportDataSet name="LT PnB Rep" id="70530" language="en-US" formatRegion="en-US">');
+        Obs.Expect('l3', '  <BCReportInformation>x');
+        Obs.Expect('l4', '    <ReportMetadata>');
+        Obs.Expect('l5', '      <ExtensionId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</ExtensionId>');
+        Obs.Expect('l6', '      <ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>');
+        Obs.Expect('l7', '      <ExtensionPublisher>AL Language</ExtensionPublisher>');
+        Obs.Expect('l8', '      <ExtensionVersion>x</ExtensionVersion>');
+        Obs.Expect('l9', '      <ReportId>70530</ReportId>');
+        Obs.Expect('l10', '      <ReportName>LT PnB Rep</ReportName>');
+        Obs.Expect('l11', '      <ReportCaption>LT PnB Caption</ReportCaption>');
+        Obs.Expect('l12', '      <AboutThisReportTitle></AboutThisReportTitle>');
+        Obs.Expect('l13', '      <AboutThisReportText></AboutThisReportText>');
+        Obs.Expect('l14', '      <ReportHelpLink></ReportHelpLink>');
+        Obs.Expect('l15', '    </ReportMetadata>');
+        Obs.Expect('l16', '    <ReportRequest>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -510,7 +527,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(17, 32, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l17', '      <TenantEntraId>x</TenantEntraId>');
+        Obs.Expect('l18', '      <EnvironmentName>x</EnvironmentName>');
+        Obs.Expect('l19', '      <EnvironmentType>x</EnvironmentType>');
+        Obs.Expect('l20', '      <CompanyName>x</CompanyName>');
+        Obs.Expect('l21', '      <CompanyDisplayName>x</CompanyDisplayName>');
+        Obs.Expect('l22', '      <CompanyId>x</CompanyId>');
+        Obs.Expect('l23', '      <UserName>x</UserName>');
+        Obs.Expect('l24', '      <DateAndTime>x</DateAndTime>');
+        Obs.Expect('l25', '      <Language>en-US</Language>');
+        Obs.Expect('l26', '      <FormatRegion>en-US</FormatRegion>');
+        Obs.Expect('l27', '      <DateTimeValues>');
+        Obs.Expect('l28', '        <Year>x</Year>');
+        Obs.Expect('l29', '        <MonthNumber>x</MonthNumber>');
+        Obs.Expect('l30', '        <DayNumber>x</DayNumber>');
+        Obs.Expect('l31', '        <Hour>x</Hour>');
+        Obs.Expect('l32', '        <Minute>x</Minute>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -519,7 +553,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(33, 48, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l33', '      </DateTimeValues>');
+        Obs.Expect('l34', '    </ReportRequest>');
+        Obs.Expect('l35', '    <CompanyMetadata>');
+        Obs.Expect('l36', '      <CompanyName>x</CompanyName>');
+        Obs.Expect('l37', '      <CompanyDisplayName>x</CompanyDisplayName>');
+        Obs.Expect('l38', '      <CompanyAddressLines>');
+        Obs.Expect('l39', '        <CompanyAddressLine1><Company></CompanyAddressLine1>');
+        Obs.Expect('l40', '        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2>');
+        Obs.Expect('l41', '        <CompanyAddressLine3>Westminster</CompanyAddressLine3>');
+        Obs.Expect('l42', '        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4>');
+        Obs.Expect('l43', '        <CompanyAddressLine5>Great Britain</CompanyAddressLine5>');
+        Obs.Expect('l44', '        <CompanyAddressLine6></CompanyAddressLine6>');
+        Obs.Expect('l45', '        <CompanyAddressLine7></CompanyAddressLine7>');
+        Obs.Expect('l46', '        <CompanyAddressLine8></CompanyAddressLine8>');
+        Obs.Expect('l47', '      </CompanyAddressLines>');
+        Obs.Expect('l48', '      <CompanyPhone>0666-666-6666</CompanyPhone>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -528,7 +579,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(49, 64, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l49', '      <CompanyPhoneCaption>Phone No.</CompanyPhoneCaption>');
+        Obs.Expect('l50', '      <CompanyFaxNo>0666-666-6660</CompanyFaxNo>');
+        Obs.Expect('l51', '      <CompanyFaxNoCaption>Fax No.</CompanyFaxNoCaption>');
+        Obs.Expect('l52', '      <CompanyEmail></CompanyEmail>');
+        Obs.Expect('l53', '      <CompanyEmailCaption>Email</CompanyEmailCaption>');
+        Obs.Expect('l54', '      <CompanyHomePage></CompanyHomePage>');
+        Obs.Expect('l55', '      <CompanyHomePageCaption>Home Page</CompanyHomePageCaption>');
+        Obs.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEU...<length 26721>');
+        Obs.Expect('l57', '      <CompanyVATRegistrationNo>777777777</CompanyVATRegistrationNo>');
+        Obs.Expect('l58', '      <CompanyVATRegistrationNoCaption>VAT Registration No.</CompanyVATRegistrationNoCaption>');
+        Obs.Expect('l59', '      <CompanyRegistrationNo></CompanyRegistrationNo>');
+        Obs.Expect('l60', '      <CompanyRegistrationNoCaption>Registration No.</CompanyRegistrationNoCaption>');
+        Obs.Expect('l61', '      <CompanyBankName>World Wide Bank</CompanyBankName>');
+        Obs.Expect('l62', '      <CompanyBankNameCaption>Bank Name</CompanyBankNameCaption>');
+        Obs.Expect('l63', '      <CompanyBankAccountNo>99-99-888</CompanyBankAccountNo>');
+        Obs.Expect('l64', '      <CompanyBankAccountNoCaption>Bank Account No.</CompanyBankAccountNoCaption>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -537,7 +605,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(65, 80, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l65', '      <CompanyBankBranchNo>BG99999</CompanyBankBranchNo>');
+        Obs.Expect('l66', '      <CompanyBankBranchNoCaption>Bank Branch No.</CompanyBankBranchNoCaption>');
+        Obs.Expect('l67', '      <CompanyIBAN>GB 12 CPBK 08929965044991</CompanyIBAN>');
+        Obs.Expect('l68', '      <CompanyIBANCaption>IBAN</CompanyIBANCaption>');
+        Obs.Expect('l69', '      <CompanyBankSWIFT></CompanyBankSWIFT>');
+        Obs.Expect('l70', '      <CompanyBankSWIFTCaption>SWIFT Code</CompanyBankSWIFTCaption>');
+        Obs.Expect('l71', '      <CompanyGiroNo>888-9999</CompanyGiroNo>');
+        Obs.Expect('l72', '      <CompanyGiroNoCaption>Giro No.</CompanyGiroNoCaption>');
+        Obs.Expect('l73', '    </CompanyMetadata>');
+        Obs.Expect('l74', '  </BCReportInformation>');
+        Obs.Expect('l75', '  <DataItems>');
+        Obs.Expect('l76', '    <DataItem language="en-US" formatRegion="en-US" name="Rows" tableId="70527">');
+        Obs.Expect('l77', '      <Columns>');
+        Obs.Expect('l78', '        <Column name="RowId">1</Column>');
+        Obs.Expect('l79', '        <Column name="RowName">One</Column>');
+        Obs.Expect('l80', '        <Column name="RowAmount" decimalformatter="#,##0.00">10.5</Column>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -546,7 +631,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(81, 96, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l81', '        <Column name="RowTag">T1</Column>');
+        Obs.Expect('l82', '        <Column name="ColSpaced">1</Column>');
+        Obs.Expect('l83', '      </Columns>');
+        Obs.Expect('l84', '      <DataItems>');
+        Obs.Expect('l85', '        <DataItem name="Kid_Item_Table" tableId="70527">');
+        Obs.Expect('l86', '          <Columns>');
+        Obs.Expect('l87', '            <Column name="KidId">11</Column>');
+        Obs.Expect('l88', '          </Columns>');
+        Obs.Expect('l89', '        </DataItem>');
+        Obs.Expect('l90', '      </DataItems>');
+        Obs.Expect('l91', '    </DataItem>');
+        Obs.Expect('l92', '    <DataItem language="en-US" formatRegion="en-US" name="Rows" tableId="70527">');
+        Obs.Expect('l93', '      <Columns>');
+        Obs.Expect('l94', '        <Column name="RowId">2</Column>');
+        Obs.Expect('l95', '        <Column name="RowName">Two</Column>');
+        Obs.Expect('l96', '        <Column name="RowAmount" decimalformatter="#,##0.00">0</Column>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -555,7 +657,24 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(97, 112, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l97', '        <Column name="RowTag">T2</Column>');
+        Obs.Expect('l98', '        <Column name="ColSpaced">2</Column>');
+        Obs.Expect('l99', '      </Columns>');
+        Obs.Expect('l100', '      <DataItems />');
+        Obs.Expect('l101', '    </DataItem>');
+        Obs.Expect('l102', '    <DataItem language="en-US" formatRegion="en-US" name="Rows" tableId="70527">');
+        Obs.Expect('l103', '      <Columns>');
+        Obs.Expect('l104', '        <Column name="RowId">3</Column>');
+        Obs.Expect('l105', '        <Column name="RowName">Three</Column>');
+        Obs.Expect('l106', '        <Column name="RowAmount" decimalformatter="#,##0.00">0</Column>');
+        Obs.Expect('l107', '        <Column name="RowTag">T3</Column>');
+        Obs.Expect('l108', '        <Column name="ColSpaced">3</Column>');
+        Obs.Expect('l109', '      </Columns>');
+        Obs.Expect('l110', '      <DataItems />');
+        Obs.Expect('l111', '    </DataItem>');
+        Obs.Expect('l112', '  </DataItems>');
+        Obs.Verify();
     end;
 
     [Test]
@@ -564,7 +683,9 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs: Codeunit "Probe Observer";
     begin
         PwDump(113, 128, Obs);
-        Obs.Finish();
+        Obs.Expect('lines', '113');
+        Obs.Expect('l113', '</ReportDataSet>');
+        Obs.Verify();
     end;
 
     // Writer PW: GetLastErrorText and GetLastErrorCode after Ok := Rep.SaveAs(..) answered false because OnPreReport raised an error
@@ -582,7 +703,11 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Observe('text', GetLastErrorText());
         Obs.Observe('code', GetLastErrorCode());
         Obs.Observe('len>0', Format(StrLen(RawText) > 0));
-        Obs.Finish();
+        Obs.Expect('ok', 'No');
+        Obs.Expect('text', 'PnB pre-report error');
+        Obs.Expect('code', 'Dialog');
+        Obs.Expect('len>0', 'No');
+        Obs.Verify();
     end;
 
     // Writer PW: the code of "The object has been run. Use the function CLEAR(Report)." after a second SaveAs on one variable, once after a
@@ -610,6 +735,18 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Observe('xmlAfterHtml', Format(Render(Rep2, '', ReportFormat::Xml)));
         Obs.Observe('xmlAfterHtml.text', GetLastErrorText());
         Obs.Observe('xmlAfterHtml.code', GetLastErrorCode());
-        Obs.Finish();
+        Obs.Expect('xml1', 'Yes');
+        Obs.Expect('xml1.text', '');
+        Obs.Expect('xml1.code', '');
+        Obs.Expect('xml2', 'No');
+        Obs.Expect('xml2.text', 'The object has been run. Use the function CLEAR(Report).');
+        Obs.Expect('xml2.code', 'ObjectHasAlreadyBeenRun');
+        Obs.Expect('html1', 'No');
+        Obs.Expect('html1.text', 'Report 70530 does not have a valid layout. Valid layout types are: Word, RDLC, Excel, and Custom.');
+        Obs.Expect('html1.code', 'ReportNoLayout');
+        Obs.Expect('xmlAfterHtml', 'No');
+        Obs.Expect('xmlAfterHtml.text', 'The object has been run. Use the function CLEAR(Report).');
+        Obs.Expect('xmlAfterHtml.code', 'ObjectHasAlreadyBeenRun');
+        Obs.Verify();
     end;
 }

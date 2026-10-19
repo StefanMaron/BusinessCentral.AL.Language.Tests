@@ -244,7 +244,19 @@ codeunit 70127 "LT PnA Q Filters"
         Q.SetRange(Grp, 'G');
         Q.SetRange(Qty, 3);
         Observer.Observe('plain:Amt-Txt-Entry-Grp-Qty', Q.GetFilters());
-        Observer.Finish();
+        Observer.Expect('plain:Grp-Entry-Qty', 'Grp: G, Entry: 1, Qty: 3');
+        Observer.Expect('plain:Grp-Qty-Entry', 'Grp: G, Entry: 1, Qty: 3');
+        Observer.Expect('plain:Entry-Grp-Qty', 'Entry: 1, Grp: G, Qty: 3');
+        Observer.Expect('plain:Entry-Qty-Grp', 'Entry: 1, Grp: G, Qty: 3');
+        Observer.Expect('plain:Qty-Grp-Entry', 'Grp: G, Entry: 1, Qty: 3');
+        Observer.Expect('plain:Qty-Entry-Grp', 'Entry: 1, Grp: G, Qty: 3');
+        Observer.Expect('plain:Grp-Txt', 'Grp: G, Name: a');
+        Observer.Expect('plain:Txt-Grp', 'Grp: G, Name: a');
+        Observer.Expect('plain:Grp-Amt', 'Grp: G, Amt: 1.5');
+        Observer.Expect('plain:Amt-Grp', 'Grp: G, Amt: 1.5');
+        Observer.Expect('plain:Qty-Grp-Entry-Txt-Amt', 'Grp: G, Entry: 1, Name: a, Qty: 3, Amt: 1.5');
+        Observer.Expect('plain:Amt-Txt-Entry-Grp-Qty', 'Entry: 1, Grp: G, Name: a, Qty: 3, Amt: 1.5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -316,7 +328,20 @@ codeunit 70127 "LT PnA Q Filters"
         M.SetRange(Entry, 1);
         M.SetRange(Qty, 3);
         Observer.Observe('mixed:FAmt-Txt-FGrp-Entry-Qty', M.GetFilters());
-        Observer.Finish();
+        Observer.Expect('mixed:FGrp-Qty-Entry', 'Grp: G, Qty: 3, Entry: 1');
+        Observer.Expect('mixed:FGrp-Entry-Qty', 'Grp: G, Qty: 3, Entry: 1');
+        Observer.Expect('mixed:Qty-FGrp-Entry', 'Qty: 3, Grp: G, Entry: 1');
+        Observer.Expect('mixed:Qty-Entry-FGrp', 'Qty: 3, Grp: G, Entry: 1');
+        Observer.Expect('mixed:Entry-FGrp-Qty', 'Grp: G, Qty: 3, Entry: 1');
+        Observer.Expect('mixed:Entry-Qty-FGrp', 'Qty: 3, Grp: G, Entry: 1');
+        Observer.Expect('mixed:FGrp-FAmt', 'Grp: G, Amt: 1.5');
+        Observer.Expect('mixed:FAmt-FGrp', 'Amt: 1.5, Grp: G');
+        Observer.Expect('mixed:FAmt-Entry', 'Amt: 1.5, Entry: 1');
+        Observer.Expect('mixed:Entry-FAmt', 'Amt: 1.5, Entry: 1');
+        Observer.Expect('mixed:Txt-FAmt-Qty', 'Amt: 1.5, Qty: 3, Name: a');
+        Observer.Expect('mixed:Qty-FAmt-Txt', 'Qty: 3, Amt: 1.5, Name: a');
+        Observer.Expect('mixed:FAmt-Txt-FGrp-Entry-Qty', 'Amt: 1.5, Grp: G, Qty: 3, Entry: 1, Name: a');
+        Observer.Verify();
     end;
 
     // Writer PW: a filter set again on a column moves it or keeps its place; SetFilter in place of SetRange.
@@ -352,6 +377,11 @@ codeunit 70127 "LT PnA Q Filters"
         M.SetRange(Entry);
         M.SetRange(Entry, 1);
         Observer.Observe('mixed:entry-fgrp-entryClearedAndSet', M.GetFilters());
-        Observer.Finish();
+        Observer.Expect('plain:grp-entry-qty-grpAgain', 'Entry: 1, Grp: H, Qty: 3');
+        Observer.Expect('plain:entry-grp-entryAgain', 'Grp: G, Entry: 2');
+        Observer.Expect('plain:setfilter-qty-grp-entry', 'Grp: G*, Entry: 1..5, Qty: >2');
+        Observer.Expect('plain:entry-grp-entryCleared', 'Grp: G');
+        Observer.Expect('mixed:entry-fgrp-entryClearedAndSet', 'Grp: G, Entry: 1');
+        Observer.Verify();
     end;
 }

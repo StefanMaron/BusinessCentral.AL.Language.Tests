@@ -317,7 +317,9 @@ codeunit 73727 "LT P132 Two Modals"
         R := PwRunA() + PwRunA() + PwRunB();
         Observer.Observe('results', R);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupOK,LookupOK,LookupCancel,');
+        Observer.Expect('log', 'A;A;B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -331,7 +333,9 @@ codeunit 73727 "LT P132 Two Modals"
         R := PwRunA() + PwRunB();
         Observer.Observe('results', R);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupOK,LookupCancel,');
+        Observer.Expect('log', 'A;B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -345,7 +349,9 @@ codeunit 73727 "LT P132 Two Modals"
         R := PwRunA() + PwRunA() + PwRunA() + PwRunB();
         Observer.Observe('results', R);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupOK,LookupOK,LookupOK,LookupCancel,');
+        Observer.Expect('log', 'A;A;A;B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -359,7 +365,9 @@ codeunit 73727 "LT P132 Two Modals"
         R := PwRunA() + PwRunB() + PwRunA() + PwRunB();
         Observer.Observe('results', R);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupOK,LookupCancel,LookupOK,LookupCancel,');
+        Observer.Expect('log', 'A;B cancel;A;B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -373,7 +381,9 @@ codeunit 73727 "LT P132 Two Modals"
         R := PwRunB() + PwRunB() + PwRunB();
         Observer.Observe('results', R);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupCancel,LookupCancel,LookupCancel,');
+        Observer.Expect('log', 'B cancel;B cancel;B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -387,7 +397,9 @@ codeunit 73727 "LT P132 Two Modals"
         R := PwRunA() + PwRunA() + PwRunA();
         Observer.Observe('results', R);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupCancel,LookupCancel,LookupCancel,');
+        Observer.Expect('log', 'A cancel;A cancel;A cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -405,7 +417,10 @@ codeunit 73727 "LT P132 Two Modals"
         else
             Observer.Observe('b', 'error ' + GetLastErrorCode());
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('results', 'LookupCancel,LookupCancel,');
+        Observer.Expect('b', 'LookupCancel,');
+        Observer.Expect('log', 'A cancel;A cancel;B;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -433,7 +448,10 @@ codeunit 73727 "LT P132 Two Modals"
         else
             Observer.Observe('b2', 'error ' + GetLastErrorCode());
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('b1', 'LookupCancel,');
+        Observer.Expect('b2', 'LookupCancel,');
+        Observer.Expect('log', 'A;A;B;B;');
+        Observer.Verify();
     end;
     // Writer PW: PW_ARunTwice_ThenB_ThenB (RunModal results used) finds Cancel, P132_TwoHandlers_ARunTwiceThenB (RunModal as statements)
     // does not. The handlers that try Cancel, with RunModal as a statement and with its result used, inside a TryFunction and alone.
@@ -452,7 +470,8 @@ codeunit 73727 "LT P132 Two Modals"
         Log.Take();
         Page.RunModal(Page::"LT P132 Modal B");
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'B cancel TestActionNotFound;B ok;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -464,7 +483,8 @@ codeunit 73727 "LT P132 Two Modals"
         Log.Take();
         Page.RunModal(Page::"LT P132 Modal A");
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'A cancel TestActionNotFound;A ok;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -477,7 +497,10 @@ codeunit 73727 "LT P132 Two Modals"
         Observer.Observe('statement ok', Format(PwTryStatementB()));
         Observer.Observe('used', PwRunB());
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('statement ok', 'Yes');
+        Observer.Expect('used', 'LookupCancel,');
+        Observer.Expect('log', 'B cancel TestActionNotFound;B ok;B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -492,7 +515,9 @@ codeunit 73727 "LT P132 Two Modals"
         else
             Observer.Observe('if', 'other');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('if', 'LookupCancel');
+        Observer.Expect('log', 'B cancel;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -512,6 +537,10 @@ codeunit 73727 "LT P132 Two Modals"
         Pg3.LookupMode(true);
         Pg3.RunModal();
         Observer.Observe('lookupmode statement log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('statement log', 'B cancel TestActionNotFound;B ok;');
+        Observer.Expect('used', 'OK');
+        Observer.Expect('used log', 'B cancel TestActionNotFound;B ok;');
+        Observer.Expect('lookupmode statement log', 'B cancel;');
+        Observer.Verify();
     end;
 }

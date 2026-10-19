@@ -630,7 +630,8 @@ codeunit 69852 "LT V Platform Event Tests"
         Seed();
         // Execute of this RDLC report also ends in the Linux tier's RDLC stub (windows-queue.md).
         PwCall(Observer, 'requestpage static', Parameters);
-        Observer.Finish();
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -646,7 +647,13 @@ codeunit 69852 "LT V Platform Event Tests"
         PwCall(Observer, 'procOnly runmodal var nopage', Parameters);
         PwCall(Observer, 'procOnly execute var', Parameters);
         PwCall(Observer, 'procOnly execute static', Parameters);
-        Observer.Finish();
+        Observer.Expect('procOnly run nopage', 'Yes|SubstituteReport(86147,Normal,in=-1);');
+        Observer.Expect('procOnly runmodal nopage', 'Yes|SubstituteReport(86147,RunModal,in=-1);');
+        Observer.Expect('procOnly run var nopage', 'Yes|');
+        Observer.Expect('procOnly runmodal var nopage', 'Yes|');
+        Observer.Expect('procOnly execute var', 'Yes|');
+        Observer.Expect('procOnly execute static', 'Yes|SubstituteReport(86147,Execute,in=-1);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -664,7 +671,14 @@ codeunit 69852 "LT V Platform Event Tests"
         PwCall(Observer, 'procOnly run nopage', Parameters);
         PwCall(Observer, 'procOnly execute var', Parameters);
         PwCall(Observer, 'procOnly saveas xml', Parameters);
-        Observer.Finish();
+        Observer.Expect('saveas var xml', 'Yes|OnDocumentReady(69860,in=No);');
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+        Observer.Expect('saveas static params xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('saveas static record xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('procOnly run nopage', 'Yes|SubstituteReport(86147,Normal,in=-1);');
+        Observer.Expect('procOnly execute var', 'Yes|');
+        Observer.Expect('procOnly saveas xml', 'No error=ReportProcessingOnly:Report 86147 is a processing-only report. Output cannot be rendered and saved to a file.|SubstituteReport(86147,SaveAs,in=-1);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -676,7 +690,8 @@ codeunit 69852 "LT V Platform Event Tests"
         Seed();
         // Pdf, Word and Excel of this RDLC report end in the Linux tier's RDLC stub (windows-queue.md); Html is refused by BC itself.
         PwCall(Observer, 'saveas static html', Parameters);
-        Observer.Finish();
+        Observer.Expect('saveas static html', 'No error=ReportUnsupportedFormat:The Html output format is not supported by the current report layout format.|SubstituteReport(69860,SaveAs,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);ApplicationReportMergeStrategy(69860,Rdlc,in=No);');
+        Observer.Verify();
     end;
 
     local procedure PwArgs(var Observer: Codeunit "Probe Observer"; Which: Text; var Parameters: Text)
@@ -707,7 +722,11 @@ codeunit 69852 "LT V Platform Event Tests"
         PwArgs(Observer, 'requestpage static', Parameters);
         PwArgs(Observer, 'saveas static params xml', Parameters);
         PwArgs(Observer, 'saveas static record xml', Parameters);
-        Observer.Finish();
+        Observer.Expect('saveas var xml', 'Yes|Ready(keys=filterviews,version,objectname,objectid,documenttype,invokedby,invokeddatetime,companyname,printername,duplex,color,defaultcopies,papertray,intent,layoutmodel,layoutname,layoutmimetype,layoutapplicationid,reportrunid, documenttype=text/xml head=Ù‹<?xml version="1.0" standalone="yes"?);');
+        Observer.Expect('requestpage static', 'Yes|Sub(ParametersOnly,xmlLen>0=No,xmlHasDataItem=No,xmlHasPrefix=No,recNo=0);');
+        Observer.Expect('saveas static params xml', 'Yes|Sub(SaveAs,xmlLen>0=Yes,xmlHasDataItem=Yes,xmlHasPrefix=Yes,recNo=0);Ready(keys=filterviews,version,objectname,objectid,documenttype,invokedby,invokeddatetime,companyname,printername,duplex,color,defaultcopies,papertray,intent,layoutmodel,layoutname,layoutmimetype,layoutapplicationid,reportrunid, documenttype=text/xml head=Ù‹<?xml version="1.0" standalone="yes"?);');
+        Observer.Expect('saveas static record xml', 'Yes|Sub(SaveAs,xmlLen>0=No,xmlHasDataItem=No,xmlHasPrefix=No,recNo=68300);Ready(keys=filterviews,version,objectname,objectid,documenttype,invokedby,invokeddatetime,companyname,printername,duplex,color,defaultcopies,papertray,intent,layoutmodel,layoutname,layoutmimetype,layoutapplicationid,reportrunid, documenttype=text/xml head=Ù‹<?xml version="1.0" standalone="yes"?);');
+        Observer.Verify();
     end;
 }
 

@@ -350,7 +350,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesDesc(1, 'desc1_', Observer);
-        Observer.Finish();
+        Observer.Expect('desc1_open', 'F(=><);R1;N(1);N(-1);F(=);R1;C;');
+        Observer.Expect('desc1_next', '');
+        Observer.Expect('desc1_last', '');
+        Observer.Expect('desc1_prev', '');
+        Observer.Expect('desc1_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -359,7 +364,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesDesc(2, 'desc2_', Observer);
-        Observer.Finish();
+        Observer.Expect('desc2_open', 'F(=><);R1;N(1);N(-1);R2;N(-1);R1;F(=);R1;C;');
+        Observer.Expect('desc2_next', '');
+        Observer.Expect('desc2_last', '');
+        Observer.Expect('desc2_prev', 'R2;F(=);R2;C;');
+        Observer.Expect('desc2_first', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -368,7 +378,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesDesc(19, 'desc19_', Observer);
-        Observer.Finish();
+        Observer.Expect('desc19_open', 'F(=><);R1;N(1);N(-1);R2;N(-1);R3;N(-1);R4;N(-1);R5;N(-1);R6;N(-1);R7;N(-1);R8;N(-1);R9;N(-1);R10;N(-1);R11;N(-1);R12;N(-1);R13;N(-1);R14;N(-1);R15;N(-1);R16;N(-1);R17;N(-1);R18;N(-1);R19;N(-1);R1;F(=);R1;C;');
+        Observer.Expect('desc19_next', '');
+        Observer.Expect('desc19_last', '');
+        Observer.Expect('desc19_prev', 'R2;F(=);R2;C;');
+        Observer.Expect('desc19_first', 'R19;F(=);R19;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -377,7 +392,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesDesc(20, 'desc20_', Observer);
-        Observer.Finish();
+        Observer.Expect('desc20_open', 'F(=><);R1;N(1);N(-1);R2;N(-1);R3;N(-1);R4;N(-1);R5;N(-1);R6;N(-1);R7;N(-1);R8;N(-1);R9;N(-1);R10;N(-1);R11;N(-1);R12;N(-1);R13;N(-1);R14;N(-1);R15;N(-1);R16;N(-1);R17;N(-1);R18;N(-1);R19;N(-1);R20;N(-1);R1;F(=);R1;C;');
+        Observer.Expect('desc20_next', '');
+        Observer.Expect('desc20_last', '');
+        Observer.Expect('desc20_prev', 'R2;F(=);R2;C;');
+        Observer.Expect('desc20_first', 'R20;F(=);R20;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +406,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesDesc(21, 'desc21_', Observer);
-        Observer.Finish();
+        Observer.Expect('desc21_open', 'F(=><);R1;N(1);N(-1);R2;N(-1);R3;N(-1);R4;N(-1);R5;N(-1);R6;N(-1);R7;N(-1);R8;N(-1);R9;N(-1);R10;N(-1);R11;N(-1);R12;N(-1);R13;N(-1);R14;N(-1);R15;N(-1);R16;N(-1);R17;N(-1);R18;N(-1);R19;N(-1);R20;N(-1);R21;R1;F(=);R1;C;');
+        Observer.Expect('desc21_next', '');
+        Observer.Expect('desc21_last', '');
+        Observer.Expect('desc21_prev', 'R2;F(=);R2;C;');
+        Observer.Expect('desc21_first', 'R21;N(-1);R21;F(=);R21;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -395,7 +420,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesAsc(19, 'asce19_', Observer);
-        Observer.Finish();
+        Observer.Expect('asce19_open', 'F(=><);R1;N(1);R2;N(1);R3;N(1);R4;N(1);R5;N(1);R6;N(1);R7;N(1);R8;N(1);R9;N(1);R10;N(1);R11;N(1);R12;N(1);R13;N(1);R14;N(1);R15;N(1);R16;N(1);R17;N(1);R18;N(1);R19;N(1);R1;N(-1);F(=);R1;C;');
+        Observer.Expect('asce19_next', 'R2;F(=);R2;C;');
+        Observer.Expect('asce19_last', 'R19;F(=);R19;C;');
+        Observer.Expect('asce19_prev', 'R18;F(=);R18;C;');
+        Observer.Expect('asce19_first', 'R1;F(=);R1;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -404,7 +434,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesAsc(20, 'asce20_', Observer);
-        Observer.Finish();
+        Observer.Expect('asce20_open', 'F(=><);R1;N(1);R2;N(1);R3;N(1);R4;N(1);R5;N(1);R6;N(1);R7;N(1);R8;N(1);R9;N(1);R10;N(1);R11;N(1);R12;N(1);R13;N(1);R14;N(1);R15;N(1);R16;N(1);R17;N(1);R18;N(1);R19;N(1);R20;R1;N(-1);F(=);R1;C;');
+        Observer.Expect('asce20_next', 'R2;F(=);R2;C;');
+        Observer.Expect('asce20_last', 'R20;N(1);R20;F(=);R20;C;');
+        Observer.Expect('asce20_prev', 'R19;F(=);R19;C;');
+        Observer.Expect('asce20_first', 'R1;F(=);R1;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -413,7 +448,12 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         MovesAsc(21, 'asce21_', Observer);
-        Observer.Finish();
+        Observer.Expect('asce21_open', 'F(=><);R1;N(1);R2;N(1);R3;N(1);R4;N(1);R5;N(1);R6;N(1);R7;N(1);R8;N(1);R9;N(1);R10;N(1);R11;N(1);R12;N(1);R13;N(1);R14;N(1);R15;N(1);R16;N(1);R17;N(1);R18;N(1);R19;N(1);R20;R1;N(-1);F(=);R1;C;');
+        Observer.Expect('asce21_next', 'R2;F(=);R2;C;');
+        Observer.Expect('asce21_last', 'R20;N(1);R21;N(1);F(=);R21;C;');
+        Observer.Expect('asce21_prev', 'R20;F(=);R20;C;');
+        Observer.Expect('asce21_first', 'R1;F(=);R1;C;');
+        Observer.Verify();
     end;
 
     // Writer PW: trust-refusals probe list "rows a GoToKey past a full 20-row window reads": GoToKey on the OnFindRecord lists after the open
@@ -467,7 +507,11 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwGoToAsc(25, 23, 5, 25, true, true, Observer);
-        Observer.Finish();
+        Observer.Expect('goto23', 'Yes|23|R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;N(1);R21;N(1);R22;N(1);R23;N(1);R24;N(1);R25;N(1);R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;');
+        Observer.Expect('goToKey5', 'Yes|5|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;');
+        Observer.Expect('goToKey25', 'Yes|25|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;R24;F(=);R24;C;R25;F(=);R25;C;');
+        Observer.Expect('next', '25|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -476,7 +520,8 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwGoToAsc(45, 40, 21, 45, true, false, Observer);
-        Observer.Finish();
+        Observer.Expect('goto40', 'Yes|40|R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;N(1);R21;N(1);R22;N(1);R23;N(1);R24;N(1);R25;N(1);R26;N(1);R27;N(1);R28;N(1);R29;N(1);R30;N(1);R31;N(1);R32;N(1);R33;N(1);R34;N(1);R35;N(1);R36;N(1);R37;N(1);R38;N(1);R39;N(1);R40;R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;R24;F(=);R24;C;R25;F(=);R25;C;R26;F(=);R26;C;R27;F(=);R27;C;R28;F(=);R28;C;R29;F(=);R29;C;R30;F(=);R30;C;R31;F(=);R31;C;R32;F(=);R32;C;R33;F(=);R33;C;R34;F(=);R34;C;R35;F(=);R35;C;R36;F(=);R36;C;R37;F(=);R37;C;R38;F(=);R38;C;R39;F(=);R39;C;R40;N(1);R41;N(1);R42;N(1);R43;N(1);R44;N(1);R45;N(1);R40;F(=);R40;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -485,7 +530,10 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwGoToAsc(45, 40, 21, 45, false, true, Observer);
-        Observer.Finish();
+        Observer.Expect('goToKey21', 'Yes|21|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;F(=);R20;C;R21;F(=);R21;C;');
+        Observer.Expect('goToKey45', 'Yes|45|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;R24;F(=);R24;C;R25;F(=);R25;C;R26;F(=);R26;C;R27;F(=);R27;C;R28;F(=);R28;C;R29;F(=);R29;C;R30;F(=);R30;C;R31;F(=);R31;C;R32;F(=);R32;C;R33;F(=);R33;C;R34;F(=);R34;C;R35;F(=);R35;C;R36;F(=);R36;C;R37;F(=);R37;C;R38;F(=);R38;C;R39;F(=);R39;C;R40;F(=);R40;C;R41;F(=);R41;C;R42;F(=);R42;C;R43;F(=);R43;C;R44;F(=);R44;C;R45;F(=);R45;C;');
+        Observer.Expect('next', '45|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -494,6 +542,9 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer: Codeunit "Probe Observer";
     begin
         PwGoToDesc(25, 3, 20, Observer);
-        Observer.Finish();
+        Observer.Expect('goToKey3', 'Yes|3|R21;N(-1);R22;N(-1);R23;N(-1);R24;N(-1);R25;N(-1);F(=);R25;C;R24;F(=);R24;C;R23;F(=);R23;C;R22;F(=);R22;C;R21;F(=);R21;C;R20;F(=);R20;C;R19;F(=);R19;C;R18;F(=);R18;C;R17;F(=);R17;C;R16;F(=);R16;C;R15;F(=);R15;C;R14;F(=);R14;C;R13;F(=);R13;C;R12;F(=);R12;C;R11;F(=);R11;C;R10;F(=);R10;C;R9;F(=);R9;C;R8;F(=);R8;C;R7;F(=);R7;C;R6;F(=);R6;C;R5;F(=);R5;C;R4;F(=);R4;C;R3;F(=);R3;C;');
+        Observer.Expect('goToKey20', 'Yes|20|R25;F(=);R25;C;R24;F(=);R24;C;R23;F(=);R23;C;R22;F(=);R22;C;R21;F(=);R21;C;R20;F(=);R20;C;');
+        Observer.Expect('next', '19|R19;F(=);R19;C;');
+        Observer.Verify();
     end;
 }

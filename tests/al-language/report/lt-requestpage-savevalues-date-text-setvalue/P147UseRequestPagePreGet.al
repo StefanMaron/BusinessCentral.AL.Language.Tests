@@ -117,7 +117,19 @@ codeunit 70272 "LT P147 Urp PreGet Test"
         Observer.Observe('variable UseRequestPage(false) RunModal', Format(PwTryRunVarNoRp()));
         Observer.ObserveError('variable');
         Observer.Observe('trace 3', Log.Get());
-        Observer.Finish();
+        Observer.Expect('runmodal(id, false, false)', 'Yes');
+        Observer.Expect('runmodal(id, false, false)|text', '');
+        Observer.Expect('runmodal(id, false, false)|code', '');
+        Observer.Expect('trace 1', 'OnInitReport;OnPreReport;get=No;');
+        Observer.Expect('runmodal(id, false)', 'Yes');
+        Observer.Expect('runmodal(id, false)|text', '');
+        Observer.Expect('runmodal(id, false)|code', '');
+        Observer.Expect('trace 2', 'OnInitReport;OnPreReport;get=No;');
+        Observer.Expect('variable UseRequestPage(false) RunModal', 'Yes');
+        Observer.Expect('variable|text', '');
+        Observer.Expect('variable|code', '');
+        Observer.Expect('trace 3', 'OnInitReport;OnPreReport;get=No;');
+        Observer.Verify();
     end;
 }
 

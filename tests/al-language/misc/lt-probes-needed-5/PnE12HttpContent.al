@@ -270,6 +270,18 @@ codeunit 72601 "LT PnE Http Content"
         Answer := true;
         Observer.Observe('copyStreamUsed', Format(PwTryCopyReadAsStreamUsed(Answer)) + ' answer=' + Format(Answer));
         Observer.ObserveError('copyStreamUsed');
-        Observer.Finish();
+        Observer.Expect('copyTextUsed', 'Yes answer=No text=kept');
+        Observer.Expect('copyTextUsed|text', '');
+        Observer.Expect('copyTextUsed|code', '');
+        Observer.Expect('streamUsed', 'Yes answer=No');
+        Observer.Expect('streamUsed|text', '');
+        Observer.Expect('streamUsed|code', '');
+        Observer.Expect('streamStatement', 'No');
+        Observer.Expect('streamStatement|text', 'Microsoft.Dynamics.Nav.Runtime.NavHttpContent variable not initialized.');
+        Observer.Expect('streamStatement|code', 'NotInitialized');
+        Observer.Expect('copyStreamUsed', 'Yes answer=No');
+        Observer.Expect('copyStreamUsed|text', '');
+        Observer.Expect('copyStreamUsed|code', '');
+        Observer.Verify();
     end;
 }
