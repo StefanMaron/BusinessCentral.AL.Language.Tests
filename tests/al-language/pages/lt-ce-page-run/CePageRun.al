@@ -7,6 +7,15 @@
 // Corpus issue 667 (part B), writer CE: Page.RunModal with an Enum or Option filter, OpenView of a descending list with OnFindRecord,
 // Page.Run(0, Rec) and a page id that does not exist, SetTableView on a page with a SourceTableView, Page.Run and Report.Run with a
 // Variant that holds a RecordRef.
+// Probe: written against a local BC 29.0 service tier; every literal below is what that tier produced; 27.5 and 28.5 by the CI matrix.
+// Facts (BC 29.0): Page.RunModal(Id, Rec) shows only the filtered rows for an Enum and for an Option filter, returns LookupOK, and a row
+// made with New() does NOT take the filtered value (Kind and Opt stay A, also once saved). OpenView of a descending list whose
+// OnFindRecord calls Rec.Find(Which) stands on Id 1 (OnFindRecord('=><') from the empty Rec finds the LAST row of the descending view),
+// the same list without the trigger stands on Id 5. Page.Run(0, Rec) opens the table's LookupPageId on the record; for a table without
+// one, and for a page id that does not exist, Page.Run and Page.RunModal raise AL:MetadataNotFound. SetTableView on a page with
+// SourceTableView = where(Kind = const(A)) gives the intersection (Kind B: no rows; A|B: rows 1 and 3; Id 1..2: row 1).
+// A Variant holding a RecordRef is accepted by Page.Run, Page.RunModal and Report.Run (the RecordRef itself does not compile:
+// must-not-compile cases 1633 and 1634).
 
 report 84350 "LT CE Rows Report"
 {
@@ -94,7 +103,12 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.Observe('new_kind', NewKind);
         Observer.Observe('new_opt', NewOpt);
         Observer.Observe('stored', Stored(90));
-        Observer.Finish();
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('rows', '[2][5]');
+        Observer.Expect('new_kind', 'A');
+        Observer.Expect('new_opt', 'A');
+        Observer.Expect('stored', 'A/A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,7 +125,12 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.Observe('new_kind', NewKind);
         Observer.Observe('new_opt', NewOpt);
         Observer.Observe('stored', Stored(90));
-        Observer.Finish();
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('rows', '[2][5]');
+        Observer.Expect('new_kind', 'A');
+        Observer.Expect('new_opt', 'A');
+        Observer.Expect('stored', 'A/A');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -149,7 +168,9 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.Observe('current', L.Id.Value());
         Observer.Observe('first_find', CopyStr(Log.Take(), 1, 40));
         L.Close();
-        Observer.Finish();
+        Observer.Expect('current', '1');
+        Observer.Expect('first_find', 'find(=><)=1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +183,8 @@ codeunit 84362 "LT CE Page Run Tests"
         L.OpenView();
         Observer.Observe('current', L.Id.Value());
         L.Close();
-        Observer.Finish();
+        Observer.Expect('current', '5');
+        Observer.Verify();
     end;
 
     // ---- Page.Run(0, Rec) and a page that does not exist ----
@@ -178,7 +200,8 @@ codeunit 84362 "LT CE Page Run Tests"
         Row.Get(3);
         Page.Run(0, Row);
         Observer.Observe('opened', Seen);
-        Observer.Finish();
+        Observer.Expect('opened', 'LT CE List current=3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -193,7 +216,13 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.ObserveError('run');
         Observer.Observe('runmodal|ok', Format(TryRunZero(Plain, true)));
         Observer.ObserveError('runmodal');
-        Observer.Finish();
+        Observer.Expect('run|ok', 'No');
+        Observer.Expect('run|text', 'You tried to invoke the Page object with the ID 0 from the object LT CE Page Run Tests. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run|code', 'AL:MetadataNotFound');
+        Observer.Expect('runmodal|ok', 'No');
+        Observer.Expect('runmodal|text', 'You tried to invoke the Page object with the ID 0 from the object LT CE Page Run Tests. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('runmodal|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +239,16 @@ codeunit 84362 "LT CE Page Run Tests"
         Row.Get(1);
         Observer.Observe('run_rec|ok', Format(TryRunId(84399, false, true, Row)));
         Observer.ObserveError('run_rec');
-        Observer.Finish();
+        Observer.Expect('run|ok', 'No');
+        Observer.Expect('run|text', 'You tried to invoke the Page object with the ID 84399 from the object LT CE Page Run Tests. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run|code', 'AL:MetadataNotFound');
+        Observer.Expect('runmodal|ok', 'No');
+        Observer.Expect('runmodal|text', 'You tried to invoke the Page object with the ID 84399 from the object LT CE Page Run Tests. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('runmodal|code', 'AL:MetadataNotFound');
+        Observer.Expect('run_rec|ok', 'No');
+        Observer.Expect('run_rec|text', 'You tried to invoke the Page object with the ID 84399 from the object LT CE Page Run Tests. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('run_rec|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -257,7 +295,9 @@ codeunit 84362 "LT CE Page Run Tests"
         Pg.RunModal();
         Observer.Observe('rows', Seen);
         Observer.Observe('filter', FilterSeen);
-        Observer.Finish();
+        Observer.Expect('rows', 'none');
+        Observer.Expect('filter', 'Kind=1 Id=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -274,7 +314,9 @@ codeunit 84362 "LT CE Page Run Tests"
         Pg.RunModal();
         Observer.Observe('rows', Seen);
         Observer.Observe('filter', FilterSeen);
-        Observer.Finish();
+        Observer.Expect('rows', '[1][3]');
+        Observer.Expect('filter', 'Kind=A|B Id=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -291,7 +333,9 @@ codeunit 84362 "LT CE Page Run Tests"
         Pg.RunModal();
         Observer.Observe('rows', Seen);
         Observer.Observe('filter', FilterSeen);
-        Observer.Finish();
+        Observer.Expect('rows', '[1]');
+        Observer.Expect('filter', 'Kind=0 Id=1..2');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -325,7 +369,9 @@ codeunit 84362 "LT CE Page Run Tests"
         if Seen = '' then
             Observer.ObserveError('run');
         Observer.Observe('run|seen', Seen);
-        Observer.Finish();
+        Observer.Expect('run|ok', 'Yes');
+        Observer.Expect('run|seen', 'LT CE List current=5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -344,7 +390,9 @@ codeunit 84362 "LT CE Page Run Tests"
         if Seen = '' then
             Observer.ObserveError('runmodal');
         Observer.Observe('runmodal|seen', Seen);
-        Observer.Finish();
+        Observer.Expect('runmodal|ok', 'Yes');
+        Observer.Expect('runmodal|seen', 'LT CE List current=5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -368,7 +416,9 @@ codeunit 84362 "LT CE Page Run Tests"
         if not Ok then
             Observer.ObserveError('report');
         Observer.Observe('report|log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('report|ok', 'Yes');
+        Observer.Expect('report|log', 'report row 2;report row 3;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +436,9 @@ codeunit 84362 "LT CE Page Run Tests"
         if Seen = '' then
             Observer.ObserveError('run');
         Observer.Observe('run|seen', Seen);
-        Observer.Finish();
+        Observer.Expect('run|ok', 'Yes');
+        Observer.Expect('run|seen', 'LT CE List current=4');
+        Observer.Verify();
     end;
 
     [TryFunction]

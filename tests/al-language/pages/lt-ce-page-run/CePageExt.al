@@ -6,6 +6,12 @@
 // Corpus issue 667 (part B), writer CE: ClearAll in a base page and the globals of a page extension (microsoft/AL issue 6499),
 // Visible of an extension action from a variable set in the extension's OnOpenPage (issue 4684), Editable of a base field
 // modified to an expression over a FlowField of Rec (issue 6720).
+// Probe: written against a local BC 29.0 service tier; every literal below is what that tier produced; 27.5 and 28.5 by the CI matrix.
+// Facts (BC 29.0): ClearAll() in the base page's OnAfterGetRecord clears the globals of a page extension, for a base page of the same
+// app and for page 302 of the Base Application (the extension's flag set in its OnOpenPage reads false in every OnAfterGetRecord).
+// An extension action with Visible = <variable set true in the extension's OnOpenPage> is visible on the TestPage; one whose
+// variable is never set is not. Opening the Item Card with the issue 6720 extension fails: "The identifier 'Stockkeeping Unit
+// Exists' could not be found." (code Expression:Argument), with and without a stockkeeping unit.
 
 codeunit 84363 "LT CE Page Ext Tests"
 {
@@ -33,7 +39,8 @@ codeunit 84363 "LT CE Page Ext Tests"
         Card.OpenView();
         Observer.Observe('open', Log.Take());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'base AGR before ClearAll flag=Yes;base AGR after ClearAll flag=No;ext AGR flag=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -43,6 +50,7 @@ codeunit 84363 "LT CE Page Ext Tests"
         Log: Codeunit "LT CE Log";
         Cust: Record Customer;
         Stat: TestPage "Customer Entry Statistics";
+        Trace: Text;
         Ok: Boolean;
     begin
         if not Cust.Get('LTCE-C1') then begin
@@ -57,8 +65,14 @@ codeunit 84363 "LT CE Page Ext Tests"
         Observer.Observe('open|ok', Format(Ok));
         if not Ok then
             Observer.ObserveError('open');
-        Observer.Observe('open', Log.Take());
-        Observer.Finish();
+        // How often the TestPage reads the record (7 times on BC 29.0) is not asserted: only the order and the flag.
+        Trace := Log.Take();
+        Observer.Observe('open_start', CopyStr(Trace, 1, StrLen('ext OnOpenPage;ext AGR flag=No;')));
+        Observer.Observe('flag_yes_in_any_ext_AGR', Format(StrPos(Trace, 'flag=Yes') > 0));
+        Observer.Expect('open|ok', 'Yes');
+        Observer.Expect('open_start', 'ext OnOpenPage;ext AGR flag=No;');
+        Observer.Expect('flag_yes_in_any_ext_AGR', 'No');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -80,7 +94,10 @@ codeunit 84363 "LT CE Page Ext Tests"
         Observer.Observe('ext_act', Format(Card.ExtAct.Visible()));
         Observer.Observe('ext_act_never_set', Format(Card.ExtActNeverSet.Visible()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('base_act', 'Yes');
+        Observer.Expect('ext_act', 'Yes');
+        Observer.Expect('ext_act_never_set', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +125,13 @@ codeunit 84363 "LT CE Page Ext Tests"
         Sku.Insert();
         Commit();
         ObserveItemCard(Observer, 'with_sku', Item);
-        Observer.Finish();
+        Observer.Expect('no_sku|open', 'No');
+        Observer.Expect('no_sku|text', 'The identifier ''Stockkeeping Unit Exists'' could not be found.');
+        Observer.Expect('no_sku|code', 'Expression:Argument');
+        Observer.Expect('with_sku|open', 'No');
+        Observer.Expect('with_sku|text', 'The identifier ''Stockkeeping Unit Exists'' could not be found.');
+        Observer.Expect('with_sku|code', 'Expression:Argument');
+        Observer.Verify();
     end;
 
     local procedure ObserveItemCard(var Observer: Codeunit "Probe Observer"; Name: Text; Item: Record Item)

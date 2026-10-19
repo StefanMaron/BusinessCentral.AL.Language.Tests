@@ -1,5 +1,6 @@
 // Probe: a Page variable constructs the page at first use (OnInit), a second run of the same variable, setters between runs, and Clear of Page and TestPage variables in every state.
 // Settles: md:273 (second run, setter between runs, construct-on-first-call), md:274 (Clear of a closed, open and trapping variable; the part-page case cannot be written, see the manifest).
+// Corpus issue 667 (writer CE): after Run() (not modal) the variable is a fresh page again (GetStep runs OnInit and reads 100), a second Run() runs OnInit again without error, SetTableView then RunModal a second time raises no error, LookupMode() of a fresh variable is false (and constructs the page).
 
 codeunit 68674 "W2 Init Log"
 {
@@ -335,7 +336,10 @@ codeunit 68675 "W2 Init Tests"
         Observer.Observe('run', Log.Take());
         Observer.Observe('step_after', Format(Pg.GetStep()));
         Observer.Observe('getter', Log.Take());
-        Observer.Finish();
+        Observer.Expect('run', 'OnInit;SetStep(5);OnOpenPage(step=5);PageHandler(step=5);');
+        Observer.Expect('step_after', '100');
+        Observer.Expect('getter', 'OnInit;GetStep;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -355,7 +359,10 @@ codeunit 68675 "W2 Init Tests"
         if not Ok then
             Observer.ObserveError('second_run');
         Observer.Observe('second_run', Log.Take());
-        Observer.Finish();
+        Observer.Expect('first_run', 'OnInit;OnOpenPage(step=100);PageHandler(step=100);');
+        Observer.Expect('second_run|ok', 'Yes');
+        Observer.Expect('second_run', 'OnInit;OnOpenPage(step=100);PageHandler(step=100);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -379,7 +386,10 @@ codeunit 68675 "W2 Init Tests"
         if not Ok then
             Observer.ObserveError('second_run');
         Observer.Observe('second_run', Log.Take());
-        Observer.Finish();
+        Observer.Expect('first_run', 'OnInit;OnOpenPage(step=100);Handler(step=100);');
+        Observer.Expect('second_run|ok', 'Yes');
+        Observer.Expect('second_run', 'OnOpenPage(step=100);Handler(step=100);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -394,7 +404,10 @@ codeunit 68675 "W2 Init Tests"
         Observer.Observe('log', Log.Take());
         Pg.LookupMode(true);
         Observer.Observe('after_set', Format(Pg.LookupMode()));
-        Observer.Finish();
+        Observer.Expect('default', 'No');
+        Observer.Expect('log', 'OnInit;');
+        Observer.Expect('after_set', 'Yes');
+        Observer.Verify();
     end;
 
     [PageHandler]
