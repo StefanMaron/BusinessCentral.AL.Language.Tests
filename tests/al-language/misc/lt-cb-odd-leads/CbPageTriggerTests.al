@@ -210,6 +210,7 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Observer: Codeunit "Probe Observer";
         Rc: TestPage "LT CB Role Center";
     begin
+        Seed();
         Log.Take();
         ClearLastError();
         Observer.Observe('open_ok', Format(TryOpenRoleCenter(Rc)));
@@ -223,7 +224,7 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Observer.Expect('invoke_ok', 'Yes');
         Observer.Expect('invoke|text', '');
         Observer.Expect('invoke|code', '');
-        Observer.Expect('log', 'card OnAfterGetCurrRecord ;card handler;');
+        Observer.Expect('log', 'card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;card handler;');
         Observer.Verify();
     end;
 
