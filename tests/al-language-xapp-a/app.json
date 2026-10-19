@@ -1,0 +1,29 @@
+{
+  "id": "cd6a4292-f27b-4af9-89bc-15a5956f5c71",
+  "name": "AL Language XApp A",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "Cross-app fixture A: the base app of the cross-app fixtures.",
+  "description": "Holds the integration event of the cross-app subscriber order probe, tables that other apps extend, and a Company Triggers counter. Depends on no app. The AL Language Coverage Tests app and the other cross-app fixtures depend on it. The app id, name and publisher are fixed on purpose: they decide the candidate orders of the cross-app subscriber order probe (CONTRIBUTING.md, \"Multi-app fixtures\"). Do not change them.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "dependencies": [],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 61100,
+      "to": 61109
+    },
+    {
+      "from": 61130,
+      "to": 61139
+    }
+  ],
+  "features": [],
+  "runtime": "18.0",
+  "target": "Cloud"
+}

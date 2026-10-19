@@ -8,6 +8,7 @@ Thank you for contributing! This repo is an executable specification proving AL 
 - [Writing a test](#writing-a-test)
 - [Naming conventions](#naming-conventions)
 - [Fixture library](#fixture-library)
+- [Multi-app fixtures](#multi-app-fixtures)
 - [Coverage gaps](#coverage-gaps)
 - [Version-gated tests (preprocessor directives)](#version-gated-tests-preprocessor-directives)
 - [Out-of-scope features](#out-of-scope-features)
@@ -144,6 +145,40 @@ All tests share a single fixture library in `_fixtures/`. Never define your own 
 
 ---
 
+## Multi-app fixtures
+
+Some behavior only shows when code is spread over several apps: an extension of a table that another app extends too, a subscriber in another app, the order of subscribers of different apps. Besides the main test app (`tests/al-language`) and the AL Internals Test Fixture (`tests/al-language-internals-fixture`), CI publishes three small apps for these cases. They hold no tests; the tests stay in the main test app, which depends on all of them.
+
+| Folder | App id | Name | Publisher | Object ids | Depends on | What it is for |
+|---|---|---|---|---|---|---|
+| `tests/al-language-xapp-a` | `cd6a4292-f27b-4af9-89bc-15a5956f5c71` | AL Language XApp A | AL Language | 61100-61109, 61130-61139 | nothing | the base app: an event other apps subscribe to, tables other apps extend, a local event, a Company Triggers counter |
+| `tests/al-language-xapp-b` | `c87ced6d-11a6-4ad2-87c7-ac10083d0a2f` | AL Language XApp B | Zulu Probe Publisher | 61110-61119, 61140-61149 | fixture, A | table extensions of A's tables, a page with a protected variable whose type is a fixture table |
+| `tests/al-language-xapp-c` | `0df0fadc-d339-4b0f-a1d5-51dc51f10900` | AL Language XApp C | Bravo Probe Publisher | 61120-61129, 61150-61159 | A, B (not the fixture) | a page extension of B's page |
+
+CI publishes the fixture, A, B, C and then the main test app (`app_dirs` of every job in `ci.yml` that compiles `al-language`, and `$apps` in `nightly-windows.yml`). A change to one of these apps is a change to a dependency app, so the pull request gets a full run.
+
+**The ids, names and publishers are fixed on purpose.** The cross-app subscriber order probe (`tests/al-language/events/lt-bw-subscriber-order/`) needs every candidate rule to predict another order of the four apps A, B, C and the main app (M):
+
+| Rule | Order of the apps |
+|---|---|
+| dependency and publish order | A B C M |
+| app id as text | C M B A |
+| app id as the bytes of `Guid.ToByteArray` | B A M C |
+| app id as a SQL Server `uniqueidentifier` | A C B M |
+| app name | M A B C |
+| publisher, then name | M A C B |
+
+Each reversed order differs from all of these too. Each app has two object id blocks that interleave with the other apps' blocks, so an order by object id alone (ignoring the app) is also told apart. Do not change an app id, name or publisher, and do not move an object to another block, without redoing that table.
+
+**Adding a cross-app case.**
+
+1. Put the objects the other apps need into the app that fits the dependencies (A for a base object, B for an extension of A, C for an extension of B without the fixture). Use the free ids of that app's blocks; a new block needs a range outside every other app's `idRanges` (free today: 61160-61199 and 61350-61399).
+2. Put the test into the main test app, as for any other test. It can name objects of A, B and C.
+3. A cross-app case that must not compile goes into `tests/must-not-compile/cases/` with `// @depends AL Language XApp A,AL Language XApp B` (the names of the corpus apps the case app depends on; see `tests/must-not-compile/README.md`). To check it locally, compile the fixture, A, B and C first and put their `.app` files into the `--symbols` folder.
+4. A new app is a bigger change: give it an id range outside every other app, add it to `app_dirs` of every job in `ci.yml` that compiles `al-language` (before `tests/al-language`), to `$apps` in `nightly-windows.yml`, to `CORPUS_DEPENDENCIES` in `.github/scripts/check-must-not-compile.py`, and to the tables above. Tell al-runtime-rs: its corpus runner loads the corpus apps by folder.
+
+---
+
 ## Version-gated tests (preprocessor directives)
 
 Tests that rely on APIs only available from a specific BC version must be wrapped in a preprocessor guard:
@@ -268,7 +303,7 @@ Every test codeunit runs when one of these is true:
 - The change touches one of these:
   - a file under `.github/` (workflows and the scripts CI runs);
   - an `app.json`, the symbols in an app's `.alpackages/` folder, or an app's resource folder (`NavApp.ListResources` sees every resource);
-  - the fixture app `tests/al-language-internals-fixture`, which the other apps depend on;
+  - a dependency app: an app in `app_dirs` of a job and in no job's `test_app_dirs` (the fixture app `tests/al-language-internals-fixture` and the cross-app fixtures `tests/al-language-xapp-a`, `-b` and `-c`, which the other apps depend on);
   - a procedure with `[EventSubscriber]`, because a subscriber can run during any test;
   - a codeunit with `Subtype = Install`, `Upgrade` or `TestRunner`;
   - a permission set, permission set extension or entitlement;

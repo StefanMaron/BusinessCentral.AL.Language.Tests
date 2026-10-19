@@ -37,6 +37,15 @@ expect(mnc.check([('AL0161', '')], found) == [], 'empty text matches any')
 expect(mnc.applies({'from': '28'}, 27, None) is False and mnc.applies({'until': '27'}, 28, None) is False, 'bc range')
 expect(mnc.applies({'min-al': '18'}, 27, 16) is False and mnc.applies({'min-al': '18'}, 27, 18) is True, 'min-al')
 
+d = mnc.dependency('AL Language XApp B')
+expect(d == {'id': 'c87ced6d-11a6-4ad2-87c7-ac10083d0a2f', 'name': 'AL Language XApp B', 'publisher': 'Zulu Probe Publisher', 'version': '1.0.0.0'}, 'corpus dependency: %r' % d)
+expect(mnc.dependency('Base Application')['version'] == '27.0.0.0', 'Microsoft dependency version')
+for name, (gid, pub, ver) in mnc.CORPUS_DEPENDENCIES.items():
+    folder = {'AL Internals Test Fixture': 'al-language-internals-fixture'}.get(name, 'al-language-xapp-' + name[-1].lower())
+    import json
+    manifest = json.load(open(os.path.join(here, '..', '..', 'tests', folder, 'app.json')))
+    expect((manifest['id'], manifest['name'], manifest['publisher'], manifest['version']) == (gid, name, pub, ver), 'CORPUS_DEPENDENCIES %s matches %s/app.json' % (name, folder))
+
 cases = os.path.join(here, '..', '..', 'tests', 'must-not-compile', 'cases')
 for f in sorted(os.listdir(cases)):
     if f.endswith('.al'):

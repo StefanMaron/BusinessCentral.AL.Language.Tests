@@ -31,6 +31,23 @@ DEPENDENCIES = {
     "Base Application": ("437dbf0e-84ff-417a-965d-ed2bb9650972", "Microsoft"),
     "System Application": ("63ca2fa4-4f03-4f2b-a480-172fef340d3f", "Microsoft"),
 }
+# Corpus apps a cross-app case may depend on (CONTRIBUTING.md, "Multi-app fixtures"). Their compiled .app files, and those of their own
+# dependencies, must be in the --symbols folder: compile them first, in the order ci.yml lists them.
+CORPUS_DEPENDENCIES = {
+    "AL Internals Test Fixture": ("f1e2d3c4-b5a6-7890-fedc-ba9876543210", "AL Language", "1.0.0.0"),
+    "AL Language XApp A": ("cd6a4292-f27b-4af9-89bc-15a5956f5c71", "AL Language", "1.0.0.0"),
+    "AL Language XApp B": ("c87ced6d-11a6-4ad2-87c7-ac10083d0a2f", "Zulu Probe Publisher", "1.0.0.0"),
+    "AL Language XApp C": ("0df0fadc-d339-4b0f-a1d5-51dc51f10900", "Bravo Probe Publisher", "1.0.0.0"),
+}
+
+
+def dependency(name):
+    """The app.json dependency entry for a name of @depends."""
+    if name in CORPUS_DEPENDENCIES:
+        gid, pub, ver = CORPUS_DEPENDENCIES[name]
+    else:
+        (gid, pub), ver = DEPENDENCIES[name], "27.0.0.0"
+    return {"id": gid, "name": name, "publisher": pub, "version": ver}
 
 
 def parse_header(text):
@@ -82,8 +99,7 @@ def build_project(root, case_path, h, symbols, runtime=None):
     for name in h.get('depends', 'Base Application,System Application').split(','):
         name = name.strip()
         if name:
-            gid, pub = DEPENDENCIES[name]
-            app['dependencies'].append({"id": gid, "name": name, "publisher": pub, "version": "27.0.0.0"})
+            app['dependencies'].append(dependency(name))
     app.update(h['appjson'])
     os.makedirs(os.path.join(root, 'src'))
     os.makedirs(os.path.join(root, '.alpackages'))
