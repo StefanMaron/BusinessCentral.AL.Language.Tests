@@ -4,6 +4,7 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: P67 Enum assigned to an Option variable and field
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 68): tables 83866, 83867 and BN3_CalcFormulaOptionAgainstEnum (CalcFormula field() between Option and Enum).
 
 codeunit 70195 "LT P67 Enum To Option"
 {
@@ -122,4 +123,95 @@ codeunit 70195 "LT P67 Enum To Option"
         Observer.Expect('validate_three', '3');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 68: CalcFields of count() FlowFields that filter an Option source field by an Enum field and an Enum source field by an
+    // Option field (the compiler gives warning AL0603 for both).
+    [Test]
+    procedure BN3_CalcFormulaOptionAgainstEnum()
+    var
+        Observer: Codeunit "Probe Observer";
+        Src: Record "LT BN3 CF Src";
+        Hdr: Record "LT BN3 CF Hdr";
+    begin
+        Src.DeleteAll();
+        Hdr.DeleteAll();
+        Src.Id := 1;
+        Src.Opt := Src.Opt::B;
+        Src.Kind := Enum::"LT P67 Dst"::Dos;
+        Src.Insert();
+        Src.Id := 2;
+        Src.Opt := Src.Opt::B;
+        Src.Kind := Enum::"LT P67 Dst"::Uno;
+        Src.Insert();
+        Src.Id := 3;
+        Src.Opt := Src.Opt::D;
+        Src.Kind := Enum::"LT P67 Dst"::Uno;
+        Src.Insert();
+        Hdr.Code := 'H';
+        Hdr.Kind := Enum::"LT P67 Dst"::Uno;
+        Hdr.Opt := Hdr.Opt::B;
+        Hdr.Insert();
+        Hdr.CalcFields(OptByEnum, EnumByOpt);
+        Observer.Observe('Kind Uno / Opt B', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
+        Hdr.Kind := Enum::"LT P67 Dst"::Tres;
+        Hdr.Opt := Hdr.Opt::C;
+        Hdr.Modify();
+        Hdr.CalcFields(OptByEnum, EnumByOpt);
+        Observer.Observe('Kind Tres / Opt C', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
+        Hdr.Kind := Enum::"LT P67 Dst"::Dos;
+        Hdr.Opt := Hdr.Opt::A;
+        Hdr.Modify();
+        Hdr.CalcFields(OptByEnum, EnumByOpt);
+        Observer.Observe('Kind Dos / Opt A', Format(Hdr.OptByEnum) + '|' + Format(Hdr.EnumByOpt));
+        Observer.Expect('Kind Uno / Opt B', '2|2');
+        Observer.Expect('Kind Tres / Opt C', '1|1');
+        Observer.Expect('Kind Dos / Opt A', '0|0');
+        Observer.Verify();
+    end;
+}
+
+// Corpus #664 item 68 (microsoft/AL issue 7613): CalcFormula count() whose where(... = field(...)) pairs an Option field with an Enum field.
+// The option members (A,B,C,D) share no names with the enum values (None,Uno,Dos,Tres), so a match by name would find nothing.
+table 83866 "LT BN3 CF Src"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Opt; Option) { OptionMembers = A,B,C,D; }
+        field(3; Kind; Enum "LT P67 Dst") { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+table 83867 "LT BN3 CF Hdr"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Code; Code[10]) { }
+        field(2; Kind; Enum "LT P67 Dst") { }
+        field(3; Opt; Option) { OptionMembers = A,B,C,D; }
+        field(4; OptByEnum; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("LT BN3 CF Src" where(Opt = field(Kind)));
+        }
+        field(5; EnumByOpt; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("LT BN3 CF Src" where(Kind = field(Opt)));
+        }
+    }
+
+    keys
+    {
+        key(PK; Code) { Clustered = true; }
+    }
 }
