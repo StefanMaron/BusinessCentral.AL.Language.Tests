@@ -143,7 +143,29 @@ codeunit 73549 "LT P130 Date Filters"
             Observer.Observe('dtm ' + Format(M), Format(Back.Dtm, 0, 9) + '|' + Format(Back.Dtm = DT) + '|' + Format(R.Dtm = DT));
             Observer.Observe('tm ' + Format(M), Format(Back.Tm, 0, 9) + '|' + Format(Back.Tm = T) + '|' + Format(R.Tm = T));
         end;
-        Observer.Finish();
+        Observer.Expect('dtm 1', '2024-03-25T00:00:00Z|No|Yes');
+        Observer.Expect('tm 1', '00:00:00|No|Yes');
+        Observer.Expect('dtm 2', '2024-03-25T00:00:00.003Z|No|Yes');
+        Observer.Expect('tm 2', '00:00:00.003|No|Yes');
+        Observer.Expect('dtm 3', '2024-03-25T00:00:00.003Z|Yes|Yes');
+        Observer.Expect('tm 3', '00:00:00.003|Yes|Yes');
+        Observer.Expect('dtm 4', '2024-03-25T00:00:00.003Z|No|Yes');
+        Observer.Expect('tm 4', '00:00:00.003|No|Yes');
+        Observer.Expect('dtm 5', '2024-03-25T00:00:00.007Z|No|Yes');
+        Observer.Expect('tm 5', '00:00:00.007|No|Yes');
+        Observer.Expect('dtm 6', '2024-03-25T00:00:00.007Z|No|Yes');
+        Observer.Expect('tm 6', '00:00:00.007|No|Yes');
+        Observer.Expect('dtm 7', '2024-03-25T00:00:00.007Z|Yes|Yes');
+        Observer.Expect('tm 7', '00:00:00.007|Yes|Yes');
+        Observer.Expect('dtm 8', '2024-03-25T00:00:00.007Z|No|Yes');
+        Observer.Expect('tm 8', '00:00:00.007|No|Yes');
+        Observer.Expect('dtm 9', '2024-03-25T00:00:00.01Z|No|Yes');
+        Observer.Expect('tm 9', '00:00:00.01|No|Yes');
+        Observer.Expect('dtm 998', '2024-03-25T00:00:00.997Z|No|Yes');
+        Observer.Expect('tm 998', '00:00:00.997|No|Yes');
+        Observer.Expect('dtm 999', '2024-03-25T00:00:01Z|No|Yes');
+        Observer.Expect('tm 999', '00:00:01|No|Yes');
+        Observer.Verify();
     end;
 
     // Corpus issue 672 item 2: a DateTime range whose upper end is 23:59:59.999 (rows stored at 2024-03-25 00:00:00.000 and at
@@ -184,7 +206,15 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Observe('time eq .001 count', Format(R.Count()));
         R.SetRange(Tm, 120000.002T);
         Observer.Observe('time eq .002 count', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('to .999 count', '2');
+        Observer.Expect('to .999 getfilters', 'Dtm: 03/01/24 12:00 AM..03/24/24 11:59:59.999 PM');
+        Observer.Expect('to .998 count', '1');
+        Observer.Expect('to .996 count', '1');
+        Observer.Expect('eq .001 count', '1');
+        Observer.Expect('eq prev .999 count', '1');
+        Observer.Expect('time eq .001 count', '1');
+        Observer.Expect('time eq .002 count', '0');
+        Observer.Verify();
     end;
 
     // Builds the values inside the asserterror (DMY2Date, ClosingDate, CreateDateTime), so an error of any step is captured; Stage names
@@ -239,7 +269,28 @@ codeunit 73549 "LT P130 Date Filters"
         StoreDates(Observer, 'date closing 1752-12-31', 1752, 12, 31, true, 0, 0, 0, 0T);
         StoreDates(Observer, 'datetime 1753-01-01 00:00', 0, 0, 0, false, 1753, 1, 1, 000000T);
         StoreDates(Observer, 'datetime 1752-12-31 12:00', 0, 0, 0, false, 1752, 12, 31, 120000T);
-        Observer.Finish();
+        Observer.Expect('blank|stage', 'stored');
+        Observer.Expect('blank|text', 'stored:||Yes|Yes');
+        Observer.Expect('blank|code', 'Dialog');
+        Observer.Expect('date 1753-01-01|stage', 'get');
+        Observer.Expect('date 1753-01-01|text', 'Cannot write the value 01/01/1753 to the field Dt in the table LT P130 Filter Row because the value is either too long or the content is invalid.');
+        Observer.Expect('date 1753-01-01|code', 'NDBCS:BadCSideData');
+        Observer.Expect('date 1752-12-31|stage', 'get');
+        Observer.Expect('date 1752-12-31|text', 'Cannot write the value 12/31/1752 to the field Dt in the table LT P130 Filter Row because the value is either too long or the content is invalid.');
+        Observer.Expect('date 1752-12-31|code', 'NDBCS:BadCSideData');
+        Observer.Expect('date 0001-01-01|stage', 'stored');
+        Observer.Expect('date 0001-01-01|text', 'stored:||Yes|Yes');
+        Observer.Expect('date 0001-01-01|code', 'Dialog');
+        Observer.Expect('date closing 1752-12-31|stage', 'get');
+        Observer.Expect('date closing 1752-12-31|text', 'Cannot write the value C12/31/1752 to the field Dt in the table LT P130 Filter Row because the value is either too long or the content is invalid.');
+        Observer.Expect('date closing 1752-12-31|code', 'NDBCS:BadCSideData');
+        Observer.Expect('datetime 1753-01-01 00:00|stage', 'get');
+        Observer.Expect('datetime 1753-01-01 00:00|text', 'Cannot write the value 01/01/1753 12:00 AM to the field Dtm in the table LT P130 Filter Row because the value is either too long or the content is invalid.');
+        Observer.Expect('datetime 1753-01-01 00:00|code', 'NDBCS:BadCSideData');
+        Observer.Expect('datetime 1752-12-31 12:00|stage', 'get');
+        Observer.Expect('datetime 1752-12-31 12:00|text', 'Cannot write the value 12/31/1752 12:00 PM to the field Dtm in the table LT P130 Filter Row because the value is either too long or the content is invalid.');
+        Observer.Expect('datetime 1752-12-31 12:00|code', 'NDBCS:BadCSideData');
+        Observer.Verify();
     end;
 
     // Corpus issue 672 item 8, upper end of the SQL datetime range (same form as BT_DateAndDateTime_SqlRangeOnInsert).
@@ -250,6 +301,12 @@ codeunit 73549 "LT P130 Date Filters"
     begin
         StoreDates(Observer, 'datetime 9999-12-31 23:59:59.997', 0, 0, 0, false, 9999, 12, 31, 235959.997T);
         StoreDates(Observer, 'datetime 9999-12-31 23:59:59.999', 0, 0, 0, false, 9999, 12, 31, 235959.999T);
-        Observer.Finish();
+        Observer.Expect('datetime 9999-12-31 23:59:59.997|stage', 'stored');
+        Observer.Expect('datetime 9999-12-31 23:59:59.997|text', 'stored:|9999-12-31T23:59:59.997Z|Yes|Yes');
+        Observer.Expect('datetime 9999-12-31 23:59:59.997|code', 'Dialog');
+        Observer.Expect('datetime 9999-12-31 23:59:59.999|stage', 'get');
+        Observer.Expect('datetime 9999-12-31 23:59:59.999|text', 'Cannot write the value 12/31/9999 11:59 PM to the field Dtm in the table LT P130 Filter Row because the value is either too long or the content is invalid.');
+        Observer.Expect('datetime 9999-12-31 23:59:59.999|code', 'NDBCS:BadCSideData');
+        Observer.Verify();
     end;
 }
