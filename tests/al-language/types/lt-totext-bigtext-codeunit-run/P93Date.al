@@ -212,4 +212,52 @@ codeunit 70320 "LT P93 Date"
         Observer.Expect('format-len', '0');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure TryWeekParts(D: Date; var R: Text)
+    begin
+        R := Format(D.DayOfWeek()) + '|' + Format(D.WeekNo()) + '|' + Format(D.Year());
+    end;
+
+    [TryFunction]
+    local procedure TryDwy(D: Date; var R: Text)
+    begin
+        R := Format(Date2DWY(D, 1)) + ',' + Format(Date2DWY(D, 2)) + ',' + Format(Date2DWY(D, 3));
+    end;
+
+    local procedure WeekParts(D: Date): Text
+    var
+        R: Text;
+        R2: Text;
+    begin
+        if not TryWeekParts(D, R) then
+            R := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        if not TryDwy(D, R2) then
+            R2 := 'error';
+        exit(R + '|dwy:' + R2);
+    end;
+
+    // Corpus issue 672 item 7: Date.DayOfWeek / WeekNo / Year (DayOfWeek|WeekNo|Year|dwy:Date2DWY 1,2,3) at ISO week-year boundaries
+    // (2024-12-30 is a Monday in ISO week 1 of 2025; 2026-01-01 is a Thursday), for a closing date and for 0D.
+    [Test]
+    procedure BT_DayOfWeek_WeekNo_Year()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('2026-01-01', WeekParts(20260101D));
+        Observer.Observe('2024-12-30', WeekParts(20241230D));
+        Observer.Observe('2027-01-01', WeekParts(20270101D));
+        Observer.Observe('2021-01-03', WeekParts(20210103D));
+        Observer.Observe('2020-12-31', WeekParts(20201231D));
+        Observer.Observe('closing 2024-12-30', WeekParts(ClosingDate(20241230D)));
+        Observer.Observe('0D', WeekParts(0D));
+        Observer.Expect('2026-01-01', '4|1|2026|dwy:4,1,2026');
+        Observer.Expect('2024-12-30', '1|1|2024|dwy:1,1,2025');
+        Observer.Expect('2027-01-01', '5|53|2027|dwy:5,53,2026');
+        Observer.Expect('2021-01-03', '7|53|2021|dwy:7,53,2020');
+        Observer.Expect('2020-12-31', '4|53|2020|dwy:4,53,2020');
+        Observer.Expect('closing 2024-12-30', '1|1|2024|dwy:1,1,2025');
+        Observer.Expect('0D', 'error:The date is not valid.|DateInvalid|dwy:error');
+        Observer.Verify();
+    end;
 }

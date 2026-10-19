@@ -247,4 +247,74 @@ codeunit 70055 "LT ScT Evaluate Num"
         Observer.Expect('c70000', 'No|z');
         Observer.Verify();
     end;
+
+    local procedure Hidden(Code: Integer): Text
+    var
+        C: Text[1];
+    begin
+        C[1] := Code;
+        exit(C);
+    end;
+
+    local procedure EvalDateHidden(Txt: Text): Text
+    var
+        D: Date;
+        Ok: Boolean;
+    begin
+        D := 20200202D;
+        Ok := Evaluate(D, Txt, 9);
+        exit(Format(Ok) + '|' + Format(D, 0, 9));
+    end;
+
+    // Corpus issue 672 item 12 (AL issues 5307 and 4999): Evaluate of number texts with an invisible character at the end or at the
+    // start: U+202C (pop directional formatting), U+200B (zero width space), U+FEFF (byte order mark) and U+00A0 (no-break space)
+    // (result | value afterwards; the value starts as 777, a Date as 2020-02-02; Date texts use format 9).
+    [Test]
+    procedure BT_Evaluate_InvisibleCharacter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Codes: List of [Integer];
+        Code: Integer;
+        H: Text;
+    begin
+        Observer.Observe('dec max plain', EvalDec('999999999999999.99'));
+        Observer.Observe('int plain', EvalInt('1999999998'));
+        Codes.AddRange(8236, 8203, 65279, 160);
+        foreach Code in Codes do begin
+            H := Hidden(Code);
+            Observer.Observe(Format(Code) + ' int end', EvalInt('1999999998' + H));
+            Observer.Observe(Format(Code) + ' int start', EvalInt(H + '1999999998'));
+            Observer.Observe(Format(Code) + ' dec end', EvalDec('999999999999999.99' + H));
+            Observer.Observe(Format(Code) + ' big end', EvalBig('4294967294' + H));
+            Observer.Observe(Format(Code) + ' big small end', EvalBig('999999998' + H));
+            Observer.Observe(Format(Code) + ' date end', EvalDateHidden('2024-03-05' + H));
+        end;
+        Observer.Expect('dec max plain', 'Yes|999999999999999.99');
+        Observer.Expect('int plain', 'Yes|1999999998');
+        Observer.Expect('8236 int end', 'No|777');
+        Observer.Expect('8236 int start', 'No|777');
+        Observer.Expect('8236 dec end', 'No|777');
+        Observer.Expect('8236 big end', 'No|777');
+        Observer.Expect('8236 big small end', 'No|777');
+        Observer.Expect('8236 date end', 'No|2020-02-02');
+        Observer.Expect('8203 int end', 'No|777');
+        Observer.Expect('8203 int start', 'No|777');
+        Observer.Expect('8203 dec end', 'No|777');
+        Observer.Expect('8203 big end', 'No|777');
+        Observer.Expect('8203 big small end', 'No|777');
+        Observer.Expect('8203 date end', 'No|2020-02-02');
+        Observer.Expect('65279 int end', 'No|777');
+        Observer.Expect('65279 int start', 'No|777');
+        Observer.Expect('65279 dec end', 'No|777');
+        Observer.Expect('65279 big end', 'No|777');
+        Observer.Expect('65279 big small end', 'No|777');
+        Observer.Expect('65279 date end', 'No|2020-02-02');
+        Observer.Expect('160 int end', 'No|777');
+        Observer.Expect('160 int start', 'No|777');
+        Observer.Expect('160 dec end', 'No|777');
+        Observer.Expect('160 big end', 'No|777');
+        Observer.Expect('160 big small end', 'No|777');
+        Observer.Expect('160 date end', 'Yes|2024-03-05');
+        Observer.Verify();
+    end;
 }
