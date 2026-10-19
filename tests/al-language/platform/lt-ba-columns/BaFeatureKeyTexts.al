@@ -17,7 +17,10 @@ codeunit 80773 "LT BA Feature Key Texts"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveKey(Observer, 'FinancialReportDefaults');
-        Observer.Finish();
+        Observer.Expect('desc', 'Feature Update: Provides functionality for having default values for financial reports');
+        Observer.Expect('link', 'https://learn.microsoft.com/en-us/dynamics365/release-plan/2025wave2/smb/dynamics365-business-central/use-enhanced-financial-reporting');
+        Observer.Expect('eng', 'Feature Update: Provides functionality for having default values for financial reports');
+        Observer.Verify();
     end;
 
     [Test]
@@ -26,7 +29,10 @@ codeunit 80773 "LT BA Feature Key Texts"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveKey(Observer, 'DisableSoapWebServicesOnMicrosoftUIPages');
-        Observer.Finish();
+        Observer.Expect('desc', 'Feature: Disable SOAP web services on Microsoft UI pages');
+        Observer.Expect('link', 'https://go.microsoft.com/fwlink/?linkid=2312202');
+        Observer.Expect('eng', 'Feature: Disable SOAP web services on Microsoft UI pages');
+        Observer.Verify();
     end;
 
     [Test]
@@ -35,7 +41,10 @@ codeunit 80773 "LT BA Feature Key Texts"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveKey(Observer, 'SalesPrices');
-        Observer.Finish();
+        Observer.Expect('desc', 'Feature Update: New sales pricing experience');
+        Observer.Expect('link', 'https://go.microsoft.com/fwlink/?linkid=2136722');
+        Observer.Expect('eng', 'Feature Update: New sales pricing experience');
+        Observer.Verify();
     end;
 
     [Test]
@@ -44,7 +53,10 @@ codeunit 80773 "LT BA Feature Key Texts"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveKey(Observer, 'FullTextSearch');
-        Observer.Finish();
+        Observer.Expect('desc', 'Feature: Use optimized text search in lists');
+        Observer.Expect('link', 'https://go.microsoft.com/fwlink/?linkid=2280603');
+        Observer.Expect('eng', 'Feature: Use optimized text search in lists');
+        Observer.Verify();
     end;
 
     [Test]
@@ -53,7 +65,10 @@ codeunit 80773 "LT BA Feature Key Texts"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveKey(Observer, 'ConcurrentJobPosting');
-        Observer.Finish();
+        Observer.Expect('desc', 'Feature Update: Enable multiple users to post job ledger entries at the same time');
+        Observer.Expect('link', 'https://go.microsoft.com/fwlink/?linkid=2299833');
+        Observer.Expect('eng', 'Feature Update: Enable multiple users to post job ledger entries at the same time');
+        Observer.Verify();
     end;
 
     local procedure ObserveKey(var Observer: Codeunit "Probe Observer"; KeyId: Text[50])

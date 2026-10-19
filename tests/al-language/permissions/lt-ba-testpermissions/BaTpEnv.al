@@ -25,7 +25,9 @@ codeunit 80761 "LT BA TP Env"
         Message('LT BA');
         Observer.Observe('installed', Installed('130450,130451,130452,130453,130454,130455,130301,130302,132218,132553,130440'));
         Observer.Observe('runner', Probe.RunnerFrames());
-        Observer.Finish();
+        Observer.Expect('installed', '130450=yes 130451=yes 130452=yes 130453=yes 130454=yes 130455=yes 130301=no 130302=no 132218=no 132553=no 130440=no ');
+        Observer.Expect('runner', '130450,130454,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -37,7 +39,8 @@ codeunit 80761 "LT BA TP Env"
         Message('LT BA');
         ApplicationArea('#Basic');
         Observer.Observe('area', ApplicationArea());
-        Observer.Finish();
+        Observer.Expect('area', '#Basic');
+        Observer.Verify();
     end;
 
     [Test]
@@ -49,7 +52,8 @@ codeunit 80761 "LT BA TP Env"
         Message('LT BA');
         Observer.Observe('area', ApplicationArea());
         ApplicationArea('');
-        Observer.Finish();
+        Observer.Expect('area', '');
+        Observer.Verify();
     end;
 
     local procedure Installed(IdList: Text): Text

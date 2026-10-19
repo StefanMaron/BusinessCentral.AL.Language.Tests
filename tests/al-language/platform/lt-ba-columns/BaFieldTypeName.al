@@ -54,7 +54,8 @@ codeunit 80772 "LT BA Field Type Name"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('rows', Rows(1, 9));
-        Observer.Finish();
+        Observer.Expect('rows', 'FInteger:Integer/4 FCode:Code20/20 FDecimal:Decimal/12 FOption:Option/4 FEnum:Option/4 FBoolean:Boolean/4 FDate:Date/4 FDateTime:DateTime/8 FTime:Time/4 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -63,7 +64,8 @@ codeunit 80772 "LT BA Field Type Name"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('rows', Rows(10, 19));
-        Observer.Finish();
+        Observer.Expect('rows', 'FGuid:GUID/16 FBlob:BLOB/8 FMedia:Media/16 FMediaSet:MediaSet/16 FBigInteger:BigInteger/8 FDuration:Duration/8 FDateFormula:DateFormula/32 FRecordId:RecordID/448 FText:Text100/100 FTableFilter:TableFilter/504 ');
+        Observer.Verify();
     end;
 
     // "<field name>:<Type Name>/<Len>" for the fields FromNo..ToNo of table 80770.

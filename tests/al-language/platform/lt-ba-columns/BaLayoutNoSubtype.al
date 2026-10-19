@@ -90,7 +90,13 @@ codeunit 80776 "LT BA Layout NoSubtype"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('rows', PartColumns(80774));
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('rows', '[BaNoSubRdlc Layout Subtype=Default HeaderFooterPart= ThemePart=][BaNoSubWord Layout Subtype=Default HeaderFooterPart= ThemePart=]');
+#else
+        // Before BC 29 the Report Layout List has no Subtype or part columns (BC 28.5, run 39181445217).
+        Observer.Expect('rows', '[BaNoSubRdlc][BaNoSubWord]');
+#endif
+        Observer.Verify();
     end;
 
 #if BC29PLUS
@@ -100,7 +106,8 @@ codeunit 80776 "LT BA Layout NoSubtype"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('rows', PartColumns(80775));
-        Observer.Finish();
+        Observer.Expect('rows', '[BaDefBody Layout Subtype=Default HeaderFooterPart= ThemePart=][BaDefHf Layout Subtype=Header/Footer HeaderFooterPart= ThemePart=][BaDefTheme Layout Subtype=Theme HeaderFooterPart= ThemePart=]');
+        Observer.Verify();
     end;
 #endif
 

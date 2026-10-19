@@ -1,7 +1,12 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-testpermissions-property
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT BA TP Probe (80751)
-// Corpus issue 658, one TestPermissions variant: codeunit Disabled, method attribute Restrictive.
+// Corpus issue 658, one TestPermissions variant: // LINUX SUSPECT (corpus issue 658): observed on BC 28.5 and 29.0 (runs 39181445217, 39181485301) under runner 130450: every
+// variant has full permissions (own table, Customer, Access Control: read and write Yes; the insert succeeds). That contradicts
+// MsDyn365Bc.On.Linux issue 64 (Restrictive refused an insert into an own table on BC 28.4). Not asserted until the Windows
+// nightly confirms it: the codeunit compiles only with the symbol LTBA_TESTPERMISSIONS_PROBE, which no CI leg defines.
+#if LTBA_TESTPERMISSIONS_PROBE
+codeunit Disabled, method attribute Restrictive.
 // Probe: observed values; every literal asserted below is what the BC tier produced under Microsoft's test runner (see BaTpHelper.al).
 // BC versions: 27, 28, 29
 codeunit 80756 "LT BA TP DisMRestr"
@@ -41,3 +46,4 @@ codeunit 80756 "LT BA TP DisMRestr"
     begin
     end;
 }
+#endif
