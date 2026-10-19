@@ -1,6 +1,6 @@
 // Fixtures of the event leads of corpus issue 669 items 16 to 30 (writer CL). Used only by the test codeunit "LT CL Event Leads" (84790) in this folder.
-// Every subscriber codeunit is Manual and logs into "LT CL Log" (SingleInstance), except
-// "LT CL GT Subs", which is StaticAutomatic (the Global Triggers setup is asked once per table) and reacts to the three LT CL GT tables only.
+// Every subscriber codeunit is Manual and logs into "LT CL Log" (SingleInstance), including
+// "LT CL GT Subs" (bound before the first write of its tables, because the Global Triggers setup is asked once per table).
 
 table 84760 "LT CL Row"
 {
@@ -598,8 +598,11 @@ codeunit 84778 "LT CL Holder SI"
 // Item 23: the Base Application codeunit GlobalTriggerManagement (49) and its OnAfter* events, for three own tables:
 // "LT CL GT Reg" is registered for OnDatabaseInsert/Modify only through OnAfterGetDatabaseTableTriggerSetup, "LT CL GT Mask" only through
 // OnAfterGetGlobalTableTriggerMask (mask 3 = insert and modify), "LT CL GT None" not at all. The subscribers log only while the mode is 'gt'.
+// Manual: the test binds it before the first write of these tables in the session.
 codeunit 84779 "LT CL GT Subs"
 {
+    EventSubscriberInstance = Manual;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::GlobalTriggerManagement, 'OnAfterGetDatabaseTableTriggerSetup', '', false, false)]
     local procedure Setup(TableId: Integer; var OnDatabaseInsert: Boolean; var OnDatabaseModify: Boolean; var OnDatabaseDelete: Boolean; var OnDatabaseRename: Boolean)
     begin

@@ -363,8 +363,10 @@ codeunit 84790 "LT CL Event Leads"
         Reg: Record "LT CL GT Reg";
         Msk: Record "LT CL GT Mask";
         Non: Record "LT CL GT None";
+        GtSubs: Codeunit "LT CL GT Subs";
         O: Codeunit "Probe Observer";
     begin
+        BindSubscription(GtSubs);
         Reg.DeleteAll();
         Msk.DeleteAll();
         Non.DeleteAll();
@@ -395,6 +397,7 @@ codeunit 84790 "LT CL Event Leads"
         Reg.DeleteAll();
         Msk.DeleteAll();
         Non.DeleteAll();
+        UnbindSubscription(GtSubs);
         O.Expect('reg', 'dbInsert Reg 1;dbInsert Reg 2;dbModify Reg 2;dbModify Reg 2;');
         O.Expect('mask', '');
         O.Expect('none', '');
