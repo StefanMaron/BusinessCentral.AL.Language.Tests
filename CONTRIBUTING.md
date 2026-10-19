@@ -122,7 +122,7 @@ When there is no special condition, omit it: `Record_Insert_AssignsSystemId`.
 
 The Cloud app (`tests/al-language`) declares two ID ranges: `60000–60999` and `67000–69999`. The first range is nearly full, so **allocate new objects from `67000–69999`**. Check existing files and open pull requests to avoid conflicts — `check-object-ids.py` and `check-cross-pr-object-ids.py` catch duplicates and out-of-range ids.
 
-If you add a third range, add it to `codeunit_range` in `.github/workflows/ci.yml` too. That value decides which test codeunits CI runs, and a test codeunit outside it compiles but never runs, with every leg still green. The job's full range is the quoted text after `||` in that line (see [Test selection in CI](#test-selection-in-ci)).
+Do not edit `.github/workflows/ci.yml` for a new id block or a new range in `app.json`. The `codeunit_range` of every test job already covers `50000..99999`, every id a test app can use. The runner only runs the `Subtype = Test` codeunits of the job's own test app, so the ids of the other apps in that span cost nothing. The one gap is `75020..75024`, which is left out of the main app's range: those are `Subtype = Test` codeunits without a `[Test]` procedure, read only as metadata. A codeunit like that reports no result and fails the leg, so do not add another one in the range.
 
 ---
 
@@ -266,7 +266,7 @@ Every test codeunit runs when one of these is true:
 - The pull request comes from `al-runtime-rs-staging` (a corpus bump).
 - The pull request has the label `full-run`.
 - The change touches one of these:
-  - a file under `.github/` (workflows and the scripts CI runs);
+  - a file under `.github/` (workflows and the scripts CI runs). One exception: a change to `ci.yml` that edits only the values of `codeunit_range` lines (a "CI range edit") is selected as usual, plus every test codeunit the edit brings into its job's range. Any other line changed in `ci.yml`, a comment included, means a full run;
   - an `app.json`, the symbols in an app's `.alpackages/` folder, or an app's resource folder (`NavApp.ListResources` sees every resource);
   - the fixture app `tests/al-language-internals-fixture`, which the other apps depend on;
   - a procedure with `[EventSubscriber]`, because a subscriber can run during any test;
