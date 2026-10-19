@@ -446,7 +446,7 @@ codeunit 60186 "Test Loop Contracts"
         Count: Integer;
         R: Text;
     begin
-        Big := 100000000000000;
+        Big := 100000000000000L;
         if TryForBig(Big, Count) then
             Observer.Observe('biginteger bound 1e14', 'ok|' + Format(Count))
         else
