@@ -34,6 +34,15 @@ codeunit 85311 "LT CU Commit Tests"
         exit('[' + Ids + ']');
     end;
 
+    local procedure NameOf(Id: Integer): Text
+    var
+        Row: Record "LT CU Row";
+    begin
+        if not Row.Get(Id) then
+            exit('<missing>');
+        exit(Row.Name);
+    end;
+
     local procedure InsertRow(Id: Integer; Name: Text[50])
     var
         Row: Record "LT CU Row";
@@ -287,6 +296,7 @@ codeunit 85311 "LT CU Commit Tests"
         asserterror ModifyThenFail(11, 'commit-in-onmodify');
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
+        Observer.Observe('name', NameOf(11));
         Observer.Finish();
     end;
 
@@ -302,6 +312,7 @@ codeunit 85311 "LT CU Commit Tests"
         UnbindSubscription(Sub);
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
+        Observer.Observe('name', NameOf(12));
         Observer.Finish();
     end;
 
@@ -309,11 +320,13 @@ codeunit 85311 "LT CU Commit Tests"
     procedure Commit_InTryFunction()
     var
         Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
     begin
         Initialize();
         InsertRow(13, 'before try');
-        Observer.Observe('try', Format(TryCommit()));
-        Observer.ObserveError('try last');
+        asserterror Ok := TryCommit();
+        Observer.ObserveError('try');
+        Observer.Observe('ok', Format(Ok));
         asserterror Error('unrelated');
         Observer.Observe('rows', Rows());
         Observer.Finish();

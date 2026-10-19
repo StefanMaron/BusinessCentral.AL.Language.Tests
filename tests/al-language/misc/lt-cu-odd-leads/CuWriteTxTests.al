@@ -83,7 +83,8 @@ codeunit 85312 "LT CU Write Tx Tests"
     begin
         Initialize();
         IsolatedStorage.Set('LTCU_w2', 'v', DataScope::User);
-        Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        asserterror Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         IsolatedStorage.Delete('LTCU_w2', DataScope::User);
@@ -98,7 +99,8 @@ codeunit 85312 "LT CU Write Tx Tests"
     begin
         Initialize();
         IsolatedStorage.Set('LTCU_w3', 'v', DataScope::Module);
-        Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        asserterror Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         IsolatedStorage.Delete('LTCU_w3', DataScope::Module);
@@ -113,7 +115,8 @@ codeunit 85312 "LT CU Write Tx Tests"
     begin
         Initialize();
         IsolatedStorage.Set('LTCU_w4', 'v', DataScope::Company);
-        Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        asserterror Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         IsolatedStorage.Delete('LTCU_w4', DataScope::Company);
@@ -128,7 +131,8 @@ codeunit 85312 "LT CU Write Tx Tests"
     begin
         Initialize();
         IsolatedStorage.Set('LTCU_w5', 'v', DataScope::CompanyAndUser);
-        Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        asserterror Ok := Codeunit.Run(Codeunit::"LT CU Inserter");
+        Observer.ObserveError('run');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         IsolatedStorage.Delete('LTCU_w5', DataScope::CompanyAndUser);
@@ -152,14 +156,14 @@ codeunit 85312 "LT CU Write Tx Tests"
     end;
 
     [Test]
-    [HandlerFunctions('ReportHandler')]
     procedure IsolatedStorageSet_ThenReportRunModal()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Initialize();
         IsolatedStorage.Set('LTCU_w7', 'v', DataScope::User);
-        Report.RunModal(Report::"LT CU Report", true);
+        asserterror Report.RunModal(Report::"LT CU Report", true);
+        Observer.ObserveError('runmodal');
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
         IsolatedStorage.Delete('LTCU_w7', DataScope::User);
@@ -189,9 +193,9 @@ codeunit 85312 "LT CU Write Tx Tests"
     begin
         Initialize();
         Other.Id := 1;
-        Ok := Codeunit.Run(Codeunit::"LT CU TableNo Run", Other);
-        Observer.Observe('ok', Format(Ok));
+        asserterror Ok := Codeunit.Run(Codeunit::"LT CU TableNo Run", Other);
         Observer.ObserveError('guarded');
+        Observer.Observe('ok', Format(Ok));
         Observer.Finish();
     end;
 
@@ -204,17 +208,33 @@ codeunit 85312 "LT CU Write Tx Tests"
     begin
         Initialize();
         Row.Id := 1;
-        Codeunit.Run('LT CU TableNo Run', Row);
-        Observer.Observe('known name', Row.Name);
-        asserterror Codeunit.Run('LT CU No Such Codeunit', Row);
-        Observer.ObserveError('unknown name');
+        RunByName(Observer, 'LT CU TableNo Run', Row);
+        RunByName(Observer, 'LT CU No Such Codeunit', Row);
+        RunByName(Observer, 'LTCU.Probe.LT CU Named Run', Row);
+        RunByName(Observer, 'LTCU.Probe."LT CU Named Run"', Row);
+        RunByName(Observer, 'LTCU.Probe.LT CU No Such Codeunit', Row);
+        RunByName(Observer, 'NoSuch.Namespace.LT CU Named Run', Row);
         Observer.Finish();
+    end;
+
+    local procedure RunByName(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT CU Row")
+    begin
+        Row.Name := '';
+        ClearLastError();
+        Observer.Observe(Name + '|ok', Format(TryRunByName(Name, Row)));
+        Observer.Observe(Name + '|name', Row.Name);
+        Observer.ObserveError(Name);
+    end;
+
+    [TryFunction]
+    local procedure TryRunByName(Name: Text; var Row: Record "LT CU Row")
+    begin
+        Codeunit.Run(Name, Row);
     end;
 #endif
 
     // ---------------------------------------------------------------- item 45
     [Test]
-    [HandlerFunctions('ReportHandler')]
     procedure ReportRun_RequestPage_AfterWrite()
     var
         Observer: Codeunit "Probe Observer";
@@ -223,7 +243,8 @@ codeunit 85312 "LT CU Write Tx Tests"
         Initialize();
         InsertPending(1);
         Row.SetRange(Id, 1);
-        Report.Run(Report::"LT CU Report", true, true, Row);
+        asserterror Report.Run(Report::"LT CU Report", true, true, Row);
+        Observer.ObserveError('report');
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
         Observer.Finish();
@@ -244,7 +265,6 @@ codeunit 85312 "LT CU Write Tx Tests"
     end;
 
     [Test]
-    [HandlerFunctions('ReportHandler')]
     procedure ReportRunModal_RequestPage_AfterWrite()
     var
         Observer: Codeunit "Probe Observer";
@@ -253,8 +273,38 @@ codeunit 85312 "LT CU Write Tx Tests"
         Initialize();
         InsertPending(1);
         Row.SetRange(Id, 1);
-        Report.RunModal(Report::"LT CU Report", true, true, Row);
+        asserterror Report.RunModal(Report::"LT CU Report", true, true, Row);
+        Observer.ObserveError('report');
         Observer.Observe('handler', HandlerLog);
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReportHandler')]
+    procedure ReportRun_RequestPage_NoPendingWrite()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT CU Row";
+    begin
+        Initialize();
+        Row.SetRange(Id, 1);
+        Report.Run(Report::"LT CU Report", true, true, Row);
+        Observer.Observe('handler', HandlerLog);
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure ReportRunModal_NoRequestPage_AfterWrite()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT CU Row";
+    begin
+        Initialize();
+        InsertPending(1);
+        Row.SetRange(Id, 1);
+        Report.RunModal(Report::"LT CU Report", false, false, Row);
         Observer.Observe('rows', Rows());
         Observer.Finish();
     end;

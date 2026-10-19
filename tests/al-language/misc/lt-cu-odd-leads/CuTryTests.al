@@ -36,6 +36,14 @@ codeunit 85310 "LT CU Try Tests"
         Error('try error after insert');
     end;
 
+    local procedure IfNotTryInsertThenError(Id: Integer; var Branch: Text)
+    begin
+        if not TryInsertThenError(Id) then
+            Branch := 'not ok'
+        else
+            Branch := 'ok';
+    end;
+
     [TryFunction]
     local procedure TryInsertOnly(Id: Integer)
     var
@@ -77,9 +85,9 @@ codeunit 85310 "LT CU Try Tests"
         Ok: Boolean;
     begin
         Initialize();
-        Ok := TryInsertThenError(1);
+        asserterror Ok := TryInsertThenError(1);
+        Observer.ObserveError('expression');
         Observer.Observe('ok', Format(Ok));
-        Observer.Observe('lasterror', GetLastErrorText());
         Observer.Observe('rows after', Rows());
         Commit();
         Observer.Observe('rows after commit', Rows());
@@ -91,12 +99,12 @@ codeunit 85310 "LT CU Try Tests"
     procedure TryInsertThenError_IfNotForm()
     var
         Observer: Codeunit "Probe Observer";
+        Branch: Text;
     begin
         Initialize();
-        if not TryInsertThenError(2) then
-            Observer.Observe('branch', 'not ok')
-        else
-            Observer.Observe('branch', 'ok');
+        asserterror IfNotTryInsertThenError(2, Branch);
+        Observer.ObserveError('if not');
+        Observer.Observe('branch', Branch);
         Observer.Observe('rows after', Rows());
         Observer.Finish();
     end;
@@ -122,9 +130,9 @@ codeunit 85310 "LT CU Try Tests"
         Ok: Boolean;
     begin
         Initialize();
-        Ok := TryInsertOnly(4);
+        asserterror Ok := TryInsertOnly(4);
+        Observer.ObserveError('expression');
         Observer.Observe('ok', Format(Ok));
-        Observer.Observe('lasterror', GetLastErrorText());
         Observer.Observe('rows after', Rows());
         Observer.Finish();
     end;
@@ -181,7 +189,8 @@ codeunit 85310 "LT CU Try Tests"
         Initialize();
         Secret := SecretStrSubstNo('lt-cu-secret');
         IsolatedStorage.SetEncrypted('LTCU_s3', Secret, DataScope::Module);
-        Observer.Observe('get', Format(IsolatedStorage.Get('LTCU_s3', DataScope::Module, Value)));
+        asserterror IsolatedStorage.Get('LTCU_s3', DataScope::Module, Value);
+        Observer.ObserveError('get');
         Observer.Observe('value', Value);
         IsolatedStorage.Delete('LTCU_s3', DataScope::Module);
         Observer.Finish();
