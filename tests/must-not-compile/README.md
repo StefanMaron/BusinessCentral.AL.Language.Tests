@@ -368,6 +368,9 @@ is only a reference.
 | 1310 | AL0296 | File.IsPathTemporary from a Cloud app. |
 | 1311 | AL0296 | File.Download from a Cloud app. |
 | 1312 | AL0296 | Database.DataFileInformation from a Cloud app. |
+| 1210 | AL0240 | A ModalPageHandler with a Page parameter and no var Response: Action. |
+| 1211 | AL0241 | A ModalPageHandler with a TestPage parameter and a Response parameter. |
+| 1212 | AL0132 | A TestPage has no Delete method for the standard Delete action. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
