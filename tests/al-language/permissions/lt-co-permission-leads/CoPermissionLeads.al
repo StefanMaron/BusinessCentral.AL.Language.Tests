@@ -456,7 +456,10 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'LT CO done');
+        Observer.Expect('insert|code', 'Dialog');
+        Observer.Expect('ledger value seen', '12');
+        Observer.Verify();
     end;
 
     [Test]
@@ -476,7 +479,10 @@ codeunit 84950 "LT CO Permission Leads"
         RestoreMock(Mock, WasStarted);
         UnbindSubscription(Sub);
         Observer.Observe('ledger value seen', Format(LedgerValueSeen));
-        Observer.Finish();
+        Observer.Expect('insert|text', 'Sorry, the current permissions prevented the action. (TableData 84941 LT CO Perm Ledger Modify: AL Language Coverage Tests)');
+        Observer.Expect('insert|code', 'DB:ClientModifyDenied');
+        Observer.Expect('ledger value seen', '-1');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -542,6 +548,16 @@ codeunit 84950 "LT CO Permission Leads"
         Mock.Set(UserSetTok);
         ObserveControls(Observer, 'read only: ');
         RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        Observer.Expect('super: plain value', '1');
+        Observer.Expect('super: guarded value', '0');
+        Observer.Expect('super: guarded visible', 'Yes');
+        Observer.Expect('super: action visible', 'Yes');
+        Observer.Expect('super: action enabled', 'Yes');
+        Observer.Expect('read only: plain value', '1');
+        Observer.Expect('read only: guarded value', 'error: The field with ID = n is not found on the page.');
+        Observer.Expect('read only: guarded visible', 'error: The field with ID = n is not found on the page.');
+        Observer.Expect('read only: action visible', 'error: The action with ID = n is not found on the page.');
+        Observer.Expect('read only: action enabled', 'error: The action with ID = n is not found on the page.');
+        Observer.Verify();
     end;
 }
