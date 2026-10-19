@@ -375,7 +375,15 @@ codeunit 69532 "Probe ClearAll Key Hyperlink"
         Row.LtBoSetExtGlobal(8);
         Observer.Observe('base procedure', Row.ClearAllInTable());
         Observer.Observe('ext global after base ClearAll', Format(Row.LtBoGetExtGlobal()));
-        Observer.Finish();
+        // ClearAll in the extension clears the extension's globals and keeps Rec (fields and filters); ClearAll in base table code clears them too.
+        Observer.Expect('ext procedure', 'ext=0,Id=3,Name=abc,num=4');
+        Observer.Expect('ext global after ext procedure', '0');
+        Observer.Expect('caller filter after ext procedure', '[Id: 3]');
+        Observer.Expect('ext OnValidate', 'ext=0,Id=3,Name=abc,num=6');
+        Observer.Expect('ext global after ext OnValidate', '0');
+        Observer.Expect('base procedure', 'Id=3,Name=abc,global=0');
+        Observer.Expect('ext global after base ClearAll', '0');
+        Observer.Verify();
     end;
 
     // Corpus issue #664 item 113: ClearAll in a page extension (pageextension 82361 on "Probe Ui Card"): in a procedure called through
@@ -396,7 +404,11 @@ codeunit 69532 "Probe ClearAll Key Hyperlink"
         CardView.OpenView();
         CardView.Close();
         Observer.Observe('OnOpenPage trace', Trace.Take());
-        Observer.Finish();
+        Observer.Expect('before', 'int=5,text=set');
+        Observer.Expect('page ext procedure', 'int=0,text=');
+        Observer.Expect('after', 'int=0,text=');
+        Observer.Expect('OnOpenPage trace', 'open before=int=0,text=;open after=int=0,text=;');
+        Observer.Verify();
     end;
 }
 

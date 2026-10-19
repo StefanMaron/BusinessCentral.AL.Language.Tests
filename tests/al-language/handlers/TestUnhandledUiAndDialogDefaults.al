@@ -185,9 +185,15 @@ codeunit 68126 "Probe Unhandled Ui"
         ProbeUiCardSameName();
         Observer.Observe('direct call', Seen);
         Seen := '';
-        Page.RunModal(Page::"Probe Ui Card");
-        Observer.Observe('run modal', Seen);
-        Observer.Finish();
+        // The handler does not run: the page call is refused as if no handler were named.
+        asserterror Page.RunModal(Page::"Probe Ui Card");
+        Observer.ObserveError('run modal');
+        Observer.Observe('seen by run modal', Seen);
+        Observer.Expect('direct call', 'normal procedure;');
+        Observer.Expect('run modal|text', 'Unhandled UI: ModalPage 68124');
+        Observer.Expect('run modal|code', 'MissingUIHandler');
+        Observer.Expect('seen by run modal', '');
+        Observer.Verify();
     end;
 
     procedure ProbeUiCardSameName()

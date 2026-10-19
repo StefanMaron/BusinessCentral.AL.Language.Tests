@@ -232,7 +232,19 @@ codeunit 60691 "Test Page Enum Field Tests"
                 Card.Close();
             end;
         end;
-        Observer.Finish();
+        // Only the OptionCaption entries at positions 0 and 1 (' ' and c1) are accepted; enum captions, names, c4/c5 and the ordinal 4 are refused.
+        Observer.Expect('[c1] page', 'c1');
+        Observer.Expect('[c1] stored', '1');
+        Observer.Expect('[cap1] error', 'Validation error for Field: E,  Message = ''Your entry of ''cap1'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[value1] error', 'Validation error for Field: E,  Message = ''Your entry of ''value1'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[c4] error', 'Validation error for Field: E,  Message = ''Your entry of ''c4'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[cap4] error', 'Validation error for Field: E,  Message = ''Your entry of ''cap4'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[value4] error', 'Validation error for Field: E,  Message = ''Your entry of ''value4'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[4] error', 'Validation error for Field: E,  Message = ''Your entry of ''4'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[c5] error', 'Validation error for Field: E,  Message = ''Your entry of ''c5'' is not an acceptable value for ''E''. (Select Refresh to discard errors)''');
+        Observer.Expect('[ ] page', ' ');
+        Observer.Expect('[ ] stored', '0');
+        Observer.Verify();
     end;
 
     local procedure SeedSparse()

@@ -4,6 +4,7 @@
 //   self-contained codeunits 82355 (overloads) and 82358 (test)
 // Corpus issue #664 item 80: overloads that differ only by the Record type of a var parameter. The compiler accepts the pair;
 // the question is whether the app publishes (records share one run-time type, which could give C# CS0111) and which one runs.
+// Result (BC 29.0): the app publishes (no CS0111) and each record type runs its own overload.
 
 codeunit 82355 "LT BO Record Overload Host"
 {

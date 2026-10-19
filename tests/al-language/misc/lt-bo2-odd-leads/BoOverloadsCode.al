@@ -4,6 +4,7 @@
 // Corpus issue #664 item 79 (second half): overloads that differ only in the length of a Code element type
 // (List of [Code[10]] and List of [Code[50]]). The compiler accepts the pair; the question is whether the app publishes
 // (both are List of [Code] at run time, which could give C# CS0111) and which overload runs.
+// Result (BC 29.0): the app publishes (no CS0111) and each list type runs its own overload.
 
 codeunit 82354 "LT BO Code Overload Host"
 {

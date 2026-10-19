@@ -4,6 +4,7 @@
 // Corpus issue #664 items 79 and 82 (P69Overloads.al is claimed by another writer, so these live here):
 //   79: overloads that differ only in the element type of a List parameter (List of [Integer] and List of [Text[30]]): which one runs.
 //   82: two overloads of a local procedure each declare a label with the same name (myLabel): does each return its own text.
+// Result (BC 29.0): each call runs the overload of its own type; each overload returns its own label text.
 
 codeunit 82353 "LT BO Overload Host"
 {
