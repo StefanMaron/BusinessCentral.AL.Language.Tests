@@ -467,7 +467,17 @@ codeunit 72022 "LT HtT Headers Errors"
         Observer.ObserveError('spaceInName');
         asserterror Headers.Add('Bad:Name', 'v');
         Observer.ObserveError('colonInName');
-        Observer.Finish();
+        Observer.Expect('emptyName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('emptyName|code', 'InvalidHeader:Argument');
+        Observer.Expect('blankName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('blankName|code', 'InvalidHeader:Argument');
+        Observer.Expect('threeBlanksName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('threeBlanksName|code', 'InvalidHeader:Argument');
+        Observer.Expect('spaceInName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('spaceInName|code', 'InvalidHeader:Format');
+        Observer.Expect('colonInName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('colonInName|code', 'InvalidHeader:Format');
+        Observer.Verify();
     end;
 #endif
 }

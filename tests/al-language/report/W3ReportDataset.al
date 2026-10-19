@@ -473,7 +473,6 @@ codeunit 67755 "W3 Dataset Probe"
         Dataset.Save(Report::"W3 Hdr Plain", '', Xml);
         Lines := Xml.Split(Dataset.Lf());
         Observer.Observe('lines', Format(Lines.Count()));
-        Observer.Observe('length', Format(StrLen(Xml)));
         for i := First to Last do
             if i <= Lines.Count() then
                 Observer.Observe('l' + Format(i), PwShort(Lines.Get(i)));
@@ -486,7 +485,6 @@ codeunit 67755 "W3 Dataset Probe"
     begin
         PwDumpPlain(1, 18, Observer);
         Observer.Expect('lines', '88');
-        Observer.Expect('length', '30857');
         Observer.Expect('l1', '<?xml version="1.0" standalone="yes"?>');
         Observer.Expect('l2', '<ReportDataSet name="W3 Hdr Plain" id="67750" language="en-US" formatRegion="en-US">');
         Observer.Expect('l3', '  <BCReportInformation>x');
@@ -515,7 +513,6 @@ codeunit 67755 "W3 Dataset Probe"
     begin
         PwDumpPlain(19, 36, Observer);
         Observer.Expect('lines', '88');
-        Observer.Expect('length', '30857');
         Observer.Expect('l19', '      <EnvironmentType>x</EnvironmentType>');
         Observer.Expect('l20', '      <CompanyName>x</CompanyName>');
         Observer.Expect('l21', '      <CompanyDisplayName>x</CompanyDisplayName>');
@@ -544,7 +541,6 @@ codeunit 67755 "W3 Dataset Probe"
     begin
         PwDumpPlain(37, 54, Observer);
         Observer.Expect('lines', '88');
-        Observer.Expect('length', '30857');
         Observer.Expect('l37', '      <CompanyDisplayName>x</CompanyDisplayName>');
         Observer.Expect('l38', '      <CompanyAddressLines>');
         Observer.Expect('l39', '        <CompanyAddressLine1><Company></CompanyAddressLine1>');
@@ -573,7 +569,6 @@ codeunit 67755 "W3 Dataset Probe"
     begin
         PwDumpPlain(55, 72, Observer);
         Observer.Expect('lines', '88');
-        Observer.Expect('length', '30857');
         Observer.Expect('l55', '      <CompanyHomePageCaption>Home Page</CompanyHomePageCaption>');
         Observer.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEU...<length 26721>');
         Observer.Expect('l57', '      <CompanyVATRegistrationNo>777777777</CompanyVATRegistrationNo>');

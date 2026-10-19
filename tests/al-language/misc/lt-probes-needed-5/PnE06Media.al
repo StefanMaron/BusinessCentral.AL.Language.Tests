@@ -211,7 +211,10 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Expect('validModify', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70 afterModify hasValue=Yes');
         Observer.Verify();
 #else
-        Observer.Finish();
+        Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Expect('validGetFirst', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Expect('validModify', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99 afterModify hasValue=Yes');
+        Observer.Verify();
 #endif
     end;
 
@@ -227,7 +230,9 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=No returned=null id field=null id');
         Observer.Verify();
 #else
-        Observer.Finish();
+        Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
+        Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
+        Observer.Verify();
 #endif
     end;
 
@@ -243,7 +248,9 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Expect('short', 'hasValue=No returned=null id field=null id');
         Observer.Verify();
 #else
-        Observer.Finish();
+        Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Expect('short', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
+        Observer.Verify();
 #endif
     end;
 }
