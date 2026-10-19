@@ -8,7 +8,7 @@
 // temporary records, Exist (Boolean) and Lookup (Text) FlowFields, assignment to a FlowFilter field, CalcFields after an assignment.
 // Every test also reads the CalcFormula source table (LT DI FW Child) and the trigger log before and after the write ('src' and 'log').
 // A call that may raise runs as `asserterror begin <call>; Error(NoErrorTok); end;` so both outcomes are observed; when it did not raise,
-// the call runs again outside asserterror (asserterror rolls the database back).
+// the call runs again outside asserterror (asserterror rolls the database back to the Commit() just before it).
 // BC versions: 27, 28, 29
 
 codeunit 86264 "LT DI FW Write Tests"
@@ -148,6 +148,7 @@ codeunit 86264 "LT DI FW Write Tests"
         Parent."Child Count" := 7;
         Parent."Child Amount" := 99;
         Observer.Observe('read at once', Format(Parent."Child Count") + '/' + Format(Parent."Child Amount"));
+        Commit();
         asserterror begin
             Parent.Modify();
             Error(NoErrorTok);
@@ -189,6 +190,7 @@ codeunit 86264 "LT DI FW Write Tests"
         Parent."Child Amount" := 99;
         Parent."Has Children" := false;
         Parent."First Child Code" := 'ZZ';
+        Commit();
         asserterror begin
             Parent.Insert(true);
             Error(NoErrorTok);
@@ -218,6 +220,7 @@ codeunit 86264 "LT DI FW Write Tests"
     begin
         Seed();
         Parent.Get(1);
+        Commit();
         asserterror begin
             Parent.Validate("Child Count", 7);
             Error(NoErrorTok);
@@ -230,6 +233,7 @@ codeunit 86264 "LT DI FW Write Tests"
             Parent.Validate("Child Count", 7);
         Observer.Observe('count after', Format(Parent."Child Count"));
         Observer.Observe('log', TakeLog());
+        Commit();
         asserterror begin
             Parent.Validate("Child Amount", 99);
             Error(NoErrorTok);
@@ -239,6 +243,7 @@ codeunit 86264 "LT DI FW Write Tests"
         if Result = 'ok' then
             Parent.Validate("Child Amount", 99);
         Observer.Observe('amount after', Format(Parent."Child Amount"));
+        Commit();
         asserterror begin
             Parent.Modify(true);
             Error(NoErrorTok);
@@ -343,6 +348,7 @@ codeunit 86264 "LT DI FW Write Tests"
         FRef := RecRef.Field(3);
         Observer.Observe('class', Format(FRef.Class()) + '/' + Format(RecRef.Field(4).Class()) + '/' + Format(RecRef.Field(7).Class()));
         Observer.Observe('value before', Format(FRef.Value()));
+        Commit();
         asserterror begin
             FRef.Value := 7;
             Error(NoErrorTok);
@@ -352,6 +358,7 @@ codeunit 86264 "LT DI FW Write Tests"
         if Result = 'ok' then
             FRef.Value := 7;
         Observer.Observe('value after', Format(FRef.Value()) + '/' + Format(RecRef.Field(3).Value()));
+        Commit();
         asserterror begin
             RecRef.Modify();
             Error(NoErrorTok);
@@ -362,6 +369,7 @@ codeunit 86264 "LT DI FW Write Tests"
             RecRef.Modify();
         Observer.Observe('value after modify', Format(RecRef.Field(3).Value()));
         Observer.Observe('stored', StoredCount(1) + ' calc ' + CalcCount(1));
+        Commit();
         asserterror begin
             FRef.Validate(8);
             Error(NoErrorTok);
@@ -553,6 +561,7 @@ codeunit 86264 "LT DI FW Write Tests"
         Parent."Has Children" := true;
         Parent."First Child Code" := 'YY';
         Observer.Observe('row 2 assigned', Format(Parent."Has Children") + '/' + Parent."First Child Code");
+        Commit();
         asserterror begin
             Parent.Modify();
             Error(NoErrorTok);
@@ -588,6 +597,7 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('read at once', Format(Parent."Date Filter", 0, 9) + ' getfilter=' + Parent.GetFilter("Date Filter"));
         Parent.CalcFields("Child Amount");
         Observer.Observe('CalcFields with assigned', Format(Parent."Child Amount"));
+        Commit();
         asserterror begin
             Parent.Modify();
             Error(NoErrorTok);
