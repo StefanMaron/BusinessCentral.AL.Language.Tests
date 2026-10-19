@@ -207,4 +207,74 @@ codeunit 70905 "LT P170 LoadFields"
         Observer.Expect('loaded_name', 'Yes');
         Observer.Verify();
     end;
+
+
+    // Corpus issue 668 item 37 (writer BQ): just-in-time load of a field that SetLoadFields left out, after the row was deleted (microsoft/AL
+    // issue 6852). LT BQ Ret Row (record/lt-bq-odd-leads/BqObjects.al) has Name and the table-extension field ExtNote. Each case is a test of
+    // its own: its error, if any, is the result.
+    local procedure BqSeedJit()
+    var
+        R: Record "LT BQ Ret Row";
+    begin
+        R.DeleteAll();
+        R.Init();
+        R.Id := 1;
+        R.Name := 'one';
+        R.ExtNote := 'note one';
+        R.Insert();
+        R.Init();
+        R.Id := 2;
+        R.Name := 'two';
+        R.ExtNote := 'note two';
+        R.Insert();
+    end;
+
+    [Test]
+    procedure P170_JitLoad_NormalField_RowDeletedByAnotherVariable_BQ()
+    var
+        R: Record "LT BQ Ret Row";
+        Gone: Record "LT BQ Ret Row";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedJit();
+        R.SetLoadFields(Id);
+        R.Get(1);
+        Gone.Get(1);
+        Gone.Delete();
+        Observer.Observe('name', R.Name);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure P170_JitLoad_ExtensionField_RowDeletedByAnotherVariable_BQ()
+    var
+        R: Record "LT BQ Ret Row";
+        Gone: Record "LT BQ Ret Row";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedJit();
+        R.SetLoadFields(Id);
+        R.Get(1);
+        Gone.Get(1);
+        Gone.Delete();
+        Observer.Observe('extNote', R.ExtNote);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure P170_JitLoad_After_Delete_Of_The_Same_Partial_Record_BQ()
+    var
+        R: Record "LT BQ Ret Row";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedJit();
+        R.SetLoadFields(Id);
+        R.Get(2);
+        Observer.Observe('nameLoadedBefore', Format(R.AreFieldsLoaded(Name)));
+        R.Delete();
+        Observer.Observe('nameLoadedAfterDelete', Format(R.AreFieldsLoaded(Name)));
+        Observer.Observe('extLoadedAfterDelete', Format(R.AreFieldsLoaded(ExtNote)));
+        Observer.Observe('name', R.Name);
+        Observer.Finish();
+    end;
 }

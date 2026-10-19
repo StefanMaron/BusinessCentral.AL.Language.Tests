@@ -58,4 +58,56 @@ codeunit 74657 "LT P143 DeFormulas"
         Helper.ProbeFormula(Observer, 'T_range_open', '..T', Today());
         Observer.Observe('count_all', Format(Helper.CountOn(0D) + 0));
     end;
+
+    // Corpus issue 668 item 7 (writer BQ): date filter formulas with arithmetic under German and French (Canada) (microsoft/AL issue 5923).
+    // The filter text is compared with the date computed in the same language, so no value depends on the run date.
+    [TryFunction]
+    local procedure BqTryLanguage(LanguageId: Integer)
+    begin
+        GlobalLanguage(LanguageId);
+    end;
+
+    local procedure BqProbe(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper"; Name: Text; FilterText: Text; Expected: Text)
+    var
+        Got: Text;
+        Cnt: Integer;
+    begin
+        if Helper.TryDate(FilterText, Got, Cnt) then
+            Observer.Observe(Name, 'ok filter_is_expected=' + Format(Got = Expected, 0, 9))
+        else
+            Observer.ObserveError(Name + '_err');
+    end;
+
+    local procedure BqRunFormulas(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper"; Prefix: Text)
+    begin
+        BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1d', '..t-1d', '..' + Format(Today() - 1));
+        BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1t', '..t-1t', '..' + Format(Today() - 1));
+        BqProbe(Observer, Helper, Prefix + '_t_plus_1d', 't+1d', Format(Today() + 1));
+        BqProbe(Observer, Helper, Prefix + '_h', 'h', Format(Today()));
+        BqProbe(Observer, Helper, Prefix + '_a', 'a', Format(Today()));
+        BqProbe(Observer, Helper, Prefix + '_j', 'j', Format(Today()));
+    end;
+
+    [Test]
+    procedure P143_LocalizedFormulas_Arithmetic_BQ()
+    var
+        Observer: Codeunit "Probe Observer";
+        Helper: Codeunit "LT P143 Helper";
+        OldLanguage: Integer;
+    begin
+        Helper.Seed();
+        OldLanguage := GlobalLanguage();
+        BqRunFormulas(Observer, Helper, 'en');
+        GlobalLanguage(1031);
+        BqRunFormulas(Observer, Helper, 'de');
+        GlobalLanguage(OldLanguage);
+        if BqTryLanguage(3084) then begin
+            Observer.Observe('frca_language', 'ok');
+            BqRunFormulas(Observer, Helper, 'frca');
+        end else
+            Observer.ObserveError('frca_language');
+        GlobalLanguage(OldLanguage);
+        Observer.Observe('language_restored', Format(GlobalLanguage() = OldLanguage));
+        Observer.Finish();
+    end;
 }

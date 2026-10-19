@@ -806,4 +806,130 @@ codeunit 71504 "LT RcA SetFilter"
         Observer.Expect('filterLength', '230');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 items 1-3 (writer BQ). Fixtures: record/lt-bq-odd-leads/BqObjects.al.
+    [TryFunction]
+    local procedure BqTrySetFilter(var R: Record "LT BQ Flt Row"; FieldNo: Integer; FilterText: Text)
+    begin
+        case FieldNo of
+            2:
+                R.SetFilter(G, FilterText);
+            3:
+                R.SetFilter(Txt, FilterText);
+            4:
+                R.SetFilter(Cd, FilterText);
+            5:
+                R.SetFilter(Num, FilterText);
+        end;
+    end;
+
+    local procedure BqTokenOutcome(FieldNo: Integer; FilterText: Text): Text
+    var
+        R: Record "LT BQ Flt Row";
+        Log: Codeunit "LT BQ Log";
+        BqSeed: Codeunit "LT BQ Seed";
+        Result: Text;
+    begin
+        Log.Take();
+        if BqTrySetFilter(R, FieldNo, FilterText) then
+            Result := 'filter=[' + R.GetFilters() + '] ids=' + BqSeed.Ids(R)
+        else
+            Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result + ' log=' + Log.Take());
+    end;
+
+    // A custom filter token whose subscriber of Filter Tokens.OnResolveTextFilterToken returns a Guid text (microsoft/AL issue 7728), in
+    // SetFilter on a Guid, Text, Code and Integer field; a token that returns 5; an unknown token; the token without the subscriber bound.
+    [Test]
+    procedure SetFilter_Custom_Filter_Token_BQ()
+    var
+        TokenSub: Codeunit "LT BQ Token Sub";
+        BqSeed: Codeunit "LT BQ Seed";
+    begin
+        BqSeed.FltRows();
+        Observer.Observe('guidUnbound', BqTokenOutcome(2, '%BQGUID'));
+        BindSubscription(TokenSub);
+        Observer.Observe('guid', BqTokenOutcome(2, '%BQGUID'));
+        Observer.Observe('guidLower', BqTokenOutcome(2, '%bqguid'));
+        Observer.Observe('text', BqTokenOutcome(3, '%BQGUID'));
+        Observer.Observe('code', BqTokenOutcome(4, '%BQGUID'));
+        Observer.Observe('integer', BqTokenOutcome(5, '%BQGUID'));
+        Observer.Observe('textFive', BqTokenOutcome(3, '%BQFIVE'));
+        Observer.Observe('codeFive', BqTokenOutcome(4, '%BQFIVE'));
+        Observer.Observe('integerFive', BqTokenOutcome(5, '%BQFIVE'));
+        Observer.Observe('integerFiveOr', BqTokenOutcome(5, '%BQFIVE|7'));
+        Observer.Observe('guidUnknown', BqTokenOutcome(2, '%BQNONE'));
+        Observer.Observe('textUnknown', BqTokenOutcome(3, '%BQNONE'));
+        UnbindSubscription(TokenSub);
+        Observer.Finish();
+    end;
+
+    // SetRange on a DateTime field with an upper bound of 23:59:59.999/.998/.997 the day before a value stored at midnight (microsoft/AL
+    // issue 7325), the same comparison in plain AL, and the value a DateTime with .999/.998/.997 milliseconds has after it is stored.
+    [Test]
+    procedure SetRange_DateTime_Millisecond_Bounds_BQ()
+    var
+        R: Record "LT BQ Flt Row";
+        Midnight: DateTime;
+    begin
+        R.DeleteAll();
+        Midnight := CreateDateTime(20240325D, 000000T);
+        R.Init();
+        R.Id := 1;
+        R.DT := Midnight;
+        R.Insert();
+        R.SetRange(DT, 0DT, CreateDateTime(20240324D, 235959.999T));
+        Observer.Observe('to999', Format(R.Count()) + '|' + R.GetFilter(DT));
+        R.SetRange(DT, 0DT, CreateDateTime(20240324D, 235959.998T));
+        Observer.Observe('to998', Format(R.Count()) + '|' + R.GetFilter(DT));
+        R.SetRange(DT, 0DT, CreateDateTime(20240324D, 235959.997T));
+        Observer.Observe('to997', Format(R.Count()) + '|' + R.GetFilter(DT));
+        R.SetRange(DT, CreateDateTime(20240325D, 000000.001T), CreateDateTime(20240326D, 000000T));
+        Observer.Observe('from001', Format(R.Count()) + '|' + R.GetFilter(DT));
+        R.SetFilter(DT, '<%1', CreateDateTime(20240325D, 000000.001T));
+        Observer.Observe('lt001', Format(R.Count()));
+        Observer.Observe('plain999GeMidnight', Format(CreateDateTime(20240324D, 235959.999T) >= Midnight));
+        Observer.Observe('plain999LtMidnight', Format(CreateDateTime(20240324D, 235959.999T) < Midnight));
+        R.Reset();
+        R.Init();
+        R.Id := 2;
+        R.DT := CreateDateTime(20240324D, 235959.999T);
+        R.Insert();
+        R.Init();
+        R.Id := 3;
+        R.DT := CreateDateTime(20240324D, 235959.998T);
+        R.Insert();
+        R.Init();
+        R.Id := 4;
+        R.DT := CreateDateTime(20240324D, 235959.997T);
+        R.Insert();
+        Observer.Observe('memory997', Format(R.DT, 0, 9));
+        R.Get(2);
+        Observer.Observe('stored999', Format(R.DT, 0, 9));
+        R.Get(3);
+        Observer.Observe('stored998', Format(R.DT, 0, 9));
+        R.Get(4);
+        Observer.Observe('stored997', Format(R.DT, 0, 9));
+        R.Reset();
+        R.SetRange(DT, Midnight);
+        Observer.Observe('eqMidnightCount', Format(R.Count()));
+        Observer.Finish();
+    end;
+
+    // '&' between two plain values on an Integer field, and '@' with '*' and '?' together on a Text field (docs: entering criteria in filters).
+    [Test]
+    procedure SetFilter_Ampersand_Values_And_At_Wildcards_BQ()
+    begin
+        Seed.Main();
+        Observer.Observe('eqAndEq', NoFilter('30&50'));
+        Observer.Observe('eqAndSame', NoFilter('30&30'));
+        Observer.Observe('eqAndRange', NoFilter('30&20..40'));
+        Seed.Texts();
+        Observer.Observe('atStarPQStar', TxFilter('@*P?*'));
+        Observer.Observe('atStarEQ', TxFilter('@*E?'));
+        Observer.Observe('atQPStar', TxFilter('@?P*'));
+        Observer.Observe('starPQStar', TxFilter('*P?*'));
+        Observer.Finish();
+    end;
 }

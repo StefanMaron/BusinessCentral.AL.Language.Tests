@@ -121,4 +121,28 @@ codeunit 98251 "LT AK Fts Test Op"
         F.FindFirst();
         Assert.IsFalse(F.OptimizeForTextSearch, 'Plain is not optimized');
     end;
+
+
+    // Corpus issue 668 item 12 (writer BQ): a filter starting with '&&' on the field with OptimizeForTextSearch and on the plain field
+    // (microsoft/AL issue 7899: the runtime generated wrong SQL, "The argument type nvarchar(max) is invalid for argument 2 of CONTAINS").
+    // Each filter is a test of its own: its error, if any, is the result.
+    [Test]
+    procedure DoubleAmpersandFilterOnOptimizedField_BQ()
+    var
+        R: Record "LT AK Fts Row Op";
+    begin
+        Seed();
+        R.SetFilter(Txt, '&&hello*');
+        Error('BQOBSERVE:filter=%1 count=%2', R.GetFilter(Txt), R.Count());
+    end;
+
+    [Test]
+    procedure DoubleAmpersandFilterOnPlainField_BQ()
+    var
+        R: Record "LT AK Fts Row Op";
+    begin
+        Seed();
+        R.SetFilter(Plain, '&&hello*');
+        Error('BQOBSERVE:filter=%1 count=%2', R.GetFilter(Plain), R.Count());
+    end;
 }

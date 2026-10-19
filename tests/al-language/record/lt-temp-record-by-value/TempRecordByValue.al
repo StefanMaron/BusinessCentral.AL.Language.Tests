@@ -215,4 +215,27 @@ codeunit 74886 "LT TRV Tests"
         Observer.Expect('caller.storedRows', '60=inCallee;100=stored;');
         Observer.Verify();
     end;
+
+
+    // Corpus issue 668 item 36 (writer BQ): a temporary record passed by value to an event whose parameter is not declared temporary, and the
+    // subscriber's view of it (microsoft/AL issue 1671). Fixtures: codeunits LT BQ TRV Pub / Sub in record/lt-bq-odd-leads/BqObjects.al.
+    [Test]
+    procedure TempRecord_ByValue_ToEventSubscriber_BQ()
+    var
+        Temp: Record "LT TRV Row" temporary;
+        Pub: Codeunit "LT BQ TRV Pub";
+        Sub: Codeunit "LT BQ TRV Sub";
+        Log: Codeunit "LT BQ Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed(Temp);
+        Log.Take();
+        BindSubscription(Sub);
+        Pub.Raise(Temp);
+        UnbindSubscription(Sub);
+        Observer.Observe('subscriber', Log.Take());
+        Observer.Observe('callerTemporary', Format(Temp.IsTemporary()));
+        Observer.Observe('callerRows', Format(Temp.Count()));
+        Observer.Finish();
+    end;
 }

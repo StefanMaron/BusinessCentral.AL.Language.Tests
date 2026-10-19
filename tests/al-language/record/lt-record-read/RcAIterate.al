@@ -385,4 +385,48 @@ codeunit 71501 "LT RcA Iterate"
         Observer.Expect('smallNo', '10');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 27 (writer BQ): rows inserted inside a running loop (docs: Find uses paging, FindSet reads the rows at once).
+    // LT RcA Main holds No 10..100; the loop inserts No + 5 for every row it reads, starting at the first row, until it has read 30 rows.
+    local procedure BqInsertWhileLooping(Mode: Integer): Text
+    var
+        R: Record "LT RcA Main";
+        Added: Record "LT RcA Main";
+        Seen: Text;
+        Reads: Integer;
+        Found: Boolean;
+    begin
+        Seed.Main();
+        case Mode of
+            1:
+                Found := R.FindSet();
+            2:
+                Found := R.FindSet(true);
+            3:
+                Found := R.Find('-');
+            4:
+                Found := R.FindFirst();
+        end;
+        if Found then
+            repeat
+                Reads += 1;
+                Seen += Format(R.No) + ' ';
+                if R.No mod 10 = 0 then begin
+                    Added.Init();
+                    Added.No := R.No + 5;
+                    Added.Insert();
+                end;
+            until (R.Next() = 0) or (Reads >= 30);
+        exit(Seen + '| reads=' + Format(Reads));
+    end;
+
+    [Test]
+    procedure Rows_Inserted_Inside_The_Loop_BQ()
+    begin
+        Observer.Observe('findSet', BqInsertWhileLooping(1));
+        Observer.Observe('findSetForUpdate', BqInsertWhileLooping(2));
+        Observer.Observe('findMinus', BqInsertWhileLooping(3));
+        Observer.Observe('findFirst', BqInsertWhileLooping(4));
+        Observer.Finish();
+    end;
 }

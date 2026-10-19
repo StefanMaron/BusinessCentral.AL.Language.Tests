@@ -687,6 +687,100 @@ codeunit 71507 "LT RcA Position View"
         Observer.Expect('order', 'Amt|No');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 11 (writer BQ): SetView('') after SetCurrentKey, Ascending(false) and filters in groups 0 and 2.
+    [Test]
+    procedure SetView_Empty_Key_Order_And_Filter_Groups_BQ()
+    var
+        R: Record "LT RcA Main";
+    begin
+        Seed.Main();
+        R.SetCurrentKey(Name);
+        R.Ascending(false);
+        R.SetRange(No, 20, 60);
+        R.FilterGroup(2);
+        R.SetRange(Cd, 'C1');
+        R.FilterGroup(0);
+        R.SetView('');
+        Observer.Observe('key', R.CurrentKey());
+        Observer.Observe('ascending', Format(R.Ascending()));
+        Observer.Observe('group', Format(R.FilterGroup()));
+        Observer.Observe('filters', R.GetFilters());
+        Observer.Observe('count', Format(R.Count()));
+        Observer.Observe('view', R.GetView());
+        R.FilterGroup(2);
+        Observer.Observe('group2Filter', R.GetFilter(Cd));
+        R.FilterGroup(0);
+        Observer.Finish();
+    end;
+
+    // Corpus issue 668 item 34 (writer BQ): GetPosition and GetView, a filtered loop, SetView and SetPosition again (microsoft/AL issue 5621:
+    // "You cannot change the value of the SystemId field"), with the primary key, with a key that holds SystemId, and on a var parameter.
+    // Rows of LT BQ Pos Row: 1..4, Grp 1, 1, 2, 2.
+    local procedure BqSeedPos()
+    var
+        P: Record "LT BQ Pos Row";
+        i: Integer;
+    begin
+        P.DeleteAll();
+        for i := 1 to 4 do begin
+            P.Init();
+            P.Id := i;
+            P.Grp := (i + 1) div 2;
+            P.Name := 'p' + Format(i);
+            P.Insert();
+        end;
+    end;
+
+    [TryFunction]
+    local procedure BqTryRestore(var P: Record "LT BQ Pos Row"; Pos: Text; View: Text)
+    begin
+        P.SetView(View);
+        P.SetPosition(Pos);
+    end;
+
+    local procedure BqLoopAndRestore(var P: Record "LT BQ Pos Row"): Text
+    var
+        Pos: Text;
+        View: Text;
+        Result: Text;
+    begin
+        Pos := P.GetPosition();
+        View := P.GetView();
+        P.SetRange(Grp, 2);
+        if P.FindSet() then
+            repeat
+            until P.Next() = 0;
+        P.SetRange(Grp);
+        if BqTryRestore(P, Pos, View) then begin
+            Result := 'ok id=' + Format(P.Id) + ' filters=' + P.GetFilters() + ' key=' + P.CurrentKey();
+            Result += ' find=' + Format(P.Find('=')) + ' name=' + P.Name;
+        end else
+            Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    [Test]
+    procedure SetPosition_After_Loop_And_SetView_BQ()
+    var
+        P: Record "LT BQ Pos Row";
+    begin
+        BqSeedPos();
+        P.Get(2);
+        Observer.Observe('primaryKey', BqLoopAndRestore(P));
+        P.Reset();
+        P.SetCurrentKey(Grp, SystemId);
+        P.Get(3);
+        Observer.Observe('positionHasSystemId', Format(StrPos(P.GetPosition(), 'SystemId') > 0));
+        Observer.Observe('systemIdKey', BqLoopAndRestore(P));
+        P.Reset();
+        P.SetCurrentKey(Grp, SystemId);
+        P.SetRange(Grp, 1);
+        P.FindFirst();
+        Observer.Observe('systemIdKeyFiltered', BqLoopAndRestore(P));
+        Observer.Finish();
+    end;
 }
 
 codeunit 71508 "LT RcA LoadFields"
