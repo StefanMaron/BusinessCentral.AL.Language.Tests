@@ -7,6 +7,7 @@
 //   59 (microsoft/AL#4625): Type Helper GetCurrUTCDateTime, GetCurrUTCDateTimeAsText and GetCurrUTCDateTimeISO8601 next to CurrentDateTime(),
 //       as relations only (no test may depend on the run date).
 //   48 (microsoft/AL#5120): Insert, Modify and Delete on the application-database table "OData Edm Type" (2000000179) from a test.
+//   54: SessionSettings.TimeZone and CreateDateTime, DT2Date, DT2Time, Format(DateTime, 0, 9) in the test session (install code is not probed: check-install-triggers.py).
 //   49 (microsoft/AL#6857): Run of an Upgrade codeunit through a codeunit variable (Codeunit.Run by id is pinned in PUpgradeTriggers.al).
 // BC versions: 27, 28, 29
 
@@ -78,6 +79,23 @@ codeunit 84895 "LT CN TypeHelper UTC"
         Observer.Observe('iso near now', Format(Abs(CurrentDateTime() - IsoDt) < 5000));
         Observer.Finish();
     end;
+
+    // Item 54, the test-session half: the session time zone and the DateTime conversions in it.
+    [Test]
+    procedure TestSession_TimeZoneAndConversions()
+    var
+        Observer: Codeunit "Probe Observer";
+        S: SessionSettings;
+        DT: DateTime;
+    begin
+        S.Init();
+        DT := CreateDateTime(20240601D, 120000T);
+        Observer.Observe('time zone', S.TimeZone());
+        Observer.Observe('format 9', Format(DT, 0, 9));
+        Observer.Observe('dt2date', Format(DT2Date(DT), 0, 9));
+        Observer.Observe('dt2time', Format(DT2Time(DT), 0, 9));
+        Observer.Finish();
+    end;
 }
 
 codeunit 84896 "LT CN OData Edm"
@@ -112,8 +130,11 @@ codeunit 84897 "LT CN Upgrade Run Var"
     [Test]
     procedure UpgradeCodeunit_RunThroughVariable()
     var
+        Observer: Codeunit "Probe Observer";
         U: Codeunit "LT P Upgrade Empty";
     begin
-        U.Run();
+        asserterror U.Run();
+        Observer.ObserveError('run');
+        Observer.Finish();
     end;
 }

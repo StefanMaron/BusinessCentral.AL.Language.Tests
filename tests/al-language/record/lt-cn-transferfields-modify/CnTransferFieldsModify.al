@@ -57,6 +57,7 @@ codeunit 84886 "LT CN TF Modify"
         R1.Name := 'first';
         R1.Qty := 1;
         R1.Insert();
+        Commit();
     end;
 
     local procedure NameInDb(): Text
@@ -112,6 +113,7 @@ codeunit 84886 "LT CN TF Modify"
         R2.Get(1);
         R2.Name := 'second';
         R2.Modify();
+        Commit();
         R1.Name := 'stale';
         R1.Modify();
         Observer.Observe('db', NameInDb());
@@ -129,6 +131,7 @@ codeunit 84886 "LT CN TF Modify"
         R2.Get(1);
         R2.Name := 'second';
         R2.Modify();
+        Commit();
         R1.TransferFields(R2);
         R1.Qty := 9;
         R1.Modify();
@@ -147,6 +150,7 @@ codeunit 84886 "LT CN TF Modify"
         R2.Get(1);
         R2.Name := 'second';
         R2.Modify();
+        Commit();
         R1.TransferFields(R2, false);
         R1.Qty := 9;
         R1.Modify();
@@ -165,6 +169,7 @@ codeunit 84886 "LT CN TF Modify"
         R2.Get(1);
         R2.Name := 'second';
         R2.Modify();
+        Commit();
         R1.Copy(R2);
         R1.Qty := 9;
         R1.Modify();
@@ -185,6 +190,7 @@ codeunit 84886 "LT CN TF Modify"
         O.Name := 'other';
         O.Qty := 3;
         O.Insert();
+        Commit();
         O.Get(1);
         R1.TransferFields(O);
         R1.Modify();

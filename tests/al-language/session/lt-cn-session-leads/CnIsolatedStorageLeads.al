@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/isolatedstorage/isolatedstorage-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); table 84884 (CnTransferFieldsModify.al); self-contained codeunits 84887-84889, 84892-84893, page 84890, 84898, report 84891
+// Fixtures used: Probe Observer (codeunit 69160); table 84884 (CnTransferFieldsModify.al); self-contained codeunits 84887-84889, 84892-84893, 84899, page 84890, 84898, report 84891
 // Probe: corpus issue #669 (writer CN).
 //   55 (microsoft/AL#8142): IsolatedStorage.Set, Get, Delete inside a page background task worker, run with TestPage.RunPageBackgroundTask.
 //   56 (microsoft/AL#5452): does IsolatedStorage.Set open a write transaction, so that a guarded Codeunit.Run, Page.RunModal or Report.RunModal
@@ -28,6 +28,12 @@ codeunit 84887 "LT CN BgTask Iso Worker"
             'get':
                 begin
                     Results.Add('Ret', Format(IsolatedStorage.Get('LTCNbg', DataScope::Module, Value), 0, 9));
+                    Results.Add('Value', Value);
+                end;
+            'getmissing':
+                begin
+                    Results.Add('Contains', Format(IsolatedStorage.Contains('LTCNbgmiss', DataScope::Module), 0, 9));
+                    Results.Add('Ret', Format(IsolatedStorage.Get('LTCNbgmiss', DataScope::Module, Value), 0, 9));
                     Results.Add('Value', Value);
                 end;
             'delete':
@@ -90,29 +96,16 @@ codeunit 84888 "LT CN BgTask Iso"
             Observer.Observe(Op + ' ' + K, Results.Get(K));
     end;
 
+    // The worker runs in a read-only session: a write to Isolated Storage is refused like a write to any table.
     [Test]
     procedure BgTask_IsolatedStorageSet()
     var
         Observer: Codeunit "Probe Observer";
-        Value: Text;
     begin
         Clean();
-        RunTask('set', Observer);
+        asserterror RunTask('set', Observer);
+        Observer.ObserveError('set');
         Observer.Observe('contains after', Format(IsolatedStorage.Contains('LTCNbg', DataScope::Module)));
-        if IsolatedStorage.Get('LTCNbg', DataScope::Module, Value) then
-            Observer.Observe('value after', Value);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure BgTask_IsolatedStorageGet()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Clean();
-        IsolatedStorage.Set('LTCNbg', 'seeded', DataScope::Module);
-        Commit();
-        RunTask('get', Observer);
         Observer.Finish();
     end;
 
@@ -124,7 +117,8 @@ codeunit 84888 "LT CN BgTask Iso"
         Clean();
         IsolatedStorage.Set('LTCNbg', 'seeded', DataScope::Module);
         Commit();
-        RunTask('delete', Observer);
+        asserterror RunTask('delete', Observer);
+        Observer.ObserveError('delete');
         Observer.Observe('contains after', Format(IsolatedStorage.Contains('LTCNbg', DataScope::Module)));
         Observer.Finish();
     end;
@@ -136,8 +130,35 @@ codeunit 84888 "LT CN BgTask Iso"
         Row: Record "LT CN TF Row";
     begin
         Clean();
-        RunTask('insert', Observer);
+        asserterror RunTask('insert', Observer);
+        Observer.ObserveError('insert');
         Observer.Observe('row after', Format(Row.Get(77)));
+        Observer.Finish();
+    end;
+}
+
+// Its own codeunit, and it writes nothing: a Get in the worker of a key the caller wrote in the same test transaction waits on the caller's
+// lock and fails with a lock error (seen on BC 29 locally), which depends on the lock timeout and is not asserted.
+codeunit 84899 "LT CN BgTask Iso Get"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure BgTask_IsolatedStorageGetMissingKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT CN BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        K: Text;
+    begin
+        Params.Add('Op', 'getmissing');
+        Card.OpenView();
+        Results := Card.RunPageBackgroundTask(Codeunit::"LT CN BgTask Iso Worker", Params, false);
+        Card.Close();
+        foreach K in Results.Keys() do
+            Observer.Observe(K, Results.Get(K));
         Observer.Finish();
     end;
 }
@@ -224,7 +245,8 @@ codeunit 84892 "LT CN Iso WriteTx"
     begin
         Clean();
         IsolatedStorage.Set('LTCNtx', 'v', DataScope::User);
-        Observer.Observe('run', Format(Codeunit.Run(Codeunit::"LT CN Noop")));
+        asserterror Observer.Observe('run', Format(Codeunit.Run(Codeunit::"LT CN Noop")));
+        Observer.ObserveError('run');
         Observer.Finish();
     end;
 
@@ -270,7 +292,6 @@ codeunit 84892 "LT CN Iso WriteTx"
     procedure ModalHandler(var P: TestPage "LT CN Modal Page")
     begin
         ModalSeen += 1;
-        P.OK().Invoke();
     end;
 }
 
@@ -285,16 +306,23 @@ codeunit 84893 "LT CN SetEncrypted Len"
             IsolatedStorage.Delete('LTCNenc', DataScope::Module);
     end;
 
-    local procedure TrySet(Value: Text; var Observer: Codeunit "Probe Observer")
+    local procedure SetAndReadBack(Value: Text; var Observer: Codeunit "Probe Observer")
     var
         Back: Text;
     begin
         Clean();
         Observer.Observe('ret', Format(IsolatedStorage.SetEncrypted('LTCNenc', Value, DataScope::Module)));
-        Observer.Observe('contains', Format(IsolatedStorage.Contains('LTCNenc', DataScope::Module)));
-        if IsolatedStorage.Get('LTCNenc', DataScope::Module, Back) then
-            Observer.Observe('same back', Format(Back = Value));
+        Observer.Observe('get', Format(IsolatedStorage.Get('LTCNenc', DataScope::Module, Back)));
+        Observer.Observe('same back', Format(Back = Value));
         Clean();
+    end;
+
+    local procedure SetFails(Value: Text; var Observer: Codeunit "Probe Observer")
+    begin
+        Clean();
+        asserterror IsolatedStorage.SetEncrypted('LTCNenc', Value, DataScope::Module);
+        Observer.ObserveError('set');
+        Observer.Observe('contains', Format(IsolatedStorage.Contains('LTCNenc', DataScope::Module)));
     end;
 
     [Test]
@@ -307,11 +335,20 @@ codeunit 84893 "LT CN SetEncrypted Len"
     end;
 
     [Test]
+    procedure SetEncrypted_214Ascii()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        SetAndReadBack(PadStr('', 214, 'a'), Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure SetEncrypted_215Ascii()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        TrySet(PadStr('', 215, 'a'), Observer);
+        SetFails(PadStr('', 215, 'a'), Observer);
         Observer.Finish();
     end;
 
@@ -320,7 +357,16 @@ codeunit 84893 "LT CN SetEncrypted Len"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        TrySet(PadStr('', 216, 'a'), Observer);
+        SetFails(PadStr('', 216, 'a'), Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure SetEncrypted_107NonAscii()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        SetAndReadBack(PadStr('', 107, 'é'), Observer);
         Observer.Finish();
     end;
 
@@ -329,16 +375,7 @@ codeunit 84893 "LT CN SetEncrypted Len"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        TrySet(PadStr('', 108, 'é'), Observer);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure SetEncrypted_1000Ascii()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        TrySet(PadStr('', 1000, 'a'), Observer);
+        SetFails(PadStr('', 108, 'é'), Observer);
         Observer.Finish();
     end;
 
