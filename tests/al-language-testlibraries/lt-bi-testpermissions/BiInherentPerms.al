@@ -6,7 +6,12 @@
 // the permission set 'D365 Full Access' when Tests-TestLibraries is installed (BiTpRestr.al), which does not grant table
 // 81562 of this app; so a plain insert into it is refused, and each procedure below shows what its attribute changes.
 // Every test declares [HandlerFunctions] so the CI runner routes the codeunit to Microsoft's test runner (BiTpHelper.al).
-// Probe: observed values.
+// Facts (27.5, 28.5, 29.0 identical): inherent 'I' lets the insert pass, also when the insert is in a callee of the procedure
+// that has the attribute; inherent 'R' does not; scope Permissions and Both grant, Entitlements alone does not;
+// ReadPermission/WritePermission inside the procedure report the inherent permissions. RequiredPermissions has no run-time
+// effect on raising the event: the raise succeeds without the named permission and the code after it runs.
+// Probe: observed values; every literal asserted below is what the BC tier produced (corpus CI job test-testlibraries,
+// runs 39234234851 / 39234269710 / 39234304686 on BC 27.5 / 28.5 / 29.0).
 // BC versions: 27, 28, 29
 table 81562 "LT BI IP Row"
 {
@@ -172,7 +177,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertPlain();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'Sorry, the current permissions prevented the action. (TableData 81562 LT BI IP Row Insert: AL Language Coverage Tests (Test Libraries))');
+        Observer.Expect('ins|code', 'DB:ClientInsertDenied');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +192,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertInherentI();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'LT BI inserted');
+        Observer.Expect('ins|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +207,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertInherentR();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'Sorry, the current permissions prevented the action. (TableData 81562 LT BI IP Row Insert: AL Language Coverage Tests (Test Libraries))');
+        Observer.Expect('ins|code', 'DB:ClientInsertDenied');
+        Observer.Verify();
     end;
 
     [Test]
@@ -211,7 +222,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertScopePermissions();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'LT BI inserted');
+        Observer.Expect('ins|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -224,7 +237,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertScopeEntitlements();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'Sorry, the current permissions prevented the action. (TableData 81562 LT BI IP Row Insert: AL Language Coverage Tests (Test Libraries))');
+        Observer.Expect('ins|code', 'DB:ClientInsertDenied');
+        Observer.Verify();
     end;
 
     [Test]
@@ -237,7 +252,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertScopeBoth();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'LT BI inserted');
+        Observer.Expect('ins|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -250,7 +267,9 @@ codeunit 81564 "LT BI IP Tests"
         Message('LT BI');
         asserterror Probe.InsertInCallee();
         Observer.ObserveError('ins');
-        Observer.Finish();
+        Observer.Expect('ins|text', 'LT BI inserted');
+        Observer.Expect('ins|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -264,7 +283,10 @@ codeunit 81564 "LT BI IP Tests"
         Observer.Observe('plain', Probe.PermissionsPlain());
         Observer.Observe('inherent_r', Probe.PermissionsInsideR());
         Observer.Observe('inherent_rimd', Probe.PermissionsInsideRIMD());
-        Observer.Finish();
+        Observer.Expect('plain', 'No/No');
+        Observer.Expect('inherent_r', 'Yes/No');
+        Observer.Expect('inherent_rimd', 'Yes/Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -280,7 +302,9 @@ codeunit 81564 "LT BI IP Tests"
         else
             Observer.ObserveError('raise');
         Observer.Observe('steps', Format(Probe.StepCount()));
-        Observer.Finish();
+        Observer.Expect('raise', 'ok');
+        Observer.Expect('steps', '2');
+        Observer.Verify();
     end;
 
     [MessageHandler]
