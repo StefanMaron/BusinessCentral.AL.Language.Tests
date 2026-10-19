@@ -424,9 +424,9 @@ codeunit 81070 "BD Region Tests"
         ClearLastError();
     end;
 
+    // Report.Run(Id, false) of the request-page report: no request page opens; the report has no layout, so the run ends in ReportNoLayout.
     [Test]
-    [HandlerFunctions('BdReqHandler')]
-    procedure BdProperty_De_TestRequestPageSaveAsXml()
+    procedure BdProperty_De_RunNoRequestPageNoLayout()
     var
         Observer: Codeunit "Probe Observer";
         Ok: Boolean;
@@ -445,6 +445,31 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('run|code', 'ReportNoLayout');
         Observer.Expect('run log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];');
         Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryRunWithRequestPage(ReportId: Integer)
+    begin
+        Report.Run(ReportId, true);
+    end;
+
+    // Report.Run(Id, true): the request page opens, the handler reads a request field and calls TestRequestPage.SaveAsXml.
+    [Test]
+    [HandlerFunctions('BdReqHandler')]
+    procedure BdProperty_De_TestRequestPageSaveAsXml()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Log.Take();
+        ReqLog := '';
+        ClearLastError();
+        Ok := TryRunWithRequestPage(Report::"BD Region De Req");
+        Observer.Observe('handler', ReqLog);
+        Observer.Observe('run ok', Format(Ok));
+        Observer.ObserveError('run');
+        Observer.Observe('run log', Log.Take());
+        Observer.Finish();
     end;
 
     [TryFunction]
