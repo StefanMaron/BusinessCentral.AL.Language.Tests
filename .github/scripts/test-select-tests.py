@@ -4,6 +4,7 @@ back to a full run. Also checks that the real ci.yml wires every test job to the
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -81,7 +82,7 @@ def git(repo, *a):
 
 def make(changes, base_files=None):
     """A repo with BASE_FILES committed, then `changes` ({path: text or None to delete}) committed on top."""
-    repo = tempfile.mkdtemp(prefix='select-tests-')
+    repo = tempfile.mkdtemp(prefix='repo-', dir=ROOT)
     git(repo, 'init', '-q', '-b', 'main')
     for p, t in (base_files or BASE_FILES).items():
         f = Path(repo, p)
@@ -111,6 +112,7 @@ def sentinels(result, app):
 
 
 FAILED = []
+ROOT = tempfile.mkdtemp(prefix='select-tests-')
 
 
 def check(name, cond, detail=''):
@@ -222,4 +224,8 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        code = main()
+    finally:
+        shutil.rmtree(ROOT, ignore_errors=True)
+    sys.exit(code)
