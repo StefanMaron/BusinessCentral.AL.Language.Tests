@@ -201,7 +201,7 @@ codeunit 71037 "LT VaT TextConst"
     end;
     // Writer PW: docs/probes-needed.md "Values and builtins": a TextConst in a Variant answers none of the Is... tests LT VaT Helper.Flags asks
     // (TextConst_In_Variant). The other Is... tests one by one, the Variant compared with a Text, passed to a Text parameter, assigned to a Code
-    // variable, after a Variant parameter and a Variant return value; a Label in a Variant for comparison.
+    // variable (comparing a Variant with a Text does not compile: AL0175), after a Variant parameter and a Variant return value; a Label in a Variant for comparison.
     local procedure PwIsFlags(V: Variant): Text
     var
         R: Text;
@@ -256,7 +256,7 @@ codeunit 71037 "LT VaT TextConst"
         C: Code[20];
     begin
         R := 'flags=' + Helper.Flags(V) + ' more=' + PwIsFlags(V);
-        R += ' eqText=' + Format(V = 'Hello');
+        R += ' eqFormat=' + Format(Format(V) = 'Hello');
         if PwTryTextParam(V, P) then
             R += ' textParam=' + P
         else
