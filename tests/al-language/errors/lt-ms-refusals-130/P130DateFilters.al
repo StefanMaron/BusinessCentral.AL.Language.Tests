@@ -115,4 +115,116 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Expect('iso_ge', 'ok count=5 filter=>=01/03/24');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 item 2 (AL issue 7325): the value of a DateTime and a Time field after Insert, read back with Get into another
+    // record variable, for 1 to 9, 998 and 999 milliseconds (value read back | read back = value written | written variable = value).
+    [Test]
+    procedure BT_DateTimeAndTime_MillisecondsAfterWrite()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Record "LT P130 Filter Row";
+        Back: Record "LT P130 Filter Row";
+        Ms: List of [Integer];
+        M: Integer;
+        T: Time;
+        DT: DateTime;
+    begin
+        R.DeleteAll();
+        Ms.AddRange(1, 2, 3, 4, 5, 6, 7, 8, 9, 998, 999);
+        foreach M in Ms do begin
+            T := 000000T + M;
+            DT := CreateDateTime(20240325D, T);
+            R.Init();
+            R.Id := M;
+            R.Tm := T;
+            R.Dtm := DT;
+            R.Insert();
+            Back.Get(M);
+            Observer.Observe('dtm ' + Format(M), Format(Back.Dtm, 0, 9) + '|' + Format(Back.Dtm = DT) + '|' + Format(R.Dtm = DT));
+            Observer.Observe('tm ' + Format(M), Format(Back.Tm, 0, 9) + '|' + Format(Back.Tm = T) + '|' + Format(R.Tm = T));
+        end;
+        Observer.Finish();
+    end;
+
+    // Corpus issue 672 item 2: a DateTime range whose upper end is 23:59:59.999 (rows stored at 2024-03-25 00:00:00.000 and at
+    // 2024-03-24 23:59:59.997), GetFilters of that range, and equality filters with a millisecond the database cannot hold.
+    [Test]
+    procedure BT_DateTimeFilter_999Milliseconds()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Record "LT P130 Filter Row";
+    begin
+        R.DeleteAll();
+        R.Init();
+        R.Id := 1;
+        R.Dtm := CreateDateTime(20240325D, 000000T);
+        R.Insert();
+        R.Init();
+        R.Id := 2;
+        R.Dtm := CreateDateTime(20240324D, 235959.997T);
+        R.Insert();
+        R.Init();
+        R.Id := 3;
+        R.Tm := 120000T;
+        R.Insert();
+        R.Reset();
+        R.SetRange(Dtm, CreateDateTime(20240301D, 000000T), CreateDateTime(20240324D, 235959.999T));
+        Observer.Observe('to .999 count', Format(R.Count()));
+        Observer.Observe('to .999 getfilters', R.GetFilters());
+        R.SetRange(Dtm, CreateDateTime(20240301D, 000000T), CreateDateTime(20240324D, 235959.998T));
+        Observer.Observe('to .998 count', Format(R.Count()));
+        R.SetRange(Dtm, CreateDateTime(20240301D, 000000T), CreateDateTime(20240324D, 235959.996T));
+        Observer.Observe('to .996 count', Format(R.Count()));
+        R.SetRange(Dtm, CreateDateTime(20240325D, 000000.001T));
+        Observer.Observe('eq .001 count', Format(R.Count()));
+        R.SetRange(Dtm, CreateDateTime(20240324D, 235959.999T));
+        Observer.Observe('eq prev .999 count', Format(R.Count()));
+        R.SetRange(Dtm);
+        R.SetRange(Tm, 120000.001T);
+        Observer.Observe('time eq .001 count', Format(R.Count()));
+        R.SetRange(Tm, 120000.002T);
+        Observer.Observe('time eq .002 count', Format(R.Count()));
+        Observer.Finish();
+    end;
+
+    local procedure StoreDates(var Observer: Codeunit "Probe Observer"; Name: Text; D: Date; DtDate: Date; DtTime: Time)
+    var
+        R: Record "LT P130 Filter Row";
+        Back: Record "LT P130 Filter Row";
+        DT: DateTime;
+    begin
+        R.DeleteAll();
+        ClearLastError();
+        asserterror begin
+            if DtDate <> 0D then
+                DT := CreateDateTime(DtDate, DtTime);
+            R.Init();
+            R.Id := 900;
+            R.Dt := D;
+            R.Dtm := DT;
+            R.Insert();
+            Back.Get(900);
+            Error('stored:' + Format(Back.Dt, 0, 9) + '|' + Format(Back.Dtm, 0, 9) + '|' + Format(Back.Dt = D) + '|' + Format(Back.Dtm = DT));
+        end;
+        Observer.ObserveError(Name);
+    end;
+
+    // Corpus issue 672 item 8: Insert of a Date and a DateTime outside the SQL datetime range (before 1753-01-01, after
+    // 9999-12-31 23:59:59.997) and of 0D / 0DT: the error, or what Get reads back (Dt | Dtm | Dt = written | Dtm = written).
+    [Test]
+    procedure BT_DateAndDateTime_SqlRangeOnInsert()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        StoreDates(Observer, 'blank', 0D, 0D, 0T);
+        StoreDates(Observer, 'date 1753-01-01', 17530101D, 0D, 0T);
+        StoreDates(Observer, 'date 1752-12-31', 17521231D, 0D, 0T);
+        StoreDates(Observer, 'date 0001-01-01', 00010101D, 0D, 0T);
+        StoreDates(Observer, 'date closing 1752-12-31', ClosingDate(17521231D), 0D, 0T);
+        StoreDates(Observer, 'datetime 1753-01-01 00:00', 0D, 17530101D, 000000T);
+        StoreDates(Observer, 'datetime 1752-12-31 12:00', 0D, 17521231D, 120000T);
+        StoreDates(Observer, 'datetime 9999-12-31 23:59:59.997', 0D, 99991231D, 235959.997T);
+        StoreDates(Observer, 'datetime 9999-12-31 23:59:59.999', 0D, 99991231D, 235959.999T);
+        Observer.Finish();
+    end;
 }

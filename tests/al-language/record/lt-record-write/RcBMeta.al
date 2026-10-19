@@ -537,4 +537,36 @@ codeunit 72009 "LT RcB Meta Test"
         Observer.Expect('overflow assign|code', 'StringLengthExceeded');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 items 28 and 31 (AL issue 6449, Learn page of Record.RecordId): Format of the RecordId of a table whose Caption
+    // ('RcB Meta Caption') differs from its name, with no format number and formats 0, 1, 2 and 9, in the session language and after
+    // GlobalLanguage(1031); Evaluate of the format 1 text back into a RecordId.
+    [Test]
+    procedure BT_RecordId_Format_CaptionedTable()
+    var
+        Rec: Record "LT RcB Meta";
+        RecId: RecordId;
+        Back: RecordId;
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+        Ok: Boolean;
+    begin
+        Rec.Id := 7;
+        RecId := Rec.RecordId();
+        Observer.Observe('none', Format(RecId));
+        Observer.Observe('0', Format(RecId, 0, 0));
+        Observer.Observe('1', Format(RecId, 0, 1));
+        Observer.Observe('2', Format(RecId, 0, 2));
+        Observer.Observe('9', Format(RecId, 0, 9));
+        Observer.Observe('tablecaption', Rec.TableCaption());
+        Ok := Evaluate(Back, Format(RecId, 0, 1));
+        Observer.Observe('evaluate 1', Format(Ok) + '|' + Format(Back = RecId));
+        Saved := GlobalLanguage();
+        GlobalLanguage(1031);
+        Observer.Observe('1031 none', Format(RecId));
+        Observer.Observe('1031 1', Format(RecId, 0, 1));
+        Observer.Observe('1031 9', Format(RecId, 0, 9));
+        GlobalLanguage(Saved);
+        Observer.Finish();
+    end;
 }

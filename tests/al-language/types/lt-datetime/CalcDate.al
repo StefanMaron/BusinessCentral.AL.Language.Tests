@@ -530,4 +530,20 @@ codeunit 73800 "LT DtT CalcDate A"
         Observer.Expect('1Y on 0D', 'ERR:You cannot base a date calculation on an undefined date.\\Date: 0D\Formula: 1Y.');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 item 5: the example of the CalcDate page on Microsoft Learn (reference date 21 May 1996, a Tuesday; Learn
+    // gives 07/20/96, 05/14/96 and 06/30/96). <-WD2> on a Tuesday: the previous Tuesday or the same day.
+    [Test]
+    procedure BT_LearnExample_1996()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('CQ+1M-10D', Calc('<CQ+1M-10D>', 19960521D));
+        Observer.Observe('-WD2', Calc('<-WD2>', 19960521D));
+        Observer.Observe('CM+30D', Calc('<CM+30D>', 19960521D));
+        Observer.Observe('CQ+1M-10D text', CalcF('<CQ+1M-10D>', 19960521D));
+        Observer.Observe('-WD2 text', CalcF('<-WD2>', 19960521D));
+        Observer.Observe('CM+30D text', CalcF('<CM+30D>', 19960521D));
+        Observer.Finish();
+    end;
 }

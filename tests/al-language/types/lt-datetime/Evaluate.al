@@ -541,4 +541,100 @@ codeunit 73805 "LT DtT Evaluate"
         Observer.Expect('CM calcdate', '2024-01-31');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 item 13 (AL issue 8256): the date text that Format(20260101D) gives in a dd.mm.yy region, read as a Time and
+    // as a Date in this session (en-US).
+    [Test]
+    procedure BT_DottedShortDate_AsTimeAndDate()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('time 01.01.26', ET('01.01.26', 0));
+        Observer.Observe('time 01.01.26 fmt 9', ET('01.01.26', 9));
+        Observer.Observe('date 01.01.26', ED('01.01.26', 0));
+        Observer.Observe('time 01.01.2026', ET('01.01.2026', 0));
+        Observer.Observe('date 01.01.2026', ED('01.01.2026', 0));
+        Observer.Finish();
+    end;
+
+    // Corpus issue 672 item 20: Evaluate of Duration texts with short unit names (d, m, min, sec, s, ms, milli, millis), a fraction
+    // of milliseconds, and a fractional second followed by milliseconds (the Microsoft Learn example).
+    [Test]
+    procedure BT_Duration_UnitAbbreviations()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('learn example', EDU('2days 4hours 3.7 seconds 17 milliseconds', 0));
+        Observer.Observe('3.7 seconds 17 milliseconds', EDU('3.7 seconds 17 milliseconds', 0));
+        Observer.Observe('1 d', EDU('1 d', 0));
+        Observer.Observe('1 m', EDU('1 m', 0));
+        Observer.Observe('1 min', EDU('1 min', 0));
+        Observer.Observe('1 mins', EDU('1 mins', 0));
+        Observer.Observe('1 sec', EDU('1 sec', 0));
+        Observer.Observe('1 s', EDU('1 s', 0));
+        Observer.Observe('5 ms', EDU('5 ms', 0));
+        Observer.Observe('5 milli', EDU('5 milli', 0));
+        Observer.Observe('5 millis', EDU('5 millis', 0));
+        Observer.Observe('1.5 milliseconds', EDU('1.5 milliseconds', 0));
+        Observer.Observe('1.5 seconds', EDU('1.5 seconds', 0));
+        Observer.Observe('2 days 3 h 4 min 5 sec 6 ms', EDU('2 days 3 h 4 min 5 sec 6 ms', 0));
+        Observer.Observe('1 D', EDU('1 D', 0));
+        Observer.Observe('1 HOUR', EDU('1 HOUR', 0));
+        Observer.Observe('1 week', EDU('1 week', 0));
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryEvalDuration(Txt: Text; Fmt: Integer; var Du: Duration)
+    begin
+        Evaluate(Du, Txt, Fmt);
+    end;
+
+    local procedure EvalDurationErr(Txt: Text; Fmt: Integer): Text
+    var
+        Du: Duration;
+    begin
+        ClearLastError();
+        if TryEvalDuration(Txt, Fmt, Du) then
+            exit('ok|' + Format(Du, 0, 9));
+        exit('err|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [TryFunction]
+    local procedure TryFormatDuration(Du: Duration; Fmt: Integer; var Result: Text)
+    begin
+        Result := Format(Du, 0, Fmt);
+    end;
+
+    local procedure FormatDurationErr(Ms: BigInteger; Fmt: Integer): Text
+    var
+        Du: Duration;
+        Result: Text;
+    begin
+        Du := Ms;
+        ClearLastError();
+        if TryFormatDuration(Du, Fmt, Result) then
+            exit('ok|' + Result);
+        exit('err|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // Corpus issue 672 item 25 (AL issue 6707): Evaluate of a number text above the Integer maximum into a Duration (a plain number is
+    // read in hours unless format 9 is given), and Format of a Duration at and above the largest .NET TimeSpan (922337203685477 ms).
+    [Test]
+    procedure BT_Duration_BeyondTimeSpan()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('eval 3000000000 fmt 0', EvalDurationErr('3000000000', 0));
+        Observer.Observe('eval 3000000000 fmt 9', EvalDurationErr('3000000000', 9));
+        Observer.Observe('eval 2147483647 fmt 0', EvalDurationErr('2147483647', 0));
+        Observer.Observe('eval 256204778 fmt 0', EvalDurationErr('256204778', 0));
+        Observer.Observe('eval 256204779 fmt 0', EvalDurationErr('256204779', 0));
+        Observer.Observe('format max timespan 0', FormatDurationErr(922337203685477L, 0));
+        Observer.Observe('format max timespan 9', FormatDurationErr(922337203685477L, 9));
+        Observer.Observe('format above timespan 0', FormatDurationErr(922337203685478L, 0));
+        Observer.Observe('format above timespan 9', FormatDurationErr(922337203685478L, 9));
+        Observer.Observe('format 3e15 ms 0', FormatDurationErr(3000000000000000L, 0));
+        Observer.Finish();
+    end;
 }

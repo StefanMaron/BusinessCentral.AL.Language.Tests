@@ -364,6 +364,139 @@ codeunit 72510 "LT SyT Evaluate"
         Observer.Expect('char 65', 'No|\u0000');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 item 11: the Evaluate example of Microsoft Learn, '010196' into Integer, Date and Boolean (result | value).
+    [Test]
+    procedure BT_Evaluate_010196()
+    var
+        Observer: Codeunit "Probe Observer";
+        I: Integer;
+        D: Date;
+        B: Boolean;
+        Ok: Boolean;
+    begin
+        I := 5;
+        Ok := Evaluate(I, '010196');
+        Observer.Observe('integer', Format(Ok) + '|' + Format(I));
+        D := 20200202D;
+        Ok := Evaluate(D, '010196');
+        Observer.Observe('date', Format(Ok) + '|' + Format(D, 0, 9));
+        B := true;
+        Ok := Evaluate(B, '010196');
+        Observer.Observe('boolean', Format(Ok) + '|' + Format(B));
+        B := false;
+        ClearLastError();
+        asserterror Evaluate(B, '010196');
+        Observer.ObserveError('boolean error');
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryEvaluateDate(var D: Date; Txt: Text; Fmt: Integer)
+    begin
+        if Fmt < 0 then
+            Evaluate(D, Txt)
+        else
+            Evaluate(D, Txt, Fmt);
+    end;
+
+    local procedure EvalDateText(Txt: Text; Fmt: Integer): Text
+    var
+        D: Date;
+    begin
+        D := 20200202D;
+        ClearLastError();
+        if TryEvaluateDate(D, Txt, Fmt) then
+            exit('ok|' + Format(D, 0, 9));
+        exit('err|' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(D, 0, 9));
+    end;
+
+    [TryFunction]
+    local procedure TryJsonAsDate(Txt: Text; var D: Date)
+    var
+        J: JsonValue;
+    begin
+        J.SetValue(Txt);
+        D := J.AsDate();
+    end;
+
+    local procedure JsonDateText(Txt: Text): Text
+    var
+        D: Date;
+    begin
+        ClearLastError();
+        if TryJsonAsDate(Txt, D) then
+            exit('ok|' + Format(D, 0, 9));
+        exit('err|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // Corpus issue 672 item 18 (AL issue 2400): Evaluate of the dotted text '29.05.2018' into a Date in the session language (en-US),
+    // after GlobalLanguage(1031) (German), with format number 9, and JsonValue.AsDate of the same text.
+    [Test]
+    procedure BT_Evaluate_DottedDate_Language()
+    var
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+    begin
+        Saved := GlobalLanguage();
+        Observer.Observe('1033 default', EvalDateText('29.05.2018', -1));
+        Observer.Observe('1033 fmt 0', EvalDateText('29.05.2018', 0));
+        Observer.Observe('1033 fmt 9', EvalDateText('29.05.2018', 9));
+        Observer.Observe('1033 iso fmt 9', EvalDateText('2018-05-29', 9));
+        Observer.Observe('1033 05/29/2018', EvalDateText('05/29/2018', -1));
+        Observer.Observe('1033 json', JsonDateText('29.05.2018'));
+        GlobalLanguage(1031);
+        Observer.Observe('1031 default', EvalDateText('29.05.2018', -1));
+        Observer.Observe('1031 fmt 9', EvalDateText('29.05.2018', 9));
+        Observer.Observe('1031 05/29/2018', EvalDateText('05/29/2018', -1));
+        Observer.Observe('1031 json', JsonDateText('29.05.2018'));
+        GlobalLanguage(Saved);
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TrySetBoolFilter(var Row: Record "ALT Universal"; FilterText: Text)
+    begin
+        Row.SetFilter("Boolean Field", FilterText);
+    end;
+
+    local procedure BoolFilterText(FilterText: Text): Text
+    var
+        Row: Record "ALT Universal" temporary;
+    begin
+        ClearLastError();
+        if TrySetBoolFilter(Row, FilterText) then
+            exit('ok|' + Row.GetFilter("Boolean Field"));
+        exit('err|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // Corpus issue 672 item 23 (AL issue 4046): Evaluate into a Boolean of texts with a leading or trailing blank (result | value),
+    // and the same texts as a SetFilter value of a Boolean field (ok | GetFilter, or the error).
+    [Test]
+    procedure BT_Evaluate_Boolean_LeadingBlank()
+    var
+        Observer: Codeunit "Probe Observer";
+        B: Boolean;
+        Ok: Boolean;
+        Inputs: List of [Text];
+        Input: Text;
+    begin
+        Inputs.Add(' Yes');
+        Inputs.Add('Yes ');
+        Inputs.Add(' No');
+        Inputs.Add(' Da');
+        Inputs.Add(' true');
+        Inputs.Add(' 1');
+        Inputs.Add('  yes  ');
+        foreach Input in Inputs do begin
+            B := false;
+            Ok := Evaluate(B, Input);
+            Observer.Observe('eval [' + Input + ']', Format(Ok) + '|' + Format(B));
+        end;
+        foreach Input in Inputs do
+            Observer.Observe('filter [' + Input + ']', BoolFilterText(Input));
+        Observer.Finish();
+    end;
 }
 
 codeunit 72511 "LT SyT Last Error"

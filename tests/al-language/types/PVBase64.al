@@ -235,4 +235,49 @@ codeunit 69339 "PV Base64 Probe"
 #endif
         Observer.Verify();
     end;
+
+    // Corpus issue 672 item 15 (AL issues 5666 and 7289): binary data (a 1x1 PNG, the first bytes of a ZIP file) decoded with
+    // FromBase64 into a Text and encoded again with ToBase64: the text form (UTF-8 by default, then Windows-1252) against the stream
+    // form (FromBase64(Text, OutStream) and ToBase64(InStream)). Each value: the result | result = input | StrLen of the text.
+    [Test]
+    procedure BT_Base64_BinaryThroughText()
+    var
+        Base64: Codeunit "Base64 Convert";
+        TempBlob: Codeunit "Temp Blob";
+        Observer: Codeunit "Probe Observer";
+        OutS: OutStream;
+        InS: InStream;
+        Png: Text;
+        Zip: Text;
+        Txt: Text;
+        Back: Text;
+    begin
+        Png := 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+        Zip := 'UEsDBBQAAAAIAI1jd1n/AA==';
+        Txt := Base64.FromBase64(Png);
+        Back := Base64.ToBase64(Txt);
+        Observer.Observe('png utf8', Back + '|' + Format(Back = Png) + '|' + Format(StrLen(Txt)));
+        Observer.Observe('png utf8 first codes', Codes(CopyStr(Txt, 1, 8)));
+        Txt := Base64.FromBase64(Png, TextEncoding::Windows);
+        Back := Base64.ToBase64(Txt, TextEncoding::Windows);
+        Observer.Observe('png windows', Format(Back = Png) + '|' + Format(StrLen(Txt)));
+        Txt := Base64.FromBase64(Zip);
+        Back := Base64.ToBase64(Txt);
+        Observer.Observe('zip utf8', Back + '|' + Format(Back = Zip) + '|' + Format(StrLen(Txt)));
+        Txt := Base64.FromBase64(Zip, TextEncoding::Windows);
+        Back := Base64.ToBase64(Txt, TextEncoding::Windows);
+        Observer.Observe('zip windows', Back + '|' + Format(Back = Zip) + '|' + Format(StrLen(Txt)));
+        TempBlob.CreateOutStream(OutS);
+        Base64.FromBase64(Png, OutS);
+        TempBlob.CreateInStream(InS);
+        Back := Base64.ToBase64(InS);
+        Observer.Observe('png stream', Format(Back = Png) + '|' + Format(TempBlob.Length()));
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutS);
+        Base64.FromBase64(Zip, OutS);
+        TempBlob.CreateInStream(InS);
+        Back := Base64.ToBase64(InS);
+        Observer.Observe('zip stream', Back + '|' + Format(Back = Zip) + '|' + Format(TempBlob.Length()));
+        Observer.Finish();
+    end;
 }
