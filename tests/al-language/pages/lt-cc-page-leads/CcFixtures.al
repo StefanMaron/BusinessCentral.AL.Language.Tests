@@ -413,8 +413,10 @@ page 84237 "LT CC Err Card"
     var
         Log: Codeunit "LT CC Log";
     begin
-        if Log.GetFailAt() = TriggerName then
+        if Log.GetFailAt() = TriggerName then begin
+            Log.Add('hit ' + TriggerName);
             Error('LT CC failure in %1', TriggerName);
+        end;
     end;
 }
 

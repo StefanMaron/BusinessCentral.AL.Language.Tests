@@ -435,6 +435,7 @@ codeunit 84275 "LT CC Page Leads"
         end else begin
             P.OpenEdit();
             P.First();
+            Log.Take();
             if Step = 3 then
                 P.New();
             Log.SetFailAt(TriggerName);
@@ -452,6 +453,7 @@ codeunit 84275 "LT CC Page Leads"
             end;
         end;
         Observer.Observe('step', Outcome());
+        Observer.Observe('log', Log.Take());
         Log.SetFailAt('');
         asserterror ErrRead(P);
         Observer.Observe('read_after', Outcome());
