@@ -279,4 +279,228 @@ codeunit 60187 "Test Case Contracts"
     begin
         exit('default-' + Format(I));
     end;
+
+    // corpus issue 664 (writer BN): case statements from microsoft/AL issues 709, 834, 4312, 6136, 6912 and Learn (control statements).
+    // Observed on BC (probe form: Observer.Finish).
+    [Test]
+    procedure BN_Case_UnbracedIfInBranches()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('a=1', UnbracedIf(1));
+        Observer.Observe('a=2', UnbracedIf(2));
+        Observer.Observe('a=3', UnbracedIf(3));
+        Observer.Expect('a=1', 'x');
+        Observer.Expect('a=2', 'y');
+        Observer.Expect('a=3', 'z');
+        Observer.Verify();
+    end;
+
+    local procedure UnbracedIf(a: Integer): Text
+    var
+        R: Text;
+    begin
+        R := 'none';
+        case a of
+            1:
+                if a = a then R := 'x';
+            2:
+                if a = a then R := 'y';
+            3:
+                if a <> a then R := 'never' else R := 'z';
+        end;
+        exit(R);
+    end;
+
+    [Test]
+    procedure BN_Case_DecimalSelector()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('1.5', DecCase(1.5));
+        Observer.Observe('1.50', DecCase(1.50));
+        Observer.Observe('1.2', DecCase(1.2));
+        Observer.Observe('2', DecCase(2));
+        Observer.Observe('2.5', DecCase(2.5));
+        Observer.Observe('-0.5', DecCase(-0.5));
+        Observer.Observe('0.1+0.2', DecCase(0.1 + 0.2));
+        Observer.Observe('0.3', DecCase(0.3));
+        Observer.Observe('-3', DecCase(-3));
+        Observer.Expect('1.5', 'first 1.5');
+        Observer.Expect('1.50', 'first 1.5');
+        Observer.Expect('1.2', 'range 1..2');
+        Observer.Expect('2', 'range 1..2');
+        Observer.Expect('2.5', 'else');
+        Observer.Expect('-0.5', 'minus 0.5');
+        Observer.Expect('0.1+0.2', '0.3');
+        Observer.Expect('0.3', '0.3');
+        Observer.Expect('-3', 'range -5..-1');
+        Observer.Verify();
+    end;
+
+    local procedure DecCase(Value: Decimal): Text
+    begin
+        case Value of
+            1.5:
+                exit('first 1.5');
+            1.50:
+                exit('second 1.50');
+            1 .. 2:
+                exit('range 1..2');
+            -0.5:
+                exit('minus 0.5');
+            0.3:
+                exit('0.3');
+            -5 .. -1:
+                exit('range -5..-1');
+            else
+                exit('else');
+        end;
+    end;
+
+    [Test]
+    procedure BN_Case_OnlyElse()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+        I: Integer;
+    begin
+        case true of
+            else begin
+                R := 'else ran';
+            end;
+        end;
+        Observer.Observe('case true only else', R);
+        R := '';
+        I := 7;
+        case I of
+            else
+                R := 'int else ran';
+        end;
+        Observer.Observe('case int only else', R);
+        Observer.Expect('case true only else', 'else ran');
+        Observer.Expect('case int only else', 'int else ran');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure BN_Case_ZeroLiterals()
+    var
+        Observer: Codeunit "Probe Observer";
+        D: Date;
+#if BC29PLUS
+        T: Time;
+#endif
+    begin
+        D := 0D;
+        Observer.Observe('0D', DateCase(D));
+        Observer.Observe('fixed date', DateCase(DMY2Date(15, 3, 2024)));
+        Observer.Observe('other date', DateCase(DMY2Date(16, 3, 2024)));
+#if BC29PLUS
+        // A Time selector with a `0T:` label runs from BC 29. On BC 28.5 the same source fails the C# compilation of the whole codeunit at
+        // publish ("error CS0426: The type name 'Create' does not exist in the type 'NavTime'", corpus CI run 39262811842).
+        T := 0T;
+        case T of
+            0T:
+                Observer.Observe('0T', 'zero');
+            else
+                Observer.Observe('0T', 'other');
+        end;
+#endif
+        // A DateTime selector with a `0DT:` label is left out on purpose: it compiles, but BC 29.0 then fails the C# compilation of the
+        // whole codeunit at publish ("C# compilation has failed for the application object CodeUnit_60187 ... error CS0426: The type name
+        // 'Create' does not exist in the type 'NavDateTime'", corpus CI run 39239885087), so none of its tests would run.
+        Observer.Expect('0D', 'zero');
+        Observer.Expect('fixed date', '15 March');
+        Observer.Expect('other date', 'other');
+#if BC29PLUS
+        Observer.Expect('0T', 'zero');
+#endif
+        Observer.Verify();
+    end;
+
+    local procedure DateCase(D: Date): Text
+    begin
+        case D of
+            0D:
+                exit('zero');
+            DMY2Date(15, 3, 2024):
+                exit('15 March');
+            else
+                exit('other');
+        end;
+    end;
+
+    [Test]
+    procedure BN_Case_CodeSelectorAndLabels()
+    var
+        Observer: Codeunit "Probe Observer";
+        MyCode: Code[10];
+        Txt: Text;
+    begin
+        MyCode := 'ABC';
+        Observer.Observe('code ABC vs labels abc,ABC', CodeCase(MyCode));
+        MyCode := 'abc';
+        Observer.Observe('code assigned abc', CodeCase(MyCode));
+        Txt := 'abc';
+        Observer.Observe('text abc vs labels ABC,abc', TextCase(Txt));
+        Txt := 'ABC';
+        Observer.Observe('text ABC vs labels ABC,abc', TextCase(Txt));
+        MyCode := 'XYZ';
+        if TryLongLabel(MyCode, Txt) then
+            Observer.Observe('code vs 12-char label', Txt)
+        else
+            Observer.ObserveError('code vs 12-char label');
+        MyCode := 'ABCDEFGHIJ';
+        if TryLongLabel(MyCode, Txt) then
+            Observer.Observe('code 10 chars vs 12-char label', Txt)
+        else
+            Observer.ObserveError('code 10 chars vs 12-char label');
+        Observer.Expect('code ABC vs labels abc,ABC', 'lower label');
+        Observer.Expect('code assigned abc', 'lower label');
+        Observer.Expect('text abc vs labels ABC,abc', 'lower label');
+        Observer.Expect('text ABC vs labels ABC,abc', 'upper label');
+        Observer.Expect('code vs 12-char label|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKL');
+        Observer.Expect('code vs 12-char label|code', 'StringLengthExceeded');
+        Observer.Expect('code 10 chars vs 12-char label|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKL');
+        Observer.Expect('code 10 chars vs 12-char label|code', 'StringLengthExceeded');
+        Observer.Verify();
+    end;
+
+    local procedure CodeCase(Value: Code[10]): Text
+    begin
+        case Value of
+            'abc':
+                exit('lower label');
+            'ABC':
+                exit('upper label');
+            else
+                exit('else');
+        end;
+    end;
+
+    local procedure TextCase(Value: Text): Text
+    begin
+        case Value of
+            'ABC':
+                exit('upper label');
+            'abc':
+                exit('lower label');
+            else
+                exit('else');
+        end;
+    end;
+
+    [TryFunction]
+    local procedure TryLongLabel(Value: Code[10]; var R: Text)
+    begin
+        case Value of
+            'ABCDEFGHIJKL':
+                R := 'long label';
+            'XYZ':
+                R := 'xyz';
+            else
+                R := 'else';
+        end;
+    end;
 }

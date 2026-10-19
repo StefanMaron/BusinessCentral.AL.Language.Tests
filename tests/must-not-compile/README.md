@@ -411,6 +411,25 @@ is only a reference.
 | 1570 to 1572 | AL0187 (and AL0666 on BC 27 and 28) | [RequiredPending] on an interface method; one case per BC major (corpus #664 item 19). |
 | 1573 | AL0625 | #define after the first token of a file (corpus #664 item 29). |
 | 1574 to 1576 | AL0629, AL0631 | Preprocessor operators that do not exist: '!', '&&', '== true' (corpus #664 item 29). |
+| 1390 | AL0304 | A local variable name of 121 characters (120 compile). |
+| 1391 | AL0121 | Two local variables whose names differ only in letter case. |
+| 1392 | AL0757 | From BC 28: a global variable `_operator` and a procedure `Operator` in one codeunit: both metadata names clash. |
+| 1393 | AL0117 | `continue;` with a local variable named Continue in scope reads as the bare variable. |
+| 1394 | AL0309 | A table with 41 keys (40 compile). |
+| 1395 | AL0154 | A table field of type Text[2049] (Text[2048] compiles). |
+| 1396 | AL0368 | An array with 11 dimensions (10 compile). |
+| 1397 | AL0146 | An array of 1,000,001 elements (1,000,000 compile). |
+| 1398 | AL0155 | An enum extension declares the same value name and ordinal twice: duplicate name only, no AL0231. |
+| 1399 | AL0231 | An enum extension declares one ordinal twice under two names. |
+| 1400 | AL0118 | Another procedure names a member of an option parameter through the parameter name. |
+| 1401 | AL0405 | `case Enum::"X" of` with the enum type instead of a value. |
+| 1402 | AL0311 | `E.FromInteger(1)` on an enum instance. |
+| 1403 | AL0156 | A page field whose source expression is the name of an enum object. |
+| 1404 | AL0103 | A for loop with an Integer control variable and a literal bound outside the Integer range. |
+| 1405 | AL0122 | `Txt := Cond ? '1' : ''`: the Char true branch sets the type and the empty Text literal does not convert. |
+| 1406 | AL0122 | `V := Cond ? CurrentDateTime() : Today()` into a Variant: the Date branch does not convert to DateTime. |
+| 1407 | AL0666 | BC 27 and 28: a bare IsDirty() in a TableNo codeunit's OnRun binds to Record.IsDirty (runtime 18.0) before the local procedure. |
+| 1408 | AL0757 | BC 27: a global variable `_operator` and a procedure `Operator`: error on the variable, only warning AL0758 on the procedure. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
