@@ -514,7 +514,11 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Observer.Observe('modifyAll', 'no error');
         R.Get(1);
         Observer.Observe('name', R.Name);
-        Observer.Finish();
+        Observer.Expect('insert', 'no error');
+        Observer.Expect('modify', 'no error');
+        Observer.Expect('modifyAll', 'no error');
+        Observer.Expect('name', 'c');
+        Observer.Verify();
     end;
 
     [Test]
@@ -537,7 +541,11 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Copied.Name := 'copied';
         Copied.Modify();
         Observer.Observe('modifyAssignedCopy', 'no error');
-        Observer.Finish();
+        Observer.Expect('seqAssigned', 'Yes');
+        Observer.Expect('modifyUnchanged', 'no error');
+        Observer.Expect('modifyOtherField', 'no error');
+        Observer.Expect('modifyAssignedCopy', 'no error');
+        Observer.Verify();
     end;
 
     [Test]
@@ -552,7 +560,9 @@ codeunit 67826 "Test AutoInc Counter Edge"
         asserterror P.Modify();
         Observer.Observe('text', GetLastErrorText().Replace(Format(P.Seq), '<seq>'));
         Observer.Observe('code', GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('text', 'You cannot change the value of an AutoIncrement field.\\Field: Seq\Table: LT BQ AutoInc Plain\\Identification fields and values:\Id=''1''');
+        Observer.Expect('code', 'DB:ModifyOnIdentityField');
+        Observer.Verify();
     end;
 
     [Test]
@@ -562,10 +572,8 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Observer: Codeunit "Probe Observer";
     begin
         BqSeedAutoIncPlain();
-        P.ModifyAll(Seq, 99999);
-        Observer.Observe('modifyAll', 'no error');
-        P.Get(1);
-        Observer.Observe('seq', Format(P.Seq));
+        asserterror P.ModifyAll(Seq, 99999);
+        Observer.ObserveError('modifyAll');
         Observer.Finish();
     end;
 
@@ -581,8 +589,8 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Other.Get(2);
         P.TransferFields(Other, false);
         Observer.Observe('seqTaken', Format(P.Seq = Other.Seq));
-        P.Modify();
-        Observer.Observe('modify', 'no error');
+        asserterror P.Modify();
+        Observer.ObserveError('modify');
         Observer.Finish();
     end;
 }

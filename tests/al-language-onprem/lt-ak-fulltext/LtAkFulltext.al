@@ -133,7 +133,10 @@ codeunit 98251 "LT AK Fts Test Op"
     begin
         Seed();
         R.SetFilter(Txt, '&&hello*');
-        Error('BQOBSERVE:filter=%1 count=%2', R.GetFilter(Txt), R.Count());
+        // BC 27.5, 28.5, 29.0: no SQL error, the filter text is kept as given. The row count (0 in CI) is not asserted: the full-text
+        // index fills asynchronously, so a count right after the inserts may depend on timing (queued for the Windows nightly).
+        Assert.AreEqual('&&hello*', R.GetFilter(Txt), '&& filter text on the optimized field');
+        Assert.IsTrue(R.Count() >= 0, 'the && filter runs without a SQL error');
     end;
 
     [Test]
@@ -143,6 +146,8 @@ codeunit 98251 "LT AK Fts Test Op"
     begin
         Seed();
         R.SetFilter(Plain, '&&hello*');
-        Error('BQOBSERVE:filter=%1 count=%2', R.GetFilter(Plain), R.Count());
+        // BC 27.5, 28.5, 29.0: on a field without OptimizeForTextSearch the && form becomes a case-insensitive contains filter.
+        Assert.AreEqual('@*hello**', R.GetFilter(Plain), '&& filter text on the plain field');
+        Assert.AreEqual(4, R.Count(), '&&hello* on the plain field');
     end;
 }

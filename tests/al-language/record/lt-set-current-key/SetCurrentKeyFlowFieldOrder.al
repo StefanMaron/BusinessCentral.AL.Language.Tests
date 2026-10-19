@@ -249,7 +249,12 @@ codeunit 74319 "LT P166 Key Flow Order"
         Observer.Observe('flowFilter', BqKeyOutcome(Owner, 4));
         Owner.Reset();
         Observer.Observe('normalFieldNoKey', BqKeyOutcome(Owner, 5));
-        Observer.Finish();
+        Observer.Expect('sumFlowField', 'returned=Yes key=Total order=1 2 3 ');
+        Observer.Expect('nestedFlowField', 'returned=No key=Id order=1 2 3 ');
+        Observer.Expect('lookupFlowField', 'returned=Yes key=FirstTxt,Id order=1 3 2 ');
+        Observer.Expect('flowFilter', 'returned=No key=Id order=1 2 3 ');
+        Observer.Expect('normalFieldNoKey', 'returned=Yes key=Name order=2 1 3 ');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -308,6 +313,8 @@ codeunit 74319 "LT P166 Key Flow Order"
         Observer.Observe('temporary', BqTempSteps(TempOwner));
         Owner.FindFirst();
         Observer.Observe('stored', BqTempSteps(Owner));
-        Observer.Finish();
+        Observer.Expect('temporary', 'step2 error:Sorting cannot be done based on the FirstTxt field(s) in the LT BQ FG Owner table.|DB:Ok order=1: 2:beta 3:alpha ');
+        Observer.Expect('stored', 'order=1: 3:alpha 2:beta ');
+        Observer.Verify();
     end;
 }

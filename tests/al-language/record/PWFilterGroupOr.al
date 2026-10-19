@@ -277,6 +277,16 @@ codeunit 69774 "PW FilterGroup Or Probe"
         Owner.Reset();
         Owner.SetRange(Total, 0);
         Observer.Observe('group0FlowField', BqOwnerIds(Owner));
-        Observer.Finish();
+        Observer.Expect('getFilters', 'Name: ''''');
+        Observer.Expect('rows', '2 (count=1)');
+        Observer.Expect('findFirstOk', 'Yes');
+        Observer.Expect('findFirst|text', '');
+        Observer.Expect('findFirst|code', '');
+        Observer.Expect('findFirstId', '2');
+        Observer.Expect('rowsGroup0', '2 (count=1)');
+        Observer.Expect('flowFieldOnly', '1 2 3 (count=3)');
+        Observer.Expect('nameOrFlowField', '1 (count=1)');
+        Observer.Expect('group0FlowField', '1 (count=1)');
+        Observer.Verify();
     end;
 }

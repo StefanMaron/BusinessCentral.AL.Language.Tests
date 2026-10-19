@@ -563,7 +563,18 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Observe('filtersAfterGet', Filtered.GetFilters());
         Observer.Observe('keyAfterGet', Filtered.CurrentKey());
         Observer.Observe('countAfterGet', Format(Filtered.Count()));
-        Observer.Finish();
+        Observer.Expect('oneValue', 'Yes Q/0/ q00');
+        Observer.Expect('twoValues', 'Yes Q/1/ q10');
+        Observer.Expect('oneValueMissing', 'No /0/ ');
+        Observer.Expect('twoValuesMissing', 'No /0/ ');
+        Observer.Expect('noValues', 'No /0/ ');
+        Observer.Expect('oneValueMissingError|text', 'The LT RcA Multi does not exist. Identification fields and values: A=''R'',B=''0'',C=''''');
+        Observer.Expect('oneValueMissingError|code', 'DB:RecordNotFound');
+        Observer.Expect('filteredGet', 'No ');
+        Observer.Expect('filtersAfterGet', 'Info: zzz');
+        Observer.Expect('keyAfterGet', 'Info');
+        Observer.Expect('countAfterGet', '0');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -619,7 +630,27 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Observe('itself', BqGetByRecordOutcome(2));
         Observer.Observe('otherTable', BqGetByRecordOutcome(3));
         Observer.Observe('initRecord', BqGetByRecordOutcome(4));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('sameTable', 'error:The value "30\tN8\tC0\t4.5\t01/03/20\tNo\tAlpha\tFive\tItem 3\t" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('sameTable', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71500 to System.Int32.|Conversion');
+#endif
+#if BC28PLUS
+        Observer.Expect('itself', 'error:The value "40\t\t\t0\t\tNo\tAlpha\tZero\t\t" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('itself', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71500 to System.Int32.|Conversion');
+#endif
+#if BC28PLUS
+        Observer.Expect('otherTable', 'error:The value "ABC\tlower" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('otherTable', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71501 to System.Int32.|Conversion');
+#endif
+#if BC28PLUS
+        Observer.Expect('initRecord', 'error:The value "0\t\t\t0\t\tNo\tAlpha\tZero\t\t" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('initRecord', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71500 to System.Int32.|Conversion');
+#endif
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -676,6 +707,11 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Observe('setRange', BqRidOutcome(3, Rid));
         Observer.Observe('getMissing', BqRidOutcome(2, Missing));
         Observer.Observe('count', BqRidOutcome(4, Rid));
-        Observer.Finish();
+        Observer.Expect('insert', 'no error');
+        Observer.Expect('get', 'No ');
+        Observer.Expect('setRange', 'Yes main 20 count=1');
+        Observer.Expect('getMissing', 'No ');
+        Observer.Expect('count', 'count=1');
+        Observer.Verify();
     end;
 }

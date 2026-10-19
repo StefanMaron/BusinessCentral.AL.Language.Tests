@@ -711,7 +711,14 @@ codeunit 71507 "LT RcA Position View"
         R.FilterGroup(2);
         Observer.Observe('group2Filter', R.GetFilter(Cd));
         R.FilterGroup(0);
-        Observer.Finish();
+        Observer.Expect('key', 'No');
+        Observer.Expect('ascending', 'No');
+        Observer.Expect('group', '0');
+        Observer.Expect('filters', '');
+        Observer.Expect('count', '4');
+        Observer.Expect('view', 'VERSION(1) SORTING(No) ORDER(Descending)');
+        Observer.Expect('group2Filter', 'C1');
+        Observer.Verify();
     end;
 
     // Corpus issue 668 item 34 (writer BQ): GetPosition and GetView, a filtered loop, SetView and SetPosition again (microsoft/AL issue 5621:
@@ -728,6 +735,8 @@ codeunit 71507 "LT RcA Position View"
             P.Id := i;
             P.Grp := (i + 1) div 2;
             P.Name := 'p' + Format(i);
+            // fixed SystemIds in Id order, so a sort on SystemId is deterministic (only the last byte differs)
+            Evaluate(P.SystemId, '{00000000-0000-0000-0000-00000000000' + Format(i) + '}');
             P.Insert();
         end;
     end;
@@ -779,7 +788,11 @@ codeunit 71507 "LT RcA Position View"
         P.SetRange(Grp, 1);
         P.FindFirst();
         Observer.Observe('systemIdKeyFiltered', BqLoopAndRestore(P));
-        Observer.Finish();
+        Observer.Expect('primaryKey', 'ok id=2 filters= key=Id find=Yes name=p2');
+        Observer.Expect('positionHasSystemId', 'No');
+        Observer.Expect('systemIdKey', 'ok id=3 filters= key=Grp,System ID find=No name=p4');
+        Observer.Expect('systemIdKeyFiltered', 'ok id=1 filters=Grp: 1 key=Grp,System ID find=No name=p4');
+        Observer.Verify();
     end;
 }
 

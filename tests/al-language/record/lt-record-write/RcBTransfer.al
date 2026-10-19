@@ -506,7 +506,16 @@ codeunit 72005 "LT RcB Transfer"
         Observer.Observe('assignmentHasValue', Format(Copied.Data.HasValue()));
         Copied.CalcFields(Data);
         Observer.Observe('assignmentAfterCalcFields', Format(Copied.Data.HasValue()));
-        Observer.Finish();
+        Observer.Expect('fromInsertedVariable', '[payload]');
+        Observer.Expect('fromInsertedVariableStored', '[payload]');
+        Observer.Expect('readHasValue', 'Yes');
+        Observer.Expect('withoutCalcFields', 'empty');
+        Observer.Expect('withoutCalcFieldsStored', 'empty');
+        Observer.Expect('withCalcFields', '[payload]');
+        Observer.Expect('withCalcFieldsStored', '[payload]');
+        Observer.Expect('assignmentHasValue', 'Yes');
+        Observer.Expect('assignmentAfterCalcFields', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -548,6 +557,9 @@ codeunit 72005 "LT RcB Transfer"
         Observer.Observe('default', BqCustomerOutcome('Short', false));
         Observer.Observe('skipNotMatching', BqCustomerOutcome('Short', true));
         Observer.Observe('longAddressSkip', BqCustomerOutcome('An address longer than ten', true));
-        Observer.Finish();
+        Observer.Expect('default', 'ok no=BQ1 name=0 search=BQ SEARCH address=Short');
+        Observer.Expect('skipNotMatching', 'ok no=BQ1 name=0 search=BQ SEARCH address=Short');
+        Observer.Expect('longAddressSkip', 'ok no=BQ1 name=0 search=BQ SEARCH address=');
+        Observer.Verify();
     end;
 }

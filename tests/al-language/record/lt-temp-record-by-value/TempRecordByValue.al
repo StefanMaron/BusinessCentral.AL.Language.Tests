@@ -236,6 +236,9 @@ codeunit 74886 "LT TRV Tests"
         Observer.Observe('subscriber', Log.Take());
         Observer.Observe('callerTemporary', Format(Temp.IsTemporary()));
         Observer.Observe('callerRows', Format(Temp.Count()));
-        Observer.Finish();
+        Observer.Expect('subscriber', 'temp=No count=1');
+        Observer.Expect('callerTemporary', 'Yes');
+        Observer.Expect('callerRows', '2');
+        Observer.Verify();
     end;
 }

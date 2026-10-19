@@ -166,6 +166,14 @@ codeunit 70337 "LT P98 RecResultField"
         R.SetRange(Id, 2);
         Got := R.ExtFirstExitRec();
         Observer.Observe('extExitRec', BqDescribe(Got));
-        Observer.Finish();
+        Observer.Expect('unnamed', 'id=0 name= filters=');
+        Observer.Expect('unnamedCaller', 'id=2 name=second filters=Id: 2');
+        Observer.Expect('named', 'id=1 name=first filters=');
+        Observer.Expect('namedCaller', 'id=0 name= filters=Id: 2');
+        Observer.Expect('exitRec', 'id=2 name=second filters=');
+        Observer.Expect('extUnnamed', 'id=0 name= filters=');
+        Observer.Expect('extUnnamedCaller', 'id=2 name=second filters=Id: 2');
+        Observer.Expect('extExitRec', 'id=2 name=second filters=');
+        Observer.Verify();
     end;
 }

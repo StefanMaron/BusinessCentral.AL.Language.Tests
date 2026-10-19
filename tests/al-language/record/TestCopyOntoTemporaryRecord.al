@@ -163,6 +163,12 @@ codeunit 60680 "ALT Copy Onto Temporary Tests"
         Observer.Observe('tempAfterCopy', 'id=' + Format(TempRows.Id) + ' temporary=' + Format(TempRows.IsTemporary()));
         Observer.Observe('tempNext', BqNextOutcome(TempRows));
         Observer.Observe('tempNextAgain', BqNextOutcome(TempRows));
-        Observer.Finish();
+        Observer.Expect('storedAfterCopy', 'id=8 temporary=No');
+        Observer.Expect('storedNext', 'next=0 id=8 temporary=No');
+        Observer.Expect('storedNextAgain', 'next=0 id=8 temporary=No');
+        Observer.Expect('tempAfterCopy', 'id=2 temporary=Yes');
+        Observer.Expect('tempNext', 'next=1 id=7 temporary=Yes');
+        Observer.Expect('tempNextAgain', 'next=1 id=8 temporary=Yes');
+        Observer.Verify();
     end;
 }

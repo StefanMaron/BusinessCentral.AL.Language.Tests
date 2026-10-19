@@ -569,6 +569,19 @@ codeunit 71505 "LT RcA FilterInfo"
         R.FilterGroup(0);
         Observer.Observe('g255SetCount', Format(R.Count()));
         Observer.Observe('g255SetFilters', R.GetFilters());
-        Observer.Finish();
+        Observer.Expect('g255', 'ok previous=255 now=255');
+        Observer.Expect('g256', 'ok previous=256 now=256');
+        Observer.Expect('g1000', 'ok previous=1000 now=1000');
+        Observer.Expect('gMinus2', 'ok previous=-2 now=-2');
+        Observer.Expect('g300', 'ok previous=300 now=300');
+        Observer.Expect('afterG300Filter', '');
+        Observer.Expect('g0Filter', '');
+        Observer.Expect('g0Filters', '');
+        Observer.Expect('count', '10');
+        Observer.Expect('g44Filter', '');
+        Observer.Expect('g255Filter', '');
+        Observer.Expect('g255SetCount', '4');
+        Observer.Expect('g255SetFilters', '');
+        Observer.Verify();
     end;
 }

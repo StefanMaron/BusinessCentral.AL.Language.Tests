@@ -241,7 +241,8 @@ codeunit 70905 "LT P170 LoadFields"
         R.Get(1);
         Gone.Get(1);
         Gone.Delete();
-        Observer.Observe('name', R.Name);
+        asserterror Observer.Observe('name', R.Name);
+        Observer.ObserveError('name');
         Observer.Finish();
     end;
 
@@ -257,7 +258,8 @@ codeunit 70905 "LT P170 LoadFields"
         R.Get(1);
         Gone.Get(1);
         Gone.Delete();
-        Observer.Observe('extNote', R.ExtNote);
+        asserterror Observer.Observe('extNote', R.ExtNote);
+        Observer.ObserveError('extNote');
         Observer.Finish();
     end;
 
@@ -275,6 +277,10 @@ codeunit 70905 "LT P170 LoadFields"
         Observer.Observe('nameLoadedAfterDelete', Format(R.AreFieldsLoaded(Name)));
         Observer.Observe('extLoadedAfterDelete', Format(R.AreFieldsLoaded(ExtNote)));
         Observer.Observe('name', R.Name);
-        Observer.Finish();
+        Observer.Expect('nameLoadedBefore', 'No');
+        Observer.Expect('nameLoadedAfterDelete', 'Yes');
+        Observer.Expect('extLoadedAfterDelete', 'Yes');
+        Observer.Expect('name', 'two');
+        Observer.Verify();
     end;
 }

@@ -196,7 +196,10 @@ codeunit 73242 "LT P163 Truncate Guards"
         Observer.Observe('returned', Format(Ok));
         Observer.Observe('lastError', GetLastErrorText());
         Observer.Observe('rows', Format(TempPlain.Count()));
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('lastError', 'Temporary tables does not support truncation.');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +213,9 @@ codeunit 73242 "LT P163 Truncate Guards"
         Ok := Plain.Truncate(true);
         Observer.Observe('returned', Format(Ok));
         Observer.Observe('rows', Format(Plain.Count()));
-        Observer.Finish();
+        Observer.Expect('returned', 'Yes');
+        Observer.Expect('rows', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,7 +230,10 @@ codeunit 73242 "LT P163 Truncate Guards"
         Observer.Observe('returned', Format(Ok));
         Observer.Observe('lastError', GetLastErrorText());
         Observer.Observe('rows', Format(Int.Count()));
-        Observer.Finish();
+        Observer.Expect('returned', 'No');
+        Observer.Expect('lastError', 'The table does not support truncation.');
+        Observer.Expect('rows', '5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,6 +249,9 @@ codeunit 73242 "LT P163 Truncate Guards"
         Observer.Observe('returned', Format(Ok));
         Observer.Observe('lastError', GetLastErrorText());
         Observer.Observe('rows', Format(Plain.Count()));
-        Observer.Finish();
+        Observer.Expect('returned', 'Yes');
+        Observer.Expect('lastError', '');
+        Observer.Expect('rows', '0');
+        Observer.Verify();
     end;
 }

@@ -859,6 +859,29 @@ codeunit 71504 "LT RcA SetFilter"
         Observer.Observe('codeFive', BqTokenOutcome(4, '%BQFIVE'));
         Observer.Observe('integerFive', BqTokenOutcome(5, '%BQFIVE'));
         Observer.Observe('integerFiveOr', BqTokenOutcome(5, '%BQFIVE|7'));
+        UnbindSubscription(TokenSub);
+        Observer.Expect('guidUnbound', 'error:The filter "%BQGUID" is not valid for the G field on the LT BQ Flt Row table. The variable "%BQGUID" was not understood.|Filter:CSide log=');
+        Observer.Expect('guid', 'error:The filter "%BQGUID" is not valid for the G field on the LT BQ Flt Row table. The variable "%BQGUID" was not understood.|Filter:CSide log=');
+        Observer.Expect('guidLower', 'error:The filter "%bqguid" is not valid for the G field on the LT BQ Flt Row table. The variable "%bqguid" was not understood.|Filter:CSide log=');
+        Observer.Expect('text', 'error:The filter "%BQGUID" is not valid for the Txt field on the LT BQ Flt Row table. Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavInvalidFilterExpressionException'' was thrown.|Filter:CSide log=token:BQGUID');
+        Observer.Expect('code', 'error:The filter "%BQGUID" is not valid for the Cd field on the LT BQ Flt Row table. Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavInvalidFilterExpressionException'' was thrown.|Filter:CSide log=token:BQGUID');
+        Observer.Expect('integer', 'error:The filter "%BQGUID" is not valid for the Num field on the LT BQ Flt Row table. The variable "%BQGUID" was not understood.|Filter:CSide log=');
+        Observer.Expect('textFive', 'filter=[Txt: 5] ids=2  log=token:BQFIVE');
+        Observer.Expect('codeFive', 'filter=[Cd: 5] ids=2  log=token:BQFIVE');
+        Observer.Expect('integerFive', 'error:The filter "%BQFIVE" is not valid for the Num field on the LT BQ Flt Row table. The variable "%BQFIVE" was not understood.|Filter:CSide log=');
+        Observer.Expect('integerFiveOr', 'error:The filter "%BQFIVE|7" is not valid for the Num field on the LT BQ Flt Row table. The variable "%BQFIVE" was not understood.|Filter:CSide log=');
+        Observer.Verify();
+    end;
+
+    // A token the subscriber does not handle (split from the test above: a failure message keeps about 2000 characters).
+    [Test]
+    procedure SetFilter_Custom_Filter_Token_Unknown_BQ()
+    var
+        TokenSub: Codeunit "LT BQ Token Sub";
+        BqSeed: Codeunit "LT BQ Seed";
+    begin
+        BqSeed.FltRows();
+        BindSubscription(TokenSub);
         Observer.Observe('guidUnknown', BqTokenOutcome(2, '%BQNONE'));
         Observer.Observe('textUnknown', BqTokenOutcome(3, '%BQNONE'));
         UnbindSubscription(TokenSub);
@@ -914,7 +937,19 @@ codeunit 71504 "LT RcA SetFilter"
         R.Reset();
         R.SetRange(DT, Midnight);
         Observer.Observe('eqMidnightCount', Format(R.Count()));
-        Observer.Finish();
+        Observer.Expect('to999', '1|''''..03/24/24 11:59:59.999 PM');
+        Observer.Expect('to998', '0|''''..03/24/24 11:59:59.998 PM');
+        Observer.Expect('to997', '0|''''..03/24/24 11:59:59.997 PM');
+        Observer.Expect('from001', '1|03/25/24 12:00:00.001 AM..03/26/24 12:00 AM');
+        Observer.Expect('lt001', '0');
+        Observer.Expect('plain999GeMidnight', 'No');
+        Observer.Expect('plain999LtMidnight', 'Yes');
+        Observer.Expect('memory997', '2024-03-24T23:59:59.997Z');
+        Observer.Expect('stored999', '2024-03-25T00:00:00Z');
+        Observer.Expect('stored998', '2024-03-24T23:59:59.997Z');
+        Observer.Expect('stored997', '2024-03-24T23:59:59.997Z');
+        Observer.Expect('eqMidnightCount', '2');
+        Observer.Verify();
     end;
 
     // '&' between two plain values on an Integer field, and '@' with '*' and '?' together on a Text field (docs: entering criteria in filters).
@@ -930,6 +965,13 @@ codeunit 71504 "LT RcA SetFilter"
         Observer.Observe('atStarEQ', TxFilter('@*E?'));
         Observer.Observe('atQPStar', TxFilter('@?P*'));
         Observer.Observe('starPQStar', TxFilter('*P?*'));
-        Observer.Finish();
+        Observer.Expect('eqAndEq', '|30&50');
+        Observer.Expect('eqAndSame', '30,|30&30');
+        Observer.Expect('eqAndRange', '30,|30&20..40');
+        Observer.Expect('atStarPQStar', 'apple;Apple pie;|@*P?*');
+        Observer.Expect('atStarEQ', 'Zed;|@*E?');
+        Observer.Expect('atQPStar', 'apple;Apple pie;|@?P*');
+        Observer.Expect('starPQStar', '|*P?*');
+        Observer.Verify();
     end;
 }

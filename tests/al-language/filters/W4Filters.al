@@ -678,6 +678,26 @@ codeunit 68058 "W4 Filter Tests"
         Observer.Observe('num_star_before', BqNumberPattern('*%1', 8));
         Observer.Observe('num_lt', BqNumberPattern('<%1', 10));
         Observer.Observe('num_range', BqNumberPattern('%1..', 28));
-        Observer.Finish();
+        Observer.Expect('txt_star_both', 'filter=[Txt: *%1*] ids=');
+        Observer.Expect('txt_at_star_both', 'filter=[Txt: @*%1*] ids=');
+        Observer.Expect('txt_star_after', 'filter=[Txt: %1*] ids=');
+        Observer.Expect('txt_star_before', 'filter=[Txt: *%1] ids=');
+        Observer.Expect('txt_question_before', 'filter=[Txt: ?%1] ids=');
+        Observer.Expect('txt_lt', 'filter=[Txt: <b] ids=1,4,5,');
+        Observer.Expect('txt_gt', 'filter=[Txt: >b] ids=2,6,');
+        Observer.Expect('txt_ne', 'filter=[Txt: <>a] ids=1,2,3,5,6,');
+        Observer.Expect('txt_range_open', 'filter=[Txt: b..] ids=2,3,6,');
+        Observer.Expect('txt_or', 'filter=[Txt: a|b] ids=3,4,');
+        Observer.Expect('txt_and', 'filter=[Txt: a&*a*] ids=4,');
+        Observer.Expect('txt_value_wildcard', 'filter=[Txt: *8] ids=5,');
+        Observer.Expect('txt_star_value_wildcard', 'filter=[Txt: *%1] ids=');
+        Observer.Expect('cd_star_both', 'filter=[Cd: *%1*] ids=');
+        Observer.Expect('cd_star_after', 'filter=[Cd: %1*] ids=');
+        Observer.Expect('cd_value_wildcard', 'filter=[Cd: *8] ids=5,');
+        Observer.Expect('num_star_after', 'error:The filter "%1*" is not valid for the Num field on the W4 Flt Row table. The variable "%1*" was not understood.|Filter:CSide');
+        Observer.Expect('num_star_before', 'error:The filter "*%1" is not valid for the Num field on the W4 Flt Row table. The value "*%1" can''t be evaluated into type Integer.|Filter:CSide');
+        Observer.Expect('num_lt', 'filter=[Num: <10] ids=2,5,6,');
+        Observer.Expect('num_range', 'filter=[Num: 28..] ids=3,4,');
+        Observer.Verify();
     end;
 }

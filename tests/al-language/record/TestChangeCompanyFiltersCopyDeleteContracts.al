@@ -271,7 +271,27 @@ codeunit 68391 "Probe Chg Company Arm"
 
         BqCleanBothCompanies();
         DeleteCompany();
-        Observer.Finish();
+        Observer.Expect('insertTrue', 'I:HOME,SI:HOME/PRB CHGCO ARM');
+        Observer.Expect('validate', 'V:HOME');
+        Observer.Expect('modifyTrue', 'M:HOME,SM:HOME/PRB CHGCO ARM');
+        Observer.Expect('modifyFalse', 'SM:HOME/PRB CHGCO ARM');
+        Observer.Expect('insertFalse', 'SI:HOME/PRB CHGCO ARM');
+        Observer.Expect('modifyAllTrue', 'M:HOME,SM:HOME/PRB CHGCO ARM,M:HOME,SM:HOME/PRB CHGCO ARM');
+        Observer.Expect('deleteTrue', 'D:HOME,SD:HOME/PRB CHGCO ARM');
+        Observer.Expect('recRefInsertTrue', 'I:HOME,SI:HOME/PRB CHGCO ARM');
+        Observer.Expect('sideRowsHome', 'SI 1;SM 1;SM 1;SI 2;SM 1;SM 2;SD 2;SI 3;');
+        Observer.Expect('sideRowsOther', '');
+        Observer.Expect('rowsOther', '2');
+        Observer.Expect('rowsHome', '0');
+        Observer.Expect('variantGetTableCompany', 'HOME');
+        Observer.Expect('variantGetTableCount', '0');
+        Observer.Expect('variantToRecordCompany', 'HOME');
+        Observer.Expect('variantToRecordCount', '0');
+        Observer.Expect('directGetTableCompany', 'PRB CHGCO ARM');
+        Observer.Expect('emptyInsertFromOnModify', 'M:HOME,emptyInsert:ok:PRB CHGCO ARM');
+        Observer.Expect('emptyRowsOther', '1');
+        Observer.Expect('emptyRowsHome', '0');
+        Observer.Verify();
     end;
 }
 

@@ -78,14 +78,22 @@ codeunit 74657 "LT P143 DeFormulas"
             Observer.ObserveError(Name + '_err');
     end;
 
-    local procedure BqRunFormulas(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper"; Prefix: Text)
+    // Probes First..Last of: ..t-1d, ..t-1t, t+1d, h, a, j (a failure message keeps about 2000 characters, so the localized error texts
+    // are split over two tests per language).
+    local procedure BqRunFormulas(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper"; Prefix: Text; First: Integer; Last: Integer)
     begin
-        BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1d', '..t-1d', '..' + Format(Today() - 1));
-        BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1t', '..t-1t', '..' + Format(Today() - 1));
-        BqProbe(Observer, Helper, Prefix + '_t_plus_1d', 't+1d', Format(Today() + 1));
-        BqProbe(Observer, Helper, Prefix + '_h', 'h', Format(Today()));
-        BqProbe(Observer, Helper, Prefix + '_a', 'a', Format(Today()));
-        BqProbe(Observer, Helper, Prefix + '_j', 'j', Format(Today()));
+        if (First <= 1) and (Last >= 1) then
+            BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1d', '..t-1d', '..' + Format(Today() - 1));
+        if (First <= 2) and (Last >= 2) then
+            BqProbe(Observer, Helper, Prefix + '_dotdot_t_minus_1t', '..t-1t', '..' + Format(Today() - 1));
+        if (First <= 3) and (Last >= 3) then
+            BqProbe(Observer, Helper, Prefix + '_t_plus_1d', 't+1d', Format(Today() + 1));
+        if (First <= 4) and (Last >= 4) then
+            BqProbe(Observer, Helper, Prefix + '_h', 'h', Format(Today()));
+        if (First <= 5) and (Last >= 5) then
+            BqProbe(Observer, Helper, Prefix + '_a', 'a', Format(Today()));
+        if (First <= 6) and (Last >= 6) then
+            BqProbe(Observer, Helper, Prefix + '_j', 'j', Format(Today()));
     end;
 
     [Test]
@@ -93,21 +101,83 @@ codeunit 74657 "LT P143 DeFormulas"
     var
         Observer: Codeunit "Probe Observer";
         Helper: Codeunit "LT P143 Helper";
+    begin
+        Helper.Seed();
+        BqRunFormulas(Observer, Helper, 'en', 1, 6);
+        Observer.Expect('en_dotdot_t_minus_1d', 'ok filter_is_expected=true');
+        Observer.Expect('en_dotdot_t_minus_1t_err|text', 'The filter "..t-1t" is not valid for the D field on the LT P143 Row table. The format of the Date ''t-1t'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('en_dotdot_t_minus_1t_err|code', 'Filter:CSide');
+        Observer.Expect('en_t_plus_1d', 'ok filter_is_expected=true');
+        Observer.Expect('en_h_err|text', 'The filter "h" is not valid for the D field on the LT P143 Row table. The format of the Date ''h'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('en_h_err|code', 'Filter:CSide');
+        Observer.Expect('en_a_err|text', 'The filter "a" is not valid for the D field on the LT P143 Row table. The format of the Date ''a'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('en_a_err|code', 'Filter:CSide');
+        Observer.Expect('en_j_err|text', 'The filter "j" is not valid for the D field on the LT P143 Row table. The format of the Date ''j'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.');
+        Observer.Expect('en_j_err|code', 'Filter:CSide');
+        Observer.Verify();
+    end;
+
+    local procedure BqGerman(var Observer: Codeunit "Probe Observer"; First: Integer; Last: Integer)
+    var
+        Helper: Codeunit "LT P143 Helper";
         OldLanguage: Integer;
     begin
         Helper.Seed();
         OldLanguage := GlobalLanguage();
-        BqRunFormulas(Observer, Helper, 'en');
         GlobalLanguage(1031);
-        BqRunFormulas(Observer, Helper, 'de');
+        BqRunFormulas(Observer, Helper, 'de', First, Last);
         GlobalLanguage(OldLanguage);
+    end;
+
+    local procedure BqFrenchCanada(var Observer: Codeunit "Probe Observer"; First: Integer; Last: Integer)
+    var
+        Helper: Codeunit "LT P143 Helper";
+        OldLanguage: Integer;
+    begin
+        Helper.Seed();
+        OldLanguage := GlobalLanguage();
         if BqTryLanguage(3084) then begin
             Observer.Observe('frca_language', 'ok');
-            BqRunFormulas(Observer, Helper, 'frca');
+            BqRunFormulas(Observer, Helper, 'frca', First, Last);
         end else
             Observer.ObserveError('frca_language');
         GlobalLanguage(OldLanguage);
         Observer.Observe('language_restored', Format(GlobalLanguage() = OldLanguage));
+    end;
+
+    [Test]
+    procedure P143_LocalizedFormulas_German_First_BQ()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqGerman(Observer, 1, 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure P143_LocalizedFormulas_German_Last_BQ()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqGerman(Observer, 4, 6);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure P143_LocalizedFormulas_FrenchCanada_First_BQ()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqFrenchCanada(Observer, 1, 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure P143_LocalizedFormulas_FrenchCanada_Last_BQ()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqFrenchCanada(Observer, 4, 6);
         Observer.Finish();
     end;
 }

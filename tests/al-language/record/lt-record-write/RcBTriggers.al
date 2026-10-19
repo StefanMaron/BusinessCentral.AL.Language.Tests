@@ -667,7 +667,14 @@ codeunit 72001 "LT RcB Triggers"
         RecRef.Field(1).Value := 3;
         Observer.Observe('recRefDeleted', Format(RecRef.Delete()));
         Observer.Observe('row3Exists', Format(Check.Get(3)));
-        Observer.Finish();
+        Observer.Expect('recordDeleted', 'Yes');
+        Observer.Expect('recordLastError', '');
+        Observer.Expect('row1Exists', 'No');
+        Observer.Expect('afterGetDeleted', 'Yes');
+        Observer.Expect('row2Exists', 'No');
+        Observer.Expect('recRefDeleted', 'Yes');
+        Observer.Expect('row3Exists', 'No');
+        Observer.Verify();
     end;
 
     // ModifyAll to the value a row already has: is that row written (OnModify with RunTrigger true, SystemModifiedAt)? (docs: ModifyAll)
@@ -704,7 +711,14 @@ codeunit 72001 "LT RcB Triggers"
         Observer.Observe('logFalse', Log.Take());
         Rec.Get(1);
         Observer.Observe('row1StampChangedFalse', Format(Rec.SystemModifiedAt <> Before1));
-        Observer.Finish();
+        Observer.Expect('log', 'M1,M2');
+        Observer.Expect('row1Amount', '10');
+        Observer.Expect('row1StampChanged', 'No');
+        Observer.Expect('row2Amount', '10');
+        Observer.Expect('row2StampChanged', 'Yes');
+        Observer.Expect('logFalse', '');
+        Observer.Expect('row1StampChangedFalse', 'Yes');
+        Observer.Verify();
     end;
 
     // ModifyAll on a FlowFilter field compiles (a FlowField does not: tests/must-not-compile/cases/1452-modifyall-flowfield.al); what it
@@ -724,6 +738,10 @@ codeunit 72001 "LT RcB Triggers"
         Owner.Get(3);
         Owner.CalcFields(Total);
         Observer.Observe('total3', Format(Owner.Total));
-        Observer.Finish();
+        Observer.Expect('modifyAll', 'no error');
+        Observer.Expect('flowFilterOnVariable', '');
+        Observer.Expect('count', '3');
+        Observer.Expect('total3', '7');
+        Observer.Verify();
     end;
 }

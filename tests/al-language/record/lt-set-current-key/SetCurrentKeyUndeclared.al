@@ -326,6 +326,15 @@ codeunit 73238 "LT P163 SetCurrentKey"
         Observer.Observe('f_disabled_key', BqKeyPickIds(R));
         R.SetCurrentKey(D, E);
         Observer.Observe('d_e', BqKeyPickIds(R));
-        Observer.Finish();
+        Observer.Expect('a', 'A,B|2143');
+        Observer.Expect('a_view', 'VERSION(1) SORTING(A,B)');
+        Observer.Expect('c', 'C|3412');
+        Observer.Expect('a_c', 'A,C|3412');
+        Observer.Expect('b', 'B|2143');
+        Observer.Expect('d', 'D|1234');
+        Observer.Expect('e_included_only', 'E|4321');
+        Observer.Expect('f_disabled_key', 'F|1432');
+        Observer.Expect('d_e', 'D,E|4321');
+        Observer.Verify();
     end;
 }
