@@ -25,6 +25,10 @@ on:
         description: 'Override BC version (e.g. 28.1). Runs only that version when set.'
         required: false
         default: ''
+      select_base:
+        description: 'Run only the tests affected by the diff from this commit or branch to the dispatched ref (see CONTRIBUTING.md, "Test selection in CI"). Empty runs everything.'
+        required: false
+        default: ''
 
 # Supersede a run that no longer answers a question anyone is asking.
 #
@@ -172,9 +176,58 @@ jobs:
     # already knows. Failing here means the matrix is never dispatched at all.
     needs: object-ids
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
+      # {test app dir: "id,id,..."}: the test codeunits each test job runs. {} (or a missing key) = the job's full
+      # codeunit_range. The job names and the required checks do not change; only the codeunits each leg runs.
+      subset: ${{ steps.select.outputs.subset || '{}' }}
     steps:
+      # depth 2: a pull request's merge commit and its first parent, the base branch the diff is taken from
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Test selection (CONTRIBUTING.md, "Test selection in CI"). "Run AL tests" is about 21 of the 26 minutes of a
+      # BC leg, so a pull request runs only the test codeunits its change can affect; .github/scripts/select-tests.py
+      # decides which, or falls back to a full run, and writes why into this job's summary. Always a full run: a push
+      # (master), a corpus bump pull request (head al-runtime-rs-staging), a pull request with the label full-run, and
+      # a manual dispatch without select_base. A failure of this step also means a full run, never a red check.
+      - id: select
+        name: Select the test codeunits to run
+        continue-on-error: true
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABELED_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'full-run') }}
+          SELECT_BASE: ${{ github.event.inputs.select_base }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          FULL='' BASE=''
+          case "$EVENT" in
+            pull_request)
+              # labels from the API, not only the event payload: "Re-run all jobs" after adding the label then works
+              LABELS=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" --jq '.[].name' 2>/dev/null || true)
+              if [ "$HEAD_REF" = "al-runtime-rs-staging" ]; then FULL='corpus bump pull request (head branch al-runtime-rs-staging): always a full run'
+              elif [ "$LABELED_FULL" = "true" ] || grep -qx 'full-run' <<< "$LABELS"; then FULL='the pull request has the label full-run'
+              else BASE=$(git rev-parse HEAD^1); fi ;;
+            workflow_dispatch)
+              if [ -z "$SELECT_BASE" ]; then FULL='manual run without select_base: always a full run'
+              elif git fetch --no-tags --quiet --depth=1 origin "$SELECT_BASE"; then BASE=$(git rev-parse FETCH_HEAD)
+              else FULL="select_base $SELECT_BASE could not be fetched"; fi ;;
+            *) FULL="$EVENT on $GITHUB_REF: always a full run" ;;
+          esac
+          if [ -n "$FULL" ]; then
+            python3 .github/scripts/select-tests.py --full-reason "$FULL" --github
+          else
+            python3 .github/scripts/select-tests.py --base "$BASE" --head HEAD --github
+          fi || { echo "::warning title=Test selection::select-tests.py failed; every test runs"; echo 'subset={}' >> "$GITHUB_OUTPUT"; }
+
       - id: set
         run: |
           OVERRIDE='${{ github.event.inputs.bc_version }}'
@@ -206,7 +259,9 @@ jobs:
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999"
+      # The quoted range after || is this job's full range: widen it there. On a pull request the prepare job may pass
+      # only the selected codeunits instead (CONTRIBUTING.md, "Test selection in CI"); the same holds for the jobs below.
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language'] || '50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -269,7 +324,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem"
-      codeunit_range:       "61200..61299|98000..98999"
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem'] || '61200..61299|98000..98999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -301,7 +356,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem-dotnet"
-      codeunit_range:       "61400..61499|99000..99499"
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem-dotnet'] || '61400..61499|99000..99499' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
