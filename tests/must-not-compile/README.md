@@ -322,6 +322,14 @@ is only a reference.
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
+| 1680 | AL0757 | Two event publishers, and two event subscribers, named `Foo Bar` and `Foo_Bar` in one codeunit. |
+| 1681 | AL0155 | Two event publishers with one name and different parameter types; an event publisher named `Run` in a codeunit. |
+| 1682 | AL0286, AL0283, AL0287 | An event publisher with a statement, a return value, a local variable, a local Label. |
+| 1683 | AL0132 | An event subscriber with `ObjectType::TableExtension`. |
+| 1684 | AL0118 | A table event subscriber naming the table with `Table::Customer` instead of `Database::Customer`. |
+| 1685 | AL0288 | A subscriber declares `var` on a parameter the publisher passes by value. |
+| 1686 | AL0284 | Subscriber parameter types: Enum as Integer, Option as Integer or Enum, a GlobalVarAccess global as Text, RunTrigger as Integer. |
+| 1687 | AL0282 | Subscriber parameters matching no publisher parameter: RunTrigger on OnAfterValidateEvent, `Record` instead of `Rec`, an unknown global. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

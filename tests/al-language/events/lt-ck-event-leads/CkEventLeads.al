@@ -23,7 +23,7 @@ codeunit 84712 "LT CK Event Leads"
     begin
         Log.Reset();
         BindSubscription(Subs);
-        Assert.AreEqual('OBS', TryOutcome(1, Pub) + '|' + Log.Text(), 'Enum C (5) received as Option A,B,C');
+        Assert.AreEqual('ok:0|opt=5/5;', TryOutcome(1, Pub) + '|' + Log.Text(), 'Enum C (5) received as Option A,B,C');
     end;
 
     // Item 10: Enum B (ordinal 1).
@@ -35,7 +35,7 @@ codeunit 84712 "LT CK Event Leads"
     begin
         Log.Reset();
         BindSubscription(Subs);
-        Assert.AreEqual('OBS', TryOutcome(2, Pub) + '|' + Log.Text(), 'Enum B (1) received as Option A,B,C');
+        Assert.AreEqual('ok:0|opt=B/1;', TryOutcome(2, Pub) + '|' + Log.Text(), 'Enum B (1) received as Option A,B,C');
     end;
 
     // Item 11: the publisher's Option A,B,C value B (1) and C (2), the subscriber declares Option X,Y (no diagnostic).
@@ -47,7 +47,7 @@ codeunit 84712 "LT CK Event Leads"
     begin
         Log.Reset();
         BindSubscription(Subs);
-        Assert.AreEqual('OBS', TryOutcome(3, Pub) + '|' + TryOutcome(4, Pub) + '|' + Log.Text(), 'Option B and C received as Option X,Y');
+        Assert.AreEqual('ok:0|ok:0|xy=Y/1;xy=2/2;', TryOutcome(3, Pub) + '|' + TryOutcome(4, Pub) + '|' + Log.Text(), 'Option B and C received as Option X,Y');
     end;
 
     // Item 12: Text[100] publisher, Text[30] subscriber (warning AL0593); 50 characters in, by value and var.
@@ -61,7 +61,7 @@ codeunit 84712 "LT CK Event Leads"
         Log.Reset();
         BindSubscription(Subs);
         VT := PadStr('', 50, 'v');
-        Assert.AreEqual('OBS', TryText(Pub, PadStr('', 50, 't'), VT) + '|' + Log.Text() + '|' + VT, 'Text[30] subscriber, 50 characters');
+        Assert.AreEqual('err:The length of the string is 50, but it must be less than or equal to 30 characters. Value: tttttttttttttttttttttttttttttttttttttttttttttttttt [StringLengthExceeded]||vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', TryText(Pub, PadStr('', 50, 't'), VT) + '|' + Log.Text() + '|' + VT, 'Text[30] subscriber, 50 characters');
     end;
 
     // Item 12: the same with 20 characters (fits both capacities).
@@ -75,7 +75,7 @@ codeunit 84712 "LT CK Event Leads"
         Log.Reset();
         BindSubscription(Subs);
         VT := PadStr('', 20, 'v');
-        Assert.AreEqual('OBS', TryText(Pub, PadStr('', 20, 't'), VT) + '|' + Log.Text() + '|' + VT, 'Text[30] subscriber, 20 characters');
+        Assert.AreEqual('ok|t=20,vt=20;|sub', TryText(Pub, PadStr('', 20, 't'), VT) + '|' + Log.Text() + '|' + VT, 'Text[30] subscriber, 20 characters');
     end;
 
     // Item 15: the publisher passes var Handled; the subscriber declares Handled without var and assigns true.
@@ -91,7 +91,7 @@ codeunit 84712 "LT CK Event Leads"
         BindSubscription(Subs);
         AfterFalse := Pub.RaiseHandled(false);
         AfterTrue := Pub.RaiseHandled(true);
-        Assert.AreEqual('OBS', Format(AfterFalse) + '|' + Format(AfterTrue) + '|' + Log.Text(), 'Handled without var');
+        Assert.AreEqual('No|Yes|entry=No;entry=Yes;', Format(AfterFalse) + '|' + Format(AfterTrue) + '|' + Log.Text(), 'Handled without var');
     end;
 
     // Item 5: GlobalVarAccess. The subscriber reads the publisher's global G by name, and a var G writes back.
@@ -106,7 +106,7 @@ codeunit 84712 "LT CK Event Leads"
         Pub.SetG(41);
         Pub.RaiseGlobalRead();
         Pub.RaiseGlobalWrite();
-        Assert.AreEqual('OBS', Log.Text() + '|' + Format(Pub.GetG()), 'GlobalVarAccess read and var write');
+        Assert.AreEqual('g=41;|141', Log.Text() + '|' + Format(Pub.GetG()), 'GlobalVarAccess read and var write');
     end;
 
     // Item 14: table event subscribers with reordered parameters, names in another case, and a subset (no xRec).
@@ -124,7 +124,7 @@ codeunit 84712 "LT CK Event Leads"
         Row.Insert(true);
         Row.Validate(Val, 20);
         Stored.Get(1);
-        Assert.AreEqual('OBS', Log.Text() + '|' + Format(Row.Val) + '|' + Format(Stored.Val), 'reordered, other case and subset parameters');
+        Assert.AreEqual('bi=Yes/1;ai=Yes/7;av=0/20;|21|7', Log.Text() + '|' + Format(Row.Val) + '|' + Format(Stored.Val), 'reordered, other case and subset parameters');
     end;
 
     // Item 3: Scope OnPrem subscriber (warning AL0635) on a Cloud publisher, in a Cloud app.
@@ -135,7 +135,7 @@ codeunit 84712 "LT CK Event Leads"
         Sub: Codeunit "LT CK Ev OnPrem Sub";
     begin
         BindSubscription(Sub);
-        Assert.AreEqual('OBS', TryOutcome(5, Pub), 'OnPrem-scoped subscriber');
+        Assert.AreEqual('ok:42', TryOutcome(5, Pub), 'OnPrem-scoped subscriber');
     end;
 
     // Item 8: an event without subscribers returns normally, the var argument unchanged.
@@ -158,7 +158,7 @@ codeunit 84712 "LT CK Event Leads"
         BindSubscription(Sub);
         TP.OpenView();
         TP.Close();
-        Assert.AreEqual('OBS', Log.Text(), 'OnOpenPageEvent of a page without SourceTable');
+        Assert.AreEqual('open;', Log.Text(), 'OnOpenPageEvent of a page without SourceTable');
     end;
 
     // Item 9: a failing isolated subscriber: the var argument, a SingleInstance member, and its table write.
@@ -176,7 +176,7 @@ codeunit 84712 "LT CK Event Leads"
         BindSubscription(Sub);
         ClearLastError();
         Counter := Pub.RaiseIsolated();
-        Assert.AreEqual('OBS', Format(Counter) + '|' + Format(Log.GetMember()) + '|' + Log.Text() + '|' + Format(Row.Get(84706)) + '|' + GetLastErrorText(), 'failing isolated subscriber');
+        Assert.AreEqual('10|99|iso;|No|LT-CK-ISO-FAILED', Format(Counter) + '|' + Format(Log.GetMember()) + '|' + Log.Text() + '|' + Format(Row.Get(84706)) + '|' + GetLastErrorText(), 'failing isolated subscriber');
     end;
 
     // Item 4: SkipOnMissingPermission = false; the effective set does not grant Execute on the subscriber codeunit.
@@ -186,7 +186,7 @@ codeunit 84712 "LT CK Event Leads"
         Strict: Codeunit "LT CK Ev Perm Sub Strict";
     begin
         BindSubscription(Strict);
-        Assert.AreEqual('OBS', RunUnderPermSet(), 'subscriber without Execute permission, SkipOnMissingPermission false');
+        Assert.AreEqual('ok:11', RunUnderPermSet(), 'subscriber without Execute permission, SkipOnMissingPermission false');
     end;
 
     // Item 4: SkipOnMissingPermission = true.
@@ -196,7 +196,7 @@ codeunit 84712 "LT CK Event Leads"
         Skip: Codeunit "LT CK Ev Perm Sub Skip";
     begin
         BindSubscription(Skip);
-        Assert.AreEqual('OBS', RunUnderPermSet(), 'subscriber without Execute permission, SkipOnMissingPermission true');
+        Assert.AreEqual('ok:101', RunUnderPermSet(), 'subscriber without Execute permission, SkipOnMissingPermission true');
     end;
 
     local procedure RunUnderPermSet() Result: Text
