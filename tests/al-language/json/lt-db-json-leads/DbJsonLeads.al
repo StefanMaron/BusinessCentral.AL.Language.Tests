@@ -22,49 +22,79 @@ codeunit 85722 "LT DB Json Leads"
         A.WriteTo(Result);
     end;
 
-    [TryFunction]
-    local procedure TryReadObj(var O: JsonObject; Json: Text; var Ret: Boolean)
-    begin
-        Ret := O.ReadFrom(Json);
-    end;
-
-    [TryFunction]
-    local procedure TryGetDecimal(var O: JsonObject; var D: Decimal)
-    begin
-        D := O.GetDecimal('d');
-    end;
-
-    [TryFunction]
-    local procedure TryAsDecimal(var O: JsonObject; var D: Decimal)
+    // Each step ends in Error('ok: ...') so that asserterror also catches a Decimal range error (a [TryFunction] does not: the range error
+    // ended the test through a TryFunction on BC 29).
+    local procedure StepRead(Json: Text)
     var
+        O: JsonObject;
         T: JsonToken;
+        Written: Text;
     begin
+        O.ReadFrom(Json);
+        O.Get('d', T);
+        T.WriteTo(Written);
+        Error('ok: %1', Written);
+    end;
+
+    local procedure StepGetDecimal(Json: Text)
+    var
+        O: JsonObject;
+        D: Decimal;
+    begin
+        O.ReadFrom(Json);
+        D := O.GetDecimal('d');
+        Error('ok: %1', Format(D, 0, 9));
+    end;
+
+    local procedure StepAsDecimal(Json: Text)
+    var
+        O: JsonObject;
+        T: JsonToken;
+        D: Decimal;
+    begin
+        O.ReadFrom(Json);
         O.Get('d', T);
         D := T.AsValue().AsDecimal();
+        Error('ok: %1', Format(D, 0, 9));
     end;
 
     // Issue 671 item 38 (microsoft/AL#6172): ReadFrom, GetDecimal and AsValue().AsDecimal() on a number at and beyond the Decimal range.
     local procedure ReadDecimal(var Observer: Codeunit "Probe Observer"; Name: Text; Json: Text)
+    begin
+        asserterror StepRead(Json);
+        Observer.ObserveError(Name + '_read');
+        asserterror StepGetDecimal(Json);
+        Observer.ObserveError(Name + '_get');
+        asserterror StepAsDecimal(Json);
+        Observer.ObserveError(Name + '_as');
+    end;
+
+    local procedure StepSetValue(D: Decimal)
+    var
+        V: JsonValue;
+        T: Text;
+    begin
+        V.SetValue(D);
+        V.WriteTo(T);
+        Error('ok: %1 back %2', T, Format(V.AsDecimal(), 0, 9));
+    end;
+
+    local procedure StepAdd(D: Decimal)
     var
         O: JsonObject;
-        Ret: Boolean;
+        T: Text;
+    begin
+        O.Add('d', D);
+        O.WriteTo(T);
+        Error('ok: %1 get %2', T, Format(O.GetDecimal('d'), 0, 9));
+    end;
+
+    local procedure StepMoreDigitLiteral()
+    var
         D: Decimal;
     begin
-        ClearLastError();
-        if TryReadObj(O, Json, Ret) then
-            Observer.Observe(Name + '_read', Format(Ret))
-        else
-            Observer.ObserveError(Name + '_read');
-        D := 0;
-        if TryGetDecimal(O, D) then
-            Observer.Observe(Name + '_get', Format(D, 0, 9))
-        else
-            Observer.ObserveError(Name + '_get');
-        D := 0;
-        if TryAsDecimal(O, D) then
-            Observer.Observe(Name + '_as', Format(D, 0, 9))
-        else
-            Observer.ObserveError(Name + '_as');
+        D := -9999999999999999.99;
+        Error('ok: %1', Format(D, 0, 9));
     end;
 
     local procedure NewObjNamed() NewObj: JsonObject
@@ -120,7 +150,19 @@ codeunit 85722 "LT DB Json Leads"
         Clear(MyArray);
         Observer.Observe('cleared1', Txt(MyArray[1]));
         Observer.Observe('cleared3', Txt(MyArray[3]));
-        Observer.Finish();
+        Observer.Expect('read1_contains_a', 'Yes');
+        Observer.Expect('read1_contains_c', 'No');
+        Observer.Expect('read1', '{"a":1}');
+        Observer.Expect('read2', '{"b":2}');
+        Observer.Expect('read3', '{"c":3}');
+        Observer.Expect('add1', '{"a":1}');
+        Observer.Expect('add2', '{"b":2}');
+        Observer.Expect('add3', '{"c":3}');
+        Observer.Expect('assigned_slot1', '{"a":1,"x":9}');
+        Observer.Expect('assigned_slot2', '{"a":1,"x":9}');
+        Observer.Expect('cleared1', '{"a":1}');
+        Observer.Expect('cleared3', '{"c":3}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,27 +183,20 @@ codeunit 85722 "LT DB Json Leads"
 
     [Test]
     procedure DecimalRange_SetValueAndAdd()
-    // Issue 671 item 38 (microsoft/AL#6172): the same values written through JsonValue.SetValue and JsonObject.Add.
+    // Issue 671 item 38 (microsoft/AL#6172): the range ends written through JsonValue.SetValue and JsonObject.Add, read back.
     var
         Observer: Codeunit "Probe Observer";
-        V: JsonValue;
-        O: JsonObject;
-        D: Decimal;
-        T: Text;
     begin
-        D := -999999999999999.99;
-        V.SetValue(D);
-        V.WriteTo(T);
-        Observer.Observe('setvalue_min', T);
-        Observer.Observe('setvalue_min_back', Format(V.AsDecimal(), 0, 9));
-        D := 999999999999999.99;
-        O.Add('d', D);
-        Observer.Observe('add_max', Txt(O));
-        D := -9999999999999999.99;
-        V.SetValue(D);
-        V.WriteTo(T);
-        Observer.Observe('setvalue_more_digit', T);
-        Observer.Observe('setvalue_more_digit_back', Format(V.AsDecimal(), 0, 9));
+        asserterror StepSetValue(-999999999999999.99);
+        Observer.ObserveError('setvalue_min');
+        asserterror StepSetValue(999999999999999.99);
+        Observer.ObserveError('setvalue_max');
+        asserterror StepAdd(-999999999999999.99);
+        Observer.ObserveError('add_min');
+        asserterror StepAdd(999999999999999.99);
+        Observer.ObserveError('add_max');
+        asserterror StepMoreDigitLiteral();
+        Observer.ObserveError('more_digit_literal');
         Observer.Finish();
     end;
 
@@ -192,7 +227,14 @@ codeunit 85722 "LT DB Json Leads"
         J2.ReadFrom('{"d":0.123456789011111111111111}');
         Observer.Observe('read_literal', Format(J2.GetDecimal('d'), 0, 9));
         Observer.Observe('read_literal_text', Txt(J2));
-        Observer.Finish();
+        Observer.Expect('source', '0.123456789011111111');
+        Observer.Expect('writeto', '{"d":0.123456789011111111}');
+        Observer.Expect('readback', '0.123456789011111');
+        Observer.Expect('equal', 'No');
+        Observer.Expect('value_writeto', '0.123456789011111111');
+        Observer.Expect('read_literal', '0.123456789011111');
+        Observer.Expect('read_literal_text', '{"d":0.12345678901111111}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -223,7 +265,15 @@ codeunit 85722 "LT DB Json Leads"
         Observer.Observe('arr_count', Format(A.Count()));
         Observer.Observe('arr', TxtA(A));
         Observer.Observe('alias_arr', TxtA(AliasA));
-        Observer.Finish();
+        Observer.Expect('obj_count', '0');
+        Observer.Expect('obj', '{}');
+        Observer.Expect('alias_obj', '{"a":1,"b":2}');
+        Observer.Expect('obj_after_add', '{"c":3}');
+        Observer.Expect('alias_obj_after_add', '{"a":1,"b":2}');
+        Observer.Expect('arr_count', '0');
+        Observer.Expect('arr', '[]');
+        Observer.Expect('alias_arr', '[1,2]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -255,7 +305,14 @@ codeunit 85722 "LT DB Json Leads"
         ChildArr.ReadFrom('[5,6]');
         Observer.Observe('parent_after_array_read', Txt(Parent));
         Observer.Observe('array_after_read', TxtA(ChildArr));
-        Observer.Finish();
+        Observer.Expect('shared_before', '{"in":{"a":1,"b":2}}');
+        Observer.Expect('parent_after_read', '{"in":{"a":1,"b":2}}');
+        Observer.Expect('child_after_read', '{"z":9}');
+        Observer.Expect('parent_after_child_add', '{"in":{"a":1,"b":2}}');
+        Observer.Expect('parent_after_token_read', '{"in":{"a":1,"b":2}}');
+        Observer.Expect('parent_after_array_read', '{"in":{"a":1,"b":2},"arr":[1]}');
+        Observer.Expect('array_after_read', '[5,6]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -272,7 +329,10 @@ codeunit 85722 "LT DB Json Leads"
         Observer.Observe('child', Txt(Child));
         Child.Add('b', 2);
         Observer.Observe('parent_after_child_add', Txt(Parent));
-        Observer.Finish();
+        Observer.Expect('ret', 'No');
+        Observer.Expect('child', '{"a":1}');
+        Observer.Expect('parent_after_child_add', '{"in":{"a":1,"b":2}}');
+        Observer.Verify();
     end;
 
     [Test]
@@ -301,7 +361,11 @@ codeunit 85722 "LT DB Json Leads"
             Observer.Observe('named_array_add', 'ok ' + TxtA(A))
         else
             Observer.ObserveError('named_array_add');
-        Observer.Finish();
+        Observer.Expect('named_add', 'ok {"p":42}');
+        Observer.Expect('named_count', '1');
+        Observer.Expect('unnamed_add', 'ok {"p":42}');
+        Observer.Expect('named_array_add', 'ok [42]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,6 +393,9 @@ codeunit 85722 "LT DB Json Leads"
         JArray.Add(JObject);
         JObject.Add('z', 2);
         Observer.Observe('add_again_then_change', TxtA(JArray));
-        Observer.Finish();
+        Observer.Expect('loop_clear', '[{"x":0},{"x":1},{"x":2}]');
+        Observer.Expect('change_after_add', '[{"x":0,"y":1}]');
+        Observer.Expect('add_again_then_change', '[{"x":0,"y":1,"z":2},{"x":0,"y":1}]');
+        Observer.Verify();
     end;
 }

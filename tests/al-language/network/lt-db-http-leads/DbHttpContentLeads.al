@@ -105,7 +105,13 @@ codeunit 85721 "LT DB Http Content Leads"
         Observer.Observe('second', ReadAll(InS2));
         Observer.Observe('ok_text', Format(Resp.Content().ReadAs(Txt)));
         Observer.Observe('text_after', Txt);
-        Observer.Finish();
+        Observer.Expect('ok1', 'Yes');
+        Observer.Expect('first', '1:<body>');
+        Observer.Expect('ok2', 'Yes');
+        Observer.Expect('second', '0:');
+        Observer.Expect('ok_text', 'Yes');
+        Observer.Expect('text_after', 'body');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +136,15 @@ codeunit 85721 "LT DB Http Content Leads"
         Observer.Observe('chained_after', ReadAll(InS3));
         Observer.Observe('ok_text', Format(Content.ReadAs(Txt)));
         Observer.Observe('text_after', Txt);
-        Observer.Finish();
+        Observer.Expect('ok1', 'Yes');
+        Observer.Expect('first', '1:<body>');
+        Observer.Expect('ok2', 'Yes');
+        Observer.Expect('second', '0:');
+        Observer.Expect('ok_chained', 'Yes');
+        Observer.Expect('chained_after', '1:<body>');
+        Observer.Expect('ok_text', 'Yes');
+        Observer.Expect('text_after', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +166,10 @@ codeunit 85721 "LT DB Http Content Leads"
         Observer.Observe('chained1', T1);
         Observer.Observe('chained2', T2);
         Observer.Observe('assigned', T3);
-        Observer.Finish();
+        Observer.Expect('chained1', 'body');
+        Observer.Expect('chained2', 'body');
+        Observer.Expect('assigned', 'body');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +205,19 @@ codeunit 85721 "LT DB Http Content Leads"
         Req.Content.WriteFrom('{"a":1}');
         Req.Content.GetHeaders(H);
         Observer.Observe('type_after_write', HeaderText(H, 'Content-Type'));
-        Observer.Finish();
+        Observer.Expect('getheaders1|text', 'Microsoft.Dynamics.Nav.Runtime.NavHttpContent variable not initialized.');
+        Observer.Expect('getheaders1|code', 'NotInitialized');
+        Observer.Expect('clear', 'ok');
+        Observer.Expect('getheaders2', 'ok');
+        Observer.Expect('type_before', 'text/plain; charset=utf-8');
+        Observer.Expect('remove', 'Yes');
+        Observer.Expect('add', 'Yes');
+        Observer.Expect('type_after', 'application/json');
+        Observer.Expect('read_ok', 'Yes');
+        Observer.Expect('read', '');
+        Observer.Expect('type_fresh_handle', 'application/json');
+        Observer.Expect('type_after_write', 'text/plain; charset=utf-8');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,7 +243,12 @@ codeunit 85721 "LT DB Http Content Leads"
         Content.WriteFrom(InS);
         Content.ReadAs(InS2);
         Observer.Observe('lines', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('read_ok', 'Yes');
+        Observer.Expect('text', '--b1\r\nContent-Disposition: form-data; name="a"\r\n\r\nvalue one\r\nvalue two\r\n--b1--\r\n');
+        Observer.Expect('same_as_body', 'Yes');
+        Observer.Expect('len', '80');
+        Observer.Expect('lines', '6:<--b1><Content-Disposition: form-data; name="a"><><value one><value two><--b1-->');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +275,9 @@ codeunit 85721 "LT DB Http Content Leads"
         Content.ReadAs(Txt);
         Observer.Observe('text', Txt);
         Observer.Observe('len', Format(StrLen(Txt)));
-        Observer.Finish();
+        Observer.Expect('text', 'line1\r\nline2\r\n');
+        Observer.Expect('len', '14');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +301,14 @@ codeunit 85721 "LT DB Http Content Leads"
         Observer.Observe('ok_stream', Format(Content.ReadAs(InS2)));
         Observer.Observe('stream_after', ReadAll(InS2));
         Observer.Observe('source_eos', Format(InS.EOS()));
-        Observer.Finish();
+        Observer.Expect('ok1', 'Yes');
+        Observer.Expect('t1', 'picture bytes');
+        Observer.Expect('ok2', 'Yes');
+        Observer.Expect('t2', 'picture bytes');
+        Observer.Expect('ok_stream', 'Yes');
+        Observer.Expect('stream_after', '1:<picture bytes>');
+        Observer.Expect('source_eos', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -288,6 +331,9 @@ codeunit 85721 "LT DB Http Content Leads"
         Observer.Observe('s2', ReadAll(InS2));
         Content.ReadAs(Txt);
         Observer.Observe('text_after', Txt);
-        Observer.Finish();
+        Observer.Expect('s1', '1:<picture bytes>');
+        Observer.Expect('s2', '0:');
+        Observer.Expect('text_after', '');
+        Observer.Verify();
     end;
 }
