@@ -223,6 +223,12 @@ jobs:
       # adds ~550 MB to the SQL pull. Only this job runs Company-insert tests (67947);
       # test-onprem does not, so it keeps the default image.
       sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      # RDLC rendering (MsDyn365Bc.On.Linux #126/#131): without these the Linux tier stubs the RDLC renderer.
+      # They pull bc-runner:rdlc and set BC_RDLC_RENDERER=mono. Report.SaveAs of an RDLC layout is pinned in
+      # report/lt-am-rdlc-output (cloud) and report/lt-am-rdlc-saveas (OnPrem). rdlc_trust_layouts is the
+      # acknowledgement that RDLC layout code runs unsandboxed; the corpus layouts carry only fixed functions.
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
 
   # The Target = OnPrem test app, in a job of its own.
   #
@@ -281,6 +287,9 @@ jobs:
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
       sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      # RDLC rendering for the OnPrem SaveAs* file forms: see the test job above.
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
 
   # The Target = OnPrem DotNet test app (tests/al-language-onprem-dotnet), in a job of its own for the same
   # one-test-app-per-invocation reason as test-onprem above. Its dotnet declarations need an AL compiler of 18.0 or
