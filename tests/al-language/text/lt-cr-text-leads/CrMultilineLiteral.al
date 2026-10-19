@@ -46,7 +46,18 @@ y' + 'z';
 q
 r'.Split(@'
 ').Count()));
-        Obs.Finish();
+        Obs.Expect('two_lines', 'a\nb');
+        Obs.Expect('two_lines_len', '3');
+        Obs.Expect('indent', 'first\n    indented\n\ttab\nlast');
+        Obs.Expect('quote', 'it''s\nhere');
+        Obs.Expect('single', 'one line');
+        Obs.Expect('empty_len', '0');
+        Obs.Expect('trailing_newline', 'trailing\n');
+        Obs.Expect('backslash_len', '11');
+        Obs.Expect('backslash_has', 'Yes');
+        Obs.Expect('concat', 'x\nyz');
+        Obs.Expect('split_count', '3');
+        Obs.Verify();
     end;
 
     [Test]

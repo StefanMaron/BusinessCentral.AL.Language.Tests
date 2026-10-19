@@ -349,7 +349,13 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('text23', Take('abcdefghij0123456789xyz'));
         Obs.Observe('assign23', Assign('abcdefghij0123456789xyz'));
         Obs.Observe('assign20_trailing_spaces', Assign('abcdefghij0123456789   '));
-        Obs.Finish();
+        Obs.Expect('field20', 'ok:[ABCDEFGHIJ0123456789]');
+        Obs.Expect('field21', 'error:The length of the string is 21, but it must be less than or equal to 20 characters. Value: abcdefghij0123456789x|StringLengthExceeded');
+        Obs.Expect('field20_trailing_spaces', 'ok:[ABCDEFGHIJ0123456789]');
+        Obs.Expect('text23', 'error:The length of the string is 23, but it must be less than or equal to 20 characters. Value: abcdefghij0123456789xyz|StringLengthExceeded');
+        Obs.Expect('assign23', 'error:The length of the string is 23, but it must be less than or equal to 20 characters. Value: abcdefghij0123456789xyz|StringLengthExceeded');
+        Obs.Expect('assign20_trailing_spaces', 'ok:ABCDEFGHIJ0123456789');
+        Obs.Verify();
     end;
 
     // Item 57 (StrCheckSum). Already pinned: types/TestProbeScalarContracts.al (non-digit source and weight, empty source with a weight,
@@ -370,7 +376,17 @@ codeunit 85120 "LT CR Text Leads"
         asserterror R := StrCheckSum('123', '111', 0);
         Obs.ObserveError('mod0');
         Obs.Observe('mod1', Format(StrCheckSum('123', '111', 1)));
-        Obs.Finish();
+        Obs.Expect('docs_4378_1234_7', '0');
+        Obs.Expect('empty_noweight', '0');
+        Obs.Expect('12345_noweight', '5');
+        Obs.Expect('12345_w11111', '5');
+        Obs.Expect('12345_w11111_10', '5');
+        Obs.Expect('123_longweight|text', 'The weight parameter cannot be longer than the value string.');
+        Obs.Expect('123_longweight|code', 'ALSystemString');
+        Obs.Expect('mod0|text', 'The modulus parameter cannot be less than 1.');
+        Obs.Expect('mod0|code', 'ALSystemString');
+        Obs.Expect('mod1', '0');
+        Obs.Verify();
     end;
 
     // Item 59 (StrSubstNo with a placeholder repeated non-adjacently). Already pinned: text/lt-text-functions/StrSubstNo.Codeunit.al
