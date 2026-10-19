@@ -4,6 +4,7 @@
 // Probe: DownloadFromStream and UploadIntoStream from a Cloud app in a test session: the return value, ToFile / FromFile afterwards and the stream position. The return variable is preset before each call.
 // An official Windows container returned Yes for DownloadFromStream and left ToFile unchanged on BC 27.5 and 29.0 (corpus runs 39125184978 and 39125190236). The Linux test runner accepts downloads and
 // refuses uploads like the Windows client since MsDyn365Bc.On.Linux PR #127 (before, DownloadFromStream ended the session on BC 27 and returned No on BC 28+).
+// Expected values: measured on official Microsoft Windows containers (onprem artifact, w1, en-US), BC 27.5 and 29.0, corpus runs 39216765049 and 39216768276 (both gave the same values).
 // BC versions: 27, 28, 29
 codeunit 81353 "LT BG Cloud Download"
 {
@@ -57,7 +58,12 @@ codeunit 81353 "LT BG Cloud Download"
         DownloadCase(Observer, 'dls_name_txt', '', '', '', 'lt-bg.txt', false);
         DownloadCase(Observer, 'dls_all_args', 'Title', '', 'Text files (*.txt)|*.txt', 'lt-bg.txt', false);
         DownloadCase(Observer, 'dls_blank', '', '', '', '', false);
-        Observer.Finish();
+        Observer.Expect('dls_title_preset_yes', 'ok ret=Yes tofile=[untouched] eos=No');
+        Observer.Expect('dls_title_preset_no', 'ok ret=Yes tofile=[untouched] eos=No');
+        Observer.Expect('dls_name_txt', 'ok ret=Yes tofile=[lt-bg.txt] eos=No');
+        Observer.Expect('dls_all_args', 'ok ret=Yes tofile=[lt-bg.txt] eos=No');
+        Observer.Expect('dls_blank', 'ok ret=Yes tofile=[] eos=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,6 +85,8 @@ codeunit 81353 "LT BG Cloud Download"
             Observer.Observe('uis2_txt', 'ok ret=' + Format(R))
         else
             Observer.ObserveError('uis2_txt');
-        Observer.Finish();
+        Observer.Expect('uis_title', 'ok ret=No fromfile=[untouched]');
+        Observer.Expect('uis2_txt', 'ok ret=No');
+        Observer.Verify();
     end;
 }

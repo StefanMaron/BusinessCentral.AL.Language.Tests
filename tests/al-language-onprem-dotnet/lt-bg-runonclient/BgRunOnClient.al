@@ -4,6 +4,7 @@
 // Probe: RunOnClient DotNet in a test session. The static IsAvailable() of the client feature types (camera, location, barcode scanners, device contacts, user tours, page notifier) and a RunOnClient
 // variable of a type that is not a client feature (System.Text.StringBuilder: its constructor and a static call). Before MsDyn365Bc.On.Linux PR #130 the Linux test runner answered these calls with a null
 // handle (BC 27.5: an uncatchable NullReferenceException; BC 28+: "A call to IsAvailable failed ... Object reference not set to an instance of an object.").
+// Expected values: measured on official Microsoft Windows containers (onprem artifact, w1, en-US), BC 27.5 and 29.0, corpus runs 39216765049 and 39216768276 (both gave the same values).
 // BC versions: 27, 28, 29
 dotnet
 {
@@ -107,7 +108,14 @@ codeunit 99490 "LT BG RunOnClient"
         AvailableCase(Observer, 'device contacts', 5);
         AvailableCase(Observer, 'user tours', 6);
         AvailableCase(Observer, 'page notifier', 7);
-        Observer.Finish();
+        Observer.Expect('camera', 'ok ret=No');
+        Observer.Expect('location', 'ok ret=No');
+        Observer.Expect('barcode scanner', 'ok ret=No');
+        Observer.Expect('camera barcode scanner', 'ok ret=No');
+        Observer.Expect('device contacts', 'ok ret=No');
+        Observer.Expect('user tours', 'ok ret=No');
+        Observer.Expect('page notifier', 'ok ret=No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,7 +129,9 @@ codeunit 99490 "LT BG RunOnClient"
             Observer.Observe('stringbuilder', 'ok [' + Result + ']')
         else
             Observer.ObserveError('stringbuilder');
-        Observer.Finish();
+        Observer.Expect('stringbuilder|text', 'The operation cannot complete because it uses a feature that is not supported (.NET Framework Interoperability.)');
+        Observer.Expect('stringbuilder|code', 'DotNetFromAlNotSupported:DotNetFromAlNotSupported');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,6 +145,8 @@ codeunit 99490 "LT BG RunOnClient"
             Observer.Observe('machinename', 'ok nonempty=' + Format(Result <> ''))
         else
             Observer.ObserveError('machinename');
-        Observer.Finish();
+        Observer.Expect('machinename|text', 'The operation cannot complete because it uses a feature that is not supported (.NET Framework Interoperability.)');
+        Observer.Expect('machinename|code', 'DotNetFromAlNotSupported:DotNetFromAlNotSupported');
+        Observer.Verify();
     end;
 }

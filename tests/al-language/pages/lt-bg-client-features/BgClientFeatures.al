@@ -4,6 +4,7 @@
 // Probe: pages and modules that ask the client for a device feature (RunOnClient DotNet: UserTours.IsAvailable in page 1310 OnInit, CameraProvider.IsAvailable in the Camera module) in a test session.
 // The test client answers like Microsoft's web client for a session without these features. Before MsDyn365Bc.On.Linux PR #130 the Linux test runner answered such calls with a null handle,
 // and opening the Business Manager Role Center ended with a NullReferenceException.
+// Expected values: measured on official Microsoft Windows containers (onprem artifact, w1, en-US), BC 27.5 and 29.0, corpus runs 39216765049 and 39216768276 (both gave the same values).
 // BC versions: 27, 28, 29
 codeunit 81351 "LT BG Role Center Open"
 {
@@ -37,7 +38,8 @@ codeunit 81351 "LT BG Role Center Open"
             Observer.Observe('open business manager rc', 'ok')
         else
             Observer.ObserveError('open business manager rc');
-        Observer.Finish();
+        Observer.Expect('open business manager rc', 'ok');
+        Observer.Verify();
     end;
 
     [Test]
@@ -49,7 +51,8 @@ codeunit 81351 "LT BG Role Center Open"
             Observer.Observe('open o365 activities', 'ok')
         else
             Observer.ObserveError('open o365 activities');
-        Observer.Finish();
+        Observer.Expect('open o365 activities', 'ok');
+        Observer.Verify();
     end;
 }
 
@@ -109,6 +112,10 @@ codeunit 81352 "LT BG Camera Availability"
             Observer.Observe('open camera page', 'ok')
         else
             Observer.ObserveError('open camera page');
-        Observer.Finish();
+        Observer.Expect('guiallowed', 'Yes');
+        Observer.Expect('isavailable', 'ok ret=No');
+        Observer.Expect('getpicture', 'ok ret=No name=[untouched]');
+        Observer.Expect('open camera page', 'ok');
+        Observer.Verify();
     end;
 }

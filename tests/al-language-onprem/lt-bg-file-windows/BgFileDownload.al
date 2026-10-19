@@ -4,6 +4,7 @@
 // Probe: the return value of File.Download and File.DownloadFromStream in a test session, and ToFile afterwards, on every version. FileQProbes.al (61276) pins them from BC 28 only and leaves the return values
 // unasserted. An official Windows container returned Yes and left ToFile unchanged on BC 27.5 and 29.0 (corpus runs 39125184978 and 39125190236); the Linux image accepts the download the same way since
 // MsDyn365Bc.On.Linux PR #127 (before, BC 27 on Linux ended the session with a NullReferenceException and BC 28+ returned No). The return variable is preset to No and to Yes before the calls.
+// Expected values: measured on official Microsoft Windows containers (onprem artifact, w1, en-US), BC 27.5 and 29.0, corpus runs 39216765049 and 39216768276 (both gave the same values).
 // BC versions: 27, 28, 29
 codeunit 98991 "LT BG File Download"
 {
@@ -81,7 +82,14 @@ codeunit 98991 "LT BG File Download"
         Observer.Observe('source_still_exists', Format(File.Exists(P)));
         if File.Exists(P) then
             File.Erase(P);
-        Observer.Finish();
+        Observer.Expect('dl_title_preset_yes', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dl_title_preset_no', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dl_all_args', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dl_blank', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dl_missing', 'ok ret=No tofile=[untouched]');
+        Observer.Expect('dl_blank_from', 'ok ret=No tofile=[untouched]');
+        Observer.Expect('source_still_exists', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -93,6 +101,10 @@ codeunit 98991 "LT BG File Download"
         StreamCase(Observer, 'dls_title_preset_no', 'Title', '', '', false);
         StreamCase(Observer, 'dls_all_args', 'Title', TemporaryPath(), 'Text files (*.txt)|*.txt', false);
         StreamCase(Observer, 'dls_blank', '', '', '', false);
-        Observer.Finish();
+        Observer.Expect('dls_title_preset_yes', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dls_title_preset_no', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dls_all_args', 'ok ret=Yes tofile=[untouched]');
+        Observer.Expect('dls_blank', 'ok ret=Yes tofile=[untouched]');
+        Observer.Verify();
     end;
 }

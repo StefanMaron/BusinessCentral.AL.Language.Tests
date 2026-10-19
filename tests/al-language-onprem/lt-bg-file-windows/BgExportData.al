@@ -4,6 +4,7 @@
 // Probe: Database.ExportData with ShowDialog = false in a test session: the return value, FileName afterwards, whether a file is written, with and without a Company record (the current company only).
 // ODatabaseOps.al (61258) pins that the call raises no error and writes no file. MsDyn365Bc.On.Linux PR #130 made the Linux test runner read the export stream as Microsoft's client does
 // (between PR #127 and PR #130 each call waited 60 seconds and ended in a TimeoutException).
+// Expected values: measured on official Microsoft Windows containers (onprem artifact, w1, en-US), BC 27.5 and 29.0, corpus runs 39216765049 and 39216768276 (both gave the same values).
 // BC versions: 27, 28, 29
 codeunit 98993 "LT BG ExportData"
 {
@@ -46,6 +47,12 @@ codeunit 98993 "LT BG ExportData"
     begin
         ExportCase(Observer, 'export no company', TemporaryPath() + 'lt-bg-export-a.navdata', false);
         ExportCase(Observer, 'export current company', TemporaryPath() + 'lt-bg-export-b.navdata', true);
-        Observer.Finish();
+        Observer.Expect('export no company', 'ok ret=Yes');
+        Observer.Expect('export no company|filename unchanged', 'Yes');
+        Observer.Expect('export no company|file exists', 'No');
+        Observer.Expect('export current company', 'ok ret=Yes');
+        Observer.Expect('export current company|filename unchanged', 'Yes');
+        Observer.Expect('export current company|file exists', 'No');
+        Observer.Verify();
     end;
 }

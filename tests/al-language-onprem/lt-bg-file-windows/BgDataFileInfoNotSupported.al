@@ -4,6 +4,7 @@
 // Probe: Database.DataFileInformation and Database.ImportData with ShowDialog = false in a test session. ODatabaseOps.al (61258) and PDataFileInfo.al (61249) observe these calls but leave them unasserted.
 // An official Windows container raised NotSupportedFileDialogProvider for each of them on BC 27.5 and 29.0 (corpus runs 39125184978 and 39125190236); the Linux image raises the same since
 // MsDyn365Bc.On.Linux PR #127 (before, Linux returned an empty result without an error). Only missing files and blank names are used.
+// Expected values: measured on official Microsoft Windows containers (onprem artifact, w1, en-US), BC 27.5 and 29.0, corpus runs 39216765049 and 39216768276 (both gave the same values).
 // BC versions: 27, 28, 29
 codeunit 98992 "LT BG DataFileInfo Refused"
 {
@@ -67,7 +68,19 @@ codeunit 98992 "LT BG DataFileInfo Refused"
         InfoCase(Observer, 'info blank', '');
         InfoCase(Observer, 'info missing absolute', '/lt-bg-no-such-dir/none.navdata');
         InfoCase(Observer, 'info missing relative', 'lt-bg-no-such-file.navdata');
-        Observer.Finish();
+        Observer.Expect('info missing temp|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('info missing temp|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Expect('info missing temp|outputs', 'desc=[untouched] app=Yes appdata=Yes global=Yes tenant=[untouched]');
+        Observer.Expect('info blank|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('info blank|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Expect('info blank|outputs', 'desc=[untouched] app=Yes appdata=Yes global=Yes tenant=[untouched]');
+        Observer.Expect('info missing absolute|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('info missing absolute|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Expect('info missing absolute|outputs', 'desc=[untouched] app=Yes appdata=Yes global=Yes tenant=[untouched]');
+        Observer.Expect('info missing relative|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('info missing relative|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Expect('info missing relative|outputs', 'desc=[untouched] app=Yes appdata=Yes global=Yes tenant=[untouched]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -78,6 +91,12 @@ codeunit 98992 "LT BG DataFileInfo Refused"
         ImportCase(Observer, 'import missing temp', TemporaryPath() + 'lt-bg-missing.navdata');
         ImportCase(Observer, 'import blank', '');
         ImportCase(Observer, 'import missing relative', 'lt-bg-no-such-file.navdata');
-        Observer.Finish();
+        Observer.Expect('import missing temp|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('import missing temp|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Expect('import blank|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('import blank|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Expect('import missing relative|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
+        Observer.Expect('import missing relative|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
+        Observer.Verify();
     end;
 }
