@@ -777,10 +777,12 @@ jobs:
       # (NavNCLTestCodeUnitNestedInvocationException). So what TestIsolation = Function resets
       # between [Test] methods can only be measured by a TOP-LEVEL custom runner, which is what
       # -testRunnerCodeunitId selects. 61300 is that runner; 61301 is the identical runner with
-      # TestIsolation = Codeunit, as the control that shows the fixture's T5 can fail. The
-      # per-test rows land in the summary via isolation-probe-results.py below.
+      # TestIsolation = Codeunit, as the control that shows the fixture's T5 can fail. 61305 sets
+      # no TestIsolation property and 61304 sets Disabled (corpus issue 645). Every runner runs
+      # every test codeunit of the app. The per-test rows land in the summary via
+      # isolation-probe-results.py below.
       # ---------------------------------------------------------------------------------
-      - name: Isolation probe -- compile, publish, run under two custom test runners
+      - name: Isolation probe -- compile, publish, run under four custom test runners
         id: isolation_probe
         continue-on-error: true
         run: |
@@ -808,9 +810,14 @@ jobs:
 
           $appJson = Get-Content (Join-Path $env:GITHUB_WORKSPACE "$folder/app.json") -Raw | ConvertFrom-Json
           # Function first: the SingleInstance mark T1 sets would otherwise already be there.
+          # Disabled last: nothing is rolled back under it, so its rows stay in the database.
+          # The runner with no TestIsolation property (61305) goes before Disabled for the same
+          # reason, in case its default is Disabled (corpus issue 645).
           $runs = @(
             @{ runner = '61300'; out = 'xunit-isolation-function.xml' },
-            @{ runner = '61301'; out = 'xunit-isolation-codeunit.xml' }
+            @{ runner = '61301'; out = 'xunit-isolation-codeunit.xml' },
+            @{ runner = '61305'; out = 'xunit-isolation-noproperty.xml' },
+            @{ runner = '61304'; out = 'xunit-isolation-disabled.xml' }
           )
           foreach ($r in $runs) {
             Write-Host "::group::isolation probe under runner $($r.runner)"
@@ -845,8 +852,14 @@ jobs:
         run: |
           python .github/scripts/isolation-probe-results.py \
             --fixture tests/al-language-isolation-probe/src/IsolProbeFixture.Codeunit.al \
+            --fixture tests/al-language-isolation-probe/src/IsolProbeWriter.Codeunit.al \
+            --fixture tests/al-language-isolation-probe/src/IsolProbeReader.Codeunit.al \
+            --fixture tests/al-language-isolation-probe/src/IsolProbeCommit.Codeunit.al \
+            --fixture tests/al-language-isolation-probe/src/IsolProbeAfterRollback.Codeunit.al \
             --run "TestIsolation = Function (runner 61300)=xunit-isolation-function.xml" \
             --run "TestIsolation = Codeunit control (runner 61301)=xunit-isolation-codeunit.xml" \
+            --run "No TestIsolation property (runner 61305)=xunit-isolation-noproperty.xml" \
+            --run "TestIsolation = Disabled (runner 61304)=xunit-isolation-disabled.xml" \
             --outdir test-results
 
       - name: Disk (after)

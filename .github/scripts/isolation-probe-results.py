@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Render the Windows nightly's isolation-probe runs as per-test rows (AL Runner #4826).
 
-The probe app (tests/al-language-isolation-probe) is run twice by nightly-windows.yml:
-under a TestIsolation = Function runner (61300) and under the identical Codeunit runner
-(61301) as a control. This script puts every test of both runs in the job summary, with
-its failure message, because the message carries the observed value -- the rows are the
-measurement, not the conclusion.
+The probe app (tests/al-language-isolation-probe) is run by nightly-windows.yml under
+each of its custom test runners: TestIsolation = Function (61300), the identical Codeunit
+runner (61301) as a control, a runner with no TestIsolation property (61305) and a Disabled
+runner (61304). This script puts every test of every run in the job summary, with its
+failure message, because the message carries the observed value -- the rows are the
+measurement, not the conclusion. --fixture names each test codeunit file of the app; a
+test method name may appear in only one of them, since rows are matched by method name.
 
 It is kept apart from bc-test-results.py on purpose: the probe's rows must never reach
 that report's headline failure count or its #213 comparison.
@@ -40,6 +42,17 @@ def fixture_tests(path):
     names = TEST_PROC.findall(pathlib.Path(path).read_text(encoding="utf-8-sig"))
     if not names:
         raise SystemExit(f"::error::no [Test] procedure found in {path}; refusing to render against an empty expectation")
+    return names
+
+
+def all_fixture_tests(paths):
+    names, seen = [], {}
+    for path in paths:
+        for name in fixture_tests(path):
+            if name in seen:
+                raise SystemExit(f"::error::test {name} is in both {seen[name]} and {path}; rows are matched by method name, so names must be unique")
+            seen[name] = path
+            names.append(name)
     return names
 
 
@@ -86,12 +99,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", action="append", required=True, metavar="LABEL=XUNIT",
                     help="a run to render; repeat for each")
-    ap.add_argument("--fixture", required=True, help="the fixture .al file whose [Test] procedures every run must report")
+    ap.add_argument("--fixture", action="append", required=True,
+                    help="a fixture .al file whose [Test] procedures every run must report; repeat for each")
     ap.add_argument("--outdir", default="test-results")
     args = ap.parse_args()
 
     parse_xunit = load_parser()
-    expected = fixture_tests(args.fixture)
+    expected = all_fixture_tests(args.fixture)
 
     out = [
         "## Isolation probe (AL Runner #4826)",
@@ -100,7 +114,10 @@ def main():
         "codeunit instance is reused across its [Test] methods and Function isolation rolls "
         "the database back after each -- and a failure message carries what was observed. "
         "T5 is the instrument check: it must pass under the Function runner and fail under "
-        "the Codeunit control; otherwise the run did not measure Function isolation.",
+        "the Codeunit control; otherwise the run did not measure Function isolation. "
+        "The W/R tests (writer and reader codeunits) state the Disabled reading, the C tests "
+        "(Commit) and S tests (state other than rows) the Function reading; W2 fails on "
+        "purpose in every run.",
         "",
     ]
     all_ok = True

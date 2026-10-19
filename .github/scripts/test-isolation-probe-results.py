@@ -105,6 +105,24 @@ def main():
         check(rc == 3, f"missing row exits 3 (got {rc})")
         check(f"| {names[-1]} | **NOT RUN** |" in md, "the missing test is named as NOT RUN")
 
+    print("== several fixture files: every test of each, names unique across them ==")
+    src = FIXTURE.parent
+    files = sorted(src.glob("*.Codeunit.al"))
+    fixtures = [f for f in files if ipr.TEST_PROC.search(f.read_text(encoding="utf-8-sig"))]
+    union = ipr.all_fixture_tests(fixtures)
+    check(len(fixtures) >= 2, f"the app has several fixture files: {[f.name for f in fixtures]}")
+    check(len(union) == sum(len(ipr.fixture_tests(f)) for f in fixtures), "the union keeps every test of every file")
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            ipr.all_fixture_tests([FIXTURE, FIXTURE])
+        dup_rc = 0
+    except SystemExit:
+        dup_rc = 3
+    check(dup_rc == 3, "a test name in two fixture files is refused")
+    workflow = (ROOT / ".github/workflows/nightly-windows.yml").read_text(encoding="utf-8")
+    missing = [f.name for f in fixtures if f"--fixture tests/al-language-isolation-probe/src/{f.name}" not in workflow]
+    check(not missing, f"nightly-windows.yml passes every fixture file to the script (missing: {missing})")
+
     if FAILURES:
         print(f"\n{FAILURES} check(s) FAILED")
         return 1
