@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpagefieldtestpagefield-setvalue-method
 // Scope: in-scope
-// Fixtures used: Test Page Enum Field Grade (60688), Test Page Enum Field Row (60689),
+// Fixtures used: Test Page Enum Field Grade (60688), Test Page Enum Field Row (60689), LT BO Sparse Enum/Row/Card (82350-82352), Probe Observer (69160),
 //   Test Page Enum Field Card (60690)
 //
 // A TestPage drives an option-typed field by its member NAME — Field.SetValue('High'),
@@ -166,5 +166,76 @@ codeunit 60691 "Test Page Enum Field Tests"
         Row.Get('E-4');
         if Row.Grade <> Row.Grade::High then
             Error('Grade was %1, expected High.', Format(Row.Grade));
+    end;
+
+    // Corpus issue #664 item 77: a page field on an enum with sparse ordinals (0, 1, 4, 5) sets OptionCaption = ' ,c1,,,c4,c5'
+    // (AL0600 is a warning, so it compiles). Which caption does the TestPage field show, and which text does SetValue accept?
+    // Fixtures: misc/lt-bo2-odd-leads/BoSparseEnumFixtures.al (enum 82350 captions cap1/cap4/cap5, table 82351, page 82352).
+    [Test]
+    procedure Enum_SparseOrdinals_PageOptionCaption()
+    var
+        Row: Record "LT BO Sparse Row";
+        Card: TestPage "LT BO Sparse Card";
+        Observer: Codeunit "Probe Observer";
+        Ordinal: Integer;
+        Attempt: Text;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.E := Row.E::value1;
+        Row.Insert();
+        Row.Id := 4;
+        Row.E := Row.E::value4;
+        Row.Insert();
+        Row.Id := 5;
+        Row.E := Row.E::value5;
+        Row.Insert();
+        Row.Id := 9;
+        Row.E := Row.E::" ";
+        Row.Insert();
+        Commit();
+
+        foreach Ordinal in Row.E.Ordinals() do begin
+            Row.Get(OrdinalRowId(Ordinal));
+            Observer.Observe('format ' + Format(Ordinal), Format(Row.E));
+        end;
+
+        Card.OpenEdit();
+        foreach Ordinal in Row.E.Ordinals() do begin
+            Row.Get(OrdinalRowId(Ordinal));
+            Card.GoToRecord(Row);
+            Observer.Observe('page value ' + Format(Ordinal), Card.E.Value());
+        end;
+
+        foreach Attempt in 'c4|cap4|value4|c5|cap5|c1|4'.Split('|') do begin
+            Row.Get(1);
+            Row.E := Row.E::value1;
+            Row.Modify();
+            Card.GoToRecord(Row);
+            if TrySetSparse(Card, Attempt) then begin
+                Observer.Observe('setvalue ' + Attempt + ' page', Card.E.Value());
+                // Moving to another record saves the edited one.
+                Row.Get(4);
+                Card.GoToRecord(Row);
+                Row.Get(1);
+                Observer.Observe('setvalue ' + Attempt + ' stored ordinal', Format(Row.E.AsInteger()));
+            end else
+                Observer.Observe('setvalue ' + Attempt + ' error', GetLastErrorText());
+        end;
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    local procedure OrdinalRowId(Ordinal: Integer): Integer
+    begin
+        if Ordinal = 0 then
+            exit(9);
+        exit(Ordinal);
+    end;
+
+    [TryFunction]
+    local procedure TrySetSparse(var Card: TestPage "LT BO Sparse Card"; Value: Text)
+    begin
+        Card.E.SetValue(Value);
     end;
 }

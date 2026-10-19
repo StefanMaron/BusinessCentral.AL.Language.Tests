@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-the-user-interface
 // Scope: in-scope
 // Fixtures used: ALT Universal (60000), ALTFixtureCleanup (60019), shared Assert (60021);
-//                self-contained pages 68124, 68125 and codeunit 68126
+//                self-contained pages 68124, 68125 and codeunit 68126; Probe Observer (69160)
 // Probe: written against a real BC 27.5 service tier; every literal below is what that tier
 // produced. Other BC versions were not measured.
 //
@@ -171,5 +171,33 @@ codeunit 68126 "Probe Unhandled Ui"
     procedure MessageHandlerThatErrors(Msg: Text)
     begin
         Error('handler error %1', Msg);
+    end;
+
+    // Corpus issue #664 item 83: a normal procedure and a [ModalPageHandler] share one name (ProbeUiCardSameName). The pair compiles
+    // (no DuplicateHandlerMethodName). Does HandlerFunctions('ProbeUiCardSameName') reach the handler, and can the normal one still be called?
+    [Test]
+    [HandlerFunctions('ProbeUiCardSameName')]
+    procedure HandlerNamedLikeANormalProcedure_WhichRuns()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Initialize();
+        ProbeUiCardSameName();
+        Observer.Observe('direct call', Seen);
+        Seen := '';
+        Page.RunModal(Page::"Probe Ui Card");
+        Observer.Observe('run modal', Seen);
+        Observer.Finish();
+    end;
+
+    procedure ProbeUiCardSameName()
+    begin
+        Seen += 'normal procedure;';
+    end;
+
+    [ModalPageHandler]
+    procedure ProbeUiCardSameName(var Card: TestPage "Probe Ui Card")
+    begin
+        Seen += 'modal page handler;';
     end;
 }

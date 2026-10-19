@@ -1,5 +1,5 @@
 // Probe: ClearAll per object kind, SetCurrentKey on fields that are not stored, Hyperlink in a test run,
-// CurrReport.Language before any set / zero / effect on Format.
+// CurrReport.Language before any set / zero / effect on Format. ClearAll in a table and a page extension: misc/lt-bo2-odd-leads/BoClearAllExt.al (82360-82362).
 table 69527 "Probe Rb Row"
 {
     DataClassification = SystemMetadata;
@@ -350,6 +350,53 @@ codeunit 69532 "Probe ClearAll Key Hyperlink"
         Observer.Observe('reportLog', Log.Take());
         Observer.Expect('reportLog', 'languageBeforeSet=1033;language1031=1031;dateFormatAfter1031=03/05/30;decimalFormatAfter1031=1,234.5;dateFormatAfter1033=03/05/30;decimalFormatAfter1033=1,234.5;languageZero_error=Invalid language ID supplied: 0.|Argument;languageAfterZeroAttempt=1033;formatRegionBeforeSet=[];');
         Observer.Verify();
+    end;
+
+    // Corpus issue #664 item 113: ClearAll in a table extension (tableextension 82360, misc/lt-bo2-odd-leads/BoClearAllExt.al):
+    // in an extension procedure, in an extension field's OnValidate, and whether ClearAll in base table code clears the extension's globals.
+    [Test]
+    procedure ClearAll_InTableExtension_WhatIsCleared()
+    var
+        Row: Record "Probe Rb Row";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Row.Id := 3;
+        Row.Name := 'abc';
+        Row.LtBoNum := 4;
+        Row.LtBoSetExtGlobal(8);
+        Row.SetRange(Id, 3);
+        Observer.Observe('ext procedure', Row.LtBoClearAllInExt());
+        Observer.Observe('ext global after ext procedure', Format(Row.LtBoGetExtGlobal()));
+        Observer.Observe('caller filter after ext procedure', '[' + Row.GetFilters() + ']');
+        Row.LtBoSetExtGlobal(8);
+        Row.Validate(LtBoNum, 6);
+        Observer.Observe('ext OnValidate', Row.LtBoTraceOfValidate());
+        Observer.Observe('ext global after ext OnValidate', Format(Row.LtBoGetExtGlobal()));
+        Row.LtBoSetExtGlobal(8);
+        Observer.Observe('base procedure', Row.ClearAllInTable());
+        Observer.Observe('ext global after base ClearAll', Format(Row.LtBoGetExtGlobal()));
+        Observer.Finish();
+    end;
+
+    // Corpus issue #664 item 113: ClearAll in a page extension (pageextension 82361 on "Probe Ui Card"): in a procedure called through
+    // a Page variable that is not open, and in the extension's OnOpenPage (trace kept by codeunit 82362).
+    [Test]
+    procedure ClearAll_InPageExtension_WhatIsCleared()
+    var
+        Card: Page "Probe Ui Card";
+        CardView: TestPage "Probe Ui Card";
+        Trace: Codeunit "LT BO ClearAll Trace";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Card.LtBoSetPageGlobals(5, 'set');
+        Observer.Observe('before', Card.LtBoDescribe());
+        Observer.Observe('page ext procedure', Card.LtBoClearAllInPageExt());
+        Observer.Observe('after', Card.LtBoDescribe());
+        Trace.Take();
+        CardView.OpenView();
+        CardView.Close();
+        Observer.Observe('OnOpenPage trace', Trace.Take());
+        Observer.Finish();
     end;
 }
 

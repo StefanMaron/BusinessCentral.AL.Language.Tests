@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Fixtures.al (interface LT ClT Shape, codeunits 74600/74601, enum 74602), codeunit 74623
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// Dictionary value types: Decimal, Boolean, Date, Enum, Text, Code, interface, List, Dictionary; values are stored by copy or reference; Keys/Values of nested collections.
+// Dictionary value types: Decimal, Boolean, Date, Enum, Text, Code, interface, List, Dictionary, TextBuilder; values are stored by copy or reference; Keys/Values of nested collections.
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 74623 "LT ClT Dict Values"
@@ -241,5 +241,33 @@ codeunit 74623 "LT ClT Dict Values"
         Observer.Expect('count after remove', '1000');
         Observer.Expect('first key', '1001');
         Observer.Verify();
+    end;
+
+    // Corpus issue #664 item 110: Dictionary of [Integer, TextBuilder] compiles and works; is the stored builder a copy or the same builder?
+    [Test]
+    procedure Values_TextBuilder()
+    var
+        Observer: Codeunit "Probe Observer";
+        D: Dictionary of [Integer, TextBuilder];
+        TB: TextBuilder;
+        TB2: TextBuilder;
+        Got: TextBuilder;
+    begin
+        TB.Append('x');
+        D.Add(1, TB);
+        Observer.Observe('stored', D.Get(1).ToText());
+        TB.Append('y');
+        Observer.Observe('after appending to the added variable', D.Get(1).ToText());
+        Got := D.Get(1);
+        Got.Append('z');
+        Observer.Observe('after appending to a Get result', D.Get(1).ToText());
+        D.Get(1, TB2);
+        TB2.Append('w');
+        Observer.Observe('after appending to a Get var result', D.Get(1).ToText());
+        D.Set(1, TB);
+        Observer.Observe('after set', D.Get(1).ToText());
+        Observer.Observe('count', Format(D.Count()));
+        Observer.Observe('length', Format(D.Get(1).Length()));
+        Observer.Finish();
     end;
 }
