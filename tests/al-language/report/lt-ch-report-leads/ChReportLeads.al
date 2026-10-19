@@ -32,6 +32,7 @@ codeunit 84549 "LT CH Report Leads"
         R.Id := 1; R.Name := 'a'; R.Grp := 'X'; R.Insert();
         R.Id := 2; R.Name := 'b'; R.Grp := 'Y'; R.Insert();
         R.Id := 3; R.Name := 'c'; R.Grp := 'X'; R.Insert();
+        Commit();
         Log.Take();
         Log.SetMode(NewMode);
         HandlerMode := 0;
@@ -48,18 +49,6 @@ codeunit 84549 "LT CH Report Leads"
         end;
     end;
 
-    [TryFunction]
-    local procedure TryRun(ReportId: Integer)
-    begin
-        Report.Run(ReportId);
-    end;
-
-    [TryFunction]
-    local procedure TryRunModal(ReportId: Integer)
-    begin
-        Report.RunModal(ReportId);
-    end;
-
     // ---------------------------------------------------------------- Part (item 117)
 
     [Test]
@@ -67,7 +56,7 @@ codeunit 84549 "LT CH Report Leads"
     procedure Part_ProcedureOfThePartPage()
     begin
         Init(0);
-        Outcome('run', TryRun(Report::"LT CH RP Part Host"));
+        Report.Run(Report::"LT CH RP Part Host");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -86,7 +75,8 @@ codeunit 84549 "LT CH Report Leads"
     procedure CloseError_RunModal_Ok()
     begin
         Init(0);
-        Outcome('runmodal', TryRunModal(Report::"LT CH RP CloseError"));
+        asserterror Report.RunModal(Report::"LT CH RP CloseError");
+        Obs.ObserveError('runmodal');
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -96,7 +86,8 @@ codeunit 84549 "LT CH Report Leads"
     procedure CloseError_Run_Ok()
     begin
         Init(0);
-        Outcome('run', TryRun(Report::"LT CH RP CloseError"));
+        asserterror Report.Run(Report::"LT CH RP CloseError");
+        Obs.ObserveError('run');
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -107,7 +98,8 @@ codeunit 84549 "LT CH Report Leads"
     begin
         Init(0);
         HandlerMode := 1;
-        Outcome('runmodal', TryRunModal(Report::"LT CH RP CloseError"));
+        asserterror Report.RunModal(Report::"LT CH RP CloseError");
+        Obs.ObserveError('runmodal');
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -131,9 +123,9 @@ codeunit 84549 "LT CH Report Leads"
     begin
         Init(0);
         HandlerMode := 1;
-        Outcome('run1', TryRunModal(Report::"LT CH SaveValues"));
+        Report.RunModal(Report::"LT CH SaveValues");
         HandlerMode := 2;
-        Outcome('run2', TryRunModal(Report::"LT CH SaveValues"));
+        Report.RunModal(Report::"LT CH SaveValues");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -185,7 +177,7 @@ codeunit 84549 "LT CH Report Leads"
     procedure FilterFields_ExtensionSetsRequestFilterFields()
     begin
         Init(0);
-        Outcome('run', TryRunModal(Report::"LT CH Filter Fields"));
+        Report.RunModal(Report::"LT CH Filter Fields");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -237,7 +229,7 @@ codeunit 84549 "LT CH Report Leads"
     procedure Enabled_BoundToGlobals_False()
     begin
         Init(0);
-        Outcome('run', TryRunModal(Report::"LT CH RP Enabled"));
+        Report.RunModal(Report::"LT CH RP Enabled");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -247,7 +239,7 @@ codeunit 84549 "LT CH Report Leads"
     procedure Enabled_BoundToGlobals_True()
     begin
         Init(1);
-        Outcome('run', TryRunModal(Report::"LT CH RP Enabled"));
+        Report.RunModal(Report::"LT CH RP Enabled");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -311,7 +303,7 @@ codeunit 84549 "LT CH Report Leads"
     begin
         Init(0);
         HandlerMode := 1;
-        Outcome('run', TryRunModal(Report::"LT CH Params"));
+        Report.RunModal(Report::"LT CH Params");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -322,7 +314,7 @@ codeunit 84549 "LT CH Report Leads"
     begin
         Init(1);
         HandlerMode := 2;
-        Outcome('run', TryRunModal(Report::"LT CH Params"));
+        Report.RunModal(Report::"LT CH Params");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;
@@ -389,9 +381,9 @@ codeunit 84549 "LT CH Report Leads"
     begin
         Init(0);
         HandlerMode := 1;
-        Outcome('run1', TryRunModal(Report::"LT CH Lost Value"));
+        Report.RunModal(Report::"LT CH Lost Value");
         HandlerMode := 2;
-        Outcome('run2', TryRunModal(Report::"LT CH Lost Value"));
+        Report.RunModal(Report::"LT CH Lost Value");
         Obs.Observe('log', Log.Take());
         Obs.Finish();
     end;

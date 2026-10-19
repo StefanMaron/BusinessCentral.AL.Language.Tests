@@ -295,6 +295,8 @@ codeunit 84524 "LT CH Query Leads"
             InS.ReadText(Line);
             Xml += Line.Trim();
         end;
+        if Xml.IndexOf('</xs:schema>') > 0 then
+            Xml := CopyStr(Xml, Xml.IndexOf('</xs:schema>') + StrLen('</xs:schema>'));
         Obs.Observe(Name + '.xml', Xml);
     end;
 
