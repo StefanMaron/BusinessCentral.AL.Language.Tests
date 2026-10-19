@@ -13,7 +13,7 @@
 //   triggers for a TestPage write versus Validate from code; a Visible = false FlowField on OpenView; control expressions with a Record-returning
 //   procedure, a BigInteger literal, a Date compared with 0D and a global Record; a 1100-character ToolTip; Rec.Reset plus CurrPage.Update(false)
 //   with SourceTableView; Drilldown on a FactBox field that only has OnLookup; CurrPage.Editable(true) after CurrPage.Editable(false) in OnOpenPage.
-// BC versions: 29 (27 and 28 by CI)
+// BC versions: 27.5, 28.5, 29.0 (CI). The BigInteger literal 0L in a control expression fails on 27 ("Not a valid number") and works from 28.
 
 codeunit 84270 "LT CC Log"
 {
