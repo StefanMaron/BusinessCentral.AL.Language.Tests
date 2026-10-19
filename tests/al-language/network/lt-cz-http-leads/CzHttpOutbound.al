@@ -12,7 +12,7 @@
 //  - GET and DELETE with a body, and GET with content headers but no body, are sent (no error).
 //  - Sending one HttpRequestMessage a second time answers false with InvalidOperation, also after SetRequestUri.
 //  - A response filled in a callee (var parameter) is readable in the caller, twice.
-//  - No baggage or traceparent header reaches an echo endpoint.
+//  - No baggage header reaches an echo endpoint. A traceparent header does on BC 27.5 and 28.5, not on BC 29.0.
 //  - 301, 302, 307 and 308 are followed: the caller sees the final 200. The Authorization default header is dropped on the redirected request.
 //  - A SecretText default header (Authorization) is copied into the request's headers by Send as plain text: GetValues returns the value,
 //    ContainsSecret is false. The client's default header stays secret.
@@ -255,7 +255,11 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Expect('ok', 'Yes');
         Observer.Expect('status', '200');
         Observer.Expect('baggage', 'No');
+#if BC29PLUS
         Observer.Expect('traceparent', 'No');
+#else
+        Observer.Expect('traceparent', 'Yes');
+#endif
         Observer.Expect('x_test', 'No');
         Observer.Verify();
     end;
