@@ -440,6 +440,7 @@ is only a reference.
 | 1685 | AL0288 | A subscriber declares `var` on a parameter the publisher passes by value. |
 | 1686 | AL0284 | Subscriber parameter types: Enum as Integer, Option as Integer or Enum, a GlobalVarAccess global as Text, RunTrigger as Integer. |
 | 1687 | AL0282 | Subscriber parameters matching no publisher parameter: RunTrigger on OnAfterValidateEvent, `Record` instead of `Rec`, an unknown global. |
+| 1616 | AL0865 | A chartpart control in a page layout: the control type is not supported (an error on every leg, not the AL0864 warning). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
