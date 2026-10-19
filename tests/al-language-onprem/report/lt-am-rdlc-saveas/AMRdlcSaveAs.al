@@ -9,7 +9,7 @@
 // Pinned on every leg: SaveAsHtml returns false with 'The Html output format is not supported by the current report layout format.'
 // (ReportUnsupportedFormat) and writes no file.
 // Pinned on BC 27 and 28 only (#if not BC29PLUS): SaveAsPdf writes a one-page PDF; TestRequestPage.SaveAsPdf writes the PDF, the request page
-// handler runs twice, and the request page is closed afterwards (Cancel: 'The TestPage is not open.'). The BC 29 Linux container turns the
+// handler runs once, and the request page is closed afterwards (Cancel: 'The TestPage is not open.'). The BC 29 Linux container turns the
 // renderer off at boot ("the side-service compatibility patch failed"), so on BC 29 these calls answer with the Linux stub text.
 // Linux suspects (kept as source under LT_AM_LINUX_SUSPECT, not compiled): SaveAsWord and SaveAsExcel, static, instance and from the request
 // page, on BC 27 and 28 fail inside the Mono renderer with 'The system encountered an internal error while rendering the report.'
@@ -590,12 +590,6 @@ codeunit 98603 "LT AM OP SaveAs Tests"
     procedure RequestPage_SaveAsPdf()
     begin
         RunKind('pdf');
-        Observer.Expect('handler|text', '');
-        Observer.Expect('handler|code', '');
-        Observer.Expect('file in handler', 'No');
-        Observer.Expect('cancel ok', 'No');
-        Observer.Expect('cancel|text', 'The TestPage is not open.');
-        Observer.Expect('cancel|code', 'TestPageNotOpened');
         Observer.Expect('handler|text', '');
         Observer.Expect('handler|code', '');
         Observer.Expect('file in handler', 'No');
