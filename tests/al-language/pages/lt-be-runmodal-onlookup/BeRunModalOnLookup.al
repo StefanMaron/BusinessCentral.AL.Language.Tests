@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/page/page-runmodal-integer-table-fieldref-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); LT BE Log (codeunit 81150); tables 81153-81154, pages 81154-81155, test codeunit 81162
+// Fixtures used: Probe Observer (codeunit 69160); codeunit 81151, tables 81153-81156, pages 81154-81158, test codeunit 81162
 // Probe: written against BC on the corpus CI matrix; every literal asserted below is what that tier produced.
 // Facts: Page.RunModal(PageId, Rec) on a plain list page (no Editable property) called from
 //   (a) a table field's OnLookup trigger, reached through TestPage <field>.Lookup() on a list page opened with OpenEdit,
@@ -11,6 +11,9 @@
 //   The modal page records CurrPage.LookupMode in OnOpenPage. Its handler walks from First() until Next() answers false (one row per filter
 //   value, like Microsoft's item with one unit of measure, and two rows for comparison), then Last() and Next(), then First() and OK().
 //   Afterwards: the action RunModal returned and the field value after the lookup.
+//   Direct calls that separate the inputs: a table with no LookupPageId (the list above), a table whose LookupPageId is the page run, and a
+//   table whose LookupPageId is another page; a filter on a key field, on a non-key field and none; LookupMode(false) + RunModal(); and a
+//   handler that only walks the rows (as handlers/TestPageModalNewRowLine_Tests.al does) next to one that also invokes OK().
 // Corpus issue: StefanMaron/BusinessCentral.AL.Language.Tests#660 item 3.
 // BC versions: all (CI)
 
@@ -41,7 +44,7 @@ table 81154 "LT BE Lk Doc"
             trigger OnLookup()
             var
                 Row: Record "LT BE Lk Row";
-                Log: Codeunit "LT BE Log";
+                Log: Codeunit "LT BE Lk Log";
                 Act: Action;
             begin
                 Row.SetRange(Grp, Rec.Grp);
@@ -79,7 +82,7 @@ page 81154 "LT BE Lk List"
 
     trigger OnOpenPage()
     var
-        Log: Codeunit "LT BE Log";
+        Log: Codeunit "LT BE Lk Log";
     begin
         Log.Add('lookupMode=' + Format(CurrPage.LookupMode));
     end;
@@ -146,7 +149,129 @@ page 81155 "LT BE Lk Doc List"
     }
 
     var
-        Log: Codeunit "LT BE Log";
+        Log: Codeunit "LT BE Lk Log";
+}
+
+codeunit 81151 "LT BE Lk Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        if Entries <> '' then
+            Entries += ',';
+        Entries += Entry;
+    end;
+
+    procedure Take() Result: Text
+    begin
+        Result := Entries;
+        Entries := '';
+    end;
+}
+
+table 81155 "LT BE Lk Row Self"
+{
+    DataClassification = SystemMetadata;
+    LookupPageId = "LT BE Lk List Self";
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
+}
+
+table 81156 "LT BE Lk Row Other"
+{
+    DataClassification = SystemMetadata;
+    LookupPageId = "LT BE Lk Other Lookup";
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
+}
+
+page 81156 "LT BE Lk List Self"
+{
+    PageType = List;
+    SourceTable = "LT BE Lk Row Self";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(Qty; Rec.Qty) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT BE Lk Log";
+    begin
+        Log.Add('lookupMode=' + Format(CurrPage.LookupMode));
+    end;
+}
+
+page 81157 "LT BE Lk List Other"
+{
+    PageType = List;
+    SourceTable = "LT BE Lk Row Other";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(Qty; Rec.Qty) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT BE Lk Log";
+    begin
+        Log.Add('lookupMode=' + Format(CurrPage.LookupMode));
+    end;
+}
+
+page 81158 "LT BE Lk Other Lookup"
+{
+    PageType = List;
+    SourceTable = "LT BE Lk Row Other";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+            }
+        }
+    }
 }
 
 codeunit 81162 "LT BE RunModal OnLookup Tests"
@@ -155,13 +280,15 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
     TestPermissions = Disabled;
 
     var
-        Log: Codeunit "LT BE Log";
+        Log: Codeunit "LT BE Lk Log";
 
     // Group G1 has one row (U1), group G2 two rows (U2, U3). Doc 1 is in G1, doc 2 in G2.
     local procedure Seed()
     var
         Row: Record "LT BE Lk Row";
         Doc: Record "LT BE Lk Doc";
+        SelfRow: Record "LT BE Lk Row Self";
+        OtherRow: Record "LT BE Lk Row Other";
     begin
         Row.DeleteAll();
         Doc.DeleteAll();
@@ -171,6 +298,20 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         AddRow('G3', 'U4', 4);
         AddDoc(1, 'G1');
         AddDoc(2, 'G2');
+        SelfRow.DeleteAll();
+        OtherRow.DeleteAll();
+        SelfRow."Code" := 'S1';
+        SelfRow.Qty := 1;
+        SelfRow.Insert();
+        SelfRow."Code" := 'S2';
+        SelfRow.Qty := 2;
+        SelfRow.Insert();
+        OtherRow."Code" := 'O1';
+        OtherRow.Qty := 1;
+        OtherRow.Insert();
+        OtherRow."Code" := 'O2';
+        OtherRow.Qty := 2;
+        OtherRow.Insert();
         Log.Take();
     end;
 
@@ -316,6 +457,197 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Log.Add('action=' + Format(Act));
         Observer.Observe('log', Log.Take());
         Observer.Finish();
+    end;
+
+    // ---- Direct calls that separate the inputs ----------------------------------------------
+
+    [Test]
+    [HandlerFunctions('WalkOnlyHandler')]
+    procedure Direct_NoLookupPageId_KeyFilter_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('WalkOnlyHandler')]
+    procedure Direct_NoLookupPageId_NonKeyFilter_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+    begin
+        Seed();
+        Row.SetFilter(Qty, '2|3');
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('WalkOnlyHandler')]
+    procedure Direct_NoLookupPageId_NoFilter_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+    begin
+        Seed();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('WalkOnlyHandler')]
+    procedure Direct_NoLookupPageId_LookupModeFalse_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+        LkList: Page "LT BE Lk List";
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        LkList.SetTableView(Row);
+        LkList.LookupMode(false);
+        Log.Add('action=' + Format(LkList.RunModal()));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('SelfWalkOnlyHandler')]
+    procedure Direct_LookupPageIdIsThePage_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row Self";
+    begin
+        Seed();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List Self", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('SelfWalkOkHandler')]
+    procedure Direct_LookupPageIdIsThePage_WalkAndOK()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row Self";
+    begin
+        Seed();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List Self", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('OtherWalkOnlyHandler')]
+    procedure Direct_LookupPageIdIsAnotherPage_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row Other";
+    begin
+        Seed();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List Other", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('OtherWalkOkHandler')]
+    procedure Direct_LookupPageIdIsAnotherPage_WalkAndOK()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row Other";
+    begin
+        Seed();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List Other", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [ModalPageHandler]
+    procedure WalkOnlyHandler(var LkList: TestPage "LT BE Lk List")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+    end;
+
+    [ModalPageHandler]
+    procedure SelfWalkOnlyHandler(var LkList: TestPage "LT BE Lk List Self")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+    end;
+
+    [ModalPageHandler]
+    procedure SelfWalkOkHandler(var LkList: TestPage "LT BE Lk List Self")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+        LkList.First();
+        LkList.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure OtherWalkOnlyHandler(var LkList: TestPage "LT BE Lk List Other")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+    end;
+
+    [ModalPageHandler]
+    procedure OtherWalkOkHandler(var LkList: TestPage "LT BE Lk List Other")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+        LkList.First();
+        LkList.OK().Invoke();
     end;
 
     [ModalPageHandler]

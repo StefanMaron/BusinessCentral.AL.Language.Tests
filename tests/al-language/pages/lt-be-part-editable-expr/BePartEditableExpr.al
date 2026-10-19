@@ -289,7 +289,18 @@ codeunit 81161 "LT BE Part Editable Tests"
         Observer.Observe('pageEditable', Format(TP.Editable()));
         ObserveStates(Observer, TP, 'H1');
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('pageEditable', 'Yes');
+        Observer.Expect('H1-ed-editable', 'No');
+        Observer.Expect('H1-ed-enabled', 'Yes');
+        Observer.Expect('H1-en-editable', 'Yes');
+        Observer.Expect('H1-en-enabled', 'No');
+        Observer.Expect('H1-both-editable', 'No');
+        Observer.Expect('H1-both-enabled', 'No');
+        Observer.Expect('H1-lit-editable', 'No');
+        Observer.Expect('H1-lit-enabled', 'Yes');
+        Observer.Expect('H1-plain-editable', 'Yes');
+        Observer.Expect('H1-plain-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -302,7 +313,17 @@ codeunit 81161 "LT BE Part Editable Tests"
         Open(TP, 'H2');
         ObserveStates(Observer, TP, 'H2');
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('H2-ed-editable', 'Yes');
+        Observer.Expect('H2-ed-enabled', 'Yes');
+        Observer.Expect('H2-en-editable', 'Yes');
+        Observer.Expect('H2-en-enabled', 'Yes');
+        Observer.Expect('H2-both-editable', 'Yes');
+        Observer.Expect('H2-both-enabled', 'Yes');
+        Observer.Expect('H2-lit-editable', 'No');
+        Observer.Expect('H2-lit-enabled', 'Yes');
+        Observer.Expect('H2-plain-editable', 'Yes');
+        Observer.Expect('H2-plain-enabled', 'Yes');
+        Observer.Verify();
     end;
 
     // The flag changes when the host moves from H1 (false) to H2 (true) and back.
@@ -326,7 +347,16 @@ codeunit 81161 "LT BE Part Editable Tests"
         Observer.Observe('prev-both-editable', Format(TP.BothLines.Description.Editable()));
         Observer.Observe('prev-both-enabled', Format(TP.BothLines.Description.Enabled()));
         TP.Close();
-        Observer.Finish();
+        Observer.Expect('at', 'H1');
+        Observer.Expect('next', 'H2');
+        Observer.Expect('next-ed-editable', 'Yes');
+        Observer.Expect('next-both-editable', 'Yes');
+        Observer.Expect('next-both-enabled', 'Yes');
+        Observer.Expect('prev', 'H1');
+        Observer.Expect('prev-ed-editable', 'No');
+        Observer.Expect('prev-both-editable', 'No');
+        Observer.Expect('prev-both-enabled', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +369,22 @@ codeunit 81161 "LT BE Part Editable Tests"
         SetCase(Observer, 'H1', 'both');
         SetCase(Observer, 'H1', 'lit');
         SetCase(Observer, 'H1', 'plain');
-        Observer.Finish();
+        Observer.Expect('H1-ed-set', 'Yes');
+        Observer.Expect('H1-ed-value', 'Changed');
+        Observer.Expect('H1-ed-stored', 'Changed');
+        Observer.Expect('H1-en-set', 'Yes');
+        Observer.Expect('H1-en-value', 'Changed');
+        Observer.Expect('H1-en-stored', 'Changed');
+        Observer.Expect('H1-both-set', 'Yes');
+        Observer.Expect('H1-both-value', 'Changed');
+        Observer.Expect('H1-both-stored', 'Changed');
+        Observer.Expect('H1-lit-set', 'Yes');
+        Observer.Expect('H1-lit-value', 'Changed');
+        Observer.Expect('H1-lit-stored', 'Changed');
+        Observer.Expect('H1-plain-set', 'Yes');
+        Observer.Expect('H1-plain-value', 'Changed');
+        Observer.Expect('H1-plain-stored', 'Changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -352,7 +397,22 @@ codeunit 81161 "LT BE Part Editable Tests"
         SetCase(Observer, 'H2', 'both');
         SetCase(Observer, 'H2', 'lit');
         SetCase(Observer, 'H2', 'plain');
-        Observer.Finish();
+        Observer.Expect('H2-ed-set', 'Yes');
+        Observer.Expect('H2-ed-value', 'Changed');
+        Observer.Expect('H2-ed-stored', 'Changed');
+        Observer.Expect('H2-en-set', 'Yes');
+        Observer.Expect('H2-en-value', 'Changed');
+        Observer.Expect('H2-en-stored', 'Changed');
+        Observer.Expect('H2-both-set', 'Yes');
+        Observer.Expect('H2-both-value', 'Changed');
+        Observer.Expect('H2-both-stored', 'Changed');
+        Observer.Expect('H2-lit-set', 'Yes');
+        Observer.Expect('H2-lit-value', 'Changed');
+        Observer.Expect('H2-lit-stored', 'Changed');
+        Observer.Expect('H2-plain-set', 'Yes');
+        Observer.Expect('H2-plain-value', 'Changed');
+        Observer.Expect('H2-plain-stored', 'Changed');
+        Observer.Verify();
     end;
 
     // The subpage's own repeater and field say Editable = RowEditable (not Locked, set in its OnAfterGetRecord); the line of H1 is
@@ -386,7 +446,12 @@ codeunit 81161 "LT BE Part Editable Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ExprCase(Observer, 'H1');
-        Observer.Finish();
+        Observer.Expect('desc-editable', 'Yes');
+        Observer.Expect('desc-enabled', 'Yes');
+        Observer.Expect('locked-editable', 'Yes');
+        Observer.Expect('set', 'Yes');
+        Observer.Expect('stored', 'Changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -395,7 +460,12 @@ codeunit 81161 "LT BE Part Editable Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ExprCase(Observer, 'H2');
-        Observer.Finish();
+        Observer.Expect('desc-editable', 'No');
+        Observer.Expect('desc-enabled', 'Yes');
+        Observer.Expect('locked-editable', 'No');
+        Observer.Expect('set', 'Yes');
+        Observer.Expect('stored', 'Changed');
+        Observer.Verify();
     end;
 
     [TryFunction]
