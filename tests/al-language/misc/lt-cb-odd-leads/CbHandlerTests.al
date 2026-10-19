@@ -5,6 +5,7 @@
 //        of the same name; a second Message, Confirm and StrMenu in one test; Message while a Dialog is open; TestPage.Close() inside a
 //        ModalPageHandler; a RunObject action to a StandardDialog with RunPageLink, RunPageView and RunPageMode; a trapped TestPage whose
 //        action opens a modal page. Compile-only halves: must-not-compile cases 1608 and 1609.
+// Probe: written against a local BC 29.0 service tier; every literal asserted below is what that tier produced. 27.5 and 28.5 by the CI matrix.
 // BC versions: 27 to 29 (CI matrix)
 
 codeunit 84168 "LT CB Handler Tests"
@@ -53,7 +54,11 @@ codeunit 84168 "LT CB Handler Tests"
         Observer.Observe('ok', Format(TryFpbRunModal(Fpb, Result)));
         Observer.Observe('result', Result);
         Observer.ObserveError('run');
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('result', 'No');
+        Observer.Expect('run|text', 'Unhandled UI: FilterPage 9598');
+        Observer.Expect('run|code', 'MissingUIHandler');
+        Observer.Verify();
     end;
 
     // ---------- item 18: a handler and a plain procedure of the same name (an overload) ----------
@@ -68,7 +73,9 @@ codeunit 84168 "LT CB Handler Tests"
         PickHandler(7);
         Observer.Observe('result', Format(Page.RunModal(Page::"LT CB Dialog")));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('result', 'LookupOK');
+        Observer.Expect('log', 'plain PickHandler 7;dialog OnOpenPage filters=[] editable=Yes;handler PickHandler;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -99,7 +106,12 @@ codeunit 84168 "LT CB Handler Tests"
         Observer.Observe('strmenu1', Format(StrMenu('A,B,C', 1, 's1')));
         Observer.Observe('strmenu2', Format(StrMenu('A,B,C', 1, 's2')));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('confirm1', 'No');
+        Observer.Expect('confirm2', 'Yes');
+        Observer.Expect('strmenu1', '2');
+        Observer.Expect('strmenu2', '3');
+        Observer.Expect('log', 'msg m1;msg m2;confirm c1;confirm c2;strmenu s1;strmenu s2;');
+        Observer.Verify();
     end;
 
     [MessageHandler]
@@ -146,7 +158,8 @@ codeunit 84168 "LT CB Handler Tests"
         Message('after close');
         Log.Add('after message 3');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'opened;msg during open;after message 1;msg after update;after message 2;msg after close;after message 3;');
+        Observer.Verify();
     end;
 
     // ---------- item 21: TestPage.Close() inside a ModalPageHandler ----------
@@ -180,7 +193,16 @@ codeunit 84168 "LT CB Handler Tests"
         Observer.Observe('rec_result', Result);
         Observer.ObserveError('rec');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('norec_ok', 'No');
+        Observer.Expect('norec_result', '');
+        Observer.Expect('norec|text', 'The RunModal procedure could not close the page 84164 as it has already been closed.');
+        Observer.Expect('norec|code', 'TestCodeUnit');
+        Observer.Expect('rec_ok', 'No');
+        Observer.Expect('rec_result', '');
+        Observer.Expect('rec|text', 'The RunModal procedure could not close the page 84164 as it has already been closed.');
+        Observer.Expect('rec|code', 'TestCodeUnit');
+        Observer.Expect('log', 'dialog OnOpenPage filters=[] editable=Yes;handler no=R1;handler after Close;dialog OnOpenPage filters=[] editable=Yes;handler no=R1;handler after Close;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -211,7 +233,9 @@ codeunit 84168 "LT CB Handler Tests"
         Card.DialogLinked.Invoke();
         Observer.Observe('r2_log', Log.Take());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('r1_log', 'dialog OnOpenPage filters=[No.: R1] editable=Yes;handler rows=R1, editable=Yes qtyEditable=Yes;');
+        Observer.Expect('r2_log', 'dialog OnOpenPage filters=[No.: R2] editable=Yes;handler rows= editable=Yes qtyEditable=No;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -263,7 +287,15 @@ codeunit 84168 "LT CB Handler Tests"
         Observer.ObserveError('read');
         Observer.Observe('close_ok', Format(TryCloseCard(Card)));
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('action_log', 'card OnAfterGetRecord R1;card OnAction OpenDialogModal;dialog OnOpenPage filters=[] editable=Yes;handler no=R1;card RunModal=OK;card OnAfterGetRecord R1;card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;');
+        Observer.Expect('read_ok', 'Yes');
+        Observer.Expect('read_value', 'One');
+        Observer.Expect('read|text', '');
+        Observer.Expect('read|code', '');
+        Observer.Expect('close_ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]

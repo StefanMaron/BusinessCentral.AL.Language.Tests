@@ -5,6 +5,7 @@
 //        OnValidate sees it (the repro of microsoft/AL#7345); Find on an empty table in OnNewRecord under OpenNew; which triggers run around
 //        an action Invoke on a NavigatePage, a Card and a List; a TestPage on a Role Center; AssistEdit in view mode; an error raised in
 //        a table field OnLookup.
+// Probe: written against a local BC 29.0 service tier; every literal asserted below is what that tier produced. 27.5 and 28.5 by the CI matrix.
 // BC versions: 27 to 29 (CI matrix)
 
 codeunit 84169 "LT CB Page Trigger Tests"
@@ -59,7 +60,10 @@ codeunit 84169 "LT CB Page Trigger Tests"
         List.NameCtl.SetValue('Three');
         Observer.Observe('validate_new', Log.Take());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('action_existing', 'list ShowFlag rec flag=Yes;');
+        Observer.Expect('validate_existing', 'table Name.OnValidate flag=No;');
+        Observer.Expect('validate_new', 'table Name.OnValidate flag=No;');
+        Observer.Verify();
     end;
 
     // ---------- item 27: Find on an empty table in OnNewRecord, page opened with OpenNew ----------
@@ -92,7 +96,23 @@ codeunit 84169 "LT CB Page Trigger Tests"
         OpenNewWithMode(2, 'find', Observer);
         OpenNewWithMode(3, 'recfind', Observer);
         OpenNewWithMode(4, 'iffind', Observer);
-        Observer.Finish();
+        Observer.Expect('findfirst_ok', 'Yes');
+        Observer.Expect('findfirst|text', 'The LT CB Empty table is empty.');
+        Observer.Expect('findfirst|code', 'DB:TableIsEmpty');
+        Observer.Expect('findfirst_log', 'card OnNewRecord FindFirst;card OnNewRecord FindFirst;');
+        Observer.Expect('find_ok', 'Yes');
+        Observer.Expect('find|text', 'The LT CB Empty does not exist. Identification fields and values: No.=''''');
+        Observer.Expect('find|code', 'DB:RecordNotFound');
+        Observer.Expect('find_log', 'card OnNewRecord Find;card OnNewRecord Find;');
+        Observer.Expect('recfind_ok', 'Yes');
+        Observer.Expect('recfind|text', 'The LT CB Row does not exist. Identification fields and values: No.=''''');
+        Observer.Expect('recfind|code', 'DB:RecordNotFound');
+        Observer.Expect('recfind_log', 'card OnNewRecord Rec.Find;card OnNewRecord Rec.Find;');
+        Observer.Expect('iffind_ok', 'Yes');
+        Observer.Expect('iffind|text', '');
+        Observer.Expect('iffind|code', '');
+        Observer.Expect('iffind_log', 'card OnNewRecord if Find=No;card OnAfterGetCurrRecord ;');
+        Observer.Verify();
     end;
 
     // ---------- item 28: triggers around an action Invoke on a NavigatePage, a Card and a List ----------
@@ -111,7 +131,10 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Nav.Act.Invoke();
         Observer.Observe('invoke2', Log.Take());
         Nav.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'nav OnAfterGetRecord R1;nav OnAfterGetCurrRecord R1;');
+        Observer.Expect('invoke1', 'nav OnAfterGetRecord R1;nav OnAction R1;nav OnAfterGetRecord R1;nav OnAfterGetRecord R1;nav OnAfterGetCurrRecord R1;');
+        Observer.Expect('invoke2', 'nav OnAfterGetRecord R1;nav OnAction R1;nav OnAfterGetRecord R1;nav OnAfterGetRecord R1;nav OnAfterGetCurrRecord R1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +151,10 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Card.Act.Invoke();
         Observer.Observe('invoke2', Log.Take());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;');
+        Observer.Expect('invoke1', 'card OnAfterGetRecord R1;card OnAction R1;card OnAfterGetRecord R1;card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;');
+        Observer.Expect('invoke2', 'card OnAfterGetRecord R1;card OnAction R1;card OnAfterGetRecord R1;card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,7 +176,11 @@ codeunit 84169 "LT CB Page Trigger Tests"
         List.Act.Invoke();
         Observer.Observe('invoke2', Log.Take());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('open', 'list OnAfterGetRecord R1;list OnAfterGetRecord R2;list OnAfterGetRecord R1;list OnAfterGetRecord R1;list OnAfterGetCurrRecord R1;');
+        Observer.Expect('invoke1', 'list OnAfterGetRecord R1;list OnAction R1;list OnAfterGetRecord R1;list OnAfterGetRecord R1;list OnAfterGetRecord R2;list OnAfterGetRecord R1;list OnAfterGetRecord R1;list OnAfterGetCurrRecord R1;');
+        Observer.Expect('next', 'list OnAfterGetRecord R2;list OnAfterGetRecord R2;list OnAfterGetCurrRecord R2;');
+        Observer.Expect('invoke2', 'list OnAfterGetRecord R2;list OnAction R2;list OnAfterGetRecord R2;list OnAfterGetRecord R2;list OnAfterGetRecord R1;list OnAfterGetRecord R2;list OnAfterGetRecord R2;list OnAfterGetCurrRecord R2;');
+        Observer.Verify();
     end;
 
     // ---------- item 29: a TestPage on a Role Center; AssistEdit in view mode ----------
@@ -187,7 +217,14 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Observer.Observe('invoke_ok', Format(TryInvokeRoleCenterAction(Rc)));
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open_ok', 'Yes');
+        Observer.Expect('open|text', '');
+        Observer.Expect('open|code', '');
+        Observer.Expect('invoke_ok', 'Yes');
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', '');
+        Observer.Expect('log', 'card OnAfterGetCurrRecord ;card handler;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -218,7 +255,15 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Observer.ObserveError('edit');
         Observer.Observe('edit_log', Log.Take());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('view_ok', 'Yes');
+        Observer.Expect('view|text', '');
+        Observer.Expect('view|code', '');
+        Observer.Expect('view_log', 'page AssistCtl.OnAssistEdit editable=No;card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;');
+        Observer.Expect('edit_ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('edit_log', 'page AssistCtl.OnAssistEdit editable=Yes;card OnAfterGetRecord R1;card OnAfterGetCurrRecord R1;');
+        Observer.Verify();
     end;
 
     // ---------- item 32: an error raised in a table field OnLookup, reached through TestPage Lookup() ----------
@@ -246,6 +291,11 @@ codeunit 84169 "LT CB Page Trigger Tests"
         Observer.Observe('log', Log.Take());
         Observer.Observe('value_after', Card.LookupErrCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('ok', 'No');
+        Observer.Expect('lookup|text', 'LT CB table lookup failed');
+        Observer.Expect('lookup|code', 'TestWrapped:Dialog');
+        Observer.Expect('log', 'table LookupErr.OnLookup;');
+        Observer.Expect('value_after', 'KEEP');
+        Observer.Verify();
     end;
 }
