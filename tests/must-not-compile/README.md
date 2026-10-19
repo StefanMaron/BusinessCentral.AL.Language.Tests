@@ -147,6 +147,42 @@ is only a reference.
 | 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
 | 0725 | AL0280 | A subscriber names an event that Company Triggers does not declare (OnCompanyOpened). |
 | 0740 | AL0161 | An app subscribes to GetRoleCenterBannerPartID of the platform codeunit "System Action Triggers"; the event is declared an InternalEvent. |
+| 0760 | AL0844 | A Date field cannot carry DateFormula = true (the property exists only on Text-like fields). |
+| 0761 | AL0843 | SQLDataType is allowed on Code fields only. |
+| 0762 | AL0169 | MaskType takes None or Concealed. |
+| 0763 | AL0103 | Width on a table field with a value that does not fit an Integer. |
+| 0764 | AL0232 | Width with a negative value. |
+| 0765 | AL0169 | AllowInCustomizations takes ToBeClassified, Never, AsReadOnly or AsReadWrite. |
+| 0766 | AL0169 | Same as 0765, on a table extension. |
+| 0767 | AL0186 | ColumnStoreIndex names a field the table does not have. |
+| 0768 | AL0223 | LinkedInTransaction on a table that is not LinkedObject. |
+| 0769 | AL0185 | DrillDownPageId of a table extension names a page that does not exist. |
+| 0770 | AL0185 | LookupPageId of a table extension names a page that does not exist. |
+| 0771 | AL0169 | modify() of a field with an invalid MaskType value. |
+| 0772 | AL0103 | modify() of a field with a Width out of range. |
+| 0773 | AL0876 | MaskType = Concealed together with ExtendedDatatype = Masked. |
+| 0774 | AL0843 | SQLTimestamp on an Integer field. |
+| 0775 | AL0843 | OptionCaptionML on a Text field. |
+| 0777 | AL0666 | BC 28 only: a page content area and an action area take none of ObsoleteState, ObsoleteReason and ObsoleteTag (not available in runtime 17.1). (6 diagnostics) |
+| 0778 | AL0666 | BC 29 and later: the same as 0777 at runtime 18.0. (6 diagnostics) |
+| 0780 | AL0223 | RequiredTestIsolation is only allowed on a codeunit with Subtype = Test. |
+| 0781 | AL0223 | TestType is only allowed on a codeunit with Subtype = Test. |
+| 0782 | AL0169 | TestType takes UnitTest, IntegrationTest, Uncategorized or AITest. |
+| 0783 | AL0169 | RequiredTestIsolation takes None, Disabled, Codeunit or Function. |
+| 0784 | AL0666, AL0928 | BC 27 only: TestHandlers needs runtime 18.0, and the BC 27 symbols lack the system enum TestHandler. (2 diagnostics) |
+| 0787 | AL0103 | MaximumHeight of a control add-in does not fit an Integer. |
+| 0788 | AL0103 | MaximumWidth of a control add-in does not fit an Integer. |
+| 0789 | AL0223 | AssignmentCompatibilityReason needs AssignmentCompatibility = true. |
+| 0790 | AL0185 | ExcludedPermissionSets names a permission set that does not exist. |
+| 0791 | AL0428, AL0543 | A query sets HelpLink and ContextSensitiveHelpPage together. (3 diagnostics) |
+| 0792 | AL0543 | ContextSensitiveHelpPage on a query needs contextSensitiveHelpUrl in app.json. |
+| 0793 | AL0471 | HelpLink on a query with a text that is not a URL. |
+| 0794 | AL0223 | EntityCaption on a query that is not of QueryType API. |
+| 0795 | AL0160 | ProfileDescriptionML with a language code that does not exist. |
+| 0796 | AL0428 | EntityCaption together with EntityCaptionML, and EntitySetCaption together with EntitySetCaptionML, on a query. (4 diagnostics) |
+| 0797 | AL0169 | Removed is not a value of ObsoleteState for page controls and actions. (11 diagnostics) |
+| 0798 | AL0169 | Removed is not a value of ObsoleteState for a table field group, page customization, permission set, profile, query column and query filter. (8 diagnostics) |
+| 0799 | AL0666 | BC 27 only: the same as 0777 at runtime 16.1. (6 diagnostics) |
 | 0800 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
 | 0801 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
 | 0802 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
@@ -284,6 +320,8 @@ is only a reference.
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
+| 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
+| 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
