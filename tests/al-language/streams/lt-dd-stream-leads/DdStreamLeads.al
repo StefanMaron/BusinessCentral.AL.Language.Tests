@@ -6,6 +6,16 @@
 // reused Temp Blob, Blob field assignment, the UTF-8 BOM, Base64 decoding of line breaks, Base64 and BigText, InStream var parameters,
 // and InStream short reads. Items 65, 69, 70 and 71 were pinned already (see the issue comment); only the unpinned parts of 62, 67, 68,
 // 72 and 75 are here.
+// Facts (BC 29.0 local, checked on 27.5 and 28.5 by CI): CSV Buffer.LoadDataFromStream decodes as UTF-8 whatever the InStream
+// encoding (0xE4 becomes U+FFFD); the overload with code page 1252 gives the a-umlaut. An encoding= header inside a Text does not
+// change the bytes (default OutStream writes u-umlaut as MSDos 0x81, UTF8 C3 BC, Windows FC, HttpContent C3 BC). Media and Blob
+// fields of a record moved with ChangeCompany export the other company's data. OutStream.Write(InStream), direct or as a Variant,
+// fails with 'The type InStream is not supported.' (NotSupportedType). Two zip entries added from one reused Temp Blob, larger
+// first: the second entry keeps the tail of the first ('small' + 35 L, 40 bytes). A Blob field assigned from a record without
+// CalcFields stores nothing. A UTF-8 InStream drops the BOM; XmlDocument.WriteTo writes a BOM and an xml declaration. Base64
+// decoding ignores CR LF. An InStream passed by value or by var shares its position with the caller; an InStream created from a
+// Temp Blob local to the callee has Length 0 after the callee returns. InStream.Read(Text, 5) on 3 bytes reads 3 and does not
+// fail without a return value.
 // BC versions: 27.5, 28.5, 29.0
 
 codeunit 85841 "LT DD Stream Leads"
@@ -142,7 +152,11 @@ codeunit 85841 "LT DD Stream Leads"
         TempBlob.CreateInStream(I);
         TempCSV3.LoadDataFromStream(I, ';', '', 1252);
         Observer.Observe('code page 1252', CsvCells(TempCSV3));
-        Observer.Finish();
+        Observer.Expect('bytes', '4B 3B E4 78 3B 5A 0D 0A 31 3B 32');
+        Observer.Expect('default', '1/1=K [75];1/2=�x [65533,120];1/3=Z [90];2/1=1 [49];2/2=2 [50];');
+        Observer.Expect('instream windows', '1/1=K [75];1/2=�x [65533,120];1/3=Z [90];2/1=1 [49];2/2=2 [50];');
+        Observer.Expect('code page 1252', '1/1=K [75];1/2=äx [228,120];1/3=Z [90];2/1=1 [49];2/2=2 [50];');
+        Observer.Verify();
     end;
 
     local procedure CsvCells(var TempCSV: Record "CSV Buffer" temporary): Text
@@ -173,7 +187,13 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('outstream windows, header', StreamTail(Header, 2));
         Observer.Observe('httpcontent, header', ContentTail(Header));
         Observer.Observe('httpcontent, no header', ContentTail(Plain));
-        Observer.Finish();
+        Observer.Expect('outstream default, header', '81 3C 2F 61 3E');
+        Observer.Expect('outstream default, no header', '81 3C 2F 61 3E');
+        Observer.Expect('outstream utf8, header', 'C3 BC 3C 2F 61 3E');
+        Observer.Expect('outstream windows, header', 'FC 3C 2F 61 3E');
+        Observer.Expect('httpcontent, header', 'C3 BC 3C 2F 61 3E');
+        Observer.Expect('httpcontent, no header', 'C3 BC 3C 2F 61 3E');
+        Observer.Verify();
     end;
 
     // the bytes written for <prefix><u-umlaut></a>, without the bytes of the prefix
@@ -257,7 +277,15 @@ codeunit 85841 "LT DD Stream Leads"
         Other.Delete();
         Company.Get(OtherCompanyTok);
         Company.Delete(true);
-        Observer.Finish();
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('local get', 'No');
+        Observer.Expect('pic hasvalue', 'Yes');
+        Observer.Expect('pic mediaid null', 'No');
+        Observer.Expect('pic exportstream', 'Yes');
+        Observer.Expect('pic exported length', '70');
+        Observer.Expect('data hasvalue', 'Yes');
+        Observer.Expect('data text', 'other company text');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 64: OutStream.Write(InStream)
@@ -287,7 +315,15 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('variant ok', Format(TryWriteVariant(O, V)));
         Observer.ObserveError('variant');
         Observer.Observe('variant bytes', Hex(Target));
-        Observer.Finish();
+        Observer.Expect('direct ok', 'No');
+        Observer.Expect('direct|text', 'The type InStream is not supported.');
+        Observer.Expect('direct|code', 'NotSupportedType');
+        Observer.Expect('direct bytes', '');
+        Observer.Expect('variant ok', 'No');
+        Observer.Expect('variant|text', 'The type InStream is not supported.');
+        Observer.Expect('variant|code', 'NotSupportedType');
+        Observer.Expect('variant bytes', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -311,7 +347,9 @@ codeunit 85841 "LT DD Stream Leads"
     begin
         Observer.Observe('larger first', ZipTwo('LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL', 'small'));
         Observer.Observe('smaller first', ZipTwo('small', 'LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL'));
-        Observer.Finish();
+        Observer.Expect('larger first', 'first.txt 40 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL;second.txt 40 smallLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL;');
+        Observer.Expect('smaller first', 'first.txt 5 small;second.txt 40 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL;');
+        Observer.Verify();
     end;
 
     local procedure ZipTwo(First: Text; Second: Text): Text
@@ -399,7 +437,11 @@ codeunit 85841 "LT DD Stream Leads"
         TempTarget.Data.CreateInStream(I);
         I.ReadText(T);
         Observer.Observe('temporary', T);
-        Observer.Finish();
+        Observer.Expect('no calcfields', '');
+        Observer.Expect('in memory hasvalue', 'Yes');
+        Observer.Expect('calcfields', 'source text');
+        Observer.Expect('temporary', 'source text');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 68: UTF-8 BOM
@@ -452,7 +494,15 @@ codeunit 85841 "LT DD Stream Leads"
         Doc.WriteTo(O);
         TempBlob.CreateInStream(I);
         Observer.Observe('xml declaration first bytes', CopyStr(HexOf(I, 0), 1, 17));
-        Observer.Finish();
+        Observer.Expect('bytes', 'EF BB BF 61 62 63');
+        Observer.Expect('readtext default', '6 [217,8249,143,97,98,99]');
+        Observer.Expect('readtext utf8', '3 [97,98,99]');
+        Observer.Expect('read utf8', '3 [97,98,99]');
+        Observer.Expect('readtext windows', '6 [239,187,191,97,98,99]');
+        Observer.Expect('writetext utf8 bytes', '61 62 63');
+        Observer.Expect('xml no declaration', 'EF BB BF 3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 75 74 66 2D 38 22 3F 3E 0D 0A 3C 61 3E 78 3C 2F 61 3E');
+        Observer.Expect('xml declaration first bytes', 'EF BB BF 3C 3F 78');
+        Observer.Verify();
     end;
 
     local procedure WriteBytes(var O: OutStream; A: Byte; B: Byte; C: Byte)
@@ -475,7 +525,12 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('crlf every 4', Decode('YW' + Crlf() + 'Jj' + Crlf() + 'ZA' + Crlf() + '=='));
         Observer.Observe('empty', Decode(''));
         Observer.Observe('outstream overload, length 5', DecodeToStream('YWJjZ'));
-        Observer.Finish();
+        Observer.Expect('crlf inside', 'ok: abcd');
+        Observer.Expect('crlf at end', 'ok: abcd');
+        Observer.Expect('crlf every 4', 'ok: abcd');
+        Observer.Expect('empty', 'ok: ');
+        Observer.Expect('outstream overload, length 5', 'error AL:Format: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.');
+        Observer.Verify();
     end;
 
     local procedure Decode(Value: Text): Text
@@ -538,7 +593,10 @@ codeunit 85841 "LT DD Stream Leads"
         TempBlob.CreateInStream(I);
         I.ReadText(T);
         Observer.Observe('write then readtext', Base64.FromBase64(T));
-        Observer.Finish();
+        Observer.Expect('format', 'abcd');
+        Observer.Expect('getsubtext', 'abcd');
+        Observer.Expect('write then readtext', 'abcd');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 74: InStream as var parameter
@@ -573,7 +631,13 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('callee temp blob: length', Format(Created.Length()));
         Created.ReadText(T);
         Observer.Observe('callee temp blob: text', T);
-        Observer.Finish();
+        Observer.Expect('var: position', '3');
+        Observer.Expect('var: rest', 'cdef');
+        Observer.Expect('value: position', '3');
+        Observer.Expect('value: rest', 'cdef');
+        Observer.Expect('callee temp blob: length', '0');
+        Observer.Expect('callee temp blob: text', '');
+        Observer.Verify();
     end;
 
     local procedure ReadTwoVar(var I: InStream)
@@ -639,7 +703,21 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('read 5 without return ok', Format(TryRead(I, 5)));
         Observer.ObserveError('read 5 without return');
 
-        Observer.Finish();
+        Observer.Expect('empty: eos', 'Yes');
+        Observer.Expect('empty: length', '0');
+        Observer.Expect('empty: position', '1');
+        Observer.Expect('eos before read', 'No');
+        Observer.Expect('length', '3');
+        Observer.Expect('position before read', '1');
+        Observer.Expect('read 5 with return', '3 abc');
+        Observer.Expect('position after', '4');
+        Observer.Expect('eos after', 'Yes');
+        Observer.Expect('read at end with return', '0 []');
+        Observer.Expect('read byte at end with return', '0 \u0000');
+        Observer.Expect('read 5 without return ok', 'Yes');
+        Observer.Expect('read 5 without return|text', '');
+        Observer.Expect('read 5 without return|code', '');
+        Observer.Verify();
     end;
 
     [TryFunction]
