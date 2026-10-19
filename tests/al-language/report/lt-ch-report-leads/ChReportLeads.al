@@ -122,6 +122,10 @@ codeunit 84549 "LT CH Report Leads"
     procedure SaveValues_ExtensionFields_SecondRun()
     begin
         Init(0);
+        // A first run stores known values, so the observed runs do not depend on what earlier runs stored.
+        HandlerMode := 3;
+        Report.RunModal(Report::"LT CH SaveValues");
+        Log.Take();
         HandlerMode := 1;
         Report.RunModal(Report::"LT CH SaveValues");
         HandlerMode := 2;
@@ -133,6 +137,13 @@ codeunit 84549 "LT CH Report Leads"
     [RequestPageHandler]
     procedure SaveValuesHandler(var RP: TestRequestPage "LT CH SaveValues")
     begin
+        if HandlerMode = 3 then begin
+            RP.BaseInt.SetValue(0);
+            RP.ExtBool.SetValue(false);
+            RP.ExtText.SetValue('');
+            RP.OK().Invoke();
+            exit;
+        end;
         Log.Add('shown int=' + RP.BaseInt.Value() + ' bool=' + RP.ExtBool.Value() + ' text=' + RP.ExtText.Value());
         if HandlerMode = 1 then begin
             RP.BaseInt.SetValue(5);
@@ -380,7 +391,10 @@ codeunit 84549 "LT CH Report Leads"
     procedure Lost_SaveValues_OnOpenPageSetsTheOption()
     begin
         Init(0);
+        // A first run stores false, so the observed runs do not depend on what earlier runs stored.
         HandlerMode := 1;
+        Report.RunModal(Report::"LT CH Lost Value");
+        Log.Take();
         Report.RunModal(Report::"LT CH Lost Value");
         HandlerMode := 2;
         Report.RunModal(Report::"LT CH Lost Value");
