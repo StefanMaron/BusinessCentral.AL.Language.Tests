@@ -177,6 +177,61 @@ page 74867 "LT PTE ListPlus"
     end;
 }
 
+page 84249 "LT CC PTE List"
+{
+    PageType = List;
+    SourceTable = "LT PTE Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnInit()
+    var
+        Log: Codeunit "LT PTE Log";
+    begin
+        Log.Add('OnInit');
+    end;
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT PTE Log";
+    begin
+        Log.Add('OnOpenPage code=[' + Rec."Code" + '] name=[' + Rec.Name + ']');
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT PTE Log";
+    begin
+        Log.Add('OnNewRecord code=[' + Rec."Code" + '] name=[' + Rec.Name + ']');
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PTE Log";
+    begin
+        Log.Add('OnAfterGetRecord code=[' + Rec."Code" + '] name=[' + Rec.Name + ']');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PTE Log";
+    begin
+        Log.Add('OnAfterGetCurrRecord code=[' + Rec."Code" + '] name=[' + Rec.Name + ']');
+    end;
+}
+
 codeunit 74895 "LT PTE Tests"
 {
     Subtype = Test;
@@ -383,5 +438,36 @@ codeunit 74895 "LT PTE Tests"
         Observer.Expect('code', 'R1');
         Observer.Expect('name', 'row one');
         Observer.Verify();
+    end;
+
+    // Added by writer CC (corpus issue 667, item 37): a List page over the empty table, opened with OpenEdit and OpenView.
+    [Test]
+    procedure List_OpenEdit_EmptyTable_CC()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT CC PTE List";
+    begin
+        Prepare(false);
+        TP.OpenEdit();
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('code', TP."Code".Value());
+        TP.Close();
+        Observer.Observe('logClose', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure List_OpenView_EmptyTable_CC()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT CC PTE List";
+    begin
+        Prepare(false);
+        TP.OpenView();
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('code', TP."Code".Value());
+        TP.Close();
+        Observer.Observe('logClose', Log.Take());
+        Observer.Finish();
     end;
 }
