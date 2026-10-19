@@ -19,6 +19,67 @@
 // the immediate parent (InnerGroup, always Visible) would pass every other test here and still
 // report FieldInNestedGroup visible while OuterGroup is hidden.
 
+// Writer BP (corpus issue 664, microsoft/AL issues 5356 and 4242): a field whose OWN Visible is a page variable that changes after
+// OnOpenPage, by an action without CurrPage.Update, by an action with CurrPage.Update(false), and in OnAfterGetCurrRecord.
+page 82558 "LT BP Field Visible Card"
+{
+    PageType = Card;
+    SourceTable = "TP Field Visible Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(PK; Rec.PK) { ApplicationArea = All; }
+            field(OwnVisible; Rec.Value)
+            {
+                ApplicationArea = All;
+                Visible = ShowOwn;
+            }
+            field(SetInOpen; Rec.Value)
+            {
+                ApplicationArea = All;
+                Visible = ShowSetInOpen;
+            }
+        }
+    }
+    actions
+    {
+        area(Processing)
+        {
+            action(ShowNoUpdate)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                begin
+                    ShowOwn := true;
+                    ShowSetInOpen := false;
+                end;
+            }
+            action(HideWithUpdate)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                begin
+                    ShowOwn := false;
+                    ShowSetInOpen := true;
+                    CurrPage.Update(false);
+                end;
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        ShowSetInOpen := true;
+    end;
+
+    var
+        ShowOwn: Boolean;
+        ShowSetInOpen: Boolean;
+}
 codeunit 60961 "Test Page Field Visible Tests"
 {
     Subtype = Test;
@@ -154,5 +215,26 @@ codeunit 60961 "Test Page Field Visible Tests"
         Assert.IsTrue(Card.FieldInNestedGroup.Visible(),
             'a field two groups deep must become visible once the outer group does, even though the immediate parent group declares no Visible of its own');
         Card.Close();
+    end;
+
+    // Writer BP (corpus issue 664): what TestPage.<field>.Visible() reads for a field whose own Visible expression changes after OnOpenPage.
+    [Test]
+    procedure FieldOwnVisibleExpression_ChangedAfterOpenPage_BP()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT BP Field Visible Card";
+    begin
+        Initialize();
+        Card.OpenEdit();
+        Observer.Observe('open own', Format(Card.OwnVisible.Visible()));
+        Observer.Observe('open set in OnOpenPage', Format(Card.SetInOpen.Visible()));
+        Card.ShowNoUpdate.Invoke();
+        Observer.Observe('action without update own', Format(Card.OwnVisible.Visible()));
+        Observer.Observe('action without update set in OnOpenPage', Format(Card.SetInOpen.Visible()));
+        Card.HideWithUpdate.Invoke();
+        Observer.Observe('action with update own', Format(Card.OwnVisible.Visible()));
+        Observer.Observe('action with update set in OnOpenPage', Format(Card.SetInOpen.Visible()));
+        Card.Close();
+        Observer.Finish();
     end;
 }

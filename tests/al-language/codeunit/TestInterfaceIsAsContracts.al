@@ -99,4 +99,17 @@ codeunit 68324 "Probe Interface Is As"
         asserterror IA := Unassigned as "Probe IA";
         Assert.AreEqual('The expression cannot be the target interface.', GetLastErrorText(), 'as the interface itself');
     end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 7800): a method called directly on an `as` expression, (IA as "Probe IB").B(),
+    // without a variable in between, and on `as` to the interface the variable already has.
+    [Test]
+    procedure As_InlineMethodCallOnTheCast_BP()
+    var
+        ImplAB: Codeunit "Probe Impl AB";
+        IA: Interface "Probe IA";
+    begin
+        IA := ImplAB;
+        Assert.AreEqual('b', (IA as "Probe IB").B(), 'a method called on the as expression runs on the instance');
+        Assert.AreEqual('a', (IA as "Probe IA").A(), 'as to the declared interface of the variable');
+    end;
 }

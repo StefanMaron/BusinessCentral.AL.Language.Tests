@@ -266,6 +266,30 @@ codeunit 68100 "Probe Codeunit Run Texts"
         Cleanup.Initialize();
         Assert.AreEqual(0, Count(9255), 'the fixture is empty again');
     end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 6438): Codeunit.Run of a codeunit with TableNo = "ALT Universal" given a record of
+    // another table (ALT Composite), guarded and unguarded, and Page.Run of a page whose SourceTable is "ALT Universal" with that record.
+    [Test]
+    procedure CodeunitRun_TableNoCodeunit_RecordOfAnotherTable_BP()
+    var
+        Observer: Codeunit "Probe Observer";
+        Composite: Record "ALT Composite";
+        Ok: Boolean;
+    begin
+        Initialize();
+
+        ClearLastError();
+        Ok := Codeunit.Run(Codeunit::"Probe TableNo Runner", Composite);
+        Observer.Observe('guarded result', Format(Ok));
+        Observer.ObserveError('guarded');
+
+        asserterror Codeunit.Run(Codeunit::"Probe TableNo Runner", Composite);
+        Observer.ObserveError('unguarded');
+
+        asserterror Page.Run(Page::"ALT Card Page", Composite);
+        Observer.ObserveError('page run');
+        Observer.Finish();
+    end;
 }
 
 codeunit 68101 "Probe TableNo Runner"

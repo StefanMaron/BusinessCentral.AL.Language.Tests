@@ -217,6 +217,68 @@ codeunit 71060 "LT OjT Proc Helper"
     end;
 }
 
+// Writer BP (corpus issue 664): code shapes that once compiled but failed when BC built the app (C# errors at publish).
+// microsoft/AL issue 6924: two overloads that differ only in the interface type of the parameter. microsoft/AL issue 6679: a case
+// statement with an else arm that assigns a codeunit returned by a procedure.
+interface "LT BP ISome"
+{
+    procedure MyProcedure(): Text;
+}
+
+interface "LT BP ISomeOther"
+{
+    procedure MyProcedure(): Text;
+}
+
+codeunit 82552 "LT BP SomeImpl" implements "LT BP ISome"
+{
+    var
+        Tag: Text;
+
+    procedure MyProcedure(): Text
+    begin
+        exit('some' + Tag);
+    end;
+
+    procedure SetTag(NewTag: Text)
+    begin
+        Tag := NewTag;
+    end;
+}
+
+codeunit 82553 "LT BP Iface Caller"
+{
+    procedure CallMy(I: Interface "LT BP ISome"): Text
+    begin
+        exit('ISome:' + I.MyProcedure());
+    end;
+
+    procedure CallMy(I: Interface "LT BP ISomeOther"): Text
+    begin
+        exit('ISomeOther:' + I.MyProcedure());
+    end;
+
+    procedure CaseWithCodeunitResult(Selector: Integer): Text
+    var
+        Impl: Codeunit "LT BP SomeImpl";
+    begin
+        case Selector of
+            1:
+                Impl := GetImpl('-one');
+            else
+                Impl := GetImpl('-else');
+        end;
+        exit(Impl.MyProcedure());
+    end;
+
+    local procedure GetImpl(NewTag: Text): Codeunit "LT BP SomeImpl"
+    var
+        Impl: Codeunit "LT BP SomeImpl";
+    begin
+        Impl.SetTag(NewTag);
+        exit(Impl);
+    end;
+}
 codeunit 71061 "LT OjT Procedures"
 {
     Subtype = Test;
@@ -444,5 +506,22 @@ codeunit 71061 "LT OjT Procedures"
         Observer.Expect('even7', 'No');
         Observer.Expect('collatz27', '111');
         Observer.Verify();
+    end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issues 6924 and 6679).
+    [Test]
+    procedure BP_InterfaceOverload_And_CaseWithCodeunitResult()
+    var
+        Observer: Codeunit "Probe Observer";
+        Caller: Codeunit "LT BP Iface Caller";
+        Impl: Codeunit "LT BP SomeImpl";
+        Some: Interface "LT BP ISome";
+    begin
+        Observer.Observe('overload codeunit argument', Caller.CallMy(Impl));
+        Some := Impl;
+        Observer.Observe('overload interface argument', Caller.CallMy(Some));
+        Observer.Observe('case arm 1', Caller.CaseWithCodeunitResult(1));
+        Observer.Observe('case else', Caller.CaseWithCodeunitResult(7));
+        Observer.Finish();
     end;
 }

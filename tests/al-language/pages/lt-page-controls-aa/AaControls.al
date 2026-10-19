@@ -395,6 +395,27 @@ page 76514 "LT AA Lenient Card"
     }
 }
 
+// Writer BP (corpus issue 664, microsoft/AL issue 5507): a page field whose source is the bare name SystemId. This app has no
+// NoImplicitWith feature, so the name binds to Rec.SystemId (warning AL0604); with the feature it is AL0118 (must-not-compile case 1446).
+page 82550 "LT BP SysId Card"
+{
+    PageType = Card;
+    SourceTable = "LT AA Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Id; Rec.Id) { ApplicationArea = All; }
+#pragma warning disable AL0604
+            field(SystemId; SystemId) { ApplicationArea = All; }
+#pragma warning restore AL0604
+            field(SysIdRec; Rec.SystemId) { ApplicationArea = All; }
+        }
+    }
+}
 codeunit 76511 "LT AA Controls Tests"
 {
     Subtype = Test;
@@ -647,6 +668,26 @@ codeunit 76511 "LT AA Controls Tests"
         Observer.Verify();
     end;
 
+    // Writer BP (corpus issue 664): the bare SystemId page field shows the SystemId of the current record, like Rec.SystemId.
+    [Test]
+    procedure AA_BP_Page_BareSystemIdField()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AA Row";
+        P: TestPage "LT BP SysId Card";
+        Id: Text;
+    begin
+        Seed(Row);
+        Row.Get('A');
+        Id := Format(Row.SystemId);
+        P.OpenView();
+        Observer.Observe('bare', P.SystemId.Value().Replace(Id, '<id>').Replace(LowerCase(Id), '<lower id>'));
+        Observer.Observe('rec', P.SysIdRec.Value().Replace(Id, '<id>').Replace(LowerCase(Id), '<lower id>'));
+        Observer.Observe('bare editable', Format(P.SystemId.Editable()));
+        Observer.Observe('bare caption', P.SystemId.Caption());
+        P.Close();
+        Observer.Finish();
+    end;
     local procedure Seed(var Row: Record "LT AA Row")
     begin
         Row.DeleteAll();

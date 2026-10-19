@@ -5,6 +5,24 @@
 // Facts: static Page.Run / Page.RunModal with a page number, a record, a field number, a field (Any) and a FieldRef: returned Action, what the handler sees (current row, rows, caption), trigger order, the record after the call
 // BC versions: 29 (27 and 28 by CI)
 
+// Writer BP (corpus issue 664, microsoft/AL issue 5209): Page.RunModal(Number, Record, X) where X is an Integer field of ANOTHER table
+// whose value (2) is a field number of the page's table: a field named ...FieldId, a field with another name, and an Integer variable.
+table 82566 "LT BP P106 Other"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(40; PickFieldId; Integer) { }
+        field(41; PickPlain; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
 codeunit 72410 "LT P106 Run Static"
 {
     Subtype = Test;
@@ -599,5 +617,53 @@ codeunit 72410 "LT P106 Run Static"
         Observer.Expect('lit_num_h', 'cur=A/Alpha;caption=LT P106 List Caption;rows=ABCD');
         Observer.Expect('lit_num_log', 'List OnOpenPage filter=;List OnQueryClosePage(LookupOK)');
         Observer.Verify();
+    end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 5209).
+    [Test]
+    [HandlerFunctions('ListH')]
+    procedure P106_BP_RunModal_IntegerFieldOfAnotherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT P106 Item";
+        Other: Record "LT BP P106 Other";
+        Act: Action;
+    begin
+        Log.Seed();
+        Mode := 0;
+        Other.PickFieldId := 2;
+        Other.PickPlain := 2;
+        Item.Get('B');
+        ClearLastError();
+        Observer.Observe('field named FieldId ok', Format(TryRunModal(Item, Other, 1, Act)));
+        Observer.ObserveError('field named FieldId');
+        Report(Observer, 'field named FieldId', Act);
+        Item.Get('B');
+        Observer.Observe('field other name ok', Format(TryRunModal(Item, Other, 2, Act)));
+        Observer.ObserveError('field other name');
+        Report(Observer, 'field other name', Act);
+        Item.Get('B');
+        Observer.Observe('integer variable ok', Format(TryRunModal(Item, Other, 3, Act)));
+        Observer.ObserveError('integer variable');
+        Report(Observer, 'integer variable', Act);
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryRunModal(var Item: Record "LT P106 Item"; Other: Record "LT BP P106 Other"; Which: Integer; var Act: Action)
+    var
+        I: Integer;
+    begin
+        case Which of
+            1:
+                Act := Page.RunModal(Page::"LT P106 List", Item, Other.PickFieldId);
+            2:
+                Act := Page.RunModal(Page::"LT P106 List", Item, Other.PickPlain);
+            3:
+                begin
+                    I := Other.PickFieldId;
+                    Act := Page.RunModal(Page::"LT P106 List", Item, I);
+                end;
+        end;
     end;
 }

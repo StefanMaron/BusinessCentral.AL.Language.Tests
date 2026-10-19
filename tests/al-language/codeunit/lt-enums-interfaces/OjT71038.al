@@ -250,4 +250,32 @@ codeunit 71042 "LT OjT Enum Basics"
         Observer.Expect('nozero.eqOne', 'No');
         Observer.Verify();
     end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 7477): enum methods written without parentheses: Names and Ordinals as the list
+    // of a foreach, AsInteger on a value, and an enum value's AsInteger used as an array index.
+    [Test]
+    procedure BP_EnumMethods_WithoutParentheses()
+    var
+        Observer: Codeunit "Probe Observer";
+        Color: Enum "LT OjT Color";
+        Arr: array[20] of Text;
+        N: Text;
+        I: Integer;
+        T: Text;
+    begin
+        foreach N in Enum::"LT OjT Color".Names do
+            T += N + ',';
+        Observer.Observe('names', T);
+        T := '';
+        foreach I in Enum::"LT OjT Color".Ordinals do
+            T += Format(I) + ',';
+        Observer.Observe('ordinals', T);
+        Observer.Observe('static AsInteger', Format(Enum::"LT OjT Color"::"Dark Blue".AsInteger));
+        Color := Color::Yellow;
+        I := Color.AsInteger;
+        Observer.Observe('variable AsInteger', Format(I));
+        Arr[Enum::"LT OjT Color"::"Dark Blue".AsInteger] := 'five';
+        Observer.Observe('array index', Arr[5]);
+        Observer.Finish();
+    end;
 }

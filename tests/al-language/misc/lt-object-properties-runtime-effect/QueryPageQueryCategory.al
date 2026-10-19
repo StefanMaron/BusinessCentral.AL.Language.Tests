@@ -40,6 +40,28 @@ page 72496 "LT P194 QueryCat List"
     }
 }
 
+// Writer BP (corpus issue 664, microsoft/AL issue 6418): QueryCategory longer than 30 characters (46 here). It compiles; the test pins
+// that the app publishes and the page opens.
+page 82559 "LT BP QueryCat Long List"
+{
+    PageType = List;
+    SourceTable = "LT P194 Gen";
+    ApplicationArea = All;
+    UsageCategory = None;
+    QueryCategory = 'Category Name That Is Longer Than Thirty Chars';
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(CodeFld; Rec."Code") { ApplicationArea = All; }
+                field(NameFld; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+}
 codeunit 72497 "LT P194 QueryCat Test"
 {
     Subtype = Test;
@@ -94,5 +116,29 @@ codeunit 72497 "LT P194 QueryCat Test"
         Observer.Observe('rows', Rows);
         Observer.Expect('rows', 'A:one,B:two,');
         Observer.Verify();
+    end;
+
+    // Writer BP (corpus issue 664): a page with a QueryCategory of 46 characters opens and shows its rows.
+    [Test]
+    procedure BP_Page_WithLongQueryCategory_OpenView()
+    var
+        Gen: Record "LT P194 Gen";
+        List: TestPage "LT BP QueryCat Long List";
+        Rows: Text;
+        Observer: Codeunit "Probe Observer";
+    begin
+        Gen.DeleteAll();
+        Gen."Code" := 'A';
+        Gen.Name := 'one';
+        Gen.Insert();
+        List.OpenView();
+        if List.First() then
+            repeat
+                Rows += List.CodeFld.Value() + ':' + List.NameFld.Value() + ',';
+            until not List.Next();
+        List.Close();
+        Observer.Observe('rows', Rows);
+        Observer.Observe('length', Format(StrLen('Category Name That Is Longer Than Thirty Chars')));
+        Observer.Finish();
     end;
 }

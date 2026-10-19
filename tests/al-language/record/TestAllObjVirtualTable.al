@@ -806,3 +806,26 @@ codeunit 60802 "Test AllObj Virtual Table"
         // DeleteAll.
     end;
 }
+
+// Writer BP (corpus issue 664, microsoft/AL issue 3019): a codeunit whose Subtype is written in lower case (`Subtype = test;`). It
+// compiles, the runner finds its [Test] procedure, and AllObjWithCaption shows its Object Subtype.
+codeunit 82557 "LT BP Lower Subtype"
+{
+    Subtype = test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure BP_LowerCaseSubtype_TestRuns()
+    var
+        Observer: Codeunit "Probe Observer";
+        AllObj: Record AllObjWithCaption;
+    begin
+        AllObj.Get(AllObj."Object Type"::Codeunit, Codeunit::"LT BP Lower Subtype");
+        Observer.Observe('own subtype', AllObj."Object Subtype");
+        AllObj.Get(AllObj."Object Type"::Codeunit, Codeunit::"Test AllObj Virtual Table");
+        Observer.Observe('Subtype = Test codeunit', AllObj."Object Subtype");
+        AllObj.Get(AllObj."Object Type"::Codeunit, Codeunit::"LT BP DataScope Holder");
+        Observer.Observe('normal codeunit', AllObj."Object Subtype");
+        Observer.Finish();
+    end;
+}

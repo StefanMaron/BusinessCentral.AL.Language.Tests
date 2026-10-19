@@ -175,4 +175,60 @@ codeunit 60073 "Test FieldRef Value"
     begin
         Cleanup.Initialize();
     end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issues 6107 and 8080): FieldRef.Value as the left side of `in [..]` and as the selector of a
+    // case statement (Integer, Text and Enum fields). The forms compile; the test pins what they give at runtime.
+    [Test]
+    procedure FieldRef_Value_InListAndCase_BP()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+        FRef: FieldRef;
+        Rec: Record "ALT Universal";
+        Res: Boolean;
+        Arm: Text;
+    begin
+        Initialize();
+        Rec."Entry No." := 1;
+        Rec."Integer Field" := 1;
+        Rec."Text Field" := 'Ja';
+        Rec."Status Field" := Rec."Status Field"::Active;
+        Rec.Insert();
+        Rec."Entry No." := 2;
+        Rec."Integer Field" := 5;
+        Rec."Text Field" := 'Nein';
+        Rec."Status Field" := Rec."Status Field"::Closed;
+        Rec.Insert();
+
+        RecRef.Open(Database::"ALT Universal");
+        RecRef.FindSet();
+        repeat
+            FRef := RecRef.Field(3);
+            Res := FRef.Value in [0, 1];
+            Observer.Observe(Format(RecRef.Field(1).Value) + ' int in [0,1]', Format(Res));
+            Res := RecRef.Field(6).Value() in ['Ano', 'Ja'];
+            Observer.Observe(Format(RecRef.Field(1).Value) + ' text in [Ano,Ja]', Format(Res));
+            Arm := 'none';
+            case RecRef.Field(15).Value of
+                Rec."Status Field"::Active:
+                    Arm := 'Active';
+                Rec."Status Field"::Closed:
+                    Arm := 'Closed';
+                else
+                    Arm := 'else';
+            end;
+            Observer.Observe(Format(RecRef.Field(1).Value) + ' enum case', Arm);
+            Arm := 'none';
+            case RecRef.Field(3).Value of
+                1:
+                    Arm := 'one';
+                5:
+                    Arm := 'five';
+                else
+                    Arm := 'else';
+            end;
+            Observer.Observe(Format(RecRef.Field(1).Value) + ' int case', Arm);
+        until RecRef.Next() = 0;
+        Observer.Finish();
+    end;
 }
