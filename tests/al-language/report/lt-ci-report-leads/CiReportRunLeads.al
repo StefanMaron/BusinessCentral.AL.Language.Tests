@@ -9,7 +9,7 @@
 // after a write (microsoft/AL#7944); SetTableView with a record of another table; CurrReport.TargetFormat and PageNo under SaveAs of each format;
 // an invalid CurrReport.FormatRegion; SaveAs of an unknown report id; SaveAs formats without a matching layout; SaveAs of a G/L Account data item
 // filtered on a decimal FlowField (microsoft/AL#7224).
-// BC versions: 27, 28, 29 (one BC28PLUS guard: the caller name in the unknown-id error)
+// BC versions: 27, 28, 29
 
 codeunit 84592 "LT CI Report Run Leads"
 {
@@ -716,16 +716,15 @@ codeunit 84592 "LT CI Report Run Leads"
         ClearLastError();
         TempBlob.CreateOutStream(OutS);
         asserterror Report.SaveAs(71999, '', ReportFormat::Pdf, OutS);
+        // The object named after 'from the object' is the test codeunit or Test Runner - Mgt, depending on the run (seen on BC 27.5 and 29.0): not asserted.
+        Observer.Observe('asserterror text starts', Format(GetLastErrorText().StartsWith('You tried to invoke the Report object with the ID 71999 from the object ')));
         Observer.ObserveError('asserterror');
         Observer.Expect('try', 'Yes');
         Observer.Expect('try result', 'No length>0=No');
         Observer.Expect('try text has', 'Yes');
         Observer.Expect('try code', 'MetadataNotFound');
-#if BC28PLUS
-        Observer.Expect('asserterror|text', 'You tried to invoke the Report object with the ID 71999 from the object LT CI Report Run Leads. An object with that ID does not exist in the current application compiled with emit version n.');
-#else
-        Observer.Expect('asserterror|text', 'You tried to invoke the Report object with the ID 71999 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
-#endif
+        Observer.Expect('asserterror text starts', 'Yes');
+        Observer.Ignore('asserterror|text');
         Observer.Expect('asserterror|code', 'AL:MetadataNotFound');
         Observer.Verify();
     end;
