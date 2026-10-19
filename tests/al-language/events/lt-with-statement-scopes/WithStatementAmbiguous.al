@@ -202,7 +202,9 @@ codeunit 72786 "LT WithAmb"
         Row.Description := 'field-before';
         Observer.Observe('param|field after `with Rec do description := ...`', Row.AssignInWith('param-before'));
         Observer.Observe('field after the call', Row.Description);
-        Observer.Finish();
+        Observer.Expect('param|field after `with Rec do description := ...`', 'param-before|assigned-in-with');
+        Observer.Expect('field after the call', 'assigned-in-with');
+        Observer.Verify();
     end;
 
     [Test]
@@ -223,7 +225,10 @@ codeunit 72786 "LT WithAmb"
         Other.Id := 3;
         Other.Description := 'other';
         Observer.Observe('codeunit with own Init: with R do Init()', Helper.Run(Other));
-        Observer.Finish();
+        Observer.Expect('table: with Other do Init(); Rec', '1|rec');
+        Observer.Expect('table: with Other do Init(); Other', '2|');
+        Observer.Expect('codeunit with own Init: with R do Init()', 'own Init calls=0|3|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -235,7 +240,9 @@ codeunit 72786 "LT WithAmb"
     begin
         Observer.Observe('codeunit: param MyCustomer in with MyTable (table global MyCustomer)', Helper.Param('param-value'));
         Observer.Observe('table: param MyCustomer shadows own global MyCustomer', Row.ParamVsGlobal('param-value'));
-        Observer.Finish();
+        Observer.Expect('codeunit: param MyCustomer in with MyTable (table global MyCustomer)', 'param-value');
+        Observer.Expect('table: param MyCustomer shadows own global MyCustomer', 'param-value');
+        Observer.Verify();
     end;
 
     [Test]
@@ -264,7 +271,14 @@ codeunit 72786 "LT WithAmb"
         Bare.Run(Row);
         Observer.Observe('bare IsDirty() with implicit with', Bare.Trace());
 #endif
-        Observer.Finish();
+        Observer.Expect('bare field assignment in OnRun', 'set-in-onrun');
+        Observer.Expect('record after Run', 'set-in-onrun');
+#if BC29PLUS
+        // Record.IsDirty (runtime 18.0) wins over the codeunit's local IsDirty, also under #pragma implicitwith disable.
+        Observer.Expect('bare IsDirty() under #pragma implicitwith disable', 'IsDirty()=true');
+        Observer.Expect('bare IsDirty() with implicit with', 'IsDirty()=true');
+#endif
+        Observer.Verify();
     end;
 }
 

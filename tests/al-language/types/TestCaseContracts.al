@@ -375,7 +375,6 @@ codeunit 60187 "Test Case Contracts"
         Observer: Codeunit "Probe Observer";
         D: Date;
         T: Time;
-        DT: DateTime;
     begin
         D := 0D;
         Observer.Observe('0D', DateCase(D));
@@ -388,13 +387,9 @@ codeunit 60187 "Test Case Contracts"
             else
                 Observer.Observe('0T', 'other');
         end;
-        DT := 0DT;
-        case DT of
-            0DT:
-                Observer.Observe('0DT', 'zero');
-            else
-                Observer.Observe('0DT', 'other');
-        end;
+        // A DateTime selector with a `0DT:` label is left out on purpose: it compiles, but BC 29.0 then fails the C# compilation of the
+        // whole codeunit at publish ("C# compilation has failed for the application object CodeUnit_60187 ... error CS0426: The type name
+        // 'Create' does not exist in the type 'NavDateTime'", corpus CI run 39239885087), so none of its tests would run.
         Observer.Finish();
     end;
 

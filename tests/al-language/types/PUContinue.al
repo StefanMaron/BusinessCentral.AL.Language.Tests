@@ -171,7 +171,10 @@ codeunit 69338 "PU Continue Probe"
         Observer.Observe('for_loop', Helper.ForLoop());
         Observer.Observe('while_loop', Helper.WhileLoop());
         Observer.Observe('explicit_call', Helper.ExplicitCall());
-        Observer.Finish();
+        Observer.Expect('for_loop', '123|calls=1');
+        Observer.Expect('while_loop', '123|calls=1');
+        Observer.Expect('explicit_call', '123|calls=1');
+        Observer.Verify();
     end;
 
     // corpus issue 664 (writer BN): `if ... then continue else ...` in a foreach nested in a for that also continues (microsoft/AL issue 8339).
@@ -207,7 +210,10 @@ codeunit 69338 "PU Continue Probe"
             Seen += '.';
         end;
         Observer.Observe('foreach_continue_else_block', Seen);
-        Observer.Finish();
+        Observer.Expect('seen', '');
+        Observer.Expect('for_after', '5');
+        Observer.Expect('foreach_continue_else_block', 'A.C.');
+        Observer.Verify();
     end;
 }
 
