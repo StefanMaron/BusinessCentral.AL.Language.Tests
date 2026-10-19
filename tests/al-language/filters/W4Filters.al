@@ -582,4 +582,122 @@ codeunit 68058 "W4 Filter Tests"
         Observer.Expect('hasvalue_row_3', 'No');
         Observer.Verify();
     end;
+
+    // ---- corpus issue 668 item 6 (writer BQ) ----
+    // SetFilter with the placeholder %1 next to wildcards or operators in the filter text (microsoft/AL issues 7283 and 7631), on a Text, a
+    // Code and an Integer field. Rows (Id Cd Txt Num): 1 ABC abc 18, 2 XA xa 8, 3 B b 28, 4 A a 80, 5 *8 *8 0, 6 BA Ba 5.
+    local procedure BqSeedPlaceholderRows()
+    var
+        R: Record "W4 Flt Row";
+    begin
+        R.DeleteAll();
+        BqAdd(1, 'ABC', 'abc', 18);
+        BqAdd(2, 'XA', 'xa', 8);
+        BqAdd(3, 'B', 'b', 28);
+        BqAdd(4, 'A', 'a', 80);
+        BqAdd(5, '*8', '*8', 0);
+        BqAdd(6, 'BA', 'Ba', 5);
+    end;
+
+    local procedure BqAdd(Id: Integer; Cd: Code[20]; Txt: Text[30]; Num: Integer)
+    var
+        R: Record "W4 Flt Row";
+    begin
+        R.Init();
+        R.Id := Id;
+        R.Cd := Cd;
+        R.Txt := Txt;
+        R.Num := Num;
+        R.Insert();
+    end;
+
+    [TryFunction]
+    local procedure BqTrySetFilterPattern(var R: Record "W4 Flt Row"; FieldNo: Integer; Pattern: Text; Value: Text)
+    begin
+        case FieldNo of
+            2:
+                R.SetFilter(Cd, Pattern, Value);
+            3:
+                R.SetFilter(Txt, Pattern, Value);
+        end;
+    end;
+
+    [TryFunction]
+    local procedure BqTrySetFilterNumber(var R: Record "W4 Flt Row"; Pattern: Text; Value: Integer)
+    begin
+        R.SetFilter(Num, Pattern, Value);
+    end;
+
+    local procedure BqPattern(FieldNo: Integer; Pattern: Text; Value: Text): Text
+    var
+        R: Record "W4 Flt Row";
+        Result: Text;
+    begin
+        if BqTrySetFilterPattern(R, FieldNo, Pattern, Value) then
+            exit('filter=[' + R.GetFilters() + '] ids=' + Ids(R));
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    local procedure BqNumberPattern(Pattern: Text; Value: Integer): Text
+    var
+        R: Record "W4 Flt Row";
+        Result: Text;
+    begin
+        if BqTrySetFilterNumber(R, Pattern, Value) then
+            exit('filter=[' + R.GetFilters() + '] ids=' + Ids(R));
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    [Test]
+    procedure SetFilterPercent1_WildcardsAroundThePlaceholder_BQ()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedPlaceholderRows();
+        Observer.Observe('txt_star_both', BqPattern(3, '*%1*', 'a'));
+        Observer.Observe('txt_at_star_both', BqPattern(3, '@*%1*', 'A'));
+        Observer.Observe('txt_star_after', BqPattern(3, '%1*', 'a'));
+        Observer.Observe('txt_star_before', BqPattern(3, '*%1', 'a'));
+        Observer.Observe('txt_question_before', BqPattern(3, '?%1', 'a'));
+        Observer.Observe('txt_lt', BqPattern(3, '<%1', 'b'));
+        Observer.Observe('txt_gt', BqPattern(3, '>%1', 'b'));
+        Observer.Observe('txt_ne', BqPattern(3, '<>%1', 'a'));
+        Observer.Observe('txt_range_open', BqPattern(3, '%1..', 'b'));
+        Observer.Observe('txt_or', BqPattern(3, '%1|b', 'a'));
+        Observer.Observe('txt_and', BqPattern(3, '%1&*a*', 'a'));
+        Observer.Observe('txt_value_wildcard', BqPattern(3, '%1', '*8'));
+        Observer.Observe('txt_star_value_wildcard', BqPattern(3, '*%1', '8'));
+        Observer.Observe('cd_star_both', BqPattern(2, '*%1*', 'a'));
+        Observer.Observe('cd_star_after', BqPattern(2, '%1*', 'B'));
+        Observer.Observe('cd_value_wildcard', BqPattern(2, '%1', '*8'));
+        Observer.Observe('num_star_after', BqNumberPattern('%1*', 8));
+        Observer.Observe('num_star_before', BqNumberPattern('*%1', 8));
+        Observer.Observe('num_lt', BqNumberPattern('<%1', 10));
+        Observer.Observe('num_range', BqNumberPattern('%1..', 28));
+        Observer.Expect('txt_star_both', 'filter=[Txt: *%1*] ids=');
+        Observer.Expect('txt_at_star_both', 'filter=[Txt: @*%1*] ids=');
+        Observer.Expect('txt_star_after', 'filter=[Txt: %1*] ids=');
+        Observer.Expect('txt_star_before', 'filter=[Txt: *%1] ids=');
+        Observer.Expect('txt_question_before', 'filter=[Txt: ?%1] ids=');
+        Observer.Expect('txt_lt', 'filter=[Txt: <b] ids=1,4,5,');
+        Observer.Expect('txt_gt', 'filter=[Txt: >b] ids=2,6,');
+        Observer.Expect('txt_ne', 'filter=[Txt: <>a] ids=1,2,3,5,6,');
+        Observer.Expect('txt_range_open', 'filter=[Txt: b..] ids=2,3,6,');
+        Observer.Expect('txt_or', 'filter=[Txt: a|b] ids=3,4,');
+        Observer.Expect('txt_and', 'filter=[Txt: a&*a*] ids=4,');
+        Observer.Expect('txt_value_wildcard', 'filter=[Txt: *8] ids=5,');
+        Observer.Expect('txt_star_value_wildcard', 'filter=[Txt: *%1] ids=');
+        Observer.Expect('cd_star_both', 'filter=[Cd: *%1*] ids=');
+        Observer.Expect('cd_star_after', 'filter=[Cd: %1*] ids=');
+        Observer.Expect('cd_value_wildcard', 'filter=[Cd: *8] ids=5,');
+        Observer.Expect('num_star_after', 'error:The filter "%1*" is not valid for the Num field on the W4 Flt Row table. The variable "%1*" was not understood.|Filter:CSide');
+        Observer.Expect('num_star_before', 'error:The filter "*%1" is not valid for the Num field on the W4 Flt Row table. The value "*%1" can''t be evaluated into type Integer.|Filter:CSide');
+        Observer.Expect('num_lt', 'filter=[Num: <10] ids=2,5,6,');
+        Observer.Expect('num_range', 'filter=[Num: 28..] ids=3,4,');
+        Observer.Verify();
+    end;
 }

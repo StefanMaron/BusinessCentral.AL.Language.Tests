@@ -518,4 +518,70 @@ codeunit 71505 "LT RcA FilterInfo"
         Observer.Expect('findOnBigKey', 'no error');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 4 (writer BQ): FilterGroup numbers past the documented range (docs: "greater numbers will be ignored").
+    [TryFunction]
+    local procedure BqTryGroup(var R: Record "LT RcA Main"; Group: Integer; var Previous: Integer)
+    begin
+        Previous := R.FilterGroup(Group);
+    end;
+
+    local procedure BqGroupOutcome(var R: Record "LT RcA Main"; Group: Integer): Text
+    var
+        Previous: Integer;
+        Result: Text;
+    begin
+        if BqTryGroup(R, Group, Previous) then
+            exit('ok previous=' + Format(Previous) + ' now=' + Format(R.FilterGroup()));
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + ' now=' + Format(R.FilterGroup());
+        ClearLastError();
+        exit(Result);
+    end;
+
+    [Test]
+    procedure FilterGroup_Numbers_Past_The_Range_BQ()
+    var
+        R: Record "LT RcA Main";
+    begin
+        Seed.Main();
+        Observer.Observe('g255', BqGroupOutcome(R, 255));
+        R.FilterGroup(0);
+        Observer.Observe('g256', BqGroupOutcome(R, 256));
+        R.FilterGroup(0);
+        Observer.Observe('g1000', BqGroupOutcome(R, 1000));
+        R.FilterGroup(0);
+        Observer.Observe('gMinus2', BqGroupOutcome(R, -2));
+        R.FilterGroup(0);
+        Observer.Observe('g300', BqGroupOutcome(R, 300));
+        R.SetRange(No, 20, 40);
+        Observer.Observe('afterG300Filter', R.GetFilter(No));
+        R.FilterGroup(0);
+        Observer.Observe('g0Filter', R.GetFilter(No));
+        Observer.Observe('g0Filters', R.GetFilters());
+        Observer.Observe('count', Format(R.Count()));
+        R.FilterGroup(44);
+        Observer.Observe('g44Filter', R.GetFilter(No));
+        R.FilterGroup(255);
+        Observer.Observe('g255Filter', R.GetFilter(No));
+        R.FilterGroup(0);
+        R.FilterGroup(255);
+        R.SetRange(Cd, 'C1');
+        R.FilterGroup(0);
+        Observer.Observe('g255SetCount', Format(R.Count()));
+        Observer.Observe('g255SetFilters', R.GetFilters());
+        Observer.Expect('g255', 'ok previous=255 now=255');
+        Observer.Expect('g256', 'ok previous=256 now=256');
+        Observer.Expect('g1000', 'ok previous=1000 now=1000');
+        Observer.Expect('gMinus2', 'ok previous=-2 now=-2');
+        Observer.Expect('g300', 'ok previous=300 now=300');
+        Observer.Expect('afterG300Filter', '');
+        Observer.Expect('g0Filter', '');
+        Observer.Expect('g0Filters', '');
+        Observer.Expect('count', '10');
+        Observer.Expect('g44Filter', '');
+        Observer.Expect('g255Filter', '');
+        Observer.Expect('g255SetCount', '4');
+        Observer.Expect('g255SetFilters', '');
+        Observer.Verify();
+    end;
 }
