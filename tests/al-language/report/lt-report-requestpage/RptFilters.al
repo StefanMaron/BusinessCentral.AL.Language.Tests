@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-dataitem-properties
 // Scope: in-scope
-// Fixtures used: tables and helper of RptFixtures.al; SingleInstance log 73830 is used only by test codeunit 73838
+// Fixtures used: tables and helper of RptFixtures.al; SingleInstance log 73830 is used only by test codeunit 73838; reports 84654-84655 (writer CJ, corpus issue 667 item 154)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Data item filters: DataItemTableView (where, sorting), SetTableView, RequestFilterFields on the request page, DataItemLink,
 // ReqFilterFields observed through GetFilter and the parameters text, PrintOnlyIfDetail seen in the dataset of SaveAs Xml.
@@ -177,6 +177,46 @@ report 73836 "LT RpT Bare"
 {
     ProcessingOnly = true;
     UseRequestPage = false;
+}
+
+report 84654 "LT CJ RpT Leaf PrintOnly"
+{
+    // Corpus issue 667, item 154: PrintOnlyIfDetail on a data item that has no child data item.
+    ProcessingOnly = false;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; "LT RpT Row")
+        {
+            PrintOnlyIfDetail = true;
+
+            column(RowId; Row.Id) { }
+        }
+    }
+}
+
+report 84655 "LT CJ RpT Leaf Child PrintOnly"
+{
+    // Corpus issue 667, item 154: PrintOnlyIfDetail on the leaf (child) data item of a parent/child dataset.
+    ProcessingOnly = false;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; "LT RpT Row")
+        {
+            column(RowId; Row.Id) { }
+
+            dataitem(Child; "LT RpT Child")
+            {
+                DataItemLink = ParentId = field(Id);
+                PrintOnlyIfDetail = true;
+
+                column(ChildId; Child.Id) { }
+            }
+        }
+    }
 }
 
 codeunit 73838 "LT RpT Filters"
@@ -493,5 +533,34 @@ codeunit 73838 "LT RpT Filters"
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'handler grp=[] id=[1..3];handler after grp=[2] id=[1..3];pre filters=[Id: >=3, Grp: 2] grp=[2] id=[>=3];get 3;get 4;');
         Observer.Verify();
+    end;
+
+    [Test]
+    procedure CJ_PrintOnlyIfDetail_LeafDataItem_Dataset()
+    var
+        Observer: Codeunit "Probe Observer";
+        Xml: Text;
+        Ok: Boolean;
+    begin
+        Seed();
+        Ok := Helper.Save(Report::"LT CJ RpT Leaf PrintOnly", '', Xml);
+        Observer.Observe('saved', Format(Ok));
+        Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure CJ_PrintOnlyIfDetail_LeafChildDataItem_Dataset()
+    var
+        Observer: Codeunit "Probe Observer";
+        Xml: Text;
+        Ok: Boolean;
+    begin
+        Seed();
+        Ok := Helper.Save(Report::"LT CJ RpT Leaf Child PrintOnly", '', Xml);
+        Observer.Observe('saved', Format(Ok));
+        Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
+        Observer.Observe('ChildId', Helper.Values(Xml, 'ChildId'));
+        Observer.Finish();
     end;
 }
