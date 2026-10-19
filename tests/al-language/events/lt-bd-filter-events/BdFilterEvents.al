@@ -1,6 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-event-types
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); LT W Pt Log (69880), its subscribers (69881) and table LT W Pt Row (69883) in events/lt-platform-triggers; own runner 81078 and tests 81079
+// Fixtures used: Probe Observer (69160); table LT W Pt Row (69883) in events/lt-platform-triggers; own log 81112 and subscribers 81113 (copies of
+// LT W Pt Log 69880 and the Filter Helper subscribers of 69881, so no SingleInstance codeunit is shared with another test codeunit); own runner 81078 and tests 81079
 // Probe: corpus issue 657. Filter texts that MakeIntFilter, MakeTimeFilter and MakeDateTimeFilter (codeunit "Filter Helper Triggers") may be raised for,
 // Decimal filter texts that are neither a number nor letters only, Time filter texts in other forms, the GetFilter text of a Time with milliseconds and
 // Integer filter texts with blank space inside. As in PtObserve.al each text is set with the log mode 0 (subscribers silent), 1 (log), 2 (log and change the
@@ -11,7 +12,7 @@ codeunit 81078 "BD Filter Runner"
 {
     trigger OnRun()
     var
-        Log: Codeunit "LT W Pt Log";
+        Log: Codeunit "BD Pt Log";
     begin
         Log.SetResult(Run(Log.Which()));
     end;
@@ -206,7 +207,7 @@ codeunit 81079 "BD Filter Event Tests"
 
     local procedure Act(Which: Text)
     var
-        Log: Codeunit "LT W Pt Log";
+        Log: Codeunit "BD Pt Log";
         Mode: Integer;
         Ok: Boolean;
         Err: Text;
@@ -435,4 +436,203 @@ codeunit 81079 "BD Filter Event Tests"
         Act('time_ms_view');
         Observer.Finish();
     end;
+}
+
+codeunit 81112 "BD Pt Log"
+{
+    SingleInstance = true;
+
+    var
+        Lines: List of [Text];
+        ModeValue: Integer;
+        WhichValue: Text;
+        ResultValue: Text;
+
+    procedure SetMode(NewMode: Integer)
+    begin
+        ModeValue := NewMode;
+    end;
+
+    procedure Mode(): Integer
+    begin
+        exit(ModeValue);
+    end;
+
+    procedure Reset()
+    begin
+        Clear(Lines);
+        ResultValue := '';
+    end;
+
+    procedure Add(Line: Text)
+    begin
+        Lines.Add(Line);
+    end;
+
+    procedure Count(): Integer
+    begin
+        exit(Lines.Count());
+    end;
+
+    procedure CountOf(Prefix: Text): Integer
+    var
+        Line: Text;
+        N: Integer;
+    begin
+        foreach Line in Lines do
+            if Line.StartsWith(Prefix) then
+                N += 1;
+        exit(N);
+    end;
+
+    procedure Dump(): Text
+    var
+        Line: Text;
+        Joined: Text;
+    begin
+        foreach Line in Lines do begin
+            if Joined <> '' then
+                Joined += ' | ';
+            Joined += Line;
+        end;
+        exit('[' + Joined + ']');
+    end;
+
+    procedure SetWhich(NewWhich: Text)
+    begin
+        WhichValue := NewWhich;
+    end;
+
+    procedure Which(): Text
+    begin
+        exit(WhichValue);
+    end;
+
+    procedure SetResult(NewResult: Text)
+    begin
+        ResultValue := NewResult;
+    end;
+
+    procedure Result(): Text
+    begin
+        exit(ResultValue);
+    end;
+}
+
+codeunit 81113 "BD Pt Subs"
+{
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Helper Triggers", 'MakeDateTimeFilter', '', false, false)]
+    local procedure MakeDateTimeFilter(var DateTimeFilterText: Text)
+    var
+        Log: Codeunit "BD Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('MakeDateTimeFilter(' + 'DateTimeFilterText=' + DateTimeFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if DateTimeFilterText.Contains('..') then
+                DateTimeFilterText := '01/01/20 12:00 PM..12/31/20 12:00 PM'
+            else
+                DateTimeFilterText := '12/31/20 12:00 PM';
+        end;
+        if Log.Mode() = 2 then begin
+            DateTimeFilterText := 'W:DateTimeFilterText';
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Helper Triggers", 'MakeIntFilter', '', false, false)]
+    local procedure MakeIntFilter(var IntFilterText: Text)
+    var
+        Log: Codeunit "BD Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('MakeIntFilter(' + 'IntFilterText=' + IntFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if IntFilterText.Contains('..') then
+                IntFilterText := '1..5'
+            else
+                IntFilterText := '5';
+        end;
+        if Log.Mode() = 2 then begin
+            IntFilterText := 'W:IntFilterText';
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Helper Triggers", 'MakeDateFilter', '', false, false)]
+    local procedure MakeDateFilter(var DateFilterText: Text)
+    var
+        Log: Codeunit "BD Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('MakeDateFilter(' + 'DateFilterText=' + DateFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if DateFilterText.Contains('..') then
+                DateFilterText := '2020-01-01..2020-12-31'
+            else
+                DateFilterText := '2020-12-31';
+        end;
+        if Log.Mode() = 2 then begin
+            DateFilterText := 'W:DateFilterText';
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Helper Triggers", 'MakeTextFilter', '', false, false)]
+    local procedure MakeTextFilter(var TextFilterText: Text)
+    var
+        Log: Codeunit "BD Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('MakeTextFilter(' + 'TextFilterText=' + TextFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if TextFilterText.Contains('..') then
+                TextFilterText := 'A*'
+            else
+                TextFilterText := 'A*';
+        end;
+        if Log.Mode() = 2 then begin
+            TextFilterText := 'W:TextFilterText';
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Helper Triggers", 'MakeCodeFilter', '', false, false)]
+    local procedure MakeCodeFilter(var TextFilterText: Text)
+    var
+        Log: Codeunit "BD Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('MakeCodeFilter(' + 'TextFilterText=' + TextFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if TextFilterText.Contains('..') then
+                TextFilterText := 'A*'
+            else
+                TextFilterText := 'A*';
+        end;
+        if Log.Mode() = 2 then begin
+            TextFilterText := 'W:TextFilterText';
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Filter Helper Triggers", 'MakeTimeFilter', '', false, false)]
+    local procedure MakeTimeFilter(var TimeFilterText: Text)
+    var
+        Log: Codeunit "BD Pt Log";
+    begin
+        if Log.Mode() = 0 then
+            exit;
+        Log.Add('MakeTimeFilter(' + 'TimeFilterText=' + TimeFilterText + ')');
+        if Log.Mode() = 3 then begin
+            if TimeFilterText.Contains('..') then
+                TimeFilterText := '12:00:00..13:00:00'
+            else
+                TimeFilterText := '12:00:00';
+        end;
+        if Log.Mode() = 2 then begin
+            TimeFilterText := 'W:TimeFilterText';
+        end;
+    end;
+
 }

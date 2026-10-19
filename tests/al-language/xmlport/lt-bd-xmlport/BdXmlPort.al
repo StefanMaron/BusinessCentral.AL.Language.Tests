@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); from xmlport/lt-y-xmlport-props/YXmlPortProps.al: table LT Y Item (75550), xmlports LT Y XP Lax (75553),
-//   LT Y XP Strict (75554), LT Y XP V10 (75555), LT Y XP V11 (75556), LT Y XP Table Unbound (75563), state 75568 and import runner 75513;
+//   LT Y XP Strict (75554), LT Y XP V10 (75555), LT Y XP V11 (75556), LT Y XP Table Unbound (75563);
+//   own state 81114 and import runner 81115 (copies of 75568/75513, so no SingleInstance codeunit is shared with another test codeunit);
 //   own table 81080, xmlports 81081-81085, tests 81086
 // Probe: corpus issue 657. UseLax with an unknown element and an element of another namespace in the middle of a sequence; default namespaces (xmlns="...")
 // on the root, on a table element and on a field element; XmlVersionNo = V11 imports of a 1.0 declaration and of no declaration; Unbound = true on a
@@ -162,7 +163,7 @@ codeunit 81086 "BD XmlPort Tests"
     TestPermissions = Disabled;
 
     var
-        Seen: Codeunit "LT Y XP State";
+        Seen: Codeunit "BD XP State";
 
     local procedure Seed()
     var
@@ -237,7 +238,7 @@ codeunit 81086 "BD XmlPort Tests"
         Seen.Put('import_id', Format(XmlPortId));
         Commit();
         ClearLastError();
-        if Codeunit.Run(Codeunit::"LT Y XP Import Runner") then
+        if Codeunit.Run(Codeunit::"BD XP Import Runner") then
             exit('ok');
         exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
@@ -430,5 +431,58 @@ codeunit 81086 "BD XmlPort Tests"
         SeedTypes(false);
         Export(Observer, 'empty', 81082);
         Observer.Finish();
+    end;
+}
+
+codeunit 81114 "BD XP State"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Dictionary of [Text, Text];
+
+    procedure Put(Name: Text; Value: Text)
+    begin
+        if Entries.ContainsKey(Name) then
+            Entries.Set(Name, Value)
+        else
+            Entries.Add(Name, Value);
+    end;
+
+    procedure Get(Name: Text): Text
+    begin
+        if Entries.ContainsKey(Name) then
+            exit(Entries.Get(Name));
+        exit('<none>');
+    end;
+}
+
+codeunit 81115 "BD XP Import Runner"
+{
+    trigger OnRun()
+    var
+        Seen: Codeunit "BD XP State";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+    begin
+        if Seen.Get('import_text').Contains('encoding="UTF-16"') then
+            TempBlob.CreateOutStream(OutS, TextEncoding::UTF16)
+        else
+            TempBlob.CreateOutStream(OutS);
+        OutS.WriteText(Seen.Get('import_text'));
+        if Seen.Get('import_text').Contains('encoding="UTF-16"') then
+            TempBlob.CreateInStream(InS, TextEncoding::UTF16)
+        else
+            TempBlob.CreateInStream(InS);
+        Xmlport.Import(GetId(Seen.Get('import_id')), InS);
+    end;
+
+    local procedure GetId(Text: Text): Integer
+    var
+        Id: Integer;
+    begin
+        Evaluate(Id, Text);
+        exit(Id);
     end;
 }
