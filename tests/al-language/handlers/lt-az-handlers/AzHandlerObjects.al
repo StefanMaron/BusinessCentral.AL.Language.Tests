@@ -40,23 +40,6 @@ codeunit 80621 "LT AZ Hnd Log"
     end;
 }
 
-codeunit 80622 "LT AZ Hnd Message OnRun"
-{
-    trigger OnRun()
-    begin
-        Message('az from onrun');
-        Result := 'after message';
-    end;
-
-    var
-        Result: Text;
-
-    procedure GetResult(): Text
-    begin
-        exit(Result);
-    end;
-}
-
 codeunit 80623 "LT AZ Hnd Confirm OnRun"
 {
     trigger OnRun()

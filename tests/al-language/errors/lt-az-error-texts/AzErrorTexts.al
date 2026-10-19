@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/errorinfo/errorinfo-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); objects 80600-80609 below (self-contained)
-// Probe: corpus issue 652 (test handlers, dialogs and error texts), items 10, 11, 13, 14 and 15, writer AZ.
+// Fixtures used: Probe Observer (69160); objects 80600-80606 below (self-contained)
+// Probe: corpus issue 652 (test handlers, dialogs and error texts), items 10, 14 and 15 (items 11 and 13 are pinned in errors/W5ErrorInfoUntouched.al and misc/lt-probes-needed-6/PnF23DecimalToIntegerParam.al), writer AZ.
 // BC versions: 27, 28, 29
 
 codeunit 80600 "LT AZ Throw Codeunit"
@@ -84,52 +84,8 @@ page 80602 "LT AZ Err Card"
                     Error('az plain');
                 end;
             }
-            action(PermError)
-            {
-                ApplicationArea = All;
-                trigger OnAction()
-                var
-                    Lic: Record "License Information";
-                begin
-                    Lic.Init();
-                    Lic.Insert();
-                end;
-            }
         }
     }
-}
-
-page 80603 "LT AZ Overload Card"
-{
-    PageType = Card;
-    SourceTable = "LT AZ Err Row";
-    UsageCategory = None;
-
-    layout
-    {
-        area(Content)
-        {
-            field(Id; Rec.Id) { ApplicationArea = All; }
-        }
-    }
-}
-
-pageextension 80604 "LT AZ Overload Ext" extends "LT AZ Overload Card"
-{
-    procedure Pick(Value: Integer): Text
-    begin
-        exit('int:' + Format(Value));
-    end;
-
-    procedure Pick(Value: Text): Text
-    begin
-        exit('text:' + Value);
-    end;
-
-    procedure Pick(Value: Boolean): Text
-    begin
-        exit('bool:' + Format(Value));
-    end;
 }
 
 enum 80605 "LT AZ Color"
@@ -157,133 +113,6 @@ codeunit 80606 "LT AZ Error Texts"
         ClearLastError();
         Ok := Codeunit.Run(80748);
         Error('RAW ok=%1 code=%2 text=%3', Ok, GetLastErrorCode(), GetLastErrorText());
-    end;
-
-    // ---- item 11: an ErrorInfo never created with ErrorInfo.Create ----
-
-    [Test]
-    procedure ErrorInfo_NotCreated_Defaults()
-    var
-        EI: ErrorInfo;
-    begin
-        Observer.Observe('collectible', Format(EI.Collectible));
-        Observer.Observe('verbosity', Format(EI.Verbosity));
-        Observer.Observe('errortype', Format(EI.ErrorType));
-        Observer.Observe('dataclassification', Format(EI.DataClassification));
-        Observer.Observe('message', EI.Message);
-        Observer.Observe('title', EI.Title);
-        Observer.Observe('detailed', EI.DetailedMessage);
-        Observer.Observe('tableid', Format(EI.TableId));
-        Observer.Observe('fieldno', Format(EI.FieldNo));
-        Observer.Observe('systemid', Format(EI.SystemId));
-        asserterror Error(EI);
-        Observer.ObserveError('raise_empty');
-        EI.Message := 'az set';
-        Observer.Observe('message_after', EI.Message);
-        Observer.Observe('collectible_after', Format(EI.Collectible));
-        Observer.Observe('errortype_after', Format(EI.ErrorType));
-        asserterror Error(EI);
-        Observer.ObserveError('raise_set');
-        Observer.Finish();
-    end;
-
-    // ---- item 13: a non-integral Decimal passed to an Integer parameter, assigned to an Integer ----
-
-    local procedure TakeInt(Value: Integer): Integer
-    begin
-        exit(Value);
-    end;
-
-    [TryFunction]
-    local procedure TryTakeInt(D: Decimal; var Got: Integer)
-    begin
-        Got := TakeInt(D);
-    end;
-
-    [TryFunction]
-    local procedure TryAssign(D: Decimal; var Got: Integer)
-    begin
-        Got := D;
-    end;
-
-    [TryFunction]
-    local procedure TryTakeLiteral(var Got: Integer)
-    begin
-        Got := TakeInt(1.5);
-    end;
-
-    [TryFunction]
-    local procedure TryTakeVariant(V: Variant; var Got: Integer)
-    begin
-        Got := TakeInt(V);
-    end;
-
-    [TryFunction]
-    local procedure TryPick(var Card: Page "LT AZ Overload Card"; D: Decimal; var Got: Text)
-    begin
-        Got := Card.Pick(D);
-    end;
-
-    [Test]
-    procedure DecimalToInteger_ParameterAndAssignment()
-    var
-        D: Decimal;
-        I: Integer;
-        V: Variant;
-    begin
-        D := 1.5;
-        I := -1;
-        Observer.Observe('try_param', Format(TryTakeInt(D, I)));
-        Observer.Observe('param_I', Format(I));
-        Observer.ObserveError('param');
-        I := -1;
-        Observer.Observe('try_assign', Format(TryAssign(D, I)));
-        Observer.Observe('assign_I', Format(I));
-        Observer.ObserveError('assign');
-        D := 2.5;
-        I := -1;
-        Observer.Observe('try_assign25', Format(TryAssign(D, I)));
-        Observer.Observe('assign25_I', Format(I));
-        Observer.ObserveError('assign25');
-        D := -1.5;
-        I := -1;
-        Observer.Observe('try_assignm15', Format(TryAssign(D, I)));
-        Observer.Observe('assignm15_I', Format(I));
-        Observer.ObserveError('assignm15');
-        D := 3;
-        I := -1;
-        Observer.Observe('try_assign3', Format(TryAssign(D, I)));
-        Observer.Observe('assign3_I', Format(I));
-        I := -1;
-        Observer.Observe('try_literal', Format(TryTakeLiteral(I)));
-        Observer.Observe('literal_I', Format(I));
-        Observer.ObserveError('literal_param');
-        V := 1.5;
-        I := -1;
-        Observer.Observe('try_variant', Format(TryTakeVariant(V, I)));
-        Observer.Observe('variant_I', Format(I));
-        Observer.ObserveError('variant_param');
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure DecimalToInteger_PageExtensionOverload()
-    var
-        Card: Page "LT AZ Overload Card";
-        D: Decimal;
-        T: Text;
-    begin
-        D := 1.5;
-        T := '-';
-        Observer.Observe('try_dec_var', Format(TryPick(Card, D, T)));
-        Observer.Observe('dec_var_T', T);
-        Observer.ObserveError('dec_var');
-        Observer.Observe('pick_int', Card.Pick(7));
-        Observer.Observe('pick_text', Card.Pick('a'));
-        Observer.Observe('pick_bool', Card.Pick(true));
-        D := 4;
-        Observer.Observe('pick_dec4', Card.Pick(D));
-        Observer.Finish();
     end;
 
     // ---- item 14: GetLastErrorCode after asserterror TestPage action Invoke ----
@@ -324,23 +153,6 @@ codeunit 80606 "LT AZ Error Texts"
         Card.GoToRecord(Row);
         asserterror Card.DupInsert.Invoke();
         Observer.ObserveError('dup');
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure PageAction_PermissionError()
-    var
-        Row: Record "LT AZ Err Row";
-        Card: TestPage "LT AZ Err Card";
-    begin
-        Row.DeleteAll();
-        Row.Id := 1;
-        Row.Insert();
-        Commit();
-        Card.OpenEdit();
-        Card.GoToRecord(Row);
-        asserterror Card.PermError.Invoke();
-        Observer.ObserveError('perm');
         Observer.Finish();
     end;
 

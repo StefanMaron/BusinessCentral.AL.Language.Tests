@@ -1,7 +1,9 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-creating-handler-methods
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); objects 80620-80626 (AzHandlerObjects.al)
-// Probe: corpus issue 652 (test handlers, dialogs and error texts), items 1-6 and 9, writer AZ.
+// Probe: corpus issue 652 (test handlers, dialogs and error texts), items 1 (MessageHandler calling StrMenu, ConfirmHandler calling Confirm or StrMenu), 2 (Confirm), 3, 5, 6 (no handler) and 9, writer AZ.
+// Already pinned: the other parts of items 1 and 2 (pages/W1Handlers.al, errors/lt-ms-refusals-133/P133MessageInHandlers.al,
+// handlers/TestUnhandledUiAndDialogDefaults.al), item 4 (report/W3ReportRequestPageRun.al), 6 with a handler (platform/lt-platform-members/PlTFilterPageBuilder.al).
 // BC versions: 27, 28, 29
 
 codeunit 80627 "LT AZ Handler Tests"
@@ -85,19 +87,6 @@ codeunit 80627 "LT AZ Handler Tests"
         Inner();
     end;
 
-    [MessageHandler]
-    procedure AzMsgPlain(Msg: Text)
-    begin
-        Log.Add('plainmsgh(' + Msg + ')');
-    end;
-
-    [ConfirmHandler]
-    procedure AzConfirmYes(Question: Text; var Reply: Boolean)
-    begin
-        Log.Add('yesh(' + Question + ')');
-        Reply := true;
-    end;
-
     [StrMenuHandler]
     procedure AzStrMenu2(Options: Text; var Choice: Integer; Instruction: Text)
     begin
@@ -106,33 +95,6 @@ codeunit 80627 "LT AZ Handler Tests"
     end;
 
     // ---- item 1: a MessageHandler or ConfirmHandler that itself calls Message, Confirm or StrMenu ----
-
-    [Test]
-    [HandlerFunctions('AzMsgReenter')]
-    procedure MessageHandler_CallsMessage()
-    begin
-        Reset('message');
-        ObserveMessage('m');
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('AzMsgReenter,AzConfirmYes')]
-    procedure MessageHandler_CallsConfirm_WithHandler()
-    begin
-        Reset('confirm');
-        ObserveMessage('m');
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('AzMsgReenter')]
-    procedure MessageHandler_CallsConfirm_NoHandler()
-    begin
-        Reset('confirm');
-        ObserveMessage('m');
-        Observer.Finish();
-    end;
 
     [Test]
     [HandlerFunctions('AzMsgReenter,AzStrMenu2')]
@@ -162,19 +124,10 @@ codeunit 80627 "LT AZ Handler Tests"
     end;
 
     [Test]
-    [HandlerFunctions('AzConfirmReenter,AzMsgPlain')]
-    procedure ConfirmHandler_CallsMessage_WithHandler()
+    [HandlerFunctions('AzConfirmReenter,AzStrMenu2')]
+    procedure ConfirmHandler_CallsStrMenu_WithHandler()
     begin
-        Reset('message');
-        ObserveConfirm('c');
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('AzConfirmReenter')]
-    procedure ConfirmHandler_CallsMessage_NoHandler()
-    begin
-        Reset('message');
+        Reset('strmenu');
         ObserveConfirm('c');
         Observer.Finish();
     end;
@@ -191,18 +144,6 @@ codeunit 80627 "LT AZ Handler Tests"
     // ---- item 2: Message and Confirm in the OnRun of a codeunit started with Codeunit.Run, no handler in the test ----
 
     [Test]
-    procedure CodeunitRun_Message_NoHandler()
-    var
-        Cu: Codeunit "LT AZ Hnd Message OnRun";
-    begin
-        Reset('');
-        Observer.Observe('run', Format(Cu.Run()));
-        Observer.Observe('result', Cu.GetResult());
-        Observer.ObserveError('run');
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure CodeunitRun_Confirm_NoHandler()
     var
         Cu: Codeunit "LT AZ Hnd Confirm OnRun";
@@ -211,20 +152,6 @@ codeunit 80627 "LT AZ Handler Tests"
         Observer.Observe('run', Format(Cu.Run()));
         Observer.Observe('result', Cu.GetResult());
         Observer.ObserveError('run');
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure Direct_Message_NoHandler()
-    var
-        Answer: Boolean;
-    begin
-        Reset('');
-        Observer.Observe('msg_ok', Format(TryMessage('az direct')));
-        Observer.ObserveError('msg');
-        Observer.Observe('conf_ok', Format(TryConfirm('az direct q', Answer)));
-        Observer.Observe('conf_answer', Format(Answer));
-        Observer.ObserveError('conf');
         Observer.Finish();
     end;
 
@@ -264,12 +191,6 @@ codeunit 80627 "LT AZ Handler Tests"
     // ---- items 4 and 5: a RequestPageHandler that neither OKs nor cancels, and one that inserts a row before OK ----
 
     [RequestPageHandler]
-    procedure AzReqNothing(var RP: TestRequestPage "LT AZ Hnd Report")
-    begin
-        Log.Add('reqh');
-    end;
-
-    [RequestPageHandler]
     procedure AzReqInsertThenOk(var RP: TestRequestPage "LT AZ Hnd Report")
     var
         Row: Record "LT AZ Hnd Row";
@@ -283,12 +204,6 @@ codeunit 80627 "LT AZ Handler Tests"
         RP.OK().Invoke();
     end;
 
-    [TryFunction]
-    local procedure TryRunReport()
-    begin
-        Report.Run(Report::"LT AZ Hnd Report");
-    end;
-
     local procedure SeedRows()
     var
         Row: Record "LT AZ Hnd Row";
@@ -296,18 +211,6 @@ codeunit 80627 "LT AZ Handler Tests"
         Row.DeleteAll();
         Row.Id := 1;
         Row.Insert();
-    end;
-
-    [Test]
-    [HandlerFunctions('AzReqNothing')]
-    procedure RequestPageHandler_NoOkNoCancel()
-    begin
-        SeedRows();
-        Reset('');
-        Observer.Observe('ok', Format(TryRunReport()));
-        Observer.Observe('log', Log.Take());
-        Observer.ObserveError('run');
-        Observer.Finish();
     end;
 
     [Test]
@@ -326,22 +229,6 @@ codeunit 80627 "LT AZ Handler Tests"
     end;
 
     // ---- item 6: FilterPageBuilder.RunModal with a FilterPageHandler and without one ----
-
-    [FilterPageHandler]
-    procedure AzFilterSet(var Record1: RecordRef): Boolean
-    begin
-        Log.Add('fph view=' + Record1.GetView());
-        Record1.Field(2).SetFilter('A*');
-        exit(true);
-    end;
-
-    [FilterPageHandler]
-    procedure AzFilterSetFalse(var Record1: RecordRef): Boolean
-    begin
-        Log.Add('fph view=' + Record1.GetView());
-        Record1.Field(2).SetFilter('A*');
-        exit(false);
-    end;
 
     [TryFunction]
     local procedure TryRunFpb(var Fpb: FilterPageBuilder; var Result: Boolean)
@@ -362,24 +249,6 @@ codeunit 80627 "LT AZ Handler Tests"
         Observer.Observe(Name + '_view_captions', Fpb.GetView('Rows', false));
         Observer.Observe(Name + '_log', Log.Take());
         Observer.ObserveError(Name);
-    end;
-
-    [Test]
-    [HandlerFunctions('AzFilterSet')]
-    procedure FilterPageBuilder_HandlerReturnsTrue()
-    begin
-        Reset('');
-        ObserveFpb('t');
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('AzFilterSetFalse')]
-    procedure FilterPageBuilder_HandlerReturnsFalse()
-    begin
-        Reset('');
-        ObserveFpb('f');
-        Observer.Finish();
     end;
 
     [Test]
