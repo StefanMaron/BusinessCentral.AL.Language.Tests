@@ -311,13 +311,16 @@ codeunit 73023 "LT RfT Views"
         Observer: Codeunit "Probe Observer";
         RecRef: RecordRef;
     begin
-        // First CI run: 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.' ended the test
-        // outside every asserterror below, so each call now runs in its own asserterror block with a marker error after it.
+        // RecordRef.LockTable(true, true) raises the Wait = FALSE error (AL:LockTableBadParm) on 27.5, 28.5 and 29.0, as the lead
+        // reports; LockTable(true) and LockTable(true, false) do not. Each call runs in its own asserterror block with a marker error.
         RecRef.Open(73001);
         Observer.Observe('wait true', LockOutcome(RecRef, 1));
         Observer.Observe('wait true versioncheck true', LockOutcome(RecRef, 2));
         Observer.Observe('wait true versioncheck false', LockOutcome(RecRef, 3));
-        Observer.Finish();
+        Observer.Expect('wait true', 'no error|Dialog');
+        Observer.Expect('wait true versioncheck true', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Expect('wait true versioncheck false', 'no error|Dialog');
+        Observer.Verify();
     end;
 
     // Corpus issue 668 item 52 (writer br): each Wait = false form alone on a fresh RecordRef (no earlier LockTable in the test).
@@ -329,7 +332,8 @@ codeunit 73023 "LT RfT Views"
     begin
         RecRef.Open(73001);
         Observer.Observe('wait false', LockOutcome(RecRef, 4));
-        Observer.Finish();
+        Observer.Expect('wait false', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Verify();
     end;
 
     [Test]
@@ -340,7 +344,8 @@ codeunit 73023 "LT RfT Views"
     begin
         RecRef.Open(73001);
         Observer.Observe('wait false versioncheck true', LockOutcome(RecRef, 5));
-        Observer.Finish();
+        Observer.Expect('wait false versioncheck true', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Verify();
     end;
 
     [Test]
@@ -351,7 +356,8 @@ codeunit 73023 "LT RfT Views"
     begin
         RecRef.Open(73001);
         Observer.Observe('wait false versioncheck false', LockOutcome(RecRef, 6));
-        Observer.Finish();
+        Observer.Expect('wait false versioncheck false', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Verify();
     end;
 
     local procedure LockOutcome(var RecRef: RecordRef; Arm: Integer): Text

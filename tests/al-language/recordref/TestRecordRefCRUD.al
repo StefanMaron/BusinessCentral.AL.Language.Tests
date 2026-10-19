@@ -179,10 +179,21 @@ codeunit 60068 "Test RecordRef CRUD"
         Observer.Observe('delete again returns', Format(Ok));
         Ok := RecRef.Modify(false);
         Observer.Observe('modify missing returns', Format(Ok));
-        // First CI run: one of the two statement forms below raised no error (asserterror failed), so each one now ends with a marker error.
+        // The statement form of Delete on the deleted row raises RecordNotFound; the statement form of Modify raises no error (27.5, 28.5, 29.0).
         Observer.Observe('delete missing statement', StatementOutcome(RecRef, true));
         Observer.Observe('modify missing statement', StatementOutcome(RecRef, false));
-        Observer.Finish();
+        Observer.Expect('key count', '2');
+        Observer.Expect('modify returns', 'Yes');
+        Observer.Expect('row 1 text', 'changed');
+        Observer.Expect('count under filter', '2');
+        Observer.Expect('delete returns', 'Yes');
+        Observer.Expect('row 1 exists', 'No');
+        Observer.Expect('rows left', '2');
+        Observer.Expect('delete again returns', 'No');
+        Observer.Expect('modify missing returns', 'No');
+        Observer.Expect('delete missing statement', 'The ALT Universal does not exist. Identification fields and values: Entry No.=''1''|DB:RecordNotFound');
+        Observer.Expect('modify missing statement', 'no error|Dialog');
+        Observer.Verify();
     end;
 
     local procedure StatementOutcome(var RecRef: RecordRef; DoDelete: Boolean): Text
