@@ -3,6 +3,7 @@
 
     select-tests.py --base REV [--head REV] [--merge-base] [--repo DIR] [--json FILE] [--github]
     select-tests.py --full-reason TEXT [--head REV] [--repo DIR] [--json FILE] [--github]
+    select-tests.py --codeunits JSON [--head REV] [--repo DIR] [--json FILE] [--github]
 
 The change is the tree diff BASE..HEAD (two dots: the merge commit's first parent for a pull request, the branch the
 batch was built on for a dispatched run). Both trees are read from git objects, so no checkout of either is needed.
@@ -21,6 +22,13 @@ What is selected, per test job of .github/workflows/ci.yml:
     ran no test at all, and a selected codeunit can be compiled out on an older BC version. The leg still compiles and
     publishes every app.
 Only codeunits inside the job's own codeunit_range are selected, so a codeunit the full run leaves out stays out.
+
+--codeunits (ci.yml: the workflow_dispatch input select_codeunits) skips the diff and uses a given selection: a JSON
+object {test app dir: "50010,50012..50015|50020"}. The corpus CI batcher passes the union of the selections it made for
+each branch of a batch alone: the selection of the merged diff would mostly be a full run (more than MAX_FILES files).
+Only runnable test codeunits of the job's range are kept (a range never pulls in a Subtype = Test codeunit without a
+[Test] procedure); every app still gets its sentinel; an app the input leaves out runs only its sentinel. An input that
+cannot be read, or that names an app no test job reads the selection for, means a full run.
 
 A change to ci.yml that edits nothing but the values of codeunit_range lines (a "CI range edit") is no reason for a
 full run: the selection is made as usual, plus every test codeunit the edit brings into its job's range.
@@ -458,17 +466,7 @@ def select(git, base, head, merge_base=False, ci_text=None):
     for n, o in enumerate(objs):
         by_path.setdefault(o.path, []).append(n)
 
-    def runnable(n):
-        o = objs[n]
-        if o.subtype != 'test' or not o.tests or not o.id:
-            return None
-        app = app_of(o.path, list(test_apps))
-        if app is None:
-            return None
-        if not any(in_spans(spans(j['range']), int(o.id)) for j in test_apps[app]):
-            return None
-        return app
-
+    runnable = runnable_fn(objs, test_apps)
     graph = Graph(objs, index, runnable, lambda: microsoft_names(git, head, all_files, ci_apps))
 
     # seeds: the changed objects of the changed files (head and base versions), objects that name a changed non-AL file.
@@ -574,6 +572,100 @@ def select(git, base, head, merge_base=False, ci_text=None):
         entry['sentinel'] = not picked
         result['apps'][app] = entry
     result['unwired_jobs'] = unwired
+    return result
+
+
+def runnable_fn(objs, test_apps):
+    """runnable(n): the test app whose job runs objs[n] (a Subtype = Test codeunit with a [Test] procedure inside the
+    job's codeunit_range), else None."""
+    def runnable(n):
+        o = objs[n]
+        if o.subtype != 'test' or not o.tests or not o.id:
+            return None
+        app = app_of(o.path, list(test_apps))
+        if app is None:
+            return None
+        if not any(in_spans(spans(j['range']), int(o.id)) for j in test_apps[app]):
+            return None
+        return app
+    return runnable
+
+
+def parse_given(text):
+    """The select_codeunits input: {test app dir: [(lo, hi)]}. Raises ValueError, stricter than spans()."""
+    try:
+        d = json.loads(text)
+    except ValueError as e:
+        raise ValueError('not JSON: %s' % e)
+    if not isinstance(d, dict) or not d:
+        raise ValueError('not a non-empty JSON object {test app dir: "ids"}')
+    out = {}
+    for app, expr in d.items():
+        if not isinstance(expr, str):
+            raise ValueError('the value for %s is not a string' % app)
+        sp = []
+        for part in expr.replace('|', ',').split(','):
+            part = part.strip()
+            if not part:
+                continue
+            lo, sep, hi = (x.strip() for x in part.partition('..'))
+            if not lo.isdigit() or (sep and not hi.isdigit()):
+                raise ValueError('%r for %s is no id or lo..hi range' % (part, app))
+            lo, hi = int(lo), int(hi) if sep else int(lo)
+            if hi < lo:
+                raise ValueError('range %r for %s ends before it starts' % (part, app))
+            sp.append((lo, hi))
+        out[app] = sp
+    return out
+
+
+def given(git, head, text, ci_text=None):
+    """--codeunits: the given selection, checked against HEAD's objects and ci.yml (see the module docstring)."""
+    head = git.rev(head)
+    result = {'base': None, 'head': head, 'mode': 'subset', 'reasons': [], 'changed_files': [], 'apps': {}, 'given': True}
+    try:
+        want = parse_given(text)
+    except ValueError as e:
+        return full(result, 'the select_codeunits input is not valid (%s)' % e)
+    ci = parse_ci(ci_text if ci_text is not None else git.read(head, [CI_YML]).get(CI_YML, ''))
+    if not ci:
+        return full(result, 'could not read the test jobs of %s' % CI_YML)
+    test_apps = {}
+    for j in ci:
+        for d in j['test_app_dirs']:
+            test_apps.setdefault(d, []).append(j)
+    wired = sorted(d for d, jobs in test_apps.items() if any(j['key'] for j in jobs))
+    unknown = sorted(set(want) - set(wired))
+    if unknown:
+        return full(result, 'the select_codeunits input names %s, which is no test app whose job reads the selection'
+                    % ', '.join(unknown))
+    ci_apps = sorted({d for j in ci for d in j['app_dirs'] + j['test_app_dirs']}, key=len, reverse=True)
+    al_files = [f for f in git.files(head) if f.endswith('.al') and app_of(f, ci_apps)]
+    texts = git.read(head, al_files)
+    objs = []
+    for f in al_files:
+        objs.extend(parse_al(f, texts[f]))
+    runnable = runnable_fn(objs, test_apps)
+    for app in wired:
+        cands = [n for n in range(len(objs)) if runnable(n) == app]
+        sp = want.get(app, [])
+        picked = sorted((n for n in cands if in_spans(sp, int(objs[n].id))), key=lambda n: int(objs[n].id))
+        entry = {'codeunits': [{'id': int(objs[n].id), 'name': objs[n].display, 'file': objs[n].path,
+                                'why': 'named in the select_codeunits input'} for n in picked],
+                 'test_codeunits_in_app': len(cands)}
+        found = {c['id'] for c in entry['codeunits']}
+        if sum(hi - lo + 1 for lo, hi in sp) <= 100000:  # a listed id that is no runnable test codeunit: say so
+            entry['dropped'] = sorted({i for lo, hi in sp for i in range(lo, hi + 1) if hi == lo} - found)
+        s = sentinel(objs, [n for n in cands if not objs[n].conditional])
+        if s is None:
+            return full(result, 'no test codeunit without #if in %s to keep its leg running' % app)
+        if s not in picked:
+            entry['codeunits'].append({'id': int(objs[s].id), 'name': objs[s].display, 'file': objs[s].path,
+                                       'why': 'sentinel: one small codeunit every leg runs, so that no leg runs zero codeunits',
+                                       'sentinel': True})
+        entry['sentinel'] = not picked
+        result['apps'][app] = entry
+    result['unwired_jobs'] = [j['job'] for j in ci if not j['key']]
     return result
 
 
@@ -779,6 +871,13 @@ def summary(result):
             own = sum(1 for c in e['codeunits'] if not c.get('sentinel'))
             label = 'nothing affected, sentinel only' if e.get('sentinel') else '%d of %d' % (own, e['test_codeunits_in_app'])
             out.append('- `%s`: %s' % (app, label))
+        if result.get('given'):
+            out.append('- selection given by the `select_codeunits` input of this run (the CI batcher passes the union of '
+                       'the selections of the branches it merged), not computed from a diff')
+            for app, e in result['apps'].items():
+                if e.get('dropped'):
+                    out.append('- `%s`: listed but no runnable test codeunit of the job range: %s'
+                               % (app, ', '.join(map(str, e['dropped']))))
         if result.get('ci_range_edit'):
             out.append('- `%s`: only `codeunit_range` values changed (CI range edit), so no full run' % CI_YML)
         if result.get('unwired_jobs'):
@@ -804,17 +903,23 @@ def main(argv=None):
                     help='diff from the merge base of BASE and HEAD (what a branch changed since it left BASE)')
     ap.add_argument('--ci-yml', help='read the test jobs from this file instead of HEAD:%s (local measurements)' % CI_YML)
     ap.add_argument('--full-reason')
+    ap.add_argument('--codeunits', help='use this selection, a JSON object {test app dir: "ids and lo..hi ranges"}, '
+                                        'instead of a diff (ci.yml: the select_codeunits input)')
     ap.add_argument('--json')
     ap.add_argument('--github', action='store_true', help='write $GITHUB_STEP_SUMMARY and $GITHUB_OUTPUT')
     a = ap.parse_args(argv)
-    if not a.full_reason and not a.base:
-        ap.error('--base or --full-reason is required')
+    if not a.full_reason and not a.base and a.codeunits is None:
+        ap.error('--base, --codeunits or --full-reason is required')
     git = Git(a.repo)
     if a.full_reason:
         result = full({'base': None, 'head': None, 'mode': 'full', 'reasons': [], 'apps': {}}, a.full_reason)
     else:
         try:
-            result = select(git, a.base, a.head, a.merge_base, open(a.ci_yml).read() if a.ci_yml else None)
+            ci_text = open(a.ci_yml).read() if a.ci_yml else None
+            if a.codeunits is not None:
+                result = given(git, a.head, a.codeunits, ci_text)
+            else:
+                result = select(git, a.base, a.head, a.merge_base, ci_text)
         except Exception as e:  # never block CI on this script: run everything
             result = full({'base': None, 'head': None, 'mode': 'full', 'reasons': [], 'apps': {}},
                           'the selection script failed (%s: %s)' % (type(e).__name__, e))

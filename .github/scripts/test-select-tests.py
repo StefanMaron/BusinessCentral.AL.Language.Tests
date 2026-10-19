@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Self-test for select-tests.py: builds small git repos and checks which test codeunits it selects and when it falls
 back to a full run. Also checks that the real ci.yml wires every test job to the selection."""
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -251,6 +253,68 @@ def subscribers():
           r['mode'] == 'subset' and ids(r, 'tests/main') == [50038], r.get('reasons') or r['apps'])
 
 
+def given_cases():
+    """--codeunits / select_codeunits: a selection given as input (the corpus CI batcher's union of the selections of
+    the branches it merged) is used as it is; no diff is read."""
+    repo = tempfile.mkdtemp(prefix='repo-', dir=ROOT)
+    git(repo, 'init', '-q', '-b', 'main')
+    for p, t in BASE_FILES.items():
+        f = Path(repo, p)
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(t)
+    git(repo, 'add', '-A')
+    git(repo, 'commit', '-q', '-m', 'base')
+    g = st.Git(repo)
+
+    r = st.given(g, 'HEAD', '{"tests/main":"50010,50011..50012"}')
+    check('given: ids and ranges are used as they are; no diff is read', r['mode'] == 'subset' and r.get('given')
+          and ids(r, 'tests/main') == [50010, 50011, 50012] and r['changed_files'] == [], r)
+    check('given: an app the input leaves out runs only its sentinel', r['apps']['tests/onprem'].get('sentinel')
+          and ids(r, 'tests/onprem') == [] and sentinels(r, 'tests/onprem') == [60011], r['apps'].get('tests/onprem'))
+    check('given: the sentinel is added when the input lacks it', sentinels(r, 'tests/main') == [50014], r['apps']['tests/main'])
+    check('given: subset output lists every id (a range is expanded)',
+          st.subset_output(r) == {'tests/main': '50010,50011,50012,50014', 'tests/onprem': '60011'}, st.subset_output(r))
+
+    r = st.given(g, 'HEAD', '{"tests/main":"50010..50015|50150|50999", "tests/onprem":"60010"}')
+    check('given: a range keeps only runnable test codeunits of the job range (no [Test] fixture, nothing out of range)',
+          r['mode'] == 'subset' and ids(r, 'tests/main') == [50010, 50011, 50012, 50014, 50015]
+          and ids(r, 'tests/onprem') == [60010] and sentinels(r, 'tests/onprem') == [60011], r)
+    check('given: listed ids that are no runnable test codeunit are reported', r['apps']['tests/main'].get('dropped') == [50150, 50999],
+          r['apps']['tests/main'])
+    check('given: the summary says the selection was given', 'select_codeunits' in st.summary(r), st.summary(r))
+
+    for name, text, needle in (
+            ('not JSON', '50010,50011', 'not valid'),
+            ('not an object', '["tests/main"]', 'not valid'),
+            ('empty object', '{}', 'not valid'),
+            ('bad id', '{"tests/main":"50010,abc"}', 'not valid'),
+            ('reversed range', '{"tests/main":"50012..50010"}', 'not valid'),
+            ('unknown app', '{"tests/main":"50010","tests/nope":"1"}', 'tests/nope')):
+        r = st.given(g, 'HEAD', text)
+        check('given: full run when the input is %s' % name, r['mode'] == 'full' and any(needle in x for x in r['reasons']),
+              r['reasons'])
+
+    out, summ = Path(ROOT, 'given-out.txt'), Path(ROOT, 'given-summary.md')
+    old = dict(os.environ)
+    os.environ.update(GITHUB_OUTPUT=str(out), GITHUB_STEP_SUMMARY=str(summ))
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            st.main(['--repo', repo, '--codeunits', '{"tests/main":"50011"}', '--github'])
+    finally:
+        os.environ.clear()
+        os.environ.update(old)
+    check('given: --codeunits --github writes the job output subset',
+          out.read_text().strip() == 'subset=' + json.dumps({'tests/main': '50011,50014', 'tests/onprem': '60011'},
+                                                            separators=(',', ':')), out.read_text())
+
+    # the real ci.yml hands the dispatch input to the script unchanged, through the environment (not inlined in the shell)
+    real = (HERE.parent / 'workflows' / 'ci.yml').read_text()
+    check('real ci.yml: workflow_dispatch input select_codeunits', '      select_codeunits:\n' in real, 'input missing')
+    check('real ci.yml: the prepare job passes select_codeunits to --codeunits',
+          'SELECT_CODEUNITS: ${{ github.event.inputs.select_codeunits }}' in real and '--codeunits "$SELECT_CODEUNITS"' in real,
+          'prepare job does not use the input')
+
+
 FAILED = []
 ROOT = tempfile.mkdtemp(prefix='select-tests-')
 
@@ -307,6 +371,7 @@ def main():
     check('[EventSubscriber( in a comment is not a subscriber', r['mode'] == 'subset', r['reasons'])
 
     subscribers()
+    given_cases()
 
     fulls = {
         'install codeunit': ({'tests/main/I.al': 'codeunit 50021 Inst\n{\n    Subtype = Install;\n}\n'}, 'Subtype = Install'),
