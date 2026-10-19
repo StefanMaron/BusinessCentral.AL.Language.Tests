@@ -1,7 +1,17 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-pages
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); table 84100, log codeunit 84101, pages 84100-84103 (CaObjects.al)
+// Probe: every literal asserted below is what BC 29.0 produced (local Linux container); BC 27 and 28 are checked by the CI legs.
 // Settles corpus issue 667 (odd AL behavior leads, part B), items 1, 3, 6, 7, 9, 15 and 16.
+// Facts: AsDecimal()/AsInteger() of a Decimal control that reads blank through BlankZero answer 0; AsDecimal() of a Text control that holds
+// '', ' ' or a word raises "The input string '...' was not in a correct format." (AL:Format). A Role Center TestPage opens with OpenView,
+// reads its Caption and invokes an action. Value and Format(control) assign to a Code variable (upper-cased; too long: StringLengthExceeded).
+// Control.Caption without parentheses reads the caption. New() on a list with CardPageId does not open the trapped card (TestPageNotOpened).
+// OK()/Cancel() held in a Variant: the Variant formats as 'TestAction', IsAction() is false, the page stays open; Cancel() on a page that
+// has no Cancel raises TestActionNotFound already when it is read. A Dialog opened in a page action (local or global variable, closed or
+// left open) runs without error under a TestPage, and GuiAllowed() is true there.
+// Not asserted (Linux suspect, queued for Windows): Trap() then Page.Run of a Role Center page (CLR NullReferenceException).
+// Item 1 for a part or page that shows NO row is pinned in testpart/BnrBlankPart.al.
 // BC versions: 27, 28, 29
 codeunit 84110 "LT CA TestPage Tests"
 {
@@ -413,7 +423,15 @@ codeunit 84110 "LT CA TestPage Tests"
             Observer.Observe('read-after-ok-invoke', T)
         else
             Observer.ObserveError('read-after-ok-invoke');
-        Observer.Finish();
+        Observer.Expect('variant-isaction', 'No');
+        Observer.Expect('variant-format', 'TestAction');
+        Observer.Expect('read-after-ok-into-variant', 'A');
+        Observer.Expect('cancel-into-variant|text', 'The built-in action = Cancel is not found on the page.');
+        Observer.Expect('cancel-into-variant|code', 'TestActionNotFound');
+        Observer.Expect('read-after-cancel-into-variant', 'A');
+        Observer.Expect('read-after-ok-invoke|text', 'The TestPage is not open.');
+        Observer.Expect('read-after-ok-invoke|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -439,7 +457,12 @@ codeunit 84110 "LT CA TestPage Tests"
         else
             Observer.ObserveError('read-after');
         Observer.Observe('variant-isaction', Format(V.IsAction()));
-        Observer.Finish();
+        Observer.Expect('ok-into-variant', 'ok');
+        Observer.Expect('cancel-into-variant|text', 'The built-in action = Cancel is not found on the page.');
+        Observer.Expect('cancel-into-variant|code', 'TestActionNotFound');
+        Observer.Expect('read-after', 'A');
+        Observer.Expect('variant-isaction', 'No');
+        Observer.Verify();
     end;
 
     // ---- item 16: a Dialog local to a page action, and one global to the page ----
