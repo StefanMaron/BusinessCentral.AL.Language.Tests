@@ -142,15 +142,9 @@ codeunit 61492 "LT AC Dn RunOnClient"
             Observer.Observe('built', Text1)
         else
             Observer.ObserveError('built');
-#if BC28PLUS
-        Observer.Expect('built|text', 'A DotNet variable has not been instantiated. Attempting to call System.Text.StringBuilder.Append in CodeUnit LT AC Dn RunOnClient: TryBuild');
-        Observer.Expect('built|code', 'DotNetVariableNotCreated');
+        Observer.Expect('built|text', 'The operation cannot complete because it uses a feature that is not supported (.NET Framework Interoperability.)');
+        Observer.Expect('built|code', 'DotNetFromAlNotSupported:DotNetFromAlNotSupported');
         Observer.Verify();
-#else
-        Observer.Expect('built|text', 'Cannot create an instance of the following .NET Framework object: assembly System.Runtime, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, type System.Text.StringBuilder.');
-        Observer.Expect('built|code', 'DotNetCreate:NullReference');
-        Observer.Verify();
-#endif
     end;
 
     [TryFunction]

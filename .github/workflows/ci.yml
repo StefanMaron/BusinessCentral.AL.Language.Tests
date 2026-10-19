@@ -29,6 +29,10 @@ on:
         description: 'Run only the tests affected by the diff from this commit or branch to the dispatched ref (see CONTRIBUTING.md, "Test selection in CI"). Empty runs everything.'
         required: false
         default: ''
+      select_codeunits:
+        description: 'Run only these test codeunits, a JSON object {"tests/al-language":"50010,50012..50015"} (see CONTRIBUTING.md, "Test selection in CI"). Takes precedence over select_base. Empty: select_base decides.'
+        required: false
+        default: ''
 
 # Supersede a run that no longer answers a question anyone is asking.
 #
@@ -196,6 +200,8 @@ jobs:
       # decides which, or falls back to a full run, and writes why into this job's summary. Always a full run: a push
       # (master), a corpus bump pull request (head al-runtime-rs-staging), a pull request with the label full-run, and
       # a manual dispatch without select_base. A failure of this step also means a full run, never a red check.
+      # A dispatch with select_codeunits (the corpus CI batcher: the union of the selections of the branches it merged,
+      # because the merged diff has too many files to select from) runs that list as it is; select_base is then ignored.
       - id: select
         name: Select the test codeunits to run
         continue-on-error: true
@@ -205,10 +211,11 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LABELED_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'full-run') }}
           SELECT_BASE: ${{ github.event.inputs.select_base }}
+          SELECT_CODEUNITS: ${{ github.event.inputs.select_codeunits }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
-          FULL='' BASE=''
+          FULL='' BASE='' GIVEN=''
           case "$EVENT" in
             pull_request)
               # labels from the API, not only the event payload: "Re-run all jobs" after adding the label then works
@@ -217,13 +224,16 @@ jobs:
               elif [ "$LABELED_FULL" = "true" ] || grep -qx 'full-run' <<< "$LABELS"; then FULL='the pull request has the label full-run'
               else BASE=$(git rev-parse HEAD^1); fi ;;
             workflow_dispatch)
-              if [ -z "$SELECT_BASE" ]; then FULL='manual run without select_base: always a full run'
+              if [ -n "${SELECT_CODEUNITS:-}" ]; then GIVEN=1
+              elif [ -z "$SELECT_BASE" ]; then FULL='manual run without select_base: always a full run'
               elif git fetch --no-tags --quiet --depth=1 origin "$SELECT_BASE"; then BASE=$(git rev-parse FETCH_HEAD)
               else FULL="select_base $SELECT_BASE could not be fetched"; fi ;;
             *) FULL="$EVENT on $GITHUB_REF: always a full run" ;;
           esac
           if [ -n "$FULL" ]; then
             python3 .github/scripts/select-tests.py --full-reason "$FULL" --github
+          elif [ -n "$GIVEN" ]; then
+            python3 .github/scripts/select-tests.py --codeunits "$SELECT_CODEUNITS" --github
           else
             python3 .github/scripts/select-tests.py --base "$BASE" --head HEAD --github
           fi || { echo "::warning title=Test selection::select-tests.py failed; every test runs"; echo 'subset={}' >> "$GITHUB_OUTPUT"; }
