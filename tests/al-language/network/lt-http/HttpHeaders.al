@@ -448,6 +448,28 @@ codeunit 72022 "LT HtT Headers Errors"
         Observer.Expect('af342|code', 'InvalidHeader:InvalidOperation');
         Observer.Verify();
     end;
+#if not BC28PLUS
+    // Writer PW: docs/probes-needed.md "Values and builtins": HttpHeaders.Add with a name of blanks on BC 27 (InvalidNames above, a BC28PLUS
+    // test, pins BC 28 and 29). The same calls as InvalidNames.
+    [Test]
+    procedure PW_InvalidNames_Bc27()
+    var
+        Headers: HttpHeaders;
+    begin
+        NewHeaders(Headers);
+        asserterror Headers.Add('', 'v');
+        Observer.ObserveError('emptyName');
+        asserterror Headers.Add(' ', 'v');
+        Observer.ObserveError('blankName');
+        asserterror Headers.Add('   ', 'v');
+        Observer.ObserveError('threeBlanksName');
+        asserterror Headers.Add('Bad Name', 'v');
+        Observer.ObserveError('spaceInName');
+        asserterror Headers.Add('Bad:Name', 'v');
+        Observer.ObserveError('colonInName');
+        Observer.Finish();
+    end;
+#endif
 }
 
 codeunit 72023 "LT HtT Headers Secret"
@@ -491,26 +513,4 @@ codeunit 72023 "LT HtT Headers Secret"
         Observer.Expect('contains', 'No');
         Observer.Verify();
     end;
-#if not BC28PLUS
-    // Writer PW: docs/probes-needed.md "Values and builtins": HttpHeaders.Add with a name of blanks on BC 27 (InvalidNames above, a BC28PLUS
-    // test, pins BC 28 and 29). The same calls as InvalidNames.
-    [Test]
-    procedure PW_InvalidNames_Bc27()
-    var
-        Headers: HttpHeaders;
-    begin
-        NewHeaders(Headers);
-        asserterror Headers.Add('', 'v');
-        Observer.ObserveError('emptyName');
-        asserterror Headers.Add(' ', 'v');
-        Observer.ObserveError('blankName');
-        asserterror Headers.Add('   ', 'v');
-        Observer.ObserveError('threeBlanksName');
-        asserterror Headers.Add('Bad Name', 'v');
-        Observer.ObserveError('spaceInName');
-        asserterror Headers.Add('Bad:Name', 'v');
-        Observer.ObserveError('colonInName');
-        Observer.Finish();
-    end;
-#endif
 }
