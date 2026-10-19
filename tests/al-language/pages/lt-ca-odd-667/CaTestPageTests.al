@@ -77,7 +77,14 @@ codeunit 84110 "LT CA TestPage Tests"
         else
             Observer.ObserveError('emptytext-asdecimal');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('blankzero-value', '');
+        Observer.Expect('plain-value', '0.00');
+        Observer.Expect('blankzero-asdecimal', '0');
+        Observer.Expect('blankzero-asinteger', '0');
+        Observer.Expect('text-value', '');
+        Observer.Expect('emptytext-asdecimal|text', 'The input string '''' was not in a correct format.');
+        Observer.Expect('emptytext-asdecimal|code', 'AL:Format');
+        Observer.Verify();
     end;
 
     [Test]
@@ -107,7 +114,15 @@ codeunit 84110 "LT CA TestPage Tests"
         else
             Observer.ObserveError('space-text-asdecimal');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('blankzero-value', '2.50');
+        Observer.Expect('blankzero-asdecimal', '2.5');
+        Observer.Expect('number-text-asdecimal', '12.5');
+        Observer.Expect('word-text-asdecimal|text', 'The input string ''abc'' was not in a correct format.');
+        Observer.Expect('word-text-asdecimal|code', 'AL:Format');
+        Observer.Expect('space-text-value', '[ ]');
+        Observer.Expect('space-text-asdecimal|text', 'The input string '' '' was not in a correct format.');
+        Observer.Expect('space-text-asdecimal|code', 'AL:Format');
+        Observer.Verify();
     end;
 
     // ---- item 3: a TestPage of a Role Center page ----
@@ -140,8 +155,9 @@ codeunit 84110 "LT CA TestPage Tests"
         L.Close();
     end;
 
-    [Test]
-    procedure Ca03_RoleCenter_TrapThenPageRun()
+    // NOT a test (Linux suspect, queued for the Windows check): on the Linux BC 29.0 container, Trap() then Page.Run of a Role Center page
+    // fails with an uncatchable CLR NullReferenceException in TestPageClientSession.UISession_FormToShow. The probe is kept for that check.
+    local procedure Ca03_RoleCenter_TrapThenPageRun()
     var
         Observer: Codeunit "Probe Observer";
         Rc: TestPage "LT CA Role Center";
@@ -182,7 +198,10 @@ codeunit 84110 "LT CA TestPage Tests"
             Observer.Observe('invoke', 'ok')
         else
             Observer.ObserveError('invoke');
-        Observer.Finish();
+        Observer.Expect('openview', 'ok');
+        Observer.Expect('caption', 'LT CA Role Center Caption');
+        Observer.Expect('invoke', 'ok');
+        Observer.Verify();
     end;
 
     // ---- item 6: a TestPage control's Value (and Format of the control) assigned to a Code variable ----
@@ -219,7 +238,14 @@ codeunit 84110 "LT CA TestPage Tests"
         else
             Observer.ObserveError('code3-from-long-value');
         P.Close();
-        Observer.Finish();
+        Observer.Expect('code-from-code-value', 'ABC');
+        Observer.Expect('code-from-text-value', 'MIXED CASE');
+        Observer.Expect('code-from-format-control', 'ABC');
+        Observer.Expect('text-from-format-control', 'mixed Case');
+        Observer.Expect('text-from-value', 'mixed Case');
+        Observer.Expect('code3-from-long-value|text', 'The length of the string is 10, but it must be less than or equal to 3 characters. Value: mixed Case');
+        Observer.Expect('code3-from-long-value|code', 'StringLengthExceeded');
+        Observer.Verify();
     end;
 
     // ---- item 7: Caption of a TestPage control read without parentheses ----
@@ -239,7 +265,10 @@ codeunit 84110 "LT CA TestPage Tests"
         T := P.CodeCtl.Caption;
         Observer.Observe('code-caption-property', T);
         P.Close();
-        Observer.Finish();
+        Observer.Expect('name-caption-property', 'LT CA Name Caption');
+        Observer.Expect('name-caption-method', 'LT CA Name Caption');
+        Observer.Expect('code-caption-property', 'Code');
+        Observer.Verify();
     end;
 
     // ---- item 9: New() on a list page whose CardPageId names a card, with the card trapped ----
@@ -288,7 +317,11 @@ codeunit 84110 "LT CA TestPage Tests"
         else
             Observer.ObserveError('card-setvalue');
         Observer.Observe('rows', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('new', 'ok');
+        Observer.Expect('card-setvalue|text', 'The TestPage is not open.');
+        Observer.Expect('card-setvalue|code', 'TestPageNotOpened');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -316,7 +349,12 @@ codeunit 84110 "LT CA TestPage Tests"
         else
             Observer.ObserveError('list-code-after-new');
         Observer.Observe('rows', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('new', 'ok');
+        Observer.Expect('card-setvalue|text', 'The TestPage is not open.');
+        Observer.Expect('card-setvalue|code', 'TestPageNotOpened');
+        Observer.Expect('list-code-after-new', '[]');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     // ---- item 15: OK() and Cancel() return a TestAction that can be held in a Variant ----
@@ -325,6 +363,24 @@ codeunit 84110 "LT CA TestPage Tests"
     local procedure TryReadCardCode(var P: TestPage "LT CA Card"; var V: Text)
     begin
         V := P.CodeCtl.Value();
+    end;
+
+    [TryFunction]
+    local procedure TryCancelIntoVariant(var P: TestPage "LT CA Card"; var V: Variant)
+    begin
+        V := P.Cancel();
+    end;
+
+    [TryFunction]
+    local procedure TryListOkIntoVariant(var L: TestPage "LT CA Editable List"; var V: Variant)
+    begin
+        V := L.OK();
+    end;
+
+    [TryFunction]
+    local procedure TryListCancelIntoVariant(var L: TestPage "LT CA Editable List"; var V: Variant)
+    begin
+        V := L.Cancel();
     end;
 
     [Test]
@@ -344,7 +400,10 @@ codeunit 84110 "LT CA TestPage Tests"
             Observer.Observe('read-after-ok-into-variant', T)
         else
             Observer.ObserveError('read-after-ok-into-variant');
-        V := P.Cancel();
+        if TryCancelIntoVariant(P, V) then
+            Observer.Observe('cancel-into-variant', 'ok')
+        else
+            Observer.ObserveError('cancel-into-variant');
         if TryReadCardCode(P, T) then
             Observer.Observe('read-after-cancel-into-variant', T)
         else
@@ -354,6 +413,32 @@ codeunit 84110 "LT CA TestPage Tests"
             Observer.Observe('read-after-ok-invoke', T)
         else
             Observer.ObserveError('read-after-ok-invoke');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Ca15_ListOkCancelIntoVariant()
+    var
+        Observer: Codeunit "Probe Observer";
+        L: TestPage "LT CA Editable List";
+        V: Variant;
+        T: Text;
+    begin
+        Seed('A', 'n', 0, '');
+        L.OpenView();
+        if TryListOkIntoVariant(L, V) then
+            Observer.Observe('ok-into-variant', 'ok')
+        else
+            Observer.ObserveError('ok-into-variant');
+        if TryListCancelIntoVariant(L, V) then
+            Observer.Observe('cancel-into-variant', 'ok')
+        else
+            Observer.ObserveError('cancel-into-variant');
+        if TryReadListCode(L, T) then
+            Observer.Observe('read-after', T)
+        else
+            Observer.ObserveError('read-after');
+        Observer.Observe('variant-isaction', Format(V.IsAction()));
         Observer.Finish();
     end;
 
@@ -395,6 +480,14 @@ codeunit 84110 "LT CA TestPage Tests"
             Observer.ObserveError('invoke3-again');
         Observer.Observe('log3-again', Log.Take());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('invoke1', 'ok');
+        Observer.Expect('log1', 'local:gui=Yes;local:done;');
+        Observer.Expect('invoke2', 'ok');
+        Observer.Expect('log2', 'global:gui=Yes;global:done;');
+        Observer.Expect('invoke3', 'ok');
+        Observer.Expect('log3', 'open-left:done;');
+        Observer.Expect('invoke3-again', 'ok');
+        Observer.Expect('log3-again', 'open-left:done;');
+        Observer.Verify();
     end;
 }

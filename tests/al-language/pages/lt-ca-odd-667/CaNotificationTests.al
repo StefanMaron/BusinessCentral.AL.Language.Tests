@@ -20,7 +20,8 @@ codeunit 84111 "LT CA Notification Tests"
     begin
         Log.Take();
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -32,7 +33,8 @@ codeunit 84111 "LT CA Notification Tests"
     begin
         Log.Take();
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -51,7 +53,9 @@ codeunit 84111 "LT CA Notification Tests"
         Observer.Observe('log-after-send', Log.Take());
         N.Recall();
         Observer.Observe('log-after-recall', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log-after-send', 'send:LT CA message;');
+        Observer.Expect('log-after-recall', 'recall:LT CA message;');
+        Observer.Verify();
     end;
 
     [SendNotificationHandler(true)]
