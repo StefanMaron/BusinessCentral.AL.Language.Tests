@@ -4,6 +4,9 @@
 // HttpContent without a request: WriteFrom/ReadAs Text and InStream, headers, Clear.
 // Fixtures used: Probe Observer (codeunit 69160)
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BV (2026-10-19, Windows check 3 item AY): a HttpHeaders handle taken with GetHeaders BEFORE the first WriteFrom, used after it:
+// real BC (Windows 27.5 and 29.0) and the Linux tiers fail with 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.'
+// (test OldHeadersHandle_AfterWriteFrom).
 
 codeunit 72019 "LT HtT Content Text"
 {
@@ -205,6 +208,63 @@ codeunit 72019 "LT HtT Content Text"
         Observer.Expect('badMediaType|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
         Observer.Expect('badMediaType|code', 'InvalidHeader:Format');
         Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryOldContains(var H: HttpHeaders; var R: Text)
+    begin
+        R := Format(H.Contains('Content-Length'));
+    end;
+
+    [TryFunction]
+    local procedure TryOldGetValues(var H: HttpHeaders; var R: Text)
+    var
+        Vals: List of [Text];
+    begin
+        R := Format(H.GetValues('Content-Length', Vals)) + ' n=' + Format(Vals.Count());
+    end;
+
+    [TryFunction]
+    local procedure TryOldKeys(var H: HttpHeaders; var R: Text)
+    begin
+        R := Format(H.Keys().Count());
+    end;
+
+    [Test]
+    procedure OldHeadersHandle_AfterWriteFrom()
+    var
+        Content: HttpContent;
+        Headers: HttpHeaders;
+        NewHeaders: HttpHeaders;
+        R: Text;
+    begin
+        Content.GetHeaders(Headers);
+        Content.WriteFrom('hello');
+        R := '-';
+        ClearLastError();
+        Observer.Observe('contains_ok', Format(TryOldContains(Headers, R)));
+        Observer.Observe('contains', R);
+        Observer.ObserveError('contains');
+        R := '-';
+        ClearLastError();
+        Observer.Observe('getvalues_ok', Format(TryOldGetValues(Headers, R)));
+        Observer.Observe('getvalues', R);
+        Observer.ObserveError('getvalues');
+        R := '-';
+        ClearLastError();
+        Observer.Observe('keys_ok', Format(TryOldKeys(Headers, R)));
+        Observer.Observe('keys', R);
+        Observer.ObserveError('keys');
+        R := '-';
+        ClearLastError();
+        asserterror begin
+            TryOldGetValues(Headers, R);
+            Error('no error');
+        end;
+        Observer.ObserveError('asserterror');
+        Content.GetHeaders(NewHeaders);
+        Observer.Observe('new_handle_contains', Format(NewHeaders.Contains('Content-Type')));
+        Observer.Finish();
     end;
 
     [Test]
