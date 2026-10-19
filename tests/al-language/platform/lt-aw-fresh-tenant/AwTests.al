@@ -78,19 +78,17 @@ codeunit 80352 "LT AW Page Meta Tests"
         exit(Meta.SourceTableView);
     end;
 
-    local procedure ActionRows(PageId: Integer): Text
+    local procedure ObserveActionRows(var Observer: Codeunit "Probe Observer"; PageId: Integer)
     var
         PageAction: Record "Page Action";
-        Result: Text;
     begin
         PageAction.SetRange("Page ID", PageId);
-        Result := Format(PageAction.Count()) + ' rows;';
+        Observer.Observe('count', Format(PageAction.Count()));
         if PageAction.FindSet() then
             repeat
-                Result += StrSubstNo('[%1 id=%2 ind=%3 parent=%4 type=%5 sub=%6 %7]', PageAction."Action Index", PageAction."Action ID", PageAction.Indentation,
-                    PageAction."Parent Action ID", Format(PageAction."Action Type", 0, 9), Format(PageAction."Action Subtype", 0, 9), PageAction.Name);
+                Observer.Observe('row ' + Format(PageAction."Action Index"), StrSubstNo('id=%1 ind=%2 parent=%3 type=%4 sub=%5 name=%6', PageAction."Action ID", PageAction.Indentation,
+                    PageAction."Parent Action ID", Format(PageAction."Action Type", 0, 9), Format(PageAction."Action Subtype", 0, 9), PageAction.Name));
             until PageAction.Next() = 0;
-        exit(Result);
     end;
 
     [Test]
@@ -108,7 +106,7 @@ codeunit 80352 "LT AW Page Meta Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('rows', ActionRows(Page::"LT AW Actions"));
+        ObserveActionRows(Observer, Page::"LT AW Actions");
         Observer.Finish();
     end;
 
@@ -117,7 +115,7 @@ codeunit 80352 "LT AW Page Meta Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        Observer.Observe('rows', ActionRows(Page::"ALT Prompt Dialog Page"));
+        ObserveActionRows(Observer, Page::"ALT Prompt Dialog Page");
         Observer.Finish();
     end;
 }
@@ -317,14 +315,10 @@ codeunit 80355 "LT AW Moved Tests"
         Observer: Codeunit "Probe Observer";
         RR: RecordRef;
     begin
-        RR.Open(80301);
-        Observer.Observe('count', Format(RR.Count()));
-        RR.Field(1).Value := 7;
-        RR.Field(2).Value := 'seven';
-        Observer.Observe('insert', Format(RR.Insert()));
-        Observer.Observe('count_after', Format(RR.Count()));
-        Observer.Observe('find', Format(RR.FindFirst()));
-        Observer.Observe('name', Format(RR.Field(2).Value));
+        // The table is declared in this app with ObsoleteState = Moved: it is not in the runtime app, so RecordRef.Open fails.
+        asserterror RR.Open(80301);
+        Observer.Observe('open_error', GetLastErrorText());
+        Observer.Observe('open_error_code', GetLastErrorCode());
         Observer.Finish();
     end;
 

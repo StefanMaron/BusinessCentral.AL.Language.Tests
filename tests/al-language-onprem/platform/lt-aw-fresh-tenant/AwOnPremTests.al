@@ -195,6 +195,25 @@ codeunit 98453 "LT AW OnPrem Tests"
         Observer.Observe('count_after_delete_fresh', Format(Config.Count()));
         Observer.Finish();
     end;
+
+    [Test]
+    procedure AgentCreationControl_Rows()
+    var
+        RowTexts: Codeunit "LT AW OnPrem Row Text";
+        Observer: Codeunit "Probe Observer";
+        RR: RecordRef;
+        Rows: Text;
+    begin
+        RR.Open(2000000297);
+        Observer.Observe('name', RR.Name);
+        Observer.Observe('count', Format(RR.Count()));
+        if RR.FindSet() then
+            repeat
+                Rows += '[' + RowTexts.RowText(RR, SystemSkipTok) + ']';
+            until RR.Next() = 0;
+        Observer.Observe('rows', Rows);
+        Observer.Finish();
+    end;
 #endif
 
     [Test]
@@ -208,6 +227,7 @@ codeunit 98453 "LT AW OnPrem Tests"
         if TableInfo.FindFirst() then
             Observer.Observe('own_moved_name', TableInfo."Table Name" + ' company=' + Format(TableInfo."Company Name" = CompanyName()));
         TableInfo.SetRange("Table No.", 308);
+        TableInfo.SetRange("Company Name", CompanyName());
         Observer.Observe('no_series_rows', Format(TableInfo.Count()));
         Observer.Finish();
     end;
