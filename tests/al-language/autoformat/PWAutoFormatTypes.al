@@ -51,6 +51,14 @@ codeunit 69776 "PW AutoFormat Probe"
         GLSetup.Modify();
     end;
 
+    // Back to the values of the container (Setup_AsInTheContainer_NoCurrency). The BC 27.5 test runner commits what a test
+    // leaves, so without this the '2:5' of the last test stayed in the database for every later codeunit (publisher 8,
+    // subset run 39257271546: the decimal format tests of later codeunits read '2:5').
+    local procedure RestoreSetup()
+    begin
+        SetSetup('2:2', '2:5', "Show Currency"::Never);
+    end;
+
     local procedure SeedCurrency(Code: Code[10]; AmountPlaces: Text; UnitPlaces: Text; Symbol: Text)
     var
         Currency: Record Currency;
@@ -149,6 +157,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('amt25_unit25_1234_5_t2blank', '1,234.50');
         Observer.Expect('amt25_unit25_1234_5_t4blank', '1,234.50');
         Observer.Expect('amt25_unit25_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -173,6 +182,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('amt22_unit25_1234_5_t2blank', '1,234.50');
         Observer.Expect('amt22_unit25_1234_5_t4blank', '1,234.50');
         Observer.Expect('amt22_unit25_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -197,6 +207,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('amt25_unit22_1234_5_t2blank', '1,234.50');
         Observer.Expect('amt25_unit22_1234_5_t4blank', '1,234.50');
         Observer.Expect('amt25_unit22_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -222,6 +233,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('cur_never_1234_5_t2blank', '1,234.50');
         Observer.Expect('cur_never_1234_5_t4blank', '1,234.50');
         Observer.Expect('cur_never_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -247,6 +259,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('cur_fcy_symbol_1234_5_t2blank', '1,234.50');
         Observer.Expect('cur_fcy_symbol_1234_5_t4blank', '1,234.50');
         Observer.Expect('cur_fcy_symbol_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -272,6 +285,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('cur_empty_fcy_symbol_1234_5_t2blank', '1,234.50');
         Observer.Expect('cur_empty_fcy_symbol_1234_5_t4blank', '1,234.50');
         Observer.Expect('cur_empty_fcy_symbol_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -297,6 +311,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('cur_fcy_code_1234_5_t2blank', '1,234.50');
         Observer.Expect('cur_fcy_code_1234_5_t4blank', '1,234.50');
         Observer.Expect('cur_fcy_code_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -339,6 +354,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('lcy_fcy_symbol_lcy_row_1234_5_t2blank', '1,234.50');
         Observer.Expect('lcy_fcy_symbol_lcy_row_1234_5_t4blank', '1,234.50');
         Observer.Expect('lcy_fcy_symbol_lcy_row_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -381,6 +397,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('lcy_fcy_code_lcy_row_1234_5_t2blank', '1,234.50');
         Observer.Expect('lcy_fcy_code_lcy_row_1234_5_t4blank', '1,234.50');
         Observer.Expect('lcy_fcy_code_lcy_row_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 
@@ -405,6 +422,7 @@ codeunit 69776 "PW AutoFormat Probe"
         Observer.Expect('cur_unknown_1234_5_t2blank', '1,234.50');
         Observer.Expect('cur_unknown_1234_5_t4blank', '1,234.50');
         Observer.Expect('cur_unknown_1234_5_t5blank', '1,234.50');
+        RestoreSetup();
         Observer.Verify();
     end;
 }
