@@ -919,7 +919,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Row.SetRange(Grp, 'G2');
         Page.RunModal(Page::"LT BE Lk List OneField", Row);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=Yes,rows=[U2][U3][]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -935,7 +936,9 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Act := Page.RunModal(Page::"LT BE Lk List OneField", Row);
         Observer.Observe('log', Log.Take());
         Observer.Observe('action', Format(Act));
-        Observer.Finish();
+        Observer.Expect('log', 'editable=No,rows=[U2][U3]');
+        Observer.Expect('action', 'LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -952,7 +955,9 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         else
             Observer.Observe('if', 'other');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('if', 'other');
+        Observer.Expect('log', 'editable=No,rows=[U2][U3]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -965,7 +970,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         SeedShapes();
         Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List CC", Row)));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=No,rows=[C1][C2],action=LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -978,7 +984,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         SeedShapes();
         Page.RunModal(Page::"LT BE Lk List CC", Row);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=Yes,rows=[C1][C2][]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -991,7 +998,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         SeedShapes();
         Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List NE", Row)));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=No,rows=[N1][N2],action=LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1004,7 +1012,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         SeedShapes();
         Page.RunModal(Page::"LT BE Lk List NE", Row);
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=Yes,rows=[N1][N2][]');
+        Observer.Verify();
     end;
 
     // The page of Plain_RunModalById_HasTheNewRowLine itself (page 60299 over table 60297), its return value used.
@@ -1024,7 +1033,8 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Log.Take();
         Log.Add('action=' + Format(Page.RunModal(Page::"Test Modal NRL Plain", Row)));
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'editable=No,rows=[A][B],action=LookupCancel');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1042,6 +1052,66 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         Row.Reset();
         Log.Take();
         Page.RunModal(Page::"Test Modal NRL Plain", Row);
+        Observer.Observe('log', Log.Take());
+        Observer.Expect('log', 'editable=Yes,rows=[A][B][]');
+        Observer.Verify();
+    end;
+
+    // A Page variable with no LookupMode call, and Page.RunModal(0, Rec), each with the return value used and not used.
+    [Test]
+    [HandlerFunctions('OneFieldWalkOnlyHandler')]
+    procedure Shape_PageVar_ReturnUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+        LkList: Page "LT BE Lk List OneField";
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        LkList.SetTableView(Row);
+        Log.Add('action=' + Format(LkList.RunModal()));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('OneFieldWalkOnlyHandler')]
+    procedure Shape_PageVar_ReturnNotUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+        LkList: Page "LT BE Lk List OneField";
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        LkList.SetTableView(Row);
+        LkList.RunModal();
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('SelfWalkOnlyHandler')]
+    procedure Shape_RunModalZero_ReturnUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row Self";
+    begin
+        Seed();
+        Log.Add('action=' + Format(Page.RunModal(0, Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('SelfWalkOnlyHandler')]
+    procedure Shape_RunModalZero_ReturnNotUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row Self";
+    begin
+        Seed();
+        Page.RunModal(0, Row);
         Observer.Observe('log', Log.Take());
         Observer.Finish();
     end;

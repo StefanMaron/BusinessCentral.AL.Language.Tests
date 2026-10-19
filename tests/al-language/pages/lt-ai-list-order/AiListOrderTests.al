@@ -1093,7 +1093,12 @@ codeunit 78862 "LT AI List Paging Order"
         Log.Clear();
         Row.Get('R1010');
         Page.Run(Page::"LT AI List", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'F:=>=Yes;R:R1010;N:1=1;R:R1011;N:1=1;R:R1012;N:1=1;R:R1013;N:1=1;R:R1014;N:1=1;R:R1015;N:1=1;R:R1016;N:1=1;R:R1017;N:1=1;R:R1018;N:1=1;R:R1019;N:1=1;R:R1020;N:1=1;R:R1021;N:1=1;R:R1022;N:1=1;R:R1023;N:1=1;R:R1024;N:1=1;R:R1025;N:1=1;R:R1026;N:1=1;R:R1027;N:1=1;R:R1028;N:1=1;R:R1029;R:R1010;N:-1=-1;R:R1009;N:-1=-1;R:R1008;N:-1=-1;R:R1007;N:-1=-1;R:R1006;N:-1=-1;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1010');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current2', 'R1011');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1107,7 +1112,12 @@ codeunit 78862 "LT AI List Paging Order"
         Log.Clear();
         Row.Get('R1010');
         Page.Run(Page::"LT AI List Curr", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'F:=>=Yes;R:R1010;N:1=1;R:R1011;N:1=1;R:R1012;N:1=1;R:R1013;N:1=1;R:R1014;N:1=1;R:R1015;N:1=1;R:R1016;N:1=1;R:R1017;N:1=1;R:R1018;N:1=1;R:R1019;N:1=1;R:R1020;N:1=1;R:R1021;N:1=1;R:R1022;N:1=1;R:R1023;N:1=1;R:R1024;N:1=1;R:R1025;N:1=1;R:R1026;N:1=1;R:R1027;N:1=1;R:R1028;N:1=1;R:R1029;R:R1010;N:-1=-1;R:R1009;N:-1=-1;R:R1008;N:-1=-1;R:R1007;N:-1=-1;R:R1006;N:-1=-1;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0;R:R1010;F:==Yes;R:R1010;C:R1010');
+        Observer.Expect('current', 'R1010');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', 'R:R1011;F:==Yes;R:R1011;C:R1011');
+        Observer.Expect('current2', 'R1011');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1128,6 +1138,26 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Observe('current2', P.NoCtl.Value());
         Log.SetStartKey('');
         P.Close();
+        Observer.Expect('open', 'R:R1010;N:1=1;R:R1011;N:1=1;R:R1012;N:1=1;R:R1013;N:1=1;R:R1014;N:1=1;R:R1015;N:1=1;R:R1016;N:1=1;R:R1017;N:1=1;R:R1018;N:1=1;R:R1019;N:1=1;R:R1020;N:1=1;R:R1021;N:1=1;R:R1022;N:1=1;R:R1023;N:1=1;R:R1024;N:1=1;R:R1025;N:1=1;R:R1026;N:1=1;R:R1027;N:1=1;R:R1028;N:1=1;R:R1029;R:R1010;N:-1=-1;R:R1009;N:-1=-1;R:R1008;N:-1=-1;R:R1007;N:-1=-1;R:R1006;N:-1=-1;R:R1005;N:-1=-1;R:R1004;N:-1=-1;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1010');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '');
+        Observer.Expect('current2', 'R1011');
+        Observer.Verify();
+    end;
+
+    // More rows before the first than a window holds (60 rows, opened on R1030): does the read back stop?
+    [Test]
+    [HandlerFunctions('RunHandler')]
+    procedure PageRun_RecordOnThirtiethOfSixty_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        Row: Record "LT AI Row";
+    begin
+        Log.Seed(60);
+        Log.Clear();
+        Row.Get('R1030');
+        Page.Run(Page::"LT AI List", Row);
         Observer.Finish();
     end;
 }

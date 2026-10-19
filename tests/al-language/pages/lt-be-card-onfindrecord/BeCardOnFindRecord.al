@@ -300,7 +300,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         MakeTemp(Row);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card TF", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/passed/;F:=:1/passed/in memory;R:1/passed/in memory');
+        Observer.Expect('descrCtl', 'passed');
+        Observer.Expect('noteCtl', 'in memory');
+        Observer.Expect('action', 'R:1/passed/in memory;A:passed/in memory;R:1/passed/in memory;F:=:1/passed/in memory;R:1/passed/in memory');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +318,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         Row.Get(1);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card TF", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/stored/;F:=:1/stored/in memory;R:1/stored/in memory');
+        Observer.Expect('descrCtl', 'stored');
+        Observer.Expect('noteCtl', 'in memory');
+        Observer.Expect('action', 'R:1/stored/in memory;A:stored/in memory;R:1/stored/in memory;F:=:1/stored/in memory;R:1/stored/in memory');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -338,7 +348,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         MakeTemp(Row);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card T", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/passed/;R:1/passed/');
+        Observer.Expect('descrCtl', 'passed');
+        Observer.Expect('noteCtl', '');
+        Observer.Expect('action', 'R:1/passed/;A:passed/;R:1/passed/;R:1/passed/');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -351,7 +366,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         Row.Get(1);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card T", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/stored/;R:1/stored/');
+        Observer.Expect('descrCtl', 'stored');
+        Observer.Expect('noteCtl', '');
+        Observer.Expect('action', 'R:1/stored/;A:stored/;R:1/stored/;R:1/stored/');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -376,7 +396,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         MakeTemp(Row);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card DF", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/passed/;F:=:1/passed/in memory;R:1/passed/in memory');
+        Observer.Expect('descrCtl', 'passed');
+        Observer.Expect('noteCtl', 'in memory');
+        Observer.Expect('action', 'R:1/passed/in memory;A:passed/in memory;R:1/passed/in memory;F:=:1/passed/in memory;R:1/passed/in memory');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -389,7 +414,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         Row.Get(1);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card DF", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/stored/;F:=:1/stored/in memory;R:1/stored/in memory');
+        Observer.Expect('descrCtl', 'stored');
+        Observer.Expect('noteCtl', 'in memory');
+        Observer.Expect('action', 'R:1/stored/in memory;A:stored/in memory;R:1/stored/in memory;F:=:1/stored/in memory;R:1/stored/in memory');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -414,7 +444,12 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         MakeTemp(Row);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card D", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/passed/;R:1/passed/');
+        Observer.Expect('descrCtl', 'passed');
+        Observer.Expect('noteCtl', '');
+        Observer.Expect('action', 'R:1/passed/;A:passed/;R:1/passed/;R:1/passed/');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -427,6 +462,11 @@ codeunit 81164 "LT BE Card OnFindRecord Tests"
         Row.Get(1);
         Log.Take();
         Page.Run(Page::"LT BE Cf Card D", Row);
-        Observer.Finish();
+        Observer.Expect('open', 'O:1/stored/;R:1/stored/');
+        Observer.Expect('descrCtl', 'stored');
+        Observer.Expect('noteCtl', '');
+        Observer.Expect('action', 'R:1/stored/;A:stored/;R:1/stored/;R:1/stored/');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 }
