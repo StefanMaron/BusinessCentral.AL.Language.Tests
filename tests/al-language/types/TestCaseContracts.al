@@ -290,7 +290,10 @@ codeunit 60187 "Test Case Contracts"
         Observer.Observe('a=1', UnbracedIf(1));
         Observer.Observe('a=2', UnbracedIf(2));
         Observer.Observe('a=3', UnbracedIf(3));
-        Observer.Finish();
+        Observer.Expect('a=1', 'x');
+        Observer.Expect('a=2', 'y');
+        Observer.Expect('a=3', 'z');
+        Observer.Verify();
     end;
 
     local procedure UnbracedIf(a: Integer): Text
@@ -323,7 +326,16 @@ codeunit 60187 "Test Case Contracts"
         Observer.Observe('0.1+0.2', DecCase(0.1 + 0.2));
         Observer.Observe('0.3', DecCase(0.3));
         Observer.Observe('-3', DecCase(-3));
-        Observer.Finish();
+        Observer.Expect('1.5', 'first 1.5');
+        Observer.Expect('1.50', 'first 1.5');
+        Observer.Expect('1.2', 'range 1..2');
+        Observer.Expect('2', 'range 1..2');
+        Observer.Expect('2.5', 'else');
+        Observer.Expect('-0.5', 'minus 0.5');
+        Observer.Expect('0.1+0.2', '0.3');
+        Observer.Expect('0.3', '0.3');
+        Observer.Expect('-3', 'range -5..-1');
+        Observer.Verify();
     end;
 
     local procedure DecCase(Value: Decimal): Text
@@ -366,7 +378,9 @@ codeunit 60187 "Test Case Contracts"
                 R := 'int else ran';
         end;
         Observer.Observe('case int only else', R);
-        Observer.Finish();
+        Observer.Expect('case true only else', 'else ran');
+        Observer.Expect('case int only else', 'int else ran');
+        Observer.Verify();
     end;
 
     [Test]
@@ -390,7 +404,11 @@ codeunit 60187 "Test Case Contracts"
         // A DateTime selector with a `0DT:` label is left out on purpose: it compiles, but BC 29.0 then fails the C# compilation of the
         // whole codeunit at publish ("C# compilation has failed for the application object CodeUnit_60187 ... error CS0426: The type name
         // 'Create' does not exist in the type 'NavDateTime'", corpus CI run 39239885087), so none of its tests would run.
-        Observer.Finish();
+        Observer.Expect('0D', 'zero');
+        Observer.Expect('fixed date', '15 March');
+        Observer.Expect('other date', 'other');
+        Observer.Expect('0T', 'zero');
+        Observer.Verify();
     end;
 
     local procedure DateCase(D: Date): Text
@@ -430,7 +448,15 @@ codeunit 60187 "Test Case Contracts"
             Observer.Observe('code 10 chars vs 12-char label', Txt)
         else
             Observer.ObserveError('code 10 chars vs 12-char label');
-        Observer.Finish();
+        Observer.Expect('code ABC vs labels abc,ABC', 'lower label');
+        Observer.Expect('code assigned abc', 'lower label');
+        Observer.Expect('text abc vs labels ABC,abc', 'lower label');
+        Observer.Expect('text ABC vs labels ABC,abc', 'upper label');
+        Observer.Expect('code vs 12-char label|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKL');
+        Observer.Expect('code vs 12-char label|code', 'StringLengthExceeded');
+        Observer.Expect('code 10 chars vs 12-char label|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKL');
+        Observer.Expect('code 10 chars vs 12-char label|code', 'StringLengthExceeded');
+        Observer.Verify();
     end;
 
     local procedure CodeCase(Value: Code[10]): Text

@@ -146,7 +146,9 @@ codeunit 60193 "Test Ternary Contracts"
     begin
         Observer.Observe('true', CharTextForms(true));
         Observer.Observe('false', CharTextForms(false));
-        Observer.Finish();
+        Observer.Expect('true', '[][1][1][a][1]');
+        Observer.Expect('false', '[1][ ][0][][]');
+        Observer.Verify();
     end;
 
     local procedure CharTextForms(Cond: Boolean): Text
@@ -189,7 +191,12 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe('Cond ? GetVariant() : Bar, true', 'ok|' + Format(V) + '|' + VariantKind(V))
         else
             Observer.ObserveError('Cond ? GetVariant() : Bar, true');
-        Observer.Finish();
+        Observer.Expect('Cond ? Bar : GetVariant(), false|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('Cond ? Bar : GetVariant(), false|code', 'TypeConversion');
+        Observer.Expect('Cond ? Bar : GetVariant(), true', 'ok|Bar|Text');
+        Observer.Expect('Cond ? GetVariant() : Bar, false', 'ok|Bar|Text');
+        Observer.Expect('Cond ? GetVariant() : Bar, true', 'ok|5|Integer');
+        Observer.Verify();
     end;
 
     local procedure GetVariant(): Variant
@@ -255,7 +262,15 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe('Boo ? 0.25 : 1, true', 'ok|' + Format(Quantity))
         else
             Observer.ObserveError('Boo ? 0.25 : 1, true');
-        Observer.Finish();
+        Observer.Expect('Boo ? 1 : 0.25, false|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 0.25 to System.Int32.');
+        Observer.Expect('Boo ? 1 : 0.25, false|code', 'ConversionCast');
+        Observer.Expect('Boo ? 1 : 3.0, false', 'ok|3');
+        Observer.Expect('Boo ? 1 : 2.5, false|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.');
+        Observer.Expect('Boo ? 1 : 2.5, false|code', 'ConversionCast');
+        Observer.Expect('Boo ? 1 : 0.25, true', 'ok|1');
+        Observer.Expect('Boo ? 0.25 : 1, false', 'ok|1');
+        Observer.Expect('Boo ? 0.25 : 1, true', 'ok|0.25');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -292,7 +307,12 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe('Cond ? 30-char text : Code20, true', 'ok|' + Result + '|' + Format(StrLen(Result)))
         else
             Observer.ObserveError('Cond ? 30-char text : Code20, true');
-        Observer.Finish();
+        Observer.Expect('Cond ? Code20 : 30-char text, false|text', 'The length of the string is 30, but it must be less than or equal to 20 characters. Value: abcdefghijklmnopqrstuvwxyz1234');
+        Observer.Expect('Cond ? Code20 : 30-char text, false|code', 'StringLengthExceeded');
+        Observer.Expect('Cond ? Code20 : 30-char text, true', 'ok|SHORTCODE');
+        Observer.Expect('Cond ? 30-char text : Code20, false', 'ok|SHORTCODE');
+        Observer.Expect('Cond ? 30-char text : Code20, true', 'ok|abcdefghijklmnopqrstuvwxyz1234|30');
+        Observer.Verify();
     end;
 
     [TryFunction]

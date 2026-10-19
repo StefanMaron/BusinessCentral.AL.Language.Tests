@@ -442,9 +442,7 @@ codeunit 60186 "Test Loop Contracts"
     var
         Observer: Codeunit "Probe Observer";
         Big: BigInteger;
-        Dec: Decimal;
         Count: Integer;
-        R: Text;
     begin
         Big := 100000000000000L;
         if TryForBig(Big, Count) then
@@ -456,22 +454,32 @@ codeunit 60186 "Test Loop Contracts"
             Observer.Observe('biginteger bound 3', 'ok|' + Format(Count))
         else
             Observer.ObserveError('biginteger bound 3');
-        Dec := 2.5;
-        R := '';
-        for Count := 1 to Dec do
-            R += Format(Count) + ',';
-        Observer.Observe('decimal bound 2.5', R + '|' + Format(Count));
-        Dec := 2.6;
-        R := '';
-        for Count := 1 to Dec do
-            R += Format(Count) + ',';
-        Observer.Observe('decimal bound 2.6', R + '|' + Format(Count));
-        Dec := 0.5;
-        R := '';
-        for Count := Dec to 2 do
-            R += Format(Count) + ',';
-        Observer.Observe('decimal start 0.5', R + '|' + Format(Count));
+        // A Decimal bound with a fraction raises an error when the loop starts (corpus CI run 39242251403 on BC 29.0: "Overflow under
+        // conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32."), so each Decimal form runs in a TryFunction.
+        ObserveDecLoop(Observer, 'decimal bound 2.5', 1, 2.5);
+        ObserveDecLoop(Observer, 'decimal bound 2.6', 1, 2.6);
+        ObserveDecLoop(Observer, 'decimal bound 3.0', 1, 3);
+        ObserveDecLoop(Observer, 'decimal start 0.5', 0.5, 2);
         Observer.Finish();
+    end;
+
+    local procedure ObserveDecLoop(var Observer: Codeunit "Probe Observer"; Name: Text; StartAt: Decimal; EndAt: Decimal)
+    var
+        R: Text;
+        Count: Integer;
+    begin
+        if TryForDec(StartAt, EndAt, R, Count) then
+            Observer.Observe(Name, 'ok|' + R + '|' + Format(Count))
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    [TryFunction]
+    local procedure TryForDec(StartAt: Decimal; EndAt: Decimal; var R: Text; var Count: Integer)
+    begin
+        R := '';
+        for Count := StartAt to EndAt do
+            R += Format(Count) + ',';
     end;
 
     [TryFunction]
