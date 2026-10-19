@@ -152,12 +152,6 @@ codeunit 81959 "LT BM FlowField Conversions"
         Observer.Observe('big_2pow32_plus_5', CountIntByBig(BigOf(4294, 967301)));
         Observer.Observe('big_2pow32_minus_1', CountIntByBig(BigOf(4294, 967295)));
 #endif
-        Host.Id := 3000000;
-        Host.CalcFields("Count Big By Id");
-        Observer.Observe('count_big_by_id_none', Format(Host."Count Big By Id"));
-        Host.Id := 1;
-        Host.CalcFields("Count Big By Id");
-        Observer.Observe('count_big_by_id_1', Format(Host."Count Big By Id"));
 #if BC29PLUS
         Observer.Expect('big_5', '2');
         Observer.Expect('big_minus_1', '1');
@@ -166,9 +160,31 @@ codeunit 81959 "LT BM FlowField Conversions"
         Observer.Expect('big_2pow32_plus_5', 'error|Overflow under conversion of System.Int64 value 4294967301 to System.Int32.|ConversionCast');
         Observer.Expect('big_2pow32_minus_1', 'error|Overflow under conversion of System.Int64 value 4294967295 to System.Int32.|ConversionCast');
 #endif
-        Observer.Expect('count_big_by_id_none', '0');
-        Observer.Expect('count_big_by_id_1', '1');
         Observer.Verify();
+    end;
+
+    // The other direction, a BigInteger field = field(Integer), gives no compile diagnostic. On BC 28.5 CalcFields then raised
+    // "The following fields must have the same type: ... Type: BigInteger <-- Integer" (CI run 39253469275); on BC 29.0 it counted.
+    [Test]
+    procedure BM_CalcFormula_BigIntegerFilterFromInteger()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Observer.Observe('id_1', CountBigById(1));
+        Observer.Observe('id_none', CountBigById(3000000));
+        Observer.Finish();
+    end;
+
+    local procedure CountBigById(HostId: Integer): Text
+    var
+        Host: Record "LT BM FF Host";
+    begin
+        Host.Id := HostId;
+        ClearLastError();
+        if TryCalc(Host, 4) then
+            exit(Format(Host."Count Big By Id"));
+        exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
     [Test]
