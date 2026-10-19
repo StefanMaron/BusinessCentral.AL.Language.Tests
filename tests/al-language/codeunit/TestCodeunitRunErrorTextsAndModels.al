@@ -290,7 +290,14 @@ codeunit 68100 "Probe Codeunit Run Texts"
 
         asserterror Page.Run(Page::"ALT Card Page", Composite);
         Observer.ObserveError('page run');
-        Observer.Finish();
+        Observer.Expect('guarded result', 'Yes');
+        Observer.Expect('guarded|text', 'Record(60001) is not compatible with Codeunit.Run(Record(60000)).');
+        Observer.Expect('guarded|code', 'InvalidType');
+        Observer.Expect('unguarded|text', 'Record(60001) is not compatible with Codeunit.Run(Record(60000)).');
+        Observer.Expect('unguarded|code', 'InvalidType');
+        Observer.Expect('page run|text', 'The table IDs do not match.');
+        Observer.Expect('page run|code', 'TableIdMismatch');
+        Observer.Verify();
     end;
 }
 

@@ -814,7 +814,10 @@ codeunit 60802 "Test AllObj Virtual Table"
         Observer.Observe('Subtype = Test', AllObj."Object Subtype");
         AllObj.Get(AllObj."Object Type"::Codeunit, Codeunit::"LT BP DataScope Holder");
         Observer.Observe('normal codeunit', AllObj."Object Subtype");
-        Observer.Finish();
+        Observer.Expect('lower case test', 'Test');
+        Observer.Expect('Subtype = Test', 'Test');
+        Observer.Expect('normal codeunit', '');
+        Observer.Verify();
     end;
 
     local procedure Initialize()

@@ -619,9 +619,8 @@ codeunit 72410 "LT P106 Run Static"
         Observer.Verify();
     end;
 
-    // Writer BP (corpus issue 664, microsoft/AL issue 5209).
+    // Writer BP (corpus issue 664, microsoft/AL issue 5209). No handler: neither call opens the page.
     [Test]
-    [HandlerFunctions('ListH')]
     procedure P106_BP_RunModal_IntegerFieldOfAnotherTable()
     var
         Observer: Codeunit "Probe Observer";
@@ -676,7 +675,13 @@ codeunit 72410 "LT P106 Run Static"
         Observer.Observe('integer variable ok', Format(TryRunModal(Item, Other, 3, Act)));
         Observer.ObserveError('integer variable');
         Report(Observer, 'integer variable', Act);
-        Observer.Finish();
+        Observer.Expect('integer variable ok', 'Yes');
+        Observer.Expect('integer variable|text', '');
+        Observer.Expect('integer variable|code', '');
+        Observer.Expect('integer variable_action', 'LookupOK');
+        Observer.Expect('integer variable_h', 'cur=B/Beta;caption=LT P106 List Caption;rows=ABCD');
+        Observer.Expect('integer variable_log', 'List OnOpenPage filter=;List OnQueryClosePage(LookupOK)');
+        Observer.Verify();
     end;
 
     [TryFunction]
