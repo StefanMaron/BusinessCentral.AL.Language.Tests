@@ -293,7 +293,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@add-assembly-probing-paths-input
     with:
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
@@ -301,6 +301,9 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem-dotnet"
+      assembly_probing_paths: |
+        platform/Test Assemblies
+        platform/ServiceTier/PFiles64/Microsoft Dynamics NAV/*/Service
       codeunit_range:       "61400..61499|99000..99499"
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
