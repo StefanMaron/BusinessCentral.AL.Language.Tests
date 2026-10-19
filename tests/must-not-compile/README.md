@@ -391,6 +391,20 @@ is only a reference.
 | 1387 | AL0165, AL0750, AL0118 | Trigger called directly; chained enum value; "17".DeleteAll and Customer.Count without a variable (corpus #664 items 30, 32, 33). |
 | 1388 | AL0185, AL0851 | 'as' with a target that is not an interface (corpus #664 item 19). |
 | 1389 | AL0159 | Blob and TestPage as return types; the other complex types and the Http types compile (corpus #664 items 35, 36). |
+| 1490 | AL0839 | a table and its table extension in the same app both set `Caption` (same XLIFF trans-unit id; Caption on a table extension alone compiles) |
+| 1491 | AL0404 | `Clustered` and `Unique` on a key that a table extension adds (`MaintainSqlIndex = false` compiles) |
+| 1492 | AL0246 | `CompressionType` on a table extension |
+| 1493 | AL0690, AL0687 | `IncludedFields` on the primary key / a secondary key whose `IncludedFields` names a primary-key field |
+| 1494 | AL0246 | `DataPerCompany` on a table extension |
+| 1495 | AL0525 | a table extension of the system table `User` and of the virtual table `Integer` |
+| 1496 | AL0564 | a table extension of a table with `Extensible = false` |
+| 1497 | AL0440 | a table extension procedure with the name (case-insensitive) and parameter types of a procedure of its table (an overload compiles) |
+| 1498 | AL0404 | `SqlTimestamp` on a field that a table extension adds |
+| 1499 | AL0171 | `modify()` of a base table field in a table extension sets `CalcFormula` |
+| 1500 | AL0926 | a table that declares `fieldgroups` before `keys` |
+| 1501 | AL0246 | a page extension changes `ApplicationArea` of a base part with `modify` (on a field control it compiles) |
+| 1502 | AL0378 | triggers in a page extension of a Role Center page (one diagnostic per trigger) |
+| 1503 | AL0322 | a page extension `modify()` sets `Editable` to a procedure call (a constant or a Boolean variable compiles) |
 | 1570 to 1572 | AL0187 (and AL0666 on BC 27 and 28) | [RequiredPending] on an interface method; one case per BC major (corpus #664 item 19). |
 | 1573 | AL0625 | #define after the first token of a file (corpus #664 item 29). |
 | 1574 to 1576 | AL0629, AL0631 | Preprocessor operators that do not exist: '!', '&&', '== true' (corpus #664 item 29). |
