@@ -312,6 +312,8 @@ codeunit 81891 "LT BL Implicit Creation"
     begin
         asserterror Pg.OpenNew();
         Observer.ObserveError('OpenNew');
-        Observer.Finish();
+        Observer.Expect('OpenNew|text', 'The view mode ''Create'' is not supported by the page ID ''81886''.');
+        Observer.Expect('OpenNew|code', 'NotSupportedPageViewMode');
+        Observer.Verify();
     end;
 }

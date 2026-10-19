@@ -122,7 +122,7 @@ codeunit 81876 "LT BL Invalid Decimal Filter"
         Observer.Expect('2 ..1', 'ok [Amount: ..1]');
         Observer.Expect('2 ''abc''', 'error [The filter "''abc''" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "abc" can''t be evaluated into type Decimal.] [Filter:CSide]');
         Observer.Expect('2 *', 'error [The filter "*" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "*" can''t be evaluated into type Decimal.] [Filter:CSide]');
-        Observer.Expect('2 -<MORE>', '');
+        Observer.Expect('2 -', 'error [The filter "-" is not valid for the Amount field on the LT BL Bad Filter Row table. The value "-" can''t be evaluated into type Decimal.] [Filter:CSide]');
         Observer.Verify();
     end;
 
