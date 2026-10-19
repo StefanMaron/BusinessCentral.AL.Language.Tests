@@ -76,6 +76,13 @@ codeunit 85601 "LT CZ Http Outbound"
         Client.Timeout := 5000;
         Observer.Observe('loopback', GetOutcome(Client, 'http://127.0.0.1:1/'));
         Observer.Observe('localhost', GetOutcome(Client, 'http://localhost:1/'));
+        Observer.Observe('loopback_other', GetOutcome(Client, 'http://127.10.20.30/'));
+        Observer.Observe('ipv6_loopback', GetOutcome(Client, 'http://[::1]:1/'));
+        Observer.Observe('ten', GetOutcome(Client, 'http://10.255.255.1/'));
+        Observer.Observe('lan', GetOutcome(Client, 'http://192.168.255.1/'));
+        Observer.Observe('lan172', GetOutcome(Client, 'http://172.16.255.1/'));
+        Observer.Observe('imds', GetOutcome(Client, 'http://169.254.169.254/metadata/instance'));
+        Observer.Observe('zero', GetOutcome(Client, 'http://0.0.0.0:1/'));
         Observer.Observe('prompts', Format(Prompts));
         Observer.Finish();
     end;
@@ -204,6 +211,17 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Finish();
     end;
 
+    local procedure EchoHasAuth(var Client: HttpClient; Url: Text): Text
+    var
+        Resp: HttpResponseMessage;
+        Body: Text;
+        Ok: Boolean;
+    begin
+        Ok := Client.Get(Url, Resp);
+        Resp.Content.ReadAs(Body);
+        exit('ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' auth=' + Format(Body.Contains('"Authorization": "Bearer visible"')));
+    end;
+
     [Test]
     [HandlerFunctions('AllowOnceHandler')]
     procedure Redirects()
@@ -215,6 +233,10 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('httpbin_302', GetOutcome(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F&status_code=302'));
         Observer.Observe('httpbin_307', GetOutcome(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F&status_code=307'));
         Observer.Observe('httpbin_308', GetOutcome(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F&status_code=308'));
+        Client.DefaultRequestHeaders().Add('Authorization', 'Bearer visible');
+        Observer.Observe('auth_direct', EchoHasAuth(Client, 'https://httpbin.org/headers'));
+        Observer.Observe('auth_after_302_same_host', EchoHasAuth(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fheaders&status_code=302'));
+        Observer.Observe('auth_after_307_same_host', EchoHasAuth(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fheaders&status_code=307'));
         Observer.Observe('httpbin_301', GetOutcome(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F&status_code=301'));
         Observer.Finish();
     end;
