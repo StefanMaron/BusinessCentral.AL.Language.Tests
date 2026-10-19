@@ -361,6 +361,7 @@ codeunit 84790 "LT CL Event Leads"
         R.Id := 'C1';
         R.Validate(E, 4);
         R.Validate(B, 6);
+        R.Validate(Qty, 9);
         O.Observe('validate', Log.Take());
         R.Insert(true);
         O.Observe('insert', Log.Take());
@@ -392,6 +393,8 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('afterB', Log.Take());
         Card.E.SetValue(3);
         O.Observe('afterE', Log.Take());
+        Card.Qty.SetValue(4);
+        O.Observe('afterQty', Log.Take());
         Card.Close();
         O.Observe('afterClose', Log.Take());
         UnbindSubscription(Subs);
@@ -423,6 +426,8 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('afterB', Log.Take());
         Card.E.SetValue(8);
         O.Observe('afterE', Log.Take());
+        Card.Qty.SetValue(5);
+        O.Observe('afterQty', Log.Take());
         Card.Close();
         O.Observe('afterClose', Log.Take());
         UnbindSubscription(Subs);

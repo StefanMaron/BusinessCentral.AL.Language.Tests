@@ -71,6 +71,15 @@ table 84764 "LT CL CFN Row"
                 L.Add('B.validate cur=' + Format(CurrFieldNo) + ' xB=' + Format(xRec.B));
             end;
         }
+        field(3; Qty; Integer)
+        {
+            trigger OnValidate()
+            var
+                L: Codeunit "LT CL Log";
+            begin
+                L.Add('Qty.validate cur=' + Format(CurrFieldNo));
+            end;
+        }
     }
 
     keys { key(PK; Id) { Clustered = true; } }
@@ -273,6 +282,7 @@ page 84771 "LT CL CFN Card"
         {
             field(Id; Rec.Id) { ApplicationArea = All; }
             field(B; Rec.B) { ApplicationArea = All; }
+            field(Qty; Rec.Qty) { ApplicationArea = All; }
             field(E; Rec.E) { ApplicationArea = All; }
         }
     }
@@ -708,6 +718,22 @@ codeunit 84781 "LT CL CFN Subs"
         L: Codeunit "LT CL Log";
     begin
         L.Add('sub.beforeB param=' + Format(CurrFieldNo));
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnBeforeValidateEvent', 'Qty', false, false)]
+    local procedure BeforeValidateQty(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.beforeQty param=' + Format(CurrFieldNo));
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterValidateEvent', 'Qty', false, false)]
+    local procedure AfterValidateQty(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.afterQty param=' + Format(CurrFieldNo));
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterInsertEvent', '', false, false)]
