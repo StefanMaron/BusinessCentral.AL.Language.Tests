@@ -86,7 +86,10 @@ codeunit 85441 "LT CW Enum Ordinals"
             R += Format(K) + '/' + Format(K, 0, 1) + '/' + Format(K, 0, 2) + ';';
         end;
         Observer.Observe('format', R);
-        Observer.Finish();
+        Observer.Expect('ordinals', '1,3,2,4,0,');
+        Observer.Expect('names', 'Text,Date,Decimal,Code,None,');
+        Observer.Expect('format', 'Text caption/Text caption/1;Date caption/Date caption/3;Decimal caption/Decimal caption/2;Code caption/Code caption/4;None caption/None caption/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -103,7 +106,13 @@ codeunit 85441 "LT CW Enum Ordinals"
         K := K::None;
         Observer.Observe('None < Text', Format(K < K::Text));
         Observer.Observe('Decimal < Date', Format(Enum::"LT CW Field Kind"::Decimal < Enum::"LT CW Field Kind"::Date));
-        Observer.Finish();
+        Observer.Expect('Date > Decimal', 'Yes');
+        Observer.Expect('Date < Code', 'Yes');
+        Observer.Expect('Date = 3', 'Yes');
+        Observer.Expect('Date = Date', 'Yes');
+        Observer.Expect('None < Text', 'Yes');
+        Observer.Expect('Decimal < Date', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +153,10 @@ codeunit 85441 "LT CW Enum Ordinals"
         Observer.Observe('range Text..Date', R + '|' + Row.GetFilter(Kind));
         Row.SetRange(Kind, Row.Kind::Date, Row.Kind::Decimal);
         Observer.Observe('range Date..Decimal', Format(Row.Count()) + '|' + Row.GetFilter(Kind));
-        Observer.Finish();
+        Observer.Expect('key order', '4:0,2:1,5:2,3:3,1:4,');
+        Observer.Expect('range Text..Date', '2,5,3,|Text caption..Date caption');
+        Observer.Expect('range Date..Decimal', '0|Date caption..Decimal caption');
+        Observer.Verify();
     end;
 
     [Test]
@@ -158,6 +170,10 @@ codeunit 85441 "LT CW Enum Ordinals"
         T := Enum::"Sales Line Type".FromInteger(6);
         Observer.Observe('six', Format(T) + '|' + Format(T, 0, 1) + '|' + Format(T.AsInteger()));
         Observer.Observe('six > ten', Format(T > T::"Allocation Account"));
-        Observer.Finish();
+        Observer.Expect('ordinals', '0,1,2,3,4,5,10,6,');
+        Observer.Expect('names', ' ,G/L Account,Item,Resource,Fixed Asset,Charge (Item),Allocation Account,LT CW Six,');
+        Observer.Expect('six', 'LT CW Six caption|LT CW Six caption|6');
+        Observer.Expect('six > ten', 'No');
+        Observer.Verify();
     end;
 }

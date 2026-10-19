@@ -133,6 +133,13 @@ codeunit 85446 "LT CW Variant ChangeCompany"
         Observer.Observe('interface var variant', Where(Parts.Get(1)) + '|' + Parts.Get(2));
 
         DeleteCompany();
-        Observer.Finish();
+        Observer.Expect('record', 'other|2');
+        Observer.Expect('variant to recordref', 'session|0|Id: >=2');
+        Observer.Expect('variant to record', 'session|1|');
+        Observer.Expect('recordref direct', 'other|2');
+        Observer.Expect('recordref variant', 'other|2');
+        Observer.Expect('recordref variant settable', 'session|0');
+        Observer.Expect('interface var variant', 'session|0');
+        Observer.Verify();
     end;
 }

@@ -65,7 +65,16 @@ codeunit 85443 "LT CW Variant Arrays"
         Observer.Observe('copy then change', Format(V[1]) + '|' + Format(V[2]));
         Clear(V[2]);
         Observer.Observe('clear one', Format(V[1]) + '|[' + Format(V[2]) + ']|' + Format(V[5]));
-        Observer.Finish();
+        Observer.Expect('v1', '10');
+        Observer.Expect('v2', '20');
+        Observer.Expect('v3 empty', 'No|[]');
+        Observer.Expect('v3 record', 'Yes|7|seven');
+        Observer.Expect('v4 record', '8|eight');
+        Observer.Expect('v5 text', 'Yes|text five');
+        Observer.Expect('v6 date', 'Yes|2025-01-02');
+        Observer.Expect('copy then change', '20|30');
+        Observer.Expect('clear one', '20|[]|text five');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +97,10 @@ codeunit 85443 "LT CW Variant Arrays"
         Observer.Observe('values', Format(F[1].Value) + '|' + Format(F[2].Value) + '|' + Format(F[3].Value));
         F[1].Value := 'changed';
         Observer.Observe('after set', Format(F[1].Value) + '|' + Format(F[2].Value) + '|' + Format(RecRef.Field(2).Value));
-        Observer.Finish();
+        Observer.Expect('names', 'Name|No.|Amount');
+        Observer.Expect('values', 'n1|C1|2.5');
+        Observer.Expect('after set', 'changed|C1|changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,6 +125,7 @@ codeunit 85443 "LT CW Variant Arrays"
                 end;
             until Fld.Next() = 0;
         Observer.Observe('branches', R);
-        Observer.Finish();
+        Observer.Expect('branches', 'Id=number,Name=textcode,No.=textcode,Amount=number,Posted=else,Due Date=else,');
+        Observer.Verify();
     end;
 }

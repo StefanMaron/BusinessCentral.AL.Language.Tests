@@ -154,7 +154,13 @@ codeunit 85429 "LT CW Interface Leads"
         Observer.Observe('option literal', Ov.P(O::C));
         Observer.Observe('enum', Ov.P(E));
         Observer.Observe('enum literal', Ov.P(E::One));
-        Observer.Finish();
+        Observer.Expect('literal', 'option 1');
+        Observer.Expect('integer', 'option 2');
+        Observer.Expect('option', 'option 1');
+        Observer.Expect('option literal', 'option 2');
+        Observer.Expect('enum', 'enum 2');
+        Observer.Expect('enum literal', 'enum 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -171,8 +177,9 @@ codeunit 85429 "LT CW Interface Leads"
         I := E;
         Observer.Observe('value without own', I.Work());
         E := Enum::"LT CW E63".FromInteger(7);
-        I := E;
-        Observer.Observe('undeclared ordinal', I.Work());
+        Observer.Observe('undeclared ordinal', Format(E.AsInteger()));
+        asserterror I := E;
+        Observer.ObserveError('undeclared ordinal to interface');
         Observer.Finish();
     end;
 
@@ -194,7 +201,11 @@ codeunit 85429 "LT CW Interface Leads"
         Observer.Observe('return option', Format(N));
         R := I.Named(O::B);
         Observer.Observe('named', Format(R) + '|' + Format(R, 0, 2));
-        Observer.Finish();
+        Observer.Expect('take option', '2|2');
+        Observer.Expect('take integer', '1|1');
+        Observer.Expect('return option', '2');
+        Observer.Expect('named', 'Y|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -210,7 +221,9 @@ codeunit 85429 "LT CW Interface Leads"
         Two := E;
         Observer.Observe('one', Sel.SelectInterface(One));
         Observer.Observe('two', Sel.SelectInterface(Two));
-        Observer.Finish();
+        Observer.Expect('one', 'one A');
+        Observer.Expect('two', 'two B');
+        Observer.Verify();
     end;
 
     [Test]
@@ -236,6 +249,16 @@ codeunit 85429 "LT CW Interface Leads"
         Observer.Observe('I > E', Format(I > E));
         Observer.Observe('E in [O, I]', Format(E in [O, I]));
         Observer.Observe('E in [O, 1]', Format(E in [O, 1]));
-        Observer.Finish();
+        Observer.Expect('E = O', 'Yes');
+        Observer.Expect('O = E', 'Yes');
+        Observer.Expect('E = I', 'Yes');
+        Observer.Expect('I = E', 'Yes');
+        Observer.Expect('E < O', 'Yes');
+        Observer.Expect('O > E', 'Yes');
+        Observer.Expect('E < I', 'Yes');
+        Observer.Expect('I > E', 'Yes');
+        Observer.Expect('E in [O, I]', 'No');
+        Observer.Expect('E in [O, 1]', 'Yes');
+        Observer.Verify();
     end;
 }
