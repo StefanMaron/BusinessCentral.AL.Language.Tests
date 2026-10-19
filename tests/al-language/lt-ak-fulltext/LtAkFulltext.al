@@ -121,4 +121,17 @@ codeunit 79201 "LT AK Fts Test"
         F.FindFirst();
         Assert.IsFalse(F.OptimizeForTextSearch, 'Plain is not optimized');
     end;
+
+    // Corpus issue 668 item 63 (writer br): FieldRef.IsOptimizedForTextSearch of a field with OptimizeForTextSearch = true and of one without.
+    // OptimizeForTextSearch on a FlowField or FlowFilter field does not compile (AL0223): must-not-compile cases 1471 and 1472.
+    [Test]
+    procedure FieldRefIsOptimizedForTextSearch()
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(Database::"LT AK Fts Row");
+        Assert.IsTrue(RecRef.Field(2).IsOptimizedForTextSearch(), 'Txt is optimized');
+        Assert.IsFalse(RecRef.Field(3).IsOptimizedForTextSearch(), 'Plain is not optimized');
+        Assert.IsFalse(RecRef.Field(1).IsOptimizedForTextSearch(), 'Id is not optimized');
+    end;
 }

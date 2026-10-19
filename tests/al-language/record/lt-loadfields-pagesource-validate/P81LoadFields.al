@@ -805,4 +805,291 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Expect('systemid_same', 'Yes');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 items 41-44 (writer br): fields loaded besides the requested ones (relation and formula fields, extension fields),
+    // validation of a relation field whose condition field is not loaded, and the return value of SetLoadFields / AddLoadFields for a
+    // FlowField and a FlowFilter field.
+    local procedure BrSeed()
+    var
+        Target: Record "LT BR LF Target";
+        Other: Record "LT BR LF Other";
+        Row: Record "LT BR LF Row";
+    begin
+        Target.DeleteAll();
+        Other.DeleteAll();
+        Row.DeleteAll();
+        Target."No." := 'T1';
+        Target.Kind := 'G1';
+        Target.Insert();
+        Target."No." := 'T2';
+        Target.Kind := 'G2';
+        Target.Insert();
+        Other."No." := 'O1';
+        Other.Insert();
+        Row.Init();
+        Row.Id := 1;
+        Row.Kind := Row.Kind::Other;
+        Row."No." := 'O1';
+        Row.Grp := 'G1';
+        Row.Note := 'note one';
+        Row.RelFiltered := 'T1';
+        Row.ExtNote := 'ext one';
+        Row.ExtRel := '';
+        Row.Insert();
+        Row.Init();
+        Row.Id := 2;
+        Row.Kind := Row.Kind::Target;
+        Row."No." := 'T2';
+        Row.Grp := 'G2';
+        Row.Note := 'note two';
+        Row.ExtNote := 'ext two';
+        Row.ExtRel := 'T2';
+        Row.Insert();
+    end;
+
+    local procedure BrLoaded(var Row: Record "LT BR LF Row"): Text
+    begin
+        exit(
+            'Kind=' + Format(Row.AreFieldsLoaded(Row.Kind)) +
+            ' No=' + Format(Row.AreFieldsLoaded(Row."No.")) +
+            ' Grp=' + Format(Row.AreFieldsLoaded(Row.Grp)) +
+            ' Cnt=' + Format(Row.AreFieldsLoaded(Row.Cnt)) +
+            ' Note=' + Format(Row.AreFieldsLoaded(Row.Note)) +
+            ' RelFiltered=' + Format(Row.AreFieldsLoaded(Row.RelFiltered)) +
+            ' ExtNote=' + Format(Row.AreFieldsLoaded(Row.ExtNote)) +
+            ' ExtRel=' + Format(Row.AreFieldsLoaded(Row.ExtRel)));
+    end;
+
+    [Test]
+    procedure BR_LoadFields_RelationAndFormulaFields_WhatElseIsLoaded()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BR LF Row";
+    begin
+        BrSeed();
+        Row.SetLoadFields(Note);
+        Row.FindFirst();
+        Observer.Observe('note only', BrLoaded(Row));
+        Clear(Row);
+        Row.SetLoadFields(Cnt);
+        Row.FindFirst();
+        Observer.Observe('flowfield using Grp', BrLoaded(Row));
+        Clear(Row);
+        Row.SetLoadFields("No.");
+        Row.FindFirst();
+        Observer.Observe('conditional relation on Kind', BrLoaded(Row));
+        Clear(Row);
+        Row.SetLoadFields(RelFiltered);
+        Row.FindFirst();
+        Observer.Observe('relation filtered by Grp', BrLoaded(Row));
+        Clear(Row);
+        Row.SetLoadFields(ExtRel);
+        Row.Get(2);
+        Observer.Observe('extension relation field', BrLoaded(Row));
+        Clear(Row);
+        Row.SetLoadFields(ExtNote);
+        Row.Get(2);
+        Observer.Observe('extension text field', BrLoaded(Row));
+        Observer.Expect('note only', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=Yes RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('flowfield using Grp', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('conditional relation on Kind', 'Kind=Yes No=Yes Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('relation filtered by Grp', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=Yes ExtNote=No ExtRel=No');
+        Observer.Expect('extension relation field', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=Yes');
+        Observer.Expect('extension text field', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=Yes ExtRel=Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure BR_LoadFields_ValidateRelationField_ConditionFieldNotLoaded()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BR LF Row";
+    begin
+        BrSeed();
+        Row.SetLoadFields(Note);
+        Row.Get(1);
+        Observer.Observe('before', BrLoaded(Row));
+        ClearLastError();
+        if TryValidateNo(Row, 'O1') then
+            Observer.Observe('validate O1 on Kind Other', 'ok|' + Row."No.")
+        else
+            Observer.Observe('validate O1 on Kind Other', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Observe('after', BrLoaded(Row));
+        Clear(Row);
+        Row.SetLoadFields(Note);
+        Row.Get(2);
+        ClearLastError();
+        if TryValidateNo(Row, 'T1') then
+            Observer.Observe('validate T1 on Kind Target', 'ok|' + Row."No.")
+        else
+            Observer.Observe('validate T1 on Kind Target', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TryValidateNo(Row, 'O1') then
+            Observer.Observe('validate O1 on Kind Target', 'ok|' + Row."No.")
+        else
+            Observer.Observe('validate O1 on Kind Target', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Clear(Row);
+        Row.SetLoadFields(Note);
+        Row.Get(1);
+        ClearLastError();
+        if TryValidateRelFiltered(Row, 'T1') then
+            Observer.Observe('validate RelFiltered T1 Grp G1', 'ok|' + Row.RelFiltered)
+        else
+            Observer.Observe('validate RelFiltered T1 Grp G1', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TryValidateRelFiltered(Row, 'T2') then
+            Observer.Observe('validate RelFiltered T2 Grp G1', 'ok|' + Row.RelFiltered)
+        else
+            Observer.Observe('validate RelFiltered T2 Grp G1', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Observe('after relfiltered', BrLoaded(Row));
+        Observer.Expect('before', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=Yes RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('validate O1 on Kind Other', 'ok|O1');
+        Observer.Expect('after', 'Kind=Yes No=Yes Grp=Yes Cnt=Yes Note=Yes RelFiltered=Yes ExtNote=Yes ExtRel=Yes');
+        Observer.Expect('validate T1 on Kind Target', 'ok|T1');
+        Observer.Expect('validate O1 on Kind Target', 'error|The field No. of table LT BR LF Row contains a value (O1) that cannot be found in the related table (LT BR LF Target).|DB:PrimRecordNotFound');
+        Observer.Expect('validate RelFiltered T1 Grp G1', 'ok|T1');
+        Observer.Expect('validate RelFiltered T2 Grp G1', 'error|The field RelFiltered of table LT BR LF Row contains a value (T2) that cannot be found in the related table (LT BR LF Target).|DB:NothingInsideFilter');
+        Observer.Expect('after relfiltered', 'Kind=Yes No=Yes Grp=Yes Cnt=Yes Note=Yes RelFiltered=Yes ExtNote=Yes ExtRel=Yes');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryValidateNo(var Row: Record "LT BR LF Row"; NewNo: Code[20])
+    begin
+        Row.Validate("No.", NewNo);
+    end;
+
+    [TryFunction]
+    local procedure TryValidateRelFiltered(var Row: Record "LT BR LF Row"; NewNo: Code[20])
+    begin
+        Row.Validate(RelFiltered, NewNo);
+    end;
+
+    [TryFunction]
+    local procedure TryAddLoadFieldsResult(var Row: Record "LT BR LF Row"; Which: Integer; var Ok: Boolean)
+    begin
+        case Which of
+            1:
+                Ok := Row.AddLoadFields(Cnt);
+            2:
+                Ok := Row.AddLoadFields(KindFilter);
+            3:
+                Ok := Row.AddLoadFields(Note);
+        end;
+    end;
+
+    local procedure AddResult(var Row: Record "LT BR LF Row"; Which: Integer): Text
+    var
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        if TryAddLoadFieldsResult(Row, Which, Ok) then
+            exit('ok|' + Format(Ok));
+        exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure BR_SetLoadFields_ReturnValue_FlowFieldAndFlowFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BR LF Row";
+        Ok: Boolean;
+    begin
+        BrSeed();
+        Ok := Row.SetLoadFields(Cnt);
+        Observer.Observe('set flowfield', Format(Ok));
+        Row.FindFirst();
+        Observer.Observe('set flowfield loaded', BrLoaded(Row));
+        Clear(Row);
+        Ok := Row.SetLoadFields(KindFilter);
+        Observer.Observe('set flowfilter', Format(Ok));
+        Clear(Row);
+        Ok := Row.SetLoadFields(Note, Cnt);
+        Observer.Observe('set normal and flowfield', Format(Ok));
+        Clear(Row);
+        Ok := Row.SetLoadFields(Note);
+        Observer.Observe('set normal', Format(Ok));
+        Observer.Observe('add flowfield', AddResult(Row, 1));
+        Observer.Observe('add flowfilter', AddResult(Row, 2));
+        Observer.Observe('add normal', AddResult(Row, 3));
+        Clear(Row);
+        Ok := Row.SetLoadFields();
+        Observer.Observe('set none', Format(Ok));
+        Observer.Expect('set flowfield', 'Yes');
+        Observer.Expect('set flowfield loaded', 'Kind=Yes No=No Grp=Yes Cnt=Yes Note=No RelFiltered=No ExtNote=No ExtRel=No');
+        Observer.Expect('set flowfilter', 'Yes');
+        Observer.Expect('set normal and flowfield', 'Yes');
+        Observer.Expect('set normal', 'Yes');
+        Observer.Expect('add flowfield', 'ok|No');
+        Observer.Expect('add flowfilter', 'ok|No');
+        Observer.Expect('add normal', 'ok|No');
+        Observer.Expect('set none', 'Yes');
+        Observer.Verify();
+    end;
+}
+
+table 82952 "LT BR LF Target"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "No."; Code[20]) { }
+        field(2; Kind; Code[10]) { }
+    }
+
+    keys { key(PK; "No.") { Clustered = true; } }
+}
+
+table 82953 "LT BR LF Other"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "No."; Code[20]) { }
+    }
+
+    keys { key(PK; "No.") { Clustered = true; } }
+}
+
+table 82954 "LT BR LF Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Kind; Option) { OptionMembers = Target,Other; }
+        field(3; "No."; Code[20])
+        {
+            TableRelation = if (Kind = const(Target)) "LT BR LF Target"."No."
+            else
+            if (Kind = const(Other)) "LT BR LF Other"."No.";
+        }
+        field(4; Grp; Code[10]) { }
+        field(5; Cnt; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("LT BR LF Target" where(Kind = field(Grp)));
+        }
+        field(6; Note; Text[30]) { }
+        field(7; KindFilter; Code[10]) { FieldClass = FlowFilter; }
+        field(8; RelFiltered; Code[20]) { TableRelation = "LT BR LF Target"."No." where(Kind = field(Grp)); }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+tableextension 82954 "LT BR LF Row Ext" extends "LT BR LF Row"
+{
+    fields
+    {
+        field(82954; ExtNote; Text[30]) { DataClassification = SystemMetadata; }
+        field(82955; ExtRel; Code[20])
+        {
+            DataClassification = SystemMetadata;
+            TableRelation = if (Kind = const(Target)) "LT BR LF Target"."No.";
+        }
+    }
 }

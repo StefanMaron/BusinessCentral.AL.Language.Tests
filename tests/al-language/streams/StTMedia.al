@@ -550,4 +550,67 @@ codeunit 74204 "LT StT Media"
         Observer.Expect('format-braces', '{}');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 74 (writer br): Media.ImportStream with a MIME type that is not a MIME type ('foo'), an empty one and ones
+    // that do not match the png bytes; HasValue and the Tenant Media "Mime Type" afterwards. ImportStream writes Tenant Media, so it is not
+    // called in a TryFunction: an import that fails ends its test with the error.
+    local procedure BrImportOutcome(MimeType: Text): Text
+    var
+        Rec: Record "LT StT Rec";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        Ins: InStream;
+        Id: Guid;
+        Result: Text;
+    begin
+        Fresh(Rec);
+        PngIn(TempBlob, Ins);
+        Id := Rec.Pic.ImportStream(Ins, 'desc', MimeType);
+        Result := 'ok|hasvalue=' + Format(Rec.Pic.HasValue()) + '|returned=mediaid:' + Format(Id = Rec.Pic.MediaId());
+        if TenantMedia.Get(Rec.Pic.MediaId()) then
+            Result += '|mime=' + TenantMedia."Mime Type"
+        else
+            Result += '|no tenant media row';
+        exit(Result);
+    end;
+
+    [Test]
+    procedure MediaImportStreamMime_Foo()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('foo', BrImportOutcome('foo'));
+        Observer.Expect('foo', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=foo');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure MediaImportStreamMime_Empty()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('empty', BrImportOutcome(''));
+        Observer.Expect('empty', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=image/png');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure MediaImportStreamMime_JpegForPngBytes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('image/jpeg', BrImportOutcome('image/jpeg'));
+        Observer.Expect('image/jpeg', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=image/jpeg');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure MediaImportStreamMime_TextPlainForPngBytes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('text/plain', BrImportOutcome('text/plain'));
+        Observer.Expect('text/plain', 'ok|hasvalue=Yes|returned=mediaid:Yes|mime=text/plain');
+        Observer.Verify();
+    end;
 }

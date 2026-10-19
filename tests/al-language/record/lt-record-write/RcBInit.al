@@ -405,4 +405,51 @@ codeunit 72002 "LT RcB Init"
         Observer.Expect('opt text compare', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 68 (writer br): an Enum field with NotBlank = true compiles and publishes; Validate, Insert and Modify with
+    // the ordinal 0 value, as a key field and as a normal field.
+    [Test]
+    procedure Props_NotBlank_EnumField()
+    var
+        Rec: Record "LT BR NotBlank Enum";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Rec.DeleteAll();
+        Rec.Init();
+        Observer.Observe('init value', Format(Rec.Color) + '|' + Format(Rec.KeyColor));
+        Rec.Validate(Color, Rec.Color::Green);
+        Observer.Observe('validate green', Format(Rec.Color));
+        ClearLastError();
+        asserterror begin
+            Rec.Validate(Color, Rec.Color::Red);
+            Error('no error');
+        end;
+        Observer.Observe('validate red (ordinal 0)', GetLastErrorText() + '|' + GetLastErrorCode());
+        Rec.Color := Rec.Color::Red;
+        Rec.KeyColor := Rec.KeyColor::Red;
+        Observer.Observe('insert ordinal 0 key and field', Format(Rec.Insert()));
+        Observer.Observe('count', Format(Rec.Count()));
+        Rec.Color := Rec.Color::Blue;
+        Observer.Observe('modify', Format(Rec.Modify()));
+        Observer.Expect('init value', 'Red|Red');
+        Observer.Expect('validate green', 'Green');
+        Observer.Expect('validate red (ordinal 0)', 'no error|Dialog');
+        Observer.Expect('insert ordinal 0 key and field', 'Yes');
+        Observer.Expect('count', '1');
+        Observer.Expect('modify', 'Yes');
+        Observer.Verify();
+    end;
+}
+
+table 82965 "LT BR NotBlank Enum"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; KeyColor; Enum "LT RcB Color") { NotBlank = true; }
+        field(2; Color; Enum "LT RcB Color") { NotBlank = true; }
+    }
+
+    keys { key(PK; KeyColor) { Clustered = true; } }
 }

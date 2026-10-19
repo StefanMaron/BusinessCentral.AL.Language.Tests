@@ -303,4 +303,110 @@ codeunit 73023 "LT RfT Views"
         Observer.Expect('hasfilter', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 52 (writer br): RecordRef.LockTable with the Wait and VersionCheck arguments.
+    [Test]
+    procedure LockTable_WaitArgument_Overloads()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        // RecordRef.LockTable(true, true) raises the Wait = FALSE error (AL:LockTableBadParm) on 27.5, 28.5 and 29.0, as the lead
+        // reports; LockTable(true) and LockTable(true, false) do not. Each call runs in its own asserterror block with a marker error.
+        RecRef.Open(73001);
+        Observer.Observe('wait true', LockOutcome(RecRef, 1));
+        Observer.Observe('wait true versioncheck true', LockOutcome(RecRef, 2));
+        Observer.Observe('wait true versioncheck false', LockOutcome(RecRef, 3));
+        Observer.Expect('wait true', 'no error|Dialog');
+        Observer.Expect('wait true versioncheck true', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Expect('wait true versioncheck false', 'no error|Dialog');
+        Observer.Verify();
+    end;
+
+    // Corpus issue 668 item 52 (writer br): each Wait = false form alone on a fresh RecordRef (no earlier LockTable in the test).
+    [Test]
+    procedure LockTable_WaitFalse_OneArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        Observer.Observe('wait false', LockOutcome(RecRef, 4));
+        Observer.Expect('wait false', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure LockTable_WaitFalse_VersionCheckTrue()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        Observer.Observe('wait false versioncheck true', LockOutcome(RecRef, 5));
+        Observer.Expect('wait false versioncheck true', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure LockTable_WaitFalse_VersionCheckFalse()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(73001);
+        Observer.Observe('wait false versioncheck false', LockOutcome(RecRef, 6));
+        Observer.Expect('wait false versioncheck false', 'The request to lock the LT RfT Data table with a Wait parameter of FALSE is not supported.|AL:LockTableBadParm');
+        Observer.Verify();
+    end;
+
+    local procedure LockOutcome(var RecRef: RecordRef; Arm: Integer): Text
+    begin
+        ClearLastError();
+        asserterror begin
+            case Arm of
+                1:
+                    RecRef.LockTable(true);
+                2:
+                    RecRef.LockTable(true, true);
+                3:
+                    RecRef.LockTable(true, false);
+                4:
+                    RecRef.LockTable(false);
+                5:
+                    RecRef.LockTable(false, true);
+                6:
+                    RecRef.LockTable(false, false);
+            end;
+            Error('no error');
+        end;
+        exit(GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // Corpus issue 668 item 55 (writer br): GetView after SetView and a later filter change on the same RecordRef.
+    [Test]
+    procedure View_SetViewThenFilterChange_GetView()
+    var
+        Observer: Codeunit "Probe Observer";
+        Helper: Codeunit "LT RfT Helper";
+        RecRef: RecordRef;
+    begin
+        Helper.Seed();
+        RecRef.Open(73001);
+        RecRef.SetView('SORTING(Int) WHERE(Int=FILTER(>=20))');
+        Observer.Observe('after setview', RecRef.GetView());
+        RecRef.Field(3).SetRange(30);
+        Observer.Observe('after setrange same field', RecRef.GetView());
+        RecRef.Field(2).SetFilter('Text*');
+        Observer.Observe('after setfilter other field', RecRef.GetView());
+        Observer.Observe('count', Format(RecRef.Count()));
+        RecRef.Field(3).SetRange();
+        Observer.Observe('after clearing int', RecRef.GetView(false));
+        Observer.Expect('after setview', 'VERSION(1) SORTING(Int,Txt Caption) WHERE(Int=FILTER(>=20))');
+        Observer.Expect('after setrange same field', 'VERSION(1) SORTING(Int,Txt Caption) WHERE(Int=FILTER(30))');
+        Observer.Expect('after setfilter other field', 'VERSION(1) SORTING(Int,Txt Caption) WHERE(Txt Caption=FILTER(Text*),Int=FILTER(30))');
+        Observer.Expect('count', '1');
+        Observer.Expect('after clearing int', 'VERSION(1) SORTING(Field3,Field2) WHERE(Field2=1(Text*))');
+        Observer.Verify();
+    end;
 }
