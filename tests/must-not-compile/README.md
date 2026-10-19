@@ -324,6 +324,8 @@ is only a reference.
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
 | 1270 | AL0270 | A page extension adds to an area name that is not a layout area (FactBoxes is accepted even when the base page does not declare it). |
+| 1140 | AL0133 | RecordRef.GetTable with a RecordRef argument (a Variant that holds the RecordRef compiles). |
+| 1141 | AL0196 | Record.TestField(Field, Value) with a Byte variable: ambiguous between the Integer and BigInteger overloads. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
