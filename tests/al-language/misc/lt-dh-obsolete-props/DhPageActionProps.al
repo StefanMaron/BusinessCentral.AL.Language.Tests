@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
 // Probe (corpus issue 663 items 20 and 21): InFooterBar set through modify() of an action in a page extension, and FileUploadAction on a page field.
-// Both compile. What a TestPage sees: the action still runs, the field still reads and writes. A TestPage cannot reach a file upload action
+// Both compile. What a TestPage sees: the action still runs, the field still reads and writes, and AssistEdit fails on that field as on a plain one. A TestPage cannot reach a file upload action
 // (AL0132, must-not-compile case 1864). Object ids 86100-86104.
 
 table 86100 "LT DH PgAct Row"
@@ -181,6 +181,11 @@ codeunit 86104 "LT DH PgAct Tests"
         asserterror Pg.Id.AssistEdit();
         Observer.ObserveError('assistedit_plain_field');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('assistedit|text', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('assistedit|code', 'MethodNotSupported');
+        Observer.Expect('assistedit_plain_field|text', 'The NavAssistEditAction method is not supported.');
+        Observer.Expect('assistedit_plain_field|code', 'MethodNotSupported');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 }

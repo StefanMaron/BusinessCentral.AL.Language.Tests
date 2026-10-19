@@ -6,7 +6,9 @@
 // - item 10: Width on an XMLport fieldattribute (and fieldelement) of an XML port: what an export writes for a value longer than Width.
 // - item 13: EntityName and EntitySetName on a system part compile and the page opens. SubPageLink and SubPageView on a system part do not compile
 //   (AL0171, must-not-compile case 1865); a TestPage cannot reach a system part (AL0132, case 1864).
-// - item 15: Permissions on a request page, for a user whose permission set has indirect insert only: request page triggers and the report's own trigger.
+// - item 15: Permissions on a request page, for a user whose permission set has indirect insert only: the request page's OnOpenPage and
+//   OnQueryClosePage may insert, the report's own OnPreReport may not (the request page inserts stay). Without the property the insert in
+//   OnQueryClosePage is denied and comes back as a message.
 // Object ids 86090-86099.
 
 table 86090 "LT DH Props Row"
@@ -230,7 +232,9 @@ codeunit 86097 "LT DH Other Props Tests"
     begin
         Observer.Observe('run', RunUnderMock(Report::"LT DH Props Rp With Perms"));
         Observer.Observe('target_ids', TargetIds());
-        Observer.Finish();
+        Observer.Expect('run', 'error: Sorry, the current permissions prevented the action. (TableData 86093 LT DH Props Rp Target Insert: AL Language Coverage Tests) | DB:ClientInsertDenied');
+        Observer.Expect('target_ids', '1;4;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +245,9 @@ codeunit 86097 "LT DH Other Props Tests"
     begin
         Observer.Observe('run', RunUnderMock(Report::"LT DH Props Rp No Perms"));
         Observer.Observe('target_ids', TargetIds());
-        Observer.Finish();
+        Observer.Expect('run', 'error: Unhandled UI: Message Sorry, the current permissions prevented the action. (TableData 86093 LT DH Props Rp Target Insert: AL Language Coverage Tests) | TestWrapped:MissingUIHandler');
+        Observer.Expect('target_ids', '');
+        Observer.Verify();
     end;
 
     local procedure RunUnderMock(ReportId: Integer) Result: Text
