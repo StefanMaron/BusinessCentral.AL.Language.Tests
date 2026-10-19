@@ -6,6 +6,7 @@
 //        or sets 2xx/4xx/5xx status codes; Get with a base address, an absolute URL and an Authorization Bearer default header; which
 //        RequestType a handler sees for custom and lower-case methods.
 // BC versions: 29.0. On 27.5 and 28.5 a request is not given to the handler (PZHttpHandler.al, PZHttpBlock.al), so every test is BC29PLUS.
+#if BC29PLUS
 codeunit 98940 "LT DA Http Handler Odd"
 {
     Subtype = Test;
@@ -107,7 +108,6 @@ codeunit 98940 "LT DA Http Handler Odd"
         exit(false);
     end;
 
-#if BC29PLUS
     [Test]
     [HandlerFunctions('UnsuccessfulHandler')]
     procedure Handler_UnsuccessfulRequest()
@@ -257,7 +257,6 @@ codeunit 98940 "LT DA Http Handler Odd"
         Observer.Expect('Post', 'ok=Yes seen=Post [https://example.invalid/method];');
         Observer.Verify();
     end;
-#endif
 
     [TryFunction]
     local procedure TrySend(var Client: HttpClient; var Req: HttpRequestMessage; var Resp: HttpResponseMessage; var Ok: Boolean)
@@ -265,3 +264,4 @@ codeunit 98940 "LT DA Http Handler Odd"
         Ok := Client.Send(Req, Resp);
     end;
 }
+#endif
