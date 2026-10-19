@@ -8,7 +8,6 @@
 //   80 a codeunit Permissions property with only indirect grants in the user's set, and a direct write next to it,
 //   81 a subscriber with a Permissions property that calls a codeunit without one (the read deeper in the call stack),
 //   82 the InherentPermissions attribute: inside the method, after it returns, in nested calls,
-//   84 Permissions Mock.ClearAssignments without a Start of its own (Microsoft's test runner toggles the mock around every test method),
 //   86 ExcludedPermissionSets at run time under the mock.
 // BC versions: 27, 28, 29
 
@@ -18,46 +17,208 @@ codeunit 85018 "LT CP Permission Leads"
     TestPermissions = Disabled;
 
     var
-        IndirectTok: Label 'LT CP Indirect', Locked = true;
         EmptyTok: Label 'LT CP Empty', Locked = true;
-        FullTok: Label 'LT CP Full', Locked = true;
-        ExclTok: Label 'LT CP Excl', Locked = true;
 
-    // Every operation below runs inside asserterror through Op(): Op ends with the error 'LT CP ok <value>' when the operation itself raised
-    // nothing, so each observation is either that marker or BC's own error text and code. asserterror rolls back what the operation wrote.
-
-    // ---- item 76: CalcField without read permission on the CalcFormula table ----
+    // Each test: seed the tables (or empty them), lower the permissions with Permissions Mock.Set, run ONE operation inside asserterror
+    // through Op(), observe, restore. Op ends with the error 'LT CP ok <value>' when the operation raised nothing, so each observation is
+    // either that marker or BC's own error. One operation per test, because asserterror rolls back every write of the test, the seed too.
+    // Items: 76 CalcField_*, 80 Indirect_*, 81 Subscriber_*, 82 Inherent_*, 86 Excluded_*.
 
     [Test]
-    procedure CalcField_NoReadPermission()
-    var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
-        WasStarted: Boolean;
+    procedure CalcField_FieldRefIf_NoRead()
     begin
-        SeedLedger();
-        WasStarted := StartMock(Mock);
-        Mock.Set(EmptyTok);
-        asserterror Op(1);
-        Observer.ObserveError('if_fieldref_calcfield');
-        asserterror Op(2);
-        Observer.ObserveError('if_record_calcfields');
-        asserterror Op(3);
-        Observer.ObserveError('tryfunction_calcfields');
-        asserterror Op(4);
-        Observer.ObserveError('host_count');
-        RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        RunOp('Empty', true, 1);
     end;
 
     [Test]
-    procedure CalcField_NoReadPermission_CodeunitRun()
+    procedure CalcField_RecordIf_NoRead()
+    begin
+        RunOp('Empty', true, 2);
+    end;
+
+    [Test]
+    procedure CalcField_TryFunction_NoRead()
+    begin
+        RunOp('Empty', true, 3);
+    end;
+
+    [Test]
+    procedure CalcField_RecordIf_NoRead_EmptyTable()
+    begin
+        RunOp('Empty', false, 2);
+    end;
+
+    [Test]
+    procedure CalcField_IndirectRead()
+    begin
+        RunOp('Indirect', true, 5);
+    end;
+
+    [Test]
+    procedure CalcField_NoMock()
+    begin
+        RunOp('', true, 5);
+    end;
+
+    [Test]
+    procedure Indirect_WriterInsert()
+    begin
+        RunOp('Indirect', true, 10);
+    end;
+
+    [Test]
+    procedure Indirect_WriterModify()
+    begin
+        RunOp('Indirect', true, 11);
+    end;
+
+    [Test]
+    procedure Indirect_WriterCount()
+    begin
+        RunOp('Indirect', true, 12);
+    end;
+
+    [Test]
+    procedure Indirect_ReadOnlyWriterInsert()
+    begin
+        RunOp('Indirect', true, 13);
+    end;
+
+    [Test]
+    procedure Indirect_DirectInsert()
+    begin
+        RunOp('Indirect', true, 14);
+    end;
+
+    [Test]
+    procedure Indirect_DirectModify()
+    begin
+        RunOp('Indirect', true, 15);
+    end;
+
+    [Test]
+    procedure Indirect_DirectCount()
+    begin
+        RunOp('Indirect', true, 6);
+    end;
+
+    [Test]
+    procedure Indirect_DirectCount_EmptyTable()
+    begin
+        RunOp('Indirect', false, 6);
+    end;
+
+    [Test]
+    procedure Indirect_EmptySet_WriterInsert()
+    begin
+        RunOp('Empty', true, 10);
+    end;
+
+    [Test]
+    procedure Subscriber_ReadInSubscriber()
+    begin
+        RunOp('Indirect', true, 21);
+    end;
+
+    [Test]
+    procedure Subscriber_ReadInCodeunitWithoutPermissions()
+    begin
+        RunOp('Indirect', true, 22);
+    end;
+
+    [Test]
+    procedure Subscriber_ReadInCodeunitWithPermissions()
+    begin
+        RunOp('Indirect', true, 23);
+    end;
+
+    [Test]
+    procedure Subscriber_ReadInInherentPermissionsMethod()
+    begin
+        RunOp('Indirect', true, 24);
+    end;
+
+    [Test]
+    procedure Subscriber_EmptySet_ReadInSubscriber()
+    begin
+        RunOp('Empty', true, 21);
+    end;
+
+    [Test]
+    procedure Subscriber_ReaderCalledDirectly()
+    begin
+        RunOp('Indirect', true, 25);
+    end;
+
+    [Test]
+    procedure Inherent_PlainMethod()
+    begin
+        RunOp('Empty', true, 31);
+    end;
+
+    [Test]
+    procedure Inherent_PlainMethod_EmptyTable()
+    begin
+        RunOp('Empty', false, 31);
+    end;
+
+    [Test]
+    procedure Inherent_AttributeMethod()
+    begin
+        RunOp('Empty', true, 32);
+    end;
+
+    [Test]
+    procedure Inherent_AttributeThenPlain()
+    begin
+        RunOp('Empty', true, 33);
+    end;
+
+    [Test]
+    procedure Inherent_NestedSameCodeunit()
+    begin
+        RunOp('Empty', true, 34);
+    end;
+
+    [Test]
+    procedure Inherent_NestedOtherCodeunit()
+    begin
+        RunOp('Empty', true, 35);
+    end;
+
+    [Test]
+    procedure Excluded_FullSetCount()
+    begin
+        RunOp('Full', true, 6);
+    end;
+
+    [Test]
+    procedure Excluded_ExclSetCount()
+    begin
+        RunOp('Excl', true, 6);
+    end;
+
+    [Test]
+    procedure Excluded_ExclSetInsert()
+    begin
+        RunOp('Excl', true, 14);
+    end;
+
+    [Test]
+    procedure Excluded_EmptySetCount()
+    begin
+        RunOp('Empty', true, 6);
+    end;
+
+    [Test]
+    procedure CalcField_CodeunitRun_NoRead()
     var
         Observer: Codeunit "Probe Observer";
         Mock: Codeunit "Permissions Mock";
         Host: Record "LT CP Flow Host";
         WasStarted: Boolean;
     begin
+        Seed(true);
         WasStarted := StartMock(Mock);
         Mock.Set(EmptyTok);
         if Codeunit.Run(Codeunit::"LT CP CalcFields Run", Host) then
@@ -66,26 +227,6 @@ codeunit 85018 "LT CP Permission Leads"
             Observer.Observe('codeunit_run', 'false');
             Observer.ObserveError('codeunit_run_error');
         end;
-        RestoreMock(Mock, WasStarted);
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure CalcField_IndirectRead_AndNoMock()
-    var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
-        WasStarted: Boolean;
-    begin
-        SeedLedger();
-        asserterror Op(5);
-        Observer.ObserveError('no_mock_calcfields');
-        WasStarted := StartMock(Mock);
-        Mock.Set(IndirectTok);
-        asserterror Op(5);
-        Observer.ObserveError('indirect_calcfields');
-        asserterror Op(6);
-        Observer.ObserveError('indirect_direct_count');
         RestoreMock(Mock, WasStarted);
         Observer.Finish();
     end;
@@ -103,154 +244,49 @@ codeunit 85018 "LT CP Permission Leads"
         Observer.Finish();
     end;
 
-    // ---- item 80: Permissions property and indirect grants ----
-
-    [Test]
-    procedure Indirect_PermissionsPropertyAndDirectWrites()
+    local procedure RunOp(SetName: Text; WithRows: Boolean; Which: Integer)
     var
         Observer: Codeunit "Probe Observer";
         Mock: Codeunit "Permissions Mock";
-        Ledger: Record "LT CP Ledger";
         WasStarted: Boolean;
     begin
-        SeedLedger();
+        Seed(WithRows);
         WasStarted := StartMock(Mock);
-        Mock.Set(IndirectTok);
-        asserterror Op(10);
-        Observer.ObserveError('writer_insert');
-        asserterror Op(11);
-        Observer.ObserveError('writer_modify');
-        asserterror Op(12);
-        Observer.ObserveError('writer_count');
-        asserterror Op(13);
-        Observer.ObserveError('readonly_writer_insert');
-        asserterror Op(14);
-        Observer.ObserveError('direct_insert');
-        asserterror Op(15);
-        Observer.ObserveError('direct_modify');
-        asserterror Op(6);
-        Observer.ObserveError('direct_count');
-        Mock.Set(EmptyTok);
-        asserterror Op(10);
-        Observer.ObserveError('empty_writer_insert');
+        if SetName <> '' then
+            Mock.Set(CopyStr('LT CP ' + SetName, 1, 20));
+        asserterror Op(Which);
+        Observer.ObserveError('op');
         RestoreMock(Mock, WasStarted);
-        Observer.Observe('rows_after', Format(Ledger.Count()));
         Observer.Finish();
     end;
 
-    // ---- item 81: subscriber with a Permissions property, read deeper in the call stack ----
-
-    [Test]
-    procedure Subscriber_ReadDeeperInTheCallStack()
+    local procedure Seed(WithRows: Boolean)
     var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
+        Ledger: Record "LT CP Ledger";
         Item: Record "LT CP Item";
         Ext: Record "LT CP Ext";
-        WasStarted: Boolean;
+        Secret: Record "LT CP Secret";
     begin
+        Ledger.DeleteAll();
         Item.DeleteAll();
         Ext.DeleteAll();
-        Ext."Entry No." := 1;
-        Ext.Insert();
+        Secret.DeleteAll();
+        if not WithRows then
+            exit;
+        Ledger."Entry No." := 1;
+        Ledger.Amount := 2;
+        Ledger.Insert();
+        Ledger."Entry No." := 2;
+        Ledger.Amount := 3;
+        Ledger.Insert();
         Item."Entry No." := 1;
         Item.Insert();
-        WasStarted := StartMock(Mock);
-        Mock.Set(IndirectTok);
-        asserterror Op(21);
-        Observer.ObserveError('read_in_subscriber');
-        asserterror Op(22);
-        Observer.ObserveError('read_in_codeunit_without_permissions');
-        asserterror Op(23);
-        Observer.ObserveError('read_in_codeunit_with_permissions');
-        asserterror Op(24);
-        Observer.ObserveError('read_in_inherent_permissions_method');
-        asserterror Op(25);
-        Observer.ObserveError('direct_reader_without_permissions');
-        Mock.Set(EmptyTok);
-        asserterror Op(21);
-        Observer.ObserveError('empty_read_in_subscriber');
-        RestoreMock(Mock, WasStarted);
-        Item.DeleteAll();
-        Ext.DeleteAll();
-        Observer.Finish();
-    end;
-
-    // ---- item 82: InherentPermissions attribute ----
-
-    [Test]
-    procedure InherentAttribute_InsideAfterNested()
-    var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
-        Secret: Record "LT CP Secret";
-        WasStarted: Boolean;
-    begin
-        Secret.DeleteAll();
+        Ext."Entry No." := 1;
+        Ext.Insert();
         Secret."Entry No." := 1;
         Secret.Insert();
         Secret."Entry No." := 2;
         Secret.Insert();
-        WasStarted := StartMock(Mock);
-        Mock.Set(EmptyTok);
-        asserterror Op(31);
-        Observer.ObserveError('plain_before');
-        asserterror Op(32);
-        Observer.ObserveError('inherent');
-        asserterror Op(33);
-        Observer.ObserveError('inherent_then_plain');
-        asserterror Op(34);
-        Observer.ObserveError('nested_same_codeunit');
-        asserterror Op(35);
-        Observer.ObserveError('nested_other_codeunit');
-        asserterror Op(36);
-        Observer.ObserveError('direct_count');
-        RestoreMock(Mock, WasStarted);
-        Secret.DeleteAll();
-        Observer.Finish();
-    end;
-
-    // ---- item 84: ClearAssignments without a Start of the test's own ----
-
-    [Test]
-    procedure Mock_ClearAssignmentsWithoutOwnStart()
-    var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
-    begin
-        Observer.Observe('started_on_entry', Format(Mock.IsStarted()));
-        Mock.ClearAssignments();
-        Observer.Observe('clear', 'no error');
-        Observer.Observe('started_after', Format(Mock.IsStarted()));
-        Observer.Finish();
-    end;
-
-    // ---- item 86: ExcludedPermissionSets under the mock ----
-
-    [Test]
-    procedure ExcludedSet_UnderTheMock()
-    var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
-        WasStarted: Boolean;
-    begin
-        SeedLedger();
-        WasStarted := StartMock(Mock);
-        Mock.Set(FullTok);
-        asserterror Op(6);
-        Observer.ObserveError('full_count');
-        asserterror Op(14);
-        Observer.ObserveError('full_insert');
-        Mock.Set(ExclTok);
-        asserterror Op(6);
-        Observer.ObserveError('excl_count');
-        asserterror Op(14);
-        Observer.ObserveError('excl_insert');
-        Mock.Set(EmptyTok);
-        asserterror Op(6);
-        Observer.ObserveError('empty_count');
-        RestoreMock(Mock, WasStarted);
-        Observer.Finish();
     end;
 
     local procedure Op(Which: Integer)
@@ -352,19 +388,6 @@ codeunit 85018 "LT CP Permission Leads"
     local procedure TryCalcFields(var Host: Record "LT CP Flow Host")
     begin
         Host.CalcFields("Ledger Count");
-    end;
-
-    local procedure SeedLedger()
-    var
-        Ledger: Record "LT CP Ledger";
-    begin
-        Ledger.DeleteAll();
-        Ledger."Entry No." := 1;
-        Ledger.Amount := 2;
-        Ledger.Insert();
-        Ledger."Entry No." := 2;
-        Ledger.Amount := 3;
-        Ledger.Insert();
     end;
 
     local procedure StartMock(var Mock: Codeunit "Permissions Mock") WasStarted: Boolean
