@@ -433,4 +433,56 @@ codeunit 60186 "Test Loop Contracts"
                 exit(Count);
         end;
     end;
+
+    // corpus issue 664 (writer BN): for-loop bounds are converted to the type of the control variable (Learn: control statements).
+    // A literal bound outside the Integer range does not compile: tests/must-not-compile/cases/1404. Here the bound is a BigInteger or
+    // Decimal variable. Observed on BC (probe form: Observer.Finish).
+    [Test]
+    procedure BN_ForLoop_BoundConvertedToControlType()
+    var
+        Observer: Codeunit "Probe Observer";
+        Big: BigInteger;
+        Dec: Decimal;
+        Count: Integer;
+        R: Text;
+    begin
+        Big := 100000000000000;
+        if TryForBig(Big, Count) then
+            Observer.Observe('biginteger bound 1e14', 'ok|' + Format(Count))
+        else
+            Observer.ObserveError('biginteger bound 1e14');
+        Big := 3;
+        if TryForBig(Big, Count) then
+            Observer.Observe('biginteger bound 3', 'ok|' + Format(Count))
+        else
+            Observer.ObserveError('biginteger bound 3');
+        Dec := 2.5;
+        R := '';
+        for Count := 1 to Dec do
+            R += Format(Count) + ',';
+        Observer.Observe('decimal bound 2.5', R + '|' + Format(Count));
+        Dec := 2.6;
+        R := '';
+        for Count := 1 to Dec do
+            R += Format(Count) + ',';
+        Observer.Observe('decimal bound 2.6', R + '|' + Format(Count));
+        Dec := 0.5;
+        R := '';
+        for Count := Dec to 2 do
+            R += Format(Count) + ',';
+        Observer.Observe('decimal start 0.5', R + '|' + Format(Count));
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryForBig(Big: BigInteger; var Count: Integer)
+    var
+        Turns: Integer;
+    begin
+        for Count := 1 to Big do begin
+            Turns += 1;
+            if Turns >= 5 then
+                exit;
+        end;
+    end;
 }
