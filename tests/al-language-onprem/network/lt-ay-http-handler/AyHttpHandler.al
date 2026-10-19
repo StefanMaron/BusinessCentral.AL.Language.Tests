@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-httpclient-mock-outbound-calls
 // Scope: in-scope (OnPrem app: the [HttpClientHandler] attribute and TestHttpRequestMessage / TestHttpResponseMessage are Scope = OnPrem)
-// Fixtures used: Probe Observer (69160), from the AL Language Coverage Tests app; own codeunit 98500
+// Fixtures used: Probe Observer (69160), from the AL Language Coverage Tests app; own codeunit 98550
 // Probe: observe probe; every literal asserted below is what the corpus CI service tiers produced.
 // Facts: the Request.Path an [HttpClientHandler] sees for HttpClient.SetBaseAddress('https://example.invalid/api/v1/') followed by Get of 'orders',
 // '/orders', '../x' and '?q=1', and for Get without a base address of 'a/b', 'a.b' and '?q=1'; a handler that sets only status 404 (reason phrase,
@@ -9,7 +9,7 @@
 // On BC 27 and 28 a request is not given to the handler (PZHttpHandler.al): those legs pin what the caller sees there.
 // BC versions: 27, 28, 29 (corpus CI)
 
-codeunit 98500 "LT AY Http Handler"
+codeunit 98550 "LT AY Http Handler"
 {
     Subtype = Test;
     TestPermissions = Disabled;

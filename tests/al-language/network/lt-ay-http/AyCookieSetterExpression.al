@@ -27,9 +27,12 @@ codeunit 80506 "LT AY Cookie Setter Expression"
     var
         Observer: Codeunit "Probe Observer";
         C: Cookie;
+        Ignored: Text;
     begin
-        C.Name('old-name');
-        C.Value('old-value');
+        // The statement form C.Name('old-name'); compiles with the AL 30 compiler but the BC 27.5/28.5/29.0 server
+        // rejects it at publish with AL0192 "The return value must be used for the method 'Name'" (corpus CI, 2026-10-19).
+        Ignored := C.Name('old-name');
+        Ignored := C.Value('old-value');
         Observer.Observe('name', '[' + Format(C.Name('n')) + '] get=' + C.Name());
         Observer.Observe('value', '[' + Format(C.Value('v')) + '] get=' + C.Value());
         Observer.Observe('name_empty', '[' + Format(C.Name('')) + '] get=' + C.Name());
