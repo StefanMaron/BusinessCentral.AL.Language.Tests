@@ -96,6 +96,11 @@ is only a reference.
 | 0111 | AL0130 | this passed to a var parameter of another codeunit. |
 | 0112 | AL0296 | SecretText.Unwrap named from a Cloud app (the method has scope OnPrem). |
 | 0113 | AL0296 | A variable of the File data type in a Cloud app. |
+| 0640 | AL0666 | `JsonArray.SelectTokens` needs runtime 17; the BC 27 app runs on 16.1 (BC 28 and 29 compile it) |
+| 0641, 0642 | AL0126 | `MediaSet.ImportStream` and `Media.ImportStream` with a file name as fourth argument (0642: on 27, 28 and 29) |
+| 0643 to 0646 | AL0296 | `Media.ExportFile`, `Media.ImportFile`, `MediaSet.ExportFile` and `MediaSet.ImportFile` named from a Cloud app (Scope = OnPrem) |
+| 0647 to 0650 | AL0133 | `Query.SaveAsCsv` and `Query.SaveAsXml` with a file name (instance and by object number): in a Cloud app only the OutStream forms exist |
+| 0651 to 0653 | AL0296 | `HttpClient.UseDefaultNetworkWindowsAuthentication` and `UseWindowsAuthentication` (Text and SecretText) named from a Cloud app |
 | 0660 | AL0296 | Report.SaveAsExcel, SaveAsHtml, SaveAsPdf, SaveAsWord and SaveAsXml of the global Report object (object id and file name) are Scope = OnPrem: a Target = Cloud app cannot name them. (5 diagnostics) |
 | 0661 | AL0296 | Report.SaveAsExcel, SaveAsHtml, SaveAsPdf, SaveAsWord and SaveAsXml on a Report variable (file name) are Scope = OnPrem: a Target = Cloud app cannot call them. (5 diagnostics) |
 | 0664 | AL0666 | The fully qualified name overloads of Report.Run, Report.RunModal, Report.Execute, Page.Run and RecordRef.Open and RecordRef.FullyQualifiedName need runtime 17.0: the BC 27 app runtime is 16.1 and cannot call them (the BC 28 and 29 apps run on 17.1 and 18.0, where tests/al-language pins them). (6 diagnostics) |
