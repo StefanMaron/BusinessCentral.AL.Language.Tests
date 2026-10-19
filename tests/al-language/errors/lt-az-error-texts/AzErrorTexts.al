@@ -126,7 +126,7 @@ codeunit 80606 "LT AZ Error Texts"
 #endif
         if not Ok then
             Error('Codeunit.Run assigned its return value');
-        // BC 27.5 run: code AL:MetadataNotFound.
+        // Same code on BC 27.5, 28.5 and 29.0.
         if GetLastErrorCode() <> 'AL:MetadataNotFound' then
             Error('expected code [AL:MetadataNotFound] but was [%1]', GetLastErrorCode());
         if GetLastErrorText() <> Expected then

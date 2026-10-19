@@ -290,7 +290,14 @@ codeunit 80670 "LT AZ Query Tests"
         Observer.Verify();
 #if BC28PLUS
 #else
-        Error('RAW27 ok=%1 rows=%2 code=%3 text=%4', TextOk, R, TextCode, TextErr);
+        if TextOk then
+            Error('expected the plain-text filter to fail on BC 27.5');
+        if R <> '' then
+            Error('expected no rows but was [%1]', R);
+        if TextCode <> 'InvalidFilterExpression:Evaluate' then
+            Error('expected code [InvalidFilterExpression:Evaluate] but was [%1]', TextCode);
+        if TextErr <> 'The value "abc" can''t be evaluated into type RecordID.' then
+            Error('expected text [The value "abc" can''t be evaluated into type RecordID.] but was [%1]', TextErr);
 #endif
     end;
 
