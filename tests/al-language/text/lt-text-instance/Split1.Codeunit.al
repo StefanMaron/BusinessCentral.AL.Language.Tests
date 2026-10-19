@@ -318,4 +318,24 @@ codeunit 70030 "LT TxA Split 1"
             Result += 'x,';
         exit(Result);
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 61: Text.Split with a Char returned by a procedure of another app
+    // (codeunit DotNet_Array of the Base Application, GetValueAsChar). Reported as a publish failure (generated C# error CS0030).
+    [Test]
+    procedure LT_BU_Split_CharFromOtherApp()
+    var
+        Observer: Codeunit "Probe Observer";
+        Arr: Codeunit DotNet_Array;
+        Parts: List of [Text];
+    begin
+        Arr.CharArray(1);
+        Arr.SetCharValue(';', 0);
+        Parts := 'Alpha;Bravo;Charlie'.Split(Arr.GetValueAsChar(0));
+        Observer.Observe('char from other app', Join(Parts));
+        Parts := 'Alpha::Bravo::Charlie'.Split('::');
+        Observer.Observe('two char separator', Join(Parts));
+        Observer.Expect('char from other app', '3:[Alpha][Bravo][Charlie]');
+        Observer.Expect('two char separator', '3:[Alpha][Bravo][Charlie]');
+        Observer.Verify();
+    end;
 }

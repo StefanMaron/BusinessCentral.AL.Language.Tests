@@ -135,4 +135,44 @@ codeunit 67291 "LT P Literal Expressions"
         Observer.Expect('char_from_text_literal', 'B');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 47: a multiline text literal (@'...', BC 26 and later). This file
+    // has LF line endings; the CRLF form is in text/lt-bu-multiline-crlf/BuMultilineCrlf.al. The second line of T2 is indented
+    // by four blanks inside the literal.
+    [Test]
+    procedure LT_BU_Literal_MultilineText()
+    var
+        Observer: Codeunit "Probe Observer";
+        T: Text;
+        T2: Text;
+        T3: Text;
+        T4: Text;
+        Code2: Integer;
+    begin
+        T := @'a
+b';
+        T2 := @'first
+    second';
+        T3 := @'it''s
+quoted';
+        T4 := @'single line';
+        Observer.Observe('two lines', T);
+        Observer.Observe('two lines len', Format(StrLen(T)));
+        Code2 := T[2];
+        Observer.Observe('char 2 code', Format(Code2));
+        Observer.Observe('indented', T2);
+        Observer.Observe('indented len', Format(StrLen(T2)));
+        Observer.Observe('escaped quote', T3);
+        Observer.Observe('single line', T4);
+        Observer.Observe('split lf', Format(T.Split(Format(T[2])).Count()));
+        Observer.Expect('two lines', 'a\nb');
+        Observer.Expect('two lines len', '3');
+        Observer.Expect('char 2 code', '10');
+        Observer.Expect('indented', 'first\n    second');
+        Observer.Expect('indented len', '16');
+        Observer.Expect('escaped quote', 'it''s\nquoted');
+        Observer.Expect('single line', 'single line');
+        Observer.Expect('split lf', '2');
+        Observer.Verify();
+    end;
 }

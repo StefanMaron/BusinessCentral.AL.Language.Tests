@@ -326,6 +326,14 @@ is only a reference.
 | 1270 | AL0270 | A page extension adds to an area name that is not a layout area (FactBoxes is accepted even when the base page does not declare it). |
 | 1140 | AL0133 | RecordRef.GetTable with a RecordRef argument (a Variant that holds the RecordRef compiles). |
 | 1141 | AL0196 | Record.TestField(Field, Value) with a Byte variable: ambiguous between the Integer and BigInteger overloads. |
+| 1530 | AL0369 | A for loop over an Integer control variable with a BigInteger literal end bound above the Integer range. |
+| 1531, 1532, 1533 | AL0172 | Unary minus on an Option variable, on an Option table field, and on an Enum. |
+| 1534 | AL0530 | A Code[2049] variable (Code[1025] to Code[2048] compile). |
+| 1535, 1536 | AL0154 | A Code[2049] and a Text[2049] table field. |
+| 1537 | AL0581 | A Code[0] variable. |
+| 1538 | AL0133 | A Code[20] variable passed to a var Text parameter. |
+| 1539 | AL0133 | A Text[100] table field passed to a var Code[20] parameter. |
+| 1540, 1541, 1542 | AL0204 | BC 27/28 only (AL 16 and 17): a CalcFormula or TableRelation where clause that filters an Integer or Enum field by a BigInteger field (AL 18 and later warn, AL0662/AL0663). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

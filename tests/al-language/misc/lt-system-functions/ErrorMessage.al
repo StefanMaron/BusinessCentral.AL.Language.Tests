@@ -576,4 +576,48 @@ codeunit 72513 "LT SyT Message"
         Observer.Expect('-1 of 3', '-1');
         Observer.Verify();
     end;
+
+    // Corpus issue 672 (odd AL behavior leads, part G), item 46: a backslash in a Message text with placeholders, and
+    // TextBuilder.AppendLine text passed to Message and Error. The Probe Observer writes CR and LF as \r and \n.
+    [MessageHandler]
+    procedure LT_BU_SeenRaw(Msg: Text[1024])
+    begin
+        Observer.Observe('message', Msg);
+    end;
+
+    [Test]
+    [HandlerFunctions('LT_BU_SeenRaw')]
+    procedure LT_BU_Message_BackslashAndAppendLine()
+    var
+        TB: TextBuilder;
+        n: Integer;
+        t: Text;
+    begin
+        n := 5;
+        t := 'x';
+        Message('A: \' + 'B:%1\' + 'C:%2', n, t);
+        Message('one\two');
+        Message('%1', 'arg\with\backslash');
+        TB.AppendLine('line1');
+        TB.AppendLine('line2');
+        TB.Append('line3');
+        Message(TB.ToText());
+        Message('%1', TB.ToText());
+        asserterror Error(TB.ToText());
+        Observer.Observe('error text', GetLastErrorText());
+        Observer.Observe('error text length', Format(StrLen(GetLastErrorText())));
+        asserterror Error('A: \' + 'B:%1\' + 'C:%2', n, t);
+        Observer.Observe('error backslash args', GetLastErrorText());
+        Observer.Observe('appendline length', Format(StrLen(TB.ToText())));
+        Observer.Expect('message', 'A: \B:5\C:x');
+        Observer.Expect('message', 'one\two');
+        Observer.Expect('message', 'arg\with\backslash');
+        Observer.Expect('message', 'line1\line2\line3');
+        Observer.Expect('message', 'line1\line2\line3');
+        Observer.Expect('error text', 'line1\line2\line3');
+        Observer.Expect('error text length', '17');
+        Observer.Expect('error backslash args', 'A: \B:5\C:x');
+        Observer.Expect('appendline length', '19');
+        Observer.Verify();
+    end;
 }
