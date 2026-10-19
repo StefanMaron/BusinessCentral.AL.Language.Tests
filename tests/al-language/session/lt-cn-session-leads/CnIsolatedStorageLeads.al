@@ -7,6 +7,10 @@
 //       right after it is refused? And after a Commit?
 //   57: the value length limit of IsolatedStorage.SetEncrypted (docs: 215 characters, special characters take more space).
 // Keys start with LTCN and are deleted at the start of each test.
+// Measured (local BC 29, checked by the CI matrix): the worker of TestPage.RunPageBackgroundTask runs read-only: Set and Delete fail with DB:ReadOnlySession,
+//   like a Record.Insert; Get and Contains of a missing key answer false. Set and Delete open a write transaction (Contains does not), so a guarded
+//   Codeunit.Run right after Set fails; after a Commit it runs. Page.RunModal and Report.RunModal right after Set run. SetEncrypted keeps 214 ASCII
+//   characters and 107 two-byte characters; 216 ASCII and 108 two-byte characters fail with EncryptionDataTooLong (215: Linux suspect, see the procedure).
 // BC versions: 27, 28, 29
 
 codeunit 84887 "LT CN BgTask Iso Worker"

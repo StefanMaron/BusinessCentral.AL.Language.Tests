@@ -5,6 +5,9 @@
 // then Rec1.Modify(). Does Modify raise "Sorry, we have just updated this page" because TransferFields or Copy carry the source row's version?
 // Sources: Rec2 built in memory, Rec2 read from the database, Rec2 read and then modified by another variable (Rec1 is then stale), a row of
 // another table, TransferFields(Rec2, false), and Record.Copy. The stale Modify without TransferFields is the control.
+// Measured (local BC 29, checked by the CI matrix): every case starts from a committed row. In-memory and freshly read sources modify fine. A stale Modify (Commit after the other write) fails with
+//   DB:RecordChanged; TransferFields(Newer) with the primary key (the default) and Copy(Newer) make the buffer current, so Modify succeeds;
+//   TransferFields(Newer, false) does not, and Modify fails with DB:RecordChanged. A row of another table with the same key transfers and modifies.
 // BC versions: 27, 28, 29
 
 table 84884 "LT CN TF Row"
@@ -120,7 +123,10 @@ codeunit 84886 "LT CN TF Modify"
         asserterror R1.Modify();
         Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,7 +166,10 @@ codeunit 84886 "LT CN TF Modify"
         asserterror R1.Modify();
         Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
     end;
 
     [Test]

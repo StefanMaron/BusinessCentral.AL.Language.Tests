@@ -9,6 +9,9 @@
 //   48 (microsoft/AL#5120): Insert, Modify and Delete on the application-database table "OData Edm Type" (2000000179) from a test.
 //   54: SessionSettings.TimeZone and CreateDateTime, DT2Date, DT2Time, Format(DateTime, 0, 9) in the test session (install code is not probed: check-install-triggers.py).
 //   49 (microsoft/AL#6857): Run of an Upgrade codeunit through a codeunit variable (Codeunit.Run by id is pinned in PUpgradeTriggers.al).
+// Measured (local BC 29, checked by the CI matrix): the Scheduled Task row carries the creating session's UserSecurityId and UserId; Type Helper's
+//   UTC value equals CurrentDateTime; the test session's time zone is UTC; OData Edm Type accepts Insert, Modify and Delete from a test (this is not SaaS);
+//   a Run through an Upgrade codeunit variable fails like Codeunit.Run by id (UpgradeCodeunitOnRunCall).
 // BC versions: 27, 28, 29
 
 codeunit 84894 "LT CN Task User"
