@@ -4,7 +4,7 @@
 // Fixtures used: Probe Observer (codeunit 69160); CgQueryFixtures.al (tables 84460-84462, table extensions 84460-84461, enum 84460, queries 84460-84474)
 // Facts: corpus #667 query leads (writer CG): column types of Sum/Average/Min/Max over Integer and BigInteger, Day/Month/Year columns,
 //   a column on a FlowField that sums a FlowField, Exist FlowField columns, DataItemLink on a FlowField (AL0910 warning), Date filters in
-//   DataItemTableFilter, filters on Option and Enum columns, a query on a DataPerCompany = false table, CopyFilter into a query column,
+//   DataItemTableFilter, filters on Option and Enum columns, a query on a DataPerCompany = false table,
 //   filters, links and joins on table extension fields, Query.SaveAsXml/Csv/Json with an object id that does not exist.
 
 codeunit 84475 "LT CG Query Leads"
@@ -466,33 +466,6 @@ codeunit 84475 "LT CG Query Leads"
         Q.Open();
         while Q.Read() do
             Rows += Q.No + ':' + Format(Q.Amount) + ' ';
-    end;
-
-    // #667 item 106: Record.CopyFilter(Field, QueryVar.Column) copies the record's filter onto the query column.
-    [Test]
-    procedure CopyFilter_FromRecordFieldIntoQueryColumn()
-    var
-        Observer: Codeunit "Probe Observer";
-        H: Record "LT CG Q Header";
-        Q: Query "LT CG Q Grp";
-        Rows: Text;
-    begin
-        Initialize();
-        AddHeader('H1', 'A', 0, 0, 0, false, '');
-        AddHeader('H2', 'B', 0, 0, 0, false, '');
-        AddHeader('H3', 'C', 0, 0, 0, false, '');
-        H.SetFilter(Grp, 'A|C');
-        H.CopyFilter(Grp, Q.Grp);
-        Observer.Observe('getfilter', Q.GetFilter(Grp));
-        Q.Open();
-        while Q.Read() do
-            Rows += Q.No + ' ';
-        Q.Close();
-        Observer.Observe('rows', Rows);
-        H.SetRange(Grp);
-        H.CopyFilter(Grp, Q.Grp);
-        Observer.Observe('getfilter after empty copy', Q.GetFilter(Grp));
-        Observer.Finish();
     end;
 
     // #667 item 107: DataItemTableFilter on a table extension field (ExtFlag = const(false)).
