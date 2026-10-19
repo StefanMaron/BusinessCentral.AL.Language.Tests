@@ -45,7 +45,16 @@ codeunit 80351 "LT AW Session Tests"
             Observer.Observe('application_name', SessionRec."Application Name");
             Observer.Observe('host_name', SessionRec."Host Name");
         end;
+#if BC28PLUS
+        Observer.Expect('count', '1');
+        Observer.Expect('database_name', 'CRONUS');
+        Observer.Expect('login_type', 'Username and Password');
+        Observer.Expect('application_name', 'Web Client');
+        Observer.Ignore('host_name');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -60,7 +69,17 @@ codeunit 80351 "LT AW Session Tests"
         Observer.Observe('client_computer_name', ActiveSession."Client Computer Name");
         Observer.Observe('client_type', Format(ActiveSession."Client Type"));
         Observer.Observe('server_computer_name_blank', Format(ActiveSession."Server Computer Name" = ''));
+#if BC28PLUS
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('database_name', 'CRONUS');
+        Observer.Expect('server_instance_name', 'BC');
+        Observer.Expect('client_computer_name', 'VSCodeTestClient');
+        Observer.Expect('client_type', 'Web Client');
+        Observer.Expect('server_computer_name_blank', 'No');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
 
@@ -86,7 +105,8 @@ codeunit 80352 "LT AW Page Meta Tests"
         Observer.Observe('count', Format(PageAction.Count()));
         if PageAction.FindSet() then
             repeat
-                Observer.Observe('row ' + Format(PageAction."Action Index"), StrSubstNo('id=%1 ind=%2 parent=%3 type=%4 sub=%5 name=%6', PageAction."Action ID", PageAction.Indentation,
+                // One row as Action ID/Indentation/Parent Action ID/Action Type/Action Subtype/Name (short, so 32 rows fit one observation message).
+                Observer.Observe(Format(PageAction."Action Index"), StrSubstNo('%1/%2/%3/%4/%5/%6', PageAction."Action ID", PageAction.Indentation,
                     PageAction."Parent Action ID", Format(PageAction."Action Type", 0, 9), Format(PageAction."Action Subtype", 0, 9), PageAction.Name));
             until PageAction.Next() = 0;
     end;
@@ -98,7 +118,13 @@ codeunit 80352 "LT AW Page Meta Tests"
     begin
         Observer.Observe('ascending', ViewOf(Page::"LT AW View Asc"));
         Observer.Observe('descending', ViewOf(Page::"LT AW View Desc"));
+#if BC28PLUS
+        Observer.Expect('ascending', 'SORTING(Field2,Field3) WHERE(Field1=FILTER(1..10),Field2=CONST(A))');
+        Observer.Expect('descending', 'SORTING(Field3) ORDER(1) WHERE(Field4=CONST(1),Field3=FILTER(>0))');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -116,7 +142,21 @@ codeunit 80352 "LT AW Page Meta Tests"
         Observer: Codeunit "Probe Observer";
     begin
         ObserveActionRows(Observer, Page::"ALT Prompt Dialog Page");
+#if BC28PLUS
+        Observer.Expect('count', '9');
+        Observer.Expect('0', '1108029291/0/0/0/12/');
+        Observer.Expect('1', '770390674/1/1108029291/1/0/Generate');
+        Observer.Expect('2', '874487081/1/1108029291/1/0/Ok');
+        Observer.Expect('3', '512114499/1/1108029291/1/0/Cancel');
+        Observer.Expect('4', '1443543236/0/0/0/1/');
+        Observer.Expect('5', '1751769759/0/0/0/3/');
+        Observer.Expect('6', '203214370/0/0/0/2/');
+        Observer.Expect('7', '1139857661/0/0/0/14/');
+        Observer.Expect('8', '1447053501/0/0/0/4/');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
 
@@ -153,7 +193,13 @@ codeunit 80353 "LT AW Layout Tests"
                 Names += LayoutList.Name + ',';
             until LayoutList.Next() = 0;
         Observer.Observe('names', Names);
+#if BC28PLUS
+        Observer.Expect('count', '5');
+        Observer.Expect('names', 'XlCaptioned,XlFalse,XlOmit,XlPending,XlTrue,');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -162,7 +208,16 @@ codeunit 80353 "LT AW Layout Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('XlTrue', LayoutRow('XlTrue'));
+#if BC28PLUS
+#if BC29PLUS
+        Observer.Expect('XlTrue', 'Caption=XlTrue;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlTrue;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=2;Layout Status=0;Layout Subtype=0;HeaderFooterPart=;ThemePart=;');
+#else
+        Observer.Expect('XlTrue', 'Caption=XlTrue;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlTrue;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=2;Layout Status=0;');
+#endif
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -171,7 +226,16 @@ codeunit 80353 "LT AW Layout Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('XlFalse', LayoutRow('XlFalse'));
+#if BC28PLUS
+#if BC29PLUS
+        Observer.Expect('XlFalse', 'Caption=XlFalse;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlFalse;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=1;Layout Status=0;Layout Subtype=0;HeaderFooterPart=;ThemePart=;');
+#else
+        Observer.Expect('XlFalse', 'Caption=XlFalse;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlFalse;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=1;Layout Status=0;');
+#endif
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -180,7 +244,16 @@ codeunit 80353 "LT AW Layout Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('XlOmit', LayoutRow('XlOmit'));
+#if BC28PLUS
+#if BC29PLUS
+        Observer.Expect('XlOmit', 'Caption=XlOmit;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlOmit;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=0;Layout Status=0;Layout Subtype=0;HeaderFooterPart=;ThemePart=;');
+#else
+        Observer.Expect('XlOmit', 'Caption=XlOmit;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlOmit;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=0;Layout Status=0;');
+#endif
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -189,7 +262,16 @@ codeunit 80353 "LT AW Layout Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('XlPending', LayoutRow('XlPending'));
+#if BC28PLUS
+#if BC29PLUS
+        Observer.Expect('XlPending', 'Caption=XlPending;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlPending;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=true;ExcelLayoutMultipleDataSheets=0;Layout Status=0;Layout Subtype=0;HeaderFooterPart=;ThemePart=;');
+#else
+        Observer.Expect('XlPending', 'Caption=XlPending;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlPending;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=true;ExcelLayoutMultipleDataSheets=0;Layout Status=0;');
+#endif
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -198,7 +280,16 @@ codeunit 80353 "LT AW Layout Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('XlCaptioned', LayoutRow('XlCaptioned'));
+#if BC28PLUS
+#if BC29PLUS
+        Observer.Expect('XlCaptioned', 'Caption=LT AW captioned layout;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlCaptioned;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=0;Layout Status=0;Layout Subtype=0;HeaderFooterPart=;ThemePart=;');
+#else
+        Observer.Expect('XlCaptioned', 'Caption=LT AW captioned layout;CaptionML=;Layout Format=2;Custom Type={00000000-0000-0000-0000-000000000000};MIME Type=;Description=XlCaptioned;Report Name=LT AW Layouts;Layout Publisher=AL Language Coverage Tests by AL Language;User Defined=false;ReportIsInstalled=true;IsObsolete=false;ExcelLayoutMultipleDataSheets=0;Layout Status=0;');
+#endif
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
 
@@ -244,7 +335,20 @@ codeunit 80354 "LT AW Link Tests"
         Observer.Observe('description', RecordLink.Description);
         Observer.Observe('user_id_is_session_user', Format(RecordLink."User ID" = UserId()));
         Observer.Observe('record_id_matches', Format(RecordLink."Record ID" = RR.RecordId()));
+#if BC28PLUS
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('company_is_session_company', 'Yes');
+        Observer.Expect('company_blank', 'No');
+        Observer.Expect('created_set', 'Yes');
+        Observer.Expect('created_in_call_window', 'Yes');
+        Observer.Expect('type', 'Link');
+        Observer.Expect('description', 'aw link');
+        Observer.Expect('user_id_is_session_user', 'Yes');
+        Observer.Expect('record_id_matches', 'Yes');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -273,7 +377,16 @@ codeunit 80354 "LT AW Link Tests"
         RR.ChangeCompany(OtherCompanyTok);
         RR.DeleteLink(LinkId);
         Observer.Observe('link_row_after_delete_changed_company', Format(RecordLink.Get(LinkId)));
+#if BC28PLUS
+        Observer.Expect('other_current_company', 'LT AW OTHER CO');
+        Observer.Expect('other_has_links_before', 'No');
+        Observer.Expect('link_row_after_delete_from_other', 'Yes');
+        Observer.Expect('own_has_links_after', 'Yes');
+        Observer.Expect('link_row_after_delete_changed_company', 'Yes');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -288,7 +401,12 @@ codeunit 80354 "LT AW Link Tests"
         LinkId := RR.AddLink('https://example.com/aw3', 'aw link 3');
         RR.DeleteLink(LinkId);
         Observer.Observe('link_row_after_delete', Format(RecordLink.Get(LinkId)));
+#if BC28PLUS
+        Observer.Expect('link_row_after_delete', 'No');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
 
@@ -306,7 +424,12 @@ codeunit 80355 "LT AW Moved Tests"
         AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
         AllObj.SetRange("Object ID", 80301);
         Observer.Observe('allobj_rows', Format(AllObj.Count()));
+#if BC28PLUS
+        Observer.Expect('allobj_rows', '0');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -319,7 +442,13 @@ codeunit 80355 "LT AW Moved Tests"
         asserterror RR.Open(80301);
         Observer.Observe('open_error', GetLastErrorText());
         Observer.Observe('open_error_code', GetLastErrorCode());
+#if BC28PLUS
+        Observer.Expect('open_error', 'You tried to invoke the Table object with the ID 80301 from the object LT AW Moved Tests. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('open_error_code', 'AL:MetadataNotFound');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -340,7 +469,14 @@ codeunit 80355 "LT AW Moved Tests"
         AllObj.SetRange("Object ID");
         AllObj.SetRange("Object Name", 'No. Series');
         Observer.Observe('rows_named_no_series', Format(AllObj.Count()));
+#if BC28PLUS
+        Observer.Expect('rows_308', '1');
+        Observer.Expect('names_308', 'No. Series,');
+        Observer.Expect('rows_named_no_series', '1');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
 
@@ -391,7 +527,14 @@ codeunit 80356 "LT AW Feature Key Tests"
         Observer.Observe('modify', Format(FeatureKey.Modify()));
         Observer.Observe('after', State());
         // Left changed on purpose: the next test reads it and restores it.
+#if BC28PLUS
+        Observer.Expect('before', 'get=All Users findset=All Users count_none=0');
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('after', 'get=None findset=None count_none=1');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -402,7 +545,13 @@ codeunit 80356 "LT AW Feature Key Tests"
         Observer.Observe('next_test', State());
         Restore();
         Observer.Observe('restored', State());
+#if BC28PLUS
+        Observer.Expect('next_test', 'get=None findset=None count_none=1');
+        Observer.Expect('restored', 'get=All Users findset=All Users count_none=0');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -419,7 +568,15 @@ codeunit 80356 "LT AW Feature Key Tests"
         FeatureKey.Enabled := FeatureKey.Enabled;
         Observer.Observe('modify_same_value', Format(FeatureKey.Modify()));
         Observer.Observe('after_same', State());
+#if BC28PLUS
+        Observer.Expect('modify_nothing_changed', 'Yes');
+        Observer.Expect('after_nothing', 'get=All Users findset=All Users count_none=0');
+        Observer.Expect('modify_same_value', 'Yes');
+        Observer.Expect('after_same', 'get=All Users findset=All Users count_none=0');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 
     [Test]
@@ -439,7 +596,13 @@ codeunit 80356 "LT AW Feature Key Tests"
         Observer.Observe('error', GetLastErrorText());
         Observer.Observe('after_rollback', State());
         Restore();
+#if BC28PLUS
+        Observer.Expect('error', 'LT AW rollback');
+        Observer.Expect('after_rollback', 'get=None findset=None count_none=1');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
 
@@ -474,6 +637,12 @@ codeunit 80357 "LT AW Agent Tests"
         end;
         Observer.Observe('rows', Rows);
         Observer.Observe('error', GetLastErrorText());
+#if BC28PLUS
+        Observer.Expect('rows', '');
+        Observer.Expect('error', 'You cannot open record 2000000297 from a RecordRef data type when you are using target Cloud.');
+        Observer.Verify();
+#else
         Observer.Finish();
+#endif
     end;
 }
