@@ -1,6 +1,6 @@
 {
-  "id": "1a0c7e11-5d22-4b6a-8f01-c2d4e6a8b003",
-  "name": "AL Language Windows Check epbt",
+  "id": "5b8e1f2a-7c3d-4e6f-9a0b-1c2d3e4f5a6b",
+  "name": "AL Language Windows Check CE",
   "publisher": "AL Language",
   "version": "1.0.0.0",
   "brief": "Probes of results that looked like Linux host bugs; run only by the Windows nightly on a branch.",
@@ -24,13 +24,19 @@
       "name": "Base Application",
       "publisher": "Microsoft",
       "version": "27.0.0.0"
+    },
+    {
+      "id": "7c1e5a30-2b44-4d1e-9a07-3f6d8e21b9c4",
+      "name": "AL Language Windows Check",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
     }
   ],
   "screenshots": [],
   "idRanges": [
     {
-      "from": 79900,
-      "to": 79999
+      "from": 50000,
+      "to": 99999
     }
   ],
   "features": [],

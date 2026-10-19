@@ -679,18 +679,20 @@ jobs:
 
           # Order matters: the fixture is a dependency of al-language, which is in turn a
           # dependency of al-language-onprem.
-          $apps = @('tests/al-language-win-probe', 'tests/al-language-win-probe-fts', 'tests/al-language-win-probe-evps', 'tests/al-language-win-probe-ehttp', 'tests/al-language-win-probe-epbt')
+          $apps = @('tests/al-language-win-probe', 'tests/al-language-win-probe-ce')
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           foreach ($folder in $apps) {
             Write-Host "::group::compile $folder"
             $sw = [Diagnostics.Stopwatch]::StartNew()
+            try {
             $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
               -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
               -appOutputFolder $outDir `
               -appSymbolsFolder (Join-Path $outDir 'symbols') `
               -UpdateSymbols -preProcessorSymbols $symbols -failOn 'error'
+            } catch { Write-Host "WCRESULT compile $folder : FAILED: $($_.Exception.Message)"; Write-Host "::endgroup::"; continue }
             Write-Host ("compiled {0} in {1:n0}s -> {2}" -f $folder, $sw.Elapsed.TotalSeconds, $appFile)
             Write-Host "::endgroup::"
 
@@ -728,28 +730,23 @@ jobs:
           }
 
           $probe = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe/app.json') -Raw | ConvertFrom-Json
-          $fts = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-fts/app.json') -Raw | ConvertFrom-Json
-          $evps = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-evps/app.json') -Raw | ConvertFrom-Json
-          $ehttp = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-ehttp/app.json') -Raw | ConvertFrom-Json
-          $epbt = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-epbt/app.json') -Raw | ConvertFrom-Json
-          # One run per test function, so a crashed session loses only that probe.
+          $ce = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'tests/al-language-win-probe-ce/app.json') -Raw | ConvertFrom-Json
           $runs = @(
-            @{ id = $probe.id; cu = 79901; fn = 'Download_File' },
-            @{ id = $probe.id; cu = 79901; fn = 'Download_FromStream' },
-            @{ id = $probe.id; cu = 67582; fn = 'PartLine_EnteredAfterHostKey_Baseline' },
-            @{ id = $probe.id; cu = 67582; fn = 'PartLine_EnteredBeforeHostKey_ThenKeyTyped' },
-            @{ id = $probe.id; cu = 79923; fn = 'TestPage_SetValue_FlowField' },
-            @{ id = $probe.id; cu = 79931; fn = 'Page_GestureContextMenu_Opens' },
-            @{ id = $evps.id; cu = 79911; fn = 'Evaluate_PageStyle' },
-            @{ id = $ehttp.id; cu = 79912; fn = 'Evaluate_HttpRequestType' },
-            @{ id = $epbt.id; cu = 79913; fn = 'Evaluate_PageBackgroundTaskErrorLevel' },
-            @{ id = $probe.id; cu = 61275; fn = 'IsPathTemporary_Paths' },
-            @{ id = $probe.id; cu = 61275; fn = 'Erase_EmptyName_FullErrorText' },
-            @{ id = $probe.id; cu = 61258; fn = 'O_Database_ExportData_ImportData_Files' },
-            @{ id = $probe.id; cu = 69852; fn = 'GlobalTriggers_MaskFifteenAndAllSetupFlagsFalse_RowB' },
-            @{ id = $probe.id; cu = 69852; fn = 'GlobalTriggers_MaskFifteenAndAllSetupFlagsTrue_Arguments_RowD' },
-            @{ id = $probe.id; cu = 69852; fn = 'GlobalTriggers_MaskZeroAndAllSetupFlagsTrue_RowC' },
-            @{ id = $fts.id;   cu = 79951; fn = 'Fts_InsertAndFilter' }
+            @{ id = $probe.id; cu = 81360; fn = 'AC_DnRunOnClient_GlobalVariable' },
+            @{ id = $ce.id;    cu = 99490; fn = 'BG_RunOnClient_ClientFeatures_IsAvailable' },
+            @{ id = $ce.id;    cu = 99490; fn = 'BG_RunOnClient_OtherType_Constructor' },
+            @{ id = $ce.id;    cu = 99490; fn = 'BG_RunOnClient_OtherType_StaticCall' },
+            @{ id = $probe.id; cu = 81351; fn = 'BG_TestPage_BusinessManagerRoleCenter_Opens' },
+            @{ id = $probe.id; cu = 81351; fn = 'BG_TestPage_O365Activities_Opens' },
+            @{ id = $probe.id; cu = 81352; fn = 'BG_Camera_IsAvailable_InTestSession' },
+            @{ id = $probe.id; cu = 81353; fn = 'BG_DownloadFromStream_Cloud_ReturnAndToFile' },
+            @{ id = $probe.id; cu = 81353; fn = 'BG_UploadIntoStream_Cloud_Return' },
+            @{ id = $probe.id; cu = 98990; fn = 'BG_IsPathTemporary_OutsideTemporaryFolder' },
+            @{ id = $probe.id; cu = 98991; fn = 'BG_File_Download_ReturnAndToFile' },
+            @{ id = $probe.id; cu = 98991; fn = 'BG_File_DownloadFromStream_ReturnAndToFile' },
+            @{ id = $probe.id; cu = 98992; fn = 'BG_DataFileInformation_RaisesNotSupported' },
+            @{ id = $probe.id; cu = 98992; fn = 'BG_ImportData_RaisesNotSupported' },
+            @{ id = $probe.id; cu = 98993; fn = 'BG_ExportData_ReturnFileNameAndFile' }
           )
           $n = 0
           foreach ($r in $runs) {
