@@ -460,7 +460,17 @@ codeunit 60186 "Test Loop Contracts"
         ObserveDecLoop(Observer, 'decimal bound 2.6', 1, 2.6);
         ObserveDecLoop(Observer, 'decimal bound 3.0', 1, 3);
         ObserveDecLoop(Observer, 'decimal start 0.5', 0.5, 2);
-        Observer.Finish();
+        Observer.Expect('biginteger bound 1e14|text', 'Overflow under conversion of System.Int64 value 100000000000000 to System.Int32.');
+        Observer.Expect('biginteger bound 1e14|code', 'ConversionCast');
+        Observer.Expect('biginteger bound 3', 'ok|3');
+        Observer.Expect('decimal bound 2.5|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.');
+        Observer.Expect('decimal bound 2.5|code', 'ConversionCast');
+        Observer.Expect('decimal bound 2.6|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.6 to System.Int32.');
+        Observer.Expect('decimal bound 2.6|code', 'ConversionCast');
+        Observer.Expect('decimal bound 3.0', 'ok|1,2,3,|3');
+        Observer.Expect('decimal start 0.5|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 0.5 to System.Int32.');
+        Observer.Expect('decimal start 0.5|code', 'ConversionCast');
+        Observer.Verify();
     end;
 
     local procedure ObserveDecLoop(var Observer: Codeunit "Probe Observer"; Name: Text; StartAt: Decimal; EndAt: Decimal)

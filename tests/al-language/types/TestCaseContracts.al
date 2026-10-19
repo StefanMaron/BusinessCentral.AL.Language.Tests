@@ -388,12 +388,17 @@ codeunit 60187 "Test Case Contracts"
     var
         Observer: Codeunit "Probe Observer";
         D: Date;
+#if BC29PLUS
         T: Time;
+#endif
     begin
         D := 0D;
         Observer.Observe('0D', DateCase(D));
         Observer.Observe('fixed date', DateCase(DMY2Date(15, 3, 2024)));
         Observer.Observe('other date', DateCase(DMY2Date(16, 3, 2024)));
+#if BC29PLUS
+        // A Time selector with a `0T:` label runs from BC 29. On BC 28.5 the same source fails the C# compilation of the whole codeunit at
+        // publish ("error CS0426: The type name 'Create' does not exist in the type 'NavTime'", corpus CI run 39262811842).
         T := 0T;
         case T of
             0T:
@@ -401,13 +406,16 @@ codeunit 60187 "Test Case Contracts"
             else
                 Observer.Observe('0T', 'other');
         end;
+#endif
         // A DateTime selector with a `0DT:` label is left out on purpose: it compiles, but BC 29.0 then fails the C# compilation of the
         // whole codeunit at publish ("C# compilation has failed for the application object CodeUnit_60187 ... error CS0426: The type name
         // 'Create' does not exist in the type 'NavDateTime'", corpus CI run 39239885087), so none of its tests would run.
         Observer.Expect('0D', 'zero');
         Observer.Expect('fixed date', '15 March');
         Observer.Expect('other date', 'other');
+#if BC29PLUS
         Observer.Expect('0T', 'zero');
+#endif
         Observer.Verify();
     end;
 
