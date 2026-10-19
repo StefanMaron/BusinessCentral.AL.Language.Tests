@@ -454,9 +454,8 @@ codeunit 67755 "W3 Dataset Probe"
     end;
     // Writer PW: the raw text of the "W3 Hdr Plain" dataset split at line feeds (a CR shows as \r), the lines Header_RawText_LineEndsAndIndentation
     // counts CR bytes in. failure-triage "dataset raw line counts" (67755 Header_RawText_LineEndsAndIndentation).
-    local procedure PwDumpPlain(First: Integer; Last: Integer)
+    local procedure PwDumpPlain(First: Integer; Last: Integer; var Observer: Codeunit "Probe Observer")
     var
-        Observer: Codeunit "Probe Observer";
         Xml: Text;
         Lines: List of [Text];
         i: Integer;
@@ -469,30 +468,41 @@ codeunit 67755 "W3 Dataset Probe"
         for i := First to Last do
             if i <= Lines.Count() then
                 Observer.Observe('l' + Format(i), Lines.Get(i));
-        Observer.Finish();
     end;
 
     [Test]
     procedure PW_DumpPlain_Lines01To18()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        PwDumpPlain(1, 18);
+        PwDumpPlain(1, 18, Observer);
+        Observer.Finish();
     end;
 
     [Test]
     procedure PW_DumpPlain_Lines19To36()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        PwDumpPlain(19, 36);
+        PwDumpPlain(19, 36, Observer);
+        Observer.Finish();
     end;
 
     [Test]
     procedure PW_DumpPlain_Lines37To54()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        PwDumpPlain(37, 54);
+        PwDumpPlain(37, 54, Observer);
+        Observer.Finish();
     end;
 
     [Test]
     procedure PW_DumpPlain_Lines55To72()
+    var
+        Observer: Codeunit "Probe Observer";
     begin
-        PwDumpPlain(55, 72);
+        PwDumpPlain(55, 72, Observer);
+        Observer.Finish();
     end;
 }

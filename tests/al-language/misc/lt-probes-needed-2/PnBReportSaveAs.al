@@ -474,9 +474,8 @@ codeunit 70535 "LT PnB SaveAs Xml"
     // Writer PW: the whole Xml dataset of "LT PnB Rep", line by line (lines as ReadText gives them, systemId attributes taken out, the
     // header values that change from run to run scrubbed by the Probe Observer). docs/probes-needed.md "Report runs and SaveAs":
     // "The Xml dataset of LT PnB Rep on BC 29 has 113 lines, the runtime writes 107".
-    local procedure PwDump(First: Integer; Last: Integer)
+    local procedure PwDump(First: Integer; Last: Integer; var Obs: Codeunit "Probe Observer")
     var
-        Obs: Codeunit "Probe Observer";
         Rep: Report "LT PnB Rep";
         i: Integer;
     begin
@@ -486,55 +485,78 @@ codeunit 70535 "LT PnB SaveAs Xml"
         for i := First to Last do
             if i <= Lines.Count() then
                 Obs.Observe('l' + Format(i), Lines.Get(i));
-        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines001To016()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(1, 16);
+        PwDump(1, 16, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines017To032()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(17, 32);
+        PwDump(17, 32, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines033To048()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(33, 48);
+        PwDump(33, 48, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines049To064()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(49, 64);
+        PwDump(49, 64, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines065To080()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(65, 80);
+        PwDump(65, 80, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines081To096()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(81, 96);
+        PwDump(81, 96, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines097To112()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(97, 112);
+        PwDump(97, 112, Obs);
+        Obs.Finish();
     end;
 
     [Test]
     procedure PW_Dump_Lines113To128()
+    var
+        Obs: Codeunit "Probe Observer";
     begin
-        PwDump(113, 128);
+        PwDump(113, 128, Obs);
+        Obs.Finish();
     end;
 
     // Writer PW: GetLastErrorText and GetLastErrorCode after Ok := Rep.SaveAs(..) answered false because OnPreReport raised an error

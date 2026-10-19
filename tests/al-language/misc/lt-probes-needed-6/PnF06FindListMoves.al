@@ -418,7 +418,7 @@ codeunit 73874 "LT PnF Find List Moves"
 
     // Writer PW: trust-refusals probe list "rows a GoToKey past a full 20-row window reads": GoToKey on the OnFindRecord lists after the open
     // read a full window. Each step's trigger log.
-    local procedure PwGoToAsc(Rows: Integer; K1: Integer; K2: Integer; K3: Integer; var Observer: Codeunit "Probe Observer")
+    local procedure PwGoToAsc(Rows: Integer; K1: Integer; K2: Integer; K3: Integer; ObserveFirst: Boolean; ObserveRest: Boolean; var Observer: Codeunit "Probe Observer")
     var
         Log: Codeunit "LT PnF FL Log";
         P: TestPage "LT PnF FL Asc";
@@ -429,11 +429,17 @@ codeunit 73874 "LT PnF Find List Moves"
         P.OpenView();
         Log.Take();
         Row.Get(K1);
-        Observer.Observe('goto' + Format(K1), Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
-        Observer.Observe('goToKey' + Format(K2), Format(P.GoToKey(K2)) + '|' + P.Id.Value() + '|' + Log.Take());
-        Observer.Observe('goToKey' + Format(K3), Format(P.GoToKey(K3)) + '|' + P.Id.Value() + '|' + Log.Take());
-        P.Next();
-        Observer.Observe('next', P.Id.Value() + '|' + Log.Take());
+        if ObserveFirst then
+            Observer.Observe('goto' + Format(K1), Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take())
+        else
+            P.GoToRecord(Row);
+        Log.Take();
+        if ObserveRest then begin
+            Observer.Observe('goToKey' + Format(K2), Format(P.GoToKey(K2)) + '|' + P.Id.Value() + '|' + Log.Take());
+            Observer.Observe('goToKey' + Format(K3), Format(P.GoToKey(K3)) + '|' + P.Id.Value() + '|' + Log.Take());
+            P.Next();
+            Observer.Observe('next', P.Id.Value() + '|' + Log.Take());
+        end;
         P.Close();
         Log.Take();
     end;
@@ -460,16 +466,25 @@ codeunit 73874 "LT PnF Find List Moves"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        PwGoToAsc(25, 23, 5, 25, Observer);
+        PwGoToAsc(25, 23, 5, 25, true, true, Observer);
         Observer.Finish();
     end;
 
     [Test]
-    procedure PW_GoToKey_Ascending_45Rows()
+    procedure PW_GoToKey_Ascending_45Rows_FarJump()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        PwGoToAsc(45, 40, 21, 45, Observer);
+        PwGoToAsc(45, 40, 21, 45, true, false, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_GoToKey_Ascending_45Rows_AfterFarJump()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwGoToAsc(45, 40, 21, 45, false, true, Observer);
         Observer.Finish();
     end;
 
