@@ -765,7 +765,11 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Doc.GetRoot(Root);
         Observer.Observe('preserve_false', Kinds(Root));
         Observer.Observe('inner_text', Root.InnerText());
-        Observer.Finish();
+        Observer.Expect('no_options', '5:text [\n  ];element a;text [\n  ];element b;text [\n];');
+        Observer.Expect('preserve_true', '5:text [\n  ];element a;text [\n  ];element b;text [\n];');
+        Observer.Expect('preserve_false', '5:text [\n  ];element a;text [\n  ];element b;text [\n];');
+        Observer.Expect('inner_text', '\n  1\n  \n');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -812,6 +816,38 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         WriteBadChar('char11', 11);
         WriteBadChar('lone_surrogate', 55296);
         WriteBadChar('tab_allowed', 9);
-        Observer.Finish();
+        Observer.Expect('char1_text_ok', 'No');
+        Observer.Expect('char1_text|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char1_text|code', 'Argument');
+        Observer.Expect('char1_text', '');
+        Observer.Expect('char1_stream_ok', 'No');
+        Observer.Expect('char1_stream|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char1_stream|code', 'Argument');
+        Observer.Expect('char1_stream_length', '0');
+        Observer.Expect('char11_text_ok', 'No');
+        Observer.Expect('char11_text|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char11_text|code', 'Argument');
+        Observer.Expect('char11_text', '');
+        Observer.Expect('char11_stream_ok', 'No');
+        Observer.Expect('char11_stream|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char11_stream|code', 'Argument');
+        Observer.Expect('char11_stream_length', '0');
+        Observer.Expect('lone_surrogate_text_ok', 'No');
+        Observer.Expect('lone_surrogate_text|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('lone_surrogate_text|code', 'Argument');
+        Observer.Expect('lone_surrogate_text', '');
+        Observer.Expect('lone_surrogate_stream_ok', 'No');
+        Observer.Expect('lone_surrogate_stream|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('lone_surrogate_stream|code', 'Argument');
+        Observer.Expect('lone_surrogate_stream_length', '0');
+        Observer.Expect('tab_allowed_text_ok', 'Yes');
+        Observer.Expect('tab_allowed_text|text', '');
+        Observer.Expect('tab_allowed_text|code', '');
+        Observer.Expect('tab_allowed_text', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>x\ty</a>');
+        Observer.Expect('tab_allowed_stream_ok', 'Yes');
+        Observer.Expect('tab_allowed_stream|text', '');
+        Observer.Expect('tab_allowed_stream|code', '');
+        Observer.Expect('tab_allowed_stream_length', '53');
+        Observer.Verify();
     end;
 }

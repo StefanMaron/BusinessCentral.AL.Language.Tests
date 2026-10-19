@@ -661,7 +661,19 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Observer.Observe('single_if', Format(Doc.SelectSingleNode('\\contract', N)));
         Observer.ObserveError('single_if');
         Observer.Observe('forward_slashes', Format(Doc.SelectNodes('//contract', L)) + '|' + Format(L.Count()));
-        Observer.Finish();
+        Observer.Expect('nodes_unused|text', '''\\contract'' has an invalid token.');
+        Observer.Expect('nodes_unused|code', 'Xml:XPath');
+        Observer.Expect('nodes_if', 'false');
+        Observer.Expect('nodes_if|text', '''\\contract'' has an invalid token.');
+        Observer.Expect('nodes_if|code', 'Xml:XPath');
+        Observer.Expect('nodes_if_count', '0');
+        Observer.Expect('single_unused|text', '''\\contract'' has an invalid token.');
+        Observer.Expect('single_unused|code', 'Xml:XPath');
+        Observer.Expect('single_if', 'No');
+        Observer.Expect('single_if|text', '''\\contract'' has an invalid token.');
+        Observer.Expect('single_if|code', 'Xml:XPath');
+        Observer.Expect('forward_slashes', 'Yes|1');
+        Observer.Verify();
     end;
 
     // Corpus issue 671 item 100 (microsoft/AL#554): SelectSingleNode that finds nothing, into a node variable that was never assigned.
@@ -681,7 +693,16 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Observer.Observe('write_ok', Format(TryWriteNode(N, Txt)));
         Observer.ObserveError('write');
         Observer.Observe('write', '[' + Txt + ']');
-        Observer.Finish();
+        Observer.Expect('found', 'No');
+        Observer.Expect('is_text_ok', 'Yes');
+        Observer.Expect('is_text|text', '');
+        Observer.Expect('is_text|code', '');
+        Observer.Expect('is_text', 'No');
+        Observer.Expect('write_ok', 'No');
+        Observer.Expect('write|text', 'Microsoft.Dynamics.Nav.Runtime.NavXmlNode variable not initialized.');
+        Observer.Expect('write|code', 'NotInitialized');
+        Observer.Expect('write', '[]');
+        Observer.Verify();
     end;
 
     // Corpus issue 671 item 101 (microsoft/AL#7955): from a node that SelectNodes returned, a path with a leading slash starts at the
@@ -704,6 +725,13 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Observer.Observe('abs_full', Format(Line.SelectSingleNode('/Header/Lines/Line/LineNumber', N)) + '|' + N.AsXmlElement().InnerText());
         Observer.Observe('descendant', Format(Line.SelectSingleNode('//LineNumber', N)) + '|' + N.AsXmlElement().InnerText());
         Observer.Observe('abs_nodes_from_line', Format(Line.SelectNodes('/Line/LineNumber', L)) + '|' + Format(L.Count()));
-        Observer.Finish();
+        Observer.Expect('lines', '2');
+        Observer.Expect('abs_from_line', 'No');
+        Observer.Expect('dot_rel', 'Yes|2');
+        Observer.Expect('plain_rel', 'Yes|2');
+        Observer.Expect('abs_full', 'Yes|1');
+        Observer.Expect('descendant', 'Yes|1');
+        Observer.Expect('abs_nodes_from_line', 'Yes|0');
+        Observer.Verify();
     end;
 }

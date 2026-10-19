@@ -865,7 +865,12 @@ codeunit 73401 "LT XmT Element"
         Observer.Observe('three_texts_out', Str(E));
         E := XmlElement.Create('name', XmlText.Create('content'));
         Observer.Observe('xmltext_out', Str(E));
-        Observer.Finish();
+        Observer.Expect('two_texts_out', '<name xmlns="content" />');
+        Observer.Expect('two_texts_ns', '[content]');
+        Observer.Expect('two_texts_inner', '[]');
+        Observer.Expect('three_texts_out', '<name xmlns="content">x</name>');
+        Observer.Expect('xmltext_out', '<name>content</name>');
+        Observer.Verify();
     end;
 
     // Corpus issue 671 item 95 (microsoft/AL#961): XmlNode.AsXmlElement().Add(XmlText) changes the element behind the node.
@@ -883,6 +888,8 @@ codeunit 73401 "LT XmT Element"
         N := E.AsXmlNode();
         N.AsXmlElement().Add(XmlText.Create('new'));
         Observer.Observe('text_then_add', Str(E) + '|' + E.InnerText() + '|' + Format(E.GetChildNodes().Count()));
-        Observer.Finish();
+        Observer.Expect('empty_then_add', '<e>x</e>|x');
+        Observer.Expect('text_then_add', '<a>oldnew</a>|oldnew|2');
+        Observer.Verify();
     end;
 }

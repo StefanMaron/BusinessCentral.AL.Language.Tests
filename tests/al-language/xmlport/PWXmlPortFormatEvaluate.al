@@ -264,6 +264,10 @@ codeunit 69771 "PW XmlPort FmtEval Probe"
         ImportOne(Xmlport::"PW FE Xml", 'En', '7', 'enum_unknown_ordinal');
         ImportOne(Xmlport::"PW FE Xml", 'En', 'one', 'enum_name_lower_case');
         ImportOne(Xmlport::"PW FE Xml", 'En', '', 'enum_empty');
-        Observer.Finish();
+        Observer.Expect('enum_unknown_name', 'imported=No error=[''Two'' is not an option. The existing options are: Zero cap,One cap] code=[InvalidOptionString] stored=[no row]');
+        Observer.Expect('enum_unknown_ordinal', 'imported=Yes error=[] code=[] stored=[Tm= Dur= Opt=Alpha cap En=7 Dec=0 Bl=No Dtm=]');
+        Observer.Expect('enum_name_lower_case', 'imported=Yes error=[] code=[] stored=[Tm= Dur= Opt=Alpha cap En=One cap Dec=0 Bl=No Dtm=]');
+        Observer.Expect('enum_empty', 'imported=Yes error=[] code=[] stored=[Tm= Dur= Opt=Alpha cap En=Zero cap Dec=0 Bl=No Dtm=]');
+        Observer.Verify();
     end;
 }

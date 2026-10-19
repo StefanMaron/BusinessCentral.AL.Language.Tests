@@ -263,7 +263,11 @@ codeunit 85969 "LT DF XmlPort Leads"
         Observer.Observe('xml_utf16', ExportBytes(Xmlport::"LT DF Xp Xml Utf16"));
         Observer.Observe('vt_utf8', ExportBytes(Xmlport::"LT DF Xp Vt Utf8"));
         Observer.Observe('vt_utf16', ExportBytes(Xmlport::"LT DF Xp Vt Utf16"));
-        Observer.Finish();
+        Observer.Expect('xml_utf8', '143 last:47,82,111,111,116,62,');
+        Observer.Expect('xml_utf16', '290 last:111,0,116,0,62,0,');
+        Observer.Expect('vt_utf8', '30 last:101,99,111,110,100,34,');
+        Observer.Expect('vt_utf16', '56 last:110,0,100,0,34,0,');
+        Observer.Verify();
     end;
 
     // Item 102.
@@ -278,6 +282,7 @@ codeunit 85969 "LT DF XmlPort Leads"
         Ok: Boolean;
     begin
         Row.DeleteAll();
+        Commit();
         TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
         OutS.WriteText('<?xml version="1.0" encoding="utf-8"?><Root><Row><Id>1</Id><Type>Beta</Type></Row><Row><Id>2</Id><Type>Gamma</Type></Row></Root>');
         TempBlob.CreateInStream(InS, TextEncoding::UTF8);
@@ -347,7 +352,8 @@ codeunit 85969 "LT DF XmlPort Leads"
         TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
         Xmlport.Export(Xmlport::"LT DF Xp Vt Nested", OutS);
         Observer.Observe('export', StreamText(TempBlob));
-        Observer.Finish();
+        Observer.Expect('export', '"H1","First","10","A"|"20","B"|||"H2","Second","10","C"||');
+        Observer.Verify();
     end;
 
     local procedure ImportNested(var Observer: Codeunit "Probe Observer"; Name: Text; Src: Text)
@@ -385,6 +391,18 @@ codeunit 85969 "LT DF XmlPort Leads"
         ImportNested(Observer, 'header_only', '"H1","First"' + Crlf);
         ImportNested(Observer, 'header_then_lines', '"H1","First"' + Crlf + Crlf + '"10","A"' + Crlf + '"20","B"' + Crlf);
         ImportNested(Observer, 'two_headers', '"H1","First"' + Crlf + '"H2","Second"' + Crlf);
-        Observer.Finish();
+        Observer.Expect('header_only', 'Yes');
+        Observer.Expect('header_only|text', '');
+        Observer.Expect('header_only|code', '');
+        Observer.Expect('header_only_rows', 'H:H1/First;');
+        Observer.Expect('header_then_lines', 'No');
+        Observer.Expect('header_then_lines|text', 'The Element <PL> is unexpected.');
+        Observer.Expect('header_then_lines|code', 'XmlPortUnexpectedElement');
+        Observer.Expect('header_then_lines_rows', '');
+        Observer.Expect('two_headers', 'Yes');
+        Observer.Expect('two_headers|text', '');
+        Observer.Expect('two_headers|code', '');
+        Observer.Expect('two_headers_rows', 'H:H1/First;H:H2/Second;');
+        Observer.Verify();
     end;
 }
