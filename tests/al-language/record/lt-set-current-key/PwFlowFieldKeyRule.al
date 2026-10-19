@@ -183,4 +183,50 @@ codeunit 86142 "LT PW FlowField Key Rule"
         Observer.Observe('sumOtherAll', Outcome(12, true));
         Observer.Finish();
     end;
+    // records/W4SortKeys.al:459 reads CurrentKey through a by-value Record parameter (Outcome(Ok; R: Record "W4 Key Row")). The key after
+    // SetCurrentKey on a FlowField and on a normal field, read on the variable itself, through a by-value parameter, through a var parameter,
+    // after an assignment and after Copy; and the FindSet order of the by-value copy.
+    local procedure ByValue(R: Record "LT PW FK Owner"): Text
+    var
+        Order: Text;
+    begin
+        if TryOrder(R, Order) then;
+        exit(R.CurrentKey() + ' order=' + Order);
+    end;
+
+    local procedure ByVar(var R: Record "LT PW FK Owner"): Text
+    begin
+        exit(R.CurrentKey());
+    end;
+
+    local procedure Copies(var Owner: Record "LT PW FK Owner"): Text
+    var
+        Assigned: Record "LT PW FK Owner";
+        Copied: Record "LT PW FK Owner";
+    begin
+        Assigned := Owner;
+        Copied.Copy(Owner);
+        exit('self=' + Owner.CurrentKey() + ' byValue=' + ByValue(Owner) + ' byVar=' + ByVar(Owner) + ' assigned=' + Assigned.CurrentKey() + ' copied=' + Copied.CurrentKey());
+    end;
+
+    [Test]
+    procedure FlowFieldKey_ThroughCopiesAndParameters()
+    var
+        Observer: Codeunit "Probe Observer";
+        Owner: Record "LT PW FK Owner";
+        Owner2: Record "LT PW FK Owner";
+        Owner3: Record "LT PW FK Owner";
+        Owner4: Record "LT PW FK Owner";
+    begin
+        Seed();
+        Owner.SetCurrentKey(CntOtherLinked);
+        Observer.Observe('flowFieldLinked', Copies(Owner));
+        Owner2.SetCurrentKey(CntSelfAll);
+        Observer.Observe('flowFieldSelfAll', Copies(Owner2));
+        Owner3.SetCurrentKey(Name);
+        Observer.Observe('normalField', Copies(Owner3));
+        Owner4.SetCurrentKey(CntOtherLinked, Id);
+        Observer.Observe('flowFieldThenId', Copies(Owner4));
+        Observer.Finish();
+    end;
 }

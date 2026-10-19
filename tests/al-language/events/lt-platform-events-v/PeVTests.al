@@ -567,20 +567,6 @@ codeunit 69852 "LT V Platform Event Tests"
     begin
         TempBlob.CreateOutStream(OutStr);
         case Which of
-            'run static nopage':
-                Report.Run(Report::"LT V Report A", false);
-            'runmodal static nopage':
-                Report.RunModal(Report::"LT V Report A", false);
-            'run var nopage':
-                begin
-                    Rep.UseRequestPage(false);
-                    Rep.Run();
-                end;
-            'runmodal var nopage':
-                begin
-                    Rep.UseRequestPage(false);
-                    Rep.RunModal();
-                end;
             'requestpage static':
                 Parameters := Report.RunRequestPage(Report::"LT V Report A");
             'execute static':
@@ -597,18 +583,26 @@ codeunit 69852 "LT V Platform Event Tests"
                     RecRef.GetTable(Parent);
                     Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Xml, OutStr, RecRef);
                 end;
-            'saveas static pdf':
-                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Pdf, OutStr);
-            'saveas static word':
-                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Word, OutStr);
-            'saveas static excel':
-                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Excel, OutStr);
             'saveas static html':
                 Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Html, OutStr);
             'procOnly run nopage':
                 Report.Run(Report::"LT PW V ProcOnly", false);
             'procOnly execute var':
                 ProcOnly.Execute('');
+            'procOnly execute static':
+                Report.Execute(Report::"LT PW V ProcOnly", '');
+            'procOnly runmodal nopage':
+                Report.RunModal(Report::"LT PW V ProcOnly", false);
+            'procOnly run var nopage':
+                begin
+                    ProcOnly.UseRequestPage(false);
+                    ProcOnly.Run();
+                end;
+            'procOnly runmodal var nopage':
+                begin
+                    ProcOnly.UseRequestPage(false);
+                    ProcOnly.RunModal();
+                end;
             'procOnly saveas xml':
                 Report.SaveAs(Report::"LT PW V ProcOnly", '', ReportFormat::Xml, OutStr);
         end;
@@ -628,21 +622,37 @@ codeunit 69852 "LT V Platform Event Tests"
         Log.Stop();
     end;
 
+    // Report.Run and RunModal of LT V Report A (an RDLC layout) end in the Linux tier's RDLC stub ('RDLC report rendering is not implemented on
+    // Linux BC'), so they are not probed here (windows-queue.md); the processing-only report has no layout to render.
     [Test]
     [HandlerFunctions('RequestPageA')]
-    procedure PW_RaisedEvents_RunRunModalExecute()
+    procedure PW_RaisedEvents_RequestPageAndExecute()
     var
         Observer: Codeunit "Probe Observer";
         Parameters: Text;
     begin
         Seed();
-        PwCall(Observer, 'run static nopage', Parameters);
-        PwCall(Observer, 'runmodal static nopage', Parameters);
-        PwCall(Observer, 'run var nopage', Parameters);
-        PwCall(Observer, 'runmodal var nopage', Parameters);
         PwCall(Observer, 'requestpage static', Parameters);
         PwCall(Observer, 'execute static', Parameters);
         PwCall(Observer, 'execute var', Parameters);
+        Parameters := '';
+        PwCall(Observer, 'execute var', Parameters);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PW_RaisedEvents_ProcessingOnlyRuns()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'procOnly run nopage', Parameters);
+        PwCall(Observer, 'procOnly runmodal nopage', Parameters);
+        PwCall(Observer, 'procOnly run var nopage', Parameters);
+        PwCall(Observer, 'procOnly runmodal var nopage', Parameters);
+        PwCall(Observer, 'procOnly execute var', Parameters);
+        PwCall(Observer, 'procOnly execute static', Parameters);
         Observer.Finish();
     end;
 
@@ -665,15 +675,13 @@ codeunit 69852 "LT V Platform Event Tests"
     end;
 
     [Test]
-    procedure PW_RaisedEvents_OtherFormats()
+    procedure PW_RaisedEvents_HtmlFormat()
     var
         Observer: Codeunit "Probe Observer";
         Parameters: Text;
     begin
         Seed();
-        PwCall(Observer, 'saveas static pdf', Parameters);
-        PwCall(Observer, 'saveas static word', Parameters);
-        PwCall(Observer, 'saveas static excel', Parameters);
+        // Pdf, Word and Excel of this RDLC report end in the Linux tier's RDLC stub (windows-queue.md); Html is refused by BC itself.
         PwCall(Observer, 'saveas static html', Parameters);
         Observer.Finish();
     end;
@@ -685,6 +693,8 @@ codeunit 69852 "LT V Platform Event Tests"
         Log.Start();
         Log.SetValue('pwcollect', 'yes');
         Ok := PwTryCall(Which, Parameters);
+        if not Ok then
+            Observer.Observe(Which + ' error', GetLastErrorCode() + ':' + CopyStr(GetLastErrorText(), 1, 120));
         ClearLastError();
         Observer.Observe(Which, Format(Ok) + '|' + Log.GetValue('pwargs'));
         Log.Take();

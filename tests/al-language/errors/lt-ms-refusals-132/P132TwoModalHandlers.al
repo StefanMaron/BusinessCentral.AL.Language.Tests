@@ -435,4 +435,83 @@ codeunit 73727 "LT P132 Two Modals"
         Observer.Observe('log', Log.Take());
         Observer.Finish();
     end;
+    // Writer PW: PW_ARunTwice_ThenB_ThenB (RunModal results used) finds Cancel, P132_TwoHandlers_ARunTwiceThenB (RunModal as statements)
+    // does not. The handlers that try Cancel, with RunModal as a statement and with its result used, inside a TryFunction and alone.
+    [TryFunction]
+    local procedure PwTryStatementB()
+    begin
+        Page.RunModal(Page::"LT P132 Modal B");
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeB')]
+    procedure PW_ProbeB_Statement()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Log.Take();
+        Page.RunModal(Page::"LT P132 Modal B");
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeA')]
+    procedure PW_ProbeA_Statement()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Log.Take();
+        Page.RunModal(Page::"LT P132 Modal A");
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeB')]
+    procedure PW_ProbeB_StatementInTryFunction_ThenUsed()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Log.Take();
+        Observer.Observe('statement ok', Format(PwTryStatementB()));
+        Observer.Observe('used', PwRunB());
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeB')]
+    procedure PW_ProbeB_InIf()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Log.Take();
+        if Page.RunModal(Page::"LT P132 Modal B") = Action::LookupCancel then
+            Observer.Observe('if', 'LookupCancel')
+        else
+            Observer.Observe('if', 'other');
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PwProbeB')]
+    procedure PW_ProbeB_PageVariable_StatementAndUsed()
+    var
+        Observer: Codeunit "Probe Observer";
+        Pg: Page "LT P132 Modal B";
+        Pg2: Page "LT P132 Modal B";
+        Pg3: Page "LT P132 Modal B";
+    begin
+        Log.Take();
+        Pg.RunModal();
+        Observer.Observe('statement log', Log.Take());
+        Observer.Observe('used', Format(Pg2.RunModal()));
+        Observer.Observe('used log', Log.Take());
+        Pg3.LookupMode(true);
+        Pg3.RunModal();
+        Observer.Observe('lookupmode statement log', Log.Take());
+        Observer.Finish();
+    end;
 }

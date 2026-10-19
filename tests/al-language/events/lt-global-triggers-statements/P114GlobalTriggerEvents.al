@@ -350,22 +350,35 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Verify();
     end;
     // Writer PW: trust-refusals probe list "CaptionClassTranslate arguments and result": what a subscriber that sets Translation changes (the
-    // LT P114 Glob Subs subscribers never change it). LT PW CCT Subs sets Translation to 'T[' + CaptionExpr + ']' in mode set, to '' in mode
-    // blank, and counts its calls. Only results and counts are observed (the order of the two subscribers is not).
+    // LT P114 Glob Subs subscribers never change it). LT PW CCT Subs sets Translation to 'T[' + CaptionExpr + ']' in mode set and to '' in mode
+    // blank, and counts its calls. A first run showed that an expression translated once in the session is not raised again (the earlier tests
+    // of this codeunit translate '3,Foo' and the captions of LT P114 Glob Card), so each expression here carries a tag made new per run (shown
+    // as <tag>). Only results and counts are observed (the order of the two subscribers is not).
+    local procedure PwOne(var Subs: Codeunit "LT PW CCT Subs"; Tag: Text; Expr: Text): Text
+    var
+        R: Text;
+    begin
+        R := CaptionClassTranslate(Expr);
+        exit(R.Replace(Tag, '<tag>') + ' calls=' + Format(Subs.TakeCalls()));
+    end;
+
     local procedure PwTranslate(Mode: Text): Text
     var
         Subs: Codeunit "LT PW CCT Subs";
+        Tag: Text;
         R: Text;
     begin
+        Tag := DelChr(Format(CreateGuid()), '=', '{}-');
         Subs.SetMode(Mode);
-        R := 'area3=' + CaptionClassTranslate('3,Foo') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | unclaimed=' + CaptionClassTranslate('P114ZZ,Foo') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | noComma=' + CaptionClassTranslate('P114 no comma') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | empty=' + CaptionClassTranslate('') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | area3Empty=' + CaptionClassTranslate('3,') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | leadingComma=' + CaptionClassTranslate(',Foo') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | area1=' + CaptionClassTranslate('1,1,1') + ' calls=' + Format(Subs.TakeCalls());
-        R += ' | lastSeen=' + Subs.LastSeen();
+        R := 'area3=' + PwOne(Subs, Tag, '3,' + Tag);
+        R += ' | area3Again=' + PwOne(Subs, Tag, '3,' + Tag);
+        R += ' | unclaimed=' + PwOne(Subs, Tag, 'PW' + Tag + ',Foo');
+        R += ' | noComma=' + PwOne(Subs, Tag, 'PW no comma ' + Tag);
+        R += ' | area1=' + PwOne(Subs, Tag, '1,1,' + Tag);
+        R += ' | leadingComma=' + PwOne(Subs, Tag, ',' + Tag);
+        R += ' | lastSeen=' + Subs.LastSeen().Replace(Tag, '<tag>');
+        R += ' | empty=' + PwOne(Subs, Tag, '');
+        R += ' | area3Empty=' + PwOne(Subs, Tag, '3,');
         Subs.SetMode('');
         exit(R);
     end;
@@ -377,7 +390,7 @@ codeunit 74244 "LT P114 Global Events"
     begin
         Observer.Observe('set', PwTranslate('set'));
         Observer.Observe('blank', PwTranslate('blank'));
-        Observer.Observe('keep', PwTranslate('keep'));
+        Observer.Observe('none', PwTranslate('none'));
         Observer.Finish();
     end;
 
@@ -386,26 +399,50 @@ codeunit 74244 "LT P114 Global Events"
     var
         Observer: Codeunit "Probe Observer";
         Subs: Codeunit "LT PW CCT Subs";
-        Card: TestPage "LT P114 Glob Card";
+        Card: TestPage "LT PW CCT Card";
     begin
         Seed();
         Subs.SetMode('set');
         Card.OpenView();
-        Card.First();
         Observer.Observe('calls after open', Format(Subs.TakeCalls()));
-        Observer.Observe('claimed caption', Card.ClaimedCaption.Caption());
-        Observer.Observe('area3 caption', Card.AreaThree.Caption());
+        Observer.Observe('claimed caption', Card.PwClaimed.Caption());
+        Observer.Observe('area3 caption', Card.PwArea3.Caption());
         Observer.Observe('calls after captions', Format(Subs.TakeCalls()));
         Card.Close();
         Subs.SetMode('blank');
         Card.OpenView();
-        Card.First();
-        Observer.Observe('blank claimed caption', Card.ClaimedCaption.Caption());
-        Observer.Observe('blank area3 caption', Card.AreaThree.Caption());
+        Observer.Observe('second open calls', Format(Subs.TakeCalls()));
+        Observer.Observe('second open claimed caption', Card.PwClaimed.Caption());
+        Observer.Observe('second open area3 caption', Card.PwArea3.Caption());
         Card.Close();
         Subs.SetMode('');
         Observer.Finish();
     end;
+}
+
+page 86150 "LT PW CCT Card"
+{
+    PageType = Card;
+    SourceTable = "LT P114 Glob Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(PwClaimed; Rec.Descr)
+            {
+                ApplicationArea = All;
+                CaptionClass = 'PWCC1,Hello';
+            }
+            field(PwArea3; Rec.Tag)
+            {
+                ApplicationArea = All;
+                CaptionClass = '3,PW plain caption';
+            }
+        }
+    }
 }
 
 codeunit 86149 "LT PW CCT Subs"

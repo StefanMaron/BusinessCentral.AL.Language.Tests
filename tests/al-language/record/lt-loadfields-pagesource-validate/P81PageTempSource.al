@@ -670,4 +670,100 @@ codeunit 70310 "LT P81 Page Temp Source"
         Page.Run(Page::"LT P81 PG List", Temp);
         Observer.Finish();
     end;
+    // Writer PW: the tests above suggest the new line depends on whether the result of RunModal is used (ShowsTempRows and the PW_ tests use
+    // it: no new line; EditWritesToTemp, WithFilter, NonTempRecord_ShowsDbRows run it as a statement: a new line). The same page and rows
+    // with RunModal as a statement, inside an if, and on a page variable with and without its result used and with LookupMode.
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_Statement()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+    begin
+        Seed(Temp);
+        Page.RunModal(Page::"LT P81 PG List", Temp);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_TempRunModal_InIf()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+    begin
+        Seed(Temp);
+        if Page.RunModal(Page::"LT P81 PG List", Temp) = Action::LookupOK then
+            Observer.Observe('if', 'LookupOK')
+        else
+            Observer.Observe('if', 'other');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_NonTempRunModal_Statement_ThreeRows()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Row: Record "LT P81 PG Row";
+    begin
+        Seed(Temp);
+        Row.Code := 'D3';
+        Row.Name := 'db-three';
+        Row.Qty := 30;
+        Row.Insert();
+        Row.FindFirst();
+        Page.RunModal(Page::"LT P81 PG List", Row);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_PageVar_RunModal_ResultUsed()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Pg: Page "LT P81 PG List";
+    begin
+        Seed(Temp);
+        Pg.SetTableView(Temp);
+        Observer.Observe('result', Format(Pg.RunModal()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_PageVar_RunModal_Statement()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Pg: Page "LT P81 PG List";
+    begin
+        Seed(Temp);
+        Pg.SetTableView(Temp);
+        Pg.RunModal();
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_PageVar_RunModal_LookupModeStatement()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Pg: Page "LT P81 PG List";
+    begin
+        Seed(Temp);
+        Pg.LookupMode(true);
+        Pg.RunModal();
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ReadRowsHandler')]
+    procedure PW_PageVar_RunModal_NoLookupModeResultUsed()
+    var
+        Temp: Record "LT P81 PG Row" temporary;
+        Pg: Page "LT P81 PG List";
+    begin
+        Seed(Temp);
+        Pg.LookupMode(false);
+        Observer.Observe('result', Format(Pg.RunModal()));
+        Observer.Finish();
+    end;
 }
