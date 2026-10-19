@@ -98,7 +98,12 @@ codeunit 80979 "BC Xml Blob"
         Setup();
         Observer.Observe('dataset', Dataset(Report::"BC Xml Blob Columns"));
         Row.DeleteAll();
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">1</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"></Column>\n        <Column name="MediaSetCol"></Column>\n        <Column name="NoteCol">empty</Column>\n      </Columns>\n    </DataItem>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">2</Column>\n        <Column name="BlobCol">SGVsbG8gQkM=</Column>\n        <Column name="MediaCol"></Column>\n        <Column name="MediaSetCol"></Column>\n        <Column name="NoteCol">text</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#else
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">1</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"></Column>\n        <Column name="MediaSetCol"></Column>\n        <Column name="NoteCol">empty</Column>\n      </Columns>\n    </DataItem>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">2</Column>\n        <Column name="BlobCol">SGVsbG8gQkM=</Column>\n        <Column name="MediaCol"></Column>\n        <Column name="MediaSetCol"></Column>\n        <Column name="NoteCol">text</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -110,7 +115,12 @@ codeunit 80979 "BC Xml Blob"
         Setup();
         Observer.Observe('dataset', Dataset(Report::"BC Xml Blob CalcFields"));
         Row.DeleteAll();
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">1</Column>\n        <Column name="BlobCol"></Column>\n      </Columns>\n    </DataItem>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">2</Column>\n        <Column name="BlobCol">SGVsbG8gQkM=</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#else
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">1</Column>\n        <Column name="BlobCol"></Column>\n      </Columns>\n    </DataItem>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">2</Column>\n        <Column name="BlobCol">SGVsbG8gQkM=</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +145,12 @@ codeunit 80979 "BC Xml Blob"
         Row.Insert();
         Observer.Observe('dataset', Dataset(Report::"BC Xml Blob CalcFields"));
         Row.DeleteAll();
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">3</Column>\n        <Column name="BlobCol">AP9B</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#else
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">3</Column>\n        <Column name="BlobCol">AP9B</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,7 +176,10 @@ codeunit 80979 "BC Xml Blob"
         Observer.Observe('saved', Format(Text.StartsWith('<DataItems>')));
         Observer.Observe('picture column is base64 of the picture', Format(Text.Contains(Expected)));
         Observer.Observe('num column', Format(Text.Contains('<Column name="Num">1</Column>')));
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('picture column is base64 of the picture', 'Yes');
+        Observer.Expect('num column', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -192,9 +210,18 @@ codeunit 80979 "BC Xml Blob"
         Text := Mask(Text, Row.Pic.MediaId(), 'media');
         Text := Mask(Text, SetId, 'mediaset');
         Text := Mask(Text, Row.Pics.Item(1), 'mediaset-item');
-        Observer.Observe('dataset', Text);
+        Observer.Observe('dataset', ClassifyPng(Text));
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('media has value', 'Yes');
+        Observer.Expect('media set count', '1');
+#if BC29PLUS
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-as-imported></Column>\n        <Column name="MediaSetCol"><png-as-imported></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#elif BC28PLUS
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-re-encoded></Column>\n        <Column name="MediaSetCol"><png-re-encoded></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#else
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-re-encoded></Column>\n        <Column name="MediaSetCol"><png-re-encoded></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#endif
+        Observer.Verify();
     end;
 
     local procedure Mask(T: Text; Id: Guid; Name: Text): Text
@@ -207,5 +234,28 @@ codeunit 80979 "BC Xml Blob"
         T := T.Replace(Format(Id), '<' + Name + '-braced>');
         T := T.Replace(Bare, '<' + Name + '-upper>');
         exit(T.Replace(LowerCase(Bare), '<' + Name + '-lower>'));
+    end;
+
+    // A Media or MediaSet column holds the picture as Base64. On some versions the platform writes the imported bytes, on others a
+    // re-encoded PNG whose bytes depend on the image library of the server: only that distinction is asserted, not the re-encoded bytes.
+    local procedure ClassifyPng(T: Text): Text
+    var
+        Result: Text;
+        Rest: Text;
+        At: Integer;
+        EndAt: Integer;
+    begin
+        T := T.Replace('>' + ValidPngBase64 + '<', '><png-as-imported><');
+        At := T.IndexOf('>iVBORw0KGgo');
+        while At > 0 do begin
+            Result += T.Substring(1, At) + '<png-re-encoded>';
+            Rest := T.Substring(At + 1);
+            EndAt := Rest.IndexOf('<');
+            if EndAt = 0 then
+                exit(Result + Rest);
+            T := Rest.Substring(EndAt);
+            At := T.IndexOf('>iVBORw0KGgo');
+        end;
+        exit(Result + T);
     end;
 }

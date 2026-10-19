@@ -58,7 +58,21 @@ codeunit 80960 "BC Date Methods"
         Both(Observer, '2023-01-01 sunday', 20230101D);
         Both(Observer, '9999-12-31', 99991231D);
         Both(Observer, 'closing 2025-12-31', ClosingDate(20251231D));
-        Observer.Finish();
+        Observer.Expect('repro 2026-10-18', '2026|10|18|7|42');
+        Observer.Expect('repro 2026-10-18 fn', '2026|10|18|7|42');
+        Observer.Expect('2024-02-29', '2024|2|29|4|9');
+        Observer.Expect('2024-02-29 fn', '2024|2|29|4|9');
+        Observer.Expect('2021-01-01 week 53', '2021|1|1|5|53');
+        Observer.Expect('2021-01-01 week 53 fn', '2021|1|1|5|53');
+        Observer.Expect('2024-12-30 week 1', '2024|12|30|1|1');
+        Observer.Expect('2024-12-30 week 1 fn', '2024|12|30|1|1');
+        Observer.Expect('2023-01-01 sunday', '2023|1|1|7|52');
+        Observer.Expect('2023-01-01 sunday fn', '2023|1|1|7|52');
+        Observer.Expect('9999-12-31', '9999|12|31|5|52');
+        Observer.Expect('9999-12-31 fn', '9999|12|31|5|52');
+        Observer.Expect('closing 2025-12-31', '2025|12|31|3|1');
+        Observer.Expect('closing 2025-12-31 fn', '2025|12|31|3|1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +83,9 @@ codeunit 80960 "BC Date Methods"
         // Passing the literal 00010101D as an argument already fails (as in P93Date.al DayMonthYear_Normal), before any method runs.
         asserterror Both(Observer, '0001-01-01', 00010101D);
         Observer.ObserveError('min literal');
-        Observer.Finish();
+        Observer.Expect('min literal|text', 'The date is not valid.');
+        Observer.Expect('min literal|code', 'DateInvalid');
+        Observer.Verify();
     end;
 
     [Test]
@@ -85,7 +101,14 @@ codeunit 80960 "BC Date Methods"
         asserterror Y := D.Year();
         Observer.ObserveError('year of 0D direct');
         Observer.Observe('y after', Format(Y));
-        Observer.Finish();
+        Observer.Expect('0D variable', 'error:The date is not valid.|DateInvalid');
+        Observer.Expect('0D variable fn', 'error:The date is not valid.|DateInvalid');
+        Observer.Expect('0D literal', 'error:The date is not valid.|DateInvalid');
+        Observer.Expect('0D literal fn', 'error:The date is not valid.|DateInvalid');
+        Observer.Expect('year of 0D direct|text', 'The date is not valid.');
+        Observer.Expect('year of 0D direct|code', 'DateInvalid');
+        Observer.Expect('y after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -100,6 +123,9 @@ codeunit 80960 "BC Date Methods"
         Observer.Observe('dayofweek is integer', Format(V.IsInteger()));
         V := 20261018D.WeekNo();
         Observer.Observe('weekno is integer', Format(V.IsInteger()));
-        Observer.Finish();
+        Observer.Expect('year is integer', 'Yes');
+        Observer.Expect('dayofweek is integer', 'Yes');
+        Observer.Expect('weekno is integer', 'Yes');
+        Observer.Verify();
     end;
 }

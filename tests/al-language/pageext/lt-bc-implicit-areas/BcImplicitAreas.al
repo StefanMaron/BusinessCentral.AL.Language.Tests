@@ -54,7 +54,16 @@ codeunit 80972 "BC Implicit Areas"
         Observer.Observe('card number 7', Card.Number.Value());
         Observer.Observe('part number 7', Card.BCPart.PartNumber.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('card number', '5');
+        Observer.Expect('part number', '5');
+        Observer.Expect('part visible', 'Yes');
+        Observer.Expect('part editable', 'No');
+        Observer.Expect('part next', 'No');
+        Observer.Expect('after part number', '5');
+        Observer.Expect('after part visible', 'Yes');
+        Observer.Expect('card number 7', '7');
+        Observer.Expect('part number 7', '7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,6 +80,10 @@ codeunit 80972 "BC Implicit Areas"
         Observer.Observe('part number', Card.BCNoLayoutPart.PartNumber.Value());
         Observer.Observe('part visible', Format(Card.BCNoLayoutPart.Visible()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('number', '3');
+        Observer.Expect('number visible', 'Yes');
+        Observer.Expect('part number', '3');
+        Observer.Expect('part visible', 'Yes');
+        Observer.Verify();
     end;
 }
