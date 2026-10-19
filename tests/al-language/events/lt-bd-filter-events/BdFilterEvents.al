@@ -240,201 +240,473 @@ codeunit 81079 "BD Filter Event Tests"
     procedure BdFilter_Int_1()
     begin
         Act('int_range_x');
-        Observer.Finish();
+        Observer.Expect('int_range_x|err', 'The filter "1..x" is not valid for the Id field on the LT W Pt Row table. The value "x" can''t be evaluated into type Integer.');
+        Observer.Expect('int_range_x|m0', 'ok=No res= log=[]');
+        Observer.Expect('int_range_x|m1|err-same', 'Yes');
+        Observer.Expect('int_range_x|m1', 'ok=No res= log=[MakeIntFilter(IntFilterText=x)]');
+        Observer.Expect('int_range_x|m2|err-same', 'Yes');
+        Observer.Expect('int_range_x|m2', 'ok=No res= log=[MakeIntFilter(IntFilterText=x) | MakeIntFilter(IntFilterText=W:IntFilterText)]');
+        Observer.Expect('int_range_x|m3|err-same', 'No');
+        Observer.Expect('int_range_x|m3', 'ok=Yes res=1..5 log=[MakeIntFilter(IntFilterText=x)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_2()
     begin
         Act('int_x_or_1');
-        Observer.Finish();
+        Observer.Expect('int_x_or_1|err', 'The filter "x|1" is not valid for the Id field on the LT W Pt Row table. The value "x" can''t be evaluated into type Integer.');
+        Observer.Expect('int_x_or_1|m0', 'ok=No res= log=[]');
+        Observer.Expect('int_x_or_1|m1|err-same', 'Yes');
+        Observer.Expect('int_x_or_1|m1', 'ok=No res= log=[MakeIntFilter(IntFilterText=x)]');
+        Observer.Expect('int_x_or_1|m2|err-same', 'Yes');
+        Observer.Expect('int_x_or_1|m2', 'ok=No res= log=[MakeIntFilter(IntFilterText=x) | MakeIntFilter(IntFilterText=W:IntFilterText)]');
+        Observer.Expect('int_x_or_1|m3|err-same', 'No');
+        Observer.Expect('int_x_or_1|m3', 'ok=Yes res=5|1 log=[MakeIntFilter(IntFilterText=x)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_3()
     begin
         Act('int_dec');
-        Observer.Finish();
+        Observer.Expect('int_dec|err', 'The filter "1.5" is not valid for the Id field on the LT W Pt Row table. The value "1.5" can''t be evaluated into type Integer.');
+        Observer.Expect('int_dec|m0', 'ok=No res= log=[]');
+        Observer.Expect('int_dec|m1|err-same', 'Yes');
+        Observer.Expect('int_dec|m1', 'ok=No res= log=[MakeIntFilter(IntFilterText=1.5)]');
+        Observer.Expect('int_dec|m2|err-same', 'Yes');
+        Observer.Expect('int_dec|m2', 'ok=No res= log=[MakeIntFilter(IntFilterText=1.5) | MakeIntFilter(IntFilterText=W:IntFilterText)]');
+        Observer.Expect('int_dec|m3|err-same', 'No');
+        Observer.Expect('int_dec|m3', 'ok=Yes res=5 log=[MakeIntFilter(IntFilterText=1.5)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_4()
     begin
         Act('int_space');
-        Observer.Finish();
+        Observer.Expect('int_space|err', 'The filter "1 2" is not valid for the Id field on the LT W Pt Row table. The value "1 2" can''t be evaluated into type Integer.');
+        Observer.Expect('int_space|m0', 'ok=No res= log=[]');
+        Observer.Expect('int_space|m1|err-same', 'Yes');
+        Observer.Expect('int_space|m1', 'ok=No res= log=[MakeIntFilter(IntFilterText=1 2)]');
+        Observer.Expect('int_space|m2|err-same', 'Yes');
+        Observer.Expect('int_space|m2', 'ok=No res= log=[MakeIntFilter(IntFilterText=1 2) | MakeIntFilter(IntFilterText=W:IntFilterText)]');
+        Observer.Expect('int_space|m3|err-same', 'No');
+        Observer.Expect('int_space|m3', 'ok=Yes res=5 log=[MakeIntFilter(IntFilterText=1 2)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_5()
     begin
         Act('int_space_range');
-        Observer.Finish();
+        Observer.Expect('int_space_range|err', '');
+        Observer.Expect('int_space_range|m0', 'ok=Yes res=1..5 log=[]');
+        Observer.Expect('int_space_range|m1|err-same', 'Yes');
+        Observer.Expect('int_space_range|m1', 'ok=Yes res=1..5 log=[]');
+        Observer.Expect('int_space_range|m2|err-same', 'Yes');
+        Observer.Expect('int_space_range|m2', 'ok=Yes res=1..5 log=[]');
+        Observer.Expect('int_space_range|m3|err-same', 'Yes');
+        Observer.Expect('int_space_range|m3', 'ok=Yes res=1..5 log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_6()
     begin
         Act('int_space_or');
-        Observer.Finish();
+        Observer.Expect('int_space_or|err', '');
+        Observer.Expect('int_space_or|m0', 'ok=Yes res=1|2 log=[]');
+        Observer.Expect('int_space_or|m1|err-same', 'Yes');
+        Observer.Expect('int_space_or|m1', 'ok=Yes res=1|2 log=[]');
+        Observer.Expect('int_space_or|m2|err-same', 'Yes');
+        Observer.Expect('int_space_or|m2', 'ok=Yes res=1|2 log=[]');
+        Observer.Expect('int_space_or|m3|err-same', 'Yes');
+        Observer.Expect('int_space_or|m3', 'ok=Yes res=1|2 log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_7()
     begin
         Act('int_lead');
-        Observer.Finish();
+        Observer.Expect('int_lead|err', '');
+        Observer.Expect('int_lead|m0', 'ok=Yes res=5 log=[]');
+        Observer.Expect('int_lead|m1|err-same', 'Yes');
+        Observer.Expect('int_lead|m1', 'ok=Yes res=5 log=[]');
+        Observer.Expect('int_lead|m2|err-same', 'Yes');
+        Observer.Expect('int_lead|m2', 'ok=Yes res=5 log=[]');
+        Observer.Expect('int_lead|m3|err-same', 'Yes');
+        Observer.Expect('int_lead|m3', 'ok=Yes res=5 log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Int_8()
     begin
         Act('int_word_range');
-        Observer.Finish();
+        Observer.Expect('int_word_range|err', 'The filter "abc..xyz" is not valid for the Id field on the LT W Pt Row table. The value "abc" can''t be evaluated into type Integer.');
+        Observer.Expect('int_word_range|m0', 'ok=No res= log=[]');
+        Observer.Expect('int_word_range|m1|err-same', 'Yes');
+        Observer.Expect('int_word_range|m1', 'ok=No res= log=[MakeIntFilter(IntFilterText=abc)]');
+        Observer.Expect('int_word_range|m2|err-same', 'Yes');
+        Observer.Expect('int_word_range|m2', 'ok=No res= log=[MakeIntFilter(IntFilterText=abc) | MakeIntFilter(IntFilterText=W:IntFilterText)]');
+        Observer.Expect('int_word_range|m3|err-same', 'No');
+        Observer.Expect('int_word_range|m3', 'ok=Yes res=5..5 log=[MakeIntFilter(IntFilterText=abc) | MakeIntFilter(IntFilterText=xyz)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_1()
     begin
         Act('time_range_x');
-        Observer.Finish();
+        Observer.Expect('time_range_x|err', 'The filter "1..x" is not valid for the T field on the LT W Pt Row table. The value "x" can''t be evaluated into type Time.');
+        Observer.Expect('time_range_x|m0', 'ok=No res= log=[]');
+        Observer.Expect('time_range_x|m1|err-same', 'Yes');
+        Observer.Expect('time_range_x|m1', 'ok=No res= log=[MakeTimeFilter(TimeFilterText=x)]');
+        Observer.Expect('time_range_x|m2|err-same', 'Yes');
+        Observer.Expect('time_range_x|m2', 'ok=No res= log=[MakeTimeFilter(TimeFilterText=x) | MakeTimeFilter(TimeFilterText=W:TimeFilterText)]');
+        Observer.Expect('time_range_x|m3|err-same', 'No');
+        Observer.Expect('time_range_x|m3', 'ok=Yes res= 1:00:00 AM..12:00:00 PM log=[MakeTimeFilter(TimeFilterText=x)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_2()
     begin
         Act('time_x_or_1');
-        Observer.Finish();
+        Observer.Expect('time_x_or_1|err', 'The filter "x|1" is not valid for the T field on the LT W Pt Row table. The value "x" can''t be evaluated into type Time.');
+        Observer.Expect('time_x_or_1|m0', 'ok=No res= log=[]');
+        Observer.Expect('time_x_or_1|m1|err-same', 'Yes');
+        Observer.Expect('time_x_or_1|m1', 'ok=No res= log=[MakeTimeFilter(TimeFilterText=x)]');
+        Observer.Expect('time_x_or_1|m2|err-same', 'Yes');
+        Observer.Expect('time_x_or_1|m2', 'ok=No res= log=[MakeTimeFilter(TimeFilterText=x) | MakeTimeFilter(TimeFilterText=W:TimeFilterText)]');
+        Observer.Expect('time_x_or_1|m3|err-same', 'No');
+        Observer.Expect('time_x_or_1|m3', 'ok=Yes res=12:00:00 PM| 1:00:00 AM log=[MakeTimeFilter(TimeFilterText=x)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_3()
     begin
         Act('time_dec');
-        Observer.Finish();
+        Observer.Expect('time_dec|err', '');
+        Observer.Expect('time_dec|m0', 'ok=Yes res= 1:05:00 AM log=[]');
+        Observer.Expect('time_dec|m1|err-same', 'Yes');
+        Observer.Expect('time_dec|m1', 'ok=Yes res= 1:05:00 AM log=[]');
+        Observer.Expect('time_dec|m2|err-same', 'Yes');
+        Observer.Expect('time_dec|m2', 'ok=Yes res= 1:05:00 AM log=[]');
+        Observer.Expect('time_dec|m3|err-same', 'Yes');
+        Observer.Expect('time_dec|m3', 'ok=Yes res= 1:05:00 AM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_4()
     begin
         Act('time_13');
-        Observer.Finish();
+        Observer.Expect('time_13|err', '');
+        Observer.Expect('time_13|m0', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Expect('time_13|m1|err-same', 'Yes');
+        Observer.Expect('time_13|m1', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Expect('time_13|m2|err-same', 'Yes');
+        Observer.Expect('time_13|m2', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Expect('time_13|m3|err-same', 'Yes');
+        Observer.Expect('time_13|m3', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_5()
     begin
         Act('time_9');
-        Observer.Finish();
+        Observer.Expect('time_9|err', '');
+        Observer.Expect('time_9|m0', 'ok=Yes res= 9:00:00 AM log=[]');
+        Observer.Expect('time_9|m1|err-same', 'Yes');
+        Observer.Expect('time_9|m1', 'ok=Yes res= 9:00:00 AM log=[]');
+        Observer.Expect('time_9|m2|err-same', 'Yes');
+        Observer.Expect('time_9|m2', 'ok=Yes res= 9:00:00 AM log=[]');
+        Observer.Expect('time_9|m3|err-same', 'Yes');
+        Observer.Expect('time_9|m3', 'ok=Yes res= 9:00:00 AM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_6()
     begin
         Act('time_digits');
-        Observer.Finish();
+        Observer.Expect('time_digits|err', '');
+        Observer.Expect('time_digits|m0', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Expect('time_digits|m1|err-same', 'Yes');
+        Observer.Expect('time_digits|m1', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Expect('time_digits|m2|err-same', 'Yes');
+        Observer.Expect('time_digits|m2', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Expect('time_digits|m3|err-same', 'Yes');
+        Observer.Expect('time_digits|m3', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_7()
     begin
         Act('time_pm');
-        Observer.Finish();
+        Observer.Expect('time_pm|err', '');
+        Observer.Expect('time_pm|m0', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Expect('time_pm|m1|err-same', 'Yes');
+        Observer.Expect('time_pm|m1', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Expect('time_pm|m2|err-same', 'Yes');
+        Observer.Expect('time_pm|m2', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Expect('time_pm|m3|err-same', 'Yes');
+        Observer.Expect('time_pm|m3', 'ok=Yes res=12:00:00 PM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_8()
     begin
         Act('time_0905');
-        Observer.Finish();
+        Observer.Expect('time_0905|err', '');
+        Observer.Expect('time_0905|m0', 'ok=Yes res= 9:05:07 AM log=[]');
+        Observer.Expect('time_0905|m1|err-same', 'Yes');
+        Observer.Expect('time_0905|m1', 'ok=Yes res= 9:05:07 AM log=[]');
+        Observer.Expect('time_0905|m2|err-same', 'Yes');
+        Observer.Expect('time_0905|m2', 'ok=Yes res= 9:05:07 AM log=[]');
+        Observer.Expect('time_0905|m3|err-same', 'Yes');
+        Observer.Expect('time_0905|m3', 'ok=Yes res= 9:05:07 AM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_9()
     begin
         Act('time_range');
-        Observer.Finish();
+        Observer.Expect('time_range|err', '');
+        Observer.Expect('time_range|m0', 'ok=Yes res=12:00:00 PM.. 1:00:00 PM log=[]');
+        Observer.Expect('time_range|m1|err-same', 'Yes');
+        Observer.Expect('time_range|m1', 'ok=Yes res=12:00:00 PM.. 1:00:00 PM log=[]');
+        Observer.Expect('time_range|m2|err-same', 'Yes');
+        Observer.Expect('time_range|m2', 'ok=Yes res=12:00:00 PM.. 1:00:00 PM log=[]');
+        Observer.Expect('time_range|m3|err-same', 'Yes');
+        Observer.Expect('time_range|m3', 'ok=Yes res=12:00:00 PM.. 1:00:00 PM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Time_10()
     begin
         Act('time_1300');
-        Observer.Finish();
+        Observer.Expect('time_1300|err', '');
+        Observer.Expect('time_1300|m0', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Expect('time_1300|m1|err-same', 'Yes');
+        Observer.Expect('time_1300|m1', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Expect('time_1300|m2|err-same', 'Yes');
+        Observer.Expect('time_1300|m2', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Expect('time_1300|m3|err-same', 'Yes');
+        Observer.Expect('time_1300|m3', 'ok=Yes res= 1:00:00 PM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_DateTime_1()
     begin
         Act('dt_abc');
-        Observer.Finish();
+        Observer.Expect('dt_abc|err', 'The filter "abc" is not valid for the DT field on the LT W Pt Row table. The value "abc" can''t be evaluated into type DateTime.');
+        Observer.Expect('dt_abc|m0', 'ok=No res= log=[]');
+        Observer.Expect('dt_abc|m1|err-same', 'Yes');
+        Observer.Expect('dt_abc|m1', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=abc)]');
+        Observer.Expect('dt_abc|m2|err-same', 'Yes');
+        Observer.Expect('dt_abc|m2', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=abc) | MakeDateTimeFilter(DateTimeFilterText=06/15/22 12:00 AM..06/15/22 11:59 PM)]');
+        Observer.Expect('dt_abc|m3|err-same', 'No');
+        Observer.Expect('dt_abc|m3', 'ok=Yes res=12/31/20 12:00 PM..12/31/20 12:00 PM log=[MakeDateTimeFilter(DateTimeFilterText=abc) | MakeDateTimeFilter(DateTimeFilterText=abc)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_DateTime_2()
     begin
         Act('dt_range_x');
-        Observer.Finish();
+        Observer.Expect('dt_range_x|err', 'The filter "1..x" is not valid for the DT field on the LT W Pt Row table. The value "x" can''t be evaluated into type DateTime.');
+        Observer.Expect('dt_range_x|m0', 'ok=No res= log=[]');
+        Observer.Expect('dt_range_x|m1|err-same', 'Yes');
+        Observer.Expect('dt_range_x|m1', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=x)]');
+        Observer.Expect('dt_range_x|m2|err-same', 'Yes');
+        Observer.Expect('dt_range_x|m2', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=x) | MakeDateTimeFilter(DateTimeFilterText=06/15/22 12:00 AM..06/15/22 11:59 PM)]');
+        Observer.Expect('dt_range_x|m3|err-same', 'No');
+        Observer.Expect('dt_range_x|m3', 'ok=Yes res=06/01/22 12:00 AM..12/31/20 12:00 PM log=[MakeDateTimeFilter(DateTimeFilterText=x)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_DateTime_3()
     begin
         Act('dt_x_or_1');
-        Observer.Finish();
+        Observer.Expect('dt_x_or_1|err', 'The filter "x|1" is not valid for the DT field on the LT W Pt Row table. The value "x" can''t be evaluated into type DateTime.');
+        Observer.Expect('dt_x_or_1|m0', 'ok=No res= log=[]');
+        Observer.Expect('dt_x_or_1|m1|err-same', 'Yes');
+        Observer.Expect('dt_x_or_1|m1', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=x)]');
+        Observer.Expect('dt_x_or_1|m2|err-same', 'Yes');
+        Observer.Expect('dt_x_or_1|m2', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=x) | MakeDateTimeFilter(DateTimeFilterText=06/15/22 12:00 AM..06/15/22 11:59 PM)]');
+        Observer.Expect('dt_x_or_1|m3|err-same', 'No');
+        Observer.Expect('dt_x_or_1|m3', 'ok=Yes res=12/31/20 12:00 PM..12/31/20 12:00 PM|06/01/22 12:00 AM..06/01/22 11:59:59 PM log=[MakeDateTimeFilter(DateTimeFilterText=x) | MakeDateTimeFilter(DateTimeFilterText=x)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_DateTime_4()
     begin
         Act('dt_words');
-        Observer.Finish();
+        Observer.Expect('dt_words|err', 'The filter "abc..xyz" is not valid for the DT field on the LT W Pt Row table. The value "abc" can''t be evaluated into type DateTime.');
+        Observer.Expect('dt_words|m0', 'ok=No res= log=[]');
+        Observer.Expect('dt_words|m1|err-same', 'Yes');
+        Observer.Expect('dt_words|m1', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=abc)]');
+        Observer.Expect('dt_words|m2|err-same', 'Yes');
+        Observer.Expect('dt_words|m2', 'ok=No res= log=[MakeDateTimeFilter(DateTimeFilterText=abc) | MakeDateTimeFilter(DateTimeFilterText=06/15/22 12:00 AM..06/15/22 11:59 PM)]');
+        Observer.Expect('dt_words|m3|err-same', 'No');
+        Observer.Expect('dt_words|m3', 'ok=Yes res=12/31/20 12:00 PM..12/31/20 12:00 PM log=[MakeDateTimeFilter(DateTimeFilterText=abc) | MakeDateTimeFilter(DateTimeFilterText=xyz)]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_DateTime_5()
     begin
         Act('dt_text');
-        Observer.Finish();
+        Observer.Expect('dt_text|err', '');
+        Observer.Expect('dt_text|m0', 'ok=Yes res=01/01/20 01:00 PM log=[]');
+        Observer.Expect('dt_text|m1|err-same', 'Yes');
+        Observer.Expect('dt_text|m1', 'ok=Yes res=01/01/20 01:00 PM log=[]');
+        Observer.Expect('dt_text|m2|err-same', 'Yes');
+        Observer.Expect('dt_text|m2', 'ok=Yes res=01/01/20 01:00 PM log=[]');
+        Observer.Expect('dt_text|m3|err-same', 'Yes');
+        Observer.Expect('dt_text|m3', 'ok=Yes res=01/01/20 01:00 PM log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_1()
     begin
         Act('dec_comma');
-        Observer.Finish();
+        Observer.Expect('dec_comma|err', '');
+        Observer.Expect('dec_comma|m0', 'ok=Yes res=15 log=[]');
+        Observer.Expect('dec_comma|m1|err-same', 'Yes');
+        Observer.Expect('dec_comma|m1', 'ok=Yes res=15 log=[]');
+        Observer.Expect('dec_comma|m2|err-same', 'Yes');
+        Observer.Expect('dec_comma|m2', 'ok=Yes res=15 log=[]');
+        Observer.Expect('dec_comma|m3|err-same', 'Yes');
+        Observer.Expect('dec_comma|m3', 'ok=Yes res=15 log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_2()
     begin
         Act('dec_dots');
-        Observer.Finish();
+        Observer.Expect('dec_dots|err', 'The filter "1.2.3" is not valid for the Amount field on the LT W Pt Row table. The value "1.2.3" can''t be evaluated into type Decimal.');
+        Observer.Expect('dec_dots|m0', 'ok=No res= log=[]');
+        Observer.Expect('dec_dots|m1|err-same', 'Yes');
+        Observer.Expect('dec_dots|m1', 'ok=No res= log=[]');
+        Observer.Expect('dec_dots|m2|err-same', 'Yes');
+        Observer.Expect('dec_dots|m2', 'ok=No res= log=[]');
+        Observer.Expect('dec_dots|m3|err-same', 'Yes');
+        Observer.Expect('dec_dots|m3', 'ok=No res= log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_3()
     begin
         Act('dec_range_x');
-        Observer.Finish();
+        Observer.Expect('dec_range_x|err', 'The filter "1..x" is not valid for the Amount field on the LT W Pt Row table. The value "x" can''t be evaluated into type Decimal.');
+        Observer.Expect('dec_range_x|m0', 'ok=No res= log=[]');
+        Observer.Expect('dec_range_x|m1|err-same', 'Yes');
+        Observer.Expect('dec_range_x|m1', 'ok=No res= log=[]');
+        Observer.Expect('dec_range_x|m2|err-same', 'Yes');
+        Observer.Expect('dec_range_x|m2', 'ok=No res= log=[]');
+        Observer.Expect('dec_range_x|m3|err-same', 'Yes');
+        Observer.Expect('dec_range_x|m3', 'ok=No res= log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_4()
     begin
         Act('dec_x_or_1');
-        Observer.Finish();
+        Observer.Expect('dec_x_or_1|err', 'The filter "x|1" is not valid for the Amount field on the LT W Pt Row table. The value "x" can''t be evaluated into type Decimal.');
+        Observer.Expect('dec_x_or_1|m0', 'ok=No res= log=[]');
+        Observer.Expect('dec_x_or_1|m1|err-same', 'Yes');
+        Observer.Expect('dec_x_or_1|m1', 'ok=No res= log=[]');
+        Observer.Expect('dec_x_or_1|m2|err-same', 'Yes');
+        Observer.Expect('dec_x_or_1|m2', 'ok=No res= log=[]');
+        Observer.Expect('dec_x_or_1|m3|err-same', 'Yes');
+        Observer.Expect('dec_x_or_1|m3', 'ok=No res= log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_5()
     begin
         Act('dec_exp');
-        Observer.Finish();
+        Observer.Expect('dec_exp|err', '');
+        Observer.Expect('dec_exp|m0', 'ok=Yes res=100,000 log=[]');
+        Observer.Expect('dec_exp|m1|err-same', 'Yes');
+        Observer.Expect('dec_exp|m1', 'ok=Yes res=100,000 log=[]');
+        Observer.Expect('dec_exp|m2|err-same', 'Yes');
+        Observer.Expect('dec_exp|m2', 'ok=Yes res=100,000 log=[]');
+        Observer.Expect('dec_exp|m3|err-same', 'Yes');
+        Observer.Expect('dec_exp|m3', 'ok=Yes res=100,000 log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_6()
     begin
         Act('dec_space');
-        Observer.Finish();
+        Observer.Expect('dec_space|err', 'The filter "1 000" is not valid for the Amount field on the LT W Pt Row table. The value "1 000" can''t be evaluated into type Decimal.');
+        Observer.Expect('dec_space|m0', 'ok=No res= log=[]');
+        Observer.Expect('dec_space|m1|err-same', 'Yes');
+        Observer.Expect('dec_space|m1', 'ok=No res= log=[]');
+        Observer.Expect('dec_space|m2|err-same', 'Yes');
+        Observer.Expect('dec_space|m2', 'ok=No res= log=[]');
+        Observer.Expect('dec_space|m3|err-same', 'Yes');
+        Observer.Expect('dec_space|m3', 'ok=No res= log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_7()
     begin
         Act('dec_minus_space');
-        Observer.Finish();
+        Observer.Expect('dec_minus_space|err', 'The filter "- 1" is not valid for the Amount field on the LT W Pt Row table. The value "- 1" can''t be evaluated into type Decimal.');
+        Observer.Expect('dec_minus_space|m0', 'ok=No res= log=[]');
+        Observer.Expect('dec_minus_space|m1|err-same', 'Yes');
+        Observer.Expect('dec_minus_space|m1', 'ok=No res= log=[]');
+        Observer.Expect('dec_minus_space|m2|err-same', 'Yes');
+        Observer.Expect('dec_minus_space|m2', 'ok=No res= log=[]');
+        Observer.Expect('dec_minus_space|m3|err-same', 'Yes');
+        Observer.Expect('dec_minus_space|m3', 'ok=No res= log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_Decimal_8()
     begin
         Act('dec_group');
-        Observer.Finish();
+        Observer.Expect('dec_group|err', '');
+        Observer.Expect('dec_group|m0', 'ok=Yes res=1,234.5 log=[]');
+        Observer.Expect('dec_group|m1|err-same', 'Yes');
+        Observer.Expect('dec_group|m1', 'ok=Yes res=1,234.5 log=[]');
+        Observer.Expect('dec_group|m2|err-same', 'Yes');
+        Observer.Expect('dec_group|m2', 'ok=Yes res=1,234.5 log=[]');
+        Observer.Expect('dec_group|m3|err-same', 'Yes');
+        Observer.Expect('dec_group|m3', 'ok=Yes res=1,234.5 log=[]');
+        Observer.Verify();
     end;
     [Test]
     procedure BdFilter_TimeMilliseconds()
     begin
         Act('time_ms_range');
         Act('time_ms_filter');
-        Observer.Finish();
+        Observer.Expect('time_ms_range|err', '');
+        Observer.Expect('time_ms_range|m0', 'ok=Yes res=12:00:00.123 PM log=[]');
+        Observer.Expect('time_ms_range|m1|err-same', 'Yes');
+        Observer.Expect('time_ms_range|m1', 'ok=Yes res=12:00:00.123 PM log=[]');
+        Observer.Expect('time_ms_range|m2|err-same', 'Yes');
+        Observer.Expect('time_ms_range|m2', 'ok=Yes res=12:00:00.123 PM log=[]');
+        Observer.Expect('time_ms_range|m3|err-same', 'Yes');
+        Observer.Expect('time_ms_range|m3', 'ok=Yes res=12:00:00.123 PM log=[]');
+        Observer.Expect('time_ms_filter|err', '');
+        Observer.Expect('time_ms_filter|m0', 'ok=Yes res=>= 9:05:07.5 AM log=[]');
+        Observer.Expect('time_ms_filter|m1|err-same', 'Yes');
+        Observer.Expect('time_ms_filter|m1', 'ok=Yes res=>= 9:05:07.5 AM log=[]');
+        Observer.Expect('time_ms_filter|m2|err-same', 'Yes');
+        Observer.Expect('time_ms_filter|m2', 'ok=Yes res=>= 9:05:07.5 AM log=[]');
+        Observer.Expect('time_ms_filter|m3|err-same', 'Yes');
+        Observer.Expect('time_ms_filter|m3', 'ok=Yes res=>= 9:05:07.5 AM log=[]');
+        Observer.Verify();
     end;
 
     [Test]
     procedure BdFilter_TimeMillisecondsView()
     begin
         Act('time_ms_view');
-        Observer.Finish();
+        Observer.Expect('time_ms_view|err', '');
+        Observer.Expect('time_ms_view|m0', 'ok=Yes res=VERSION(1) SORTING(Id) WHERE(T=FILTER(23:59:59.999)) log=[]');
+        Observer.Expect('time_ms_view|m1|err-same', 'Yes');
+        Observer.Expect('time_ms_view|m1', 'ok=Yes res=VERSION(1) SORTING(Id) WHERE(T=FILTER(23:59:59.999)) log=[]');
+        Observer.Expect('time_ms_view|m2|err-same', 'Yes');
+        Observer.Expect('time_ms_view|m2', 'ok=Yes res=VERSION(1) SORTING(Id) WHERE(T=FILTER(23:59:59.999)) log=[]');
+        Observer.Expect('time_ms_view|m3|err-same', 'Yes');
+        Observer.Expect('time_ms_view|m3', 'ok=Yes res=VERSION(1) SORTING(Id) WHERE(T=FILTER(23:59:59.999)) log=[]');
+        Observer.Verify();
     end;
 }
 

@@ -258,7 +258,19 @@ codeunit 81096 "BD Page Ext Twice Tests"
         Observer.Observe('close ok', Format(TryCloseInsFT(P)));
         Observer.ObserveError('close');
         Observer.Observe('rows', Stored());
-        Observer.Finish();
+        Observer.Expect('meta', 'insert=Yes modify=Yes delete=Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('rows', '1/Changed;2/Two;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -302,7 +314,19 @@ codeunit 81096 "BD Page Ext Twice Tests"
         Observer.Observe('close ok', Format(TryCloseInsTF(P)));
         Observer.ObserveError('close');
         Observer.Observe('rows', Stored());
-        Observer.Finish();
+        Observer.Expect('meta', 'insert=No modify=Yes delete=Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('new ok', 'No');
+        Observer.Expect('new|text', 'New method failed because Insert is not allowed. Page = BD PX Ins TF, Id = 81091.');
+        Observer.Expect('new|code', 'DB:ClientInsertDenied');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('rows', '1/Changed;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -346,7 +370,19 @@ codeunit 81096 "BD Page Ext Twice Tests"
         Observer.Observe('close ok', Format(TryCloseModFT(P)));
         Observer.ObserveError('close');
         Observer.Observe('rows', Stored());
-        Observer.Finish();
+        Observer.Expect('meta', 'insert=Yes modify=Yes delete=Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('rows', '1/Changed;2/Two;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -390,7 +426,19 @@ codeunit 81096 "BD Page Ext Twice Tests"
         Observer.Observe('close ok', Format(TryCloseModTF(P)));
         Observer.ObserveError('close');
         Observer.Observe('rows', Stored());
-        Observer.Finish();
+        Observer.Expect('meta', 'insert=Yes modify=No delete=Yes');
+        Observer.Expect('name editable', 'No');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', 'Page cannot be saved.');
+        Observer.Expect('new|code', 'SaveAbort');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('rows', '1/One;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -434,7 +482,19 @@ codeunit 81096 "BD Page Ext Twice Tests"
         Observer.Observe('close ok', Format(TryCloseDelFT(P)));
         Observer.ObserveError('close');
         Observer.Observe('rows', Stored());
-        Observer.Finish();
+        Observer.Expect('meta', 'insert=Yes modify=Yes delete=Yes');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('rows', '1/Changed;2/Two;');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -478,6 +538,18 @@ codeunit 81096 "BD Page Ext Twice Tests"
         Observer.Observe('close ok', Format(TryCloseDelTF(P)));
         Observer.ObserveError('close');
         Observer.Observe('rows', Stored());
-        Observer.Finish();
+        Observer.Expect('meta', 'insert=Yes modify=Yes delete=No');
+        Observer.Expect('name editable', 'Yes');
+        Observer.Expect('edit ok', 'Yes');
+        Observer.Expect('edit|text', '');
+        Observer.Expect('edit|code', '');
+        Observer.Expect('new ok', 'Yes');
+        Observer.Expect('new|text', '');
+        Observer.Expect('new|code', '');
+        Observer.Expect('close ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('rows', '1/Changed;2/Two;');
+        Observer.Verify();
     end;
 }

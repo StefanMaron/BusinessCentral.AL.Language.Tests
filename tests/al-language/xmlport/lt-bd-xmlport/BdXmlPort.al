@@ -282,7 +282,13 @@ codeunit 81086 "BD XmlPort Tests"
         Import(Observer, 'lax', 75553, '<Root><Item><Id>7</Id><Unknown>x</Unknown><Name>seven</Name></Item></Root>');
         Import(Observer, 'strict', 75554, '<Root><Item><Id>7</Id><Unknown>x</Unknown><Name>seven</Name></Item></Root>');
         Import(Observer, 'lax first', 75553, '<Root><Item><Unknown>x</Unknown><Id>8</Id><Name>eight</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('lax', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown''. List of possible elements expected: ''Name'' as well as any element in namespace ''##other''.|XmlPortInvalidXml');
+        Observer.Expect('lax rows', '1/one/5;2/two/6;');
+        Observer.Expect('strict', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown''. List of possible elements expected: ''Name''.|XmlPortInvalidXml');
+        Observer.Expect('strict rows', '1/one/5;2/two/6;');
+        Observer.Expect('lax first', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown''. List of possible elements expected: ''Id'' as well as any element in namespace ''##other''.|XmlPortInvalidXml');
+        Observer.Expect('lax first rows', '1/one/5;2/two/6;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,7 +300,15 @@ codeunit 81086 "BD XmlPort Tests"
         Import(Observer, 'strict', 75554, '<Root><Item><Id>6</Id><Unknown xmlns="urn:other">x</Unknown><Name>six</Name></Item></Root>');
         Import(Observer, 'lax between items', 75553, '<Root><Item><Id>9</Id><Name>nine</Name></Item><Other xmlns="urn:other"/><Item><Id>10</Id><Name>ten</Name></Item></Root>');
         Import(Observer, 'lax first', 75553, '<Root><Item><Unknown xmlns="urn:other">x</Unknown><Id>11</Id><Name>eleven</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('lax', 'ok');
+        Observer.Expect('lax rows', '1/one/5;2/two/6;6/six/0;');
+        Observer.Expect('strict', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Unknown'' in namespace ''urn:other''. List of possible elements expected: ''Name''.|XmlPortInvalidXml');
+        Observer.Expect('strict rows', '1/one/5;2/two/6;');
+        Observer.Expect('lax between items', 'error:Imported XML cannot validate with the schema: The element ''Root'' has invalid child element ''Item''. List of possible elements expected: any element in namespace ''##other''.|XmlPortInvalidXml');
+        Observer.Expect('lax between items rows', '1/one/5;2/two/6;');
+        Observer.Expect('lax first', 'ok');
+        Observer.Expect('lax first rows', '1/one/5;2/two/6;11/eleven/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +319,13 @@ codeunit 81086 "BD XmlPort Tests"
         Import(Observer, 'strict', 75554, '<Root xmlns="urn:x"><Item><Id>4</Id><Name>four</Name></Item></Root>');
         Import(Observer, 'lax', 75553, '<Root xmlns="urn:x"><Item><Id>4</Id><Name>four</Name></Item></Root>');
         Import(Observer, 'strict empty', 75554, '<Root xmlns=""><Item><Id>5</Id><Name>five</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('strict', 'error:The element <Root> cannot be found in the object description.|XmlPortElementNotFound');
+        Observer.Expect('strict rows', '1/one/5;2/two/6;');
+        Observer.Expect('lax', 'error:The element <Root> cannot be found in the object description.|XmlPortElementNotFound');
+        Observer.Expect('lax rows', '1/one/5;2/two/6;');
+        Observer.Expect('strict empty', 'ok');
+        Observer.Expect('strict empty rows', '1/one/5;2/two/6;5/five/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -317,7 +337,15 @@ codeunit 81086 "BD XmlPort Tests"
         Import(Observer, 'lax item', 75553, '<Root><Item xmlns="urn:x"><Id>3</Id><Name>three</Name></Item></Root>');
         Import(Observer, 'strict field', 75554, '<Root><Item><Id xmlns="urn:x">12</Id><Name>twelve</Name></Item></Root>');
         Import(Observer, 'lax field', 75553, '<Root><Item><Id>13</Id><Name xmlns="urn:x">thirteen</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('strict item', 'error:Imported XML cannot validate with the schema: The element ''Root'' has invalid child element ''Item'' in namespace ''urn:x''. List of possible elements expected: ''Item''.|XmlPortInvalidXml');
+        Observer.Expect('strict item rows', '1/one/5;2/two/6;');
+        Observer.Expect('lax item', 'error:Imported XML cannot validate with the schema: The element ''Root'' has incomplete content. List of possible elements expected: ''Item'' as well as any element in namespace ''##other''.|XmlPortInvalidXml');
+        Observer.Expect('lax item rows', '1/one/5;2/two/6;');
+        Observer.Expect('strict field', 'error:Imported XML cannot validate with the schema: The element ''Item'' has invalid child element ''Id'' in namespace ''urn:x''. List of possible elements expected: ''Id''.|XmlPortInvalidXml');
+        Observer.Expect('strict field rows', '1/one/5;2/two/6;');
+        Observer.Expect('lax field', 'error:Imported XML cannot validate with the schema: The element ''Item'' has incomplete content. List of possible elements expected: ''Name'' as well as any element in namespace ''##other''.|XmlPortInvalidXml');
+        Observer.Expect('lax field rows', '1/one/5;2/two/6;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,7 +357,12 @@ codeunit 81086 "BD XmlPort Tests"
         Export(Observer, 'export', 81085);
         Import(Observer, 'same namespace', 81085, '<Root xmlns="urn:bd-default"><Item><Id>14</Id><Name>fourteen</Name></Item></Root>');
         Import(Observer, 'no namespace', 81085, '<Root><Item><Id>15</Id><Name>fifteen</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root xmlns="urn:bd-default">|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('same namespace', 'ok');
+        Observer.Expect('same namespace rows', '1/one/5;2/two/6;14/fourteen/0;');
+        Observer.Expect('no namespace', 'error:The element <Root> cannot be found in the object description.|XmlPortElementNotFound');
+        Observer.Expect('no namespace rows', '1/one/5;2/two/6;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -341,7 +374,15 @@ codeunit 81086 "BD XmlPort Tests"
         Import(Observer, 'v11 no decl', 75556, '<Root><Item><Id>8</Id><Name>eight</Name></Item></Root>');
         Import(Observer, 'v10 no decl', 75555, '<Root><Item><Id>9</Id><Name>nine</Name></Item></Root>');
         Import(Observer, 'v10 decl 1.1', 75555, '<?xml version="1.1" encoding="utf-8"?><Root><Item><Id>10</Id><Name>ten</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('v11 decl 1.0', 'ok');
+        Observer.Expect('v11 decl 1.0 rows', '1/one/5;2/two/6;7/seven/0;');
+        Observer.Expect('v11 no decl', 'ok');
+        Observer.Expect('v11 no decl rows', '1/one/5;2/two/6;8/eight/0;');
+        Observer.Expect('v10 no decl', 'ok');
+        Observer.Expect('v10 no decl rows', '1/one/5;2/two/6;9/nine/0;');
+        Observer.Expect('v10 decl 1.1', 'error:Version number ''1.1'' is invalid. Line 1, position 16.|XmlPortImport:Xml');
+        Observer.Expect('v10 decl 1.1 rows', '1/one/5;2/two/6;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -353,7 +394,12 @@ codeunit 81086 "BD XmlPort Tests"
         Export(Observer, 'export', 75563);
         Import(Observer, 'import', 75563, '<Root><Item><Id>31</Id></Item><Plain>p</Plain></Root>');
         Import(Observer, 'import two', 75563, '<Root><Item><Id>32</Id></Item><Item><Id>33</Id></Item><Plain>p</Plain></Root>');
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Item>|    <Id>1</Id>|  </Item>|  <Item>|    <Id>2</Id>|  </Item>|  <Plain />|</Root>|');
+        Observer.Expect('import', 'ok');
+        Observer.Expect('import rows', '1/one/5;2/two/6;31//0;');
+        Observer.Expect('import two', 'ok');
+        Observer.Expect('import two rows', '1/one/5;2/two/6;32//0;33//0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -366,7 +412,13 @@ codeunit 81086 "BD XmlPort Tests"
         Export(Observer, 'all unused', 81084);
         Import(Observer, 'import one unused', 81083, '<Root xmlns:p="urn:bd-p"><Item><p:Id>16</p:Id><Name>sixteen</Name></Item></Root>');
         Import(Observer, 'import all unused', 81084, '<Root><Item><Id>17</Id><Name>seventeen</Name></Item></Root>');
-        Observer.Finish();
+        Observer.Expect('one unused', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root xmlns:p="urn:bd-p" xmlns:q="urn:bd-q">|  <Item>|    <p:Id>1</p:Id>|    <Name>one</Name>|  </Item>|  <Item>|    <p:Id>2</p:Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('all unused', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root xmlns:q="urn:bd-q">|  <Item>|    <Id>1</Id>|    <Name>one</Name>|  </Item>|  <Item>|    <Id>2</Id>|    <Name>two</Name>|  </Item>|</Root>|');
+        Observer.Expect('import one unused', 'ok');
+        Observer.Expect('import one unused rows', '1/one/5;2/two/6;16/sixteen/0;');
+        Observer.Expect('import all unused', 'ok');
+        Observer.Expect('import all unused rows', '1/one/5;2/two/6;17/seventeen/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -376,7 +428,8 @@ codeunit 81086 "BD XmlPort Tests"
     begin
         SeedTypes(true);
         Export(Observer, 'values', 81081);
-        Observer.Finish();
+        Observer.Expect('values', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Row">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Id" type="xs:int" />|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Amt" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="D" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="B" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Opt" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="DT" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Cd" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="T" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Big" type="xs:long" />|      <xs:element minOccurs="1" maxOccurs="1" name="Dur" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="G" type="xs:string" />|    </xs:sequence>|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="unbounded" name="Row" type="Row" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema><Row><Id>1</Id><Name>Alpha &amp; &lt;b&gt;</Name><Amt>-1,234.50</Amt><D>03/05/24</D><B>Yes</B><Opt>Beta</Opt><DT>03/05/24 09:05 AM</DT><Cd>CODE1</Cd><T> 2:30:15 PM</T><Big>9876543210</Big><Dur>1 day 1 hour 1 minute 1 second 1 millisecond</Dur><G>{5A2F6C9E-1B3D-4E8F-9A0B-1C2D3E4F5A6B}</G></Row></Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -386,7 +439,8 @@ codeunit 81086 "BD XmlPort Tests"
     begin
         SeedTypes(false);
         Export(Observer, 'empty', 81081);
-        Observer.Finish();
+        Observer.Expect('empty', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Row">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Id" type="xs:int" />|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Amt" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="D" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="B" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Opt" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="DT" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Cd" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="T" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Big" type="xs:long" />|      <xs:element minOccurs="1" maxOccurs="1" name="Dur" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="G" type="xs:string" />|    </xs:sequence>|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="unbounded" name="Row" type="Row" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema><Row><Id>1</Id><Name /><Amt>0.00</Amt><D /><B>No</B><Opt>Alpha</Opt><DT /><Cd /><T /><Big>0</Big><Dur /><G>{00000000-0000-0000-0000-000000000000}</G></Row></Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -398,7 +452,8 @@ codeunit 81086 "BD XmlPort Tests"
         R.DeleteAll();
         Commit();
         Export(Observer, 'types', 81081);
-        Observer.Finish();
+        Observer.Expect('types', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Row">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Id" type="xs:int" />|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Amt" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="D" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="B" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Opt" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="DT" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="Cd" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="T" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" default="0" name="Big" type="xs:long" />|      <xs:element minOccurs="1" maxOccurs="1" name="Dur" type="xs:string" />|      <xs:element minOccurs="1" maxOccurs="1" name="G" type="xs:string" />|    </xs:sequence>|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="unbounded" name="Row" type="Row" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema><Row><Id>0</Id><Name /><Amt>0.00</Amt><D /><B>No</B><Opt>Alpha</Opt><DT /><Cd /><T /><Big>0</Big><Dur /><G>{00000000-0000-0000-0000-000000000000}</G></Row></Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -410,7 +465,8 @@ codeunit 81086 "BD XmlPort Tests"
         R.DeleteAll();
         Commit();
         Export(Observer, 'attrs', 81082);
-        Observer.Finish();
+        Observer.Expect('attrs', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Row">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|      <xs:element minOccurs="0" maxOccurs="unbounded" name="Extra" type="xs:string" />|    </xs:sequence>|    <xs:attribute name="Id" type="xs:string" use="required" />|    <xs:attribute name="Amt" type="xs:string" use="required" />|    <xs:attribute name="B" type="xs:string" use="optional" />|    <xs:attribute name="Note" type="xs:string" use="required" />|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="0" maxOccurs="unbounded" name="Row" type="Row" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema></Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -420,7 +476,8 @@ codeunit 81086 "BD XmlPort Tests"
     begin
         SeedTypes(true);
         Export(Observer, 'values', 81082);
-        Observer.Finish();
+        Observer.Expect('values', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Row">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|      <xs:element minOccurs="0" maxOccurs="unbounded" name="Extra" type="xs:string" />|    </xs:sequence>|    <xs:attribute name="Id" type="xs:string" use="required" />|    <xs:attribute name="Amt" type="xs:string" use="required" />|    <xs:attribute name="B" type="xs:string" use="optional" />|    <xs:attribute name="Note" type="xs:string" use="required" />|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="0" maxOccurs="unbounded" name="Row" type="Row" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema><Row Id="1" Amt="-1,234.50" B="Yes" Note=""><Name>Alpha &amp; &lt;b&gt;</Name><Extra /></Row></Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -430,7 +487,8 @@ codeunit 81086 "BD XmlPort Tests"
     begin
         SeedTypes(false);
         Export(Observer, 'empty', 81082);
-        Observer.Finish();
+        Observer.Expect('empty', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">|  <xs:complexType name="Row">|    <xs:sequence>|      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />|      <xs:element minOccurs="0" maxOccurs="unbounded" name="Extra" type="xs:string" />|    </xs:sequence>|    <xs:attribute name="Id" type="xs:string" use="required" />|    <xs:attribute name="Amt" type="xs:string" use="required" />|    <xs:attribute name="B" type="xs:string" use="optional" />|    <xs:attribute name="Note" type="xs:string" use="required" />|  </xs:complexType>|  <xs:complexType name="Root" mixed="true">|    <xs:sequence>|      <xs:element minOccurs="0" maxOccurs="unbounded" name="Row" type="Row" />|    </xs:sequence>|  </xs:complexType>|  <xs:element name="Root" type="Root" />|</xs:schema><Row Id="1" Amt="0.00" B="No" Note=""><Name /><Extra /></Row></Root>|');
+        Observer.Verify();
     end;
 }
 

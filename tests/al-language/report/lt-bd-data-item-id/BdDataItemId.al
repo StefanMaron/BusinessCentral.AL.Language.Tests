@@ -51,7 +51,11 @@ codeunit 81075 "BD Data Item Id Tests"
         Observer.Observe('ok', Format(TryItems(Result)));
         Observer.Observe('items', Result);
         Observer.ObserveError('read');
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('items', 'Plain=185209233;oBGiBAU=2147483647;');
+        Observer.Expect('read|text', '');
+        Observer.Expect('read|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -62,7 +66,10 @@ codeunit 81075 "BD Data Item Id Tests"
         ClearLastError();
         Observer.Observe('run', Format(Codeunit.Run(Codeunit::"BD Data Item Id Runner")));
         Observer.ObserveError('run');
-        Observer.Finish();
+        Observer.Expect('run', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Verify();
     end;
 }
 

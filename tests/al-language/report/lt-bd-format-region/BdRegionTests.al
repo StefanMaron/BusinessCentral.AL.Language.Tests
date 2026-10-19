@@ -122,7 +122,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region De");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region De id:81052 language="en-US formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region De</ReportName>|<ReportCaption>BD Region De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region De id:81052 language="en-US formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region De</ReportName>|<Language>en-US</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -132,7 +139,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Gb");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Gb id:81053 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Gb</ReportName>|<ReportCaption>BD Region Gb</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Gb id:81053 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Gb</ReportName>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[en-GB];post=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +156,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Fr");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Fr id:81054 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Fr</ReportName>|<ReportCaption>BD Region Fr</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Fr id:81054 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Fr</ReportName>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[fr-FR];post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +173,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Jp");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Jp id:81055 language="en-US formatRegion="ja-JP">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Jp</ReportName>|<ReportCaption>BD Region Jp</ReportCaption>|<Language>en-US</Language>|<FormatRegion>ja-JP</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Jp id:81055 language="en-US formatRegion="ja-JP">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Jp</ReportName>|<Language>en-US</Language>|<FormatRegion>ja-JP</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=2025/01/31;D2Col=2024/03/05;DT1Col=2025/01/31 14:30:15;DT2Col=2024/03/05 9:05:07;T1Col=14:30:15;T2Col=9:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07#-1234567 region=[ja-JP];get=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07#-1234567 region=[ja-JP];post=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +190,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Zz");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Zz id:81056 language="en-US formatRegion="zz-ZZ">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Zz</ReportName>|<ReportCaption>BD Region Zz</ReportCaption>|<Language>en-US</Language>|<FormatRegion>zz-ZZ</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Zz id:81056 language="en-US formatRegion="zz-ZZ">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Zz</ReportName>|<Language>en-US</Language>|<FormatRegion>zz-ZZ</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 14:30:15;DT2Col=3/5/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -172,7 +207,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Dk");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Dk id:81057 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Dk</ReportName>|<ReportCaption>BD Region Dk</ReportCaption>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Dk id:81057 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Dk</ReportName>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14.30.15;DT2Col=05-03-2024 09.05.07;T1Col=14.30.15;T2Col=09.05.07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567 region=[da-DK];post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -182,7 +224,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Us");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Us id:81058 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Us</ReportName>|<ReportCaption>BD Region Us</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Us id:81058 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Us</ReportName>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -192,7 +241,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Nl");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Nl id:81059 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Nl</ReportName>|<ReportCaption>BD Region Nl</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Nl id:81059 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Nl</ReportName>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14:30:15;DT2Col=05-03-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[nl-NL];post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +258,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Ch");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Ch id:81060 language="en-US formatRegion="de-CH">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Ch</ReportName>|<ReportCaption>BD Region Ch</ReportCaption>|<Language>en-US</Language>|<FormatRegion>de-CH</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Ch id:81060 language="en-US formatRegion="de-CH">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Ch</ReportName>|<Language>en-US</Language>|<FormatRegion>de-CH</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-CH];get=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-CH];post=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -212,7 +275,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region It");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region It id:81061 language="en-US formatRegion="it-IT">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region It</ReportName>|<ReportCaption>BD Region It</ReportCaption>|<Language>en-US</Language>|<FormatRegion>it-IT</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region It id:81061 language="en-US formatRegion="it-IT">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region It</ReportName>|<Language>en-US</Language>|<FormatRegion>it-IT</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[it-IT];get=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[it-IT];post=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,7 +292,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Es");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Es id:81062 language="en-US formatRegion="es-ES">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Es</ReportName>|<ReportCaption>BD Region Es</ReportCaption>|<Language>en-US</Language>|<FormatRegion>es-ES</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Es id:81062 language="en-US formatRegion="es-ES">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Es</ReportName>|<Language>en-US</Language>|<FormatRegion>es-ES</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/1/2025;D2Col=5/3/2024;DT1Col=31/1/2025 14:30:15;DT2Col=5/3/2024 9:05:07;T1Col=14:30:15;T2Col=9:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567 region=[es-ES];get=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567 region=[es-ES];post=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +309,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Se");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Se id:81063 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Se</ReportName>|<ReportCaption>BD Region Se</ReportCaption>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Se id:81063 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Se</ReportName>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=−1234,5;D1Col=2025-01-31;D2Col=2024-03-05;DT1Col=2025-01-31 14:30:15;DT2Col=2024-03-05 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=−1234567;TextsCol=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567 region=[sv-SE];post=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -242,7 +326,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region No");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region No id:81064 language="en-US formatRegion="nb-NO">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region No</ReportName>|<ReportCaption>BD Region No</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nb-NO</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region No id:81064 language="en-US formatRegion="nb-NO">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region No</ReportName>|<Language>en-US</Language>|<FormatRegion>nb-NO</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=−1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=−1234567;TextsCol=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[nb-NO];get=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[nb-NO];post=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +343,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Empty");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Empty id:81065 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Empty</ReportName>|<ReportCaption>BD Region Empty</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Empty id:81065 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Empty</ReportName>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +365,19 @@ codeunit 81070 "BD Region Tests"
         RunWay(Observer, 'runmodal', TryRunModal(Report::"BD Region De Proc"));
         ClearLastError();
         RunWay(Observer, 'execute', TryExecute(Report::"BD Region De Proc"));
-        Observer.Finish();
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('runmodal ok', 'Yes');
+        Observer.Expect('runmodal|text', '');
+        Observer.Expect('runmodal|code', '');
+        Observer.Expect('runmodal log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('execute ok', 'Yes');
+        Observer.Expect('execute|text', '');
+        Observer.Expect('execute|code', '');
+        Observer.Expect('execute log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 
 #if BD_LINUX_SUSPECT
@@ -329,7 +439,12 @@ codeunit 81070 "BD Region Tests"
         Observer.Observe('run ok', Format(Ok));
         Observer.ObserveError('run');
         Observer.Observe('run log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('handler', '');
+        Observer.Expect('run ok', 'No');
+        Observer.Expect('run|text', 'Report 81067 does not have a valid layout. Valid layout types are: Word, RDLC, Excel, and Custom.');
+        Observer.Expect('run|code', 'ReportNoLayout');
+        Observer.Expect('run log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -344,7 +459,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'en-GB', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -353,7 +479,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'ja-JP', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="ja-JP">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>ja-JP</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="ja-JP">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>ja-JP</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=2025/01/31;D2Col=2024/03/05;DT1Col=2025/01/31 14:30:15;DT2Col=2024/03/05 9:05:07;T1Col=14:30:15;T2Col=9:05:07;TextsCol=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07 language=1033 region=[ja-JP];get=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07;post=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07 language=1033 region=[ja-JP];get=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07;post=1,234,567.891#-1,234.5#25/01/31#24/03/05#2024年3月5日#25/01/31 14:30#24/03/05 09:05#14:30:15# 9:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -362,7 +499,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'nl-NL', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14:30:15;DT2Col=05-03-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -371,7 +519,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'de-CH', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="de-CH">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>de-CH</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="de-CH">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>de-CH</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1033 region=[de-CH];get=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1033 region=[de-CH];get=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1’234’567.891#-1’234.5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -380,7 +539,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'it-IT', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="it-IT">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>it-IT</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="it-IT">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>it-IT</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[it-IT];get=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[it-IT];get=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -389,7 +559,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'sv-SE', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=−1234,5;D1Col=2025-01-31;D2Col=2024-03-05;DT1Col=2025-01-31 14:30:15;DT2Col=2024-03-05 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07 language=1033 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07 language=1033 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -398,7 +579,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterDataset(Observer, 'en-US', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -407,7 +595,11 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterRun(Observer, 'en-US', true, 0);
-        Observer.Finish();
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -416,7 +608,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'zz-ZZ', true, 0);
-        Observer.Finish();
+        Observer.Expect('saveas|text', 'An unsupported language was selected (''zz-ZZ'' - ''Requested culture is not supported by the current platform'').');
+        Observer.Expect('saveas|code', 'ReportFormatCultureNotFound');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Expect('run ok', 'No');
+        Observer.Expect('run|text', 'An unsupported language was selected (''zz-ZZ'' - ''Requested culture is not supported by the current platform'').');
+        Observer.Expect('run|code', 'ReportFormatCultureNotFound');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -425,7 +624,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, '', true, 0);
-        Observer.Finish();
+        Observer.Expect('saveas|text', 'Invalid language ID supplied: 0.');
+        Observer.Expect('saveas|code', 'Argument');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Expect('run ok', 'No');
+        Observer.Expect('run|text', 'Invalid language ID supplied: 0.');
+        Observer.Expect('run|code', 'Argument');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -434,7 +640,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'de-DE', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1033 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1033 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -443,7 +660,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'fr-FR', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -452,7 +680,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'da-DK', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14.30.15;DT2Col=05-03-2024 09.05.07;T1Col=14.30.15;T2Col=09.05.07;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07 language=1033 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07 language=1033 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -461,7 +700,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'de-de', true, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="de-de">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>de-de</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="de-de">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>de-de</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1033 region=[de-de];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1033 region=[de-de];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -470,7 +720,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'de', true, 0);
-        Observer.Finish();
+        Observer.Expect('saveas|text', 'An unsupported language was selected (''de'' - ''Requested culture is not supported by the current platform'').');
+        Observer.Expect('saveas|code', 'ReportFormatCultureNotFound');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Expect('run ok', 'No');
+        Observer.Expect('run|text', 'An unsupported language was selected (''de'' - ''Requested culture is not supported by the current platform'').');
+        Observer.Expect('run|code', 'ReportFormatCultureNotFound');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -479,7 +736,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterDataset(Observer, 'en-US', true, 1031);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="de-DE formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>de-DE</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="de-DE formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>de-DE</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1031 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -488,7 +752,11 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterRun(Observer, 'en-US', true, 1031);
-        Observer.Finish();
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1031 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -497,7 +765,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'de-DE', true, 1031);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="de-DE formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>de-DE</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="de-DE formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>de-DE</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1031 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07 language=1031 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. März 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -506,7 +785,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterDataset(Observer, '', false, 1031);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="de-DE formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>de-DE</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="de-DE formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>de-DE</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1031 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -515,7 +801,11 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterRun(Observer, '', false, 1031);
-        Observer.Finish();
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1031 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#März 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -524,7 +814,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, '', true, 1036);
-        Observer.Finish();
+        Observer.Expect('saveas|text', 'Invalid language ID supplied: 0.');
+        Observer.Expect('saveas|code', 'Argument');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Expect('run ok', 'No');
+        Observer.Expect('run|text', 'Invalid language ID supplied: 0.');
+        Observer.Expect('run|code', 'Argument');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -533,7 +830,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterDataset(Observer, 'en-US', true, 1036);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="fr-FR formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>fr-FR</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="fr-FR formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>fr-FR</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1036 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -542,7 +846,11 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterRun(Observer, 'en-US', true, 1036);
-        Observer.Finish();
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1036 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#mars 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -551,7 +859,14 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterDataset(Observer, 'en-US', true, 1033);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 2:30:15 PM;DT2Col=3/5/2024 9:05:07 AM;T1Col=2:30:15 PM;T2Col=9:05:07 AM;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -560,7 +875,11 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         SetterRun(Observer, 'en-US', true, 1033);
-        Observer.Finish();
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -569,7 +888,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'fr-FR', true, 1030);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="da-DK formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>da-DK</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="da-DK formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>da-DK</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1030 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1030 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -580,7 +910,14 @@ codeunit 81070 "BD Region Tests"
         Log.SetCulture('fr-FR', true, 0);
         Dataset(Observer, Report::"BD Region Setter De");
         Log.SetCulture('', false, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<ReportCaption>BD Region Setter De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;D2Col=05/03/2024;DT2Col=05/03/2024 09:05:07;TextsCol=1 234 567,891#05/03/24#05/03/24 09:05;');
+        Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];after=1 234 567,891#05/03/24#05/03/24 09:05 region=[fr-FR];get=1 234 567,891#05/03/24#05/03/24 09:05 region=[fr-FR];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -591,7 +928,14 @@ codeunit 81070 "BD Region Tests"
         Log.SetCulture('en-US', true, 0);
         Dataset(Observer, Report::"BD Region Setter De");
         Log.SetCulture('', false, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<ReportCaption>BD Region Setter De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="en-US">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<Language>en-US</Language>|<FormatRegion>en-US</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;D2Col=3/5/2024;DT2Col=3/5/2024 9:05:07 AM;TextsCol=1,234,567.891#03/05/24#03/05/24 09:05 AM;');
+        Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];after=1,234,567.891#03/05/24#03/05/24 09:05 AM region=[en-US];get=1,234,567.891#03/05/24#03/05/24 09:05 AM region=[en-US];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -602,7 +946,10 @@ codeunit 81070 "BD Region Tests"
         Log.SetCulture('', true, 0);
         Dataset(Observer, Report::"BD Region Setter De");
         Log.SetCulture('', false, 0);
-        Observer.Finish();
+        Observer.Expect('saveas|text', 'Invalid language ID supplied: 0.');
+        Observer.Expect('saveas|code', 'Argument');
+        Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -613,7 +960,14 @@ codeunit 81070 "BD Region Tests"
         Log.SetCulture('', false, 0);
         Dataset(Observer, Report::"BD Region Setter De");
         Log.SetCulture('', false, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<ReportCaption>BD Region Setter De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="de-DE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<Language>en-US</Language>|<FormatRegion>de-DE</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;D2Col=05.03.2024;DT2Col=05.03.2024 09:05:07;TextsCol=1.234.567,891#05.03.24#05.03.24 09:05;');
+        Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];after=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];get=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -624,7 +978,14 @@ codeunit 81070 "BD Region Tests"
         Log.SetCulture('ja-JP', true, 0);
         Dataset(Observer, Report::"BD Region Setter De");
         Log.SetCulture('', false, 0);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="ja-JP">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<ReportCaption>BD Region Setter De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>ja-JP</FormatRegion>|');
+#else
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="ja-JP">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<Language>en-US</Language>|<FormatRegion>ja-JP</FormatRegion>|');
+#endif
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;D2Col=2024/03/05;DT2Col=2024/03/05 9:05:07;TextsCol=1,234,567.891#24/03/05#24/03/05 09:05;');
+        Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];after=1,234,567.891#24/03/05#24/03/05 09:05 region=[ja-JP];get=1,234,567.891#24/03/05#24/03/05 09:05 region=[ja-JP];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -657,7 +1018,9 @@ codeunit 81070 "BD Region Tests"
         Xml := Helper.SaveAsXml(Report::"BD Decimal Formatter");
         Observer.Observe('columns short', Helper.Columns(Xml));
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('columns', 'Plain[decimalformatter:#,##0.00=1234.567;Places25[decimalformatter:#,##0.00###=1234.567;Places00[decimalformatter:#,##0=1234.567;Auto1[decimalformatter:#,##0.00=1234.567;Auto2[decimalformatter:#,##0.00###=1234.567;V0[decimalformatter:#,##0.00=1234;V1[decimalformatter:#,##0.00=1234.5;V2[decimalformatter:#,##0.00=1234.56;V3[decimalformatter:#,##0.00=1234.567;V4[decimalformatter:#,##0.00=1234.5678;V5[decimalformatter:#,##0.00=1234.56789;V6[decimalformatter:#,##0.00=1234.567891;VNeg3[decimalformatter:#,##0.00=-1234.567;VSmall[decimalformatter:#,##0.00=0.125;VExpr[decimalformatter:#,##0.00=2469.134;VExpr2[decimalformatter:#,##0.00=1235.567;');
+        Observer.Expect('columns short', 'Plain[decimalformatter:#,##0.00=1234.5;Places25[decimalformatter:#,##0.00###=1234.5;Places00[decimalformatter:#,##0=1234;Auto1[decimalformatter:#,##0.00=1234.5;Auto2[decimalformatter:#,##0.00###=1234.5;V0[decimalformatter:#,##0.00=1234;V1[decimalformatter:#,##0.00=1234.5;V2[decimalformatter:#,##0.00=1234.56;V3[decimalformatter:#,##0.00=1234.567;V4[decimalformatter:#,##0.00=1234.5678;V5[decimalformatter:#,##0.00=1234.56789;V6[decimalformatter:#,##0.00=1234.567891;VNeg3[decimalformatter:#,##0.00=-1234.567;VSmall[decimalformatter:#,##0.00=0.125;VExpr[decimalformatter:#,##0.00=2469.134;VExpr2[decimalformatter:#,##0.00=1235.5;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -674,7 +1037,8 @@ codeunit 81070 "BD Region Tests"
         Result := YHelper.LayoutSummaries(Report::"BD Summary Langs");
         GlobalLanguage(Original);
         Observer.Observe('layouts', Result);
-        Observer.Finish();
+        Observer.Expect('layouts', 'SumAll=English all;SumDanOnly=SumDanOnly;SumNoEnu=SumNoEnu;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -691,7 +1055,8 @@ codeunit 81070 "BD Region Tests"
         Result := YHelper.LayoutSummaries(Report::"BD Summary Langs");
         GlobalLanguage(Original);
         Observer.Observe('layouts', Result);
-        Observer.Finish();
+        Observer.Expect('layouts', 'SumAll=Deutsch alle;SumDanOnly=SumDanOnly;SumNoEnu=Deutsch ohne;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -708,7 +1073,8 @@ codeunit 81070 "BD Region Tests"
         Result := YHelper.LayoutSummaries(Report::"BD Summary Langs");
         GlobalLanguage(Original);
         Observer.Observe('layouts', Result);
-        Observer.Finish();
+        Observer.Expect('layouts', 'SumAll=Francais tous;SumDanOnly=SumDanOnly;SumNoEnu=Francais sans;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -725,7 +1091,8 @@ codeunit 81070 "BD Region Tests"
         Result := YHelper.LayoutSummaries(Report::"BD Summary Langs");
         GlobalLanguage(Original);
         Observer.Observe('layouts', Result);
-        Observer.Finish();
+        Observer.Expect('layouts', 'SumAll=Dansk alle;SumDanOnly=Kun dansk;SumNoEnu=SumNoEnu;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -742,7 +1109,8 @@ codeunit 81070 "BD Region Tests"
         Result := YHelper.LayoutSummaries(Report::"BD Summary Langs");
         GlobalLanguage(Original);
         Observer.Observe('layouts', Result);
-        Observer.Finish();
+        Observer.Expect('layouts', 'SumAll=Nederlands alle;SumDanOnly=SumDanOnly;SumNoEnu=SumNoEnu;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -759,7 +1127,8 @@ codeunit 81070 "BD Region Tests"
         Result := YHelper.LayoutSummaries(Report::"BD Summary Langs");
         GlobalLanguage(Original);
         Observer.Observe('layouts', Result);
-        Observer.Finish();
+        Observer.Expect('layouts', 'SumAll=English all;SumDanOnly=SumDanOnly;SumNoEnu=SumNoEnu;');
+        Observer.Verify();
     end;
 
 }
