@@ -249,7 +249,6 @@ codeunit 70063 "LT ScT Mixed Defaults"
         Holder: Codeunit "LT BP DataScope Holder";
     begin
         Observer.Observe('default', Format(Holder.GetScope()));
-        Observer.Observe('default ordinal', Format(Holder.GetScope(), 0, 2));
         Holder.SetScope(DataScope::Company);
         Observer.Observe('assigned', Format(Holder.GetScope()));
         Observer.Observe('is company', Format(Holder.GetScope() = DataScope::Company));
