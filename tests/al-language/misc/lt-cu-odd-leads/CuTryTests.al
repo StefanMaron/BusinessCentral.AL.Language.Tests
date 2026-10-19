@@ -91,7 +91,12 @@ codeunit 85310 "LT CU Try Tests"
         Observer.Observe('rows after', Rows());
         Commit();
         Observer.Observe('rows after commit', Rows());
-        Observer.Finish();
+        Observer.Expect('expression|text', 'Call to the function ''INSERT'' is not allowed inside the call to ''RootMethodScope'' when it is used as a TryFunction.');
+        Observer.Expect('expression|code', 'TryFunctionWrite');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows after', '0');
+        Observer.Expect('rows after commit', '0');
+        Observer.Verify();
     end;
 
     // Item 32: the same in the `if not Try() then` form.
@@ -106,7 +111,11 @@ codeunit 85310 "LT CU Try Tests"
         Observer.ObserveError('if not');
         Observer.Observe('branch', Branch);
         Observer.Observe('rows after', Rows());
-        Observer.Finish();
+        Observer.Expect('if not|text', 'Call to the function ''INSERT'' is not allowed inside the call to ''TryInsertThenError_IfNotForm'' when it is used as a TryFunction.');
+        Observer.Expect('if not|code', 'TryFunctionWrite');
+        Observer.Expect('branch', '');
+        Observer.Expect('rows after', '0');
+        Observer.Verify();
     end;
 
     // Item 32: a TryFunction called as a plain statement.
@@ -119,7 +128,10 @@ codeunit 85310 "LT CU Try Tests"
         asserterror TryInsertThenError(3);
         Observer.ObserveError('statement');
         Observer.Observe('rows after', Rows());
-        Observer.Finish();
+        Observer.Expect('statement|text', 'try error after insert');
+        Observer.Expect('statement|code', 'Dialog');
+        Observer.Expect('rows after', '0');
+        Observer.Verify();
     end;
 
     // Item 32/33: a TryFunction that only inserts, its result consumed.
@@ -134,7 +146,11 @@ codeunit 85310 "LT CU Try Tests"
         Observer.ObserveError('expression');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows after', Rows());
-        Observer.Finish();
+        Observer.Expect('expression|text', 'Call to the function ''INSERT'' is not allowed inside the call to ''RootMethodScope'' when it is used as a TryFunction.');
+        Observer.Expect('expression|code', 'TryFunctionWrite');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows after', '0');
+        Observer.Verify();
     end;
 
     // Item 34: Insert, Modify, ModifyAll, DeleteAll on a temporary record inside a TryFunction, its result consumed.
@@ -150,7 +166,10 @@ codeunit 85310 "LT CU Try Tests"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('log', Log);
         Observer.Observe('lasterror', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'insert;modify;modifyall;deleteall;count=0;');
+        Observer.Expect('lasterror', '');
+        Observer.Verify();
     end;
 
     // Item 35: IsolatedStorage.Get into a Text of a value stored with SetEncrypted(SecretText), inside a TryFunction.
@@ -175,7 +194,15 @@ codeunit 85310 "LT CU Try Tests"
         ClearLastError();
         IsolatedStorage.Delete('LTCU_s1', DataScope::Module);
         IsolatedStorage.Delete('LTCU_s2', DataScope::Module);
-        Observer.Finish();
+        Observer.Expect('set', 'Yes');
+        Observer.Expect('try ok', 'No');
+        Observer.Expect('value', '');
+        Observer.Expect('lasterror', 'The operation was aborted to prevent exposing a secret value.');
+        Observer.Expect('lastcode', 'ForbiddenSecretAccess');
+        Observer.Expect('set plain', 'Yes');
+        Observer.Expect('try ok plain', 'No');
+        Observer.Expect('lasterror plain', 'The operation was aborted to prevent exposing a secret value.');
+        Observer.Verify();
     end;
 
     // Item 35: the same Get called directly.
@@ -193,6 +220,10 @@ codeunit 85310 "LT CU Try Tests"
         Observer.ObserveError('get');
         Observer.Observe('value', Value);
         Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_s3', DataScope::Module)));
-        Observer.Finish();
+        Observer.Expect('get|text', 'The operation was aborted to prevent exposing a secret value.');
+        Observer.Expect('get|code', 'ForbiddenSecretAccess');
+        Observer.Expect('value', '');
+        Observer.Expect('stored after', 'No');
+        Observer.Verify();
     end;
 }

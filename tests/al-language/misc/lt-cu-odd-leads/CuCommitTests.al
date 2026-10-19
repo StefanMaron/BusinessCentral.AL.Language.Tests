@@ -102,7 +102,11 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.ObserveError('err');
         Observer.Observe('log', Log);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'run=Yes;lasterror=;');
+        Observer.Expect('rows', '[100;]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,7 +120,11 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.ObserveError('err');
         Observer.Observe('log', Log);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'run=Yes;lasterror=;');
+        Observer.Expect('rows', '[100;]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -130,7 +138,11 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.ObserveError('err');
         Observer.Observe('log', Log);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'run=No;lasterror=failing run;');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +154,10 @@ codeunit 85311 "LT CU Commit Tests"
         asserterror ErrorScopeStatementRunThenFail(Codeunit::"LT CU Inserter");
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 40
@@ -207,7 +222,10 @@ codeunit 85311 "LT CU Commit Tests"
         asserterror OuterErrorInnerIgnoreThenFail(1);
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'Commit is prohibited in the current scope. The operation cannot continue. Contact your system administrator.');
+        Observer.Expect('err|code', 'DB:Ok');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -219,7 +237,10 @@ codeunit 85311 "LT CU Commit Tests"
         asserterror OuterIgnoreInnerErrorThenFail(2);
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'Commit is prohibited in the current scope. The operation cannot continue. Contact your system administrator.');
+        Observer.Expect('err|code', 'DB:Ok');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +253,13 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.ObserveError('error try last');
         Observer.Observe('ignore try', Format(TryCommitUnderIgnore()));
         Observer.ObserveError('ignore try last');
-        Observer.Finish();
+        Observer.Expect('error try', 'No');
+        Observer.Expect('error try last|text', 'Commit is prohibited in the current scope. The operation cannot continue. Contact your system administrator.');
+        Observer.Expect('error try last|code', 'DB:Ok');
+        Observer.Expect('ignore try', 'Yes');
+        Observer.Expect('ignore try last|text', '');
+        Observer.Expect('ignore try last|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,7 +274,10 @@ codeunit 85311 "LT CU Commit Tests"
         Commit();
         asserterror Error('unrelated');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('scope|text', 'Commit is prohibited in the current scope. The operation cannot continue. Contact your system administrator.');
+        Observer.Expect('scope|code', 'DB:Ok');
+        Observer.Expect('rows', '[4;]');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 43
@@ -282,7 +312,10 @@ codeunit 85311 "LT CU Commit Tests"
         asserterror InsertThenFail(10, 'commit-in-oninsert');
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -297,7 +330,11 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
         Observer.Observe('name', NameOf(11));
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('rows', '[11;]');
+        Observer.Expect('name', 'plain');
+        Observer.Verify();
     end;
 
     [Test]
@@ -313,7 +350,11 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
         Observer.Observe('name', NameOf(12));
-        Observer.Finish();
+        Observer.Expect('err|text', 'unrelated');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('rows', '[12;]');
+        Observer.Expect('name', 'commit-in-sub');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,7 +370,11 @@ codeunit 85311 "LT CU Commit Tests"
         Observer.Observe('ok', Format(Ok));
         asserterror Error('unrelated');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('try|text', 'Call to the function ''COMMIT'' is not allowed inside the call to ''RootMethodScope'' when it is used as a TryFunction.');
+        Observer.Expect('try|code', 'TryFunctionWrite');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 44
@@ -365,7 +410,10 @@ codeunit 85311 "LT CU Commit Tests"
         asserterror InconsistentInsertCommit(21);
         Observer.ObserveError('err');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('err|text', 'The transaction cannot be completed because it will cause inconsistencies in the LT CU Row table. Check where and how the CONSISTENT function is used in the transaction to find the reason for the error.\\Contact your system administrator.\\Tables can be marked as inconsistent during comprehensive tasks, such as posting. This prevents data from being updated incorrectly.');
+        Observer.Expect('err|code', 'DB:TableInConsistent');
+        Observer.Expect('rows', '[20;]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -377,6 +425,7 @@ codeunit 85311 "LT CU Commit Tests"
         InconsistentThenConsistentCommit(22);
         asserterror Error('unrelated');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('rows', '[22;]');
+        Observer.Verify();
     end;
 }

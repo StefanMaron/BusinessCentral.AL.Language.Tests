@@ -72,7 +72,8 @@ codeunit 85312 "LT CU Write Tx Tests"
         Page.RunModal(Page::"LT CU Row List");
         Observer.Observe('handler', HandlerLog);
         IsolatedStorage.Delete('LTCU_w1', DataScope::User);
-        Observer.Finish();
+        Observer.Expect('handler', 'modal;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +89,12 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w2', DataScope::User)));
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows', '[]');
+        Observer.Expect('stored after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -104,7 +110,12 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w3', DataScope::Module)));
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows', '[]');
+        Observer.Expect('stored after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +131,12 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w4', DataScope::Company)));
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows', '[]');
+        Observer.Expect('stored after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,7 +152,12 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w5', DataScope::CompanyAndUser)));
-        Observer.Finish();
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('rows', '[]');
+        Observer.Expect('stored after', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -152,7 +173,9 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('rows', Rows());
         IsolatedStorage.Delete('LTCU_w6', DataScope::User);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('rows', '[100;]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -167,7 +190,12 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
         Observer.Observe('stored after', Format(IsolatedStorage.Contains('LTCU_w7', DataScope::User)));
-        Observer.Finish();
+        Observer.Expect('runmodal|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('runmodal|code', 'DB:Ok');
+        Observer.Expect('handler', '');
+        Observer.Expect('rows', '[]');
+        Observer.Expect('stored after', 'No');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 42
@@ -181,7 +209,9 @@ codeunit 85312 "LT CU Write Tx Tests"
         Other.Id := 1;
         asserterror Codeunit.Run(Codeunit::"LT CU TableNo Run", Other);
         Observer.ObserveError('statement');
-        Observer.Finish();
+        Observer.Expect('statement|text', 'Record(85301) is not compatible with Codeunit.Run(Record(85300)).');
+        Observer.Expect('statement|code', 'InvalidType');
+        Observer.Verify();
     end;
 
     [Test]
@@ -196,7 +226,10 @@ codeunit 85312 "LT CU Write Tx Tests"
         asserterror Ok := Codeunit.Run(Codeunit::"LT CU TableNo Run", Other);
         Observer.ObserveError('guarded');
         Observer.Observe('ok', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('guarded|text', 'Record(85301) is not compatible with Codeunit.Run(Record(85300)).');
+        Observer.Expect('guarded|code', 'InvalidType');
+        Observer.Expect('ok', 'No');
+        Observer.Verify();
     end;
 
 #if BC28PLUS
@@ -212,7 +245,23 @@ codeunit 85312 "LT CU Write Tx Tests"
         RunByName(Observer, 'LT CU No Such Codeunit', Row);
         RunByName(Observer, 'LTCU.Probe.LT CU No Such Codeunit', Row);
         RunByName(Observer, 'NoSuch.Namespace.LT CU Named Run', Row);
-        Observer.Finish();
+        Observer.Expect('LT CU TableNo Run|ok', 'No');
+        Observer.Expect('LT CU TableNo Run|name', '');
+        Observer.Expect('LT CU TableNo Run|text', 'The provided object name is not fully qualified.');
+        Observer.Expect('LT CU TableNo Run|code', 'InvalidOperation');
+        Observer.Expect('LT CU No Such Codeunit|ok', 'No');
+        Observer.Expect('LT CU No Such Codeunit|name', '');
+        Observer.Expect('LT CU No Such Codeunit|text', 'The provided object name is not fully qualified.');
+        Observer.Expect('LT CU No Such Codeunit|code', 'InvalidOperation');
+        Observer.Expect('LTCU.Probe.LT CU No Such Codeunit|ok', 'No');
+        Observer.Expect('LTCU.Probe.LT CU No Such Codeunit|name', '');
+        Observer.Expect('LTCU.Probe.LT CU No Such Codeunit|text', 'A codeunit with full name LTCU.Probe.LT CU No Such Codeunit could not be found.');
+        Observer.Expect('LTCU.Probe.LT CU No Such Codeunit|code', 'InvalidMetadata');
+        Observer.Expect('NoSuch.Namespace.LT CU Named Run|ok', 'No');
+        Observer.Expect('NoSuch.Namespace.LT CU Named Run|name', '');
+        Observer.Expect('NoSuch.Namespace.LT CU Named Run|text', 'A codeunit with full name NoSuch.Namespace.LT CU Named Run could not be found.');
+        Observer.Expect('NoSuch.Namespace.LT CU Named Run|code', 'InvalidMetadata');
+        Observer.Verify();
     end;
 
     local procedure RunByName(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT CU Row")
@@ -245,7 +294,11 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('report');
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('report|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('report|code', 'DB:Ok');
+        Observer.Expect('handler', '');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +312,8 @@ codeunit 85312 "LT CU Write Tx Tests"
         Row.SetRange(Id, 1);
         Report.Run(Report::"LT CU Report", false, false, Row);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('rows', '[1;900;]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -275,7 +329,11 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.ObserveError('report');
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('report|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('report|code', 'DB:Ok');
+        Observer.Expect('handler', '');
+        Observer.Expect('rows', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -290,7 +348,9 @@ codeunit 85312 "LT CU Write Tx Tests"
         Report.Run(Report::"LT CU Report", true, true, Row);
         Observer.Observe('handler', HandlerLog);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('handler', 'requestpage;');
+        Observer.Expect('rows', '[900;]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -304,6 +364,7 @@ codeunit 85312 "LT CU Write Tx Tests"
         Row.SetRange(Id, 1);
         Report.RunModal(Report::"LT CU Report", false, false, Row);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('rows', '[1;900;]');
+        Observer.Verify();
     end;
 }
