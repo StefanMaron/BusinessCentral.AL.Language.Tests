@@ -63,7 +63,21 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('empty_1_1', Sub('', 1, 1));
         Obs.Observe('empty_2_1', Sub('', 2, 1));
         Obs.Observe('textconst_5_20', TC.Substring(5, 20));
-        Obs.Finish();
+        Obs.Expect('string_1_20', 'ok:string');
+        Obs.Expect('abc_2_5', 'ok:bc');
+        Obs.Expect('digits_1_20', 'ok:123456789');
+        Obs.Expect('12345_3_10', 'ok:345');
+        Obs.Expect('abc_4_0', 'ok:');
+        Obs.Expect('abc_4_1', 'ok:');
+        Obs.Expect('abc_5_0', 'error:startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Obs.Expect('abc_5_1', 'error:startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Obs.Expect('abc_0_1', 'error:startIndex (''-1'') must be a non-negative value. (Parameter ''startIndex'')\Actual value was -1.|ArgumentOutOfRange');
+        Obs.Expect('abc_3_1', 'ok:c');
+        Obs.Expect('empty_1_0', 'ok:');
+        Obs.Expect('empty_1_1', 'ok:');
+        Obs.Expect('empty_2_1', 'error:startIndex cannot be larger than length of string. (Parameter ''startIndex'')|ArgumentOutOfRange');
+        Obs.Expect('textconst_5_20', 'const');
+        Obs.Verify();
     end;
 
     // Item 51 (BigText boundaries). Already pinned: streams/StTBigText.al (AddText at 0, -1 and length+2; GetSubText 0, negative, length+1
@@ -95,7 +109,14 @@ codeunit 85120 "LT CR Text Leads"
         Clear(Big);
         Obs.Observe('emptyTextPos', Format(Big.TextPos('a')));
         Obs.Observe('emptyTextPosEmpty', Format(Big.TextPos('')));
-        Obs.Finish();
+        Obs.Expect('add999', 'abcx|4');
+        Obs.Expect('addEmpty', 'abcx|4');
+        Obs.Expect('sub_len_plus_1', '|0');
+        Obs.Expect('sub_20', '|0');
+        Obs.Expect('sub_3_50', 'cx|2');
+        Obs.Expect('emptyTextPos', '0');
+        Obs.Expect('emptyTextPosEmpty', '0');
+        Obs.Verify();
     end;
 
     [TryFunction]
@@ -144,7 +165,15 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('text_len_plus_1', SetText(T, 4, 'd'));
         Obs.Observe('text_gap', SetText(T, 8, 'x'));
         Obs.Observe('text_after', T);
-        Obs.Finish();
+        Obs.Expect('code_len_plus_1', 'ok:ABCD');
+        Obs.Expect('code_gap', 'error:The value of INDEXING parameter 1 is outside of the permitted range. The current value is: 6. The permitted range is: from 1 to 4.|OutsidePermittedRange');
+        Obs.Expect('code_replace_lower', 'ok:QBCD');
+        Obs.Expect('code_after', 'QBCD|4');
+        Obs.Expect('code_past_declared', 'error:The length of the string is 11, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJK|StringLengthExceeded');
+        Obs.Expect('text_len_plus_1', 'ok:abcd');
+        Obs.Expect('text_gap', 'error:The value of INDEXING parameter 1 is outside of the permitted range. The current value is: 8. The permitted range is: from 1 to 4.|OutsidePermittedRange');
+        Obs.Expect('text_after', 'abcd');
+        Obs.Verify();
     end;
 
     [TryFunction]
@@ -204,12 +233,102 @@ codeunit 85120 "LT CR Text Leads"
             Obs.Observe('set1032', 'error:' + GetLastErrorText());
         Cases(Obs, 'el.');
         GlobalLanguage(Saved);
-        Obs.Finish();
+        Obs.Expect('default_language', '1033');
+        Obs.Expect('en.LowerCase_I', '105');
+        Obs.Expect('en.ToLower_I', '105');
+        Obs.Expect('en.UpperCase_i', '73');
+        Obs.Expect('en.ToUpper_i', '73');
+        Obs.Expect('en.LowerCase_Idot', '105');
+        Obs.Expect('en.ToLower_Idot', '304');
+        Obs.Expect('en.UpperCase_dotless', '73');
+        Obs.Expect('en.ToUpper_dotless', '305');
+        Obs.Expect('en.LowerCase_AS', '945,963');
+        Obs.Expect('en.ToLower_AS', '945,963');
+        Obs.Expect('en.UpperCase_as', '913,931');
+        Obs.Expect('en.ToUpper_as', '913,931');
+        Obs.Expect('en.UpperCase_sz', '223');
+        Obs.Expect('en.ToUpper_sz', '223');
+        Obs.Expect('set1055', 'ok:1055');
+        Obs.Expect('tr.LowerCase_I', '305');
+        Obs.Expect('tr.ToLower_I', '105');
+        Obs.Expect('tr.UpperCase_i', '304');
+        Obs.Expect('tr.ToUpper_i', '73');
+        Obs.Expect('tr.LowerCase_Idot', '105');
+        Obs.Expect('tr.ToLower_Idot', '304');
+        Obs.Expect('tr.UpperCase_dotless', '73');
+        Obs.Expect('tr.ToUpper_dotless', '305');
+        Obs.Expect('tr.LowerCase_AS', '945,963');
+        Obs.Expect('tr.ToLower_AS', '945,963');
+        Obs.Expect('tr.UpperCase_as', '913,931');
+        Obs.Expect('tr.ToUpper_as', '913,931');
+        Obs.Expect('tr.UpperCase_sz', '223');
+        Obs.Expect('tr.ToUpper_sz', '223');
+        Obs.Expect('set1032', 'ok:1032');
+        Obs.Expect('el.LowerCase_I', '105');
+        Obs.Expect('el.ToLower_I', '105');
+        Obs.Expect('el.UpperCase_i', '73');
+        Obs.Expect('el.ToUpper_i', '73');
+        Obs.Expect('el.LowerCase_Idot', '105');
+        Obs.Expect('el.ToLower_Idot', '304');
+        Obs.Expect('el.UpperCase_dotless', '73');
+        Obs.Expect('el.ToUpper_dotless', '305');
+        Obs.Expect('el.LowerCase_AS', '945,963');
+        Obs.Expect('el.ToLower_AS', '945,963');
+        Obs.Expect('el.UpperCase_as', '913,931');
+        Obs.Expect('el.ToUpper_as', '913,931');
+        Obs.Expect('el.UpperCase_sz', '223');
+        Obs.Expect('el.ToUpper_sz', '223');
+        Obs.Verify();
     end;
 
     local procedure TakeCode20(C: Code[20]): Text
     begin
         exit('[' + C + ']');
+    end;
+
+    [TryFunction]
+    local procedure TryTake(T: Text[100]; var Res: Text)
+    begin
+        Res := TakeCode20(T);
+    end;
+
+    [TryFunction]
+    local procedure TryTakeField(var FinHdr: Record "Finance Charge Memo Header" temporary; var Res: Text)
+    begin
+        Res := TakeCode20(FinHdr.Name);
+    end;
+
+    [TryFunction]
+    local procedure TryAssign(T: Text[100]; var C20: Code[20])
+    begin
+        C20 := T;
+    end;
+
+    local procedure Take(T: Text[100]): Text
+    var
+        Res: Text;
+    begin
+        if TryTake(T, Res) then
+            exit('ok:' + Res);
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    local procedure TakeField(var FinHdr: Record "Finance Charge Memo Header" temporary): Text
+    var
+        Res: Text;
+    begin
+        if TryTakeField(FinHdr, Res) then
+            exit('ok:' + Res);
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    local procedure Assign(T: Text[100]): Text
+    var
+        C20: Code[20];
+    begin
+        if TryAssign(T, C20) then
+            exit('ok:' + C20);
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
 
     // Item 56 (a long Text field passed to a Code[20] value parameter). Already pinned for a Label: text/lt-label-textbuilder/TxCLabel.al
@@ -220,23 +339,16 @@ codeunit 85120 "LT CR Text Leads"
     var
         Obs: Codeunit "Probe Observer";
         FinHdr: Record "Finance Charge Memo Header" temporary;
-        T100: Text[100];
-        C20: Code[20];
-        R: Text;
     begin
         FinHdr.Name := 'abcdefghij0123456789';
-        Obs.Observe('field20', TakeCode20(FinHdr.Name));
+        Obs.Observe('field20', TakeField(FinHdr));
         FinHdr.Name := 'abcdefghij0123456789x';
-        asserterror R := TakeCode20(FinHdr.Name);
-        Obs.ObserveError('field21');
+        Obs.Observe('field21', TakeField(FinHdr));
         FinHdr.Name := 'abcdefghij0123456789          ';
-        asserterror R := TakeCode20(FinHdr.Name);
-        Obs.ObserveError('field20_trailing_spaces');
-        T100 := 'abcdefghij0123456789xyz';
-        asserterror R := TakeCode20(T100);
-        Obs.ObserveError('var23');
-        asserterror C20 := T100;
-        Obs.ObserveError('assign23');
+        Obs.Observe('field20_trailing_spaces', TakeField(FinHdr));
+        Obs.Observe('text23', Take('abcdefghij0123456789xyz'));
+        Obs.Observe('assign23', Assign('abcdefghij0123456789xyz'));
+        Obs.Observe('assign20_trailing_spaces', Assign('abcdefghij0123456789   '));
         Obs.Finish();
     end;
 
@@ -253,7 +365,8 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('12345_noweight', Format(StrCheckSum('12345')));
         Obs.Observe('12345_w11111', Format(StrCheckSum('12345', '11111')));
         Obs.Observe('12345_w11111_10', Format(StrCheckSum('12345', '11111', 10)));
-        Obs.Observe('123_longweight', Format(StrCheckSum('123', '12345')));
+        asserterror R := StrCheckSum('123', '12345');
+        Obs.ObserveError('123_longweight');
         asserterror R := StrCheckSum('123', '111', 0);
         Obs.ObserveError('mod0');
         Obs.Observe('mod1', Format(StrCheckSum('123', '111', 1)));
@@ -271,7 +384,11 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('forum', StrSubstNo('%1%2%1', 9, 0));
         Obs.Observe('sep', StrSubstNo('%2%1%3%1%4%1', ';', '1', '2', '3'));
         Obs.Observe('three', StrSubstNo('%1-%2-%1-%2-%1', 'a', 'b'));
-        Obs.Finish();
+        Obs.Expect('learn', 'Test 555 777 555');
+        Obs.Expect('forum', '909');
+        Obs.Expect('sep', '1;2;3;');
+        Obs.Expect('three', 'a-b-a-b-a');
+        Obs.Verify();
     end;
 
     // Item 60 (UTF-16 strings). Already pinned: text/lt-text-instance/Index1.Codeunit.al (StrLen of an emoji = 2 units, its code units,
@@ -303,7 +420,17 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('LowerCase_deseret', Codes(LowerCase(Capital)));
         Obs.Observe('ToLower_deseret', Codes(Capital.ToLower()));
         Obs.Observe('compare_upper', Format(UpperCase(Small) = Capital));
-        Obs.Finish();
+        Obs.Expect('copy_1_2', '97,55357');
+        Obs.Expect('copy_3', '56832,98');
+        Obs.Expect('copy_3_1', '56832');
+        Obs.Expect('delstr_2_1', '97,56832,98');
+        Obs.Expect('strpos_low', '3');
+        Obs.Expect('UpperCase_deseret', '55297,56320');
+        Obs.Expect('ToUpper_deseret', '55297,56320');
+        Obs.Expect('LowerCase_deseret', '55297,56360');
+        Obs.Expect('ToLower_deseret', '55297,56360');
+        Obs.Expect('compare_upper', 'Yes');
+        Obs.Verify();
     end;
 
     // Item 61 (Split with a Char returned by a procedure). The lead's case has the procedure in another app (not pinnable in one app); here
@@ -326,7 +453,12 @@ codeunit 85120 "LT CR Text Leads"
         Obs.Observe('double_colon', Format(Parts.Count()) + '|' + Parts.Get(2));
         Parts := 'Alpha::Bravo::Charlie'.Split(Provider.GetColon());
         Obs.Observe('colon_char', Format(Parts.Count()));
-        Obs.Finish();
+        Obs.Expect('char_count', '4');
+        Obs.Expect('char_3', '');
+        Obs.Expect('char_4', 'c');
+        Obs.Expect('double_colon', '3|Bravo');
+        Obs.Expect('colon_char', '5');
+        Obs.Verify();
     end;
 }
 

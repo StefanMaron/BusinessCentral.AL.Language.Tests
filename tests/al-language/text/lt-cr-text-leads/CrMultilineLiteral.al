@@ -37,7 +37,8 @@ here';
 ';
         Obs.Observe('trailing_newline', T);
         T := @'back\nslash';
-        Obs.Observe('backslash', T);
+        Obs.Observe('backslash_len', Format(StrLen(T)));
+        Obs.Observe('backslash_has', Format(T.Contains('\')));
         T := @'x
 y' + 'z';
         Obs.Observe('concat', T);
@@ -58,6 +59,8 @@ r'.Split(@'
 d';
         Obs.Observe('crlf', T);
         Obs.Observe('crlf_len', Format(StrLen(T)));
-        Obs.Finish();
+        Obs.Expect('crlf', 'c\r\nd');
+        Obs.Expect('crlf_len', '4');
+        Obs.Verify();
     end;
 }
