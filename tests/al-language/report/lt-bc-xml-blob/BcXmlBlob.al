@@ -210,12 +210,17 @@ codeunit 80979 "BC Xml Blob"
         Text := Mask(Text, Row.Pic.MediaId(), 'media');
         Text := Mask(Text, SetId, 'mediaset');
         Text := Mask(Text, Row.Pics.Item(1), 'mediaset-item');
+#if BC29PLUS
+        // BC 29: Linux keeps the imported PNG bytes, Windows 29.0 re-encodes them (Windows check 3, bc-linux #135): both count as <png>.
+        Observer.Observe('dataset', AnyPng(ClassifyPng(Text)));
+#else
         Observer.Observe('dataset', ClassifyPng(Text));
+#endif
         Row.DeleteAll();
         Observer.Expect('media has value', 'Yes');
         Observer.Expect('media set count', '1');
 #if BC29PLUS
-        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-as-imported></Column>\n        <Column name="MediaSetCol"><png-as-imported></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png></Column>\n        <Column name="MediaSetCol"><png></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
 #elif BC28PLUS
         Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-re-encoded></Column>\n        <Column name="MediaSetCol"><png-re-encoded></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
 #else
@@ -238,6 +243,12 @@ codeunit 80979 "BC Xml Blob"
 
     // A Media or MediaSet column holds the picture as Base64. On some versions the platform writes the imported bytes, on others a
     // re-encoded PNG whose bytes depend on the image library of the server: only that distinction is asserted, not the re-encoded bytes.
+    local procedure AnyPng(T: Text): Text
+    begin
+        T := T.Replace('<png-as-imported>', '<png>');
+        exit(T.Replace('<png-re-encoded>', '<png>'));
+    end;
+
     local procedure ClassifyPng(T: Text): Text
     var
         Result: Text;
