@@ -64,7 +64,7 @@ codeunit 99131 "LT AL Client Triggers Test"
         TestPage.Close();
     end;
 
-    local procedure Probe(PageId: Integer; Refused: Boolean)
+    local procedure Probe(PageId: Integer)
     var
         Observer: Codeunit "Probe Observer";
         Log: Codeunit "LT AL Client Log";
@@ -77,21 +77,17 @@ codeunit 99131 "LT AL Client Triggers Test"
         if not Ok then
             Observer.ObserveError('open_error');
         Observer.Observe('log', Log.Joined());
-        if Refused then begin
-            Observer.Expect('open_ok', 'No');
-            Observer.Expect('open_error|text', 'A call to IsAvailable failed with this message: Object reference not set to an instance of an object.');
-            Observer.Expect('open_error|code', 'DotNetInvoke:NullReference');
-            Observer.Expect('log', '');
-        end else begin
-            Observer.Expect('open_ok', 'Yes');
-            Observer.Expect('log', 'open without handlers;');
-        end;
+        // No test probes the pages whose OnOpenPage calls IsAvailable: the old expectation (an IsAvailable NullReference error) was a
+        // Linux-container artifact. The Windows runs 39216765049 (27.5) and 39216768276 (29.0) answer IsAvailable = No (pinned in
+        // lt-bg-runonclient/BgRunOnClient.al of a later bump).
+        Observer.Expect('open_ok', 'Yes');
+        Observer.Expect('log', 'open without handlers;');
         Observer.Verify();
     end;
 
     [Test]
     procedure ALClient_NoHandler()
     begin
-        Probe(99136, false);
+        Probe(99136);
     end;
 }
