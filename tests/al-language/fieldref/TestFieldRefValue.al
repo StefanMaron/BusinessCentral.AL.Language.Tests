@@ -219,10 +219,10 @@ codeunit 60073 "Test FieldRef Value"
             end;
             Observer.Observe(Format(RecRef.Field(1).Value) + ' enum case', Arm);
             Arm := 'none';
-            case RecRef.Field(3).Value of
-                1:
+            case Format(RecRef.Field(3).Value) of
+                '1':
                     Arm := 'one';
-                5:
+                '5':
                     Arm := 'five';
                 else
                     Arm := 'else';
