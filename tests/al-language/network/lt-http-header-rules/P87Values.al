@@ -451,7 +451,17 @@ codeunit 74223 "LT P87 Header Values"
             Observer.Observe('iso' + Format(Kind), Line(Kind, 'Date', '2020-07-14T08:17:00Z'));
             Observer.Observe('rfc' + Format(Kind), Line(Kind, 'Date', 'Tue, 14 Jul 2020 08:17:00 GMT'));
         end;
-        Observer.Finish();
+        Observer.Expect('iso1', 'add=E[Invalid HTTP header. Please, make sure t|InvalidHeader:Format];get=No/n=0/1=/2=;raw=Yes;get2=Yes/n=1/1=2020-07-14T08:17:00Z/2=');
+        Observer.Expect('rfc1', 'add=added;get=Yes/n=1/1=Tue, 14 Jul 2020 08:17:00 GMT/2=;raw=Yes;get2=Yes/n=1/1=Tue, 14 Jul 2020 08:17:00 GMT/2=');
+        Observer.Expect('iso2', 'add=E[The requested operation cannot be perfor|InvalidOperation];get=No/n=0/1=/2=;raw=No;get2=No/n=0/1=/2=');
+        Observer.Expect('rfc2', 'add=E[The requested operation cannot be perfor|InvalidOperation];get=No/n=0/1=/2=;raw=No;get2=No/n=0/1=/2=');
+        Observer.Expect('iso3', 'add=E[The requested operation cannot be perfor|InvalidOperation];get=No/n=0/1=/2=;raw=No;get2=No/n=0/1=/2=');
+        Observer.Expect('rfc3', 'add=E[The requested operation cannot be perfor|InvalidOperation];get=No/n=0/1=/2=;raw=No;get2=No/n=0/1=/2=');
+        Observer.Expect('iso4', 'add=E[Invalid HTTP header. Please, make sure t|InvalidHeader:Format];get=No/n=0/1=/2=;raw=Yes;get2=Yes/n=1/1=2020-07-14T08:17:00Z/2=');
+        Observer.Expect('rfc4', 'add=added;get=Yes/n=1/1=Tue, 14 Jul 2020 08:17:00 GMT/2=;raw=Yes;get2=Yes/n=1/1=Tue, 14 Jul 2020 08:17:00 GMT/2=');
+        Observer.Expect('iso5', 'add=E[The requested operation cannot be perfor|InvalidOperation];get=No/n=0/1=/2=;raw=No;get2=No/n=0/1=/2=');
+        Observer.Expect('rfc5', 'add=E[The requested operation cannot be perfor|InvalidOperation];get=No/n=0/1=/2=;raw=No;get2=No/n=0/1=/2=');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -477,6 +487,12 @@ codeunit 74223 "LT P87 Header Values"
             Observer.Observe('full', 'added')
         else
             Observer.ObserveError('full');
-        Observer.Finish();
+        Observer.Expect('lower', 'add=E[Invalid HTTP header. Please, make sure t|InvalidHeader:Format];get=No/n=0/1=/2=;raw=Yes;get2=Yes/n=1/1=1:e6c6699e-aa52-4cdc-b493-7f097fa53a9f/2=');
+        Observer.Expect('upper', 'add=E[Invalid HTTP header. Please, make sure t|InvalidHeader:Format];get=No/n=0/1=/2=;raw=Yes;get2=Yes/n=1/1=1:e6c6699e-aa52-4cdc-b493-7f097fa53a9f/2=');
+        Observer.Expect('schemeColon', 'add=added;get=Yes/n=1/1=Token 1:e6c6699e/2=;raw=Yes;get2=Yes/n=1/1=Token 1:e6c6699e/2=');
+        Observer.Expect('colonOnly', 'add=E[Invalid HTTP header. Please, make sure t|InvalidHeader:Format];get=No/n=0/1=/2=;raw=Yes;get2=Yes/n=1/1=:/2=');
+        Observer.Expect('full|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('full|code', 'InvalidHeader:Format');
+        Observer.Verify();
     end;
 }

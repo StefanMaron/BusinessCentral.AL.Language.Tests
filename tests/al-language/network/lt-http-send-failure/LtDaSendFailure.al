@@ -39,7 +39,9 @@ codeunit 85660 "LT DA Send Failure"
         Ok := Client.Get('https://lt-da.invalid/get', Resp);
         Observer.Observe('get', Describe(Format(Ok), Resp));
         Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('get', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('lastError', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.|HttpRequest:Socket');
+        Observer.Verify();
     end;
 
     [Test]
@@ -58,7 +60,9 @@ codeunit 85660 "LT DA Send Failure"
         Ok := Client.Send(Req, Resp);
         Observer.Observe('send', Describe(Format(Ok), Resp));
         Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('send', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('lastError', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.|HttpRequest:Socket');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,7 +75,10 @@ codeunit 85660 "LT DA Send Failure"
         asserterror Client.Get('https://lt-da.invalid/statement', Resp);
         Observer.ObserveError('get');
         Observer.Observe('after', Describe('-', Resp));
-        Observer.Finish();
+        Observer.Expect('get|text', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('get|code', 'HttpRequest:Socket');
+        Observer.Expect('after', 'ok=- status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -86,7 +93,10 @@ codeunit 85660 "LT DA Send Failure"
         asserterror Client.Send(Req, Resp);
         Observer.ObserveError('send');
         Observer.Observe('after', Describe('-', Resp));
-        Observer.Finish();
+        Observer.Expect('send|text', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('send|code', 'HttpRequest:Socket');
+        Observer.Expect('after', 'ok=- status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,7 +124,12 @@ codeunit 85660 "LT DA Send Failure"
             Ok := Client.Send(Req, Resp);
             Observer.Observe(M, Describe(Format(Ok), Resp) + ' method=' + Req.Method + ' err=' + GetLastErrorText());
         end;
-        Observer.Finish();
+        Observer.Expect('FOO', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0 method=FOO err=There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('TRACE', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0 method=TRACE err=There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('OPTIONS', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0 method=OPTIONS err=There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('HEAD', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0 method=HEAD err=There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('get', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0 method=get err=There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
+        Observer.Verify();
     end;
 }
 
@@ -136,6 +151,8 @@ codeunit 85661 "LT DA Policy AllowAll"
         Ok := Client.Get('https://lt-da.invalid/allow-all', Resp);
         Observer.Observe('get', 'ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' success=' + Format(Resp.IsSuccessStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment));
         Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('get', 'ok=No status=0 success=No blocked=No');
+        Observer.Expect('lastError', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.|HttpRequest:Socket');
+        Observer.Verify();
     end;
 }

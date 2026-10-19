@@ -367,6 +367,14 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Observe('valueNow', '[' + C.Value() + ']');
         Observer.Observe('inExpression', C.Name('n3') + '|' + C.Value('v3'));
         Observer.Observe('afterExpression', C.Name() + '=' + C.Value());
-        Observer.Finish();
+        Observer.Expect('nameFirst', '[n1]');
+        Observer.Expect('nameSecond', '[n2]');
+        Observer.Expect('nameNow', '[n2]');
+        Observer.Expect('valueFirst', '[v1]');
+        Observer.Expect('valueSecond', '[v2]');
+        Observer.Expect('valueNow', '[v2]');
+        Observer.Expect('inExpression', 'n3|v3');
+        Observer.Expect('afterExpression', 'n3=v3');
+        Observer.Verify();
     end;
 }

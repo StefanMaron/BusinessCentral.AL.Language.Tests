@@ -116,7 +116,9 @@ codeunit 98940 "LT DA Http Handler Odd"
     begin
         Observer.Observe('get', GetDescribed('https://example.invalid/unsuccessful'));
         Observer.Observe('statement', GetStatementDescribed('https://example.invalid/unsuccessful'));
-        Observer.Finish();
+        Observer.Expect('get', 'ok=No status=200 reason=[OK] success=Yes blocked=No read=Yes body=[unsuccessful body] keys=0');
+        Observer.Expect('statement', 'no error ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[unsuccessful body] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +129,9 @@ codeunit 98940 "LT DA Http Handler Odd"
     begin
         Observer.Observe('get', GetDescribed('https://example.invalid/blocked'));
         Observer.Observe('statement', GetStatementDescribed('https://example.invalid/blocked'));
-        Observer.Finish();
+        Observer.Expect('get', 'ok=Yes status=200 reason=[OK] success=Yes blocked=Yes read=Yes body=[] keys=0');
+        Observer.Expect('statement', 'no error ok=- status=200 reason=[OK] success=Yes blocked=Yes read=Yes body=[] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -138,7 +142,9 @@ codeunit 98940 "LT DA Http Handler Odd"
     begin
         Observer.Observe('get', GetDescribed('https://example.invalid/blocked2'));
         Observer.Observe('statement', GetStatementDescribed('https://example.invalid/blocked2'));
-        Observer.Finish();
+        Observer.Expect('get', 'ok=No status=200 reason=[OK] success=Yes blocked=Yes read=Yes body=[] keys=0');
+        Observer.Expect('statement', 'no error ok=- status=200 reason=[OK] success=Yes blocked=Yes read=Yes body=[] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -148,7 +154,8 @@ codeunit 98940 "LT DA Http Handler Odd"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('get', GetDescribed('https://example.invalid/error'));
-        Observer.Finish();
+        Observer.Expect('get', 'E[LT DA handler failed|Dialog] ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -174,7 +181,18 @@ codeunit 98940 "LT DA Http Handler Odd"
             StatusToSet := Code;
             Observer.Observe(Format(Code), GetDescribed('https://example.invalid/status'));
         end;
-        Observer.Finish();
+        Observer.Expect('200', 'ok=Yes status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('201', 'ok=Yes status=201 reason=[Created] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('204', 'ok=Yes status=204 reason=[No Content] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('299', 'E[The value ''299'' is not a valid HTTP status code.|InvalidValue] ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('301', 'E[The value ''301'' is outside the allowed range for mocked HTTP status codes. Redirect (3**) status codes are not permitted.|InvalidValue] ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('304', 'E[The value ''304'' is outside the allowed range for mocked HTTP status codes. Redirect (3**) status codes are not permitted.|InvalidValue] ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('400', 'ok=Yes status=400 reason=[Bad Request] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('404', 'ok=Yes status=404 reason=[Not Found] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('500', 'ok=Yes status=500 reason=[Internal Server Error] success=No blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('99', 'E[The value ''99'' is not a valid HTTP status code.|InvalidValue] ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('600', 'E[The value ''600'' is not a valid HTTP status code.|InvalidValue] ok=- status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -195,7 +213,10 @@ codeunit 98940 "LT DA Http Handler Odd"
         Ok := Client.Get('items?x=1', Resp);
         Observer.Observe('relative', Describe(Format(Ok), Resp));
         Observer.Observe('seen', Seen);
-        Observer.Finish();
+        Observer.Expect('absolute', 'ok=Yes status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('relative', 'ok=Yes status=200 reason=[OK] success=Yes blocked=No read=Yes body=[] keys=0');
+        Observer.Expect('seen', 'Get [https://example.invalid/api/items];Get [https://example.invalid/api/items];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +249,13 @@ codeunit 98940 "LT DA Http Handler Odd"
             else
                 Observer.Observe(M, 'E[' + GetLastErrorText() + '|' + GetLastErrorCode() + '] seen=' + Seen);
         end;
-        Observer.Finish();
+        Observer.Expect('FOO', 'ok=Yes seen=Unknown [https://example.invalid/method];');
+        Observer.Expect('TRACE', 'ok=Yes seen=Trace [https://example.invalid/method];');
+        Observer.Expect('OPTIONS', 'ok=Yes seen=Options [https://example.invalid/method];');
+        Observer.Expect('HEAD', 'ok=Yes seen=Head [https://example.invalid/method];');
+        Observer.Expect('get', 'ok=Yes seen=Get [https://example.invalid/method];');
+        Observer.Expect('Post', 'ok=Yes seen=Post [https://example.invalid/method];');
+        Observer.Verify();
     end;
 #endif
 
