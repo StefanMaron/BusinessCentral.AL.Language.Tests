@@ -210,16 +210,17 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         InS: InStream;
     begin
         Setup();
+        // statement form: the value-consuming form is refused while the setup rows are uncommitted (TestXmlPortImportWriteTx.al)
         TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
         OutS.WriteText('<Root><Row><Id>9</Id><MasterCode>A</MasterCode><MasterName>Typed</MasterName></Row></Root>');
         TempBlob.CreateInStream(InS, TextEncoding::UTF8);
         if Auto then begin
             XpAuto.SetSource(InS);
-            Observer.Observe('ok', Format(XpAuto.Import()));
+            XpAuto.Import();
             Observer.Observe('seen', XpAuto.GetSeen());
         end else begin
             XpNo.SetSource(InS);
-            Observer.Observe('ok', Format(XpNo.Import()));
+            XpNo.Import();
             Observer.Observe('seen', XpNo.GetSeen());
         end;
         if R.Get(9) then begin
@@ -237,7 +238,9 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Export(Observer, true, false);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('xml', '<?decl?><Root><Row><Id>1</Id><MasterCode>A</MasterCode><MasterName>Alpha</MasterName></Row><Row><Id>2</Id><MasterCode>Z</MasterCode><MasterName /></Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -246,7 +249,9 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Export(Observer, true, true);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('xml', '<?decl?><Root><Row><Id>1</Id><MasterCode>A</MasterCode><MasterName>Alpha</MasterName></Row><Row><Id>2</Id><MasterCode>Z</MasterCode><MasterName /></Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -255,7 +260,9 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Export(Observer, false, false);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('xml', '<?decl?><Root><Row><Id>1</Id><MasterCode>A</MasterCode><MasterName /></Row><Row><Id>2</Id><MasterCode>Z</MasterCode><MasterName /></Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -264,7 +271,9 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Export(Observer, false, true);
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('xml', '<?decl?><Root><Row><Id>1</Id><MasterCode>A</MasterCode><MasterName>Alpha</MasterName></Row><Row><Id>2</Id><MasterCode>Z</MasterCode><MasterName /></Row></Root>');
+        Observer.Verify();
     end;
 
     [Test]

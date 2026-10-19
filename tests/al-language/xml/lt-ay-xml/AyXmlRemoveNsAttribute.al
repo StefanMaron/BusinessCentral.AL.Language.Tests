@@ -73,7 +73,9 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_prefixed_pa', 'p:a');
-        Observer.Finish();
+        Observer.Expect('name_prefixed_pa|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('name_prefixed_pa|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,7 +84,9 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_prefixed_qa', 'q:a');
-        Observer.Finish();
+        Observer.Expect('name_prefixed_qa|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('name_prefixed_qa|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -91,7 +95,8 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_local_a', 'a');
-        Observer.Finish();
+        Observer.Expect('name_local_a', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" p:b="4" />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -100,7 +105,8 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_local_b', 'b');
-        Observer.Finish();
+        Observer.Expect('name_local_b', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" a="3" p:b="4" />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +115,9 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_prefixed_pb', 'p:b');
-        Observer.Finish();
+        Observer.Expect('name_prefixed_pb|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('name_prefixed_pb|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -118,7 +126,9 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_unknown_prefix', 'z:a');
-        Observer.Finish();
+        Observer.Expect('name_unknown_prefix|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('name_unknown_prefix|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]

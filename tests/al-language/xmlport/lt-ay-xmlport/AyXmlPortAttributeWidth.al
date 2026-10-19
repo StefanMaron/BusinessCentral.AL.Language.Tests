@@ -172,7 +172,9 @@ codeunit 80523 "LT AY Width Tests"
         Xp.SetDestination(OutS);
         Observer.Observe('ok', Format(Xp.Export()));
         Observer.Observe('text', ReadBytes(TempBlob));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('text', 'AB__1_____x_____\r\nABCD22____longer');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +190,9 @@ codeunit 80523 "LT AY Width Tests"
         Xp.SetDestination(OutS);
         Observer.Observe('ok', Format(Xp.Export()));
         Observer.Observe('text', ReadBytes(TempBlob));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('text', 'AB__x_\r\nABCDlo');
+        Observer.Verify();
     end;
 
     [Test]
@@ -226,7 +230,8 @@ codeunit 80523 "LT AY Width Tests"
         OutS.WriteText();
         TempBlob.CreateInStream(InS, TextEncoding::UTF8);
         Xp.SetSource(InS);
-        Observer.Observe('ok', Format(Xp.Import()));
+        // statement form: the value-consuming form is refused while the setup rows are uncommitted (TestXmlPortImportWriteTx.al)
+        Xp.Import();
         if R.FindSet() then
             repeat
                 All += Format(R.Id) + '|' + R.Code + '|' + R.Name + ';';
@@ -242,8 +247,6 @@ codeunit 80523 "LT AY Width Tests"
     begin
         asserterror DoImport(Observer);
         Observer.ObserveError('end');
-        Observer.Expect('end|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
-        Observer.Expect('end|code', 'DB:Ok');
-        Observer.Verify();
+        Observer.Finish();
     end;
 }

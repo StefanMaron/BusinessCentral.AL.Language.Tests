@@ -310,7 +310,8 @@ codeunit 80518 "LT AY Flow Trigger Tests"
         TempBlob.CreateInStream(InS, TextEncoding::UTF8);
         Xp.SetMode(Trig, Action);
         Xp.SetSource(InS);
-        Observer.Observe('ok', Format(Xp.Import()));
+        // statement form: the value-consuming form is refused while the setup rows are uncommitted (TestXmlPortImportWriteTx.al)
+        Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('rows', Rows());
         Error('FINISHED');
@@ -534,7 +535,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'pre', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;');
+        Observer.Expect('xml', '<?decl?>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -544,7 +549,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'pre', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;');
+        Observer.Expect('xml', '<?decl?>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -554,7 +563,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'pre', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;');
+        Observer.Expect('xml', '<?decl?>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -564,7 +577,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'head', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;post;');
+        Observer.Expect('xml', '<?decl?><Root />');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -574,7 +591,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'head', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;passfield3;post;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id><Name>n2</Name></Row><Row><Id>3</Id><Name>n3</Name></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -584,7 +605,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'head', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;');
+        Observer.Expect('xml', '<?decl?><Root />');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -594,7 +619,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'preitem', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;passfield3;post;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id><Name>n2</Name></Row><Row><Id>3</Id><Name>n3</Name></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -604,7 +633,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'preitem', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;passfield3;post;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id><Name>n2</Name></Row><Row><Id>3</Id><Name>n3</Name></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -614,7 +647,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'preitem', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;passfield3;post;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id><Name>n2</Name></Row><Row><Id>3</Id><Name>n3</Name></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -624,7 +661,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'passfield', 1);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;passfield3;post;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id></Row><Row><Id>3</Id><Name>n3</Name></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -634,7 +675,11 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'passfield', 2);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;passfield3;post;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id><Name>n2</Name></Row><Row><Id>3</Id><Name>n3</Name></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 
     [Test]
@@ -644,6 +689,10 @@ codeunit 80518 "LT AY Flow Trigger Tests"
     begin
         asserterror DoExport(Observer, 'passfield', 3);
         Observer.Observe('end', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('log', 'pre1;head1;preitem1;passfield1;passfield2;');
+        Observer.Expect('xml', '<?decl?><Root><Head>h</Head><Row><Id>1</Id><Name>n1</Name></Row><Row><Id>2</Id></Row></Root>');
+        Observer.Expect('end', 'FINISHED');
+        Observer.Verify();
     end;
 }

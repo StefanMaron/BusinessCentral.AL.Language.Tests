@@ -37,7 +37,9 @@ codeunit 80506 "LT AY Cookie Setter Expression"
         Ignored := C.Value('old-value');
         Observer.Observe('name', '[' + Format(C.Name('n')) + '] get=' + C.Name());
         Observer.Observe('value', '[' + Format(C.Value('v')) + '] get=' + C.Value());
-        Observer.Finish();
+        Observer.Expect('name', '[n] get=n');
+        Observer.Expect('value', '[v] get=v');
+        Observer.Verify();
     end;
 
     // Corpus CI 2026-10-19: Name('') raises "The 'Name'='' part of the cookie is invalid." on 27.5, 28.5 and 29.0.
@@ -52,7 +54,10 @@ codeunit 80506 "LT AY Cookie Setter Expression"
         asserterror Ignored := C.Name('');
         Observer.ObserveError('name_empty');
         Observer.Observe('name_after', C.Name());
-        Observer.Finish();
+        Observer.Expect('name_empty|text', 'The ''Name''='''' part of the cookie is invalid.');
+        Observer.Expect('name_empty|code', 'AL:Cookie');
+        Observer.Expect('name_after', 'old-name');
+        Observer.Verify();
     end;
 
     [Test]
@@ -65,6 +70,7 @@ codeunit 80506 "LT AY Cookie Setter Expression"
         Ignored := C.Name('old-name');
         Ignored := C.Value('old-value');
         Observer.Observe('value_empty', '[' + Format(C.Value('')) + '] get=' + C.Value());
-        Observer.Finish();
+        Observer.Expect('value_empty', '[] get=');
+        Observer.Verify();
     end;
 }
