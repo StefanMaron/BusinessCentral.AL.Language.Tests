@@ -345,4 +345,30 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Expect('blankName', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue #671 (odd AL behavior leads, part F) item 24: the setter form as a statement (the AL 30 compiler of the corpus CI
+    // accepts it with no AL0192) and the value it returns when it is used as an expression.
+    [Test]
+    procedure Setter_ReturnValue()
+    var
+        C: Cookie;
+        R: Text;
+    begin
+        R := C.Name('n1');
+        Observer.Observe('nameFirst', '[' + R + ']');
+        R := C.Name('n2');
+        Observer.Observe('nameSecond', '[' + R + ']');
+        Observer.Observe('nameNow', '[' + C.Name() + ']');
+        R := C.Value('v1');
+        Observer.Observe('valueFirst', '[' + R + ']');
+        R := C.Value('v2');
+        Observer.Observe('valueSecond', '[' + R + ']');
+        Observer.Observe('valueNow', '[' + C.Value() + ']');
+        Observer.Observe('inExpression', C.Name('n3') + '|' + C.Value('v3'));
+        Observer.Observe('afterExpression', C.Name() + '=' + C.Value());
+        C.Name('statement');
+        C.Value('form');
+        Observer.Observe('afterStatement', C.Name() + '=' + C.Value());
+        Observer.Finish();
+    end;
 }

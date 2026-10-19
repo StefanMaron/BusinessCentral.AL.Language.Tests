@@ -440,4 +440,43 @@ codeunit 74223 "LT P87 Header Values"
         Observer.Verify();
     end;
 
+    // Corpus issue #671 (odd AL behavior leads, part F) item 28: a Date header in ISO 8601 form and in RFC 1123 form, on every header collection.
+    [Test]
+    procedure DateHeader_Iso8601_AllKinds()
+    var
+        Observer: Codeunit "Probe Observer";
+        Kind: Integer;
+    begin
+        for Kind := 1 to 5 do begin
+            Observer.Observe('iso' + Format(Kind), Line(Kind, 'Date', '2020-07-14T08:17:00Z'));
+            Observer.Observe('rfc' + Format(Kind), Line(Kind, 'Date', 'Tue, 14 Jul 2020 08:17:00 GMT'));
+        end;
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryAddFull(var H: HttpHeaders; N: Text; V: Text)
+    begin
+        H.Add(N, V);
+    end;
+
+    // Corpus issue #671 item 29: an Authorization value with a colon and no scheme, full error text and code.
+    [Test]
+    procedure Authorization_ValueWithColon()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: HttpHeaders;
+    begin
+        Observer.Observe('lower', Line(1, 'authorization', '1:e6c6699e-aa52-4cdc-b493-7f097fa53a9f'));
+        Observer.Observe('upper', Line(1, 'Authorization', '1:e6c6699e-aa52-4cdc-b493-7f097fa53a9f'));
+        Observer.Observe('schemeColon', Line(1, 'Authorization', 'Token 1:e6c6699e'));
+        Observer.Observe('colonOnly', Line(1, 'Authorization', ':'));
+        Helper.GetH(1, H);
+        ClearLastError();
+        if TryAddFull(H, 'authorization', '1:e6c6699e-aa52-4cdc-b493-7f097fa53a9f') then
+            Observer.Observe('full', 'added')
+        else
+            Observer.ObserveError('full');
+        Observer.Finish();
+    end;
 }

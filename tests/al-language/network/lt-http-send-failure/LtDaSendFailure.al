@@ -1,0 +1,141 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpclient/httpclient-send-method
+// Scope: in-scope
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunits 85660 and 85661
+// Probe: corpus issue #671 (odd AL behavior leads, part F) items 16, 18, 21, 22. Measured on the corpus CI service tiers.
+// Facts: a real request to a name that never resolves (lt-da.invalid): the Boolean of Get and Send, the state of the HttpResponseMessage after it,
+//        the error when the Boolean is not used, a custom method on Send, and TestHttpRequestPolicy = AllowAllOutboundRequests.
+// BC versions: 27, 28, 29
+codeunit 85660 "LT DA Send Failure"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Describe(Ok: Boolean; var Resp: HttpResponseMessage): Text
+    var
+        Body: Text;
+        ReadOk: Boolean;
+    begin
+        Body := 'preset';
+        ReadOk := TryRead(Resp, Body);
+        exit('ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' reason=[' + Resp.ReasonPhrase + '] success=' + Format(Resp.IsSuccessStatusCode) +
+          ' blocked=' + Format(Resp.IsBlockedByEnvironment) + ' read=' + Format(ReadOk) + ' body=[' + Body + '] keys=' + Format(Resp.Headers.Keys().Count()));
+    end;
+
+    [TryFunction]
+    local procedure TryRead(var Resp: HttpResponseMessage; var Body: Text)
+    begin
+        Resp.Content.ReadAs(Body);
+    end;
+
+    [Test]
+    procedure Get_UnresolvableHost_ReturnsFalse()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Ok := Client.Get('https://lt-da.invalid/get', Resp);
+        Observer.Observe('get', Describe(Ok, Resp));
+        Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Send_UnresolvableHost_ReturnsFalse()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Req: HttpRequestMessage;
+        Resp: HttpResponseMessage;
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Req.SetRequestUri('https://lt-da.invalid/send');
+        Req.Method := 'POST';
+        Req.Content.WriteFrom('body');
+        Ok := Client.Send(Req, Resp);
+        Observer.Observe('send', Describe(Ok, Resp));
+        Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Get_UnusedReturnValue_RaisesError()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+    begin
+        asserterror Client.Get('https://lt-da.invalid/statement', Resp);
+        Observer.ObserveError('get');
+        Observer.Observe('after', Describe(false, Resp));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Send_UnusedReturnValue_RaisesError()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Req: HttpRequestMessage;
+        Resp: HttpResponseMessage;
+    begin
+        Req.SetRequestUri('https://lt-da.invalid/statement');
+        asserterror Client.Send(Req, Resp);
+        Observer.ObserveError('send');
+        Observer.Observe('after', Describe(false, Resp));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Send_CustomMethods_UnresolvableHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Req: HttpRequestMessage;
+        Resp: HttpResponseMessage;
+        Methods: List of [Text];
+        M: Text;
+        Ok: Boolean;
+    begin
+        Methods.Add('FOO');
+        Methods.Add('TRACE');
+        Methods.Add('OPTIONS');
+        Methods.Add('HEAD');
+        Methods.Add('get');
+        foreach M in Methods do begin
+            Clear(Req);
+            Clear(Resp);
+            ClearLastError();
+            Req.Method := M;
+            Req.SetRequestUri('https://lt-da.invalid/method');
+            Ok := Client.Send(Req, Resp);
+            Observer.Observe(M, Describe(Ok, Resp) + ' method=' + Req.Method + ' err=' + GetLastErrorText());
+        end;
+        Observer.Finish();
+    end;
+}
+
+codeunit 85661 "LT DA Policy AllowAll"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+    TestHttpRequestPolicy = AllowAllOutboundRequests;
+
+    [Test]
+    procedure AllowAll_UnresolvableHost_IsSentForReal()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Ok := Client.Get('https://lt-da.invalid/allow-all', Resp);
+        Observer.Observe('get', 'ok=' + Format(Ok) + ' status=' + Format(Resp.HttpStatusCode) + ' success=' + Format(Resp.IsSuccessStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment));
+        Observer.Observe('lastError', GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+}
