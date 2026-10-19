@@ -42,21 +42,21 @@ codeunit 80709 "LT AZ Event Tests"
         if Company.FindFirst() then
             OtherName := Company.Name;
         Observer.Observe('other_company_found', Format(OtherName <> ''));
-        if OtherName = '' then
-            Observer.Finish();
-        Log.Start();
-        Row.Id := 1;
-        Row.Insert(true);
-        Observer.Observe('first_company', Log.Stop().Replace(CompanyName(), '<current>'));
-        Log.Start();
-        Other.ChangeCompany(OtherName);
-        Other.Id := 2;
-        Other.Insert(true);
-        Observer.Observe('second_company', Log.Stop().Replace(OtherName, '<other>').Replace(CompanyName(), '<current>'));
-        Log.Start();
-        Row.Id := 3;
-        Row.Insert(true);
-        Observer.Observe('first_again', Log.Stop().Replace(CompanyName(), '<current>'));
+        if OtherName <> '' then begin
+            Log.Start();
+            Row.Id := 1;
+            Row.Insert(true);
+            Observer.Observe('first_company', Log.Stop().Replace(CompanyName(), '<current>'));
+            Log.Start();
+            Other.ChangeCompany(OtherName);
+            Other.Id := 2;
+            Other.Insert(true);
+            Observer.Observe('second_company', Log.Stop().Replace(OtherName, '<other>').Replace(CompanyName(), '<current>'));
+            Log.Start();
+            Row.Id := 3;
+            Row.Insert(true);
+            Observer.Observe('first_again', Log.Stop().Replace(CompanyName(), '<current>'));
+        end;
         Observer.Finish();
     end;
 

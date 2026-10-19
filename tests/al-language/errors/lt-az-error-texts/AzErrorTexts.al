@@ -194,41 +194,94 @@ codeunit 80606 "LT AZ Error Texts"
         Observer.ObserveError(Name + '_code');
     end;
 
-    local procedure ProbeVariants(Lang: Integer; Prefix: Text)
+    local procedure ProbeVariants(Lang: Integer; Prefix: Text; Part: Integer)
     var
         Color: Enum "LT AZ Color";
         Opt: Option Alpha,Beta;
     begin
         GlobalLanguage(Lang);
-        One(12, Prefix + 'int');
-        One(1.25, Prefix + 'dec');
-        One(true, Prefix + 'bool');
-        One(DMY2Date(3, 4, 2024), Prefix + 'date');
-        Color := Color::Green;
-        One(Color, Prefix + 'enum');
-        Opt := Opt::Beta;
-        One(Opt, Prefix + 'opt');
+        case Part of
+            1:
+                begin
+                    One(12, Prefix + 'int');
+                    One(1.25, Prefix + 'dec');
+                end;
+            2:
+                begin
+                    One(true, Prefix + 'bool');
+                    One(DMY2Date(3, 4, 2024), Prefix + 'date');
+                end;
+            3:
+                begin
+                    Color := Color::Green;
+                    One(Color, Prefix + 'enum');
+                    Opt := Opt::Beta;
+                    One(Opt, Prefix + 'opt');
+                end;
+        end;
         GlobalLanguage(1033);
     end;
 
     [Test]
-    procedure VariantToText_Language1033()
+    procedure VariantToText_Language1033_IntDec()
     begin
-        ProbeVariants(1033, 'en_');
+        ProbeVariants(1033, 'en_', 1);
         Observer.Finish();
     end;
 
     [Test]
-    procedure VariantToText_Language1036()
+    procedure VariantToText_Language1033_BoolDate()
     begin
-        ProbeVariants(1036, 'fr_');
+        ProbeVariants(1033, 'en_', 2);
         Observer.Finish();
     end;
 
     [Test]
-    procedure VariantToText_Language1031()
+    procedure VariantToText_Language1033_EnumOption()
     begin
-        ProbeVariants(1031, 'de_');
+        ProbeVariants(1033, 'en_', 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure VariantToText_Language1036_IntDec()
+    begin
+        ProbeVariants(1036, 'fr_', 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure VariantToText_Language1036_BoolDate()
+    begin
+        ProbeVariants(1036, 'fr_', 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure VariantToText_Language1036_EnumOption()
+    begin
+        ProbeVariants(1036, 'fr_', 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure VariantToText_Language1031_IntDec()
+    begin
+        ProbeVariants(1031, 'de_', 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure VariantToText_Language1031_BoolDate()
+    begin
+        ProbeVariants(1031, 'de_', 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure VariantToText_Language1031_EnumOption()
+    begin
+        ProbeVariants(1031, 'de_', 3);
         Observer.Finish();
     end;
 }

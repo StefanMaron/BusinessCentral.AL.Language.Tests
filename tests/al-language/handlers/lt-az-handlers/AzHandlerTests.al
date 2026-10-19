@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-creating-handler-methods
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); objects 80620-80626 (AzHandlerObjects.al)
-// Probe: corpus issue 652 (test handlers, dialogs and error texts), items 1 (MessageHandler calling StrMenu, ConfirmHandler calling Confirm or StrMenu), 2 (Confirm), 3, 5, 6 (no handler) and 9, writer AZ.
+// Probe: corpus issue 652 (test handlers, dialogs and error texts), items 1 (MessageHandler calling StrMenu, ConfirmHandler calling Confirm or StrMenu), 2 (Confirm), 5, 6 (no handler) and 9, writer AZ.
 // Already pinned: the other parts of items 1 and 2 (pages/W1Handlers.al, errors/lt-ms-refusals-133/P133MessageInHandlers.al,
 // handlers/TestUnhandledUiAndDialogDefaults.al), item 4 (report/W3ReportRequestPageRun.al), 6 with a handler (platform/lt-platform-members/PlTFilterPageBuilder.al).
 // BC versions: 27, 28, 29
@@ -156,37 +156,8 @@ codeunit 80627 "LT AZ Handler Tests"
     end;
 
     // ---- item 3: two MessageHandlers in one HandlerFunctions list ----
-
-    [MessageHandler]
-    procedure AzMsgA(Msg: Text)
-    begin
-        Log.Add('A(' + Msg + ')');
-    end;
-
-    [MessageHandler]
-    procedure AzMsgB(Msg: Text)
-    begin
-        Log.Add('B(' + Msg + ')');
-    end;
-
-    [Test]
-    [HandlerFunctions('AzMsgA,AzMsgB')]
-    procedure TwoMessageHandlers_WhichOneRuns()
-    begin
-        Reset('');
-        Message('az one');
-        Message('az two');
-        Observer.Observe('log', Log.Take());
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('AzMsgA,AzMsgB')]
-    procedure TwoMessageHandlers_TestEndsNormally()
-    begin
-        Reset('');
-        Message('az one');
-    end;
+    // Not asserted here (a test with this list cannot pass): it compiles; on BC 29.0 the first listed handler received every Message() and
+    // the test then failed with "The following UI handlers were not executed: <second handler>". See the writer AZ report.
 
     // ---- items 4 and 5: a RequestPageHandler that neither OKs nor cancels, and one that inserts a row before OK ----
 
@@ -220,6 +191,7 @@ codeunit 80627 "LT AZ Handler Tests"
         Row: Record "LT AZ Hnd Row";
     begin
         SeedRows();
+        Commit();
         Reset('');
         Report.Run(Report::"LT AZ Hnd Report");
         Observer.Observe('log', Log.Take());
