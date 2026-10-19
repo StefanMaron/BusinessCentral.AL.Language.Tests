@@ -1,8 +1,9 @@
 // Scope: in-scope
 // Fixtures for codeunit 85060 "LT CQ Odd Leads" (corpus issue 672, items 32 to 46).
 // Table 85061 has a BigInteger key; table 85062 reads it through FlowFields whose CalcFormula converts BigInteger to Integer or to an enum.
-// The compiler reports warning AL0662 (BigInteger to Integer) for LookupInt and Cnt2 and warning AL0663 (BigInteger to Enum) for CntEnum; the app still compiles.
-// SumInt (sum of a BigInteger field into an Integer FlowField) gets no warning.
+// The AL 30 compiler reports warning AL0662 (BigInteger to Integer) for LookupInt and Cnt2 and warning AL0663 (BigInteger to Enum) for CntEnum; the app still compiles.
+// SumInt (sum of a BigInteger field into an Integer FlowField) gets no warning. BC 27.5 and 28.5 refuse to publish LookupInt (AL0427),
+// Cnt2 and CntEnum (AL0204), so those fields exist only from BC 29.
 
 enum 85063 "LT CQ E"
 {
@@ -36,16 +37,19 @@ table 85062 "LT CQ Flow"
     {
         field(1; Id; Integer) { }
         field(2; Big; BigInteger) { }
+#if BC29PLUS
         field(3; LookupInt; Integer)
         {
             FieldClass = FlowField;
             CalcFormula = lookup("LT CQ Src".Id where(Other = field(Id)));
         }
+#endif
         field(4; SumInt; Integer)
         {
             FieldClass = FlowField;
             CalcFormula = sum("LT CQ Src".Id where(Other = field(Id)));
         }
+#if BC29PLUS
         field(5; Cnt2; Integer)
         {
             FieldClass = FlowField;
@@ -56,6 +60,7 @@ table 85062 "LT CQ Flow"
             FieldClass = FlowField;
             CalcFormula = count("LT CQ Src" where(En = field(Big)));
         }
+#endif
     }
     keys
     {

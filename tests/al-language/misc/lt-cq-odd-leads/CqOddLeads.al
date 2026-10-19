@@ -250,7 +250,7 @@ codeunit 85060 "LT CQ Odd Leads"
     end;
 
     [Test]
-    procedure Item38_BigIntegerIntoIntegerAndEnumFlowFields()
+    procedure Item38_BigIntegerSumIntoIntegerFlowField()
     var
         Observer: Codeunit "Probe Observer";
         Flow: Record "LT CQ Flow";
@@ -258,9 +258,34 @@ codeunit 85060 "LT CQ Odd Leads"
         // asserterror rolls back the inserted rows, so every step inserts them again first.
         SetupFlowRows(Flow);
         Flow.Id := 2;
-        Flow.CalcFields(LookupInt, SumInt);
-        Observer.Observe('lookup small', Format(Flow.LookupInt));
+        Flow.CalcFields(SumInt);
         Observer.Observe('sum small', Format(Flow.SumInt));
+        SetupFlowRows(Flow);
+        Flow.Id := 3;
+        asserterror begin
+            Flow.CalcFields(SumInt);
+            Error('no error: %1', Flow.SumInt);
+        end;
+        Observer.ObserveError('sum 4000000001');
+        Observer.Expect('sum small', '11');
+        Observer.Expect('sum 4000000001|text', 'Arithmetic operation resulted in an overflow.');
+        Observer.Expect('sum 4000000001|code', 'AL:Overflow');
+        Observer.Verify();
+    end;
+
+#if BC29PLUS
+    // BC 27.5 and 28.5 refuse to publish the FlowFields LookupInt, Cnt2 and CntEnum (AL0427 for LookupInt, AL0204 for the two
+    // count filters); the BC 29 service tier accepts them, and the AL 30 compiler only warns (AL0662, AL0663).
+    [Test]
+    procedure Item38_BigIntegerIntoIntegerAndEnumFlowFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        Flow: Record "LT CQ Flow";
+    begin
+        SetupFlowRows(Flow);
+        Flow.Id := 2;
+        Flow.CalcFields(LookupInt);
+        Observer.Observe('lookup small', Format(Flow.LookupInt));
         Flow.Big := 1;
         Flow.CalcFields(Cnt2);
         Observer.Observe('count int = 1', Format(Flow.Cnt2));
@@ -274,13 +299,6 @@ codeunit 85060 "LT CQ Odd Leads"
             Error('no error: %1', Flow.LookupInt);
         end;
         Observer.ObserveError('lookup 3000000000');
-        SetupFlowRows(Flow);
-        Flow.Id := 3;
-        asserterror begin
-            Flow.CalcFields(SumInt);
-            Error('no error: %1', Flow.SumInt);
-        end;
-        Observer.ObserveError('sum 4000000001');
         SetupFlowRows(Flow);
         Flow.Big := 1;
         asserterror begin
@@ -296,19 +314,17 @@ codeunit 85060 "LT CQ Odd Leads"
         end;
         Observer.ObserveError('count int = 3000000000');
         Observer.Expect('lookup small', '5');
-        Observer.Expect('sum small', '11');
         Observer.Expect('count int = 1', '2');
         Observer.Expect('count int = 0', '3');
         Observer.Expect('lookup 3000000000|text', 'Arithmetic operation resulted in an overflow.');
         Observer.Expect('lookup 3000000000|code', 'AL:Overflow');
-        Observer.Expect('sum 4000000001|text', 'Arithmetic operation resulted in an overflow.');
-        Observer.Expect('sum 4000000001|code', 'AL:Overflow');
         Observer.Expect('count enum = 1|text', 'The following fields must have the same type:\\Field: En <-- Big\Table: LT CQ Src <-- LT CQ Flow\Type: Option <-- BigInteger');
         Observer.Expect('count enum = 1|code', 'DB:TypeMisMatch');
         Observer.Expect('count int = 3000000000|text', 'Overflow under conversion of System.Int64 value 3000000000 to System.Int32.');
         Observer.Expect('count int = 3000000000|code', 'ConversionCast');
         Observer.Verify();
     end;
+#endif
 
     local procedure SetupFlowRows(var Flow: Record "LT CQ Flow")
     var
