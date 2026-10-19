@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-subscribing-to-events
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-events-isolated
 // Scope: in-scope
-// Fixtures used: CkEventObjects.al and CkEventPermObjects.al in this folder (84700-84711), shared Assert (60021), Permissions Mock.
+// Fixtures used: CkEventObjects.al and CkEventPermObjects.al in this folder (84700-84711, 84709 unused), shared Assert (60021),
+//   Permissions Mock with the shared permission set ALTPermissionSet (60022).
 // Facts: corpus issue 669 (odd AL behavior leads, part D), items 3, 4, 5, 8, 9, 10, 11, 12, 14, 15. Each test binds its own
 //   manual subscriber codeunit, raises one event and asserts one result string with what BC returned.
 //   - Enum received as Option keeps the ordinal (C = 5 formats as '5'); an Option received as an Option with other members keeps the ordinal.
@@ -218,7 +219,7 @@ codeunit 84712 "LT CK Event Leads"
         WasStarted := PermissionsMock.IsStarted();
         if not WasStarted then
             PermissionsMock.Start();
-        PermissionsMock.Set('LT CK Ev Perm');
+        PermissionsMock.Set('ALTPermissionSet');
         Result := TryOutcome(6, Pub);
         PermissionsMock.ClearAssignments();
         if not WasStarted then

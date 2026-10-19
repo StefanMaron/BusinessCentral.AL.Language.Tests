@@ -1,15 +1,6 @@
 // Fixtures for "LT CK Event Leads" (84712), corpus issue 669 item 4: SkipOnMissingPermission on a subscriber codeunit the
-// effective permission sets do not grant Execute on. The set grants the publisher, the log and the test codeunit, not the subscribers.
-
-permissionset 84709 "LT CK Ev Perm"
-{
-    Assignable = true;
-    Permissions =
-        tabledata "LT CK Ev Row" = RIMD,
-        codeunit "LT CK Ev Pub" = X,
-        codeunit "LT CK Ev Log" = X,
-        codeunit "LT CK Event Leads" = X;
-}
+// effective permission sets do not grant Execute on. The test narrows the sets to the shared fixture set ALTPermissionSet (60022),
+// which grants table data only (no codeunit). No permission set of its own: a new permission set makes CI run the whole corpus.
 
 codeunit 84710 "LT CK Ev Perm Sub Strict"
 {
