@@ -204,25 +204,25 @@ codeunit 60073 "Test FieldRef Value"
         RecRef.FindSet();
         repeat
             FRef := RecRef.Field(3);
-            Res := Format(FRef.Value) in ['0', '1'];
+            Res := FRef.Value in [0, 1];
             Observer.Observe(Format(RecRef.Field(1).Value) + ' int in [0,1]', Format(Res));
-            Res := Format(RecRef.Field(6).Value()) in ['Ano', 'Ja'];
+            Res := RecRef.Field(6).Value() in ['Ano', 'Ja'];
             Observer.Observe(Format(RecRef.Field(1).Value) + ' text in [Ano,Ja]', Format(Res));
             Arm := 'none';
-            case RecRef.Field(15).Value of
-                Rec."Status Field"::Active:
+            case Format(RecRef.Field(15).Value) of
+                Format(Rec."Status Field"::Active):
                     Arm := 'Active';
-                Rec."Status Field"::Closed:
+                Format(Rec."Status Field"::Closed):
                     Arm := 'Closed';
                 else
                     Arm := 'else';
             end;
             Observer.Observe(Format(RecRef.Field(1).Value) + ' enum case', Arm);
             Arm := 'none';
-            case RecRef.Field(3).Value of
-                1:
+            case Format(RecRef.Field(3).Value) of
+                '1':
                     Arm := 'one';
-                5:
+                '5':
                     Arm := 'five';
                 else
                     Arm := 'else';
