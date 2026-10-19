@@ -142,6 +142,7 @@ page 84949 "LT CO ABP Facts"
     SourceTableView = where(ID = const(84941));
     Editable = false;
     UsageCategory = None;
+    ApplicationArea = All;
 
     layout
     {
@@ -177,6 +178,7 @@ page 84952 "LT CO ABP Ledger"
     SourceTable = "LT CO Perm Ledger";
     Editable = false;
     UsageCategory = None;
+    ApplicationArea = All;
 
     layout
     {
