@@ -289,10 +289,10 @@ codeunit 80421 "LT AX Evaluate Text"
     [TryFunction]
     local procedure TryVariantToLocalText(V: Variant; var Txt: Text)
     var
-        Local: Text;
+        LocalTxt: Text;
     begin
-        Local := V;
-        Txt := Local;
+        LocalTxt := V;
+        Txt := LocalTxt;
     end;
 
     [Test]
