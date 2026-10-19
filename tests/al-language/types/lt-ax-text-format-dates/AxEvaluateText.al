@@ -317,7 +317,12 @@ codeunit 80421 "LT AX Evaluate Text"
             Observer.Observe('text', '[' + Txt + ']')
         else
             Observer.ObserveError('text');
-        Observer.Finish();
+        Observer.Expect('date|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('date|code', 'TypeConversion');
+        Observer.Expect('boolean|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Observer.Expect('boolean|code', 'TypeConversion');
+        Observer.Expect('text', '[abc]');
+        Observer.Verify();
     end;
 
     local procedure GetTrue(): Text
