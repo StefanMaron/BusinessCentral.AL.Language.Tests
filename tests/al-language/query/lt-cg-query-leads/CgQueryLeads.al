@@ -92,6 +92,10 @@ codeunit 84475 "LT CG Query Leads"
         AddHeader('H6', 'C', 1, 1, 0, false, '');
         AddHeader('H7', 'C', 1, 1, 0, false, '');
         AddHeader('H8', 'C', 2, 2, 0, false, '');
+        // D: 1, 2, 2 averages 1.67, so a rounding Average would give 2.
+        AddHeader('H9', 'D', 1, 1, 0, false, '');
+        AddHeader('HA', 'D', 2, 2, 0, false, '');
+        AddHeader('HB', 'D', 2, 2, 0, false, '');
         Q.Open();
         while Q.Read() do begin
             N += 1;
@@ -228,54 +232,63 @@ codeunit 84475 "LT CG Query Leads"
         Observer.Finish();
     end;
 
-    // #667 item 102: DataItemLink with a FlowField on the parent side, and on the child side (both compile with warning AL0910 below runtime 30.0).
+    // #667 item 102: DataItemLink with a FlowField on the parent side (compiles with warning AL0910 below runtime 30.0).
+    // The SQL error is not caught by a [TryFunction]; asserterror catches it.
     [Test]
-    procedure DataItemLink_OnAFlowField_OpenRead()
+    procedure DataItemLink_OnAParentFlowField_OpenReadErrors()
     var
         Observer: Codeunit "Probe Observer";
-        QP: Query "LT CG Q Link FF Parent";
-        QC: Query "LT CG Q Link FF Child";
-        Ok: Boolean;
-        Rows: Text;
+        Q: Query "LT CG Q Link FF Parent";
     begin
         Initialize();
+        SeedLinkFlowField();
+        asserterror ReadAllParent(Q);
+        Observer.ObserveError('parent error');
+        Observer.Finish();
+    end;
+
+    // #667 item 102: DataItemLink with a FlowField on the child side (compiles with warning AL0910 below runtime 30.0).
+    [Test]
+    procedure DataItemLink_OnAChildFlowField_OpenReadErrors()
+    var
+        Observer: Codeunit "Probe Observer";
+        Q: Query "LT CG Q Link FF Child";
+    begin
+        Initialize();
+        SeedLinkFlowField();
+        asserterror ReadAllChild(Q);
+        Observer.ObserveError('child error');
+        Observer.Finish();
+    end;
+
+    local procedure SeedLinkFlowField()
+    begin
         AddHeader('H1', 'A', 15, 0, 0, false, '');
         AddHeader('H2', 'A', 7, 0, 0, false, '');
         AddLine(1, 'H1', 10, '', 0);
         AddLine(2, 'H1', 5, '', 0);
         AddLine(3, 'X', 15, '', 0);
         AddLine(4, 'X', 7, '', 0);
-        ClearLastError();
-        Ok := TryReadParent(QP, Rows);
-        Observer.Observe('parent ok', Format(Ok));
-        if Ok then
-            Observer.Observe('parent rows', Rows)
-        else
-            Observer.ObserveError('parent error');
-        Rows := '';
-        Ok := TryReadChild(QC, Rows);
-        Observer.Observe('child ok', Format(Ok));
-        if Ok then
-            Observer.Observe('child rows', Rows)
-        else
-            Observer.ObserveError('child error');
-        Observer.Finish();
     end;
 
-    [TryFunction]
-    local procedure TryReadParent(var Q: Query "LT CG Q Link FF Parent"; var Rows: Text)
+    local procedure ReadAllParent(var Q: Query "LT CG Q Link FF Parent")
+    var
+        Rows: Text;
     begin
         Q.Open();
         while Q.Read() do
             Rows += Q.No + ':' + Format(Q.EntryNo) + ' ';
+        Error('rows: %1', Rows);
     end;
 
-    [TryFunction]
-    local procedure TryReadChild(var Q: Query "LT CG Q Link FF Child"; var Rows: Text)
+    local procedure ReadAllChild(var Q: Query "LT CG Q Link FF Child")
+    var
+        Rows: Text;
     begin
         Q.Open();
         while Q.Read() do
             Rows += Q.No + ':' + Format(Q.EntryNo) + ' ';
+        Error('rows: %1', Rows);
     end;
 
     // #667 item 103: DataItemTableFilter = PDate = filter(29082018) (a number, not a date) and filter(20180829D).
