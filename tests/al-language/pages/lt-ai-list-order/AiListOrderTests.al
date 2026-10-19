@@ -1065,4 +1065,69 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Expect('current', 'R1021');
         Observer.Verify();
     end;
+
+    // Writer BE (corpus #660, asked by al-runtime-rs assumption list-open-full-window-rows-before): the open read of a list whose
+    // first window of 20 rows is full and that has rows before its first row (40 rows, opened on R1010), with OnFindRecord,
+    // OnNextRecord and OnAfterGetRecord, without OnAfterGetCurrRecord (LT AI List, LT AI List Pos) and with it (LT AI List Curr).
+    [PageHandler]
+    procedure RunCurrHandler(var P: TestPage "LT AI List Curr")
+    var
+        Log: Codeunit "LT AI Log Mgt";
+    begin
+        Observer.Observe('open', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_log', Log.Dump());
+        Observer.Observe('current2', P.NoCtl.Value());
+    end;
+
+    [Test]
+    [HandlerFunctions('RunHandler')]
+    procedure PageRun_RecordOnTenthOfForty_Nav()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        Row: Record "LT AI Row";
+    begin
+        Log.Seed(40);
+        Log.Clear();
+        Row.Get('R1010');
+        Page.Run(Page::"LT AI List", Row);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RunCurrHandler')]
+    procedure PageRun_RecordOnTenthOfForty_NavCurr()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        Row: Record "LT AI Row";
+    begin
+        Log.Seed(40);
+        Log.Clear();
+        Row.Get('R1010');
+        Page.Run(Page::"LT AI List Curr", Row);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure OpenOnRow_TenthOfForty_Pos()
+    var
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT AI List Pos";
+    begin
+        Log.Seed(40);
+        Log.SetStartKey('R1010');
+        Log.Clear();
+        P.OpenView();
+        Observer.Observe('open', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_log', Log.Dump());
+        Observer.Observe('current2', P.NoCtl.Value());
+        Log.SetStartKey('');
+        P.Close();
+        Observer.Finish();
+    end;
 }

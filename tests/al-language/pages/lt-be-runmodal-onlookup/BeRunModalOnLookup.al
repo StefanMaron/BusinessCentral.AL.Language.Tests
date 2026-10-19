@@ -320,6 +320,93 @@ page 81160 "LT BE Lk List OneField"
     }
 }
 
+// Shapes of handlers/TestPageModalNewRowLine_Objects.al that the lists above do not have: a CustomerContent table, and a table whose
+// LookupPageId is a page with Editable = false. Both lists have one field and no trigger, as page 60299 there.
+table 81157 "LT BE Lk Row CC"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
+}
+
+table 81158 "LT BE Lk Row NE"
+{
+    DataClassification = SystemMetadata;
+    LookupPageId = "LT BE Lk NE Lookup";
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
+}
+
+page 81161 "LT BE Lk List CC"
+{
+    PageType = List;
+    SourceTable = "LT BE Lk Row CC";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 81162 "LT BE Lk List NE"
+{
+    PageType = List;
+    SourceTable = "LT BE Lk Row NE";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 81163 "LT BE Lk NE Lookup"
+{
+    PageType = List;
+    SourceTable = "LT BE Lk Row NE";
+    Editable = false;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
 codeunit 81162 "LT BE RunModal OnLookup Tests"
 {
     Subtype = Test;
@@ -798,5 +885,209 @@ codeunit 81162 "LT BE RunModal OnLookup Tests"
         LkList.First();
         Log.Add('backAtFirst=' + LkList."Code".Value());
         LkList.OK().Invoke();
+    end;
+
+    // ---- What decides the new-row line of Page.RunModal(id, Rec): the shapes of handlers/TestPageModalNewRowLine_Tests.al ----
+
+    local procedure SeedShapes()
+    var
+        CCRow: Record "LT BE Lk Row CC";
+        NERow: Record "LT BE Lk Row NE";
+    begin
+        CCRow.DeleteAll();
+        NERow.DeleteAll();
+        CCRow."Code" := 'C1';
+        CCRow.Insert();
+        CCRow."Code" := 'C2';
+        CCRow.Insert();
+        NERow."Code" := 'N1';
+        NERow.Insert();
+        NERow."Code" := 'N2';
+        NERow.Insert();
+        Log.Take();
+    end;
+
+    // The call as a statement: the return value is not used (as Plain_RunModalById_HasTheNewRowLine calls it).
+    [Test]
+    [HandlerFunctions('OneFieldWalkOnlyHandler')]
+    procedure Shape_ReturnNotUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        Page.RunModal(Page::"LT BE Lk List OneField", Row);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('OneFieldWalkOnlyHandler')]
+    procedure Shape_ReturnAssigned_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+        Act: Action;
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        Act := Page.RunModal(Page::"LT BE Lk List OneField", Row);
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('action', Format(Act));
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('OneFieldWalkOnlyHandler')]
+    procedure Shape_ReturnInIf_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row";
+    begin
+        Seed();
+        Row.SetRange(Grp, 'G2');
+        if Page.RunModal(Page::"LT BE Lk List OneField", Row) = Action::LookupOK then
+            Observer.Observe('if', 'LookupOK')
+        else
+            Observer.Observe('if', 'other');
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('CCWalkOnlyHandler')]
+    procedure Shape_CustomerContent_ReturnUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row CC";
+    begin
+        SeedShapes();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List CC", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('CCWalkOnlyHandler')]
+    procedure Shape_CustomerContent_ReturnNotUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row CC";
+    begin
+        SeedShapes();
+        Page.RunModal(Page::"LT BE Lk List CC", Row);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('NEWalkOnlyHandler')]
+    procedure Shape_LookupPageIdNotEditable_ReturnUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row NE";
+    begin
+        SeedShapes();
+        Log.Add('action=' + Format(Page.RunModal(Page::"LT BE Lk List NE", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('NEWalkOnlyHandler')]
+    procedure Shape_LookupPageIdNotEditable_ReturnNotUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BE Lk Row NE";
+    begin
+        SeedShapes();
+        Page.RunModal(Page::"LT BE Lk List NE", Row);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    // The page of Plain_RunModalById_HasTheNewRowLine itself (page 60299 over table 60297), its return value used.
+    [Test]
+    [HandlerFunctions('NrlPlainWalkOnlyHandler')]
+    procedure Shape_NrlPlainPage_ReturnUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "Test Modal NRL Row";
+    begin
+        Row.DeleteAll();
+        Row."No." := 'A';
+        Row.Insert();
+        Row."No." := 'B';
+        Row.Insert();
+        Row.Reset();
+        Log.Take();
+        Log.Add('action=' + Format(Page.RunModal(Page::"Test Modal NRL Plain", Row)));
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('NrlPlainWalkOnlyHandler')]
+    procedure Shape_NrlPlainPage_ReturnNotUsed_WalkOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "Test Modal NRL Row";
+    begin
+        Row.DeleteAll();
+        Row."No." := 'A';
+        Row.Insert();
+        Row."No." := 'B';
+        Row.Insert();
+        Row.Reset();
+        Log.Take();
+        Page.RunModal(Page::"Test Modal NRL Plain", Row);
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
+    end;
+
+    [ModalPageHandler]
+    procedure CCWalkOnlyHandler(var LkList: TestPage "LT BE Lk List CC")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+    end;
+
+    [ModalPageHandler]
+    procedure NEWalkOnlyHandler(var LkList: TestPage "LT BE Lk List NE")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(LkList.Editable()));
+        if LkList.First() then
+            repeat
+                Seen += '[' + LkList."Code".Value() + ']';
+                Steps += 1;
+            until (not LkList.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
+    end;
+
+    [ModalPageHandler]
+    procedure NrlPlainWalkOnlyHandler(var TP: TestPage "Test Modal NRL Plain")
+    var
+        Seen: Text;
+        Steps: Integer;
+    begin
+        Log.Add('editable=' + Format(TP.Editable()));
+        if TP.First() then
+            repeat
+                Seen += '[' + TP.RowNo.Value() + ']';
+                Steps += 1;
+            until (not TP.Next()) or (Steps > 5);
+        Log.Add('rows=' + Seen);
     end;
 }
