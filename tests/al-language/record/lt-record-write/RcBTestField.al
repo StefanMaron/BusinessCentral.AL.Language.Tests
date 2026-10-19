@@ -470,7 +470,15 @@ codeunit 72003 "LT RcB TestField"
         Observer.Observe('after modify stored', Format(Stored.Get(16)) + ' ' + Stored.Txt);
         Rec.DeleteAll();
         Commit();
-        Observer.Finish();
+        Observer.Expect('memory only|text', 'Cod must have a value in RcB TF Caption: Id=16. It cannot be zero or empty.');
+        Observer.Expect('memory only|code', 'TestField');
+        Observer.Expect('memory only var', 'in memory');
+        Observer.Expect('memory only stored', 'No');
+        Observer.Expect('after modify|text', 'Cod must have a value in RcB TF Caption: Id=16. It cannot be zero or empty.');
+        Observer.Expect('after modify|code', 'TestField');
+        Observer.Expect('after modify var', 'modified');
+        Observer.Expect('after modify stored', 'Yes orig');
+        Observer.Verify();
     end;
 }
 

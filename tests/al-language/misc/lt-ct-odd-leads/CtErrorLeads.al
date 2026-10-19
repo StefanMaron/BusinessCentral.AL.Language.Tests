@@ -262,7 +262,10 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('confirm literals', Captured);
         if Confirm('Value %1 and %2', false, 7, 'Tx') then;
         Observer.Observe('confirm no backslash', Captured);
-        Observer.Finish();
+        Observer.Expect('confirm labels', '%1\Second\%2\');
+        Observer.Expect('confirm literals', '%1\Second\%2\');
+        Observer.Expect('confirm no backslash', 'Value %1 and %2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -418,7 +421,11 @@ codeunit 85240 "LT CT Error Leads"
         Observer.Observe('collect only row kept', Format(Row.Get(241)));
         Row.DeleteAll();
         Commit();
-        Observer.Finish();
+        Observer.Expect('plain log', 'run false;text=x;has=Yes;count=2;msg=first collectible;msg=second collectible;');
+        Observer.Expect('plain row kept', 'No');
+        Observer.Expect('collect only log', 'run true;text=;has=Yes;count=2;msg=first collectible;msg=second collectible;');
+        Observer.Expect('collect only row kept', 'Yes');
+        Observer.Verify();
     end;
 
     // ---------------------------------------------------------------- item 25
@@ -588,7 +595,11 @@ codeunit 85240 "LT CT Error Leads"
         Observer.ObserveError('raising call');
         Ok := Item29_TryFunctionOnTest();
         Observer.Observe('quiet call', Format(Ok));
-        Observer.Finish();
+        Observer.Expect('raising call', 'No');
+        Observer.Expect('raising call|text', 'ct item 29 raised');
+        Observer.Expect('raising call|code', 'Dialog');
+        Observer.Expect('quiet call', 'Yes');
+        Observer.Verify();
     end;
 
     var
