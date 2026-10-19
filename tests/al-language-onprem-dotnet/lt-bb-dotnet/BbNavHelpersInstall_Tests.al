@@ -4,6 +4,7 @@
 //   install codeunit LT BB Install NavHelper Probe (99223) in BbNavHelpersInstall.al; self-contained codeunit 99224
 // Probe: corpus issue 653 item 12, install half: reads back what NavTestExecution.IsInTestMode() and
 //   NavTenantSettingsHelper.TryGetStringTenantSetting('TENANTID') returned inside OnInstallAppPerCompany while the app was published.
+//   Observed on the corpus CI matrix: IsInTestMode is false there (true in OnRun and in a test method, BbNavHelpers.al); TENANTID = default.
 // BC versions: 27, 28, 29
 codeunit 99224 "LT BB Install NavHelper Tests"
 {
@@ -24,6 +25,10 @@ codeunit 99224 "LT BB Install NavHelper Tests"
             Observer.Observe('row written', 'Yes');
         end else
             Observer.Observe('row written', 'No');
-        Observer.Finish();
+        // Observed on 27.5, 28.5 and 29.0: the install trigger is not in test mode (a test method is: BbNavHelpers.al).
+        Observer.Expect('in test mode', 'No');
+        Observer.Expect('tenant id setting', 'Yes|[default]');
+        Observer.Expect('row written', 'Yes');
+        Observer.Verify();
     end;
 }
