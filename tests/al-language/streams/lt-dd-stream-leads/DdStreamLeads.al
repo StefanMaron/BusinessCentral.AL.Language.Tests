@@ -282,7 +282,12 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Expect('pic hasvalue', 'Yes');
         Observer.Expect('pic mediaid null', 'No');
         Observer.Expect('pic exportstream', 'Yes');
+        // BC 29 exports the 1x1 png as 70 bytes, BC 27.5 and 28.5 as 99 bytes
+#if BC29PLUS
         Observer.Expect('pic exported length', '70');
+#else
+        Observer.Expect('pic exported length', '99');
+#endif
         Observer.Expect('data hasvalue', 'Yes');
         Observer.Expect('data text', 'other company text');
         Observer.Verify();
@@ -529,7 +534,12 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Expect('crlf at end', 'ok: abcd');
         Observer.Expect('crlf every 4', 'ok: abcd');
         Observer.Expect('empty', 'ok: ');
+        // BC 27.5 reports the .NET call (code DotNetInvoke:Format), BC 28.5 and 29.0 code AL:Format without the prefix
+#if BC28PLUS
         Observer.Expect('outstream overload, length 5', 'error AL:Format: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.');
+#else
+        Observer.Expect('outstream overload, length 5', 'error DotNetInvoke:Format: A call to System.Convert.FromBase64String failed with this message: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.');
+#endif
         Observer.Verify();
     end;
 
