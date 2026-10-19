@@ -4,6 +4,11 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles probes-needed row: Report "CurrReport.Language := n is kept and reads back at once; FormatRegion := t ... Probe wanted: whether Format of a date or number changes after Language := 1031" (probe batch 4)
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BV (2026-10-19, Windows check 3 item AQ): CurrReport.Language := -2 raises 'Unexpected CLR exception thrown.: System.ArgumentOutOfRangeException:
+// culture (''-2'') must be a non-negative and non-zero value. (Parameter ''culture'')' on real BC (Windows 27.5 and 29.0) and on the Linux tiers. Neither asserterror
+// around Report.Run nor a TryFunction around the assignment catches it: a test that does it ends with that error. Codeunit.Run does not catch it either
+// (Linux BC 29.0, corpus CI run 39233212960: the test ended with the same CLR text). So no passing test can show it; report 83754 and codeunit 83755 are kept as
+// the probe source, and Language_MinusTwo_CodeunitRun has no [Test] attribute (a runtime models -2 as an error no AL statement catches).
 
 codeunit 71142 "LT PnC Log 3"
 {
@@ -93,6 +98,38 @@ report 71085 "LT PnC Rpt Lang"
     end;
 }
 
+report 83754 "LT BV Rpt Lang Minus Two"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; Integer)
+        {
+            DataItemTableView = where(Number = const(1));
+        }
+    }
+
+    var
+        Log: Codeunit "LT PnC Log 3";
+
+    trigger OnPreReport()
+    begin
+        Log.Add('pre:' + Format(CurrReport.Language));
+        CurrReport.Language := -2;
+        Log.Add('after:' + Format(CurrReport.Language));
+    end;
+}
+
+codeunit 83755 "LT BV Lang Minus Two Runner"
+{
+    trigger OnRun()
+    begin
+        Report.Run(Report::"LT BV Rpt Lang Minus Two", false);
+    end;
+}
+
 codeunit 71107 "LT PnC Report Language"
 {
     Subtype = Test;
@@ -154,5 +191,24 @@ codeunit 71107 "LT PnC Report Language"
         Observer.Expect('validThenZero|code', 'Argument');
         Observer.Expect('logValidThenZero', '');
         Observer.Verify();
+    end;
+
+    // Not a [Test]: ends with the uncatchable CLR error (see the header).
+    procedure Language_MinusTwo_CodeunitRun()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnC Log 3";
+        Ok: Boolean;
+        ErrText: Text;
+    begin
+        Log.Reset();
+        ClearLastError();
+        Ok := Codeunit.Run(Codeunit::"LT BV Lang Minus Two Runner");
+        Observer.Observe('ok', Format(Ok));
+        ErrText := GetLastErrorText();
+        Observer.Observe('text_start', CopyStr(ErrText, 1, 220));
+        Observer.Observe('code', GetLastErrorCode());
+        Observer.Observe('log', Log.Joined());
+        Observer.Finish();
     end;
 }

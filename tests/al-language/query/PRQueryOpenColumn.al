@@ -10,6 +10,11 @@
 // false (past the last row) it raises the same text again.
 // Fixtures used: self-contained tables 69541, queries 69541 and 69542, codeunit 69543
 // BC versions: 27.5
+// Added by writer BV (2026-10-19, Windows check 3 item AZ): a bare FILTER element name (KindF, on a Code field) read inside the query's own procedure, with no
+// filter set and the query not open, raises the same QueryNoDataSet error naming 'KindF' (Windows BC 27.5 and 29.0 and the Linux tiers; table 83752, query 83753,
+// test FilterElement_InQueryProcedure_NoFilter). Not asserted: after SetRange(KindF, ...) the same read raises an uncatchable 'Unexpected CLR exception thrown.:
+// System.InvalidCastException: Unable to cast object of type ''Microsoft.Dynamics.Nav.Runtime.NavInteger'' to type ''Microsoft.Dynamics.Nav.Runtime.NavCode''.'
+// on real BC (Windows 27.5 and 29.0) too; neither a TryFunction nor asserterror catches it, so no passing test can show it.
 
 table 69541 "PR Query Row"
 {
@@ -85,6 +90,39 @@ query 69542 "PR Query Bare Column"
     procedure PeekThis(): Integer
     begin
         exit(this.Id);
+    end;
+}
+
+table 83752 "LT BV Q Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(5; Kind; Code[10]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+query 83753 "LT BV Q Filter Proc"
+{
+    elements
+    {
+        dataitem(Row; "LT BV Q Row")
+        {
+            filter(KindF; Kind) { }
+            column(Id; Id) { }
+        }
+    }
+
+    procedure ReadKindF(): Text
+    begin
+        exit('[' + Format(KindF) + ']');
     end;
 }
 
@@ -210,6 +248,40 @@ codeunit 69543 "PR Query Probe"
         Observer.Expect('filtered_rows', '1');
         Observer.Expect('getfilter_open', '10');
         Observer.Expect('sum_of_open_column', '30');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryReadKindF(var Q: Query "LT BV Q Filter Proc"; var R: Text)
+    begin
+        R := Q.ReadKindF();
+    end;
+
+    // Windows check 3 (BC 27.5 and 29.0) gave exactly these values.
+    [Test]
+    procedure FilterElement_InQueryProcedure_NoFilter()
+    var
+        Q: Query "LT BV Q Filter Proc";
+        Row: Record "LT BV Q Row";
+        Observer: Codeunit "Probe Observer";
+        R: Text;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Kind := 'K1';
+        Row.Insert();
+        Row.Id := 2;
+        Row.Kind := 'K2';
+        Row.Insert();
+        R := '-';
+        ClearLastError();
+        Observer.Observe('ok', Format(TryReadKindF(Q, R)));
+        Observer.Observe('result', R);
+        Observer.ObserveError('read');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('result', '-');
+        Observer.Expect('read|text', 'You have not yet retrieved a data row for this query. The value for column ''KindF'' can only be accessed after a row is retrieved with a call to the READ function.');
+        Observer.Expect('read|code', 'QueryNoDataSet');
         Observer.Verify();
     end;
 }
