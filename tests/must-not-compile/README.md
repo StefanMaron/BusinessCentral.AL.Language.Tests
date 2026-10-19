@@ -519,6 +519,40 @@ is only a reference.
 | 1780 | AL0132 | BC 29: a default interface method called on a codeunit variable whose codeunit does not declare it. |
 | 1781 | AL0922 | BC 29: a [Scope('OnPrem')] procedure overrides a default interface method. |
 | 1782 | AL0231 | An enumextension of Base Application "Sales Line Type" reuses an ordinal of the base enum (ordinal 6 compiles). |
+| 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
+| 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
+| 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |
+| 1411 | AL0243, AL0245, AL0240 | Handler attributes outside a test codeunit, on a local procedure, and with wrong signatures. |
+| 1412 | AL0161 | A local procedure called through a handle of its own object (codeunit variable, Rec./xRec., CurrPage.). |
+| 1413 | AL0161, AL0118 | An internal procedure of Base Application ("Assembly Line".ShowAssemblyDocument) called from this app. |
+| 1414 | AL0440 | Two extensions of one page (and of one table) in one app declare the same procedure. |
+| 1415 | AL0404 | A table extension field with AutoIncrement = true. |
+| 1416 | AL0124 | The Owner property on a Blob field and on an Integer field. (two diagnostics) |
+| 1417 | AL0450 | A field with ObsoleteState = Removed in an active key (table extension and table). (two diagnostics) |
+| 1418 | AL0166 | Record.FieldCaption with an enum value instead of a field. |
+| 1419 | AL0525 | A table extension of the system table "Record Link". |
+| 1420 | AL0757 | A table extension field named Timestamp: clashes with SystemRowVersion. |
+| 1421 | AL0163 | A table extension modify() trigger declares a local variable without var. |
+| 1422 | AL0365 | A codeunit with Subtype = Upgrade and TableNo. |
+| 1423 | AL0185 | A TableRelation to a misspelled table name. |
+| 1424 | AL0800, AL0844 | ExtendedDatatype = RichContent on a Text and on a Blob table field. (three diagnostics) |
+| 1425 | AL0433 | A field with ObsoleteState = Removed kept in a fieldgroup (Pending compiles). |
+| 1426 | AL0433 | A field of Base Application with ObsoleteState = Removed named by a dependent app. |
+| 1427 | AL0118, AL0132 | CurrFieldNo outside table and table extension code. |
+| 1428 | AL0104, AL0107 | An attribute on a parameter. |
+| 1429 | AL0296 | A Cloud app calls the OnPrem File Management / Excel Buffer methods UploadFile, ServerCreateDirectory, OpenBook, CreateBook. |
+| 1560 | AL0196 | An Integer argument to overloads that differ only by the enum type is ambiguous. |
+| 1712 | AL0296 | A permission set in a Cloud app names tabledata of the Scope = OnPrem table `User Property`. |
+| 1713 | AL0296 | A permission set in a Cloud app names the table object of the Scope = OnPrem table `User Property`. |
+| 1714 | AL0161 | A permission set names a codeunit that is Access = Internal in a dependency (System Application `Agent Impl.`). |
+| 1715 | AL0195 | AccessByPermission on a page field names a page with R (only X is allowed). |
+| 1716 | AL0195 | AccessByPermission on a page field names a codeunit with RIMD (only X is allowed). |
+| 1717 | AL0195 | AccessByPermission on page actions names a report with M, a query with R and an xmlport with R. |
+| 1718 | AL0195 | AccessByPermission on a page action names a table object with D (tabledata takes RIMD). |
+| 1760 | AL0774 | `exit(false)` / `exit(true)` in a `[TryFunction]` without a return value (a bare `exit;` compiles) |
+| 1768 | AL0582 | An interface implementation omits `temporary` on a `var` record parameter. |
+| 1769 | AL0122 | An interface variable assigned from a field of an enum that does not implement the interface. |
+| 1770 | AL0698 | A `case` statement over a Record value. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
