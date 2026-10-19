@@ -168,7 +168,12 @@ codeunit 99473 "LT AZ Lek Tests"
         Exc: DotNet LtAzExc;
     begin
         RunMode(8, Exc, Observer, 'getmissing');
-        Observer.Finish();
+        Observer.Expect('getmissing_ran', 'No');
+        Observer.Expect('getmissing_code', 'DB:RecordNotFound');
+        Observer.Expect('getmissing_text', 'The LT AZ Lek Row does not exist. Identification fields and values: Id=''-4242''');
+        Observer.Expect('getmissing_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavCSideRecordNotFoundException');
+        Observer.Expect('getmissing_message', 'The LT AZ Lek Row does not exist. Identification fields and values: Id=''-4242''');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,7 +208,12 @@ codeunit 99473 "LT AZ Lek Tests"
         Observer.Expect('deep_text', 'LT AZ deep error');
         Observer.Expect('deep_class', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException');
         Observer.Expect('deep_message', 'LT AZ deep error');
+        // BC 29 adds the ValueTaskExtensions frame between the two codeunits; BC 27.5 and 28.5 do not.
+#if BC29PLUS
         Observer.Expect('deep_tostring', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT AZ deep error\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99471.Raise()\n   at Microsoft.Dynamics.Nav.Types.ValueTaskExtensions.ManualResetValueTaskSource`1.GetResult(Int16 token)\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.OnRunAsync(INavRecordHandle εrec)\n   at Microsoft.Dynamics.Nav.Runtime.NavCodeunit.DoRunAsync(DataError errorLevel, NavRecord record)');
+#else
+        Observer.Expect('deep_tostring', 'Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLDialogException: LT AZ deep error\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99471.Raise()\n   at Microsoft.Dynamics.Nav.BusinessApplication.Codeunit99472.OnRunAsync(INavRecordHandle εrec)\n   at Microsoft.Dynamics.Nav.Runtime.NavCodeunit.DoRunAsync(DataError errorLevel, NavRecord record)');
+#endif
         Observer.Verify();
     end;
 

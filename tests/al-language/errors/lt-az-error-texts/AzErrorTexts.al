@@ -106,13 +106,28 @@ codeunit 80606 "LT AZ Error Texts"
     // ---- item 10: Codeunit.Run of a codeunit id that does not exist; the raw text (the Observer would scrub the emit version) ----
 
     [Test]
+    // Codeunit.Run does not trap this error (its return value is never assigned); the error names the test runner as the caller.
     procedure CodeunitRun_MissingId_RawText()
     var
         Ok: Boolean;
+        Expected: Text;
     begin
         ClearLastError();
-        Ok := Codeunit.Run(80748);
-        Error('RAW ok=%1 code=%2 text=%3', Ok, GetLastErrorCode(), GetLastErrorText());
+        Ok := true;
+        asserterror Ok := Codeunit.Run(80748);
+#if BC29PLUS
+        Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 29022.';
+#else
+#if BC28PLUS
+        Expected := 'You tried to invoke the CodeUnit object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version 28015.';
+#else
+        Error('RAW27 ok=%1 code=%2 text=%3', Ok, GetLastErrorCode(), GetLastErrorText());
+#endif
+#endif
+        if not Ok then
+            Error('Codeunit.Run assigned its return value');
+        if GetLastErrorText() <> Expected then
+            Error('expected [%1] but was [%2]', Expected, GetLastErrorText());
     end;
 
     // ---- item 14: GetLastErrorCode after asserterror TestPage action Invoke ----

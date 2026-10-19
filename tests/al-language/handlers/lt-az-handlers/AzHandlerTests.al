@@ -227,7 +227,12 @@ codeunit 80627 "LT AZ Handler Tests"
         Observer.Observe('log', Log.Take());
         Observer.Observe('row99', Format(Row.Get(99)));
         Observer.Observe('count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('run|text', 'A transaction must be started before changes can be made to the database.');
+        Observer.Expect('run|code', 'DB:BWTMissing');
+        Observer.Expect('log', 'reqh;');
+        Observer.Expect('row99', 'No');
+        Observer.Expect('count', '1');
+        Observer.Verify();
     end;
 
     // ---- item 6: FilterPageBuilder.RunModal with a FilterPageHandler and without one ----
