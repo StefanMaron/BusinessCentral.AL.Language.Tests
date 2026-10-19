@@ -1064,6 +1064,16 @@ codeunit 77099 "LT AB Tests"
     begin
         RenderSeed();
         TempBlob.CreateOutStream(OutStr);
+#if not BC29PLUS
+        // BC 27 and 28: the corpus CI containers run the RDLC renderer (ci.yml rdlc_renderer), so SaveAs Pdf renders. The stub
+        // error pinned before was a property of the container, not of BC. BC 29: the container still turns the renderer off at boot.
+        ClearLastError();
+        Observer.Observe('saveas-pdf ok', Format(TrySaveAsPlainPdf(OutStr)));
+        Observer.Observe('saveas-pdf error', GetLastErrorText());
+        Observer.Observe('log', Log.Dump());
+        Observer.Observe('has-output', Format(TempBlob.Length() > 0));
+        Observer.Finish();
+#else
         asserterror Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
         Observer.ObserveError('saveas-pdf');
         Observer.Observe('log', Log.Dump());
@@ -1073,7 +1083,16 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('log', 'plain OnPreReport | plain ext OnPreRendering keys=0');
         Observer.Expect('has-output', 'No');
         Observer.Verify();
+#endif
     end;
+
+#if not BC29PLUS
+    [TryFunction]
+    local procedure TrySaveAsPlainPdf(var OutStr: OutStream)
+    begin
+        Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
+    end;
+#endif
 
     [Test]
     procedure RenderSaveAsPdf()
