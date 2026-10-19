@@ -4,6 +4,10 @@
 // Probe: corpus issue 601 item 14. XmlPort DefaultFieldsValidation = true (set explicitly), = false and not set, on an import: which OnValidate
 //   triggers run for a field element without FieldValidate, with FieldValidate = Yes and with FieldValidate = No, in which order, and what a
 //   value that is not in the related table does under each setting.
+// Facts (CI): DefaultFieldsValidation = true and the property left out behave the same: every field element without FieldValidate is
+//   validated (OnValidate runs, xRec already holds the new value, a TableRelation is checked: DB:PrimRecordNotFound and no row), FieldValidate = No
+//   is not validated, FieldValidate = Yes is. With false only FieldValidate = Yes is validated and an unrelated value is stored. Validation runs
+//   per field in document order, before OnInsert. Elements out of schema order fail the import after the rows before them were inserted.
 // BC versions: 27, 28, 29
 
 table 81670 "LT BJ Xv Rel"
@@ -297,20 +301,32 @@ codeunit 81676 "LT BJ Xv Tests"
     procedure XmlPort_DefaultFieldsValidation_True_InOrder()
     begin
         ProbeInOrder('true', Xmlport::"LT BJ Xv True");
-        Observer.Finish();
+        Observer.Expect('true good ok', 'Yes');
+        Observer.Expect('true good error', '');
+        Observer.Expect('true good log', 'val Plain=p1 xRec=p1;val Forced=f1;val Rel=R1;insert 1;val Plain=p2 xRec=p2;insert 2;');
+        Observer.Expect('true good rows', '1:p1:f1:s1:R1,2:p2::s2:,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure XmlPort_DefaultFieldsValidation_False_InOrder()
     begin
         ProbeInOrder('false', Xmlport::"LT BJ Xv False");
-        Observer.Finish();
+        Observer.Expect('false good ok', 'Yes');
+        Observer.Expect('false good error', '');
+        Observer.Expect('false good log', 'val Forced=f1;insert 1;insert 2;');
+        Observer.Expect('false good rows', '1:p1:f1:s1:R1,2:p2::s2:,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure XmlPort_DefaultFieldsValidation_Unset_InOrder()
     begin
         ProbeInOrder('unset', Xmlport::"LT BJ Xv Unset");
-        Observer.Finish();
+        Observer.Expect('unset good ok', 'Yes');
+        Observer.Expect('unset good error', '');
+        Observer.Expect('unset good log', 'val Plain=p1 xRec=p1;val Forced=f1;val Rel=R1;insert 1;val Plain=p2 xRec=p2;insert 2;');
+        Observer.Expect('unset good rows', '1:p1:f1:s1:R1,2:p2::s2:,');
+        Observer.Verify();
     end;
 }

@@ -112,8 +112,8 @@ codeunit 81653 "LT BJ Fqn Page Run Tests"
         Observer.Verify();
     end;
 
+    // No handler: the page does not open (a listed handler that never runs fails the test).
     [Test]
-    [HandlerFunctions('CardHandler')]
     procedure PageRun_Fqn_Record_UnknownFieldNo()
     var
         Row: Record "LT BJ Fqn Row";
