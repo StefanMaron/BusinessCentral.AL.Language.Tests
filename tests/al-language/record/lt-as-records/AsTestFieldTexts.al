@@ -181,10 +181,11 @@ codeunit 79926 "LT AS TestField Texts"
         P: Record "LT AS Caption PK";
     begin
         P.DeleteAll();
-        // ModifyAll is not allowed inside a TryFunction, so the call is made directly: an error fails the test with its text.
-        P.ModifyAll("Key Code", 'K2');
-        Observer.Observe('zero', 'ok');
-        Observer.Finish();
+        // ModifyAll is not allowed inside a TryFunction (an error of its own), so asserterror catches it.
+        asserterror P.ModifyAll("Key Code", 'K2');
+        Observer.Observe('zero', Helper.LastError());
+        Observer.Expect('zero', 'The MODIFYALL function cannot be used on the Key Caption field in the AS PK Table Cap table because it is part of the primary key.|DB:Ok');
+        Observer.Verify();
     end;
 
     [Test]
