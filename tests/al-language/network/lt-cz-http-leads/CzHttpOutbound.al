@@ -1,7 +1,21 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/httpclient/httpclient-data-type
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 85601
-// Leads: corpus issue #671 (HTTP client, requests and responses). These tests make real outbound requests (no TestHttpRequestPolicy).
+// Leads: corpus issue #671 (HTTP client, requests and responses). These tests make real outbound requests (no TestHttpRequestPolicy) to
+// example.com, badssl.com, httpbin.org and github.com. Every request first raises the platform's outbound-connection prompt (a StrMenu), answered "Allow Once".
+// Probe: measured on a local BC 29.0 service tier, then on the corpus CI legs.
+// Facts:
+//  - Internal addresses (127.x, localhost, ::1, 10.x, 172.16.x, 192.168.x, 169.254.169.254) are refused before any connection: Get answers false,
+//    status 0, IsBlockedByEnvironment false, last error code HttpRequest:Security. 0.0.0.0 gives HttpRequest:Argument.
+//  - A failed certificate check (expired, wrong host, self-signed) makes Get answer false with code HttpRequest:HttpRequest (SecureConnectionError);
+//    with UseServerCertificateValidation(false) the same hosts answer 200.
+//  - GET and DELETE with a body, and GET with content headers but no body, are sent (no error).
+//  - Sending one HttpRequestMessage a second time answers false with InvalidOperation, also after SetRequestUri.
+//  - A response filled in a callee (var parameter) is readable in the caller, twice.
+//  - No baggage or traceparent header reaches an echo endpoint.
+//  - 301, 302, 307 and 308 are followed: the caller sees the final 200. The Authorization default header is dropped on the redirected request.
+//  - A SecretText default header (Authorization) is copied into the request's headers by Send as plain text: GetValues returns the value,
+//    ContainsSecret is false. The client's default header stays secret.
 codeunit 85601 "LT CZ Http Outbound"
 {
     Subtype = Test;
@@ -89,7 +103,17 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('imds', Brief(Client, 'http://169.254.169.254/metadata/instance'));
         Observer.Observe('zero', Brief(Client, 'http://0.0.0.0:1/'));
         Observer.Observe('public', Brief(Client, 'https://example.com/'));
-        Observer.Finish();
+        Observer.Expect('loopback', 'raised=No ok=No status=0 blocked=No err=[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.] code=[HttpRequest:Security]');
+        Observer.Expect('localhost', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('loopback_other', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('ipv6_loopback', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('ten', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('lan', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('lan172', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('imds', 'ok=No status=0 blocked=No code=HttpRequest:Security');
+        Observer.Expect('zero', 'ok=No status=0 blocked=No code=HttpRequest:Argument');
+        Observer.Expect('public', 'ok=Yes status=200 blocked=No code=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +132,14 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('off_expired', GetOutcome(Loose, 'https://expired.badssl.com/'));
         Observer.Observe('off_wrong_host', GetOutcome(Loose, 'https://wrong.host.badssl.com/'));
         Observer.Observe('off_self_signed', GetOutcome(Loose, 'https://self-signed.badssl.com/'));
-        Observer.Finish();
+        Observer.Expect('expired', 'raised=No ok=No status=0 blocked=No err=[There was an error while executing the HTTP request, error request: SecureConnectionError. Make sure you are connecting to a valid endpoint.] code=[HttpRequest:HttpRequest]');
+        Observer.Expect('wrong_host', 'raised=No ok=No status=0 blocked=No err=[There was an error while executing the HTTP request, error request: SecureConnectionError. Make sure you are connecting to a valid endpoint.] code=[HttpRequest:HttpRequest]');
+        Observer.Expect('self_signed', 'raised=No ok=No status=0 blocked=No err=[There was an error while executing the HTTP request, error request: SecureConnectionError. Make sure you are connecting to a valid endpoint.] code=[HttpRequest:HttpRequest]');
+        Observer.Expect('good', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('off_expired', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('off_wrong_host', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('off_self_signed', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,7 +176,10 @@ codeunit 85601 "LT CZ Http Outbound"
         Req3.SetRequestUri('https://example.com/');
         Req3.Content := Content3;
         Observer.Observe('get_headers_no_body', SendOutcome(Client, Req3));
-        Observer.Finish();
+        Observer.Expect('get_body', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('delete_body', 'raised=No ok=Yes status=405 blocked=No err=[] code=[]');
+        Observer.Expect('get_headers_no_body', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +197,11 @@ codeunit 85601 "LT CZ Http Outbound"
         Req.SetRequestUri('https://example.com/other');
         Observer.Observe('third_new_uri', SendOutcome(Client, Req));
         Observer.Observe('uri_after', Req.GetRequestUri());
-        Observer.Finish();
+        Observer.Expect('first', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('second_same_uri', 'raised=No ok=No status=0 blocked=No err=[The requested operation cannot be performed in this context.] code=[InvalidOperation]');
+        Observer.Expect('third_new_uri', 'raised=No ok=No status=0 blocked=No err=[The requested operation cannot be performed in this context.] code=[InvalidOperation]');
+        Observer.Expect('uri_after', 'https://example.com/other');
+        Observer.Verify();
     end;
 
     local procedure GetInto(var Response: HttpResponseMessage): Boolean
@@ -188,7 +226,11 @@ codeunit 85601 "LT CZ Http Outbound"
         Body := '';
         Response.Content.ReadAs(Body);
         Observer.Observe('second_read_has_body', Format(Body.Contains('Example Domain')));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('status', '200');
+        Observer.Expect('has_body', 'Yes');
+        Observer.Expect('second_read_has_body', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -207,11 +249,15 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('ok', Format(Client.Get('https://httpbin.org/headers', Resp)));
         Observer.Observe('status', Format(Resp.HttpStatusCode));
         Resp.Content.ReadAs(Body);
-        Observer.Observe('body', Short(Body));
         Observer.Observe('baggage', Format(Body.ToLower().Contains('"baggage"')));
         Observer.Observe('traceparent', Format(Body.ToLower().Contains('"traceparent"')));
         Observer.Observe('x_test', Format(Body.ToLower().Contains('"x-test": "1"')));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('status', '200');
+        Observer.Expect('baggage', 'No');
+        Observer.Expect('traceparent', 'No');
+        Observer.Expect('x_test', 'No');
+        Observer.Verify();
     end;
 
     local procedure EchoHasAuth(var Client: HttpClient; Url: Text): Text
@@ -241,7 +287,15 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('auth_after_302_same_host', EchoHasAuth(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fheaders&status_code=302'));
         Observer.Observe('auth_after_307_same_host', EchoHasAuth(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fheaders&status_code=307'));
         Observer.Observe('httpbin_301', GetOutcome(Client, 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F&status_code=301'));
-        Observer.Finish();
+        Observer.Expect('http_github', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('httpbin_302', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('httpbin_307', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('httpbin_308', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Expect('auth_direct', 'ok=Yes status=200 auth=Yes');
+        Observer.Expect('auth_after_302_same_host', 'ok=Yes status=200 auth=No');
+        Observer.Expect('auth_after_307_same_host', 'ok=Yes status=200 auth=No');
+        Observer.Expect('httpbin_301', 'raised=No ok=Yes status=200 blocked=No err=[] code=[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,6 +325,14 @@ codeunit 85601 "LT CZ Http Outbound"
         Observer.Observe('req_secret_values', Format(H.GetSecretValues('Authorization', Secrets)) + ' ' + Format(Secrets.Count()));
         Observer.Observe('client_after_secret', Format(Client.DefaultRequestHeaders().ContainsSecret('Authorization')));
         Observer.Observe('client_after_plain', Format(Client.DefaultRequestHeaders().Contains('Authorization')));
-        Observer.Finish();
+        Observer.Expect('client_before_secret', 'Yes');
+        Observer.Expect('send', 'Yes');
+        Observer.Expect('req_contains', 'Yes');
+        Observer.Expect('req_contains_secret', 'No');
+        Observer.Expect('req_values', '1 [Bearer abc]');
+        Observer.Expect('req_secret_values', 'No 0');
+        Observer.Expect('client_after_secret', 'Yes');
+        Observer.Expect('client_after_plain', 'No');
+        Observer.Verify();
     end;
 }

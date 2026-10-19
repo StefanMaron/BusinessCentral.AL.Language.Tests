@@ -3,6 +3,14 @@
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 85600
 // Leads: corpus issue #671 (Http Content codeunit Create(SecretText); DefaultRequestHeaders reference kept across UseServerCertificateValidation).
 // No request leaves the machine (TestHttpRequestPolicy = BlockOutboundRequests).
+// Probe: measured on a local BC 29.0 service tier, then on the corpus CI legs.
+// Facts:
+//  - Codeunit "Http Content".Create(SecretText) and Create(SecretText; ContentType) do not raise (the lead's 'Invalid HTTP header' does not happen):
+//    the content is secret content, not empty, and its Content-Type is text/plain (or the given type; '' gives text/plain).
+//  - UseServerCertificateValidation(false) detaches an HttpHeaders taken earlier from DefaultRequestHeaders: headers added through the old
+//    reference no longer reach the client (CzHttpOutbound.al EchoedRequestHeaders shows they are not sent either). A reference taken after the
+//    call, and UseServerCertificateValidation(true), keep the link.
+// BC versions: 27, 28, 29
 codeunit 85600 "LT CZ Http No Network"
 {
     Subtype = Test;
@@ -68,11 +76,24 @@ codeunit 85600 "LT CZ Http No Network"
         Observer.Observe('secret_type_empty_result', Result);
         Observer.ObserveError('secret_type_empty_err');
         Observer.Observe('text', DescribeContent(HttpContent.Create('test').GetHttpContent()));
-        Observer.Finish();
+        Observer.Expect('secret_ok', 'Yes');
+        Observer.Expect('secret_result', 'body=[<secret empty=No>] type=[text/plain] secret=Yes');
+        Observer.Expect('secret_err|text', '');
+        Observer.Expect('secret_err|code', '');
+        Observer.Expect('secret_type_ok', 'Yes');
+        Observer.Expect('secret_type_result', 'body=[<secret empty=No>] type=[application/json] secret=Yes');
+        Observer.Expect('secret_type_err|text', '');
+        Observer.Expect('secret_type_err|code', '');
+        Observer.Expect('secret_type_empty_ok', 'Yes');
+        Observer.Expect('secret_type_empty_result', 'body=[<secret empty=No>] type=[text/plain] secret=Yes');
+        Observer.Expect('secret_type_empty_err|text', '');
+        Observer.Expect('secret_type_empty_err|code', '');
+        Observer.Expect('text', 'body=[test] type=[text/plain] secret=No');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure DefaultRequestHeaders_ReferenceKept_AcrossUseServerCertificateValidation()
+    procedure DefaultRequestHeaders_ReferenceLost_AfterValidationOff()
     var
         Observer: Codeunit "Probe Observer";
         Client: HttpClient;
@@ -90,7 +111,12 @@ codeunit 85600 "LT CZ Http No Network"
         Observer.Observe('client_sees_after_true', Format(Client.DefaultRequestHeaders().Contains('X-Two')));
         Observer.Observe('client_keeps_first', Format(Client.DefaultRequestHeaders().Contains('X-Test')));
         Observer.Observe('keys', Format(Client.DefaultRequestHeaders().Keys().Count()));
-        Observer.Finish();
+        Observer.Expect('client_sees_after_false', 'No');
+        Observer.Expect('ref_sees', 'Yes');
+        Observer.Expect('client_sees_after_true', 'Yes');
+        Observer.Expect('client_keeps_first', 'No');
+        Observer.Expect('keys', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -111,6 +137,9 @@ codeunit 85600 "LT CZ Http No Network"
         Observer.Observe('client_sees_after_false_twice', Format(Client.DefaultRequestHeaders().Contains('X-Again')));
         Client.DefaultRequestHeaders().Add('X-Direct', '1');
         Observer.Observe('direct_add_after_false', Format(Client.DefaultRequestHeaders().Contains('X-Direct')));
-        Observer.Finish();
+        Observer.Expect('client_sees_after_true', 'Yes');
+        Observer.Expect('client_sees_after_false_twice', 'No');
+        Observer.Expect('direct_add_after_false', 'Yes');
+        Observer.Verify();
     end;
 }
