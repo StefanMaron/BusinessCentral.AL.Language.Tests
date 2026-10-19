@@ -212,23 +212,14 @@ codeunit 85018 "LT CP Permission Leads"
 
     [Test]
     procedure CalcField_CodeunitRun_NoRead()
-    var
-        Observer: Codeunit "Probe Observer";
-        Mock: Codeunit "Permissions Mock";
-        Host: Record "LT CP Flow Host";
-        WasStarted: Boolean;
     begin
-        Seed(true);
-        WasStarted := StartMock(Mock);
-        Mock.Set(EmptyTok);
-        if Codeunit.Run(Codeunit::"LT CP CalcFields Run", Host) then
-            Observer.Observe('codeunit_run', 'true')
-        else begin
-            Observer.Observe('codeunit_run', 'false');
-            Observer.ObserveError('codeunit_run_error');
-        end;
-        RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        RunOp('Empty', true, 7);
+    end;
+
+    [Test]
+    procedure CalcField_CodeunitRun_NoRead_EmptyTable()
+    begin
+        RunOp('Empty', false, 7);
     end;
 
     // ---- item 78: Table Information through a RecordRef from a Cloud app ----
@@ -331,6 +322,11 @@ codeunit 85018 "LT CP Permission Leads"
                 end;
             6:
                 Result := Format(Ledger.Count());
+            7:
+                if Codeunit.Run(Codeunit::"LT CP CalcFields Run", Host) then
+                    Result := 'true'
+                else
+                    Result := 'false: ' + GetLastErrorText();
             10:
                 begin
                     Writer.InsertRow(10);
@@ -339,8 +335,7 @@ codeunit 85018 "LT CP Permission Leads"
             11:
                 begin
                     Writer.ModifyRow(1, 9);
-                    Ledger.Get(1);
-                    Result := Format(Ledger.Amount);
+                    Result := 'modified';
                 end;
             12:
                 Result := Format(Writer.CountRows());
@@ -353,7 +348,7 @@ codeunit 85018 "LT CP Permission Leads"
                 end;
             15:
                 begin
-                    Ledger.Get(1);
+                    Ledger."Entry No." := 1;
                     Ledger.Amount := 15;
                     Ledger.Modify();
                 end;
