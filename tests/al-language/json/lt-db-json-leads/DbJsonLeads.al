@@ -174,7 +174,25 @@ codeunit 85722 "LT DB Json Leads"
         ReadDecimal(Observer, 'min', '{"d":-999999999999999.99}');
         ReadDecimal(Observer, 'max', '{"d":999999999999999.99}');
         ReadDecimal(Observer, 'min_more_digit', '{"d":-9999999999999999.99}');
-        Observer.Finish();
+        Observer.Expect('min_read|text', 'ok: -1000000000000000.0');
+        Observer.Expect('min_read|code', 'Dialog');
+        Observer.Expect('min_get|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: -1,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('min_get|code', 'OutsidePermittedRange');
+        Observer.Expect('min_as|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: -1,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('min_as|code', 'OutsidePermittedRange');
+        Observer.Expect('max_read|text', 'ok: 1000000000000000.0');
+        Observer.Expect('max_read|code', 'Dialog');
+        Observer.Expect('max_get|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 1,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('max_get|code', 'OutsidePermittedRange');
+        Observer.Expect('max_as|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 1,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('max_as|code', 'OutsidePermittedRange');
+        Observer.Expect('min_more_digit_read|text', 'ok: -10000000000000000.0');
+        Observer.Expect('min_more_digit_read|code', 'Dialog');
+        Observer.Expect('min_more_digit_get|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: -10,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('min_more_digit_get|code', 'OutsidePermittedRange');
+        Observer.Expect('min_more_digit_as|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: -10,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('min_more_digit_as|code', 'OutsidePermittedRange');
+        Observer.Verify();
     end;
 
     [Test]
@@ -186,7 +204,25 @@ codeunit 85722 "LT DB Json Leads"
         ReadDecimal(Observer, 'max_more_digit', '{"d":9999999999999999.99}');
         ReadDecimal(Observer, 'net_max', '{"d":79228162514264337593543950335}');
         ReadDecimal(Observer, 'exp40', '{"d":1e40}');
-        Observer.Finish();
+        Observer.Expect('max_more_digit_read|text', 'ok: 10000000000000000.0');
+        Observer.Expect('max_more_digit_read|code', 'Dialog');
+        Observer.Expect('max_more_digit_get|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 10,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('max_more_digit_get|code', 'OutsidePermittedRange');
+        Observer.Expect('max_more_digit_as|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 10,000,000,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('max_more_digit_as|code', 'OutsidePermittedRange');
+        Observer.Expect('net_max_read|text', 'ok: 79228162514264337593543950335');
+        Observer.Expect('net_max_read|code', 'Dialog');
+        Observer.Expect('net_max_get|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 79,228,162,514,264,337,500,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('net_max_get|code', 'OutsidePermittedRange');
+        Observer.Expect('net_max_as|text', 'The value of Decimal parameter  is outside of the permitted range. The current value is: 79,228,162,514,264,337,500,000,000,000. The permitted range is: from -999,999,999,999,999.99 to 999,999,999,999,999.99.');
+        Observer.Expect('net_max_as|code', 'OutsidePermittedRange');
+        Observer.Expect('exp40_read|text', 'ok: 1E+40');
+        Observer.Expect('exp40_read|code', 'Dialog');
+        Observer.Expect('exp40_get|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.Decimal18.');
+        Observer.Expect('exp40_get|code', 'Conversion');
+        Observer.Expect('exp40_as|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.Decimal18.');
+        Observer.Expect('exp40_as|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
