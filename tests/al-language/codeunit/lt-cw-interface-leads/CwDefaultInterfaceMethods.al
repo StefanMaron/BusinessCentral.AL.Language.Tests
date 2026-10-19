@@ -13,6 +13,8 @@
 //   - the default reached through an enum's Implementation.
 //   Compile errors: Scope attribute on an interface member (AL0187 + AL0919, case 1779), calling an inherited default on a codeunit
 //   variable (AL0132, case 1780), OnPrem-scope override of a default member (AL0922, case 1781).
+// Results: the default body runs when the codeunit does not declare the member, and a default body calls the implementor's Req;
+//   internal procedures (AL0920 warning) still run as the implementation, for a default member and for a required one.
 // BC versions: 29
 #if BC29PLUS
 
@@ -145,7 +147,12 @@ codeunit 85436 "LT CW Default Methods"
         R := Intl;
         Observer.Observe('internal req only', R.Req());
         Observer.Observe('local own call', Loc.CallOwnOpt());
-        Observer.Finish();
+        Observer.Expect('internal req', 'internal req');
+        Observer.Expect('internal opt', 'internal opt');
+        Observer.Expect('internal chain', 'default chain of internal req');
+        Observer.Expect('internal req only', 'internal req');
+        Observer.Expect('local own call', 'local opt');
+        Observer.Verify();
     end;
 
     [Test]

@@ -11,6 +11,10 @@
 //   - two overloads SelectInterface(var A: Interface One) and SelectInterface(var B: Interface Two), both interfaces implemented by
 //     one enum (old report: a C# name clash at publish);
 //   - Enum against Option and Integer: =, <, >, in.
+// Results: an integer literal and an Integer select the Option overload (no ambiguity); the value's Implementation wins over
+//   DefaultImplementation, a value without one gets the default; an undeclared ordinal does NOT get the default: the cast fails with
+//   'Enum does not contain value 7.' / ArgumentOutOfRange; Option parameters and returns pass through the interface; both
+//   SelectInterface overloads publish and run; Enum compares with Option and Integer by ordinal (=, <, >, in).
 // BC versions: 27, 28, 29
 
 enum 85420 "LT CW Kind"
@@ -180,7 +184,12 @@ codeunit 85429 "LT CW Interface Leads"
         Observer.Observe('undeclared ordinal', Format(E.AsInteger()));
         asserterror I := E;
         Observer.ObserveError('undeclared ordinal to interface');
-        Observer.Finish();
+        Observer.Expect('value with own', 'B');
+        Observer.Expect('value without own', 'A');
+        Observer.Expect('undeclared ordinal', '7');
+        Observer.Expect('undeclared ordinal to interface|text', 'Enum does not contain value 7.');
+        Observer.Expect('undeclared ordinal to interface|code', 'ArgumentOutOfRange');
+        Observer.Verify();
     end;
 
     [Test]

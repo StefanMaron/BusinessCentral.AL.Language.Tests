@@ -8,6 +8,8 @@
 //     order, Format, AsInteger, <, > and = between members, the order of a table key on the enum field and a range filter on it;
 //   - an enumextension (of this app) of Base Application's extensible enum "Sales Line Type" with ordinal 6 (unused there: 0-5 and 10):
 //     Names() and Ordinals() of the base enum include it. Reusing an ordinal the base enum has (1) is AL0231 (must-not-compile case 1782).
+// Results: Names() and Ordinals() follow declaration order (base, then extension), not ordinal order; comparisons, key order and
+//   range filters follow the ordinal; the Base Application enum lists the extension value 6 last (after 10).
 // BC versions: 27, 28, 29
 
 enum 85437 "LT CW Field Kind"

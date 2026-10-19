@@ -6,6 +6,7 @@
 //   - array[50] of Variant: elements set to 10 and 20 stay independent; elements holding a Record, a Text and a Date; Clear of one element;
 //   - array[3] of FieldRef set from three fields of one RecordRef: each element keeps its own field;
 //   - case Field.Type of Field.Type::Text, Field.Type::Code: over the Field virtual table (TableNo 85442): which branch each field type takes.
+// Results: array elements of Variant and FieldRef are independent; the CASE comma list matches Text and Code fields.
 // BC versions: 27, 28, 29
 
 table 85442 "LT CW Var Row"

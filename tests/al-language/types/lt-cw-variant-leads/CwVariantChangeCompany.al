@@ -7,6 +7,9 @@
 //   - assigned to a Variant and read back with RecordRef.GetTable(Variant) and Record := Variant: CurrentCompany, filters, Count;
 //   - Variant := RecordRef (a RecordRef that took the record's company) and back;
 //   - the Variant passed by var into an interface method that does RecordRef.GetTable on it.
+// Results: Variant := Record drops the ChangeCompany company (RecordRef.GetTable(Variant) and Record := Variant are in the session
+//   company; GetTable keeps the filters, Record := Variant does not); Variant := RecordRef keeps it; a Variant passed by var into an
+//   interface method also loses it (AL issue 7933 still open in BC 29).
 // BC versions: 27, 28, 29
 
 table 85444 "LT CW Chg Row"
