@@ -204,6 +204,17 @@ codeunit 71169 "LT P69 Namespaced Dataitem"
         Clear(Back);
         Ok := Evaluate(Back, 'LT P69 Ns Row: 2');
         Observer.Observe('evaluate plain', Format(Ok) + '|' + Format(Back = RecId));
-        Observer.Finish();
+        Observer.Expect('none', 'LT P69 Ns Row: 2');
+        Observer.Expect('0', 'LT P69 Ns Row: 2');
+        Observer.Expect('evaluate 0', 'Yes|Yes');
+        Observer.Expect('1', 'LT P69 Ns Row: 2');
+        Observer.Expect('evaluate 1', 'Yes|Yes');
+        Observer.Expect('2', 'LT P69 Ns Row: 2');
+        Observer.Expect('evaluate 2', 'Yes|Yes');
+        Observer.Expect('9', '[LT.P69.Data.LT P69 Ns Row]: 2');
+        Observer.Expect('evaluate 9', 'Yes|Yes');
+        Observer.Expect('evaluate qualified', 'No|No');
+        Observer.Expect('evaluate plain', 'Yes|Yes');
+        Observer.Verify();
     end;
 }

@@ -239,6 +239,15 @@ codeunit 73549 "LT P130 Date Filters"
         StoreDates(Observer, 'date closing 1752-12-31', 1752, 12, 31, true, 0, 0, 0, 0T);
         StoreDates(Observer, 'datetime 1753-01-01 00:00', 0, 0, 0, false, 1753, 1, 1, 000000T);
         StoreDates(Observer, 'datetime 1752-12-31 12:00', 0, 0, 0, false, 1752, 12, 31, 120000T);
+        Observer.Finish();
+    end;
+
+    // Corpus issue 672 item 8, upper end of the SQL datetime range (same form as BT_DateAndDateTime_SqlRangeOnInsert).
+    [Test]
+    procedure BT_DateAndDateTime_SqlRangeOnInsert_Max()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         StoreDates(Observer, 'datetime 9999-12-31 23:59:59.997', 0, 0, 0, false, 9999, 12, 31, 235959.997T);
         StoreDates(Observer, 'datetime 9999-12-31 23:59:59.999', 0, 0, 0, false, 9999, 12, 31, 235959.999T);
         Observer.Finish();

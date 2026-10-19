@@ -343,7 +343,16 @@ codeunit 73302 "LT P129 Format FieldRef"
         Observer.Observe('date 1031', FieldVsValue(RecRef, 6));
         Observer.Observe('dec22 1031', FieldVsValue(RecRef, 2));
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('rec dec22', '1,234.50|1234.50');
+        Observer.Expect('rec dec05', '1,234.5');
+        Observer.Expect('rec dec33', '2.000');
+        Observer.Expect('dec22', '1,234.5|1,234.5|1234.5|1234.5|1234.5|1234.5');
+        Observer.Expect('dec05', '1,234.5|1,234.5|1234.5|1234.5|1234.5|1234.5');
+        Observer.Expect('dec33', '2|2|2|2|2|2');
+        Observer.Expect('date', '03/05/24|03/05/24|03/05/24|03/05/24|2024-03-05|2024-03-05');
+        Observer.Expect('date 1031', '03/05/24|03/05/24|03/05/24|03/05/24|2024-03-05|2024-03-05');
+        Observer.Expect('dec22 1031', '1,234.5|1,234.5|1234.5|1234.5|1234.5|1234.5');
+        Observer.Verify();
     end;
 
     // Corpus issue 672 item 24, second part: the same comparison for a Blob with content, an Option with captions and an Enum.
@@ -364,6 +373,9 @@ codeunit 73302 "LT P129 Format FieldRef"
         Filled(RecRef);
         Observer.Observe('option', FieldVsValue(RecRef, 9));
         Observer.Observe('enum', FieldVsValue(RecRef, 12));
-        Observer.Finish();
+        Observer.Expect('blob', '*|*|*|*|*|*');
+        Observer.Expect('option', 'Dos|Dos|Dos|Dos|2|2');
+        Observer.Expect('enum', 'Big Kind|Big Kind|Big Kind|Big Kind|1|1');
+        Observer.Verify();
     end;
 }

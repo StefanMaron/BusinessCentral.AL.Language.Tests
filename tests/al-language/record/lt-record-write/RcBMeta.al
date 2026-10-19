@@ -567,6 +567,16 @@ codeunit 72009 "LT RcB Meta Test"
         Observer.Observe('1031 1', Format(RecId, 0, 1));
         Observer.Observe('1031 9', Format(RecId, 0, 9));
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('none', 'LT RcB Meta: 7');
+        Observer.Expect('0', 'LT RcB Meta: 7');
+        Observer.Expect('1', 'RcB Meta Caption: 7');
+        Observer.Expect('2', 'LT RcB Meta: 7');
+        Observer.Expect('9', 'LT RcB Meta: 7');
+        Observer.Expect('tablecaption', 'RcB Meta Caption');
+        Observer.Expect('evaluate 1', 'No|No');
+        Observer.Expect('1031 none', 'LT RcB Meta: 7');
+        Observer.Expect('1031 1', 'RcB Meta Caption: 7');
+        Observer.Expect('1031 9', 'LT RcB Meta: 7');
+        Observer.Verify();
     end;
 }

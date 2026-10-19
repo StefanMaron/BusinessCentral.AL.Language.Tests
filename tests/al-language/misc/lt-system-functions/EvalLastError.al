@@ -388,7 +388,12 @@ codeunit 72510 "LT SyT Evaluate"
         ClearLastError();
         asserterror Evaluate(B, '010196');
         Observer.ObserveError('boolean error');
-        Observer.Finish();
+        Observer.Expect('integer', 'Yes|10196');
+        Observer.Expect('date', 'Yes|1996-01-01');
+        Observer.Expect('boolean', 'No|Yes');
+        Observer.Expect('boolean error|text', 'The value "010196" can''t be evaluated into type Boolean.');
+        Observer.Expect('boolean error|code', 'Evaluate');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -445,7 +450,13 @@ codeunit 72510 "LT SyT Evaluate"
         Observer.Observe('1033 iso fmt 9', EvalDateText('2018-05-29', 9));
         Observer.Observe('1033 05/29/2018', EvalDateText('05/29/2018', -1));
         Observer.Observe('1033 json', JsonDateText('29.05.2018'));
-        Observer.Finish();
+        Observer.Expect('1033 default', 'err|The format of the Date ''29.05.2018'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|2020-02-02');
+        Observer.Expect('1033 fmt 0', 'err|The format of the Date ''29.05.2018'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|2020-02-02');
+        Observer.Expect('1033 fmt 9', 'err|The format of the Date ''29.05.2018'' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|2020-02-02');
+        Observer.Expect('1033 iso fmt 9', 'ok|2018-05-29');
+        Observer.Expect('1033 05/29/2018', 'ok|2018-05-29');
+        Observer.Expect('1033 json', 'err|Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavDate.|Conversion');
+        Observer.Verify();
     end;
 
     // Corpus issue 672 item 18, second half: the same texts with GlobalLanguage 1031 (the session region stays as it is).
@@ -462,7 +473,11 @@ codeunit 72510 "LT SyT Evaluate"
         Observer.Observe('1031 05/29/2018', EvalDateText('05/29/2018', -1));
         Observer.Observe('1031 json', JsonDateText('29.05.2018'));
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('1031 default', 'err|Das Format Date „29.05.2018“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.|Evaluate|2020-02-02');
+        Observer.Expect('1031 fmt 9', 'err|Das Format Date „29.05.2018“ stimmt nicht mit den Datumseinstellungen Ihres Geräts überein.\\Stellen Sie sicher, dass Tag, Monat und Jahr die richtige Reihenfolge aufweisen und das richtige Trennzeichen verwendet wird (z. b. - oder /). Alternativ können Sie das Format „jjjj-mm-tt“ verwenden.|Evaluate|2020-02-02');
+        Observer.Expect('1031 05/29/2018', 'ok|2018-05-29');
+        Observer.Expect('1031 json', 'err|Die Konvertierung von Microsoft.Dynamics.Nav.Runtime.NavJsonValue in Microsoft.Dynamics.Nav.Runtime.NavDate ist nicht möglich.|Conversion');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -506,7 +521,21 @@ codeunit 72510 "LT SyT Evaluate"
         end;
         foreach Input in Inputs do
             Observer.Observe('filter [' + Input + ']', BoolFilterText(Input));
-        Observer.Finish();
+        Observer.Expect('eval [ Yes]', 'Yes|Yes');
+        Observer.Expect('eval [Yes ]', 'Yes|Yes');
+        Observer.Expect('eval [ No]', 'Yes|No');
+        Observer.Expect('eval [ Da]', 'No|No');
+        Observer.Expect('eval [ true]', 'Yes|Yes');
+        Observer.Expect('eval [ 1]', 'Yes|Yes');
+        Observer.Expect('eval [  yes  ]', 'Yes|Yes');
+        Observer.Expect('filter [ Yes]', 'ok|Yes');
+        Observer.Expect('filter [Yes ]', 'ok|Yes');
+        Observer.Expect('filter [ No]', 'ok|No');
+        Observer.Expect('filter [ Da]', 'err|The filter " Da" is not valid for the Boolean Field field on the ALT Universal table. The value "Da" can''t be evaluated into type Boolean.|Filter:CSide');
+        Observer.Expect('filter [ true]', 'ok|Yes');
+        Observer.Expect('filter [ 1]', 'ok|Yes');
+        Observer.Expect('filter [  yes  ]', 'ok|Yes');
+        Observer.Verify();
     end;
 }
 

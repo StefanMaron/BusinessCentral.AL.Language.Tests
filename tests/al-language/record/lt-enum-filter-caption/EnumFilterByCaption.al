@@ -216,6 +216,14 @@ codeunit 70652 "LT EFCap Filter"
         foreach Ordinal in "LT EFCap Kind".Ordinals() do
             EvalFromFilter(Observer, '1031', "LT EFCap Kind".FromInteger(Ordinal));
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('1033 0', 'Plain|Yes|0');
+        Observer.Expect('1033 1', 'Primary Item|Yes|1');
+        Observer.Expect('1033 2', 'Third|Yes|2');
+        Observer.Expect('1033 3', 'Fourth Item|Yes|3');
+        Observer.Expect('1031 0', 'Plain|Ja|0');
+        Observer.Expect('1031 1', 'Primary Item|Ja|1');
+        Observer.Expect('1031 2', 'Third|Ja|2');
+        Observer.Expect('1031 3', 'Fourth Item|Ja|3');
+        Observer.Verify();
     end;
 }

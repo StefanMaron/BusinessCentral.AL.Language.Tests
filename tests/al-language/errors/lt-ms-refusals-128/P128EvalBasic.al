@@ -314,6 +314,22 @@ codeunit 73168 "LT P128 Eval Basic"
             else
                 Observer.Observe('fieldref [' + Input + ']', 'err|' + GetLastErrorText() + '|' + GetLastErrorCode());
         end;
-        Observer.Finish();
+        Observer.Expect('eval [1]', 'Yes|1|2');
+        Observer.Expect('eval [0.01]', 'Yes|0.01|1');
+        Observer.Expect('eval [10]', 'Yes|10|3');
+        Observer.Expect('eval [2]', 'Yes|1|2');
+        Observer.Expect('eval [1000]', 'Yes|1000|6');
+        Observer.Expect('eval [7]', 'Yes|7|7');
+        Observer.Expect('eval [Round]', 'Yes|1|2');
+        Observer.Expect('eval []', 'Yes| |0');
+        Observer.Expect('fieldref [1]', 'ok|1|2');
+        Observer.Expect('fieldref [0.01]', 'ok|0.01|1');
+        Observer.Expect('fieldref [10]', 'ok|10|3');
+        Observer.Expect('fieldref [2]', 'ok|1|2');
+        Observer.Expect('fieldref [1000]', 'ok|1000|6');
+        Observer.Expect('fieldref [7]', 'ok|7|7');
+        Observer.Expect('fieldref [Round]', 'ok|1|2');
+        Observer.Expect('fieldref []', 'ok| |0');
+        Observer.Verify();
     end;
 }

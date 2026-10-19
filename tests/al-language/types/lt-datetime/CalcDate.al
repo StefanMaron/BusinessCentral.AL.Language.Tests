@@ -544,6 +544,12 @@ codeunit 73800 "LT DtT CalcDate A"
         Observer.Observe('CQ+1M-10D text', CalcF('<CQ+1M-10D>', 19960521D));
         Observer.Observe('-WD2 text', CalcF('<-WD2>', 19960521D));
         Observer.Observe('CM+30D text', CalcF('<CM+30D>', 19960521D));
-        Observer.Finish();
+        Observer.Expect('CQ+1M-10D', '1996-07-20');
+        Observer.Expect('-WD2', '1996-05-14');
+        Observer.Expect('CM+30D', '1996-06-30');
+        Observer.Expect('CQ+1M-10D text', '1996-07-20');
+        Observer.Expect('-WD2 text', '1996-05-14');
+        Observer.Expect('CM+30D text', '1996-06-30');
+        Observer.Verify();
     end;
 }

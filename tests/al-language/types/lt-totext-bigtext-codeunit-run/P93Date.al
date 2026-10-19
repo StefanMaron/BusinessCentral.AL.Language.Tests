@@ -251,6 +251,13 @@ codeunit 70320 "LT P93 Date"
         Observer.Observe('2020-12-31', WeekParts(20201231D));
         Observer.Observe('closing 2024-12-30', WeekParts(ClosingDate(20241230D)));
         Observer.Observe('0D', WeekParts(0D));
-        Observer.Finish();
+        Observer.Expect('2026-01-01', '4|1|2026|dwy:4,1,2026');
+        Observer.Expect('2024-12-30', '1|1|2024|dwy:1,1,2025');
+        Observer.Expect('2027-01-01', '5|53|2027|dwy:5,53,2026');
+        Observer.Expect('2021-01-03', '7|53|2021|dwy:7,53,2020');
+        Observer.Expect('2020-12-31', '4|53|2020|dwy:4,53,2020');
+        Observer.Expect('closing 2024-12-30', '1|1|2024|dwy:1,1,2025');
+        Observer.Expect('0D', 'error:The date is not valid.|DateInvalid|dwy:error');
+        Observer.Verify();
     end;
 }

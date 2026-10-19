@@ -278,6 +278,13 @@ codeunit 69339 "PV Base64 Probe"
         TempBlob.CreateInStream(InS);
         Back := Base64.ToBase64(InS);
         Observer.Observe('zip stream', Back + '|' + Format(Back = Zip) + '|' + Format(TempBlob.Length()));
-        Observer.Finish();
+        Observer.Expect('png utf8', '77+9UE5HDQoaCgAAAA1JSERSAAAAAQAAAAEIAAAAADp+77+9VQAAAAtJREFUeO+/vWNk77+9DwABBQEBJxjvv71mAAAAAElFTkTvv71CYO+/vQ==|No|68');
+        Observer.Expect('png utf8 first codes', '65533 80 78 71 13 10 26 10 ');
+        Observer.Expect('png windows', 'Yes|68');
+        Observer.Expect('zip utf8', 'UEsDBBQAAAAIAO+/vWN3We+/vQA=|No|16');
+        Observer.Expect('zip windows', 'UEsDBBQAAAAIAI1jd1n/AA==|Yes|16');
+        Observer.Expect('png stream', 'Yes|68');
+        Observer.Expect('zip stream', 'UEsDBBQAAAAIAI1jd1n/AA==|Yes|16');
+        Observer.Verify();
     end;
 }

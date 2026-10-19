@@ -554,7 +554,12 @@ codeunit 73805 "LT DtT Evaluate"
         Observer.Observe('date 01.01.26', ED('01.01.26', 0));
         Observer.Observe('time 01.01.2026', ET('01.01.2026', 0));
         Observer.Observe('date 01.01.2026', ED('01.01.2026', 0));
-        Observer.Finish();
+        Observer.Expect('time 01.01.26', 'Yes|01:01:26');
+        Observer.Expect('time 01.01.26 fmt 9', 'No|');
+        Observer.Expect('date 01.01.26', 'Yes|2026-01-01');
+        Observer.Expect('time 01.01.2026', 'Yes|01:01:20.26');
+        Observer.Expect('date 01.01.2026', 'Yes|2026-01-01');
+        Observer.Verify();
     end;
 
     // Corpus issue 672 item 20: Evaluate of Duration texts with short unit names (d, m, min, sec, s, ms, milli, millis), a fraction
@@ -581,7 +586,24 @@ codeunit 73805 "LT DtT Evaluate"
         Observer.Observe('1 D', EDU('1 D', 0));
         Observer.Observe('1 HOUR', EDU('1 HOUR', 0));
         Observer.Observe('1 week', EDU('1 week', 0));
-        Observer.Finish();
+        Observer.Expect('learn example', 'Yes|P2DT4H0M3.717S');
+        Observer.Expect('3.7 seconds 17 milliseconds', 'Yes|P0DT0H0M3.717S');
+        Observer.Expect('1 d', 'Yes|P1DT0H0M0.0S');
+        Observer.Expect('1 m', 'Yes|P0DT0H1M0.0S');
+        Observer.Expect('1 min', 'Yes|P0DT0H1M0.0S');
+        Observer.Expect('1 mins', 'No|P0DT0H0M0.0S');
+        Observer.Expect('1 sec', 'Yes|P0DT0H0M1.0S');
+        Observer.Expect('1 s', 'Yes|P0DT0H0M1.0S');
+        Observer.Expect('5 ms', 'No|P0DT0H0M0.0S');
+        Observer.Expect('5 milli', 'Yes|P0DT0H0M0.005S');
+        Observer.Expect('5 millis', 'Yes|P0DT0H0M0.005S');
+        Observer.Expect('1.5 milliseconds', 'No|P0DT0H0M0.0S');
+        Observer.Expect('1.5 seconds', 'Yes|P0DT0H0M1.5S');
+        Observer.Expect('2 days 3 h 4 min 5 sec 6 ms', 'No|P0DT0H0M0.0S');
+        Observer.Expect('1 D', 'Yes|P1DT0H0M0.0S');
+        Observer.Expect('1 HOUR', 'Yes|P0DT1H0M0.0S');
+        Observer.Expect('1 week', 'No|P0DT0H0M0.0S');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -635,6 +657,16 @@ codeunit 73805 "LT DtT Evaluate"
         Observer.Observe('format above timespan 0', FormatDurationErr(922337203685478L, 0));
         Observer.Observe('format above timespan 9', FormatDurationErr(922337203685478L, 9));
         Observer.Observe('format 3e15 ms 0', FormatDurationErr(3000000000000000L, 0));
-        Observer.Finish();
+        Observer.Expect('eval 3000000000 fmt 0', 'ok|P125000000DT0H0M0.0S');
+        Observer.Expect('eval 3000000000 fmt 9', 'err|The value "3000000000" can''t be evaluated into type Duration.|Evaluate');
+        Observer.Expect('eval 2147483647 fmt 0', 'ok|P89478485DT7H0M0.0S');
+        Observer.Expect('eval 256204778 fmt 0', 'ok|P10675199DT2H0M0.0S');
+        Observer.Expect('eval 256204779 fmt 0', 'ok|P10675199DT3H0M0.0S');
+        Observer.Expect('format max timespan 0', 'ok|10675199 days 2 hours 48 minutes 5 seconds 477 milliseconds');
+        Observer.Expect('format max timespan 9', 'ok|P10675199DT2H48M5.477S');
+        Observer.Expect('format above timespan 0', 'ok|10675199 days 2 hours 48 minutes 5 seconds 478 milliseconds');
+        Observer.Expect('format above timespan 9', 'ok|P10675199DT2H48M5.478S');
+        Observer.Expect('format 3e15 ms 0', 'ok|34722222 days 5 hours 20 minutes');
+        Observer.Verify();
     end;
 }
