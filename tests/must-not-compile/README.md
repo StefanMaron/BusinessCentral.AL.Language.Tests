@@ -316,12 +316,122 @@ is only a reference.
 | 1051 | AL0124 | XmlPort textelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
 | 1052 | AL0124 | XmlPort tableelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
 | 1053 | AL0169 | XmlPort fieldattribute: Occurrence takes Optional or Required. |
+| 1150 | AL0122 | A Text character by index plus or minus a one-character literal is an Integer: it does not assign to a Text (three statements). |
 | 1060 | AL0316 | A tree repeater whose IndentationColumn is a Decimal field. |
+| 1360 | AL0271 | A page extension adds to area Creation of a ListPart page that declares no actions (a ListPart has no implicit Creation area). |
+| 1361 | AL0193 | SetFilter on a Decimal field with a %1 placeholder whose value is a Text constant. |
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
 | 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
 | 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
+| 1270 | AL0270 | A page extension adds to an area name that is not a layout area (FactBoxes is accepted even when the base page does not declare it). |
+| 1140 | AL0133 | RecordRef.GetTable with a RecordRef argument (a Variant that holds the RecordRef compiles). |
+| 1141 | AL0196 | Record.TestField(Field, Value) with a Byte variable: ambiguous between the Integer and BigInteger overloads. |
+| 1530 | AL0369 | A for loop over an Integer control variable with a BigInteger literal end bound above the Integer range. |
+| 1531, 1532, 1533 | AL0172 | Unary minus on an Option variable, on an Option table field, and on an Enum. |
+| 1534 | AL0530 | A Code[2049] variable (Code[1025] to Code[2048] compile). |
+| 1535, 1536 | AL0154 | A Code[2049] and a Text[2049] table field. |
+| 1537 | AL0581 | A Code[0] variable. |
+| 1538 | AL0133 | A Code[20] variable passed to a var Text parameter. |
+| 1539 | AL0133 | A Text[100] table field passed to a var Code[20] parameter. |
+| 1540, 1541, 1542 | AL0204 | BC 27/28 only (AL 16 and 17): a CalcFormula or TableRelation where clause that filters an Integer or Enum field by a BigInteger field (AL 18 and later warn, AL0662/AL0663). |
+| 1080 | AL0777 | Guid assigned to Text[10]. |
+| 1120 | AL0132 | A TestRequestPage data item (TestFilter) has no SetRange, GetRangeMin or GetRangeMax. |
+| 1121 | AL0721 | A report rendering section without DefaultRenderingLayout. |
+| 1122 | AL0379 | A report column name with a space. |
+| 1160, 1161 | AL0196 | A Decimal variable and a Decimal literal passed to a procedure whose only overloads take Integer and BigInteger. |
+| 1162 | AL0193 | CopyArray with a two-dimensional destination and a one-dimensional source. |
+| 1170 | AL0132 | CommitBehavior with a member other than Ignore and Error. |
+| 1171 | AL0238 | The CommitBehavior attribute without its argument. |
+| 1172 | AL0433 | The removed User Group Member table. |
+| 1180 | AL0169 | A report layout with ObsoleteState = Removed (a layout takes only No and Pending). |
+| 1190, 1191 | AL0122 | A Boolean assigned to a Text and to a Code variable. |
+| 1192 | AL0111 | A number literal with an exponent (1e19) is a syntax error. |
+| 1193 | AL0122 | A Date assigned to a DateTime variable. |
+| 1240 | AL0296 | OnPrem-scoped platform tables of BC 28 and 29 used from a Cloud app (the BC 27 list is 0020 to 0024). |
+| 1241 | AL0162 | Triggers of other object types (OnRun, OnInsert, OnValidate, OnAction, OnPreReport, OnBeforeOpen, ...) in a page extension. |
+| 1242 | AL0440 | Foo(var A: Integer) next to Foo(A: Integer): var does not make a different signature. |
+| 1243 | AL0440 | Two procedures with the same name and parameter types in a table, a page and a report. |
+| 1244 | AL0124 | assemblyProbingPaths in app.json of a Target = OnPrem app at runtime 16.0. |
+| 1245 | AL0124 | assemblyProbingPaths in app.json of a Cloud app at runtime 18.0. |
+| 1246 | AL0132 | An unknown field of a table that has a table extension, and of a table of a dependency app. |
+| 1247 | AL0118 | A bare call of an unknown name in a report extension, a table extension, a query trigger and an xmlport trigger. |
+| 1248 | AL0197 | Two table extensions and two report extensions of one name. |
+| 1249 | AL0133 | An enum value passed by value to a parameter of another enum type without AssignmentCompatibility. |
+| 1250 | AL0122 | Integer from a Text variable, Code from an Integer, Text from an Integer expression. |
+| 1251 | AL0122 | A two-character literal assigned to a BigInteger and to a Decimal. |
+| 1252 to 1258 | AL0591, AL0314 | Cue group, file upload, freeze column, grid, indentation and tree properties on a plain group. |
+| 1259, 1260 | AL0591 | CuegroupLayout and GridLayout on a repeater. |
+| 1261 | AL0171 | SubPageLink on a system part. |
+| 1262 | AL0171 | SubPageView on a system part. |
+| 1263 | AL0543 | ContextSensitiveHelpPage on a page extension without the manifest property contextSensitiveHelpUrl. |
+| 1264 | AL1150 | A contextSensitiveHelpUrl in app.json that is not a URL. |
+| 1310 | AL0296 | File.IsPathTemporary from a Cloud app. |
+| 1311 | AL0296 | File.Download from a Cloud app. |
+| 1312 | AL0296 | Database.DataFileInformation from a Cloud app. |
+| 1210 | AL0240 | A ModalPageHandler with a Page parameter and no var Response: Action. |
+| 1211 | AL0241 | A ModalPageHandler with a TestPage parameter and a Response parameter. |
+| 1212 | AL0132 | A TestPage has no Delete method for the standard Delete action. |
+| 1370 | AL0779 | ModifyAll on a FlowField (Sum, Lookup); ModifyAll on a FlowFilter and assignments to either compile (corpus #664 item 4). |
+| 1371 | AL0777 | A Guid assigned to Text[10] or Code[20] overflows; Code[50] and Text take it (corpus #664 item 5). |
+| 1372 | AL0774 | exit(false) / exit(true) in a [TryFunction]; a bare exit compiles (corpus #664 item 6). |
+| 1373 | AL0896 | FlowFields whose CalcFormula forms a cycle, directly or through a second FlowField (corpus #664 item 9). |
+| 1374 | AL0873 | continue outside a loop (corpus #664 item 11). |
+| 1375 | AL0855, AL0155, AL0379 | A variable named ""; a query data item and column named "" (corpus #664 item 13). |
+| 1376 | AL0926, AL0104 | Table fields and keys after a procedure, on BC 27, 28 and 29 alike (corpus #664 item 15). |
+| 1377 | AL0582, AL0922 | A local procedure, and a Scope OnPrem procedure, as an interface implementation (corpus #664 item 19). |
+| 1378 | AL0104, AL0107 | '?' or '*' in a variable name (corpus #664 item 22). |
+| 1379 | AL0224, AL0111, AL0104, AL0198 | Nested block comments; braces used as a comment in a procedure body (corpus #664 items 23, 24). |
+| 1380 | AL0353, AL0815 | A query column whose source is a FlowFilter (corpus #664 item 5). |
+| 1381 | AL0190 | Time literals with fewer than six digits: 2359T, 1130T, 12T, 123T (corpus #664 item 27). |
+| 1382 | AL0111, AL0224, AL0104 | Lower-case literal suffixes 0d, 0t, 0dt, 20200101d, 120000t; DMY2Date(1, , 2020) (corpus #664 items 28, 34). |
+| 1383 | AL0623, AL0622 | A #region that starts outside an #if and ends inside it (corpus #664 item 29). |
+| 1384 | AL0831, AL0582 | A [TryFunction] as an interface implementation (corpus #664 item 6). |
+| 1385 | AL0806 | Record "18": a quoted object id (corpus #664 item 31). |
+| 1386 | AL0870, AL0224, AL0111 | @ not followed by a quote (corpus #664 item 11). |
+| 1387 | AL0165, AL0750, AL0118 | Trigger called directly; chained enum value; "17".DeleteAll and Customer.Count without a variable (corpus #664 items 30, 32, 33). |
+| 1388 | AL0185, AL0851 | 'as' with a target that is not an interface (corpus #664 item 19). |
+| 1389 | AL0159 | Blob and TestPage as return types; the other complex types and the Http types compile (corpus #664 items 35, 36). |
+| 1490 | AL0839 | a table and its table extension in the same app both set `Caption` (same XLIFF trans-unit id; Caption on a table extension alone compiles) |
+| 1491 | AL0404 | `Clustered` and `Unique` on a key that a table extension adds (`MaintainSqlIndex = false` compiles) |
+| 1492 | AL0246 | `CompressionType` on a table extension |
+| 1493 | AL0690, AL0687 | `IncludedFields` on the primary key / a secondary key whose `IncludedFields` names a primary-key field |
+| 1494 | AL0246 | `DataPerCompany` on a table extension |
+| 1495 | AL0525 | a table extension of the system table `User` and of the virtual table `Integer` |
+| 1496 | AL0564 | a table extension of a table with `Extensible = false` |
+| 1497 | AL0440 | a table extension procedure with the name (case-insensitive) and parameter types of a procedure of its table (an overload compiles) |
+| 1498 | AL0404 | `SqlTimestamp` on a field that a table extension adds |
+| 1499 | AL0171 | `modify()` of a base table field in a table extension sets `CalcFormula` |
+| 1500 | AL0926 | a table that declares `fieldgroups` before `keys` |
+| 1501 | AL0246 | a page extension changes `ApplicationArea` of a base part with `modify` (on a field control it compiles) |
+| 1502 | AL0378 | triggers in a page extension of a Role Center page (one diagnostic per trigger) |
+| 1503 | AL0322 | a page extension `modify()` sets `Editable` to a procedure call (a constant or a Boolean variable compiles) |
+| 1200 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
+| 1340 | AL0122 | BC 28 and 29: the result of Page.Run(FullyQualifiedName, Record, FieldNo) assigned; the overload returns nothing. |
+| 1341 | AL0133 | BC 28 and 29: Page.Run with a fully qualified name and a FieldRef (no such overload). |
+| 1570 to 1572 | AL0187 (and AL0666 on BC 27 and 28) | [RequiredPending] on an interface method; one case per BC major (corpus #664 item 19). |
+| 1573 | AL0625 | #define after the first token of a file (corpus #664 item 29). |
+| 1574 to 1576 | AL0629, AL0631 | Preprocessor operators that do not exist: '!', '&&', '== true' (corpus #664 item 29). |
+| 1390 | AL0304 | A local variable name of 121 characters (120 compile). |
+| 1391 | AL0121 | Two local variables whose names differ only in letter case. |
+| 1392 | AL0757 | From BC 28: a global variable `_operator` and a procedure `Operator` in one codeunit: both metadata names clash. |
+| 1393 | AL0117 | `continue;` with a local variable named Continue in scope reads as the bare variable. |
+| 1394 | AL0309 | A table with 41 keys (40 compile). |
+| 1395 | AL0154 | A table field of type Text[2049] (Text[2048] compiles). |
+| 1396 | AL0368 | An array with 11 dimensions (10 compile). |
+| 1397 | AL0146 | An array of 1,000,001 elements (1,000,000 compile). |
+| 1398 | AL0155 | An enum extension declares the same value name and ordinal twice: duplicate name only, no AL0231. |
+| 1399 | AL0231 | An enum extension declares one ordinal twice under two names. |
+| 1400 | AL0118 | Another procedure names a member of an option parameter through the parameter name. |
+| 1401 | AL0405 | `case Enum::"X" of` with the enum type instead of a value. |
+| 1402 | AL0311 | `E.FromInteger(1)` on an enum instance. |
+| 1403 | AL0156 | A page field whose source expression is the name of an enum object. |
+| 1404 | AL0103 | A for loop with an Integer control variable and a literal bound outside the Integer range. |
+| 1405 | AL0122 | `Txt := Cond ? '1' : ''`: the Char true branch sets the type and the empty Text literal does not convert. |
+| 1406 | AL0122 | `V := Cond ? CurrentDateTime() : Today()` into a Variant: the Date branch does not convert to DateTime. |
+| 1407 | AL0666 | BC 27 and 28: a bare IsDirty() in a TableNo codeunit's OnRun binds to Record.IsDirty (runtime 18.0) before the local procedure. |
+| 1408 | AL0757 | BC 27: a global variable `_operator` and a procedure `Operator`: error on the variable, only warning AL0758 on the procedure. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

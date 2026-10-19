@@ -3,6 +3,7 @@
   "name": "AL Internals Test Fixture",
   "publisher": "AL Language",
   "version": "1.0.0.0",
+  "platform": "27.0.0.0",
   "brief": "Dependency fixture exposing internal objects to the AL Language Coverage Tests app.",
   "description": "",
   "privacyStatement": "",

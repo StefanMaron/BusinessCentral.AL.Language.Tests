@@ -1069,4 +1069,57 @@ codeunit 69804 "PA Text Date Format"
         O.Expect('format_record', '1\tFirst\tXx\t1,234.5');
         O.Verify();
     end;
+
+    // Corpus #664 item 20: IncStr(Text, BigInteger) (runtime 15.2) with steps and numbers beyond the Integer range.
+    [Test]
+    procedure BM_IncStr_BigIntegerIncrement()
+    var
+        O: Codeunit "Probe Observer";
+    begin
+        O.Observe('big_1', IncStrByBig('A1', 1));
+        O.Observe('big_3e9', IncStrByBig('A1', BigOf(3000, 0)));
+        O.Observe('big_neg_3e9', IncStrByBig('A5000000000', BigOf(-3000, 0)));
+        O.Observe('big_neg_to_zero', IncStrByBig('A3000000000', BigOf(-3000, 0)));
+        O.Observe('big_neg_below_zero', IncStrByBig('A1', BigOf(-3000, 0)));
+        O.Observe('big_keeps_width', IncStrByBig('A0000000000001', BigOf(3000, 0)));
+        O.Observe('big_digits_beyond_int', IncStrByBig('A9999999999', 1));
+        O.Observe('big_zero', IncStrByBig('A5', 0));
+        O.Observe('big_no_digits', IncStrByBig('ABC', BigOf(3000, 0)));
+        O.Observe('noarg_digits_beyond_int', Try(6, 'A99999999999', '', 0, 0));
+        O.Expect('big_1', '[A2]');
+        O.Expect('big_3e9', '[A3000000001]');
+        O.Expect('big_neg_3e9', '[A2000000000]');
+        O.Expect('big_neg_to_zero', '[A0000000000]');
+        O.Expect('big_neg_below_zero', 'ERR:The result of incrementing cannot be negative./InvalidOperation');
+        O.Expect('big_keeps_width', '[A0003000000001]');
+        O.Expect('big_digits_beyond_int', '[A10000000000]');
+        O.Expect('big_zero', '[A5]');
+        O.Expect('big_no_digits', '[]');
+        O.Expect('noarg_digits_beyond_int', '[A100000000000]');
+        O.Verify();
+    end;
+
+    local procedure IncStrByBig(T: Text; By: BigInteger): Text
+    var
+        R: Text;
+    begin
+        if TryIncByBig(T, By, R) then
+            exit('[' + R + ']');
+        exit('ERR:' + GetLastErrorText() + '/' + GetLastErrorCode());
+    end;
+
+    [TryFunction]
+    local procedure TryIncByBig(T: Text; By: BigInteger; var R: Text)
+    begin
+        R := IncStr(T, By);
+    end;
+
+    local procedure BigOf(Millions: Integer; Rest: Integer): BigInteger
+    var
+        R: BigInteger;
+    begin
+        // A literal above 2147483647 is AL0103 even where a BigInteger is expected, so large values are built at run time.
+        R := Millions;
+        exit(R * 1000000 + Rest);
+    end;
 }

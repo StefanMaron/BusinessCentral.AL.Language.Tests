@@ -270,7 +270,7 @@ The summary of the `prepare` job lists every selected codeunit and the reason it
 
 Every test codeunit runs when one of these is true:
 
-- The run is a push to master (so every merge gets a full run), or a manual run without `select_base`.
+- The run is a push to master (so every merge gets a full run), or a manual run without `select_base` and without `select_codeunits`.
 - The pull request comes from `al-runtime-rs-staging` (a corpus bump).
 - The pull request has the label `full-run`.
 - The change touches one of these:
@@ -309,6 +309,14 @@ A manual run (**Actions → AL Language Test Suite → Run workflow**) takes `se
 python3 .github/scripts/select-tests.py --base origin/master --head HEAD
 # what a branch changed since it left the base branch:
 python3 .github/scripts/select-tests.py --base origin/master --head my-branch --merge-base
+```
+
+A manual run can also take `select_codeunits`: the test codeunits to run, as a JSON object with one entry per test app, for example `{"tests/al-language":"50010,50012..50015","tests/al-language-onprem":"60011"}`. The run then uses this list as it is and reads no diff; `select_base` is ignored. Ids are separated by `,` or `|`, and `lo..hi` is a range. The `prepare` job keeps only the runnable test codeunits of the job's `codeunit_range` (a range never adds a `Subtype = Test` codeunit without a `[Test]` procedure), lists the ids it dropped, and adds each app's sentinel. An app the input leaves out runs only its sentinel. An input that cannot be read, or that names an app no test job reads, means a full run. GitHub limits all inputs of one dispatch to 65,535 characters together; every test codeunit of the corpus written out one by one is about 20,000.
+
+The corpus CI batcher of al-runtime-rs uses `select_codeunits`. It merges many branches into one run, and the merged diff usually has more than 50 files, so `select_base` would mean a full run. The batcher passes the union of the selections of each branch alone instead. To check an input by hand:
+
+```bash
+python3 .github/scripts/select-tests.py --head HEAD --codeunits '{"tests/al-language":"50010,50012..50015"}'
 ```
 
 ---

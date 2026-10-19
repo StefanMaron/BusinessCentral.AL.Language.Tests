@@ -158,4 +158,116 @@ codeunit 69338 "PU Continue Probe"
         Observer.Expect('continue_inside_case', '23');
         Observer.Verify();
     end;
+
+    // corpus issue 664 (writer BN): `continue;` in a codeunit that also declares a procedure named Continue (microsoft/AL issue 7930,
+    // Learn: control statements). The loop lives in codeunit 82150 below, so the other tests of this codeunit keep the plain statement.
+    // A local variable named Continue makes `continue;` an illegal statement: tests/must-not-compile/cases/1393.
+    [Test]
+    procedure Continue_WithProcedureNamedContinue()
+    var
+        Observer: Codeunit "Probe Observer";
+        Helper: Codeunit "LT BN Continue Proc";
+    begin
+        Observer.Observe('for_loop', Helper.ForLoop());
+        Observer.Observe('while_loop', Helper.WhileLoop());
+        Observer.Observe('explicit_call', Helper.ExplicitCall());
+        Observer.Expect('for_loop', '123|calls=1');
+        Observer.Expect('while_loop', '123|calls=1');
+        Observer.Expect('explicit_call', '123|calls=1');
+        Observer.Verify();
+    end;
+
+    // corpus issue 664 (writer BN): `if ... then continue else ...` in a foreach nested in a for that also continues (microsoft/AL issue 8339).
+    [Test]
+    procedure Continue_ForeachInFor_IfContinueElse()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: List of [Text];
+        Item: Text;
+        FieldNo: Integer;
+        Seen: Text;
+    begin
+        List.Add('A');
+        List.Add('B');
+        List.Add('C');
+        for FieldNo := 1 to 5 do begin
+            if FieldNo = 3 then
+                continue;
+            foreach Item in List do
+                if Item = 'A' then
+                    continue
+                else
+                    Seen += Format(FieldNo) + Item + ' ';
+        end;
+        Observer.Observe('seen', Seen);
+        Observer.Observe('for_after', Format(FieldNo));
+        Seen := '';
+        foreach Item in List do begin
+            if Item = 'B' then
+                continue
+            else
+                Seen += Item;
+            Seen += '.';
+        end;
+        Observer.Observe('foreach_continue_else_block', Seen);
+        Observer.Expect('seen', '');
+        Observer.Expect('for_after', '5');
+        Observer.Expect('foreach_continue_else_block', 'A.C.');
+        Observer.Verify();
+    end;
+}
+
+// corpus issue 664 (writer BN): helper for Continue_WithProcedureNamedContinue. Not a test codeunit.
+codeunit 82150 "LT BN Continue Proc"
+{
+    var
+        Calls: Integer;
+
+    procedure Continue()
+    begin
+        Calls += 1;
+    end;
+
+    procedure ForLoop(): Text
+    var
+        i: Integer;
+        S: Text;
+    begin
+        Calls := 0;
+        for i := 1 to 3 do begin
+            if i = 2 then
+                continue;
+            S += Format(i);
+        end;
+        exit(S + '|calls=' + Format(Calls));
+    end;
+
+    procedure WhileLoop(): Text
+    var
+        i: Integer;
+        S: Text;
+    begin
+        Calls := 0;
+        while i < 3 do begin
+            i += 1;
+            if i = 2 then
+                continue;
+            S += Format(i);
+        end;
+        exit(S + '|calls=' + Format(Calls));
+    end;
+
+    procedure ExplicitCall(): Text
+    var
+        i: Integer;
+        S: Text;
+    begin
+        Calls := 0;
+        for i := 1 to 3 do begin
+            if i = 2 then
+                Continue();
+            S += Format(i);
+        end;
+        exit(S + '|calls=' + Format(Calls));
+    end;
 }

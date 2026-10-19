@@ -251,4 +251,57 @@ codeunit 72697 "LT P107 RecRef Names"
         Observer.Expect('wrong_table_false|code', 'TableIdMismatch');
         Observer.Verify();
     end;
+
+    // Corpus #664 item 12: RecordRef.Open with a Variant argument. The compiler gives warning AL0916 and picks Open(Integer) (AL 30 beta,
+    // runtime 18.0); this records what that call does with a Variant that holds an Integer, a BigInteger, a numeric Text and a table name.
+    [Test]
+    procedure BM_OpenVariantArgument()
+    var
+        Observer: Codeunit "Probe Observer";
+        V: Variant;
+        Big: BigInteger;
+    begin
+        V := 72694;
+        Observer.Observe('integer', TryOpenVariant(V));
+        Big := 72694;
+        V := Big;
+        Observer.Observe('biginteger', TryOpenVariant(V));
+        V := '72694';
+        Observer.Observe('numeric_text', TryOpenVariant(V));
+        V := 'LT P107 Rec';
+        Observer.Observe('table_name_text', TryOpenVariant(V));
+        V := 0;
+        Observer.Observe('zero', TryOpenVariant(V));
+        Observer.Expect('integer', 'ok|No|72694|LT P107 Rec');
+        Observer.Expect('biginteger', 'ok|No|72694|LT P107 Rec');
+        Observer.Expect('numeric_text', 'ok|No|72694|LT P107 Rec');
+        Observer.Expect('table_name_text', 'error|before open|The expression Variant cannot be type-converted to a Integer value.|TypeConversion:Format');
+        // Open(0) raises no error, but the RecordRef is not open afterwards: Number() raises the error.
+        Observer.Expect('zero', 'error|opened|The record is not open.|RecordNotOpened');
+        Observer.Verify();
+    end;
+
+    local procedure TryOpenVariant(V: Variant): Text
+    var
+        Opened: Text;
+    begin
+        ClearLastError();
+        if TryOpen(V, Opened) then
+            exit('ok|' + Opened);
+        exit('error|' + Opened + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    // The first version passed the RecordRef out of the try function; on BC 29.0 the test then stopped with "The record is not open."
+    // (the caller read Number after the try function returned true), so the number and name are now read inside the try function, next to the Open call.
+    [TryFunction]
+    local procedure TryOpen(V: Variant; var Opened: Text)
+    var
+        RecRef: RecordRef;
+    begin
+        Opened := 'before open';
+        RecRef.Open(V);
+        Opened := 'opened';
+        Opened := Format(RecRef.IsTemporary()) + '|' + Format(RecRef.Number()) + '|' + RecRef.Name();
+    end;
 }
+

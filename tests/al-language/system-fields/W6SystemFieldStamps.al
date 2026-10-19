@@ -179,4 +179,72 @@ codeunit 67306 "W6 System Field Stamps"
         Observer.Verify();
     end;
 
+#if BC29PLUS // the four user-name system fields exist from BC 29 (metadata/W6FieldKeyRows.al pins the field lists per version)
+    // ---- Added by writer bs (corpus issue #668, item 80): table 83157 "LT BS Opt Row" in tableextension/lt-bs-tableext-leads/BsObjects.al ----
+
+    local procedure BsSystemNameFields(var RecRef: RecordRef; Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        FieldRec: Record Field;
+        UserRec: Record User;
+        FRef: FieldRef;
+        Names: List of [Text];
+        FieldName: Text;
+        FullName: Text;
+    begin
+        if UserRec.Get(UserSecurityId()) then
+            FullName := UserRec."Full Name";
+        Names.Add('SystemCreatedByUserName');
+        Names.Add('SystemCreatedByFullName');
+        Names.Add('SystemModifiedByUserName');
+        Names.Add('SystemModifiedByFullName');
+        foreach FieldName in Names do begin
+            FieldRec.SetRange(TableNo, RecRef.Number());
+            FieldRec.SetRange(FieldName, FieldName);
+            if not FieldRec.FindFirst() then
+                Observer.Observe(Prefix + FieldName, 'missing')
+            else begin
+                FRef := RecRef.Field(FieldRec."No.");
+                if FRef.Class() = FieldClass::FlowField then
+                    FRef.CalcField();
+                Observer.Observe(Prefix + FieldName, Format(FieldRec."No.") + '|' + Format(FieldRec.Class) + '|' + Format(FieldRec.Type) + '|' + Format(FieldRec.Len)
+                    + '|is_user_id=' + Format(Format(FRef.Value()) = UserId()) + '|is_full_name=' + Format(Format(FRef.Value()) = FullName)
+                    + '|blank=' + Format(Format(FRef.Value()) = ''));
+            end;
+        end;
+    end;
+
+    [Test]
+    procedure UserNameSystemFields_NormalAndTemporaryRecord()
+    // CLAIM (issue #668 item 80): BC 29 adds SystemCreatedByUserName, SystemCreatedByFullName, SystemModifiedByUserName and
+    // SystemModifiedByFullName. Per field: number, class, type, length, and whether the value after Insert equals UserId() or the user's
+    // full name, on a normal and on a temporary record.
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BS Opt Row";
+        TempRow: Record "LT BS Opt Row" temporary;
+        RecRef: RecordRef;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Insert();
+        Row.Get(1);
+        RecRef.GetTable(Row);
+        BsSystemNameFields(RecRef, 'normal_', Observer);
+        TempRow.Id := 1;
+        TempRow.Insert();
+        TempRow.Get(1);
+        RecRef.GetTable(TempRow);
+        BsSystemNameFields(RecRef, 'temporary_', Observer);
+        Row.DeleteAll();
+        Observer.Expect('normal_SystemCreatedByUserName', '2000000005|FlowField|Text|50|is_user_id=Yes|is_full_name=No|blank=No');
+        Observer.Expect('normal_SystemCreatedByFullName', '2000000006|FlowField|Text|80|is_user_id=No|is_full_name=Yes|blank=No');
+        Observer.Expect('normal_SystemModifiedByUserName', '2000000007|FlowField|Text|50|is_user_id=Yes|is_full_name=No|blank=No');
+        Observer.Expect('normal_SystemModifiedByFullName', '2000000008|FlowField|Text|80|is_user_id=No|is_full_name=Yes|blank=No');
+        Observer.Expect('temporary_SystemCreatedByUserName', '2000000005|FlowField|Text|50|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Expect('temporary_SystemCreatedByFullName', '2000000006|FlowField|Text|80|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Expect('temporary_SystemModifiedByUserName', '2000000007|FlowField|Text|50|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Expect('temporary_SystemModifiedByFullName', '2000000008|FlowField|Text|80|is_user_id=No|is_full_name=No|blank=Yes');
+        Observer.Verify();
+    end;
+#endif
 }

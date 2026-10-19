@@ -348,4 +348,150 @@ codeunit 60331 "TableExt Keys And InitValue"
 
         RecRef.Close();
     end;
+
+    // ── Added by writer bs (corpus issue #668, items 90 and 91): objects in lt-bs-tableext-leads/BsObjects.al ──
+
+    local procedure BsSeedBase()
+    var
+        Base: Record "LT BS Base";
+    begin
+        Base.DeleteAll();
+        BsInsertBase(1, 30, 'c', 1.5, 1, 10);
+        BsInsertBase(2, 10, 'b', 2.25, 1, 20);
+        BsInsertBase(3, 20, 'a', 4, 2, 40);
+        BsInsertBase(4, 10, 'a', 8, 2, 80);
+    end;
+
+    local procedure BsInsertBase(Id: Integer; A: Integer; Name: Text[30]; B: Decimal; E1: Integer; E2: Decimal)
+    var
+        Base: Record "LT BS Base";
+    begin
+        Base.Init();
+        Base.Id := Id;
+        Base.A := A;
+        Base.Name := Name;
+        Base.B := B;
+        Base.E1 := E1;
+        Base.E2 := E2;
+        Base.Insert();
+    end;
+
+    local procedure BsOrder(var Base: Record "LT BS Base"): Text
+    var
+        Result: Text;
+    begin
+        if Base.FindSet() then
+            repeat
+                Result += Format(Base.Id) + ';';
+            until Base.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure BsKeyList(TableNo: Integer): Text
+    var
+        RecRef: RecordRef;
+        KRef: KeyRef;
+        Index: Integer;
+        FieldIndex: Integer;
+        Result: Text;
+    begin
+        RecRef.Open(TableNo);
+        for Index := 1 to RecRef.KeyCount() do begin
+            KRef := RecRef.KeyIndex(Index);
+            Result += Format(Index) + ':' + Format(KRef.FieldCount()) + ':';
+            for FieldIndex := 1 to KRef.FieldCount() do
+                Result += KRef.FieldIndex(FieldIndex).Name() + ',';
+            Result += ';';
+        end;
+        RecRef.Close();
+        exit(Result);
+    end;
+
+    [Test]
+    procedure TableExt_Key_BaseFieldsOnly_SetCurrentKeyAndKeyList()
+    // CLAIM (issue #668 items 90, 91): a tableextension key that lists only fields of the base table (key(BsBaseOnly; A, Name)) compiles.
+    // Does SetCurrentKey(A, Name) sort by it, what does CurrentKey answer, and does the key show in the key list?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+    begin
+        BsSeedBase();
+        Base.SetCurrentKey(A, Name);
+        Observer.Observe('current_key', Base.CurrentKey());
+        Observer.Observe('order', BsOrder(Base));
+        Base.SetCurrentKey(E1);
+        Observer.Observe('current_key_ext_sum_key', Base.CurrentKey());
+        Observer.Observe('key_list', BsKeyList(Database::"LT BS Base"));
+        Observer.Expect('current_key', 'A,Name');
+        Observer.Expect('order', '4;2;3;1;');
+        Observer.Expect('current_key_ext_sum_key', 'E1');
+        Observer.Expect('key_list', '1:1:Id,;2:2:A,Name,;3:1:E1,;4:1:$systemId,;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure TableExt_Key_SumIndexFieldsBaseAndExtension_CalcSums()
+    // CLAIM (issue #668 item 90): key(BsExtSum; E1) { SumIndexFields = B, E2; } in a tableextension names a base field and an extension
+    // field (warning AL0836 only). What do CalcSums(B, E2) give per E1 filter?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+    begin
+        BsSeedBase();
+        Base.SetCurrentKey(E1);
+        Base.SetRange(E1, 1);
+        Base.CalcSums(B, E2);
+        Observer.Observe('e1_1_sum_b', Format(Base.B, 0, 9));
+        Observer.Observe('e1_1_sum_e2', Format(Base.E2, 0, 9));
+        Base.SetRange(E1, 2);
+        Base.CalcSums(B, E2);
+        Observer.Observe('e1_2_sum_b', Format(Base.B, 0, 9));
+        Observer.Observe('e1_2_sum_e2', Format(Base.E2, 0, 9));
+        Base.SetRange(E1);
+        Base.SetRange(A, 10);
+        Base.CalcSums(B);
+        Observer.Observe('a_10_sum_b', Format(Base.B, 0, 9));
+        Observer.Expect('e1_1_sum_b', '3.75');
+        Observer.Expect('e1_1_sum_e2', '30');
+        Observer.Expect('e1_2_sum_b', '12');
+        Observer.Expect('e1_2_sum_e2', '120');
+        Observer.Expect('a_10_sum_b', '10.25');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Table_Key_MoreThan16Fields_SetCurrentKeyAndKeyList()
+    // CLAIM (issue #668 item 91): the docs say only the first 16 fields of a key are used. A table with a 17-field and a 19-field key
+    // compiles and publishes(?). What does the key list hold, and does SetCurrentKey over all 17 fields sort by them (the rows differ only in
+    // F18, the 17th field of key K17)?
+    var
+        Observer: Codeunit "Probe Observer";
+        Wide: Record "LT BS Wide Key";
+        Index: Integer;
+        Result: Text;
+    begin
+        Wide.DeleteAll();
+        for Index := 1 to 3 do begin
+            Wide.Init();
+            Wide.F1 := Index;
+            Wide.F18 := 10 - Index;
+            Wide.F19 := Index * 2;
+            Wide.Insert();
+        end;
+        Wide.SetCurrentKey(F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18);
+        Observer.Observe('current_key_17', Wide.CurrentKey());
+        if Wide.FindSet() then
+            repeat
+                Result += Format(Wide.F1) + ';';
+            until Wide.Next() = 0;
+        Observer.Observe('order_17', Result);
+        Wide.SetCurrentKey(F20, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F2);
+        Observer.Observe('current_key_19', Wide.CurrentKey());
+        Observer.Observe('key_list', BsKeyList(Database::"LT BS Wide Key"));
+        Observer.Expect('current_key_17', 'F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18');
+        Observer.Expect('order_17', '3;2;1;');
+        Observer.Expect('current_key_19', 'F20,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,F19,F2');
+        Observer.Expect('key_list', '1:1:F1,;2:17:F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,;3:19:F20,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,F19,F2,;4:1:$systemId,;');
+        Observer.Verify();
+    end;
 }

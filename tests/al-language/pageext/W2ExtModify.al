@@ -429,4 +429,43 @@ codeunit 68678 "W2 Ext Tests"
     begin
         Pg.OptionC.SetValue(Input);
     end;
+
+    // ---- Added by writer bs (corpus issue #668, items 105 and 107): page 83161 and pageextension 83161 in
+    //      tableextension/lt-bs-tableext-leads/BsObjects.al ----
+
+    [Test]
+    procedure PageExt_GlobalWithBasePageGlobalName_UsedInVisible()
+    // CLAIM (issue #668 item 107): the base page uses its global X in Visible of control Id; the page extension declares its own global X,
+    // sets it to true in OnOpenPage and uses it in Visible of its control BsExtA. It compiles; at run time is each Visible bound to its
+    // own X?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+        Card: TestPage "LT BS Card";
+    begin
+        Base.DeleteAll();
+        Base.Id := 1;
+        Base.Insert();
+        Card.OpenView();
+        Observer.Observe('base_control_visible', Format(Card.Id.Visible()));
+        Observer.Observe('extension_control_visible', Format(Card.BsExtA.Visible()));
+        Card.Close();
+        Base.DeleteAll();
+        Observer.Expect('base_control_visible', 'No');
+        Observer.Expect('extension_control_visible', 'Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PageExt_ProtectedLabelVariable_Readable()
+    // CLAIM (issue #668 item 105): a page extension declares `protected var BsProtectedTxt: Label 'LT BS protected label';`. It compiles
+    // and publishes(?); a procedure of the extension, called on a Page variable, returns the label text.
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: Page "LT BS Card";
+    begin
+        Observer.Observe('protected_label', Card.BsGetProtectedLabel());
+        Observer.Expect('protected_label', 'LT BS protected label');
+        Observer.Verify();
+    end;
 }

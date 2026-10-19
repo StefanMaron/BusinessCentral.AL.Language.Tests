@@ -18,8 +18,9 @@
 //                            name matched zero rows and CreateKey() could not remember the
 //                            key it had just written. Nothing in CreateKey() was ever
 //                            Windows-only. entrypoint.sh sets that tenantid now.
-//   * nightly-windows.yml -- creates a real key with BC's own New-NAVEncryptionKey during
-//                            container setup, and fails the run if it cannot (#253).
+//   * nightly-windows.yml -- creates the tenant key from AL with CreateEncryptionKey() (a helper
+//                            app's install trigger) and verifies it with an Encrypt/Decrypt
+//                            round trip; the run fails if it cannot (#253, #282).
 //
 // So neither tier fakes this any more, and the EncryptDecrypt test below -- removed in the
 // Patch #26 era because a pass-through provider structurally could not satisfy it -- is back.

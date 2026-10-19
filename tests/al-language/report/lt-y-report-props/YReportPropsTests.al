@@ -23,6 +23,11 @@ codeunit 75510 "LT Y Report Props Tests"
     var
         Xml: Text;
     begin
+        // The decimalformatter of a Decimal column follows General Ledger Setup "Amount Decimal Places" as the session first
+        // read it: later changes in the session are not seen until SelectLatestVersion (diagnostic runs 39255002308 and
+        // 39256045991, the same on BC 27.5, 28.5 and 29.0). Earlier tests set '2:5' and roll it back, so without this call the
+        // value depends on the run order.
+        SelectLatestVersion();
         if TryDataItemsXml(ReportId, Xml) then
             Observer.Observe('xml', Helper.AsciiOnly(Xml))
         else
@@ -36,11 +41,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region De");
-#if BC28PLUS
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="de-DE" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00###">1234567,891</Column>|        <Column name="DayCol">31.01.2025</Column>|        <Column name="StampCol">31.01.2025 14:30:15</Column>|        <Column name="AmtText">1.234.567,891</Column>|        <Column name="DayText">31.01.25</Column>|        <Column name="StampText">31.01.25 14:30</Column>|        <Column name="LongDayText">31. January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="de-DE" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567,891</Column>|        <Column name="DayCol">31.01.2025</Column>|        <Column name="StampCol">31.01.2025 14:30:15</Column>|        <Column name="AmtText">1.234.567,891</Column>|        <Column name="DayText">31.01.25</Column>|        <Column name="StampText">31.01.25 14:30</Column>|        <Column name="LongDayText">31. January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=de-DE;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
@@ -55,11 +56,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region Gb");
-#if BC28PLUS
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="en-GB" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00###">1234567.891</Column>|        <Column name="DayCol">31/01/2025</Column>|        <Column name="StampCol">31/01/2025 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">31/01/25</Column>|        <Column name="StampText">31/01/25 14:30</Column>|        <Column name="LongDayText">31 January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="en-GB" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567.891</Column>|        <Column name="DayCol">31/01/2025</Column>|        <Column name="StampCol">31/01/2025 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">31/01/25</Column>|        <Column name="StampText">31/01/25 14:30</Column>|        <Column name="LongDayText">31 January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=en-GB;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
@@ -74,11 +71,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region Fr");
-#if BC28PLUS
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="fr-FR" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00###">1234567,891</Column>|        <Column name="DayCol">31/01/2025</Column>|        <Column name="StampCol">31/01/2025 14:30:15</Column>|        <Column name="AmtText">1\u00CB\u00C7\u00BB234\u00CB\u00C7\u00BB567,891</Column>|        <Column name="DayText">31/01/25</Column>|        <Column name="StampText">31/01/25 14:30</Column>|        <Column name="LongDayText">31 January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="fr-FR" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567,891</Column>|        <Column name="DayCol">31/01/2025</Column>|        <Column name="StampCol">31/01/2025 14:30:15</Column>|        <Column name="AmtText">1\u00CB\u00C7\u00BB234\u00CB\u00C7\u00BB567,891</Column>|        <Column name="DayText">31/01/25</Column>|        <Column name="StampText">31/01/25 14:30</Column>|        <Column name="LongDayText">31 January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=fr-FR;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
@@ -93,11 +86,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region Jp");
-#if BC28PLUS
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="ja-JP" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00###">1234567.891</Column>|        <Column name="DayCol">2025/01/31</Column>|        <Column name="StampCol">2025/01/31 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">25/01/31</Column>|        <Column name="StampText">25/01/31 14:30</Column>|        <Column name="LongDayText">2025\u00CE\u2030\u201E1\u00B5\u00A3\u00EA31\u00B5\u00F9\u00D1</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="ja-JP" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567.891</Column>|        <Column name="DayCol">2025/01/31</Column>|        <Column name="StampCol">2025/01/31 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">25/01/31</Column>|        <Column name="StampText">25/01/31 14:30</Column>|        <Column name="LongDayText">2025\u00CE\u2030\u201E1\u00B5\u00A3\u00EA31\u00B5\u00F9\u00D1</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=ja-JP;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
@@ -112,11 +101,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region None");
-#if BC28PLUS
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00###">1234567.891</Column>|        <Column name="DayCol">1/31/2025</Column>|        <Column name="StampCol">1/31/2025 2:30:15 PM</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">01/31/25</Column>|        <Column name="StampText">01/31/25 02:30 PM</Column>|        <Column name="LongDayText">January 31, 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="en-US" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567.891</Column>|        <Column name="DayCol">1/31/2025</Column>|        <Column name="StampCol">1/31/2025 2:30:15 PM</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">01/31/25</Column>|        <Column name="StampText">01/31/25 02:30 PM</Column>|        <Column name="LongDayText">January 31, 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
@@ -131,11 +116,7 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region Bad");
-#if BC28PLUS
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="zz-ZZ" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00###">1234567.891</Column>|        <Column name="DayCol">1/31/2025</Column>|        <Column name="StampCol">1/31/2025 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">01/31/25</Column>|        <Column name="StampText">01/31/25 02:30 PM</Column>|        <Column name="LongDayText">January 31, 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="zz-ZZ" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567.891</Column>|        <Column name="DayCol">1/31/2025</Column>|        <Column name="StampCol">1/31/2025 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">01/31/25</Column>|        <Column name="StampText">01/31/25 02:30 PM</Column>|        <Column name="LongDayText">January 31, 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
-#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=zz-ZZ;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
