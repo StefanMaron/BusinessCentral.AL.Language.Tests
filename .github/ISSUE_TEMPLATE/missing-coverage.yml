@@ -64,6 +64,6 @@ body:
     id: context
     attributes:
       label: Additional context
-      description: Known quirks, Cloud vs. runner differences, relevant GitHub issues, etc.
+      description: Known quirks, Cloud vs. OnPrem differences, relevant GitHub issues, etc.
     validations:
       required: false

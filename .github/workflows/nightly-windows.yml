@@ -15,7 +15,8 @@ name: Nightly Windows (official MS BC container)
 #
 # THIS IS DELIBERATELY NOT A REQUIRED STATUS CONTEXT. Do not add it to the branch ruleset.
 # It takes ~1-2 hours, it is a signal for humans, and a nightly that gates merges stalls the
-# repository. The eight "BC <ver> / test" contexts from ci.yml remain the merge gate.
+# repository. The required checks from ci.yml (the Cloud, OnPrem and OnPrem DotNet test legs
+# for 27.5, 28.5 and 29.0, and the object-id gate) remain the merge gate.
 #
 # WHY THE ENVIRONMENT IS PINNED AND PRINTED, NOT JUST PINNED.
 # Six of #213's 14 failures are properties of the tier, not of BC: three are decimal-comma /
@@ -768,7 +769,8 @@ jobs:
             ForEach-Object { Write-Host ("{0}: {1:n0} KB" -f $_.Name, ($_.Length/1KB)) }
 
       # ---------------------------------------------------------------------------------
-      # Isolation probe (AL Runner #4826). ADDITIVE: it runs after the corpus, writes its own
+      # Isolation probe (first asked for in BusinessCentral.AL.Runner issue 4826; al-runtime-rs
+      # reads its XUnit files as an oracle). ADDITIVE: it runs after the corpus, writes its own
       # XUnit files, never reaches the headline or the #213 comparison above, and cannot fail
       # the job (continue-on-error). ci.yml's Linux legs never compile this app.
       #

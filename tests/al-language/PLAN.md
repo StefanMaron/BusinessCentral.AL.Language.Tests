@@ -25,30 +25,11 @@ method, and know exactly:
 The working backlog for uncovered or thinly covered surfaces lives in
 [`docs/al-language-coverage-gaps.md`](../../docs/al-language-coverage-gaps.md).
 
-## Why Start From Scratch
+## Downstream use
 
-The existing `tests/bucket-*` suites are runner regression tests. They were written
-incrementally alongside runner development, mix concerns, have per-test boilerplate
-tables and helper codeunits, and are not structured for language-coverage navigation.
-Salvaging them into a coverage document would cost more than building clean.
-
-The existing tests remain valuable — they stay in place as runner CI — but they are
-not this.
-
-## Relationship to the AL Runner — Contributing Runner Gaps
-
-This suite serves as the **executable specification** for the AL Runner. If the runner
-handles a language feature incorrectly:
-
-1. Write a test here that proves the correct Cloud behavior.
-2. The test becomes an executable spec the runner must pass.
-3. Once the runner is fixed, promote the test to `tests/bucket-*/` as a regression guard.
-
-A test that passes here but fails on the runner → **runner bug to fix**.
-A test that passes on the runner but fails here → **runner has a gap**.
-
-This folder is **isolated from the runner CI**. The runner picks up `tests/bucket-*/`
-only. This folder has its own `app.json` and its own CI pipeline.
+al-runtime-rs (StefanMaron/al-runtime-rs) pins this repository as a submodule and uses
+the JUnit files of its CI as its oracle. This folder has its own `app.json`; its CI
+pipeline is `.github/workflows/ci.yml`.
 
 ---
 
@@ -216,9 +197,7 @@ specifies the behavior being tested. If the BC docs change, the test must be rev
 
 ## In-Scope Boundary
 
-Derived from `docs/scope.md` in the runner repo. Tests are only written for features
-the runner is designed to support. Out-of-scope features are explicitly listed so
-agents do not write tests for them.
+Out-of-scope features are listed so agents do not write positive tests for them.
 
 **In scope (test everything):**
 - Record CRUD, filters, FlowFields, keys, triggers, locking, SystemId, RecordId
@@ -245,7 +224,7 @@ agents do not write tests for them.
 **Out of scope (do NOT write tests — write one negative test confirming it throws):**
 - File.Upload / File.Download (browser round-trip)
 - SMTP / email sending
-- HttpClient (throws in runner; write one "blocks with error" test)
+- HttpClient (write one "blocks with error" test)
 - OData / SOAP endpoints
 - Background task scheduling / job queue execution
 - Report rendering to PDF/Word
@@ -338,7 +317,7 @@ never modified by tests — tests insert/modify/delete data, not schema.
 tests/al-language/
   PLAN.md                          ← this file
   app.json                         ← standalone AL package, id-range 60000..60999
-  run-bc-tests.py                  ← same runner script as bucket-1
+  run-bc-tests.py                  ← script that runs the tests against a BC container
   _fixtures/
     tables/
       ALTUniversal.al
@@ -489,7 +468,7 @@ Each test file opens with a comment block:
 ```al
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/
 //   dev-itpro/developer/methods-auto/record/record-insert-method
-// Scope: in-scope (runner supports Record.Insert)
+// Scope: in-scope
 // Fixtures used: ALT Universal, ALT Triggered
 ```
 
@@ -583,9 +562,6 @@ Agent output: filled `.al` file. Compile + BC run after each batch.
 
 ### Phase 5 — Validate and lock
 - All tests pass against BC container → suite is locked
-- Suite is added to `docs/coverage.yaml` in the runner repo
-- Any future runner work that touches a method in `al-surface-inscope.json` must
-  also have a corresponding passing test in this suite
 
 ---
 
