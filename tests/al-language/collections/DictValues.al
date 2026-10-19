@@ -268,6 +268,13 @@ codeunit 74623 "LT ClT Dict Values"
         Observer.Observe('after set', D.Get(1).ToText());
         Observer.Observe('count', Format(D.Count()));
         Observer.Observe('length', Format(D.Get(1).Length()));
-        Observer.Finish();
+        Observer.Expect('stored', 'x');
+        Observer.Expect('after appending to the added variable', 'xy');
+        Observer.Expect('after appending to a Get result', 'xyz');
+        Observer.Expect('after appending to a Get var result', 'xyzw');
+        Observer.Expect('after set', 'xyzw');
+        Observer.Expect('count', '1');
+        Observer.Expect('length', '4');
+        Observer.Verify();
     end;
 }

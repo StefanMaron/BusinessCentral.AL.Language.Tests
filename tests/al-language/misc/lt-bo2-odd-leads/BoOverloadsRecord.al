@@ -35,6 +35,8 @@ codeunit 82358 "LT BO Record Overloads"
         ShipmentLine."Document No." := 'SHP1';
         Observer.Observe('sales invoice line', Host.F(InvoiceLine));
         Observer.Observe('sales shipment line', Host.F(ShipmentLine));
-        Observer.Finish();
+        Observer.Expect('sales invoice line', 'invoice line INV1');
+        Observer.Expect('sales shipment line', 'shipment line SHP1');
+        Observer.Verify();
     end;
 }

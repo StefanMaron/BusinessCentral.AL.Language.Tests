@@ -247,6 +247,13 @@ codeunit 71172 "LT P69 Curr Field No"
         Row.Validate(LtBoExtNum, 5);
         Observer.Observe('ext validate', Row.LtBoSeenInValidate());
         Observer.Observe('after ext validate', Format(Row.ReadCurrFieldNo()));
-        Observer.Finish();
+        Observer.Expect('ext default', '0');
+        Observer.Expect('ext assign 3', '3');
+        Observer.Expect('base reads after ext assign', '3');
+        Observer.Expect('base assign 2', '2');
+        Observer.Expect('ext reads after base assign', '2');
+        Observer.Expect('ext validate', 'ext validate CurrFieldNo=2 after assign=1');
+        Observer.Expect('after ext validate', '1');
+        Observer.Verify();
     end;
 }

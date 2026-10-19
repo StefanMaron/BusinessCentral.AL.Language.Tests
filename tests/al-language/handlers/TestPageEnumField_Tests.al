@@ -178,7 +178,66 @@ codeunit 60691 "Test Page Enum Field Tests"
         Card: TestPage "LT BO Sparse Card";
         Observer: Codeunit "Probe Observer";
         Ordinal: Integer;
+    begin
+        SeedSparse();
+
+        foreach Ordinal in Row.E.Ordinals() do begin
+            Row.Get(OrdinalRowId(Ordinal));
+            Observer.Observe('format ' + Format(Ordinal), Format(Row.E));
+        end;
+
+        Card.OpenEdit();
+        foreach Ordinal in Row.E.Ordinals() do begin
+            Row.Get(OrdinalRowId(Ordinal));
+            Card.GoToRecord(Row);
+            Observer.Observe('page value ' + Format(Ordinal), Card.E.Value());
+        end;
+
+        Card.Close();
+        // The page shows the OptionCaption entry only for ordinals 0 and 1; ordinals 4 and 5 show as their number, not as c4/c5.
+        Observer.Expect('format 0', ' ');
+        Observer.Expect('format 1', 'cap1');
+        Observer.Expect('format 4', 'cap4');
+        Observer.Expect('format 5', 'cap5');
+        Observer.Expect('page value 0', ' ');
+        Observer.Expect('page value 1', 'c1');
+        Observer.Expect('page value 4', '4');
+        Observer.Expect('page value 5', '5');
+        Observer.Verify();
+    end;
+
+    // Item 77, second half: SetValue on that field, each attempt on a freshly opened page; the row starts at value5 (ordinal 5).
+    [Test]
+    procedure Enum_SparseOrdinals_PageOptionCaption_SetValue()
+    var
+        Row: Record "LT BO Sparse Row";
+        Card: TestPage "LT BO Sparse Card";
+        Observer: Codeunit "Probe Observer";
         Attempt: Text;
+    begin
+        SeedSparse();
+        foreach Attempt in 'c1|cap1|value1|c4|cap4|value4|4|c5| '.Split('|') do begin
+            Row.Get(1);
+            Row.E := Row.E::value5;
+            Row.Modify();
+            Card.OpenEdit();
+            Card.GoToRecord(Row);
+            if TrySetSparse(Card, Attempt) then begin
+                Observer.Observe('[' + Attempt + '] page', Card.E.Value());
+                Card.Close();
+                Row.Get(1);
+                Observer.Observe('[' + Attempt + '] stored', Format(Row.E.AsInteger()));
+            end else begin
+                Observer.Observe('[' + Attempt + '] error', GetLastErrorText());
+                Card.Close();
+            end;
+        end;
+        Observer.Finish();
+    end;
+
+    local procedure SeedSparse()
+    var
+        Row: Record "LT BO Sparse Row";
     begin
         Row.DeleteAll();
         Row.Id := 1;
@@ -194,36 +253,6 @@ codeunit 60691 "Test Page Enum Field Tests"
         Row.E := Row.E::" ";
         Row.Insert();
         Commit();
-
-        foreach Ordinal in Row.E.Ordinals() do begin
-            Row.Get(OrdinalRowId(Ordinal));
-            Observer.Observe('format ' + Format(Ordinal), Format(Row.E));
-        end;
-
-        Card.OpenEdit();
-        foreach Ordinal in Row.E.Ordinals() do begin
-            Row.Get(OrdinalRowId(Ordinal));
-            Card.GoToRecord(Row);
-            Observer.Observe('page value ' + Format(Ordinal), Card.E.Value());
-        end;
-
-        foreach Attempt in 'c4|cap4|value4|c5|cap5|c1|4'.Split('|') do begin
-            Row.Get(1);
-            Row.E := Row.E::value1;
-            Row.Modify();
-            Card.GoToRecord(Row);
-            if TrySetSparse(Card, Attempt) then begin
-                Observer.Observe('setvalue ' + Attempt + ' page', Card.E.Value());
-                // Moving to another record saves the edited one.
-                Row.Get(4);
-                Card.GoToRecord(Row);
-                Row.Get(1);
-                Observer.Observe('setvalue ' + Attempt + ' stored ordinal', Format(Row.E.AsInteger()));
-            end else
-                Observer.Observe('setvalue ' + Attempt + ' error', GetLastErrorText());
-        end;
-        Card.Close();
-        Observer.Finish();
     end;
 
     local procedure OrdinalRowId(Ordinal: Integer): Integer

@@ -60,7 +60,9 @@ codeunit 82356 "LT BO Overloads"
         LT30.Add('b');
         Observer.Observe('list of integer', Host.Initialize(LI));
         Observer.Observe('list of text30', Host.Initialize(LT30));
-        Observer.Finish();
+        Observer.Expect('list of integer', 'integer list 1');
+        Observer.Expect('list of text30', 'text30 list 2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -71,6 +73,8 @@ codeunit 82356 "LT BO Overloads"
     begin
         Observer.Observe('integer overload', Host.LabelOf(7));
         Observer.Observe('text overload', Host.LabelOf('x'));
-        Observer.Finish();
+        Observer.Expect('integer overload', 'AH int 7');
+        Observer.Expect('text overload', 'AH text x');
+        Observer.Verify();
     end;
 }

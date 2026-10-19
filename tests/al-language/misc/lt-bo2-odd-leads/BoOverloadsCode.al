@@ -36,6 +36,8 @@ codeunit 82357 "LT BO Code Overloads"
         L50.Add('C');
         Observer.Observe('list of code10', Host.InitCode(L10));
         Observer.Observe('list of code50', Host.InitCode(L50));
-        Observer.Finish();
+        Observer.Expect('list of code10', 'code10 list 1');
+        Observer.Expect('list of code50', 'code50 list 2');
+        Observer.Verify();
     end;
 }
