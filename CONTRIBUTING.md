@@ -251,8 +251,18 @@ A full BC leg takes about 26 minutes, and about 21 of them are the "Run AL tests
 `.github/scripts/select-tests.py` compares the pull request with its base branch. For each test job in `ci.yml` it selects:
 
 - every test codeunit declared in a changed file;
-- every test codeunit that uses an object the change touches, directly or through other objects. A codeunit uses an object when its source code names the object by name or by id. A changed extension object (`tableextension`, `pageextension`, `enumextension`, `reportextension`) also counts as a change to the object it extends;
+- every test codeunit that uses an object the change touches, directly or through other objects. A codeunit uses an object when its source code names the object by name or by id (an object's own id and name in its header do not count). A changed extension object (`tableextension`, `pageextension`, `enumextension`, `reportextension`) also counts as a change to the object it extends;
 - for a changed file that is not AL code (a report layout, an add-in script), the objects that name the file, and the test codeunits that use those objects.
+
+An object the change touches is one whose code changed. An object in a changed file whose code is the same before and after (comments and line breaks do not count) is not one, unless the file's `namespace`, `using` or `#define` lines changed. If only comments changed in a file, the test codeunits that use its objects run.
+
+#### Event subscribers
+
+A subscriber runs when its publisher raises the event. So a test codeunit that uses the publisher also uses the subscriber, and the selection follows that path too:
+
+- An automatic subscriber (the default `EventSubscriberInstance`) to an object of the test apps selects the test codeunits that use that publisher object, directly or through other objects. For example, a subscriber to the `OnAfterModifyEvent` of a table the same change adds selects the tests that use that table.
+- A manual subscriber (`EventSubscriberInstance = Manual`) runs only after `BindSubscription` on an instance of its codeunit. It selects the test codeunits that use the subscriber codeunit, whatever its publisher. A manual subscriber that is also `SingleInstance = true` stays bound into later test codeunits, so it is treated like an automatic one.
+- A subscriber that the change does not touch still counts when the change touches an object it uses: the test codeunits that use its publisher run.
 
 Each leg also runs one small test codeunit that is not inside an `#if` (the summary calls it the sentinel). The test workflow fails a leg that ran no test at all, and a selected codeunit can be compiled out on an older BC version. A codeunit outside the job's `codeunit_range` is never selected, and neither is a `Subtype = Test` codeunit without a `[Test]` procedure.
 
@@ -269,7 +279,13 @@ Every test codeunit runs when one of these is true:
   - a file under `.github/` (workflows and the scripts CI runs). One exception: a change to `ci.yml` that edits only the values of `codeunit_range` lines (a "CI range edit") is selected as usual, plus every test codeunit the edit brings into its job's range. Any other line changed in `ci.yml`, a comment included, means a full run;
   - an `app.json`, the symbols in an app's `.alpackages/` folder, or an app's resource folder (`NavApp.ListResources` sees every resource);
   - the fixture app `tests/al-language-internals-fixture`, which the other apps depend on;
-  - a procedure with `[EventSubscriber]`, because a subscriber can run during any test;
+  - an event subscriber that can run during any test, when the change touches it, removes it, or touches an object it uses. That is an automatic subscriber whose publisher is:
+    - not an object of the test apps (a platform, System Application or Base Application object, for example `Global Triggers`, `Company Triggers`, `Caption Class`, or a table event of `Customer`);
+    - an install or upgrade event (the event name contains `Install` or `Upgrade`);
+    - an object of the test apps that more than 40 test codeunits use. Shared fixture publishers such as `ALT Triggered` or `ALT Event Publisher` are used by more than 250; a subscriber there changes the behavior of many unrelated tests;
+    - named the same as a Microsoft object in the symbol packages, so the scan cannot tell which one is meant;
+    - written in a way the scan cannot read;
+  - an `Install` or `Upgrade` codeunit that uses an object the change touches;
   - a codeunit with `Subtype = Install`, `Upgrade` or `TestRunner`;
   - a permission set, permission set extension or entitlement;
   - more than 50 files in the test apps;
