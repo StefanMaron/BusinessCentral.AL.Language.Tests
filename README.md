@@ -14,17 +14,17 @@ This repo is useful in two ways:
 
 **As a language reference** — search by type name or method and find a test that documents the exact behavior, including edge cases and error conditions. Every test is a behavioral contract backed by a CI run, not a prose description that may be out of date.
 
-**As a cross-version compatibility map** — the CI matrix runs against BC 27.5 and BC 28.1. Version-gated tests (`#if BC28PLUS`) document which features changed between versions and exactly how. This is the kind of precision that release notes rarely provide.
+**As a cross-version compatibility map** — the CI matrix runs against BC 27.5, 28.5 and 29.0. Version-gated tests (`#if BC28PLUS`, `#if BC29PLUS`) document which features changed between versions and exactly how. This is the kind of precision that release notes rarely provide.
 
 The primary goal is BC Cloud compatibility. Every in-scope AL feature gets at least one positive test proving it works and one negative test proving it fails predictably at the boundary. Cloud-restricted features (file I/O, .NET interop, `HttpClient`) get exactly one negative test confirming the expected error.
 
-**AL Runner:** if `BusinessCentral.AL.Runner` handles a feature incorrectly, write the test here to document the correct Cloud behavior. Once the runner is fixed, the test moves to its regression suite.
+**al-runtime-rs:** [StefanMaron/al-runtime-rs](https://github.com/StefanMaron/al-runtime-rs), a runtime for AL written in Rust, uses this repository as its oracle. It pins a commit of `master` and compares its own results with the JUnit files of this repository's CI.
 
 ---
 
 ## Quick Start
 
-**CI:** Push to any branch. GitHub Actions runs the full matrix over BC 27.5 and 28.1 automatically — no self-hosted runner required.
+**CI:** Every pull request to `master` runs the matrix: BC 27.5, 28.5 and 29.0 for the Cloud, OnPrem and OnPrem DotNet test apps. On any other branch, start it from **Actions → AL Language Test Suite → Run workflow**. No self-hosted runner is needed. `master` takes changes only through pull requests with these checks green.
 
 **Local development** (requires a bc-linux Docker container at `localhost`):
 
@@ -41,7 +41,7 @@ See [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.
 
 ## Test Areas
 
-519 AL files, 273 test codeunits (ID ranges 60000–60999 and 67000–69999; new objects go in 67000–69999), target `Cloud`, runtime 16.1 (BC 27+).
+Test apps: `tests/al-language` (target `Cloud`, where almost every test goes), `tests/al-language-onprem` and `tests/al-language-onprem-dotnet` (target `OnPrem`), and `tests/al-language-isolation-probe` (run only by the Windows nightly). `tests/al-language-internals-fixture` is a helper app the tests depend on. Each app's `app.json` lists its object id ranges. Files the compiler must reject are in `tests/must-not-compile`.
 
 | Area | Description |
 |------|-------------|
@@ -107,16 +107,9 @@ begin
 end;
 ```
 
-### Runner Gap Contribution Path
-
-1. Identify behavior the AL Runner gets wrong
-2. Write a test here that passes against BC Cloud and documents the correct behavior
-3. Open a PR referencing the runner issue (use the [runner-gap issue template](.github/ISSUE_TEMPLATE/runner-gap.yml))
-4. Once [BusinessCentral.AL.Runner](https://github.com/StefanMaron/BusinessCentral.AL.Runner) is fixed, the test is promoted to its regression suite
-
 ---
 
 ## Related Repos
 
 - [StefanMaron/MsDyn365Bc.On.Linux](https://github.com/StefanMaron/MsDyn365Bc.On.Linux) — BC runtime on Linux; powers local dev and CI
-- [StefanMaron/BusinessCentral.AL.Runner](https://github.com/StefanMaron/BusinessCentral.AL.Runner) — AL Runner; tests here feed its regression suite
+- [StefanMaron/al-runtime-rs](https://github.com/StefanMaron/al-runtime-rs) — AL runtime in Rust; uses this repository as its oracle
