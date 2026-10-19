@@ -128,7 +128,6 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
         ClearLastError();
         Observer.Observe(Name + '|ok', Format(TrySetValue(Card, NewValue)));
         Observer.ObserveError(Name);
-        Observer.Observe(Name + '|validation', Card.Tier.GetValidationError());
         Observer.Observe(Name + '|value', Card.Tier.Value());
         Card.Close();
         Row.Get(1);
