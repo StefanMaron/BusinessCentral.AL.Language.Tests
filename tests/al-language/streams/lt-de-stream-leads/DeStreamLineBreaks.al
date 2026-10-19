@@ -60,7 +60,13 @@ codeunit 85901 "LT DE Stream Line Breaks"
         Observer.Observe('bytes', Helper.HexOf(TempBlob));
         ReadTextAll(Observer, 'wt', TempBlob);
         ReadAll(Observer, 'wt', TempBlob);
-        Observer.Finish();
+        Observer.Expect('bytes', '41 0D 0A 42 0D 0A 43');
+        Observer.Expect('wt eos before', 'No');
+        Observer.Expect('wt readtext 1', '1|A|No');
+        Observer.Expect('wt readtext 2', '1|B|No');
+        Observer.Expect('wt readtext 3', '1|C|Yes');
+        Observer.Expect('wt read 1', '7|A\r\nB\r\nC|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -77,7 +83,14 @@ codeunit 85901 "LT DE Stream Line Breaks"
         Observer.Observe('bytes', Helper.HexOf(TempBlob));
         ReadTextAll(Observer, 'w', TempBlob);
         ReadAll(Observer, 'w', TempBlob);
-        Observer.Finish();
+        Observer.Expect('bytes', '41 0D 0A 42 00 43 00');
+        Observer.Expect('w eos before', 'No');
+        Observer.Expect('w readtext 1', '1|A|No');
+        Observer.Expect('w readtext 2', '1|B|No');
+        Observer.Expect('w readtext 3', '1|C|Yes');
+        Observer.Expect('w read 1', '5|A\r\nB|No');
+        Observer.Expect('w read 2', '2|C|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -97,6 +110,13 @@ codeunit 85901 "LT DE Stream Line Breaks"
         Observer.Observe('bytes', Helper.HexOf(TempBlob));
         ReadTextAll(Observer, 'mix', TempBlob);
         ReadAll(Observer, 'mix', TempBlob);
-        Observer.Finish();
+        Observer.Expect('bytes', '41 00 42 0D 0A 43 44 00');
+        Observer.Expect('mix eos before', 'No');
+        Observer.Expect('mix readtext 1', '1|A|No');
+        Observer.Expect('mix readtext 2', '1|B|No');
+        Observer.Expect('mix readtext 3', '2|CD|Yes');
+        Observer.Expect('mix read 1', '2|A|No');
+        Observer.Expect('mix read 2', '6|B\r\nCD|Yes');
+        Observer.Verify();
     end;
 }

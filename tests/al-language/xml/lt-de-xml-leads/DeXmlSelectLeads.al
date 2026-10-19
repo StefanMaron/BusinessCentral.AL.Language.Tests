@@ -50,7 +50,16 @@ codeunit 85903 "LT DE Xml Select LastError"
         ClearLastError();
         Observer.Observe('document returned', Format(Doc.SelectSingleNode('//missing', N)));
         LastError(Observer, 'document format');
-        Observer.Finish();
+        Observer.Expect('document text', '');
+        Observer.Expect('document code', '');
+        Observer.Expect('element text', '');
+        Observer.Expect('element code', '');
+        Observer.Expect('node text', '');
+        Observer.Expect('node code', '');
+        Observer.Expect('document returned', 'No');
+        Observer.Expect('document format text', '');
+        Observer.Expect('document format code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -70,7 +79,13 @@ codeunit 85903 "LT DE Xml Select LastError"
         asserterror Error('earlier error');
         if Doc.SelectSingleNode('//missing', N) then;
         LastError(Observer, 'missing after error');
-        Observer.Finish();
+        Observer.Expect('match clean text', '');
+        Observer.Expect('match clean code', '');
+        Observer.Expect('match after error text', 'earlier error');
+        Observer.Expect('match after error code', 'Dialog');
+        Observer.Expect('missing after error text', 'earlier error');
+        Observer.Expect('missing after error code', 'Dialog');
+        Observer.Verify();
     end;
 }
 
@@ -167,7 +182,13 @@ codeunit 85904 "LT DE Xml Empty XPath"
             else
                 Observer.Observe(KindName(Kind) + ' without boolean', 'error ' + GetLastErrorText() + '|' + GetLastErrorCode());
         end;
-        Observer.Finish();
+        Observer.Expect('document with boolean', 'ok No');
+        Observer.Expect('document without boolean', 'error Expression must evaluate to a node-set.|Xml:XPath');
+        Observer.Expect('element with boolean', 'ok No');
+        Observer.Expect('element without boolean', 'error Expression must evaluate to a node-set.|Xml:XPath');
+        Observer.Expect('node with boolean', 'ok No');
+        Observer.Expect('node without boolean', 'error Expression must evaluate to a node-set.|Xml:XPath');
+        Observer.Verify();
     end;
 
     [Test]
@@ -192,7 +213,13 @@ codeunit 85904 "LT DE Xml Empty XPath"
             else
                 Observer.Observe(KindName(Kind) + ' without boolean', 'error ' + GetLastErrorText() + '|' + GetLastErrorCode());
         end;
-        Observer.Finish();
+        Observer.Expect('document with boolean', 'ok No count 0');
+        Observer.Expect('document without boolean', 'error Expression must evaluate to a node-set.|Xml:XPath');
+        Observer.Expect('element with boolean', 'ok No count 0');
+        Observer.Expect('element without boolean', 'error Expression must evaluate to a node-set.|Xml:XPath');
+        Observer.Expect('node with boolean', 'ok No count 0');
+        Observer.Expect('node without boolean', 'error Expression must evaluate to a node-set.|Xml:XPath');
+        Observer.Verify();
     end;
 }
 
@@ -234,7 +261,13 @@ codeunit 85905 "LT DE XmlNodeList Get"
             else
                 Observer.Observe('get ' + Format(Index), 'error ' + GetLastErrorText() + '|' + GetLastErrorCode());
         end;
-        Observer.Finish();
+        Observer.Expect('count', '3');
+        Observer.Expect('get -1', 'error Index out of bounds.|IndexOutOfBounds');
+        Observer.Expect('get 0', 'error The parameter index must have a value greater than zero.|IndexOutOfBounds');
+        Observer.Expect('get 1', 'ok 1');
+        Observer.Expect('get 3', 'ok 3');
+        Observer.Expect('get 4', 'error Index out of bounds.|IndexOutOfBounds');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,6 +287,7 @@ codeunit 85905 "LT DE XmlNodeList Get"
             Observer.Observe('get 1 of empty', 'ok ' + Name)
         else
             Observer.Observe('get 1 of empty', 'error ' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('get 1 of empty', 'error Index out of bounds.|IndexOutOfBounds');
+        Observer.Verify();
     end;
 }

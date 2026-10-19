@@ -71,7 +71,15 @@ codeunit 85906 "LT DE Xml ReadFrom ZeroByte"
         TempBlob.CreateOutStream(OutS);
         OutS.Write('<Envelope><Id>1</Id></Envelope>');
         ObserveRead(Observer, 'write no declaration', TempBlob);
-        Observer.Finish();
+        Observer.Expect('writetext length', '154');
+        Observer.Expect('writetext readfrom', 'ok Envelope');
+        Observer.Expect('write length', '155');
+        Observer.Expect('write readfrom', 'error The following exception was encountered when processing XML data: ''''.'', hexadecimal value 0x00, is an invalid character. Line 1, position 155.'' at line 1 and position 155.|Xml:Xml');
+        Observer.Expect('write utf8 length', '155');
+        Observer.Expect('write utf8 readfrom', 'error The following exception was encountered when processing XML data: ''''.'', hexadecimal value 0x00, is an invalid character. Line 1, position 155.'' at line 1 and position 155.|Xml:Xml');
+        Observer.Expect('write no declaration length', '32');
+        Observer.Expect('write no declaration readfrom', 'error The following exception was encountered when processing XML data: ''''.'', hexadecimal value 0x00, is an invalid character. Line 1, position 32.'' at line 1 and position 32.|Xml:Xml');
+        Observer.Verify();
     end;
 }
 
@@ -124,7 +132,11 @@ codeunit 85907 "LT DE Xml Declaration Encoding"
         ObserveText(Observer, 'iso-8859-1');
         ObserveText(Observer, 'UTF-8');
         ObserveText(Observer, 'Windows-1252');
-        Observer.Finish();
+        Observer.Expect('ISO-8859-1 text', '<?xml version="1.0" encoding="ISO-8859-1" standalone=""?>\r\n<a>ä</a>');
+        Observer.Expect('iso-8859-1 text', '<?xml version="1.0" encoding="iso-8859-1" standalone=""?>\r\n<a>ä</a>');
+        Observer.Expect('UTF-8 text', '<?xml version="1.0" encoding="UTF-8" standalone=""?>\r\n<a>ä</a>');
+        Observer.Expect('Windows-1252 text', '<?xml version="1.0" encoding="Windows-1252" standalone=""?>\r\n<a>ä</a>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -135,7 +147,10 @@ codeunit 85907 "LT DE Xml Declaration Encoding"
         ObserveStream(Observer, 'ISO-8859-1 utf8 stream', 'ISO-8859-1', '', TextEncoding::UTF8);
         ObserveStream(Observer, 'UTF-8 utf8 stream', 'UTF-8', '', TextEncoding::UTF8);
         ObserveStream(Observer, 'Windows-1252 utf8 stream', 'Windows-1252', '', TextEncoding::UTF8);
-        Observer.Finish();
+        Observer.Expect('ISO-8859-1 utf8 stream bytes', '3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 49 53 4F 2D 38 38 35 39 2D 31 22 20 73 74 61 6E 64 61 6C 6F 6E 65 3D 22 22 3F 3E 0D 0A 3C 61 3E E4 3C 2F 61 3E');
+        Observer.Expect('UTF-8 utf8 stream bytes', 'EF BB BF 3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 55 54 46 2D 38 22 20 73 74 61 6E 64 61 6C 6F 6E 65 3D 22 22 3F 3E 0D 0A 3C 61 3E C3 A4 3C 2F 61 3E');
+        Observer.Expect('Windows-1252 utf8 stream bytes', '3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 57 69 6E 64 6F 77 73 2D 31 32 35 32 22 20 73 74 61 6E 64 61 6C 6F 6E 65 3D 22 22 3F 3E 0D 0A 3C 61 3E E4 3C 2F 61 3E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,7 +160,9 @@ codeunit 85907 "LT DE Xml Declaration Encoding"
     begin
         ObserveStream(Observer, 'ISO-8859-1 yes windows stream', 'ISO-8859-1', 'yes', TextEncoding::Windows);
         ObserveStream(Observer, 'ISO-8859-1 yes msdos stream', 'ISO-8859-1', 'yes', TextEncoding::MSDos);
-        Observer.Finish();
+        Observer.Expect('ISO-8859-1 yes windows stream bytes', '3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 49 53 4F 2D 38 38 35 39 2D 31 22 20 73 74 61 6E 64 61 6C 6F 6E 65 3D 22 79 65 73 22 3F 3E 0D 0A 3C 61 3E E4 3C 2F 61 3E');
+        Observer.Expect('ISO-8859-1 yes msdos stream bytes', '3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 49 53 4F 2D 38 38 35 39 2D 31 22 20 73 74 61 6E 64 61 6C 6F 6E 65 3D 22 79 65 73 22 3F 3E 0D 0A 3C 61 3E E4 3C 2F 61 3E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -161,7 +178,8 @@ codeunit 85907 "LT DE Xml Declaration Encoding"
         TempBlob.CreateOutStream(OutS, TextEncoding::Windows);
         Doc.WriteTo(OutS);
         Observer.Observe('loaded windows stream bytes', Helper.HexOf(TempBlob));
-        Observer.Finish();
+        Observer.Expect('loaded windows stream bytes', '3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E 3D 22 31 2E 30 22 20 65 6E 63 6F 64 69 6E 67 3D 22 49 53 4F 2D 38 38 35 39 2D 31 22 3F 3E 0D 0A 3C 61 3E E4 3C 2F 61 3E');
+        Observer.Verify();
     end;
 }
 
@@ -233,7 +251,11 @@ codeunit 85908 "LT DE Xml xmlns Attribute"
         E := XmlElement.Create('Root');
         ObserveAdd(Observer, 'no ns', E, XmlAttribute.Create('xmlns', 'urn:x-obml:1.0'));
         ObserveWrite(Observer, 'no ns', E);
-        Observer.Finish();
+        Observer.Expect('no ns add', 'ok');
+        Observer.Expect('no ns element writeto', 'error The following exception was encountered when processing XML data: ''The prefix '''' cannot be redefined from '''' to ''urn:x-obml:1.0'' within the same start element tag.'' at line 0 and position 0.|Xml:Xml');
+        Observer.Expect('no ns document writeto', 'error The following exception was encountered when processing XML data: ''The prefix '''' cannot be redefined from '''' to ''urn:x-obml:1.0'' within the same start element tag.'' at line 0 and position 0.|Xml:Xml');
+        Observer.Expect('no ns namespaceuri', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -245,7 +267,11 @@ codeunit 85908 "LT DE Xml xmlns Attribute"
         E := XmlElement.Create('Root', 'urn:x-obml:1.0');
         ObserveAdd(Observer, 'same ns', E, XmlAttribute.Create('xmlns', 'urn:x-obml:1.0'));
         ObserveWrite(Observer, 'same ns', E);
-        Observer.Finish();
+        Observer.Expect('same ns add', 'ok');
+        Observer.Expect('same ns element writeto', 'ok <Root xmlns="urn:x-obml:1.0" />');
+        Observer.Expect('same ns document writeto', 'ok <?xml version="1.0" encoding="utf-16"?>\r\n<Root xmlns="urn:x-obml:1.0" />');
+        Observer.Expect('same ns namespaceuri', '[urn:x-obml:1.0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -257,7 +283,11 @@ codeunit 85908 "LT DE Xml xmlns Attribute"
         E := XmlElement.Create('Root', 'urn:other');
         ObserveAdd(Observer, 'other ns', E, XmlAttribute.Create('xmlns', 'urn:x-obml:1.0'));
         ObserveWrite(Observer, 'other ns', E);
-        Observer.Finish();
+        Observer.Expect('other ns add', 'ok');
+        Observer.Expect('other ns element writeto', 'error The following exception was encountered when processing XML data: ''The prefix '''' cannot be redefined from ''urn:other'' to ''urn:x-obml:1.0'' within the same start element tag.'' at line 0 and position 0.|Xml:Xml');
+        Observer.Expect('other ns document writeto', 'error The following exception was encountered when processing XML data: ''The prefix '''' cannot be redefined from ''urn:other'' to ''urn:x-obml:1.0'' within the same start element tag.'' at line 0 and position 0.|Xml:Xml');
+        Observer.Expect('other ns namespaceuri', '[urn:other]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,6 +303,10 @@ codeunit 85908 "LT DE Xml xmlns Attribute"
         else
             Observer.Observe('setattribute', 'error ' + GetLastErrorText() + '|' + GetLastErrorCode());
         ObserveWrite(Observer, 'setattribute', E);
-        Observer.Finish();
+        Observer.Expect('setattribute', 'ok');
+        Observer.Expect('setattribute element writeto', 'error The following exception was encountered when processing XML data: ''The prefix '''' cannot be redefined from '''' to ''urn:x-obml:1.0'' within the same start element tag.'' at line 0 and position 0.|Xml:Xml');
+        Observer.Expect('setattribute document writeto', 'error The following exception was encountered when processing XML data: ''The prefix '''' cannot be redefined from '''' to ''urn:x-obml:1.0'' within the same start element tag.'' at line 0 and position 0.|Xml:Xml');
+        Observer.Expect('setattribute namespaceuri', '[]');
+        Observer.Verify();
     end;
 }

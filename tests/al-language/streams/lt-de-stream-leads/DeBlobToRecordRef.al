@@ -71,7 +71,13 @@ codeunit 85902 "LT DE Blob ToRecordRef"
         TempBlob.ToRecordRef(RecRef, 2);
         Observer.Observe('modify', Format(RecRef.Modify()));
         ObserveRow(Observer, 'modified');
-        Observer.Finish();
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('modified hasvalue before calcfields', 'Yes');
+        Observer.Expect('modified length before calcfields', '16');
+        Observer.Expect('modified hasvalue', 'Yes');
+        Observer.Expect('modified length', '10');
+        Observer.Expect('modified text', 'into field');
+        Observer.Verify();
     end;
 
     [Test]
@@ -89,6 +95,11 @@ codeunit 85902 "LT DE Blob ToRecordRef"
         RecRef.FindFirst();
         TempBlob.ToRecordRef(RecRef, 2);
         ObserveRow(Observer, 'not modified');
-        Observer.Finish();
+        Observer.Expect('not modified hasvalue before calcfields', 'No');
+        Observer.Expect('not modified length before calcfields', '0');
+        Observer.Expect('not modified hasvalue', 'No');
+        Observer.Expect('not modified length', '0');
+        Observer.Expect('not modified text', '');
+        Observer.Verify();
     end;
 }
