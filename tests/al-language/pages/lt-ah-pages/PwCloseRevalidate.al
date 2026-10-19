@@ -193,7 +193,13 @@ codeunit 86157 "LT PW Close Revalidate"
         Observer.Observe('close', Outcome(TryCloseCard(P)));
         Observer.Observe('close log', Log.Take());
         Observer.Observe('stored', Stored());
-        Observer.Finish();
+        Observer.Expect('open log', '');
+        Observer.Expect('refused', 'TestValidation');
+        Observer.Expect('setvalue log', 'VG:bad;');
+        Observer.Expect('close', 'ok');
+        Observer.Expect('close log', '');
+        Observer.Expect('stored', 'R1=orig1/;R2=orig2/;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -213,7 +219,12 @@ codeunit 86157 "LT PW Close Revalidate"
         Observer.Observe('close', Outcome(TryCloseCard(P)));
         Observer.Observe('close log', Log.Take());
         Observer.Observe('stored', Stored());
-        Observer.Finish();
+        Observer.Expect('valid log', 'VT:new1;');
+        Observer.Expect('setvalue log', 'VG:bad;');
+        Observer.Expect('close', 'ok');
+        Observer.Expect('close log', '');
+        Observer.Expect('stored', 'R1=orig1/;R2=orig2/;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -232,7 +243,11 @@ codeunit 86157 "LT PW Close Revalidate"
         Observer.Observe('close', Outcome(TryCloseCard(P)));
         Observer.Observe('close log', Log.Take());
         Observer.Observe('stored', Stored());
-        Observer.Finish();
+        Observer.Expect('setvalue log', 'VG:bad;VG:bad;');
+        Observer.Expect('close', 'ok');
+        Observer.Expect('close log', '');
+        Observer.Expect('stored', 'R1=orig1/;R2=orig2/;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +267,11 @@ codeunit 86157 "LT PW Close Revalidate"
         Observer.Observe('close', Outcome(TryCloseList(P)));
         Observer.Observe('close log', Log.Take());
         Observer.Observe('stored', Stored());
-        Observer.Finish();
+        Observer.Expect('setvalue log', 'VT:new1;VG:bad;');
+        Observer.Expect('close', 'ok');
+        Observer.Expect('close log', '');
+        Observer.Expect('stored', 'R1=orig1/;R2=orig2/;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -275,7 +294,14 @@ codeunit 86157 "LT PW Close Revalidate"
         Observer.Observe('close', Outcome(TryCloseList(P)));
         Observer.Observe('close log', Log.Take());
         Observer.Observe('stored', Stored());
-        Observer.Finish();
+        Observer.Expect('setvalue log', 'VT:new1;VG:bad;');
+        Observer.Expect('next', 'ok');
+        Observer.Expect('next log', '');
+        Observer.Expect('stored after next', 'R1=orig1/;R2=orig2/;');
+        Observer.Expect('close', 'ok');
+        Observer.Expect('close log', '');
+        Observer.Expect('stored', 'R1=orig1/;R2=orig2/;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -297,6 +323,11 @@ codeunit 86157 "LT PW Close Revalidate"
         Observer.Observe('close', Outcome(TryCloseList(P)));
         Observer.Observe('close log', Log.Take());
         Observer.Observe('stored', Stored());
-        Observer.Finish();
+        Observer.Expect('new row log', 'I:N1;VT:newrow;');
+        Observer.Expect('setvalue log', 'VG:bad;');
+        Observer.Expect('close', 'ok');
+        Observer.Expect('close log', '');
+        Observer.Expect('stored', 'R1=orig1/;R2=orig2/;');
+        Observer.Verify();
     end;
 }
