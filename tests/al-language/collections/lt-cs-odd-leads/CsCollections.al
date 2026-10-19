@@ -189,15 +189,22 @@ codeunit 85180 "LT CS Collections"
     end;
 
     [Test]
-    procedure EnumNames_MutationsAndCopies()
+    procedure EnumNames_AssignAndCount()
     var
         Observer: Codeunit "Probe Observer";
         L: List of [Text];
-        R: List of [Text];
-        C: List of [Text];
-        O: List of [Integer];
-        Copy: List of [Integer];
-        S: Text;
+    begin
+        L := Enum::"LT ClT Color".Names();
+        Observer.Observe('count', Format(L.Count()));
+        Observer.Observe('get 3', L.Get(3));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure EnumNames_Mutations()
+    var
+        Observer: Codeunit "Probe Observer";
+        L: List of [Text];
     begin
         L := Enum::"LT ClT Color".Names();
         asserterror L.Reverse();
@@ -206,14 +213,47 @@ codeunit 85180 "LT CS Collections"
         Observer.ObserveError('names add');
         asserterror L.Set(1, 'x');
         Observer.ObserveError('names set');
-        R := L.GetRange(2, L.Count() - 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure EnumNames_GetRange()
+    var
+        Observer: Codeunit "Probe Observer";
+        L: List of [Text];
+        R: List of [Text];
+    begin
+        L := Enum::"LT ClT Color".Names();
+        asserterror R := L.GetRange(2, L.Count() - 1);
+        Observer.ObserveError('getrange');
         Observer.Observe('getrange count', Format(R.Count()));
-        R.Add('x');
-        Observer.Observe('getrange add', Format(R.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure EnumNames_LoopCopy()
+    var
+        Observer: Codeunit "Probe Observer";
+        L: List of [Text];
+        C: List of [Text];
+        S: Text;
+    begin
+        L := Enum::"LT ClT Color".Names();
         foreach S in L do
             C.Add(S);
         C.Reverse();
-        Observer.Observe('loop copy reversed', C.Get(1));
+        C.Add('x');
+        Observer.Observe('loop copy', C.Get(1) + ',' + Format(C.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure EnumOrdinals_GetRangeCopy()
+    var
+        Observer: Codeunit "Probe Observer";
+        O: List of [Integer];
+        Copy: List of [Integer];
+    begin
         O := Enum::"LT ClT Color".Ordinals();
         Copy := O.GetRange(1, O.Count());
         Copy.Reverse();
@@ -249,26 +289,55 @@ codeunit 85180 "LT CS Collections"
         Observer.Finish();
     end;
 
+    [TryFunction]
+    local procedure TryContains(L: List of [Dictionary of [Integer, Code[20]]]; D: Dictionary of [Integer, Code[20]]; var Result: Text)
+    begin
+        Result := Format(L.Contains(D));
+    end;
+
+    [TryFunction]
+    local procedure TryIndexOf(L: List of [Dictionary of [Integer, Code[20]]]; D: Dictionary of [Integer, Code[20]]; var Result: Text)
+    begin
+        Result := Format(L.IndexOf(D));
+    end;
+
+    [TryFunction]
+    local procedure TryRemove(L: List of [Dictionary of [Integer, Code[20]]]; D: Dictionary of [Integer, Code[20]]; var Result: Text)
+    begin
+        Result := Format(L.Remove(D));
+    end;
+
+    local procedure Outcome(Ok: Boolean; Result: Text): Text
+    begin
+        if Ok then
+            exit(Result);
+        exit('error: ' + GetLastErrorText() + ' code: ' + GetLastErrorCode());
+    end;
+
     [Test]
     procedure DictionaryList_ContainsAndIndexOf()
     var
         Observer: Codeunit "Probe Observer";
         L: List of [Dictionary of [Integer, Code[20]]];
         D: Dictionary of [Integer, Code[20]];
+        D2: Dictionary of [Integer, Code[20]];
         E: Dictionary of [Integer, Code[20]];
+        Same: Dictionary of [Integer, Code[20]];
+        R: Text;
     begin
         D.Add(1, 'A');
+        D2.Add(2, 'B');
+        Same.Add(1, 'A');
         L.Add(D);
-        asserterror Observer.Observe('contains same', Format(L.Contains(D)));
-        Observer.ObserveError('contains same');
-        asserterror Observer.Observe('indexof same', Format(L.IndexOf(D)));
-        Observer.ObserveError('indexof same');
-        asserterror Observer.Observe('contains other', Format(L.Contains(E)));
-        Observer.ObserveError('contains other');
-        asserterror Observer.Observe('lastindexof same', Format(L.LastIndexOf(D)));
-        Observer.ObserveError('lastindexof same');
-        asserterror L.Remove(D);
-        Observer.ObserveError('remove same');
+        L.Add(D2);
+        Observer.Observe('contains same', Outcome(TryContains(L, D, R), R));
+        Observer.Observe('contains second', Outcome(TryContains(L, D2, R), R));
+        Observer.Observe('indexof same', Outcome(TryIndexOf(L, D, R), R));
+        Observer.Observe('indexof second', Outcome(TryIndexOf(L, D2, R), R));
+        Observer.Observe('contains empty other', Outcome(TryContains(L, E, R), R));
+        Observer.Observe('indexof empty other', Outcome(TryIndexOf(L, E, R), R));
+        Observer.Observe('contains equal contents', Outcome(TryContains(L, Same, R), R));
+        Observer.Observe('remove second', Outcome(TryRemove(L, D2, R), R));
         Observer.Observe('count', Format(L.Count()));
         Observer.Finish();
     end;
@@ -417,8 +486,8 @@ codeunit 85180 "LT CS Collections"
         RR.Field(2).Value := 'changed';
         Observer.Observe('name after source change', Format(ListOfRecRefs.Get(1).Field(2).Value()));
         RR.Close();
-        asserterror Observer.Observe('number after source close', Format(ListOfRecRefs.Get(1).Number()));
-        Observer.ObserveError('after close');
+        Observer.Observe('isempty after source close', Format(ListOfRecRefs.Get(1).IsEmpty()));
+        Observer.Observe('number after source close', Format(ListOfRecRefs.Get(1).Number()));
         Observer.Finish();
     end;
 }
