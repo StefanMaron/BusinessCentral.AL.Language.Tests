@@ -1,7 +1,23 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-subscribing-to-events
 // Scope: in-scope
 // Fixtures used: ClEventObjects.al in this folder (84760-84785), Probe Observer (69160).
-// Facts: corpus issue 669 (odd AL behavior leads, part D), items 16 to 30 (writer CL). OBSERVE pass.
+// Probe: written against BC on the local 29.0 loop and the corpus CI legs; every literal asserted below is what BC produced.
+// Facts: corpus issue 669 (odd AL behavior leads, part D), items 16 to 30 (writer CL). Every test binds its own manual subscriber codeunit.
+//   - Table events of a temporary record: a subscriber with Rec by value sees IsTemporary = No and the rows of the real table; one with
+//     Rec by value declared temporary sees IsTemporary = Yes and an empty table; one with var Rec sees the temporary rows.
+//   - A subscriber that declares var R ... temporary for a var Record parameter compiles and runs for a real record (IsTemporary = No, its
+//     assignment reaches the caller). A parameter named Finalize and one named ParamWithäöü bind and carry values.
+//   - A codeunit passed by value through an event shares the instance (SetValue in the subscriber reaches the caller); Clear on the by-value
+//     parameter detaches it. A SingleInstance codeunit is always the same instance.
+//   - Assignments to Rec in OnAfterInsert/OnAfterModify (subscriber or table extension trigger) reach the caller's variable, not the stored row.
+//     Rec.Modify() inside OnAfterModifyEvent raises the event again (RunTrigger No).
+//   - GlobalTriggerManagement: OnAfterOnDatabaseInsert/Modify run only for a table registered in OnAfterGetDatabaseTableTriggerSetup, for
+//     Insert/Modify with and without RunTrigger; OnAfterOnGlobalInsert/Modify do not run for writes from code, mask or not.
+//   - CurrFieldNo is 0 for code-driven Validate, Insert and Modify; on a TestPage it is the field number in the field's own OnValidate (also a
+//     table extension field) and in the validate event parameter, 0 in OnInsert/OnModify and their table extension triggers.
+//   - Order on TestPage open: page trigger, page extension A, page extension B, then the page event subscriber, for each trigger.
+//   - A page event subscriber with Rec or Handled without var: the assignment does not reach the page. Action subscribers bind
+//     the action name in any letter case. The Event Subscription rows of these subscribers are Active with no Error Information.
 // BC versions: 27, 28, 29
 
 codeunit 84790 "LT CL Event Leads"
@@ -47,7 +63,11 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('realInsertTrue', Log.Take());
         UnbindSubscription(Subs);
         Real.DeleteAll();
-        O.Finish();
+        O.Expect('tempInsertFalse', 'ins.byValue temp=No count=3 id=2;ins.temporary temp=Yes count=0 id=2;ins.var temp=Yes count=2 id=2;');
+        O.Expect('tempInsertTrue', 'ins.byValue temp=No count=3 id=3;ins.temporary temp=Yes count=0 id=3;ins.var temp=Yes count=3 id=3;');
+        O.Expect('tempDeleteTrue', 'del.byValue temp=No count=3 id=2;del.var temp=Yes count=2 id=2;');
+        O.Expect('realInsertTrue', 'ins.byValue temp=No count=4 id=103;ins.temporary temp=Yes count=0 id=103;ins.var temp=No count=4 id=103;');
+        O.Verify();
     end;
 
     // Item 19: a subscriber parameter named Finalize (a C# method name; microsoft/AL issue 5077 saw ErrorParameterMismatch).
@@ -62,7 +82,9 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('true', Format(Pub.RaiseFinalize(true)));
         O.Observe('false', Format(Pub.RaiseFinalize(false)));
         UnbindSubscription(Subs);
-        O.Finish();
+        O.Expect('true', '11');
+        O.Expect('false', '10');
+        O.Verify();
     end;
 
     // Item 19: the publisher passes var R: Record (a real record, then a temporary one); the subscriber declares var R: Record ... temporary.
@@ -98,7 +120,11 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('tempLog', Log.Take());
         UnbindSubscription(Subs);
         Real.DeleteAll();
-        O.Finish();
+        O.Expect('real', 'ok name=fromSub');
+        O.Expect('realLog', 'tempParam temp=No count=2 id=101;');
+        O.Expect('temp', 'ok name=fromSub');
+        O.Expect('tempLog', 'tempParam temp=Yes count=1 id=1;');
+        O.Verify();
     end;
 
     [TryFunction]
@@ -121,7 +147,9 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('result', Format(Pub.RaiseUmlaut(3)));
         O.Observe('log', Log.Take());
         UnbindSubscription(Subs);
-        O.Finish();
+        O.Expect('result', '8');
+        O.Expect('log', 'umlaut in=3;');
+        O.Verify();
     end;
 
     // Item 21: a codeunit (not SingleInstance) passed by value to a by-value subscriber; the subscriber calls SetValue(7).
@@ -141,7 +169,9 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('callerValue', Format(H.Get()));
         O.Observe('log', Log.Take());
         UnbindSubscription(Subs);
-        O.Finish();
+        O.Expect('callerValue', '7');
+        O.Expect('log', 'cuByValue in=1;');
+        O.Verify();
     end;
 
     // Item 21: the same; the subscriber first calls Clear on its parameter, then SetValue(7).
@@ -162,7 +192,9 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('log', Log.Take());
         UnbindSubscription(Subs);
         Log.SetMode('');
-        O.Finish();
+        O.Expect('callerValue', '1');
+        O.Expect('log', 'cuByValue in=1;');
+        O.Verify();
     end;
 
     // Item 21: var publisher and var subscriber; SetValue(8), and Clear then SetValue(8).
@@ -187,7 +219,10 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('log', Log.Take());
         UnbindSubscription(Subs);
         Log.SetMode('');
-        O.Finish();
+        O.Expect('callerValue', '8');
+        O.Expect('callerValueAfterClear', '8');
+        O.Expect('log', 'cuByVar in=1;cuByVar in=2;');
+        O.Verify();
     end;
 
     // Item 21: a SingleInstance codeunit passed by value; SetValue(9), and Clear then SetValue(9).
@@ -213,7 +248,10 @@ codeunit 84790 "LT CL Event Leads"
         UnbindSubscription(Subs);
         Log.SetMode('');
         H.SetValue(0);
-        O.Finish();
+        O.Expect('callerValue', '9');
+        O.Expect('callerValueAfterClear', '9');
+        O.Expect('log', 'siByValue in=1;siByValue in=2;');
+        O.Verify();
     end;
 
     // Item 22: an OnAfterInsertEvent / OnAfterModifyEvent subscriber assigns Name without Modify.
@@ -242,7 +280,11 @@ codeunit 84790 "LT CL Event Leads"
         UnbindSubscription(Subs);
         Log.SetMode('');
         R.DeleteAll();
-        O.Finish();
+        O.Expect('insert.caller', 'subAfterInsert');
+        O.Expect('insert.stored', 'caller');
+        O.Expect('modify.caller', 'subAfterModify');
+        O.Expect('modify.stored', 'callerModify');
+        O.Verify();
     end;
 
     // Item 22: the table extension OnAfterInsert / OnAfterModify triggers assign Note without Modify.
@@ -273,7 +315,13 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('modifyFalse.stored', Stored.Note);
         Log.SetMode('');
         R.DeleteAll();
-        O.Finish();
+        O.Expect('insert.caller', 'extAfterInsert');
+        O.Expect('insert.stored', '');
+        O.Expect('modify.caller', 'extAfterModify');
+        O.Expect('modify.stored', 'callerModify');
+        O.Expect('modifyFalse.caller', 'x');
+        O.Expect('modifyFalse.stored', 'x');
+        O.Verify();
     end;
 
     // Item 22: Rec.Modify() inside an OnAfterModifyEvent subscriber (the subscriber stops itself at depth 3).
@@ -300,7 +348,10 @@ codeunit 84790 "LT CL Event Leads"
         UnbindSubscription(Subs);
         Log.SetMode('');
         R.DeleteAll();
-        O.Finish();
+        O.Expect('log', 'afterModify depth=1 run=Yes;afterModify depth=2 run=No;afterModify depth=3 run=No;');
+        O.Expect('caller', 'depth2');
+        O.Expect('stored', 'depth2');
+        O.Verify();
     end;
 
     // Item 23: GlobalTriggerManagement OnAfterOnDatabaseInsert/Modify and OnAfterOnGlobalInsert/Modify for a table registered through
@@ -343,7 +394,10 @@ codeunit 84790 "LT CL Event Leads"
         Reg.DeleteAll();
         Msk.DeleteAll();
         Non.DeleteAll();
-        O.Finish();
+        O.Expect('reg', 'dbInsert Reg 1;dbInsert Reg 2;dbModify Reg 2;dbModify Reg 2;');
+        O.Expect('mask', '');
+        O.Expect('none', '');
+        O.Verify();
     end;
 
     // Items 29 and 30: CurrFieldNo when code validates a table extension field and a base field, then inserts and modifies.
@@ -370,7 +424,10 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('modify', Log.Take());
         UnbindSubscription(Subs);
         R.DeleteAll();
-        O.Finish();
+        O.Expect('validate', 'E.validate cur=0 xE=0;B.validate cur=0 xB=0;sub.beforeQty param=0;Qty.validate cur=0;sub.afterQty param=0;');
+        O.Expect('insert', 'table.OnInsert cur=0;ext.OnInsert cur=0;ext.OnAfterInsert cur=0;sub.AfterInsert;');
+        O.Expect('modify', 'E.validate cur=0 xE=4;table.OnModify cur=0;ext.OnModify cur=0;ext.OnAfterModify cur=0;');
+        O.Verify();
     end;
 
     // Items 29 and 30: TestPage.OpenNew, SetValue Id, B and E, Close.
@@ -400,7 +457,13 @@ codeunit 84790 "LT CL Event Leads"
         UnbindSubscription(Subs);
         O.Observe('stored', Format(R.Get('N1')) + ' B=' + Format(R.B) + ' E=' + Format(R.E));
         R.DeleteAll();
-        O.Finish();
+        O.Expect('afterId', '');
+        O.Expect('afterB', 'table.OnInsert cur=0;ext.OnInsert cur=0;ext.OnAfterInsert cur=0;sub.AfterInsert;B.validate cur=2 xB=0;');
+        O.Expect('afterE', 'E.validate cur=84760 xE=0;');
+        O.Expect('afterQty', 'sub.beforeQty param=3;Qty.validate cur=3;sub.afterQty param=3;');
+        O.Expect('afterClose', 'table.OnModify cur=0;ext.OnModify cur=0;ext.OnAfterModify cur=0;');
+        O.Expect('stored', 'Yes B=2 E=3');
+        O.Verify();
     end;
 
     // Items 29 and 30: TestPage.OpenEdit on an existing record, SetValue B then E, Close.
@@ -432,7 +495,11 @@ codeunit 84790 "LT CL Event Leads"
         O.Observe('afterClose', Log.Take());
         UnbindSubscription(Subs);
         R.DeleteAll();
-        O.Finish();
+        O.Expect('afterB', 'B.validate cur=2 xB=1;');
+        O.Expect('afterE', 'E.validate cur=84760 xE=1;');
+        O.Expect('afterQty', 'sub.beforeQty param=3;Qty.validate cur=3;sub.afterQty param=3;');
+        O.Expect('afterClose', 'table.OnModify cur=0;ext.OnModify cur=0;ext.OnAfterModify cur=0;');
+        O.Verify();
     end;
 
     // Item 24: order of page triggers, two page extensions and page event subscribers when a TestPage opens a record.
@@ -456,10 +523,11 @@ codeunit 84790 "LT CL Event Leads"
         UnbindSubscription(Subs);
         Log.Take();
         R.DeleteAll();
-        O.Finish();
+        O.Expect('open', 'page.OnOpenPage;extA.OnOpenPage;extB.OnOpenPage;sub.OnOpenPageEvent;page.OnAfterGetRecord;extA.OnAfterGetRecord;extB.OnAfterGetRecord;sub.OnAfterGetRecordEvent;page.OnAfterGetCurrRecord;extA.OnAfterGetCurrRecord;extB.OnAfterGetCurrRecord;sub.OnAfterGetCurrRecordEvent;');
+        O.Verify();
     end;
 
-    // Item 17: OnOpenPageEvent subscriber that takes Rec without var and assigns Name.
+    // Item 17: an OnAfterGetCurrRecordEvent subscriber (Rec is passed var) that takes Rec without var and assigns Name.
     [Test]
     procedure PageEvent_RecWithoutVar_Assignment()
     var
@@ -531,7 +599,10 @@ codeunit 84790 "LT CL Event Leads"
         BindSubscription(SubsVar);
         O.Observe('var', P.RaiseHandled());
         UnbindSubscription(SubsVar);
-        O.Finish();
+        O.Expect('byValue', 'No');
+        O.Expect('log', 'handled in=No;');
+        O.Expect('var', 'Yes');
+        O.Verify();
     end;
 
     // Item 25: an action subscriber that names the action in lower case, and one with the exact name.
@@ -555,7 +626,8 @@ codeunit 84790 "LT CL Event Leads"
         Card.Close();
         UnbindSubscription(Subs);
         R.DeleteAll();
-        O.Finish();
+        O.Expect('log', 'before(lower case name);OnAction;after(exact name);');
+        O.Verify();
     end;
 
     // Items 19, 20 and 30: the Event Subscription rows of the subscriber codeunits 84776 and 84781 (Active and Error Information).
@@ -572,6 +644,7 @@ codeunit 84790 "LT CL Event Leads"
                 Rows += Format(Sub."Subscriber Codeunit ID") + ' ' + Sub."Subscriber Function" + ' -> ' + Sub."Published Function" + ' active=' + Format(Sub.Active) + ' error=' + Sub."Error Information" + ';';
             until Sub.Next() = 0;
         O.Observe('rows', Rows);
-        O.Finish();
+        O.Expect('rows', '84776 CuByValue -> OnCuByValue active=Yes error=;84776 CuByVar -> OnCuByVar active=Yes error=;84776 DelByValue -> OnAfterDeleteEvent active=Yes error=;84776 DelVar -> OnAfterDeleteEvent active=Yes error=;84776 Fin -> OnFinalize active=Yes error=;84776 InsByValue -> OnAfterInsertEvent active=Yes error=;84776 InsTemporary -> OnAfterInsertEvent active=Yes error=;84776 InsVar -> OnAfterInsertEvent active=Yes error=;84776 SiByValue -> OnSiByValue active=Yes error=;84776 TempParam -> OnTempParam active=Yes error=;84776 Umlaut -> OnUmlaut active=Yes error=;84781 AfterInsert -> OnAfterInsertEvent active=Yes error=;84781 AfterValidateQty -> OnAfterValidateEvent - Qty active=Yes error=;84781 BeforeValidateQty -> OnBeforeValidateEvent - Qty active=Yes error=;');
+        O.Verify();
     end;
 }

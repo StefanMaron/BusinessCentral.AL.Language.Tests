@@ -696,29 +696,7 @@ codeunit 84781 "LT CL CFN Subs"
 {
     EventSubscriberInstance = Manual;
 
-    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterValidateEvent', 'B', false, false)]
-    local procedure AfterValidateB(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
-    var
-        L: Codeunit "LT CL Log";
-    begin
-        L.Add('sub.B param=' + Format(CurrFieldNo));
-    end;
 
-    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterValidateEvent', 'B', false, false)]
-    local procedure AfterValidateBNoCurrFieldNo(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row")
-    var
-        L: Codeunit "LT CL Log";
-    begin
-        L.Add('sub.B(no CurrFieldNo)');
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnBeforeValidateEvent', 'B', false, false)]
-    local procedure BeforeValidateB(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
-    var
-        L: Codeunit "LT CL Log";
-    begin
-        L.Add('sub.beforeB param=' + Format(CurrFieldNo));
-    end;
 
     [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnBeforeValidateEvent', 'Qty', false, false)]
     local procedure BeforeValidateQty(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
@@ -788,8 +766,8 @@ codeunit 84783 "LT CL PE Subs"
 {
     EventSubscriberInstance = Manual;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT CL PE Card", 'OnOpenPageEvent', '', false, false)]
-    local procedure OpenPageByValue(Rec: Record "LT CL Row")
+    [EventSubscriber(ObjectType::Page, Page::"LT CL PE Card", 'OnAfterGetCurrRecordEvent', '', false, false)]
+    local procedure AfterGetCurrRecordByValue(Rec: Record "LT CL Row")
     var
         L: Codeunit "LT CL Log";
     begin
@@ -812,8 +790,8 @@ codeunit 84784 "LT CL PE Subs Var"
 {
     EventSubscriberInstance = Manual;
 
-    [EventSubscriber(ObjectType::Page, Page::"LT CL PE Card", 'OnOpenPageEvent', '', false, false)]
-    local procedure OpenPageVar(var Rec: Record "LT CL Row")
+    [EventSubscriber(ObjectType::Page, Page::"LT CL PE Card", 'OnAfterGetCurrRecordEvent', '', false, false)]
+    local procedure AfterGetCurrRecordVar(var Rec: Record "LT CL Row")
     var
         L: Codeunit "LT CL Log";
     begin
@@ -847,5 +825,37 @@ codeunit 84785 "LT CL Act Subs"
         L: Codeunit "LT CL Log";
     begin
         L.Add('after(exact name)');
+    end;
+}
+
+// Not bound by any test: validate subscribers on the one-letter field B. On the Linux BC container their Event Subscription rows show
+// "OnAfterValidateEvent - 66" / "OnBeforeValidateEvent - 66" (66 is the character code of B), Active = No, Error Information = ErrorFieldNotFound,
+// and they never run. Queued for the Windows check (windows-queue.md, writer CL) before it is pinned.
+codeunit 84786 "LT CL One Letter Subs"
+{
+    EventSubscriberInstance = Manual;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterValidateEvent', 'B', false, false)]
+    local procedure AfterValidateB(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.B param=' + Format(CurrFieldNo));
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnAfterValidateEvent', 'B', false, false)]
+    local procedure AfterValidateBNoCurrFieldNo(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row")
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.B(no CurrFieldNo)');
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT CL CFN Row", 'OnBeforeValidateEvent', 'B', false, false)]
+    local procedure BeforeValidateB(var Rec: Record "LT CL CFN Row"; var xRec: Record "LT CL CFN Row"; CurrFieldNo: Integer)
+    var
+        L: Codeunit "LT CL Log";
+    begin
+        L.Add('sub.beforeB param=' + Format(CurrFieldNo));
     end;
 }
