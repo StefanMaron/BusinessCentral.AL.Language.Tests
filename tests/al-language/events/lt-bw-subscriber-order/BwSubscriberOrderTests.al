@@ -22,6 +22,16 @@
 //   Predictions: ascending id PQRST; descending id TSRQP; descending name, ordinal QTPRS; descending name ignoring case TPRQS;
 //   descending name with namespace S first; ascending name ignoring case SQRPT; file order QSRPT.
 // Q3: a subscriber of cross-app fixture A to Company Triggers counts its calls per session; A's and this app's install routines log the count.
+// Observed on BC 27.5, 28.5 and 29.0 (same on every leg and on a second raise):
+//   Q2: A1 A2 B1 B2 C1 C2 P Q R S T = apps in dependency/publish order (A B C M), ascending codeunit id inside each app.
+//     Not told apart by this setup: dependency order vs publish order (CI publishes in dependency order), and apps ordered by
+//     their lowest subscriber codeunit id (A 61105 < B 61115 < C 61125 < M 83960).
+//   Q1: P Q R S T = ascending codeunit id, for an event of this app and for the event of app A.
+//   Q3: each app's install routines run in one session that is not the test session; app A's install and this app's install run in
+//     different sessions. Each app runs OnInstallAppPerCompany for every company (the current company, then 'My Company') before
+//     OnInstallAppPerDatabase. App A's Company Triggers subscribers (OnCompanyOpen + OnCompanyOpenCompleted) ran twice before each
+//     per-company install row (the SingleInstance counter starts again per company) and not before the per-database rows
+//     (company name empty there), in app A's own install and in this app's install.
 // Install rows are written when the apps are installed (CI publish), so Initialize deletes nothing here.
 // Fixtures: BwOrderFixtures.al, a-order/, b-order/, c-order/, tests/al-language-xapp-a|b|c. Probe Observer (69160).
 // BC versions: 27 - 29
@@ -42,7 +52,9 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Initialize();
         Observer.Observe('order', Publisher.Raise());
         Observer.Observe('order again', Publisher.Raise());
-        Observer.Finish();
+        Observer.Expect('order', 'A1;A2;B1;B2;C1;C2;P;Q;R;S;T;');
+        Observer.Expect('order again', 'A1;A2;B1;B2;C1;C2;P;Q;R;S;T;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -53,7 +65,9 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Initialize();
         Observer.Observe('order', Publisher.Raise());
         Observer.Observe('order again', Publisher.Raise());
-        Observer.Finish();
+        Observer.Expect('order', 'P;Q;R;S;T;');
+        Observer.Expect('order again', 'P;Q;R;S;T;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -85,7 +99,13 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Observer.Observe('contexts', Contexts);
         Observer.Observe('one session', Format(OneSession));
         Observer.Observe('session is the test session', Format(FirstSession = SessionId()));
-        Observer.Finish();
+        Observer.Expect('rows', '15');
+        Observer.Expect('order', 'P@company|<Company>;Q@company|<Company>;R@company|<Company>;S@company|<Company>;T@company|<Company>;P@company|My Company;Q@company|My Company;R@company|My Company;S@company|My Company;T@company|My Company;P@database|;Q@database|;R@database|;S@database|;T@database|;');
+        Observer.Expect('A company open calls', 'P=2;Q=2;R=2;S=2;T=2;P=2;Q=2;R=2;S=2;T=2;P=0;Q=0;R=0;S=0;T=0;');
+        Observer.Expect('contexts', 'Install;Install;Install;Install;Install;Install;Install;Install;Install;Install;Install;Install;Install;Install;Install;');
+        Observer.Expect('one session', 'Yes');
+        Observer.Expect('session is the test session', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -113,7 +133,11 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Observer.Observe('one session', Format(OneSession));
         if MainRow.FindFirst() then
             Observer.Observe('same session as the install of this app', Format(MainRow."Session Id" = FirstSession));
-        Observer.Finish();
+        Observer.Expect('rows', '6');
+        Observer.Expect('order', 'A1|<Company>|calls=2|Install;A2|<Company>|calls=2|Install;A1|My Company|calls=2|Install;A2|My Company|calls=2|Install;A1||calls=0|Install;A2||calls=0|Install;');
+        Observer.Expect('one session', 'Yes');
+        Observer.Expect('same session as the install of this app', 'No');
+        Observer.Verify();
     end;
 
     local procedure Initialize()

@@ -35,7 +35,11 @@ codeunit 83951 "LT BW Cross App Tests"
         Observer.Observe('BwSame from app B', Base.BwCallSameFromB());
         Observer.Observe('BwOverload Integer', Base.BwOverload(5));
         Observer.Observe('BwOverload Text', Base.BwOverload('x'));
-        Observer.Finish();
+        Observer.Expect('BwSame from app A', 'table of app A');
+        Observer.Expect('BwSame from app B', 'extension of app B');
+        Observer.Expect('BwOverload Integer', 'table of app A, Integer 5');
+        Observer.Expect('BwOverload Text', 'extension of app B, Text x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -67,7 +71,11 @@ codeunit 83951 "LT BW Cross App Tests"
         Observer.Observe('flowfield count note n1', Format(Counts."Note Filter Count"));
         Base.SetRange("BW XB Kind", Base."BW XB Kind"::Second);
         Observer.Observe('SetRange count Second', Format(Base.Count()));
-        Observer.Finish();
+        Observer.Expect('page rows', 'K2;K3;');
+        Observer.Expect('flowfield count Second', '2');
+        Observer.Expect('flowfield count note n1', '2');
+        Observer.Expect('SetRange count Second', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +109,16 @@ codeunit 83951 "LT BW Cross App Tests"
         Observer.Observe('new OLD has value', Format(Fresh."BW XB Blob".HasValue()));
         Observer.Observe('new OLD blob', BlobText(Fresh));
         Observer.Observe('rows', Format(Fresh.Count()));
-        Observer.Finish();
+        Observer.Expect('blob in variable after rename', '<none>');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('NEW has value', 'Yes');
+        Observer.Expect('NEW blob', 'blob of OLD');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('insert OLD again', 'Yes');
+        Observer.Expect('new OLD has value', 'No');
+        Observer.Expect('new OLD blob', '<none>');
+        Observer.Expect('rows', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,7 +143,13 @@ codeunit 83951 "LT BW Cross App Tests"
         Fresh.Get('OLD');
         Observer.Observe('new OLD text', Fresh."BW XB Text");
         Observer.Observe('rows', Format(Fresh.Count()));
-        Observer.Finish();
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('NEW text', 'text of OLD');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('insert OLD again', 'Yes');
+        Observer.Expect('new OLD text', '');
+        Observer.Expect('rows', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -144,7 +167,10 @@ codeunit 83951 "LT BW Cross App Tests"
         Observer.Observe('C marker', Card.BwXcMarker.Value());
         Observer.Observe('blah filter', Card.BlahFilterText.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('No.', 'M1');
+        Observer.Expect('C marker', 'extension of app C');
+        Observer.Expect('blah filter', 'No.: BW-BLAH');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,7 +180,8 @@ codeunit 83951 "LT BW Cross App Tests"
     begin
         Initialize();
         Observer.Observe('log', Publisher.Raise());
-        Observer.Finish();
+        Observer.Expect('log', 'B local;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -173,7 +200,10 @@ codeunit 83951 "LT BW Cross App Tests"
         Fresh.Get('F1');
         Observer.Observe('B note after validate in M', Fresh."BW XB Note");
         Observer.Observe('M copy', Fresh."BW M Copy");
-        Observer.Finish();
+        Observer.Expect('copy', 'note of B');
+        Observer.Expect('B note after validate in M', 'from M: abc');
+        Observer.Expect('M copy', 'abc');
+        Observer.Verify();
     end;
 
     local procedure AddBase(No: Code[20]; Kind: Integer; Note: Text[30])
