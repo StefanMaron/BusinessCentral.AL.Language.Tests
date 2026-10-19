@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-creating-handler-methods
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); LT CB Row / Log / Card / Dialog (CbFixtures.al)
+// Fixtures used: Probe Observer (codeunit 69160); LT CB Row / Hnd Log / Hnd Card / Hnd Dialog (CbFixtures.al)
 // Probe: corpus issue #667 items 17 to 23 (handlers and UI): FilterPageBuilder.RunModal without a handler; a handler and a plain procedure
 //        of the same name; a second Message, Confirm and StrMenu in one test; Message while a Dialog is open; TestPage.Close() inside a
 //        ModalPageHandler; a RunObject action to a StandardDialog with RunPageLink, RunPageView and RunPageMode; a trapped TestPage whose
@@ -14,7 +14,7 @@ codeunit 84168 "LT CB Handler Tests"
     TestPermissions = Disabled;
 
     var
-        Log: Codeunit "LT CB Log";
+        Log: Codeunit "LT CB Hnd Log";
 
     local procedure Seed()
     var
@@ -71,7 +71,7 @@ codeunit 84168 "LT CB Handler Tests"
     begin
         Seed();
         PickHandler(7);
-        Observer.Observe('result', Format(Page.RunModal(Page::"LT CB Dialog")));
+        Observer.Observe('result', Format(Page.RunModal(Page::"LT CB Hnd Dialog")));
         Observer.Observe('log', Log.Take());
         Observer.Expect('result', 'LookupOK');
         Observer.Expect('log', 'plain PickHandler 7;dialog OnOpenPage filters=[] editable=Yes;handler PickHandler;');
@@ -79,7 +79,7 @@ codeunit 84168 "LT CB Handler Tests"
     end;
 
     [ModalPageHandler]
-    procedure PickHandler(var Pg: TestPage "LT CB Dialog")
+    procedure PickHandler(var Pg: TestPage "LT CB Hnd Dialog")
     begin
         Log.Add('handler PickHandler');
         Pg.OK().Invoke();
@@ -171,9 +171,9 @@ codeunit 84168 "LT CB Handler Tests"
     begin
         if WithRecord then begin
             Row.Get('R1');
-            Result := Format(Page.RunModal(Page::"LT CB Dialog", Row));
+            Result := Format(Page.RunModal(Page::"LT CB Hnd Dialog", Row));
         end else
-            Result := Format(Page.RunModal(Page::"LT CB Dialog"));
+            Result := Format(Page.RunModal(Page::"LT CB Hnd Dialog"));
     end;
 
     [Test]
@@ -195,18 +195,18 @@ codeunit 84168 "LT CB Handler Tests"
         Observer.Observe('log', Log.Take());
         Observer.Expect('norec_ok', 'No');
         Observer.Expect('norec_result', '');
-        Observer.Expect('norec|text', 'The RunModal procedure could not close the page 84164 as it has already been closed.');
+        Observer.Expect('norec|text', 'The RunModal procedure could not close the page 84172 as it has already been closed.');
         Observer.Expect('norec|code', 'TestCodeUnit');
         Observer.Expect('rec_ok', 'No');
         Observer.Expect('rec_result', '');
-        Observer.Expect('rec|text', 'The RunModal procedure could not close the page 84164 as it has already been closed.');
+        Observer.Expect('rec|text', 'The RunModal procedure could not close the page 84172 as it has already been closed.');
         Observer.Expect('rec|code', 'TestCodeUnit');
         Observer.Expect('log', 'dialog OnOpenPage filters=[] editable=Yes;handler no=R1;handler after Close;dialog OnOpenPage filters=[] editable=Yes;handler no=R1;handler after Close;');
         Observer.Verify();
     end;
 
     [ModalPageHandler]
-    procedure CloseHandler(var Pg: TestPage "LT CB Dialog")
+    procedure CloseHandler(var Pg: TestPage "LT CB Hnd Dialog")
     begin
         Log.Add('handler no=' + Pg.NoCtl.Value());
         Pg.Close();
@@ -220,7 +220,7 @@ codeunit 84168 "LT CB Handler Tests"
     procedure RunObjectAction_StandardDialog_LinkViewMode()
     var
         Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT CB Card";
+        Card: TestPage "LT CB Hnd Card";
     begin
         Seed();
         Card.OpenEdit();
@@ -239,7 +239,7 @@ codeunit 84168 "LT CB Handler Tests"
     end;
 
     [ModalPageHandler]
-    procedure LinkedDialogHandler(var Pg: TestPage "LT CB Dialog")
+    procedure LinkedDialogHandler(var Pg: TestPage "LT CB Hnd Dialog")
     var
         Rows: Text;
     begin
@@ -254,13 +254,13 @@ codeunit 84168 "LT CB Handler Tests"
     // ---------- item 23: a trapped TestPage whose action opens a modal page ----------
 
     [TryFunction]
-    local procedure TryReadName(var Card: TestPage "LT CB Card"; var Value: Text)
+    local procedure TryReadName(var Card: TestPage "LT CB Hnd Card"; var Value: Text)
     begin
         Value := Card.NameCtl.Value();
     end;
 
     [TryFunction]
-    local procedure TryCloseCard(var Card: TestPage "LT CB Card")
+    local procedure TryCloseCard(var Card: TestPage "LT CB Hnd Card")
     begin
         Card.Close();
     end;
@@ -271,13 +271,13 @@ codeunit 84168 "LT CB Handler Tests"
     var
         Observer: Codeunit "Probe Observer";
         Row: Record "LT CB Row";
-        Card: TestPage "LT CB Card";
+        Card: TestPage "LT CB Hnd Card";
         Value: Text;
     begin
         Seed();
         Row.Get('R1');
         Card.Trap();
-        Page.Run(Page::"LT CB Card", Row);
+        Page.Run(Page::"LT CB Hnd Card", Row);
         Log.Take();
         Card.OpenDialogModal.Invoke();
         Observer.Observe('action_log', Log.Take());
@@ -299,7 +299,7 @@ codeunit 84168 "LT CB Handler Tests"
     end;
 
     [ModalPageHandler]
-    procedure OkDialogHandler(var Pg: TestPage "LT CB Dialog")
+    procedure OkDialogHandler(var Pg: TestPage "LT CB Hnd Dialog")
     begin
         Log.Add('handler no=' + Pg.NoCtl.Value());
         Pg.OK().Invoke();
