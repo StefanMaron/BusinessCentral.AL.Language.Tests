@@ -122,7 +122,8 @@ codeunit 81955 "LT BM Builtin Names"
         Observer.Expect('note_after_modify', 'own Modify');
         Observer.Expect('stored_note_after_modify', 'caller');
         Observer.Expect('modify_false_result', 'No');
-        Observer.Expect('note_after_modify_false', 'own Modify(Bo');
+        Observer.Expect('note_after_modify_false', 'own Modify(Boolean)');
+        Observer.Expect('stored_note_after_modify_false', 'caller');
         Observer.Verify();
     end;
 

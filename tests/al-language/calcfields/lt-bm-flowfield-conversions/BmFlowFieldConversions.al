@@ -2,8 +2,10 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160)
 // Corpus #664 items 8 and 10 (the runtime half; compile results from AL 30 beta, runtime 16.1 to 18.0):
-// - item 8: a CalcFormula filter Integer field = field(BigInteger) gives warning AL0662 ("may overflow at runtime"); a filter
-//   BigInteger field = field(Integer) gives none. This records CalcFields when the BigInteger value is above 2147483647.
+// - item 8: a CalcFormula filter Integer field = field(BigInteger) gives warning AL0662 ("may overflow at runtime") with AL 30; a
+//   filter BigInteger field = field(Integer) gives none. Publishing to BC 27.5 and 28.5 fails on that field: the server's compile gives
+//   error AL0204 "Field type Integer is not convertible to field type BigInteger." (CI run 39242281578), so the field and its checks
+//   are BC 29 only. This records CalcFields on BC 29 when the BigInteger value is above 2147483647.
 // - item 10: a Lookup FlowField Text[10] over a Text[30] source gives warning AL0685 ("could result in a runtime error"). This records
 //   CalcFields when the source value is longer than 10 characters.
 // BC versions: 29 (27 and 28 by CI)
@@ -33,11 +35,13 @@ table 81958 "LT BM FF Host"
     {
         field(1; Id; Integer) { }
         field(2; Big; BigInteger) { }
+#if BC29PLUS
         field(3; "Count Int By Big"; Integer)
         {
             FieldClass = FlowField;
             CalcFormula = count("LT BM FF Source" where(Int = field(Big)));
         }
+#endif
         field(4; "Count Big By Id"; Integer)
         {
             FieldClass = FlowField;
@@ -88,6 +92,7 @@ codeunit 81959 "LT BM FlowField Conversions"
         Src.Insert();
     end;
 
+#if BC29PLUS
     local procedure CountIntByBig(Big: BigInteger): Text
     var
         Host: Record "LT BM FF Host";
@@ -99,6 +104,7 @@ codeunit 81959 "LT BM FlowField Conversions"
             exit(Format(Host."Count Int By Big"));
         exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
     end;
+#endif
 
     local procedure Lookup(HostId: Integer; FieldNo: Integer): Text
     var
@@ -118,8 +124,10 @@ codeunit 81959 "LT BM FlowField Conversions"
     local procedure TryCalc(var Host: Record "LT BM FF Host"; FieldNo: Integer)
     begin
         case FieldNo of
+#if BC29PLUS
             3:
                 Host.CalcFields("Count Int By Big");
+#endif
             4:
                 Host.CalcFields("Count Big By Id");
             5:
@@ -136,24 +144,28 @@ codeunit 81959 "LT BM FlowField Conversions"
         Host: Record "LT BM FF Host";
     begin
         Seed();
+#if BC29PLUS
         Observer.Observe('big_5', CountIntByBig(5));
         Observer.Observe('big_minus_1', CountIntByBig(-1));
         Observer.Observe('big_int_max', CountIntByBig(2147483647));
         Observer.Observe('big_3e9', CountIntByBig(BigOf(3000, 0)));
         Observer.Observe('big_2pow32_plus_5', CountIntByBig(BigOf(4294, 967301)));
         Observer.Observe('big_2pow32_minus_1', CountIntByBig(BigOf(4294, 967295)));
+#endif
         Host.Id := 3000000;
         Host.CalcFields("Count Big By Id");
         Observer.Observe('count_big_by_id_none', Format(Host."Count Big By Id"));
         Host.Id := 1;
         Host.CalcFields("Count Big By Id");
         Observer.Observe('count_big_by_id_1', Format(Host."Count Big By Id"));
+#if BC29PLUS
         Observer.Expect('big_5', '2');
         Observer.Expect('big_minus_1', '1');
         Observer.Expect('big_int_max', '0');
         Observer.Expect('big_3e9', 'error|Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast');
         Observer.Expect('big_2pow32_plus_5', 'error|Overflow under conversion of System.Int64 value 4294967301 to System.Int32.|ConversionCast');
         Observer.Expect('big_2pow32_minus_1', 'error|Overflow under conversion of System.Int64 value 4294967295 to System.Int32.|ConversionCast');
+#endif
         Observer.Expect('count_big_by_id_none', '0');
         Observer.Expect('count_big_by_id_1', '1');
         Observer.Verify();

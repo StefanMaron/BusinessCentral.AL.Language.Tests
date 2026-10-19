@@ -272,7 +272,13 @@ codeunit 72697 "LT P107 RecRef Names"
         Observer.Observe('table_name_text', TryOpenVariant(V));
         V := 0;
         Observer.Observe('zero', TryOpenVariant(V));
-        Observer.Finish();
+        Observer.Expect('integer', 'ok|No|72694|LT P107 Rec');
+        Observer.Expect('biginteger', 'ok|No|72694|LT P107 Rec');
+        Observer.Expect('numeric_text', 'ok|No|72694|LT P107 Rec');
+        Observer.Expect('table_name_text', 'error|before open|The expression Variant cannot be type-converted to a Integer value.|TypeConversion:Format');
+        // Open(0) raises no error, but the RecordRef is not open afterwards: Number() raises the error.
+        Observer.Expect('zero', 'error|opened|The record is not open.|RecordNotOpened');
+        Observer.Verify();
     end;
 
     local procedure TryOpenVariant(V: Variant): Text
