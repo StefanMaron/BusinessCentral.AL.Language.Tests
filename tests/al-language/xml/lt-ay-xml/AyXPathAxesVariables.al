@@ -69,7 +69,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'ancestor', 'ancestor::*');
         Q(Observer, B, 'ancestor_or_self', 'ancestor-or-self::*');
-        Observer.Finish();
+        Observer.Expect('ancestor', 'Yes 2:r,a,');
+        Observer.Expect('ancestor_or_self', 'Yes 3:r,a,b,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -82,7 +84,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'descendant', 'descendant::*');
         Q(Observer, B, 'descendant_or_self', 'descendant-or-self::*');
-        Observer.Finish();
+        Observer.Expect('descendant', 'Yes 2:c,d,');
+        Observer.Expect('descendant_or_self', 'Yes 3:b,c,d,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -95,7 +99,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'following', 'following::*');
         Q(Observer, B, 'following_sibling', 'following-sibling::*');
-        Observer.Finish();
+        Observer.Expect('following', 'Yes 3:e,f,g,');
+        Observer.Expect('following_sibling', 'Yes 1:e,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +114,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'preceding_of_g', '//g/preceding::*');
         Q(Observer, B, 'preceding_sibling_of_e', '//e/preceding-sibling::*');
-        Observer.Finish();
+        Observer.Expect('preceding_of_g', 'Yes 5:a,b,c,d,e,');
+        Observer.Expect('preceding_sibling_of_e', 'Yes 1:b,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -121,7 +129,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'parent', 'parent::*');
         Q(Observer, B, 'self', 'self::b');
-        Observer.Finish();
+        Observer.Expect('parent', 'Yes 1:a,');
+        Observer.Expect('self', 'Yes 1:b,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +144,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'self_other', 'self::a');
         Q(Observer, B, 'attribute', 'attribute::*');
-        Observer.Finish();
+        Observer.Expect('self_other', 'Yes 0:');
+        Observer.Expect('attribute', 'Yes 1:@id,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -147,7 +159,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'child', 'child::*');
         Q(Observer, B, 'namespace', 'namespace::*');
-        Observer.Finish();
+        Observer.Expect('child', 'Yes 2:c,d,');
+        Observer.Expect('namespace', 'Yes 2:@xmlns:p,@xmlns:xml,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,7 +174,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, B, 'ancestor_pos', 'ancestor::*[1]');
         Q(Observer, B, 'preceding_pos', '//g/preceding::*[1]');
-        Observer.Finish();
+        Observer.Expect('ancestor_pos', 'Yes 1:a,');
+        Observer.Expect('preceding_pos', 'Yes 1:e,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -172,7 +188,8 @@ codeunit 80503 "LT AY XPath Axes Variables"
     begin
         Load(Root, B);
         Q(Observer, B, 'unknown_axis', 'sideways::*');
-        Observer.Finish();
+        Observer.Expect('unknown_axis', 'No 0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +202,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, Root, 'var_alone', '$v');
         Q(Observer, Root, 'var_in_predicate', '//*[@id=$v]');
-        Observer.Finish();
+        Observer.Expect('var_alone', 'No 0:');
+        Observer.Expect('var_in_predicate', 'No 0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +217,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, Root, 'var_in_function', '//*[contains(@id, $v)]');
         Q(Observer, Root, 'var_dollar_only', '//*[@id=$]');
-        Observer.Finish();
+        Observer.Expect('var_in_function', 'No 0:');
+        Observer.Expect('var_dollar_only', 'No 0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -211,7 +232,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, Root, 'unclosed_in_predicate', '//*[contains(@id, ''1'']');
         Q(Observer, Root, 'unclosed_nested', '//*[not(contains(@id, ''1'')]');
-        Observer.Finish();
+        Observer.Expect('unclosed_in_predicate', 'No 0:');
+        Observer.Expect('unclosed_nested', 'No 0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -224,7 +247,9 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Load(Root, B);
         Q(Observer, Root, 'unclosed_at_end', '//*[last(]');
         Q(Observer, Root, 'unclosed_path_end', '//a/text(');
-        Observer.Finish();
+        Observer.Expect('unclosed_at_end', 'No 0:');
+        Observer.Expect('unclosed_path_end', 'No 0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -236,6 +261,7 @@ codeunit 80503 "LT AY XPath Axes Variables"
     begin
         Load(Root, B);
         Q(Observer, Root, 'unclosed_name', '//*[local-name(=''a'']');
-        Observer.Finish();
+        Observer.Expect('unclosed_name', 'No 0:');
+        Observer.Verify();
     end;
 }

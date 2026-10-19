@@ -45,6 +45,7 @@ table 80511 "LT AY Lk Row"
 xmlport 80512 "LT AY Lk Port Auto"
 {
     Format = Xml;
+    Encoding = UTF8;
     Direction = Both;
     UseRequestPage = false;
 
@@ -91,6 +92,7 @@ xmlport 80512 "LT AY Lk Port Auto"
 xmlport 80513 "LT AY Lk Port NoAuto"
 {
     Format = Xml;
+    Encoding = UTF8;
     Direction = Both;
     UseRequestPage = false;
 

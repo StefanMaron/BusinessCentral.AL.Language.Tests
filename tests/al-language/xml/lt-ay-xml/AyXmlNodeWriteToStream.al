@@ -86,7 +86,11 @@ codeunit 80502 "LT AY Xml Node WriteTo Stream"
     begin
         Run(Observer, 'text', 1, TextEncoding::UTF8);
         Run(Observer, 'cdata', 2, TextEncoding::UTF8);
-        Observer.Finish();
+        Observer.Expect('text_bytes', '16:cHJlPD5wb3N0YiZhbXA7Yw==');
+        Observer.Expect('text_text', 'pre<>postb&amp;c|');
+        Observer.Expect('cdata_bytes', '21:cHJlPD5wb3N0QVRBW2E8YiZjXV0+');
+        Observer.Expect('cdata_text', 'pre<>postATA[a<b&c]]>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -96,7 +100,11 @@ codeunit 80502 "LT AY Xml Node WriteTo Stream"
     begin
         Run(Observer, 'comment', 3, TextEncoding::UTF8);
         Run(Observer, 'element', 4, TextEncoding::UTF8);
-        Observer.Finish();
+        Observer.Expect('comment_bytes', '17:cHJlPD5wb3N0bm90ZSAtLT4=');
+        Observer.Expect('comment_text', 'pre<>postnote -->|');
+        Observer.Expect('element_bytes', '12:cHJlPD5wb3N0L2U+');
+        Observer.Expect('element_text', 'pre<>post/e>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -105,7 +113,9 @@ codeunit 80502 "LT AY Xml Node WriteTo Stream"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, 'document', 5, TextEncoding::UTF8);
-        Observer.Finish();
+        Observer.Expect('document_bytes', '52:cHJlPD5wb3N0IHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9InV0Zi04Ij8+DQo8cj54PC9yPg==');
+        Observer.Expect('document_text', 'pre<>post version="1.0" encoding="utf-8"?>|<r>x</r>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -115,7 +125,11 @@ codeunit 80502 "LT AY Xml Node WriteTo Stream"
     begin
         Run(Observer, 'text16', 1, TextEncoding::UTF16);
         Run(Observer, 'cdata16', 2, TextEncoding::UTF16);
-        Observer.Finish();
+        Observer.Expect('text16_bytes', '20:cAByAGUAPAA+AHAAbwBzAHQAO2M=');
+        Observer.Expect('text16_text', 'pre<>post挻|');
+        Observer.Expect('cdata16_bytes', '25:cAByAGUAPAA+AHAAbwBzAHQAPGImY11dPg==');
+        Observer.Expect('cdata16_text', 'pre<>post戼挦嵝|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,6 +138,8 @@ codeunit 80502 "LT AY Xml Node WriteTo Stream"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, 'comment16', 3, TextEncoding::UTF16);
-        Observer.Finish();
+        Observer.Expect('comment16_bytes', '21:cAByAGUAPAA+AHAAbwBzAHQALS0+');
+        Observer.Expect('comment16_text', 'pre<>postⴭ|');
+        Observer.Verify();
     end;
 }

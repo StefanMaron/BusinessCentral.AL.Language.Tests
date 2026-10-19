@@ -90,7 +90,10 @@ codeunit 80504 "LT AY Json ReadFrom Tolerant"
         Obj(Observer, 'comment_after_value', '{"a":1 // c' + Lf() + '}');
         Obj(Observer, 'comment_before_key', '{// c' + Lf() + '"a":1}');
         Obj(Observer, 'comment_at_end_no_lf', '{"a":1} // c');
-        Observer.Finish();
+        Observer.Expect('comment_after_value', 'Yes {"a":1} a:value');
+        Observer.Expect('comment_before_key', 'Yes {"a":1} a:value');
+        Observer.Expect('comment_at_end_no_lf', 'Yes {"a":1} a:value');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +104,10 @@ codeunit 80504 "LT AY Json ReadFrom Tolerant"
         Obj(Observer, 'comment_unclosed_object', '{"a":1 // c }');
         Obj(Observer, 'comment_in_string', '{"a":"x // y"}');
         Arr(Observer, 'arr_comment', '[1, // c' + Lf() + '2]');
-        Observer.Finish();
+        Observer.Expect('comment_unclosed_object', 'No {}');
+        Observer.Expect('comment_in_string', 'Yes {"a":"x // y"} a:value');
+        Observer.Expect('arr_comment', 'Yes [1,2] 0:value/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -112,7 +118,10 @@ codeunit 80504 "LT AY Json ReadFrom Tolerant"
         Obj(Observer, 'obj_empty_elem', '{"a":[1,,2]}');
         Obj(Observer, 'obj_only_comma', '{"a":[,]}');
         Obj(Observer, 'obj_infinity', '{"a":Infinity}');
-        Observer.Finish();
+        Observer.Expect('obj_empty_elem', 'Yes {"a":[1,undefined,2]} a:array');
+        Observer.Expect('obj_only_comma', 'Yes {"a":[undefined]} a:array');
+        Observer.Expect('obj_infinity', 'Yes {"a":"Infinity"} a:value');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +132,10 @@ codeunit 80504 "LT AY Json ReadFrom Tolerant"
         Obj(Observer, 'obj_neg_infinity', '{"a":-Infinity}');
         Obj(Observer, 'obj_nan', '{"a":NaN}');
         Arr(Observer, 'arr_neg_infinity', '[-Infinity]');
-        Observer.Finish();
+        Observer.Expect('obj_neg_infinity', 'Yes {"a":"-Infinity"} a:value');
+        Observer.Expect('obj_nan', 'Yes {"a":"NaN"} a:value');
+        Observer.Expect('arr_neg_infinity', 'Yes ["-Infinity"] 0:value/"-Infinity"');
+        Observer.Verify();
     end;
 
     [Test]
@@ -134,7 +146,10 @@ codeunit 80504 "LT AY Json ReadFrom Tolerant"
         Arr(Observer, 'zero_one_point_five', '[01.5]');
         Arr(Observer, 'zero_zero_point_five', '[00.5]');
         Arr(Observer, 'zero_zero_seven', '[007]');
-        Observer.Finish();
+        Observer.Expect('zero_one_point_five', 'No []');
+        Observer.Expect('zero_zero_point_five', 'No []');
+        Observer.Expect('zero_zero_seven', 'Yes [7] 0:value/7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,6 +160,9 @@ codeunit 80504 "LT AY Json ReadFrom Tolerant"
         Arr(Observer, 'neg_zero_one_point_five', '[-01.5]');
         Arr(Observer, 'zero_one_e2', '[01e2]');
         Obj(Observer, 'obj_zero_one_point_five', '{"a":01.50}');
-        Observer.Finish();
+        Observer.Expect('neg_zero_one_point_five', 'Yes [-1.5] 0:value/-1.5');
+        Observer.Expect('zero_one_e2', 'No []');
+        Observer.Expect('obj_zero_one_point_five', 'No {}');
+        Observer.Verify();
     end;
 }

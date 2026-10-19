@@ -26,6 +26,7 @@ table 80515 "LT AY Flow Row"
 xmlport 80516 "LT AY Flow Import"
 {
     Format = Xml;
+    Encoding = UTF8;
     Direction = Import;
     UseRequestPage = false;
 
@@ -156,6 +157,7 @@ xmlport 80516 "LT AY Flow Import"
 xmlport 80517 "LT AY Flow Export"
 {
     Format = Xml;
+    Encoding = UTF8;
     Direction = Export;
     UseRequestPage = false;
 

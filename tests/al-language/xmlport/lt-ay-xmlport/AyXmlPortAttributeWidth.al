@@ -132,6 +132,33 @@ codeunit 80523 "LT AY Width Tests"
         exit(All.Replace('<?xml version="1.0" encoding="UTF-8" standalone="no"?>', '<?decl?>'));
     end;
 
+    // FixedText ports write one byte per character here (the default TextEncoding); InStream.Read into a Char takes two bytes, so read Bytes.
+    local procedure ReadBytes(var TempBlob: Codeunit "Temp Blob"): Text
+    var
+        InS: InStream;
+        B: Byte;
+        C: Char;
+        All: Text;
+    begin
+        TempBlob.CreateInStream(InS);
+        while not InS.EOS() do begin
+            InS.Read(B);
+            case B of
+                13:
+                    All += '\r';
+                10:
+                    All += '\n';
+                32:
+                    All += '_';
+                else begin
+                    C := B;
+                    All += Format(C);
+                end;
+            end;
+        end;
+        exit(All);
+    end;
+
     [Test]
     procedure Width_FixedText_FieldAttribute_Export()
     var
@@ -144,7 +171,7 @@ codeunit 80523 "LT AY Width Tests"
         TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
         Xp.SetDestination(OutS);
         Observer.Observe('ok', Format(Xp.Export()));
-        Observer.Observe('text', ReadAll(TempBlob));
+        Observer.Observe('text', ReadBytes(TempBlob));
         Observer.Finish();
     end;
 
@@ -160,7 +187,7 @@ codeunit 80523 "LT AY Width Tests"
         TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
         Xp.SetDestination(OutS);
         Observer.Observe('ok', Format(Xp.Export()));
-        Observer.Observe('text', ReadAll(TempBlob));
+        Observer.Observe('text', ReadBytes(TempBlob));
         Observer.Finish();
     end;
 
@@ -177,7 +204,9 @@ codeunit 80523 "LT AY Width Tests"
         Xp.SetDestination(OutS);
         Observer.Observe('ok', Format(Xp.Export()));
         Observer.Observe('text', ReadAll(TempBlob));
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('text', '﻿<?xml_version="1.0"_encoding="UTF-16"_standalone="no"?>\r\n<Root>\r\n__<Row_Code="AB">\r\n____<Name>x</Name>\r\n__</Row>\r\n__<Row_Code="ABCDEFG">\r\n____<Name>longer_name</Name>\r\n__</Row>\r\n</Root>');
+        Observer.Verify();
     end;
 
     local procedure DoImport(var Observer: Codeunit "Probe Observer")
@@ -213,6 +242,8 @@ codeunit 80523 "LT AY Width Tests"
     begin
         asserterror DoImport(Observer);
         Observer.ObserveError('end');
-        Observer.Finish();
+        Observer.Expect('end|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('end|code', 'DB:Ok');
+        Observer.Verify();
     end;
 }

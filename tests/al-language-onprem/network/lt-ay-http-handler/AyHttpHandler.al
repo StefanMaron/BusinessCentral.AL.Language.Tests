@@ -103,7 +103,17 @@ codeunit 98550 "LT AY Http Handler"
         Client.SetBaseAddress('https://example.invalid/api/v1/');
         Path(Observer, Client, 'plain', 'orders');
         Path(Observer, Client, 'rooted', '/orders');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('plain', 'Yes [https://example.invalid/api/v1/orders]');
+#else
+        Observer.Expect('plain', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('rooted', 'Yes [https://example.invalid/orders]');
+#else
+        Observer.Expect('rooted', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -116,7 +126,17 @@ codeunit 98550 "LT AY Http Handler"
         Client.SetBaseAddress('https://example.invalid/api/v1/');
         Path(Observer, Client, 'parent', '../x');
         Path(Observer, Client, 'query', '?q=1');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('parent', 'Yes [https://example.invalid/api/x]');
+#else
+        Observer.Expect('parent', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('query', 'Yes [https://example.invalid/api/v1/]q=1&');
+#else
+        Observer.Expect('query', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +148,17 @@ codeunit 98550 "LT AY Http Handler"
     begin
         Path(Observer, Client, 'a_slash_b', 'a/b');
         Path(Observer, Client, 'a_dot_b', 'a.b');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('a_slash_b', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('a_slash_b', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('a_dot_b', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('a_dot_b', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +169,12 @@ codeunit 98550 "LT AY Http Handler"
         Client: HttpClient;
     begin
         Path(Observer, Client, 'query', '?q=1');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('query', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('query', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +184,27 @@ codeunit 98550 "LT AY Http Handler"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'https://example.invalid/missing');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=Yes status=404 reason=[Not Found] success=No blocked=No');
+#else
+        Observer.Expect('result', 'error status=200');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', '');
+#else
+        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', '');
+#else
+        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1');
+#else
+        Observer.Expect('calls', '0');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -159,7 +214,23 @@ codeunit 98550 "LT AY Http Handler"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'https://example.invalid/boom');
-        Observer.Finish();
+        Observer.Expect('result', 'error status=200');
+#if BC29PLUS
+        Observer.Expect('last_error', 'handler failed');
+#else
+        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', 'Dialog');
+#else
+        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1');
+#else
+        Observer.Expect('calls', '0');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -169,6 +240,26 @@ codeunit 98550 "LT AY Http Handler"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'http://localhost:1/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+#else
+        Observer.Expect('result', 'error status=200');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+#else
+        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', 'MissingUIHandler');
+#else
+        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1');
+#else
+        Observer.Expect('calls', '0');
+#endif
+        Observer.Verify();
     end;
 }

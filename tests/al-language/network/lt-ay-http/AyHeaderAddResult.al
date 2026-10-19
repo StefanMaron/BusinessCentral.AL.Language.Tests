@@ -87,7 +87,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'accept_ok', 'Accept', 'application/json');
         Req(Observer, 'accept_noslash', 'Accept', 'json');
         Req(Observer, 'accept_semis', 'Accept', ';;;');
-        Observer.Finish();
+        Observer.Expect('accept_ok', 'ret=Yes n=1[application/json]');
+        Observer.Expect('accept_noslash', 'ret=No get=E');
+        Observer.Expect('accept_semis', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -98,7 +101,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'accept_quote', 'Accept', 'a/b; q="');
         Req(Observer, 'auth_ok', 'Authorization', 'Bearer abc');
         Req(Observer, 'auth_three', 'Authorization', 'a b c');
-        Observer.Finish();
+        Observer.Expect('accept_quote', 'ret=No get=E');
+        Observer.Expect('auth_ok', 'ret=Yes n=1[Bearer abc]');
+        Observer.Expect('auth_three', 'ret=Yes n=1[a b c]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -109,7 +115,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'auth_comma', 'Authorization', ',');
         Req(Observer, 'auth_empty', 'Authorization', '');
         Req(Observer, 'date_ok', 'Date', 'Tue, 15 Nov 1994 08:12:31 GMT');
-        Observer.Finish();
+        Observer.Expect('auth_comma', 'ret=No get=E');
+        Observer.Expect('auth_empty', 'ret=No get=E');
+        Observer.Expect('date_ok', 'ret=Yes n=1[Tue, 15 Nov 1994 08:12:31 GMT]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -120,7 +129,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'date_bad', 'Date', 'not a date');
         Req(Observer, 'date_iso', 'Date', '1994-11-15T08:12:31Z');
         Cnt(Observer, 'ctype_ok', 'Content-Type', 'text/plain');
-        Observer.Finish();
+        Observer.Expect('date_bad', 'ret=No get=E');
+        Observer.Expect('date_iso', 'ret=No get=E');
+        Observer.Expect('ctype_ok', 'ret=No n=1[text/plain; charset=utf-8]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,7 +143,10 @@ codeunit 80507 "LT AY Header Add Result"
         Cnt(Observer, 'ctype_noslash', 'Content-Type', 'text');
         Cnt(Observer, 'ctype_two', 'Content-Type', 'text/plain, text/html');
         Cnt(Observer, 'ctype_badparam', 'Content-Type', 'text/plain; =x');
-        Observer.Finish();
+        Observer.Expect('ctype_noslash', 'ret=No n=1[text/plain; charset=utf-8]');
+        Observer.Expect('ctype_two', 'ret=No n=1[text/plain; charset=utf-8]');
+        Observer.Expect('ctype_badparam', 'ret=No n=1[text/plain; charset=utf-8]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -142,7 +157,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'name_space', 'Bad Name', 'v');
         Req(Observer, 'name_colon', 'X:Y', 'v');
         Req(Observer, 'name_empty', '', 'v');
-        Observer.Finish();
+        Observer.Expect('name_space', 'ret=No get=E');
+        Observer.Expect('name_colon', 'ret=No get=E');
+        Observer.Expect('name_empty', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -153,7 +171,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'name_paren', 'X(Y)', 'v');
         Req(Observer, 'name_unicode', 'X-Ä', 'v');
         Cnt(Observer, 'content_name_space', 'Bad Name', 'v');
-        Observer.Finish();
+        Observer.Expect('name_paren', 'ret=No get=E');
+        Observer.Expect('name_unicode', 'ret=No get=E');
+        Observer.Expect('content_name_space', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,7 +185,10 @@ codeunit 80507 "LT AY Header Add Result"
         Resp(Observer, 'response_name_space', 'Bad Name', 'v');
         Req(Observer, 'name_content_on_request', 'Content-Type', 'text/plain');
         Cnt(Observer, 'name_request_on_content', 'Accept', 'text/plain');
-        Observer.Finish();
+        Observer.Expect('response_name_space', 'ret=No get=E');
+        Observer.Expect('name_content_on_request', 'ret=No get=E');
+        Observer.Expect('name_request_on_content', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +199,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'range_ok', 'Range', 'bytes=0-9');
         Req(Observer, 'range_bad', 'Range', 'abc');
         Req(Observer, 'range_noeq', 'Range', 'bytes 0-9');
-        Observer.Finish();
+        Observer.Expect('range_ok', 'ret=Yes n=1[bytes=0-9]');
+        Observer.Expect('range_bad', 'ret=No get=E');
+        Observer.Expect('range_noeq', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -186,7 +213,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'ifmatch_ok', 'If-Match', '"abc"');
         Req(Observer, 'ifmatch_star', 'If-Match', '*');
         Req(Observer, 'ifmatch_bad', 'If-Match', 'abc');
-        Observer.Finish();
+        Observer.Expect('ifmatch_ok', 'ret=Yes n=1["abc"]');
+        Observer.Expect('ifmatch_star', 'ret=Yes n=1[*]');
+        Observer.Expect('ifmatch_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -197,7 +227,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'ifnonematch_bad', 'If-None-Match', 'abc');
         Req(Observer, 'ifmodsince_ok', 'If-Modified-Since', 'Tue, 15 Nov 1994 08:12:31 GMT');
         Req(Observer, 'ifmodsince_bad', 'If-Modified-Since', 'yesterday');
-        Observer.Finish();
+        Observer.Expect('ifnonematch_bad', 'ret=No get=E');
+        Observer.Expect('ifmodsince_ok', 'ret=Yes n=1[Tue, 15 Nov 1994 08:12:31 GMT]');
+        Observer.Expect('ifmodsince_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -208,7 +241,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'ifrange_bad', 'If-Range', 'abc');
         Req(Observer, 'maxfwd_ok', 'Max-Forwards', '5');
         Req(Observer, 'maxfwd_bad', 'Max-Forwards', 'five');
-        Observer.Finish();
+        Observer.Expect('ifrange_bad', 'ret=No get=E');
+        Observer.Expect('maxfwd_ok', 'ret=Yes n=1[5]');
+        Observer.Expect('maxfwd_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -219,7 +255,10 @@ codeunit 80507 "LT AY Header Add Result"
         Req(Observer, 'referer_ok', 'Referer', 'https://a.example/x');
         Req(Observer, 'referer_bad', 'Referer', 'a b');
         Req(Observer, 'expect_bad', 'Expect', '=');
-        Observer.Finish();
+        Observer.Expect('referer_ok', 'ret=Yes n=1[https://a.example/x]');
+        Observer.Expect('referer_bad', 'ret=Yes n=1[a%20b]');
+        Observer.Expect('expect_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -230,7 +269,10 @@ codeunit 80507 "LT AY Header Add Result"
         Cnt(Observer, 'disp_ok', 'Content-Disposition', 'attachment; filename="a.txt"');
         Cnt(Observer, 'disp_bad', 'Content-Disposition', ';;;');
         Cnt(Observer, 'enc_ok', 'Content-Encoding', 'gzip');
-        Observer.Finish();
+        Observer.Expect('disp_ok', 'ret=Yes n=1[attachment; filename="a.txt"]');
+        Observer.Expect('disp_bad', 'ret=No get=E');
+        Observer.Expect('enc_ok', 'ret=Yes n=1[gzip]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +283,10 @@ codeunit 80507 "LT AY Header Add Result"
         Cnt(Observer, 'enc_bad', 'Content-Encoding', 'g z');
         Cnt(Observer, 'lang_bad', 'Content-Language', 'e n');
         Cnt(Observer, 'crange_ok', 'Content-Range', 'bytes 0-9/10');
-        Observer.Finish();
+        Observer.Expect('enc_bad', 'ret=No get=E');
+        Observer.Expect('lang_bad', 'ret=No get=E');
+        Observer.Expect('crange_ok', 'ret=Yes n=1[bytes 0-9/10]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -252,7 +297,10 @@ codeunit 80507 "LT AY Header Add Result"
         Cnt(Observer, 'crange_bad', 'Content-Range', 'abc');
         Cnt(Observer, 'md5_ok', 'Content-MD5', 'AAECAwQFBgcICQoLDA0ODw==');
         Cnt(Observer, 'md5_bad', 'Content-MD5', 'not base64!');
-        Observer.Finish();
+        Observer.Expect('crange_bad', 'ret=No get=E');
+        Observer.Expect('md5_ok', 'ret=Yes n=1[AAECAwQFBgcICQoLDA0ODw==]');
+        Observer.Expect('md5_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -263,7 +311,10 @@ codeunit 80507 "LT AY Header Add Result"
         Cnt(Observer, 'cloc_bad', 'Content-Location', 'a b');
         Cnt(Observer, 'expires_ok', 'Expires', 'Tue, 15 Nov 1994 08:12:31 GMT');
         Cnt(Observer, 'expires_bad', 'Expires', 'soon');
-        Observer.Finish();
+        Observer.Expect('cloc_bad', 'ret=Yes n=1[a%20b]');
+        Observer.Expect('expires_ok', 'ret=Yes n=1[Tue, 15 Nov 1994 08:12:31 GMT]');
+        Observer.Expect('expires_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -274,7 +325,10 @@ codeunit 80507 "LT AY Header Add Result"
         Cnt(Observer, 'expires_zero', 'Expires', '0');
         Cnt(Observer, 'lastmod_bad', 'Last-Modified', 'soon');
         Cnt(Observer, 'allow_bad', 'Allow', 'G E T');
-        Observer.Finish();
+        Observer.Expect('expires_zero', 'ret=No get=E');
+        Observer.Expect('lastmod_bad', 'ret=No get=E');
+        Observer.Expect('allow_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +339,10 @@ codeunit 80507 "LT AY Header Add Result"
         Resp(Observer, 'age_ok', 'Age', '12');
         Resp(Observer, 'age_bad', 'Age', 'old');
         Resp(Observer, 'etag_ok', 'ETag', '"abc"');
-        Observer.Finish();
+        Observer.Expect('age_ok', 'ret=Yes n=1[12]');
+        Observer.Expect('age_bad', 'ret=No get=E');
+        Observer.Expect('etag_ok', 'ret=Yes n=1["abc"]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -296,7 +353,10 @@ codeunit 80507 "LT AY Header Add Result"
         Resp(Observer, 'etag_bad', 'ETag', 'abc');
         Resp(Observer, 'location_ok', 'Location', 'https://a.example/x');
         Resp(Observer, 'location_bad', 'Location', 'a b');
-        Observer.Finish();
+        Observer.Expect('etag_bad', 'ret=No get=E');
+        Observer.Expect('location_ok', 'ret=Yes n=1[https://a.example/x]');
+        Observer.Expect('location_bad', 'ret=Yes n=1[a%20b]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,7 +367,10 @@ codeunit 80507 "LT AY Header Add Result"
         Resp(Observer, 'retry_ok', 'Retry-After', '120');
         Resp(Observer, 'retry_bad', 'Retry-After', 'later');
         Resp(Observer, 'vary_bad', 'Vary', 'a b');
-        Observer.Finish();
+        Observer.Expect('retry_ok', 'ret=Yes n=1[120]');
+        Observer.Expect('retry_bad', 'ret=No get=E');
+        Observer.Expect('vary_bad', 'ret=No get=E');
+        Observer.Verify();
     end;
 
     [Test]
@@ -318,6 +381,9 @@ codeunit 80507 "LT AY Header Add Result"
         Resp(Observer, 'wwwauth_bad', 'WWW-Authenticate', ',');
         Resp(Observer, 'ranges_bad', 'Accept-Ranges', 'a b');
         Resp(Observer, 'ctype_on_response', 'Content-Type', 'text/plain');
-        Observer.Finish();
+        Observer.Expect('wwwauth_bad', 'ret=Yes get=E');
+        Observer.Expect('ranges_bad', 'ret=No get=E');
+        Observer.Expect('ctype_on_response', 'ret=No get=E');
+        Observer.Verify();
     end;
 }

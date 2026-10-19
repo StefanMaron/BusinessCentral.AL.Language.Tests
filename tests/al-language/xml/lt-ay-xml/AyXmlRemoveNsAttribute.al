@@ -68,23 +68,55 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
     end;
 
     [Test]
-    procedure RemoveAttribute_ByName_Prefixed_1()
+    procedure RemoveAttribute_ByName_PrefixedPA()
     var
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_prefixed_pa', 'p:a');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RemoveAttribute_ByName_PrefixedQA()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         ByName(Observer, 'name_prefixed_qa', 'q:a');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RemoveAttribute_ByName_LocalA()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         ByName(Observer, 'name_local_a', 'a');
         Observer.Finish();
     end;
 
     [Test]
-    procedure RemoveAttribute_ByName_Prefixed_2()
+    procedure RemoveAttribute_ByName_LocalB()
     var
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_local_b', 'b');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RemoveAttribute_ByName_PrefixedPB()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         ByName(Observer, 'name_prefixed_pb', 'p:b');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RemoveAttribute_ByName_UnknownPrefix()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         ByName(Observer, 'name_unknown_prefix', 'z:a');
         Observer.Finish();
     end;
@@ -95,7 +127,9 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         Observer: Codeunit "Probe Observer";
     begin
         ByName(Observer, 'name_case', 'P:A');
-        Observer.Finish();
+        Observer.Expect('name_case|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('name_case|code', 'Xml:Xml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -106,7 +140,10 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         ByNs(Observer, 'ns_a_p', 'a', 'urn:p');
         ByNs(Observer, 'ns_a_q', 'a', 'urn:q');
         ByNs(Observer, 'ns_a_empty', 'a', '');
-        Observer.Finish();
+        Observer.Expect('ns_a_p', '<r xmlns:p="urn:p" xmlns:q="urn:q" q:a="2" a="3" p:b="4" />');
+        Observer.Expect('ns_a_q', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" a="3" p:b="4" />');
+        Observer.Expect('ns_a_empty', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" p:b="4" />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +154,10 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
         ByNs(Observer, 'ns_b_p', 'b', 'urn:p');
         ByNs(Observer, 'ns_b_q', 'b', 'urn:q');
         ByNs(Observer, 'ns_b_empty', 'b', '');
-        Observer.Finish();
+        Observer.Expect('ns_b_p', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" a="3" />');
+        Observer.Expect('ns_b_q', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" a="3" p:b="4" />');
+        Observer.Expect('ns_b_empty', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" a="3" p:b="4" />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +167,10 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
     begin
         ByNs(Observer, 'ns_prefixed_local', 'p:a', 'urn:p');
         ByNs(Observer, 'ns_unknown', 'a', 'urn:z');
-        Observer.Finish();
+        Observer.Expect('ns_prefixed_local|text', 'The following exception was encountered when processing XML data: ''The '':'' character, hexadecimal value 0x3A, cannot be included in a name.'' at line 0 and position 2.');
+        Observer.Expect('ns_prefixed_local|code', 'Xml:Xml');
+        Observer.Expect('ns_unknown', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" a="3" p:b="4" />');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,6 +206,11 @@ codeunit 80501 "LT AY Xml Remove Ns Attribute"
             Observer.Observe('obj_free_pa', Show(E))
         else
             Observer.ObserveError('obj_free_pa');
-        Observer.Finish();
+        Observer.Expect('obj_found', 'q:a|a|urn:q|2');
+        Observer.Expect('obj_qa', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" a="3" p:b="4" />');
+        Observer.Expect('obj_qa_again', '<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" a="3" p:b="4" />');
+        Observer.Expect('obj_other_pa', '<r xmlns:p="urn:p" xmlns:q="urn:q" a="3" p:b="4" /> other=<r xmlns:p="urn:p" xmlns:q="urn:q" p:a="1" q:a="2" a="3" p:b="4" />');
+        Observer.Expect('obj_free_pa', '<r xmlns:p="urn:p" xmlns:q="urn:q" a="3" p:b="4" />');
+        Observer.Verify();
     end;
 }

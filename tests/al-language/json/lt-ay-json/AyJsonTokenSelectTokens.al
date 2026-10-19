@@ -58,7 +58,10 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         Q(Observer, Doc(), 'wildcard', '$.a[*].n', false);
         Q(Observer, Doc(), 'recursive', '$..n', false);
         Q(Observer, Doc(), 'filter', '$.a[?(@.p > 10)].n', false);
-        Observer.Finish();
+        Observer.Expect('wildcard', 'Yes n=3:1@a[0].n;2@a[1].n;3@a[2].n;');
+        Observer.Expect('recursive', 'Yes n=4:1@a[0].n;2@a[1].n;3@a[2].n;4@b.n;');
+        Observer.Expect('filter', 'Yes n=1:2@a[1].n;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -69,7 +72,10 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         Q(Observer, Doc(), 'single', '$.b.n', false);
         Q(Observer, Doc(), 'no_dollar', 'a[0].n', false);
         Q(Observer, Doc(), 'no_match', '$.zz', false);
-        Observer.Finish();
+        Observer.Expect('single', 'Yes n=1:4@b.n;');
+        Observer.Expect('no_dollar', 'Yes n=1:1@a[0].n;');
+        Observer.Expect('no_match', 'Yes n=0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -79,7 +85,9 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
     begin
         Q(Observer, Doc(), 'no_match_prefilled', '$.zz', true);
         Q(Observer, Doc(), 'match_prefilled', '$.a[*].n', true);
-        Observer.Finish();
+        Observer.Expect('no_match_prefilled', 'Yes n=0:');
+        Observer.Expect('match_prefilled', 'Yes n=3:1@a[0].n;2@a[1].n;3@a[2].n;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -94,7 +102,10 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         Q(Observer, A, 'array_all', '$[*]', false);
         Q(Observer, A, 'array_slice', '$[0:2]', false);
         Q(Observer, A, 'array_recursive', '$..x', false);
-        Observer.Finish();
+        Observer.Expect('array_all', 'Yes n=3:1@[0];[2,3]@[1];{"x":4}@[2];');
+        Observer.Expect('array_slice', 'Yes n=2:1@[0];[2,3]@[1];');
+        Observer.Expect('array_recursive', 'Yes n=1:4@[2].x;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -108,7 +119,9 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         V.ReadFrom('7');
         Q(Observer, V, 'value_root', '$', false);
         Q(Observer, V, 'value_child', '$.a', false);
-        Observer.Finish();
+        Observer.Expect('value_root', 'Yes n=1:7@;');
+        Observer.Expect('value_child', 'Yes n=0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -119,7 +132,10 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         Q(Observer, Doc(), 'unclosed_bracket', '$.a[', false);
         Q(Observer, Doc(), 'bad_filter', '$.a[?(@.p >)]', false);
         Q(Observer, Doc(), 'empty', '', false);
-        Observer.Finish();
+        Observer.Expect('unclosed_bracket', 'No n=0: last=The requested operation cannot be performed in this context.|InvalidOperation');
+        Observer.Expect('bad_filter', 'No n=0: last=The requested operation cannot be performed in this context.|InvalidOperation');
+        Observer.Expect('empty', 'Yes n=1:{"a":[{"n":1,"p":5},{"n":2,"p":15},{"n":3}],"b":{"n":4}}@;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -128,7 +144,8 @@ codeunit 80505 "LT AY JsonToken SelectTokens"
         Observer: Codeunit "Probe Observer";
     begin
         Q(Observer, Doc(), 'unclosed_prefilled', '$.a[', true);
-        Observer.Finish();
+        Observer.Expect('unclosed_prefilled', 'No n=1:"old"@; last=The requested operation cannot be performed in this context.|InvalidOperation');
+        Observer.Verify();
     end;
 #endif
 }
