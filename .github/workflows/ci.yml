@@ -388,7 +388,7 @@ jobs:
   #     set 'D365 Full Access'. Without Tests-TestLibraries neither codeunit exists (corpus issue 658).
   # The test job above keeps its installed-app set unchanged: al-runtime-rs models that set as its oracle environment.
   # A test belongs in tests/al-language-testlibraries only when its result needs these apps. Its objects live in
-  # 81550..81649 (codeunit_range below).
+  # 81550..81649 (codeunit_range below; on a pull request the prepare job may pass only the selected codeunits).
   #
   # Not a required status check yet: its checks are named "BC TestLibraries <ver> / test", and the repository's
   # rulesets list only "BC <ver> / test" (add them there once the job has run green for a while).
@@ -408,7 +408,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-testlibraries"
-      codeunit_range:       "81550..81649"
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-testlibraries'] || '81550..81649' }}
       extra_apps: |
         Tests-TestLibraries
         Data Archive
