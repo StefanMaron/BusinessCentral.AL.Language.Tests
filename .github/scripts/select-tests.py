@@ -11,7 +11,12 @@ What is selected, per test job of .github/workflows/ci.yml:
   * every test codeunit (Subtype = Test, at least one [Test] procedure) declared in a changed file, and
   * every test codeunit that references a changed object, directly or through other objects: an object that names a
     changed object by name or id is itself treated as changed, until nothing new is found. An extension object
-    (tableextension, pageextension, enumextension, ...) also counts as a change of the object it extends.
+    (tableextension, pageextension, enumextension, ...) also counts as a change of the object it extends. A changed
+    object is one whose code changed, not every object of a changed file.
+  * event subscribers: an object that runs a publisher may run its automatic subscribers, so the tests that use the
+    publisher are selected for a changed subscriber (Graph.fires). A Manual subscriber runs only once bound, which names
+    its codeunit. A subscriber that can run in any test (platform publisher, install or upgrade event, a publisher more
+    than MAX_PUBLISHER_USERS test codeunits use, a name the scan cannot resolve) means a full run.
   * every job also runs one small test codeunit outside any #if (the sentinel): the reusable workflow fails a leg that
     ran no test at all, and a selected codeunit can be compiled out on an older BC version. The leg still compiles and
     publishes every app.
@@ -28,11 +33,13 @@ Output: the step summary (--github: $GITHUB_STEP_SUMMARY), and the job output `s
 when its key is missing. --json FILE writes the whole result (mode, reasons, per app selection with the why).
 """
 import argparse
+import io
 import json
 import os
 import re
 import subprocess
 import sys
+import zipfile
 
 CI_YML = '.github/workflows/ci.yml'
 MAX_FILES = 50
@@ -66,7 +73,46 @@ SUBTYPE = re.compile(r'\bSubtype\s*=\s*(\w+)\s*;', re.I)
 TEST_ATTR = re.compile(r'\[\s*Test\s*\]', re.I)
 HANDLER_ATTR = re.compile(r'\[\s*HandlerFunctions\s*\(', re.I)
 SUBSCRIBER_ATTR = re.compile(r'\[\s*EventSubscriber\s*\(', re.I)
+# [EventSubscriber(ObjectType::Table, Database::"X", 'OnAfterInsertEvent', ...)]: the publisher's type, its name or id, the event.
+SUBSCRIBER_ARGS = re.compile(r"\[\s*EventSubscriber\s*\(\s*ObjectType\s*::\s*(\w+)\s*,\s*(?:\w+\s*::\s*(%s)|(\d+))\s*,\s*"
+                             r"('(?:[^']|'')*'|%s)" % (QUALIFIED, NAME), re.I)
+MANUAL = re.compile(r'\bEventSubscriberInstance\s*=\s*Manual\s*;', re.I)
+SINGLE_INSTANCE = re.compile(r'\bSingleInstance\s*=\s*true\s*;', re.I)
+PUBLISHER_KINDS = {'table': 'table', 'codeunit': 'codeunit', 'page': 'page', 'report': 'report', 'query': 'query',
+                   'xmlport': 'xmlport'}
+# Platform codeunits whose events fire in every session or around install and upgrade, whatever a test names. They are
+# not corpus objects, so a subscriber to them is unresolved anyway; the list keeps that true if a corpus object ever
+# takes one of these names.
+GLOBAL_PUBLISHERS = {'global triggers', 'system initialization', 'company triggers', 'extension triggers',
+                     'system action triggers', 'database triggers', 'navapp triggers'}
+GLOBAL_EVENT = re.compile(r'install|upgrade', re.I)
+# A subscriber is selected by the tests that use its publisher only while at most this many test codeunits use the
+# publisher (directly or through other objects). Above it the publisher is shared fixture: a subscriber there changes
+# the behavior of many unrelated tests, and effects between codeunits that a subset run does not reproduce
+# (SingleInstance state, rows an earlier codeunit left) become likely. Measured on al-runtime-rs-staging, 2026-10-19:
+# the publishers of the subscribers writers add for their own objects were used by 0 to 13 test codeunits; the shared
+# fixture publishers ("ALT Triggered", "ALT Event Publisher", "ALT Subscribed Table", ...) by 255 to 258, mostly
+# through "ALTFixtureCleanup". 40 is three times the largest narrow one and far below the shared ones.
+MAX_PUBLISHER_USERS = 40
 PREPROCESSOR_IF = re.compile(r'^\s*#if\b', re.I | re.M)
+
+
+KIND_WORD = re.compile(r'\b(?:%s)\b' % '|'.join(KINDS), re.I)
+HEADER_TAIL = re.compile(r'\s*(?:implements\b[^{]*)?', re.I)
+
+
+def declaration(head_text):
+    """The object declaration of the text before an object's '{': the last one that reaches the '{' (only an
+    implements clause may follow), so a stray line such as "report 98103, test codeunit 98104" above it is not read as
+    the declaration. Without such a match, the last declaration found anywhere in the text."""
+    for k in reversed([m.start() for m in KIND_WORD.finditer(head_text)]):
+        m = HEADER.match(head_text, k)
+        if m and HEADER_TAIL.fullmatch(head_text, m.end()):
+            return m
+    hm = None
+    for hm in HEADER.finditer(head_text):
+        pass
+    return hm
 
 
 def has_code(text):
@@ -81,9 +127,14 @@ def unquote(name):
     return name.lower()
 
 
+def last_name(qualified):
+    """The object name of a possibly namespaced name: Microsoft.Sales."Gen. Jnl.-Post" -> gen. jnl.-post."""
+    return unquote(re.findall(NAME, qualified)[-1])
+
+
 class Obj:
     __slots__ = ('path', 'kind', 'id', 'name', 'display', 'target', 'subtype', 'tests', 'handlers', 'subscriber', 'size',
-                 'tokens', 'aliases', 'conditional')
+                 'tokens', 'aliases', 'conditional', 'subscriptions', 'manual', 'single', 'text')
 
     def keys(self):
         """What other objects use to name this one."""
@@ -118,16 +169,14 @@ def parse_al(path, text):
                 head_tokens = header
                 head_text = ''.join(header)
                 header = []
-                hm = None
-                for hm in HEADER.finditer(head_text):
-                    pass
+                hm = declaration(head_text)
                 o = Obj()
                 o.path, o.aliases, o.conditional = path, set(), conditional
                 if hm is not None:
                     o.kind, o.id, o.name = hm.group(1).lower(), hm.group(2), unquote(hm.group(3))
                     o.display = hm.group(3).strip().strip('"')
                     target = hm.group(4)
-                    o.target = unquote(re.split(r'\s*\.\s*(?=[^.]*$)', target)[-1]) if target else None
+                    o.target = last_name(target) if target else None
                     if o.kind not in EXTENSION_KINDS:
                         o.target = None
                 elif DOTNET_HEADER.search(head_text):
@@ -151,22 +200,36 @@ def parse_al(path, text):
     return objs
 
 
-def finish(o, body):
-    text = ''.join(body)
+def words(parts):
     tokens = set()
-    for part in o.tokens + body:
+    for part in parts:
         if part.startswith("'"):
             tokens.add(part[1:-1].replace("''", "'").lower())
         elif part.startswith('"'):
             tokens.add(part[1:-1].lower())
         else:
             tokens.update(w.lower() for w in WORD.findall(part))
-    o.tokens = tokens
+    return tokens
+
+
+def finish(o, body):
+    text = ''.join(body)
+    # what the object is, comments left out and whitespace outside strings folded: equal text = unchanged object
+    o.text = ''.join(t if t[:1] in '\'"' else re.sub(r'\s+', ' ', t) for t in o.tokens + body).strip()
+    head, tokens = words(o.tokens), words(body)
+    # The header's own id and name are not a reference: without this, table 60985 would "name" codeunit 60985.
+    o.tokens = tokens | (head - {o.id, o.name})
     sm = SUBTYPE.search(text)
     o.subtype = sm.group(1).lower() if (sm and o.kind == 'codeunit') else None
     o.tests = len(TEST_ATTR.findall(text)) if o.subtype == 'test' else 0
     o.handlers = bool(HANDLER_ATTR.search(text))
     o.subscriber = bool(SUBSCRIBER_ATTR.search(text))
+    # one (publisher kind, publisher name or id, event) per [EventSubscriber]; None for one this scan cannot read
+    subs = [(m.group(1).lower(), last_name(m.group(2)) if m.group(2) else m.group(3),
+             unquote(m.group(4).strip("'"))) for m in SUBSCRIBER_ARGS.finditer(text)]
+    o.subscriptions = subs + [None] * (len(SUBSCRIBER_ATTR.findall(text)) - len(subs))
+    o.manual = bool(MANUAL.search(text))
+    o.single = bool(SINGLE_INSTANCE.search(text))
     o.size = len(text)
     if o.kind == 'dotnet':
         o.aliases = {unquote(a) for a in DOTNET_ALIAS.findall(text)}
@@ -395,45 +458,6 @@ def select(git, base, head, merge_base=False, ci_text=None):
     for n, o in enumerate(objs):
         by_path.setdefault(o.path, []).append(n)
 
-    # seeds: objects of the changed files (head and base versions), objects that name a changed non-AL file
-    base_texts = git.read(base, [f for f in relevant if f.endswith('.al')])
-    seeds = []  # (description, keys, head object indices, needs_coverage)
-    for f in relevant:
-        if f.endswith('.al'):
-            versions = [(objs[n], 'head') for n in by_path.get(f, [])]
-            if f in base_texts:
-                versions += [(o, 'base') for o in parse_al(f, base_texts[f])]
-            if f in texts and not by_path.get(f) and has_code(texts[f]):
-                reasons.append('no AL object found in %s' % f)
-            for o, side in versions:
-                if o.kind is None:
-                    reasons.append('an object in %s could not be read' % f)
-                elif o.subscriber:
-                    reasons.append('event subscriber in %s (%s): it can run in any test' % (f, o.label()))
-                elif o.subtype in ('install', 'upgrade', 'testrunner'):
-                    reasons.append('Subtype = %s codeunit in %s' % (o.subtype.capitalize(), f))
-                elif o.kind in PERMISSION_KINDS:
-                    reasons.append('%s in %s' % (o.kind, f))
-            here = by_path.get(f, [])
-            if f in texts and here:
-                seeds.append(('changed: %s' % f, set(), here, True))
-            gone = {o.name for o, side in versions if side == 'base'} - {objs[n].name for n in here}
-            if gone:
-                # deleted or renamed objects: the compile proves nothing else names them; follow their names anyway
-                keys = set().union(*[o.keys() for o, side in versions if side == 'base' and o.name in gone])
-                seeds.append(('object removed from %s' % f, keys, [], False))
-        else:
-            base_name = f.rsplit('/', 1)[-1].lower()
-            app = app_of(f, ci_apps)
-            users = [n for n, o in enumerate(objs) if o.path.startswith(app + '/') and base_name in texts[o.path].lower()]
-            users = sorted({n for n in users})
-            if not users and f in all_files:
-                reasons.append('no AL object names the changed file %s' % f)
-            seeds.append(('changed: %s (named in %s)' % (f, ', '.join(sorted({objs[n].path for n in users})) or 'nothing'),
-                          set(), users, f in all_files))
-    if reasons:
-        return full(result, *reasons)
-
     def runnable(n):
         o = objs[n]
         if o.subtype != 'test' or not o.tests or not o.id:
@@ -445,15 +469,73 @@ def select(git, base, head, merge_base=False, ci_text=None):
             return None
         return app
 
-    why = {}
-    for desc, keys, here, needs_cover in seeds:  # a test codeunit in a changed file: that is the reason to give
-        for n in here:
-            if runnable(n):
-                why[n] = desc
-    for desc, keys, here, needs_cover in seeds:
-        reached = closure(objs, index, keys, here)
+    graph = Graph(objs, index, runnable, lambda: microsoft_names(git, head, all_files, ci_apps))
+
+    # seeds: the changed objects of the changed files (head and base versions), objects that name a changed non-AL file.
+    # An object whose text is the same on both sides is not a seed: it can only behave differently through a changed
+    # object it names, and the closure reaches it from there.
+    base_texts = git.read(base, [f for f in relevant if f.endswith('.al')])
+    seeds = []  # (description, keys, head object indices, needs_coverage, follow_events)
+    why = {}  # every test codeunit declared in a changed file runs, changed or not
+    for f in relevant:
+        if f.endswith('.al'):
+            here = by_path.get(f, []) if f in texts else []
+            for n in here:
+                if runnable(n):
+                    why[n] = 'changed: %s' % f
+            base_objs = parse_al(f, base_texts[f]) if f in base_texts else []
+            if f in texts and not here and has_code(texts[f]):
+                reasons.append('no AL object found in %s' % f)
+            if file_scope(texts.get(f, '')) != file_scope(base_texts.get(f, '')):
+                base_sig, head_sig = set(), set()  # using, namespace or #define changed: every object of the file counts
+            else:
+                base_sig, head_sig = {sig(o) for o in base_objs}, {sig(objs[n]) for n in here}
+            changed_here = [n for n in here if sig(objs[n]) not in base_sig]
+            changed_base = [o for o in base_objs if sig(o) not in head_sig]
+            for o in [objs[n] for n in changed_here] + changed_base:
+                if o.kind is None:
+                    reasons.append('an object in %s could not be read' % f)
+                elif o.subtype in ('install', 'upgrade', 'testrunner'):
+                    reasons.append('Subtype = %s codeunit in %s' % (o.subtype.capitalize(), f))
+                elif o.kind in PERMISSION_KINDS:
+                    reasons.append('%s in %s' % (o.kind, f))
+            if changed_here:
+                seeds.append(('changed: %s' % f, set(), changed_here, True, True))
+            elif here and not changed_base:
+                # only comments or layout changed: nothing behaves differently; run the users of the file's objects
+                seeds.append(('changed (comments or layout only): %s' % f, set(), here, True, False))
+            # the base version of a changed or removed subscriber fired in the tests that use its publisher
+            for o in changed_base:
+                pubs, cause = graph.fires(o)
+                if cause:
+                    reasons.append('event subscriber in %s (%s, before this change): it %s' % (f, o.label(), cause))
+                elif pubs:
+                    seeds.append(('event subscriber changed or removed in %s (%s)' % (f, o.label()), set(), pubs, False,
+                                  True))
+            gone = {o.name for o in changed_base} - {objs[n].name for n in here}
+            if gone:
+                # deleted or renamed objects: the compile proves nothing else names them; follow their names anyway
+                keys = set().union(*[o.keys() for o in changed_base if o.name in gone])
+                seeds.append(('object removed from %s' % f, keys, [], False, True))
+        else:
+            base_name = f.rsplit('/', 1)[-1].lower()
+            app = app_of(f, ci_apps)
+            users = [n for n, o in enumerate(objs) if o.path.startswith(app + '/') and base_name in texts[o.path].lower()]
+            users = sorted({n for n in users})
+            if not users and f in all_files:
+                reasons.append('no AL object names the changed file %s' % f)
+            seeds.append(('changed: %s (named in %s)' % (f, ', '.join(sorted({objs[n].path for n in users})) or 'nothing'),
+                          set(), users, f in all_files, True))
+    if reasons:
+        return full(result, *reasons)
+
+    for desc, keys, here, needs_cover, events in seeds:
+        reached, escapes = graph.closure(keys, here, events)
+        for n, reason in escapes:
+            reasons.append('%s: %s %s, which %s' % (desc, 'it declares' if n in here else 'it can run',
+                                                    '%s (%s)' % (objs[n].label(), objs[n].path), reason))
         tests = {n: v for n, v in reached.items() if runnable(n)}
-        if needs_cover and not tests:
+        if needs_cover and not tests and not escapes:
             reasons.append('nothing in a test codeunit uses what %s declares, so its effect is unknown' % desc.split(': ', 1)[-1])
         for n, v in tests.items():
             if n not in why:
@@ -495,23 +577,135 @@ def select(git, base, head, merge_base=False, ci_text=None):
     return result
 
 
-def closure(objs, index, keys, start):
-    """{object index: (key, from)} for every object that names one of keys or a key of start, directly or through
-    other objects; from is the object the key belongs to (None for a key of a removed object)."""
-    reached = {n: None for n in start}
-    todo = [(k, None) for k in keys] + [(k, n) for n in start for k in objs[n].keys()]
-    seen = set()
-    while todo:
-        k, src = todo.pop()
-        if k in seen:
-            continue
-        seen.add(k)
-        for n in index.get(k, ()):
-            if n in reached:
-                continue
-            reached[n] = (k, src)
-            todo.extend((k2, n) for k2 in objs[n].keys())
-    return reached
+class Graph:
+    """The reference graph of the test apps' objects: who may run what."""
+
+    def __init__(self, objs, index, runnable, symbols=lambda: {}):
+        self.objs, self.index, self.runnable = objs, index, runnable
+        self.symbols, self.ms_names = symbols, None
+        self.by_kind = {}
+        for n, o in enumerate(objs):
+            if o.kind in PUBLISHER_KINDS.values():
+                for k in (o.name, o.id):
+                    if k:
+                        self.by_kind.setdefault((o.kind, k), []).append(n)
+        self.users = {}
+
+    def fires(self, o):
+        """([publisher object index], None) for an object whose event subscribers may run, or ([], why) when one of
+        them can run in any test. A subscriber runs when its publisher's event is raised, so whatever may run the
+        publisher may run the subscriber. A Manual subscriber runs only after BindSubscription on an instance of its
+        codeunit, which names the codeunit, so the plain reference scan covers it. A SingleInstance one stays bound into
+        later test codeunits, so it is treated like an automatic one."""
+        if not o.subscriptions or (o.manual and not o.single):
+            return [], None
+        out = []
+        for s in o.subscriptions:
+            if s is None:
+                return [], 'has an [EventSubscriber] whose publisher this scan cannot read, so it can run in any test'
+            kind, name, event = s
+            what = '%s %s event %s' % (kind, name if name.isdigit() else '"%s"' % name, event)
+            if GLOBAL_EVENT.search(event) or name in GLOBAL_PUBLISHERS:
+                return [], 'subscribes to %s, which fires around install, upgrade or every session' % what
+            found = self.by_kind.get((PUBLISHER_KINDS.get(kind), name))
+            if not found:
+                return [], ('subscribes to %s, which is not an object of the test apps (a platform, System or Base '
+                            'Application object), so it can run in any test' % what)
+            if self.ms_names is None:
+                try:
+                    self.ms_names = self.symbols()
+                except Exception as e:  # noqa: BLE001 - any failure: the name check cannot be made
+                    self.ms_names = 'the Microsoft symbol packages could not be read (%s: %s)' % (type(e).__name__, e)
+            if isinstance(self.ms_names, str):
+                return [], 'subscribes to %s; %s, so it can run in any test' % (what, self.ms_names)
+            if (PUBLISHER_KINDS.get(kind), name) in self.ms_names:
+                return [], ('subscribes to %s; a Microsoft object has that name too, so the scan cannot tell which one, '
+                            'and it can run in any test' % what)
+            for p in found:
+                k = self.user_count(p)
+                if k > MAX_PUBLISHER_USERS:
+                    return [], 'subscribes to %s, which %d test codeunits use (more than %d)' % (what, k, MAX_PUBLISHER_USERS)
+                out.append(p)
+        return out, None
+
+    def user_count(self, p):
+        if p not in self.users:
+            reached, _ = self.closure(set(), [p], follow_events=False)
+            self.users[p] = sum(1 for n in reached if self.runnable(n))
+        return self.users[p]
+
+    def closure(self, keys, start, follow_events=True):
+        """({object index: (key, from)}, escapes) for every object that names one of keys or a key of start, directly
+        or through other objects, or that runs an event whose subscriber is reached; from is the object the key belongs
+        to (None for a key of a removed object; key None: from is the subscriber whose publisher this is). escapes:
+        [(object index, why)] for a reached object whose effect is not limited to the tests that reach it (an event
+        subscriber that can run in any test, an install or upgrade codeunit)."""
+        objs = self.objs
+        reached = {n: None for n in start}
+        work = list(start)  # reached objects whose keys and events are still to follow
+        todo = [(k, None) for k in keys]
+        seen, escapes = set(), []
+        while work or todo:
+            while todo:
+                k, src = todo.pop()
+                if k in seen:
+                    continue
+                seen.add(k)
+                for n in self.index.get(k, ()):
+                    if n not in reached:
+                        reached[n] = (k, src)
+                        work.append(n)
+            while work:
+                n = work.pop()
+                todo.extend((k, n) for k in objs[n].keys())
+                if not follow_events:
+                    continue
+                if objs[n].subtype in ('install', 'upgrade'):
+                    escapes.append((n, 'runs when the app is installed or upgraded, before any test'))
+                pubs, why = self.fires(objs[n])
+                if why:
+                    escapes.append((n, why))
+                for p in pubs:
+                    if p not in reached:
+                        reached[p] = (None, n)
+                        work.append(p)
+        return reached, escapes
+
+
+SYMBOL_KINDS = {'Tables': 'table', 'Codeunits': 'codeunit', 'Pages': 'page', 'Reports': 'report', 'Queries': 'query',
+                'XmlPorts': 'xmlport'}
+
+
+def microsoft_names(git, rev, files, ci_apps):
+    """{(kind, lower-case name)} of the objects in the symbol packages (.alpackages/*.app) of the CI apps. A package
+    that cannot be read raises, and the caller makes that a full run."""
+    names = set()
+
+    def walk(d):
+        for key, kind in SYMBOL_KINDS.items():
+            for o in d.get(key) or []:
+                names.add((kind, o['Name'].lower()))
+        for ns in d.get('Namespaces') or []:
+            walk(ns)
+    apps = [f for f in files if f.endswith('.app') and '/.alpackages/' in f and app_of(f, ci_apps)]
+    for f in apps:
+        data = git.run('cat-file', 'blob', '%s:%s' % (rev, f), binary=True)
+        z = zipfile.ZipFile(io.BytesIO(data[data.find(b'PK\x03\x04'):]))
+        walk(json.loads(z.read('SymbolReference.json').decode('utf-8-sig')))
+    return names
+
+
+def sig(o):
+    return (o.kind, o.id, o.name, o.text)
+
+
+FILE_SCOPE = re.compile(r'^\s*(?:(?:using|namespace)\s+[^;]+;|#\s*(?:define|undef)\b[^\n]*)', re.I | re.M)
+
+
+def file_scope(text):
+    """The statements of a file that change how every object in it compiles: namespace, using, #define, #undef."""
+    code = ''.join(t for t in (m.group(0) for m in LEX.finditer(text)) if not (t.startswith('//') or t.startswith('/*')))
+    return [re.sub(r'\s+', ' ', x.strip()).lower() for x in FILE_SCOPE.findall(code)]
 
 
 def describe(objs, via, seed):
@@ -521,6 +715,8 @@ def describe(objs, via, seed):
     if src is None:
         return 'uses "%s"; %s' % (key, seed)
     o = objs[src]
+    if key is None:
+        return 'raises an event of which %s subscribes; %s' % (o.label(), seed)
     if o.target and key == o.target:
         return 'uses "%s", which %s extends; %s' % (key, o.label(), seed)
     return 'uses %s; %s' % (o.label(), seed)
