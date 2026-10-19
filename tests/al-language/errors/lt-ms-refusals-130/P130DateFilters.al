@@ -187,44 +187,60 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Finish();
     end;
 
-    local procedure StoreDates(var Observer: Codeunit "Probe Observer"; Name: Text; D: Date; DtDate: Date; DtTime: Time)
+    // Builds the values inside the asserterror (DMY2Date, ClosingDate, CreateDateTime), so an error of any step is captured; Stage names
+    // the step that ran last.
+    local procedure StoreDates(var Observer: Codeunit "Probe Observer"; Name: Text; Y: Integer; Mo: Integer; Dd: Integer; Closing: Boolean; DtY: Integer; DtMo: Integer; DtDd: Integer; DtTime: Time)
     var
         R: Record "LT P130 Filter Row";
         Back: Record "LT P130 Filter Row";
+        D: Date;
         DT: DateTime;
+        Stage: Text;
     begin
         R.DeleteAll();
         ClearLastError();
         asserterror begin
-            if DtDate <> 0D then
-                DT := CreateDateTime(DtDate, DtTime);
+            Stage := 'date';
+            if Y <> 0 then
+                D := DMY2Date(Dd, Mo, Y);
+            Stage := 'closingdate';
+            if Closing then
+                D := ClosingDate(D);
+            Stage := 'createdatetime';
+            if DtY <> 0 then
+                DT := CreateDateTime(DMY2Date(DtDd, DtMo, DtY), DtTime);
+            Stage := 'insert';
             R.Init();
             R.Id := 900;
             R.Dt := D;
             R.Dtm := DT;
             R.Insert();
+            Stage := 'get';
             Back.Get(900);
+            Stage := 'stored';
             Error('stored:' + Format(Back.Dt, 0, 9) + '|' + Format(Back.Dtm, 0, 9) + '|' + Format(Back.Dt = D) + '|' + Format(Back.Dtm = DT));
         end;
+        Observer.Observe(Name + '|stage', Stage);
         Observer.ObserveError(Name);
     end;
 
     // Corpus issue 672 item 8: Insert of a Date and a DateTime outside the SQL datetime range (before 1753-01-01, after
-    // 9999-12-31 23:59:59.997) and of 0D / 0DT: the error, or what Get reads back (Dt | Dtm | Dt = written | Dtm = written).
+    // 9999-12-31 23:59:59.997) and of 0D / 0DT: the step that failed and its error, or what Get reads back
+    // (stored:Dt | Dtm | Dt = written | Dtm = written).
     [Test]
     procedure BT_DateAndDateTime_SqlRangeOnInsert()
     var
         Observer: Codeunit "Probe Observer";
     begin
-        StoreDates(Observer, 'blank', 0D, 0D, 0T);
-        StoreDates(Observer, 'date 1753-01-01', 17530101D, 0D, 0T);
-        StoreDates(Observer, 'date 1752-12-31', 17521231D, 0D, 0T);
-        StoreDates(Observer, 'date 0001-01-01', 00010101D, 0D, 0T);
-        StoreDates(Observer, 'date closing 1752-12-31', ClosingDate(17521231D), 0D, 0T);
-        StoreDates(Observer, 'datetime 1753-01-01 00:00', 0D, 17530101D, 000000T);
-        StoreDates(Observer, 'datetime 1752-12-31 12:00', 0D, 17521231D, 120000T);
-        StoreDates(Observer, 'datetime 9999-12-31 23:59:59.997', 0D, 99991231D, 235959.997T);
-        StoreDates(Observer, 'datetime 9999-12-31 23:59:59.999', 0D, 99991231D, 235959.999T);
+        StoreDates(Observer, 'blank', 0, 0, 0, false, 0, 0, 0, 0T);
+        StoreDates(Observer, 'date 1753-01-01', 1753, 1, 1, false, 0, 0, 0, 0T);
+        StoreDates(Observer, 'date 1752-12-31', 1752, 12, 31, false, 0, 0, 0, 0T);
+        StoreDates(Observer, 'date 0001-01-01', 1, 1, 1, false, 0, 0, 0, 0T);
+        StoreDates(Observer, 'date closing 1752-12-31', 1752, 12, 31, true, 0, 0, 0, 0T);
+        StoreDates(Observer, 'datetime 1753-01-01 00:00', 0, 0, 0, false, 1753, 1, 1, 000000T);
+        StoreDates(Observer, 'datetime 1752-12-31 12:00', 0, 0, 0, false, 1752, 12, 31, 120000T);
+        StoreDates(Observer, 'datetime 9999-12-31 23:59:59.997', 0, 0, 0, false, 9999, 12, 31, 235959.997T);
+        StoreDates(Observer, 'datetime 9999-12-31 23:59:59.999', 0, 0, 0, false, 9999, 12, 31, 235959.999T);
         Observer.Finish();
     end;
 }

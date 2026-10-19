@@ -445,6 +445,17 @@ codeunit 72510 "LT SyT Evaluate"
         Observer.Observe('1033 iso fmt 9', EvalDateText('2018-05-29', 9));
         Observer.Observe('1033 05/29/2018', EvalDateText('05/29/2018', -1));
         Observer.Observe('1033 json', JsonDateText('29.05.2018'));
+        Observer.Finish();
+    end;
+
+    // Corpus issue 672 item 18, second half: the same texts with GlobalLanguage 1031 (the session region stays as it is).
+    [Test]
+    procedure BT_Evaluate_DottedDate_Language1031()
+    var
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+    begin
+        Saved := GlobalLanguage();
         GlobalLanguage(1031);
         Observer.Observe('1031 default', EvalDateText('29.05.2018', -1));
         Observer.Observe('1031 fmt 9', EvalDateText('29.05.2018', 9));
