@@ -257,6 +257,55 @@ report 68175 "Probe Rep Writer"
     end;
 }
 
+// Writer BP (corpus issue 664, microsoft/AL issues 6513 and 6572): UsageCategory values written in the wrong case (`none`,
+// `ReportsandAnalysis`). They compile; publishing once failed with "There is an error in the XML document". The test runs both reports.
+report 82564 "LT BP Usage Lower None"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+    UsageCategory = none;
+    ApplicationArea = All;
+
+    dataset
+    {
+        dataitem(I; Integer)
+        {
+            DataItemTableView = where(Number = const(1));
+
+            trigger OnAfterGetRecord()
+            begin
+                PageLog.Add('lower none row ' + Format(Number));
+            end;
+        }
+    }
+
+    var
+        PageLog: Codeunit "Probe Report Log";
+}
+
+report 82565 "LT BP Usage Mixed Case"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+    UsageCategory = ReportsandAnalysis;
+    ApplicationArea = All;
+
+    dataset
+    {
+        dataitem(I; Integer)
+        {
+            DataItemTableView = where(Number = const(1));
+
+            trigger OnAfterGetRecord()
+            begin
+                PageLog.Add('mixed case row ' + Format(Number));
+            end;
+        }
+    }
+
+    var
+        PageLog: Codeunit "Probe Report Log";
+}
 codeunit 68176 "Probe Report Contracts"
 {
     Subtype = Test;
@@ -489,5 +538,15 @@ codeunit 68176 "Probe Report Contracts"
         Rep: Report "Probe Rep Order";
     begin
         Rep.Run();
+    end;
+
+    // Writer BP (corpus issue 664): the two reports with UsageCategory in the wrong case are published and run.
+    [Test]
+    procedure Report_UsageCategoryInWrongCase_PublishesAndRuns_BP()
+    begin
+        Initialize();
+        Report.Run(Report::"LT BP Usage Lower None");
+        Report.Run(Report::"LT BP Usage Mixed Case");
+        Assert.AreEqual('lower none row 1;mixed case row 1;', PageLog.Take(), 'both reports ran their one row');
     end;
 }

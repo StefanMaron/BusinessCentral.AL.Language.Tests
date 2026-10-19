@@ -5,6 +5,23 @@
 // Facts: Defaults of scalar types, Clear, comparison across types, Variant type checks
 // BC versions: 29 (27 and 28 by CI)
 
+// Writer BP (corpus issue 664, microsoft/AL issue 6620): a global variable of the type DataScope in a codeunit. It once failed at publish
+// ("Normal variable of type DataScope"). A `protected var` section in a codeunit is refused (must-not-compile case 1443).
+codeunit 82556 "LT BP DataScope Holder"
+{
+    var
+        MyDataScope: DataScope;
+
+    procedure GetScope(): DataScope
+    begin
+        exit(MyDataScope);
+    end;
+
+    procedure SetScope(NewScope: DataScope)
+    begin
+        MyDataScope := NewScope;
+    end;
+}
 codeunit 70063 "LT ScT Mixed Defaults"
 {
     Subtype = Test;
@@ -222,5 +239,25 @@ codeunit 70063 "LT ScT Mixed Defaults"
     local procedure IsBig(V: Variant): Boolean
     begin
         exit(V.IsBigInteger());
+    end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 6620): the default and an assigned value of a global DataScope variable.
+    [Test]
+    procedure Defaults_DataScopeGlobal_BP()
+    var
+        Observer: Codeunit "Probe Observer";
+        Holder: Codeunit "LT BP DataScope Holder";
+    begin
+        Observer.Observe('default', Format(Holder.GetScope()));
+        Holder.SetScope(DataScope::Company);
+        Observer.Observe('assigned', Format(Holder.GetScope()));
+        Observer.Observe('is company', Format(Holder.GetScope() = DataScope::Company));
+        Holder.SetScope(DataScope::User);
+        Observer.Observe('reassigned', Format(Holder.GetScope()));
+        Observer.Expect('default', 'Module');
+        Observer.Expect('assigned', 'Company');
+        Observer.Expect('is company', 'Yes');
+        Observer.Expect('reassigned', 'User');
+        Observer.Verify();
     end;
 }
