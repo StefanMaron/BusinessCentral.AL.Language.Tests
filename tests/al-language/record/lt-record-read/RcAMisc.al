@@ -781,7 +781,7 @@ codeunit 71507 "LT RcA Position View"
         P.Reset();
         P.SetCurrentKey(Grp, SystemId);
         P.Get(3);
-        Observer.Observe('positionHasSystemId', Format(StrPos(P.GetPosition(), 'SystemId') > 0));
+        Observer.Observe('position', P.GetPosition());
         Observer.Observe('systemIdKey', BqLoopAndRestore(P));
         P.Reset();
         P.SetCurrentKey(Grp, SystemId);
