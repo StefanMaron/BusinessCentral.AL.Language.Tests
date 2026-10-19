@@ -7,6 +7,7 @@
 // BC versions: 28, 29. On 27.5 the CI service tier asks the outbound-request approval prompt (StrMenu 'Allow Always,Allow Once,Block Always,Block Once')
 //   before the request: with the Boolean used Get answers false with a default response (status 200), as a statement it raises
 //   'Unhandled UI: StrMenu ...'. That is a setting of the tier (Allow HttpClient Requests), not the HttpClient behavior asked here, so the tests are BC28PLUS.
+#if BC28PLUS
 codeunit 85660 "LT DA Send Failure"
 {
     Subtype = Test;
@@ -29,7 +30,6 @@ codeunit 85660 "LT DA Send Failure"
         Resp.Content.ReadAs(Body);
     end;
 
-#if BC28PLUS
     [Test]
     procedure Get_UnresolvableHost_ReturnsFalse()
     var
@@ -134,16 +134,16 @@ codeunit 85660 "LT DA Send Failure"
         Observer.Expect('get', 'ok=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No read=Yes body=[] keys=0 method=get err=There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
         Observer.Verify();
     end;
-#endif
 }
+#endif
 
+#if BC28PLUS
 codeunit 85661 "LT DA Policy AllowAll"
 {
     Subtype = Test;
     TestPermissions = Disabled;
     TestHttpRequestPolicy = AllowAllOutboundRequests;
 
-#if BC28PLUS
     [Test]
     procedure AllowAll_UnresolvableHost_IsSentForReal()
     var
@@ -160,5 +160,5 @@ codeunit 85661 "LT DA Policy AllowAll"
         Observer.Expect('lastError', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.|HttpRequest:Socket');
         Observer.Verify();
     end;
-#endif
 }
+#endif
