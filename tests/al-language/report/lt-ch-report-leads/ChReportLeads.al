@@ -58,7 +58,8 @@ codeunit 84549 "LT CH Report Leads"
         Init(0);
         Report.Run(Report::"LT CH RP Part Host");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'OnOpenPage part ping count=3;handler;');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]
@@ -78,7 +79,10 @@ codeunit 84549 "LT CH Report Leads"
         asserterror Report.RunModal(Report::"LT CH RP CloseError");
         Obs.ObserveError('runmodal');
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('runmodal|text', 'One or more errors occurred while closing the page.\n\nLT CH close error');
+        Obs.Expect('runmodal|code', 'TestWrapped');
+        Obs.Expect('log', 'OnInitReport;handler;OnClosePage;');
+        Obs.Verify();
     end;
 
     [Test]
@@ -89,7 +93,10 @@ codeunit 84549 "LT CH Report Leads"
         asserterror Report.Run(Report::"LT CH RP CloseError");
         Obs.ObserveError('run');
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('run|text', 'One or more errors occurred while closing the page.\n\nLT CH close error');
+        Obs.Expect('run|code', 'TestWrapped');
+        Obs.Expect('log', 'OnInitReport;handler;OnClosePage;');
+        Obs.Verify();
     end;
 
     [Test]
@@ -101,7 +108,10 @@ codeunit 84549 "LT CH Report Leads"
         asserterror Report.RunModal(Report::"LT CH RP CloseError");
         Obs.ObserveError('runmodal');
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('runmodal|text', 'One or more errors occurred while closing the page.\n\nLT CH close error');
+        Obs.Expect('runmodal|code', 'TestWrapped');
+        Obs.Expect('log', 'OnInitReport;handler;OnClosePage;');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]
@@ -131,7 +141,8 @@ codeunit 84549 "LT CH Report Leads"
         HandlerMode := 2;
         Report.RunModal(Report::"LT CH SaveValues");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'shown int=0 bool=No text=;base OnPreReport int=5;ext OnPreReport bool=Yes text=hello;shown int=5 bool=Yes text=hello;base OnPreReport int=5;ext OnPreReport bool=Yes text=hello;');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]
@@ -190,7 +201,8 @@ codeunit 84549 "LT CH Report Leads"
         Init(0);
         Report.RunModal(Report::"LT CH Filter Fields");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'filter Id ok;filter Name ok;filter Grp ok;filters=[Id: 1..2, Name: b, Grp: Y];');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]
@@ -212,7 +224,9 @@ codeunit 84549 "LT CH Report Leads"
         Params := Report.RunRequestPage(Report::"LT CH Filter Fields");
         Obs.Observe('dataitems', Between(Params, '<DataItems>', '</DataItems>'));
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('dataitems', '<DataItem name="Items">VERSION(1) SORTING(Field1)</DataItem>');
+        Obs.Expect('log', '');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]
@@ -242,7 +256,8 @@ codeunit 84549 "LT CH Report Leads"
         Init(0);
         Report.RunModal(Report::"LT CH RP Enabled");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'OnOpenPage openEnabled=No initEnabled=No;open enabled=No visible=Yes editable=Yes;init enabled=No visible=Yes editable=Yes;plain enabled=Yes;');
+        Obs.Verify();
     end;
 
     [Test]
@@ -252,7 +267,8 @@ codeunit 84549 "LT CH Report Leads"
         Init(1);
         Report.RunModal(Report::"LT CH RP Enabled");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'OnOpenPage openEnabled=Yes initEnabled=Yes;open enabled=Yes visible=Yes editable=Yes;init enabled=Yes visible=Yes editable=Yes;plain enabled=Yes;');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]
@@ -289,21 +305,30 @@ codeunit 84549 "LT CH Report Leads"
     procedure Order_SaveAsXml_BaseAndExtension()
     begin
         OrderRun(0);
-        Obs.Finish();
+        Obs.Expect('saveas', 'ok');
+        Obs.Expect('has output', 'Yes');
+        Obs.Expect('log', 'base OnInitReport;base OnPreReport;ext OnPreReport;ext OnBeforePreDataItem;base OnPreDataItem;ext OnAfterPreDataItem;ext OnBeforeAfterGetRecord 1;base OnAfterGetRecord 1;ext OnAfterAfterGetRecord 1;ext OnBeforeAfterGetRecord 2;base OnAfterGetRecord 2;ext OnAfterAfterGetRecord 2;ext OnBeforePostDataItem;base OnPostDataItem;ext OnAfterPostDataItem;base OnPreRendering;ext OnPreRendering;base OnPostReport;ext OnPostReport;');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Order_SaveAsXml_QuitInOnPreReport()
     begin
         OrderRun(1);
-        Obs.Finish();
+        Obs.Expect('saveas', 'ok');
+        Obs.Expect('has output', 'No');
+        Obs.Expect('log', 'base OnInitReport;base OnPreReport;');
+        Obs.Verify();
     end;
 
     [Test]
     procedure Order_SaveAsXml_QuitInOnPreDataItem()
     begin
         OrderRun(2);
-        Obs.Finish();
+        Obs.Expect('saveas', 'ok');
+        Obs.Expect('has output', 'No');
+        Obs.Expect('log', 'base OnInitReport;base OnPreReport;ext OnPreReport;ext OnBeforePreDataItem;base OnPreDataItem;');
+        Obs.Verify();
     end;
 
     // ---------------------------------------------------------------- Params (items 124 and 125)
@@ -316,7 +341,8 @@ codeunit 84549 "LT CH Report Leads"
         HandlerMode := 1;
         Report.RunModal(Report::"LT CH Params");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=0;ext OnOpenPage ext=0;handler shows opt=0 ext=0;Opt OnValidate 5;ExtOpt OnValidate 6;handler set;RP OnQueryClosePage OK;RP OnClosePage opt=5;handler after OK;OnPreReport opt=5;ext OnPreReport ext=6;OnPreDataItem opt=5;');
+        Obs.Verify();
     end;
 
     [Test]
@@ -327,7 +353,8 @@ codeunit 84549 "LT CH Report Leads"
         HandlerMode := 2;
         Report.RunModal(Report::"LT CH Params");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=0;ext OnOpenPage ext=0;handler shows opt=99 ext=77;Opt OnValidate 5;ExtOpt OnValidate 6;handler set;RP OnQueryClosePage OK;RP OnClosePage opt=5;handler after OK;OnPreReport opt=5;ext OnPreReport ext=6;OnPreDataItem opt=5;');
+        Obs.Verify();
     end;
 
     [Test]
@@ -346,7 +373,13 @@ codeunit 84549 "LT CH Report Leads"
         Log.SetMode(1);
         Outcome('execute assigning', TryExecute(Params));
         Obs.Observe('execute assigning log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('page log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=0;ext OnOpenPage ext=0;handler shows opt=0 ext=0;Opt OnValidate 5;ExtOpt OnValidate 6;handler set;RP OnQueryClosePage OK;RP OnClosePage opt=5;handler after OK;');
+        Obs.Expect('options', '<Field name="OptVal">5</Field><Field name="ExtOptVal">6</Field>');
+        Obs.Expect('execute', 'ok');
+        Obs.Expect('execute log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=5;ext OnOpenPage ext=6;RP OnClosePage opt=5;OnPreReport opt=5;ext OnPreReport ext=6;OnPreDataItem opt=5;');
+        Obs.Expect('execute assigning', 'ok');
+        Obs.Expect('execute assigning log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=5;ext OnOpenPage ext=6;RP OnClosePage opt=99;OnPreReport opt=99;ext OnPreReport ext=77;OnPreDataItem opt=99;');
+        Obs.Verify();
     end;
 
     [Test]
@@ -364,7 +397,13 @@ codeunit 84549 "LT CH Report Leads"
         Obs.Observe('execute assigning log', Log.Take());
         Outcome('execute empty assigning', TryExecute(''));
         Obs.Observe('execute empty assigning log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('execute', 'ok');
+        Obs.Expect('execute log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=5;ext OnOpenPage ext=6;RP OnClosePage opt=5;OnPreReport opt=5;ext OnPreReport ext=6;OnPreDataItem opt=5;');
+        Obs.Expect('execute assigning', 'ok');
+        Obs.Expect('execute assigning log', 'OnInitReport;RP OnInit opt=0;RP OnOpenPage opt=5;ext OnOpenPage ext=6;RP OnClosePage opt=99;OnPreReport opt=99;ext OnPreReport ext=77;OnPreDataItem opt=99;');
+        Obs.Expect('execute empty assigning', 'ok');
+        Obs.Expect('execute empty assigning log', 'OnInitReport;RP OnInit opt=0;OnPreReport opt=0;ext OnPreReport ext=0;OnPreDataItem opt=0;');
+        Obs.Verify();
     end;
 
     [TryFunction]
@@ -399,7 +438,8 @@ codeunit 84549 "LT CH Report Leads"
         HandlerMode := 2;
         Report.RunModal(Report::"LT CH Lost Value");
         Obs.Observe('log', Log.Take());
-        Obs.Finish();
+        Obs.Expect('log', 'OnOpenPage show=No;handler shows Yes;OnPreReport show=No;OnPreDataItem show=No;OnOpenPage show=No;handler shows Yes;OnPreReport show=Yes;OnPreDataItem show=Yes;');
+        Obs.Verify();
     end;
 
     [RequestPageHandler]

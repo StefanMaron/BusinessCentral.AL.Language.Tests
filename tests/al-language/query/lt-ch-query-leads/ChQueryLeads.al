@@ -191,7 +191,16 @@ codeunit 84524 "LT CH Query Leads"
         Step('read2', TryReadAll());
         Obs.Observe('read2.rows', Rows);
         Obs.Observe('filters2', Q.GetFilters());
-        Obs.Finish();
+        Obs.Expect('read1', 'ok');
+        Obs.Expect('read1.rows', '1');
+        Obs.Expect('filters after clear', '');
+        Obs.Expect('read after clear', 'ok');
+        Obs.Expect('read after clear.rows', 'false');
+        Obs.Expect('open2', 'ok');
+        Obs.Expect('read2', 'ok');
+        Obs.Expect('read2.rows', '3,4,');
+        Obs.Expect('filters2', 'Grp: B');
+        Obs.Verify();
     end;
 
     // Item 113: the same cycle without Clear: Close, SetRange on the other group, Open, Read.
@@ -209,7 +218,13 @@ codeunit 84524 "LT CH Query Leads"
         Step('read2', TryReadAll());
         Obs.Observe('read2.rows', Rows);
         Obs.Observe('filters2', Q.GetFilters());
-        Obs.Finish();
+        Obs.Expect('read1', 'ok');
+        Obs.Expect('read1.rows', '1');
+        Obs.Expect('open2', 'ok');
+        Obs.Expect('read2', 'ok');
+        Obs.Expect('read2.rows', '3,4,');
+        Obs.Expect('filters2', 'Grp: B');
+        Obs.Verify();
     end;
 
     local procedure SelfOpen(NewMode: Integer)
@@ -244,7 +259,11 @@ codeunit 84524 "LT CH Query Leads"
     procedure OnBeforeOpen_CallsOpen()
     begin
         SelfOpen(1);
-        Obs.Finish();
+        Obs.Expect('open', 'It is not possible to execute the current query from within the ''OnBeforeOpen'' trigger.');
+        Obs.Expect('open code', 'QueryIllegalCallInTrigger');
+        Obs.Expect('rows', '');
+        Obs.Expect('log', 'OnBeforeOpen depth=1;');
+        Obs.Verify();
     end;
 
     // Item 114: CurrQuery.SaveAsXml inside OnBeforeOpen.
@@ -252,7 +271,10 @@ codeunit 84524 "LT CH Query Leads"
     procedure OnBeforeOpen_CallsSaveAsXml()
     begin
         SelfOpen(2);
-        Obs.Finish();
+        Obs.Expect('open', 'ok');
+        Obs.Expect('rows', '1,2,3,4,');
+        Obs.Expect('log', 'OnBeforeOpen depth=1;inner SaveAsXml=No length=740;');
+        Obs.Verify();
     end;
 
     // Item 114: CurrQuery.Close inside OnBeforeOpen.
@@ -260,7 +282,11 @@ codeunit 84524 "LT CH Query Leads"
     procedure OnBeforeOpen_CallsClose()
     begin
         SelfOpen(3);
-        Obs.Finish();
+        Obs.Expect('open', 'It is not possible to execute the current query from within the ''OnBeforeOpen'' trigger.');
+        Obs.Expect('open code', 'QueryIllegalCallInTrigger');
+        Obs.Expect('rows', '');
+        Obs.Expect('log', 'OnBeforeOpen depth=1;');
+        Obs.Verify();
     end;
 
     // Item 114: CurrQuery.Read inside OnBeforeOpen.
@@ -268,7 +294,10 @@ codeunit 84524 "LT CH Query Leads"
     procedure OnBeforeOpen_CallsRead()
     begin
         SelfOpen(4);
-        Obs.Finish();
+        Obs.Expect('open', 'ok');
+        Obs.Expect('rows', '1,2,3,4,');
+        Obs.Expect('log', 'OnBeforeOpen depth=1;inner Read=No;');
+        Obs.Verify();
     end;
 
     [TryFunction]
@@ -314,7 +343,16 @@ codeunit 84524 "LT CH Query Leads"
         Obs.Observe('read2.rows', Rows);
         Step('read rest', TryReadAll());
         Obs.Observe('read rest.rows', Rows);
-        Obs.Finish();
+        Obs.Expect('read1', 'ok');
+        Obs.Expect('read1.rows', '3');
+        Obs.Expect('save', 'ok');
+        Obs.Expect('save.result', 'Yes');
+        Obs.Expect('save.xml', '<Result><Id>3</Id><Grp>B</Grp></Result><Result><Id>4</Id><Grp>B</Grp></Result></DataSet>');
+        Obs.Expect('read2', 'ok');
+        Obs.Expect('read2.rows', 'false');
+        Obs.Expect('read rest', 'ok');
+        Obs.Expect('read rest.rows', '');
+        Obs.Verify();
     end;
 
     // Item 116: SaveAsXml without Open, then Read without Open.
@@ -326,7 +364,12 @@ codeunit 84524 "LT CH Query Leads"
         ObserveSave('save');
         Step('read1', TryReadOne());
         Obs.Observe('read1.rows', Rows);
-        Obs.Finish();
+        Obs.Expect('save', 'ok');
+        Obs.Expect('save.result', 'Yes');
+        Obs.Expect('save.xml', '<Result><Id>1</Id><Grp>A</Grp></Result><Result><Id>2</Id><Grp>A</Grp></Result></DataSet>');
+        Obs.Expect('read1', 'ok');
+        Obs.Expect('read1.rows', 'false');
+        Obs.Verify();
     end;
 
     // Item 116: SaveAsXml twice on one open query.
@@ -338,6 +381,12 @@ codeunit 84524 "LT CH Query Leads"
         Q.Open();
         ObserveSave('save1');
         ObserveSave('save2');
-        Obs.Finish();
+        Obs.Expect('save1', 'ok');
+        Obs.Expect('save1.result', 'Yes');
+        Obs.Expect('save1.xml', '<Result><Id>1</Id><Grp>A</Grp></Result><Result><Id>2</Id><Grp>A</Grp></Result></DataSet>');
+        Obs.Expect('save2', 'ok');
+        Obs.Expect('save2.result', 'Yes');
+        Obs.Expect('save2.xml', '<Result><Id>1</Id><Grp>A</Grp></Result><Result><Id>2</Id><Grp>A</Grp></Result></DataSet>');
+        Obs.Verify();
     end;
 }
