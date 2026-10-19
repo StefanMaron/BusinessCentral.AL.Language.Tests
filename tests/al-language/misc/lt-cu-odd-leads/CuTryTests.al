@@ -1,0 +1,189 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-handling-errors-using-try-methods
+// Scope: in-scope
+// Fixtures used: Probe Observer (69160), LT CU Row (85300)
+// Corpus #670 items 32, 33, 34, 35: writes inside a [TryFunction] in the corpus container (expression form and statement form),
+// temporary-record writes inside a TryFunction, and IsolatedStorage.Get into Text of a value stored as SecretText.
+// BC versions: 27.5, 28.5, 29.0
+
+codeunit 85310 "LT CU Try Tests"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Initialize()
+    var
+        Row: Record "LT CU Row";
+    begin
+        Row.DeleteAll();
+        Commit();
+        ClearLastError();
+    end;
+
+    local procedure Rows(): Text
+    var
+        Row: Record "LT CU Row";
+    begin
+        exit(Format(Row.Count()));
+    end;
+
+    [TryFunction]
+    local procedure TryInsertThenError(Id: Integer)
+    var
+        Row: Record "LT CU Row";
+    begin
+        Row.Id := Id;
+        Row.Insert();
+        Error('try error after insert');
+    end;
+
+    [TryFunction]
+    local procedure TryInsertOnly(Id: Integer)
+    var
+        Row: Record "LT CU Row";
+    begin
+        Row.Id := Id;
+        Row.Insert();
+    end;
+
+    [TryFunction]
+    local procedure TryTempWrites(var Log: Text)
+    var
+        Tmp: Record "LT CU Row" temporary;
+    begin
+        Tmp.Id := 1;
+        Tmp.Insert();
+        Log += 'insert;';
+        Tmp.Name := 'changed';
+        Tmp.Modify();
+        Log += 'modify;';
+        Tmp.ModifyAll(Name, 'all');
+        Log += 'modifyall;';
+        Tmp.DeleteAll();
+        Log += 'deleteall;';
+        Log += 'count=' + Format(Tmp.Count()) + ';';
+    end;
+
+    [TryFunction]
+    local procedure TryGetText(StorageKey: Text; var Value: Text)
+    begin
+        IsolatedStorage.Get(StorageKey, DataScope::Module, Value);
+    end;
+
+    // Item 32/33: TryFunction that inserts and then errors, its result consumed.
+    [Test]
+    procedure TryInsertThenError_ExpressionForm()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Initialize();
+        Ok := TryInsertThenError(1);
+        Observer.Observe('ok', Format(Ok));
+        Observer.Observe('lasterror', GetLastErrorText());
+        Observer.Observe('rows after', Rows());
+        Commit();
+        Observer.Observe('rows after commit', Rows());
+        Observer.Finish();
+    end;
+
+    // Item 32: the same in the `if not Try() then` form.
+    [Test]
+    procedure TryInsertThenError_IfNotForm()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Initialize();
+        if not TryInsertThenError(2) then
+            Observer.Observe('branch', 'not ok')
+        else
+            Observer.Observe('branch', 'ok');
+        Observer.Observe('rows after', Rows());
+        Observer.Finish();
+    end;
+
+    // Item 32: a TryFunction called as a plain statement.
+    [Test]
+    procedure TryInsertThenError_StatementForm()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Initialize();
+        asserterror TryInsertThenError(3);
+        Observer.ObserveError('statement');
+        Observer.Observe('rows after', Rows());
+        Observer.Finish();
+    end;
+
+    // Item 32/33: a TryFunction that only inserts, its result consumed.
+    [Test]
+    procedure TryInsertOnly_ExpressionForm()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+    begin
+        Initialize();
+        Ok := TryInsertOnly(4);
+        Observer.Observe('ok', Format(Ok));
+        Observer.Observe('lasterror', GetLastErrorText());
+        Observer.Observe('rows after', Rows());
+        Observer.Finish();
+    end;
+
+    // Item 34: Insert, Modify, ModifyAll, DeleteAll on a temporary record inside a TryFunction, its result consumed.
+    [Test]
+    procedure TryTemporaryWrites_ExpressionForm()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Text;
+        Ok: Boolean;
+    begin
+        Initialize();
+        Ok := TryTempWrites(Log);
+        Observer.Observe('ok', Format(Ok));
+        Observer.Observe('log', Log);
+        Observer.Observe('lasterror', GetLastErrorText());
+        Observer.Finish();
+    end;
+
+    // Item 35: IsolatedStorage.Get into a Text of a value stored with SetEncrypted(SecretText), inside a TryFunction.
+    [Test]
+    procedure SecretText_GetIntoText_InTryFunction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Secret: SecretText;
+        Value: Text;
+    begin
+        Initialize();
+        Secret := SecretStrSubstNo('lt-cu-secret');
+        Observer.Observe('set', Format(IsolatedStorage.SetEncrypted('LTCU_s1', Secret, DataScope::Module)));
+        Observer.Observe('try ok', Format(TryGetText('LTCU_s1', Value)));
+        Observer.Observe('value', Value);
+        Observer.Observe('lasterror', GetLastErrorText());
+        Observer.Observe('lastcode', GetLastErrorCode());
+        ClearLastError();
+        Observer.Observe('set plain', Format(IsolatedStorage.Set('LTCU_s2', Secret, DataScope::Module)));
+        Observer.Observe('try ok plain', Format(TryGetText('LTCU_s2', Value)));
+        Observer.Observe('lasterror plain', GetLastErrorText());
+        ClearLastError();
+        IsolatedStorage.Delete('LTCU_s1', DataScope::Module);
+        IsolatedStorage.Delete('LTCU_s2', DataScope::Module);
+        Observer.Finish();
+    end;
+
+    // Item 35: the same Get called directly.
+    [Test]
+    procedure SecretText_GetIntoText_Direct()
+    var
+        Observer: Codeunit "Probe Observer";
+        Secret: SecretText;
+        Value: Text;
+    begin
+        Initialize();
+        Secret := SecretStrSubstNo('lt-cu-secret');
+        IsolatedStorage.SetEncrypted('LTCU_s3', Secret, DataScope::Module);
+        Observer.Observe('get', Format(IsolatedStorage.Get('LTCU_s3', DataScope::Module, Value)));
+        Observer.Observe('value', Value);
+        IsolatedStorage.Delete('LTCU_s3', DataScope::Module);
+        Observer.Finish();
+    end;
+}
