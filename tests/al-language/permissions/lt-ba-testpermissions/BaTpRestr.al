@@ -1,0 +1,41 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-testpermissions-property
+// Scope: in-scope
+// Fixtures used: Probe Observer (69160), LT BA TP Probe (80751)
+// Corpus issue 658, one TestPermissions variant: TestPermissions = Restrictive on the codeunit.
+// Probe: observed values; every literal asserted below is what the BC tier produced under Microsoft's test runner (see BaTpHelper.al).
+// BC versions: 27, 28, 29
+codeunit 80755 "LT BA TP Restr"
+{
+    Subtype = Test;
+    TestPermissions = Restrictive;
+
+    [Test]
+    [HandlerFunctions('BaTpMsg')]
+    procedure BaTpRestr_Permissions()
+    var
+        Observer: Codeunit "Probe Observer";
+        Probe: Codeunit "LT BA TP Probe";
+    begin
+        Message('LT BA');
+        Probe.ObservePermissions(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('BaTpMsg')]
+    procedure BaTpRestr_Insert()
+    var
+        Observer: Codeunit "Probe Observer";
+        Probe: Codeunit "LT BA TP Probe";
+    begin
+        Message('LT BA');
+        asserterror Probe.InsertThenFail();
+        Observer.ObserveError('ins');
+        Observer.Finish();
+    end;
+
+    [MessageHandler]
+    procedure BaTpMsg(Msg: Text[1024])
+    begin
+    end;
+}
