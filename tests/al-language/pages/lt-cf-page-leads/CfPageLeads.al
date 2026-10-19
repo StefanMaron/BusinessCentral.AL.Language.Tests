@@ -3,7 +3,8 @@
 // Fixtures used: Probe Observer (69160); own objects 84420-84435 (CfPageObjects.al), test codeunit 84439
 // Probe: written against BC on CI; every literal asserted below is what BC produced. Corpus issue 667 items 81, 85, 86, 88, 89, 90.
 // Facts:
-//   81: an API page whose OnInsertRecord runs Rec.Insert(true) and answers false (or true), driven by a TestPage: OpenNew, set the key and a field, Close.
+//   81: an API page whose OnInsertRecord runs Rec.Insert(true) and answers false (or true): TestPage OpenNew is refused (DB:ClientInsertDenied),
+//       so the trigger never runs from a TestPage; the OData insert path the lead asks about needs a web-service client.
 //   85: a card whose OnNewRecord runs Rec.Insert(true) when "No." is blank: when the row reaches the database with TestPage OpenNew.
 //   86: a FlowFilter field as a list column (page and page extension) compiles; what the TestPage shows.
 //   88: a FlowField (lookup) used in a TableRelation filter and calculated in OnAfterGetCurrRecord: its value on OpenEdit, GoToRecord and OpenNew,
@@ -164,7 +165,22 @@ codeunit 84439 "LT CF Page Leads"
         Observer.ObserveError('close');
         Observer.Observe('after close log', Log.Text());
         Observer.Observe('after close rows', ApiRows());
-        Observer.Finish();
+        Observer.Expect('open new ok', 'No');
+        Observer.Expect('open new|text', 'Sorry, the current permissions prevented the action. (Page 84423 LT CF P Api False Insert: AL Language Coverage Tests)');
+        Observer.Expect('open new|code', 'DB:ClientInsertDenied');
+        Observer.Expect('after open log', '');
+        Observer.Expect('after open rows', '');
+        Observer.Expect('set ok', 'No');
+        Observer.Expect('set|text', 'The TestPage is not open.');
+        Observer.Expect('set|code', 'TestPageNotOpened');
+        Observer.Expect('after set log', '');
+        Observer.Expect('after set rows', '');
+        Observer.Expect('close ok', 'No');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Expect('after close log', '');
+        Observer.Expect('after close rows', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -188,7 +204,22 @@ codeunit 84439 "LT CF Page Leads"
         Observer.ObserveError('close');
         Observer.Observe('after close log', Log.Text());
         Observer.Observe('after close rows', ApiRows());
-        Observer.Finish();
+        Observer.Expect('open new ok', 'No');
+        Observer.Expect('open new|text', 'Sorry, the current permissions prevented the action. (Page 84424 LT CF P Api True Insert: AL Language Coverage Tests)');
+        Observer.Expect('open new|code', 'DB:ClientInsertDenied');
+        Observer.Expect('after open log', '');
+        Observer.Expect('after open rows', '');
+        Observer.Expect('set ok', 'No');
+        Observer.Expect('set|text', 'The TestPage is not open.');
+        Observer.Expect('set|code', 'TestPageNotOpened');
+        Observer.Expect('after set log', '');
+        Observer.Expect('after set rows', '');
+        Observer.Expect('close ok', 'No');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Expect('after close log', '');
+        Observer.Expect('after close rows', '');
+        Observer.Verify();
     end;
 
     // ---------- item 85 ----------
