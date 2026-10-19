@@ -67,9 +67,9 @@ codeunit 74657 "LT P143 DeFormulas"
         GlobalLanguage(LanguageId);
     end;
 
-    // The date a formula gives: days from Today() when it is within one day of Today(), else days from WorkDate(). BqRunFormulas sets the
-    // work date to 10 January 2024 (a Wednesday), so a formula that resolves against the work date (or a weekday near it) does not depend
-    // on the run date. Prefix is '..' for an open range.
+    // The date a formula gives, named relative to Today() (within one day, or one week, month, quarter or year back or ahead) or to the
+    // work date (within a week). BqRunFormulas sets the work date to 10 January 2024 (a Wednesday), so a formula that resolves against the
+    // work date (or a weekday near it) does not depend on the run date. Prefix is '..' for an open range.
     local procedure BqProbe(var Observer: Codeunit "Probe Observer"; var Helper: Codeunit "LT P143 Helper"; Name: Text; FilterText: Text; Prefix: Text)
     var
         Got: Text;
@@ -81,12 +81,28 @@ codeunit 74657 "LT P143 DeFormulas"
             exit;
         end;
         if (CopyStr(Got, 1, StrLen(Prefix)) = Prefix) and Evaluate(D, CopyStr(Got, StrLen(Prefix) + 1)) then
-            if Abs(D - Today()) <= 1 then
-                Observer.Observe(Name, 'ok ' + Prefix + 'today' + Format(D - Today()))
-            else
-                Observer.Observe(Name, 'ok ' + Prefix + 'workdate' + Format(D - WorkDate()))
+            Observer.Observe(Name, 'ok ' + Prefix + BqNameDate(D))
         else
             Observer.Observe(Name, 'ok not a single date');
+    end;
+
+    local procedure BqNameDate(D: Date): Text
+    var
+        Units: List of [Text];
+        U: Text;
+    begin
+        if Abs(D - Today()) <= 1 then
+            exit('today' + Format(D - Today()));
+        Units.AddRange('W', 'M', 'Q', 'Y');
+        foreach U in Units do begin
+            if D = CalcDate('<-1' + U + '>', Today()) then
+                exit('today-1' + U);
+            if D = CalcDate('<+1' + U + '>', Today()) then
+                exit('today+1' + U);
+        end;
+        if Abs(D - WorkDate()) <= 7 then
+            exit('workdate' + Format(D - WorkDate()));
+        exit('other');
     end;
 
     // Probes First..Last of: ..t-1d, ..t-1t, t+1d, h, a, j (a failure message keeps about 2000 characters, so the localized error texts

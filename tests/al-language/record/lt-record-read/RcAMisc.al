@@ -788,7 +788,11 @@ codeunit 71507 "LT RcA Position View"
         P.SetRange(Grp, 1);
         P.FindFirst();
         Observer.Observe('systemIdKeyFiltered', BqLoopAndRestore(P));
-        Observer.Finish();
+        Observer.Expect('primaryKey', 'ok id=2 filters= key=Id find=Yes name=p2');
+        Observer.Expect('position', 'Id=CONST(3)');
+        Observer.Expect('systemIdKey', 'ok id=3 filters= key=Grp,System ID find=Yes name=p3');
+        Observer.Expect('systemIdKeyFiltered', 'ok id=1 filters=Grp: 1 key=Grp,System ID find=No name=p3');
+        Observer.Verify();
     end;
 }
 
