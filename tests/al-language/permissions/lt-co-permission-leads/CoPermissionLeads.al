@@ -149,6 +149,7 @@ page 84949 "LT CO ABP Facts"
         {
             repeater(Rows)
             {
+                field(PlainCtl; Rec.ID) { }
                 field(IdCtl; Rec.ID) { AccessByPermission = tabledata "Table Metadata" = R; }
                 field(NameCtl; Rec.Name) { AccessByPermission = tabledata "LT CO Perm Ledger" = D; }
             }
@@ -446,6 +447,8 @@ codeunit 84950 "LT CO Permission Leads"
     local procedure TryControl(var Facts: TestPage "LT CO ABP Facts"; What: Text; var Result: Text)
     begin
         case What of
+            'plain value':
+                Result := Facts.PlainCtl.Value();
             'id value':
                 Result := Facts.IdCtl.Value();
             'id visible':
@@ -478,6 +481,7 @@ codeunit 84950 "LT CO Permission Leads"
         Facts: TestPage "LT CO ABP Facts";
     begin
         Facts.OpenView();
+        Observer.Observe('plain value', ControlOutcome(Facts, 'plain value'));
         Observer.Observe('id value', ControlOutcome(Facts, 'id value'));
         Observer.Observe('id visible', ControlOutcome(Facts, 'id visible'));
         Observer.Observe('name value', ControlOutcome(Facts, 'name value'));
