@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160), Temp Blob (System Application); own objects in DgXmlPortLeadObjects.al (86020-86029)
+// Fixtures used: Probe Observer (69160), Temp Blob (System Application); own objects in DgXmlPortLeadObjects.al (86020-86029, 86031-86033)
 // Facts: corpus issue 671 items 106 to 111: the TableSeparator default between two root tables of a VariableText export
-// (microsoft/AL issue 6416); Boolean export and import text under session language 1031 and 1033 (issue 7243); the SOAP envelope
+// (microsoft/AL issue 6416); what an empty or undeclared namespace prefix exports (Learn: Namespaces, NamespacePrefix); Boolean export and import text under session language 1031 and 1033 (issue 7243); the SOAP envelope
 // xmlport of issue 246 (prefixed text elements with DefaultNamespace and UseDefaultNamespace); an import of a value longer than
 // 2048 characters into a text element and into a Text[2048] field (issue 2870); Import from an InStream of a stored Blob and
 // from an InStream that was never created (issue 5218).
@@ -61,6 +61,24 @@ codeunit 86030 "LT DG XmlPort Leads"
         Big.Read(InS);
         if Big.Length() = 0 then
             exit('<empty>');
+        Big.GetSubText(Result, 1, Big.Length());
+        exit(Result);
+    end;
+
+    local procedure TryExportText(XmlPortId: Integer): Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+        Big: BigText;
+        Result: Text;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        ClearLastError();
+        if not Xmlport.Export(XmlPortId, OutS) then
+            exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        TempBlob.CreateInStream(InS, TextEncoding::UTF16);
+        Big.Read(InS);
         Big.GetSubText(Result, 1, Big.Length());
         exit(Result);
     end;
@@ -150,6 +168,8 @@ codeunit 86030 "LT DG XmlPort Leads"
             Outcome := 'ok'
         else
             Outcome := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        if StrLen(Outcome) > 300 then
+            Outcome := CopyStr(Outcome, 1, 120) + '...' + CopyStr(Outcome, StrLen(Outcome) - 179);
         exit(Outcome + ' length=' + Format(Xp.TxtLength()));
     end;
 
@@ -233,6 +253,21 @@ codeunit 86030 "LT DG XmlPort Leads"
         Observer.Observe('csv_1031', ImportBoolRow(Xmlport::"LT DG Csv Bool"));
         Observer.Observe('legacy_1031_yes', ImportText(Xmlport::"LT DG Xml Bool Legacy", '<Root><Item><Id>1</Id><Flag>Yes</Flag></Item></Root>'));
         GlobalLanguage(OldLanguage);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure Item108_NamespaceRules()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT DG Item";
+    begin
+        Item.DeleteAll();
+        Item.Id := 9;
+        Item.Insert();
+        Observer.Observe('empty_prefix', TryExportText(Xmlport::"LT DG Ns Empty Prefix"));
+        Observer.Observe('undeclared', TryExportText(Xmlport::"LT DG Ns Undeclared"));
+        Observer.Observe('no_namespaces', TryExportText(Xmlport::"LT DG Ns No Namespaces"));
         Observer.Finish();
     end;
 

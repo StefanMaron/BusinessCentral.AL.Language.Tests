@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: none (own tables 86020-86022, xmlports 86023-86029)
+// Fixtures used: none (own tables 86020-86022, xmlports 86023-86029 and 86031-86033)
 // Shared objects of DgXmlPortLeads.al (corpus issue 671, items 106 to 111): not a test codeunit.
 // BC versions: 27, 28, 29
 
@@ -227,4 +227,69 @@ xmlport 86029 "LT DG Long Import"
     begin
         exit(StrLen(Txt));
     end;
+}
+
+// Item 108: an empty prefix (quoted identifier "") in Namespaces together with UseDefaultNamespace = true. It compiles (the unquoted '' does not: case 1856).
+xmlport 86031 "LT DG Ns Empty Prefix"
+{
+    Format = Xml;
+    Direction = Export;
+    Namespaces = "" = 'urn:lt-dg-empty';
+    UseDefaultNamespace = true;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(ItemRow; "LT DG Item")
+            {
+                XmlName = 'Item';
+                fieldelement(Id; ItemRow.Id) { }
+            }
+        }
+    }
+}
+
+// Item 108: a NamespacePrefix that Namespaces does not declare. It compiles.
+xmlport 86032 "LT DG Ns Undeclared"
+{
+    Format = Xml;
+    Direction = Export;
+    Namespaces = p = 'urn:lt-dg-p';
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            NamespacePrefix = 'q';
+            tableelement(ItemRow; "LT DG Item")
+            {
+                XmlName = 'Item';
+                fieldelement(Id; ItemRow.Id) { }
+            }
+        }
+    }
+}
+
+// Item 108: a NamespacePrefix on an xmlport without a Namespaces property. It compiles.
+xmlport 86033 "LT DG Ns No Namespaces"
+{
+    Format = Xml;
+    Direction = Export;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(ItemRow; "LT DG Item")
+            {
+                XmlName = 'Item';
+                NamespacePrefix = 'p';
+                fieldelement(Id; ItemRow.Id) { }
+            }
+        }
+    }
 }
