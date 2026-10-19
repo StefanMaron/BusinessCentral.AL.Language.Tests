@@ -58,8 +58,8 @@ codeunit 79926 "LT AS TestField Texts"
         asserterror NumRef(Row).TestField(B);
         Observer.Observe('byte200', Helper.LastError());
 #if BC28PLUS
-        // Linux suspect (not asserted): the BC 28 and 29 Linux tiers write Byte 200 as U+02DC, not as U+00C8; checked on the Windows nightly first.
-        Observer.Ignore('byte200');
+        // BC 28+ writes Byte 200 as one character, U+02DC (small tilde); confirmed on Windows BC (windows check 3), same as the Linux tiers.
+        Observer.Expect('byte200', 'Num Cap must be equal to ''˜''  in AS TF Caption: Id Cap=1. Current value is ''7''.|TestField');
 #else
         Observer.Expect('byte200', 'Num Cap must be equal to ''200''  in AS TF Caption: Id Cap=1. Current value is ''7''.|TestField');
 #endif
