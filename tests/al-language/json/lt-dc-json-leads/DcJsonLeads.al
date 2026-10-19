@@ -93,7 +93,19 @@ codeunit 85780 "LT DC Json Leads"
         Observer.ObserveError('ok_get_2');
         asserterror GetBool('ok_get_minus1', A, -1);
         Observer.ObserveError('ok_get_minus1');
-        Observer.Finish();
+        Observer.Expect('ok_get_3', 'No');
+        Observer.Expect('ok_get_3|text', 'no error');
+        Observer.Expect('ok_get_3|code', 'Dialog');
+        Observer.Expect('ifnot_get_3', 'if not: false');
+        Observer.Expect('ifnot_get_3|text', 'no error');
+        Observer.Expect('ifnot_get_3|code', 'Dialog');
+        Observer.Expect('ok_get_2', 'Yes');
+        Observer.Expect('ok_get_2|text', 'no error');
+        Observer.Expect('ok_get_2|code', 'Dialog');
+        Observer.Expect('ok_get_minus1', 'No');
+        Observer.Expect('ok_get_minus1|text', 'no error');
+        Observer.Expect('ok_get_minus1|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +129,11 @@ codeunit 85780 "LT DC Json Leads"
         Observer.Observe('lbl_astext', T.AsValue().AsText());
         O.Get('tb', T);
         Observer.Observe('tb_astext_len', Format(StrLen(T.AsValue().AsText())));
-        Observer.Finish();
+        Observer.Expect('label_len', '12');
+        Observer.Expect('writeto', '{"lbl":"line1\\nline2","lbl_bs":"a\\b","tb":"x\r\ny","txt_lf":"p\nq"}');
+        Observer.Expect('lbl_astext', 'line1\nline2');
+        Observer.Expect('tb_astext_len', '4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,7 +166,17 @@ codeunit 85780 "LT DC Json Leads"
         Observer.Observe('array_get_5|text', GetLastErrorText());
         Observer.Observe('array_get_5|code', GetLastErrorCode());
         ClearLastError();
-        Observer.Finish();
+        Observer.Expect('missing|text', '');
+        Observer.Expect('missing|code', '');
+        Observer.Expect('several|text', '');
+        Observer.Expect('several|code', '');
+        Observer.Expect('found|text', '');
+        Observer.Expect('found|code', '');
+        Observer.Expect('object_get_missing|text', '');
+        Observer.Expect('object_get_missing|code', '');
+        Observer.Expect('array_get_5|text', '');
+        Observer.Expect('array_get_5|code', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +201,12 @@ codeunit 85780 "LT DC Json Leads"
         Observer.Observe('deep_json', Json);
         O.WriteToYaml(Yaml);
         Observer.Observe('deep_yaml', Yaml);
-        Observer.Finish();
+        Observer.Expect('indented_json', '{"steps":["a","b"]}');
+        Observer.Expect('indented_yaml', 'steps:\r\n- a\r\n- b\r\n');
+        Observer.Expect('flush_yaml', 'steps:\r\n- a\r\n- b\r\n');
+        Observer.Expect('deep_json', '{"job":{"steps":["a",{"name":"b","run":"c"}]}}');
+        Observer.Expect('deep_yaml', 'job:\r\n  steps:\r\n  - a\r\n  - name: b\r\n    run: c\r\n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -204,7 +235,14 @@ codeunit 85780 "LT DC Json Leads"
         Observer.Observe('reread_astext', T.AsValue().AsText());
         R.Get('bs', T);
         Observer.Observe('reread_bs_astext', T.AsValue().AsText());
-        Observer.Finish();
+        Observer.Expect('quotes_astext', 'Version="1.1.0.1"');
+        Observer.Expect('quotes_value_writeto', '"Version=\"1.1.0.1\""');
+        Observer.Expect('bs_astext', 'C:\temp\x');
+        Observer.Expect('ltgt_astext', '<a href="x">');
+        Observer.Expect('object_writeto', '{"Test":"Version=\"1.1.0.1\"","bs":"C:\\temp\\x","ltgt":"<a href=\"x\">"}');
+        Observer.Expect('reread_astext', 'Version="1.1.0.1"');
+        Observer.Expect('reread_bs_astext', 'C:\temp\x');
+        Observer.Verify();
     end;
 
     [Test]
@@ -225,7 +263,23 @@ codeunit 85780 "LT DC Json Leads"
         Observer.ObserveError('stmt_missing');
         asserterror SelectStatement('stmt_index', O, '$.translations[0].text');
         Observer.ObserveError('stmt_index');
-        Observer.Finish();
+        Observer.Expect('bool_dollar', 'false');
+        Observer.Expect('bool_dollar|text', 'no error');
+        Observer.Expect('bool_dollar|code', 'Dialog');
+        Observer.Expect('bool_plain', 'false');
+        Observer.Expect('bool_plain|text', 'no error');
+        Observer.Expect('bool_plain|code', 'Dialog');
+        Observer.Expect('bool_index', 'true "Hi"');
+        Observer.Expect('bool_index|text', 'no error');
+        Observer.Expect('bool_index|code', 'Dialog');
+        Observer.Expect('stmt_dollar|text', 'The JSON path ''$.translations.text'' does not match any tokens.');
+        Observer.Expect('stmt_dollar|code', 'InvalidJsonPathSelection');
+        Observer.Expect('stmt_missing|text', 'The JSON path ''$.missing'' does not match any tokens.');
+        Observer.Expect('stmt_missing|code', 'InvalidJsonPathSelection');
+        Observer.Expect('stmt_index', 'selected "Hi"');
+        Observer.Expect('stmt_index|text', 'no error');
+        Observer.Expect('stmt_index|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +319,38 @@ codeunit 85780 "LT DC Json Leads"
         Observer.Observe('array_nested', Format(A.SelectToken('[1][0]', T)));
         T.WriteTo(Txt);
         Observer.Observe('array_nested_token', Txt);
-        Observer.Finish();
+        Observer.Expect('one_bool', 'true "x"');
+        Observer.Expect('one_bool|text', 'no error');
+        Observer.Expect('one_bool|code', 'Dialog');
+        Observer.Expect('zero_bool', 'false');
+        Observer.Expect('zero_bool|text', 'no error');
+        Observer.Expect('zero_bool|code', 'Dialog');
+        Observer.Expect('two_bool', 'false');
+        Observer.Expect('two_bool|text', 'no error');
+        Observer.Expect('two_bool|code', 'Dialog');
+        Observer.Expect('one_stmt', 'selected "x"');
+        Observer.Expect('one_stmt|text', 'no error');
+        Observer.Expect('one_stmt|code', 'Dialog');
+        Observer.Expect('zero_stmt|text', 'The JSON path ''$.a[?(@.id==9)].name'' does not match any tokens.');
+        Observer.Expect('zero_stmt|code', 'InvalidJsonPathSelection');
+        Observer.Expect('two_stmt|text', 'The set of tokens matching the JSON path ''$.a[?(@.id==2)].name'' contains more than one element.');
+        Observer.Expect('two_stmt|code', 'InvalidJsonPathSelection');
+        Observer.Expect('single_quotes', 'true "x"');
+        Observer.Expect('single_quotes|text', 'no error');
+        Observer.Expect('single_quotes|code', 'Dialog');
+        Observer.Expect('double_quotes', 'false');
+        Observer.Expect('double_quotes|text', 'no error');
+        Observer.Expect('double_quotes|code', 'Dialog');
+        Observer.Expect('filter_text_single_quotes', 'true 2');
+        Observer.Expect('filter_text_single_quotes|text', 'no error');
+        Observer.Expect('filter_text_single_quotes|code', 'Dialog');
+        Observer.Expect('array_empty_path', 'Yes');
+        Observer.Expect('array_empty_path_token', '[1,[2,3]]');
+        Observer.Expect('array_dollar', 'Yes');
+        Observer.Expect('array_dollar_token', '[1,[2,3]]');
+        Observer.Expect('array_nested', 'Yes');
+        Observer.Expect('array_nested_token', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -287,7 +372,16 @@ codeunit 85780 "LT DC Json Leads"
         Observer.ObserveError('value_astext');
         asserterror I := V.AsInteger();
         Observer.ObserveError('value_asinteger');
-        Observer.Finish();
+        Observer.Expect('contains', 'No');
+        Observer.Expect('get', 'No');
+        Observer.Expect('gettext|text', 'There is no property with the ''a'' key on the JSON object.');
+        Observer.Expect('gettext|code', 'JsonPropertyNotFound');
+        Observer.Expect('array_get0', 'No');
+        Observer.Expect('value_astext|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to Microsoft.Dynamics.Nav.Runtime.NavText.');
+        Observer.Expect('value_astext|code', 'Conversion');
+        Observer.Expect('value_asinteger|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavJsonValue to System.Int32.');
+        Observer.Expect('value_asinteger|code', 'Conversion');
+        Observer.Verify();
     end;
 }
 
@@ -338,7 +432,14 @@ codeunit 85781 "LT DC Token SelectTokens"
         Observer.Observe('value_dollar', Format(B) + ' ' + Render(L));
         B := V.SelectTokens('$.a', L);
         Observer.Observe('value_child', Format(B) + ' ' + Render(L));
-        Observer.Finish();
+        Observer.Expect('filter', 'Yes 2:{"line_no":30000};{"line_no":40000};');
+        Observer.Expect('nomatch', 'Yes 0:');
+        Observer.Expect('invalid', 'No 0:');
+        Observer.Expect('invalid|text', 'The requested operation cannot be performed in this context.');
+        Observer.Expect('invalid|code', 'InvalidOperation');
+        Observer.Expect('value_dollar', 'Yes 1:1;');
+        Observer.Expect('value_child', 'Yes 0:');
+        Observer.Verify();
     end;
 }
 #endif

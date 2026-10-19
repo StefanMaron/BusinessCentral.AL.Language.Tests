@@ -13,6 +13,7 @@ codeunit 85782 "LT DC InStream Scope"
 
     var
         Observer: Codeunit "Probe Observer";
+        KeptBlob: Codeunit "Temp Blob";
 
     local procedure FromTempBlob(Content: Text) Result: InStream
     var
@@ -22,6 +23,27 @@ codeunit 85782 "LT DC InStream Scope"
         TempBlob.CreateOutStream(OutS);
         OutS.WriteText(Content);
         TempBlob.CreateInStream(Result);
+    end;
+
+    local procedure InScope(Content: Text): Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        OutS.WriteText(Content);
+        TempBlob.CreateInStream(InS);
+        exit(ReadAll(InS));
+    end;
+
+    local procedure FromKeptBlob(Content: Text) Result: InStream
+    var
+        OutS: OutStream;
+    begin
+        KeptBlob.CreateOutStream(OutS);
+        OutS.WriteText(Content);
+        KeptBlob.CreateInStream(Result);
     end;
 
     local procedure FromTempBlobVar(Content: Text; var InS: InStream)
@@ -70,6 +92,9 @@ codeunit 85782 "LT DC InStream Scope"
         InS: InStream;
         InS2: InStream;
     begin
+        Observer.Observe('control_in_scope', InScope('hello in scope'));
+        InS := FromKeptBlob('hello kept blob');
+        Observer.Observe('kept_blob_text', ReadAll(InS));
         InS := FromTempBlob('hello temp blob');
         Observer.Observe('return_length', Format(InS.Length()));
         Observer.Observe('return_text', ReadAll(InS));
