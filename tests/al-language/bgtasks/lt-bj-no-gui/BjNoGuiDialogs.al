@@ -227,7 +227,6 @@ codeunit 81685 "LT BJ NoGui Tests NoHandler"
 
     var
         Observer: Codeunit "Probe Observer";
-        NoGuiLog: Codeunit "LT BJ NoGui Log";
 
     local procedure Dump(Results: Dictionary of [Text, Text]): Text
     var
@@ -251,7 +250,6 @@ codeunit 81685 "LT BJ NoGui Tests NoHandler"
         Row."No." := 'RUN';
         Row.Insert();
         Commit();
-        NoGuiLog.Take();
         Pg.OpenView();
         Results := Pg.RunPageBackgroundTask(Codeunit::"LT BJ NoGui Worker", Params, false);
         Observer.Observe('results', Dump(Results));
