@@ -180,4 +180,70 @@ codeunit 72026 "LT HtT Client"
         Observer.Expect('original', '99 milliseconds');
         Observer.Verify();
     end;
+
+    // Corpus issue #671 (odd AL behavior leads, part F) items 26 and 30: the other HttpHeaders members with Content-Type on the
+    // client's default request headers, and a manual Cookie header there. Add with its Boolean used answers false; the same Add as a
+    // statement raises 'The requested operation cannot be performed in this context.' (DefaultRequestHeaders above).
+    [TryFunction]
+    local procedure TryHeaderOp(var Headers: HttpHeaders; Op: Integer; Name: Text; Value: Text; var Result: Boolean)
+    var
+        Vals: array[5] of Text;
+    begin
+        case Op of
+            1:
+                Result := Headers.Contains(Name);
+            2:
+                Result := Headers.Remove(Name);
+            3:
+                Result := Headers.TryAddWithoutValidation(Name, Value);
+            4:
+                Result := Headers.GetValues(Name, Vals);
+            5:
+                Result := Headers.Add(Name, Value);
+        end;
+    end;
+
+    local procedure HeaderOp(var Headers: HttpHeaders; Op: Integer; Name: Text; Value: Text): Text
+    var
+        Result: Boolean;
+    begin
+        ClearLastError();
+        if TryHeaderOp(Headers, Op, Name, Value, Result) then
+            exit(Format(Result));
+        exit('E[' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+    end;
+
+    [Test]
+    procedure DefaultRequestHeaders_ContentTypeMembers_AndCookie()
+    var
+        Client: HttpClient;
+        Headers: HttpHeaders;
+        Vals: array[5] of Text;
+    begin
+        Headers := Client.DefaultRequestHeaders();
+        Observer.Observe('contains', HeaderOp(Headers, 1, 'Content-Type', ''));
+        Observer.Observe('remove', HeaderOp(Headers, 2, 'Content-Type', ''));
+        Observer.Observe('raw', HeaderOp(Headers, 3, 'Content-Type', 'text/xml'));
+        Observer.Observe('getValues', HeaderOp(Headers, 4, 'Content-Type', ''));
+        Observer.Observe('addLower', HeaderOp(Headers, 5, 'content-type', 'application/json'));
+        Observer.Observe('addUsed', HeaderOp(Headers, 5, 'Content-Type', 'text/plain'));
+        Observer.Observe('containsLength', HeaderOp(Headers, 1, 'Content-Length', ''));
+        Observer.Observe('keys', Format(Headers.Keys().Count()));
+        Observer.Observe('cookieAdd', HeaderOp(Headers, 5, 'Cookie', 'a=b'));
+        Headers.GetValues('Cookie', Vals);
+        Observer.Observe('cookieValue', Vals[1]);
+        Observer.Observe('cookieKeys', Format(Client.DefaultRequestHeaders().Keys().Count()));
+        Observer.Expect('contains', 'E[Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:InvalidOperation]');
+        Observer.Expect('remove', 'No');
+        Observer.Expect('raw', 'No');
+        Observer.Expect('getValues', 'No');
+        Observer.Expect('addLower', 'No');
+        Observer.Expect('addUsed', 'No');
+        Observer.Expect('containsLength', 'E[Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:InvalidOperation]');
+        Observer.Expect('keys', '0');
+        Observer.Expect('cookieAdd', 'Yes');
+        Observer.Expect('cookieValue', 'a=b');
+        Observer.Expect('cookieKeys', '1');
+        Observer.Verify();
+    end;
 }
