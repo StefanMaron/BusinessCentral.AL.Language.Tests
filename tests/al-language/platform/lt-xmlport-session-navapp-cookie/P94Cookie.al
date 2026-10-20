@@ -345,4 +345,36 @@ codeunit 73085 "LT P94 Cookie"
         Observer.Expect('blankName', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue #671 (odd AL behavior leads, part F) item 24: the value the setter form returns when it is used as an expression.
+    // As a statement (C.Name('n');) the AL 30.0.42.60748-beta compiler accepts it, but publishing to BC 29.0 fails with
+    // "error AL0192: The return value must be used for the method 'Name'" (and 'Value'), so it cannot be in this app.
+    [Test]
+    procedure Setter_ReturnValue()
+    var
+        C: Cookie;
+        R: Text;
+    begin
+        R := C.Name('n1');
+        Observer.Observe('nameFirst', '[' + R + ']');
+        R := C.Name('n2');
+        Observer.Observe('nameSecond', '[' + R + ']');
+        Observer.Observe('nameNow', '[' + C.Name() + ']');
+        R := C.Value('v1');
+        Observer.Observe('valueFirst', '[' + R + ']');
+        R := C.Value('v2');
+        Observer.Observe('valueSecond', '[' + R + ']');
+        Observer.Observe('valueNow', '[' + C.Value() + ']');
+        Observer.Observe('inExpression', C.Name('n3') + '|' + C.Value('v3'));
+        Observer.Observe('afterExpression', C.Name() + '=' + C.Value());
+        Observer.Expect('nameFirst', '[n1]');
+        Observer.Expect('nameSecond', '[n2]');
+        Observer.Expect('nameNow', '[n2]');
+        Observer.Expect('valueFirst', '[v1]');
+        Observer.Expect('valueSecond', '[v2]');
+        Observer.Expect('valueNow', '[v2]');
+        Observer.Expect('inExpression', 'n3|v3');
+        Observer.Expect('afterExpression', 'n3=v3');
+        Observer.Verify();
+    end;
 }

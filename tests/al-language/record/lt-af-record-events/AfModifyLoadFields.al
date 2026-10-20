@@ -160,4 +160,123 @@ codeunit 78307 "LT AF Modify LoadFields"
         Observer.Expect('caller after modify(true) full', 'A=Yes B=Yes C=Yes');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 38 (writer br): what an OnBeforeModify / OnAfterModify subscriber reads from xRec fields the caller never loaded.
+    [Test]
+    procedure BR_Modify_True_After_SetLoadFields_A_SubscriberReadsXRecValues()
+    var
+        Observer: Codeunit "Probe Observer";
+        BrSubscribers: Codeunit "LT BR AF Mod Subscribers";
+        Row: Record "LT BR AF Mod";
+    begin
+        BrSeed();
+        BrSubscribers.SetReload(false);
+        Row.SetLoadFields(A);
+        Row.Get(1);
+        Row.B := 11;
+        Row.Modify(true);
+        Observer.Observe('subscribers', BrSubscribers.Take());
+        Observer.Observe('caller c', Format(Row.C, 0, 9));
+        Row.Get(1);
+        Observer.Observe('stored', Format(Row.B) + '|' + Format(Row.C, 0, 9));
+        Observer.Expect('subscribers', 'before xrec loadedC=Yes B=11 C=1.5; before rec loadedC=Yes B=11 C=1.5; after xrec loadedC=Yes B=11 C=1.5; after rec loadedC=Yes B=11 C=1.5; ');
+        Observer.Expect('caller c', '1.5');
+        Observer.Expect('stored', '11|1.5');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure BR_Modify_True_After_SetLoadFields_A_SubscriberReloadsXRec()
+    var
+        Observer: Codeunit "Probe Observer";
+        BrSubscribers: Codeunit "LT BR AF Mod Subscribers";
+        Row: Record "LT BR AF Mod";
+    begin
+        BrSeed();
+        BrSubscribers.SetReload(true);
+        Row.SetLoadFields(A);
+        Row.Get(1);
+        Row.B := 12;
+        Row.Modify(true);
+        BrSubscribers.SetReload(false);
+        Observer.Observe('subscribers', BrSubscribers.Take());
+        Row.Get(1);
+        Observer.Observe('stored', Format(Row.B) + '|' + Format(Row.C, 0, 9));
+        Observer.Expect('subscribers', 'reload find=Yes; before xrec loadedC=Yes B=10 C=1.5; before rec loadedC=Yes B=12 C=1.5; after xrec loadedC=Yes B=10 C=1.5; after rec loadedC=Yes B=12 C=1.5; ');
+        Observer.Expect('stored', '12|1.5');
+        Observer.Verify();
+    end;
+
+    local procedure BrSeed()
+    var
+        Row: Record "LT BR AF Mod";
+        BrSubscribers: Codeunit "LT BR AF Mod Subscribers";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.A := 'one';
+        Row.B := 10;
+        Row.C := 1.5;
+        Row.Insert();
+        BrSubscribers.Take();
+    end;
+}
+
+table 82950 "LT BR AF Mod"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; A; Text[30]) { }
+        field(3; B; Integer) { }
+        field(4; C; Decimal) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+codeunit 82951 "LT BR AF Mod Subscribers"
+{
+    SingleInstance = true;
+
+    var
+        Log: Text;
+        Reload: Boolean;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Log;
+        Log := '';
+        exit(Result);
+    end;
+
+    procedure SetReload(NewReload: Boolean)
+    begin
+        Reload := NewReload;
+    end;
+
+    local procedure Values(var R: Record "LT BR AF Mod"): Text
+    begin
+        exit('loadedC=' + Format(R.AreFieldsLoaded(R.C)) + ' B=' + Format(R.B) + ' C=' + Format(R.C, 0, 9));
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT BR AF Mod", OnBeforeModifyEvent, '', false, false)]
+    local procedure OnBeforeModify(var Rec: Record "LT BR AF Mod"; var xRec: Record "LT BR AF Mod"; RunTrigger: Boolean)
+    begin
+        if Reload then begin
+            xRec.AddLoadFields(C);
+            Log += 'reload find=' + Format(xRec.Find('=')) + '; ';
+        end;
+        Log += 'before xrec ' + Values(xRec) + '; before rec ' + Values(Rec) + '; ';
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT BR AF Mod", OnAfterModifyEvent, '', false, false)]
+    local procedure OnAfterModify(var Rec: Record "LT BR AF Mod"; var xRec: Record "LT BR AF Mod"; RunTrigger: Boolean)
+    begin
+        Log += 'after xrec ' + Values(xRec) + '; after rec ' + Values(Rec) + '; ';
+    end;
 }

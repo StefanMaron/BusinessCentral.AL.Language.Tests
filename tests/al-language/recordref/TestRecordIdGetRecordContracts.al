@@ -85,4 +85,58 @@ codeunit 68962 "Probe RecordId GetRecord"
         Assert.AreEqual('The record is not open.', GetLastErrorText(), 'text');
         Assert.AreEqual('RecordNotOpened', GetLastErrorCode(), 'code');
     end;
+
+    // Corpus issue 668 item 47 (writer br): the SystemId field of the RecordRef that RecordId.GetRecord() answers, before and after
+    // RecordRef.LoadFields(SystemIdNo), after SetRecFilter + FindFirst, and from RecordRef.Get(RecordId).
+    local procedure BrSystemIdState(var RR: RecordRef; Expected: Guid): Text
+    var
+        G: Guid;
+    begin
+        G := RR.Field(RR.SystemIdNo()).Value;
+        exit('null=' + Format(IsNullGuid(G)) + ' same=' + Format(G = Expected));
+    end;
+
+    [TryFunction]
+    local procedure BrTryLoadSystemId(var RR: RecordRef)
+    begin
+        RR.LoadFields(RR.SystemIdNo());
+    end;
+
+    [Test]
+    procedure GetRecord_SystemIdField_BeforeAndAfterLoading()
+    var
+        Observer: Codeunit "Probe Observer";
+        GrRec: Record "Probe GetRecord Table";
+        Rid: RecordId;
+        GrRef: RecordRef;
+        Fetched: RecordRef;
+        Expected: Guid;
+    begin
+        GrRec.DeleteAll();
+        GrRec.Id := 1;
+        GrRec.Txt := 'hello';
+        GrRec.Insert();
+        Rid := GrRec.RecordId;
+        Expected := GrRec.SystemId;
+
+        GrRef := Rid.GetRecord();
+        Observer.Observe('getrecord', BrSystemIdState(GrRef, Expected));
+        ClearLastError();
+        if BrTryLoadSystemId(GrRef) then
+            Observer.Observe('loadfields', 'ok|' + BrSystemIdState(GrRef, Expected) + '|txt=' + Format(GrRef.Field(2).Value))
+        else
+            Observer.Observe('loadfields', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+
+        GrRef := Rid.GetRecord();
+        GrRef.SetRecFilter();
+        Observer.Observe('setrecfilter findfirst', Format(GrRef.FindFirst()) + '|' + BrSystemIdState(GrRef, Expected) + '|txt=' + Format(GrRef.Field(2).Value));
+
+        Fetched.Open(Database::"Probe GetRecord Table");
+        Observer.Observe('recordref get', Format(Fetched.Get(Rid)) + '|' + BrSystemIdState(Fetched, Expected));
+        Observer.Expect('getrecord', 'null=Yes same=No');
+        Observer.Expect('loadfields', 'ok|null=Yes same=No|txt=');
+        Observer.Expect('setrecfilter findfirst', 'Yes|null=No same=Yes|txt=hello');
+        Observer.Expect('recordref get', 'Yes|null=No same=Yes');
+        Observer.Verify();
+    end;
 }

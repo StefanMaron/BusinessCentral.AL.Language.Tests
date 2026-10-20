@@ -4,6 +4,7 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: Report.SetTableView and the record argument of Report.Run with a record of a table that the report has no data item over, that two data items of the report read, and with a temporary, marked or re-sorted (key, descending) record; observed by the rows each data item visits
 // BC versions: 29 (27 and 28 by CI)
+// Added by writer BN3 (corpus #664 item 54): table 83863, report 83864 and BN3_Report_DataItemTableViewConstZeroDate (DataItemTableView where(D = const(0D))).
 
 table 74347 "LT P136 Item"
 {
@@ -318,4 +319,79 @@ codeunit 74352 "LT P136 Report Tests"
         Observer.Expect('keyQtyFiltered', 'ok|I:c;I:b;');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure BN3_TryRunZeroDate()
+    begin
+        Report.Run(Report::"LT BN3 Rp ZeroDate", false);
+    end;
+
+    // Corpus #664 item 54: DataItemTableView = where(D = const(0D)) compiles; which rows the data item visits and the filter text it sees.
+    [Test]
+    procedure BN3_Report_DataItemTableViewConstZeroDate()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BN3 Dated";
+        L: Record "LT P136 Log";
+    begin
+        Row.DeleteAll();
+        L.DeleteAll();
+        Row.Id := 1;
+        Row.D := 0D;
+        Row.Insert();
+        Row.Id := 2;
+        Row.D := DMY2Date(1, 1, 2020);
+        Row.Insert();
+        Row.Id := 3;
+        Row.D := 0D;
+        Row.Insert();
+        Observer.Observe('run', Outcome(BN3_TryRunZeroDate()));
+        Observer.Expect('run', 'error|The format of the Date '''''''' does not match your device''s date settings.\\Make sure that the day, month, and year are in the correct order and use the correct separator (such as - or /). Alternatively, you can always use the format ''yyyy-mm-dd''.|Evaluate|');
+        Observer.Verify();
+    end;
+}
+
+// Corpus #664 item 54 (microsoft/AL issue 6898): a report data item whose DataItemTableView filters a Date field with const(0D).
+table 83863 "LT BN3 Dated"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; D; Date) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+report 83864 "LT BN3 Rp ZeroDate"
+{
+    ProcessingOnly = true;
+    UsageCategory = None;
+
+    dataset
+    {
+        dataitem(Rows; "LT BN3 Dated")
+        {
+            DataItemTableView = where(D = const(0D));
+
+            trigger OnPreDataItem()
+            var
+                L: Record "LT P136 Log";
+            begin
+                L.Add('filters=' + Rows.GetFilters());
+            end;
+
+            trigger OnAfterGetRecord()
+            var
+                L: Record "LT P136 Log";
+            begin
+                L.Add('row ' + Format(Rows.Id));
+            end;
+        }
+    }
 }

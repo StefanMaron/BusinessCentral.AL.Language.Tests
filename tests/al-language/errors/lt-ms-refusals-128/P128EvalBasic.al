@@ -31,6 +31,28 @@ table 73169 "LT P128 Eval Opt"
     }
 }
 
+// Corpus issue 672 item 14 (AL issue 4102): an Option whose captions are numbers that clash with the ordinals (caption '1' is
+// member Round, ordinal 2; ordinal 1 is Ordinary, caption '0.01').
+table 83350 "LT BT Rounding Opt"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Rounding; Option)
+        {
+            OptionMembers = " ",Ordinary,Round,Tens,Fifties,Hundreds,Thousands;
+            OptionCaption = ' ,0.01,1,10,50,100,1000';
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
 codeunit 73168 "LT P128 Eval Basic"
 {
     Subtype = Test;
@@ -244,6 +266,70 @@ codeunit 73168 "LT P128 Eval Basic"
         Observer.Expect('caption Thirty', 'Yes|Thirty|2');
         Observer.Expect('neither Three', 'No|Thirty|2');
         Observer.Expect('ordinal 5', 'Yes|5|5');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryValidateRoundingText(var Row: Record "LT BT Rounding Opt"; Txt: Text)
+    var
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+    begin
+        RecRef.GetTable(Row);
+        FldRef := RecRef.Field(Row.FieldNo(Rounding));
+        Evaluate(FldRef, Txt);
+        FldRef.Validate();
+        RecRef.SetTable(Row);
+    end;
+
+    // Corpus issue 672 item 14 (AL issue 4102): Evaluate of the texts '1', '0.01', '10', '2', '1000' and 'Round' into the Option field
+    // above, and the same texts through Evaluate(FieldRef) + FieldRef.Validate (result | Format | ordinal).
+    [Test]
+    procedure BT_Evaluate_IntoOptionField_CaptionsClashWithOrdinals()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BT Rounding Opt";
+        Ok: Boolean;
+        Inputs: List of [Text];
+        Input: Text;
+    begin
+        Inputs.Add('1');
+        Inputs.Add('0.01');
+        Inputs.Add('10');
+        Inputs.Add('2');
+        Inputs.Add('1000');
+        Inputs.Add('7');
+        Inputs.Add('Round');
+        Inputs.Add('');
+        foreach Input in Inputs do begin
+            Row.Rounding := Row.Rounding::Fifties;
+            Ok := Evaluate(Row.Rounding, Input);
+            Observer.Observe('eval [' + Input + ']', Format(Ok) + '|' + Format(Row.Rounding) + '|' + Format(Row.Rounding, 0, 2));
+        end;
+        foreach Input in Inputs do begin
+            Row.Rounding := Row.Rounding::Fifties;
+            ClearLastError();
+            if TryValidateRoundingText(Row, Input) then
+                Observer.Observe('fieldref [' + Input + ']', 'ok|' + Format(Row.Rounding) + '|' + Format(Row.Rounding, 0, 2))
+            else
+                Observer.Observe('fieldref [' + Input + ']', 'err|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        end;
+        Observer.Expect('eval [1]', 'Yes|1|2');
+        Observer.Expect('eval [0.01]', 'Yes|0.01|1');
+        Observer.Expect('eval [10]', 'Yes|10|3');
+        Observer.Expect('eval [2]', 'Yes|1|2');
+        Observer.Expect('eval [1000]', 'Yes|1000|6');
+        Observer.Expect('eval [7]', 'Yes|7|7');
+        Observer.Expect('eval [Round]', 'Yes|1|2');
+        Observer.Expect('eval []', 'Yes| |0');
+        Observer.Expect('fieldref [1]', 'ok|1|2');
+        Observer.Expect('fieldref [0.01]', 'ok|0.01|1');
+        Observer.Expect('fieldref [10]', 'ok|10|3');
+        Observer.Expect('fieldref [2]', 'ok|1|2');
+        Observer.Expect('fieldref [1000]', 'ok|1000|6');
+        Observer.Expect('fieldref [7]', 'ok|7|7');
+        Observer.Expect('fieldref [Round]', 'ok|1|2');
+        Observer.Expect('fieldref []', 'ok| |0');
         Observer.Verify();
     end;
 }

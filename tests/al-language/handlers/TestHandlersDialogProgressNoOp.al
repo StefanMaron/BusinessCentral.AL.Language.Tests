@@ -108,4 +108,26 @@ codeunit 60218 "Test Handlers Dialog NoOp"
     local procedure Initialize()
     begin
     end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 2689): an array of Dialog (once a compiler crash) compiles, and each element is
+    // a progress dialog that is a headless no-op like a single Dialog variable.
+    [Test]
+    procedure ProgressDialog_ArrayOfDialog_EachElementIsNoOp_BP()
+    var
+        Windows: array[5] of Dialog;
+        Counter: Integer;
+        Total: Integer;
+    begin
+        Initialize();
+        for Counter := 1 to 5 do
+            Windows[Counter].Open('Step ' + Format(Counter) + ' #1######');
+        for Counter := 1 to 5 do begin
+            Windows[Counter].Update(1, Counter * 10);
+            Total += Counter;
+        end;
+        for Counter := 1 to 5 do
+            Windows[Counter].Close();
+        Assert.AreEqual(15, Total, 'the code after Open, Update and Close of every array element ran');
+        Assert.AreEqual(5, ArrayLen(Windows), 'ArrayLen of an array of Dialog');
+    end;
 }

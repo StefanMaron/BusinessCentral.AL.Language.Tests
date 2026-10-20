@@ -285,4 +285,49 @@ codeunit 70903 "LT P140 Integer ToText"
         Observer.Expect('restored_equal', 'Yes');
         Observer.Verify();
     end;
+
+    // corpus issue 669 (writer CO): after GlobalLanguage(1043) (Dutch), does Format use a Dutch decimal separator, and do date texts change?
+    [Test]
+    procedure P140_DutchGlobalLanguage_NumbersAndDates_CO()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+        D: Decimal;
+        Dt: Date;
+    begin
+        Orig := GlobalLanguage();
+        D := 1234.5;
+        Dt := DMY2Date(5, 2, 2024);
+        Observer.Observe('enu_dec_format', Format(D));
+        Observer.Observe('enu_date_format', Format(Dt));
+        Observer.Observe('enu_date_month_text', Format(Dt, 0, '<Month Text>'));
+        Observer.Observe('enu_date_weekday_text', Format(Dt, 0, '<Weekday Text>'));
+        GlobalLanguage(1043);
+        Observer.Observe('nld_global_language', Format(GlobalLanguage()));
+        Observer.Observe('nld_dec_format', Format(D));
+        Observer.Observe('nld_dec_totext', D.ToText());
+        Observer.Observe('nld_dec_format_1', Format(D, 0, 1));
+        Observer.Observe('nld_date_format', Format(Dt));
+        Observer.Observe('nld_date_format_4', Format(Dt, 0, 4));
+        Observer.Observe('nld_date_month_text', Format(Dt, 0, '<Month Text>'));
+        Observer.Observe('nld_date_weekday_text', Format(Dt, 0, '<Weekday Text>'));
+        Observer.Observe('nld_bool', Format(true));
+        GlobalLanguage(Orig);
+        Observer.Observe('restored_equal', Format(GlobalLanguage() = Orig));
+        Observer.Expect('enu_dec_format', '1,234.5');
+        Observer.Expect('enu_date_format', '02/05/24');
+        Observer.Expect('enu_date_month_text', 'February');
+        Observer.Expect('enu_date_weekday_text', 'Monday');
+        Observer.Expect('nld_global_language', '1043');
+        Observer.Expect('nld_dec_format', '1,234.5');
+        Observer.Expect('nld_dec_totext', '1,234.5');
+        Observer.Expect('nld_dec_format_1', '1234.5');
+        Observer.Expect('nld_date_format', '02/05/24');
+        Observer.Expect('nld_date_format_4', 'februari 5, 2024');
+        Observer.Expect('nld_date_month_text', 'februari');
+        Observer.Expect('nld_date_weekday_text', 'maandag');
+        Observer.Expect('nld_bool', 'Ja');
+        Observer.Expect('restored_equal', 'Yes');
+        Observer.Verify();
+    end;
 }

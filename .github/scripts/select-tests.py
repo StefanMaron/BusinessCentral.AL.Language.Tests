@@ -57,6 +57,8 @@ IGNORED_OUTSIDE_APPS = (
     re.compile(r'^docs/'), re.compile(r'^scripts/'), re.compile(r'^\.claude/'), re.compile(r'^tests/must-not-compile/'),
     re.compile(r'^[^/]+\.md$'), re.compile(r'^tests/[^/]+\.md$'), re.compile(r'^tests/al-surface(-inscope)?\.json$'),
     re.compile(r'^(tests/)?v2-classification\.json$'), re.compile(r'^\.gitignore$'),
+    # The Windows nightly's own files: ci.yml and the scripts it runs never read them.
+    re.compile(r'^\.github/nightly-windows/'), re.compile(r'^\.github/workflows/nightly-windows\.yml$'),
 )
 # Files inside a CI app that the compile does not read.
 IGNORED_INSIDE_APP = re.compile(r'(\.md|\.py|/bc-full-results\.json|/\.dev/.*)$')
@@ -428,7 +430,7 @@ def select(git, base, head, merge_base=False, ci_text=None):
         app = app_of(f, ci_apps)
         if f == CI_YML and range_edit:
             result['ci_range_edit'] = [f]  # only codeunit_range values changed: select as usual
-        elif f.startswith('.github/'):
+        elif f.startswith('.github/') and not any(p.search(f) for p in IGNORED_OUTSIDE_APPS):
             reasons.append('CI configuration changed: %s' % f)
         elif app is None:
             if any(p.search(f) for p in IGNORED_OUTSIDE_APPS) or test_app_outside_ci(f, all_files, ci_apps):
