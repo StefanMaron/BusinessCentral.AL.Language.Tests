@@ -450,6 +450,12 @@ is only a reference.
 | 1733 | AL0369 | The same for loop with the BigInteger literal 100000000000000L as end bound. |
 | 1734 | AL0427 | An Enum lookup FlowField over a BigInteger field. |
 | 1735 | AL0103 | `InitValue = 3000000000` on an Integer field. |
+| 1832 | AL0133 | A BigText passed to "Base64 Convert".FromBase64: no overload takes a BigText. |
+| 1833 | AL0122 | A BigText assigned to a Text variable: no implicit conversion. |
+| 1864 | AL0132 | A TestPage cannot reach a system part, file upload action, custom action, view or user control. |
+| 1865 | AL0171 | SubPageLink and SubPageView on a system part. (two diagnostics) |
+| 1866 | AL0543 | ContextSensitiveHelpPage on a page extension without the manifest property contextSensitiveHelpUrl. |
+| 1888 | AL0779 | ModifyAll on a FlowField with RunTrigger = true. |
 | 1430 | AL0528 | API page field control names with a space or a quoted special character (digit inside, leading digit, underscore compile). (two diagnostics) |
 | 1431 | AL0666 | Importance = Optional on a page field: not available in the app runtime. |
 | 1432 | AL0298 | StyleExpr set to a PageStyle variable. |
@@ -467,6 +473,10 @@ is only a reference.
 | 1444 | AL0371 | BigInteger assigned a product of Integer literals that overflows Integer. |
 | 1445 | AL0198 | `internal interface` (access modifier before the keyword). |
 | 1446 | AL0118 | A page field whose source is the bare name SystemId, with the feature NoImplicitWith. |
+| 1450 | AL0166 | Record.SetRange with one argument that is an enum or option value, not a field. |
+| 1451 | AL0118 | Record.SetCurrentKey with the name of a key instead of its fields. |
+| 1452 | AL0779 | Record.ModifyAll on a FlowField (own FlowField and Customer."Balance (LCY)"). |
+| 1453 | AL0224, AL0104 | Record.Get with an empty argument in the middle of the key values. |
 | 1470 | AL0827 | Record.CalcSums with a Sum FlowField as the only argument and as the second argument. (two diagnostics) |
 | 1471 | AL0223 | OptimizeForTextSearch = true on a Lookup FlowField of type Text. |
 | 1472 | AL0223 | OptimizeForTextSearch = true on a FlowFilter field of type Text. |
@@ -490,6 +500,13 @@ is only a reference.
 | 1656 | AL0161 | A report trigger calls a procedure of a part of its request page (from the request page OnOpenPage it compiles). |
 | 1672 | AL0162 | A report extension modify() of a base data item declares OnAfterGetRecord. |
 | 1736 | AL0133 | Text[100] field passed to a var Code[20] parameter |
+| 1744 | AL0107, AL0104 | Dictionary of [Guid, Option]: Option is not a type argument, the parser wants option members. |
+| 1745 | AL0104 | Dictionary of [Guid, Option "a","b"] does not parse either. (two diagnostics) |
+| 1746 | AL0107, AL0104 | List of [Option] does not parse. |
+| 1747 | AL0408 | Dictionary of [Text, Variant] and List of [Variant]. (two diagnostics) |
+| 1748 | AL0408 | Dictionary of [Integer, Record ...] and List of [Record ...] (List of [RecordRef] compiles). (two diagnostics) |
+| 1749 | AL0408 | List of [Blob]. |
+| 1750 | AL0133 | A Dictionary or a List passed to a var Variant parameter. (two diagnostics) |
 | 1752 | AL0831 | A [TryFunction] procedure as the implementation of an interface method. |
 | 1784 | AL0133 | A Record passed to a var Variant parameter. |
 | 1785 | AL0777 | A Guid (variable or SystemId) assigned to a Code[20]. (two diagnostics) |
@@ -506,6 +523,13 @@ is only a reference.
 | 1818 | AL0132 | JsonObject has no Clear method (Clear(variable) empties it). |
 | 1819 | AL0132 | JsonArray has no Clear method (Clear(variable) empties it). |
 | 1824 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
+| 1776 | AL0612 | An interface that declares a trigger: an interface member must be a procedure. |
+| 1777 | AL0675 | DefaultImplementation that lists the same interface twice. |
+| 1778 | AL0675 | An enum value's Implementation that lists the same interface twice. |
+| 1779 | AL0187, AL0919 | [Scope('Cloud')] on an interface member. |
+| 1780 | AL0132 | BC 29: a default interface method called on a codeunit variable whose codeunit does not declare it. |
+| 1781 | AL0922 | BC 29: a [Scope('OnPrem')] procedure overrides a default interface method. |
+| 1782 | AL0231 | An enumextension of Base Application "Sales Line Type" reuses an ordinal of the base enum (ordinal 6 compiles). |
 | 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
 | 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
 | 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |
@@ -536,10 +560,16 @@ is only a reference.
 | 1716 | AL0195 | AccessByPermission on a page field names a codeunit with RIMD (only X is allowed). |
 | 1717 | AL0195 | AccessByPermission on page actions names a report with M, a query with R and an xmlport with R. |
 | 1718 | AL0195 | AccessByPermission on a page action names a table object with D (tabledata takes RIMD). |
+| 1720 | AL0124 | ExcludedPermissionSets in a permissionsetextension (only a permissionset may exclude sets). |
 | 1760 | AL0774 | `exit(false)` / `exit(true)` in a `[TryFunction]` without a return value (a bare `exit;` compiles) |
 | 1768 | AL0582 | An interface implementation omits `temporary` on a `var` record parameter. |
 | 1769 | AL0122 | An interface variable assigned from a field of an enum that does not implement the interface. |
 | 1770 | AL0698 | A `case` statement over a Record value. |
+| 1290 | AL0220 | A page sets its own Editable property to a page variable (controls accept an expression). |
+| 1688 | AL0284 | Subscriber parameter types: Record Vendor for Record Customer, a Codeunit for a Record, Decimal for Integer. |
+| 1689 | AL0271 | An action subscriber names the action by its caption (with and without the ampersand) or by an unknown name. |
+| 1690 | AL0155 | A page has an action group and an action with the same name. |
+| 1691 | AL0132, AL0161 | A table event subscriber reads `Rec.CurrFieldNo` (a table of another app, a table of the same app). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

@@ -495,4 +495,223 @@ codeunit 71500 "LT RcA GetFind"
         Observer.Expect('leTx', 'ABD');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 items 20, 24, 28, 29 (writer BQ). Fixtures: record/lt-bq-odd-leads/BqObjects.al.
+    [TryFunction]
+    local procedure BqTryGetMulti(var M: Record "LT RcA Multi"; Shape: Integer; var Found: Boolean)
+    begin
+        case Shape of
+            1:
+                Found := M.Get('Q');
+            2:
+                Found := M.Get('Q', 1);
+            3:
+                Found := M.Get('R');
+            4:
+                Found := M.Get('Q', 2);
+            5:
+                Found := M.Get();
+        end;
+    end;
+
+    local procedure BqMultiOutcome(var M: Record "LT RcA Multi"; Shape: Integer): Text
+    var
+        Found: Boolean;
+        Result: Text;
+    begin
+        Clear(M);
+        if BqTryGetMulti(M, Shape, Found) then
+            exit(Format(Found) + ' ' + M.A + '/' + Format(M.B) + '/' + Format(M.C, 0, 9) + ' ' + M.Info);
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    // Get with fewer values than the three key fields of LT RcA Multi (A Code, B Integer, C Date); rows Q/0/0D, Q/1/0D, Q/1/2020-01-01.
+    [Test]
+    procedure Get_Fewer_Values_Than_Key_Fields_BQ()
+    var
+        M: Record "LT RcA Multi";
+        Filtered: Record "LT RcA Multi";
+    begin
+        Seed.Keys();
+        M.Init();
+        M.A := 'Q';
+        M.Info := 'q00';
+        M.Insert();
+        M.Init();
+        M.A := 'Q';
+        M.B := 1;
+        M.Info := 'q10';
+        M.Insert();
+        M.Init();
+        M.A := 'Q';
+        M.B := 1;
+        M.C := DMY2Date(1, 1, 2020);
+        M.Info := 'q1d';
+        M.Insert();
+        Observer.Observe('oneValue', BqMultiOutcome(M, 1));
+        Observer.Observe('twoValues', BqMultiOutcome(M, 2));
+        Observer.Observe('oneValueMissing', BqMultiOutcome(M, 3));
+        Observer.Observe('twoValuesMissing', BqMultiOutcome(M, 4));
+        Observer.Observe('noValues', BqMultiOutcome(M, 5));
+        asserterror M.Get('R');
+        Observer.ObserveError('oneValueMissingError');
+        Filtered.SetRange(Info, 'zzz');
+        Filtered.SetCurrentKey(Info);
+        Observer.Observe('filteredGet', Format(Filtered.Get('Q', 1)) + ' ' + Filtered.Info);
+        Observer.Observe('filtersAfterGet', Filtered.GetFilters());
+        Observer.Observe('keyAfterGet', Filtered.CurrentKey());
+        Observer.Observe('countAfterGet', Format(Filtered.Count()));
+        Observer.Expect('oneValue', 'Yes Q/0/ q00');
+        Observer.Expect('twoValues', 'Yes Q/1/ q10');
+        Observer.Expect('oneValueMissing', 'No /0/ ');
+        Observer.Expect('twoValuesMissing', 'No /0/ ');
+        Observer.Expect('noValues', 'No /0/ ');
+        Observer.Expect('oneValueMissingError|text', 'The LT RcA Multi does not exist. Identification fields and values: A=''R'',B=''0'',C=''''');
+        Observer.Expect('oneValueMissingError|code', 'DB:RecordNotFound');
+        Observer.Expect('filteredGet', 'No ');
+        Observer.Expect('filtersAfterGet', 'Info: zzz');
+        Observer.Expect('keyAfterGet', 'Info');
+        Observer.Expect('countAfterGet', '0');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure BqTryGetByRecord(var R: Record "LT RcA Main"; Shape: Integer; var Found: Boolean)
+    var
+        Other: Record "LT RcA Main";
+        CodeKey: Record "LT RcA CodeKey";
+    begin
+        case Shape of
+            1:
+                begin
+                    Other.Get(30);
+                    Found := R.Get(Other);
+                end;
+            2:
+                begin
+                    R.No := 40;
+                    Found := R.Get(R);
+                end;
+            3:
+                begin
+                    CodeKey.FindFirst();
+                    Found := R.Get(CodeKey);
+                end;
+            4:
+                begin
+                    Other.Init();
+                    Found := R.Get(Other);
+                end;
+        end;
+    end;
+
+    local procedure BqGetByRecordOutcome(Shape: Integer): Text
+    var
+        R: Record "LT RcA Main";
+        Found: Boolean;
+        Result: Text;
+    begin
+        if BqTryGetByRecord(R, Shape, Found) then
+            exit(Format(Found) + ' no=' + Format(R.No));
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    // Record.Get with a Record as its argument compiles (Get takes Any; microsoft/AL issue 6769): what it does at run time.
+    [Test]
+    procedure Get_With_A_Record_Argument_BQ()
+    begin
+        Seed.Main();
+        Seed.Keys();
+        Observer.Observe('sameTable', BqGetByRecordOutcome(1));
+        Observer.Observe('itself', BqGetByRecordOutcome(2));
+        Observer.Observe('otherTable', BqGetByRecordOutcome(3));
+        Observer.Observe('initRecord', BqGetByRecordOutcome(4));
+#if BC28PLUS
+        Observer.Expect('sameTable', 'error:The value "30\tN8\tC0\t4.5\t01/03/20\tNo\tAlpha\tFive\tItem 3\t" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('sameTable', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71500 to System.Int32.|Conversion');
+#endif
+#if BC28PLUS
+        Observer.Expect('itself', 'error:The value "40\t\t\t0\t\tNo\tAlpha\tZero\t\t" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('itself', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71500 to System.Int32.|Conversion');
+#endif
+#if BC28PLUS
+        Observer.Expect('otherTable', 'error:The value "ABC\tlower" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('otherTable', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71501 to System.Int32.|Conversion');
+#endif
+#if BC28PLUS
+        Observer.Expect('initRecord', 'error:The value "0\t\t\t0\t\tNo\tAlpha\tZero\t\t" can''t be evaluated into type Integer.|Evaluate:Conversion');
+#else
+        Observer.Expect('initRecord', 'error:Unable to convert from Microsoft.Dynamics.Nav.BusinessApplication.Record71500 to System.Int32.|Conversion');
+#endif
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure BqTryRidStep(Step: Integer; var Rid: RecordId; var Result: Text)
+    var
+        K: Record "LT BQ Rid Key";
+    begin
+        case Step of
+            2:
+                Result := Format(K.Get(Rid)) + ' ' + K.Name;
+            3:
+                begin
+                    K.SetRange(Ref, Rid);
+                    Result := Format(K.FindFirst()) + ' ' + K.Name + ' count=' + Format(K.Count());
+                end;
+            4:
+                Result := 'count=' + Format(K.Count());
+        end;
+    end;
+
+    local procedure BqRidOutcome(Step: Integer; var Rid: RecordId): Text
+    var
+        Result: Text;
+    begin
+        if BqTryRidStep(Step, Rid, Result) then
+            exit(Result);
+        Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result);
+    end;
+
+    // A table whose only key field is a RecordId (docs: Record.Get): Insert, Get(RecordId), SetRange plus FindFirst, and Get of a RecordId that
+    // has no row.
+    [Test]
+    procedure Get_On_A_RecordId_Primary_Key_BQ()
+    var
+        R: Record "LT RcA Main";
+        K: Record "LT BQ Rid Key";
+        Rid: RecordId;
+        Missing: RecordId;
+    begin
+        Seed.Main();
+        K.DeleteAll();
+        R.Get(20);
+        Rid := R.RecordId();
+        R.Get(30);
+        Missing := R.RecordId();
+        K.Init();
+        K.Ref := Rid;
+        K.Name := 'main 20';
+        K.Insert();
+        Observer.Observe('insert', 'no error');
+        Observer.Observe('get', BqRidOutcome(2, Rid));
+        Observer.Observe('setRange', BqRidOutcome(3, Rid));
+        Observer.Observe('getMissing', BqRidOutcome(2, Missing));
+        Observer.Observe('count', BqRidOutcome(4, Rid));
+        Observer.Expect('insert', 'no error');
+        Observer.Expect('get', 'No ');
+        Observer.Expect('setRange', 'Yes main 20 count=1');
+        Observer.Expect('getMissing', 'No ');
+        Observer.Expect('count', 'count=1');
+        Observer.Verify();
+    end;
 }

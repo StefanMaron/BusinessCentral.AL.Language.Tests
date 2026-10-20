@@ -265,8 +265,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@16116688b46acb5d828c2e972049d28f1178586f
     with:
+      bc_linux_ref:         "16116688b46acb5d828c2e972049d28f1178586f"
+      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-16116688b46acb5d828c2e972049d28f1178586f"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
@@ -298,6 +301,17 @@ jobs:
       # The default job timeout is 45 minutes. With about 2500 test codeunits the BC 27.5 "Run AL tests" step takes 37 to
       # 40 minutes on a loaded runner, so the 27.5 job was cancelled at 45 minutes twice (run 39269527543, both attempts).
       timeout_minutes:      70
+      # Each test phase (hub, websocket) has its own limit, the runner's --timeout (bc-linux input
+      # test_timeout_minutes, default 30). The BC 28.5 hub phase reached the 30-minute limit in run 39322214364
+      # (1802 s; codeunits 85841 onward were not run). 60 keeps room for growth and stays below timeout_minutes.
+      # The OnPrem jobs take about 7 minutes in all and keep the default.
+      test_timeout_minutes: 60
+      # RDLC rendering (MsDyn365Bc.On.Linux #126/#131): without these the Linux tier stubs the RDLC renderer.
+      # They pull bc-runner:rdlc and set BC_RDLC_RENDERER=mono. Report.SaveAs of an RDLC layout is pinned in
+      # report/lt-am-rdlc-output (cloud) and report/lt-am-rdlc-saveas (OnPrem). rdlc_trust_layouts is the
+      # acknowledgement that RDLC layout code runs unsandboxed; the corpus layouts carry only fixed functions.
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
 
   # The Target = OnPrem test app, in a job of its own.
   #
@@ -333,8 +347,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@16116688b46acb5d828c2e972049d28f1178586f
     with:
+      bc_linux_ref:         "16116688b46acb5d828c2e972049d28f1178586f"
+      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-16116688b46acb5d828c2e972049d28f1178586f"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is a production app HERE only in the sense that it has to be
@@ -356,6 +373,9 @@ jobs:
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
       sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      # RDLC rendering for the OnPrem SaveAs* file forms: see the test job above.
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
 
   # The Target = OnPrem DotNet test app (tests/al-language-onprem-dotnet), in a job of its own for the same
   # one-test-app-per-invocation reason as test-onprem above. Its dotnet declarations need an AL compiler of 18.0 or
@@ -368,8 +388,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@16116688b46acb5d828c2e972049d28f1178586f
     with:
+      bc_linux_ref:         "16116688b46acb5d828c2e972049d28f1178586f"
+      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:16116688b46acb5d828c2e972049d28f1178586f"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs: |

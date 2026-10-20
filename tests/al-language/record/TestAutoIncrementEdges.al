@@ -473,4 +473,129 @@ codeunit 67826 "Test AutoInc Counter Edge"
         Assert.ExpectedError('AutoInc edge: OnInsert refused the row');
         Assert.AreEqual(0, P."Entry No.", 'a refused Insert must not leave the key it would have taken on the record');
     end;
+
+
+    // Corpus issue 668 item 33 (writer BQ): "You cannot change the value of an AutoIncrement field." on Modify (microsoft/AL issue 6934).
+    // LT BQ AutoInc Removed has a BigInteger AutoIncrement field marked ObsoleteState = Removed; LT BQ AutoInc Plain has a normal BigInteger
+    // AutoIncrement field outside the key (record/lt-bq-odd-leads/BqObjects.al). Each case is a test of its own: its error, if any, is the
+    // result.
+    local procedure BqSeedAutoIncPlain()
+    var
+        P: Record "LT BQ AutoInc Plain";
+    begin
+        P.DeleteAll();
+        P.Init();
+        P.Id := 1;
+        P.Name := 'one';
+        P.Insert();
+        P.Init();
+        P.Id := 2;
+        P.Name := 'two';
+        P.Insert();
+    end;
+
+    [Test]
+    procedure AutoInc_RemovedField_InsertAndModify_BQ()
+    var
+        R: Record "LT BQ AutoInc Removed";
+        Observer: Codeunit "Probe Observer";
+    begin
+        R.DeleteAll();
+        R.Init();
+        R.Id := 1;
+        R.Name := 'a';
+        R.Insert();
+        Observer.Observe('insert', 'no error');
+        R.Get(1);
+        R.Name := 'b';
+        R.Modify();
+        Observer.Observe('modify', 'no error');
+        R.ModifyAll(Name, 'c');
+        Observer.Observe('modifyAll', 'no error');
+        R.Get(1);
+        Observer.Observe('name', R.Name);
+        Observer.Expect('insert', 'no error');
+        Observer.Expect('modify', 'no error');
+        Observer.Expect('modifyAll', 'no error');
+        Observer.Expect('name', 'c');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure AutoInc_NonKeyField_ModifyUnchangedAndOtherField_BQ()
+    var
+        P: Record "LT BQ AutoInc Plain";
+        Copied: Record "LT BQ AutoInc Plain";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedAutoIncPlain();
+        P.Get(1);
+        Observer.Observe('seqAssigned', Format(P.Seq > 0));
+        P.Modify();
+        Observer.Observe('modifyUnchanged', 'no error');
+        P.Name := 'uno';
+        P.Modify();
+        Observer.Observe('modifyOtherField', 'no error');
+        P.Get(1);
+        Copied := P;
+        Copied.Name := 'copied';
+        Copied.Modify();
+        Observer.Observe('modifyAssignedCopy', 'no error');
+        Observer.Expect('seqAssigned', 'Yes');
+        Observer.Expect('modifyUnchanged', 'no error');
+        Observer.Expect('modifyOtherField', 'no error');
+        Observer.Expect('modifyAssignedCopy', 'no error');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure AutoInc_NonKeyField_ModifyChangedValue_BQ()
+    var
+        P: Record "LT BQ AutoInc Plain";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedAutoIncPlain();
+        P.Get(1);
+        P.Seq := P.Seq + 1000;
+        asserterror P.Modify();
+        Observer.Observe('text', GetLastErrorText().Replace(Format(P.Seq), '<seq>'));
+        Observer.Observe('code', GetLastErrorCode());
+        Observer.Expect('text', 'You cannot change the value of an AutoIncrement field.\\Field: Seq\Table: LT BQ AutoInc Plain\\Identification fields and values:\Id=''1''');
+        Observer.Expect('code', 'DB:ModifyOnIdentityField');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure AutoInc_NonKeyField_ModifyAll_BQ()
+    var
+        P: Record "LT BQ AutoInc Plain";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedAutoIncPlain();
+        asserterror P.ModifyAll(Seq, 99999);
+        Observer.ObserveError('modifyAll');
+        Observer.Expect('modifyAll|text', 'You cannot change the value of the Seq field.\\Table: LT BQ AutoInc Plain');
+        Observer.Expect('modifyAll|code', 'DB:Ok');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure AutoInc_NonKeyField_TransferFieldsFromAnotherRow_BQ()
+    var
+        P: Record "LT BQ AutoInc Plain";
+        Other: Record "LT BQ AutoInc Plain";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedAutoIncPlain();
+        P.Get(1);
+        Other.Get(2);
+        P.TransferFields(Other, false);
+        Observer.Observe('seqTaken', Format(P.Seq = Other.Seq));
+        asserterror P.Modify();
+        Observer.ObserveError('modify');
+        Observer.Expect('seqTaken', 'Yes');
+        Observer.Expect('modify|text', 'You cannot change the value of an AutoIncrement field.\\Field: Seq\Table: LT BQ AutoInc Plain\\Identification fields and values:\Id=''1''');
+        Observer.Expect('modify|code', 'DB:ModifyOnIdentityField');
+        Observer.Verify();
+    end;
 }

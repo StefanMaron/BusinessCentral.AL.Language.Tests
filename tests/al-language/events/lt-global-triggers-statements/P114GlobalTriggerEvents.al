@@ -379,7 +379,8 @@ codeunit 74244 "LT P114 Global Events"
         R += ' | leadingComma=' + PwOne(Subs, Tag, ',' + Tag);
         R += ' | lastSeen=' + Subs.LastSeen().Replace(Tag, '<tag>');
         R += ' | empty=' + PwOne(Subs, Tag, '');
-        R += ' | area3Empty=' + PwOne(Subs, Tag, '3,');
+        // No untagged '3,' here: it stays translated for the rest of the session, so a later test that shows a '3,' caption
+        // read the 'T[3,]' of this subscriber (P79CaptionClass.al Page_LiteralClasses, BC 27.5, run 39376096626).
         Subs.SetMode('');
         UnbindSubscription(Subs);
         exit(R);
@@ -393,9 +394,9 @@ codeunit 74244 "LT P114 Global Events"
         Observer.Observe('set', PwTranslate('set'));
         Observer.Observe('blank', PwTranslate('blank'));
         Observer.Observe('none', PwTranslate('none'));
-        Observer.Expect('set', 'area3=T[3,<tag>] calls=1 | area3Again=T[3,<tag>] calls=0 | unclaimed=T[PW<tag>,Foo] calls=1 | noComma=T[PW no comma <tag>] calls=1 | area1=T[1,1,<tag>] calls=1 | leadingComma=T[,<tag>] calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=1');
-        Observer.Expect('blank', 'area3= calls=1 | area3Again= calls=0 | unclaimed= calls=1 | noComma= calls=1 | area1= calls=1 | leadingComma= calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=0');
-        Observer.Expect('none', 'area3=<tag> calls=1 | area3Again=<tag> calls=0 | unclaimed=PW<tag>,Foo calls=1 | noComma=PW no comma <tag> calls=1 | area1=1,1,<tag> calls=1 | leadingComma=,<tag> calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0 | area3Empty=T[3,] calls=0');
+        Observer.Expect('set', 'area3=T[3,<tag>] calls=1 | area3Again=T[3,<tag>] calls=0 | unclaimed=T[PW<tag>,Foo] calls=1 | noComma=T[PW no comma <tag>] calls=1 | area1=T[1,1,<tag>] calls=1 | leadingComma=T[,<tag>] calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0');
+        Observer.Expect('blank', 'area3= calls=1 | area3Again= calls=0 | unclaimed= calls=1 | noComma= calls=1 | area1= calls=1 | leadingComma= calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0');
+        Observer.Expect('none', 'area3=<tag> calls=1 | area3Again=<tag> calls=0 | unclaimed=PW<tag>,Foo calls=1 | noComma=PW no comma <tag> calls=1 | area1=1,1,<tag> calls=1 | leadingComma=,<tag> calls=1 | lastSeen=lang_is_session=Yes,expr=,<tag> | empty= calls=0');
         Observer.Verify();
     end;
 
