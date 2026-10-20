@@ -305,4 +305,50 @@ codeunit 81666 "LT BJ Dd Tests"
     begin
         RowsB('B modal', P);
     end;
+
+    // Writer PX (al-runtime-rs probes-needed "TestRequestPage.DrillDown"): DrillDown = false on request page controls (report 86223 in
+    // PxRequestDrillDownOff.al): the error of Drilldown() and whether the OnDrillDown trigger runs.
+    [Test]
+    [HandlerFunctions('PxDdOffHandler')]
+    procedure PX_RequestPage_DrillDownFalse()
+    begin
+        Seed();
+        Report.Run(Report::"LT PX Dd Off Report", true, false);
+        Observer.Observe('log after run', DdLog.Take());
+        Observer.Finish();
+    end;
+
+    local procedure PxTryDrill(var Req: TestRequestPage "LT PX Dd Off Report"; Ctl: Integer; Name: Text)
+    begin
+        DdLog.Take();
+        asserterror begin
+            case Ctl of
+                1:
+                    Req.OffPlain.Drilldown();
+                2:
+                    Req.OffTrigger.Drilldown();
+                3:
+                    Req.OnTrigger.Drilldown();
+                4:
+                    Req.OffFlow.Drilldown();
+                5:
+                    Req.OffPageId.Drilldown();
+            end;
+            Error('NOERROR');
+        end;
+        Observer.ObserveError(Name);
+        Observer.Observe(Name + ' log', DdLog.Take());
+    end;
+
+    [RequestPageHandler]
+    procedure PxDdOffHandler(var Req: TestRequestPage "LT PX Dd Off Report")
+    begin
+        PxTryDrill(Req, 1, 'off plain');
+        PxTryDrill(Req, 2, 'off trigger');
+        PxTryDrill(Req, 3, 'on trigger');
+        PxTryDrill(Req, 4, 'off flowfield');
+        PxTryDrill(Req, 5, 'off pageid');
+        Observer.Observe('value after', Req.OffPlain.Value);
+        Req.Cancel().Invoke();
+    end;
 }

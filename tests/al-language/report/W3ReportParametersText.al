@@ -629,4 +629,106 @@ codeunit 67740 "W3 Params Probe"
         Observer.Expect('dataitems', '<DataItem name="Row">VERSION(1) SORTING(Field1) WHERE(Field1=1(1))</DataItem>');
         Observer.Verify();
     end;
+
+    // Writer PX (al-runtime-rs probes-needed "Request page" parameters text, PR 333): a Boolean filter on No, a filter in filter group 2,
+    // and a key whose fields have different directions (report 86222 in PxReportParametersText.al).
+    [Test]
+    [HandlerFunctions('PxFlagNoHandler')]
+    procedure PX_Params_BooleanFilterOnNo()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT PX Params Rpt";
+        Row: Record "W3 Row";
+        Parameters: Text;
+    begin
+        Seed();
+        Parameters := Report.RunRequestPage(Report::"LT PX Params Rpt");
+        Observer.Observe('handler', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Observer.Observe('log', L.Take());
+        Row.SetRange(Flag, false);
+        Rpt.SetTableView(Row);
+        Parameters := Rpt.RunRequestPage();
+        Observer.Observe('settableview', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxFlagNoHandler(var RP: TestRequestPage "LT PX Params Rpt")
+    begin
+        if RP.Row.GetFilter(Flag) = '' then
+            RP.Row.SetFilter(Flag, 'No');
+        L.Add('flag=[' + RP.Row.GetFilter(Flag) + ']');
+        RP.OK().Invoke();
+    end;
+
+    [Test]
+    [HandlerFunctions('PxParamsLogHandler')]
+    procedure PX_Params_FilterGroupTwo()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT PX Params Rpt";
+        Row: Record "W3 Row";
+        Parameters: Text;
+    begin
+        Seed();
+        Row.FilterGroup(2);
+        Row.SetRange(Id, 1, 5);
+        Row.FilterGroup(0);
+        Rpt.SetTableView(Row);
+        Parameters := Rpt.RunRequestPage();
+        Observer.Observe('group2', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Observer.Observe('group2 log', L.Take());
+        Clear(Rpt);
+        Row.Reset();
+        Row.FilterGroup(2);
+        Row.SetRange(Id, 1, 5);
+        Row.FilterGroup(0);
+        Row.SetRange(Flag, true);
+        Rpt.SetTableView(Row);
+        Parameters := Rpt.RunRequestPage();
+        Observer.Observe('group2+0', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Observer.Observe('group2+0 log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PxParamsLogHandler')]
+    procedure PX_Params_DirectionPerKeyField()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT PX Params Rpt";
+        Row: Record "W3 Row";
+        Parameters: Text;
+    begin
+        Seed();
+        Row.SetCurrentKey(Name, Id);
+        Row.SetAscending(Id, false);
+        Rpt.SetTableView(Row);
+        Parameters := Rpt.RunRequestPage();
+        Observer.Observe('second desc', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Clear(Rpt);
+        Row.Reset();
+        Row.SetCurrentKey(Name, Id);
+        Row.SetAscending(Name, false);
+        Rpt.SetTableView(Row);
+        Parameters := Rpt.RunRequestPage();
+        Observer.Observe('first desc', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Clear(Rpt);
+        Row.Reset();
+        Row.SetCurrentKey(Name, Id);
+        Row.Ascending(false);
+        Row.SetAscending(Id, true);
+        Rpt.SetTableView(Row);
+        Parameters := Rpt.RunRequestPage();
+        Observer.Observe('desc then second asc', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxParamsLogHandler(var RP: TestRequestPage "LT PX Params Rpt")
+    begin
+        L.Add('id=[' + RP.Row.GetFilter(Id) + '] flag=[' + RP.Row.GetFilter(Flag) + ']');
+        RP.OK().Invoke();
+    end;
 }

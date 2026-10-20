@@ -273,6 +273,7 @@ codeunit 73850 "LT RpT Request Page"
     var
         L: Codeunit "LT RpT Request Log";
         Helper: Codeunit "LT RpT Helper";
+        PxMode: Text;
 
     local procedure Seed()
     var
@@ -1069,5 +1070,172 @@ codeunit 73850 "LT RpT Request Page"
     begin
         L.Add('h filter=[' + RP.Row.GetFilter(Id) + ']');
         RP.OK().Invoke();
+    end;
+
+    // Writer PX (al-runtime-rs probes-needed "Request page", PR 333): a handler error it does not catch closes the request page; which
+    // triggers run, in what order, and the error the caller gets, for the shapes the runtime refuses (objects in PxRequestPageClose.al).
+    [Test]
+    [HandlerFunctions('PxSourceErrorHandler')]
+    procedure PX_HandlerError_SourceTable()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror Report.Run(Report::"LT PX Rp Source");
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxSourceErrorHandler(var RP: TestRequestPage "LT PX Rp Source")
+    begin
+        L.Add('h id=[' + RP.SrcId.Value() + ']');
+        Error('px handler raised');
+    end;
+
+    [Test]
+    [HandlerFunctions('PxPartsErrorHandler')]
+    procedure PX_HandlerError_Parts()
+    var
+        Observer: Codeunit "Probe Observer";
+        Child: Record "LT RpT Child";
+    begin
+        Seed();
+        Child.DeleteAll();
+        Child.Id := 1;
+        Child.Insert();
+        Child.Id := 2;
+        Child.Insert();
+        Commit();
+        L.Take();
+        asserterror Report.Run(Report::"LT PX Rp Parts");
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxPartsErrorHandler(var RP: TestRequestPage "LT PX Rp Parts")
+    begin
+        L.Add('h');
+        Error('px handler raised');
+    end;
+
+    [Test]
+    [HandlerFunctions('PxExtErrorHandler')]
+    procedure PX_HandlerError_ExtensionCloseTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror Report.Run(Report::"LT PX Rp ExtBase");
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxExtErrorHandler(var RP: TestRequestPage "LT PX Rp ExtBase")
+    begin
+        L.Add('h');
+        Error('px handler raised');
+    end;
+
+    local procedure PxRunCloseMode(Mode: Integer)
+    var
+        Rpt: Report "LT PX Rp CloseMode";
+    begin
+        Rpt.SetMode(Mode);
+        Rpt.Run();
+    end;
+
+    [Test]
+    [HandlerFunctions('PxCloseModeErrorHandler')]
+    procedure PX_HandlerError_QueryCloseAnswersFalse()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror PxRunCloseMode(1);
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PxCloseModeErrorHandler')]
+    procedure PX_HandlerError_QueryCloseRaises()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror PxRunCloseMode(2);
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PxCloseModeErrorHandler')]
+    procedure PX_HandlerError_ClosePageRaises()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror PxRunCloseMode(3);
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxCloseModeErrorHandler(var RP: TestRequestPage "LT PX Rp CloseMode")
+    begin
+        L.Add('h');
+        Error('px handler raised');
+    end;
+
+    // A SaveValues request page: OK with 'base' saves it; a run whose handler sets 'changed' and raises; the next run shows which is saved.
+    [Test]
+    [HandlerFunctions('PxSaveValuesHandler')]
+    procedure PX_HandlerError_SaveValues_NextRunShows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        PxMode := 'set_ok';
+        Report.Run(Report::"LT PX Rp SaveValues");
+        Observer.Observe('first', L.Take());
+        PxMode := 'set_err';
+        asserterror Report.Run(Report::"LT PX Rp SaveValues");
+        Observer.ObserveError('err');
+        Observer.Observe('second', L.Take());
+        PxMode := 'read';
+        Report.Run(Report::"LT PX Rp SaveValues");
+        Observer.Observe('third', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure PxSaveValuesHandler(var RP: TestRequestPage "LT PX Rp SaveValues")
+    begin
+        // The value shown at the first run depends on earlier runs in the same database: not logged.
+        if PxMode <> 'set_ok' then
+            L.Add('h ' + PxMode + ' shown=[' + RP.TextCtl.Value() + ']');
+        case PxMode of
+            'set_ok':
+                begin
+                    RP.TextCtl.SetValue('base');
+                    RP.OK().Invoke();
+                end;
+            'set_err':
+                begin
+                    RP.TextCtl.SetValue('changed');
+                    Error('px handler raised');
+                end;
+            else
+                RP.OK().Invoke();
+        end;
     end;
 }
