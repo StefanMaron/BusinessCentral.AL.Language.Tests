@@ -79,16 +79,11 @@ codeunit 72551 "LT PnE Media Import"
         Observer.Observe('hasValue', Format(Rec.Pic.HasValue()));
         Observer.Observe('tenantMedia', TenantMediaText(Rec.Pic.MediaId));
         Rec.DeleteAll();
-#if LT_HELD_BCLINUX_135
-        // Held on Linux (LT_HELD_BCLINUX_135): the values of the Linux image before the bc-linux #135/#161 fixes (the short PNG was refused).
-        // The image at dbee8022 and Windows BC 29.0 (Windows run 2026-10-20, first difference only) give hasValue = Yes. Re-assert after the
-        // Windows check (windows-queue), then remove this hold; it does not end with the bc-linux issue (closed).
-        Observer.Expect('hasValue', 'No');
-        Observer.Expect('tenantMedia', 'no row');
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): a TenantMedia row exists and HasValue is Yes. The Linux image at dbee8022 gives
+        // the same; the image before the bc-linux #135/#161 fixes gave hasValue = No and no row.
+        Observer.Expect('hasValue', 'Yes');
+        Observer.Expect('tenantMedia', 'FileName=|Description=desc|Mime=image/png');
         Observer.Verify();
-#else
-        Observer.Discard();
-#endif
     end;
 #endif
 }
