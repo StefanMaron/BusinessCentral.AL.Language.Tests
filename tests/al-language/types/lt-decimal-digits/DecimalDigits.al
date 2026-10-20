@@ -4,6 +4,11 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // BC versions: 29 (27 and 28 by CI)
 // Operands are built with Evaluate from text so that no literal-length compile rule applies; results are printed with Format(x, 0, 9) (XML format, all digits).
+// Writer QE (2026-10-20), QE_* tests: every result (sum, difference, product, quotient, BigInteger converted to Decimal) keeps
+// 18 significant digits, rounded half away from zero, the same for negative results, mixed signs and BigInteger operands
+// (Power(2, 62) and a BigInteger of 19 digits both hold 4611686018427387900). A product is rounded too: 1234.56 * (1/3) equals
+// 411.52. Below 1E-18 the value keeps its digits, but Format(x, 0, 9) shows at most 18 decimals and shows '-0' for a negative
+// value that rounds to zero there.
 
 codeunit 73232 "LT P163 Decimal Digits"
 {
@@ -502,6 +507,25 @@ codeunit 73232 "LT P163 Decimal Digits"
         Observer.Observe('small quotient scaled up', F(P * 10000000000.0));
         P := D('-1') / D('30000000000');
         Observer.Observe('neg small quotient scaled up', F(P * 10000000000.0));
-        Observer.Finish();
+        Observer.Expect('neg tiny quotient', '-0');
+        Observer.Expect('neg tiny quotient = 0', 'No');
+        Observer.Expect('neg tiny quotient < 0', 'Yes');
+        Observer.Expect('neg tiny quotient default format', '-0');
+        Observer.Expect('neg tiny quotient + 1', '1');
+        Observer.Expect('neg tiny quotient * 1000', '-0.000000000000000333');
+        Observer.Expect('1e-18*0.5', '0.000000000000000001');
+        Observer.Expect('-1e-18*0.5', '-0.000000000000000001');
+        Observer.Expect('1e-18*0.4', '0');
+        Observer.Expect('-1e-18*0.4', '-0');
+        Observer.Expect('1e-10*1e-9', '0');
+        Observer.Expect('-1e-10*1e-9', '-0');
+        Observer.Expect('1e-10*1e-9 = 0', 'No');
+        Observer.Expect('small product', '0.000000000015241579');
+        Observer.Expect('small product scaled up', '0.15241578750190521');
+        Observer.Expect('neg small product scaled up', '-0.15241578750190521');
+        Observer.Expect('small product inline scaled up', '-0.15241578750190521');
+        Observer.Expect('small quotient scaled up', '0.333333333333333333');
+        Observer.Expect('neg small quotient scaled up', '-0.333333333333333333');
+        Observer.Verify();
     end;
 }

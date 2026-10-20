@@ -8,6 +8,12 @@
 // Measured (local BC 29, checked by the CI matrix): every case starts from a committed row. In-memory and freshly read sources modify fine. A stale Modify (Commit after the other write) fails with
 //   DB:RecordChanged; TransferFields(Newer) with the primary key (the default) and Copy(Newer) make the buffer current, so Modify succeeds;
 //   TransferFields(Newer, false) does not, and Modify fails with DB:RecordChanged. A row of another table with the same key transfers and modifies.
+// Writer QE (2026-10-20), QE_* tests: TransferFields from ANOTHER table leaves the buffer's SystemId and SystemRowVersion as they
+//   were but copies SystemCreatedAt and SystemModifiedAt from the source. A stale buffer stays stale (Modify fails with
+//   DB:RecordChanged whether the source row is older, newer or in memory, with or without the key); a current buffer modifies
+//   fine even when the source row is older; a buffer that never read the row (only the key set by TransferFields) modifies the
+//   stored row, also when another variable changed and committed it. After the Modify the row keeps its own SystemId and
+//   SystemCreatedAt and gets a new SystemModifiedAt and SystemRowVersion.
 // BC versions: 27, 28, 29
 
 table 84884 "LT CN TF Row"
@@ -343,7 +349,8 @@ codeunit 84886 "LT CN TF Modify"
         R1.TransferFields(O);
         R1.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -360,7 +367,8 @@ codeunit 84886 "LT CN TF Modify"
         R3.TransferFields(O);
         R3.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -379,7 +387,8 @@ codeunit 84886 "LT CN TF Modify"
         R3.TransferFields(O);
         R3.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'mem/4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -397,7 +406,8 @@ codeunit 84886 "LT CN TF Modify"
         R3.TransferFields(O);
         R3.Modify();
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
     end;
 
     [Test]

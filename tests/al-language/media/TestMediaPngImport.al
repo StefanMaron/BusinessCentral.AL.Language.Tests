@@ -3,6 +3,9 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/media/media-exportstream-method
 // Scope: in-scope
 // Fixtures used: ALT Media (60980)
+//   and table "LT QE Media Other" (86580, end of file; writer QE 2026-10-20, QE_* tests: a media held by a row of ANOTHER
+//   table or by another field is removed from Tenant Media when one holder lets it go by Modify or Delete; the other holder
+//   keeps the MediaId, HasValue is false, ExportStream returns false and writes nothing)
 //
 // Companion of StefanMaron/BusinessCentral.AL.Runner#2570, which reports that AL Runner
 // refuses to import ANY recognized image format into a Media field (it needs
