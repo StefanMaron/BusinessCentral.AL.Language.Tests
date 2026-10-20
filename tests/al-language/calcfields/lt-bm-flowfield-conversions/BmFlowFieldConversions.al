@@ -226,4 +226,99 @@ codeunit 81959 "LT BM FlowField Conversions"
         R := Millions;
         exit(R * 1000000 + Rest);
     end;
+
+    // Writer PX (PR 331): Code[5] lookup over Code[30], Min/Max into Text[5] and Code[5] (objects in PxFlowFieldShorter.al).
+    local procedure PxSeed()
+    var
+        Src: Record "LT PX FF Src";
+    begin
+        Src.DeleteAll();
+        PxAdd(1, 1, 'ABC', 'abc');
+        PxAdd(2, 2, 'ABCDEFGHIJ', 'abcdefghij');
+        PxAdd(3, 2, 'ZZZZZZZZZZZZ', 'zzzzzzzzzzzz');
+        PxAdd(4, 3, 'ABCDE', 'abcde');
+    end;
+
+    local procedure PxAdd(NewId: Integer; NewGrp: Integer; NewCd: Code[30]; NewTxt: Text[30])
+    var
+        Src: Record "LT PX FF Src";
+    begin
+        Src.Id := NewId;
+        Src.Grp := NewGrp;
+        Src.Cd := NewCd;
+        Src.Txt := NewTxt;
+        Src.Insert();
+    end;
+
+    local procedure PxCalc(HostId: Integer; FieldNo: Integer): Text
+    var
+        Host: Record "LT PX FF Host";
+        V: Text;
+    begin
+        Host.Id := HostId;
+        ClearLastError();
+        if not PxTryCalc(Host, FieldNo) then
+            exit('error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        case FieldNo of
+            2:
+                V := Host."Code Lookup";
+            3:
+                V := Host."Text Min";
+            4:
+                V := Host."Text Max";
+            5:
+                V := Host."Code Min";
+            6:
+                V := Host."Code Max";
+        end;
+        exit('[' + V + '] len ' + Format(StrLen(V)));
+    end;
+
+    [TryFunction]
+    local procedure PxTryCalc(var Host: Record "LT PX FF Host"; FieldNo: Integer)
+    begin
+        case FieldNo of
+            2:
+                Host.CalcFields("Code Lookup");
+            3:
+                Host.CalcFields("Text Min");
+            4:
+                Host.CalcFields("Text Max");
+            5:
+                Host.CalcFields("Code Min");
+            6:
+                Host.CalcFields("Code Max");
+        end;
+    end;
+
+    [Test]
+    procedure PX_CodeLookup_ShorterThanSource()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PxSeed();
+        Observer.Observe('lookup_3_chars', PxCalc(1, 2));
+        Observer.Observe('lookup_10_chars', PxCalc(2, 2));
+        Observer.Observe('lookup_12_chars', PxCalc(3, 2));
+        Observer.Observe('lookup_5_chars', PxCalc(4, 2));
+        Observer.Observe('lookup_no_row', PxCalc(99, 2));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_MinMax_IntoShorterTextAndCode()
+    var
+        Observer: Codeunit "Probe Observer";
+        F: Integer;
+    begin
+        PxSeed();
+        for F := 3 to 6 do begin
+            Observer.Observe(Format(F) + '_grp1_short', PxCalc(1, F));
+            Observer.Observe(Format(F) + '_grp2_long', PxCalc(2, F));
+            Observer.Observe(Format(F) + '_grp3_exact', PxCalc(3, F));
+            Observer.Observe(Format(F) + '_grp_none', PxCalc(9, F));
+        end;
+        Observer.Finish();
+    end;
+
 }

@@ -66,6 +66,29 @@ codeunit 79926 "LT AS TestField Texts"
         Observer.Verify();
     end;
 
+    // Writer PX (runtime probes-needed "TestField typed value texts", PR 331): the FieldRef.TestField text for Byte values other than 10 and 200,
+    // against an Integer field that holds 1000 (so every value differs, 7 included).
+    [Test]
+    procedure PX_ByteValues()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT AS TF Row";
+        B: Byte;
+        Item: Text;
+        V: Integer;
+    begin
+        Seed(Row);
+        Row.Num := 1000;
+        Row.Modify();
+        foreach Item in '0,1,2,3,4,5,7,9,11,13,31,32,65,127,128,129,159,160,200,255'.Split(',') do begin
+            Evaluate(V, Item);
+            B := V;
+            asserterror NumRef(Row).TestField(B);
+            Observer.Observe('byte' + Format(V), Helper.LastError());
+        end;
+        Observer.Finish();
+    end;
+
     [Test]
     procedure Byte7Equal()
     var
