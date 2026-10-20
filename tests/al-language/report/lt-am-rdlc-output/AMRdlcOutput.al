@@ -10,9 +10,9 @@
 // (OnDocumentReady documenttype application/pdf). The BC 29 Linux container turns the renderer off at boot ("the side-service compatibility
 // patch failed"), so on BC 29 these calls answer with the Linux stub text, which is not Business Central behavior.
 // PDF bytes are never compared (not stable) and PDF text is compressed, so only the page count is asserted.
-// Linux suspects (kept as source under LT_AM_LINUX_SUSPECT, not compiled): SaveAs Word and Excel of an RDLC layout on BC 27 and 28 return false
-// with 'The system encountered an internal error while rendering the report.' (ReportingService:Rpc) after OnPreRendering: the Mono renderer
-// fails, to be checked on the Windows nightly.
+// SaveAs Word and Excel of an RDLC layout: asserted with the Windows BC 27.5/28.5 values (Windows check 2026-10-20: zip with the marker, no
+// error) and held on Linux under LT_HELD_BCLINUX_144: the pinned Linux image returns false with 'The system encountered an internal error
+// while rendering the report.' (ReportingService:Rpc) after OnPreRendering. BC 29.0 not measured on Windows yet.
 // BC versions: 27 - 29
 
 codeunit 79259 "LT AM Rdlc Log"
@@ -329,25 +329,51 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     end;
 #endif
 
-#if LT_AM_LINUX_SUSPECT
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20). Held on Linux: the pinned Linux image fails in the Mono renderer (ReportingService:Rpc,
+    // bc-linux #144). BC 29.0 not measured on Windows yet.
     [Test]
     procedure TextRdlc_SaveAsWord()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Word);
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79256,SaveAs,req=Yes);OnPreRendering();OnDocumentReady(79256,keys=19,documenttype=application/vnd.openxmlformats-officedocument.wordprocessingml.document,layoutmimetype=Application/ReportLayout/Rdlc,layoutname=LtAmRdlcText,objectname=LT AM Rdlc Text Rpt,success=No);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('has_output', 'Yes');
+        Observer.Expect('kind', 'zip');
+        Observer.Expect('main_part', 'Yes/No');
+        Observer.Expect('entries_with_marker', 'word/document.xml,');
+        Observer.Expect('marker', 'AMTXT[REQ:AMREQ42|MARK:AMMARK|ROWS:3|SUM:6|LAST:3]');
+        Observer.Expect('unreadable_parts', '');
+        Observer.Verify();
     end;
 #endif
 
-#if LT_AM_LINUX_SUSPECT
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20). Held on Linux: the pinned Linux image fails in the Mono renderer (ReportingService:Rpc,
+    // bc-linux #144). BC 29.0 not measured on Windows yet.
     [Test]
     procedure TextRdlc_SaveAsExcel()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, Report::"LT AM Rdlc Text Rpt", ReportFormat::Excel);
-        Observer.Finish();
+        Observer.Expect('log', 'SubstituteReport(79256,SaveAs,req=Yes);OnPreRendering();OnDocumentReady(79256,keys=19,documenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,layoutmimetype=Application/ReportLayout/Rdlc,layoutname=LtAmRdlcText,objectname=LT AM Rdlc Text Rpt,success=No);');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('has_output', 'Yes');
+        Observer.Expect('kind', 'zip');
+        Observer.Expect('main_part', 'No/Yes');
+        Observer.Expect('entries_with_marker', 'xl/worksheets/sheet1.xml,');
+        Observer.Expect('marker', 'AMTXT[REQ:AMREQ42|MARK:AMMARK|ROWS:3|SUM:6|LAST:3]');
+        Observer.Expect('unreadable_parts', '');
+        Observer.Verify();
     end;
 #endif
 
