@@ -214,4 +214,69 @@ codeunit 74975 "LT GetUrl Shape"
         Observer.Expect('management', 'ok|no scheme|empty=Yes');
         Observer.Verify();
     end;
+
+    // al-runtime-rs probes-needed row geturl-web-base-address (writer QA, 2026-10-20): GetUrl(ClientType::Web) with no argument, taken apart as
+    // scheme | host | port | path | query. The host name differs per environment, so it is reported only as: empty, localhost, or <host> (any other
+    // name), and whether it is in lower case; the rest is reported as it is.
+    local procedure WebParts(Url: Text): Text
+    var
+        Scheme: Text;
+        Rest: Text;
+        HostPort: Text;
+        HostName: Text;
+        Port: Text;
+        PathPart: Text;
+        Query: Text;
+        HostShown: Text;
+        At: Integer;
+    begin
+        At := StrPos(Url, '://');
+        if At = 0 then
+            exit('no scheme|' + Format(StrLen(Url)));
+        Scheme := CopyStr(Url, 1, At - 1);
+        Rest := CopyStr(Url, At + 3);
+        At := StrPos(Rest, '?');
+        if At > 0 then begin
+            Query := CopyStr(Rest, At);
+            Rest := CopyStr(Rest, 1, At - 1);
+        end;
+        At := StrPos(Rest, '/');
+        if At > 0 then begin
+            HostPort := CopyStr(Rest, 1, At - 1);
+            PathPart := CopyStr(Rest, At);
+        end else
+            HostPort := Rest;
+        At := StrPos(HostPort, ':');
+        if At > 0 then begin
+            HostName := CopyStr(HostPort, 1, At - 1);
+            Port := CopyStr(HostPort, At + 1);
+        end else
+            HostName := HostPort;
+        case true of
+            HostName = '':
+                HostShown := '<empty>';
+            HostName = 'localhost':
+                HostShown := 'localhost';
+            else
+                HostShown := '<host>';
+        end;
+        exit(Scheme + '|' + HostShown + '|lower=' + Format(HostName = LowerCase(HostName)) + '|port=' + Port + '|path=' + PathPart + '|query=' + Query);
+    end;
+
+    [Test]
+    procedure QA_GetUrl_Web_NoArgument_Whole()
+    var
+        Observer: Codeunit "Probe Observer";
+        Full: Text;
+    begin
+        Full := GetUrl(ClientType::Web);
+        Observer.Observe('web alone', WebParts(Full));
+        Observer.Observe('web alone ends with /', Format(Full.EndsWith('/')));
+        Observer.Observe('web empty company equal', Format(GetUrl(ClientType::Web, '') = Full));
+        Observer.Observe('web company starts with it', Format(GetUrl(ClientType::Web, CompanyName()).StartsWith(Full)));
+        Observer.Observe('web company', WebParts(GetUrl(ClientType::Web, CompanyName())).Replace(CompanyName().Replace(' ', '%20'), '<company>'));
+        Observer.Observe('web page', WebParts(GetUrl(ClientType::Web, '', ObjectType::Page, 21)));
+        Observer.Observe('default alone', WebParts(GetUrl(ClientType::Default)));
+        Observer.Finish();
+    end;
 }
