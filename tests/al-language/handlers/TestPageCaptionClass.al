@@ -160,6 +160,15 @@ codeunit 60930 "TPCC Tests"
         Observer.Observe('remark FieldRef.Caption', RecRef.Field(2).Caption());
         Observer.Observe('amount FieldRef.Caption', RecRef.Field(3).Caption());
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('remark control', 'QB Modified Class');
+        Observer.Expect('remark control with class', 'QB Page Class');
+        Observer.Expect('amount control', 'QB Modified Over Base');
+        Observer.Expect('plain control', 'QB Plain Caption');
+        Observer.Expect('remark FieldCaption', 'QB Modified Class');
+        Observer.Expect('amount FieldCaption', 'QB Modified Over Base');
+        Observer.Expect('plain FieldCaption', 'QB Plain Caption');
+        Observer.Expect('remark FieldRef.Caption', 'QB Modified Class');
+        Observer.Expect('amount FieldRef.Caption', 'QB Modified Over Base');
+        Observer.Verify();
     end;
 }

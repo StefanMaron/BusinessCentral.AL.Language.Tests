@@ -514,6 +514,8 @@ codeunit 60331 "TableExt Keys And InitValue"
         RecRef.Open(Database::"LT QB Fg Base");
         Observer.Observe('field 86393', RecRef.Field(86393).Name());
         RecRef.Close();
-        Observer.Finish();
+        Observer.Expect('row', 'QB1|Desc|Extra');
+        Observer.Expect('field 86393', 'QB Extra');
+        Observer.Verify();
     end;
 }

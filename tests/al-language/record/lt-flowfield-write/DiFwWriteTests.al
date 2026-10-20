@@ -901,6 +901,27 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('assigned amount value', Format(QbParent."Child Amount"));
         Observer.Observe('assigned amount log', TakeLog());
         Observer.Observe('assigned amount src', Src());
-        Observer.Finish();
+        Observer.Expect('count value', '0');
+        Observer.Expect('count log', 'n=0');
+        Observer.Expect('amount', 'ok');
+        Observer.Expect('amount value', '0');
+        Observer.Expect('amount log', 'n=1;OnValidate Child Amount Rec=0 xRec=0');
+        Observer.Expect('amount src', 'n=5;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;5|1||-60|');
+        Observer.Expect('exist', 'error:The type of the Has Children FlowField in the LT QB FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('exist log', 'n=0');
+        Observer.Expect('lookup', 'error:The type of the First Child Code FlowField in the LT QB FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('lookup log', 'n=0');
+        Observer.Expect('calc amount before', '60');
+        Observer.Expect('calc amount', 'ok');
+        Observer.Expect('calc amount value', '60');
+        Observer.Expect('calc amount log', 'n=1;OnValidate Child Amount Rec=60 xRec=60');
+        Observer.Expect('calc amount src', 'n=4;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15');
+        Observer.Expect('calc count', 'error:The type of the Child Count FlowField in the LT QB FW Parent table must be Decimal.|FlowFieldValidation');
+        Observer.Expect('calc count log', 'n=0');
+        Observer.Expect('assigned amount', 'ok');
+        Observer.Expect('assigned amount value', '100');
+        Observer.Expect('assigned amount log', 'n=1;OnValidate Child Amount Rec=100 xRec=100');
+        Observer.Expect('assigned amount src', 'n=5;1|1|A|10|2026-01-10;2|1|B|20|2026-02-10;3|1|C|30|2026-03-10;4|3|D|5|2026-01-15;5|1||40|');
+        Observer.Verify();
     end;
 }

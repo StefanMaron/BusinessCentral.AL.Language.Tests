@@ -169,7 +169,10 @@ codeunit 86384 "LT QB Lock FindSet Plain"
         Observer.Observe('before', Snapshot.Locks());
         Observer.Observe('found', Format(Company.FindSet()));
         Observer.Observe('after FindSet', Snapshot.Locks());
-        Observer.Finish();
+        Observer.Expect('before', 'n=0;');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('after FindSet', 'n=0;');
+        Observer.Verify();
     end;
 }
 
@@ -188,7 +191,10 @@ codeunit 86385 "LT QB Lock FindSet True"
         Observer.Observe('before', Snapshot.Locks());
         Observer.Observe('found', Format(Company.FindSet(true)));
         Observer.Observe('after FindSet(true)', Snapshot.Locks());
-        Observer.Finish();
+        Observer.Expect('before', 'n=0;');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('after FindSet(true)', 'n=1;Company|KEY|Update|Granted;');
+        Observer.Verify();
     end;
 }
 
@@ -209,6 +215,10 @@ codeunit 86386 "LT QB Lock LockTable FindSet"
         Observer.Observe('after LockTable', Snapshot.Locks());
         Observer.Observe('found', Format(Company.FindSet()));
         Observer.Observe('after LockTable+FindSet', Snapshot.Locks());
-        Observer.Finish();
+        Observer.Expect('before', 'n=0;');
+        Observer.Expect('after LockTable', 'n=0;');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('after LockTable+FindSet', 'n=1;Company|KEY|Update|Granted;');
+        Observer.Verify();
     end;
 }

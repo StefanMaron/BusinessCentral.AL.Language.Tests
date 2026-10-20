@@ -467,7 +467,13 @@ codeunit 86382 "LT QB BgTask Iso GetLocked"
         foreach K in Results.Keys() do
             Observer.Observe(K, Results.Get(K));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('caller set', 'true');
+        Observer.Expect('get', 'ok');
+        Observer.Expect('InWriteTx', 'false');
+        Observer.Expect('Ret', 'false');
+        Observer.Expect('Value', '');
+        Observer.Expect('InWriteTxAfter', 'false');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -503,7 +509,10 @@ codeunit 86383 "LT QB BgTask Iso GetCommitted"
         foreach K in Results.Keys() do
             Observer.Observe(K, Results.Get(K));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('caller set', 'true');
+        Observer.Expect('get|text', 'We can''t save your changes right now, because a record in table ''Isolated Storage'' is being updated in a transaction done by another session.\\You''ll have to wait until the other transaction has completed, which may take a while. Please try again later.');
+        Observer.Expect('get|code', 'NDBCS:LockTimeout');
+        Observer.Verify();
     end;
 
     [TryFunction]

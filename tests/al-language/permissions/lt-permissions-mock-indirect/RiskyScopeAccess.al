@@ -163,8 +163,9 @@ codeunit 70476 "LT P116 Scope Access"
         else
             Observer.ObserveError('call');
         Observer.Observe('contains current company', Format(TempCompany.Get(CompanyName())));
-        Observer.Observe('count', Format(TempCompany.Count()));
-        Observer.Finish();
+        Observer.Expect('call', 'ok');
+        Observer.Expect('contains current company', 'Yes');
+        Observer.Verify();
     end;
 
     [TryFunction]

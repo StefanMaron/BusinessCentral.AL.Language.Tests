@@ -659,6 +659,16 @@ codeunit 84950 "LT CO Permission Leads"
         Mock.Set(UserSetTok);
         QbObserveControls(Observer, 'read only: ');
         RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        Observer.Expect('super: plain value', '84941');
+        Observer.Expect('super: guarded value', 'LT CO Perm Ledger');
+        Observer.Expect('super: guarded visible', 'Yes');
+        Observer.Expect('super: action visible', 'Yes');
+        Observer.Expect('super: action enabled', 'Yes');
+        Observer.Expect('read only: plain value', '84941');
+        Observer.Expect('read only: guarded value', 'error: The field with ID = n is not found on the page.');
+        Observer.Expect('read only: guarded visible', 'error: The field with ID = n is not found on the page.');
+        Observer.Expect('read only: action visible', 'error: The action with ID = n is not found on the page.');
+        Observer.Expect('read only: action enabled', 'error: The action with ID = n is not found on the page.');
+        Observer.Verify();
     end;
 }
