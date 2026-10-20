@@ -391,6 +391,8 @@ jobs:
 
           # MEASURED (run 34057062917): without sharing the workspace, the compile step dies
           # with "The appProjectFolder (D:\a\...) is not shared with the container."
+          # (Since 2026-10-20 the apps compile on the host with the latest AL compiler, see "Install the
+          # latest AL compiler"; the share stays for the publish and test steps.)
           # Compile-AppInBcContainer runs the AL compiler INSIDE the container, so the sources
           # have to be reachable from in there. BcContainerHelper shares its own helper and
           # artifact folders by default but never the GitHub workspace, which on a hosted
@@ -439,6 +441,92 @@ jobs:
           Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
 
       # ---------------------------------------------------------------------------------
+      # The AL compiler: the newest one, never the container's own (owner rule 2026-10-20).
+      #
+      # WHY. Every corpus app compiles with the latest AL compiler, on every BC version and in
+      # every workflow. The container's compiler is the one that shipped with that BC build.
+      # Run 39363023181 (BC 28.4): that compiler crashed on Report "LT AW Layouts"
+      # ("Sequence contains no elements" in Excel layout validation), so no test ran.
+      #
+      # WHERE IT COMES FROM. The same place and the same version as ci.yml's Linux legs:
+      # nuget.org, package Microsoft.Dynamics.BusinessCentral.Development.Tools, version =
+      # ci.yml's `al_tool_version`. This step reads that pin from ci.yml, so the two tiers
+      # cannot drift apart: bump the pin in ci.yml and the nightly follows. The package holds a
+      # framework-dependent alc.exe (tools/net8.0/any), which runs on the Windows runner with
+      # .NET 8. (bc-linux's install-al-compiler.sh takes the compiler from this same package.)
+      #
+      # HOW. BcContainerHelper's New-BcCompilerFolder builds a compiler folder on the HOST: the
+      # symbols (.app files) and service-tier DLLs from this run's BC artifact, the same build
+      # the container runs, and the compiler from -vsixFile. A folder laid out as
+      # extension\bin\alc.exe is the "flat bin" VSIX layout it accepts. The compile steps call
+      # Compile-AppWithBcCompilerFolder and then publish the .app into the container.
+      # New-BcCompilerFolder copies only some test libraries into the symbols; the corpus also
+      # needs Test Runner and Permissions Mock, so every other .app of the artifact's
+      # Applications folders is added with Copy-AppFilesToCompilerFolder (Microsoft's own test
+      # apps excepted).
+      # ---------------------------------------------------------------------------------
+      - name: Set up .NET 8 for the AL compiler
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install the latest AL compiler (same pin as ci.yml)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $bcContainerHelperConfig.bcartifactsCacheFolder = $env:BC_ARTIFACT_CACHE
+
+          $ci = Get-Content (Join-Path $env:GITHUB_WORKSPACE '.github/workflows/ci.yml') -Raw
+          $pins = @([regex]::Matches($ci, '(?m)^\s*al_tool_version:\s*"([^"]+)"') |
+                    ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+          if ($pins.Count -ne 1) {
+            throw "ci.yml must pin exactly one al_tool_version; found: $($pins -join ', ')"
+          }
+          $ver = $pins[0]
+          Write-Host "AL compiler: Microsoft.Dynamics.BusinessCentral.Development.Tools $ver (from ci.yml)"
+
+          $pkg = 'microsoft.dynamics.businesscentral.development.tools'
+          $nupkg = Join-Path $env:RUNNER_TEMP "$pkg.$ver.zip"
+          $extract = Join-Path $env:RUNNER_TEMP 'al-tools-nupkg'
+          Invoke-WebRequest -UseBasicParsing -OutFile $nupkg `
+            -Uri "https://api.nuget.org/v3-flatcontainer/$pkg/$ver/$pkg.$ver.nupkg"
+          Expand-Archive -Path $nupkg -DestinationPath $extract -Force
+          $toolDir = Join-Path $extract 'tools/net8.0/any'
+          if (-not (Test-Path (Join-Path $toolDir 'alc.exe'))) {
+            throw "No tools/net8.0/any/alc.exe in $pkg $ver."
+          }
+          $vsix = Join-Path $env:RUNNER_TEMP 'al-compiler-vsix'
+          $bin = Join-Path $vsix 'extension/bin'
+          New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          Copy-Item -Path (Join-Path $toolDir '*') -Destination $bin -Recurse -Force
+          & (Join-Path $bin 'alc.exe') /? | Select-Object -First 2 | ForEach-Object { Write-Host "alc: $_" }
+
+          $cf = New-BcCompilerFolder -artifactUrl $env:BC_ARTIFACT_URL -containerName 'nightlyalc' -vsixFile $vsix
+          Write-Host "compiler folder: $cf"
+
+          $symbols = Join-Path $cf 'symbols'
+          $have = @(Get-ChildItem -Path $symbols -Filter '*.app' | ForEach-Object Name)
+          $paths = Download-Artifacts -artifactUrl $env:BC_ARTIFACT_URL -includePlatform
+          $extra = @(foreach ($p in $paths) {
+            Get-ChildItem -Path $p -Directory -Filter '?pplications*' | ForEach-Object {
+              Get-ChildItem -Path $_.FullName -Filter '*.app' -Recurse
+            }
+          }) | Where-Object { $_.Name -notlike 'Microsoft_Tests-*' -and $have -notcontains $_.Name } |
+               Sort-Object Name -Unique
+          Write-Host ("adding {0} more .app files from the artifact to the symbols" -f $extra.Count)
+          if ($extra.Count) {
+            Copy-AppFilesToCompilerFolder -compilerFolder $cf -appFiles @($extra | ForEach-Object FullName)
+          }
+          foreach ($n in 'Test Runner', 'Permissions Mock', 'System Application Test Library', 'Base Application') {
+            if (-not (Get-ChildItem -Path $symbols -Filter "*$n*.app")) { throw "No $n symbols in $symbols." }
+          }
+
+          "BC_COMPILER_FOLDER=$cf" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "AL_COMPILER_VERSION=$ver" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "- AL compiler: ``Microsoft.Dynamics.BusinessCentral.Development.Tools $ver`` (nuget.org, same pin as ci.yml)" |
+            Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      # ---------------------------------------------------------------------------------
       # Create a tenant encryption key (#248, #282).
       #
       # WHY THIS STEP EXISTS. `IsolatedStorage.SetEncrypted`, AL's ENCRYPT/DECRYPT and Data
@@ -479,9 +567,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
           $appJson = Get-Content (Join-Path $folder 'app.json') -Raw | ConvertFrom-Json
 
-          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+          # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+          $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
             -appProjectFolder $folder -appOutputFolder $outDir `
-            -appSymbolsFolder (Join-Path $outDir 'symbols') -UpdateSymbols -failOn 'error'
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -failOn 'error'
           # The install trigger (OnInstallAppPerDatabase) creates the key.
           Publish-BcContainerApp -containerName $c -credential $cred `
             -appFile $appFile -skipVerification -sync -install
@@ -637,11 +726,13 @@ jobs:
           foreach ($folder in $apps) {
             Write-Host "::group::compile $folder"
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+            # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+            # -CopyAppToSymbolsFolder: the next app in the list compiles against this one.
+            $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
               -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
               -appOutputFolder $outDir `
               -appSymbolsFolder (Join-Path $outDir 'symbols') `
-              -UpdateSymbols -preProcessorSymbols $symbols -failOn 'error'
+              -CopyAppToSymbolsFolder -preProcessorSymbols $symbols -failOn 'error'
             Write-Host ("compiled {0} in {1:n0}s -> {2}" -f $folder, $sw.Elapsed.TotalSeconds, $appFile)
             Write-Host "::endgroup::"
 
@@ -738,11 +829,11 @@ jobs:
           $folder = 'tests/al-language-isolation-probe'
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+          # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+          $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
             -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
             -appOutputFolder $outDir `
-            -appSymbolsFolder (Join-Path $outDir 'symbols') `
-            -UpdateSymbols -failOn 'error'
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -failOn 'error'
           Publish-BcContainerApp -containerName $c -credential $cred `
             -appFile $appFile -skipVerification -sync -install
 
