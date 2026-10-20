@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-query-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); declares tables 74054, 74055, queries 74056-74061
+// Fixtures used: Probe Observer (codeunit 69160); declares tables 74054, 74055, queries 74056-74061 (writer PX: queries 86166-86175)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: a nested dataitem that is outer-joined (no SqlJoinType at all, and LeftOuterJoin spelled out) and carries a static filter: a Count column with ColumnFilter = const(0) or > 0 over the outer item (parents with no child), a plain column with a ColumnFilter, a DataItemTableFilter on an item with the default join type; two-field DataItemLink
 // BC versions: 29 (27 and 28 by CI)
@@ -367,6 +367,8 @@ codeunit 74062 "LT P133 Query Outer Filters"
 
     // Writer PX (probes-needed, PR 326 "Not done"): a ColumnFilter on a Sum, Average, Min or Max column of an outer-joined dataitem
     // (queries 86166-86173, data of Seed: D1 kinds 1 and 2, D2 kind 2, D3 and D4 no linked child), and the same aggregates without a filter (86175).
+    // Rule seen: a parent without a linked child reads 0 for Sum, Average, Min and Max; the ColumnFilter filters the groups on that value (const(0)
+    // keeps D3 and D4, the join stays outer); Average of an Integer column is cut to an Integer (D1: 1, not 1.5), and the filter sees the cut value.
 
     [TryFunction]
     local procedure TryDrainPxSumZero(var Result: Text)
@@ -466,7 +468,8 @@ codeunit 74062 "LT P133 Query Outer Filters"
     begin
         Seed();
         Show(Observer, 'all aggregates', TryDrainPxAllAggregates(Rows), Rows);
-        Observer.Finish();
+        Observer.Expect('all aggregates', 'D1:sum=3,avg=1,min=1,max=2 D2:sum=2,avg=2,min=2,max=2 D3:sum=0,avg=0,min=0,max=0 D4:sum=0,avg=0,min=0,max=0 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -480,7 +483,9 @@ codeunit 74062 "LT P133 Query Outer Filters"
         Show(Observer, 'sum const(0)', TryDrainPxSumZero(Rows), Rows);
         Clear(Rows);
         Show(Observer, 'sum filter(>= 2)', TryDrainPxSumAtLeast2(Rows), Rows);
-        Observer.Finish();
+        Observer.Expect('sum const(0)', 'D3:0 D4:0 ');
+        Observer.Expect('sum filter(>= 2)', 'D1:3 D2:2 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -494,7 +499,9 @@ codeunit 74062 "LT P133 Query Outer Filters"
         Show(Observer, 'average const(0)', TryDrainPxAverageZero(Rows), Rows);
         Clear(Rows);
         Show(Observer, 'average filter(>= 2)', TryDrainPxAverageAtLeast2(Rows), Rows);
-        Observer.Finish();
+        Observer.Expect('average const(0)', 'D3:0 D4:0 ');
+        Observer.Expect('average filter(>= 2)', 'D2:2 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -508,7 +515,9 @@ codeunit 74062 "LT P133 Query Outer Filters"
         Show(Observer, 'min const(0)', TryDrainPxMinZero(Rows), Rows);
         Clear(Rows);
         Show(Observer, 'min filter(>= 2)', TryDrainPxMinAtLeast2(Rows), Rows);
-        Observer.Finish();
+        Observer.Expect('min const(0)', 'D3:0 D4:0 ');
+        Observer.Expect('min filter(>= 2)', 'D2:2 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -522,12 +531,16 @@ codeunit 74062 "LT P133 Query Outer Filters"
         Show(Observer, 'max const(0)', TryDrainPxMaxZero(Rows), Rows);
         Clear(Rows);
         Show(Observer, 'max filter(>= 2)', TryDrainPxMaxAtLeast2(Rows), Rows);
-        Observer.Finish();
+        Observer.Expect('max const(0)', 'D3:0 D4:0 ');
+        Observer.Expect('max filter(>= 2)', 'D1:2 D2:2 ');
+        Observer.Verify();
     end;
 
     // Writer PX (probes-needed, PR 326 "Not done"): Query.GetFilters with filters on columns of two dataitems (query 74059: Parent DocNo field 1,
     // PostDate field 2; Child EntryNo field 1, Kind field 4) and with filter elements on both dataitems (query 86174: column DocNo, filter FPost,
     // column EntryNo, filter FKind), every order of the four SetRange calls.
+    // Rule seen: column filters always come in column order, whatever the set order and the dataitem; filter elements are placed by set order
+    // among themselves and around the columns as asserted below (no column of the Child dataitem moves ahead of a Parent column).
     local procedure PxSetDefault(var Q: Query "LT P133 Q TableFilter Default"; Name: Text)
     begin
         case Name of
@@ -593,7 +606,19 @@ codeunit 74062 "LT P133 Query Outer Filters"
         PxOrderDefault(Observer, 'PostDate-EntryNo-Kind-DocNo');
         PxOrderDefault(Observer, 'PostDate-Kind-DocNo-EntryNo');
         PxOrderDefault(Observer, 'PostDate-Kind-EntryNo-DocNo');
-        Observer.Finish();
+        Observer.Expect('DocNo-PostDate-EntryNo-Kind', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('DocNo-PostDate-Kind-EntryNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('DocNo-EntryNo-PostDate-Kind', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('DocNo-EntryNo-Kind-PostDate', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('DocNo-Kind-PostDate-EntryNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('DocNo-Kind-EntryNo-PostDate', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('PostDate-DocNo-EntryNo-Kind', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('PostDate-DocNo-Kind-EntryNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('PostDate-EntryNo-DocNo-Kind', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('PostDate-EntryNo-Kind-DocNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('PostDate-Kind-DocNo-EntryNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('PostDate-Kind-EntryNo-DocNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -613,7 +638,19 @@ codeunit 74062 "LT P133 Query Outer Filters"
         PxOrderDefault(Observer, 'Kind-PostDate-EntryNo-DocNo');
         PxOrderDefault(Observer, 'Kind-EntryNo-DocNo-PostDate');
         PxOrderDefault(Observer, 'Kind-EntryNo-PostDate-DocNo');
-        Observer.Finish();
+        Observer.Expect('EntryNo-DocNo-PostDate-Kind', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('EntryNo-DocNo-Kind-PostDate', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('EntryNo-PostDate-DocNo-Kind', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('EntryNo-PostDate-Kind-DocNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('EntryNo-Kind-DocNo-PostDate', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('EntryNo-Kind-PostDate-DocNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('Kind-DocNo-PostDate-EntryNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('Kind-DocNo-EntryNo-PostDate', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('Kind-PostDate-DocNo-EntryNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('Kind-PostDate-EntryNo-DocNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('Kind-EntryNo-DocNo-PostDate', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Expect('Kind-EntryNo-PostDate-DocNo', 'DocNo: D1, PostDate: 01/01/24, EntryNo: 2, Kind: 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -633,7 +670,19 @@ codeunit 74062 "LT P133 Query Outer Filters"
         PxOrderTwoItems(Observer, 'FPost-EntryNo-FKind-DocNo');
         PxOrderTwoItems(Observer, 'FPost-FKind-DocNo-EntryNo');
         PxOrderTwoItems(Observer, 'FPost-FKind-EntryNo-DocNo');
-        Observer.Finish();
+        Observer.Expect('DocNo-FPost-EntryNo-FKind', 'DocNo: D1, PostDate: 01/01/24, Kind: 1, EntryNo: 2');
+        Observer.Expect('DocNo-FPost-FKind-EntryNo', 'DocNo: D1, PostDate: 01/01/24, Kind: 1, EntryNo: 2');
+        Observer.Expect('DocNo-EntryNo-FPost-FKind', 'DocNo: D1, PostDate: 01/01/24, Kind: 1, EntryNo: 2');
+        Observer.Expect('DocNo-EntryNo-FKind-FPost', 'DocNo: D1, Kind: 1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('DocNo-FKind-FPost-EntryNo', 'DocNo: D1, Kind: 1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('DocNo-FKind-EntryNo-FPost', 'DocNo: D1, Kind: 1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('FPost-DocNo-EntryNo-FKind', 'PostDate: 01/01/24, DocNo: D1, Kind: 1, EntryNo: 2');
+        Observer.Expect('FPost-DocNo-FKind-EntryNo', 'PostDate: 01/01/24, DocNo: D1, Kind: 1, EntryNo: 2');
+        Observer.Expect('FPost-EntryNo-DocNo-FKind', 'PostDate: 01/01/24, DocNo: D1, Kind: 1, EntryNo: 2');
+        Observer.Expect('FPost-EntryNo-FKind-DocNo', 'PostDate: 01/01/24, Kind: 1, DocNo: D1, EntryNo: 2');
+        Observer.Expect('FPost-FKind-DocNo-EntryNo', 'PostDate: 01/01/24, Kind: 1, DocNo: D1, EntryNo: 2');
+        Observer.Expect('FPost-FKind-EntryNo-DocNo', 'PostDate: 01/01/24, Kind: 1, DocNo: D1, EntryNo: 2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -653,7 +702,19 @@ codeunit 74062 "LT P133 Query Outer Filters"
         PxOrderTwoItems(Observer, 'FKind-FPost-EntryNo-DocNo');
         PxOrderTwoItems(Observer, 'FKind-EntryNo-DocNo-FPost');
         PxOrderTwoItems(Observer, 'FKind-EntryNo-FPost-DocNo');
-        Observer.Finish();
+        Observer.Expect('EntryNo-DocNo-FPost-FKind', 'DocNo: D1, PostDate: 01/01/24, Kind: 1, EntryNo: 2');
+        Observer.Expect('EntryNo-DocNo-FKind-FPost', 'DocNo: D1, Kind: 1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('EntryNo-FPost-DocNo-FKind', 'PostDate: 01/01/24, DocNo: D1, Kind: 1, EntryNo: 2');
+        Observer.Expect('EntryNo-FPost-FKind-DocNo', 'PostDate: 01/01/24, Kind: 1, DocNo: D1, EntryNo: 2');
+        Observer.Expect('EntryNo-FKind-DocNo-FPost', 'Kind: 1, DocNo: D1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('EntryNo-FKind-FPost-DocNo', 'Kind: 1, PostDate: 01/01/24, DocNo: D1, EntryNo: 2');
+        Observer.Expect('FKind-DocNo-FPost-EntryNo', 'Kind: 1, DocNo: D1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('FKind-DocNo-EntryNo-FPost', 'Kind: 1, DocNo: D1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('FKind-FPost-DocNo-EntryNo', 'Kind: 1, PostDate: 01/01/24, DocNo: D1, EntryNo: 2');
+        Observer.Expect('FKind-FPost-EntryNo-DocNo', 'Kind: 1, PostDate: 01/01/24, DocNo: D1, EntryNo: 2');
+        Observer.Expect('FKind-EntryNo-DocNo-FPost', 'Kind: 1, DocNo: D1, PostDate: 01/01/24, EntryNo: 2');
+        Observer.Expect('FKind-EntryNo-FPost-DocNo', 'Kind: 1, PostDate: 01/01/24, DocNo: D1, EntryNo: 2');
+        Observer.Verify();
     end;
 }
 

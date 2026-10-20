@@ -3,6 +3,9 @@
 // Fixtures used: Probe Observer (codeunit 69160); declares codeunits 86163-86165; calls test procedures of codeunit 67334 "W6 Code Coverage Ids"
 // Probe: writer PX, probes-needed "Platform tables and session facts": Code Coverage Test Lookup "Method ID" of procedures with different and
 // equal signatures, in one codeunit and in two; Tests Run "Method ID" and "Test ID" in a second test codeunit and across recordings.
+// Rule seen (BC 29 local): a Test Lookup Method ID is the Method Id of the procedure's Trigger/Function row in Code Coverage; equal for the same
+// name and signature in two codeunits (NoArgs), different for different names with one signature. Tests Run rows have their own Method ID and
+// Test ID per test procedure. A new CodeCoverageLog(true, ...) without clearing keeps only the rows of the new recording.
 // BC versions: 27, 28, 29
 
 codeunit 86164 "LT PX CC Target A"
@@ -170,7 +173,11 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Observe('lines_a', DumpLineMethodIds(Codeunit::"LT PX CC Target A"));
         Observer.Observe('lines_b', DumpLineMethodIds(Codeunit::"LT PX CC Target B"));
         Initialize();
-        Observer.Finish();
+        Observer.Expect('runs', '[PxRunsASameOne obj=86163 methodid=-1803411697 testid=-1910502296: Codeunit 86164 -130816186] [PxRunsBNoArgs obj=86163 methodid=667973114 testid=-1527742205: Codeunit 86165 1569086646] [PxRunsATextArg obj=86163 methodid=-652159326 testid=113543347: Codeunit 86164 -1663764975] [PxRunsAIntArg obj=86163 methodid=-133430896 testid=174429217: Codeunit 86164 -370288627] [PxRunsANoArgs obj=86163 methodid=1797822318 testid=568644803: Codeunit 86164 1569086646] [PxRunsASameTwo obj=86163 methodid=-450565804 testid=2025528333: Codeunit 86164 -1760197669] ');
+        Observer.Expect('lookups', '(Codeunit 86164 -1760197669 test 2025528333) (Codeunit 86164 -1663764975 test 113543347) (Codeunit 86164 -370288627 test 174429217) (Codeunit 86164 -130816186 test -1910502296) (Codeunit 86164 1569086646 test 568644803) (Codeunit 86165 1569086646 test -1527742205) count=6');
+        Observer.Expect('lines_a', 'L0:Object/-1 L10:Trigger/Function/1569086646 L11:Empty/-1 L12:Empty/-1 L14:Trigger/Function/-370288627 L15:Empty/-1 L16:Code/-370288627 L17:Code/-370288627 L18:Empty/-1 L20:Trigger/Function/-1663764975 L21:Empty/-1 L22:Code/-1663764975 L23:Empty/-1 L25:Trigger/Function/-130816186 L26:Empty/-1 L27:Empty/-1 L29:Trigger/Function/-1760197669 L30:Empty/-1 L31:Empty/-1 ');
+        Observer.Expect('lines_b', 'L0:Object/-1 L4:Trigger/Function/1569086646 L5:Empty/-1 L6:Empty/-1 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -190,6 +197,8 @@ codeunit 86163 "LT PX Code Coverage Ids"
         CodeCoverageLog(false, false);
         Observer.Observe('second_without_reset', DumpRuns());
         Initialize();
-        Observer.Finish();
+        Observer.Expect('first', '[MethodA obj=67334 methodid=915199647 testid=-1061756221:] [PxRunsANoArgs obj=86163 methodid=1797822318 testid=568644803: Codeunit 86164 1569086646] ');
+        Observer.Expect('second_without_reset', '[PxRunsBNoArgs obj=86163 methodid=667973114 testid=-1527742205: Codeunit 86165 1569086646] ');
+        Observer.Verify();
     end;
 }

@@ -167,7 +167,13 @@ codeunit 79201 "LT AK Fts Test"
         R.SetFilter(Cd, '*HELLO*');
         Observer.Observe('contains_count', Format(R.Count()));
         R.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('field_row_code', 'Yes');
+        Observer.Expect('field_row_plain_code', 'No');
+        Observer.Expect('fieldref_code', 'Yes');
+        Observer.Expect('fieldref_plain_code', 'No');
+        Observer.Expect('at_contains_count', '2');
+        Observer.Expect('contains_count', '2');
+        Observer.Verify();
     end;
 }
 
