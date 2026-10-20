@@ -10,6 +10,10 @@
 // Results: the callee gets a temporary record over an EMPTY table (Count 0, Get and FindFirst fail) that holds the caller's current field
 //   values but not its filters; Insert and Modify in the callee write only that temporary table; the caller's record, filters and the stored
 //   table are unchanged. Modify of the handed current row fails (it is not in the temporary table). Same as for a temporary subscriber parameter.
+// Writer QF: own table 86646 (secondary key on Name), callee codeunit 86645, tests QF_* in 86508. Results: a stored record with
+//   SetCurrentKey(Name) + Ascending(false), or with marks and MarkedOnly(true), handed by value to a `temporary` parameter: the callee sees the
+//   primary key ascending (GetView 'VERSION(1) SORTING(Field1)'), MarkedOnly No, Mark No, and its own rows sort by the primary key and are
+//   all unmarked; the caller keeps its key, order, marks and MarkedOnly.
 // BC versions: 27, 28, 29
 
 table 86506 "LT QD TP Row"
@@ -137,5 +141,208 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Expect('caller.current', '1=one');
         Observer.Expect('stored.rows', '1=one;2=two;3=three;');
         Observer.Verify();
+    end;
+
+    // Writer QF (al-runtime-rs refusal: a current key, sort order or marks on a stored record handed to a `temporary` parameter): what the
+    // callee sees of the caller's key, sort order and marks, how its own rows sort and which of them count as marked, and the caller after.
+    [Test]
+    procedure QF_StoredRecord_KeyAndOrder_ToTemporaryParameter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Callee: Codeunit "LT QF TP Callee";
+        Stored: Record "LT QF TP Row";
+    begin
+        QfSeed();
+        Stored.SetCurrentKey(Name);
+        Stored.Ascending(false);
+        Stored.FindFirst();
+        Callee.KeyAndOrder(Stored, Observer);
+        Observer.Observe('caller.key', Stored.CurrentKey());
+        Observer.Observe('caller.ascending', Format(Stored.Ascending()));
+        Observer.Observe('caller.view', Stored.GetView(false));
+        Observer.Observe('caller.current', Format(Stored.Id) + '=' + Stored.Name);
+        Observer.Observe('caller.order', QfOrder(Stored));
+        Observer.Expect('callee.isTemporary', 'Yes');
+        Observer.Expect('callee.key', 'Id');
+        Observer.Expect('callee.ascending', 'Yes');
+        Observer.Expect('callee.view', 'VERSION(1) SORTING(Field1)');
+        Observer.Expect('callee.current', '1=c');
+        Observer.Expect('callee.order', '1,2,3,');
+        Observer.Expect('callee.keyAfter', 'Id');
+        Observer.Expect('callee.ascendingAfter', 'Yes');
+        Observer.Expect('caller.key', 'Name');
+        Observer.Expect('caller.ascending', 'No');
+        Observer.Expect('caller.view', 'VERSION(1) SORTING(Field2) ORDER(1)');
+        Observer.Expect('caller.current', '1=c');
+        Observer.Expect('caller.order', '1,3,2,');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_StoredRecord_Marks_ToTemporaryParameter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Callee: Codeunit "LT QF TP Callee";
+        Stored: Record "LT QF TP Row";
+    begin
+        QfSeed();
+        Stored.Get(1);
+        Stored.Mark(true);
+        Stored.Get(3);
+        Stored.Mark(true);
+        Stored.MarkedOnly(true);
+        Callee.Marks(Stored, Observer);
+        Observer.Observe('caller.markedOnly', Format(Stored.MarkedOnly()));
+        Observer.Observe('caller.count', Format(Stored.Count()));
+        Observer.Observe('caller.mark', Format(Stored.Mark()));
+        Observer.Observe('caller.order', QfOrder(Stored));
+        Observer.Expect('callee.markedOnly', 'No');
+        Observer.Expect('callee.mark', 'No');
+        Observer.Expect('callee.current', '3=b');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.countFilled', '3');
+        Observer.Expect('callee.orderFilled', '1,2,3,');
+        Observer.Expect('callee.countAll', '3');
+        Observer.Expect('callee.marks', '1=No,2=No,3=No,');
+        Observer.Expect('caller.markedOnly', 'Yes');
+        Observer.Expect('caller.count', '2');
+        Observer.Expect('caller.mark', 'Yes');
+        Observer.Expect('caller.order', '1,3,');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_StoredRecord_MarksNotMarkedOnly_ToTemporaryParameter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Callee: Codeunit "LT QF TP Callee";
+        Stored: Record "LT QF TP Row";
+    begin
+        QfSeed();
+        Stored.Get(2);
+        Stored.Mark(true);
+        Callee.Marks(Stored, Observer);
+        Observer.Observe('caller.markedOnly', Format(Stored.MarkedOnly()));
+        Observer.Observe('caller.mark', Format(Stored.Mark()));
+        Observer.Expect('callee.markedOnly', 'No');
+        Observer.Expect('callee.mark', 'No');
+        Observer.Expect('callee.current', '2=a');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.countFilled', '3');
+        Observer.Expect('callee.orderFilled', '1,2,3,');
+        Observer.Expect('callee.countAll', '3');
+        Observer.Expect('callee.marks', '1=No,2=No,3=No,');
+        Observer.Expect('caller.markedOnly', 'No');
+        Observer.Expect('caller.mark', 'Yes');
+        Observer.Verify();
+    end;
+
+    local procedure QfSeed()
+    var
+        Row: Record "LT QF TP Row";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Name := 'c';
+        Row.Insert();
+        Row.Id := 2;
+        Row.Name := 'a';
+        Row.Insert();
+        Row.Id := 3;
+        Row.Name := 'b';
+        Row.Insert();
+    end;
+
+    local procedure QfOrder(var Row: Record "LT QF TP Row"): Text
+    var
+        Ids: Text;
+    begin
+        if Row.FindSet() then
+            repeat
+                Ids += Format(Row.Id) + ',';
+            until Row.Next() = 0;
+        exit(Ids);
+    end;
+}
+
+table 86646 "LT QF TP Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Name; Text[30]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+        key(ByName; Name) { }
+    }
+}
+
+codeunit 86645 "LT QF TP Callee"
+{
+    procedure KeyAndOrder(R: Record "LT QF TP Row" temporary; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('callee.isTemporary', Format(R.IsTemporary()));
+        Observer.Observe('callee.key', R.CurrentKey());
+        Observer.Observe('callee.ascending', Format(R.Ascending()));
+        Observer.Observe('callee.view', R.GetView(false));
+        Observer.Observe('callee.current', Format(R.Id) + '=' + R.Name);
+        Fill(R);
+        Observer.Observe('callee.order', Order(R));
+        Observer.Observe('callee.keyAfter', R.CurrentKey());
+        Observer.Observe('callee.ascendingAfter', Format(R.Ascending()));
+    end;
+
+    procedure Marks(R: Record "LT QF TP Row" temporary; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('callee.markedOnly', Format(R.MarkedOnly()));
+        Observer.Observe('callee.mark', Format(R.Mark()));
+        Observer.Observe('callee.current', Format(R.Id) + '=' + R.Name);
+        Observer.Observe('callee.count', Format(R.Count()));
+        Fill(R);
+        Observer.Observe('callee.countFilled', Format(R.Count()));
+        Observer.Observe('callee.orderFilled', Order(R));
+        R.MarkedOnly(false);
+        Observer.Observe('callee.countAll', Format(R.Count()));
+        Observer.Observe('callee.marks', MarkList(R));
+    end;
+
+    local procedure Fill(var R: Record "LT QF TP Row" temporary)
+    begin
+        R.Id := 1;
+        R.Name := 'c';
+        R.Insert();
+        R.Id := 2;
+        R.Name := 'a';
+        R.Insert();
+        R.Id := 3;
+        R.Name := 'b';
+        R.Insert();
+    end;
+
+    local procedure Order(var R: Record "LT QF TP Row" temporary): Text
+    var
+        Ids: Text;
+    begin
+        if R.FindSet() then
+            repeat
+                Ids += Format(R.Id) + ',';
+            until R.Next() = 0;
+        exit(Ids);
+    end;
+
+    local procedure MarkList(var R: Record "LT QF TP Row" temporary): Text
+    var
+        Ids: Text;
+    begin
+        if R.FindSet() then
+            repeat
+                Ids += Format(R.Id) + '=' + Format(R.Mark()) + ',';
+            until R.Next() = 0;
+        exit(Ids);
     end;
 }

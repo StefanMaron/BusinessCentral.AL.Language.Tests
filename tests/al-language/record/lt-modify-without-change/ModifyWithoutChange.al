@@ -3,6 +3,9 @@
 // Fixtures used: Probe Observer (codeunit 69160); own table 74971, log 74972, test codeunit 74973; writer QD: table 86510, manual subscriber codeunits 86511 and 86512 (ModifyAll over a row that has the value, with and without modify subscribers)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: Modify() on a record with no field changed: whether SystemRowVersion changes (in the variable after the call and when the row is read again), whether the OnModify trigger runs, and whether xRec equals Rec in it; Modify(true), Modify(false) and ModifyAll with the same value; Modify with one field changed. Row versions are compared with each other, never asserted as numbers. ModifyAll with the same value is asserted for its trace only: whether it changes the row version differs between the local container (unchanged) and the CI container (changed), so the row version is not asserted for it.
+// Writer QF: tables 86647 (no trigger) and 86648 (OnModify trigger), with no modify-event subscriber declared anywhere; tests QF_* in 74973.
+//   Result: ModifyAll(Qty, 5, false) writes in bulk: the row that already had Qty 5 gets a new SystemModifiedAt and SystemRowVersion on both
+//   tables, and the OnModify trigger does not run.
 // BC versions: 29 (27 and 28 by CI)
 
 table 74971 "LT MW Row"
@@ -364,6 +367,87 @@ codeunit 74973 "LT Modify Without Change"
         Observer.Expect('before_row2_version_changed', 'Yes');
         Observer.Verify();
     end;
+
+    // Writer QF (al-runtime-rs assumption modifyall-bulk-unchanged-row-version): ModifyAll(Qty, 5, false) over two rows of a table with NO
+    // modify-event subscriber declared anywhere, row 1 already has Qty 5 and row 2 has 6: SystemModifiedAt and SystemRowVersion of each
+    // row, on a table without triggers (86647) and on one with an OnModify trigger (86648).
+    [Test]
+    procedure QF_ModifyAll_SameValue_NoSubscriberDeclared_NoTrigger()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QF MW Plain Row";
+        L: Codeunit "LT MW Log";
+        Stamp1: DateTime;
+        Stamp2: DateTime;
+        Version1: BigInteger;
+        Version2: BigInteger;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1; Row.Qty := 5; Row.Insert();
+        Row.Id := 2; Row.Qty := 6; Row.Insert();
+        Row.Get(1); Stamp1 := Row.SystemModifiedAt; Version1 := Row.SystemRowVersion;
+        Row.Get(2); Stamp2 := Row.SystemModifiedAt; Version2 := Row.SystemRowVersion;
+        L.Take();
+        Sleep(50);
+        Row.Reset();
+        Row.ModifyAll(Qty, 5, false);
+        Observer.Observe('trace', L.Take());
+        Row.Get(1);
+        Observer.Observe('row1_qty', Format(Row.Qty));
+        Observer.Observe('row1_stamp_changed', Format(Row.SystemModifiedAt <> Stamp1));
+        Observer.Observe('row1_version_changed', Format(Row.SystemRowVersion <> Version1));
+        Row.Get(2);
+        Observer.Observe('row2_qty', Format(Row.Qty));
+        Observer.Observe('row2_stamp_changed', Format(Row.SystemModifiedAt <> Stamp2));
+        Observer.Observe('row2_version_changed', Format(Row.SystemRowVersion <> Version2));
+        Observer.Expect('trace', '');
+        Observer.Expect('row1_qty', '5');
+        Observer.Expect('row1_stamp_changed', 'Yes');
+        Observer.Expect('row1_version_changed', 'Yes');
+        Observer.Expect('row2_qty', '5');
+        Observer.Expect('row2_stamp_changed', 'Yes');
+        Observer.Expect('row2_version_changed', 'Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_ModifyAll_SameValue_NoSubscriberDeclared_OnModifyTrigger()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QF MW Trg Row";
+        L: Codeunit "LT MW Log";
+        Stamp1: DateTime;
+        Stamp2: DateTime;
+        Version1: BigInteger;
+        Version2: BigInteger;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1; Row.Qty := 5; Row.Insert();
+        Row.Id := 2; Row.Qty := 6; Row.Insert();
+        Row.Get(1); Stamp1 := Row.SystemModifiedAt; Version1 := Row.SystemRowVersion;
+        Row.Get(2); Stamp2 := Row.SystemModifiedAt; Version2 := Row.SystemRowVersion;
+        L.Take();
+        Sleep(50);
+        Row.Reset();
+        Row.ModifyAll(Qty, 5, false);
+        Observer.Observe('trace', L.Take());
+        Row.Get(1);
+        Observer.Observe('row1_qty', Format(Row.Qty));
+        Observer.Observe('row1_stamp_changed', Format(Row.SystemModifiedAt <> Stamp1));
+        Observer.Observe('row1_version_changed', Format(Row.SystemRowVersion <> Version1));
+        Row.Get(2);
+        Observer.Observe('row2_qty', Format(Row.Qty));
+        Observer.Observe('row2_stamp_changed', Format(Row.SystemModifiedAt <> Stamp2));
+        Observer.Observe('row2_version_changed', Format(Row.SystemRowVersion <> Version2));
+        Observer.Expect('trace', '');
+        Observer.Expect('row1_qty', '5');
+        Observer.Expect('row1_stamp_changed', 'Yes');
+        Observer.Expect('row1_version_changed', 'Yes');
+        Observer.Expect('row2_qty', '5');
+        Observer.Expect('row2_stamp_changed', 'Yes');
+        Observer.Expect('row2_version_changed', 'Yes');
+        Observer.Verify();
+    end;
 }
 
 table 86510 "LT QD MW Sub Row"
@@ -402,5 +486,38 @@ codeunit 86512 "LT QD MW Before Subs"
         L: Codeunit "LT MW Log";
     begin
         L.Add('before ' + Format(Rec.Id) + ' rec=' + Format(Rec.Qty) + ' xrec=' + Format(xRec.Qty));
+    end;
+}
+
+table 86647 "LT QF MW Plain Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+table 86648 "LT QF MW Trg Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+
+    trigger OnModify()
+    var
+        L: Codeunit "LT MW Log";
+    begin
+        L.Add('OnModify ' + Format(Rec.Id));
     end;
 }

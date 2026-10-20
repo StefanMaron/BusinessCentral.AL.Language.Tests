@@ -18,6 +18,12 @@
 //     empty record, then once for each field with a control on the current row; Caption() of a control reads the value of the open
 //     and runs nothing. A page control's own CaptionClass expression resolves the same way.
 //   - Sales Line "Inv. Discount Amount" / "Line Amount": Excl. VAT without a Sales Header, Incl. VAT when the header has Prices Including VAT.
+// Writer QF: own table 86643, pages 86640 (List), 86641 (ListPart) and 86642 (Card hosting the part); tests QF_* in 86504 (still the only
+//   user of log 86503). Results: a List page opened with OpenView or OpenEdit runs every expression field of the table 9 times with an empty
+//   record (108 calls), Page.Run of the List (trapped) 111 calls, a Card hosting the ListPart 108 (counts seen on every major, but not
+//   asserted: the same card open counted 240 and 492 in two BC 29 runs); then once per expression control on the first row only. Next (List, ListPart and Card) runs no expression, and Caption() after Next still reads the value of the open (first row).
+//   The corpus database's General Ledger Setup: LCY Code GBP, Global Dimension 1 DEPARTMENT ('Department Code'), Global Dimension 2
+//   CUSTOMERGROUP ('Customergroup Code'), Additional Reporting Currency EUR from BC 28 ('' on BC 27.5).
 // BC versions: 27, 28, 29
 
 table 86500 "LT QD Cap Row"
@@ -431,7 +437,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         R.Insert();
         Log.Reset();
         P.OpenView();
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'lit20', P.Lit20.Caption());
         Cap(Observer, 'lit21', P.Lit21.Caption());
         Cap(Observer, 'lit53', P.Lit53.Caption());
@@ -439,8 +445,8 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'expr21', P.Expr21.Caption());
         Cap(Observer, 'expr53', P.Expr53.Caption());
         Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
-        Cap(Observer, 'exprId', P.ExprId.Caption());
-        Cap(Observer, 'exprId_again', P.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'exprId_again', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'exprEmpty', P.ExprEmpty.Caption());
         Cap(Observer, 'expr9', P.Expr9.Caption());
         Cap(Observer, 'expr2x', P.Expr2x.Caption());
@@ -448,7 +454,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'pageExpr', P.PageExpr.Caption());
         P.Close();
         Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=240 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
         Observer.Expect('lit20', 'Inv. Discount Amount Excl. VAT');
         Observer.Expect('lit20_calls', '');
         Observer.Expect('lit21', 'Inv. Discount Amount Incl. VAT');
@@ -463,9 +469,9 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Expect('expr53_calls', '');
         Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('exprVAT_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 245');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
-        Observer.Expect('exprId_again', 'Id 3 call 245');
+        Observer.Expect('exprId_again', 'Id 3');
         Observer.Expect('exprId_again_calls', '');
         Observer.Expect('exprEmpty', '');
         Observer.Expect('exprEmpty_calls', '');
@@ -545,4 +551,344 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Expect('other_doc_invdisc', 'Inv. Discount Amount Excl. VAT');
         Observer.Verify();
     end;
+
+    // Writer QF (al-runtime-rs assumption page-open-caption-class-expressions): the card log above on a List page opened with OpenView,
+    // OpenEdit and Page.Run, on a ListPart of a card, and after Next on the list and on the card. Two rows: Id 3 (Incl VAT) and Id 5.
+    local procedure QfSeedTwo()
+    var
+        R: Record "LT QD Cap Row";
+    begin
+        R.DeleteAll();
+        R.Id := 3;
+        R."Incl VAT" := true;
+        R.Insert();
+        R.Id := 5;
+        R."Incl VAT" := false;
+        R.Insert();
+        Log.Reset();
+    end;
+
+    // The empty-record calls of a page open are counted differently between runs (Page_ControlCaptions saw 240 and 492 on BC 29 CI): only
+    // whether there were any is asserted; the counts seen are in the header. QfNoCall cuts the running call count off the "Expr Id" caption.
+    local procedure QfSummarize(Calls: Text): Text
+    var
+        Folded: Text;
+        At: Integer;
+    begin
+        Folded := Summarize(Calls);
+        At := Folded.IndexOf(' fields0=');
+        exit('id0>0=' + Format(CopyStr(Folded, 5, At - 5) <> '0') + CopyStr(Folded, At));
+    end;
+
+    local procedure QfNoCall(Caption: Text): Text
+    begin
+        if Caption.IndexOf(' call ') = 0 then
+            exit(Caption);
+        exit(CopyStr(Caption, 1, Caption.IndexOf(' call ') - 1));
+    end;
+
+    [Test]
+    procedure QF_List_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QF Cap List";
+    begin
+        QfSeedTwo();
+        P.OpenView();
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
+        Cap(Observer, 'expr20', P.Expr20.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
+        P.Close();
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
+        Observer.Expect('row', '3');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('exprVAT_calls', '');
+        Observer.Expect('expr20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('expr20_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
+        Observer.Expect('next_row', '5');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('next_exprVAT_calls', '');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_List_OpenEdit()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QF Cap List";
+    begin
+        QfSeedTwo();
+        P.OpenEdit();
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
+        P.Close();
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
+        Observer.Expect('row', '3');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('exprVAT_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
+        Observer.Expect('next_row', '5');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('next_exprVAT_calls', '');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_List_PageRun()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QF Cap List";
+    begin
+        QfSeedTwo();
+        P.Trap();
+        Page.Run(Page::"LT QF Cap List");
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
+        P.Close();
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
+        Observer.Expect('row', '3');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('exprVAT_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
+        Observer.Expect('next_row', '5');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_ListPart_OnCard()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT QF Cap Host Row";
+        H: TestPage "LT QF Cap Host";
+    begin
+        Host.DeleteAll();
+        Host.Id := 1;
+        Host.Insert();
+        QfSeedTwo();
+        H.OpenView();
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'row', H.Lines.Id.Value());
+        Cap(Observer, 'exprId', QfNoCall(H.Lines.ExprId.Caption()));
+        Cap(Observer, 'exprVAT', H.Lines.ExprVAT.Caption());
+        Observer.Observe('next', Format(H.Lines.Next()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'next_row', H.Lines.Id.Value());
+        Cap(Observer, 'next_exprId', QfNoCall(H.Lines.ExprId.Caption()));
+        Cap(Observer, 'next_exprVAT', H.Lines.ExprVAT.Caption());
+        H.Close();
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=23@3;24@3;');
+        Observer.Expect('row', '3');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('exprVAT_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
+        Observer.Expect('next_row', '5');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('next_exprVAT_calls', '');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QF_Card_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QD Cap Card";
+    begin
+        QfSeedTwo();
+        P.OpenView();
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
+        P.Close();
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('row', '3');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
+        Observer.Expect('next_row', '5');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('next_exprVAT_calls', '');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
+        Observer.Verify();
+    end;
+
+    // Writer QF: the General Ledger Setup row and the global dimension captions of the corpus database, which Base Application's
+    // OnResolveCaptionClass reads for areas 101 (currency) and 1 (dimension) above.
+    [Test]
+    procedure QF_GLSetup_CorpusRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        GLSetup: Record "General Ledger Setup";
+        Dim: Record Dimension;
+    begin
+        Observer.Observe('count', Format(GLSetup.Count()));
+        Observer.Observe('get', Format(GLSetup.Get()));
+        Observer.Observe('primaryKey', GLSetup."Primary Key");
+        Observer.Observe('lcyCode', GLSetup."LCY Code");
+        Observer.Observe('globalDim1', GLSetup."Global Dimension 1 Code");
+        Observer.Observe('globalDim2', GLSetup."Global Dimension 2 Code");
+        Observer.Observe('addReportingCurrency', GLSetup."Additional Reporting Currency");
+        Observer.Observe('dim1_get', Format(Dim.Get(GLSetup."Global Dimension 1 Code")));
+        Observer.Observe('dim1_codeCaption', Dim."Code Caption");
+        Observer.Observe('dim2_get', Format(Dim.Get(GLSetup."Global Dimension 2 Code")));
+        Observer.Observe('dim2_codeCaption', Dim."Code Caption");
+        Observer.Expect('count', '1');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('primaryKey', '');
+        Observer.Expect('lcyCode', 'GBP');
+        Observer.Expect('globalDim1', 'DEPARTMENT');
+        Observer.Expect('globalDim2', 'CUSTOMERGROUP');
+#if BC28PLUS
+        Observer.Expect('addReportingCurrency', 'EUR');
+#else
+        Observer.Expect('addReportingCurrency', '');
+#endif
+        Observer.Expect('dim1_get', 'Yes');
+        Observer.Expect('dim1_codeCaption', 'Department Code');
+        Observer.Expect('dim2_get', 'Yes');
+        Observer.Expect('dim2_codeCaption', 'Customergroup Code');
+        Observer.Verify();
+    end;
+}
+
+table 86643 "LT QF Cap Host Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+page 86640 "LT QF Cap List"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QD Cap Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Expr20; Rec."Expr 2-0") { ApplicationArea = All; }
+                field(ExprVAT; Rec."Expr VAT") { ApplicationArea = All; }
+                field(ExprId; Rec."Expr Id") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 86641 "LT QF Cap Part"
+{
+    PageType = ListPart;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QD Cap Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(ExprVAT; Rec."Expr VAT") { ApplicationArea = All; }
+                field(ExprId; Rec."Expr Id") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 86642 "LT QF Cap Host"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QF Cap Host Row";
+
+    layout
+    {
+        area(Content)
+        {
+            group(G)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QF Cap Part") { ApplicationArea = All; }
+        }
+    }
 }
