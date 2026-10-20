@@ -6,9 +6,9 @@
 // Facts asked: the No. of the row with ID 'W. Europe Standard Time', the row count, the first and last ID.
 // Asserted with the Windows values (corpus #683): BC 27.5 and 28.5 (Windows check 2026-10-20) and 27.5 and 29.0 (Windows check 3) all give
 // 144 rows, 'W. Europe Standard Time' = No. 55, no 'Europe/Berlin', 1=Dateline Standard Time, 2=UTC-11, 3=Aleutian Standard Time,
-// 144=Line Islands Standard Time. Held on Linux under LT_HELD_BCLINUX_132: the Linux image pinned in ci.yml lists the IANA ids (BC 29.0,
+// 144=Line Islands Standard Time. Before the bc-linux #132 fix the Linux image listed the IANA ids (BC 29.0,
 // 2026-10-19: count 419; no 'W. Europe Standard Time'; 'Europe/Berlin' is No. 195; 1=Pacific/Niue, 2=Pacific/Midway, 3=Pacific/Pago_Pago;
-// 419=Pacific/Kiritimati), so there the values are observed and not asserted until the pin includes the bc-linux #132 fix.
+// 419=Pacific/Kiritimati). The ci.yml pin includes that fix, so the values are asserted on Linux too.
 // BC versions: 27, 28, 29
 
 codeunit 80007 "LT AT Time Zone Numbering"
@@ -42,7 +42,6 @@ codeunit 80007 "LT AT Time Zone Numbering"
         Observer.Observe('2', TimeZone.ID);
         TimeZone.Get(3);
         Observer.Observe('3', TimeZone.ID);
-#if LT_HELD_BCLINUX_132
         Observer.Expect('count', '144');
         Observer.Expect('W. Europe No.', '55');
         Observer.Expect('Europe/Berlin No.', 'absent');
@@ -50,15 +49,6 @@ codeunit 80007 "LT AT Time Zone Numbering"
         Observer.Expect('last', '144=Line Islands Standard Time');
         Observer.Expect('2', 'UTC-11');
         Observer.Expect('3', 'Aleutian Standard Time');
-#else
-        Observer.Ignore('count');
-        Observer.Ignore('W. Europe No.');
-        Observer.Ignore('Europe/Berlin No.');
-        Observer.Ignore('first');
-        Observer.Ignore('last');
-        Observer.Ignore('2');
-        Observer.Ignore('3');
-#endif
         Observer.Verify();
     end;
 }
