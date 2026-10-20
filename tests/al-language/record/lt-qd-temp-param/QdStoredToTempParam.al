@@ -7,6 +7,9 @@
 // Facts: a stored (database) record with rows, a current row and a filter passed by value to a parameter declared `temporary` of a normal
 //   procedure (not an event subscriber): IsTemporary, Count, the field values and filters the callee sees, Get / FindFirst, Insert and
 //   Modify in the callee, then the stored table and the caller's record after the call.
+// Results: the callee gets a temporary record over an EMPTY table (Count 0, Get and FindFirst fail) that holds the caller's current field
+//   values but not its filters; Insert and Modify in the callee write only that temporary table; the caller's record, filters and the stored
+//   table are unchanged. Modify of the handed current row fails (it is not in the temporary table). Same as for a temporary subscriber parameter.
 // BC versions: 27, 28, 29
 
 table 86506 "LT QD TP Row"

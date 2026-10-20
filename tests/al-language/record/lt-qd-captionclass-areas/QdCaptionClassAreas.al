@@ -6,9 +6,18 @@
 //   assumption field-caption-class-expression-per-read. Observed values; every literal asserted below is what the BC tier produced.
 // Facts: the caption FieldCaption, FieldRef.Caption and a TestPage control give for a table field whose CaptionClass is a literal or an
 //   expression with area 2 ('2,0,x', '2,1,x', VAT), 5 ('5,3,', County), 101 (Currency), 1 (Dimension), an area no subscriber resolves, an
-//   empty text and '3,'; how often the expression runs per read and with which record (a SingleInstance log counts the calls); whether
-//   what the expression changes on Rec stays changed; Sales Line "Inv. Discount Amount" with and without a Sales Header that has
-//   Prices Including VAT.
+//   empty text and '3,'; how often the expression runs per read and with which record; Sales Line "Inv. Discount Amount".
+// Results:
+//   - An expression result goes through the same resolvers as a literal: '2,0,x' -> 'x Excl. VAT', '2,1,x' -> 'x Incl. VAT', '5,3,' ->
+//     'Bill-to County', '101,0,Amount (%1)' -> the LCY code, '1,1,1' -> the global dimension 1 caption. An area nobody resolves ('9,x') and
+//     '2,x' (VAT without a second comma) read as the whole CaptionClass text.
+//   - An empty result and '3,' read as the field's Caption in FieldCaption and FieldRef.Caption, but as '' on a page control.
+//   - FieldCaption and FieldRef.Caption run the expression once per read, with the record that reads it (its current values, Id 0 for a
+//     RecordRef.Open); what the expression changes on Rec (a field, a table global) stays changed. FieldName does not run it.
+//   - A page open runs the expression of EVERY CaptionClass expression field of the table, also those without a control, 20 times with an
+//     empty record, then once for each field with a control on the current row; Caption() of a control reads the value of the open
+//     and runs nothing. A page control's own CaptionClass expression resolves the same way.
+//   - Sales Line "Inv. Discount Amount" / "Line Amount": Excl. VAT without a Sales Header, Incl. VAT when the header has Prices Including VAT.
 // BC versions: 27, 28, 29
 
 table 86500 "LT QD Cap Row"
@@ -439,7 +448,37 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'pageExpr', P.PageExpr.Caption());
         P.Close();
         Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Finish();
+        Observer.Expect('open_calls', 'id0=240 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('lit20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('lit20_calls', '');
+        Observer.Expect('lit21', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('lit21_calls', '');
+        Observer.Expect('lit53', 'Bill-to County');
+        Observer.Expect('lit53_calls', '');
+        Observer.Expect('expr20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('expr20_calls', '');
+        Observer.Expect('expr21', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('expr21_calls', '');
+        Observer.Expect('expr53', 'Bill-to County');
+        Observer.Expect('expr53_calls', '');
+        Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('exprVAT_calls', '');
+        Observer.Expect('exprId', 'Id 3 call 245');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('exprId_again', 'Id 3 call 245');
+        Observer.Expect('exprId_again_calls', '');
+        Observer.Expect('exprEmpty', '');
+        Observer.Expect('exprEmpty_calls', '');
+        Observer.Expect('expr9', '9,x');
+        Observer.Expect('expr9_calls', '');
+        Observer.Expect('expr2x', '2,x');
+        Observer.Expect('expr2x_calls', '');
+        Observer.Expect('expr3', '');
+        Observer.Expect('expr3_calls', '');
+        Observer.Expect('pageExpr', 'Page Control Incl. VAT');
+        Observer.Expect('pageExpr_calls', '');
+        Observer.Expect('close_calls', 'id0=0 fields0= rest=');
+        Observer.Verify();
     end;
 
     [Test]
