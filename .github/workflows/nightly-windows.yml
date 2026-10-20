@@ -841,11 +841,14 @@ jobs:
             "$($s.name)=$($app.FullName)" | Out-File (Join-Path $env:RUNNER_TEMP 'suite-apps.txt') -Append -Encoding utf8
 
             $out = Join-Path $env:GITHUB_WORKSPACE "xunit-$($s.name).xml"
-            $partsDir = Join-Path $env:RUNNER_TEMP "xunit-parts-$($s.name)"
+            # Under the workspace: Run-TestsInBcContainer writes the file from inside the container, and
+            # only the workspace is shared with it (run 39379151878: RUNNER_TEMP "is not shared with the container").
+            $partsDir = Join-Path $env:GITHUB_WORKSPACE ".xunit-parts/$($s.name)"
             New-Item -ItemType Directory -Force -Path $partsDir | Out-Null
             [xml]$merged = '<?xml version="1.0" encoding="UTF-8"?><assemblies/>'
             $done = [System.Collections.Generic.HashSet[int]]::new()
             $aborted = @()
+            $abortedInARow = 0
             $size = $chunkSize
             $call = 0
             $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -886,11 +889,15 @@ jobs:
               # or stopped on the first codeunit): halve it, down to the first codeunit alone; a
               # codeunit that reports nothing even alone is recorded as aborted and skipped.
               if ($got.Count -gt 0) {
-                $size = [Math]::Min($chunkSize, $size * 2)
+                $size = [Math]::Min($chunkSize, $size * 2); $abortedInARow = 0
                 if ($got.Count -lt $chunk.Count) { Write-Host "call $call stopped early after $($got.Count) of $($chunk.Count) codeunit(s); continuing with the rest"; Start-Sleep -Seconds 20 }
               } elseif ($chunk.Count -eq 1) {
                 Write-Host "::warning::$($s.name): the test runner aborted during codeunit $($chunk[0]); it is reported as missing"
-                $aborted += $chunk[0]; $size = $chunkSize; Start-Sleep -Seconds 20
+                $aborted += $chunk[0]; $size = $chunkSize; $abortedInARow++
+                # Three codeunits in a row that report nothing even alone: the runner itself is broken
+                # (setup, connection, container), not a codeunit. Stop instead of crawling through the app.
+                if ($abortedInARow -ge 3) { throw "$($s.name): $abortedInARow codeunits in a row reported nothing ($($aborted[-3..-1] -join ', ')); the test runner is not working. Last error above." }
+                Start-Sleep -Seconds 20
               } else {
                 $size = [Math]::Max(1, [int][Math]::Floor($chunk.Count / 2))
                 Write-Host "call $call reported nothing; retrying with $size codeunit(s)"; Start-Sleep -Seconds 20
