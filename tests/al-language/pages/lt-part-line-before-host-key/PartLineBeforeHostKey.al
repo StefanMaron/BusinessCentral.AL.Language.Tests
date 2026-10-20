@@ -633,7 +633,13 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
     end;
 
-    // Writer PY-B (2026-10-20): how often a part's OnNewRecord runs while its host opens new, by page shape.
+    // Writer PY-B (2026-10-20): how often a part's OnNewRecord runs while its host opens new, by page shape (BC 29 local, then the CI legs).
+    // Rule seen: an EDITABLE host (OpenNew, OpenEdit) whose part shows no row runs the part's OnNewRecord 3 times, each pair of runs after
+    // a validation of the SubPageLink field (validate, new, new, validate, new); an unlinked part gives the 3 runs without validations; a
+    // second linked part repeats the pattern after the first; host OnNewRecord, AutoSplitKey and page type (Card or Document) change
+    // nothing. A part that shows rows (unlinked with rows, or linked rows of the blank key) runs none. OpenView runs it once, without
+    // validation. Host New() runs only the host's OnNewRecord, never the part's. A const() link to a missing header: OpenNew fails
+    // TestWrapped with the relation text after one part OnNewRecord.
     local procedure SeedLine(DocNo: Code[20]; LineNo: Integer)
     var
         Line: Record "LT DL Line";
@@ -776,7 +782,11 @@ codeunit 67582 "LT DL Tests"
         Observer.Observe('open_new', Format(TryOpenConst(Host)));
         Observer.ObserveError('open_new_error');
         TakeLog(Observer, 'open_new_log');
-        Observer.Finish();
+        Observer.Expect('open_new', 'No');
+        Observer.Expect('open_new_error|text', 'The field Document No. of table LT DL Line contains a value (D9) that cannot be found in the related table (LT DL Header).');
+        Observer.Expect('open_new_error|code', 'TestWrapped');
+        Observer.Expect('open_new_log', '[LP.OnNewRecord:D9]');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -801,7 +811,10 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'host_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[L.OnValidate(Document No.):D8 | LP.OnNewRecord:D8 | LP.OnNewRecord:D8 | L.OnValidate(Document No.):D8 | LP.OnNewRecord:D8]');
+        Observer.Expect('host_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -817,7 +830,10 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'host_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('host_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -883,6 +899,8 @@ codeunit 67582 "LT DL Tests"
     end;
 
     [Test]
+    // A non-key field typed first inserts the host with a blank key; the key typed later runs its OnValidate but is lost (no rename, the
+    // card shows blank), and the line is stored under the blank key at Close.
     procedure PYB_OpenNew_NameTypedFirst_ThenKey_ThenLine()
     var
         Observer: Codeunit "Probe Observer";

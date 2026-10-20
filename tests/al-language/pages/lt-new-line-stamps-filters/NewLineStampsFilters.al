@@ -312,6 +312,9 @@ codeunit 74141 "LT New Line Stamps Filters"
 
     // Writer PY-B (2026-10-20): why the line keeps a blank link when Type is typed before No. on a new header: what the header table
     // holds after each step, what the card shows, and the link filter of each part.
+    // Rule seen: typing Type first inserts the header with a blank No.; No. typed afterwards is lost (card shows blank, no rename, part
+    // filters stay ''), so the line gets the blank link. No. typed first: nothing stored until Type is typed, then the header is inserted
+    // as HN and the parts filter on HN. Header Type B itself plays no part (Type A first behaves the same).
     local procedure Headers(): Text
     var
         H: Record "LT NL Header";

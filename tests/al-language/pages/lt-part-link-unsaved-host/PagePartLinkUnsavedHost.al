@@ -291,6 +291,10 @@ codeunit 71254 "LT Part Link Unsaved Host"
     end;
 
     // Writer PY-B (2026-10-20): what a new card shows and stores after its key is typed, with two linked parts, one, or none.
+    // Rule seen: typing the key alone inserts nothing; the card shows the key and the parts filter on it; the row is inserted with the key
+    // when the next host field is typed. The same with 0, 1 or 2 parts and for a key missing from the Group table. If the host row was
+    // already inserted with a blank key (a non-key field typed, or a part touched: TestPart.First()), the key typed later is lost: the card
+    // shows blank and the row keeps the blank key (this is what P174_OpenNew_KeyWithGroup_PartsAfterKey reads).
     local procedure HostRows(): Text
     var
         Host: Record "LT PLK Host";
@@ -466,7 +470,12 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
-        Observer.Finish();
+        Observer.Expect('h_first', 'No');
+        Observer.Expect('db_after_first', '1 [|]');
+        Observer.Expect('db_after_code', '1 [|]');
+        Observer.Expect('code_value', '[]');
+        Observer.Expect('db_after_close', '1 [|]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -484,7 +493,11 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
-        Observer.Finish();
+        Observer.Expect('db_after_descr', '1 [|]');
+        Observer.Expect('db_after_code', '1 [|]');
+        Observer.Expect('code_value', '[]');
+        Observer.Expect('db_after_close', '1 [|d1]');
+        Observer.Verify();
     end;
 
 }
