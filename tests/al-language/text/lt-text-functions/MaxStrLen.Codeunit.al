@@ -141,4 +141,120 @@ codeunit 70512 "LT TxB MaxStrLen"
     begin
         exit(MaxStrLen(s));
     end;
+    // Writer PY-C (al-runtime-rs PR 346, probes-needed "Loops, continue and MaxStrLen"): MaxStrLen of a var Text parameter handed on from
+    // another var parameter (two and three hops), and of the var Text parameter of an event subscriber (manual binding, codeunit 85215).
+    [Test]
+    procedure PYC_MaxStrLen_VarParameterHops()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record Item;
+        T30: Text[30];
+        T: Text;
+        C20: Code[20];
+    begin
+        Observer.Observe('two hops text30', Format(Hop1(T30)));
+        Observer.Observe('two hops field text100', Format(Hop1(Item.Description)));
+        Observer.Observe('two hops text', Format(Hop1(T)));
+        Observer.Observe('three hops text30', Format(Hop0(T30)));
+        Observer.Observe('hop through text30 param', Format(Hop30(T30)));
+        Observer.Observe('hop through text30 param field', Format(Hop30(Item.Description)));
+        Observer.Observe('code hops code20', Format(HopCode(C20)));
+        Observer.Expect('two hops text30', '30');
+        Observer.Expect('two hops field text100', '100');
+        Observer.Expect('two hops text', '2147483647');
+        Observer.Expect('three hops text30', '30');
+        Observer.Expect('hop through text30 param', '30');
+        Observer.Expect('hop through text30 param field', '100');
+        Observer.Expect('code hops code20', '20');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYC_MaxStrLen_EventSubscriberVarParameter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Sub: Codeunit "LT PYC MaxStrLen Events";
+        Item: Record Item;
+        T30: Text[30];
+        T: Text;
+    begin
+        BindSubscription(Sub);
+        Sub.OnProbe(T30);
+        Observer.Observe('direct raise text30', Sub.Seen());
+        Sub.OnProbe(Item.Description);
+        Observer.Observe('direct raise field text100', Sub.Seen());
+        Sub.Raise(T30);
+        Observer.Observe('subscriber text30', Sub.Seen());
+        Sub.Raise(Item.Description);
+        Observer.Observe('subscriber field text100', Sub.Seen());
+        Sub.Raise(T);
+        Observer.Observe('subscriber text', Sub.Seen());
+        Sub.RaiseFromVar(T30);
+        Observer.Observe('subscriber via var param text30', Sub.Seen());
+        UnbindSubscription(Sub);
+        Observer.Expect('direct raise text30', '30');
+        Observer.Expect('direct raise field text100', '100');
+        Observer.Expect('subscriber text30', '30');
+        Observer.Expect('subscriber field text100', '100');
+        Observer.Expect('subscriber text', '2147483647');
+        Observer.Expect('subscriber via var param text30', '30');
+        Observer.Verify();
+    end;
+
+    local procedure Hop0(var s: Text): Integer
+    begin
+        exit(Hop1(s));
+    end;
+
+    local procedure Hop1(var s: Text): Integer
+    begin
+        exit(MaxOfVarText(s));
+    end;
+
+    local procedure Hop30(var s: Text[30]): Integer
+    begin
+        exit(MaxOfVarText(s));
+    end;
+
+    local procedure HopCode(var s: Code[30]): Integer
+    begin
+        exit(MaxOfVarCode30(s));
+    end;
+}
+
+// Writer PY-C: publisher and manual subscriber for PYC_MaxStrLen_EventSubscriberVarParameter. Not a test codeunit.
+codeunit 85215 "LT PYC MaxStrLen Events"
+{
+    EventSubscriberInstance = Manual;
+
+    var
+        Last: Text;
+
+    procedure Raise(var Value: Text)
+    begin
+        Last := '';
+        OnProbe(Value);
+    end;
+
+    procedure RaiseFromVar(var Value: Text)
+    begin
+        Raise(Value);
+    end;
+
+    procedure Seen() Result: Text
+    begin
+        Result := Last;
+        Last := '<none>';
+    end;
+
+    [IntegrationEvent(false, false)]
+    procedure OnProbe(var Value: Text)
+    begin
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"LT PYC MaxStrLen Events", 'OnProbe', '', false, false)]
+    local procedure HandleProbe(var Value: Text)
+    begin
+        Last := Format(MaxStrLen(Value));
+    end;
 }
