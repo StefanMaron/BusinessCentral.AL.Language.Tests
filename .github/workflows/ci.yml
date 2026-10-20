@@ -265,8 +265,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@16116688b46acb5d828c2e972049d28f1178586f
     with:
+      bc_linux_ref:         "16116688b46acb5d828c2e972049d28f1178586f"
+      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-16116688b46acb5d828c2e972049d28f1178586f"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
@@ -344,8 +347,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@16116688b46acb5d828c2e972049d28f1178586f
     with:
+      bc_linux_ref:         "16116688b46acb5d828c2e972049d28f1178586f"
+      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-16116688b46acb5d828c2e972049d28f1178586f"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is a production app HERE only in the sense that it has to be
@@ -382,8 +388,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
+    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@16116688b46acb5d828c2e972049d28f1178586f
     with:
+      bc_linux_ref:         "16116688b46acb5d828c2e972049d28f1178586f"
+      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:16116688b46acb5d828c2e972049d28f1178586f"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs: |
