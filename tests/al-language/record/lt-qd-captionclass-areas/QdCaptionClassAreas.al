@@ -545,4 +545,232 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Expect('other_doc_invdisc', 'Inv. Discount Amount Excl. VAT');
         Observer.Verify();
     end;
+
+    // Writer QF (al-runtime-rs assumption page-open-caption-class-expressions): the card log above on a List page opened with OpenView,
+    // OpenEdit and Page.Run, on a ListPart of a card, and after Next on the list and on the card. Two rows: Id 3 (Incl VAT) and Id 5.
+    local procedure QfSeedTwo()
+    var
+        R: Record "LT QD Cap Row";
+    begin
+        R.DeleteAll();
+        R.Id := 3;
+        R."Incl VAT" := true;
+        R.Insert();
+        R.Id := 5;
+        R."Incl VAT" := false;
+        R.Insert();
+        Log.Reset();
+    end;
+
+    [Test]
+    procedure QF_List_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QF Cap List";
+    begin
+        QfSeedTwo();
+        P.OpenView();
+        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
+        Cap(Observer, 'expr20', P.Expr20.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
+        P.Close();
+        Observer.Observe('close_calls', Summarize(Log.Take()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QF_List_OpenEdit()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QF Cap List";
+    begin
+        QfSeedTwo();
+        P.OpenEdit();
+        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
+        P.Close();
+        Observer.Observe('close_calls', Summarize(Log.Take()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QF_List_PageRun()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QF Cap List";
+    begin
+        QfSeedTwo();
+        P.Trap();
+        Page.Run(Page::"LT QF Cap List");
+        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        P.Close();
+        Observer.Observe('close_calls', Summarize(Log.Take()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QF_ListPart_OnCard()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT QF Cap Host Row";
+        H: TestPage "LT QF Cap Host";
+    begin
+        Host.DeleteAll();
+        Host.Id := 1;
+        Host.Insert();
+        QfSeedTwo();
+        H.OpenView();
+        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Cap(Observer, 'row', H.Lines.Id.Value());
+        Cap(Observer, 'exprId', H.Lines.ExprId.Caption());
+        Cap(Observer, 'exprVAT', H.Lines.ExprVAT.Caption());
+        Observer.Observe('next', Format(H.Lines.Next()));
+        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Cap(Observer, 'next_row', H.Lines.Id.Value());
+        Cap(Observer, 'next_exprId', H.Lines.ExprId.Caption());
+        Cap(Observer, 'next_exprVAT', H.Lines.ExprVAT.Caption());
+        H.Close();
+        Observer.Observe('close_calls', Summarize(Log.Take()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QF_Card_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QD Cap Card";
+    begin
+        QfSeedTwo();
+        P.OpenView();
+        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Cap(Observer, 'row', P.Id.Value());
+        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Cap(Observer, 'next_row', P.Id.Value());
+        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
+        P.Close();
+        Observer.Observe('close_calls', Summarize(Log.Take()));
+        Observer.Finish();
+    end;
+
+    // Writer QF: the General Ledger Setup row and the global dimension captions of the corpus database, which Base Application's
+    // OnResolveCaptionClass reads for areas 101 (currency) and 1 (dimension) above.
+    [Test]
+    procedure QF_GLSetup_CorpusRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        GLSetup: Record "General Ledger Setup";
+        Dim: Record Dimension;
+    begin
+        Observer.Observe('count', Format(GLSetup.Count()));
+        Observer.Observe('get', Format(GLSetup.Get()));
+        Observer.Observe('primaryKey', GLSetup."Primary Key");
+        Observer.Observe('lcyCode', GLSetup."LCY Code");
+        Observer.Observe('globalDim1', GLSetup."Global Dimension 1 Code");
+        Observer.Observe('globalDim2', GLSetup."Global Dimension 2 Code");
+        Observer.Observe('addReportingCurrency', GLSetup."Additional Reporting Currency");
+        Observer.Observe('dim1_get', Format(Dim.Get(GLSetup."Global Dimension 1 Code")));
+        Observer.Observe('dim1_codeCaption', Dim."Code Caption");
+        Observer.Observe('dim2_get', Format(Dim.Get(GLSetup."Global Dimension 2 Code")));
+        Observer.Observe('dim2_codeCaption', Dim."Code Caption");
+        Observer.Finish();
+    end;
+}
+
+table 86643 "LT QF Cap Host Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+page 86640 "LT QF Cap List"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QD Cap Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Expr20; Rec."Expr 2-0") { ApplicationArea = All; }
+                field(ExprVAT; Rec."Expr VAT") { ApplicationArea = All; }
+                field(ExprId; Rec."Expr Id") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 86641 "LT QF Cap Part"
+{
+    PageType = ListPart;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QD Cap Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(ExprVAT; Rec."Expr VAT") { ApplicationArea = All; }
+                field(ExprId; Rec."Expr Id") { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 86642 "LT QF Cap Host"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QF Cap Host Row";
+
+    layout
+    {
+        area(Content)
+        {
+            group(G)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QF Cap Part") { ApplicationArea = All; }
+        }
+    }
 }
