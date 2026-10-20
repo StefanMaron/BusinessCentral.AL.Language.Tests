@@ -901,6 +901,7 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Observe('assigned amount value', Format(QbParent."Child Amount"));
         Observer.Observe('assigned amount log', TakeLog());
         Observer.Observe('assigned amount src', Src());
+        Observer.Expect('count', 'error:The type of the Child Count FlowField in the LT QB FW Parent table must be Decimal.|FlowFieldValidation');
         Observer.Expect('count value', '0');
         Observer.Expect('count log', 'n=0');
         Observer.Expect('amount', 'ok');

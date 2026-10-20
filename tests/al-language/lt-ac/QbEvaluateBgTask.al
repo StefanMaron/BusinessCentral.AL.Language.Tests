@@ -8,6 +8,12 @@
 //   runs in the worker of a page background task (TestPage.RunPageBackgroundTask), which is a session of its own.
 // BC versions: 27, 28, 29
 
+// LINUX SUSPECT (BC 29.0, corpus CI run 39418527129): each worker fails before it runs with "Unexpected CLR exception thrown.:
+//   System.InvalidOperationException: C# compilation has failed for the application object CodeUnit_86394" (86395, 86399 the same), an
+//   error no TryFunction catches. So Evaluate into these three types does not compile on the service tier (the AL compiler accepts it).
+//   Not asserted until a Windows container shows what BC does: the file compiles only with the symbol LTQB_EVALUATE_PROBE, which no CI leg
+//   defines (windows-queue.md, row QB 626.11/12/15).
+#if LTQB_EVALUATE_PROBE
 codeunit 86394 "LT QB Eval Worker Http"
 {
     trigger OnRun()
@@ -202,3 +208,4 @@ codeunit 86398 "LT QB Eval PbtErrorLevel"
         Results := Card.RunPageBackgroundTask(WorkerId, Params, false);
     end;
 }
+#endif
