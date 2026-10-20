@@ -7,8 +7,8 @@
 // through a request page; CurrReport.FormatRegion := for 14 values (SaveAs Xml and Run), after CurrReport.Language :=, and inside a report that has
 // the property; the decimalformatter of Decimal columns; SummaryML of layouts in several languages.
 // SaveAs Pdf/Word/Excel/Html: asserted with the Windows BC 27.5/28.5/29.0 values (Windows checks 2026-10-20; 29.0 gives the same values) and
-// held on Linux (not compiled) until the bc-linux pin in ci.yml renders RDLC to Word and Excel: LT_HELD_BCLINUX_144 on 27/28,
-// LT_HELD_BCLINUX_143 on 29 (renderer off at boot).
+// held on Linux (not compiled) until the bc-linux pin in ci.yml rendered RDLC to Word and Excel (bc-linux #144 on 27/28,
+// #143 on 29, renderer off at boot).
 // BC versions: 27-29
 
 codeunit 81070 "BD Region Tests"
@@ -381,10 +381,9 @@ codeunit 81070 "BD Region Tests"
         Observer.Verify();
     end;
 
-#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
-    // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20: same values as 27.5/28.5) give these values. The Linux image pinned
-    // in ci.yml ends SaveAs Word/Excel of the RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot,
-    // bc-linux #143): held until the pin includes the fixes.
+    // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20: same values as 27.5/28.5) give these values. Before the bc-linux fixes the Linux image
+    // ended SaveAs Word/Excel of the RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot,
+    // bc-linux #143).
     [Test]
     procedure BdProperty_De_SaveAsPdfWord()
     var
@@ -404,12 +403,10 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('Word log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Verify();
     end;
-#endif
 
-#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
-    // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20: same values as 27.5/28.5) give these values. The Linux image pinned
-    // in ci.yml ends SaveAs Word/Excel of the RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot,
-    // bc-linux #143): held until the pin includes the fixes.
+    // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20: same values as 27.5/28.5) give these values. Before the bc-linux fixes the Linux image
+    // ended SaveAs Word/Excel of the RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot,
+    // bc-linux #143).
     [Test]
     procedure BdProperty_De_SaveAsExcelHtml()
     var
@@ -429,7 +426,6 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('Html log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];');
         Observer.Verify();
     end;
-#endif
 
     [TryFunction]
     local procedure TryRequestSaveAsXml(var RP: TestRequestPage "BD Region De Req")

@@ -747,10 +747,10 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Verify();
     end;
 
-#if (BC28PLUS and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+#if BC28PLUS
     // Report.Run, RunModal and Execute of the RDLC report LT V Report A (no request page), and SaveAs Pdf/Word/Excel: the Reporting Triggers
-    // events BC raises, from Windows BC 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned
-    // Linux image ends these calls in its RDLC stub or renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
+    // events BC raises, from Windows BC 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Before the bc-linux fixes
+    // the Linux image ended these calls in its RDLC stub or renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     // BC 27.5 through the TestRunnerHub ends Run/RunModal/Execute with CallbackNotAllowed (a client callback to download the file), so 27
     // depends on the test runner and is not asserted.
     [Test]

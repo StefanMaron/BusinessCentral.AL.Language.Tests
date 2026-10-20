@@ -12,10 +12,10 @@
 // handler runs once, and the request page is closed afterwards (Cancel: 'The TestPage is not open.'). The BC 29 Linux container turns the
 // renderer off at boot ("the side-service compatibility patch failed"), so on BC 29 these calls answer with the Linux stub text.
 // SaveAsWord and SaveAsExcel, static, instance and from the request page: asserted with the Windows BC 27.5/28.5 values (Windows check
-// 2026-10-20: the file is written, marker in word/document.xml or xl/worksheets/sheet1.xml) and held on Linux under LT_HELD_BCLINUX_144:
-// the pinned Linux image fails inside the Mono renderer with 'The system encountered an internal error while rendering the report.'
+// 2026-10-20: the file is written, marker in word/document.xml or xl/worksheets/sheet1.xml) and were held on Linux until the bc-linux #144 fix:
+// the Linux image failed inside the Mono renderer with 'The system encountered an internal error while rendering the report.'
 // (ReportingService:Rpc; the request page forms raise it uncaught). Windows BC 29.0 (check 2026-10-20) gives the same values; held on 29
-// under LT_HELD_BCLINUX_143 (the BC 29 Linux container turns the renderer off at boot).
+// until the bc-linux #143 fix (the BC 29 Linux container turned the renderer off at boot).
 // PDF text is compressed: only the page count is asserted.
 // BC versions: 27 - 29
 
@@ -485,10 +485,9 @@ codeunit 98603 "LT AM OP SaveAs Tests"
         Observer.Verify();
     end;
 
-#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values) write the docx/xlsx with the marker in the main
-    // part and no error. The Linux image pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
-    // renderer off at boot, bc-linux #143): held until the pin includes the fixes.
+    // part and no error. Before the bc-linux fixes the Linux image failed inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
+    // renderer off at boot, bc-linux #143).
     [Test]
     procedure Static_SaveAsWord()
     begin
@@ -572,7 +571,6 @@ codeunit 98603 "LT AM OP SaveAs Tests"
         Observer.Expect('instance xlsx filtered zip marker', 'xl/worksheets/sheet1.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
         Observer.Verify();
     end;
-#endif
 
     [Test]
     procedure RecordFilter_RowsTheDatasetReads()
@@ -666,10 +664,9 @@ codeunit 98603 "LT AM OP SaveAs Tests"
     end;
 #endif
 
-#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values) write the docx/xlsx with the marker in the main
-    // part and no error. The Linux image pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
-    // renderer off at boot, bc-linux #143): held until the pin includes the fixes.
+    // part and no error. Before the bc-linux fixes the Linux image failed inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
+    // renderer off at boot, bc-linux #143).
     [Test]
     [HandlerFunctions('SaveHandler')]
     procedure RequestPage_SaveAsExcel()
@@ -707,5 +704,4 @@ codeunit 98603 "LT AM OP SaveAs Tests"
         Observer.Expect('docx zip marker', 'word/document.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
         Observer.Verify();
     end;
-#endif
 }
