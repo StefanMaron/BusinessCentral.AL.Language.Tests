@@ -980,7 +980,27 @@ codeunit 86200 "LT PX Nav Tests"
         Observer.Verify();
     end;
 
-    // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
+#if LT_HELD_BCLINUX_152 and not BC28PLUS
+    // Windows BC 27.5 (Windows check 2026-10-20, TestRunnerHub): the lookup asks for a modal page and, with no handler, fails with
+    // 'Unhandled UI: ModalPage ' (blank page name, TestWrapped:MissingUIHandler); the value stays G2. The control relation names a table
+    // without a LookupPageId (only a DrillDownPageId, or no page). Held on Linux: the Linux image ends the lookup with an uncatchable
+    // NullReferenceException (bc-linux #152). BC 28 and 29 are not asserted: the Windows 28.5 and 29.0 containers raise no error for a
+    // missing UI handler (ok=Yes, no page opened), so their value is not an oracle.
+    [Test]
+    procedure PX_Lookup_LkCond_KindB()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe(Observer, 'LkCond', 1);
+        Observer.Expect('LkCond:ok', 'No');
+        Observer.Expect('LkCond:err|text', 'Unhandled UI: ModalPage ');
+        Observer.Expect('LkCond:err|code', 'TestWrapped:MissingUIHandler');
+        Observer.Expect('LkCond:log', '');
+        Observer.Expect('LkCond:stored', 'G2');
+        Observer.Verify();
+    end;
+#else
+    // Linux suspect (not asserted on Linux and on BC 28/29, see the BC 27 test above): this lookup ends with 'Unexpected CLR exception thrown.:
     // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
     // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
     procedure PX_Lookup_LkCond_KindB()
@@ -990,6 +1010,7 @@ codeunit 86200 "LT PX Nav Tests"
         Probe(Observer, 'LkCond', 1);
         Observer.Finish();
     end;
+#endif
 
     [Test]
     [HandlerFunctions('GrpModal')]
@@ -1029,7 +1050,27 @@ codeunit 86200 "LT PX Nav Tests"
         Observer.Verify();
     end;
 
-    // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
+#if LT_HELD_BCLINUX_152 and not BC28PLUS
+    // Windows BC 27.5 (Windows check 2026-10-20, TestRunnerHub): the lookup asks for a modal page and, with no handler, fails with
+    // 'Unhandled UI: ModalPage ' (blank page name, TestWrapped:MissingUIHandler); the value stays G2. The control relation names a table
+    // without a LookupPageId (only a DrillDownPageId, or no page). Held on Linux: the Linux image ends the lookup with an uncatchable
+    // NullReferenceException (bc-linux #152). BC 28 and 29 are not asserted: the Windows 28.5 and 29.0 containers raise no error for a
+    // missing UI handler (ok=Yes, no page opened), so their value is not an oracle.
+    [Test]
+    procedure PX_Lookup_LkOnlyDd()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe(Observer, 'LkOnlyDd', 0);
+        Observer.Expect('LkOnlyDd:ok', 'No');
+        Observer.Expect('LkOnlyDd:err|text', 'Unhandled UI: ModalPage ');
+        Observer.Expect('LkOnlyDd:err|code', 'TestWrapped:MissingUIHandler');
+        Observer.Expect('LkOnlyDd:log', '');
+        Observer.Expect('LkOnlyDd:stored', 'G2');
+        Observer.Verify();
+    end;
+#else
+    // Linux suspect (not asserted on Linux and on BC 28/29, see the BC 27 test above): this lookup ends with 'Unexpected CLR exception thrown.:
     // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
     // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
     procedure PX_Lookup_LkOnlyDd()
@@ -1039,8 +1080,29 @@ codeunit 86200 "LT PX Nav Tests"
         Probe(Observer, 'LkOnlyDd', 0);
         Observer.Finish();
     end;
+#endif
 
-    // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
+#if LT_HELD_BCLINUX_152 and not BC28PLUS
+    // Windows BC 27.5 (Windows check 2026-10-20, TestRunnerHub): the lookup asks for a modal page and, with no handler, fails with
+    // 'Unhandled UI: ModalPage ' (blank page name, TestWrapped:MissingUIHandler); the value stays G2. The control relation names a table
+    // without a LookupPageId (only a DrillDownPageId, or no page). Held on Linux: the Linux image ends the lookup with an uncatchable
+    // NullReferenceException (bc-linux #152). BC 28 and 29 are not asserted: the Windows 28.5 and 29.0 containers raise no error for a
+    // missing UI handler (ok=Yes, no page opened), so their value is not an oracle.
+    [Test]
+    procedure PX_Lookup_LkNone()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe(Observer, 'LkNone', 0);
+        Observer.Expect('LkNone:ok', 'No');
+        Observer.Expect('LkNone:err|text', 'Unhandled UI: ModalPage ');
+        Observer.Expect('LkNone:err|code', 'TestWrapped:MissingUIHandler');
+        Observer.Expect('LkNone:log', '');
+        Observer.Expect('LkNone:stored', 'G2');
+        Observer.Verify();
+    end;
+#else
+    // Linux suspect (not asserted on Linux and on BC 28/29, see the BC 27 test above): this lookup ends with 'Unexpected CLR exception thrown.:
     // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
     // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
     procedure PX_Lookup_LkNone()
@@ -1050,6 +1112,7 @@ codeunit 86200 "LT PX Nav Tests"
         Probe(Observer, 'LkNone', 0);
         Observer.Finish();
     end;
+#endif
 
     [Test]
     [HandlerFunctions('EntModal')]
