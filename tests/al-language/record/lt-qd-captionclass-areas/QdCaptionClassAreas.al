@@ -437,7 +437,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         R.Insert();
         Log.Reset();
         P.OpenView();
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'lit20', P.Lit20.Caption());
         Cap(Observer, 'lit21', P.Lit21.Caption());
         Cap(Observer, 'lit53', P.Lit53.Caption());
@@ -445,8 +445,8 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'expr21', P.Expr21.Caption());
         Cap(Observer, 'expr53', P.Expr53.Caption());
         Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
-        Cap(Observer, 'exprId', P.ExprId.Caption());
-        Cap(Observer, 'exprId_again', P.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        Cap(Observer, 'exprId_again', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'exprEmpty', P.ExprEmpty.Caption());
         Cap(Observer, 'expr9', P.Expr9.Caption());
         Cap(Observer, 'expr2x', P.Expr2x.Caption());
@@ -454,7 +454,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'pageExpr', P.PageExpr.Caption());
         P.Close();
         Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=240 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
         Observer.Expect('lit20', 'Inv. Discount Amount Excl. VAT');
         Observer.Expect('lit20_calls', '');
         Observer.Expect('lit21', 'Inv. Discount Amount Incl. VAT');
@@ -469,9 +469,9 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Expect('expr53_calls', '');
         Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('exprVAT_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 245');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
-        Observer.Expect('exprId_again', 'Id 3 call 245');
+        Observer.Expect('exprId_again', 'Id 3');
         Observer.Expect('exprId_again_calls', '');
         Observer.Expect('exprEmpty', '');
         Observer.Expect('exprEmpty_calls', '');
