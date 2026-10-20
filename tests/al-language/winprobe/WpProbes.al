@@ -19,6 +19,7 @@ codeunit 85065 "WP Probes"
         Observer.Finish();
     end;
 
+#if BC28PLUS
     [Test]
     procedure WP_CU_RunByQualifiedName()
     var
@@ -40,4 +41,5 @@ codeunit 85065 "WP Probes"
     begin
         Codeunit.Run(Name, Row);
     end;
+#endif
 }
