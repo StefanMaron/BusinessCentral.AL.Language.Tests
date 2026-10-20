@@ -120,3 +120,71 @@ table 86263 "LT DI FW Copy"
         key(PK; "No.") { Clustered = true; }
     }
 }
+
+// Writer QB (corpus issue #665, question in the second comment): a parent whose Count, Sum, Exist and Lookup FlowFields all have an
+// OnValidate trigger, for the one-argument Validate(Field) form. The triggers write to LT DI FW Log.
+table 86380 "LT QB FW Parent"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "No."; Integer) { }
+        field(3; "Child Count"; Integer)
+        {
+            FieldClass = FlowField;
+            CalcFormula = count("LT DI FW Child" where("Parent No." = field("No.")));
+            Editable = false;
+
+            trigger OnValidate()
+            begin
+                Log('OnValidate Child Count Rec=' + Format("Child Count") + ' xRec=' + Format(xRec."Child Count"));
+            end;
+        }
+        field(4; "Child Amount"; Decimal)
+        {
+            FieldClass = FlowField;
+            CalcFormula = sum("LT DI FW Child".Amount where("Parent No." = field("No.")));
+            Editable = false;
+
+            trigger OnValidate()
+            begin
+                Log('OnValidate Child Amount Rec=' + Format("Child Amount") + ' xRec=' + Format(xRec."Child Amount"));
+            end;
+        }
+        field(5; "Has Children"; Boolean)
+        {
+            FieldClass = FlowField;
+            CalcFormula = exist("LT DI FW Child" where("Parent No." = field("No.")));
+
+            trigger OnValidate()
+            begin
+                Log('OnValidate Has Children Rec=' + Format("Has Children"));
+            end;
+        }
+        field(6; "First Child Code"; Text[30])
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup("LT DI FW Child".Code where("Parent No." = field("No.")));
+
+            trigger OnValidate()
+            begin
+                Log('OnValidate First Child Code Rec=' + "First Child Code");
+            end;
+        }
+    }
+
+    keys
+    {
+        key(PK; "No.") { Clustered = true; }
+    }
+
+    local procedure Log(Msg: Text)
+    var
+        LogRow: Record "LT DI FW Log";
+    begin
+        LogRow.Init();
+        LogRow.Msg := CopyStr(Msg, 1, MaxStrLen(LogRow.Msg));
+        LogRow.Insert();
+    end;
+}

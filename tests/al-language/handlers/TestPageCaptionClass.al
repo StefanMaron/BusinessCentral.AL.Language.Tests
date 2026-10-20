@@ -133,4 +133,33 @@ codeunit 60930 "TPCC Tests"
         Observer.Expect('fieldref_caption', 'LT BS Added Field Class');
         Observer.Verify();
     end;
+
+    [Test]
+    procedure TestPageField_Caption_TableExtensionModifiedFieldCaptionClass_QB()
+    // CLAIM (issue #668 item 99, writer QB): a tableextension sets CaptionClass with modify() on a base field that has only a Caption
+    // (Remark) and on one that already has a CaptionClass (Amount). What do the page controls, FieldCaption and FieldRef.Caption give?
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QB Cc Card";
+        Row: Record "LT QB Cc Row";
+        RecRef: RecordRef;
+    begin
+        Row.DeleteAll();
+        Row."No." := 'QB1';
+        Row.Insert();
+        Card.OpenView();
+        Observer.Observe('remark control', Card.RemarkCtl.Caption());
+        Observer.Observe('remark control with class', Card.RemarkPageClass.Caption());
+        Observer.Observe('amount control', Card.AmountCtl.Caption());
+        Observer.Observe('plain control', Card.PlainCtl.Caption());
+        Card.Close();
+        Observer.Observe('remark FieldCaption', Row.FieldCaption(Remark));
+        Observer.Observe('amount FieldCaption', Row.FieldCaption(Amount));
+        Observer.Observe('plain FieldCaption', Row.FieldCaption(Plain));
+        RecRef.Open(Database::"LT QB Cc Row");
+        Observer.Observe('remark FieldRef.Caption', RecRef.Field(2).Caption());
+        Observer.Observe('amount FieldRef.Caption', RecRef.Field(3).Caption());
+        RecRef.Close();
+        Observer.Finish();
+    end;
 }

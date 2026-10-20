@@ -826,4 +826,81 @@ codeunit 86264 "LT DI FW Write Tests"
         Observer.Expect('parents', 'n=3;1|P1;2|P2;3|P3');
         Observer.Verify();
     end;
+
+    // ---- writer QB, #665 question 14: the one-argument Validate(Field) on FlowFields that have an OnValidate trigger (table 86380) ----
+    local procedure QbValidate(var QbParent: Record "LT QB FW Parent"; Which: Text)
+    begin
+        case Which of
+            'count':
+                QbParent.Validate("Child Count");
+            'amount':
+                QbParent.Validate("Child Amount");
+            'exist':
+                QbParent.Validate("Has Children");
+            'lookup':
+                QbParent.Validate("First Child Code");
+        end;
+    end;
+
+    local procedure QbTry(var QbParent: Record "LT QB FW Parent"; Which: Text): Text
+    var
+        Result: Text;
+    begin
+        Commit();
+        asserterror begin
+            QbValidate(QbParent, Which);
+            Error(NoErrorTok);
+        end;
+        Result := Outcome();
+        if Result = 'ok' then
+            QbValidate(QbParent, Which);
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QB_ValidateOneArgFlowFieldWithOnValidate()
+    var
+        Observer: Codeunit "Probe Observer";
+        QbParent: Record "LT QB FW Parent";
+    begin
+        Seed();
+        QbParent.DeleteAll(false);
+        QbParent.Init();
+        QbParent."No." := 1;
+        QbParent.Insert(false);
+        TakeLog();
+        // no CalcFields: the FlowFields hold their initial values in the variable
+        QbParent.Get(1);
+        Observer.Observe('count', QbTry(QbParent, 'count'));
+        Observer.Observe('count value', Format(QbParent."Child Count"));
+        Observer.Observe('count log', TakeLog());
+        Observer.Observe('amount', QbTry(QbParent, 'amount'));
+        Observer.Observe('amount value', Format(QbParent."Child Amount"));
+        Observer.Observe('amount log', TakeLog());
+        Observer.Observe('amount src', Src());
+        Observer.Observe('exist', QbTry(QbParent, 'exist'));
+        Observer.Observe('exist log', TakeLog());
+        Observer.Observe('lookup', QbTry(QbParent, 'lookup'));
+        Observer.Observe('lookup log', TakeLog());
+        // after CalcFields: the Sum FlowField holds the current sum
+        Seed();
+        QbParent.Get(1);
+        QbParent.CalcFields("Child Amount", "Child Count");
+        Observer.Observe('calc amount before', Format(QbParent."Child Amount"));
+        Observer.Observe('calc amount', QbTry(QbParent, 'amount'));
+        Observer.Observe('calc amount value', Format(QbParent."Child Amount"));
+        Observer.Observe('calc amount log', TakeLog());
+        Observer.Observe('calc amount src', Src());
+        Observer.Observe('calc count', QbTry(QbParent, 'count'));
+        Observer.Observe('calc count log', TakeLog());
+        // an assigned value in the Sum FlowField, then the one-argument Validate
+        Seed();
+        QbParent.Get(1);
+        QbParent."Child Amount" := 100;
+        Observer.Observe('assigned amount', QbTry(QbParent, 'amount'));
+        Observer.Observe('assigned amount value', Format(QbParent."Child Amount"));
+        Observer.Observe('assigned amount log', TakeLog());
+        Observer.Observe('assigned amount src', Src());
+        Observer.Finish();
+    end;
 }

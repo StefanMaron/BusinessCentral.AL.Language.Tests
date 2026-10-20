@@ -207,6 +207,45 @@ page 84952 "LT CO ABP Ledger"
     }
 }
 
+// Writer QB (corpus issue #669 item 74, run time): the same guarded field and action as on page 84952, on a page over the virtual table
+// Table Metadata. Is AccessByPermission ignored there?
+page 86381 "LT QB ABP Virtual"
+{
+    PageType = List;
+    SourceTable = "Table Metadata";
+    SourceTableView = where(ID = const(84941));
+    Editable = false;
+    UsageCategory = None;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(PlainCtl; Rec.ID) { }
+                field(GuardedCtl; Rec.Name) { AccessByPermission = tabledata "LT CO Perm Ledger" = D; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(GuardedAction)
+            {
+                AccessByPermission = tabledata "LT CO Perm Ledger" = D;
+                trigger OnAction()
+                begin
+                end;
+            }
+        }
+    }
+}
+
+
 codeunit 84950 "LT CO Permission Leads"
 {
     Subtype = Test;
@@ -559,5 +598,67 @@ codeunit 84950 "LT CO Permission Leads"
         Observer.Expect('read only: action visible', 'error: The action with ID = n is not found on the page.');
         Observer.Expect('read only: action enabled', 'error: The action with ID = n is not found on the page.');
         Observer.Verify();
+    end;
+
+    // ---- writer QB, #669 item 74 (run time): AccessByPermission on a page over a virtual table (page 86381) ----
+    [TryFunction]
+    local procedure QbTryControl(var Facts: TestPage "LT QB ABP Virtual"; What: Text; var Result: Text)
+    begin
+        case What of
+            'plain value':
+                Result := Facts.PlainCtl.Value();
+            'guarded value':
+                Result := Facts.GuardedCtl.Value();
+            'guarded visible':
+                Result := Format(Facts.GuardedCtl.Visible());
+            'action visible':
+                Result := Format(Facts.GuardedAction.Visible());
+            'action enabled':
+                Result := Format(Facts.GuardedAction.Enabled());
+        end;
+    end;
+
+    local procedure QbObserveControls(var Observer: Codeunit "Probe Observer"; Prefix: Text)
+    var
+        Facts: TestPage "LT QB ABP Virtual";
+        Result: Text;
+        What: Text;
+    begin
+        ClearLastError();
+        if not QbTryOpen(Facts) then begin
+            Observer.Observe(Prefix + 'open', 'error: ' + GetLastErrorText());
+            exit;
+        end;
+        foreach What in 'plain value,guarded value,guarded visible,action visible,action enabled'.Split(',') do begin
+            ClearLastError();
+            Result := '';
+            if QbTryControl(Facts, What, Result) then
+                Observer.Observe(Prefix + What, Result)
+            else
+                Observer.Observe(Prefix + What, 'error: ' + GetLastErrorText());
+        end;
+        Facts.Close();
+    end;
+
+    [TryFunction]
+    local procedure QbTryOpen(var Facts: TestPage "LT QB ABP Virtual")
+    begin
+        Facts.OpenView();
+    end;
+
+    [Test]
+    procedure AccessByPermission_VirtualTablePage_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Mock: Codeunit "Permissions Mock";
+        WasStarted: Boolean;
+    begin
+        Init();
+        QbObserveControls(Observer, 'super: ');
+        WasStarted := StartMock(Mock);
+        Mock.Set(UserSetTok);
+        QbObserveControls(Observer, 'read only: ');
+        RestoreMock(Mock, WasStarted);
+        Observer.Finish();
     end;
 }
