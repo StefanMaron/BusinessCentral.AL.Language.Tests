@@ -192,4 +192,26 @@ codeunit 72211 "LT P92 Fields"
         Observer.Expect('after_close_fieldexist|code', 'RecordNotOpened');
         Observer.Verify();
     end;
+
+#if not BC29PLUS
+    // Writer PX (probes-needed "Platform tables and session facts": RecordRef.FieldExist(2000000005) before BC 29; BC 29 answers Yes,
+    // FieldExist_ByNumber above). The four user-name system fields 2000000005-2000000008 arrived with BC 29; 2000000009 for comparison.
+    [Test]
+    procedure PX_FieldExist_UserNameSystemFields_Before29()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+        i: Integer;
+    begin
+        RecRef.Open(72200);
+        for i := 2000000005 to 2000000009 do
+            Observer.Observe('exist_' + Format(i), Format(RecRef.FieldExist(i)));
+        Observer.Expect('exist_2000000005', 'No');
+        Observer.Expect('exist_2000000006', 'No');
+        Observer.Expect('exist_2000000007', 'No');
+        Observer.Expect('exist_2000000008', 'No');
+        Observer.Expect('exist_2000000009', 'No');
+        Observer.Verify();
+    end;
+#endif
 }

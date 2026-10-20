@@ -364,4 +364,530 @@ codeunit 74062 "LT P133 Query Outer Filters"
         Observer.Expect('default join, table filter, no children', '');
         Observer.Verify();
     end;
+
+    // Writer PX (probes-needed, PR 326 "Not done"): a ColumnFilter on a Sum, Average, Min or Max column of an outer-joined dataitem
+    // (queries 86166-86173, data of Seed: D1 kinds 1 and 2, D2 kind 2, D3 and D4 no linked child), and the same aggregates without a filter (86175).
+
+    [TryFunction]
+    local procedure TryDrainPxSumZero(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Sum Zero";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxSumAtLeast2(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Sum AtLeast2";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxAverageZero(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Average Zero";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxAverageAtLeast2(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Average AtLeast2";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxMinZero(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Min Zero";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxMinAtLeast2(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Min AtLeast2";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxMaxZero(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Max Zero";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxMaxAtLeast2(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer Max AtLeast2";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':' + Format(Q.Agg, 0, 9) + ' ';
+    end;
+
+    [TryFunction]
+    local procedure TryDrainPxAllAggregates(var Result: Text)
+    var
+        Q: Query "LT PX Q Outer All Aggregates";
+    begin
+        Q.Open();
+        while Q.Read() do
+            Result += Q.DocNo + ':sum=' + Format(Q.SumKind, 0, 9) + ',avg=' + Format(Q.AvgKind, 0, 9) + ',min=' + Format(Q.MinKind, 0, 9) + ',max=' + Format(Q.MaxKind, 0, 9) + ' ';
+    end;
+
+    [Test]
+    procedure PX_Query_OuterAggregates_NoColumnFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        Seed();
+        Show(Observer, 'all aggregates', TryDrainPxAllAggregates(Rows), Rows);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_OuterColumnFilter_Sum()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        Seed();
+        Clear(Rows);
+        Show(Observer, 'sum const(0)', TryDrainPxSumZero(Rows), Rows);
+        Clear(Rows);
+        Show(Observer, 'sum filter(>= 2)', TryDrainPxSumAtLeast2(Rows), Rows);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_OuterColumnFilter_Average()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        Seed();
+        Clear(Rows);
+        Show(Observer, 'average const(0)', TryDrainPxAverageZero(Rows), Rows);
+        Clear(Rows);
+        Show(Observer, 'average filter(>= 2)', TryDrainPxAverageAtLeast2(Rows), Rows);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_OuterColumnFilter_Min()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        Seed();
+        Clear(Rows);
+        Show(Observer, 'min const(0)', TryDrainPxMinZero(Rows), Rows);
+        Clear(Rows);
+        Show(Observer, 'min filter(>= 2)', TryDrainPxMinAtLeast2(Rows), Rows);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_OuterColumnFilter_Max()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rows: Text;
+    begin
+        Seed();
+        Clear(Rows);
+        Show(Observer, 'max const(0)', TryDrainPxMaxZero(Rows), Rows);
+        Clear(Rows);
+        Show(Observer, 'max filter(>= 2)', TryDrainPxMaxAtLeast2(Rows), Rows);
+        Observer.Finish();
+    end;
+
+    // Writer PX (probes-needed, PR 326 "Not done"): Query.GetFilters with filters on columns of two dataitems (query 74059: Parent DocNo field 1,
+    // PostDate field 2; Child EntryNo field 1, Kind field 4) and with filter elements on both dataitems (query 86174: column DocNo, filter FPost,
+    // column EntryNo, filter FKind), every order of the four SetRange calls.
+    local procedure PxSetDefault(var Q: Query "LT P133 Q TableFilter Default"; Name: Text)
+    begin
+        case Name of
+            'DocNo':
+                Q.SetRange(DocNo, 'D1');
+            'PostDate':
+                Q.SetRange(PostDate, DMY2Date(1, 1, 2024));
+            'EntryNo':
+                Q.SetRange(EntryNo, 2);
+            'Kind':
+                Q.SetRange(Kind, 1);
+        end;
+    end;
+
+    local procedure PxSetTwoItems(var Q: Query "LT PX Q Two Items"; Name: Text)
+    begin
+        case Name of
+            'DocNo':
+                Q.SetRange(DocNo, 'D1');
+            'FPost':
+                Q.SetRange(FPost, DMY2Date(1, 1, 2024));
+            'EntryNo':
+                Q.SetRange(EntryNo, 2);
+            'FKind':
+                Q.SetRange(FKind, 1);
+        end;
+    end;
+
+    local procedure PxOrderDefault(var Observer: Codeunit "Probe Observer"; Order: Text)
+    var
+        Q: Query "LT P133 Q TableFilter Default";
+        Name: Text;
+    begin
+        foreach Name in Order.Split('-') do
+            PxSetDefault(Q, Name);
+        Observer.Observe(Order, Q.GetFilters());
+    end;
+
+    local procedure PxOrderTwoItems(var Observer: Codeunit "Probe Observer"; Order: Text)
+    var
+        Q: Query "LT PX Q Two Items";
+        Name: Text;
+    begin
+        foreach Name in Order.Split('-') do
+            PxSetTwoItems(Q, Name);
+        Observer.Observe(Order, Q.GetFilters());
+    end;
+
+    [Test]
+    procedure PX_Query_GetFilters_TwoDataItems_Columns_1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PxOrderDefault(Observer, 'DocNo-PostDate-EntryNo-Kind');
+        PxOrderDefault(Observer, 'DocNo-PostDate-Kind-EntryNo');
+        PxOrderDefault(Observer, 'DocNo-EntryNo-PostDate-Kind');
+        PxOrderDefault(Observer, 'DocNo-EntryNo-Kind-PostDate');
+        PxOrderDefault(Observer, 'DocNo-Kind-PostDate-EntryNo');
+        PxOrderDefault(Observer, 'DocNo-Kind-EntryNo-PostDate');
+        PxOrderDefault(Observer, 'PostDate-DocNo-EntryNo-Kind');
+        PxOrderDefault(Observer, 'PostDate-DocNo-Kind-EntryNo');
+        PxOrderDefault(Observer, 'PostDate-EntryNo-DocNo-Kind');
+        PxOrderDefault(Observer, 'PostDate-EntryNo-Kind-DocNo');
+        PxOrderDefault(Observer, 'PostDate-Kind-DocNo-EntryNo');
+        PxOrderDefault(Observer, 'PostDate-Kind-EntryNo-DocNo');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_GetFilters_TwoDataItems_Columns_2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PxOrderDefault(Observer, 'EntryNo-DocNo-PostDate-Kind');
+        PxOrderDefault(Observer, 'EntryNo-DocNo-Kind-PostDate');
+        PxOrderDefault(Observer, 'EntryNo-PostDate-DocNo-Kind');
+        PxOrderDefault(Observer, 'EntryNo-PostDate-Kind-DocNo');
+        PxOrderDefault(Observer, 'EntryNo-Kind-DocNo-PostDate');
+        PxOrderDefault(Observer, 'EntryNo-Kind-PostDate-DocNo');
+        PxOrderDefault(Observer, 'Kind-DocNo-PostDate-EntryNo');
+        PxOrderDefault(Observer, 'Kind-DocNo-EntryNo-PostDate');
+        PxOrderDefault(Observer, 'Kind-PostDate-DocNo-EntryNo');
+        PxOrderDefault(Observer, 'Kind-PostDate-EntryNo-DocNo');
+        PxOrderDefault(Observer, 'Kind-EntryNo-DocNo-PostDate');
+        PxOrderDefault(Observer, 'Kind-EntryNo-PostDate-DocNo');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_GetFilters_TwoDataItems_FilterElements_1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PxOrderTwoItems(Observer, 'DocNo-FPost-EntryNo-FKind');
+        PxOrderTwoItems(Observer, 'DocNo-FPost-FKind-EntryNo');
+        PxOrderTwoItems(Observer, 'DocNo-EntryNo-FPost-FKind');
+        PxOrderTwoItems(Observer, 'DocNo-EntryNo-FKind-FPost');
+        PxOrderTwoItems(Observer, 'DocNo-FKind-FPost-EntryNo');
+        PxOrderTwoItems(Observer, 'DocNo-FKind-EntryNo-FPost');
+        PxOrderTwoItems(Observer, 'FPost-DocNo-EntryNo-FKind');
+        PxOrderTwoItems(Observer, 'FPost-DocNo-FKind-EntryNo');
+        PxOrderTwoItems(Observer, 'FPost-EntryNo-DocNo-FKind');
+        PxOrderTwoItems(Observer, 'FPost-EntryNo-FKind-DocNo');
+        PxOrderTwoItems(Observer, 'FPost-FKind-DocNo-EntryNo');
+        PxOrderTwoItems(Observer, 'FPost-FKind-EntryNo-DocNo');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_Query_GetFilters_TwoDataItems_FilterElements_2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PxOrderTwoItems(Observer, 'EntryNo-DocNo-FPost-FKind');
+        PxOrderTwoItems(Observer, 'EntryNo-DocNo-FKind-FPost');
+        PxOrderTwoItems(Observer, 'EntryNo-FPost-DocNo-FKind');
+        PxOrderTwoItems(Observer, 'EntryNo-FPost-FKind-DocNo');
+        PxOrderTwoItems(Observer, 'EntryNo-FKind-DocNo-FPost');
+        PxOrderTwoItems(Observer, 'EntryNo-FKind-FPost-DocNo');
+        PxOrderTwoItems(Observer, 'FKind-DocNo-FPost-EntryNo');
+        PxOrderTwoItems(Observer, 'FKind-DocNo-EntryNo-FPost');
+        PxOrderTwoItems(Observer, 'FKind-FPost-DocNo-EntryNo');
+        PxOrderTwoItems(Observer, 'FKind-FPost-EntryNo-DocNo');
+        PxOrderTwoItems(Observer, 'FKind-EntryNo-DocNo-FPost');
+        PxOrderTwoItems(Observer, 'FKind-EntryNo-FPost-DocNo');
+        Observer.Finish();
+    end;
+}
+
+query 86166 "LT PX Q Outer Sum Zero"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = const(0);
+                    Method = Sum;
+                }
+            }
+        }
+    }
+}
+
+query 86167 "LT PX Q Outer Sum AtLeast2"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = filter(>= 2);
+                    Method = Sum;
+                }
+            }
+        }
+    }
+}
+
+query 86168 "LT PX Q Outer Average Zero"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = const(0);
+                    Method = Average;
+                }
+            }
+        }
+    }
+}
+
+query 86169 "LT PX Q Outer Average AtLeast2"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = filter(>= 2);
+                    Method = Average;
+                }
+            }
+        }
+    }
+}
+
+query 86170 "LT PX Q Outer Min Zero"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = const(0);
+                    Method = Min;
+                }
+            }
+        }
+    }
+}
+
+query 86171 "LT PX Q Outer Min AtLeast2"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = filter(>= 2);
+                    Method = Min;
+                }
+            }
+        }
+    }
+}
+
+query 86172 "LT PX Q Outer Max Zero"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = const(0);
+                    Method = Max;
+                }
+            }
+        }
+    }
+}
+
+query 86173 "LT PX Q Outer Max AtLeast2"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(Agg; Kind)
+                {
+                    ColumnFilter = Agg = filter(>= 2);
+                    Method = Max;
+                }
+            }
+        }
+    }
+}
+
+query 86174 "LT PX Q Two Items"
+{
+    QueryType = Normal;
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            filter(FPost; PostDate) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                filter(FKind; Kind) { }
+                column(EntryNo; EntryNo) { }
+            }
+        }
+    }
+}
+
+query 86175 "LT PX Q Outer All Aggregates"
+{
+    QueryType = Normal;
+    OrderBy = ascending(DocNo);
+
+    elements
+    {
+        dataitem(Parent; "LT P133 Parent")
+        {
+            column(DocNo; DocNo) { }
+            dataitem(Child; "LT P133 Child")
+            {
+                DataItemLink = DocNo = Parent.DocNo, PostDate = Parent.PostDate;
+                SqlJoinType = LeftOuterJoin;
+                column(SumKind; Kind) { Method = Sum; }
+                column(AvgKind; Kind) { Method = Average; }
+                column(MinKind; Kind) { Method = Min; }
+                column(MaxKind; Kind) { Method = Max; }
+            }
+        }
+    }
 }

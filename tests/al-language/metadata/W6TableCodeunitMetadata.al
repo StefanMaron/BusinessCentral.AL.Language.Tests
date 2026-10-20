@@ -262,4 +262,44 @@ codeunit 67316 "W6 Table Codeunit Meta"
 #endif
         Observer.Verify();
     end;
+
+    // Writer PX (probes-needed "Platform tables and session facts": CodeUnit Metadata TestType or RequiredTestIsolation declared on a codeunit
+    // that is not Subtype = Test): codeunits 86160 (TestType = IntegrationTest) and 86161 (RequiredTestIsolation = Codeunit), both Normal.
+    [Test]
+    procedure PX_CodeunitMetadata_TestPropertiesOnANormalCodeunit()
+    var
+        CodeunitMeta: Record "CodeUnit Metadata";
+        Observer: Codeunit "Probe Observer";
+    begin
+        CodeunitMeta.Get(Codeunit::"LT PX CM TestType Normal");
+        Observer.Observe('testtype_subtype', Format(CodeunitMeta.Subtype));
+        Observer.Observe('testtype_testtype', Format(CodeunitMeta.TestType));
+        Observer.Observe('testtype_isolation', Format(CodeunitMeta.RequiredTestIsolation));
+        CodeunitMeta.Get(Codeunit::"LT PX CM Isolation Normal");
+        Observer.Observe('isolation_subtype', Format(CodeunitMeta.Subtype));
+        Observer.Observe('isolation_testtype', Format(CodeunitMeta.TestType));
+        Observer.Observe('isolation_isolation', Format(CodeunitMeta.RequiredTestIsolation));
+        CodeunitMeta.Get(Codeunit::"W6 CM Defaults");
+        Observer.Observe('defaults_testtype', Format(CodeunitMeta.TestType));
+        Observer.Observe('defaults_isolation', Format(CodeunitMeta.RequiredTestIsolation));
+        Observer.Finish();
+    end;
+}
+
+codeunit 86160 "LT PX CM TestType Normal"
+{
+    TestType = IntegrationTest;
+
+    procedure Nothing()
+    begin
+    end;
+}
+
+codeunit 86161 "LT PX CM Isolation Normal"
+{
+    RequiredTestIsolation = Codeunit;
+
+    procedure Nothing()
+    begin
+    end;
 }
