@@ -8,6 +8,8 @@
 // Content-Language, Content-Range, Content-MD5, Content-Location, Expires, Last-Modified, Allow, Age, ETag, Location, Retry-After, Vary, WWW-Authenticate,
 // Accept-Ranges) on request, content and response headers; the values read back with GetValues afterwards. P87Matrix.al pins the valid values per
 // collection with a statement call; the lt-http-header-names-cache-control folder pins Cache-Control.
+// Writer PY (2026-10-20, tests PY_*): GetValues of a missing, bad or content name as a statement and as an expression on request, response,
+// client and content headers; the last error after an Add that answered false.
 // BC versions: 27, 28, 29 (corpus CI)
 
 codeunit 80507 "LT AY Header Add Result"

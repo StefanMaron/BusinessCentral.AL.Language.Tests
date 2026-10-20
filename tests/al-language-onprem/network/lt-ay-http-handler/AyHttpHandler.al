@@ -7,6 +7,8 @@
 // IsSuccessStatusCode, the Boolean of Get); a handler that raises an error (what the caller sees); a handler that answers true (fall through to the
 // real network) for a host that resolves but refuses the connection (http://localhost:1): the Boolean, the status code and GetLastErrorText.
 // On BC 27 and 28 a request is not given to the handler (PZHttpHandler.al): those legs pin what the caller sees there.
+// Writer PY (2026-10-20, tests PY_*): a handler answering true with a StrMenuHandler bound (Allow Once, Block Once, cancel), a failed call whose
+// result is not used, a failed call into a filled response, ReasonPhrase of mocked statuses, more base-address joins and paths without one.
 // BC versions: 27, 28, 29 (corpus CI)
 
 codeunit 98550 "LT AY Http Handler"
@@ -591,7 +593,26 @@ codeunit 98550 "LT AY Http Handler"
         Reason(Observer, 304);
         Reason(Observer, 400);
         Reason(Observer, 401);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('201', 'ret=Yes status=201 reason=[Created] success=Yes blocked=No');
+        Observer.Expect('202', 'ret=Yes status=202 reason=[Accepted] success=Yes blocked=No');
+        Observer.Expect('204', 'ret=Yes status=204 reason=[No Content] success=Yes blocked=No');
+        Observer.Expect('301', 'E[The value ''301'' is outside the allowed range for mocked HTTP|InvalidValue]');
+        Observer.Expect('302', 'E[The value ''302'' is outside the allowed range for mocked HTTP|InvalidValue]');
+        Observer.Expect('304', 'E[The value ''304'' is outside the allowed range for mocked HTTP|InvalidValue]');
+        Observer.Expect('400', 'ret=Yes status=400 reason=[Bad Request] success=No blocked=No');
+        Observer.Expect('401', 'ret=Yes status=401 reason=[Unauthorized] success=No blocked=No');
+#else
+        Observer.Expect('201', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('202', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('204', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('301', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('302', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('304', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('400', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('401', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -608,7 +629,26 @@ codeunit 98550 "LT AY Http Handler"
         Reason(Observer, 429);
         Reason(Observer, 500);
         Reason(Observer, 503);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('403', 'ret=Yes status=403 reason=[Forbidden] success=No blocked=No');
+        Observer.Expect('405', 'ret=Yes status=405 reason=[Method Not Allowed] success=No blocked=No');
+        Observer.Expect('409', 'ret=Yes status=409 reason=[Conflict] success=No blocked=No');
+        Observer.Expect('418', 'E[The value ''418'' is not a valid HTTP status code.|InvalidValue]');
+        Observer.Expect('422', 'ret=Yes status=422 reason=[Unprocessable Entity] success=No blocked=No');
+        Observer.Expect('429', 'ret=Yes status=429 reason=[Too Many Requests] success=No blocked=No');
+        Observer.Expect('500', 'ret=Yes status=500 reason=[Internal Server Error] success=No blocked=No');
+        Observer.Expect('503', 'ret=Yes status=503 reason=[Service Unavailable] success=No blocked=No');
+#else
+        Observer.Expect('403', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('405', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('409', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('418', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('422', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('429', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('500', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('503', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -625,7 +665,26 @@ codeunit 98550 "LT AY Http Handler"
         Reason(Observer, 999);
         Reason(Observer, 1000);
         Reason(Observer, -1);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('100', 'ret=Yes status=100 reason=[Continue] success=No blocked=No');
+        Observer.Expect('299', 'E[The value ''299'' is not a valid HTTP status code.|InvalidValue]');
+        Observer.Expect('451', 'ret=Yes status=451 reason=[Unavailable For Legal Reasons] success=No blocked=No');
+        Observer.Expect('599', 'E[The value ''599'' is not a valid HTTP status code.|InvalidValue]');
+        Observer.Expect('0', 'E[The value ''0'' is not a valid HTTP status code.|InvalidValue]');
+        Observer.Expect('999', 'E[The value ''999'' is not a valid HTTP status code.|InvalidValue]');
+        Observer.Expect('1000', 'E[The value ''1000'' is not a valid HTTP status code.|InvalidValue]');
+        Observer.Expect('-1', 'E[The value ''-1'' is not a valid HTTP status code.|InvalidValue]');
+#else
+        Observer.Expect('100', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('299', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('451', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('599', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('0', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('999', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('1000', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+        Observer.Expect('-1', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
+#endif
+        Observer.Verify();
     end;
 
     local procedure Join(var Observer: Codeunit "Probe Observer"; ObsKey: Text; Base: Text; Url: Text)

@@ -4,6 +4,7 @@
 // Probe: observe probe; every literal asserted below is what the corpus CI service tiers produced.
 // Facts: the Content-Length header of an HttpContent after WriteFrom('hello'): before and after ReadAs(Text), after ReadAs(InStream), after a second
 // WriteFrom of a longer text, after WriteFrom of an InStream, and when GetHeaders was taken before the first WriteFrom (Contains and GetValues).
+// Writer PY (2026-10-20, tests PY_*): WriteFrom of another length after a read put Content-Length in the headers.
 // BC versions: 27, 28, 29 (corpus CI)
 
 codeunit 80508 "LT AY Content Length"
