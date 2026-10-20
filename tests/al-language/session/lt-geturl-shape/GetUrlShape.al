@@ -217,7 +217,7 @@ codeunit 74975 "LT GetUrl Shape"
 
     // al-runtime-rs probes-needed row geturl-web-base-address (writer QA, 2026-10-20): GetUrl(ClientType::Web) with no argument, taken apart as
     // scheme | host | port | path | query. The host name differs per environment, so it is reported only as: empty, localhost, or <host> (any other
-    // name), and whether it is in lower case; the rest is reported as it is.
+    // name), and whether it is in lower case; a port as <port> (the CI container's ports); the rest is reported as it is.
     local procedure WebParts(Url: Text): Text
     var
         Scheme: Text;
@@ -228,6 +228,7 @@ codeunit 74975 "LT GetUrl Shape"
         PathPart: Text;
         Query: Text;
         HostShown: Text;
+        PortShown: Text;
         At: Integer;
     begin
         At := StrPos(Url, '://');
@@ -252,6 +253,8 @@ codeunit 74975 "LT GetUrl Shape"
             Port := CopyStr(HostPort, At + 1);
         end else
             HostName := HostPort;
+        if Port <> '' then
+            PortShown := '<port>';
         case true of
             HostName = '':
                 HostShown := '<empty>';
@@ -260,7 +263,7 @@ codeunit 74975 "LT GetUrl Shape"
             else
                 HostShown := '<host>';
         end;
-        exit(Scheme + '|' + HostShown + '|lower=' + Format(HostName = LowerCase(HostName)) + '|port=' + Port + '|path=' + PathPart + '|query=' + Query);
+        exit(Scheme + '|' + HostShown + '|lower=' + Format(HostName = LowerCase(HostName)) + '|port=' + PortShown + '|path=' + PathPart + '|query=' + Query);
     end;
 
     [Test]
@@ -277,6 +280,13 @@ codeunit 74975 "LT GetUrl Shape"
         Observer.Observe('web company', WebParts(GetUrl(ClientType::Web, CompanyName())).Replace(CompanyName().Replace(' ', '%20'), '<company>'));
         Observer.Observe('web page', WebParts(GetUrl(ClientType::Web, '', ObjectType::Page, 21)));
         Observer.Observe('default alone', WebParts(GetUrl(ClientType::Default)));
-        Observer.Finish();
+        Observer.Expect('web alone', 'http|<host>|lower=Yes|port=<port>|path=/BC|query=');
+        Observer.Expect('web alone ends with /', 'No');
+        Observer.Expect('web empty company equal', 'Yes');
+        Observer.Expect('web company starts with it', 'Yes');
+        Observer.Expect('web company', 'http|<host>|lower=Yes|port=<port>|path=/BC/|query=?company=<company>');
+        Observer.Expect('web page', 'http|<host>|lower=Yes|port=<port>|path=/BC/|query=?page=21');
+        Observer.Expect('default alone', 'dynamicsnav|<host>|lower=Yes|port=<port>|path=/BC//|query=');
+        Observer.Verify();
     end;
 }

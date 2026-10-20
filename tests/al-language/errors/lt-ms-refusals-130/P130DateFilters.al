@@ -313,6 +313,8 @@ codeunit 73549 "LT P130 Date Filters"
     // al-runtime-rs backlog (partner gap, owner 2026-10-20, writer QA): a TEMPORARY record's Time and DateTime fields holding milliseconds that the SQL
     // column of a database table rounds (1/300 s; .999 rolls over, see BT_DateTimeAndTime_MillisecondsAfterWrite above): the value after assignment,
     // after Insert (the variable), after Get, a SetRange on the exact value, and after Modify then Get. Each value is Format(Tm, 0, 9)|Format(Dtm, 0, 9).
+    // Measured on 27.5, 28.5 and 29.0 (the same): a temporary table keeps the milliseconds whole (.001, .998, .999, 23:59:59.999 do not round or roll
+    // over); the rounding happens when the value is written to a database table (Insert of TransferFields, Copy or := of the temporary record).
     local procedure TmDtm(var R: Record "LT P130 Filter Row"): Text
     begin
         exit(Format(R.Tm, 0, 9) + '|' + Format(R.Dtm, 0, 9));
@@ -366,7 +368,26 @@ codeunit 73549 "LT P130 Date Filters"
         TempR.Init();
         TempR.Get(5000);
         Observer.Observe('235959.999 get', TmDtm(TempR));
-        Observer.Finish();
+        Observer.Expect('1 assign', '00:00:00.001|2024-03-25T00:00:00.001Z');
+        Observer.Expect('1 insert', '00:00:00.001|2024-03-25T00:00:00.001Z');
+        Observer.Expect('1 get', '00:00:00.001|2024-03-25T00:00:00.001Z|Yes|Yes');
+        Observer.Expect('1 setrange tm', '1');
+        Observer.Expect('1 setrange dtm', '1');
+        Observer.Expect('1 modify get', '00:00:01.001|2024-03-26T00:00:01.001Z');
+        Observer.Expect('998 assign', '00:00:00.998|2024-03-25T00:00:00.998Z');
+        Observer.Expect('998 insert', '00:00:00.998|2024-03-25T00:00:00.998Z');
+        Observer.Expect('998 get', '00:00:00.998|2024-03-25T00:00:00.998Z|Yes|Yes');
+        Observer.Expect('998 setrange tm', '1');
+        Observer.Expect('998 setrange dtm', '1');
+        Observer.Expect('998 modify get', '00:00:01.998|2024-03-26T00:00:01.998Z');
+        Observer.Expect('999 assign', '00:00:00.999|2024-03-25T00:00:00.999Z');
+        Observer.Expect('999 insert', '00:00:00.999|2024-03-25T00:00:00.999Z');
+        Observer.Expect('999 get', '00:00:00.999|2024-03-25T00:00:00.999Z|Yes|Yes');
+        Observer.Expect('999 setrange tm', '1');
+        Observer.Expect('999 setrange dtm', '1');
+        Observer.Expect('999 modify get', '00:00:01.999|2024-03-26T00:00:01.999Z');
+        Observer.Expect('235959.999 get', '23:59:59.999|2024-03-25T23:59:59.999Z');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -454,6 +475,30 @@ codeunit 73549 "LT P130 Date Filters"
             TempR.Get(M + 4000);
             Observer.Observe(N + 'from row get', TmDtm(TempR));
         end;
-        Observer.Finish();
+        Observer.Expect('1 tf var', '00:00:00.001|2024-03-25T00:00:00.001Z');
+        Observer.Expect('1 tf get', '00:00:00|2024-03-25T00:00:00Z');
+        Observer.Expect('1 copy var', '00:00:00.001|2024-03-25T00:00:00.001Z|temporary=No');
+        Observer.Expect('1 copy get', '00:00:00|2024-03-25T00:00:00Z');
+        Observer.Expect('1 assign var', '00:00:00.001|2024-03-25T00:00:00.001Z|temporary=No');
+        Observer.Expect('1 assign get', '00:00:00|2024-03-25T00:00:00Z');
+        Observer.Expect('1 from var get', '00:00:00.001|2024-03-25T00:00:00.001Z');
+        Observer.Expect('1 from row get', '00:00:00|2024-03-25T00:00:00Z');
+        Observer.Expect('998 tf var', '00:00:00.998|2024-03-25T00:00:00.998Z');
+        Observer.Expect('998 tf get', '00:00:00.997|2024-03-25T00:00:00.997Z');
+        Observer.Expect('998 copy var', '00:00:00.998|2024-03-25T00:00:00.998Z|temporary=No');
+        Observer.Expect('998 copy get', '00:00:00.997|2024-03-25T00:00:00.997Z');
+        Observer.Expect('998 assign var', '00:00:00.998|2024-03-25T00:00:00.998Z|temporary=No');
+        Observer.Expect('998 assign get', '00:00:00.997|2024-03-25T00:00:00.997Z');
+        Observer.Expect('998 from var get', '00:00:00.998|2024-03-25T00:00:00.998Z');
+        Observer.Expect('998 from row get', '00:00:00.997|2024-03-25T00:00:00.997Z');
+        Observer.Expect('999 tf var', '00:00:00.999|2024-03-25T00:00:00.999Z');
+        Observer.Expect('999 tf get', '00:00:01|2024-03-25T00:00:01Z');
+        Observer.Expect('999 copy var', '00:00:00.999|2024-03-25T00:00:00.999Z|temporary=No');
+        Observer.Expect('999 copy get', '00:00:01|2024-03-25T00:00:01Z');
+        Observer.Expect('999 assign var', '00:00:00.999|2024-03-25T00:00:00.999Z|temporary=No');
+        Observer.Expect('999 assign get', '00:00:01|2024-03-25T00:00:01Z');
+        Observer.Expect('999 from var get', '00:00:00.999|2024-03-25T00:00:00.999Z');
+        Observer.Expect('999 from row get', '00:00:01|2024-03-25T00:00:01Z');
+        Observer.Verify();
     end;
 }
