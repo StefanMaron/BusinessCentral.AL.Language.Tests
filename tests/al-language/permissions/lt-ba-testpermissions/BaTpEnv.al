@@ -56,6 +56,44 @@ codeunit 80761 "LT BA TP Env"
         Observer.Verify();
     end;
 
+    // Writer QD (al-runtime-rs, AllObj rows of the test libraries): whether Library Assert (130002), Library Variable Storage (131004)
+    // and Any (130500) are installed in the corpus environment, and the app that holds each.
+    [Test]
+    [HandlerFunctions('BaTpEnvMsg')]
+    procedure QD_BaTpEnv_InstalledTestLibraries()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Message('LT BA');
+        Observer.Observe('installed', Installed('130002,131004,130500'));
+        Observer.Observe('apps', QdApps('130002,131004,130500'));
+        Observer.Finish();
+    end;
+
+    local procedure QdApps(IdList: Text): Text
+    var
+        AllObj: Record AllObj;
+        InstalledApp: Record "NAV App Installed App";
+        IdText: Text;
+        Id: Integer;
+        Result: Text;
+    begin
+        foreach IdText in IdList.Split(',') do begin
+            Evaluate(Id, IdText);
+            Result += IdText + '=';
+            if AllObj.Get(AllObj."Object Type"::Codeunit, Id) then begin
+                Result += AllObj."Object Name" + '/';
+                InstalledApp.SetRange("Package ID", AllObj."App Package ID");
+                if InstalledApp.FindFirst() then
+                    Result += InstalledApp.Name + '/' + InstalledApp.Publisher
+                else
+                    Result += '<no app>';
+            end;
+            Result += ' ';
+        end;
+        exit(Result);
+    end;
+
     local procedure Installed(IdList: Text): Text
     var
         AllObj: Record AllObj;

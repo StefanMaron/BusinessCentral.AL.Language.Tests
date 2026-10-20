@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-onfindrecord-page-trigger
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles probes-needed row: "Find list" (Page reads after an action, and a list that ends inside its window, corpus bump 7)
 // Facts: log of OnFindRecord (F), OnNextRecord (N), OnAfterGetRecord (R) and OnAfterGetCurrRecord (C) when a TestPage opens a list and moves First, Next, Last and Previous,
@@ -648,6 +648,114 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Expect('previous', 'Yes|3|R3;F(=);R3;C;');
         Observer.Verify();
     end;
+
+    // Writer QD (al-runtime-rs PR "OnFindRecord on pages whose SourceTableView filters"): what First, Next, Last, Previous and GoToKey ask a
+    // list with OnFindRecord (with and without OnNextRecord) whose SourceTableView is descending with a WHERE part, over 6 rows (the view keeps
+    // 1, 3, 5) and 25 rows (the view keeps 2..24); and GoToKey past the rows the client holds on a list with OnFindRecord only and 25 rows.
+    // Each step: result|current Id|trigger log (F = OnFindRecord, N = OnNextRecord, R = OnAfterGetRecord, C = OnAfterGetCurrRecord).
+    [Test]
+    procedure QD_DescView_FindOnly_6Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT QD FL DescView Find";
+    begin
+        Seed(6);
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('08_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('09_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('10_gotokey2_out', Format(P.GoToKey(2)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('11_gotokey3', Format(P.GoToKey(3)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('12_gotokey1', Format(P.GoToKey(1)) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QD_DescView_FindNext_6Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT QD FL DescView FindNext";
+    begin
+        Seed(6);
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('08_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('09_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('10_gotokey2_out', Format(P.GoToKey(2)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('11_gotokey3', Format(P.GoToKey(3)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('12_gotokey1', Format(P.GoToKey(1)) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QD_DescView_FindOnly_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT QD FL DescView25";
+    begin
+        Seed(25);
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_gotokey4', Format(P.GoToKey(4)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_gotokey1_out', Format(P.GoToKey(1)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_gotokey20', Format(P.GoToKey(20)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('08_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QD_FindOnly_25Rows_GoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT QD FL FindOnly";
+    begin
+        Seed(25);
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_gotokey23', Format(P.GoToKey(23)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_gotokey5', Format(P.GoToKey(5)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_gotokey25', Format(P.GoToKey(25)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_gotokey26_none', Format(P.GoToKey(26)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('08_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Log.Take();
+        Observer.Finish();
+    end;
 }
 
 // Writer PW: an OnFindRecord / OnNextRecord / OnAfterGetRecord list that positions itself on the last row in OnOpenPage (with OnAfterGetCurrRecord).
@@ -756,5 +864,185 @@ page 86152 "LT PW FL Last Plain"
         Log: Codeunit "LT PnF FL Log";
     begin
         Log.Add('R' + Format(Rec.Id));
+    end;
+}
+
+// Writer QD: lists with OnFindRecord over a descending SourceTableView with a WHERE part, and a list with OnFindRecord only.
+page 86530 "LT QD FL DescView Find"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT PnF FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Id = filter(1 | 3 | 5));
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('F(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('C');
+    end;
+}
+
+page 86531 "LT QD FL DescView FindNext"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT PnF FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Id = filter(1 | 3 | 5));
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('F(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('N(' + Format(Steps) + ')');
+        exit(Rec.Next(Steps));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('C');
+    end;
+}
+
+page 86532 "LT QD FL DescView25"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT PnF FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Id = filter(2 .. 24));
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('F(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('C');
+    end;
+}
+
+page 86533 "LT QD FL FindOnly"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT PnF FL Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('F(' + Which + ')');
+        exit(Rec.Find(Which));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('C');
     end;
 }
