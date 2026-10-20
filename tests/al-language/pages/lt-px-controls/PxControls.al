@@ -1115,10 +1115,10 @@ codeunit 86200 "LT PX Nav Tests"
         Card.Close();
         Observer.Observe('off_set_C', TrySet(1, 'C12/31/2025'));
         Observer.Observe('off_set_c', TrySet(1, 'c12/31/2025'));
-#if BC28PLUS
+#if not WP_NEVER_DEFINED
         Observer.Observe('on_set_c', TrySet(2, 'c12/31/2025'));
 #endif
-#if BC28PLUS
+#if not WP_NEVER_DEFINED
         Observer.Observe('on_set_plain', TrySet(2, '12/30/2025'));
 #endif
         Observer.Expect('off_value', '12/31/2025');

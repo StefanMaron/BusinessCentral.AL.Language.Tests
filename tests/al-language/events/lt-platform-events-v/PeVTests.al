@@ -677,6 +677,20 @@ codeunit 69852 "LT V Platform Event Tests"
     end;
 
     [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure WP_PW_RaisedEvents_ExecuteOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'requestpage static', Parameters);
+        PwCall(Observer, 'execute static', Parameters);
+        PwCall(Observer, 'execute var', Parameters);
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure WP_PW_RaisedEvents_OtherFormats()
     var
         Observer: Codeunit "Probe Observer";
