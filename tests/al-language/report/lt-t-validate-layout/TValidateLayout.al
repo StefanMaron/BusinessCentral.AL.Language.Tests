@@ -107,6 +107,8 @@ codeunit 69366 "LT T Validate Layout Tests"
         OwnLayout(Again);
         Original := ReadAll(Again);
         OwnLayout(Layout);
+        // The last error of an earlier test carries over on Windows: clear it so 'static rdlc error' only sees this call.
+        ClearLastError();
         Ok := Report.ValidateAndPrepareLayout(Report::"LT T Layout Rpt", Layout, Prepared, ReportLayoutType::RDLC);
         Describe('static rdlc', Ok, Prepared, Original);
         Observer.Expect('static rdlc ok', 'Yes');
