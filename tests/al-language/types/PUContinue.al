@@ -217,17 +217,15 @@ codeunit 69338 "PU Continue Probe"
     end;
 
     // Writer PY-C (al-runtime-rs PR 346, "continue; where the procedure named Continue ..."): `continue;` in a codeunit whose procedure Continue
-    // takes a parameter, returns a value, is a TryFunction, or is overloaded (helpers 85211-85214 below).
+    // returns a value, is a TryFunction, or is overloaded (helpers 85212-85214 below). A Continue with a parameter only: must-not-compile case 1875.
     [Test]
     procedure PYC_Continue_ProcedureShapes()
     var
         Observer: Codeunit "Probe Observer";
-        P: Codeunit "LT PYC Continue Param";
         R: Codeunit "LT PYC Continue Ret";
         T: Codeunit "LT PYC Continue Try";
         O: Codeunit "LT PYC Continue Over";
     begin
-        Observer.Observe('with parameter', P.ForLoop());
         Observer.Observe('with return value', R.ForLoop());
         Observer.Observe('try function', T.ForLoop());
         Observer.Observe('overloaded', O.ForLoop());
@@ -407,31 +405,6 @@ codeunit 82150 "LT BN Continue Proc"
 }
 
 // Writer PY-C (al-runtime-rs PR 346): helpers for PYC_Continue_ProcedureShapes. Not test codeunits.
-codeunit 85211 "LT PYC Continue Param"
-{
-    var
-        Calls: Integer;
-
-    procedure Continue(X: Integer)
-    begin
-        Calls += X;
-    end;
-
-    procedure ForLoop(): Text
-    var
-        i: Integer;
-        S: Text;
-    begin
-        Calls := 0;
-        for i := 1 to 3 do begin
-            if i = 2 then
-                continue;
-            S += Format(i);
-        end;
-        exit(S + '|calls=' + Format(Calls));
-    end;
-}
-
 codeunit 85212 "LT PYC Continue Ret"
 {
     var

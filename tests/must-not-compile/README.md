@@ -507,6 +507,9 @@ is only a reference.
 | 1819 | AL0132 | JsonArray has no Clear method (Clear(variable) empties it). |
 | 1824 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
 | 1872 | AL0122 | `V := Cond ? D : DT` (Date true, DateTime false): the DateTime branch does not convert to Date. |
+| 1873 | AL0122 | `'K' in [TLo .. THi]` and `'K' in ['a' .. THi]`: a one-character literal is a Char and the Text range ends do not convert. |
+| 1874 | AL0122 | `'K' in [CLo .. CHi]` with Code range ends: the Code ends do not convert to Char. |
+| 1875 | AL0135 | `continue;` in a codeunit whose only procedure Continue takes a parameter (read as a call without its argument). |
 | 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
 | 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
 | 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |
