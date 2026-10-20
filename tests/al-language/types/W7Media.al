@@ -138,13 +138,12 @@ codeunit 68571 "W7 Media Probes"
         Observer.Expect('export|text', '');
         Observer.Expect('export|code', '');
         Observer.Expect('source length', '68');
+        // Windows re-encodes the imported 68-byte PNG to 99 bytes: Windows nightly triage 2026-10-16 (this test, 'exported length = 99'),
+        // and Windows BC 29.0 check 2026-10-20 (Media.ImportStream re-encodes a PNG to 99 bytes on 29.0 too, bc-linux #161). The Linux
+        // values asserted before (93 on 27/28, 68 and unchanged bytes on 29) came from the Linux image before bc-linux #135 and #161.
+        Observer.Expect('exported length', '99');
 #if BC29PLUS
-        Observer.Expect('exported length', '68');
-#else
-        Observer.Expect('exported length', '93');
-#endif
-#if BC29PLUS
-        Observer.Expect('exported bytes = imported bytes', 'Yes');
+        Observer.Expect('exported bytes = imported bytes', 'No');
         Observer.Expect('exported first bytes', '89 50 4E 47 0D 0A 1A 0A 00 00 00 0D 49 4');
 #else
         Observer.Expect('exported bytes = imported bytes', 'No');
