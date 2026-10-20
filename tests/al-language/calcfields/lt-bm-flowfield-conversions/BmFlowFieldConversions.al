@@ -311,6 +311,7 @@ codeunit 81959 "LT BM FlowField Conversions"
     end;
 
     [Test]
+    // BC 29 raises StringLengthExceeded for a Min/Max value longer than the target; BC 27.5 and 28.5 return the whole value (CI run 39354581861).
     procedure PX_MinMax_IntoShorterTextAndCode()
     var
         Observer: Codeunit "Probe Observer";
@@ -324,19 +325,35 @@ codeunit 81959 "LT BM FlowField Conversions"
             Observer.Observe(Format(F) + '_grp_none', PxCalc(9, F));
         end;
         Observer.Expect('3_grp1_short', '[abc] len 3');
+#if BC29PLUS
         Observer.Expect('3_grp2_long', 'error|The length of the string is 10, but it must be less than or equal to 5 characters. Value: abcdefghij|StringLengthExceeded');
+#else
+        Observer.Expect('3_grp2_long', '[abcdefghij] len 10');
+#endif
         Observer.Expect('3_grp3_exact', '[abcde] len 5');
         Observer.Expect('3_grp_none', '[] len 0');
         Observer.Expect('4_grp1_short', '[abc] len 3');
+#if BC29PLUS
         Observer.Expect('4_grp2_long', 'error|The length of the string is 12, but it must be less than or equal to 5 characters. Value: zzzzzzzzzzzz|StringLengthExceeded');
+#else
+        Observer.Expect('4_grp2_long', '[zzzzzzzzzzzz] len 12');
+#endif
         Observer.Expect('4_grp3_exact', '[abcde] len 5');
         Observer.Expect('4_grp_none', '[] len 0');
         Observer.Expect('5_grp1_short', '[ABC] len 3');
+#if BC29PLUS
         Observer.Expect('5_grp2_long', 'error|The length of the string is 10, but it must be less than or equal to 5 characters. Value: ABCDEFGHIJ|StringLengthExceeded');
+#else
+        Observer.Expect('5_grp2_long', '[ABCDEFGHIJ] len 10');
+#endif
         Observer.Expect('5_grp3_exact', '[ABCDE] len 5');
         Observer.Expect('5_grp_none', '[] len 0');
         Observer.Expect('6_grp1_short', '[ABC] len 3');
+#if BC29PLUS
         Observer.Expect('6_grp2_long', 'error|The length of the string is 12, but it must be less than or equal to 5 characters. Value: ZZZZZZZZZZZZ|StringLengthExceeded');
+#else
+        Observer.Expect('6_grp2_long', '[ZZZZZZZZZZZZ] len 12');
+#endif
         Observer.Expect('6_grp3_exact', '[ABCDE] len 5');
         Observer.Expect('6_grp_none', '[] len 0');
         Observer.Verify();

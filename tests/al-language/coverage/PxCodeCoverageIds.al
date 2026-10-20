@@ -110,35 +110,43 @@ codeunit 86163 "LT PX Code Coverage Ids"
         B.NoArgs();
     end;
 
-    local procedure DumpRuns(): Text
+    // Rows in the order of Names (Tests Run is keyed by its Test ID, a number that changes from run to run, so neither the Test ID nor
+    // the row order is asserted). The Test Lookup rows of a run are found through its Test ID. testids_distinct: every row has its own one.
+    local procedure DumpRuns(Names: Text): Text
     var
         TestsRun: Record "Code Coverage Tests Run";
         TestLookup: Record "Code Coverage Test Lookup";
+        Seen: List of [Integer];
+        Name: Text;
         Result: Text;
+        Distinct: Boolean;
     begin
-        if TestsRun.FindSet() then
-            repeat
-                Result += StrSubstNo('[%1 obj=%2 methodid=%3 testid=%4:', TestsRun."Method Name", TestsRun."Object ID", TestsRun."Method ID", TestsRun."Test ID");
-                TestLookup.SetRange("Test ID", TestsRun."Test ID");
-                if TestLookup.FindSet() then
-                    repeat
-                        Result += StrSubstNo(' %1 %2 %3', TestLookup."Object Type", TestLookup."Object ID", TestLookup."Method ID");
-                    until TestLookup.Next() = 0;
-                Result += '] ';
-            until TestsRun.Next() = 0;
-        exit(Result);
+        Distinct := true;
+        foreach Name in Names.Split(',') do begin
+            TestsRun.SetRange("Method Name", Name);
+            if TestsRun.FindSet() then
+                repeat
+                    if Seen.Contains(TestsRun."Test ID") then
+                        Distinct := false;
+                    Seen.Add(TestsRun."Test ID");
+                    Result += StrSubstNo('[%1 obj=%2 methodid=%3:', TestsRun."Method Name", TestsRun."Object ID", TestsRun."Method ID");
+                    TestLookup.SetRange("Test ID", TestsRun."Test ID");
+                    if TestLookup.FindSet() then
+                        repeat
+                            Result += StrSubstNo(' %1 %2 %3', TestLookup."Object Type", TestLookup."Object ID", TestLookup."Method ID");
+                        until TestLookup.Next() = 0;
+                    Result += '] ';
+                until TestsRun.Next() = 0;
+        end;
+        TestsRun.Reset();
+        exit(Result + StrSubstNo('rows=%1 testids_distinct=%2', TestsRun.Count(), Distinct));
     end;
 
     local procedure DumpLookups(): Text
     var
         TestLookup: Record "Code Coverage Test Lookup";
-        Result: Text;
     begin
-        if TestLookup.FindSet() then
-            repeat
-                Result += StrSubstNo('(%1 %2 %3 test %4) ', TestLookup."Object Type", TestLookup."Object ID", TestLookup."Method ID", TestLookup."Test ID");
-            until TestLookup.Next() = 0;
-        exit(Result + 'count=' + Format(TestLookup.Count()));
+        exit('count=' + Format(TestLookup.Count()));
     end;
 
     local procedure DumpLineMethodIds(ObjectId: Integer): Text
@@ -169,13 +177,13 @@ codeunit 86163 "LT PX Code Coverage Ids"
         PxRunsASameTwo();
         PxRunsBNoArgs();
         CodeCoverageLog(false, false);
-        Observer.Observe('runs', DumpRuns());
+        Observer.Observe('runs', DumpRuns('PxRunsANoArgs,PxRunsAIntArg,PxRunsATextArg,PxRunsASameOne,PxRunsASameTwo,PxRunsBNoArgs'));
         Observer.Observe('lookups', DumpLookups());
         Observer.Observe('lines_a', DumpLineMethodIds(Codeunit::"LT PX CC Target A"));
         Observer.Observe('lines_b', DumpLineMethodIds(Codeunit::"LT PX CC Target B"));
         Initialize();
-        Observer.Expect('runs', '[PxRunsASameOne obj=86163 methodid=-1803411697 testid=-1910502296: Codeunit 86164 -130816186] [PxRunsBNoArgs obj=86163 methodid=667973114 testid=-1527742205: Codeunit 86165 1569086646] [PxRunsATextArg obj=86163 methodid=-652159326 testid=113543347: Codeunit 86164 -1663764975] [PxRunsAIntArg obj=86163 methodid=-133430896 testid=174429217: Codeunit 86164 -370288627] [PxRunsANoArgs obj=86163 methodid=1797822318 testid=568644803: Codeunit 86164 1569086646] [PxRunsASameTwo obj=86163 methodid=-450565804 testid=2025528333: Codeunit 86164 -1760197669] ');
-        Observer.Expect('lookups', '(Codeunit 86164 -1760197669 test 2025528333) (Codeunit 86164 -1663764975 test 113543347) (Codeunit 86164 -370288627 test 174429217) (Codeunit 86164 -130816186 test -1910502296) (Codeunit 86164 1569086646 test 568644803) (Codeunit 86165 1569086646 test -1527742205) count=6');
+        Observer.Expect('runs', '[PxRunsANoArgs obj=86163 methodid=1797822318: Codeunit 86164 1569086646] [PxRunsAIntArg obj=86163 methodid=-133430896: Codeunit 86164 -370288627] [PxRunsATextArg obj=86163 methodid=-652159326: Codeunit 86164 -1663764975] [PxRunsASameOne obj=86163 methodid=-1803411697: Codeunit 86164 -130816186] [PxRunsASameTwo obj=86163 methodid=-450565804: Codeunit 86164 -1760197669] [PxRunsBNoArgs obj=86163 methodid=667973114: Codeunit 86165 1569086646] rows=6 testids_distinct=Yes');
+        Observer.Expect('lookups', 'count=6');
         Observer.Expect('lines_a', 'L0:Object/-1 L14:Trigger/Function/1569086646 L15:Empty/-1 L16:Empty/-1 L18:Trigger/Function/-370288627 L19:Empty/-1 L20:Code/-370288627 L21:Code/-370288627 L22:Empty/-1 L24:Trigger/Function/-1663764975 L25:Empty/-1 L26:Code/-1663764975 L27:Empty/-1 L29:Trigger/Function/-130816186 L30:Empty/-1 L31:Empty/-1 L33:Trigger/Function/-1760197669 L34:Empty/-1 L35:Empty/-1 ');
         Observer.Expect('lines_b', 'L0:Object/-1 L4:Trigger/Function/1569086646 L5:Empty/-1 L6:Empty/-1 ');
         Observer.Verify();
@@ -192,14 +200,14 @@ codeunit 86163 "LT PX Code Coverage Ids"
         PxRunsANoArgs();
         W6.MethodA();
         CodeCoverageLog(false, false);
-        Observer.Observe('first', DumpRuns());
+        Observer.Observe('first', DumpRuns('MethodA,PxRunsANoArgs,PxRunsBNoArgs'));
         CodeCoverageLog(true, false);
         PxRunsBNoArgs();
         CodeCoverageLog(false, false);
-        Observer.Observe('second_without_reset', DumpRuns());
+        Observer.Observe('second_without_reset', DumpRuns('MethodA,PxRunsANoArgs,PxRunsBNoArgs'));
         Initialize();
-        Observer.Expect('first', '[MethodA obj=67334 methodid=915199647 testid=-1061756221:] [PxRunsANoArgs obj=86163 methodid=1797822318 testid=568644803: Codeunit 86164 1569086646] ');
-        Observer.Expect('second_without_reset', '[PxRunsBNoArgs obj=86163 methodid=667973114 testid=-1527742205: Codeunit 86165 1569086646] ');
+        Observer.Expect('first', '[MethodA obj=67334 methodid=915199647:] [PxRunsANoArgs obj=86163 methodid=1797822318: Codeunit 86164 1569086646] rows=2 testids_distinct=Yes');
+        Observer.Expect('second_without_reset', '[PxRunsBNoArgs obj=86163 methodid=667973114: Codeunit 86165 1569086646] rows=1 testids_distinct=Yes');
         Observer.Verify();
     end;
 }
