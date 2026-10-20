@@ -461,7 +461,14 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('request page ok', 'Yes');
         Observer.Expect('request page error|text', '');
         Observer.Expect('request page error|code', '');
+#if LT_HELD_BCLINUX_158
+        // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20, same on 27.5/28.5) raise no SetupPrinters after
+        // SubstituteReport(...,ParametersOnly). The Linux image raises SetupPrinters(in=0) there (bc-linux #158): held on Linux under
+        // LT_HELD_BCLINUX_158; the #else branch keeps the Linux value until the pin includes the fix.
+        Observer.Expect('request page log', 'SubstituteReport(69860,ParametersOnly,in=-1);');
+#else
         Observer.Expect('request page log', 'SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+#endif
         Observer.Verify();
     end;
 
@@ -655,7 +662,14 @@ codeunit 69852 "LT V Platform Event Tests"
         Seed();
         // Execute of this RDLC report also ends in the Linux tier's RDLC stub (windows-queue.md).
         PwCall(Observer, 'requestpage static', Parameters);
+#if LT_HELD_BCLINUX_158
+        // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20, same on 27.5/28.5) raise no SetupPrinters after
+        // SubstituteReport(...,ParametersOnly). The Linux image raises SetupPrinters(in=0) there (bc-linux #158): held on Linux under
+        // LT_HELD_BCLINUX_158; the #else branch keeps the Linux value until the pin includes the fix.
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);');
+#else
         Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+#endif
         Observer.Verify();
     end;
 
@@ -696,6 +710,19 @@ codeunit 69852 "LT V Platform Event Tests"
         PwCall(Observer, 'procOnly run nopage', Parameters);
         PwCall(Observer, 'procOnly execute var', Parameters);
         PwCall(Observer, 'procOnly saveas xml', Parameters);
+#if LT_HELD_BCLINUX_158
+        // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20, same on 27.5/28.5) raise no SetupPrinters after
+        // SubstituteReport(...,ParametersOnly). The Linux image raises SetupPrinters(in=0) there (bc-linux #158): held on Linux under
+        // LT_HELD_BCLINUX_158; the #else branch keeps the Linux value until the pin includes the fix.
+        // Windows reported only this first difference, so the observations after it are not measured there (Ignore).
+        Observer.Expect('saveas var xml', 'Yes|OnDocumentReady(69860,in=No);');
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);');
+        Observer.Ignore('saveas static params xml');
+        Observer.Ignore('saveas static record xml');
+        Observer.Ignore('procOnly run nopage');
+        Observer.Ignore('procOnly execute var');
+        Observer.Ignore('procOnly saveas xml');
+#else
         Observer.Expect('saveas var xml', 'Yes|OnDocumentReady(69860,in=No);');
         Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
         Observer.Expect('saveas static params xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
@@ -703,6 +730,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('procOnly run nopage', 'Yes|SubstituteReport(86147,Normal,in=-1);');
         Observer.Expect('procOnly execute var', 'Yes|');
         Observer.Expect('procOnly saveas xml', 'No error=ReportProcessingOnly:Report 86147 is a processing-only report. Output cannot be rendered and saved to a file.|SubstituteReport(86147,SaveAs,in=-1);');
+#endif
         Observer.Verify();
     end;
 
