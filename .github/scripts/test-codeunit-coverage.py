@@ -12,8 +12,8 @@ so codeunits that a preprocessor symbol leaves out of a BC version are not expec
 
   check --app A.app --xunit results.xml --name al-language [--aborted 1,2] [--summary FILE]
         Compares the codeunits that reported in the XUnit file against the app. Prints the counts
-        and the highest id that reported, appends a table to --summary, and exits 1 when fewer
-        codeunits reported than the app contains.
+        and the highest id that reported, appends them to --summary, and exits 1 when a codeunit
+        is silently missing: neither reported nor listed in --aborted (a recorded runner stop).
 """
 import argparse
 import io
@@ -38,7 +38,7 @@ def codeunits(node):
         yield from codeunits(ns)
 
 
-def test_codeunits(app_path):
+def test_codeunits(app_path, names=None):
     tests, no_methods = [], []
     for cu in codeunits(symbols(app_path)):
         props = {p.get('Name'): p.get('Value') for p in cu.get('Properties') or []}
@@ -50,6 +50,8 @@ def test_codeunits(app_path):
             for a in m.get('Attributes') or []
         )
         (tests if has_test else no_methods).append(int(cu['Id']))
+        if names is not None:
+            names[str(cu['Id'])] = cu.get('Name', '')
     return sorted(tests), sorted(no_methods)
 
 
@@ -81,27 +83,32 @@ def main():
     a = ap.parse_args()
 
     if a.cmd == 'ids':
-        tests, no_methods = test_codeunits(a.app)
+        names = {}
+        tests, no_methods = test_codeunits(a.app, names)
         foreign = set()
         for o in a.other:
             t, n = test_codeunits(o)
             foreign.update(t)
             foreign.update(n)
-        json.dump({'tests': tests, 'no_methods': no_methods, 'foreign': sorted(foreign)}, sys.stdout)
+        json.dump({'tests': tests, 'no_methods': no_methods, 'foreign': sorted(foreign), 'names': names}, sys.stdout)
         return 0
 
     tests, no_methods = test_codeunits(a.app)
-    got = reported_ids(a.xunit)
-    missing = sorted(set(tests) - got)
     aborted = [int(x) for x in a.aborted.split(',') if x.strip()]
+    # A runner stop is written into the XUnit file as one failed test; it is accounted for,
+    # but it is not a codeunit that ran, so it is counted apart.
+    got = reported_ids(a.xunit) - set(aborted)
+    missing = sorted(set(tests) - got - set(aborted))
     top = max(got) if got else None
     lines = [
-        f'{a.name}: {len(got & set(tests))} of {len(tests)} test codeunits reported '
+        f'{a.name}: {len(got & set(tests))} of {len(tests)} test codeunits reported, '
+        f'{len(set(aborted) & set(tests))} runner stop(s), {len(missing)} silently missing '
         f'(highest id that reported: {top}; highest in the app: {tests[-1] if tests else None}; '
         f'{len(no_methods)} Subtype = Test codeunits without a [Test] method not counted)',
     ]
     if aborted:
-        lines.append(f'{a.name}: the test runner aborted during codeunit(s) {", ".join(map(str, aborted))}')
+        lines.append(f'{a.name}: runner stop (the test runner stopped during the codeunit and reported nothing; '
+                     f'recorded as a failed codeunit): {", ".join(map(str, aborted))}')
     if missing:
         shown = ', '.join(map(str, missing[:40])) + (' ...' if len(missing) > 40 else '')
         lines.append(f'{a.name}: {len(missing)} test codeunit(s) did not report: {shown}')

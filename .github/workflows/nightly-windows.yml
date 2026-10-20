@@ -768,10 +768,11 @@ jobs:
       # Each call runs the next chunk of not-yet-reported codeunits, selected by
       # -testCodeunitRange (a range filter that never spans another corpus app's test codeunit
       # or one that already reported). When a call reports nothing, the first codeunit of the
-      # chunk is halved until the first codeunit runs alone; if it still reports nothing, it is
-      # recorded as "aborted" and the run goes on after it. Each call writes its own XUnit file; they are merged into
+      # chunk is halved until the first codeunit runs alone; if it still reports nothing, it is a
+      # "runner stop": written into the XUnit file as one failed test with the reason, and the run
+      # goes on with the next codeunit (run 39390812023: onprem 61276 "LT Q File Probes"). Each call writes its own XUnit file; they are merged into
       # xunit-<app>.xml. The step "Every test codeunit reported" below fails the job when any
-      # codeunit is missing.
+      # codeunit is silently missing (not reported and not a runner stop).
       # ---------------------------------------------------------------------------------
       - name: Run the corpus
         id: run_tests
@@ -872,8 +873,10 @@ jobs:
                   -culture $env:CULTURE -timezone $env:TIMEZONE `
                   -XUnitResultFileName $part -AzureDevOps 'no' -GitHubActions 'no' `
                   -detailed -returnTrueIfAllPassed | Out-Null
+                $lastError = 'the test runner returned without a result for this codeunit'
               } catch {
-                Write-Host "::warning::Run-TestsInBcContainer for $($s.name) (call $call, from $($chunk[0])) raised: $($_.Exception.Message)"
+                $lastError = $_.Exception.Message
+                Write-Host "::warning::Run-TestsInBcContainer for $($s.name) (call $call, from $($chunk[0])) raised: $lastError"
               }
               $got = Get-ReportedIds $part
               $outside = @($got | Where-Object { -not $chunkSet.Contains($_) })
@@ -892,8 +895,21 @@ jobs:
                 $size = [Math]::Min($chunkSize, $size * 2); $abortedInARow = 0
                 if ($got.Count -lt $chunk.Count) { Write-Host "call $call stopped early after $($got.Count) of $($chunk.Count) codeunit(s); continuing with the rest"; Start-Sleep -Seconds 20 }
               } elseif ($chunk.Count -eq 1) {
-                Write-Host "::warning::$($s.name): the test runner aborted during codeunit $($chunk[0]); it is reported as missing"
+                Write-Host "::warning::$($s.name): runner stop during codeunit $($chunk[0]); recorded as a failed codeunit, continuing with the next one"
                 $aborted += $chunk[0]; $size = $chunkSize; $abortedInARow++
+                # Recorded as ONE failed test of that codeunit, with the reason, so the results say
+                # "runner stop" instead of leaving the codeunit out. The run goes on after it.
+                $cuName = "$($info.names."$($chunk[0])")"
+                $asm = $merged.CreateElement('assembly')
+                foreach ($kv in @(@('name', "$($chunk[0]) $cuName"), @('test-framework', 'PS Test Runner'), @('total', '1'), @('passed', '0'), @('failed', '1'), @('skipped', '0'), @('time', '0'))) { $asm.SetAttribute($kv[0], $kv[1]) }
+                $col = $merged.CreateElement('collection')
+                foreach ($kv in @(@('name', $cuName), @('total', '1'), @('passed', '0'), @('failed', '1'), @('skipped', '0'), @('time', '0'))) { $col.SetAttribute($kv[0], $kv[1]) }
+                $t = $merged.CreateElement('test')
+                foreach ($kv in @(@('name', "${cuName}:RunnerStop_NoResult"), @('method', 'RunnerStop_NoResult'), @('time', '0'), @('result', 'Fail'))) { $t.SetAttribute($kv[0], $kv[1]) }
+                $f = $merged.CreateElement('failure'); $m = $merged.CreateElement('message')
+                $m.InnerText = "Runner stop: the test runner stopped during codeunit $($chunk[0]) and reported no result, also when it ran alone. Last error: $lastError"
+                [void]$f.AppendChild($m); [void]$t.AppendChild($f); [void]$col.AppendChild($t); [void]$asm.AppendChild($col)
+                [void]$merged.DocumentElement.AppendChild($asm)
                 # Three codeunits in a row that report nothing even alone: the runner itself is broken
                 # (setup, connection, container), not a codeunit. Stop instead of crawling through the app.
                 if ($abortedInARow -ge 3) { throw "$($s.name): $abortedInARow codeunits in a row reported nothing ($($aborted[-3..-1] -join ', ')); the test runner is not working. Last error above." }
@@ -995,7 +1011,8 @@ jobs:
             --run "TestIsolation = Codeunit control (runner 61301)=xunit-isolation-codeunit.xml" \
             --outdir test-results
 
-      # Fails the job, loudly, when fewer test codeunits reported than the app contains. It
+      # Fails the job, loudly, when a test codeunit is silently missing: neither reported nor
+      # recorded as a runner stop. It
       # runs after the comparison and before the upload, so the partial results still land in
       # the artifact. The counts and the highest id that reported go into the run summary.
       - name: Every test codeunit reported
