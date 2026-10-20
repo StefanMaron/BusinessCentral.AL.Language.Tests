@@ -309,4 +309,111 @@ codeunit 74141 "LT New Line Stamps Filters"
         Obs.Expect('db.first', 'HN|A|A|x');
         Obs.Verify();
     end;
+
+    // Writer PY-B (2026-10-20): why the line keeps a blank link when Type is typed before No. on a new header: what the header table
+    // holds after each step, what the card shows, and the link filter of each part.
+    local procedure Headers(): Text
+    var
+        H: Record "LT NL Header";
+        Rows: Text;
+    begin
+        if H.FindSet() then
+            repeat
+                Rows += '[' + H."No." + '|' + Format(H.Type) + ']';
+            until H.Next() = 0;
+        exit(Format(H.Count()) + ' ' + Rows);
+    end;
+
+    local procedure Snapshot(Prefix: Text; var Host: TestPage "LT NL Host")
+    begin
+        Obs.Observe(Prefix + '.headers', Headers());
+        Obs.Observe(Prefix + '.card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        Obs.Observe(Prefix + '.filter_b', '[' + Host.LinesB.Filter.GetFilter("Document No.") + ']');
+        Obs.Observe(Prefix + '.filter_plain', '[' + Host.LinesPlain.Filter.GetFilter("Document No.") + ']');
+    end;
+
+    [TryFunction]
+    local procedure TryHostNo(var Host: TestPage "LT NL Host"; Value: Text)
+    begin
+        Host."No.".SetValue(Value);
+    end;
+
+    [TryFunction]
+    local procedure TryHostType(var Host: TestPage "LT NL Host"; Value: Text)
+    begin
+        Host.Type.SetValue(Value);
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_TypeThenNo_Steps()
+    var
+        Host: TestPage "LT NL Host";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Snapshot('open', Host);
+        Step('set_type', TryHostType(Host, 'B'));
+        Snapshot('after_type', Host);
+        Step('set_no', TryHostNo(Host, 'HN'));
+        Snapshot('after_no', Host);
+        Step('line', TryTypePlain(Host));
+        ObserveLines('after_line');
+        Step('close', TryClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        ObserveLines('after_close');
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_NoThenType_Steps()
+    var
+        Host: TestPage "LT NL Host";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Step('set_no', TryHostNo(Host, 'HN'));
+        Snapshot('after_no', Host);
+        Step('set_type', TryHostType(Host, 'B'));
+        Snapshot('after_type', Host);
+        Step('line', TryTypePlain(Host));
+        ObserveLines('after_line');
+        Step('close', TryClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        ObserveLines('after_close');
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_TypeA_ThenNo_Steps()
+    var
+        Host: TestPage "LT NL Host";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Step('set_type', TryHostType(Host, 'A'));
+        Snapshot('after_type', Host);
+        Step('set_no', TryHostNo(Host, 'HN'));
+        Snapshot('after_no', Host);
+        Step('close', TryClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_TypeThenNo_ThenNext()
+    var
+        Host: TestPage "LT NL Host";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Step('set_type', TryHostType(Host, 'B'));
+        Step('set_no', TryHostNo(Host, 'HN'));
+        Obs.Observe('next', Format(Host.Next()));
+        Obs.Observe('after_next.headers', Headers());
+        Obs.Observe('after_next.card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        Step('close', TryClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        Obs.Finish();
+    end;
+
 }

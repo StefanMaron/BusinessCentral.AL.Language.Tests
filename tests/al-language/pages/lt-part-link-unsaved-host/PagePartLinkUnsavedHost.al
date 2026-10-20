@@ -127,6 +127,46 @@ page 71253 "LT PLK Card"
     }
 }
 
+// Writer PY-B (2026-10-20): the same card with one linked part and with no part, for contrast (pages 85191, 85192).
+page 85191 "LT PYB PLK Card One"
+{
+    PageType = Card;
+    SourceTable = "LT PLK Host";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("Code"; Rec.Code) { ApplicationArea = All; }
+            field(Descr; Rec.Descr) { ApplicationArea = All; }
+            part(LinesG; "LT PLK Lines G")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Group Code" = field(Code);
+            }
+        }
+    }
+}
+
+page 85192 "LT PYB PLK Card None"
+{
+    PageType = Card;
+    SourceTable = "LT PLK Host";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("Code"; Rec.Code) { ApplicationArea = All; }
+            field(Descr; Rec.Descr) { ApplicationArea = All; }
+        }
+    }
+}
+
 codeunit 71254 "LT Part Link Unsaved Host"
 {
     Subtype = Test;
@@ -249,4 +289,134 @@ codeunit 71254 "LT Part Link Unsaved Host"
     begin
         exit(Host.Count());
     end;
+
+    // Writer PY-B (2026-10-20): what a new card shows and stores after its key is typed, with two linked parts, one, or none.
+    local procedure HostRows(): Text
+    var
+        Host: Record "LT PLK Host";
+        Rows: Text;
+    begin
+        if Host.FindSet() then
+            repeat
+                Rows += '[' + Host.Code + '|' + Host.Descr + ']';
+            until Host.Next() = 0;
+        exit(Format(Host.Count()) + ' ' + Rows);
+    end;
+
+    [TryFunction]
+    local procedure TryCode2(var Card: TestPage "LT PLK Card"; Value: Text)
+    begin
+        Card.Code.SetValue(Value);
+    end;
+
+    [TryFunction]
+    local procedure TryDescr2(var Card: TestPage "LT PLK Card"; Value: Text)
+    begin
+        Card.Descr.SetValue(Value);
+    end;
+
+    local procedure Ok(var Observer: Codeunit "Probe Observer"; Name: Text; Done: Boolean)
+    begin
+        if Done then
+            Observer.Observe(Name, 'ok')
+        else
+            Observer.Observe(Name, 'E[' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+        ClearLastError();
+    end;
+
+    [Test]
+    procedure PYB_TwoParts_KeyTyped_WhatIsShownAndStored()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PLK Card";
+    begin
+        Seed();
+        Card.OpenNew();
+        Ok(Observer, 'code', TryCode2(Card, 'G1'));
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
+        Observer.Observe('descr_value', '[' + Card.Descr.Value() + ']');
+        Observer.Observe('h_filter', '[' + Card.LinesH.Filter.GetFilter("Host Code") + ']');
+        Observer.Observe('g_filter', '[' + Card.LinesG.Filter.GetFilter("Group Code") + ']');
+        Ok(Observer, 'descr', TryDescr2(Card, 'd1'));
+        Observer.Observe('db_after_descr', HostRows());
+        Observer.Observe('code_value_after_descr', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYB_TwoParts_KeyNotInGroupTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PLK Card";
+    begin
+        Seed();
+        Card.OpenNew();
+        Ok(Observer, 'code', TryCode2(Card, 'X1'));
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYB_TwoParts_DescrFirstThenKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PLK Card";
+    begin
+        Seed();
+        Card.OpenNew();
+        Ok(Observer, 'descr', TryDescr2(Card, 'd1'));
+        Observer.Observe('db_after_descr', HostRows());
+        Ok(Observer, 'code', TryCode2(Card, 'G1'));
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYB_OnePart_KeyTyped()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PYB PLK Card One";
+    begin
+        Seed();
+        Card.OpenNew();
+        Card.Code.SetValue('G1');
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
+        Observer.Observe('g_filter', '[' + Card.LinesG.Filter.GetFilter("Group Code") + ']');
+        Card.Descr.SetValue('d1');
+        Observer.Observe('db_after_descr', HostRows());
+        Observer.Observe('code_value_after_descr', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYB_NoPart_KeyTyped()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PYB PLK Card None";
+    begin
+        Seed();
+        Card.OpenNew();
+        Card.Code.SetValue('G1');
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
+        Card.Descr.SetValue('d1');
+        Observer.Observe('db_after_descr', HostRows());
+        Observer.Observe('code_value_after_descr', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Finish();
+    end;
+
 }
