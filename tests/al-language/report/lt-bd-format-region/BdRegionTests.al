@@ -140,15 +140,18 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Gb");
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Gb id:81053 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Gb</ReportName>|<ReportCaption>BD Region Gb</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[en-GB];post=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Gb id:81053 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Gb</ReportName>|<ReportCaption>BD Region Gb</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Gb id:81053 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Gb</ReportName>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[en-GB];post=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Verify();
@@ -164,6 +167,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Fr");
+#if BC29PLUS and LT_HELD_BCLINUX_167
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // Held on Linux BC 29 (LT_HELD_BCLINUX_167, bc-linux #167): the image at dbee8022 still differs (fr-FR group separator: Linux U+202F, Windows U+00A0); the #else branch keeps the Linux value.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Fr id:81054 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Fr</ReportName>|<ReportCaption>BD Region Fr</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[fr-FR];post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
+#else
 #if BC29PLUS
         Observer.Expect('header', '<ReportDataSet name="BD Region Fr id:81054 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Fr</ReportName>|<ReportCaption>BD Region Fr</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
 #else
@@ -172,6 +183,7 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567 region=[fr-FR];post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Verify();
+#endif
     end;
 
     [Test]
@@ -198,6 +210,14 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Zz");
+#if BC29PLUS and LT_HELD_BCLINUX_167
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // Held on Linux BC 29 (LT_HELD_BCLINUX_167, bc-linux #167): the image at dbee8022 still differs (zz-ZZ dates: Linux 1/31/2025, Windows 01/31/2025); the #else branch keeps the Linux value.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Zz id:81056 language="en-US formatRegion="zz-ZZ">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Zz</ReportName>|<ReportCaption>BD Region Zz</ReportCaption>|<Language>en-US</Language>|<FormatRegion>zz-ZZ</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=01/31/2025;D2Col=03/05/2024;DT1Col=01/31/2025 14:30:15;DT2Col=03/05/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        Observer.Verify();
+#else
 #if BC29PLUS
         Observer.Expect('header', '<ReportDataSet name="BD Region Zz id:81056 language="en-US formatRegion="zz-ZZ">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Zz</ReportName>|<ReportCaption>BD Region Zz</ReportCaption>|<Language>en-US</Language>|<FormatRegion>zz-ZZ</FormatRegion>|');
 #else
@@ -206,6 +226,7 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 14:30:15;DT2Col=3/5/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
         Observer.Verify();
+#endif
     end;
 
     [Test]
@@ -215,15 +236,18 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Dk");
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Dk id:81057 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Dk</ReportName>|<ReportCaption>BD Region Dk</ReportCaption>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14:30:15;DT2Col=05-03-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[da-DK];post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Dk id:81057 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Dk</ReportName>|<ReportCaption>BD Region Dk</ReportCaption>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Dk id:81057 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Dk</ReportName>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14.30.15;DT2Col=05-03-2024 09.05.07;T1Col=14.30.15;T2Col=09.05.07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567 region=[da-DK];post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07#-1234567;');
         Observer.Verify();
@@ -256,15 +280,18 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Nl");
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Nl id:81059 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Nl</ReportName>|<ReportCaption>BD Region Nl</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-1-2025;D2Col=5-3-2024;DT1Col=31-1-2025 14:30:15;DT2Col=5-3-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[nl-NL];post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Nl id:81059 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Nl</ReportName>|<ReportCaption>BD Region Nl</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Nl id:81059 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Nl</ReportName>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14:30:15;DT2Col=05-03-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567 region=[nl-NL];post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Verify();
@@ -314,15 +341,18 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Es");
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Es id:81062 language="en-US formatRegion="es-ES">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Es</ReportName>|<ReportCaption>BD Region Es</ReportCaption>|<Language>en-US</Language>|<FormatRegion>es-ES</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 9:05:07;T1Col=14:30:15;T2Col=9:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567 region=[es-ES];get=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567 region=[es-ES];post=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Es id:81062 language="en-US formatRegion="es-ES">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Es</ReportName>|<ReportCaption>BD Region Es</ReportCaption>|<Language>en-US</Language>|<FormatRegion>es-ES</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Es id:81062 language="en-US formatRegion="es-ES">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Es</ReportName>|<Language>en-US</Language>|<FormatRegion>es-ES</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/1/2025;D2Col=5/3/2024;DT1Col=31/1/2025 14:30:15;DT2Col=5/3/2024 9:05:07;T1Col=14:30:15;T2Col=9:05:07;IntCol=-1234567;TextsCol=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567 region=[es-ES];get=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567 region=[es-ES];post=1.234.567,891#-1.234,5#31/01/25#05/03/24#5 de March de 2024#31/01/25 14:30#05/03/24 09:05#14:30:15# 9:05:07#-1234567;');
         Observer.Verify();
@@ -338,15 +368,18 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region Se");
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Se id:81063 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Se</ReportName>|<ReportCaption>BD Region Se</ReportCaption>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=2025-01-31;D2Col=2024-03-05;DT1Col=2025-01-31 14:30:15;DT2Col=2024-03-05 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567 region=[sv-SE];post=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Se id:81063 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Se</ReportName>|<ReportCaption>BD Region Se</ReportCaption>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Se id:81063 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Se</ReportName>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=−1234,5;D1Col=2025-01-31;D2Col=2024-03-05;DT1Col=2025-01-31 14:30:15;DT2Col=2024-03-05 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=−1234567;TextsCol=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567 region=[sv-SE];post=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Verify();
@@ -362,15 +395,18 @@ codeunit 81070 "BD Region Tests"
     begin
         Log.Take();
         Dataset(Observer, Report::"BD Region No");
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region No id:81064 language="en-US formatRegion="nb-NO">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region No</ReportName>|<ReportCaption>BD Region No</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nb-NO</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[nb-NO];get=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[nb-NO];post=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region No id:81064 language="en-US formatRegion="nb-NO">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region No</ReportName>|<ReportCaption>BD Region No</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nb-NO</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region No id:81064 language="en-US formatRegion="nb-NO">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region No</ReportName>|<Language>en-US</Language>|<FormatRegion>nb-NO</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=−1234,5;D1Col=31.01.2025;D2Col=05.03.2024;DT1Col=31.01.2025 14:30:15;DT2Col=05.03.2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=−1234567;TextsCol=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[nb-NO];get=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[nb-NO];post=1 234 567,891#-1 234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
         Observer.Verify();
@@ -552,15 +588,22 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'en-GB', true, 0);
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1,234,567.891#-1,234.5#31/01/25#05/03/24#05 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="en-GB">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>en-GB</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
         Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[en-GB];get=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1,234,567.891#-1,234.5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
         Observer.Expect('run ok', 'Yes');
@@ -599,15 +642,22 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'nl-NL', true, 0);
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-1-2025;D2Col=5-3-2024;DT1Col=31-1-2025 14:30:15;DT2Col=5-3-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="nl-NL">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>nl-NL</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14:30:15;DT2Col=05-03-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
         Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[nl-NL];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5 March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
         Observer.Expect('run ok', 'Yes');
@@ -666,15 +716,22 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'sv-SE', true, 0);
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=2025-01-31;D2Col=2024-03-05;DT1Col=2025-01-31 14:30:15;DT2Col=2024-03-05 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07 language=1033 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07 language=1033 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#25-01-31#24-03-05#den 5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="sv-SE">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>sv-SE</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=−1234,5;D1Col=2025-01-31;D2Col=2024-03-05;DT1Col=2025-01-31 14:30:15;DT2Col=2024-03-05 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
         Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07 language=1033 region=[sv-SE];get=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#25-01-31#24-03-05#5 March 2024#25-01-31 14:30#24-03-05 09:05#14:30:15#09:05:07;');
         Observer.Expect('run ok', 'Yes');
@@ -774,6 +831,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'fr-FR', true, 0);
+#if BC29PLUS and LT_HELD_BCLINUX_167
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // Held on Linux BC 29 (LT_HELD_BCLINUX_167, bc-linux #167): the image at dbee8022 still differs (fr-FR group separator: Linux U+202F, Windows U+00A0); the #else branch keeps the Linux value.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
+#else
 #if BC29PLUS
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
 #else
@@ -786,6 +855,7 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('run|code', '');
         Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1033 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 March 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
         Observer.Verify();
+#endif
     end;
 
     [Test]
@@ -794,15 +864,22 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'da-DK', true, 0);
-#if LT_HELD_BCLINUX_157
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // The Linux image at dbee8022 gives the same values (corpus CI 2026-10-20), so BC 29 has no hold.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14:30:15;DT2Col=05-03-2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07 language=1033 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14:30#05-03-24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_157
         // Held on Linux (LT_HELD_BCLINUX_157): these are the Linux values of the image before the bc-linux #157 fix. The image at dbee8022 formats
         // as Windows does, and the Windows runs (2026-10-20) differ from these values, but only the first difference was measured. Re-assert with
         // the full Windows values after the Windows check (windows-queue), then remove this hold; it does not end when bc-linux #157 closes.
-#if BC29PLUS
-        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
-#else
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="en-US formatRegion="da-DK">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<Language>en-US</Language>|<FormatRegion>da-DK</FormatRegion>|');
-#endif
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31-01-2025;D2Col=05-03-2024;DT1Col=31-01-2025 14.30.15;DT2Col=05-03-2024 09.05.07;T1Col=14.30.15;T2Col=09.05.07;TextsCol=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;');
         Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07 language=1033 region=[da-DK];get=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;post=1.234.567,891#-1.234,5#31-01-25#05-03-24#5. March 2024#31-01-25 14.30#05-03-24 09.05#14.30.15#09.05.07;');
         Observer.Expect('run ok', 'Yes');
@@ -1009,6 +1086,18 @@ codeunit 81070 "BD Region Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Setter(Observer, 'fr-FR', true, 1030);
+#if BC29PLUS and LT_HELD_BCLINUX_167
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // Held on Linux BC 29 (LT_HELD_BCLINUX_167, bc-linux #167): the image at dbee8022 still differs (fr-FR group separator: Linux U+202F, Windows U+00A0); the #else branch keeps the Linux value.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="da-DK formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>da-DK</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;NegCol[decimalformatter:#,##0.00=-1234,5;D1Col=31/01/2025;D2Col=05/03/2024;DT1Col=31/01/2025 14:30:15;DT2Col=05/03/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;TextsCol=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1030 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Expect('run ok', 'Yes');
+        Observer.Expect('run|text', '');
+        Observer.Expect('run|code', '');
+        Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1030 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
+        Observer.Verify();
+#else
 #if BC29PLUS
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter id:81068 language="da-DK formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter</ReportName>|<ReportCaption>BD Region Setter</ReportCaption>|<Language>da-DK</Language>|<FormatRegion>fr-FR</FormatRegion>|');
 #else
@@ -1021,6 +1110,7 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('run|code', '');
         Observer.Expect('run log', 'before=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM language=1033 region=[];after=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07 language=1030 region=[fr-FR];get=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;post=1 234 567,891#-1 234,5#31/01/25#05/03/24#5 marts 2024#31/01/25 14:30#05/03/24 09:05#14:30:15#09:05:07;');
         Observer.Verify();
+#endif
     end;
 
     [Test]
@@ -1031,6 +1121,14 @@ codeunit 81070 "BD Region Tests"
         Log.SetCulture('fr-FR', true, 0);
         Dataset(Observer, Report::"BD Region Setter De");
         Log.SetCulture('', false, 0);
+#if BC29PLUS and LT_HELD_BCLINUX_167
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue): every key measured (Windows NLS culture data; U+00A0 is a no-break space).
+        // Held on Linux BC 29 (LT_HELD_BCLINUX_167, bc-linux #167): the image at dbee8022 still differs (fr-FR group separator: Linux U+202F, Windows U+00A0); the #else branch keeps the Linux value.
+        Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<ReportCaption>BD Region Setter De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;D2Col=05/03/2024;DT2Col=05/03/2024 09:05:07;TextsCol=1 234 567,891#05/03/24#05/03/24 09:05;');
+        Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];after=1 234 567,891#05/03/24#05/03/24 09:05 region=[fr-FR];get=1 234 567,891#05/03/24#05/03/24 09:05 region=[fr-FR];');
+        Observer.Verify();
+#else
 #if BC29PLUS
         Observer.Expect('header', '<ReportDataSet name="BD Region Setter De id:81076 language="en-US formatRegion="fr-FR">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Setter De</ReportName>|<ReportCaption>BD Region Setter De</ReportCaption>|<Language>en-US</Language>|<FormatRegion>fr-FR</FormatRegion>|');
 #else
@@ -1039,6 +1137,7 @@ codeunit 81070 "BD Region Tests"
         Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567,891;D2Col=05/03/2024;DT2Col=05/03/2024 09:05:07;TextsCol=1 234 567,891#05/03/24#05/03/24 09:05;');
         Observer.Expect('log', 'before=1.234.567,891#05.03.24#05.03.24 09:05 region=[de-DE];after=1 234 567,891#05/03/24#05/03/24 09:05 region=[fr-FR];get=1 234 567,891#05/03/24#05/03/24 09:05 region=[fr-FR];');
         Observer.Verify();
+#endif
     end;
 
     [Test]
