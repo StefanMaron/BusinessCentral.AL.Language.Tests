@@ -5,8 +5,11 @@
     select-tests.py --full-reason TEXT [--head REV] [--repo DIR] [--json FILE] [--github]
     select-tests.py --codeunits JSON [--head REV] [--repo DIR] [--json FILE] [--github]
 
-The change is the tree diff BASE..HEAD (two dots: the merge commit's first parent for a pull request, the branch the
-batch was built on for a dispatched run). Both trees are read from git objects, so no checkout of either is needed.
+The change is the tree diff from the merge base of BASE and HEAD to HEAD (three dots, BASE...HEAD): what HEAD changed
+since it left BASE. For a pull request BASE is the merge commit's first parent, which is also the merge base. For a
+dispatched run BASE is select_base (for example al-runtime-rs-staging): a branch cut from master or from an older
+staging then stays a subset run after master and staging move on. In a shallow clone with no merge base the script
+fetches the missing history first. Both trees are read from git objects, so no checkout of either is needed.
 
 What is selected, per test job of .github/workflows/ci.yml:
   * every test codeunit (Subtype = Test, at least one [Test] procedure) declared in a changed file, and
@@ -260,6 +263,16 @@ class Git:
     def rev(self, rev):
         return self.run('rev-parse', '--verify', rev + '^{commit}').strip()
 
+    def merge_base(self, base, head):
+        try:
+            return self.run('merge-base', base, head).strip()
+        except RuntimeError:
+            if self.run('rev-parse', '--is-shallow-repository').strip() != 'true':
+                raise
+        # a CI checkout (depth 2, select_base fetched with depth 1) has no common history yet: fetch it, then retry
+        self.run('fetch', '--no-tags', '--quiet', '--unshallow', 'origin', base, head)
+        return self.run('merge-base', base, head).strip()
+
     def changed(self, base, head):
         out = self.run('diff', '--name-only', '--no-renames', '-z', base, head)
         return sorted(f for f in out.split('\0') if f)
@@ -396,11 +409,11 @@ def app_of(path, app_dirs):
     return None
 
 
-def select(git, base, head, merge_base=False, ci_text=None):
+def select(git, base, head, merge_base=True, ci_text=None):
     head = git.rev(head)
     base = git.rev(base)
     if merge_base:
-        base = git.run('merge-base', base, head).strip()
+        base = git.merge_base(base, head)
     result = {'base': base, 'head': head, 'mode': 'subset', 'reasons': [], 'changed_files': [], 'apps': {}}
     ci = parse_ci(ci_text if ci_text is not None else git.read(head, [CI_YML]).get(CI_YML, ''))
     if not ci:
@@ -902,7 +915,8 @@ def main(argv=None):
     ap.add_argument('--head', default='HEAD')
     ap.add_argument('--repo', default='.')
     ap.add_argument('--merge-base', action='store_true',
-                    help='diff from the merge base of BASE and HEAD (what a branch changed since it left BASE)')
+                    help='diff from the merge base of BASE and HEAD (what a branch changed since it left BASE); '
+                         'the default, kept for older callers')
     ap.add_argument('--ci-yml', help='read the test jobs from this file instead of HEAD:%s (local measurements)' % CI_YML)
     ap.add_argument('--full-reason')
     ap.add_argument('--codeunits', help='use this selection, a JSON object {test app dir: "ids and lo..hi ranges"}, '
@@ -921,7 +935,7 @@ def main(argv=None):
             if a.codeunits is not None:
                 result = given(git, a.head, a.codeunits, ci_text)
             else:
-                result = select(git, a.base, a.head, a.merge_base, ci_text)
+                result = select(git, a.base, a.head, True, ci_text)
         except Exception as e:  # never block CI on this script: run everything
             result = full({'base': None, 'head': None, 'mode': 'full', 'reasons': [], 'apps': {}},
                           'the selection script failed (%s: %s)' % (type(e).__name__, e))
