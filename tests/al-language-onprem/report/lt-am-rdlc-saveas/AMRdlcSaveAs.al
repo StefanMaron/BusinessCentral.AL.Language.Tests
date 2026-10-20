@@ -485,7 +485,7 @@ codeunit 98603 "LT AM OP SaveAs Tests"
         Observer.Verify();
     end;
 
-#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values) write the docx/xlsx with the marker in the main
     // part and no error. The Linux image pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
     // renderer off at boot, bc-linux #143): held until the pin includes the fixes.
@@ -666,7 +666,7 @@ codeunit 98603 "LT AM OP SaveAs Tests"
     end;
 #endif
 
-#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values) write the docx/xlsx with the marker in the main
     // part and no error. The Linux image pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
     // renderer off at boot, bc-linux #143): held until the pin includes the fixes.

@@ -330,7 +330,7 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     end;
 #endif
 
-#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned Linux image fails in
     // the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     [Test]
@@ -354,7 +354,7 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     end;
 #endif
 
-#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+#if not BC29PLUS or (LT_HELD_BCLINUX_143 and BC29PLUS)
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned Linux image fails in
     // the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     [Test]
