@@ -68,7 +68,6 @@ table 86188 "LT PX Itm"
         field(3; Plain; Code[10]) { }
         field(4; Qty; Integer) { }
         field(5; Closing; Date) { ClosingDates = true; }
-        field(6; CapFld; Text[30]) { CaptionClass = 'LTPX,FieldA'; }
         field(7; LkTrig; Code[10])
         {
             trigger OnLookup()
@@ -87,7 +86,18 @@ table 86188 "LT PX Itm"
         }
         field(10; "Date Filter"; Date) { FieldClass = FlowFilter; }
         field(11; Qty2; Integer) { }
-        field(12; CapFld2; Text[30]) { CaptionClass = 'LTPX,FieldB'; }
+        field(13; P1; Code[10]) { }
+        field(14; P2; Code[10]) { }
+        field(15; P3; Code[10]) { }
+        field(16; P4; Code[10]) { }
+        field(17; P5; Code[10]) { }
+        field(18; P6; Code[10]) { }
+        field(19; P7; Code[10]) { }
+        field(20; G2f; Code[10]) { TableRelation = "LT PX Grp".Code; }
+        field(21; G3f; Code[10]) { TableRelation = "LT PX Grp".Code; }
+        field(22; P8; Code[10]) { }
+        field(23; G4f; Code[10]) { TableRelation = "LT PX Grp".Code; }
+        field(24; P9; Code[10]) { }
     }
 
     keys
@@ -113,6 +123,30 @@ table 86189 "LT PX Ent"
     {
         key(PK; Entry) { Clustered = true; }
     }
+}
+
+table 86201 "LT PX CapRow"
+{
+    DataClassification = CustomerContent;
+
+    fields
+    {
+        field(1; "No."; Code[10]) { }
+        field(2; CapFld; Text[30]) { CaptionClass = CapText('A'); }
+        field(3; CapFld2; Text[30]) { CaptionClass = CapText('B'); }
+    }
+
+    keys
+    {
+        key(PK; "No.") { Clustered = true; }
+    }
+
+    procedure CapText(Suffix: Text): Text
+    var
+        State: Codeunit "LT PX CC State";
+    begin
+        exit('LTPX,' + State.GetText() + Suffix);
+    end;
 }
 
 page 86190 "LT PX Grp List"
@@ -247,8 +281,8 @@ page 86194 "LT PX Nav Card"
                 field(ClosingOff; Rec.Closing) { ApplicationArea = All; ClosingDates = false; }
                 field(ClosingOn; Rec.Closing) { ApplicationArea = All; }
                 field(GrpCtl; Rec.Grp) { ApplicationArea = All; }
-                field(DdNoRel; Rec.Plain) { ApplicationArea = All; DrillDownPageId = "LT PX Grp List"; }
-                field(DdRel; Rec.Grp) { ApplicationArea = All; DrillDownPageId = "LT PX Grp List"; }
+                field(DdNoRel; Rec.P8) { ApplicationArea = All; DrillDownPageId = "LT PX Grp List"; }
+                field(DdRel; Rec.G4f) { ApplicationArea = All; DrillDownPageId = "LT PX Grp List"; }
                 field(DdBoth; Rec.Qty)
                 {
                     ApplicationArea = All;
@@ -273,16 +307,19 @@ page 86194 "LT PX Nav Card"
                     end;
                 }
                 field(DdFlow; Rec.SumAmt) { ApplicationArea = All; }
-                field(LkWhere; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp".Code where(Descr = const('Open')); }
-                field(LkCond; Rec.Plain) { ApplicationArea = All; TableRelation = if (Kind = const(A)) "LT PX Grp".Code else "LT PX Grp2".Code; }
-                field(LkOverRel; Rec.Grp) { ApplicationArea = All; TableRelation = "LT PX Grp2".Code; }
+                field(LkWhere; Rec.P2) { ApplicationArea = All; TableRelation = "LT PX Grp".Code where(Descr = const('Open')); }
+                field(LkCond; Rec.P3) { ApplicationArea = All; TableRelation = if (Kind = const(A)) "LT PX Grp".Code else "LT PX Grp2".Code; }
+                field(LkOverRel; Rec.G2f) { ApplicationArea = All; TableRelation = "LT PX Grp2".Code; }
                 field(LkOverTrig; Rec.LkTrig) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; }
-                field(LkDiffPage; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; LookupPageId = "LT PX Grp Alt List"; }
-                field(LkOnlyDd; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp2".Code; }
-                field(LkNone; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp3".Code; }
-                field(LkOtherTable; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; LookupPageId = "LT PX Ent List"; }
-                field(LkPageOverRel; Rec.Grp) { ApplicationArea = All; LookupPageId = "LT PX Grp Alt List"; }
-                field(LkPlainRel; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; }
+                field(LkDiffPage; Rec.P4) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; LookupPageId = "LT PX Grp Alt List"; }
+                field(LkOnlyDd; Rec.P5) { ApplicationArea = All; TableRelation = "LT PX Grp2".Code; }
+                field(LkNone; Rec.P6) { ApplicationArea = All; TableRelation = "LT PX Grp3".Code; }
+                field(LkOtherTable; Rec.P7) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; LookupPageId = "LT PX Ent List"; }
+                field(LkPageOverRel; Rec.G3f) { ApplicationArea = All; LookupPageId = "LT PX Grp Alt List"; }
+                field(LkPlainRel; Rec.P1) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; }
+                field(LkPlainRelEmpty; Rec.P9) { ApplicationArea = All; TableRelation = "LT PX Grp".Code; }
+                field(SharedFirst; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp".Code where(Descr = const('Open')); }
+                field(SharedSecond; Rec.Plain) { ApplicationArea = All; TableRelation = "LT PX Grp2".Code; }
             }
         }
     }
@@ -291,7 +328,7 @@ page 86194 "LT PX Nav Card"
 page 86195 "LT PX Cap Card"
 {
     PageType = Card;
-    SourceTable = "LT PX Itm";
+    SourceTable = "LT PX CapRow";
     ApplicationArea = All;
     UsageCategory = None;
 
@@ -427,7 +464,7 @@ codeunit 86199 "LT PX Cap Tests"
 
     local procedure Seed()
     var
-        Itm: Record "LT PX Itm";
+        Itm: Record "LT PX CapRow";
     begin
         Itm.DeleteAll();
         Itm."No." := 'I1';
@@ -574,6 +611,17 @@ codeunit 86200 "LT PX Nav Tests"
         Itm.Grp := 'G2';
         Itm.Plain := 'G2';
         Itm.LkTrig := 'G2';
+        Itm.P1 := 'G2';
+        Itm.P2 := 'G2';
+        Itm.P3 := 'G2';
+        Itm.P4 := 'G2';
+        Itm.P5 := 'G2';
+        Itm.P6 := 'G2';
+        Itm.P7 := 'G2';
+        Itm.P8 := 'G2';
+        Itm.G2f := 'G2';
+        Itm.G3f := 'G2';
+        Itm.G4f := 'G2';
         Itm.Insert();
         Log.Take();
     end;
@@ -598,12 +646,49 @@ codeunit 86200 "LT PX Nav Tests"
         Ent.Insert();
     end;
 
-    local procedure Stored(): Text
+    local procedure Stored(Which: Text): Text
     var
         Itm: Record "LT PX Itm";
     begin
         Itm.Get('I1');
-        exit('grp=' + Itm.Grp + ' plain=' + Itm.Plain + ' lktrig=' + Itm.LkTrig);
+        case Which of
+            'DdNoRel':
+                exit(Itm.P8);
+            'DdRel':
+                exit(Itm.G4f);
+            'DdBoth':
+                exit(Format(Itm.Qty));
+            'DdErr':
+                exit(Format(Itm.Qty2));
+            'DdFlow':
+                exit(Format(Itm.Qty));
+            'GrpCtl':
+                exit(Itm.Grp);
+            'LkWhere':
+                exit(Itm.P2);
+            'LkCond':
+                exit(Itm.P3);
+            'LkOverRel':
+                exit(Itm.G2f);
+            'LkOverTrig':
+                exit(Itm.LkTrig);
+            'LkDiffPage':
+                exit(Itm.P4);
+            'LkOnlyDd':
+                exit(Itm.P5);
+            'LkNone':
+                exit(Itm.P6);
+            'LkOtherTable':
+                exit(Itm.P7);
+            'LkPageOverRel':
+                exit(Itm.G3f);
+            'LkPlainRel':
+                exit(Itm.P1);
+            'LkPlainRelEmpty':
+                exit(Itm.P9);
+            'SharedSecond':
+                exit(Itm.Plain);
+        end;
     end;
 
     [PageHandler]
@@ -728,6 +813,10 @@ codeunit 86200 "LT PX Nav Tests"
                 Card.LkPageOverRel.Lookup();
             'LkPlainRel':
                 Card.LkPlainRel.Lookup();
+            'LkPlainRelEmpty':
+                Card.LkPlainRelEmpty.Lookup();
+            'SharedSecond':
+                Card.SharedSecond.Lookup();
         end;
     end;
 
@@ -745,16 +834,21 @@ codeunit 86200 "LT PX Nav Tests"
         end;
         Itm.Get('I1');
         Itm.SetFilter("Date Filter", '%1..%2', DMY2Date(1, 1, 2025), DMY2Date(31, 1, 2025));
-        Card.Trap();
-        Page.Run(Page::"LT PX Nav Card", Itm);
+        if Kind = 2 then begin
+            Which += '@openedit';
+            Card.OpenEdit();
+        end else begin
+            Card.Trap();
+            Page.Run(Page::"LT PX Nav Card", Itm);
+        end;
         ClearLastError();
-        Ok := TryNav(Card, Which);
+        Ok := TryNav(Card, Which.Replace('@openedit', ''));
         Observer.Observe(Which + ':ok', Format(Ok));
         if not Ok then
             Observer.ObserveError(Which + ':err');
         Observer.Observe(Which + ':log', Log.Take());
         Card.Close();
-        Observer.Observe(Which + ':stored', Stored());
+        Observer.Observe(Which + ':stored', Stored(Which.Replace('@openedit', '')));
     end;
 
     [Test]
@@ -764,7 +858,9 @@ codeunit 86200 "LT PX Nav Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'DdNoRel', 0);
+        Probe(Observer, 'DdNoRel', 2);
         Probe(Observer, 'DdRel', 0);
+        Probe(Observer, 'DdRel', 2);
         Probe(Observer, 'DdBoth', 0);
         Probe(Observer, 'DdErr', 0);
         Probe(Observer, 'DdFlow', 0);
@@ -783,12 +879,23 @@ codeunit 86200 "LT PX Nav Tests"
         Probe(Observer, 'LkCond', 0);
         Probe(Observer, 'LkCond', 1);
         Probe(Observer, 'LkOverRel', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_ControlLookups2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkOverTrig', 0);
         Probe(Observer, 'LkDiffPage', 0);
         Probe(Observer, 'LkOnlyDd', 0);
         Probe(Observer, 'LkNone', 0);
         Probe(Observer, 'LkOtherTable', 0);
         Probe(Observer, 'LkPageOverRel', 0);
+        Probe(Observer, 'LkPlainRelEmpty', 0);
+        Probe(Observer, 'SharedSecond', 0);
         Observer.Finish();
     end;
 
@@ -832,7 +939,10 @@ codeunit 86200 "LT PX Nav Tests"
         Result += ' | off=' + Card.ClosingOff.Value() + ' on=' + Card.ClosingOn.Value();
         Card.Close();
         Itm.Get('I1');
-        exit(Result + ' | stored=' + Format(Itm.Closing) + ' closing=' + Format((Itm.Closing <> 0D) and (Itm.Closing = ClosingDate(NormalDate(Itm.Closing)))));
+        Result += ' | stored=' + Format(Itm.Closing);
+        if Itm.Closing <> 0D then
+            Result += ' closing=' + Format(Itm.Closing = ClosingDate(NormalDate(Itm.Closing)));
+        exit(Result);
     end;
 
     [TryFunction]
