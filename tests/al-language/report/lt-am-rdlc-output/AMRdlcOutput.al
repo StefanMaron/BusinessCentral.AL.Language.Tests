@@ -12,7 +12,8 @@
 // PDF bytes are never compared (not stable) and PDF text is compressed, so only the page count is asserted.
 // SaveAs Word and Excel of an RDLC layout: asserted with the Windows BC 27.5/28.5 values (Windows check 2026-10-20: zip with the marker, no
 // error) and held on Linux under LT_HELD_BCLINUX_144: the pinned Linux image returns false with 'The system encountered an internal error
-// while rendering the report.' (ReportingService:Rpc) after OnPreRendering. BC 29.0 not measured on Windows yet.
+// while rendering the report.' (ReportingService:Rpc) after OnPreRendering. Windows BC 29.0 (check 2026-10-20) gives the same values; held on
+// 29 under LT_HELD_BCLINUX_143 (the BC 29 Linux container turns the renderer off at boot).
 // BC versions: 27 - 29
 
 codeunit 79259 "LT AM Rdlc Log"
@@ -329,9 +330,9 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     end;
 #endif
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20). Held on Linux: the pinned Linux image fails in the Mono renderer (ReportingService:Rpc,
-    // bc-linux #144). BC 29.0 not measured on Windows yet.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned Linux image fails in
+    // the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     [Test]
     procedure TextRdlc_SaveAsWord()
     var
@@ -353,9 +354,9 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     end;
 #endif
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20). Held on Linux: the pinned Linux image fails in the Mono renderer (ReportingService:Rpc,
-    // bc-linux #144). BC 29.0 not measured on Windows yet.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned Linux image fails in
+    // the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     [Test]
     procedure TextRdlc_SaveAsExcel()
     var
