@@ -452,4 +452,143 @@ codeunit 67755 "W3 Dataset Probe"
 #endif
         Observer.Verify();
     end;
+#if BC29PLUS
+    // Writer PW: the raw text of the "W3 Hdr Plain" dataset split at line feeds (a CR shows as \r), the lines Header_RawText_LineEndsAndIndentation
+    // counts CR bytes in. failure-triage "dataset raw line counts" (67755 Header_RawText_LineEndsAndIndentation).
+    // A line longer than 200 characters (the base64 company logo) is shown as its first 40 characters and its length.
+    local procedure PwShort(Line: Text): Text
+    begin
+        if StrLen(Line) <= 200 then
+            exit(Line);
+        exit(CopyStr(Line, 1, 40) + '...<length ' + Format(StrLen(Line)) + '>');
+    end;
+
+    local procedure PwDumpPlain(First: Integer; Last: Integer; var Observer: Codeunit "Probe Observer")
+    var
+        Xml: Text;
+        Lines: List of [Text];
+        i: Integer;
+    begin
+        Seed(true, false);
+        Dataset.Save(Report::"W3 Hdr Plain", '', Xml);
+        Lines := Xml.Split(Dataset.Lf());
+        Observer.Observe('lines', Format(Lines.Count()));
+        for i := First to Last do
+            if i <= Lines.Count() then
+                Observer.Observe('l' + Format(i), PwShort(Lines.Get(i)));
+    end;
+
+    [Test]
+    procedure PW_DumpPlain_Lines01To18()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwDumpPlain(1, 18, Observer);
+        Observer.Expect('lines', '88');
+        Observer.Expect('l1', '<?xml version="1.0" standalone="yes"?>');
+        Observer.Expect('l2', '<ReportDataSet name="W3 Hdr Plain" id="67750" language="en-US" formatRegion="en-US">');
+        Observer.Expect('l3', '  <BCReportInformation>x');
+        Observer.Expect('l4', '    <ReportMetadata>');
+        Observer.Expect('l5', '      <ExtensionId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</ExtensionId>');
+        Observer.Expect('l6', '      <ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>');
+        Observer.Expect('l7', '      <ExtensionPublisher>AL Language</ExtensionPublisher>');
+        Observer.Expect('l8', '      <ExtensionVersion>x</ExtensionVersion>');
+        Observer.Expect('l9', '      <ReportId>67750</ReportId>');
+        Observer.Expect('l10', '      <ReportName>W3 Hdr Plain</ReportName>');
+        Observer.Expect('l11', '      <ReportCaption>W3 Hdr Plain</ReportCaption>');
+        Observer.Expect('l12', '      <AboutThisReportTitle></AboutThisReportTitle>');
+        Observer.Expect('l13', '      <AboutThisReportText></AboutThisReportText>');
+        Observer.Expect('l14', '      <ReportHelpLink></ReportHelpLink>');
+        Observer.Expect('l15', '    </ReportMetadata>');
+        Observer.Expect('l16', '    <ReportRequest>');
+        Observer.Expect('l17', '      <TenantEntraId>x</TenantEntraId>');
+        Observer.Expect('l18', '      <EnvironmentName>x</EnvironmentName>');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_DumpPlain_Lines19To36()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwDumpPlain(19, 36, Observer);
+        Observer.Expect('lines', '88');
+        Observer.Expect('l19', '      <EnvironmentType>x</EnvironmentType>');
+        Observer.Expect('l20', '      <CompanyName>x</CompanyName>');
+        Observer.Expect('l21', '      <CompanyDisplayName>x</CompanyDisplayName>');
+        Observer.Expect('l22', '      <CompanyId>x</CompanyId>');
+        Observer.Expect('l23', '      <UserName>x</UserName>');
+        Observer.Expect('l24', '      <DateAndTime>x</DateAndTime>');
+        Observer.Expect('l25', '      <Language>en-US</Language>');
+        Observer.Expect('l26', '      <FormatRegion>en-US</FormatRegion>');
+        Observer.Expect('l27', '      <DateTimeValues>');
+        Observer.Expect('l28', '        <Year>x</Year>');
+        Observer.Expect('l29', '        <MonthNumber>x</MonthNumber>');
+        Observer.Expect('l30', '        <DayNumber>x</DayNumber>');
+        Observer.Expect('l31', '        <Hour>x</Hour>');
+        Observer.Expect('l32', '        <Minute>x</Minute>');
+        Observer.Expect('l33', '      </DateTimeValues>');
+        Observer.Expect('l34', '    </ReportRequest>');
+        Observer.Expect('l35', '    <CompanyMetadata>');
+        Observer.Expect('l36', '      <CompanyName>x</CompanyName>');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_DumpPlain_Lines37To54()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwDumpPlain(37, 54, Observer);
+        Observer.Expect('lines', '88');
+        Observer.Expect('l37', '      <CompanyDisplayName>x</CompanyDisplayName>');
+        Observer.Expect('l38', '      <CompanyAddressLines>');
+        Observer.Expect('l39', '        <CompanyAddressLine1><Company></CompanyAddressLine1>');
+        Observer.Expect('l40', '        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2>');
+        Observer.Expect('l41', '        <CompanyAddressLine3>Westminster</CompanyAddressLine3>');
+        Observer.Expect('l42', '        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4>');
+        Observer.Expect('l43', '        <CompanyAddressLine5>Great Britain</CompanyAddressLine5>');
+        Observer.Expect('l44', '        <CompanyAddressLine6></CompanyAddressLine6>');
+        Observer.Expect('l45', '        <CompanyAddressLine7></CompanyAddressLine7>');
+        Observer.Expect('l46', '        <CompanyAddressLine8></CompanyAddressLine8>');
+        Observer.Expect('l47', '      </CompanyAddressLines>');
+        Observer.Expect('l48', '      <CompanyPhone>0666-666-6666</CompanyPhone>');
+        Observer.Expect('l49', '      <CompanyPhoneCaption>Phone No.</CompanyPhoneCaption>');
+        Observer.Expect('l50', '      <CompanyFaxNo>0666-666-6660</CompanyFaxNo>');
+        Observer.Expect('l51', '      <CompanyFaxNoCaption>Fax No.</CompanyFaxNoCaption>');
+        Observer.Expect('l52', '      <CompanyEmail></CompanyEmail>');
+        Observer.Expect('l53', '      <CompanyEmailCaption>Email</CompanyEmailCaption>');
+        Observer.Expect('l54', '      <CompanyHomePage></CompanyHomePage>');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_DumpPlain_Lines55To72()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PwDumpPlain(55, 72, Observer);
+        Observer.Expect('lines', '88');
+        Observer.Expect('l55', '      <CompanyHomePageCaption>Home Page</CompanyHomePageCaption>');
+        Observer.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEU...<length 26721>');
+        Observer.Expect('l57', '      <CompanyVATRegistrationNo>777777777</CompanyVATRegistrationNo>');
+        Observer.Expect('l58', '      <CompanyVATRegistrationNoCaption>VAT Registration No.</CompanyVATRegistrationNoCaption>');
+        Observer.Expect('l59', '      <CompanyRegistrationNo></CompanyRegistrationNo>');
+        Observer.Expect('l60', '      <CompanyRegistrationNoCaption>Registration No.</CompanyRegistrationNoCaption>');
+        Observer.Expect('l61', '      <CompanyBankName>World Wide Bank</CompanyBankName>');
+        Observer.Expect('l62', '      <CompanyBankNameCaption>Bank Name</CompanyBankNameCaption>');
+        Observer.Expect('l63', '      <CompanyBankAccountNo>99-99-888</CompanyBankAccountNo>');
+        Observer.Expect('l64', '      <CompanyBankAccountNoCaption>Bank Account No.</CompanyBankAccountNoCaption>');
+        Observer.Expect('l65', '      <CompanyBankBranchNo>BG99999</CompanyBankBranchNo>');
+        Observer.Expect('l66', '      <CompanyBankBranchNoCaption>Bank Branch No.</CompanyBankBranchNoCaption>');
+        Observer.Expect('l67', '      <CompanyIBAN>GB 12 CPBK 08929965044991</CompanyIBAN>');
+        Observer.Expect('l68', '      <CompanyIBANCaption>IBAN</CompanyIBANCaption>');
+        Observer.Expect('l69', '      <CompanyBankSWIFT></CompanyBankSWIFT>');
+        Observer.Expect('l70', '      <CompanyBankSWIFTCaption>SWIFT Code</CompanyBankSWIFTCaption>');
+        Observer.Expect('l71', '      <CompanyGiroNo>888-9999</CompanyGiroNo>');
+        Observer.Expect('l72', '      <CompanyGiroNoCaption>Giro No.</CompanyGiroNoCaption>');
+        Observer.Verify();
+    end;
+#endif
+
 }

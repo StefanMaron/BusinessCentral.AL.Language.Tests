@@ -448,6 +448,38 @@ codeunit 72022 "LT HtT Headers Errors"
         Observer.Expect('af342|code', 'InvalidHeader:InvalidOperation');
         Observer.Verify();
     end;
+#if not BC28PLUS
+    // Writer PW: docs/probes-needed.md "Values and builtins": HttpHeaders.Add with a name of blanks on BC 27 (InvalidNames above, a BC28PLUS
+    // test, pins BC 28 and 29). The same calls as InvalidNames.
+    [Test]
+    procedure PW_InvalidNames_Bc27()
+    var
+        Headers: HttpHeaders;
+    begin
+        NewHeaders(Headers);
+        asserterror Headers.Add('', 'v');
+        Observer.ObserveError('emptyName');
+        asserterror Headers.Add(' ', 'v');
+        Observer.ObserveError('blankName');
+        asserterror Headers.Add('   ', 'v');
+        Observer.ObserveError('threeBlanksName');
+        asserterror Headers.Add('Bad Name', 'v');
+        Observer.ObserveError('spaceInName');
+        asserterror Headers.Add('Bad:Name', 'v');
+        Observer.ObserveError('colonInName');
+        Observer.Expect('emptyName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('emptyName|code', 'InvalidHeader:Argument');
+        Observer.Expect('blankName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('blankName|code', 'InvalidHeader:Argument');
+        Observer.Expect('threeBlanksName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('threeBlanksName|code', 'InvalidHeader:Argument');
+        Observer.Expect('spaceInName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('spaceInName|code', 'InvalidHeader:Format');
+        Observer.Expect('colonInName|text', 'Invalid HTTP header. Please, make sure the format of the header is correct.');
+        Observer.Expect('colonInName|code', 'InvalidHeader:Format');
+        Observer.Verify();
+    end;
+#endif
 }
 
 codeunit 72023 "LT HtT Headers Secret"
