@@ -663,7 +663,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -677,7 +679,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -691,7 +695,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[LP.OnNewRecord: | LP.OnNewRecord: | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -707,7 +713,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -721,7 +729,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | NP.OnNewRecord: below=Yes | NP.OnNewRecord: below=Yes | L.OnValidate(Document No.): | NP.OnNewRecord: below=Yes]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -735,7 +745,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | L.OnValidate(Document No.): | BP.OnNewRecord: below=Yes | BP.OnNewRecord: below=Yes | L.OnValidate(Document No.): | BP.OnNewRecord: below=Yes]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -749,7 +761,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -759,8 +773,48 @@ codeunit 67582 "LT DL Tests"
         Host: TestPage "LT PYB DL Doc Const";
     begin
         Seed();
+        Observer.Observe('open_new', Format(TryOpenConst(Host)));
+        Observer.ObserveError('open_new_error');
+        TakeLog(Observer, 'open_new_log');
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure TryOpenConst(var Host: TestPage "LT PYB DL Doc Const")
+    begin
+        Host.OpenNew();
+    end;
+
+    [Test]
+    procedure PYB_OpenEdit_HostWithoutLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+        Header: Record "LT DL Header";
+    begin
+        Seed();
+        Header."No." := 'D8';
+        Header.Insert();
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.New();
+        TakeLog(Observer, 'host_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_ThenHostNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
         Host.OpenNew();
         TakeLog(Observer, 'open_new');
+        Host.New();
+        TakeLog(Observer, 'host_new');
         Host.Close();
         TakeLog(Observer, 'close');
         Observer.Finish();
@@ -780,7 +834,10 @@ codeunit 67582 "LT DL Tests"
         Observer.Observe('part_first_description', Host.Lines.Description.Value());
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('part_first_description', 'seeded');
+        Observer.Expect('close', '[HP.OnInsertRecord: | H.OnInsert:]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -800,7 +857,10 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'host_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[]');
+        Observer.Expect('host_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -817,7 +877,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_view');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[LP.OnNewRecord:D6]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -838,7 +900,36 @@ codeunit 67582 "LT DL Tests"
         Stored(Observer, 'after_line');
         Step(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', 'Yes');
+        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('type_name', 'Yes');
+        Observer.Expect('type_name_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | H.OnValidate(Name):N1 key= | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('after_name_headers', '1');
+        Observer.Expect('after_name_header_rows', '[|]');
+        Observer.Expect('after_name_lines', '0');
+        Observer.Expect('after_name_line_rows', '');
+        Observer.Expect('type_key', 'Yes');
+        Observer.Expect('type_key_log', '[H.OnValidate(No.):D7]');
+        Observer.Expect('after_key_card_no', '[]');
+        Observer.Expect('after_key_headers', '1');
+        Observer.Expect('after_key_header_rows', '[|]');
+        Observer.Expect('after_key_lines', '0');
+        Observer.Expect('after_key_line_rows', '');
+        Observer.Expect('new_line', 'Yes');
+        Observer.Expect('new_line_log', '[L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('description', 'Yes');
+        Observer.Expect('description_log', '[L.OnValidate(Description):x key=/0]');
+        Observer.Expect('after_line_headers', '1');
+        Observer.Expect('after_line_header_rows', '[|]');
+        Observer.Expect('after_line_lines', '0');
+        Observer.Expect('after_line_line_rows', '');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[LP.OnInsertRecord:/20000 | L.OnInsert:/20000]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|20000|x|0]');
+        Observer.Verify();
     end;
 
 }

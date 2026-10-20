@@ -343,7 +343,17 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Observer.Observe('code_value_after_descr', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
-        Observer.Finish();
+        Observer.Expect('code', 'ok');
+        Observer.Expect('db_after_code', '0 ');
+        Observer.Expect('code_value', '[G1]');
+        Observer.Expect('descr_value', '[]');
+        Observer.Expect('h_filter', '[G1]');
+        Observer.Expect('g_filter', '[G1]');
+        Observer.Expect('descr', 'ok');
+        Observer.Expect('db_after_descr', '1 [G1|]');
+        Observer.Expect('code_value_after_descr', '[G1]');
+        Observer.Expect('db_after_close', '1 [G1|d1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -359,7 +369,11 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
-        Observer.Finish();
+        Observer.Expect('code', 'ok');
+        Observer.Expect('db_after_code', '0 ');
+        Observer.Expect('code_value', '[X1]');
+        Observer.Expect('db_after_close', '1 [X1|]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -377,7 +391,13 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
-        Observer.Finish();
+        Observer.Expect('descr', 'ok');
+        Observer.Expect('db_after_descr', '1 [|]');
+        Observer.Expect('code', 'ok');
+        Observer.Expect('db_after_code', '1 [|]');
+        Observer.Expect('code_value', '[]');
+        Observer.Expect('db_after_close', '1 [|d1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -397,7 +417,13 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Observer.Observe('code_value_after_descr', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
-        Observer.Finish();
+        Observer.Expect('db_after_code', '0 ');
+        Observer.Expect('code_value', '[G1]');
+        Observer.Expect('g_filter', '[G1]');
+        Observer.Expect('db_after_descr', '1 [G1|]');
+        Observer.Expect('code_value_after_descr', '[G1]');
+        Observer.Expect('db_after_close', '1 [G1|d1]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -414,6 +440,48 @@ codeunit 71254 "LT Part Link Unsaved Host"
         Card.Descr.SetValue('d1');
         Observer.Observe('db_after_descr', HostRows());
         Observer.Observe('code_value_after_descr', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Expect('db_after_code', '0 ');
+        Observer.Expect('code_value', '[G1]');
+        Observer.Expect('db_after_descr', '1 [G1|]');
+        Observer.Expect('code_value_after_descr', '[G1]');
+        Observer.Expect('db_after_close', '1 [G1|d1]');
+        Observer.Verify();
+    end;
+
+
+    [Test]
+    procedure PYB_TwoParts_PartFirstThenKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PLK Card";
+    begin
+        Seed();
+        Card.OpenNew();
+        Observer.Observe('h_first', Format(Card.LinesH.First()));
+        Observer.Observe('db_after_first', HostRows());
+        Card.Code.SetValue('G1');
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
+        Card.Close();
+        Observer.Observe('db_after_close', HostRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYB_NoPart_DescrFirstThenKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT PYB PLK Card None";
+    begin
+        Seed();
+        Card.OpenNew();
+        Card.Descr.SetValue('d1');
+        Observer.Observe('db_after_descr', HostRows());
+        Card.Code.SetValue('G1');
+        Observer.Observe('db_after_code', HostRows());
+        Observer.Observe('code_value', '[' + Card.Code.Value() + ']');
         Card.Close();
         Observer.Observe('db_after_close', HostRows());
         Observer.Finish();

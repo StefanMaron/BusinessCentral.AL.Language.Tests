@@ -361,7 +361,27 @@ codeunit 74141 "LT New Line Stamps Filters"
         Step('close', TryClose(Host));
         Obs.Observe('after_close.headers', Headers());
         ObserveLines('after_close');
-        Obs.Finish();
+        Obs.Expect('open.headers', '0 ');
+        Obs.Expect('open.card', '[|A]');
+        Obs.Expect('open.filter_b', '['''']');
+        Obs.Expect('open.filter_plain', '['''']');
+        Obs.Expect('set_type', 'ok');
+        Obs.Expect('after_type.headers', '1 [|A]');
+        Obs.Expect('after_type.card', '[|B]');
+        Obs.Expect('after_type.filter_b', '['''']');
+        Obs.Expect('after_type.filter_plain', '['''']');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '1 [|A]');
+        Obs.Expect('after_no.card', '[|B]');
+        Obs.Expect('after_no.filter_b', '['''']');
+        Obs.Expect('after_no.filter_plain', '['''']');
+        Obs.Expect('line', 'ok');
+        Obs.Expect('after_line.count', '0');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|B]');
+        Obs.Expect('after_close.count', '1');
+        Obs.Expect('after_close.first', '|A|A|x');
+        Obs.Verify();
     end;
 
     [Test]
@@ -380,7 +400,23 @@ codeunit 74141 "LT New Line Stamps Filters"
         Step('close', TryClose(Host));
         Obs.Observe('after_close.headers', Headers());
         ObserveLines('after_close');
-        Obs.Finish();
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '0 ');
+        Obs.Expect('after_no.card', '[HN|A]');
+        Obs.Expect('after_no.filter_b', '[HN]');
+        Obs.Expect('after_no.filter_plain', '[HN]');
+        Obs.Expect('set_type', 'ok');
+        Obs.Expect('after_type.headers', '1 [HN|A]');
+        Obs.Expect('after_type.card', '[HN|B]');
+        Obs.Expect('after_type.filter_b', '[HN]');
+        Obs.Expect('after_type.filter_plain', '[HN]');
+        Obs.Expect('line', 'ok');
+        Obs.Expect('after_line.count', '0');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [HN|B]');
+        Obs.Expect('after_close.count', '1');
+        Obs.Expect('after_close.first', 'HN|A|A|x');
+        Obs.Verify();
     end;
 
     [Test]
@@ -396,7 +432,19 @@ codeunit 74141 "LT New Line Stamps Filters"
         Snapshot('after_no', Host);
         Step('close', TryClose(Host));
         Obs.Observe('after_close.headers', Headers());
-        Obs.Finish();
+        Obs.Expect('set_type', 'ok');
+        Obs.Expect('after_type.headers', '1 [|A]');
+        Obs.Expect('after_type.card', '[|A]');
+        Obs.Expect('after_type.filter_b', '['''']');
+        Obs.Expect('after_type.filter_plain', '['''']');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '1 [|A]');
+        Obs.Expect('after_no.card', '[|A]');
+        Obs.Expect('after_no.filter_b', '['''']');
+        Obs.Expect('after_no.filter_plain', '['''']');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|A]');
+        Obs.Verify();
     end;
 
     [Test]
@@ -413,7 +461,14 @@ codeunit 74141 "LT New Line Stamps Filters"
         Obs.Observe('after_next.card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
         Step('close', TryClose(Host));
         Obs.Observe('after_close.headers', Headers());
-        Obs.Finish();
+        Obs.Expect('set_type', 'ok');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('next', 'No');
+        Obs.Expect('after_next.headers', '1 [|B]');
+        Obs.Expect('after_next.card', '[|B]');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|B]');
+        Obs.Verify();
     end;
 
 }
