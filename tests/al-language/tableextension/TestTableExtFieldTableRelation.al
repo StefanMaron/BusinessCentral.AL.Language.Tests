@@ -296,4 +296,148 @@ codeunit 60827 "Test TableExt Field Relation"
         Observer.Expect('z_none|code', '');
         Observer.Verify();
     end;
+
+    // ---- writer PY-D (2026-10-20): more modify(TableRelation) combinations (objects in lt-pyd-relation/PydRelationObjects.al) ----
+
+    [TryFunction]
+    local procedure PydTryValidate(var Base: Record "LT PYD Rel Base"; FieldNo: Integer; Value: Code[20])
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.GetTable(Base);
+        RecRef.Field(FieldNo).Validate(Value);
+        RecRef.SetTable(Base);
+    end;
+
+    local procedure PydProbe(var Observer: Codeunit "Probe Observer"; Name: Text; Kind: Option; FieldNo: Integer; Value: Code[20])
+    var
+        Base: Record "LT PYD Rel Base";
+    begin
+        Base.Init();
+        Base.Id := 1;
+        Base.Kind := Kind;
+        ClearLastError();
+        Observer.Observe(Name, Format(PydTryValidate(Base, FieldNo, Value)));
+        Observer.ObserveError(Name);
+    end;
+
+    local procedure PydAll(var Observer: Codeunit "Probe Observer"; Prefix: Text; FieldNo: Integer; Part: Integer)
+    var
+        Base: Record "LT PYD Rel Base";
+    begin
+        BsSeedTargets();
+        if Part = 2 then begin
+            PydProbe(Observer, Prefix + 'z_a', Base.Kind::Z, FieldNo, 'ONLYA');
+            PydProbe(Observer, Prefix + 'z_b', Base.Kind::Z, FieldNo, 'ONLYB');
+            PydProbe(Observer, Prefix + 'z_none', Base.Kind::Z, FieldNo, 'NONE');
+            exit;
+        end;
+        PydProbe(Observer, Prefix + 'x_a', Base.Kind::X, FieldNo, 'ONLYA');
+        PydProbe(Observer, Prefix + 'x_b', Base.Kind::X, FieldNo, 'ONLYB');
+        PydProbe(Observer, Prefix + 'y_a', Base.Kind::Y, FieldNo, 'ONLYA');
+        PydProbe(Observer, Prefix + 'y_b', Base.Kind::Y, FieldNo, 'ONLYB');
+    end;
+
+    local procedure PydRelNo(var Observer: Codeunit "Probe Observer"; FieldNo: Integer)
+    var
+        FieldRec: Record Field;
+    begin
+        FieldRec.Get(Database::"LT PYD Rel Base", FieldNo);
+        Observer.Observe('relation_table_no', Format(FieldRec.RelationTableNo));
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseConditional_ExtUnconditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'mix_', 3, 1);
+        PydRelNo(Observer, 3);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseConditional_ExtUnconditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'mix_', 3, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseElseArm_ExtConditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'else_', 4, 1);
+        PydRelNo(Observer, 4);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseElseArm_ExtConditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'else_', 4, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Conditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'two_', 5, 1);
+        PydRelNo(Observer, 5);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Conditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'two_', 5, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Unconditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'twou_', 6, 1);
+        PydRelNo(Observer, 6);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Unconditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'twou_', 6, 2);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseUnconditional_ExtElseArm_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'ue_', 7, 1);
+        PydRelNo(Observer, 7);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseUnconditional_ExtElseArm_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'ue_', 7, 2);
+        Observer.Finish();
+    end;
 }

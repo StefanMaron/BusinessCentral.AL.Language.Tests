@@ -264,4 +264,133 @@ codeunit 80503 "LT AY XPath Axes Variables"
         Observer.Expect('unclosed_name', 'No 0:');
         Observer.Verify();
     end;
+
+    // ---- writer PY-D (2026-10-20): the namespace axis in detail, and following/preceding from an attribute ----
+
+    local procedure PydDescribe(N: XmlNode): Text
+    var
+        A: XmlAttribute;
+        Owner: XmlElement;
+        T: Text;
+    begin
+        if not N.IsXmlAttribute() then
+            exit(NodeName(N));
+        A := N.AsXmlAttribute();
+        T := '[' + A.Name() + '|' + A.LocalName() + '|' + A.NamespacePrefix() + '|' + A.NamespaceUri() + '|' + A.Value() + '|' + Format(A.IsNamespaceDeclaration()) + '|';
+        if N.GetParent(Owner) then
+            T += Owner.Name()
+        else
+            T += '-';
+        exit(T + ']');
+    end;
+
+    local procedure PydQ(var Observer: Codeunit "Probe Observer"; Context: XmlElement; ObsKey: Text; Path: Text)
+    var
+        Nodes: XmlNodeList;
+        N: XmlNode;
+        Ok: Boolean;
+        T: Text;
+    begin
+        ClearLastError();
+        if TrySelect(Context, Path, Nodes, Ok) then begin
+            T := Format(Ok) + ' ' + Format(Nodes.Count()) + ':';
+            foreach N in Nodes do
+                T += PydDescribe(N);
+            Observer.Observe(ObsKey, T);
+        end else
+            Observer.ObserveError(ObsKey);
+    end;
+
+    local procedure PydLoad(var Doc: XmlDocument; var Root: XmlElement; var B: XmlElement)
+    var
+        N: XmlNode;
+    begin
+        XmlDocument.ReadFrom('<r xmlns="urn:d" xmlns:p="urn:p"><a xmlns:q="urn:q" id="1"><b id="2"><c id="3"/></b><e id="5"/></a></r>', Doc);
+        Doc.GetRoot(Root);
+        Root.SelectSingleNode('//*[local-name()=''b'']', N);
+        B := N.AsXmlElement();
+    end;
+
+    [Test]
+    procedure PYD_NamespaceAxis_Members()
+    var
+        Observer: Codeunit "Probe Observer";
+        Doc: XmlDocument;
+        Root: XmlElement;
+        B: XmlElement;
+    begin
+        PydLoad(Doc, Root, B);
+        PydQ(Observer, B, 'all', 'namespace::*');
+        PydQ(Observer, Root, 'root_all', 'namespace::*');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_NamespaceAxis_ByNameAndPredicate()
+    var
+        Observer: Codeunit "Probe Observer";
+        Doc: XmlDocument;
+        Root: XmlElement;
+        B: XmlElement;
+    begin
+        PydLoad(Doc, Root, B);
+        PydQ(Observer, B, 'by_name_p', 'namespace::p');
+        PydQ(Observer, B, 'by_name_xml', 'namespace::xml');
+        PydQ(Observer, B, 'first', 'namespace::*[1]');
+        PydQ(Observer, B, 'last', 'namespace::*[last()]');
+        PydQ(Observer, B, 'pred_name', 'namespace::*[name()=''q'']');
+        PydQ(Observer, B, 'pred_value', 'namespace::*[.=''urn:d'']');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_NamespaceAxis_RemoveNode()
+    var
+        Observer: Codeunit "Probe Observer";
+        Doc: XmlDocument;
+        Root: XmlElement;
+        B: XmlElement;
+        Nodes: XmlNodeList;
+        N: XmlNode;
+        T: Text;
+    begin
+        PydLoad(Doc, Root, B);
+        B.SelectNodes('namespace::p', Nodes);
+        Observer.Observe('count', Format(Nodes.Count()));
+        if Nodes.Get(1, N) then begin
+            ClearLastError();
+            if PydTryRemove(N) then
+                Observer.Observe('remove', 'ok')
+            else
+                Observer.ObserveError('remove');
+        end;
+        Doc.WriteTo(T);
+        Observer.Observe('doc', T);
+        Observer.Observe('root_attrs', Format(Root.Attributes().Count()));
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure PydTryRemove(N: XmlNode)
+    begin
+        N.Remove();
+    end;
+
+    [Test]
+    procedure PYD_FollowingPreceding_FromAttribute()
+    var
+        Observer: Codeunit "Probe Observer";
+        Root: XmlElement;
+        B: XmlElement;
+    begin
+        Load(Root, B);
+        Q(Observer, Root, 'following', '//b/@id/following::*');
+        Q(Observer, Root, 'preceding', '//b/@id/preceding::*');
+        Q(Observer, Root, 'following_sibling', '//b/@id/following-sibling::*');
+        Q(Observer, Root, 'preceding_sibling', '//b/@id/preceding-sibling::*');
+        Q(Observer, Root, 'parent', '//b/@id/parent::*');
+        Q(Observer, Root, 'ancestor', '//b/@id/ancestor::*');
+        Q(Observer, Root, 'following_node', '//b/@id/following::node()');
+        Observer.Finish();
+    end;
 }
