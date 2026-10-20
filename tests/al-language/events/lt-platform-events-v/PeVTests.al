@@ -710,9 +710,9 @@ codeunit 69852 "LT V Platform Event Tests"
         PwCall(Observer, 'procOnly run nopage', Parameters);
         PwCall(Observer, 'procOnly execute var', Parameters);
         PwCall(Observer, 'procOnly saveas xml', Parameters);
-#if BC29PLUS and LT_HELD_BCLINUX_158
+#if BC29PLUS and LT_HELD_BCLINUX_168
         // Windows BC 29.0 check 2026-10-20 (bump 34 queue), all keys: no SetupPrinters after SubstituteReport(...,ParametersOnly); the
-        // other keys equal the Linux values in the #else branch. Held on Linux BC 29 (LT_HELD_BCLINUX_158): the image at dbee8022 still
+        // other keys equal the Linux values in the #else branch. Held on Linux BC 29 (LT_HELD_BCLINUX_168, bc-linux #168): the image at dbee8022 still
         // raises SetupPrinters(in=0) there (corpus CI 2026-10-20).
         Observer.Expect('saveas var xml', 'Yes|OnDocumentReady(69860,in=No);');
         Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);');
