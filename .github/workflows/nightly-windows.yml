@@ -391,6 +391,8 @@ jobs:
 
           # MEASURED (run 34057062917): without sharing the workspace, the compile step dies
           # with "The appProjectFolder (D:\a\...) is not shared with the container."
+          # (Since 2026-10-20 the apps compile on the host with the latest AL compiler, see "Install the
+          # latest AL compiler"; the share stays for the publish and test steps.)
           # Compile-AppInBcContainer runs the AL compiler INSIDE the container, so the sources
           # have to be reachable from in there. BcContainerHelper shares its own helper and
           # artifact folders by default but never the GitHub workspace, which on a hosted
@@ -439,6 +441,92 @@ jobs:
           Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
 
       # ---------------------------------------------------------------------------------
+      # The AL compiler: the newest one, never the container's own (owner rule 2026-10-20).
+      #
+      # WHY. Every corpus app compiles with the latest AL compiler, on every BC version and in
+      # every workflow. The container's compiler is the one that shipped with that BC build.
+      # Run 39363023181 (BC 28.4): that compiler crashed on Report "LT AW Layouts"
+      # ("Sequence contains no elements" in Excel layout validation), so no test ran.
+      #
+      # WHERE IT COMES FROM. The same place and the same version as ci.yml's Linux legs:
+      # nuget.org, package Microsoft.Dynamics.BusinessCentral.Development.Tools, version =
+      # ci.yml's `al_tool_version`. This step reads that pin from ci.yml, so the two tiers
+      # cannot drift apart: bump the pin in ci.yml and the nightly follows. The package holds a
+      # framework-dependent alc.exe (tools/net8.0/any), which runs on the Windows runner with
+      # .NET 8. (bc-linux's install-al-compiler.sh takes the compiler from this same package.)
+      #
+      # HOW. BcContainerHelper's New-BcCompilerFolder builds a compiler folder on the HOST: the
+      # symbols (.app files) and service-tier DLLs from this run's BC artifact, the same build
+      # the container runs, and the compiler from -vsixFile. A folder laid out as
+      # extension\bin\alc.exe is the "flat bin" VSIX layout it accepts. The compile steps call
+      # Compile-AppWithBcCompilerFolder and then publish the .app into the container.
+      # New-BcCompilerFolder copies only some test libraries into the symbols; the corpus also
+      # needs Test Runner and Permissions Mock, so every other .app of the artifact's
+      # Applications folders is added with Copy-AppFilesToCompilerFolder (Microsoft's own test
+      # apps excepted).
+      # ---------------------------------------------------------------------------------
+      - name: Set up .NET 8 for the AL compiler
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install the latest AL compiler (same pin as ci.yml)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $bcContainerHelperConfig.bcartifactsCacheFolder = $env:BC_ARTIFACT_CACHE
+
+          $ci = Get-Content (Join-Path $env:GITHUB_WORKSPACE '.github/workflows/ci.yml') -Raw
+          $pins = @([regex]::Matches($ci, '(?m)^\s*al_tool_version:\s*"([^"]+)"') |
+                    ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+          if ($pins.Count -ne 1) {
+            throw "ci.yml must pin exactly one al_tool_version; found: $($pins -join ', ')"
+          }
+          $ver = $pins[0]
+          Write-Host "AL compiler: Microsoft.Dynamics.BusinessCentral.Development.Tools $ver (from ci.yml)"
+
+          $pkg = 'microsoft.dynamics.businesscentral.development.tools'
+          $nupkg = Join-Path $env:RUNNER_TEMP "$pkg.$ver.zip"
+          $extract = Join-Path $env:RUNNER_TEMP 'al-tools-nupkg'
+          Invoke-WebRequest -UseBasicParsing -OutFile $nupkg `
+            -Uri "https://api.nuget.org/v3-flatcontainer/$pkg/$ver/$pkg.$ver.nupkg"
+          Expand-Archive -Path $nupkg -DestinationPath $extract -Force
+          $toolDir = Join-Path $extract 'tools/net8.0/any'
+          if (-not (Test-Path (Join-Path $toolDir 'alc.exe'))) {
+            throw "No tools/net8.0/any/alc.exe in $pkg $ver."
+          }
+          $vsix = Join-Path $env:RUNNER_TEMP 'al-compiler-vsix'
+          $bin = Join-Path $vsix 'extension/bin'
+          New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          Copy-Item -Path (Join-Path $toolDir '*') -Destination $bin -Recurse -Force
+          & (Join-Path $bin 'alc.exe') /? | Select-Object -First 2 | ForEach-Object { Write-Host "alc: $_" }
+
+          $cf = New-BcCompilerFolder -artifactUrl $env:BC_ARTIFACT_URL -containerName 'nightlyalc' -vsixFile $vsix
+          Write-Host "compiler folder: $cf"
+
+          $symbols = Join-Path $cf 'symbols'
+          $have = @(Get-ChildItem -Path $symbols -Filter '*.app' | ForEach-Object Name)
+          $paths = Download-Artifacts -artifactUrl $env:BC_ARTIFACT_URL -includePlatform
+          $extra = @(foreach ($p in $paths) {
+            Get-ChildItem -Path $p -Directory -Filter '?pplications*' | ForEach-Object {
+              Get-ChildItem -Path $_.FullName -Filter '*.app' -Recurse
+            }
+          }) | Where-Object { $_.Name -notlike 'Microsoft_Tests-*' -and $have -notcontains $_.Name } |
+               Sort-Object Name -Unique
+          Write-Host ("adding {0} more .app files from the artifact to the symbols" -f $extra.Count)
+          if ($extra.Count) {
+            Copy-AppFilesToCompilerFolder -compilerFolder $cf -appFiles @($extra | ForEach-Object FullName)
+          }
+          foreach ($n in 'Test Runner', 'Permissions Mock', 'System Application Test Library', 'Base Application') {
+            if (-not (Get-ChildItem -Path $symbols -Filter "*$n*.app")) { throw "No $n symbols in $symbols." }
+          }
+
+          "BC_COMPILER_FOLDER=$cf" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "AL_COMPILER_VERSION=$ver" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "- AL compiler: ``Microsoft.Dynamics.BusinessCentral.Development.Tools $ver`` (nuget.org, same pin as ci.yml)" |
+            Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      # ---------------------------------------------------------------------------------
       # Create a tenant encryption key (#248, #282).
       #
       # WHY THIS STEP EXISTS. `IsolatedStorage.SetEncrypted`, AL's ENCRYPT/DECRYPT and Data
@@ -479,9 +567,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
           $appJson = Get-Content (Join-Path $folder 'app.json') -Raw | ConvertFrom-Json
 
-          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+          # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+          $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
             -appProjectFolder $folder -appOutputFolder $outDir `
-            -appSymbolsFolder (Join-Path $outDir 'symbols') -UpdateSymbols -failOn 'error'
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -failOn 'error'
           # The install trigger (OnInstallAppPerDatabase) creates the key.
           Publish-BcContainerApp -containerName $c -credential $cred `
             -appFile $appFile -skipVerification -sync -install
@@ -637,11 +726,13 @@ jobs:
           foreach ($folder in $apps) {
             Write-Host "::group::compile $folder"
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+            # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+            # -CopyAppToSymbolsFolder: the next app in the list compiles against this one.
+            $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
               -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
               -appOutputFolder $outDir `
               -appSymbolsFolder (Join-Path $outDir 'symbols') `
-              -UpdateSymbols -preProcessorSymbols $symbols -failOn 'error'
+              -CopyAppToSymbolsFolder -preProcessorSymbols $symbols -failOn 'error'
             Write-Host ("compiled {0} in {1:n0}s -> {2}" -f $folder, $sw.Elapsed.TotalSeconds, $appFile)
             Write-Host "::endgroup::"
 
@@ -661,6 +752,28 @@ jobs:
           Get-BcContainerAppInfo -containerName $c |
             Select-Object Name, Publisher, Version, IsInstalled | Format-Table -AutoSize
 
+      # ---------------------------------------------------------------------------------
+      # Run the corpus: EVERY test codeunit of each app, in chunks, with restarts.
+      #
+      # WHY CHUNKS. One Run-TestsInBcContainer call per app used to run the whole app. When the
+      # test runner stopped partway, the call returned normally and every later codeunit was
+      # silently missing. Measured: run 39227679359 (BC 29.0) stopped after codeunit 67202 on
+      # "ERROR DIALOG: We can't save your changes right now, because a record in table 'Test
+      # Method Line' is being updated in a transaction done by another session." and reported
+      # 558 of 2423 test codeunits. (The scheduled runs looked complete only because they
+      # measured `master`, which then ended at codeunit 69982.)
+      #
+      # HOW. The list of expected codeunits comes from the compiled .app (SymbolReference.json:
+      # Subtype = Test with at least one [Test] method), read by test-codeunit-coverage.py.
+      # Each call runs the next chunk of not-yet-reported codeunits, selected by
+      # -testCodeunitRange (a range filter that never spans another corpus app's test codeunit
+      # or one that already reported). When a call reports nothing, the first codeunit of the
+      # chunk is halved until the first codeunit runs alone; if it still reports nothing, it is a
+      # "runner stop": written into the XUnit file as one failed test with the reason, and the run
+      # goes on with the next codeunit (run 39390812023: onprem 61276 "LT Q File Probes"). Each call writes its own XUnit file; they are merged into
+      # xunit-<app>.xml. The step "Every test codeunit reported" below fails the job when any
+      # codeunit is silently missing (not reported and not a runner stop).
+      # ---------------------------------------------------------------------------------
       - name: Run the corpus
         id: run_tests
         run: |
@@ -673,10 +786,42 @@ jobs:
           # formatting. If this build of BcContainerHelper cannot pin it, stop: an unpinned run
           # would report those three as BC divergences on any European-defaulting image.
           $rt = Get-Command Run-TestsInBcContainer
-          foreach ($p in 'culture', 'timezone') {
+          foreach ($p in 'culture', 'timezone', 'testCodeunitRange', 'interactionTimeout') {
             if (-not $rt.Parameters.ContainsKey($p)) {
               throw "Run-TestsInBcContainer has no -$p parameter in BcContainerHelper $env:BCCH_VERSION. Refusing to run with an undeclared session $p."
             }
+          }
+
+          $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
+          $allApps = @(Get-ChildItem -Path $outDir -Filter '*.app' -File)
+          $coverage = Join-Path $env:GITHUB_WORKSPACE '.github/scripts/test-codeunit-coverage.py'
+          $chunkSize = 100
+
+          # "a..b|c..d" over $ids, split wherever a $blocked id lies between two neighbours.
+          function ConvertTo-RangeFilter([int[]]$ids, [int[]]$sortedBlocked) {
+            $parts = @(); $start = $ids[0]; $prev = $ids[0]
+            foreach ($i in ($ids | Select-Object -Skip 1)) {
+              $k = [Array]::BinarySearch($sortedBlocked, $prev + 1); if ($k -lt 0) { $k = -bnot $k }
+              if ($k -lt $sortedBlocked.Length -and $sortedBlocked[$k] -lt $i) {
+                $parts += $(if ($start -eq $prev) { "$start" } else { "$start..$prev" }); $start = $i
+              }
+              $prev = $i
+            }
+            $parts += $(if ($start -eq $prev) { "$start" } else { "$start..$prev" })
+            $parts -join '|'
+          }
+          function Get-ReportedIds([string]$file) {
+            $set = [System.Collections.Generic.HashSet[int]]::new()
+            if (Test-Path $file) {
+              try {
+                [xml]$x = [IO.File]::ReadAllText($file)
+                foreach ($a in $x.SelectNodes('//assembly')) {
+                  $head = ($a.GetAttribute('name') -split ' ', 2)[0]
+                  $n = 0; if ([int]::TryParse($head, [ref]$n)) { [void]$set.Add($n) }
+                }
+              } catch { Write-Host "::warning::cannot read $file : $($_.Exception.Message)" }
+            }
+            ,$set
           }
 
           $suites = @(
@@ -686,20 +831,97 @@ jobs:
 
           foreach ($s in $suites) {
             $appJson = Get-Content (Join-Path $env:GITHUB_WORKSPACE "$($s.folder)/app.json") -Raw | ConvertFrom-Json
+            $app = $allApps | Where-Object { $_.Name -eq "$($appJson.publisher)_$($appJson.name)_$($appJson.version).app" } | Select-Object -First 1
+            if (-not $app) { throw "No compiled .app for $($s.folder) in $outDir." }
+            $others = @($allApps | Where-Object { $_.FullName -ne $app.FullName } | ForEach-Object { '--other'; $_.FullName })
+            $info = & python $coverage ids --app $app.FullName @others | ConvertFrom-Json
+            $expected = @($info.tests | ForEach-Object { [int]$_ })
+            $blockedBase = [System.Collections.Generic.HashSet[int]]::new()
+            foreach ($i in @($info.foreign) + @($info.no_methods)) { [void]$blockedBase.Add([int]$i) }
+            Write-Host ("{0}: {1} test codeunits expected ({2}..{3})" -f $s.name, $expected.Count, $expected[0], $expected[-1])
+            "$($s.name)=$($app.FullName)" | Out-File (Join-Path $env:RUNNER_TEMP 'suite-apps.txt') -Append -Encoding utf8
+
             $out = Join-Path $env:GITHUB_WORKSPACE "xunit-$($s.name).xml"
-            Write-Host "::group::run $($s.name) ($($appJson.id))"
+            # Under the workspace: Run-TestsInBcContainer writes the file from inside the container, and
+            # only the workspace is shared with it (run 39379151878: RUNNER_TEMP "is not shared with the container").
+            $partsDir = Join-Path $env:GITHUB_WORKSPACE ".xunit-parts/$($s.name)"
+            New-Item -ItemType Directory -Force -Path $partsDir | Out-Null
+            [xml]$merged = '<?xml version="1.0" encoding="UTF-8"?><assemblies/>'
+            $done = [System.Collections.Generic.HashSet[int]]::new()
+            $aborted = @()
+            $abortedInARow = 0
+            $size = $chunkSize
+            $call = 0
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            try {
-              Run-TestsInBcContainer -containerName $c -credential $cred `
-                -extensionId $appJson.id `
-                -culture $env:CULTURE -timezone $env:TIMEZONE `
-                -XUnitResultFileName $out -AzureDevOps 'no' -GitHubActions 'no' `
-                -detailed -returnTrueIfAllPassed | Out-Null
-            } catch {
-              # A failing test must not abort the other suite -- the artifact is the deliverable.
-              Write-Host "::warning::Run-TestsInBcContainer for $($s.name) raised: $($_.Exception.Message)"
+            Write-Host "::group::run $($s.name) ($($appJson.id))"
+            while ($true) {
+              $remaining = @($expected | Where-Object { -not $done.Contains($_) -and $aborted -notcontains $_ })
+              if ($remaining.Count -eq 0) { break }
+              $call++
+              if ($call -gt 200) { Write-Host "::warning::$($s.name): stopped after 200 test runner calls"; break }
+              $chunk = @($remaining | Select-Object -First $size)
+              $chunkSet = [System.Collections.Generic.HashSet[int]]::new([int[]]$chunk)
+              $blocked = [System.Collections.Generic.HashSet[int]]::new($blockedBase)
+              foreach ($i in $expected) { if (-not $chunkSet.Contains($i)) { [void]$blocked.Add($i) } }
+              $filter = ConvertTo-RangeFilter $chunk ([int[]]@($blocked | Sort-Object))
+              $part = Join-Path $partsDir ("part-{0:d3}.xml" -f $call)
+              Write-Host ("call {0}: {1} codeunit(s) from {2}, filter {3}" -f $call, $chunk.Count, $chunk[0], $filter)
+              try {
+                Run-TestsInBcContainer -containerName $c -credential $cred `
+                  -extensionId $appJson.id -testCodeunitRange $filter `
+                  -interactionTimeout ([timespan]::FromMinutes(10)) `
+                  -culture $env:CULTURE -timezone $env:TIMEZONE `
+                  -XUnitResultFileName $part -AzureDevOps 'no' -GitHubActions 'no' `
+                  -detailed -returnTrueIfAllPassed | Out-Null
+                $lastError = 'the test runner returned without a result for this codeunit'
+              } catch {
+                $lastError = $_.Exception.Message
+                Write-Host "::warning::Run-TestsInBcContainer for $($s.name) (call $call, from $($chunk[0])) raised: $lastError"
+              }
+              $got = Get-ReportedIds $part
+              $outside = @($got | Where-Object { -not $chunkSet.Contains($_) })
+              if ($outside.Count) {
+                throw "The codeunit range filter was not applied: call $call reported codeunits outside its chunk ($($outside[0..4] -join ', ')). Refusing to merge duplicate results."
+              }
+              if (Test-Path $part) {
+                [xml]$px = [IO.File]::ReadAllText($part)
+                foreach ($a in $px.SelectNodes('//assembly')) { [void]$merged.DocumentElement.AppendChild($merged.ImportNode($a, $true)) }
+              }
+              foreach ($i in $got) { [void]$done.Add($i) }
+              # Progress: grow the chunk again. No result at all (the runner threw and lost its file,
+              # or stopped on the first codeunit): halve it, down to the first codeunit alone; a
+              # codeunit that reports nothing even alone is recorded as aborted and skipped.
+              if ($got.Count -gt 0) {
+                $size = [Math]::Min($chunkSize, $size * 2); $abortedInARow = 0
+                if ($got.Count -lt $chunk.Count) { Write-Host "call $call stopped early after $($got.Count) of $($chunk.Count) codeunit(s); continuing with the rest"; Start-Sleep -Seconds 20 }
+              } elseif ($chunk.Count -eq 1) {
+                Write-Host "::warning::$($s.name): runner stop during codeunit $($chunk[0]); recorded as a failed codeunit, continuing with the next one"
+                $aborted += $chunk[0]; $size = $chunkSize; $abortedInARow++
+                # Recorded as ONE failed test of that codeunit, with the reason, so the results say
+                # "runner stop" instead of leaving the codeunit out. The run goes on after it.
+                $cuName = "$($info.names."$($chunk[0])")"
+                $asm = $merged.CreateElement('assembly')
+                foreach ($kv in @(@('name', "$($chunk[0]) $cuName"), @('test-framework', 'PS Test Runner'), @('total', '1'), @('passed', '0'), @('failed', '1'), @('skipped', '0'), @('time', '0'))) { $asm.SetAttribute($kv[0], $kv[1]) }
+                $col = $merged.CreateElement('collection')
+                foreach ($kv in @(@('name', $cuName), @('total', '1'), @('passed', '0'), @('failed', '1'), @('skipped', '0'), @('time', '0'))) { $col.SetAttribute($kv[0], $kv[1]) }
+                $t = $merged.CreateElement('test')
+                foreach ($kv in @(@('name', "${cuName}:RunnerStop_NoResult"), @('method', 'RunnerStop_NoResult'), @('time', '0'), @('result', 'Fail'))) { $t.SetAttribute($kv[0], $kv[1]) }
+                $f = $merged.CreateElement('failure'); $m = $merged.CreateElement('message')
+                $m.InnerText = "Runner stop: the test runner stopped during codeunit $($chunk[0]) and reported no result, also when it ran alone. Last error: $lastError"
+                [void]$f.AppendChild($m); [void]$t.AppendChild($f); [void]$col.AppendChild($t); [void]$asm.AppendChild($col)
+                [void]$merged.DocumentElement.AppendChild($asm)
+                # Three codeunits in a row that report nothing even alone: the runner itself is broken
+                # (setup, connection, container), not a codeunit. Stop instead of crawling through the app.
+                if ($abortedInARow -ge 3) { throw "$($s.name): $abortedInARow codeunits in a row reported nothing ($($aborted[-3..-1] -join ', ')); the test runner is not working. Last error above." }
+                Start-Sleep -Seconds 20
+              } else {
+                $size = [Math]::Max(1, [int][Math]::Floor($chunk.Count / 2))
+                Write-Host "call $call reported nothing; retrying with $size codeunit(s)"; Start-Sleep -Seconds 20
+              }
             }
-            Write-Host ("$($s.name) finished in {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+            $merged.Save($out)
+            "ABORTED_$($s.name -replace '-', '_')=$($aborted -join ',')" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host ("$($s.name): {0} of {1} codeunits reported in {2} call(s), {3:n1} min" -f $done.Count, $expected.Count, $call, $sw.Elapsed.TotalMinutes)
             Write-Host "::endgroup::"
           }
 
@@ -738,11 +960,11 @@ jobs:
           $folder = 'tests/al-language-isolation-probe'
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+          # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+          $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
             -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
             -appOutputFolder $outDir `
-            -appSymbolsFolder (Join-Path $outDir 'symbols') `
-            -UpdateSymbols -failOn 'error'
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -failOn 'error'
           Publish-BcContainerApp -containerName $c -credential $cred `
             -appFile $appFile -skipVerification -sync -install
 
@@ -788,6 +1010,29 @@ jobs:
             --run "TestIsolation = Function (runner 61300)=xunit-isolation-function.xml" \
             --run "TestIsolation = Codeunit control (runner 61301)=xunit-isolation-codeunit.xml" \
             --outdir test-results
+
+      # Fails the job, loudly, when a test codeunit is silently missing: neither reported nor
+      # recorded as a runner stop. It
+      # runs after the comparison and before the upload, so the partial results still land in
+      # the artifact. The counts and the highest id that reported go into the run summary.
+      - name: Every test codeunit reported
+        if: always() && steps.run_tests.outcome != 'skipped'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $list = Join-Path $env:RUNNER_TEMP 'suite-apps.txt'
+          if (-not (Test-Path $list)) { throw "The run step recorded no test apps: no test codeunit was run." }
+          $failed = 0
+          "### Test codeunits that reported" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          foreach ($line in Get-Content $list) {
+            $name, $app = $line -split '=', 2
+            $aborted = [Environment]::GetEnvironmentVariable("ABORTED_$($name -replace '-', '_')")
+            & python (Join-Path $env:GITHUB_WORKSPACE '.github/scripts/test-codeunit-coverage.py') check `
+              --app $app --xunit (Join-Path $env:GITHUB_WORKSPACE "xunit-$name.xml") --name $name `
+              --aborted "$aborted" --summary $env:GITHUB_STEP_SUMMARY
+            if ($LASTEXITCODE -ne 0) { $failed++ }
+          }
+          if ($failed) { throw "$failed test app(s) did not report every test codeunit." }
 
       - name: Disk (after)
         if: always()
