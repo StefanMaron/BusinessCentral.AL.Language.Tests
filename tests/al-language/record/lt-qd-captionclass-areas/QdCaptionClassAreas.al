@@ -20,10 +20,10 @@
 //   - Sales Line "Inv. Discount Amount" / "Line Amount": Excl. VAT without a Sales Header, Incl. VAT when the header has Prices Including VAT.
 // Writer QF: own table 86643, pages 86640 (List), 86641 (ListPart) and 86642 (Card hosting the part); tests QF_* in 86504 (still the only
 //   user of log 86503). Results: a List page opened with OpenView or OpenEdit runs every expression field of the table 9 times with an empty
-//   record (108 calls), Page.Run of the List (trapped) 111 calls, a Card hosting the ListPart 108; then once per expression control on the
-//   first row only. Next (List, ListPart and Card) runs no expression, and Caption() after Next still reads the value of the open (first row).
+//   record (108 calls), Page.Run of the List (trapped) 111 calls, a Card hosting the ListPart 108 (counts seen on every major, but not
+//   asserted: the same card open counted 240 and 492 in two BC 29 runs); then once per expression control on the first row only. Next (List, ListPart and Card) runs no expression, and Caption() after Next still reads the value of the open (first row).
 //   The corpus database's General Ledger Setup: LCY Code GBP, Global Dimension 1 DEPARTMENT ('Department Code'), Global Dimension 2
-//   CUSTOMERGROUP ('Customergroup Code'), Additional Reporting Currency EUR.
+//   CUSTOMERGROUP ('Customergroup Code'), Additional Reporting Currency EUR from BC 28 ('' on BC 27.5).
 // BC versions: 27, 28, 29
 
 table 86500 "LT QD Cap Row"
@@ -568,6 +568,25 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Log.Reset();
     end;
 
+    // The empty-record calls of a page open are counted differently between runs (Page_ControlCaptions saw 240 and 492 on BC 29 CI): only
+    // whether there were any is asserted; the counts seen are in the header. QfNoCall cuts the running call count off the "Expr Id" caption.
+    local procedure QfSummarize(Calls: Text): Text
+    var
+        Folded: Text;
+        At: Integer;
+    begin
+        Folded := Summarize(Calls);
+        At := Folded.IndexOf(' fields0=');
+        exit('id0>0=' + Format(CopyStr(Folded, 5, At - 5) <> '0') + CopyStr(Folded, At));
+    end;
+
+    local procedure QfNoCall(Caption: Text): Text
+    begin
+        if Caption.IndexOf(' call ') = 0 then
+            exit(Caption);
+        exit(CopyStr(Caption, 1, Caption.IndexOf(' call ') - 1));
+    end;
+
     [Test]
     procedure QF_List_OpenView()
     var
@@ -576,36 +595,36 @@ codeunit 86504 "LT QD CaptionClass Areas"
     begin
         QfSeedTwo();
         P.OpenView();
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'row', P.Id.Value());
-        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
         Cap(Observer, 'expr20', P.Expr20.Caption());
         Observer.Observe('next', Format(P.Next()));
-        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'next_row', P.Id.Value());
-        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
         P.Close();
-        Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=108 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
         Observer.Expect('row', '3');
         Observer.Expect('row_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 111');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
         Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('exprVAT_calls', '');
         Observer.Expect('expr20', 'Inv. Discount Amount Excl. VAT');
         Observer.Expect('expr20_calls', '');
         Observer.Expect('next', 'Yes');
-        Observer.Expect('next_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
         Observer.Expect('next_row', '5');
         Observer.Expect('next_row_calls', '');
-        Observer.Expect('next_exprId', 'Id 3 call 111');
+        Observer.Expect('next_exprId', 'Id 3');
         Observer.Expect('next_exprId_calls', '');
         Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('next_exprVAT_calls', '');
-        Observer.Expect('close_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
         Observer.Verify();
     end;
 
@@ -617,33 +636,33 @@ codeunit 86504 "LT QD CaptionClass Areas"
     begin
         QfSeedTwo();
         P.OpenEdit();
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'row', P.Id.Value());
-        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
         Observer.Observe('next', Format(P.Next()));
-        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'next_row', P.Id.Value());
-        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
         P.Close();
-        Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=108 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
         Observer.Expect('row', '3');
         Observer.Expect('row_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 111');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
         Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('exprVAT_calls', '');
         Observer.Expect('next', 'Yes');
-        Observer.Expect('next_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
         Observer.Expect('next_row', '5');
         Observer.Expect('next_row_calls', '');
-        Observer.Expect('next_exprId', 'Id 3 call 111');
+        Observer.Expect('next_exprId', 'Id 3');
         Observer.Expect('next_exprId_calls', '');
         Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('next_exprVAT_calls', '');
-        Observer.Expect('close_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
         Observer.Verify();
     end;
 
@@ -656,30 +675,30 @@ codeunit 86504 "LT QD CaptionClass Areas"
         QfSeedTwo();
         P.Trap();
         Page.Run(Page::"LT QF Cap List");
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'row', P.Id.Value());
-        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'exprVAT', P.ExprVAT.Caption());
         Observer.Observe('next', Format(P.Next()));
-        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'next_row', P.Id.Value());
-        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
         P.Close();
-        Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=111 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;23@3;24@3;');
         Observer.Expect('row', '3');
         Observer.Expect('row_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 114');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
         Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('exprVAT_calls', '');
         Observer.Expect('next', 'Yes');
-        Observer.Expect('next_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
         Observer.Expect('next_row', '5');
         Observer.Expect('next_row_calls', '');
-        Observer.Expect('next_exprId', 'Id 3 call 114');
+        Observer.Expect('next_exprId', 'Id 3');
         Observer.Expect('next_exprId_calls', '');
-        Observer.Expect('close_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
         Observer.Verify();
     end;
 
@@ -695,33 +714,33 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Host.Insert();
         QfSeedTwo();
         H.OpenView();
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'row', H.Lines.Id.Value());
-        Cap(Observer, 'exprId', H.Lines.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(H.Lines.ExprId.Caption()));
         Cap(Observer, 'exprVAT', H.Lines.ExprVAT.Caption());
         Observer.Observe('next', Format(H.Lines.Next()));
-        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'next_row', H.Lines.Id.Value());
-        Cap(Observer, 'next_exprId', H.Lines.ExprId.Caption());
+        Cap(Observer, 'next_exprId', QfNoCall(H.Lines.ExprId.Caption()));
         Cap(Observer, 'next_exprVAT', H.Lines.ExprVAT.Caption());
         H.Close();
-        Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=108 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=23@3;24@3;');
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=23@3;24@3;');
         Observer.Expect('row', '3');
         Observer.Expect('row_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 110');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
         Observer.Expect('exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('exprVAT_calls', '');
         Observer.Expect('next', 'Yes');
-        Observer.Expect('next_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
         Observer.Expect('next_row', '5');
         Observer.Expect('next_row_calls', '');
-        Observer.Expect('next_exprId', 'Id 3 call 110');
+        Observer.Expect('next_exprId', 'Id 3');
         Observer.Expect('next_exprId_calls', '');
         Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('next_exprVAT_calls', '');
-        Observer.Expect('close_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
         Observer.Verify();
     end;
 
@@ -733,30 +752,30 @@ codeunit 86504 "LT QD CaptionClass Areas"
     begin
         QfSeedTwo();
         P.OpenView();
-        Observer.Observe('open_calls', Summarize(Log.Take()));
+        Observer.Observe('open_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'row', P.Id.Value());
-        Cap(Observer, 'exprId', P.ExprId.Caption());
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
         Observer.Observe('next', Format(P.Next()));
-        Observer.Observe('next_calls', Summarize(Log.Take()));
+        Observer.Observe('next_calls', QfSummarize(Log.Take()));
         Cap(Observer, 'next_row', P.Id.Value());
-        Cap(Observer, 'next_exprId', P.ExprId.Caption());
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
         Cap(Observer, 'next_exprVAT', P.ExprVAT.Caption());
         P.Close();
-        Observer.Observe('close_calls', Summarize(Log.Take()));
-        Observer.Expect('open_calls', 'id0=240 fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Observe('close_calls', QfSummarize(Log.Take()));
+        Observer.Expect('open_calls', 'id0>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
         Observer.Expect('row', '3');
         Observer.Expect('row_calls', '');
-        Observer.Expect('exprId', 'Id 3 call 245');
+        Observer.Expect('exprId', 'Id 3');
         Observer.Expect('exprId_calls', '');
         Observer.Expect('next', 'Yes');
-        Observer.Expect('next_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('next_calls', 'id0>0=No fields0= rest=');
         Observer.Expect('next_row', '5');
         Observer.Expect('next_row_calls', '');
-        Observer.Expect('next_exprId', 'Id 3 call 245');
+        Observer.Expect('next_exprId', 'Id 3');
         Observer.Expect('next_exprId_calls', '');
         Observer.Expect('next_exprVAT', 'Inv. Discount Amount Incl. VAT');
         Observer.Expect('next_exprVAT_calls', '');
-        Observer.Expect('close_calls', 'id0=0 fields0= rest=');
+        Observer.Expect('close_calls', 'id0>0=No fields0= rest=');
         Observer.Verify();
     end;
 
@@ -786,7 +805,11 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Expect('lcyCode', 'GBP');
         Observer.Expect('globalDim1', 'DEPARTMENT');
         Observer.Expect('globalDim2', 'CUSTOMERGROUP');
+#if BC28PLUS
         Observer.Expect('addReportingCurrency', 'EUR');
+#else
+        Observer.Expect('addReportingCurrency', '');
+#endif
         Observer.Expect('dim1_get', 'Yes');
         Observer.Expect('dim1_codeCaption', 'Department Code');
         Observer.Expect('dim2_get', 'Yes');
