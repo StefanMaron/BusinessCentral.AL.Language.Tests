@@ -315,7 +315,24 @@ codeunit 81666 "LT BJ Dd Tests"
         Seed();
         Report.Run(Report::"LT PX Dd Off Report", true, false);
         Observer.Observe('log after run', DdLog.Take());
-        Observer.Finish();
+        Observer.Expect('off plain|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off plain|code', 'MethodNotSupported');
+        Observer.Expect('off plain log', '');
+        Observer.Expect('off trigger|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off trigger|code', 'MethodNotSupported');
+        Observer.Expect('off trigger log', '');
+        Observer.Expect('on trigger|text', 'NOERROR');
+        Observer.Expect('on trigger|code', 'Dialog');
+        Observer.Expect('on trigger log', 'on trigger ran;');
+        Observer.Expect('off flowfield|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off flowfield|code', 'MethodNotSupported');
+        Observer.Expect('off flowfield log', '');
+        Observer.Expect('off pageid|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off pageid|code', 'MethodNotSupported');
+        Observer.Expect('off pageid log', '');
+        Observer.Expect('value after', '7');
+        Observer.Expect('log after run', '');
+        Observer.Verify();
     end;
 
     local procedure PxTryDrill(var Req: TestRequestPage "LT PX Dd Off Report"; Ctl: Integer; Name: Text)

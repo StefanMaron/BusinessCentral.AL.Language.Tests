@@ -649,7 +649,10 @@ codeunit 67740 "W3 Params Probe"
         Rpt.SetTableView(Row);
         Parameters := Rpt.RunRequestPage();
         Observer.Observe('settableview', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
-        Observer.Finish();
+        Observer.Expect('handler', '<DataItem name="Row">VERSION(1) SORTING(Field1) WHERE(Field4=1(0))</DataItem>');
+        Observer.Expect('log', 'flag=[No];');
+        Observer.Expect('settableview', '<DataItem name="Row">VERSION(1) SORTING(Field1) WHERE(Field4=1(0))</DataItem>');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -688,7 +691,11 @@ codeunit 67740 "W3 Params Probe"
         Parameters := Rpt.RunRequestPage();
         Observer.Observe('group2+0', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
         Observer.Observe('group2+0 log', L.Take());
-        Observer.Finish();
+        Observer.Expect('group2', '<DataItem name="Row">VERSION(1) SORTING(Field1)</DataItem>');
+        Observer.Expect('group2 log', 'id=[1..5] flag=[];');
+        Observer.Expect('group2+0', '<DataItem name="Row">VERSION(1) SORTING(Field1) WHERE(Field4=1(1))</DataItem>');
+        Observer.Expect('group2+0 log', 'id=[1..5] flag=[1];');
+        Observer.Verify();
     end;
 
     [Test]
@@ -722,7 +729,11 @@ codeunit 67740 "W3 Params Probe"
         Parameters := Rpt.RunRequestPage();
         Observer.Observe('desc then second asc', Dataset.Between(Parameters, '<DataItems>', '</DataItems>'));
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('second desc', '<DataItem name="Row">VERSION(1) SORTING(Field2,Field1)</DataItem>');
+        Observer.Expect('first desc', '<DataItem name="Row">VERSION(1) SORTING(Field2,Field1)</DataItem>');
+        Observer.Expect('desc then second asc', '<DataItem name="Row">VERSION(1) SORTING(Field2,Field1) ORDER(1)</DataItem>');
+        Observer.Expect('log', 'id=[] flag=[];id=[] flag=[];id=[] flag=[];');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]

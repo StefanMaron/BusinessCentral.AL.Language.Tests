@@ -1084,7 +1084,10 @@ codeunit 73850 "LT RpT Request Page"
         asserterror Report.Run(Report::"LT PX Rp Source");
         Observer.ObserveError('err');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('err|text', 'px handler raised');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'OnInitReport;RP OnOpenPage;RP OnAfterGetRecord 1;RP OnAfterGetCurrRecord 1;h id=[1];RP OnQueryClosePage action=Cancel;RP OnClosePage;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -1112,7 +1115,10 @@ codeunit 73850 "LT RpT Request Page"
         asserterror Report.Run(Report::"LT PX Rp Parts");
         Observer.ObserveError('err');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('err|text', 'px handler raised');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'RP OnOpenPage;part OnOpenPage;part OnAfterGetCurrRecord 1;h;part OnQueryClosePage action=None;RP OnQueryClosePage action=Cancel;part OnClosePage;RP OnClosePage;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -1132,7 +1138,10 @@ codeunit 73850 "LT RpT Request Page"
         asserterror Report.Run(Report::"LT PX Rp ExtBase");
         Observer.ObserveError('err');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('err|text', 'px handler raised');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'RP OnOpenPage;ext RP OnOpenPage;h;RP OnQueryClosePage action=Cancel;ext RP OnQueryClosePage action=Cancel;RP OnClosePage;ext RP OnClosePage;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -1152,8 +1161,8 @@ codeunit 73850 "LT RpT Request Page"
 
     // Not tests (writer PX, local BC 29.0): with OnQueryClosePage answering false (mode 1) or raising (mode 2), a handler error gives the
     // caller the handler's error ('px handler raised', Dialog); the log is 'RP OnOpenPage;h;RP OnQueryClosePage action=Cancel;' and
-    // OnClosePage does not run. The request page then stays open in the session: a later test codeunit failed at Report.Run with
-    // 'Server page is already open.', so these shapes cannot be asserted without breaking other tests.
+    // OnClosePage does not run, so the request page may stay open in the session: in the run with these tests a later test codeunit
+    // failed at Report.Run with 'Server page is already open.'. They are left out so no other test depends on them.
 
     [Test]
     [HandlerFunctions('PxCloseModeErrorHandler')]
@@ -1165,7 +1174,10 @@ codeunit 73850 "LT RpT Request Page"
         asserterror PxRunCloseMode(3);
         Observer.ObserveError('err');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('err|text', 'px handler raised');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('log', 'RP OnOpenPage;h;RP OnQueryClosePage action=Cancel;RP OnClosePage;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -1193,7 +1205,12 @@ codeunit 73850 "LT RpT Request Page"
         PxMode := 'read';
         Report.Run(Report::"LT PX Rp SaveValues");
         Observer.Observe('third', L.Take());
-        Observer.Finish();
+        Observer.Expect('first', 'RP OnQueryClosePage action=OK text=[base];OnPreReport text=[base];');
+        Observer.Expect('err|text', 'px handler raised');
+        Observer.Expect('err|code', 'Dialog');
+        Observer.Expect('second', 'h set_err shown=[base];RP OnQueryClosePage action=Cancel text=[changed];');
+        Observer.Expect('third', 'h read shown=[base];RP OnQueryClosePage action=OK text=[base];OnPreReport text=[base];');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
