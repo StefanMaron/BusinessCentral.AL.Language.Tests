@@ -8,6 +8,12 @@
 // Measured (local BC 29, checked by the CI matrix): every case starts from a committed row. In-memory and freshly read sources modify fine. A stale Modify (Commit after the other write) fails with
 //   DB:RecordChanged; TransferFields(Newer) with the primary key (the default) and Copy(Newer) make the buffer current, so Modify succeeds;
 //   TransferFields(Newer, false) does not, and Modify fails with DB:RecordChanged. A row of another table with the same key transfers and modifies.
+// Writer QE (2026-10-20), QE_* tests: TransferFields from ANOTHER table leaves the buffer's SystemId and SystemRowVersion as they
+//   were but copies SystemCreatedAt and SystemModifiedAt from the source. A stale buffer stays stale (Modify fails with
+//   DB:RecordChanged whether the source row is older, newer or in memory, with or without the key); a current buffer modifies
+//   fine even when the source row is older; a buffer that never read the row (only the key set by TransferFields) modifies the
+//   stored row, also when another variable changed and committed it. After the Modify the row keeps its own SystemId and
+//   SystemCreatedAt and gets a new SystemModifiedAt and SystemRowVersion.
 // BC versions: 27, 28, 29
 
 table 84884 "LT CN TF Row"
@@ -210,6 +216,264 @@ codeunit 84886 "LT CN TF Modify"
         R1.TransferFields(O);
         R1.Modify();
         Observer.Observe('db', NameInDb());
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
+    end;
+
+    // ── Added by writer QE (2026-10-20): TransferFields from ANOTHER table into a buffer that is stale, current but newer
+    // than the source row, or never read, then Modify; and the system fields of the target row after such a Modify.
+    // A stale buffer here means: another variable modified the row and committed after this buffer read it.
+
+    local procedure QeInsertOther()
+    var
+        O: Record "LT CN TF Other";
+    begin
+        O.Init();
+        O.Id := 1;
+        O.Name := 'other';
+        O.Qty := 3;
+        O.Insert();
+        Commit();
+    end;
+
+    local procedure QeModifyElsewhere()
+    var
+        R2: Record "LT CN TF Row";
+    begin
+        R2.Get(1);
+        R2.Name := 'second';
+        R2.Modify();
+        Commit();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_StaleBuffer_SourceOlder()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeInsertOther();
+        QeModifyElsewhere();
+        O.Get(1);
+        R1.TransferFields(O);
+        asserterror R1.Modify();
+        Observer.ObserveError('modify');
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_StaleBuffer_SourceNewer()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeModifyElsewhere();
+        QeInsertOther();
+        O.Get(1);
+        R1.TransferFields(O);
+        asserterror R1.Modify();
+        Observer.ObserveError('modify');
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_StaleBuffer_SourceInMemory()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeModifyElsewhere();
+        O.Init();
+        O.Id := 1;
+        O.Name := 'mem';
+        O.Qty := 4;
+        R1.TransferFields(O);
+        asserterror R1.Modify();
+        Observer.ObserveError('modify');
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_NoKey_StaleBuffer_SourceNewer()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeModifyElsewhere();
+        QeInsertOther();
+        O.Get(1);
+        R1.TransferFields(O, false);
+        asserterror R1.Modify();
+        Observer.ObserveError('modify');
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_CurrentBuffer_SourceOlder()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeInsertOther();
+        R1.Get(1);
+        R1.Name := 'own';
+        R1.Modify();
+        Commit();
+        O.Get(1);
+        R1.TransferFields(O);
+        R1.Modify();
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_TargetNeverRead_SourceFromDb()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        R3: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeInsertOther();
+        O.Get(1);
+        R3.TransferFields(O);
+        R3.Modify();
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_TargetNeverRead_SourceInMemory()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        R3: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        O.Init();
+        O.Id := 1;
+        O.Name := 'mem';
+        O.Qty := 4;
+        R3.TransferFields(O);
+        R3.Modify();
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('db', 'mem/4');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_TargetNeverRead_StaleRow_SourceFromDb()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        R3: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+    begin
+        Prep(R1);
+        QeInsertOther();
+        QeModifyElsewhere();
+        O.Get(1);
+        R3.TransferFields(O);
+        R3.Modify();
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_TF_Other_SystemFields_AfterModify()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        R4: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+        OwnId: Guid;
+        OwnVersion: BigInteger;
+        OwnModified: DateTime;
+        OwnCreated: DateTime;
+    begin
+        Prep(R1);
+        Sleep(50);
+        QeInsertOther();
+        R1.Get(1);
+        OwnId := R1.SystemId;
+        OwnVersion := R1.SystemRowVersion;
+        OwnModified := R1.SystemModifiedAt;
+        OwnCreated := R1.SystemCreatedAt;
+        O.Get(1);
+        Observer.Observe('other newer than own (setup)', Format(O.SystemRowVersion > OwnVersion));
+        R1.TransferFields(O);
+        Observer.Observe('buffer systemid = own', Format(R1.SystemId = OwnId));
+        Observer.Observe('buffer systemid = other', Format(R1.SystemId = O.SystemId));
+        Observer.Observe('buffer rowversion = own', Format(R1.SystemRowVersion = OwnVersion));
+        Observer.Observe('buffer rowversion = other', Format(R1.SystemRowVersion = O.SystemRowVersion));
+        Observer.Observe('buffer modifiedat = own', Format(R1.SystemModifiedAt = OwnModified));
+        Observer.Observe('buffer modifiedat = other', Format(R1.SystemModifiedAt = O.SystemModifiedAt));
+        Observer.Observe('buffer createdat = own', Format(R1.SystemCreatedAt = OwnCreated));
+        Observer.Observe('buffer createdat = other', Format(R1.SystemCreatedAt = O.SystemCreatedAt));
+        Sleep(50);
+        R1.Modify();
+        Observer.Observe('after modify buffer rowversion > other', Format(R1.SystemRowVersion > O.SystemRowVersion));
+        Observer.Observe('after modify buffer systemid = own', Format(R1.SystemId = OwnId));
+        R4.Get(1);
+        Observer.Observe('db systemid = own', Format(R4.SystemId = OwnId));
+        Observer.Observe('db rowversion > own', Format(R4.SystemRowVersion > OwnVersion));
+        Observer.Observe('db rowversion > other', Format(R4.SystemRowVersion > O.SystemRowVersion));
+        Observer.Observe('db rowversion = buffer', Format(R4.SystemRowVersion = R1.SystemRowVersion));
+        Observer.Observe('db modifiedat > own', Format(R4.SystemModifiedAt > OwnModified));
+        Observer.Observe('db modifiedat > other', Format(R4.SystemModifiedAt > O.SystemModifiedAt));
+        Observer.Observe('db createdat = own', Format(R4.SystemCreatedAt = OwnCreated));
+        Observer.Observe('db createdat = other', Format(R4.SystemCreatedAt = O.SystemCreatedAt));
+        Observer.Observe('db', NameInDb());
+        Observer.Expect('other newer than own (setup)', 'Yes');
+        Observer.Expect('buffer systemid = own', 'Yes');
+        Observer.Expect('buffer systemid = other', 'No');
+        Observer.Expect('buffer rowversion = own', 'Yes');
+        Observer.Expect('buffer rowversion = other', 'No');
+        Observer.Expect('buffer modifiedat = own', 'No');
+        Observer.Expect('buffer modifiedat = other', 'Yes');
+        Observer.Expect('buffer createdat = own', 'No');
+        Observer.Expect('buffer createdat = other', 'Yes');
+        Observer.Expect('after modify buffer rowversion > other', 'Yes');
+        Observer.Expect('after modify buffer systemid = own', 'Yes');
+        Observer.Expect('db systemid = own', 'Yes');
+        Observer.Expect('db rowversion > own', 'Yes');
+        Observer.Expect('db rowversion > other', 'Yes');
+        Observer.Expect('db rowversion = buffer', 'Yes');
+        Observer.Expect('db modifiedat > own', 'Yes');
+        Observer.Expect('db modifiedat > other', 'Yes');
+        Observer.Expect('db createdat = own', 'Yes');
+        Observer.Expect('db createdat = other', 'No');
         Observer.Expect('db', 'other/3');
         Observer.Verify();
     end;
