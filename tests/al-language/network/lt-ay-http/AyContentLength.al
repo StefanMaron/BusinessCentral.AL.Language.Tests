@@ -4,6 +4,7 @@
 // Probe: observe probe; every literal asserted below is what the corpus CI service tiers produced.
 // Facts: the Content-Length header of an HttpContent after WriteFrom('hello'): before and after ReadAs(Text), after ReadAs(InStream), after a second
 // WriteFrom of a longer text, after WriteFrom of an InStream, and when GetHeaders was taken before the first WriteFrom (Contains and GetValues).
+// Writer PY (2026-10-20, tests PY_*): WriteFrom of another length after a read put Content-Length in the headers.
 // BC versions: 27, 28, 29 (corpus CI)
 
 codeunit 80508 "LT AY Content Length"
@@ -129,6 +130,102 @@ codeunit 80508 "LT AY Content Length"
         Observer.Observe('stream_read', Len(C) + ' read=' + T);
         Observer.Expect('stream', 'No');
         Observer.Expect('stream_read', 'Yes[11] read=hello world');
+        Observer.Verify();
+    end;
+
+    // Writer PY (2026-10-20): probes-needed "HTTP" row "Content-Length value after HttpContent.WriteFrom of a non-empty body of another length,
+    // once a read put a Content-Length in the headers".
+    [Test]
+    procedure PY_ContentLength_LongerBodyAfterRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        Observer.Observe('first_read', Len(C));
+        C.WriteFrom('a longer text');
+        Observer.Observe('rewritten', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('second_read', Len(C) + ' read=' + T);
+        Observer.Expect('first_read', 'Yes[5]');
+        Observer.Expect('rewritten', 'Yes[5]');
+        Observer.Expect('second_read', 'Yes[5] read=a longer text');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PY_ContentLength_ShorterBodyAfterRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        C.WriteFrom('hi');
+        Observer.Observe('rewritten', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('second_read', Len(C) + ' read=' + T);
+        C.WriteFrom('a much longer text');
+        Observer.Observe('third_write', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('third_read', Len(C) + ' read=' + T);
+        Observer.Expect('rewritten', 'Yes[5]');
+        Observer.Expect('second_read', 'Yes[5] read=hi');
+        Observer.Expect('third_write', 'Yes[5]');
+        Observer.Expect('third_read', 'Yes[5] read=a much longer text');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PY_ContentLength_HandleTakenAfterReadThenRewrite()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        H: HttpHeaders;
+        Vals: List of [Text];
+        V: Text;
+        Out: Text;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        C.GetHeaders(H);
+        C.WriteFrom('a longer text');
+        Out := Format(H.Contains('Content-Length'));
+        if H.GetValues('Content-Length', Vals) then
+            foreach V in Vals do
+                Out += '[' + V + ']';
+        Observer.Observe('old_handle', Out);
+        Observer.Observe('new_handle', Len(C));
+        Observer.Expect('old_handle', 'Yes[5]');
+        Observer.Expect('new_handle', 'Yes[5]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PY_ContentLength_InStreamAfterRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        C: HttpContent;
+        OutS: OutStream;
+        InS: InStream;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        OutS.WriteText('hello world');
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
+        C.WriteFrom(InS);
+        Observer.Observe('stream', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('stream_read', Len(C) + ' read=' + T);
+        Observer.Expect('stream', 'Yes[5]');
+        Observer.Expect('stream_read', 'Yes[5] read=hello world');
         Observer.Verify();
     end;
 }

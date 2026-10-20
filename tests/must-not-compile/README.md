@@ -530,6 +530,10 @@ is only a reference.
 | 1780 | AL0132 | BC 29: a default interface method called on a codeunit variable whose codeunit does not declare it. |
 | 1781 | AL0922 | BC 29: a [Scope('OnPrem')] procedure overrides a default interface method. |
 | 1782 | AL0231 | An enumextension of Base Application "Sales Line Type" reuses an ordinal of the base enum (ordinal 6 compiles). |
+| 1872 | AL0122 | `V := Cond ? D : DT` (Date true, DateTime false): the DateTime branch does not convert to Date. |
+| 1873 | AL0122 | `'K' in [TLo .. THi]` and `'K' in ['a' .. THi]`: a one-character literal is a Char and the Text range ends do not convert. |
+| 1874 | AL0122 | `'K' in [CLo .. CHi]` with Code range ends: the Code ends do not convert to Char. |
+| 1875 | AL0135 | `continue;` in a codeunit whose only procedure Continue takes a parameter (read as a call without its argument). |
 | 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
 | 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
 | 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |

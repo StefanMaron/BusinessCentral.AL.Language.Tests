@@ -454,4 +454,305 @@ codeunit 80606 "LT AZ Error Texts"
         Observer.Expect('de_opt_code|code', 'TypeConversion');
         Observer.Verify();
     end;
+
+    // ---- writer PY-D (2026-10-20): action error codes for other errors, and the missing-object caller ----
+
+    [Test]
+    procedure PYD_PageAction_OtherErrorCodes_1()
+    var
+        Row: Record "LT PYD Act Row";
+        Card: TestPage "LT PYD Act Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Uniq := 7;
+        Row.Insert();
+        Commit();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        asserterror Card.ValidateRelation.Invoke();
+        Observer.ObserveError('relation');
+        asserterror Card.ValidateTrigger.Invoke();
+        Observer.ObserveError('onvalidate');
+        asserterror Card.FieldErr.Invoke();
+        Observer.ObserveError('fielderror');
+        Card.Close();
+        Observer.Expect('relation|text', 'The field Ref of table LT PYD Act Row contains a value (999) that cannot be found in the related table (LT PYD Act Row).');
+        Observer.Expect('relation|code', 'TestWrapped:CSideValidateTableRelation');
+        Observer.Expect('onvalidate|text', 'pyd validate');
+        Observer.Expect('onvalidate|code', 'TestWrapped:Dialog');
+        Observer.Expect('fielderror|text', 'You must specify Name in LT PYD Act Row Id=''1''.');
+        Observer.Expect('fielderror|code', 'TestWrapped:CSide');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_PageAction_OtherErrorCodes_2()
+    var
+        Row: Record "LT PYD Act Row";
+        Card: TestPage "LT PYD Act Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Uniq := 7;
+        Row.Insert();
+        Commit();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        asserterror Card.UniqueDup.Invoke();
+        Observer.ObserveError('unique');
+        Observer.Observe('rows', Format(Row.Count()));
+        Card.Close();
+        Observer.Expect('unique|text', 'There is already a record in table LT PYD Act Row that has the same values in a unique index for the following fields: Uniq=''7''');
+        Observer.Expect('unique|code', 'TestWrapped:CSideDuplicateKey');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_PageAction_OtherErrorCodes_3()
+    var
+        Row: Record "LT PYD Act Row";
+        Card: TestPage "LT PYD Act Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Insert();
+        Commit();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        asserterror Card.DivZero.Invoke();
+        Observer.ObserveError('divzero');
+        asserterror Card.DecDivZero.Invoke();
+        Observer.ObserveError('decdivzero');
+        asserterror Card.StrLen.Invoke();
+        Observer.ObserveError('strlen');
+        asserterror Card.ModifyMissing.Invoke();
+        Observer.ObserveError('modify_missing');
+        Card.Close();
+        Observer.Expect('divzero|text', 'Attempted to divide by zero.');
+        Observer.Expect('divzero|code', 'TestWrapped:AL');
+        Observer.Expect('decdivzero|text', 'Attempted to divide by zero.');
+        Observer.Expect('decdivzero|code', 'TestWrapped:AL');
+        Observer.Expect('strlen|text', 'The length of the string is 16, but it must be less than or equal to 5 characters. Value: longer than five');
+        Observer.Expect('strlen|code', 'TestWrapped:StringLengthExceeded');
+        Observer.Expect('modify_missing|text', 'The LT PYD Act Row does not exist. Identification fields and values: Id=''555''');
+        Observer.Expect('modify_missing|code', 'TestWrapped:CSideRecordNotFound');
+        Observer.Verify();
+    end;
+
+    local procedure PydRunMissingCodeunit()
+    begin
+        Codeunit.Run(80748);
+    end;
+
+    [Test]
+    procedure PYD_MissingCodeunit_FromLocalProcedure()
+    begin
+        asserterror PydRunMissingCodeunit();
+        Observer.ObserveError('local');
+        Observer.Expect('local|text', 'You tried to invoke the CodeUnit object with the ID 80748 from the object LT AZ Error Texts. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('local|code', 'AL:MetadataNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_MissingReport_OutsideTry()
+    begin
+        asserterror Report.Run(80748);
+        Observer.ObserveError('report');
+        Observer.Expect('report|text', 'You tried to invoke the Report object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('report|code', 'AL:MetadataNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_MissingXmlPort_OutsideTry()
+    begin
+        asserterror XmlPort.Run(80748);
+        Observer.ObserveError('xmlport');
+        Observer.Expect('xmlport|text', 'You tried to invoke the XmlPort object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('xmlport|code', 'AL:MetadataNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_MissingPage_OutsideTry()
+    begin
+        asserterror Page.Run(80748);
+        Observer.ObserveError('page');
+        Observer.Expect('page|text', 'You tried to invoke the Page object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('page|code', 'AL:MetadataNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_MissingCodeunit_TwoHelpersDeep()
+    var
+        Outer: Codeunit "LT PYD Missing Outer";
+    begin
+        asserterror Outer.ViaHelper();
+        Observer.ObserveError('two_deep');
+        Observer.Expect('two_deep|text', 'You tried to invoke the CodeUnit object with the ID 80748 from the object LT PYD Missing Outer. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('two_deep|code', 'AL:MetadataNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_MissingCodeunit_InOnRunOfRunCodeunit()
+    begin
+        asserterror Codeunit.Run(Codeunit::"LT PYD Missing Outer");
+        Observer.ObserveError('onrun');
+        Observer.Expect('onrun|text', 'You tried to invoke the CodeUnit object with the ID 80748 from the object LT AZ Error Texts. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('onrun|code', 'AL:MetadataNotFound');
+        Observer.Verify();
+    end;
+}
+
+// Writer PY-D (2026-10-20): objects 85227-85229 for the action error codes and the missing-object caller probes below.
+table 85227 "LT PYD Act Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Ref; Integer) { TableRelation = "LT PYD Act Row".Id; }
+        field(3; Name; Text[20])
+        {
+            trigger OnValidate()
+            begin
+                Error('pyd validate');
+            end;
+        }
+        field(4; Uniq; Integer) { }
+        field(5; Short; Code[5]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+        key(UQ; Uniq) { Unique = true; }
+    }
+}
+
+page 85228 "LT PYD Act Card"
+{
+    PageType = Card;
+    SourceTable = "LT PYD Act Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Id; Rec.Id) { ApplicationArea = All; }
+            field(Ref; Rec.Ref) { ApplicationArea = All; }
+            field(Name; Rec.Name) { ApplicationArea = All; }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(ValidateRelation)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                begin
+                    Rec.Validate(Ref, 999);
+                end;
+            }
+            action(ValidateTrigger)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                begin
+                    Rec.Validate(Name, 'x');
+                end;
+            }
+            action(FieldErr)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                begin
+                    Rec.FieldError(Name);
+                end;
+            }
+            action(UniqueDup)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    Row: Record "LT PYD Act Row";
+                begin
+                    Row.Id := 2;
+                    Row.Uniq := 7;
+                    Row.Insert();
+                end;
+            }
+            action(DivZero)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    I: Integer;
+                    Zero: Integer;
+                begin
+                    I := 1 div Zero;
+                    Rec.Ref := I;
+                end;
+            }
+            action(DecDivZero)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    D: Decimal;
+                    Zero: Decimal;
+                begin
+                    D := 1 / Zero;
+                    Rec.Ref := D;
+                end;
+            }
+            action(StrLen)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    T: Text;
+                begin
+                    T := 'longer than five';
+                    Rec.Short := T;
+                end;
+            }
+            action(ModifyMissing)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    Row: Record "LT PYD Act Row";
+                begin
+                    Row.Id := 555;
+                    Row.Modify();
+                end;
+            }
+        }
+    }
+}
+
+codeunit 85229 "LT PYD Missing Outer"
+{
+    trigger OnRun()
+    begin
+        Codeunit.Run(80748);
+    end;
+
+    procedure ViaHelper()
+    var
+        Caller: Codeunit "W5 Missing Caller";
+    begin
+        Caller.RunMissingCodeunit(80748);
+    end;
 }

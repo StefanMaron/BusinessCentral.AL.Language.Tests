@@ -832,4 +832,85 @@ codeunit 72516 "LT SyT Exit Recursion"
                 exit;
         end;
     end;
+    // Writer PY-C (al-runtime-rs PR 346, probes-needed "Loops, continue and MaxStrLen"): a downto loop on an Integer counter whose BigInteger
+    // end bound is below the Integer range, and a BigInteger start bound above it.
+    [Test]
+    procedure PYC_ForDownto_BigIntegerBoundOnInteger()
+    var
+        Observer: Codeunit "Probe Observer";
+        i: Integer;
+        Rounds: Integer;
+    begin
+        ClearLastError();
+        if TryDowntoBig(-3000000000L, i, Rounds) then
+            Observer.Observe('downto -3e9', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('downto -3e9', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryDowntoBig(-2147483649L, i, Rounds) then
+            Observer.Observe('downto min-1', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('downto min-1', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryDowntoBig(998L, i, Rounds) then
+            Observer.Observe('downto 998', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('downto 998', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryDowntoFromBig(3000000000L, i, Rounds) then
+            Observer.Observe('from 3e9 downto 1', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('from 3e9 downto 1', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        ClearLastError();
+        if TryDowntoIntMin(i, Rounds) then
+            Observer.Observe('downto int min', 'no error|' + Format(i) + '|' + Format(Rounds))
+        else
+            Observer.Observe('downto int min', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
+        Observer.Expect('downto -3e9', 'error:Overflow under conversion of System.Int64 value -3000000000 to System.Int32.|ConversionCast|1000|0');
+        Observer.Expect('downto min-1', 'error:Overflow under conversion of System.Int64 value -2147483649 to System.Int32.|ConversionCast|1000|0');
+        Observer.Expect('downto 998', 'no error|998|3');
+        Observer.Expect('from 3e9 downto 1', 'error:Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast|0|0');
+        Observer.Expect('downto int min', 'no error|-2147483648|2');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryDowntoBig(EndBound: BigInteger; var i: Integer; var Rounds: Integer)
+    begin
+        i := 0;
+        Rounds := 0;
+        for i := 1000 downto EndBound do begin
+            Rounds += 1;
+            if Rounds = 5 then
+                exit;
+        end;
+    end;
+
+    [TryFunction]
+    local procedure TryDowntoFromBig(StartBound: BigInteger; var i: Integer; var Rounds: Integer)
+    begin
+        i := 0;
+        Rounds := 0;
+        for i := StartBound downto 1 do begin
+            Rounds += 1;
+            if Rounds = 5 then
+                exit;
+        end;
+    end;
+
+    [TryFunction]
+    local procedure TryDowntoIntMin(var i: Integer; var Rounds: Integer)
+    var
+        Lowest: Integer;
+    begin
+        Lowest := -2147483647;
+        Lowest -= 1;
+        i := 0;
+        Rounds := 0;
+        for i := -2147483647 downto Lowest do begin
+            Rounds += 1;
+            if Rounds = 5 then
+                exit;
+        end;
+    end;
 }

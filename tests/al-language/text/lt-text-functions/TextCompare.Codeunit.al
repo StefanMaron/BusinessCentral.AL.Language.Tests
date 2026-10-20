@@ -347,5 +347,36 @@ codeunit 70515 "LT TxB TextCompare"
         Obs.Expect('c10over|code', 'StringLengthExceeded');
         Obs.Verify();
     end;
-
+    // Writer PY-C (al-runtime-rs PR 341, "Case label of a Code selector": a plain Code = Text compare outside case). Variables: TextEqualityVariables
+    // above (tc/ct: Code 'HELLO' and Text 'Hello' differ). Here: a Code against a text literal and a Text variable, and the order operators.
+    [Test]
+    procedure PYC_CodeAgainstTextLiteral()
+    begin
+        C5 := 'abc';
+        T := 'abc';
+        Obs.Observe('code = lower literal', Format(C5 = 'abc'));
+        Obs.Observe('lower literal = code', Format('abc' = C5));
+        Obs.Observe('code <> lower literal', Format(C5 <> 'abc'));
+        Obs.Observe('code = upper literal', Format(C5 = 'ABC'));
+        Obs.Observe('code = lower text var', Format(C5 = T));
+        Obs.Observe('code < abd literal', Format(C5 < 'abd'));
+        Obs.Observe('code > abd literal', Format(C5 > 'abd'));
+        Obs.Observe('code = 8-char literal', Format(C5 = 'abcdefgh'));
+        Obs.Observe('code in [lower literal]', Format(C5 in ['abc']));
+        Obs.Observe('code in [lower text var]', Format(C5 in [T]));
+        C10 := 'abc';
+        Obs.Observe('code10 = code5', Format(C10 = C5));
+        Obs.Expect('code = lower literal', 'No');
+        Obs.Expect('lower literal = code', 'No');
+        Obs.Expect('code <> lower literal', 'Yes');
+        Obs.Expect('code = upper literal', 'Yes');
+        Obs.Expect('code = lower text var', 'No');
+        Obs.Expect('code < abd literal', 'Yes');
+        Obs.Expect('code > abd literal', 'No');
+        Obs.Expect('code = 8-char literal', 'No');
+        Obs.Expect('code in [lower literal]', 'Yes');
+        Obs.Expect('code in [lower text var]', 'Yes');
+        Obs.Expect('code10 = code5', 'Yes');
+        Obs.Verify();
+    end;
 }
