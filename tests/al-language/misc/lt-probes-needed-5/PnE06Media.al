@@ -229,7 +229,14 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Expect('short', 'blobLength=69 hasValue=No returned=null id field=null id');
         Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=No returned=null id field=null id');
         Observer.Verify();
+#elif LT_HELD_BCLINUX_135
+        // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes, like the valid one. Only the first difference
+        // was reported, so shortGetFirst is not measured there. The Linux image pinned in ci.yml keeps 69 bytes (bc-linux #135).
+        Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Ignore('shortGetFirst');
+        Observer.Verify();
 #else
+        // Linux image until the pin includes the bc-linux #135 fix (Windows: the held branch above).
         Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
         Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
         Observer.Verify();
@@ -247,7 +254,13 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
         Observer.Expect('short', 'hasValue=No returned=null id field=null id');
         Observer.Verify();
+#elif LT_HELD_BCLINUX_135
+        // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes; the pinned Linux image keeps 69 (bc-linux #135).
+        Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Expect('short', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Verify();
 #else
+        // Linux image until the pin includes the bc-linux #135 fix (Windows: the held branch above).
         Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Expect('short', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
         Observer.Verify();
