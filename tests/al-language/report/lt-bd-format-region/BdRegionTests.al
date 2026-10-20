@@ -6,8 +6,8 @@
 // OnAfterGetRecord and OnPostReport for 14 property values; the same report started with Run, RunModal, Execute, SaveAs Pdf/Word/Excel/Html and
 // through a request page; CurrReport.FormatRegion := for 14 values (SaveAs Xml and Run), after CurrReport.Language :=, and inside a report that has
 // the property; the decimalformatter of Decimal columns; SummaryML of layouts in several languages.
-// Linux suspects: SaveAs Pdf/Word/Excel/Html end in the bc-linux RDLC stub error on the Linux tier; those two tests are kept as source under
-// BD_LINUX_SUSPECT (not compiled) until the Windows nightly measures them.
+// SaveAs Pdf/Word/Excel/Html: asserted with the Windows BC 27.5/28.5 values (Windows check 2026-10-20) and held on Linux under
+// LT_HELD_BCLINUX_144 (not compiled) until the bc-linux pin in ci.yml renders RDLC to Word and Excel; BC 29.0 not measured on Windows yet.
 // BC versions: 27-29
 
 codeunit 81070 "BD Region Tests"
@@ -380,8 +380,10 @@ codeunit 81070 "BD Region Tests"
         Observer.Verify();
     end;
 
-#if BD_LINUX_SUSPECT
-    // Linux suspect: on the Linux tier every SaveAs Pdf/Word/Excel/Html ends in the bc-linux RDLC stub error; kept as source, not compiled.
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) give these values. The Linux image pinned in ci.yml ends SaveAs Word/Excel of the
+    // RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143): held until the pin includes
+    // the fixes. BC 29.0 is not measured on Windows yet, so the test is not compiled there.
     [Test]
     procedure BdProperty_De_SaveAsPdfWord()
     var
@@ -389,12 +391,24 @@ codeunit 81070 "BD Region Tests"
     begin
         SaveAsWay(Observer, ReportFormat::Pdf);
         SaveAsWay(Observer, ReportFormat::Word);
-        Observer.Finish();
+        Observer.Expect('Pdf ok', 'Yes');
+        Observer.Expect('Pdf has output', 'Yes');
+        Observer.Expect('Pdf|text', '');
+        Observer.Expect('Pdf|code', '');
+        Observer.Expect('Pdf log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('Word ok', 'Yes');
+        Observer.Expect('Word has output', 'Yes');
+        Observer.Expect('Word|text', '');
+        Observer.Expect('Word|code', '');
+        Observer.Expect('Word log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Verify();
     end;
 #endif
 
-#if BD_LINUX_SUSPECT
-    // Linux suspect: on the Linux tier every SaveAs Pdf/Word/Excel/Html ends in the bc-linux RDLC stub error; kept as source, not compiled.
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) give these values. The Linux image pinned in ci.yml ends SaveAs Word/Excel of the
+    // RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143): held until the pin includes
+    // the fixes. BC 29.0 is not measured on Windows yet, so the test is not compiled there.
     [Test]
     procedure BdProperty_De_SaveAsExcelHtml()
     var
@@ -402,7 +416,17 @@ codeunit 81070 "BD Region Tests"
     begin
         SaveAsWay(Observer, ReportFormat::Excel);
         SaveAsWay(Observer, ReportFormat::Html);
-        Observer.Finish();
+        Observer.Expect('Excel ok', 'Yes');
+        Observer.Expect('Excel has output', 'Yes');
+        Observer.Expect('Excel|text', '');
+        Observer.Expect('Excel|code', '');
+        Observer.Expect('Excel log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];get=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567 region=[de-DE];post=1.234.567,891#-1.234,5#31.01.25#05.03.24#5. March 2024#31.01.25 14:30#05.03.24 09:05#14:30:15#09:05:07#-1234567;');
+        Observer.Expect('Html ok', 'No');
+        Observer.Expect('Html has output', 'No');
+        Observer.Expect('Html|text', 'The Html output format is not supported by the current report layout format.');
+        Observer.Expect('Html|code', 'ReportUnsupportedFormat');
+        Observer.Expect('Html log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];');
+        Observer.Verify();
     end;
 #endif
 
