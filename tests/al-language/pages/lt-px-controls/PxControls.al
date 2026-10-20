@@ -869,32 +869,140 @@ codeunit 86200 "LT PX Nav Tests"
 
     [Test]
     [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
-    procedure PX_ControlLookups()
+    procedure PX_Lookup_GrpCtl()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'GrpCtl', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkPlainRel()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkPlainRel', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkPlainRelEmpty()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe(Observer, 'LkPlainRelEmpty', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkWhere()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkWhere', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkCond()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkCond', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkCond_KindB()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkCond', 1);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkOverRel()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkOverRel', 0);
         Observer.Finish();
     end;
 
     [Test]
     [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
-    procedure PX_ControlLookups2()
+    procedure PX_Lookup_LkOverTrig()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkOverTrig', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkDiffPage()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkDiffPage', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkOnlyDd()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkOnlyDd', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkNone()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkNone', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkOtherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkOtherTable', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_LkPageOverRel()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'LkPageOverRel', 0);
-        Probe(Observer, 'LkPlainRelEmpty', 0);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    procedure PX_Lookup_SharedSecond()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
         Probe(Observer, 'SharedSecond', 0);
         Observer.Finish();
     end;
