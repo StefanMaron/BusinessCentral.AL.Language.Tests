@@ -14,7 +14,8 @@
 // SaveAsWord and SaveAsExcel, static, instance and from the request page: asserted with the Windows BC 27.5/28.5 values (Windows check
 // 2026-10-20: the file is written, marker in word/document.xml or xl/worksheets/sheet1.xml) and held on Linux under LT_HELD_BCLINUX_144:
 // the pinned Linux image fails inside the Mono renderer with 'The system encountered an internal error while rendering the report.'
-// (ReportingService:Rpc; the request page forms raise it uncaught). BC 29.0 not measured on Windows yet.
+// (ReportingService:Rpc; the request page forms raise it uncaught). Windows BC 29.0 (check 2026-10-20) gives the same values; held on 29
+// under LT_HELD_BCLINUX_143 (the BC 29 Linux container turns the renderer off at boot).
 // PDF text is compressed: only the page count is asserted.
 // BC versions: 27 - 29
 
@@ -484,10 +485,10 @@ codeunit 98603 "LT AM OP SaveAs Tests"
         Observer.Verify();
     end;
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) write the docx/xlsx with the marker in the main part and no error. The Linux image
-    // pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144): held until the pin includes the fix.
-    // BC 29.0 is not measured on Windows yet.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values) write the docx/xlsx with the marker in the main
+    // part and no error. The Linux image pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
+    // renderer off at boot, bc-linux #143): held until the pin includes the fixes.
     [Test]
     procedure Static_SaveAsWord()
     begin
@@ -665,10 +666,10 @@ codeunit 98603 "LT AM OP SaveAs Tests"
     end;
 #endif
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) write the docx/xlsx with the marker in the main part and no error. The Linux image
-    // pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144): held until the pin includes the fix.
-    // BC 29.0 is not measured on Windows yet.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values) write the docx/xlsx with the marker in the main
+    // part and no error. The Linux image pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0:
+    // renderer off at boot, bc-linux #143): held until the pin includes the fixes.
     [Test]
     [HandlerFunctions('SaveHandler')]
     procedure RequestPage_SaveAsExcel()

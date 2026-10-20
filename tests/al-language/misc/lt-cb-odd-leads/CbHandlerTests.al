@@ -217,8 +217,10 @@ codeunit 84168 "LT CB Handler Tests"
 
     // Held (publisher, bump 29): in the full run 39315232637 the first Invoke raised 'Unexpected CLR exception thrown.:
     // System.Reflection.TargetException: Object does not match target type.' on BC 27.5 and 28.5 (green in the writer's own runs).
-    // Same class as TPARONH 60285 (RunObject action to a dialog, windows-queue.md PUB8 row): a Linux suspect until a Windows check.
-#if LT_HELD_BCLINUX_TARGETEXCEPTION
+    // Windows BC 27.5 and 28.5 full runs (2026-10-20, all corpus codeunits, this test enabled) pass it with no TargetException. The Linux
+    // failure depends on the run (bc-linux #162, open), so one green Linux run proves nothing: held on Linux under LT_HELD_BCLINUX_162 on
+    // every version (BC 29.0 full run on Windows not done yet).
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('LinkedDialogHandler')]
 #endif

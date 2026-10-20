@@ -6,8 +6,9 @@
 // OnAfterGetRecord and OnPostReport for 14 property values; the same report started with Run, RunModal, Execute, SaveAs Pdf/Word/Excel/Html and
 // through a request page; CurrReport.FormatRegion := for 14 values (SaveAs Xml and Run), after CurrReport.Language :=, and inside a report that has
 // the property; the decimalformatter of Decimal columns; SummaryML of layouts in several languages.
-// SaveAs Pdf/Word/Excel/Html: asserted with the Windows BC 27.5/28.5 values (Windows check 2026-10-20) and held on Linux under
-// LT_HELD_BCLINUX_144 (not compiled) until the bc-linux pin in ci.yml renders RDLC to Word and Excel; BC 29.0 not measured on Windows yet.
+// SaveAs Pdf/Word/Excel/Html: asserted with the Windows BC 27.5/28.5/29.0 values (Windows checks 2026-10-20; 29.0 gives the same values) and
+// held on Linux (not compiled) until the bc-linux pin in ci.yml renders RDLC to Word and Excel: LT_HELD_BCLINUX_144 on 27/28,
+// LT_HELD_BCLINUX_143 on 29 (renderer off at boot).
 // BC versions: 27-29
 
 codeunit 81070 "BD Region Tests"
@@ -380,10 +381,10 @@ codeunit 81070 "BD Region Tests"
         Observer.Verify();
     end;
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) give these values. The Linux image pinned in ci.yml ends SaveAs Word/Excel of the
-    // RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143): held until the pin includes
-    // the fixes. BC 29.0 is not measured on Windows yet, so the test is not compiled there.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20: same values as 27.5/28.5) give these values. The Linux image pinned
+    // in ci.yml ends SaveAs Word/Excel of the RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot,
+    // bc-linux #143): held until the pin includes the fixes.
     [Test]
     procedure BdProperty_De_SaveAsPdfWord()
     var
@@ -405,10 +406,10 @@ codeunit 81070 "BD Region Tests"
     end;
 #endif
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) give these values. The Linux image pinned in ci.yml ends SaveAs Word/Excel of the
-    // RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143): held until the pin includes
-    // the fixes. BC 29.0 is not measured on Windows yet, so the test is not compiled there.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20: same values as 27.5/28.5) give these values. The Linux image pinned
+    // in ci.yml ends SaveAs Word/Excel of the RDLC layout in the Mono renderer error (bc-linux #144; BC 29.0: renderer off at boot,
+    // bc-linux #143): held until the pin includes the fixes.
     [Test]
     procedure BdProperty_De_SaveAsExcelHtml()
     var

@@ -667,9 +667,10 @@ codeunit 84592 "LT CI Report Run Leads"
         Observer.Verify();
     end;
 
-#if LT_HELD_BCLINUX_144 and not BC29PLUS
-    // Item 144: SaveAs Word and Excel of the RDLC-only report render the RDLC layout. Windows BC 27.5/28.5 (Windows check 2026-10-20); the
-    // Linux image pinned in ci.yml fails RDLC to Word/Excel (bc-linux #144): held until the pin moves. BC 29.0 not measured on Windows yet.
+#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+    // Item 144: SaveAs Word and Excel of the RDLC-only report render the RDLC layout. Windows BC 27.5/28.5/29.0 (Windows checks 2026-10-20;
+    // 29.0 gives the same values); the Linux image pinned in ci.yml fails RDLC to Word/Excel (bc-linux #144; BC 29.0: renderer off at boot,
+    // bc-linux #143): held until the pin moves.
     [Test]
     procedure SaveAs_RdlcOnly_WordExcel()
     var

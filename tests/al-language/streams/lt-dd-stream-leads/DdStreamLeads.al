@@ -268,7 +268,7 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('pic mediaid null', Format(IsNullGuid(Other.Pic.MediaId())));
         OutBlob.CreateOutStream(O);
         Observer.Observe('pic exportstream', Format(Other.Pic.ExportStream(O)));
-#if not BC29PLUS or LT_HELD_BCLINUX_135
+#if not BC29PLUS or LT_HELD_BCLINUX_161
         Observer.Observe('pic exported length', Format(OutBlob.Length()));
 #endif
         Other.CalcFields(Data);
@@ -284,10 +284,10 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Expect('pic hasvalue', 'Yes');
         Observer.Expect('pic mediaid null', 'No');
         Observer.Expect('pic exportstream', 'Yes');
-        // BC 27.5 and 28.5 export the 1x1 png as 99 bytes (re-encoded). Linux BC 29.0 gives 70 (keeps the imported bytes);
-        // Windows 29.0 re-encodes media (bc-linux #135, see BcXmlBlob.al), so 70 is likely a Linux value: the BC 29 length
-        // is held until the Windows check (windows-queue.md, DD item 63) or bc-linux #135 lands. 99 on 29 is not measured yet.
-#if not BC29PLUS or LT_HELD_BCLINUX_135
+        // BC 27.5, 28.5 and Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) export the 1x1 png as 99 bytes (re-encoded). Linux
+        // BC 29.0 gives 70 (keeps the imported bytes), a Linux value: the BC 29 length is held on Linux under LT_HELD_BCLINUX_161
+        // (bc-linux #161).
+#if not BC29PLUS or LT_HELD_BCLINUX_161
         Observer.Expect('pic exported length', '99');
 #endif
         Observer.Expect('data hasvalue', 'Yes');
@@ -712,6 +712,9 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('read byte at end with return', StrSubstNo('%1 %2', N, B));
 
         I.ResetPosition();
+        // A successful TryFunction leaves the last error as it was: clear it first, so an error of an earlier test does not show here
+        // (Windows BC 27.5/28.5/29.0 check 2026-10-20 saw the Base64 error of Item72 here).
+        ClearLastError();
         Observer.Observe('read 5 without return ok', Format(TryRead(I, 5)));
         Observer.ObserveError('read 5 without return');
 

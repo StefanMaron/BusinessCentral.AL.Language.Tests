@@ -3,7 +3,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-run-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160), LT CU Row (85300), LT CU Other (85301), LT CU Row List (85302), LT CU Inserter (85303),
-//   LT CU TableNo Run (85305), LT CU Report (85306)
+//   LT CU TableNo Run (85305), LT CU Report (85306), LT CU Named Run (85308, namespace LTCU.Probe)
 // Corpus #670 items 37, 42, 45: what IsolatedStorage.Set leaves behind for Page.RunModal, a guarded Codeunit.Run and Report.RunModal;
 // Codeunit.Run of a TableNo codeunit with a record of another table, and by an unknown name; Report.Run with a request page right after a write.
 // BC versions: 27.5, 28.5, 29.0
@@ -263,6 +263,35 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Expect('NoSuch.Namespace.LT CU Named Run|code', 'InvalidMetadata');
         Observer.Verify();
     end;
+
+#if LT_HELD_BCLINUX_159
+    // Codeunit.Run(Text) with the namespace-qualified name of codeunit 85308 (namespace LTCU.Probe, CuNamedRun.al), plain and with the
+    // object name quoted: Windows BC 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20) run the codeunit for both spellings (OnRun sets
+    // Rec.Name to 'x'). Held on Linux: the Linux image (BC 29.0) answers 'A codeunit with full name LTCU.Probe.LT CU Named Run could not
+    // be found.' (InvalidMetadata), bc-linux #159.
+    [Test]
+    procedure CodeunitRun_ByQualifiedName()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT CU Row";
+        Named: Codeunit LTCU.Probe."LT CU Named Run"; // not called: names the codeunit for the CI test selection
+    begin
+        Initialize();
+        Row.Id := 1;
+        RunByName(Observer, 'LTCU.Probe.LT CU Named Run', Row);
+        RunByName(Observer, 'LTCU.Probe."LT CU Named Run"', Row);
+        Observer.Expect('LTCU.Probe.LT CU Named Run|ok', 'Yes');
+        Observer.Expect('LTCU.Probe.LT CU Named Run|name', 'x');
+        Observer.Expect('LTCU.Probe.LT CU Named Run|text', '');
+        Observer.Expect('LTCU.Probe.LT CU Named Run|code', '');
+        Observer.Expect('LTCU.Probe."LT CU Named Run"|ok', 'Yes');
+        Observer.Expect('LTCU.Probe."LT CU Named Run"|name', 'x');
+        Observer.Expect('LTCU.Probe."LT CU Named Run"|text', '');
+        Observer.Expect('LTCU.Probe."LT CU Named Run"|code', '');
+        Observer.Verify();
+    end;
+#endif
+
 
     local procedure RunByName(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT CU Row")
     begin
