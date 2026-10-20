@@ -351,4 +351,130 @@ codeunit 77532 "LT AC Attributes"
         Calls += 1;
         exit('service_enabled_ran');
     end;
+
+    // Writer PX (probes-needed, PR 326 "Not done"): what SecurityFiltering() answers on a record declared with [SecurityFiltering(x)] after
+    // Clear, ClearAll, Reset, Init, an assignment (both directions, from a record with another attribute and with none), Copy, a parameter,
+    // and on a global record of a codeunit (codeunit 86176).
+    // Rule seen: the declared attribute stays with the variable: Clear and ClearAll go back to the declared value (also after a SecurityFiltering(x)
+    // call), Reset and Init keep it, an assignment or Copy does not carry it over, parameters (by value and var) carry the argument's value.
+    [Test]
+    procedure PX_Attr_SecurityFiltering_ClearAndAssign()
+    var
+        Observer: Codeunit "Probe Observer";
+        [SecurityFiltering(SecurityFilter::Filtered)]
+        FilteredRow: Record "LT AC Attr Row";
+        [SecurityFiltering(SecurityFilter::Ignored)]
+        IgnoredRow: Record "LT AC Attr Row";
+        [SecurityFiltering(SecurityFilter::Disallowed)]
+        DisallowedRow: Record "LT AC Attr Row";
+        PlainRow: Record "LT AC Attr Row";
+    begin
+        Observer.Observe('disallowed', Format(DisallowedRow.SecurityFiltering()));
+        Clear(FilteredRow);
+        Observer.Observe('filtered_after_clear', Format(FilteredRow.SecurityFiltering()));
+        FilteredRow.Reset();
+        Observer.Observe('filtered_after_reset', Format(FilteredRow.SecurityFiltering()));
+        FilteredRow.Init();
+        Observer.Observe('filtered_after_init', Format(FilteredRow.SecurityFiltering()));
+        FilteredRow := PlainRow;
+        Observer.Observe('filtered_after_plain_assigned', Format(FilteredRow.SecurityFiltering()));
+        FilteredRow := IgnoredRow;
+        Observer.Observe('filtered_after_ignored_assigned', Format(FilteredRow.SecurityFiltering()));
+        PlainRow := IgnoredRow;
+        Observer.Observe('plain_after_ignored_assigned', Format(PlainRow.SecurityFiltering()));
+        Clear(PlainRow);
+        PlainRow.Copy(DisallowedRow);
+        Observer.Observe('plain_after_copy_disallowed', Format(PlainRow.SecurityFiltering()));
+        Clear(PlainRow);
+        PlainRow.SecurityFiltering(SecurityFilter::Ignored);
+        Observer.Observe('plain_set_ignored', Format(PlainRow.SecurityFiltering()));
+        Clear(PlainRow);
+        Observer.Observe('plain_set_ignored_then_clear', Format(PlainRow.SecurityFiltering()));
+        IgnoredRow.SecurityFiltering(SecurityFilter::Validated);
+        Observer.Observe('ignored_set_validated', Format(IgnoredRow.SecurityFiltering()));
+        Clear(IgnoredRow);
+        Observer.Observe('ignored_set_validated_then_clear', Format(IgnoredRow.SecurityFiltering()));
+        Observer.Observe('by_value_param_of_ignored', PxSecurityOf(IgnoredRow));
+        Observer.Observe('var_param_of_ignored', PxSecurityOfVar(IgnoredRow));
+        Observer.Expect('disallowed', 'Disallowed');
+        Observer.Expect('filtered_after_clear', 'Filtered');
+        Observer.Expect('filtered_after_reset', 'Filtered');
+        Observer.Expect('filtered_after_init', 'Filtered');
+        Observer.Expect('filtered_after_plain_assigned', 'Filtered');
+        Observer.Expect('filtered_after_ignored_assigned', 'Filtered');
+        Observer.Expect('plain_after_ignored_assigned', 'Validated');
+        Observer.Expect('plain_after_copy_disallowed', 'Validated');
+        Observer.Expect('plain_set_ignored', 'Ignored');
+        Observer.Expect('plain_set_ignored_then_clear', 'Validated');
+        Observer.Expect('ignored_set_validated', 'Validated');
+        Observer.Expect('ignored_set_validated_then_clear', 'Ignored');
+        Observer.Expect('by_value_param_of_ignored', 'Ignored');
+        Observer.Expect('var_param_of_ignored', 'Ignored');
+        Observer.Verify();
+    end;
+
+    local procedure PxSecurityOf(Row: Record "LT AC Attr Row"): Text
+    begin
+        exit(Format(Row.SecurityFiltering()));
+    end;
+
+    local procedure PxSecurityOfVar(var Row: Record "LT AC Attr Row"): Text
+    begin
+        exit(Format(Row.SecurityFiltering()));
+    end;
+
+    [Test]
+    procedure PX_Attr_SecurityFiltering_Global()
+    var
+        Observer: Codeunit "Probe Observer";
+        Holder: Codeunit "LT PX SecFilter Holder";
+    begin
+        Observer.Observe('global_filtered', Holder.GlobalFiltering());
+        Observer.Observe('global_plain', Holder.GlobalPlainFiltering());
+        Holder.ClearGlobal();
+        Observer.Observe('global_filtered_after_clear', Holder.GlobalFiltering());
+        Observer.Observe('clearall', Holder.ClearAllThenRead());
+        Observer.Observe('global_filtered_after_clearall', Holder.GlobalFiltering());
+        Observer.Observe('global_plain_after_clearall', Holder.GlobalPlainFiltering());
+        Observer.Expect('global_filtered', 'Filtered');
+        Observer.Expect('global_plain', 'Validated');
+        Observer.Expect('global_filtered_after_clear', 'Filtered');
+        Observer.Expect('clearall', 'local=Ignored global=Filtered plain_set_ignored=Validated');
+        Observer.Expect('global_filtered_after_clearall', 'Filtered');
+        Observer.Expect('global_plain_after_clearall', 'Validated');
+        Observer.Verify();
+    end;
+}
+
+codeunit 86176 "LT PX SecFilter Holder"
+{
+    var
+        [SecurityFiltering(SecurityFilter::Filtered)]
+        GlobalRow: Record "LT AC Attr Row";
+        GlobalPlain: Record "LT AC Attr Row";
+
+    procedure GlobalFiltering(): Text
+    begin
+        exit(Format(GlobalRow.SecurityFiltering()));
+    end;
+
+    procedure GlobalPlainFiltering(): Text
+    begin
+        exit(Format(GlobalPlain.SecurityFiltering()));
+    end;
+
+    procedure ClearGlobal()
+    begin
+        Clear(GlobalRow);
+    end;
+
+    procedure ClearAllThenRead(): Text
+    var
+        [SecurityFiltering(SecurityFilter::Ignored)]
+        LocalRow: Record "LT AC Attr Row";
+    begin
+        GlobalPlain.SecurityFiltering(SecurityFilter::Ignored);
+        ClearAll();
+        exit('local=' + Format(LocalRow.SecurityFiltering()) + ' global=' + Format(GlobalRow.SecurityFiltering()) + ' plain_set_ignored=' + Format(GlobalPlain.SecurityFiltering()));
+    end;
 }

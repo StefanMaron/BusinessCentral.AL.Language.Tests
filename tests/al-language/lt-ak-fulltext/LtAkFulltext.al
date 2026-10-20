@@ -134,4 +134,60 @@ codeunit 79201 "LT AK Fts Test"
         Assert.IsFalse(RecRef.Field(3).IsOptimizedForTextSearch(), 'Plain is not optimized');
         Assert.IsFalse(RecRef.Field(1).IsOptimizedForTextSearch(), 'Id is not optimized');
     end;
+
+    // Writer PX (probes-needed "Platform tables and session facts": Field.OptimizeForTextSearch declared on a field that is not Text):
+    // a Code field with OptimizeForTextSearch = true (table 86162): the Field row, FieldRef.IsOptimizedForTextSearch and the rows a filter keeps.
+    [Test]
+    procedure PX_OptimizeForTextSearch_OnACodeField()
+    var
+        Observer: Codeunit "Probe Observer";
+        F: Record Field;
+        R: Record "LT PX Fts Code Row";
+        RecRef: RecordRef;
+    begin
+        R.DeleteAll();
+        R.Id := 1;
+        R.Cd := 'HELLO WORLD';
+        R.Insert();
+        R.Id := 2;
+        R.Cd := 'SAY HELLO';
+        R.Insert();
+        R.Id := 3;
+        R.Cd := 'GOODBYE';
+        R.Insert();
+        F.Get(Database::"LT PX Fts Code Row", 2);
+        Observer.Observe('field_row_code', Format(F.OptimizeForTextSearch));
+        F.Get(Database::"LT PX Fts Code Row", 3);
+        Observer.Observe('field_row_plain_code', Format(F.OptimizeForTextSearch));
+        RecRef.Open(Database::"LT PX Fts Code Row");
+        Observer.Observe('fieldref_code', Format(RecRef.Field(2).IsOptimizedForTextSearch()));
+        Observer.Observe('fieldref_plain_code', Format(RecRef.Field(3).IsOptimizedForTextSearch()));
+        R.SetFilter(Cd, '@*hello*');
+        Observer.Observe('at_contains_count', Format(R.Count()));
+        R.SetFilter(Cd, '*HELLO*');
+        Observer.Observe('contains_count', Format(R.Count()));
+        R.DeleteAll();
+        Observer.Expect('field_row_code', 'Yes');
+        Observer.Expect('field_row_plain_code', 'No');
+        Observer.Expect('fieldref_code', 'Yes');
+        Observer.Expect('fieldref_plain_code', 'No');
+        Observer.Expect('at_contains_count', '2');
+        Observer.Expect('contains_count', '2');
+        Observer.Verify();
+    end;
+}
+
+table 86162 "LT PX Fts Code Row"
+{
+    DataClassification = SystemMetadata;
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Cd; Code[50]) { OptimizeForTextSearch = true; }
+        field(3; PlainCd; Code[50]) { }
+    }
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
 }
