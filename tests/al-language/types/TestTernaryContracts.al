@@ -336,4 +336,105 @@ codeunit 60193 "Test Ternary Contracts"
         LongText := 'abcdefghijklmnopqrstuvwxyz1234';
         Result := Cond ? LongText : C20;
     end;
+    // Writer PY-C (al-runtime-rs PR 339, probes-needed "Ternary and call-argument conversion"): Integer true with BigInteger false beyond Int32,
+    // Text[10] true with a 12-character Text false, Option and Enum true with Integer false. Each read into a BigInteger, Text or Integer.
+    [Test]
+    procedure PYC_Ternary_MoreBranchPairs()
+    var
+        Observer: Codeunit "Probe Observer";
+        Big: BigInteger;
+        R: Text;
+        I: Integer;
+    begin
+        ClearLastError();
+        if TryIntBig(false, 3000000000L, Big) then
+            Observer.Observe('Cond ? 1 : Big 3e9, false', 'ok|' + Format(Big))
+        else
+            Observer.ObserveError('Cond ? 1 : Big 3e9, false');
+        if TryIntBig(false, 5L, Big) then
+            Observer.Observe('Cond ? 1 : Big 5, false', 'ok|' + Format(Big))
+        else
+            Observer.ObserveError('Cond ? 1 : Big 5, false');
+        if TryBigInt(false, 3000000000L, Big) then
+            Observer.Observe('Cond ? Big 3e9 : 1, true', 'ok|' + Format(Big))
+        else
+            Observer.ObserveError('Cond ? Big 3e9 : 1, true');
+        if TryText10(false, R) then
+            Observer.Observe('Cond ? Text10 : 12-char text, false', 'ok|' + R + '|' + Format(StrLen(R)))
+        else
+            Observer.ObserveError('Cond ? Text10 : 12-char text, false');
+        if TryText10(true, R) then
+            Observer.Observe('Cond ? Text10 : 12-char text, true', 'ok|' + R)
+        else
+            Observer.ObserveError('Cond ? Text10 : 12-char text, true');
+        if TryOptionInt(false, I) then
+            Observer.Observe('Cond ? Option : Integer 7, false', 'ok|' + Format(I))
+        else
+            Observer.ObserveError('Cond ? Option : Integer 7, false');
+        if TryOptionInt(true, I) then
+            Observer.Observe('Cond ? Option : Integer 7, true', 'ok|' + Format(I))
+        else
+            Observer.ObserveError('Cond ? Option : Integer 7, true');
+        if TryEnumInt(false, I) then
+            Observer.Observe('Cond ? Enum : Integer 7, false', 'ok|' + Format(I))
+        else
+            Observer.ObserveError('Cond ? Enum : Integer 7, false');
+        if TryEnumInt(true, I) then
+            Observer.Observe('Cond ? Enum : Integer 7, true', 'ok|' + Format(I))
+        else
+            Observer.ObserveError('Cond ? Enum : Integer 7, true');
+        Observer.Expect('Cond ? 1 : Big 3e9, false|text', 'Overflow under conversion of System.Int64 value 3000000000 to System.Int32.');
+        Observer.Expect('Cond ? 1 : Big 3e9, false|code', 'ConversionCast');
+        Observer.Expect('Cond ? 1 : Big 5, false', 'ok|5');
+        Observer.Expect('Cond ? Big 3e9 : 1, true', 'ok|3000000000');
+        Observer.Expect('Cond ? Text10 : 12-char text, false|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: abcdefghijkl');
+        Observer.Expect('Cond ? Text10 : 12-char text, false|code', 'StringLengthExceeded');
+        Observer.Expect('Cond ? Text10 : 12-char text, true', 'ok|short');
+        Observer.Expect('Cond ? Option : Integer 7, false', 'ok|7');
+        Observer.Expect('Cond ? Option : Integer 7, true', 'ok|2');
+        Observer.Expect('Cond ? Enum : Integer 7, false', 'ok|7');
+        Observer.Expect('Cond ? Enum : Integer 7, true', 'ok|2');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryIntBig(Cond: Boolean; B: BigInteger; var Result: BigInteger)
+    begin
+        Result := Cond ? 1 : B;
+    end;
+
+    [TryFunction]
+    local procedure TryBigInt(Cond: Boolean; B: BigInteger; var Result: BigInteger)
+    begin
+        Result := not Cond ? B : 1;
+    end;
+
+    [TryFunction]
+    local procedure TryText10(Cond: Boolean; var Result: Text)
+    var
+        T10: Text[10];
+        T: Text;
+    begin
+        T10 := 'short';
+        T := 'abcdefghijkl';
+        Result := Cond ? T10 : T;
+    end;
+
+    [TryFunction]
+    local procedure TryOptionInt(Cond: Boolean; var Result: Integer)
+    var
+        Opt: Option Zero,One,Two;
+    begin
+        Opt := Opt::Two;
+        Result := Cond ? Opt : 7;
+    end;
+
+    [TryFunction]
+    local procedure TryEnumInt(Cond: Boolean; var Result: Integer)
+    var
+        E: Enum "Sales Document Type";
+    begin
+        E := E::Invoice;
+        Result := Cond ? E : 7;
+    end;
 }

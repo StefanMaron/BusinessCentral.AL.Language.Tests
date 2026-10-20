@@ -214,4 +214,33 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Expect('Tk in[CodeVal]', 'No');
         Observer.Verify();
     end;
+    // Writer PY-C (al-runtime-rs PR 341, probes-needed "Text literal on the left of in with a range"): a longer literal on the left, and a
+    // one-character literal with a range of Text or Code variables (does not compile: must-not-compile cases 1873, 1874).
+    [Test]
+    procedure PYC_InRange_TextLiteralOnTheLeft()
+    var
+        Observer: Codeunit "Probe Observer";
+        TLo: Text;
+        THi: Text;
+        CLo: Code[10];
+        CHi: Code[10];
+    begin
+        TLo := 'a';
+        THi := 'z';
+        CLo := 'a';
+        CHi := 'z';
+        Observer.Observe('Kx in[a..z]', Format('Kx' in ['a' .. 'z']));
+        Observer.Observe('Kx in[A..Z]', Format('Kx' in ['A' .. 'Z']));
+        Observer.Observe('kx in[a..z]', Format('kx' in ['a' .. 'z']));
+        Observer.Observe('zz in[a..z]', Format('zz' in ['a' .. 'z']));
+        Observer.Observe('K in[a..z]', Format('K' in ['a' .. 'z']));
+        Observer.Observe('Kx in[Ta..Tz]', Format('Kx' in [TLo .. THi]));
+        Observer.Expect('Kx in[a..z]', 'Yes');
+        Observer.Expect('Kx in[A..Z]', 'Yes');
+        Observer.Expect('kx in[a..z]', 'Yes');
+        Observer.Expect('zz in[a..z]', 'No');
+        Observer.Expect('K in[a..z]', 'No');
+        Observer.Expect('Kx in[Ta..Tz]', 'Yes');
+        Observer.Verify();
+    end;
 }

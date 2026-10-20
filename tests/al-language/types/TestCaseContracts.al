@@ -503,4 +503,101 @@ codeunit 60187 "Test Case Contracts"
                 R := 'else';
         end;
     end;
+    // Writer PY-C (al-runtime-rs PR 341, probes-needed "Case label of a Code selector"): a label that is a Text variable, a range label of
+    // literals and a range label of Text variables, with a Code selector.
+    [Test]
+    procedure PYC_Case_CodeSelector_VariableAndRangeLabels()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: Code[10];
+    begin
+        C := 'ABC';
+        Observer.Observe('code ABC, text var label abc', CodeVarLabel(C, 'abc'));
+        Observer.Observe('code ABC, text var label ABC', CodeVarLabel(C, 'ABC'));
+        Observer.Observe('code ABC, text var label ABC space', CodeVarLabel(C, 'ABC '));
+        if TryCodeVarLabel(C, 'ABCDEFGHIJKL') then
+            Observer.Observe('code ABC, text var label 12 chars', 'no error')
+        else
+            Observer.ObserveError('code ABC, text var label 12 chars');
+        C := 'K';
+        Observer.Observe('code K, range a..z', CodeLiteralRange(C, 1));
+        Observer.Observe('code K, range A..Z', CodeLiteralRange(C, 2));
+        Observer.Observe('code K, range abc..klm', CodeLiteralRange(C, 3));
+        Observer.Observe('code K, text var range a..z', CodeVarRange(C, 'a', 'z'));
+        Observer.Observe('code K, text var range A..Z', CodeVarRange(C, 'A', 'Z'));
+        C := 'ABD';
+        Observer.Observe('code ABD, range abc..abe', CodeLiteralRange(C, 3));
+        Observer.Observe('code ABD, text var range abc..abe', CodeVarRange(C, 'abc', 'abe'));
+        Observer.Observe('code ABD, text var range ABC..ABE', CodeVarRange(C, 'ABC', 'ABE'));
+        Observer.Expect('code ABC, text var label abc', 'label');
+        Observer.Expect('code ABC, text var label ABC', 'label');
+        Observer.Expect('code ABC, text var label ABC space', 'label');
+        Observer.Expect('code ABC, text var label 12 chars|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKL');
+        Observer.Expect('code ABC, text var label 12 chars|code', 'StringLengthExceeded');
+        Observer.Expect('code K, range a..z', 'in');
+        Observer.Expect('code K, range A..Z', 'in');
+        Observer.Expect('code K, range abc..klm', 'in abc..klm');
+        Observer.Expect('code K, text var range a..z', 'in');
+        Observer.Expect('code K, text var range A..Z', 'in');
+        Observer.Expect('code ABD, range abc..abe', 'in abc..abe');
+        Observer.Expect('code ABD, text var range abc..abe', 'in');
+        Observer.Expect('code ABD, text var range ABC..ABE', 'in');
+        Observer.Verify();
+    end;
+
+    local procedure CodeVarLabel(Value: Code[10]; Lbl: Text): Text
+    begin
+        case Value of
+            Lbl:
+                exit('label');
+            else
+                exit('else');
+        end;
+    end;
+
+    [TryFunction]
+    local procedure TryCodeVarLabel(Value: Code[10]; Lbl: Text)
+    begin
+        if CodeVarLabel(Value, Lbl) = '' then
+            exit;
+    end;
+
+    local procedure CodeLiteralRange(Value: Code[10]; Which: Integer): Text
+    begin
+        case Which of
+            1:
+                case Value of
+                    'a' .. 'z':
+                        exit('in');
+                    else
+                        exit('else');
+                end;
+            2:
+                case Value of
+                    'A' .. 'Z':
+                        exit('in');
+                    else
+                        exit('else');
+                end;
+            3:
+                case Value of
+                    'abc' .. 'abe':
+                        exit('in abc..abe');
+                    'abc' .. 'klm':
+                        exit('in abc..klm');
+                    else
+                        exit('else');
+                end;
+        end;
+    end;
+
+    local procedure CodeVarRange(Value: Code[10]; Lo: Text; Hi: Text): Text
+    begin
+        case Value of
+            Lo .. Hi:
+                exit('in');
+            else
+                exit('else');
+        end;
+    end;
 }
