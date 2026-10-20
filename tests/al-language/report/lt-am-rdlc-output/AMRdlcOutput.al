@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); self-contained report 79256 (hand-written layout LtAmRdlcText.rdlc), test codeunit 79257,
-// subscriber codeunit 79258, log codeunit 79259
+// subscriber codeunit 79258, log codeunit 79259; writer QD: manual subscriber codeunit 86520 (the RequestPageXml text)
 // What Report.SaveAs and Report.Run do with an RDLC layout (corpus #601 item 1; the corpus CI runs the Mono RDLC renderer, rdlc_renderer: true):
 // whether it saves, the file signature, the PDF page count, and the order of SubstituteReport, OnPreRendering and OnDocumentReady.
 // Pinned on every leg: Html is refused before rendering ('The Html output format is not supported by the current report layout format.',
@@ -430,4 +430,110 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer.Verify();
     end;
 #endif
+
+    // Writer QD (al-runtime-rs: the RequestPageXml text SubstituteReport receives): the whole text for an Html SaveAs of the RDLC report
+    // (refused before rendering), with the parameters of RequestXmlTxt and with empty parameters, and for an Xml SaveAs as a contrast.
+    local procedure QdRequestPageXml(Fmt: ReportFormat; Parameters: Text; Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Sub: Codeunit "LT QD Rdlc Req Subscriber";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        Ok: Boolean;
+    begin
+        BindSubscription(Sub);
+        AmLog.Start();
+        ClearLastError();
+        TempBlob.CreateOutStream(OutS);
+        Ok := TryQdSaveAs(Parameters, Fmt, OutS);
+        AmLog.Take();
+        UnbindSubscription(Sub);
+        Observer.Observe(Prefix + '_ok', Format(Ok));
+        Observer.Observe(Prefix + '_calls', Format(Sub.Calls()));
+        Observer.Observe(Prefix + '_runmode', Sub.RunMode());
+        Observer.Observe(Prefix + '_length', Format(StrLen(Sub.RequestPageXml())));
+        Observer.Observe(Prefix + '_xml', Sub.RequestPageXml());
+    end;
+
+    [TryFunction]
+    local procedure TryQdSaveAs(Parameters: Text; Fmt: ReportFormat; var OutS: OutStream)
+    begin
+        Report.SaveAs(Report::"LT AM Rdlc Text Rpt", Parameters, Fmt, OutS);
+    end;
+
+    [Test]
+    procedure QD_TextRdlc_SaveAsHtml_RequestPageXml()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QdRequestPageXml(ReportFormat::Html, RequestXmlTxt, 'html', Observer);
+        Observer.Expect('html_ok', 'No');
+        Observer.Expect('html_calls', '1');
+        Observer.Expect('html_runmode', 'SaveAs');
+        Observer.Expect('html_length', '131');
+        Observer.Expect('html_xml', '<?xml version="1.0" standalone="yes"?><ReportParameters><Options><Field name="ReqText">AMREQ42</Field></Options></ReportParameters>');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QD_TextRdlc_SaveAsHtml_EmptyParameters_RequestPageXml()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QdRequestPageXml(ReportFormat::Html, '', 'html_empty', Observer);
+        Observer.Expect('html_empty_ok', 'No');
+        Observer.Expect('html_empty_calls', '1');
+        Observer.Expect('html_empty_runmode', 'SaveAs');
+        Observer.Expect('html_empty_length', '0');
+        Observer.Expect('html_empty_xml', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QD_TextRdlc_SaveAsXml_RequestPageXml()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QdRequestPageXml(ReportFormat::Xml, RequestXmlTxt, 'xml', Observer);
+        Observer.Expect('xml_ok', 'Yes');
+        Observer.Expect('xml_calls', '1');
+        Observer.Expect('xml_runmode', 'SaveAs');
+        Observer.Expect('xml_length', '131');
+        Observer.Expect('xml_xml', '<?xml version="1.0" standalone="yes"?><ReportParameters><Options><Field name="ReqText">AMREQ42</Field></Options></ReportParameters>');
+        Observer.Verify();
+    end;
+}
+
+codeunit 86520 "LT QD Rdlc Req Subscriber"
+{
+    EventSubscriberInstance = Manual;
+
+    var
+        LastXml: Text;
+        LastRunMode: Text;
+        CallCount: Integer;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'SubstituteReport', '', false, false)]
+    local procedure QdSubstitute(ReportId: Integer; RunMode: Option Normal,ParametersOnly,Execute,Print,SaveAs,RunModal; RequestPageXml: Text; RecordRef: RecordRef; var NewReportId: Integer)
+    begin
+        if ReportId <> 79256 then
+            exit;
+        CallCount += 1;
+        LastXml := RequestPageXml;
+        LastRunMode := Format(RunMode);
+    end;
+
+    procedure RequestPageXml(): Text
+    begin
+        exit(LastXml);
+    end;
+
+    procedure RunMode(): Text
+    begin
+        exit(LastRunMode);
+    end;
+
+    procedure Calls(): Integer
+    begin
+        exit(CallCount);
+    end;
 }
