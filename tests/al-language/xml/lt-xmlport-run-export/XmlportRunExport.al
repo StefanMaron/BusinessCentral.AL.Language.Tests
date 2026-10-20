@@ -190,19 +190,15 @@ codeunit 74313 "LT P166 Xmlport Run"
         Seed();
         Commit();
         RunOk := Codeunit.Run(Codeunit::"LT P166 XP Run Import");
-#if LT_HELD_BCLINUX_141
         Observer.Observe('ok', Format(RunOk));
         Observer.ObserveError('run');
-#endif
         Observer.Observe('rowsAfter', Format(Row.Count()));
         Row.DeleteAll();
         Commit();
-#if LT_HELD_BCLINUX_141
-        // Windows: ok=No, NotSupportedFileDialogProvider (batch XP); enable when bc-linux #141 lands
+        // Windows: ok=No, NotSupportedFileDialogProvider (batch XP); fixed on Linux by bc-linux #141
         Observer.Expect('ok', 'No');
         Observer.Expect('run|text', 'The operation cannot complete because it uses a feature that is not supported (AL File function.)');
         Observer.Expect('run|code', 'NotSupportedFileDialogProvider:NotSupportedFileDialogProvider');
-#endif
         Observer.Expect('rowsAfter', '3');
         Observer.Verify();
     end;
