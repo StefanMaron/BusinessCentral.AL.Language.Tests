@@ -710,7 +710,18 @@ codeunit 69852 "LT V Platform Event Tests"
         PwCall(Observer, 'procOnly run nopage', Parameters);
         PwCall(Observer, 'procOnly execute var', Parameters);
         PwCall(Observer, 'procOnly saveas xml', Parameters);
-#if LT_HELD_BCLINUX_158
+#if BC29PLUS and LT_HELD_BCLINUX_158
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue), all keys: no SetupPrinters after SubstituteReport(...,ParametersOnly); the
+        // other keys equal the Linux values in the #else branch. Held on Linux BC 29 (LT_HELD_BCLINUX_158): the image at dbee8022 still
+        // raises SetupPrinters(in=0) there (corpus CI 2026-10-20).
+        Observer.Expect('saveas var xml', 'Yes|OnDocumentReady(69860,in=No);');
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);');
+        Observer.Expect('saveas static params xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('saveas static record xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('procOnly run nopage', 'Yes|SubstituteReport(86147,Normal,in=-1);');
+        Observer.Expect('procOnly execute var', 'Yes|');
+        Observer.Expect('procOnly saveas xml', 'No error=ReportProcessingOnly:Report 86147 is a processing-only report. Output cannot be rendered and saved to a file.|SubstituteReport(86147,SaveAs,in=-1);');
+#elif LT_HELD_BCLINUX_158
         // Windows BC 27.5, 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20, same on 27.5/28.5) raise no SetupPrinters after
         // SubstituteReport(...,ParametersOnly). The Linux image raises SetupPrinters(in=0) there (bc-linux #158): held on Linux under
         // LT_HELD_BCLINUX_158; the #else branch keeps the Linux value until the pin includes the fix.
