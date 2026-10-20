@@ -645,7 +645,7 @@ codeunit 84592 "LT CI Report Run Leads"
         Observer: Codeunit "Probe Observer";
     begin
         Start(0);
-        // SaveAs Word and Excel of the RDLC-only report are not asserted: the Linux CI tier stubs RDLC rendering (queued for the Windows check).
+        // SaveAs Word and Excel of the RDLC-only report: SaveAs_RdlcOnly_WordExcel below (held on Linux).
         SaveAs(Observer, 'rdlc html', Report::"LT CI Rdlc Rpt", ReportFormat::Html);
         SaveAs(Observer, 'excelonly pdf', Report::"LT CI ExcelOnly Rpt", ReportFormat::Pdf);
         SaveAs(Observer, 'excelonly html', Report::"LT CI ExcelOnly Rpt", ReportFormat::Html);
@@ -666,6 +666,31 @@ codeunit 84592 "LT CI Report Run Leads"
         Observer.Expect('excelonly html log', '');
         Observer.Verify();
     end;
+
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Item 144: SaveAs Word and Excel of the RDLC-only report render the RDLC layout. Windows BC 27.5/28.5 (Windows check 2026-10-20); the
+    // Linux image pinned in ci.yml fails RDLC to Word/Excel (bc-linux #144): held until the pin moves. BC 29.0 not measured on Windows yet.
+    [Test]
+    procedure SaveAs_RdlcOnly_WordExcel()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Start(0);
+        SaveAs(Observer, 'rdlc word', Report::"LT CI Rdlc Rpt", ReportFormat::Word);
+        SaveAs(Observer, 'rdlc excel', Report::"LT CI Rdlc Rpt", ReportFormat::Excel);
+        Observer.Expect('rdlc word', 'Yes');
+        Observer.Expect('rdlc word result', 'Yes length>0=Yes');
+        Observer.Expect('rdlc word|text', '');
+        Observer.Expect('rdlc word|code', '');
+        Observer.Expect('rdlc word log', 'rdlc pre targetformat=Word;');
+        Observer.Expect('rdlc excel', 'Yes');
+        Observer.Expect('rdlc excel result', 'Yes length>0=Yes');
+        Observer.Expect('rdlc excel|text', '');
+        Observer.Expect('rdlc excel|code', '');
+        Observer.Expect('rdlc excel log', 'rdlc pre targetformat=Excel;');
+        Observer.Verify();
+    end;
+#endif
 
     // Item 140: CurrReport.FormatRegion set to an unknown name, to empty, and to de-DE in OnPreReport.
     [Test]
