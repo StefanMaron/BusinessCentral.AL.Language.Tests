@@ -620,4 +620,85 @@ codeunit 72513 "LT SyT Message"
         Observer.Expect('appendline length', '19');
         Observer.Verify();
     end;
+    // Writer PY-C (al-runtime-rs PR 341, probes-needed "CR LF in Error with arguments"): Error('%1', Text with CR LF), a lone CR and a lone LF in
+    // Message and Error, from the text and from an argument. Each value is shown as its text and as the codes of its characters below 32 and of
+    // the backslash (<13>, <10>, <92>).
+    local procedure PYC_Codes(Value: Text): Text
+    var
+        i: Integer;
+        N: Integer;
+        R: Text;
+    begin
+        for i := 1 to StrLen(Value) do begin
+            N := Value[i];
+            if (N < 32) or (N = 92) then
+                R += '<' + Format(N) + '>'
+            else
+                R += Format(Value[i]);
+        end;
+        exit(R);
+    end;
+
+    local procedure PYC_Texts(var CrLf: Text; var Cr: Text; var Lf: Text)
+    var
+        C13: Char;
+        C10: Char;
+    begin
+        C13 := 13;
+        C10 := 10;
+        CrLf := 'a' + Format(C13) + Format(C10) + 'b';
+        Cr := 'a' + Format(C13) + 'b';
+        Lf := 'a' + Format(C10) + 'b';
+    end;
+
+    [MessageHandler]
+    procedure PYC_SeenCodes(Msg: Text[1024])
+    begin
+        Observer.Observe('message', PYC_Codes(Msg));
+    end;
+
+    [Test]
+    [HandlerFunctions('PYC_SeenCodes')]
+    procedure PYC_Message_LoneCrAndLf()
+    var
+        CrLf: Text;
+        Cr: Text;
+        Lf: Text;
+    begin
+        PYC_Texts(CrLf, Cr, Lf);
+        Message(Cr);
+        Message(Lf);
+        Message('%1', Cr);
+        Message('%1', Lf);
+        Message('%1', CrLf);
+        Message('x%1y', Lf);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYC_Error_CrLfAndLoneCrLf()
+    var
+        CrLf: Text;
+        Cr: Text;
+        Lf: Text;
+    begin
+        PYC_Texts(CrLf, Cr, Lf);
+        asserterror Error('%1', CrLf);
+        Observer.Observe('error arg crlf', PYC_Codes(GetLastErrorText()));
+        asserterror Error('x%1y', CrLf);
+        Observer.Observe('error arg crlf in text', PYC_Codes(GetLastErrorText()));
+        asserterror Error(Cr);
+        Observer.Observe('error text cr', PYC_Codes(GetLastErrorText()));
+        asserterror Error(Lf);
+        Observer.Observe('error text lf', PYC_Codes(GetLastErrorText()));
+        asserterror Error('%1', Cr);
+        Observer.Observe('error arg cr', PYC_Codes(GetLastErrorText()));
+        asserterror Error('%1', Lf);
+        Observer.Observe('error arg lf', PYC_Codes(GetLastErrorText()));
+        asserterror Error(CrLf);
+        Observer.Observe('error text crlf', PYC_Codes(GetLastErrorText()));
+        asserterror Error('p\q %1', CrLf);
+        Observer.Observe('error backslash text and crlf arg', PYC_Codes(GetLastErrorText()));
+        Observer.Finish();
+    end;
 }

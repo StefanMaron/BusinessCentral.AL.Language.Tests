@@ -506,6 +506,7 @@ is only a reference.
 | 1818 | AL0132 | JsonObject has no Clear method (Clear(variable) empties it). |
 | 1819 | AL0132 | JsonArray has no Clear method (Clear(variable) empties it). |
 | 1824 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
+| 1872 | AL0122 | `V := Cond ? D : DT` (Date true, DateTime false): the DateTime branch does not convert to Date. |
 | 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
 | 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
 | 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |

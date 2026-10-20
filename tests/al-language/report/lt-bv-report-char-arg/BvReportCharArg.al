@@ -168,4 +168,292 @@ codeunit 83761 "LT BV Report Char Arg"
         Observer.Expect('result', 'local integer 113');
         Observer.Verify();
     end;
+    // Writer PY-C (al-runtime-rs PR 339, probes-needed "Ternary and call-argument conversion"): a Char variable into BigInteger, Decimal, Byte and
+    // Duration parameters of a codeunit and a report procedure (85205, 85206); into an Integer parameter of a page, query, xmlport and table
+    // procedure (85207-85210); and a Char expression that is not a variable (a call, Text[i]) into an Integer parameter of another codeunit.
+    local procedure PYC_Step(var Observer: Codeunit "Probe Observer"; Name: Text; Ok: Boolean; Result: Text)
+    begin
+        if Ok then
+            Observer.Observe(Name, 'ok|' + Result)
+        else
+            Observer.Observe(Name, 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+    end;
+
+    [TryFunction]
+    local procedure PYC_CuBig(Ch: Char; var R: Text)
+    var
+        T: Codeunit "LT PYC Char Target";
+    begin
+        R := T.BumpBig(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_CuDec(Ch: Char; var R: Text)
+    var
+        T: Codeunit "LT PYC Char Target";
+    begin
+        R := T.BumpDec(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_CuByte(Ch: Char; var R: Text)
+    var
+        T: Codeunit "LT PYC Char Target";
+    begin
+        R := T.BumpByte(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_CuDur(Ch: Char; var R: Text)
+    var
+        T: Codeunit "LT PYC Char Target";
+    begin
+        R := T.BumpDur(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_RepBig(Ch: Char; var R: Text)
+    var
+        Rep: Report "LT PYC Char Report";
+    begin
+        R := Rep.BumpBig(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_RepDec(Ch: Char; var R: Text)
+    var
+        Rep: Report "LT PYC Char Report";
+    begin
+        R := Rep.BumpDec(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_RepByte(Ch: Char; var R: Text)
+    var
+        Rep: Report "LT PYC Char Report";
+    begin
+        R := Rep.BumpByte(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_RepDur(Ch: Char; var R: Text)
+    var
+        Rep: Report "LT PYC Char Report";
+    begin
+        R := Rep.BumpDur(Ch);
+    end;
+
+    [Test]
+    procedure PYC_Char_NumberParameters_CodeunitAndReport()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ch: Char;
+        R: Text;
+    begin
+        Ch := 'q';
+        ClearLastError();
+        PYC_Step(Observer, 'codeunit bigint', PYC_CuBig(Ch, R), R);
+        PYC_Step(Observer, 'codeunit decimal', PYC_CuDec(Ch, R), R);
+        PYC_Step(Observer, 'codeunit byte', PYC_CuByte(Ch, R), R);
+        PYC_Step(Observer, 'codeunit duration', PYC_CuDur(Ch, R), R);
+        PYC_Step(Observer, 'report bigint', PYC_RepBig(Ch, R), R);
+        PYC_Step(Observer, 'report decimal', PYC_RepDec(Ch, R), R);
+        PYC_Step(Observer, 'report byte', PYC_RepByte(Ch, R), R);
+        PYC_Step(Observer, 'report duration', PYC_RepDur(Ch, R), R);
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure PYC_PageInt(Ch: Char; var R: Text)
+    var
+        P: Page "LT PYC Char Page";
+    begin
+        R := P.Bump(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_QueryInt(Ch: Char; var R: Text)
+    var
+        Q: Query "LT PYC Char Query";
+    begin
+        R := Q.Bump(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_XmlPortInt(Ch: Char; var R: Text)
+    var
+        X: XmlPort "LT PYC Char XmlPort";
+    begin
+        R := X.Bump(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_TableInt(Ch: Char; var R: Text)
+    var
+        H: Record "LT PYC Char Holder";
+    begin
+        R := H.Bump(Ch);
+    end;
+
+    [TryFunction]
+    local procedure PYC_CallExpr(var R: Text)
+    var
+        T: Codeunit "LT PYC Char Target";
+    begin
+        R := T.BumpInt(PYC_GiveChar());
+    end;
+
+    [TryFunction]
+    local procedure PYC_IndexExpr(Value: Text; var R: Text)
+    var
+        T: Codeunit "LT PYC Char Target";
+    begin
+        R := T.BumpInt(Value[2]);
+    end;
+
+    local procedure PYC_GiveChar(): Char
+    begin
+        exit('q');
+    end;
+
+    [Test]
+    procedure PYC_Char_IntegerParameters_OtherObjectsAndExpressions()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ch: Char;
+        R: Text;
+    begin
+        Ch := 'q';
+        ClearLastError();
+        PYC_Step(Observer, 'page integer', PYC_PageInt(Ch, R), R);
+        PYC_Step(Observer, 'query integer', PYC_QueryInt(Ch, R), R);
+        PYC_Step(Observer, 'xmlport integer', PYC_XmlPortInt(Ch, R), R);
+        PYC_Step(Observer, 'table integer', PYC_TableInt(Ch, R), R);
+        PYC_Step(Observer, 'call result to codeunit integer', PYC_CallExpr(R), R);
+        PYC_Step(Observer, 'text index to codeunit integer', PYC_IndexExpr('pq', R), R);
+        Observer.Observe('text index to local integer', LocalBump('pq'[2]));
+        Observer.Finish();
+    end;
+}
+
+// Writer PY-C: receivers for the PYC_Char tests above. Not test codeunits.
+codeunit 85205 "LT PYC Char Target"
+{
+    procedure BumpInt(A: Integer): Text
+    begin
+        exit('codeunit integer ' + Format(A));
+    end;
+
+    procedure BumpBig(A: BigInteger): Text
+    begin
+        exit('codeunit bigint ' + Format(A));
+    end;
+
+    procedure BumpDec(A: Decimal): Text
+    begin
+        exit('codeunit decimal ' + Format(A));
+    end;
+
+    procedure BumpByte(A: Byte): Text
+    begin
+        exit('codeunit byte ' + Format(A));
+    end;
+
+    procedure BumpDur(A: Duration): Text
+    begin
+        exit('codeunit duration ' + Format(A));
+    end;
+}
+
+report 85206 "LT PYC Char Report"
+{
+    ProcessingOnly = true;
+    UsageCategory = None;
+    dataset { dataitem(Row; "LT BV Char Row") { } }
+
+    procedure BumpBig(A: BigInteger): Text
+    begin
+        exit('report bigint ' + Format(A));
+    end;
+
+    procedure BumpDec(A: Decimal): Text
+    begin
+        exit('report decimal ' + Format(A));
+    end;
+
+    procedure BumpByte(A: Byte): Text
+    begin
+        exit('report byte ' + Format(A));
+    end;
+
+    procedure BumpDur(A: Duration): Text
+    begin
+        exit('report duration ' + Format(A));
+    end;
+}
+
+page 85207 "LT PYC Char Page"
+{
+    PageType = Card;
+    SourceTable = "LT BV Char Row";
+    UsageCategory = None;
+
+    procedure Bump(A: Integer): Text
+    begin
+        exit('page integer ' + Format(A));
+    end;
+}
+
+query 85208 "LT PYC Char Query"
+{
+    QueryType = Normal;
+
+    elements
+    {
+        dataitem(Row; "LT BV Char Row")
+        {
+            column(Id; Id) { }
+        }
+    }
+
+    procedure Bump(A: Integer): Text
+    begin
+        exit('query integer ' + Format(A));
+    end;
+}
+
+xmlport 85209 "LT PYC Char XmlPort"
+{
+    schema
+    {
+        textelement(Root)
+        {
+        }
+    }
+
+    procedure Bump(A: Integer): Text
+    begin
+        exit('xmlport integer ' + Format(A));
+    end;
+}
+
+table 85210 "LT PYC Char Holder"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+
+    procedure Bump(A: Integer): Text
+    begin
+        exit('table integer ' + Format(A));
+    end;
 }

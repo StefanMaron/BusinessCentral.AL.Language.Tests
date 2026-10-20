@@ -212,4 +212,65 @@ codeunit 70509 "LT TxB CaseConv"
     begin
         exit(Value.ToUpper());
     end;
+    // Writer PY-C (al-runtime-rs PR 341, probes-needed "LowerCase and UpperCase in other languages"): Azerbaijani (1068), German (1031) and
+    // Lithuanian (1063) with the same cases, and the upper-casing of a Code assignment, a Code parameter and a Code compare under Turkish (1055).
+    [Test]
+    procedure PYC_CaseConv_OtherLanguages()
+    var
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+    begin
+        Saved := GlobalLanguage();
+        ClearLastError();
+        if TrySetLanguage(1068) then
+            ObserveCases(Observer, 'az')
+        else
+            Observer.Observe('az', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TrySetLanguage(1031) then
+            ObserveCases(Observer, 'de')
+        else
+            Observer.Observe('de', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ClearLastError();
+        if TrySetLanguage(1063) then
+            ObserveCases(Observer, 'lt')
+        else
+            Observer.Observe('lt', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        GlobalLanguage(Saved);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYC_CodeAssign_Turkish()
+    var
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+        C: Code[10];
+        T: Text;
+    begin
+        Saved := GlobalLanguage();
+        ClearLastError();
+        if TrySetLanguage(1055) then begin
+            Observer.Observe('language', Format(GlobalLanguage()));
+            C := 'iı';
+            Observer.Observe('code := i dotless-i', C);
+            T := 'istanbul';
+            C := T;
+            Observer.Observe('code := text istanbul', C);
+            Observer.Observe('code param', TakeCode('iz'));
+            Observer.Observe('code = I literal', Format(C = 'ISTANBUL'));
+            Observer.Observe('code = dotted literal', Format(C = 'İSTANBUL'));
+            C := 'İ';
+            Observer.Observe('code := dotted I', C);
+            Observer.Observe('UpperCase i', UpperCase('i'));
+        end else
+            Observer.Observe('tr', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        GlobalLanguage(Saved);
+        Observer.Finish();
+    end;
+
+    local procedure TakeCode(Value: Code[10]): Text
+    begin
+        exit(Value);
+    end;
 }
