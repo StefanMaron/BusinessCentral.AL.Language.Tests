@@ -429,4 +429,99 @@ codeunit 70583 "LT PnH UseRp Tests"
         Observer.Expect('log', 'init;');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Report runs and SaveAs": the static Report.RunModal(id, true / false) on a report that declares
+    // UseRequestPage = false (only Report.Run(id, true) is pinned: NoRP_Static_Run_RunModal_ShowNoPage). With a RequestPageHandler for the
+    // report the outcome was the same on BC 29.0 and the test then failed with 'The following UI handlers were not executed', so that form
+    // is not a test here.
+    [TryFunction]
+    local procedure PwTryStaticRunModal(RequestWindow: Boolean)
+    begin
+        Report.RunModal(Report::"LT PnH NoRP", RequestWindow);
+    end;
+
+    [Test]
+    procedure PW_NoRP_StaticRunModal_RequestWindow_NoHandler()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Start();
+        Observer.Observe('runmodal true', Format(PwTryStaticRunModal(true)));
+        Observer.ObserveError('runmodal true');
+        Observer.Observe('runmodal true log', L.Take());
+        Observer.Observe('runmodal false', Format(PwTryStaticRunModal(false)));
+        Observer.ObserveError('runmodal false');
+        Observer.Observe('runmodal false log', L.Take());
+        Observer.Expect('runmodal true', 'No');
+        Observer.Expect('runmodal true|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('runmodal true|code', 'DB:Ok');
+        Observer.Expect('runmodal true log', 'init;');
+        Observer.Expect('runmodal false', 'Yes');
+        Observer.Expect('runmodal false|text', '');
+        Observer.Expect('runmodal false|code', '');
+        Observer.Expect('runmodal false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Verify();
+    end;
+
+    // Writer PW: UseRequestPage() after an Execute of a variable whose UseRequestPage was set (only a variable never set is pinned:
+    // WithRP_UseFalse_Run_RunModal_Execute reads false after Execute).
+    [Test]
+    procedure PW_Getter_AfterExecute_OfASetVariable()
+    var
+        Observer: Codeunit "Probe Observer";
+        NoTrue: Report "LT PnH NoRP";
+        NoFalse: Report "LT PnH NoRP";
+        NoNever: Report "LT PnH NoRP";
+        WithTrue: Report "LT PnH WithRP";
+        WithFalse: Report "LT PnH WithRP";
+        WithNever: Report "LT PnH WithRP";
+    begin
+        Start();
+        NoTrue.UseRequestPage(true);
+        Observer.Observe('noRP true execute', Format(TryExecuteNo(NoTrue)));
+        Observer.ObserveError('noRP true execute');
+        Observer.Observe('noRP true getter', Format(NoTrue.UseRequestPage()));
+        Observer.Observe('noRP true log', L.Take());
+        NoFalse.UseRequestPage(false);
+        Observer.Observe('noRP false execute', Format(TryExecuteNo(NoFalse)));
+        Observer.Observe('noRP false getter', Format(NoFalse.UseRequestPage()));
+        Observer.Observe('noRP false log', L.Take());
+        Observer.Observe('noRP never execute', Format(TryExecuteNo(NoNever)));
+        Observer.Observe('noRP never getter', Format(NoNever.UseRequestPage()));
+        Observer.Observe('noRP never log', L.Take());
+        WithTrue.UseRequestPage(true);
+        Observer.Observe('withRP true execute', Format(TryExecuteWith(WithTrue)));
+        Observer.ObserveError('withRP true execute');
+        Observer.Observe('withRP true getter', Format(WithTrue.UseRequestPage()));
+        Observer.Observe('withRP true log', L.Take());
+        WithFalse.UseRequestPage(false);
+        Observer.Observe('withRP false execute', Format(TryExecuteWith(WithFalse)));
+        Observer.Observe('withRP false getter', Format(WithFalse.UseRequestPage()));
+        Observer.Observe('withRP false log', L.Take());
+        Observer.Observe('withRP never execute', Format(TryExecuteWith(WithNever)));
+        Observer.Observe('withRP never getter', Format(WithNever.UseRequestPage()));
+        Observer.Observe('withRP never log', L.Take());
+        Observer.Expect('noRP true execute', 'Yes');
+        Observer.Expect('noRP true execute|text', '');
+        Observer.Expect('noRP true execute|code', '');
+        Observer.Expect('noRP true getter', 'No');
+        Observer.Expect('noRP true log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('noRP false execute', 'Yes');
+        Observer.Expect('noRP false getter', 'No');
+        Observer.Expect('noRP false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('noRP never execute', 'Yes');
+        Observer.Expect('noRP never getter', 'No');
+        Observer.Expect('noRP never log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('withRP true execute', 'Yes');
+        Observer.Expect('withRP true execute|text', '');
+        Observer.Expect('withRP true execute|code', '');
+        Observer.Expect('withRP true getter', 'No');
+        Observer.Expect('withRP true log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('withRP false execute', 'Yes');
+        Observer.Expect('withRP false getter', 'No');
+        Observer.Expect('withRP false log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Expect('withRP never execute', 'Yes');
+        Observer.Expect('withRP never getter', 'No');
+        Observer.Expect('withRP never log', 'init;pre note=[];row 1;row 2;row 3;post;');
+        Observer.Verify();
+    end;
 }
