@@ -490,7 +490,11 @@ codeunit 86199 "LT PX Cap Tests"
         Observer.Observe('second_events', Subscriber.Take());
         Pg.Close();
         UnbindSubscription(Subscriber);
-        Observer.Finish();
+        Observer.Expect('first', 'res:T1B');
+        Observer.Expect('first_events', '');
+        Observer.Expect('second', 'res:T1B');
+        Observer.Expect('second_events', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -516,7 +520,15 @@ codeunit 86199 "LT PX Cap Tests"
         Observer.Observe('third_events', Subscriber.Take());
         Pg.Close();
         UnbindSubscription(Subscriber);
-        Observer.Finish();
+        Observer.Expect('open_events', '[T2A][T2B][T2]');
+        Observer.Expect('first', 'res:T2A');
+        Observer.Expect('first_events', '');
+        Observer.Expect('second', 'res:T2A');
+        Observer.Expect('second_events', '');
+        Observer.Expect('setvalue_events', '');
+        Observer.Expect('third', 'res:T2A');
+        Observer.Expect('third_events', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -541,7 +553,13 @@ codeunit 86199 "LT PX Cap Tests"
         Observer.Observe('setvalue_caption', Pg.ExprCC.Caption());
         Pg.Close();
         UnbindSubscription(Subscriber);
-        Observer.Finish();
+        Observer.Expect('open_events', '[T3A][T3B][T3]');
+        Observer.Expect('open_caption', 'res:T3');
+        Observer.Expect('action_events', '');
+        Observer.Expect('action_caption', 'res:T3');
+        Observer.Expect('setvalue_events', '');
+        Observer.Expect('setvalue_caption', 'res:T3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -569,7 +587,14 @@ codeunit 86199 "LT PX Cap Tests"
         Observer.Observe('back_caption', Pg.ExprCC.Caption());
         Pg.Close();
         UnbindSubscription(Subscriber);
-        Observer.Finish();
+        Observer.Expect('open_events', '[T4aA][T4aB][T4a]');
+        Observer.Expect('changed_caption', 'res:T4a');
+        Observer.Expect('changed_events', '');
+        Observer.Expect('action_events', '[T4bA][T4bB][T4b]');
+        Observer.Expect('action_caption', 'res:T4b');
+        Observer.Expect('back_events', '');
+        Observer.Expect('back_caption', 'res:T4a');
+        Observer.Verify();
     end;
 }
 
@@ -864,61 +889,100 @@ codeunit 86200 "LT PX Nav Tests"
         Probe(Observer, 'DdBoth', 0);
         Probe(Observer, 'DdErr', 0);
         Probe(Observer, 'DdFlow', 0);
-        Observer.Finish();
+        Observer.Expect('DdNoRel:ok', 'Yes');
+        Observer.Expect('DdNoRel:log', 'open grp list;page grp cur=G1 rows=G1,G2,G3,;');
+        Observer.Expect('DdNoRel:stored', 'G2');
+        Observer.Expect('DdNoRel@openedit:ok', 'Yes');
+        Observer.Expect('DdNoRel@openedit:log', 'open grp list;page grp cur=G1 rows=G1,G2,G3,;');
+        Observer.Expect('DdNoRel@openedit:stored', 'G2');
+        Observer.Expect('DdRel:ok', 'Yes');
+        Observer.Expect('DdRel:log', 'open grp list;page grp cur=G1 rows=G1,G2,G3,;');
+        Observer.Expect('DdRel:stored', 'G2');
+        Observer.Expect('DdRel@openedit:ok', 'Yes');
+        Observer.Expect('DdRel@openedit:log', 'open grp list;page grp cur=G1 rows=G1,G2,G3,;');
+        Observer.Expect('DdRel@openedit:stored', 'G2');
+        Observer.Expect('DdBoth:ok', 'Yes');
+        Observer.Expect('DdBoth:log', 'ondrilldown;');
+        Observer.Expect('DdBoth:stored', '0');
+        Observer.Expect('DdErr:ok', 'No');
+        Observer.Expect('DdErr:err|text', 'The LT PX Grp does not exist. Identification fields and values: Code=''NONE''');
+        Observer.Expect('DdErr:err|code', 'TestWrapped:CSideRecordNotFound');
+        Observer.Expect('DdErr:log', '');
+        Observer.Expect('DdErr:stored', '0');
+        Observer.Expect('DdFlow:ok', 'Yes');
+        Observer.Expect('DdFlow:log', 'open ent list g0=Grp: G2, Day: 01/01/25..01/31/25;page ent cur=1 rows=1,4,;');
+        Observer.Expect('DdFlow:stored', '0');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_GrpCtl()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'GrpCtl', 0);
-        Observer.Finish();
+        Observer.Expect('GrpCtl:ok', 'Yes');
+        Observer.Expect('GrpCtl:log', 'open grp list;open grp list;modal grp cur=G2 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('GrpCtl:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_LkPlainRel()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkPlainRel', 0);
-        Observer.Finish();
+        Observer.Expect('LkPlainRel:ok', 'Yes');
+        Observer.Expect('LkPlainRel:log', 'open grp list;open grp list;modal grp cur=G2 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('LkPlainRel:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_LkPlainRelEmpty()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkPlainRelEmpty', 0);
-        Observer.Finish();
+        Observer.Expect('LkPlainRelEmpty:ok', 'Yes');
+        Observer.Expect('LkPlainRelEmpty:log', 'open grp list;open grp list;modal grp cur=G1 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('LkPlainRelEmpty:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_LkWhere()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkWhere', 0);
-        Observer.Finish();
+        Observer.Expect('LkWhere:ok', 'Yes');
+        Observer.Expect('LkWhere:log', 'open grp list g0=Descr: Open;open grp list g0=Descr: Open;modal grp cur=G1 rows=G1,G3, pick=G3;');
+        Observer.Expect('LkWhere:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_LkCond()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkCond', 0);
-        Observer.Finish();
+        Observer.Expect('LkCond:ok', 'Yes');
+        Observer.Expect('LkCond:log', 'open grp list;open grp list;modal grp cur=G2 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('LkCond:stored', 'G3');
+        Observer.Verify();
     end;
 
-    [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
+    // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
+    // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
     procedure PX_Lookup_LkCond_KindB()
     var
         Observer: Codeunit "Probe Observer";
@@ -928,37 +992,46 @@ codeunit 86200 "LT PX Nav Tests"
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_LkOverRel()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkOverRel', 0);
-        Observer.Finish();
+        Observer.Expect('LkOverRel:ok', 'Yes');
+        Observer.Expect('LkOverRel:log', 'open grp list;open grp list;modal grp cur=G2 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('LkOverRel:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
     procedure PX_Lookup_LkOverTrig()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkOverTrig', 0);
-        Observer.Finish();
+        Observer.Expect('LkOverTrig:ok', 'Yes');
+        Observer.Expect('LkOverTrig:log', 'field-onlookup;');
+        Observer.Expect('LkOverTrig:stored', 'G2');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpAltModal')]
     procedure PX_Lookup_LkDiffPage()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkDiffPage', 0);
-        Observer.Finish();
+        Observer.Expect('LkDiffPage:ok', 'Yes');
+        Observer.Expect('LkDiffPage:log', 'open grp alt list;open grp alt list;modal grpalt cur=G2 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('LkDiffPage:stored', 'G3');
+        Observer.Verify();
     end;
 
-    [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
+    // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
+    // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
     procedure PX_Lookup_LkOnlyDd()
     var
         Observer: Codeunit "Probe Observer";
@@ -967,8 +1040,9 @@ codeunit 86200 "LT PX Nav Tests"
         Observer.Finish();
     end;
 
-    [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
+    // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
+    // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
     procedure PX_Lookup_LkNone()
     var
         Observer: Codeunit "Probe Observer";
@@ -978,33 +1052,44 @@ codeunit 86200 "LT PX Nav Tests"
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('EntModal')]
     procedure PX_Lookup_LkOtherTable()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkOtherTable', 0);
-        Observer.Finish();
+        Observer.Expect('LkOtherTable:ok', 'No');
+        Observer.Expect('LkOtherTable:err|text', 'A RecordID from table ''LT PX Ent'' cannot be used with a record from table ''LT PX Grp''.');
+        Observer.Expect('LkOtherTable:err|code', 'TestWrapped:DataBinding');
+        Observer.Expect('LkOtherTable:log', 'open ent list;open ent list;modal ent cur=1 rows=1,2,3,4, pick=4;');
+        Observer.Expect('LkOtherTable:stored', 'G2');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpAltModal')]
     procedure PX_Lookup_LkPageOverRel()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'LkPageOverRel', 0);
-        Observer.Finish();
+        Observer.Expect('LkPageOverRel:ok', 'Yes');
+        Observer.Expect('LkPageOverRel:log', 'open grp alt list;open grp alt list;modal grpalt cur=G2 rows=G1,G2,G3, pick=G3;');
+        Observer.Expect('LkPageOverRel:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('GrpModal,GrpAltModal,Grp2Modal,EntModal')]
+    [HandlerFunctions('GrpModal')]
     procedure PX_Lookup_SharedSecond()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Probe(Observer, 'SharedSecond', 0);
-        Observer.Finish();
+        Observer.Expect('SharedSecond:ok', 'Yes');
+        Observer.Expect('SharedSecond:log', 'open grp list g0=Descr: Open;open grp list g0=Descr: Open;modal grp cur=G1 rows=G1,G3, pick=G3;');
+        Observer.Expect('SharedSecond:stored', 'G3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1026,7 +1111,13 @@ codeunit 86200 "LT PX Nav Tests"
         Observer.Observe('off_set_c', TrySet(1, 'c12/31/2025'));
         Observer.Observe('on_set_c', TrySet(2, 'c12/31/2025'));
         Observer.Observe('on_set_plain', TrySet(2, '12/30/2025'));
-        Observer.Finish();
+        Observer.Expect('off_value', '12/31/2025');
+        Observer.Expect('on_value', 'C12/31/2025');
+        Observer.Expect('off_set_C', 'err TestValidation Validation error for Field: ClosingOff,  Message = ''Your entry of ''C12/31/2025'' is not an acceptable value for ''Closing''. Cannot specify a closing date. (Select Refresh to discard errors)'' | off= on= | stored=');
+        Observer.Expect('off_set_c', 'err TestValidation Validation error for Field: ClosingOff,  Message = ''Your entry of ''c12/31/2025'' is not an acceptable value for ''Closing''. Cannot specify a closing date. (Select Refresh to discard errors)'' | off= on= | stored=');
+        Observer.Expect('on_set_c', 'ok | off=12/31/2025 on=C12/31/2025 | stored=C12/31/25 closing=Yes');
+        Observer.Expect('on_set_plain', 'ok | off=12/30/2025 on=12/30/2025 | stored=12/30/25 closing=No');
+        Observer.Verify();
     end;
 
     local procedure TrySet(Ctl: Integer; NewValue: Text): Text
