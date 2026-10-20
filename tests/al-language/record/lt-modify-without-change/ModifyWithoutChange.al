@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-modify-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); own table 74971, log 74972, test codeunit 74973
+// Fixtures used: Probe Observer (codeunit 69160); own table 74971, log 74972, test codeunit 74973; writer QD: table 86510, manual subscriber codeunits 86511 and 86512 (ModifyAll over a row that has the value, with and without modify subscribers)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: Modify() on a record with no field changed: whether SystemRowVersion changes (in the variable after the call and when the row is read again), whether the OnModify trigger runs, and whether xRec equals Rec in it; Modify(true), Modify(false) and ModifyAll with the same value; Modify with one field changed. Row versions are compared with each other, never asserted as numbers. ModifyAll with the same value is asserted for its trace only: whether it changes the row version differs between the local container (unchanged) and the CI container (changed), so the row version is not asserted for it.
 // BC versions: 29 (27 and 28 by CI)
@@ -281,5 +281,126 @@ codeunit 74973 "LT Modify Without Change"
         Observer.Expect('row1_greater', 'Yes');
         Observer.Expect('trace', 'OnModify rec=one/9 xrec=one/9;');
         Observer.Verify();
+    end;
+
+    // Writer QD (al-runtime-rs assumption modifyall-with-events-unchanged-row): ModifyAll(Qty, 5, false) over two rows of a table without
+    // triggers, row 1 already has Qty 5 and row 2 has 6: SystemModifiedAt and SystemRowVersion of each row before and after, with no
+    // subscriber bound, with an OnAfterModifyEvent subscriber bound and with an OnBeforeModifyEvent subscriber bound.
+    local procedure QdModifyAllSame(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Row: Record "LT QD MW Sub Row";
+        L: Codeunit "LT MW Log";
+        Stamp1: DateTime;
+        Stamp2: DateTime;
+        Version1: BigInteger;
+        Version2: BigInteger;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1; Row.Qty := 5; Row.Insert();
+        Row.Id := 2; Row.Qty := 6; Row.Insert();
+        Row.Get(1); Stamp1 := Row.SystemModifiedAt; Version1 := Row.SystemRowVersion;
+        Row.Get(2); Stamp2 := Row.SystemModifiedAt; Version2 := Row.SystemRowVersion;
+        L.Take();
+        Sleep(50);
+        Row.Reset();
+        Row.ModifyAll(Qty, 5, false);
+        Observer.Observe(Prefix + '_trace', L.Take());
+        Row.Get(1);
+        Observer.Observe(Prefix + '_row1_stamp_changed', Format(Row.SystemModifiedAt <> Stamp1));
+        Observer.Observe(Prefix + '_row1_version_changed', Format(Row.SystemRowVersion <> Version1));
+        Row.Get(2);
+        Observer.Observe(Prefix + '_row2_qty', Format(Row.Qty));
+        Observer.Observe(Prefix + '_row2_stamp_changed', Format(Row.SystemModifiedAt <> Stamp2));
+        Observer.Observe(Prefix + '_row2_version_changed', Format(Row.SystemRowVersion <> Version2));
+    end;
+
+    [Test]
+    procedure QD_ModifyAll_SameValue_NoSubscriber()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QdModifyAllSame('none', Observer);
+        Observer.Expect('none_trace', '');
+        Observer.Expect('none_row1_stamp_changed', 'No');
+        Observer.Expect('none_row1_version_changed', 'No');
+        Observer.Expect('none_row2_qty', '5');
+        Observer.Expect('none_row2_stamp_changed', 'Yes');
+        Observer.Expect('none_row2_version_changed', 'Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QD_ModifyAll_SameValue_AfterModifySubscriber()
+    var
+        Observer: Codeunit "Probe Observer";
+        Subs: Codeunit "LT QD MW After Subs";
+    begin
+        BindSubscription(Subs);
+        QdModifyAllSame('after', Observer);
+        UnbindSubscription(Subs);
+        Observer.Expect('after_trace', 'after 1 rec=5 xrec=5;after 2 rec=5 xrec=5;');
+        Observer.Expect('after_row1_stamp_changed', 'No');
+        Observer.Expect('after_row1_version_changed', 'No');
+        Observer.Expect('after_row2_qty', '5');
+        Observer.Expect('after_row2_stamp_changed', 'Yes');
+        Observer.Expect('after_row2_version_changed', 'Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QD_ModifyAll_SameValue_BeforeModifySubscriber()
+    var
+        Observer: Codeunit "Probe Observer";
+        Subs: Codeunit "LT QD MW Before Subs";
+    begin
+        BindSubscription(Subs);
+        QdModifyAllSame('before', Observer);
+        UnbindSubscription(Subs);
+        Observer.Expect('before_trace', 'before 1 rec=5 xrec=5;before 2 rec=5 xrec=5;');
+        Observer.Expect('before_row1_stamp_changed', 'No');
+        Observer.Expect('before_row1_version_changed', 'No');
+        Observer.Expect('before_row2_qty', '5');
+        Observer.Expect('before_row2_stamp_changed', 'Yes');
+        Observer.Expect('before_row2_version_changed', 'Yes');
+        Observer.Verify();
+    end;
+}
+
+table 86510 "LT QD MW Sub Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Qty; Integer) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+codeunit 86511 "LT QD MW After Subs"
+{
+    EventSubscriberInstance = Manual;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT QD MW Sub Row", 'OnAfterModifyEvent', '', false, false)]
+    local procedure AfterModify(var Rec: Record "LT QD MW Sub Row"; var xRec: Record "LT QD MW Sub Row"; RunTrigger: Boolean)
+    var
+        L: Codeunit "LT MW Log";
+    begin
+        L.Add('after ' + Format(Rec.Id) + ' rec=' + Format(Rec.Qty) + ' xrec=' + Format(xRec.Qty));
+    end;
+}
+
+codeunit 86512 "LT QD MW Before Subs"
+{
+    EventSubscriberInstance = Manual;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT QD MW Sub Row", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure BeforeModify(var Rec: Record "LT QD MW Sub Row"; var xRec: Record "LT QD MW Sub Row"; RunTrigger: Boolean)
+    var
+        L: Codeunit "LT MW Log";
+    begin
+        L.Add('before ' + Format(Rec.Id) + ' rec=' + Format(Rec.Qty) + ' xrec=' + Format(xRec.Qty));
     end;
 }
