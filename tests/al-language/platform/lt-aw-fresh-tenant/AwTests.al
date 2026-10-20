@@ -434,8 +434,8 @@ codeunit 80355 "LT AW Moved Tests"
         // Windows names 'Test Runner - Mgt.' on 27.5/28.5/29.0 (Windows check runs 39232594469/39232598079/39232601421).
         // Before the bc-linux #140 fix Linux BC 28/29 named the test codeunit instead.
         Observer.Observe('open_error', GetLastErrorText());
-        Observer.Expect('open_error', 'You tried to invoke the Table object with the ID 80301 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Expect('open_error_code', 'AL:MetadataNotFound');
+        Observer.Expect('open_error', 'You tried to invoke the Table object with the ID 80301 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
         Observer.Verify();
     end;
 
