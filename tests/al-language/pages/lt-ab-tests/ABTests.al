@@ -1064,9 +1064,8 @@ codeunit 77099 "LT AB Tests"
     begin
         RenderSeed();
         TempBlob.CreateOutStream(OutStr);
-#if not BC29PLUS or LT_HELD_BCLINUX_143
-        // BC 29 (LT_HELD_BCLINUX_143): Windows BC 29.0 (Windows run 2026-10-20) raises no error here, like 27/28; the other 29.0 values are
-        // not measured yet (windows-queue). Remove this hold after the Windows check, not when bc-linux #143 (closed) is fixed.
+        // BC 29: Windows BC 29.0 check 2026-10-20 (bump 34 queue) gives the same values as 27/28 (no error, output written); so does the
+        // Linux image at dbee8022 (the bc-linux #143 fix).
         // BC 27 and 28: the corpus CI containers run the RDLC renderer (ci.yml rdlc_renderer), so SaveAs Pdf renders. The stub
         // error pinned before was a property of the container, not of BC.
         ClearLastError();
@@ -1079,16 +1078,6 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('log', 'plain OnPreReport | plain ext OnPreRendering keys=0');
         Observer.Expect('has-output', 'Yes');
         Observer.Verify();
-#else
-        // Linux BC 29: the Linux stub error asserted before ('RDLC report rendering is not implemented on Linux BC ...') is gone with the
-        // bc-linux #143 fix (PR run 39475237141: no error). Observed, not asserted, until the Windows check gives the BC 29.0 values.
-        ClearLastError();
-        Observer.Observe('saveas-pdf ok', Format(TrySaveAsPlainPdf(OutStr)));
-        Observer.Observe('saveas-pdf error', GetLastErrorText());
-        Observer.Observe('log', Log.Dump());
-        Observer.Observe('has-output', Format(TempBlob.Length() > 0));
-        Observer.Discard();
-#endif
     end;
 
     [TryFunction]

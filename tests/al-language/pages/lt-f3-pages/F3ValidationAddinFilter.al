@@ -406,7 +406,14 @@ codeunit 67122 "LT F3 Addin Calls"
             Observer.Observe('code', GetLastErrorCode());
         end;
         Observer.Observe('log', Log.Dump());
-#if LT_HELD_BCLINUX_133
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue); the Linux image at dbee8022 gives the same values.
+        Observer.Expect('ok', 'No');
+        Observer.Expect('error', 'The control add-in on control Host on page LT F3 Addin Page has not been instantiated.');
+        Observer.Expect('code', 'DotNetControlAddInNotCreated');
+        Observer.Expect('log', '');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_133
         // Held on Linux (LT_HELD_BCLINUX_133): these are the Linux values of the image before the bc-linux #133 fix. The image at dbee8022 and
         // Windows BC 28.5/29.0 (Windows runs 2026-10-20, first difference only) give 'The control add-in on control Host on page LT F3 Addin Page
         // has not been instantiated.'; Windows BC 27.5 gives a client callback error. Re-assert after the Windows check (windows-queue), then
@@ -437,7 +444,17 @@ codeunit 67122 "LT F3 Addin Calls"
         ObserveCall('setlocale', Pg, 1);
         ObserveCall('load', Pg, 2);
         Observer.Observe('log', Log.Dump());
-#if LT_HELD_BCLINUX_133
+#if BC29PLUS
+        // Windows BC 29.0 check 2026-10-20 (bump 34 queue); the Linux image at dbee8022 gives the same values.
+        Observer.Expect('setlocale_ok', 'No');
+        Observer.Expect('setlocale_error', 'The control add-in on control Host on page LT F3 Addin Page has not been instantiated.');
+        Observer.Expect('setlocale_code', 'DotNetControlAddInNotCreated');
+        Observer.Expect('load_ok', 'No');
+        Observer.Expect('load_error', 'The control add-in on control Host on page LT F3 Addin Page has not been instantiated.');
+        Observer.Expect('load_code', 'DotNetControlAddInNotCreated');
+        Observer.Expect('log', '');
+        Observer.Verify();
+#elif LT_HELD_BCLINUX_133
         // Held on Linux (LT_HELD_BCLINUX_133): these are the Linux values of the image before the bc-linux #133 fix. The image at dbee8022 and
         // Windows BC 28.5/29.0 (Windows runs 2026-10-20, first difference only) give 'The control add-in on control Host on page LT F3 Addin Page
         // has not been instantiated.'; Windows BC 27.5 gives a client callback error. Re-assert after the Windows check (windows-queue), then
