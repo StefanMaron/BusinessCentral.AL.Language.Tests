@@ -529,7 +529,20 @@ codeunit 60187 "Test Case Contracts"
         Observer.Observe('code ABD, range abc..abe', CodeLiteralRange(C, 3));
         Observer.Observe('code ABD, text var range abc..abe', CodeVarRange(C, 'abc', 'abe'));
         Observer.Observe('code ABD, text var range ABC..ABE', CodeVarRange(C, 'ABC', 'ABE'));
-        Observer.Finish();
+        Observer.Expect('code ABC, text var label abc', 'label');
+        Observer.Expect('code ABC, text var label ABC', 'label');
+        Observer.Expect('code ABC, text var label ABC space', 'label');
+        Observer.Expect('code ABC, text var label 12 chars|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKL');
+        Observer.Expect('code ABC, text var label 12 chars|code', 'StringLengthExceeded');
+        Observer.Expect('code K, range a..z', 'in');
+        Observer.Expect('code K, range A..Z', 'in');
+        Observer.Expect('code K, range abc..klm', 'in abc..klm');
+        Observer.Expect('code K, text var range a..z', 'in');
+        Observer.Expect('code K, text var range A..Z', 'in');
+        Observer.Expect('code ABD, range abc..abe', 'in abc..abe');
+        Observer.Expect('code ABD, text var range abc..abe', 'in');
+        Observer.Expect('code ABD, text var range ABC..ABE', 'in');
+        Observer.Verify();
     end;
 
     local procedure CodeVarLabel(Value: Code[10]; Lbl: Text): Text

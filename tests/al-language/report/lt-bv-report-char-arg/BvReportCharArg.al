@@ -261,7 +261,15 @@ codeunit 83761 "LT BV Report Char Arg"
         PYC_Step(Observer, 'report decimal', PYC_RepDec(Ch, R), R);
         PYC_Step(Observer, 'report byte', PYC_RepByte(Ch, R), R);
         PYC_Step(Observer, 'report duration', PYC_RepDur(Ch, R), R);
-        Observer.Finish();
+        Observer.Expect('codeunit bigint', 'error|Unable to convert from System.Char to System.Int64.|Conversion');
+        Observer.Expect('codeunit decimal', 'error|Unable to convert from System.Char to Microsoft.Dynamics.Nav.Runtime.Decimal18.|Conversion');
+        Observer.Expect('codeunit byte', 'ok|codeunit byte q');
+        Observer.Expect('codeunit duration', 'ok|codeunit duration 113 milliseconds');
+        Observer.Expect('report bigint', 'error|Unable to convert from System.Char to System.Int64.|Conversion');
+        Observer.Expect('report decimal', 'error|Unable to convert from System.Char to Microsoft.Dynamics.Nav.Runtime.Decimal18.|Conversion');
+        Observer.Expect('report byte', 'ok|report byte q');
+        Observer.Expect('report duration', 'ok|report duration 113 milliseconds');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -333,7 +341,14 @@ codeunit 83761 "LT BV Report Char Arg"
         PYC_Step(Observer, 'call result to codeunit integer', PYC_CallExpr(R), R);
         PYC_Step(Observer, 'text index to codeunit integer', PYC_IndexExpr('pq', R), R);
         Observer.Observe('text index to local integer', LocalBump('pq'[2]));
-        Observer.Finish();
+        Observer.Expect('page integer', 'error|Unable to convert from System.Char to System.Int32.|Conversion');
+        Observer.Expect('query integer', 'error|Unable to convert from System.Char to System.Int32.|Conversion');
+        Observer.Expect('xmlport integer', 'error|Unable to convert from System.Char to System.Int32.|Conversion');
+        Observer.Expect('table integer', 'error|Unable to convert from System.Char to System.Int32.|Conversion');
+        Observer.Expect('call result to codeunit integer', 'error|Unable to convert from System.Char to System.Int32.|Conversion');
+        Observer.Expect('text index to codeunit integer', 'error|Unable to convert from System.Char to System.Int32.|Conversion');
+        Observer.Expect('text index to local integer', 'local integer 113');
+        Observer.Verify();
     end;
 }
 

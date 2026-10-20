@@ -672,7 +672,13 @@ codeunit 72513 "LT SyT Message"
         Message('%1', Lf);
         Message('%1', CrLf);
         Message('x%1y', Lf);
-        Observer.Finish();
+        Observer.Expect('message', 'a<13>b');
+        Observer.Expect('message', 'a<10>b');
+        Observer.Expect('message', 'a<13>b');
+        Observer.Expect('message', 'a<10>b');
+        Observer.Expect('message', 'a<92>b');
+        Observer.Expect('message', 'xa<10>by');
+        Observer.Verify();
     end;
 
     [Test]
@@ -699,6 +705,14 @@ codeunit 72513 "LT SyT Message"
         Observer.Observe('error text crlf', PYC_Codes(GetLastErrorText()));
         asserterror Error('p\q %1', CrLf);
         Observer.Observe('error backslash text and crlf arg', PYC_Codes(GetLastErrorText()));
-        Observer.Finish();
+        Observer.Expect('error arg crlf', 'a<92>b');
+        Observer.Expect('error arg crlf in text', 'xa<92>by');
+        Observer.Expect('error text cr', 'a<13>b');
+        Observer.Expect('error text lf', 'a<10>b');
+        Observer.Expect('error arg cr', 'a<13>b');
+        Observer.Expect('error arg lf', 'a<10>b');
+        Observer.Expect('error text crlf', 'a<92>b');
+        Observer.Expect('error backslash text and crlf arg', 'p<92>q a<92>b');
+        Observer.Verify();
     end;
 }

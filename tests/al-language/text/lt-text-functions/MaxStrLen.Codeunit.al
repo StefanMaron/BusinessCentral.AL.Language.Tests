@@ -159,7 +159,14 @@ codeunit 70512 "LT TxB MaxStrLen"
         Observer.Observe('hop through text30 param', Format(Hop30(T30)));
         Observer.Observe('hop through text30 param field', Format(Hop30(Item.Description)));
         Observer.Observe('code hops code20', Format(HopCode(C20)));
-        Observer.Finish();
+        Observer.Expect('two hops text30', '30');
+        Observer.Expect('two hops field text100', '100');
+        Observer.Expect('two hops text', '2147483647');
+        Observer.Expect('three hops text30', '30');
+        Observer.Expect('hop through text30 param', '30');
+        Observer.Expect('hop through text30 param field', '100');
+        Observer.Expect('code hops code20', '20');
+        Observer.Verify();
     end;
 
     [Test]
@@ -185,7 +192,13 @@ codeunit 70512 "LT TxB MaxStrLen"
         Sub.RaiseFromVar(T30);
         Observer.Observe('subscriber via var param text30', Sub.Seen());
         UnbindSubscription(Sub);
-        Observer.Finish();
+        Observer.Expect('direct raise text30', '30');
+        Observer.Expect('direct raise field text100', '100');
+        Observer.Expect('subscriber text30', '30');
+        Observer.Expect('subscriber field text100', '100');
+        Observer.Expect('subscriber text', '2147483647');
+        Observer.Expect('subscriber via var param text30', '30');
+        Observer.Verify();
     end;
 
     local procedure Hop0(var s: Text): Integer

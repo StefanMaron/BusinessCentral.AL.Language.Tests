@@ -229,7 +229,10 @@ codeunit 69338 "PU Continue Probe"
         Observer.Observe('with return value', R.ForLoop());
         Observer.Observe('try function', T.ForLoop());
         Observer.Observe('overloaded', O.ForLoop());
-        Observer.Finish();
+        Observer.Expect('with return value', '123|calls=1');
+        Observer.Expect('try function', '123|calls=1');
+        Observer.Expect('overloaded', '123|calls=1');
+        Observer.Verify();
     end;
 
     // Writer PY-C (al-runtime-rs PR 346, probes-needed "Loops, continue and MaxStrLen"): `if ... then continue else ...` with the foreach
@@ -297,7 +300,12 @@ codeunit 69338 "PU Continue Probe"
             else
                 Seen += Item;
         Observer.Observe('foreach direct body', Seen);
-        Observer.Finish();
+        Observer.Expect('for no continue', '|2');
+        Observer.Expect('while', '1B 1C 2B 2C |2');
+        Observer.Expect('repeat', '1B 1C 2B 2C |2');
+        Observer.Expect('for begin end', '|2');
+        Observer.Expect('foreach direct body', 'AC');
+        Observer.Verify();
     end;
 
     [Test]
@@ -345,7 +353,11 @@ codeunit 69338 "PU Continue Probe"
                 Seen += Format(i) + Item + ' ';
             end;
         Observer.Observe('continue without else', Seen + '|' + Format(i));
-        Observer.Finish();
+        Observer.Expect('foreach in foreach', 'xB xC yB yC ');
+        Observer.Expect('else continue', '|2');
+        Observer.Expect('then begin continue end else', '|2');
+        Observer.Expect('continue without else', '|2');
+        Observer.Verify();
     end;
 }
 

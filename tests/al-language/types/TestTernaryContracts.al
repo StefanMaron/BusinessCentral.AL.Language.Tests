@@ -383,7 +383,18 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe('Cond ? Enum : Integer 7, true', 'ok|' + Format(I))
         else
             Observer.ObserveError('Cond ? Enum : Integer 7, true');
-        Observer.Finish();
+        Observer.Expect('Cond ? 1 : Big 3e9, false|text', 'Overflow under conversion of System.Int64 value 3000000000 to System.Int32.');
+        Observer.Expect('Cond ? 1 : Big 3e9, false|code', 'ConversionCast');
+        Observer.Expect('Cond ? 1 : Big 5, false', 'ok|5');
+        Observer.Expect('Cond ? Big 3e9 : 1, true', 'ok|3000000000');
+        Observer.Expect('Cond ? Text10 : 12-char text, false|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: abcdefghijkl');
+        Observer.Expect('Cond ? Text10 : 12-char text, false|code', 'StringLengthExceeded');
+        Observer.Expect('Cond ? Text10 : 12-char text, true', 'ok|short');
+        Observer.Expect('Cond ? Option : Integer 7, false', 'ok|7');
+        Observer.Expect('Cond ? Option : Integer 7, true', 'ok|2');
+        Observer.Expect('Cond ? Enum : Integer 7, false', 'ok|7');
+        Observer.Expect('Cond ? Enum : Integer 7, true', 'ok|2');
+        Observer.Verify();
     end;
 
     [TryFunction]

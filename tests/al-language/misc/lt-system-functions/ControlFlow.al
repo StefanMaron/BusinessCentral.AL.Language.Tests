@@ -866,7 +866,12 @@ codeunit 72516 "LT SyT Exit Recursion"
             Observer.Observe('downto int min', 'no error|' + Format(i) + '|' + Format(Rounds))
         else
             Observer.Observe('downto int min', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode() + '|' + Format(i) + '|' + Format(Rounds));
-        Observer.Finish();
+        Observer.Expect('downto -3e9', 'error:Overflow under conversion of System.Int64 value -3000000000 to System.Int32.|ConversionCast|1000|0');
+        Observer.Expect('downto min-1', 'error:Overflow under conversion of System.Int64 value -2147483649 to System.Int32.|ConversionCast|1000|0');
+        Observer.Expect('downto 998', 'no error|998|3');
+        Observer.Expect('from 3e9 downto 1', 'error:Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast|0|0');
+        Observer.Expect('downto int min', 'no error|-2147483648|2');
+        Observer.Verify();
     end;
 
     [TryFunction]

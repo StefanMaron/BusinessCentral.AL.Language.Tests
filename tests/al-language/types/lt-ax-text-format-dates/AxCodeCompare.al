@@ -235,6 +235,12 @@ codeunit 80422 "LT AX Code Compare"
         Observer.Observe('zz in[a..z]', Format('zz' in ['a' .. 'z']));
         Observer.Observe('K in[a..z]', Format('K' in ['a' .. 'z']));
         Observer.Observe('Kx in[Ta..Tz]', Format('Kx' in [TLo .. THi]));
-        Observer.Finish();
+        Observer.Expect('Kx in[a..z]', 'Yes');
+        Observer.Expect('Kx in[A..Z]', 'Yes');
+        Observer.Expect('kx in[a..z]', 'Yes');
+        Observer.Expect('zz in[a..z]', 'No');
+        Observer.Expect('K in[a..z]', 'No');
+        Observer.Expect('Kx in[Ta..Tz]', 'Yes');
+        Observer.Verify();
     end;
 }

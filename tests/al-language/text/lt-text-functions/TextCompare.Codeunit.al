@@ -366,6 +366,17 @@ codeunit 70515 "LT TxB TextCompare"
         Obs.Observe('code in [lower text var]', Format(C5 in [T]));
         C10 := 'abc';
         Obs.Observe('code10 = code5', Format(C10 = C5));
-        Obs.Finish();
+        Obs.Expect('code = lower literal', 'No');
+        Obs.Expect('lower literal = code', 'No');
+        Obs.Expect('code <> lower literal', 'Yes');
+        Obs.Expect('code = upper literal', 'Yes');
+        Obs.Expect('code = lower text var', 'No');
+        Obs.Expect('code < abd literal', 'Yes');
+        Obs.Expect('code > abd literal', 'No');
+        Obs.Expect('code = 8-char literal', 'No');
+        Obs.Expect('code in [lower literal]', 'Yes');
+        Obs.Expect('code in [lower text var]', 'Yes');
+        Obs.Expect('code10 = code5', 'Yes');
+        Obs.Verify();
     end;
 }

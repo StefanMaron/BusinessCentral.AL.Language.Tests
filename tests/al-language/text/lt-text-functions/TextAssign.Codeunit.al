@@ -320,7 +320,11 @@ codeunit 70513 "LT TxB TextAssign"
             Observer.Observe('bigint 7', 'outer ok|' + Inner)
         else
             Observer.Observe('bigint 7', 'outer error|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('decimal 2.5', 'outer ok|inner false|Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.|ConversionCast');
+        Observer.Expect('decimal 3', 'outer ok|inner ok 3');
+        Observer.Expect('bigint 3e9', 'outer ok|inner false|Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast');
+        Observer.Expect('bigint 7', 'outer ok|inner ok 7');
+        Observer.Verify();
     end;
 
     [TryFunction]

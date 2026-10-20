@@ -237,7 +237,43 @@ codeunit 70509 "LT TxB CaseConv"
         else
             Observer.Observe('lt', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('az language', '1068');
+        Observer.Expect('az LowerCase I', 'ı');
+        Observer.Expect('az ToLower I', 'i');
+        Observer.Expect('az UpperCase i', 'İ');
+        Observer.Expect('az ToUpper i', 'I');
+        Observer.Expect('az LowerCase dotted I', 'i');
+        Observer.Expect('az UpperCase dotless i', 'I');
+        Observer.Expect('az LowerCase ΑΣ', 'ασ');
+        Observer.Expect('az ToLower ΑΣ', 'ασ');
+        Observer.Expect('az UpperCase ας', 'ΑΣ');
+        Observer.Expect('az UpperCase ß', 'ß');
+        Observer.Expect('az ToUpper ß', 'ß');
+        Observer.Expect('de language', '1031');
+        Observer.Expect('de LowerCase I', 'i');
+        Observer.Expect('de ToLower I', 'i');
+        Observer.Expect('de UpperCase i', 'I');
+        Observer.Expect('de ToUpper i', 'I');
+        Observer.Expect('de LowerCase dotted I', 'i');
+        Observer.Expect('de UpperCase dotless i', 'I');
+        Observer.Expect('de LowerCase ΑΣ', 'ασ');
+        Observer.Expect('de ToLower ΑΣ', 'ασ');
+        Observer.Expect('de UpperCase ας', 'ΑΣ');
+        Observer.Expect('de UpperCase ß', 'ß');
+        Observer.Expect('de ToUpper ß', 'ß');
+        Observer.Expect('lt language', '1063');
+        Observer.Expect('lt LowerCase I', 'i');
+        Observer.Expect('lt ToLower I', 'i');
+        Observer.Expect('lt UpperCase i', 'I');
+        Observer.Expect('lt ToUpper i', 'I');
+        Observer.Expect('lt LowerCase dotted I', 'i');
+        Observer.Expect('lt UpperCase dotless i', 'I');
+        Observer.Expect('lt LowerCase ΑΣ', 'ασ');
+        Observer.Expect('lt ToLower ΑΣ', 'ασ');
+        Observer.Expect('lt UpperCase ας', 'ΑΣ');
+        Observer.Expect('lt UpperCase ß', 'ß');
+        Observer.Expect('lt ToUpper ß', 'ß');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,15 +294,31 @@ codeunit 70509 "LT TxB CaseConv"
             C := T;
             Observer.Observe('code := text istanbul', C);
             Observer.Observe('code param', TakeCode('iz'));
-            Observer.Observe('code = I literal', Format(C = 'ISTANBUL'));
-            Observer.Observe('code = dotted literal', Format(C = 'İSTANBUL'));
+            Observer.Observe('code = I literal', PYC_YesNo(C = 'ISTANBUL'));
+            Observer.Observe('code = dotted literal', PYC_YesNo(C = 'İSTANBUL'));
             C := 'İ';
             Observer.Observe('code := dotted I', C);
             Observer.Observe('UpperCase i', UpperCase('i'));
         end else
             Observer.Observe('tr', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
         GlobalLanguage(Saved);
-        Observer.Finish();
+        Observer.Expect('language', '1055');
+        Observer.Expect('code := i dotless-i', 'İI');
+        Observer.Expect('code := text istanbul', 'İSTANBUL');
+        Observer.Expect('code param', 'İZ');
+        Observer.Expect('code = I literal', 'No');
+        Observer.Expect('code = dotted literal', 'Yes');
+        Observer.Expect('code := dotted I', 'İ');
+        Observer.Expect('UpperCase i', 'İ');
+        Observer.Verify();
+    end;
+
+    // Format(Boolean) follows the session language (Turkish gives Evet/Hayir), so the compare results are written in English here.
+    local procedure PYC_YesNo(Value: Boolean): Text
+    begin
+        if Value then
+            exit('Yes');
+        exit('No');
     end;
 
     local procedure TakeCode(Value: Code[10]): Text
