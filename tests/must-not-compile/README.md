@@ -452,6 +452,10 @@ is only a reference.
 | 1735 | AL0103 | `InitValue = 3000000000` on an Integer field. |
 | 1832 | AL0133 | A BigText passed to "Base64 Convert".FromBase64: no overload takes a BigText. |
 | 1833 | AL0122 | A BigText assigned to a Text variable: no implicit conversion. |
+| 1864 | AL0132 | A TestPage cannot reach a system part, file upload action, custom action, view or user control. |
+| 1865 | AL0171 | SubPageLink and SubPageView on a system part. (two diagnostics) |
+| 1866 | AL0543 | ContextSensitiveHelpPage on a page extension without the manifest property contextSensitiveHelpUrl. |
+| 1888 | AL0779 | ModifyAll on a FlowField with RunTrigger = true. |
 | 1430 | AL0528 | API page field control names with a space or a quoted special character (digit inside, leading digit, underscore compile). (two diagnostics) |
 | 1431 | AL0666 | Importance = Optional on a page field: not available in the app runtime. |
 | 1432 | AL0298 | StyleExpr set to a PageStyle variable. |
@@ -496,6 +500,13 @@ is only a reference.
 | 1656 | AL0161 | A report trigger calls a procedure of a part of its request page (from the request page OnOpenPage it compiles). |
 | 1672 | AL0162 | A report extension modify() of a base data item declares OnAfterGetRecord. |
 | 1736 | AL0133 | Text[100] field passed to a var Code[20] parameter |
+| 1744 | AL0107, AL0104 | Dictionary of [Guid, Option]: Option is not a type argument, the parser wants option members. |
+| 1745 | AL0104 | Dictionary of [Guid, Option "a","b"] does not parse either. (two diagnostics) |
+| 1746 | AL0107, AL0104 | List of [Option] does not parse. |
+| 1747 | AL0408 | Dictionary of [Text, Variant] and List of [Variant]. (two diagnostics) |
+| 1748 | AL0408 | Dictionary of [Integer, Record ...] and List of [Record ...] (List of [RecordRef] compiles). (two diagnostics) |
+| 1749 | AL0408 | List of [Blob]. |
+| 1750 | AL0133 | A Dictionary or a List passed to a var Variant parameter. (two diagnostics) |
 | 1752 | AL0831 | A [TryFunction] procedure as the implementation of an interface method. |
 | 1784 | AL0133 | A Record passed to a var Variant parameter. |
 | 1785 | AL0777 | A Guid (variable or SystemId) assigned to a Code[20]. (two diagnostics) |
@@ -549,6 +560,7 @@ is only a reference.
 | 1716 | AL0195 | AccessByPermission on a page field names a codeunit with RIMD (only X is allowed). |
 | 1717 | AL0195 | AccessByPermission on page actions names a report with M, a query with R and an xmlport with R. |
 | 1718 | AL0195 | AccessByPermission on a page action names a table object with D (tabledata takes RIMD). |
+| 1720 | AL0124 | ExcludedPermissionSets in a permissionsetextension (only a permissionset may exclude sets). |
 | 1760 | AL0774 | `exit(false)` / `exit(true)` in a `[TryFunction]` without a return value (a bare `exit;` compiles) |
 | 1768 | AL0582 | An interface implementation omits `temporary` on a `var` record parameter. |
 | 1769 | AL0122 | An interface variable assigned from a field of an enum that does not implement the interface. |
