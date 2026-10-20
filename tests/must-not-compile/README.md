@@ -554,6 +554,10 @@ is only a reference.
 | 1769 | AL0122 | An interface variable assigned from a field of an enum that does not implement the interface. |
 | 1770 | AL0698 | A `case` statement over a Record value. |
 | 1290 | AL0220 | A page sets its own Editable property to a page variable (controls accept an expression). |
+| 1688 | AL0284 | Subscriber parameter types: Record Vendor for Record Customer, a Codeunit for a Record, Decimal for Integer. |
+| 1689 | AL0271 | An action subscriber names the action by its caption (with and without the ampersand) or by an unknown name. |
+| 1690 | AL0155 | A page has an action group and an action with the same name. |
+| 1691 | AL0132, AL0161 | A table event subscriber reads `Rec.CurrFieldNo` (a table of another app, a table of the same app). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
