@@ -374,16 +374,30 @@ codeunit 80514 "LT AY Lk FlowField Tests"
     end;
 
     [Test]
-    procedure PYD_Import_Xml_FlowFieldValuesOfWrongType()
+    procedure PYD_Import_Xml_FlowFieldValuesOfWrongType_Integer()
     var
         Observer: Codeunit "Probe Observer";
     begin
         asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>many</CntD><Note>n</Note></Row></Root>');
         Observer.ObserveError('int');
-        asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>abc</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
-        Observer.ObserveError('decimal');
-        asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>maybe</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
-        Observer.ObserveError('boolean');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_Import_Xml_FlowFieldValuesOfWrongType_Decimal()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>abc</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PYD_Import_Xml_FlowFieldValuesOfWrongType_Boolean()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>maybe</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
         Observer.Finish();
     end;
 
