@@ -137,10 +137,10 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
         Observer.Observe(Name + '|stored', Format(Row.Tier.AsInteger()));
     end;
 
-#if LT_HELD_BCLINUX_160
     // Corpus #670 item 60: TestPage field GetValidationError() with no validation error pending returns an empty text. Windows BC 27.5,
-    // 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20). Held on Linux: the Linux image (BC 29.0) ends the test with an uncatchable
-    // System.ArgumentOutOfRangeException (Parameter 'index') in NavTestField.ALGetValidationError, bc-linux #160.
+    // 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20). Was held on Linux for bc-linux #160 (the Linux image, BC 29.0, ended the test with an
+    // uncatchable System.ArgumentOutOfRangeException (Parameter 'index') in NavTestField.ALGetValidationError); the bc-linux maintainer
+    // cannot reproduce it on the current image.
     [Test]
     procedure GetValidationError_NonePending()
     var
@@ -160,7 +160,6 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
         Observer.Expect('getvalidationerror', '');
         Observer.Verify();
     end;
-#endif
 
     [Test]
     procedure TestPageSetValueByCaption()
