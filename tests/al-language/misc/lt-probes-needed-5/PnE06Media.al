@@ -208,12 +208,11 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Observe('validGetFirst', OwnBlob(ValidPng(), true, false));
         Observer.Observe('validModify', OwnBlob(ValidPng(), false, true));
 #if BC29PLUS
-        // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) re-encodes the PNG to 99 bytes and accepts the short one, as 27.5/28.5 do.
-        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Before the bc-linux #161 fix
-        // the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
+        // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20, all keys in the bump 34 queue) re-encodes the PNG to 99 bytes and accepts the
+        // short one, as 27.5/28.5 do. Before the bc-linux #161 fix the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
         Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
-        Observer.Ignore('validGetFirst');
-        Observer.Ignore('validModify');
+        Observer.Expect('validGetFirst', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Expect('validModify', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99 afterModify hasValue=Yes');
         Observer.Verify();
 #else
         Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
@@ -231,11 +230,10 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Observe('short', OwnBlob(ShortPng(), false, false));
         Observer.Observe('shortGetFirst', OwnBlob(ShortPng(), true, false));
 #if BC29PLUS
-        // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) re-encodes the PNG to 99 bytes and accepts the short one, as 27.5/28.5 do.
-        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Before the bc-linux #161 fix
-        // the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
+        // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20, all keys in the bump 34 queue) re-encodes the PNG to 99 bytes and accepts the
+        // short one, as 27.5/28.5 do. Before the bc-linux #161 fix the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
         Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
-        Observer.Ignore('shortGetFirst');
+        Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Verify();
 #else
         // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes, like the valid one. Only the first difference
@@ -254,11 +252,10 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Observe('valid', OtherBlob(ValidPng()));
         Observer.Observe('short', OtherBlob(ShortPng()));
 #if BC29PLUS
-        // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) re-encodes the PNG to 99 bytes and accepts the short one, as 27.5/28.5 do.
-        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Before the bc-linux #161 fix
-        // the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
+        // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20, all keys in the bump 34 queue) re-encodes the PNG to 99 bytes and accepts the
+        // short one, as 27.5/28.5 do. Before the bc-linux #161 fix the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
         Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
-        Observer.Ignore('short');
+        Observer.Expect('short', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Verify();
 #else
         // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes; before the bc-linux #135 fix the Linux image kept 69.
