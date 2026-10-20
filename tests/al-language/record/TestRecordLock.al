@@ -181,7 +181,13 @@ codeunit 86385 "LT QB Lock FindSet True"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    // Held (publisher, bump 32): the lock row is not stable between runs. Observation 3 ('after FindSet(true)') read
+    // 'n=1;Company|KEY|Update|Granted;' on BC 28.5 and 29.0 and in the writer's subset run on 27.5, but 'n=0;' on BC 27.5
+    // in two full corpus runs of bump 32. An outcome that changes between runs is not an oracle. Held on every version
+    // until writer QB finds what decides it; the assertions do not change.
+#if LT_HELD_QB_FINDSET_TRUE_LOCK
     [Test]
+#endif
     procedure FindSet_True_DatabaseLocks_QB()
     var
         Observer: Codeunit "Probe Observer";
