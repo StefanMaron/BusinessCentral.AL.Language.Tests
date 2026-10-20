@@ -783,10 +783,19 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.ObserveError('call');
         Observer.Observe('log', Log.Take());
         Observer.Expect('ok', 'No');
-        // Linux suspect, not asserted until the Windows nightly confirms it: on the Linux CI container (27.5, 28.5, 29.0) the text is
-        // 'A call to Say failed with this message: Object reference not set to an instance of an object.' with code 'TestWrapped:DotNetInvoke'.
+#if LT_HELD_BCLINUX_133 and BC28PLUS
+        // Windows BC 28.5 (Windows check 2026-10-20) and 27.5/29.0 in a client session (Windows check 3). The Linux image pinned in ci.yml
+        // gives 'A call to Say failed with this message: Object reference not set to an instance of an object.' (TestWrapped:DotNetInvoke):
+        // held until the pin includes the bc-linux #133 fix.
+        Observer.Expect('call|text', 'The control add-in on control Ctl on page LT AO Addin Card has not been instantiated.');
+        Observer.Expect('call|code', 'TestWrapped:DotNetControlAddInNotCreated');
+#else
+        // BC 27.5 depends on the test runner: through the TestRunnerHub (Windows check 2026-10-20) the call fails earlier with
+        // 'Microsoft Dynamics 365 Business Central Data Services attempted to issue a client callback to get a DotNet object Page 79511
+        // LT AO Addin Card. ...' (TestWrapped:CallbackNotAllowed); a client session gives the 28.5 text. Linux: see above.
         Observer.Ignore('call|text');
         Observer.Ignore('call|code');
+#endif
         Observer.Expect('log', 'before;');
         Observer.Verify();
     end;
