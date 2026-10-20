@@ -719,4 +719,135 @@ codeunit 73400 "LT XmT Doc ReadWrite"
         Observer.Expect('cleared_root', 'No');
         Observer.Verify();
     end;
+
+    local procedure Kinds(Root: XmlElement): Text
+    var
+        Nodes: XmlNodeList;
+        N: XmlNode;
+        R: Text;
+    begin
+        Nodes := Root.GetChildNodes();
+        R := Format(Nodes.Count()) + ':';
+        foreach N in Nodes do
+            if N.IsXmlElement() then
+                R += 'element ' + N.AsXmlElement().Name() + ';'
+            else
+                if N.IsXmlText() then
+                    R += 'text [' + N.AsXmlText().Value() + '];'
+                else
+                    R += 'other;';
+        exit(R);
+    end;
+
+    // Corpus issue 671 item 91 (microsoft/AL#5881): the line breaks and indentation between elements of a document built with
+    // TextBuilder.AppendLine, after ReadFrom without options and with PreserveWhitespace true and false.
+    [Test]
+    procedure ReadFrom_AppendLine_Whitespace_Nodes()
+    var
+        Doc: XmlDocument;
+        Opt: XmlReadOptions;
+        Root: XmlElement;
+        TB: TextBuilder;
+    begin
+        TB.AppendLine('<root>');
+        TB.AppendLine('  <a>1</a>');
+        TB.AppendLine('  <b/>');
+        TB.Append('</root>');
+        XmlDocument.ReadFrom(TB.ToText(), Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('no_options', Kinds(Root));
+        Opt.PreserveWhitespace(true);
+        XmlDocument.ReadFrom(TB.ToText(), Opt, Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('preserve_true', Kinds(Root));
+        Opt.PreserveWhitespace(false);
+        XmlDocument.ReadFrom(TB.ToText(), Opt, Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('preserve_false', Kinds(Root));
+        Observer.Observe('inner_text', Root.InnerText());
+        Observer.Expect('no_options', '5:text [\n  ];element a;text [\n  ];element b;text [\n];');
+        Observer.Expect('preserve_true', '5:text [\n  ];element a;text [\n  ];element b;text [\n];');
+        Observer.Expect('preserve_false', '5:text [\n  ];element a;text [\n  ];element b;text [\n];');
+        Observer.Expect('inner_text', '\n  1\n  \n');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryWriteText(Doc: XmlDocument; var Result: Text)
+    begin
+        Doc.WriteTo(Result);
+    end;
+
+    [TryFunction]
+    local procedure TryWriteStream(Doc: XmlDocument; var Length: Integer)
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        Doc.WriteTo(OutS);
+        Length := TempBlob.Length();
+    end;
+
+    local procedure WriteBadChar(Name: Text; Code: Integer)
+    var
+        Doc: XmlDocument;
+        C: Text[1];
+        Txt: Text;
+        Length: Integer;
+    begin
+        C[1] := Code;
+        Doc := XmlDocument.Create();
+        Doc.Add(XmlElement.Create('a', '', 'x' + C + 'y'));
+        ClearLastError();
+        Observer.Observe(Name + '_text_ok', Format(TryWriteText(Doc, Txt)));
+        Observer.ObserveError(Name + '_text');
+        Observer.Observe(Name + '_text', Txt);
+        Observer.Observe(Name + '_stream_ok', Format(TryWriteStream(Doc, Length)));
+        Observer.ObserveError(Name + '_stream');
+        Observer.Observe(Name + '_stream_length', Format(Length));
+    end;
+
+    // Corpus issue 671 item 93 (microsoft/AL#8082): XmlDocument.WriteTo when element text holds a character XML 1.0 does not allow.
+    [Test]
+    procedure WriteTo_Char_Not_Allowed_In_Xml()
+    begin
+        WriteBadChar('char1', 1);
+        WriteBadChar('char11', 11);
+        WriteBadChar('lone_surrogate', 55296);
+        WriteBadChar('tab_allowed', 9);
+        Observer.Expect('char1_text_ok', 'No');
+        Observer.Expect('char1_text|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char1_text|code', 'Argument');
+        Observer.Expect('char1_text', '');
+        Observer.Expect('char1_stream_ok', 'No');
+        Observer.Expect('char1_stream|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char1_stream|code', 'Argument');
+        Observer.Expect('char1_stream_length', '0');
+        Observer.Expect('char11_text_ok', 'No');
+        Observer.Expect('char11_text|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char11_text|code', 'Argument');
+        Observer.Expect('char11_text', '');
+        Observer.Expect('char11_stream_ok', 'No');
+        Observer.Expect('char11_stream|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('char11_stream|code', 'Argument');
+        Observer.Expect('char11_stream_length', '0');
+        Observer.Expect('lone_surrogate_text_ok', 'No');
+        Observer.Expect('lone_surrogate_text|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('lone_surrogate_text|code', 'Argument');
+        Observer.Expect('lone_surrogate_text', '');
+        Observer.Expect('lone_surrogate_stream_ok', 'No');
+        Observer.Expect('lone_surrogate_stream|text', 'Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNCLArgumentException'' was thrown.');
+        Observer.Expect('lone_surrogate_stream|code', 'Argument');
+        Observer.Expect('lone_surrogate_stream_length', '0');
+        Observer.Expect('tab_allowed_text_ok', 'Yes');
+        Observer.Expect('tab_allowed_text|text', '');
+        Observer.Expect('tab_allowed_text|code', '');
+        Observer.Expect('tab_allowed_text', '<?xml version="1.0" encoding="utf-16"?>\r\n<a>x\ty</a>');
+        Observer.Expect('tab_allowed_stream_ok', 'Yes');
+        Observer.Expect('tab_allowed_stream|text', '');
+        Observer.Expect('tab_allowed_stream|code', '');
+        Observer.Expect('tab_allowed_stream_length', '53');
+        Observer.Verify();
+    end;
 }

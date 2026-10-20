@@ -509,4 +509,82 @@ codeunit 74616 "LT ClT Ref Semantics"
         Observer.Expect('pairs', '9');
         Observer.Verify();
     end;
+    // Writer PW: trust-refusals probe list "read-only List methods other than IndexOf inside foreach" (only IndexOf is pinned there,
+    // misc/lt-u-obsolete-pending/UObsoletePending.al:35-36). One method per loop over the list it reads; Set with the same value and
+    // Set with another value for comparison.
+    [TryFunction]
+    local procedure PwTryReadWhileIterating(var L: List of [Integer]; Which: Text; var Visited: Text)
+    var
+        X: Integer;
+        Part: List of [Integer];
+        N: Integer;
+    begin
+        foreach X in L do begin
+            Visited += Format(X) + ',';
+            case Which of
+                'Count':
+                    N := L.Count();
+                'Get':
+                    N := L.Get(1);
+                'GetVar':
+                    if L.Get(1, N) then;
+                'Contains':
+                    if L.Contains(2) then;
+                'IndexOf':
+                    N := L.IndexOf(X);
+                'LastIndexOf':
+                    N := L.LastIndexOf(X);
+                'GetRange':
+                    Part := L.GetRange(1, 2);
+                'SetSame':
+                    L.Set(1, L.Get(1));
+                'SetOther':
+                    L.Set(3, 99);
+            end;
+        end;
+    end;
+
+    local procedure PwRead(Which: Text): Text
+    var
+        L: List of [Integer];
+        Visited: Text;
+        Result: Text;
+    begin
+        L.Add(1);
+        L.Add(2);
+        L.Add(3);
+        ClearLastError();
+        if PwTryReadWhileIterating(L, Which, Visited) then
+            Result := 'ok'
+        else
+            Result := 'error:' + GetLastErrorText() + '|' + GetLastErrorCode();
+        ClearLastError();
+        exit(Result + ' visited=' + Visited + ' last=' + Format(L.Get(3)));
+    end;
+
+    [Test]
+    procedure PW_Foreach_ListReadsWhileIterating()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('Count', PwRead('Count'));
+        Observer.Observe('Get', PwRead('Get'));
+        Observer.Observe('GetVar', PwRead('GetVar'));
+        Observer.Observe('Contains', PwRead('Contains'));
+        Observer.Observe('IndexOf', PwRead('IndexOf'));
+        Observer.Observe('LastIndexOf', PwRead('LastIndexOf'));
+        Observer.Observe('GetRange', PwRead('GetRange'));
+        Observer.Observe('SetSame', PwRead('SetSame'));
+        Observer.Observe('SetOther', PwRead('SetOther'));
+        Observer.Expect('Count', 'ok visited=1,2,3, last=3');
+        Observer.Expect('Get', 'ok visited=1,2,3, last=3');
+        Observer.Expect('GetVar', 'ok visited=1,2,3, last=3');
+        Observer.Expect('Contains', 'ok visited=1,2,3, last=3');
+        Observer.Expect('IndexOf', 'ok visited=1,2,3, last=3');
+        Observer.Expect('LastIndexOf', 'ok visited=1,2,3, last=3');
+        Observer.Expect('GetRange', 'ok visited=1,2,3, last=3');
+        Observer.Expect('SetSame', 'error:Collection was modified; enumeration operation may not execute.|AL:InvalidOperation visited=1, last=3');
+        Observer.Expect('SetOther', 'error:Collection was modified; enumeration operation may not execute.|AL:InvalidOperation visited=1, last=99');
+        Observer.Verify();
+    end;
 }

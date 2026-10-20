@@ -791,4 +791,135 @@ Observer.Verify();
         Languages.Add(1031);
         Languages.Add(1036);
     end;
+
+    // Writer PX (runtime probes-needed "Format of an Option member"): Format(Rec.Field::Member, Length[, FormatNumber]) other than (.., 0, 9),
+    // on Op (OptionCaptionML ENU/DEU) and OptCap (OptionCaption changed by the table extension), in 1033 and 1031.
+    [Test]
+    procedure PX_Format_OptionMember_LengthAndFormatNumber()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props";
+        OldLanguage: Integer;
+        Lang: Integer;
+    begin
+        OldLanguage := GlobalLanguage();
+        foreach Lang in PxLanguages() do begin
+            GlobalLanguage(Lang);
+            Observer.Observe(Format(Lang) + '_op_0_0', Format(Row.Op::B, 0, 0));
+            Observer.Observe(Format(Lang) + '_op_0_1', Format(Row.Op::B, 0, 1));
+            Observer.Observe(Format(Lang) + '_op_0_2', Format(Row.Op::B, 0, 2));
+            Observer.Observe(Format(Lang) + '_op_1', Format(Row.Op::B, 1));
+            Observer.Observe(Format(Lang) + '_op_3', Format(Row.Op::B, 3));
+            Observer.Observe(Format(Lang) + '_op_10', Format(Row.Op::B, 10));
+            Observer.Observe(Format(Lang) + '_op_3_9', Format(Row.Op::B, 3, 9));
+            Observer.Observe(Format(Lang) + '_optcap_0_2', Format(Row.OptCap::C, 0, 2));
+            Observer.Observe(Format(Lang) + '_optcap_2', Format(Row.OptCap::C, 2));
+            Observer.Observe(Format(Lang) + '_optcap_8', Format(Row.OptCap::C, 8));
+            Observer.Observe(Format(Lang) + '_optcap_0_1', Format(Row.OptCap::C, 0, 1));
+        end;
+        GlobalLanguage(OldLanguage);
+        Observer.Expect('1033_op_0_0', 'Beta');
+        Observer.Expect('1033_op_0_1', 'Beta');
+        Observer.Expect('1033_op_0_2', '1');
+        Observer.Expect('1033_op_1', 'B');
+        Observer.Expect('1033_op_3', 'Bet');
+        Observer.Expect('1033_op_10', 'Beta      ');
+        Observer.Expect('1033_op_3_9', '1  ');
+        Observer.Expect('1033_optcap_0_2', '2');
+        Observer.Expect('1033_optcap_2', 'Tr');
+        Observer.Expect('1033_optcap_8', 'Tres    ');
+        Observer.Expect('1033_optcap_0_1', 'Tres');
+        Observer.Expect('1031_op_0_0', 'Zwei');
+        Observer.Expect('1031_op_0_1', 'Zwei');
+        Observer.Expect('1031_op_0_2', '1');
+        Observer.Expect('1031_op_1', 'Z');
+        Observer.Expect('1031_op_3', 'Zwe');
+        Observer.Expect('1031_op_10', 'Zwei      ');
+        Observer.Expect('1031_op_3_9', '1  ');
+        Observer.Expect('1031_optcap_0_2', '2');
+        Observer.Expect('1031_optcap_2', 'Tr');
+        Observer.Expect('1031_optcap_8', 'Tres    ');
+        Observer.Expect('1031_optcap_0_1', 'Tres');
+        Observer.Verify();
+    end;
+
+    local procedure PxLanguages() Languages: List of [Integer]
+    begin
+        Languages.Add(1033);
+        Languages.Add(1031);
+    end;
+
+    // Writer PX (runtime probes-needed "OptionCaptionML"): Format and FieldRef.OptionCaption in 1040 (no ITA entry), Evaluate of captions
+    // in 1031 and 1033, and GetFilter/GetFilters of the field in 1031 and 1033.
+    [Test]
+    procedure PX_OptionCaptionML_ItalianEvaluateGetFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props";
+        RecRef: RecordRef;
+        OldLanguage: Integer;
+        Ok: Boolean;
+    begin
+        Seed();
+        Row.Get(1);
+        Row.Op := Row.Op::B;
+        Row.OptMl := Row.OptMl::C;
+        OldLanguage := GlobalLanguage();
+        GlobalLanguage(1040);
+        Observer.Observe('ita_format', Format(Row.Op));
+        Observer.Observe('ita_format_member', Format(Row.Op::C));
+        Observer.Observe('ita_format_modified', Format(Row.OptMl));
+        RecRef.GetTable(Row);
+        Observer.Observe('ita_optioncaption', RecRef.Field(Row.FieldNo(Op)).OptionCaption);
+        Observer.Observe('ita_optioncaption_modified', RecRef.Field(Row.FieldNo(OptMl)).OptionCaption);
+        GlobalLanguage(1031);
+        Ok := Evaluate(Row.Op, 'Drei');
+        Observer.Observe('deu_eval_deu', Format(Ok) + '/' + Format(Row.Op, 0, 9));
+        Ok := Evaluate(Row.Op, 'Alpha');
+        Observer.Observe('deu_eval_enu', Format(Ok) + '/' + Format(Row.Op, 0, 9));
+        Ok := Evaluate(Row.Op, 'B');
+        Observer.Observe('deu_eval_member', Format(Ok) + '/' + Format(Row.Op, 0, 9));
+        Ok := Evaluate(Row.OptMl, 'Gelb');
+        Observer.Observe('deu_eval_modified', Format(Ok) + '/' + Format(Row.OptMl, 0, 9));
+        Ok := Evaluate(Row.OptMl, 'Blau');
+        Observer.Observe('deu_eval_base_caption_of_modified', Format(Ok) + '/' + Format(Row.OptMl, 0, 9));
+        Row.SetRange(Op, Row.Op::B);
+        Row.SetRange(OptMl, Row.OptMl::A, Row.OptMl::B);
+        Observer.Observe('deu_getfilter', Row.GetFilter(Op));
+        Observer.Observe('deu_getfilter_modified', Row.GetFilter(OptMl));
+        Observer.Observe('deu_getfilters', Row.GetFilters());
+        Row.SetFilter(Op, 'Drei');
+        Observer.Observe('deu_setfilter_caption_count', Format(Row.Count()));
+        Observer.Observe('deu_setfilter_caption_getfilter', Row.GetFilter(Op));
+        GlobalLanguage(1033);
+        Row.SetRange(Op, Row.Op::B);
+        Observer.Observe('enu_getfilter', Row.GetFilter(Op));
+        Observer.Observe('enu_getfilters', Row.GetFilters());
+        Ok := Evaluate(Row.Op, 'Zwei');
+        Observer.Observe('enu_eval_deu', Format(Ok) + '/' + Format(Row.Op, 0, 9));
+        GlobalLanguage(1040);
+        Observer.Observe('ita_getfilters', Row.GetFilters());
+        GlobalLanguage(OldLanguage);
+        Observer.Expect('ita_format', 'Beta');
+        Observer.Expect('ita_format_member', 'Gamma');
+        Observer.Expect('ita_format_modified', 'Yellow');
+        Observer.Expect('ita_optioncaption', 'Alpha,Beta,Gamma');
+        Observer.Expect('ita_optioncaption_modified', 'Cyan,Magenta,Yellow');
+        Observer.Expect('deu_eval_deu', 'Ja/2');
+        Observer.Expect('deu_eval_enu', 'Nein/2');
+        Observer.Expect('deu_eval_member', 'Ja/1');
+        Observer.Expect('deu_eval_modified', 'Ja/2');
+        Observer.Expect('deu_eval_base_caption_of_modified', 'Nein/2');
+        Observer.Expect('deu_getfilter', 'Zwei');
+        Observer.Expect('deu_getfilter_modified', 'Zyan..Magenta');
+        Observer.Expect('deu_getfilters', 'Op: Zwei, OptMl: Zyan..Magenta');
+        Observer.Expect('deu_setfilter_caption_count', '0');
+        Observer.Expect('deu_setfilter_caption_getfilter', 'Drei');
+        Observer.Expect('enu_getfilter', 'Beta');
+        Observer.Expect('enu_getfilters', 'Op: Beta, OptMl: Cyan..Magenta');
+        Observer.Expect('enu_eval_deu', 'No/1');
+        Observer.Expect('ita_getfilters', 'Op: Beta, OptMl: Cyan..Magenta');
+        Observer.Verify();
+    end;
+
 }

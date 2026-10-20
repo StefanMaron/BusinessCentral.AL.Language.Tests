@@ -212,4 +212,121 @@ codeunit 70128 "LT PnA Q OpenRead"
         Observer.Expect('open-while-open|code', '');
         Observer.Verify();
     end;
+
+    // Writer PX (probes-needed "Query": TopNumberOfRows and SecurityFiltering after Open are not pinned): each call between Open and the first
+    // Read, after a Read, and before Open, then the rows read (5 rows of Seed, Entry 1..5).
+    // Rule seen: TopNumberOfRows after Open (before or after a Read) is accepted, and the next Read raises the metadata-changed error until Open
+    // again; SecurityFiltering after Open or after a Read raises nothing and the reading goes on (it does not need a new Open).
+    [TryFunction]
+    local procedure PxTryTop(N: Integer)
+    begin
+        Q.TopNumberOfRows(N);
+    end;
+
+    [TryFunction]
+    local procedure PxTrySecurity()
+    begin
+        Q.SecurityFiltering(SecurityFilter::Filtered);
+    end;
+
+    [TryFunction]
+    local procedure PxTryReadAll(var Rows: Text)
+    begin
+        Rows := ReadAll();
+    end;
+
+    local procedure PxRead(var Observer: Codeunit "Probe Observer"; Name: Text)
+    var
+        Rows: Text;
+    begin
+        Observer.Observe(Name, Format(PxTryReadAll(Rows)) + ' ' + Rows);
+        Observer.ObserveError(Name);
+    end;
+
+    [Test]
+    procedure PX_TopNumberOfRows_AroundOpen()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Clear(Q);
+        Q.Open();
+        Observer.Observe('top-after-open', Format(PxTryTop(2)));
+        Observer.ObserveError('top-after-open');
+        PxRead(Observer, 'read-after-top');
+        Q.Close();
+        Clear(Q);
+        Q.TopNumberOfRows(2);
+        Q.Open();
+        PxRead(Observer, 'top-before-open');
+        Clear(Q);
+        Q.Open();
+        Observer.Observe('first-read', Format(Q.Read()));
+        Observer.Observe('top-after-read', Format(PxTryTop(1)));
+        Observer.ObserveError('top-after-read');
+        PxRead(Observer, 'read-after-top-after-read');
+        Q.Open();
+        PxRead(Observer, 'reopen-after-top');
+        Observer.Expect('top-after-open', 'Yes');
+        Observer.Expect('top-after-open|text', '');
+        Observer.Expect('top-after-open|code', '');
+        Observer.Expect('read-after-top', 'No ');
+        Observer.Expect('read-after-top|text', 'The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function.');
+        Observer.Expect('read-after-top|code', 'Query');
+        Observer.Expect('top-before-open', 'Yes 1,2,');
+        Observer.Expect('top-before-open|text', '');
+        Observer.Expect('top-before-open|code', '');
+        Observer.Expect('first-read', 'Yes');
+        Observer.Expect('top-after-read', 'Yes');
+        Observer.Expect('top-after-read|text', '');
+        Observer.Expect('top-after-read|code', '');
+        Observer.Expect('read-after-top-after-read', 'No ');
+        Observer.Expect('read-after-top-after-read|text', 'The READ function is called on a query after query metadata has been changed by one of the following: SETFILTER, SETRANGE, SECURITYFILTERING, or TOPNUMBEROFROWS. After metadata changes, you must reopen the query by calling the OPEN function before calling the READ function.');
+        Observer.Expect('read-after-top-after-read|code', 'Query');
+        Observer.Expect('reopen-after-top', 'Yes 1,');
+        Observer.Expect('reopen-after-top|text', '');
+        Observer.Expect('reopen-after-top|code', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PX_SecurityFiltering_AroundOpen()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Clear(Q);
+        Q.Open();
+        Observer.Observe('security-after-open', Format(PxTrySecurity()));
+        Observer.ObserveError('security-after-open');
+        PxRead(Observer, 'read-after-security');
+        Q.Close();
+        Clear(Q);
+        Q.Open();
+        Observer.Observe('first-read', Format(Q.Read()));
+        Observer.Observe('security-after-read', Format(PxTrySecurity()));
+        Observer.ObserveError('security-after-read');
+        PxRead(Observer, 'read-after-security-after-read');
+        Q.Open();
+        PxRead(Observer, 'reopen-after-security');
+        Observer.Observe('security-value', Format(Q.SecurityFiltering()));
+        Observer.Expect('security-after-open', 'Yes');
+        Observer.Expect('security-after-open|text', '');
+        Observer.Expect('security-after-open|code', '');
+        Observer.Expect('read-after-security', 'Yes 1,2,3,4,5,');
+        Observer.Expect('read-after-security|text', '');
+        Observer.Expect('read-after-security|code', '');
+        Observer.Expect('first-read', 'Yes');
+        Observer.Expect('security-after-read', 'Yes');
+        Observer.Expect('security-after-read|text', '');
+        Observer.Expect('security-after-read|code', '');
+        Observer.Expect('read-after-security-after-read', 'Yes 2,3,4,5,');
+        Observer.Expect('read-after-security-after-read|text', '');
+        Observer.Expect('read-after-security-after-read|code', '');
+        Observer.Expect('reopen-after-security', 'Yes 1,2,3,4,5,');
+        Observer.Expect('reopen-after-security|text', '');
+        Observer.Expect('reopen-after-security|code', '');
+        Observer.Expect('security-value', 'Filtered');
+        Observer.Verify();
+    end;
 }

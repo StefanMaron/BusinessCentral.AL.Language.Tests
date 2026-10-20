@@ -118,4 +118,62 @@ codeunit 70337 "LT P98 RecResultField"
         Observer.Expect('numval', '3');
         Observer.Verify();
     end;
+
+
+    // Corpus issue 668 item 35 (writer BQ): a table (and table extension) procedure whose return type is the table's own record type, with
+    // no named return value, after Rec.FindFirst() (microsoft/AL issue 6529); a named return value; exit(Rec). The caller filters Id = 2.
+    local procedure BqDescribe(var R: Record "LT BQ Ret Row"): Text
+    begin
+        exit('id=' + Format(R.Id) + ' name=' + R.Name + ' filters=' + R.GetFilters());
+    end;
+
+    [Test]
+    procedure P98_TableProcedure_Returning_Own_Record_Type_BQ()
+    var
+        R: Record "LT BQ Ret Row";
+        Got: Record "LT BQ Ret Row";
+        Observer: Codeunit "Probe Observer";
+    begin
+        R.DeleteAll();
+        R.Init();
+        R.Id := 1;
+        R.Name := 'first';
+        R.Insert();
+        R.Init();
+        R.Id := 2;
+        R.Name := 'second';
+        R.Insert();
+        Clear(R);
+        R.SetRange(Id, 2);
+        Got := R.FirstUnnamed();
+        Observer.Observe('unnamed', BqDescribe(Got));
+        Observer.Observe('unnamedCaller', BqDescribe(R));
+        Clear(R);
+        R.SetRange(Id, 2);
+        Got := R.FirstNamed();
+        Observer.Observe('named', BqDescribe(Got));
+        Observer.Observe('namedCaller', BqDescribe(R));
+        Clear(R);
+        R.SetRange(Id, 2);
+        Got := R.FirstExitRec();
+        Observer.Observe('exitRec', BqDescribe(Got));
+        Clear(R);
+        R.SetRange(Id, 2);
+        Got := R.ExtFirstUnnamed();
+        Observer.Observe('extUnnamed', BqDescribe(Got));
+        Observer.Observe('extUnnamedCaller', BqDescribe(R));
+        Clear(R);
+        R.SetRange(Id, 2);
+        Got := R.ExtFirstExitRec();
+        Observer.Observe('extExitRec', BqDescribe(Got));
+        Observer.Expect('unnamed', 'id=0 name= filters=');
+        Observer.Expect('unnamedCaller', 'id=2 name=second filters=Id: 2');
+        Observer.Expect('named', 'id=1 name=first filters=');
+        Observer.Expect('namedCaller', 'id=0 name= filters=Id: 2');
+        Observer.Expect('exitRec', 'id=2 name=second filters=');
+        Observer.Expect('extUnnamed', 'id=0 name= filters=');
+        Observer.Expect('extUnnamedCaller', 'id=2 name=second filters=Id: 2');
+        Observer.Expect('extExitRec', 'id=2 name=second filters=');
+        Observer.Verify();
+    end;
 }

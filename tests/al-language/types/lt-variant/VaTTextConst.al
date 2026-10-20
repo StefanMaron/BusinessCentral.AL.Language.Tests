@@ -199,4 +199,95 @@ codeunit 71037 "LT VaT TextConst"
         Observer.Expect('error_pct5|code', 'Dialog');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Values and builtins": a TextConst in a Variant answers none of the Is... tests LT VaT Helper.Flags asks
+    // (TextConst_In_Variant). The other Is... tests one by one, the Variant compared with a Text, passed to a Text parameter, assigned to a Code
+    // variable (comparing a Variant with a Text does not compile: AL0175), after a Variant parameter and a Variant return value; a Label in a Variant for comparison.
+    local procedure PwIsFlags(V: Variant): Text
+    var
+        R: Text;
+    begin
+        if V.IsTextConstant() then R += 'TextConstant,';
+        if V.IsTextBuilder() then R += 'TextBuilder,';
+        if V.IsWideChar() then R += 'WideChar,';
+        if V.IsAction() then R += 'Action,';
+        if V.IsTextEncoding() then R += 'TextEncoding,';
+        if V.IsReportFormat() then R += 'ReportFormat,';
+        if V.IsObjectType() then R += 'ObjectType,';
+        if V.IsExecutionMode() then R += 'ExecutionMode,';
+        if V.IsClientType() then R += 'ClientType,';
+        if V.IsDataClassification() then R += 'DataClassification,';
+        if V.IsDataClassificationType() then R += 'DataClassificationType,';
+        if V.IsSecurityFiltering() then R += 'SecurityFiltering,';
+        if V.IsTestPermissions() then R += 'TestPermissions,';
+        if V.IsTransactionType() then R += 'TransactionType,';
+        if V.IsTableConnectionType() then R += 'TableConnectionType,';
+        if V.IsDefaultLayout() then R += 'DefaultLayout,';
+        if V.IsFilterPageBuilder() then R += 'FilterPageBuilder,';
+        if V.IsJsonObject() then R += 'JsonObject,';
+        if V.IsJsonValue() then R += 'JsonValue,';
+        if V.IsFile() then R += 'File,';
+        if V.IsBinary() then R += 'Binary,';
+        if V.IsPromptMode() then R += 'PromptMode,';
+        exit(R);
+    end;
+
+    local procedure PwTextParam(T: Text): Text
+    begin
+        exit('[' + T + ']');
+    end;
+
+    [TryFunction]
+    local procedure PwTryTextParam(V: Variant; var Result: Text)
+    begin
+        Result := PwTextParam(V);
+    end;
+
+    [TryFunction]
+    local procedure PwTryCode(V: Variant; var Result: Code[20])
+    begin
+        Result := V;
+    end;
+
+    local procedure PwShape(V: Variant): Text
+    var
+        Helper: Codeunit "LT VaT Helper";
+        R: Text;
+        P: Text;
+        C: Code[20];
+    begin
+        R := 'flags=' + Helper.Flags(V) + ' more=' + PwIsFlags(V);
+        R += ' eqFormat=' + Format(Format(V) = 'Hello');
+        if PwTryTextParam(V, P) then
+            R += ' textParam=' + P
+        else
+            R += ' textParam=error:' + GetLastErrorCode();
+        ClearLastError();
+        if PwTryCode(V, C) then
+            R += ' code=' + C
+        else
+            R += ' code=error:' + GetLastErrorCode();
+        ClearLastError();
+        exit(R);
+    end;
+
+    [Test]
+    procedure PW_TextConst_In_Variant_OtherIsTests()
+    var
+        Observer: Codeunit "Probe Observer";
+        V: Variant;
+        Lbl: Label 'Hello';
+    begin
+        V := Simple;
+        Observer.Observe('assigned', PwShape(V));
+        Observer.Observe('throughParameterAndReturn', PwShape(VariantArg(Simple)));
+        V := Lbl;
+        Observer.Observe('label', PwShape(V));
+        V := 'Hello';
+        Observer.Observe('textLiteral', PwShape(V));
+        Observer.Expect('assigned', 'flags= more=TextConstant, eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Expect('throughParameterAndReturn', 'flags= more=TextConstant, eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Expect('label', 'flags= more=TextConstant, eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Expect('textLiteral', 'flags=Text, more= eqFormat=Yes textParam=[Hello] code=HELLO');
+        Observer.Verify();
+    end;
 }

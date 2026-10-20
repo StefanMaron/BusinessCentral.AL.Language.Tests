@@ -305,4 +305,67 @@ codeunit 81666 "LT BJ Dd Tests"
     begin
         RowsB('B modal', P);
     end;
+
+    // Writer PX (al-runtime-rs probes-needed "TestRequestPage.DrillDown"): DrillDown = false on request page controls (report 86223 in
+    // PxRequestDrillDownOff.al): the error of Drilldown() and whether the OnDrillDown trigger runs.
+    [Test]
+    [HandlerFunctions('PxDdOffHandler')]
+    procedure PX_RequestPage_DrillDownFalse()
+    begin
+        Seed();
+        Report.Run(Report::"LT PX Dd Off Report", true, false);
+        Observer.Observe('log after run', DdLog.Take());
+        Observer.Expect('off plain|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off plain|code', 'MethodNotSupported');
+        Observer.Expect('off plain log', '');
+        Observer.Expect('off trigger|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off trigger|code', 'MethodNotSupported');
+        Observer.Expect('off trigger log', '');
+        Observer.Expect('on trigger|text', 'NOERROR');
+        Observer.Expect('on trigger|code', 'Dialog');
+        Observer.Expect('on trigger log', 'on trigger ran;');
+        Observer.Expect('off flowfield|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off flowfield|code', 'MethodNotSupported');
+        Observer.Expect('off flowfield log', '');
+        Observer.Expect('off pageid|text', 'The NavDrilldownAction method is not supported.');
+        Observer.Expect('off pageid|code', 'MethodNotSupported');
+        Observer.Expect('off pageid log', '');
+        Observer.Expect('value after', '7');
+        Observer.Expect('log after run', '');
+        Observer.Verify();
+    end;
+
+    local procedure PxTryDrill(var Req: TestRequestPage "LT PX Dd Off Report"; Ctl: Integer; Name: Text)
+    begin
+        DdLog.Take();
+        asserterror begin
+            case Ctl of
+                1:
+                    Req.OffPlain.Drilldown();
+                2:
+                    Req.OffTrigger.Drilldown();
+                3:
+                    Req.OnTrigger.Drilldown();
+                4:
+                    Req.OffFlow.Drilldown();
+                5:
+                    Req.OffPageId.Drilldown();
+            end;
+            Error('NOERROR');
+        end;
+        Observer.ObserveError(Name);
+        Observer.Observe(Name + ' log', DdLog.Take());
+    end;
+
+    [RequestPageHandler]
+    procedure PxDdOffHandler(var Req: TestRequestPage "LT PX Dd Off Report")
+    begin
+        PxTryDrill(Req, 1, 'off plain');
+        PxTryDrill(Req, 2, 'off trigger');
+        PxTryDrill(Req, 3, 'on trigger');
+        PxTryDrill(Req, 4, 'off flowfield');
+        PxTryDrill(Req, 5, 'off pageid');
+        Observer.Observe('value after', Req.OffPlain.Value);
+        Req.Cancel().Invoke();
+    end;
 }
