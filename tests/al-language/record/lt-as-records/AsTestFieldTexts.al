@@ -67,7 +67,7 @@ codeunit 79926 "LT AS TestField Texts"
     end;
 
     // Writer PX (runtime probes-needed "TestField typed value texts", PR 331): the FieldRef.TestField text for Byte values other than 10 and 200,
-    // against an Integer field that holds 1000 (so every value differs, 7 included).
+    // against an Integer field that holds 250 (so every value differs, 7 included; 1000 raises "Overflow when converting to a byte.").
     [Test]
     procedure PX_ByteValues()
     var
@@ -78,7 +78,7 @@ codeunit 79926 "LT AS TestField Texts"
         V: Integer;
     begin
         Seed(Row);
-        Row.Num := 1000;
+        Row.Num := 250;
         Row.Modify();
         foreach Item in '0,1,2,3,4,5,7,9,11,13,31,32,65,127,128,129,159,160,200,255'.Split(',') do begin
             Evaluate(V, Item);

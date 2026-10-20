@@ -83,7 +83,18 @@ codeunit 69584 "LT U Text Search Tests"
         Observer.Observe('page_caption', Card.Opt.Caption);
         Observer.Observe('page_text_caption', Card.Txt.Caption);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('format', 'B');
+        Observer.Expect('format_member', 'Alph');
+        Observer.Expect('optioncaption', 'Alph,B');
+        Observer.Expect('fieldcaption', 'Opt');
+        Observer.Expect('evaluate_full', 'No/1');
+        Observer.Expect('evaluate_prefix', 'No/1');
+        Observer.Expect('evaluate_cut', 'Yes/0');
+        Observer.Expect('evaluate_full_second', 'No/0');
+        Observer.Expect('page_value', '1');
+        Observer.Expect('page_caption', 'Opt');
+        Observer.Expect('page_text_caption', 'Txt');
+        Observer.Verify();
     end;
 
 }

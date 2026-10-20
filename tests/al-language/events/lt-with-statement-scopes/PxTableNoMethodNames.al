@@ -31,7 +31,8 @@ codeunit 86237 "LT PX TableNo Names Tests"
         Seed(Row);
         Names.Run(Row);
         Observer.Observe('onrun', Names.Trace());
-        Observer.Finish();
+        Observer.Expect('onrun', 'Count=1;IsEmpty=No;GetFilters=Id: 1;after Reset Rec.GetFilters=;outside[Count=42,IsEmpty=Yes,GetFilters=own-getfilters,IsDirty=Yes]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -43,7 +44,8 @@ codeunit 86237 "LT PX TableNo Names Tests"
     begin
         Seed(Row);
         Observer.Observe('outside_called_directly', Names.Outside());
-        Observer.Finish();
+        Observer.Expect('outside_called_directly', 'Count=42,IsEmpty=Yes,GetFilters=own-getfilters,IsDirty=Yes');
+        Observer.Verify();
     end;
 }
 

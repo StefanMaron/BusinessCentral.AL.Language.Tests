@@ -302,7 +302,12 @@ codeunit 81959 "LT BM FlowField Conversions"
         Observer.Observe('lookup_12_chars', PxCalc(3, 2));
         Observer.Observe('lookup_5_chars', PxCalc(4, 2));
         Observer.Observe('lookup_no_row', PxCalc(99, 2));
-        Observer.Finish();
+        Observer.Expect('lookup_3_chars', '[ABC] len 3');
+        Observer.Expect('lookup_10_chars', '[ABCDEFGHIJ] len 10');
+        Observer.Expect('lookup_12_chars', '[ZZZZZZZZZZZZ] len 12');
+        Observer.Expect('lookup_5_chars', '[ABCDE] len 5');
+        Observer.Expect('lookup_no_row', '[] len 0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -318,7 +323,23 @@ codeunit 81959 "LT BM FlowField Conversions"
             Observer.Observe(Format(F) + '_grp3_exact', PxCalc(3, F));
             Observer.Observe(Format(F) + '_grp_none', PxCalc(9, F));
         end;
-        Observer.Finish();
+        Observer.Expect('3_grp1_short', '[abc] len 3');
+        Observer.Expect('3_grp2_long', 'error|The length of the string is 10, but it must be less than or equal to 5 characters. Value: abcdefghij|StringLengthExceeded');
+        Observer.Expect('3_grp3_exact', '[abcde] len 5');
+        Observer.Expect('3_grp_none', '[] len 0');
+        Observer.Expect('4_grp1_short', '[abc] len 3');
+        Observer.Expect('4_grp2_long', 'error|The length of the string is 12, but it must be less than or equal to 5 characters. Value: zzzzzzzzzzzz|StringLengthExceeded');
+        Observer.Expect('4_grp3_exact', '[abcde] len 5');
+        Observer.Expect('4_grp_none', '[] len 0');
+        Observer.Expect('5_grp1_short', '[ABC] len 3');
+        Observer.Expect('5_grp2_long', 'error|The length of the string is 10, but it must be less than or equal to 5 characters. Value: ABCDEFGHIJ|StringLengthExceeded');
+        Observer.Expect('5_grp3_exact', '[ABCDE] len 5');
+        Observer.Expect('5_grp_none', '[] len 0');
+        Observer.Expect('6_grp1_short', '[ABC] len 3');
+        Observer.Expect('6_grp2_long', 'error|The length of the string is 12, but it must be less than or equal to 5 characters. Value: ZZZZZZZZZZZZ|StringLengthExceeded');
+        Observer.Expect('6_grp3_exact', '[ABCDE] len 5');
+        Observer.Expect('6_grp_none', '[] len 0');
+        Observer.Verify();
     end;
 
 }
