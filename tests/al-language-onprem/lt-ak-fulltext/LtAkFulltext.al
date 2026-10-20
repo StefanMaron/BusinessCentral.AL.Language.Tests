@@ -130,6 +130,7 @@ codeunit 98251 "LT AK Fts Test Op"
     procedure DoubleAmpersandFilterOnOptimizedField_BQ()
     var
         R: Record "LT AK Fts Row Op";
+        Count1: Integer;
     begin
         Seed();
         R.SetFilter(Txt, '&&hello*');
@@ -137,6 +138,9 @@ codeunit 98251 "LT AK Fts Test Op"
         // index fills asynchronously, so a count right after the inserts may depend on timing (queued for the Windows nightly).
         Assert.AreEqual('&&hello*', R.GetFilter(Txt), '&& filter text on the optimized field');
         Assert.IsTrue(R.Count() >= 0, 'the && filter runs without a SQL error');
+        Count1 := R.Count();
+        Sleep(10000);
+        Error('OBSERVE:count now=%1 after 10s=%2 filter=%3', Count1, R.Count(), R.GetFilter(Txt));
     end;
 
     [Test]

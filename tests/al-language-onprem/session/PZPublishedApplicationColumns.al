@@ -110,7 +110,7 @@ codeunit 61262 "PZ Published App Columns"
         Observer.Expect('some rows carry a tenant id', 'Yes');
         Observer.Expect('every non-blank tenant id is TenantId()', 'Yes');
         Observer.Expect('rows passing blank or TenantId() equals all rows', 'Yes');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     local procedure AllRows(): Integer

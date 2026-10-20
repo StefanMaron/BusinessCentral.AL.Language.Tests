@@ -1,3 +1,4 @@
+#define LT_AM_LINUX_SUSPECT
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveaspdf-method
 // Scope: in-scope, but ONLY for a Target = OnPrem app (File, TemporaryPath, Report.SaveAs* to a file name and TestRequestPage.SaveAs* are Scope = OnPrem)
 // Fixtures used: Probe Observer (69160); self-contained table 98600, reports 98601 and 98602 (hand-written layouts LtAmOpSave.rdlc and

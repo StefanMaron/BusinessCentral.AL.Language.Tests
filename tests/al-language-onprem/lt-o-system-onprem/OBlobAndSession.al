@@ -176,4 +176,49 @@ codeunit 61257 "LT O Session Misc"
         Observer.Expect('empty is empty', 'Yes');
         Observer.Verify();
     end;
+
+    // corpus issue 669 (writer CO): LogSecurityAudit with target type and target name arrays of different lengths, and of equal length.
+    [TryFunction]
+    local procedure TryAuditTargets(TypeCount: Integer; NameCount: Integer)
+    var
+        Types2: array[2] of Text;
+        Types1: array[1] of Text;
+        Names2: array[2] of Text;
+        Names1: array[1] of Text;
+    begin
+        Types2[1] := 'Table';
+        Types2[2] := 'Page';
+        Types1[1] := 'Table';
+        Names2[1] := 'Customer';
+        Names2[2] := 'Customer Card';
+        Names1[1] := 'Customer';
+        if (TypeCount = 2) and (NameCount = 1) then
+            Session.LogSecurityAudit('LT CO audit', SecurityOperationResult::Success, 'LT CO detail', AuditCategory::ApplicationManagement, Types2, Names1);
+        if (TypeCount = 1) and (NameCount = 2) then
+            Session.LogSecurityAudit('LT CO audit', SecurityOperationResult::Success, 'LT CO detail', AuditCategory::ApplicationManagement, Types1, Names2);
+        if (TypeCount = 2) and (NameCount = 2) then
+            Session.LogSecurityAudit('LT CO audit', SecurityOperationResult::Success, 'LT CO detail', AuditCategory::ApplicationManagement, Types2, Names2);
+        if (TypeCount = 1) and (NameCount = 1) then
+            Session.LogSecurityAudit('LT CO audit', SecurityOperationResult::Failure, 'LT CO detail', AuditCategory::UserManagement, Types1, Names1);
+    end;
+
+    local procedure AuditTargetsOutcome(TypeCount: Integer; NameCount: Integer): Text
+    begin
+        ClearLastError();
+        if TryAuditTargets(TypeCount, NameCount) then
+            exit('no error');
+        exit('error: ' + GetLastErrorText() + ' | ' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure O_Session_LogSecurityAudit_TargetArrayLengths_CO()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('two types, one name', AuditTargetsOutcome(2, 1));
+        Observer.Observe('one type, two names', AuditTargetsOutcome(1, 2));
+        Observer.Observe('two types, two names', AuditTargetsOutcome(2, 2));
+        Observer.Observe('one type, one name', AuditTargetsOutcome(1, 1));
+        Observer.Finish();
+    end;
 }
