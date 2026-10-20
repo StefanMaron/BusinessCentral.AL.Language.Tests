@@ -141,10 +141,9 @@ codeunit 84658 "LT CJ Word Sections Tests"
         Observer.Verify();
     end;
 
-#if LT_HELD_BCLINUX_155
     // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values): the Pdf save of the merge report returns true,
-    // writes a PDF and leaves no last error. Held on Linux: the Linux image (BC 29.0) leaves the last error "Unable to merge pdf streams due to
-    // internal error. Retry without compliance" (code InvalidOperation:TypeLoad), bc-linux #155.
+    // writes a PDF and leaves no last error. Before the bc-linux #155 fix the Linux image (BC 29.0) left the last error "Unable to merge pdf streams due to
+    // internal error. Retry without compliance" (code InvalidOperation:TypeLoad).
     [Test]
     procedure SectionBreaks_WordMergeDataItem_Pdf()
     var
@@ -158,16 +157,6 @@ codeunit 84658 "LT CJ Word Sections Tests"
         Observer.Expect('Pdf head', '37,80,68,70,');
         Observer.Verify();
     end;
-#else
-    // Not a test on Linux (see the held test above): kept as the probe source.
-    procedure SectionBreaks_WordMergeDataItem_Pdf()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        One(Observer, Report::"LT CJ Word Sections Merge", 'Pdf', ReportFormat::Pdf);
-        Observer.Finish();
-    end;
-#endif
 
     [Test]
     procedure SectionBreaks_NoWordMergeDataItem()
