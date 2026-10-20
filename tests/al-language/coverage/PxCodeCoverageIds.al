@@ -123,9 +123,11 @@ codeunit 86163 "LT PX Code Coverage Ids"
     begin
         Distinct := true;
         foreach Name in Names.Split(',') do begin
-            TestsRun.SetRange("Method Name", Name);
+            // A SetRange on "Method Name" is not applied by this platform table (seen on BC 29 local), so the rows are matched in AL.
             if TestsRun.FindSet() then
                 repeat
+                    if TestsRun."Method Name" <> Name then
+                        continue;
                     if Seen.Contains(TestsRun."Test ID") then
                         Distinct := false;
                     Seen.Add(TestsRun."Test ID");
@@ -138,7 +140,6 @@ codeunit 86163 "LT PX Code Coverage Ids"
                     Result += '] ';
                 until TestsRun.Next() = 0;
         end;
-        TestsRun.Reset();
         exit(Result + StrSubstNo('rows=%1 testids_distinct=%2', TestsRun.Count(), Distinct));
     end;
 
