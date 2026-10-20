@@ -734,4 +734,46 @@ codeunit 73404 "LT XmT XPath Namespaces"
         Observer.Expect('abs_nodes_from_line', 'Yes|0');
         Observer.Verify();
     end;
+
+    [TryFunction]
+    local procedure TryTextValue(N: XmlNode; var Result: Text)
+    begin
+        Result := N.AsXmlText().Value();
+    end;
+
+    // Corpus issue 671 item 92 (microsoft/AL#596): text() on an empty element (<value/> and <value></value>).
+    [Test]
+    procedure SelectSingleNode_Text_Of_Empty_Element()
+    var
+        Doc: XmlDocument;
+        Root: XmlElement;
+        N: XmlNode;
+        V: Text;
+    begin
+        Load('<keyvalueid><key>KEYNAME</key><value/></keyvalueid>', Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('key_text', Format(Root.SelectSingleNode('key/text()', N)) + '|' + Format(N.IsXmlText()) + '|' + N.AsXmlText().Value());
+        Observer.Observe('self_closing', Format(Root.SelectSingleNode('value/text()', N)));
+        Observer.Observe('self_closing_node_kind', Format(N.IsXmlText()) + '|' + Format(N.IsXmlElement()));
+        Observer.Observe('self_closing_value_ok', Format(TryTextValue(N, V)) + '|[' + V + ']');
+        Observer.ObserveError('self_closing_value');
+        asserterror Root.SelectSingleNode('value/text()', N);
+        Observer.ObserveError('self_closing_unused');
+        Load('<keyvalueid><key>KEYNAME</key><value></value></keyvalueid>', Doc);
+        Doc.GetRoot(Root);
+        Observer.Observe('open_close', Format(Root.SelectSingleNode('value/text()', N)));
+        Root.SelectSingleNode('value', N);
+        Observer.Observe('element_inner', '[' + N.AsXmlElement().InnerText() + ']|' + Format(N.AsXmlElement().GetChildNodes().Count()));
+        Observer.Expect('key_text', 'Yes|Yes|KEYNAME');
+        Observer.Expect('self_closing', 'No');
+        Observer.Expect('self_closing_node_kind', 'Yes|No');
+        Observer.Expect('self_closing_value_ok', 'Yes|[KEYNAME]');
+        Observer.Expect('self_closing_value|text', '');
+        Observer.Expect('self_closing_value|code', '');
+        Observer.Expect('self_closing_unused|text', 'The XPath query ''value/text()'' does not match any nodes.');
+        Observer.Expect('self_closing_unused|code', 'InvalidXPathSelection');
+        Observer.Expect('open_close', 'No');
+        Observer.Expect('element_inner', '[]|0');
+        Observer.Verify();
+    end;
 }
