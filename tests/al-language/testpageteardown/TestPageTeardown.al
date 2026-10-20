@@ -1728,6 +1728,15 @@ codeunit 69640 "TPT Teardown Tests"
     end;
 
     // ---- 6. a page handed to a handler, torn down inside the handler ----
+    //
+    // Held (publisher, bump 32): all 20 tests of this codeunit that have [HandlerFunctions] (sections 6 and 7). They leave
+    // session state that breaks later codeunits: after this codeunit ran, later tests that open a modal page fail with
+    // 'Unexpected CLR exception thrown.: System.Reflection.TargetException: Object type ...Codeunit69640 does not match
+    // target type ...'. The exception names this codeunit as the target of a handler call, and these are the only tests
+    // here that bind a handler (section 6 tears the page down inside the ModalPageHandler; section 7 binds one that never
+    // runs and leaves the host page open). Seen on Linux BC 27.5, 28.5 and 29.0 and on Windows BC 29.0 in a full
+    // TestRunnerHub run (bc-linux #162). Which of the 20 leaves the state behind is not measured, so all are held under
+    // LT_HELD_BCLINUX_162 on every version. The assertions do not change.
 
     [ModalPageHandler]
     procedure ExpressionHandler(var P: TestPage "TPT Expression Card")
@@ -1800,120 +1809,154 @@ codeunit 69640 "TPT Teardown Tests"
         Page.RunModal(Page::"TPT Trigger Card", Row);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Value_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunExpressionPage('Value', true);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Value_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('Value', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_AsInteger_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunExpressionPage('AsInteger', true);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_AsInteger_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('AsInteger', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Editable_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunExpressionPage('Editable', true);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_AssertEquals_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunExpressionPage('AssertEquals', true);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_AssertEquals_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('AssertEquals', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Close_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('Close', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_OK_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('OK', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_PageCaption_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('PageCaption', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Next_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('Next', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Act_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunExpressionPage('Act', true);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('ExpressionHandler')]
+#endif
     procedure Handler_CardExpression_Act_NeverRead_RaisesNotOpen()
     begin
         RunExpressionPage('Act', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('TriggerHandler')]
+#endif
     procedure Handler_CardTrigger_Value_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunTriggerPage('Value', true);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('TriggerHandler')]
+#endif
     procedure Handler_CardTrigger_Value_NeverRead_RaisesNotOpen()
     begin
         RunTriggerPage('Value', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('TriggerHandler')]
+#endif
     procedure Handler_CardTrigger_Close_NeverRead_RaisesNotOpen()
     begin
         RunTriggerPage('Close', false);
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('TriggerHandler')]
+#endif
     procedure Handler_CardTrigger_Act_ReadBeforeTheTeardown_RaisesNotOpen()
     begin
         RunTriggerPage('Act', true);
@@ -1925,8 +1968,10 @@ codeunit 69640 "TPT Teardown Tests"
         asserterror P.GoToKey('B');
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('SwallowingHandler')]
+#endif
     procedure Handler_ATeardownInsideTheHandler_RunModalReturnsLookupCancel()
     var
         Row: Record "TPT Row";
@@ -1939,6 +1984,7 @@ codeunit 69640 "TPT Teardown Tests"
     end;
 
     // ---- 7. a page that fails to open somewhere else leaves a TestPage that is open open ----
+    // Held with section 6: see the note there.
 
     [ModalPageHandler]
     procedure NeverRunHandler(var P: TestPage "TPT Expression Card")
@@ -1946,8 +1992,10 @@ codeunit 69640 "TPT Teardown Tests"
         Error('TPT handler ran');
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('NeverRunHandler')]
+#endif
     procedure Host_ActionWhoseModalFailsToOpen_RaisesTheExpressionsError_AndTheHostStaysOpen()
     var
         P: TestPage "TPT Host Card";
@@ -1962,8 +2010,10 @@ codeunit 69640 "TPT Teardown Tests"
         Assert.AreEqual('A', T, 'an error raised by the modal page the action opens does not tear the host down');
     end;
 
+#if LT_HELD_BCLINUX_162
     [Test]
     [HandlerFunctions('NeverRunHandler')]
+#endif
     procedure Host_ActionWhoseModalFailsToOpen_TheHostIsStillOpen_SoOpeningItAgainIsRefused()
     var
         P: TestPage "TPT Host Card";
