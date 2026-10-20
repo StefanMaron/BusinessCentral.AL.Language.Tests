@@ -131,4 +131,89 @@ codeunit 80508 "LT AY Content Length"
         Observer.Expect('stream_read', 'Yes[11] read=hello world');
         Observer.Verify();
     end;
+
+    // Writer PY (2026-10-20): probes-needed "HTTP" row "Content-Length value after HttpContent.WriteFrom of a non-empty body of another length,
+    // once a read put a Content-Length in the headers".
+    [Test]
+    procedure PY_ContentLength_LongerBodyAfterRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        Observer.Observe('first_read', Len(C));
+        C.WriteFrom('a longer text');
+        Observer.Observe('rewritten', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('second_read', Len(C) + ' read=' + T);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_ContentLength_ShorterBodyAfterRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        C.WriteFrom('hi');
+        Observer.Observe('rewritten', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('second_read', Len(C) + ' read=' + T);
+        C.WriteFrom('a much longer text');
+        Observer.Observe('third_write', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('third_read', Len(C) + ' read=' + T);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_ContentLength_HandleTakenAfterReadThenRewrite()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        H: HttpHeaders;
+        Vals: List of [Text];
+        V: Text;
+        Out: Text;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        C.GetHeaders(H);
+        C.WriteFrom('a longer text');
+        Out := Format(H.Contains('Content-Length'));
+        if H.GetValues('Content-Length', Vals) then
+            foreach V in Vals do
+                Out += '[' + V + ']';
+        Observer.Observe('old_handle', Out);
+        Observer.Observe('new_handle', Len(C));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_ContentLength_InStreamAfterRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        C: HttpContent;
+        OutS: OutStream;
+        InS: InStream;
+        T: Text;
+    begin
+        C.WriteFrom('hello');
+        C.ReadAs(T);
+        TempBlob.CreateOutStream(OutS, TextEncoding::UTF8);
+        OutS.WriteText('hello world');
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
+        C.WriteFrom(InS);
+        Observer.Observe('stream', Len(C));
+        C.ReadAs(T);
+        Observer.Observe('stream_read', Len(C) + ' read=' + T);
+        Observer.Finish();
+    end;
 }

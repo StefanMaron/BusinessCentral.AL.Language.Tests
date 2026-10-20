@@ -18,6 +18,11 @@ codeunit 98550 "LT AY Http Handler"
     var
         Seen: Text;
         Calls: Integer;
+        Mode: Text;
+        NextStatus: Integer;
+        MenuChoice: Integer;
+        MenuCalls: Integer;
+        MenuSeen: Text;
 
     [HttpClientHandler]
     procedure PathHandler(Request: TestHttpRequestMessage; var Response: TestHttpResponseMessage): Boolean
@@ -261,5 +266,314 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('calls', '0');
 #endif
         Observer.Verify();
+    end;
+
+    // Writer PY (2026-10-20): probes-needed "HTTP" rows (al-runtime-rs PR 342): a handler answering true while a StrMenuHandler is bound,
+    // a failed call whose result is not used, a failed call into a response variable that already holds a response, ReasonPhrase for statuses
+    // other than 200 and 404, more relative paths with and without a base address.
+    [HttpClientHandler]
+    procedure ModeHandler(Request: TestHttpRequestMessage; var Response: TestHttpResponseMessage): Boolean
+    begin
+        Calls += 1;
+        Seen += '[' + Request.Path + ']';
+        case Mode of
+            'status':
+                begin
+                    Response.HttpStatusCode := NextStatus;
+                    exit(false);
+                end;
+            'true':
+                exit(true);
+            'error':
+                Error('mode handler failed');
+        end;
+        exit(false);
+    end;
+
+    [StrMenuHandler]
+    procedure MenuHandler(Options: Text; var Choice: Integer; Instruction: Text)
+    begin
+        MenuCalls += 1;
+        MenuSeen := Options + '|' + Instruction;
+        Choice := MenuChoice;
+    end;
+
+    [TryFunction]
+    local procedure TryGetStatement(var Client: HttpClient; Url: Text; var Resp: HttpResponseMessage)
+    begin
+        Client.Get(Url, Resp);
+    end;
+
+    local procedure Describe(var Resp: HttpResponseMessage): Text
+    begin
+        exit('status=' + Format(Resp.HttpStatusCode) + ' reason=[' + Resp.ReasonPhrase + '] success=' + Format(Resp.IsSuccessStatusCode) + ' blocked=' + Format(Resp.IsBlockedByEnvironment));
+    end;
+
+    local procedure Menu(var Observer: Codeunit "Probe Observer"; Choice: Integer; Url: Text)
+    var
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+        Ret: Boolean;
+    begin
+        Mode := 'true';
+        MenuChoice := Choice;
+        Calls := 0;
+        MenuCalls := 0;
+        MenuSeen := '';
+        ClearLastError();
+        if TryGet(Client, Url, Resp, Ret) then
+            Observer.Observe('result', 'ret=' + Format(Ret) + ' ' + Describe(Resp))
+        else
+            Observer.Observe('result', 'error ' + Describe(Resp));
+        Observer.Observe('last_error', GetLastErrorText());
+        Observer.Observe('last_code', GetLastErrorCode());
+        Observer.Observe('calls', Format(Calls) + ' menu=' + Format(MenuCalls) + ' ' + MenuSeen);
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler,MenuHandler')]
+    procedure PY_HandlerTrue_StrMenuAllowOnce()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Menu(Observer, 2, 'http://localhost:1/x');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler,MenuHandler')]
+    procedure PY_HandlerTrue_StrMenuBlockOnce()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Menu(Observer, 4, 'http://localhost:1/x');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler,MenuHandler')]
+    procedure PY_HandlerTrue_StrMenuCancel()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Menu(Observer, 0, 'http://localhost:1/x');
+        Observer.Finish();
+    end;
+
+    local procedure Unused(var Observer: Codeunit "Probe Observer"; ObsKey: Text; NewMode: Text; Url: Text)
+    var
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+    begin
+        Mode := NewMode;
+        NextStatus := 404;
+        Calls := 0;
+        MenuCalls := 0;
+        ClearLastError();
+        if TryGetStatement(Client, Url, Resp) then
+            Observer.Observe(ObsKey, 'ok ' + Describe(Resp) + ' calls=' + Format(Calls) + ' menu=' + Format(MenuCalls))
+        else
+            Observer.Observe(ObsKey, 'E[' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(Resp) + ' calls=' + Format(Calls) + ' menu=' + Format(MenuCalls));
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler,MenuHandler')]
+    procedure PY_UnusedResult_BlockOnce()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MenuChoice := 4;
+        Unused(Observer, 'block_once', 'true', 'http://localhost:1/x');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler,MenuHandler')]
+    procedure PY_UnusedResult_AllowOnceRefused()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        MenuChoice := 2;
+        Unused(Observer, 'allow_once', 'true', 'http://localhost:1/x');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_UnusedResult_MockedAndErrors()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Unused(Observer, 'mocked_404', 'status', 'https://example.invalid/x');
+        Unused(Observer, 'handler_error', 'error', 'https://example.invalid/x');
+        Unused(Observer, 'no_base_a_b', 'status', 'a/b');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler,MenuHandler')]
+    procedure PY_FailedCall_IntoFilledResponse()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+        Ret: Boolean;
+    begin
+        Mode := 'status';
+        NextStatus := 201;
+        Observer.Observe('first', Format(TryGet(Client, 'https://example.invalid/one', Resp, Ret)) + ' ret=' + Format(Ret) + ' ' + Describe(Resp));
+        Mode := 'true';
+        MenuChoice := 4;
+        ClearLastError();
+        Observer.Observe('second', Format(TryGet(Client, 'http://localhost:1/two', Resp, Ret)) + ' ret=' + Format(Ret) + ' ' + Describe(Resp));
+        Observer.Observe('second_error', GetLastErrorText() + '|' + GetLastErrorCode());
+        Mode := 'error';
+        ClearLastError();
+        Observer.Observe('third', Format(TryGet(Client, 'https://example.invalid/three', Resp, Ret)) + ' ret=' + Format(Ret) + ' ' + Describe(Resp));
+        Observer.Finish();
+    end;
+
+    local procedure Reason(var Observer: Codeunit "Probe Observer"; Status: Integer)
+    var
+        Client: HttpClient;
+        Resp: HttpResponseMessage;
+        Ret: Boolean;
+    begin
+        Mode := 'status';
+        NextStatus := Status;
+        ClearLastError();
+        if TryGet(Client, 'https://example.invalid/s', Resp, Ret) then
+            Observer.Observe(Format(Status), 'ret=' + Format(Ret) + ' ' + Describe(Resp))
+        else
+            Observer.Observe(Format(Status), 'E[' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_ReasonPhrase_1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Reason(Observer, 201);
+        Reason(Observer, 202);
+        Reason(Observer, 204);
+        Reason(Observer, 301);
+        Reason(Observer, 302);
+        Reason(Observer, 304);
+        Reason(Observer, 400);
+        Reason(Observer, 401);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_ReasonPhrase_2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Reason(Observer, 403);
+        Reason(Observer, 405);
+        Reason(Observer, 409);
+        Reason(Observer, 418);
+        Reason(Observer, 422);
+        Reason(Observer, 429);
+        Reason(Observer, 500);
+        Reason(Observer, 503);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_ReasonPhrase_3()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Reason(Observer, 100);
+        Reason(Observer, 299);
+        Reason(Observer, 451);
+        Reason(Observer, 599);
+        Reason(Observer, 0);
+        Reason(Observer, 999);
+        Reason(Observer, 1000);
+        Reason(Observer, -1);
+        Observer.Finish();
+    end;
+
+    local procedure Join(var Observer: Codeunit "Probe Observer"; ObsKey: Text; Base: Text; Url: Text)
+    var
+        Client: HttpClient;
+    begin
+        Mode := 'status';
+        NextStatus := 200;
+        if Base <> '' then
+            Client.SetBaseAddress(Base);
+        Path(Observer, Client, ObsKey, Url);
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_BaseAddress_Joins_1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Join(Observer, 'noslash_plain', 'https://example.invalid/api/v1', 'orders');
+        Join(Observer, 'noslash_rooted', 'https://example.invalid/api/v1', '/orders');
+        Join(Observer, 'host_only_plain', 'https://example.invalid', 'orders');
+        Join(Observer, 'dot_slash', 'https://example.invalid/api/v1/', './x');
+        Join(Observer, 'empty', 'https://example.invalid/api/v1/', '');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_BaseAddress_Joins_2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Join(Observer, 'absolute', 'https://example.invalid/api/v1/', 'https://other.invalid/abs');
+        Join(Observer, 'scheme_relative', 'https://example.invalid/api/v1/', '//other.invalid/x');
+        Join(Observer, 'dot_dot_middle', 'https://example.invalid/api/v1/', 'a/../b');
+        Join(Observer, 'two_up', 'https://example.invalid/api/v1/', '../../../x');
+        Join(Observer, 'fragment', 'https://example.invalid/api/v1/', 'orders?x=1#f');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_BaseAddress_Joins_3()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Join(Observer, 'base_query', 'https://example.invalid/api/v1/?k=1', 'orders');
+        Join(Observer, 'space', 'https://example.invalid/api/v1/', 'a b');
+        Join(Observer, 'trailing_slash', 'https://example.invalid/api/v1/', 'orders/');
+        Join(Observer, 'query_on_noslash', 'https://example.invalid/api/v1', '?q=1');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_NoBaseAddress_Paths_1()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Join(Observer, 'orders', '', 'orders');
+        Join(Observer, 'rooted', '', '/orders');
+        Join(Observer, 'x_y', '', 'x/y');
+        Join(Observer, 'a_b_c', '', 'a/b/c');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('ModeHandler')]
+    procedure PY_NoBaseAddress_Paths_2()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Join(Observer, 'ab_cd', '', 'ab.cd');
+        Join(Observer, 'query_x', '', '?x=2');
+        Join(Observer, 'empty', '', '');
+        Join(Observer, 'host_no_scheme', '', 'example.invalid/x');
+        Observer.Finish();
     end;
 }

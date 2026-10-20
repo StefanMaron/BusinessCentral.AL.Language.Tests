@@ -386,4 +386,123 @@ codeunit 80507 "LT AY Header Add Result"
         Observer.Expect('ctype_on_response', 'ret=No get=E');
         Observer.Verify();
     end;
+
+    // Writer PY (2026-10-20): probes-needed "HTTP" row http-get-values-missing-error (the text and code of the error HttpHeaders.GetValues raises
+    // as a statement on request, response and client headers) and row http-headers-add-used-result (the last error after an Add that answered false).
+    local procedure GetStatement(var Observer: Codeunit "Probe Observer"; var H: HttpHeaders; ObsKey: Text; N: Text)
+    var
+        Vals: List of [Text];
+        Ret: Boolean;
+    begin
+        ClearLastError();
+        if TryGetValues(H, N, Vals) then
+            Observer.Observe(ObsKey, 'ok n=' + Format(Vals.Count()))
+        else
+            Observer.Observe(ObsKey, 'E[' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+        ClearLastError();
+        Ret := H.GetValues(N, Vals);
+        Observer.Observe(ObsKey + '_expr', Format(Ret) + ' n=' + Format(Vals.Count()) + ' last=[' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+    end;
+
+    [Test]
+    procedure PY_GetValues_Statement_RequestHeaders()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: HttpRequestMessage;
+        H: HttpHeaders;
+    begin
+        R.GetHeaders(H);
+        GetStatement(Observer, H, 'missing', 'X-None');
+        GetStatement(Observer, H, 'bad_name', 'Bad Name');
+        GetStatement(Observer, H, 'content_name', 'Content-Type');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_GetValues_Statement_ResponseHeaders()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: HttpResponseMessage;
+        H: HttpHeaders;
+    begin
+        H := R.Headers();
+        GetStatement(Observer, H, 'missing', 'X-None');
+        GetStatement(Observer, H, 'bad_name', 'Bad Name');
+        GetStatement(Observer, H, 'content_name', 'Content-Type');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_GetValues_Statement_ClientHeaders()
+    var
+        Observer: Codeunit "Probe Observer";
+        Client: HttpClient;
+        H: HttpHeaders;
+    begin
+        H := Client.DefaultRequestHeaders();
+        GetStatement(Observer, H, 'missing', 'X-None');
+        GetStatement(Observer, H, 'bad_name', 'Bad Name');
+        GetStatement(Observer, H, 'content_name', 'Content-Type');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_GetValues_Statement_ContentHeaders_EmptyName()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        H: HttpHeaders;
+    begin
+        C.GetHeaders(H);
+        GetStatement(Observer, H, 'empty', '');
+        GetStatement(Observer, H, 'request_name', 'Accept');
+        Observer.Finish();
+    end;
+
+    local procedure AddLastError(var Observer: Codeunit "Probe Observer"; var H: HttpHeaders; ObsKey: Text; N: Text; V: Text)
+    var
+        Ret: Boolean;
+    begin
+        asserterror Error('prior error');
+        Ret := H.Add(N, V);
+        Observer.Observe(ObsKey + '_after_prior', Format(Ret) + ' [' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+        ClearLastError();
+        Ret := H.Add(N, V);
+        Observer.Observe(ObsKey + '_after_clear', Format(Ret) + ' [' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+    end;
+
+    [Test]
+    procedure PY_AddFalse_LastError_Request()
+    var
+        Observer: Codeunit "Probe Observer";
+        R: HttpRequestMessage;
+        H: HttpHeaders;
+    begin
+        R.GetHeaders(H);
+        AddLastError(Observer, H, 'bad_name', 'Bad Name', 'x');
+        AddLastError(Observer, H, 'content_name', 'Content-Type', 'text/plain');
+        AddLastError(Observer, H, 'bad_value', 'Accept', 'json');
+        AddLastError(Observer, H, 'ok', 'X-Ok', 'v');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PY_AddFalse_LastError_ContentAndResponse()
+    var
+        Observer: Codeunit "Probe Observer";
+        C: HttpContent;
+        R: HttpResponseMessage;
+        H: HttpHeaders;
+        H2: HttpHeaders;
+        Lf: Char;
+    begin
+        Lf := 10;
+        C.GetHeaders(H);
+        AddLastError(Observer, H, 'content_request_name', 'Accept', 'a/b');
+        AddLastError(Observer, H, 'content_bad_value', 'Content-Type', 'bad');
+        H2 := R.Headers();
+        AddLastError(Observer, H2, 'response_content_name', 'Content-Type', 'text/plain');
+        AddLastError(Observer, H2, 'response_line_break', 'X-A', 'a' + Format(Lf) + 'b');
+        Observer.Finish();
+    end;
 }
