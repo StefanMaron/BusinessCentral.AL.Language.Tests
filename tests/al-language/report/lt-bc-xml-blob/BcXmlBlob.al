@@ -210,8 +210,13 @@ codeunit 80979 "BC Xml Blob"
         Text := Mask(Text, Row.Pic.MediaId(), 'media');
         Text := Mask(Text, SetId, 'mediaset');
         Text := Mask(Text, Row.Pics.Item(1), 'mediaset-item');
-#if BC29PLUS
-        // BC 29: Linux keeps the imported PNG bytes, Windows 29.0 re-encodes them (Windows check 3, bc-linux #135): both count as <png>.
+#if LT_HELD_BCLINUX_135
+        // Windows writes the same re-encoded PNG on every version (Windows BC 27.5/28.5 check 2026-10-20, 27.5/29.0 Windows check 3): the exact
+        // Base64 is asserted. Held on Linux: the pinned Linux image keeps the imported bytes on 29 and re-encodes them differently on 27/28.
+        Observer.Observe('dataset', Text);
+#elif BC29PLUS
+        // Linux image until the pin includes the bc-linux #135 fix (remove this branch then): BC 29 on Linux keeps the imported PNG bytes,
+        // Windows re-encodes them; both count as <png>.
         Observer.Observe('dataset', AnyPng(ClassifyPng(Text)));
 #else
         Observer.Observe('dataset', ClassifyPng(Text));
@@ -219,7 +224,11 @@ codeunit 80979 "BC Xml Blob"
         Row.DeleteAll();
         Observer.Expect('media has value', 'Yes');
         Observer.Expect('media set count', '1');
-#if BC29PLUS
+#if LT_HELD_BCLINUX_135 and BC28PLUS
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol">iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAANSURBVBhXY2BgYPgPAAEEAQBwIGULAAAAAElFTkSuQmCC</Column>\n        <Column name="MediaSetCol">iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAANSURBVBhXY2BgYPgPAAEEAQBwIGULAAAAAElFTkSuQmCC</Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#elif LT_HELD_BCLINUX_135
+        Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol">iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAANSURBVBhXY2BgYPgPAAEEAQBwIGULAAAAAElFTkSuQmCC</Column>\n        <Column name="MediaSetCol">iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAANSURBVBhXY2BgYPgPAAEEAQBwIGULAAAAAElFTkSuQmCC</Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
+#elif BC29PLUS
         Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png></Column>\n        <Column name="MediaSetCol"><png></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
 #elif BC28PLUS
         Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row" tableId="80975" systemId="<guid36>">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-re-encoded></Column>\n        <Column name="MediaSetCol"><png-re-encoded></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');

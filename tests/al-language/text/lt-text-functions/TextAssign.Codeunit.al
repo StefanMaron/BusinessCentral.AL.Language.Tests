@@ -285,4 +285,75 @@ codeunit 70513 "LT TxB TextAssign"
     begin
         R := Value + '|' + Format(StrLen(Value));
     end;
+    // Writer PY-C (al-runtime-rs PR 339, probes-needed "Ternary and call-argument conversion"): a by-value number argument of a TryFunction
+    // whose conversion fails (Decimal 2.5 and BigInteger 3e9 into an Integer parameter): caught by the try or raised at the call. The call
+    // stands inside a second TryFunction so an uncaught error is still observed; 'inner' says whether the inner try answered false.
+    [Test]
+    procedure PYC_TryFunction_NumberArgumentConversion()
+    var
+        Observer: Codeunit "Probe Observer";
+        D: Decimal;
+        B: BigInteger;
+        Inner: Text;
+    begin
+        D := 2.5;
+        ClearLastError();
+        if OuterDecimal(D, Inner) then
+            Observer.Observe('decimal 2.5', 'outer ok|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode())
+        else
+            Observer.Observe('decimal 2.5', 'outer error|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        D := 3;
+        ClearLastError();
+        if OuterDecimal(D, Inner) then
+            Observer.Observe('decimal 3', 'outer ok|' + Inner)
+        else
+            Observer.Observe('decimal 3', 'outer error|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        B := 3000000000L;
+        ClearLastError();
+        if OuterBig(B, Inner) then
+            Observer.Observe('bigint 3e9', 'outer ok|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode())
+        else
+            Observer.Observe('bigint 3e9', 'outer error|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        B := 7;
+        ClearLastError();
+        if OuterBig(B, Inner) then
+            Observer.Observe('bigint 7', 'outer ok|' + Inner)
+        else
+            Observer.Observe('bigint 7', 'outer error|' + Inner + '|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Expect('decimal 2.5', 'outer ok|inner false|Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.|ConversionCast');
+        Observer.Expect('decimal 3', 'outer ok|inner ok 3');
+        Observer.Expect('bigint 3e9', 'outer ok|inner false|Overflow under conversion of System.Int64 value 3000000000 to System.Int32.|ConversionCast');
+        Observer.Expect('bigint 7', 'outer ok|inner ok 7');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure OuterDecimal(D: Decimal; var Inner: Text)
+    var
+        R: Text;
+    begin
+        Inner := 'not reached';
+        if TryTakeInteger(D, R) then
+            Inner := 'inner ok ' + R
+        else
+            Inner := 'inner false';
+    end;
+
+    [TryFunction]
+    local procedure OuterBig(B: BigInteger; var Inner: Text)
+    var
+        R: Text;
+    begin
+        Inner := 'not reached';
+        if TryTakeInteger(B, R) then
+            Inner := 'inner ok ' + R
+        else
+            Inner := 'inner false';
+    end;
+
+    [TryFunction]
+    local procedure TryTakeInteger(Value: Integer; var R: Text)
+    begin
+        R := Format(Value);
+    end;
 }

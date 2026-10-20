@@ -11,9 +11,10 @@
 // Pinned on BC 27 and 28 only (#if not BC29PLUS): SaveAsPdf writes a one-page PDF; TestRequestPage.SaveAsPdf writes the PDF, the request page
 // handler runs once, and the request page is closed afterwards (Cancel: 'The TestPage is not open.'). The BC 29 Linux container turns the
 // renderer off at boot ("the side-service compatibility patch failed"), so on BC 29 these calls answer with the Linux stub text.
-// Linux suspects (kept as source under LT_AM_LINUX_SUSPECT, not compiled): SaveAsWord and SaveAsExcel, static, instance and from the request
-// page, on BC 27 and 28 fail inside the Mono renderer with 'The system encountered an internal error while rendering the report.'
-// (ReportingService:Rpc; the request page forms raise it uncaught). To be checked on the Windows nightly.
+// SaveAsWord and SaveAsExcel, static, instance and from the request page: asserted with the Windows BC 27.5/28.5 values (Windows check
+// 2026-10-20: the file is written, marker in word/document.xml or xl/worksheets/sheet1.xml) and held on Linux under LT_HELD_BCLINUX_144:
+// the pinned Linux image fails inside the Mono renderer with 'The system encountered an internal error while rendering the report.'
+// (ReportingService:Rpc; the request page forms raise it uncaught). BC 29.0 not measured on Windows yet.
 // PDF text is compressed: only the page count is asserted.
 // BC versions: 27 - 29
 
@@ -483,33 +484,92 @@ codeunit 98603 "LT AM OP SaveAs Tests"
         Observer.Verify();
     end;
 
-#if LT_AM_LINUX_SUSPECT
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) write the docx/xlsx with the marker in the main part and no error. The Linux image
+    // pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144): held until the pin includes the fix.
+    // BC 29.0 is not measured on Windows yet.
     [Test]
     procedure Static_SaveAsWord()
     begin
         Both('static', 'docx');
-        Observer.Finish();
+        Observer.Expect('static docx ok', 'Yes');
+        Observer.Expect('static docx saved', 'Yes');
+        Observer.Expect('static docx error|text', '');
+        Observer.Expect('static docx error|code', '');
+        Observer.Expect('static docx exists', 'Yes');
+        Observer.Expect('static docx kind', 'zip');
+        Observer.Expect('static docx zip marker', 'word/document.xml=AMTXT[FIRST:row1|LAST:row4|ROWS:4]');
+        Observer.Expect('static docx filtered ok', 'Yes');
+        Observer.Expect('static docx filtered saved', 'Yes');
+        Observer.Expect('static docx filtered error|text', '');
+        Observer.Expect('static docx filtered error|code', '');
+        Observer.Expect('static docx filtered exists', 'Yes');
+        Observer.Expect('static docx filtered kind', 'zip');
+        Observer.Expect('static docx filtered zip marker', 'word/document.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Static_SaveAsExcel()
     begin
         Both('static', 'xlsx');
-        Observer.Finish();
+        Observer.Expect('static xlsx ok', 'Yes');
+        Observer.Expect('static xlsx saved', 'Yes');
+        Observer.Expect('static xlsx error|text', '');
+        Observer.Expect('static xlsx error|code', '');
+        Observer.Expect('static xlsx exists', 'Yes');
+        Observer.Expect('static xlsx kind', 'zip');
+        Observer.Expect('static xlsx zip marker', 'xl/worksheets/sheet1.xml=AMTXT[FIRST:row1|LAST:row4|ROWS:4]');
+        Observer.Expect('static xlsx filtered ok', 'Yes');
+        Observer.Expect('static xlsx filtered saved', 'Yes');
+        Observer.Expect('static xlsx filtered error|text', '');
+        Observer.Expect('static xlsx filtered error|code', '');
+        Observer.Expect('static xlsx filtered exists', 'Yes');
+        Observer.Expect('static xlsx filtered kind', 'zip');
+        Observer.Expect('static xlsx filtered zip marker', 'xl/worksheets/sheet1.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Instance_SaveAsWord()
     begin
         Both('instance', 'docx');
-        Observer.Finish();
+        Observer.Expect('instance docx ok', 'Yes');
+        Observer.Expect('instance docx saved', 'Yes');
+        Observer.Expect('instance docx error|text', '');
+        Observer.Expect('instance docx error|code', '');
+        Observer.Expect('instance docx exists', 'Yes');
+        Observer.Expect('instance docx kind', 'zip');
+        Observer.Expect('instance docx zip marker', 'word/document.xml=AMTXT[FIRST:row1|LAST:row4|ROWS:4]');
+        Observer.Expect('instance docx filtered ok', 'Yes');
+        Observer.Expect('instance docx filtered saved', 'Yes');
+        Observer.Expect('instance docx filtered error|text', '');
+        Observer.Expect('instance docx filtered error|code', '');
+        Observer.Expect('instance docx filtered exists', 'Yes');
+        Observer.Expect('instance docx filtered kind', 'zip');
+        Observer.Expect('instance docx filtered zip marker', 'word/document.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
+        Observer.Verify();
     end;
 
     [Test]
     procedure Instance_SaveAsExcel()
     begin
         Both('instance', 'xlsx');
-        Observer.Finish();
+        Observer.Expect('instance xlsx ok', 'Yes');
+        Observer.Expect('instance xlsx saved', 'Yes');
+        Observer.Expect('instance xlsx error|text', '');
+        Observer.Expect('instance xlsx error|code', '');
+        Observer.Expect('instance xlsx exists', 'Yes');
+        Observer.Expect('instance xlsx kind', 'zip');
+        Observer.Expect('instance xlsx zip marker', 'xl/worksheets/sheet1.xml=AMTXT[FIRST:row1|LAST:row4|ROWS:4]');
+        Observer.Expect('instance xlsx filtered ok', 'Yes');
+        Observer.Expect('instance xlsx filtered saved', 'Yes');
+        Observer.Expect('instance xlsx filtered error|text', '');
+        Observer.Expect('instance xlsx filtered error|code', '');
+        Observer.Expect('instance xlsx filtered exists', 'Yes');
+        Observer.Expect('instance xlsx filtered kind', 'zip');
+        Observer.Expect('instance xlsx filtered zip marker', 'xl/worksheets/sheet1.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
+        Observer.Verify();
     end;
 #endif
 
@@ -605,13 +665,27 @@ codeunit 98603 "LT AM OP SaveAs Tests"
     end;
 #endif
 
-#if LT_AM_LINUX_SUSPECT
+#if LT_HELD_BCLINUX_144 and not BC29PLUS
+    // Windows BC 27.5 and 28.5 (Windows check 2026-10-20) write the docx/xlsx with the marker in the main part and no error. The Linux image
+    // pinned in ci.yml fails inside the Mono renderer (ReportingService:Rpc, bc-linux #144): held until the pin includes the fix.
+    // BC 29.0 is not measured on Windows yet.
     [Test]
     [HandlerFunctions('SaveHandler')]
     procedure RequestPage_SaveAsExcel()
     begin
         RunKind('xlsx');
-        Observer.Finish();
+        Observer.Expect('handler|text', '');
+        Observer.Expect('handler|code', '');
+        Observer.Expect('file in handler', 'No');
+        Observer.Expect('cancel ok', 'No');
+        Observer.Expect('cancel|text', 'The TestPage is not open.');
+        Observer.Expect('cancel|code', 'TestPageNotOpened');
+        Observer.Expect('after run|text', '');
+        Observer.Expect('after run|code', '');
+        Observer.Expect('xlsx exists', 'Yes');
+        Observer.Expect('xlsx kind', 'zip');
+        Observer.Expect('xlsx zip marker', 'xl/worksheets/sheet1.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -619,7 +693,18 @@ codeunit 98603 "LT AM OP SaveAs Tests"
     procedure RequestPage_SaveAsWord()
     begin
         RunKind('docx');
-        Observer.Finish();
+        Observer.Expect('handler|text', '');
+        Observer.Expect('handler|code', '');
+        Observer.Expect('file in handler', 'No');
+        Observer.Expect('cancel ok', 'No');
+        Observer.Expect('cancel|text', 'The TestPage is not open.');
+        Observer.Expect('cancel|code', 'TestPageNotOpened');
+        Observer.Expect('after run|text', '');
+        Observer.Expect('after run|code', '');
+        Observer.Expect('docx exists', 'Yes');
+        Observer.Expect('docx kind', 'zip');
+        Observer.Expect('docx zip marker', 'word/document.xml=AMTXT[FIRST:row3|LAST:row4|ROWS:2]');
+        Observer.Verify();
     end;
 #endif
 }

@@ -530,6 +530,10 @@ is only a reference.
 | 1780 | AL0132 | BC 29: a default interface method called on a codeunit variable whose codeunit does not declare it. |
 | 1781 | AL0922 | BC 29: a [Scope('OnPrem')] procedure overrides a default interface method. |
 | 1782 | AL0231 | An enumextension of Base Application "Sales Line Type" reuses an ordinal of the base enum (ordinal 6 compiles). |
+| 1872 | AL0122 | `V := Cond ? D : DT` (Date true, DateTime false): the DateTime branch does not convert to Date. |
+| 1873 | AL0122 | `'K' in [TLo .. THi]` and `'K' in ['a' .. THi]`: a one-character literal is a Char and the Text range ends do not convert. |
+| 1874 | AL0122 | `'K' in [CLo .. CHi]` with Code range ends: the Code ends do not convert to Char. |
+| 1875 | AL0135 | `continue;` in a codeunit whose only procedure Continue takes a parameter (read as a call without its argument). |
 | 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
 | 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
 | 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |
@@ -570,6 +574,8 @@ is only a reference.
 | 1689 | AL0271 | An action subscriber names the action by its caption (with and without the ampersand) or by an unknown name. |
 | 1690 | AL0155 | A page has an action group and an action with the same name. |
 | 1691 | AL0132, AL0161 | A table event subscriber reads `Rec.CurrFieldNo` (a table of another app, a table of the same app). |
+| 1856 | AL0107 | An XmlPort Namespaces entry with the empty prefix written as `''` (the quoted identifier `""` compiles). |
+| 1857 | AL0107 | An XmlPort Namespaces property written as one string `'soap=http://...'`. |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

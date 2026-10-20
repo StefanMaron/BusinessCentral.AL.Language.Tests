@@ -227,6 +227,208 @@ page 67577 "LT DL Document"
     end;
 }
 
+// Writer PY-B (2026-10-20): page shapes for the count of a part's OnNewRecord at host OpenNew and New (pages 85183-85190, all log into
+// "LT DL Log" and are used by test codeunit 67582 only).
+page 85183 "LT PYB DL Lines NoSplit"
+{
+    PageType = ListPart;
+    SourceTable = "LT DL Line";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Description; Rec.Description) { ApplicationArea = All; }
+                field(Quantity; Rec.Quantity) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('NP.OnNewRecord:' + Rec."Document No." + ' below=' + Format(BelowxRec));
+    end;
+}
+
+page 85184 "LT PYB DL Lines B"
+{
+    PageType = ListPart;
+    SourceTable = "LT DL Line";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Description; Rec.Description) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('BP.OnNewRecord:' + Rec."Document No." + ' below=' + Format(BelowxRec));
+    end;
+}
+
+page 85185 "LT PYB DL Doc NoTrigger"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+            part(Lines; "LT DL Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+page 85186 "LT PYB DL Doc Unlinked"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+            }
+            part(Lines; "LT DL Lines")
+            {
+                ApplicationArea = All;
+            }
+        }
+    }
+}
+
+page 85187 "LT PYB DL Doc NoSplit"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+            }
+            part(Lines; "LT PYB DL Lines NoSplit")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+page 85188 "LT PYB DL Doc Two"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+            }
+            part(Lines; "LT DL Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+            part(LinesB; "LT PYB DL Lines B")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+page 85189 "LT PYB DL Card"
+{
+    PageType = Card;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("No."; Rec."No.") { ApplicationArea = All; }
+            part(Lines; "LT DL Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+page 85190 "LT PYB DL Doc Const"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+            }
+            part(Lines; "LT DL Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = const('D9');
+            }
+        }
+    }
+}
+
 codeunit 67582 "LT DL Tests"
 {
     Subtype = Test;
@@ -430,4 +632,322 @@ codeunit 67582 "LT DL Tests"
     begin
         Host.Close();
     end;
+
+    // Writer PY-B (2026-10-20): how often a part's OnNewRecord runs while its host opens new, by page shape (BC 29 local, then the CI legs).
+    // Rule seen: an EDITABLE host (OpenNew, OpenEdit) whose part shows no row runs the part's OnNewRecord 3 times, each pair of runs after
+    // a validation of the SubPageLink field (validate, new, new, validate, new); an unlinked part gives the 3 runs without validations; a
+    // second linked part repeats the pattern after the first; host OnNewRecord, AutoSplitKey and page type (Card or Document) change
+    // nothing. A part that shows rows (unlinked with rows, or linked rows of the blank key) runs none. OpenView runs it once, without
+    // validation. Host New() runs only the host's OnNewRecord, never the part's. A const() link to a missing header: OpenNew fails
+    // TestWrapped with the relation text after one part OnNewRecord.
+    local procedure SeedLine(DocNo: Code[20]; LineNo: Integer)
+    var
+        Line: Record "LT DL Line";
+    begin
+        Line."Document No." := DocNo;
+        Line."Line No." := LineNo;
+        Line.Description := 'seeded';
+        Line.Insert();
+    end;
+
+    local procedure TakeLog(var Observer: Codeunit "Probe Observer"; Name: Text)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Observer.Observe(Name, Log.Dump());
+        Log.Reset();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_Document_LogOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_HostWithoutOnNewRecord()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc NoTrigger";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_UnlinkedPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc Unlinked";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[LP.OnNewRecord: | LP.OnNewRecord: | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_UnlinkedPart_WithRows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc Unlinked";
+    begin
+        Seed();
+        SeedLine('X1', 10000);
+        SeedLine('X1', 20000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_PartWithoutAutoSplitKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc NoSplit";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | NP.OnNewRecord: below=Yes | NP.OnNewRecord: below=Yes | L.OnValidate(Document No.): | NP.OnNewRecord: below=Yes]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_TwoLinkedParts()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc Two";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | L.OnValidate(Document No.): | BP.OnNewRecord: below=Yes | BP.OnNewRecord: below=Yes | L.OnValidate(Document No.): | BP.OnNewRecord: below=Yes]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_CardHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Card";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_ConstLinkedPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc Const";
+    begin
+        Seed();
+        Observer.Observe('open_new', Format(TryOpenConst(Host)));
+        Observer.ObserveError('open_new_error');
+        TakeLog(Observer, 'open_new_log');
+        Observer.Expect('open_new', 'No');
+        Observer.Expect('open_new_error|text', 'The field Document No. of table LT DL Line contains a value (D9) that cannot be found in the related table (LT DL Header).');
+        Observer.Expect('open_new_error|code', 'TestWrapped');
+        Observer.Expect('open_new_log', '[LP.OnNewRecord:D9]');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryOpenConst(var Host: TestPage "LT PYB DL Doc Const")
+    begin
+        Host.OpenNew();
+    end;
+
+    [Test]
+    procedure PYB_OpenEdit_HostWithoutLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+        Header: Record "LT DL Header";
+    begin
+        Seed();
+        Header."No." := 'D8';
+        Header.Insert();
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.New();
+        TakeLog(Observer, 'host_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_edit', '[L.OnValidate(Document No.):D8 | LP.OnNewRecord:D8 | LP.OnNewRecord:D8 | L.OnValidate(Document No.):D8 | LP.OnNewRecord:D8]');
+        Observer.Expect('host_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_ThenHostNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.New();
+        TakeLog(Observer, 'host_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('host_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenNew_LinkedPart_BlankKeyRowsExist()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        SeedLine('', 20000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Observer.Observe('part_first_description', Host.Lines.Description.Value());
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('part_first_description', 'seeded');
+        Observer.Expect('close', '[HP.OnInsertRecord: | H.OnInsert:]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenEdit_ThenHostNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+        Header: Record "LT DL Header";
+    begin
+        Seed();
+        Header."No." := 'D5';
+        Header.Insert();
+        SeedLine('D5', 10000);
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.New();
+        TakeLog(Observer, 'host_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_edit', '[]');
+        Observer.Expect('host_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYB_OpenView_ExistingHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+        Header: Record "LT DL Header";
+    begin
+        Seed();
+        Header."No." := 'D6';
+        Header.Insert();
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Expect('open_view', '[LP.OnNewRecord:D6]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    // A non-key field typed first inserts the host with a blank key; the key typed later runs its OnValidate but is lost (no rename, the
+    // card shows blank), and the line is stored under the blank key at Close.
+    procedure PYB_OpenNew_NameTypedFirst_ThenKey_ThenLine()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        Step(Observer, 'open_new', TryOpenNew(Host));
+        Step(Observer, 'type_name', TryName(Host, 'N1'));
+        Stored(Observer, 'after_name');
+        Step(Observer, 'type_key', TryKey(Host, 'D7'));
+        Observer.Observe('after_key_card_no', '[' + Host."No.".Value() + ']');
+        Stored(Observer, 'after_key');
+        Step(Observer, 'new_line', TryNewLine(Host));
+        Step(Observer, 'description', TryDescription(Host, 'x'));
+        Stored(Observer, 'after_line');
+        Step(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Expect('open_new', 'Yes');
+        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('type_name', 'Yes');
+        Observer.Expect('type_name_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | H.OnValidate(Name):N1 key= | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('after_name_headers', '1');
+        Observer.Expect('after_name_header_rows', '[|]');
+        Observer.Expect('after_name_lines', '0');
+        Observer.Expect('after_name_line_rows', '');
+        Observer.Expect('type_key', 'Yes');
+        Observer.Expect('type_key_log', '[H.OnValidate(No.):D7]');
+        Observer.Expect('after_key_card_no', '[]');
+        Observer.Expect('after_key_headers', '1');
+        Observer.Expect('after_key_header_rows', '[|]');
+        Observer.Expect('after_key_lines', '0');
+        Observer.Expect('after_key_line_rows', '');
+        Observer.Expect('new_line', 'Yes');
+        Observer.Expect('new_line_log', '[L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('description', 'Yes');
+        Observer.Expect('description_log', '[L.OnValidate(Description):x key=/0]');
+        Observer.Expect('after_line_headers', '1');
+        Observer.Expect('after_line_header_rows', '[|]');
+        Observer.Expect('after_line_lines', '0');
+        Observer.Expect('after_line_line_rows', '');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[LP.OnInsertRecord:/20000 | L.OnInsert:/20000]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|20000|x|0]');
+        Observer.Verify();
+    end;
+
 }
