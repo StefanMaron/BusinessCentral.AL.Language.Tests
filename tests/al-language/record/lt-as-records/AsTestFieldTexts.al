@@ -74,7 +74,36 @@ codeunit 79926 "LT AS TestField Texts"
         Observer: Codeunit "Probe Observer";
     begin
         PxObserveBytes(Observer, '0,1,2,3,4,5,7,9,11,13,31,32,65');
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('byte0', 'Num Cap must be equal to ''\u0000''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte1', 'Num Cap must be equal to ''\u0001''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte2', 'Num Cap must be equal to ''\u0002''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte3', 'Num Cap must be equal to ''\u0003''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte4', 'Num Cap must be equal to ''\u0004''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte5', 'Num Cap must be equal to ''\u0005''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte7', 'Num Cap must be equal to ''\u0007''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte9', 'Num Cap must be equal to ''\t''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte11', 'Num Cap must be equal to ''\u000B''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte13', 'Num Cap must be equal to ''\r''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte31', 'Num Cap must be equal to ''\u001F''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte32', 'Num Cap must be equal to '' ''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte65', 'Num Cap must be equal to ''A''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+#else
+        Observer.Expect('byte0', 'Num Cap must be equal to ''0''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte1', 'Num Cap must be equal to ''1''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte2', 'Num Cap must be equal to ''2''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte3', 'Num Cap must be equal to ''3''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte4', 'Num Cap must be equal to ''4''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte5', 'Num Cap must be equal to ''5''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte7', 'Num Cap must be equal to ''7''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte9', 'Num Cap must be equal to ''9''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte11', 'Num Cap must be equal to ''11''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte13', 'Num Cap must be equal to ''13''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte31', 'Num Cap must be equal to ''31''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte32', 'Num Cap must be equal to ''32''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte65', 'Num Cap must be equal to ''65''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -83,10 +112,27 @@ codeunit 79926 "LT AS TestField Texts"
         Observer: Codeunit "Probe Observer";
     begin
         PxObserveBytes(Observer, '127,128,129,159,160,200,255');
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('byte127', 'Num Cap must be equal to ''<U+007F>''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte128', 'Num Cap must be equal to ''Ç''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte129', 'Num Cap must be equal to ''ü''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte159', 'Num Cap must be equal to ''ƒ''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte160', 'Num Cap must be equal to ''á''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte200', 'Num Cap must be equal to ''˜''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte255', 'Num Cap must be equal to ''<U+00A0>''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+#else
+        Observer.Expect('byte127', 'Num Cap must be equal to ''127''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte128', 'Num Cap must be equal to ''128''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte129', 'Num Cap must be equal to ''129''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte159', 'Num Cap must be equal to ''159''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte160', 'Num Cap must be equal to ''160''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte200', 'Num Cap must be equal to ''200''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+        Observer.Expect('byte255', 'Num Cap must be equal to ''255''  in AS TF Caption: Id Cap=1. Current value is ''250''.|TestField');
+#endif
+        Observer.Verify();
     end;
 
-    // U+007F (Byte 127) is shown as <U+007F> so the asserted literal has no invisible character.
+    // U+007F (Byte 127) and U+00A0 (Byte 255) are shown as <U+007F> and <U+00A0> so the asserted literals have no invisible character.
     local procedure PxObserveBytes(var Observer: Codeunit "Probe Observer"; List: Text)
     var
         Row: Record "LT AS TF Row";
@@ -94,8 +140,10 @@ codeunit 79926 "LT AS TestField Texts"
         Item: Text;
         V: Integer;
         Del: Text[1];
+        Nbsp: Text[1];
     begin
         Del[1] := 127;
+        Nbsp[1] := 160;
         Seed(Row);
         Row.Num := 250;
         Row.Modify();
@@ -103,7 +151,7 @@ codeunit 79926 "LT AS TestField Texts"
             Evaluate(V, Item);
             B := V;
             asserterror NumRef(Row).TestField(B);
-            Observer.Observe('byte' + Format(V), Helper.LastError().Replace(Del, '<U+007F>'));
+            Observer.Observe('byte' + Format(V), Helper.LastError().Replace(Del, '<U+007F>').Replace(Nbsp, '<U+00A0>'));
         end;
     end;
 
