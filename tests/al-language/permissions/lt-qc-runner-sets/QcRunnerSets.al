@@ -11,6 +11,16 @@
 //   "User Permissions".GetEffectivePermission (NavUserAccountHelper.GetEffectivePermissionForObject).
 //   Writes run inside asserterror and end with an own error, so they are rolled back and leave no rows in Microsoft tables.
 //   Written against a local BC 29.0 service tier; every literal below is what that tier produced; 27.5 and 28.5 by the CI matrix.
+// Facts (BC 29.0): "Test Tables" does not exist in the corpus database (it ships in Microsoft's Tests-TestLibraries app); All Objects,
+//   D365 Full Access, D365 Basic and LOCAL do. Under the runner sets:
+//   - Base Application tables (Company Information, Standard Text): read and write are allowed; ReadPermission and WritePermission
+//     are true; GetEffectivePermission gives Yes for read, insert, modify and delete.
+//   - System tables: AllObj and Access Control read and write; Tenant Media has only indirect insert, modify and delete: WritePermission is
+//     false and an insert fails with "Sorry, the current permissions prevented the action. (TableData 2000000184 Tenant Media Insert: ...)".
+//   - A table of the test app that no assigned set names: ReadPermission and WritePermission are false, FindFirst fails with
+//     DB:ClientReadDenied and Insert with DB:ClientInsertDenied; GetEffectivePermission gives nothing for its table data and only
+//     Execute for the table and the test codeunit (from All Objects). Without the mock everything is allowed.
+//   So the runner sets do NOT grant everything: they grant what D365 Full Access, D365 Basic and LOCAL name, plus Execute on every object.
 // BC versions: 27, 28, 29
 
 table 86450 "LT QC Perm Row"
@@ -170,7 +180,12 @@ codeunit 86450 "LT QC Runner Sets Tests"
         Observer.Observe('test_tables', Format(SetExists('Test Tables')));
         Observer.Observe('d365_basic', Format(SetExists('D365 Basic')));
         Observer.Observe('local', Format(SetExists('LOCAL')));
-        Observer.Finish();
+        Observer.Expect('all_objects', 'Yes');
+        Observer.Expect('d365_full_access', 'Yes');
+        Observer.Expect('test_tables', 'No');
+        Observer.Expect('d365_basic', 'Yes');
+        Observer.Expect('local', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -194,7 +209,17 @@ codeunit 86450 "LT QC Runner Sets Tests"
         Observer.Observe('effective_standard_text', Rights(0, Database::"Standard Text"));
         Observer.Observe('effective_company_information', Rights(0, Database::"Company Information"));
         RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        Observer.Expect('company_information_get|text', 'LT QC rolled back: get=Yes');
+        Observer.Expect('company_information_get|code', 'Dialog');
+        Observer.Expect('company_information_read_permission', 'Yes');
+        Observer.Expect('company_information_write_permission', 'Yes');
+        Observer.Expect('standard_text_read_permission', 'Yes');
+        Observer.Expect('standard_text_write_permission', 'Yes');
+        Observer.Expect('standard_text_write|text', 'LT QC rolled back');
+        Observer.Expect('standard_text_write|code', 'Dialog');
+        Observer.Expect('effective_standard_text', 'Yes,Yes,Yes,Yes, ');
+        Observer.Expect('effective_company_information', 'Yes,Yes,Yes,Yes, ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -222,7 +247,20 @@ codeunit 86450 "LT QC Runner Sets Tests"
         Observer.Observe('effective_tenant_media', Rights(0, Database::"Tenant Media"));
         Observer.Observe('effective_access_control', Rights(0, Database::"Access Control"));
         RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        Observer.Expect('allobj_findfirst|text', 'LT QC rolled back: findfirst=Yes');
+        Observer.Expect('allobj_findfirst|code', 'Dialog');
+        Observer.Expect('allobj_read_permission', 'Yes');
+        Observer.Expect('tenant_media_read_permission', 'Yes');
+        Observer.Expect('tenant_media_write_permission', 'No');
+        Observer.Expect('tenant_media_write|text', 'Sorry, the current permissions prevented the action. (TableData 2000000184 Tenant Media Insert: AL Language Coverage Tests)');
+        Observer.Expect('tenant_media_write|code', 'DB:ClientInsertDenied');
+        Observer.Expect('access_control_read_permission', 'Yes');
+        Observer.Expect('access_control_write_permission', 'Yes');
+        Observer.Expect('access_control_isempty|text', 'LT QC rolled back: isempty=No');
+        Observer.Expect('access_control_isempty|code', 'Dialog');
+        Observer.Expect('effective_tenant_media', 'Yes,Indirect,Indirect,Indirect, ');
+        Observer.Expect('effective_access_control', 'Yes,Yes,Yes,Yes, ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -245,7 +283,16 @@ codeunit 86450 "LT QC Runner Sets Tests"
         Observer.Observe('effective_table', Rights(1, Database::"LT QC Perm Row"));
         Observer.Observe('effective_codeunit', Rights(5, Codeunit::"LT QC Runner Sets Tests"));
         RestoreMock(Mock, WasStarted);
-        Observer.Finish();
+        Observer.Expect('read_permission', 'No');
+        Observer.Expect('write_permission', 'No');
+        Observer.Expect('findfirst|text', 'Sorry, the current permissions prevented the action. (TableData 86450 LT QC Perm Row Read: AL Language Coverage Tests)');
+        Observer.Expect('findfirst|code', 'DB:ClientReadDenied');
+        Observer.Expect('write|text', 'Sorry, the current permissions prevented the action. (TableData 86450 LT QC Perm Row Insert: AL Language Coverage Tests)');
+        Observer.Expect('write|code', 'DB:ClientInsertDenied');
+        Observer.Expect('effective_table_data', ' , , , , ');
+        Observer.Expect('effective_table', ' , , , ,Yes');
+        Observer.Expect('effective_codeunit', ' , , , ,Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -262,6 +309,12 @@ codeunit 86450 "LT QC Runner Sets Tests"
         asserterror WriteOwn();
         Observer.ObserveError('write');
         Observer.Observe('effective_table_data', Rights(0, Database::"LT QC Perm Row"));
-        Observer.Finish();
+        Observer.Expect('read_permission', 'Yes');
+        Observer.Expect('write_permission', 'Yes');
+        Observer.Expect('findfirst', 'Yes');
+        Observer.Expect('write|text', 'LT QC rolled back');
+        Observer.Expect('write|code', 'Dialog');
+        Observer.Expect('effective_table_data', 'Yes,Yes,Yes,Yes, ');
+        Observer.Verify();
     end;
 }
