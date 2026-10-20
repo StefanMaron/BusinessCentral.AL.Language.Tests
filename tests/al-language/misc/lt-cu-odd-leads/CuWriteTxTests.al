@@ -264,11 +264,10 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Verify();
     end;
 
-#if LT_HELD_BCLINUX_159
     // Codeunit.Run(Text) with the namespace-qualified name of codeunit 85308 (namespace LTCU.Probe, CuNamedRun.al), plain and with the
     // object name quoted: Windows BC 28.5 and 29.0 (Windows BC 29.0 check 2026-10-20) run the codeunit for both spellings (OnRun sets
-    // Rec.Name to 'x'). Held on Linux: the Linux image (BC 29.0) answers 'A codeunit with full name LTCU.Probe.LT CU Named Run could not
-    // be found.' (InvalidMetadata), bc-linux #159.
+    // Rec.Name to 'x'). Was held on Linux for bc-linux #159 (the Linux image, BC 29.0, answered 'A codeunit with full
+    // name LTCU.Probe.LT CU Named Run could not be found.', InvalidMetadata); the bc-linux maintainer cannot reproduce it on the current image.
     [Test]
     procedure CodeunitRun_ByQualifiedName()
     var
@@ -290,7 +289,6 @@ codeunit 85312 "LT CU Write Tx Tests"
         Observer.Expect('LTCU.Probe."LT CU Named Run"|code', '');
         Observer.Verify();
     end;
-#endif
 
 
     local procedure RunByName(var Observer: Codeunit "Probe Observer"; Name: Text; var Row: Record "LT CU Row")
