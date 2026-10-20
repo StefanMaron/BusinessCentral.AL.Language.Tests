@@ -196,6 +196,30 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Observe(Name + '_calls', Log.Take());
     end;
 
+    // The calls of a page open, folded: how many ran with an empty record (Id 0) and for which fields, then the other calls in order.
+    local procedure Summarize(Calls: Text): Text
+    var
+        Part: Text;
+        FieldText: Text;
+        Fields0: List of [Text];
+        Fields0Text: Text;
+        Id0: Integer;
+        Rest: Text;
+    begin
+        foreach Part in Calls.Split(';') do
+            if Part <> '' then
+                if Part.EndsWith('@0') then begin
+                    Id0 += 1;
+                    FieldText := Part.Substring(1, Part.IndexOf('@') - 1);
+                    if not Fields0.Contains(FieldText) then
+                        Fields0.Add(FieldText);
+                end else
+                    Rest += Part + ';';
+        foreach FieldText in Fields0 do
+            Fields0Text += FieldText + ',';
+        exit('id0=' + Format(Id0) + ' fields0=' + Fields0Text + ' rest=' + Rest);
+    end;
+
     [Test]
     procedure Literals_FieldCaption()
     var
@@ -210,7 +234,19 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'lit53code', R.FieldCaption("Lit 5-3 Code"));
         Cap(Observer, 'lit101', R.FieldCaption("Lit 101-0"));
         Cap(Observer, 'lit11', R.FieldCaption("Lit 1-1"));
-        Observer.Finish();
+        Observer.Expect('lit20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('lit20_calls', '');
+        Observer.Expect('lit21', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('lit21_calls', '');
+        Observer.Expect('lit53', 'Bill-to County');
+        Observer.Expect('lit53_calls', '');
+        Observer.Expect('lit53code', '5,3,QDX');
+        Observer.Expect('lit53code_calls', '');
+        Observer.Expect('lit101', 'Amount (GBP)');
+        Observer.Expect('lit101_calls', '');
+        Observer.Expect('lit11', 'Department Code');
+        Observer.Expect('lit11_calls', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -230,7 +266,25 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'expr3', R.FieldCaption("Expr 3-"));
         Cap(Observer, 'expr101', R.FieldCaption("Expr 101"));
         Cap(Observer, 'expr11', R.FieldCaption("Expr 1-1"));
-        Observer.Finish();
+        Observer.Expect('expr20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('expr20_calls', '20@1;');
+        Observer.Expect('expr21', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('expr21_calls', '21@1;');
+        Observer.Expect('expr53', 'Bill-to County');
+        Observer.Expect('expr53_calls', '22@1;');
+        Observer.Expect('exprEmpty', 'Cap Expr Empty');
+        Observer.Expect('exprEmpty_calls', '25@1;');
+        Observer.Expect('expr9', '9,x');
+        Observer.Expect('expr9_calls', '26@1;');
+        Observer.Expect('expr2x', '2,x');
+        Observer.Expect('expr2x_calls', '27@1;');
+        Observer.Expect('expr3', 'Cap Expr 3-');
+        Observer.Expect('expr3_calls', '28@1;');
+        Observer.Expect('expr101', 'Amount (GBP)');
+        Observer.Expect('expr101_calls', '29@1;');
+        Observer.Expect('expr11', 'Department Code');
+        Observer.Expect('expr11_calls', '30@1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -247,7 +301,13 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'incl', R.FieldCaption("Expr VAT"));
         R."Incl VAT" := false;
         Cap(Observer, 'excl_again', R.FieldCaption("Expr VAT"));
-        Observer.Finish();
+        Observer.Expect('excl', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('excl_calls', '23@1;');
+        Observer.Expect('incl', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('incl_calls', '23@1;');
+        Observer.Expect('excl_again', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('excl_again_calls', '23@1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -265,7 +325,16 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'r2', R2.FieldCaption("Expr Id"));
         Cap(Observer, 'r1_fieldname', R.FieldName("Expr Id"));
         Observer.Observe('total', Format(Log.Total()));
-        Observer.Finish();
+        Observer.Expect('r1_first', 'Id 1 call 1');
+        Observer.Expect('r1_first_calls', '24@1;');
+        Observer.Expect('r1_second', 'Id 1 call 2');
+        Observer.Expect('r1_second_calls', '24@1;');
+        Observer.Expect('r2', 'Id 2 call 3');
+        Observer.Expect('r2_calls', '24@2;');
+        Observer.Expect('r1_fieldname', 'Expr Id');
+        Observer.Expect('r1_fieldname_calls', '');
+        Observer.Expect('total', '3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -283,7 +352,15 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'second', R.FieldCaption("Expr Touch"));
         Observer.Observe('tag_after_second', R.Tag);
         Observer.Observe('touched_after_second', Format(R.TouchedCount()));
-        Observer.Finish();
+        Observer.Expect('first', 'Touch 1');
+        Observer.Expect('first_calls', '31@4;');
+        Observer.Expect('tag_after_first', 'touched 1');
+        Observer.Expect('touched_after_first', '1');
+        Observer.Expect('second', 'Touch 2');
+        Observer.Expect('second_calls', '31@4;');
+        Observer.Expect('tag_after_second', 'touched 2');
+        Observer.Expect('touched_after_second', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,7 +386,27 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Fresh.Open(Database::"LT QD Cap Row");
         Cap(Observer, 'fresh_exprId', Fresh.Field(24).Caption());
         Cap(Observer, 'fresh_exprVAT', Fresh.Field(23).Caption());
-        Observer.Finish();
+        Observer.Expect('ref_expr20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('ref_expr20_calls', '20@7;');
+        Observer.Expect('ref_expr21', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('ref_expr21_calls', '21@7;');
+        Observer.Expect('ref_expr53', 'Bill-to County');
+        Observer.Expect('ref_expr53_calls', '22@7;');
+        Observer.Expect('ref_exprVAT', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('ref_exprVAT_calls', '23@7;');
+        Observer.Expect('ref_exprId', 'Id 7 call 5');
+        Observer.Expect('ref_exprId_calls', '24@7;');
+        Observer.Expect('ref_exprEmpty', 'Cap Expr Empty');
+        Observer.Expect('ref_exprEmpty_calls', '25@7;');
+        Observer.Expect('ref_lit20', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('ref_lit20_calls', '');
+        Observer.Expect('ref_lit53', 'Bill-to County');
+        Observer.Expect('ref_lit53_calls', '');
+        Observer.Expect('fresh_exprId', 'Id 0 call 7');
+        Observer.Expect('fresh_exprId_calls', '24@0;');
+        Observer.Expect('fresh_exprVAT', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('fresh_exprVAT_calls', '23@0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,7 +422,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         R.Insert();
         Log.Reset();
         P.OpenView();
-        Observer.Observe('open_calls', Log.Take());
+        Observer.Observe('open_calls', Summarize(Log.Take()));
         Cap(Observer, 'lit20', P.Lit20.Caption());
         Cap(Observer, 'lit21', P.Lit21.Caption());
         Cap(Observer, 'lit53', P.Lit53.Caption());
@@ -341,7 +438,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'expr3', P.Expr3.Caption());
         Cap(Observer, 'pageExpr', P.PageExpr.Caption());
         P.Close();
-        Observer.Observe('close_calls', Log.Take());
+        Observer.Observe('close_calls', Summarize(Log.Take()));
         Observer.Finish();
     end;
 
@@ -359,7 +456,11 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Observe('no', SalesLine.FieldCaption("No."));
         Ref.GetTable(SalesLine);
         Observer.Observe('ref_invdisc', Ref.Field(SalesLine.FieldNo("Inv. Discount Amount")).Caption());
-        Observer.Finish();
+        Observer.Expect('invdisc', 'Inv. Discount Amount Excl. VAT');
+        Observer.Expect('lineamount', 'Line Amount Excl. VAT');
+        Observer.Expect('no', 'No.');
+        Observer.Expect('ref_invdisc', 'Inv. Discount Amount Excl. VAT');
+        Observer.Verify();
     end;
 
     [Test]
@@ -395,6 +496,14 @@ codeunit 86504 "LT QD CaptionClass Areas"
         P.Close();
         SalesLine."Document No." := 'QD-OTHER';
         Observer.Observe('other_doc_invdisc', SalesLine.FieldCaption("Inv. Discount Amount"));
-        Observer.Finish();
+        Observer.Expect('invdisc', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('lineamount', 'Line Amount Incl. VAT');
+        Observer.Expect('no', 'No.');
+        Observer.Expect('ref_invdisc', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('page_invdisc', 'Inv. Discount Amount Incl. VAT');
+        Observer.Expect('page_lineamount', 'Line Amount Incl. VAT');
+        Observer.Expect('page_no', 'No.');
+        Observer.Expect('other_doc_invdisc', 'Inv. Discount Amount Excl. VAT');
+        Observer.Verify();
     end;
 }

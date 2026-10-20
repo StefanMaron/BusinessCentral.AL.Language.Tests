@@ -99,7 +99,22 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.filters', Stored.GetFilters());
         Observer.Observe('caller.count', Format(Stored.Count()));
         Observer.Observe('stored.rows', StoredRows());
-        Observer.Finish();
+        Observer.Expect('callee.isTemporary', 'Yes');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.current', '2=two');
+        Observer.Expect('callee.filters', '');
+        Observer.Expect('callee.get', 'No');
+        Observer.Expect('callee.findFirst', 'No:2=two');
+        Observer.Expect('callee.insert', 'Yes');
+        Observer.Expect('callee.modify', 'Yes');
+        Observer.Expect('callee.countAfter', '1');
+        Observer.Expect('callee.isTemporaryAfter', 'Yes');
+        Observer.Expect('caller.isTemporary', 'No');
+        Observer.Expect('caller.current', '2=two');
+        Observer.Expect('caller.filters', 'Id: 2..3');
+        Observer.Expect('caller.count', '2');
+        Observer.Expect('stored.rows', '1=one;2=two;3=three;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -114,6 +129,10 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Callee.ModifyCurrent(Stored, Observer);
         Observer.Observe('caller.current', Format(Stored.Id) + '=' + Stored.Name);
         Observer.Observe('stored.rows', StoredRows());
-        Observer.Finish();
+        Observer.Expect('modcur.modify', 'No');
+        Observer.Expect('modcur.count', '0');
+        Observer.Expect('caller.current', '1=one');
+        Observer.Expect('stored.rows', '1=one;2=two;3=three;');
+        Observer.Verify();
     end;
 }

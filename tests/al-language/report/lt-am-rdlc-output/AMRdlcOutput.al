@@ -466,7 +466,12 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer: Codeunit "Probe Observer";
     begin
         QdRequestPageXml(ReportFormat::Html, RequestXmlTxt, 'html', Observer);
-        Observer.Finish();
+        Observer.Expect('html_ok', 'No');
+        Observer.Expect('html_calls', '1');
+        Observer.Expect('html_runmode', 'SaveAs');
+        Observer.Expect('html_length', '131');
+        Observer.Expect('html_xml', '<?xml version="1.0" standalone="yes"?><ReportParameters><Options><Field name="ReqText">AMREQ42</Field></Options></ReportParameters>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -475,7 +480,12 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer: Codeunit "Probe Observer";
     begin
         QdRequestPageXml(ReportFormat::Html, '', 'html_empty', Observer);
-        Observer.Finish();
+        Observer.Expect('html_empty_ok', 'No');
+        Observer.Expect('html_empty_calls', '1');
+        Observer.Expect('html_empty_runmode', 'SaveAs');
+        Observer.Expect('html_empty_length', '0');
+        Observer.Expect('html_empty_xml', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -484,7 +494,12 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer: Codeunit "Probe Observer";
     begin
         QdRequestPageXml(ReportFormat::Xml, RequestXmlTxt, 'xml', Observer);
-        Observer.Finish();
+        Observer.Expect('xml_ok', 'Yes');
+        Observer.Expect('xml_calls', '1');
+        Observer.Expect('xml_runmode', 'SaveAs');
+        Observer.Expect('xml_length', '131');
+        Observer.Expect('xml_xml', '<?xml version="1.0" standalone="yes"?><ReportParameters><Options><Field name="ReqText">AMREQ42</Field></Options></ReportParameters>');
+        Observer.Verify();
     end;
 }
 

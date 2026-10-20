@@ -320,7 +320,13 @@ codeunit 74973 "LT Modify Without Change"
         Observer: Codeunit "Probe Observer";
     begin
         QdModifyAllSame('none', Observer);
-        Observer.Finish();
+        Observer.Expect('none_trace', '');
+        Observer.Expect('none_row1_stamp_changed', 'No');
+        Observer.Expect('none_row1_version_changed', 'No');
+        Observer.Expect('none_row2_qty', '5');
+        Observer.Expect('none_row2_stamp_changed', 'Yes');
+        Observer.Expect('none_row2_version_changed', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -332,7 +338,13 @@ codeunit 74973 "LT Modify Without Change"
         BindSubscription(Subs);
         QdModifyAllSame('after', Observer);
         UnbindSubscription(Subs);
-        Observer.Finish();
+        Observer.Expect('after_trace', 'after 1 rec=5 xrec=5;after 2 rec=5 xrec=5;');
+        Observer.Expect('after_row1_stamp_changed', 'No');
+        Observer.Expect('after_row1_version_changed', 'No');
+        Observer.Expect('after_row2_qty', '5');
+        Observer.Expect('after_row2_stamp_changed', 'Yes');
+        Observer.Expect('after_row2_version_changed', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -344,7 +356,13 @@ codeunit 74973 "LT Modify Without Change"
         BindSubscription(Subs);
         QdModifyAllSame('before', Observer);
         UnbindSubscription(Subs);
-        Observer.Finish();
+        Observer.Expect('before_trace', 'before 1 rec=5 xrec=5;before 2 rec=5 xrec=5;');
+        Observer.Expect('before_row1_stamp_changed', 'No');
+        Observer.Expect('before_row1_version_changed', 'No');
+        Observer.Expect('before_row2_qty', '5');
+        Observer.Expect('before_row2_stamp_changed', 'Yes');
+        Observer.Expect('before_row2_version_changed', 'Yes');
+        Observer.Verify();
     end;
 }
 

@@ -67,7 +67,9 @@ codeunit 80761 "LT BA TP Env"
         Message('LT BA');
         Observer.Observe('installed', Installed('130002,131004,130500'));
         Observer.Observe('apps', QdApps('130002,131004,130500'));
-        Observer.Finish();
+        Observer.Expect('installed', '130002=no 131004=no 130500=yes ');
+        Observer.Expect('apps', '130002= 131004= 130500=Any/Any/Microsoft ');
+        Observer.Verify();
     end;
 
     local procedure QdApps(IdList: Text): Text

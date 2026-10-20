@@ -678,7 +678,20 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('12_gotokey1', Format(P.GoToKey(1)) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Log.Take();
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><);R1;R3;R5;R1;F(=);R1;C;');
+        Observer.Expect('01_first', 'Yes|5|R5;F(=);R5;C;');
+        Observer.Expect('02_next', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('03_next', 'Yes|1|R1;F(=);R1;C;');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_last', 'Yes|1|');
+        Observer.Expect('06_previous', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('07_previous', 'Yes|5|R5;F(=);R5;C;');
+        Observer.Expect('08_previous_top', 'No|5|');
+        Observer.Expect('09_first', 'Yes|5|');
+        Observer.Expect('10_gotokey2_out', 'No|5|R3;F(=);R3;C;R1;F(=);R1;C;R5;F(=);R5;C;');
+        Observer.Expect('11_gotokey3', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('12_gotokey1', 'Yes|1|R5;F(=);R5;C;R3;F(=);R3;C;R1;F(=);R1;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -706,7 +719,20 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('12_gotokey1', Format(P.GoToKey(1)) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Log.Take();
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><);R1;N(1);N(-1);R3;N(-1);R5;N(-1);R1;F(=);R1;C;');
+        Observer.Expect('01_first', 'Yes|5|R5;F(=);R5;C;');
+        Observer.Expect('02_next', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('03_next', 'Yes|1|R1;F(=);R1;C;');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_last', 'Yes|1|');
+        Observer.Expect('06_previous', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('07_previous', 'Yes|5|R5;F(=);R5;C;');
+        Observer.Expect('08_previous_top', 'No|5|');
+        Observer.Expect('09_first', 'Yes|5|');
+        Observer.Expect('10_gotokey2_out', 'No|5|R3;F(=);R3;C;R1;F(=);R1;C;R5;F(=);R5;C;');
+        Observer.Expect('11_gotokey3', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('12_gotokey1', 'Yes|1|R5;F(=);R5;C;R3;F(=);R3;C;R1;F(=);R1;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -730,7 +756,16 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('08_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Log.Take();
-        Observer.Finish();
+        Observer.Expect('open', '2|F(=><);R2;R3;R4;R5;R6;R7;R8;R9;R10;R11;R12;R13;R14;R15;R16;R17;R18;R19;R20;R21;R22;R2;F(=);R2;C;');
+        Observer.Expect('01_next', 'No|2|');
+        Observer.Expect('02_last', 'Yes|2|');
+        Observer.Expect('03_previous', 'Yes|3|R3;F(=);R3;C;');
+        Observer.Expect('04_first', 'Yes|24|R22;R23;R24;F(=);R24;C;');
+        Observer.Expect('05_gotokey4', 'Yes|4|R23;F(=);R23;C;R22;F(=);R22;C;R21;F(=);R21;C;R20;F(=);R20;C;R19;F(=);R19;C;R18;F(=);R18;C;R17;F(=);R17;C;R16;F(=);R16;C;R15;F(=);R15;C;R14;F(=);R14;C;R13;F(=);R13;C;R12;F(=);R12;C;R11;F(=);R11;C;R10;F(=);R10;C;R9;F(=);R9;C;R8;F(=);R8;C;R7;F(=);R7;C;R6;F(=);R6;C;R5;F(=);R5;C;R4;F(=);R4;C;');
+        Observer.Expect('06_gotokey1_out', 'No|4|R24;F(=);R24;C;R23;F(=);R23;C;R22;F(=);R22;C;R21;F(=);R21;C;R20;F(=);R20;C;R19;F(=);R19;C;R18;F(=);R18;C;R17;F(=);R17;C;R16;F(=);R16;C;R15;F(=);R15;C;R14;F(=);R14;C;R13;F(=);R13;C;R12;F(=);R12;C;R11;F(=);R11;C;R10;F(=);R10;C;R9;F(=);R9;C;R8;F(=);R8;C;R7;F(=);R7;C;R6;F(=);R6;C;R5;F(=);R5;C;R4;F(=);R4;C;R3;F(=);R3;C;R2;F(=);R2;C;R4;F(=);R4;C;');
+        Observer.Expect('07_gotokey20', 'Yes|20|R24;F(=);R24;C;R23;F(=);R23;C;R22;F(=);R22;C;R21;F(=);R21;C;R20;F(=);R20;C;');
+        Observer.Expect('08_next', 'Yes|19|R19;F(=);R19;C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -754,7 +789,16 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('08_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Log.Take();
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><);R1;R2;R3;R4;R5;R6;R7;R8;R9;R10;R11;R12;R13;R14;R15;R16;R17;R18;R19;R20;R1;F(=);R1;C;');
+        Observer.Expect('01_gotokey23', 'Yes|23|R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;R21;R22;R23;R24;R25;R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;');
+        Observer.Expect('02_gotokey5', 'Yes|5|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;');
+        Observer.Expect('03_gotokey25', 'Yes|25|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;R24;F(=);R24;C;R25;F(=);R25;C;');
+        Observer.Expect('04_gotokey26_none', 'No|25|R1;F(=);R1;C;R2;F(=);R2;C;R3;F(=);R3;C;R4;F(=);R4;C;R5;F(=);R5;C;R6;F(=);R6;C;R7;F(=);R7;C;R8;F(=);R8;C;R9;F(=);R9;C;R10;F(=);R10;C;R11;F(=);R11;C;R12;F(=);R12;C;R13;F(=);R13;C;R14;F(=);R14;C;R15;F(=);R15;C;R16;F(=);R16;C;R17;F(=);R17;C;R18;F(=);R18;C;R19;F(=);R19;C;R20;F(=);R20;C;R21;F(=);R21;C;R22;F(=);R22;C;R23;F(=);R23;C;R24;F(=);R24;C;R25;F(=);R25;C;');
+        Observer.Expect('05_previous', 'Yes|24|R24;F(=);R24;C;');
+        Observer.Expect('06_first', 'Yes|1|R1;F(=);R1;C;');
+        Observer.Expect('07_last', 'Yes|25|R25;F(=);R25;C;');
+        Observer.Expect('08_next_end', 'No|25|');
+        Observer.Verify();
     end;
 }
 
