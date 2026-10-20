@@ -1064,9 +1064,11 @@ codeunit 77099 "LT AB Tests"
     begin
         RenderSeed();
         TempBlob.CreateOutStream(OutStr);
-#if not BC29PLUS
+#if not BC29PLUS or LT_HELD_BCLINUX_143
+        // BC 29 (LT_HELD_BCLINUX_143): Windows BC 29.0 (Windows run 2026-10-20) raises no error here, like 27/28; the other 29.0 values are
+        // not measured yet (windows-queue). Remove this hold after the Windows check, not when bc-linux #143 (closed) is fixed.
         // BC 27 and 28: the corpus CI containers run the RDLC renderer (ci.yml rdlc_renderer), so SaveAs Pdf renders. The stub
-        // error pinned before was a property of the container, not of BC. BC 29: the container still turns the renderer off at boot.
+        // error pinned before was a property of the container, not of BC.
         ClearLastError();
         Observer.Observe('saveas-pdf ok', Format(TrySaveAsPlainPdf(OutStr)));
         Observer.Observe('saveas-pdf error', GetLastErrorText());
@@ -1078,25 +1080,22 @@ codeunit 77099 "LT AB Tests"
         Observer.Expect('has-output', 'Yes');
         Observer.Verify();
 #else
-        asserterror Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
-        Observer.ObserveError('saveas-pdf');
+        // Linux BC 29: the Linux stub error asserted before ('RDLC report rendering is not implemented on Linux BC ...') is gone with the
+        // bc-linux #143 fix (PR run 39475237141: no error). Observed, not asserted, until the Windows check gives the BC 29.0 values.
+        ClearLastError();
+        Observer.Observe('saveas-pdf ok', Format(TrySaveAsPlainPdf(OutStr)));
+        Observer.Observe('saveas-pdf error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Observer.Observe('has-output', Format(TempBlob.Length() > 0));
-        Observer.Expect('saveas-pdf|text', 'RDLC report rendering is not implemented on Linux BC: the Windows Reporting Service is stubbed out (bc-linux StartupHook.cs Patch #19). IReportingServiceClient.RenderAsync() cannot produce report output on this platform.');
-        Observer.Expect('saveas-pdf|code', 'Report');
-        Observer.Expect('log', 'plain OnPreReport | plain ext OnPreRendering keys=0');
-        Observer.Expect('has-output', 'No');
-        Observer.Verify();
+        Observer.Discard();
 #endif
     end;
 
-#if not BC29PLUS
     [TryFunction]
     local procedure TrySaveAsPlainPdf(var OutStr: OutStream)
     begin
         Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
     end;
-#endif
 
     [Test]
     procedure RenderSaveAsPdf()

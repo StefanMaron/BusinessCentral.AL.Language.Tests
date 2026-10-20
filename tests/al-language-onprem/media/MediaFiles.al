@@ -139,19 +139,14 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('export_return', 'Yes');
         Observer.Expect('source_len', '68');
         Observer.Expect('export_exists', 'Yes');
-#if BC29PLUS
-        Observer.Expect('export_len', '68');
-        Observer.Expect('export_base64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
-#else
-        Observer.Expect('export_len', '93');
-        Observer.Expect('export_base64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAAXNSR0IArs4c6QAAAAFzQklUCOYKW5kAAAAKSURBVAiZY2AAAAACAAH0cWSmAAAAAElFTkSuQmCC');
-#endif
+        // Windows re-encodes this 68-byte PNG to 99 bytes: Windows nightly triage 2026-10-16 (codeunit 68571, the same source PNG:
+        // 'exported length = 99') and Windows BC 29.0 check 2026-10-20 (29.0 re-encodes a PNG to 99 bytes too, bc-linux #161). The Linux
+        // values asserted before (93 on 27/28, 68 on 29) came from the Linux image before bc-linux #135 and #161. The exact Base64 of the
+        // re-encoded file is not measured on Windows: not asserted (windows-queue row).
+        Observer.Expect('export_len', '99');
+        Observer.Ignore('export_base64');
         Observer.Expect('export_overwrite_ok', 'Yes');
-#if BC29PLUS
-        Observer.Expect('export_overwrite_len', '68');
-#else
-        Observer.Expect('export_overwrite_len', '93');
-#endif
+        Observer.Expect('export_overwrite_len', '99');
         Observer.Verify();
     end;
 

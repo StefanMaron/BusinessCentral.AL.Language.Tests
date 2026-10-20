@@ -747,10 +747,10 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Verify();
     end;
 
-#if (LT_HELD_BCLINUX_144 and BC28PLUS and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
+#if BC28PLUS
     // Report.Run, RunModal and Execute of the RDLC report LT V Report A (no request page), and SaveAs Pdf/Word/Excel: the Reporting Triggers
-    // events BC raises, from Windows BC 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned
-    // Linux image ends these calls in its RDLC stub or renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
+    // events BC raises, from Windows BC 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Before the bc-linux fixes
+    // the Linux image ended these calls in its RDLC stub or renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     // BC 27.5 through the TestRunnerHub ends Run/RunModal/Execute with CallbackNotAllowed (a client callback to download the file), so 27
     // depends on the test runner and is not asserted.
     [Test]
@@ -771,6 +771,9 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Verify();
     end;
 
+#if LT_HELD_BCLINUX_158
+    // Held on Linux under bc-linux #158: after the RDLC holds were removed (bc-linux #143/#144), PR run 39475237141 showed on BC 28.5
+    // and 29.0 that Report.RunRequestPage also raises SetupPrinters(in=0) on Linux ('requestpage static' key). Windows does not.
     [Test]
     [HandlerFunctions('RequestPageA')]
     procedure PW_RaisedEvents_Execute()
@@ -787,6 +790,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('execute var', 'Yes|SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
         Observer.Verify();
     end;
+#endif
 
     [Test]
     procedure PW_RaisedEvents_OtherFormats()

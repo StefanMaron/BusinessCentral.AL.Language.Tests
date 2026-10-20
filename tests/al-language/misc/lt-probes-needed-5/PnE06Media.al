@@ -79,9 +79,16 @@ codeunit 72551 "LT PnE Media Import"
         Observer.Observe('hasValue', Format(Rec.Pic.HasValue()));
         Observer.Observe('tenantMedia', TenantMediaText(Rec.Pic.MediaId));
         Rec.DeleteAll();
+#if LT_HELD_BCLINUX_135
+        // Held on Linux (LT_HELD_BCLINUX_135): the values of the Linux image before the bc-linux #135/#161 fixes (the short PNG was refused).
+        // The image at dbee8022 and Windows BC 29.0 (Windows run 2026-10-20, first difference only) give hasValue = Yes. Re-assert after the
+        // Windows check (windows-queue), then remove this hold; it does not end with the bc-linux issue (closed).
         Observer.Expect('hasValue', 'No');
         Observer.Expect('tenantMedia', 'no row');
         Observer.Verify();
+#else
+        Observer.Discard();
+#endif
     end;
 #endif
 }
@@ -205,19 +212,13 @@ codeunit 86144 "LT PW Media Own Blob"
         Observer.Observe('valid', OwnBlob(ValidPng(), false, false));
         Observer.Observe('validGetFirst', OwnBlob(ValidPng(), true, false));
         Observer.Observe('validModify', OwnBlob(ValidPng(), false, true));
-#if BC29PLUS and LT_HELD_BCLINUX_161
+#if BC29PLUS
         // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) re-encodes the PNG to 99 bytes and accepts the short one, as 27.5/28.5 do.
-        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Held on Linux: the Linux
-        // image (BC 29.0) keeps 70 bytes and refuses the short PNG (bc-linux #161).
+        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Before the bc-linux #161 fix
+        // the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
         Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Ignore('validGetFirst');
         Observer.Ignore('validModify');
-        Observer.Verify();
-#elif BC29PLUS
-        // Linux image (BC 29.0) until the pin includes the bc-linux #161 fix (Windows: the held branch above).
-        Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
-        Observer.Expect('validGetFirst', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
-        Observer.Expect('validModify', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70 afterModify hasValue=Yes');
         Observer.Verify();
 #else
         Observer.Expect('valid', 'blobLength=70 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
@@ -234,28 +235,18 @@ codeunit 86144 "LT PW Media Own Blob"
     begin
         Observer.Observe('short', OwnBlob(ShortPng(), false, false));
         Observer.Observe('shortGetFirst', OwnBlob(ShortPng(), true, false));
-#if BC29PLUS and LT_HELD_BCLINUX_161
+#if BC29PLUS
         // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) re-encodes the PNG to 99 bytes and accepts the short one, as 27.5/28.5 do.
-        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Held on Linux: the Linux
-        // image (BC 29.0) keeps 70 bytes and refuses the short PNG (bc-linux #161).
-        Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
-        Observer.Ignore('shortGetFirst');
-        Observer.Verify();
-#elif BC29PLUS
-        // Linux image (BC 29.0) until the pin includes the bc-linux #161 fix (Windows: the held branch above).
-        Observer.Expect('short', 'blobLength=69 hasValue=No returned=null id field=null id');
-        Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=No returned=null id field=null id');
-        Observer.Verify();
-#elif LT_HELD_BCLINUX_135
-        // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes, like the valid one. Only the first difference
-        // was reported, so shortGetFirst is not measured there. The Linux image pinned in ci.yml keeps 69 bytes (bc-linux #135).
+        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Before the bc-linux #161 fix
+        // the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
         Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Ignore('shortGetFirst');
         Observer.Verify();
 #else
-        // Linux image until the pin includes the bc-linux #135 fix (Windows: the held branch above).
-        Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
-        Observer.Expect('shortGetFirst', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
+        // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes, like the valid one. Only the first difference
+        // was reported, so shortGetFirst is not measured there. Before the bc-linux #135 fix the Linux image kept 69 bytes.
+        Observer.Expect('short', 'blobLength=69 hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
+        Observer.Ignore('shortGetFirst');
         Observer.Verify();
 #endif
     end;
@@ -267,27 +258,17 @@ codeunit 86144 "LT PW Media Own Blob"
     begin
         Observer.Observe('valid', OtherBlob(ValidPng()));
         Observer.Observe('short', OtherBlob(ShortPng()));
-#if BC29PLUS and LT_HELD_BCLINUX_161
+#if BC29PLUS
         // Windows BC 29.0 (Windows BC 29.0 check 2026-10-20) re-encodes the PNG to 99 bytes and accepts the short one, as 27.5/28.5 do.
-        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Held on Linux: the Linux
-        // image (BC 29.0) keeps 70 bytes and refuses the short PNG (bc-linux #161).
+        // Only the first difference was reported, so the keys after it are not measured on 29.0 (Ignore). Before the bc-linux #161 fix
+        // the Linux image (BC 29.0) kept 70 bytes and refused the short PNG.
         Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Ignore('short');
         Observer.Verify();
-#elif BC29PLUS
-        // Linux image (BC 29.0) until the pin includes the bc-linux #161 fix (Windows: the held branch above).
-        Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=70 field=row|Description=desc|Mime=image/png|Length=70');
-        Observer.Expect('short', 'hasValue=No returned=null id field=null id');
-        Observer.Verify();
-#elif LT_HELD_BCLINUX_135
-        // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes; the pinned Linux image keeps 69 (bc-linux #135).
+#else
+        // Windows BC 27.5/28.5 (Windows check 2026-10-20) re-encode the short PNG to 99 bytes; before the bc-linux #135 fix the Linux image kept 69.
         Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
         Observer.Expect('short', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
-        Observer.Verify();
-#else
-        // Linux image until the pin includes the bc-linux #135 fix (Windows: the held branch above).
-        Observer.Expect('valid', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=99 field=row|Description=desc|Mime=image/png|Length=99');
-        Observer.Expect('short', 'hasValue=Yes returned=row|Description=desc|Mime=image/png|Length=69 field=row|Description=desc|Mime=image/png|Length=69');
         Observer.Verify();
 #endif
     end;

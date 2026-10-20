@@ -11,9 +11,9 @@
 // patch failed"), so on BC 29 these calls answer with the Linux stub text, which is not Business Central behavior.
 // PDF bytes are never compared (not stable) and PDF text is compressed, so only the page count is asserted.
 // SaveAs Word and Excel of an RDLC layout: asserted with the Windows BC 27.5/28.5 values (Windows check 2026-10-20: zip with the marker, no
-// error) and held on Linux under LT_HELD_BCLINUX_144: the pinned Linux image returns false with 'The system encountered an internal error
+// error) and were held on Linux until the bc-linux #144 fix: the Linux image returned false with 'The system encountered an internal error
 // while rendering the report.' (ReportingService:Rpc) after OnPreRendering. Windows BC 29.0 (check 2026-10-20) gives the same values; held on
-// 29 under LT_HELD_BCLINUX_143 (the BC 29 Linux container turns the renderer off at boot).
+// 29 until the bc-linux #143 fix (the BC 29 Linux container turned the renderer off at boot).
 // BC versions: 27 - 29
 
 codeunit 79259 "LT AM Rdlc Log"
@@ -330,8 +330,7 @@ codeunit 79257 "LT AM Rdlc Output Tests"
     end;
 #endif
 
-#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
-    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned Linux image fails in
+    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Before the bc-linux fixes the Linux image failed in
     // the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     [Test]
     procedure TextRdlc_SaveAsWord()
@@ -352,10 +351,8 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer.Expect('unreadable_parts', '');
         Observer.Verify();
     end;
-#endif
 
-#if (LT_HELD_BCLINUX_144 and not BC29PLUS) or (LT_HELD_BCLINUX_143 and BC29PLUS)
-    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Held on Linux: the pinned Linux image fails in
+    // Windows BC 27.5, 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Before the bc-linux fixes the Linux image failed in
     // the Mono renderer (ReportingService:Rpc, bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
     [Test]
     procedure TextRdlc_SaveAsExcel()
@@ -376,7 +373,6 @@ codeunit 79257 "LT AM Rdlc Output Tests"
         Observer.Expect('unreadable_parts', '');
         Observer.Verify();
     end;
-#endif
 
     [Test]
     procedure TextRdlc_SaveAsHtml_IsRefused()

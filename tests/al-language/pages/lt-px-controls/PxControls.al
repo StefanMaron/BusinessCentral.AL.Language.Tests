@@ -1156,9 +1156,9 @@ codeunit 86200 "LT PX Nav Tests"
     end;
 
     [Test]
-    // Windows BC 27.5 stores both entries like 28.5 (Windows check 2026-10-20). The Linux image's BC 27.5 refuses every entry on the
-    // ClosingDates control (c12/31/2025 and 12/30/2025) with the license file's allowed-interval error ('??11*|??12*|??01*|??02*', CI runs
-    // 39354581861, 39355900105): on 27 the stored-entry cases are held under LT_HELD_BCLINUX_153 (bc-linux #153).
+    // Windows BC 27.5 stores both entries like 28.5 (Windows check 2026-10-20). Before the bc-linux #153 fix the Linux image's BC 27.5
+    // refused every entry on the ClosingDates control (c12/31/2025 and 12/30/2025) with the license file's allowed-interval error
+    // ('??11*|??12*|??01*|??02*', CI runs 39354581861, 39355900105).
     procedure PX_ClosingDatesOffOverClosingField()
     var
         Observer: Codeunit "Probe Observer";
@@ -1175,22 +1175,14 @@ codeunit 86200 "LT PX Nav Tests"
         Card.Close();
         Observer.Observe('off_set_C', TrySet(1, 'C12/31/2025'));
         Observer.Observe('off_set_c', TrySet(1, 'c12/31/2025'));
-#if BC28PLUS or LT_HELD_BCLINUX_153
         Observer.Observe('on_set_c', TrySet(2, 'c12/31/2025'));
-#endif
-#if BC28PLUS or LT_HELD_BCLINUX_153
         Observer.Observe('on_set_plain', TrySet(2, '12/30/2025'));
-#endif
         Observer.Expect('off_value', '12/31/2025');
         Observer.Expect('on_value', 'C12/31/2025');
         Observer.Expect('off_set_C', 'err TestValidation Validation error for Field: ClosingOff,  Message = ''Your entry of ''C12/31/2025'' is not an acceptable value for ''Closing''. Cannot specify a closing date. (Select Refresh to discard errors)'' | off= on= | stored=');
         Observer.Expect('off_set_c', 'err TestValidation Validation error for Field: ClosingOff,  Message = ''Your entry of ''c12/31/2025'' is not an acceptable value for ''Closing''. Cannot specify a closing date. (Select Refresh to discard errors)'' | off= on= | stored=');
-#if BC28PLUS or LT_HELD_BCLINUX_153
         Observer.Expect('on_set_c', 'ok | off=12/31/2025 on=C12/31/2025 | stored=C12/31/25 closing=Yes');
-#endif
-#if BC28PLUS or LT_HELD_BCLINUX_153
         Observer.Expect('on_set_plain', 'ok | off=12/30/2025 on=12/30/2025 | stored=12/30/25 closing=No');
-#endif
         Observer.Verify();
     end;
 
