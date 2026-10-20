@@ -431,7 +431,7 @@ codeunit 61400 "Test DotNet Value Kinds"
             2:
                 Secret := Str.Concat('ab', 'cd');
             3:
-                Secret := Str.Empty;
+                Secret := Str.Concat('', '');
             4:
                 Secret := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61400');
             5:
