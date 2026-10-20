@@ -1150,31 +1150,10 @@ codeunit 73850 "LT RpT Request Page"
         Rpt.Run();
     end;
 
-    [Test]
-    [HandlerFunctions('PxCloseModeErrorHandler')]
-    procedure PX_HandlerError_QueryCloseAnswersFalse()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        asserterror PxRunCloseMode(1);
-        Observer.ObserveError('err');
-        Observer.Observe('log', L.Take());
-        Observer.Finish();
-    end;
-
-    [Test]
-    [HandlerFunctions('PxCloseModeErrorHandler')]
-    procedure PX_HandlerError_QueryCloseRaises()
-    var
-        Observer: Codeunit "Probe Observer";
-    begin
-        Seed();
-        asserterror PxRunCloseMode(2);
-        Observer.ObserveError('err');
-        Observer.Observe('log', L.Take());
-        Observer.Finish();
-    end;
+    // Not tests (writer PX, local BC 29.0): with OnQueryClosePage answering false (mode 1) or raising (mode 2), a handler error gives the
+    // caller the handler's error ('px handler raised', Dialog); the log is 'RP OnOpenPage;h;RP OnQueryClosePage action=Cancel;' and
+    // OnClosePage does not run. The request page then stays open in the session: a later test codeunit failed at Report.Run with
+    // 'Server page is already open.', so these shapes cannot be asserted without breaking other tests.
 
     [Test]
     [HandlerFunctions('PxCloseModeErrorHandler')]
