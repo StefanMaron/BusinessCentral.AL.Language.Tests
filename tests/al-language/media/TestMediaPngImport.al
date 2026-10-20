@@ -450,7 +450,20 @@ codeunit 60130 "Test Media Png Import"
         Row.Delete();
         QeObserveOther(Observer, 'after delete', 'QE1', Id);
         Observer.Observe('tenant media still there', Format(TenantMedia.Get(Id)));
-        Observer.Finish();
+        Observer.Expect('before has_value', 'Yes');
+        Observer.Expect('before same_id', 'Yes');
+        Observer.Expect('before null_id', 'No');
+        Observer.Expect('before in_tenant_media', 'Yes');
+        Observer.Expect('before export_result', 'Yes');
+        Observer.Expect('before export_nonempty', 'Yes');
+        Observer.Expect('after delete has_value', 'No');
+        Observer.Expect('after delete same_id', 'Yes');
+        Observer.Expect('after delete null_id', 'No');
+        Observer.Expect('after delete in_tenant_media', 'No');
+        Observer.Expect('after delete export_result', 'No');
+        Observer.Expect('after delete export_nonempty', 'No');
+        Observer.Expect('tenant media still there', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -471,7 +484,14 @@ codeunit 60130 "Test Media Png Import"
         Row.Get('QE2');
         Observer.Observe('source has new id', Format(Row.Picture.MediaId() <> Id));
         QeObserveOther(Observer, 'after replace', 'QE2', Id);
-        Observer.Finish();
+        Observer.Expect('source has new id', 'Yes');
+        Observer.Expect('after replace has_value', 'No');
+        Observer.Expect('after replace same_id', 'Yes');
+        Observer.Expect('after replace null_id', 'No');
+        Observer.Expect('after replace in_tenant_media', 'No');
+        Observer.Expect('after replace export_result', 'No');
+        Observer.Expect('after replace export_nonempty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -492,7 +512,14 @@ codeunit 60130 "Test Media Png Import"
         Other.Insert();
         Row.Delete();
         QeObserveOther(Observer, 'after delete', 'QE3', Id);
-        Observer.Finish();
+        Observer.Expect('transferred same id', 'Yes');
+        Observer.Expect('after delete has_value', 'No');
+        Observer.Expect('after delete same_id', 'Yes');
+        Observer.Expect('after delete null_id', 'No');
+        Observer.Expect('after delete in_tenant_media', 'No');
+        Observer.Expect('after delete export_result', 'No');
+        Observer.Expect('after delete export_nonempty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -516,7 +543,13 @@ codeunit 60130 "Test Media Png Import"
         Row.Picture.ImportStream(InStr, 'replacement');
         Row.Modify();
         QeObserveOther(Observer, 'after replace', 'QE4', Id);
-        Observer.Finish();
+        Observer.Expect('after replace has_value', 'No');
+        Observer.Expect('after replace same_id', 'Yes');
+        Observer.Expect('after replace null_id', 'No');
+        Observer.Expect('after replace in_tenant_media', 'No');
+        Observer.Expect('after replace export_result', 'No');
+        Observer.Expect('after replace export_nonempty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -536,7 +569,13 @@ codeunit 60130 "Test Media Png Import"
         Row.Get('QE5');
         Row.Delete();
         Observer.Observe('after both deleted in_tenant_media', Format(TenantMedia.Get(Id)));
-        Observer.Finish();
+        Observer.Expect('after other delete has_value', 'No');
+        Observer.Expect('after other delete same_id', 'Yes');
+        Observer.Expect('after other delete in_tenant_media', 'No');
+        Observer.Expect('after other delete export_result', 'No');
+        Observer.Expect('after other delete export_nonempty', 'No');
+        Observer.Expect('after both deleted in_tenant_media', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -557,7 +596,13 @@ codeunit 60130 "Test Media Png Import"
         Other.Get('QE6');
         Observer.Observe('other has new id', Format(Other.Picture.MediaId() <> Id));
         QeObserveAlt(Observer, 'after other replace', 'QE6', Id);
-        Observer.Finish();
+        Observer.Expect('other has new id', 'Yes');
+        Observer.Expect('after other replace has_value', 'No');
+        Observer.Expect('after other replace same_id', 'Yes');
+        Observer.Expect('after other replace in_tenant_media', 'No');
+        Observer.Expect('after other replace export_result', 'No');
+        Observer.Expect('after other replace export_nonempty', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -591,7 +636,12 @@ codeunit 60130 "Test Media Png Import"
         Observer.Observe('old in_tenant_media', Format(TenantMedia.Get(Id)));
         Other.Delete();
         Observer.Observe('after delete old in_tenant_media', Format(TenantMedia.Get(Id)));
-        Observer.Finish();
+        Observer.Expect('picture new id', 'Yes');
+        Observer.Expect('picture2 same id', 'Yes');
+        Observer.Expect('picture2 has_value', 'No');
+        Observer.Expect('old in_tenant_media', 'No');
+        Observer.Expect('after delete old in_tenant_media', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -608,7 +658,13 @@ codeunit 60130 "Test Media Png Import"
         Row.Delete();
         Commit();
         QeObserveOther(Observer, 'after committed delete', 'QE8', Id);
-        Observer.Finish();
+        Observer.Expect('after committed delete has_value', 'No');
+        Observer.Expect('after committed delete same_id', 'Yes');
+        Observer.Expect('after committed delete null_id', 'No');
+        Observer.Expect('after committed delete in_tenant_media', 'No');
+        Observer.Expect('after committed delete export_result', 'No');
+        Observer.Expect('after committed delete export_nonempty', 'No');
+        Observer.Verify();
     end;
 }
 

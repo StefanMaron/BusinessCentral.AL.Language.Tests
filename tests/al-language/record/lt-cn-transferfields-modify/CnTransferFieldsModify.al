@@ -255,7 +255,10 @@ codeunit 84886 "LT CN TF Modify"
         asserterror R1.Modify();
         Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +276,10 @@ codeunit 84886 "LT CN TF Modify"
         asserterror R1.Modify();
         Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -293,7 +299,10 @@ codeunit 84886 "LT CN TF Modify"
         asserterror R1.Modify();
         Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -311,7 +320,10 @@ codeunit 84886 "LT CN TF Modify"
         asserterror R1.Modify();
         Observer.ObserveError('modify');
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('modify|text', 'The changes to the LT CN TF Row record cannot be saved because some information on the page is not up-to-date. Close the page, reopen it, and try again.\\Identification fields and values:\\Id=''1''');
+        Observer.Expect('modify|code', 'DB:RecordChanged');
+        Observer.Expect('db', 'second/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -329,8 +341,7 @@ codeunit 84886 "LT CN TF Modify"
         Commit();
         O.Get(1);
         R1.TransferFields(O);
-        asserterror R1.Modify();
-        Observer.ObserveError('modify');
+        R1.Modify();
         Observer.Observe('db', NameInDb());
         Observer.Finish();
     end;
@@ -347,8 +358,7 @@ codeunit 84886 "LT CN TF Modify"
         QeInsertOther();
         O.Get(1);
         R3.TransferFields(O);
-        asserterror R3.Modify();
-        Observer.ObserveError('modify');
+        R3.Modify();
         Observer.Observe('db', NameInDb());
         Observer.Finish();
     end;
@@ -367,8 +377,7 @@ codeunit 84886 "LT CN TF Modify"
         O.Name := 'mem';
         O.Qty := 4;
         R3.TransferFields(O);
-        asserterror R3.Modify();
-        Observer.ObserveError('modify');
+        R3.Modify();
         Observer.Observe('db', NameInDb());
         Observer.Finish();
     end;
@@ -386,8 +395,7 @@ codeunit 84886 "LT CN TF Modify"
         QeModifyElsewhere();
         O.Get(1);
         R3.TransferFields(O);
-        asserterror R3.Modify();
-        Observer.ObserveError('modify');
+        R3.Modify();
         Observer.Observe('db', NameInDb());
         Observer.Finish();
     end;
@@ -437,6 +445,26 @@ codeunit 84886 "LT CN TF Modify"
         Observer.Observe('db createdat = own', Format(R4.SystemCreatedAt = OwnCreated));
         Observer.Observe('db createdat = other', Format(R4.SystemCreatedAt = O.SystemCreatedAt));
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('other newer than own (setup)', 'Yes');
+        Observer.Expect('buffer systemid = own', 'Yes');
+        Observer.Expect('buffer systemid = other', 'No');
+        Observer.Expect('buffer rowversion = own', 'Yes');
+        Observer.Expect('buffer rowversion = other', 'No');
+        Observer.Expect('buffer modifiedat = own', 'No');
+        Observer.Expect('buffer modifiedat = other', 'Yes');
+        Observer.Expect('buffer createdat = own', 'No');
+        Observer.Expect('buffer createdat = other', 'Yes');
+        Observer.Expect('after modify buffer rowversion > other', 'Yes');
+        Observer.Expect('after modify buffer systemid = own', 'Yes');
+        Observer.Expect('db systemid = own', 'Yes');
+        Observer.Expect('db rowversion > own', 'Yes');
+        Observer.Expect('db rowversion > other', 'Yes');
+        Observer.Expect('db rowversion = buffer', 'Yes');
+        Observer.Expect('db modifiedat > own', 'Yes');
+        Observer.Expect('db modifiedat > other', 'Yes');
+        Observer.Expect('db createdat = own', 'Yes');
+        Observer.Expect('db createdat = other', 'No');
+        Observer.Expect('db', 'other/3');
+        Observer.Verify();
     end;
 }
