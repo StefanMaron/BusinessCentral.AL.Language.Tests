@@ -540,6 +540,7 @@ is only a reference.
 | 1768 | AL0582 | An interface implementation omits `temporary` on a `var` record parameter. |
 | 1769 | AL0122 | An interface variable assigned from a field of an enum that does not implement the interface. |
 | 1770 | AL0698 | A `case` statement over a Record value. |
+| 1290 | AL0220 | A page sets its own Editable property to a page variable (controls accept an expression). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
