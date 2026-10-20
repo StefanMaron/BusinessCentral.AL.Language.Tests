@@ -72,21 +72,39 @@ codeunit 79926 "LT AS TestField Texts"
     procedure PX_ByteValues()
     var
         Observer: Codeunit "Probe Observer";
+    begin
+        PxObserveBytes(Observer, '0,1,2,3,4,5,7,9,11,13,31,32,65');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure PX_ByteValues_High()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PxObserveBytes(Observer, '127,128,129,159,160,200,255');
+        Observer.Finish();
+    end;
+
+    // U+007F (Byte 127) is shown as <U+007F> so the asserted literal has no invisible character.
+    local procedure PxObserveBytes(var Observer: Codeunit "Probe Observer"; List: Text)
+    var
         Row: Record "LT AS TF Row";
         B: Byte;
         Item: Text;
         V: Integer;
+        Del: Text[1];
     begin
+        Del[1] := 127;
         Seed(Row);
         Row.Num := 250;
         Row.Modify();
-        foreach Item in '0,1,2,3,4,5,7,9,11,13,31,32,65,127,128,129,159,160,200,255'.Split(',') do begin
+        foreach Item in List.Split(',') do begin
             Evaluate(V, Item);
             B := V;
             asserterror NumRef(Row).TestField(B);
-            Observer.Observe('byte' + Format(V), Helper.LastError());
+            Observer.Observe('byte' + Format(V), Helper.LastError().Replace(Del, '<U+007F>'));
         end;
-        Observer.Finish();
     end;
 
     [Test]
