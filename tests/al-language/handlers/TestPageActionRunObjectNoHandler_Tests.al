@@ -394,7 +394,14 @@ codeunit 60285 "TPARONH Tests"
 
     // ARM 7: invoked with nothing bound, the dialog RunObject IS refused, and with the message
     // written for this case -- not the 'Unhandled UI' the Page.Run controls above get.
+    // Held (publisher, bump 32): this test fails depending on the run, with the TargetException 'Object type
+    // ...Codeunit69640 does not match target type' when "TPT Teardown Tests" (69640) ran earlier in the same session. The
+    // master push run 39417479271 failed it on 27.5 and 29.0 (twice); the bump 30 pull request run passed it. Windows BC 29.0
+    // shows the same exception in a full TestRunnerHub run (bc-linux #162). An outcome that changes between runs is not an
+    // oracle: held under LT_HELD_BCLINUX_162 on every version, like CB 667.22. The assertions do not change.
+#if LT_HELD_BCLINUX_162
     [Test]
+#endif
     procedure RunObjectActionOnADialogTargetWithoutAHandlerIsRefused()
     var
         Host: TestPage "TPARONH Host";
@@ -413,7 +420,14 @@ codeunit 60285 "TPARONH Tests"
     // host's current row -- before BC found nobody bound. Kept apart from arm 7 so the error and
     // the opening are measured independently. Reads the in-memory probe, since the refusal rolls
     // uncommitted rows back; the sentinel proves the probe survived the error.
+    // Held (publisher, bump 32): this test fails depending on the run, with the TargetException 'Object type
+    // ...Codeunit69640 does not match target type' when "TPT Teardown Tests" (69640) ran earlier in the same session. The
+    // master push run 39417479271 failed it on 27.5 and 29.0 (twice); the bump 30 pull request run passed it. Windows BC 29.0
+    // shows the same exception in a full TestRunnerHub run (bc-linux #162). An outcome that changes between runs is not an
+    // oracle: held under LT_HELD_BCLINUX_162 on every version, like CB 667.22. The assertions do not change.
+#if LT_HELD_BCLINUX_162
     [Test]
+#endif
     procedure RunObjectActionOnADialogTargetWithoutAHandlerOpensItBeforeRefusing()
     var
         Host: TestPage "TPARONH Host";
