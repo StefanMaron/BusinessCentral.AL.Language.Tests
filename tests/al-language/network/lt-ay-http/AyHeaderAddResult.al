@@ -415,7 +415,13 @@ codeunit 80507 "LT AY Header Add Result"
         GetStatement(Observer, H, 'missing', 'X-None');
         GetStatement(Observer, H, 'bad_name', 'Bad Name');
         GetStatement(Observer, H, 'content_name', 'Content-Type');
-        Observer.Finish();
+        Observer.Expect('missing', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('missing_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('bad_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('bad_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('content_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('content_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -429,7 +435,13 @@ codeunit 80507 "LT AY Header Add Result"
         GetStatement(Observer, H, 'missing', 'X-None');
         GetStatement(Observer, H, 'bad_name', 'Bad Name');
         GetStatement(Observer, H, 'content_name', 'Content-Type');
-        Observer.Finish();
+        Observer.Expect('missing', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('missing_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('bad_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('bad_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('content_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('content_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -443,7 +455,13 @@ codeunit 80507 "LT AY Header Add Result"
         GetStatement(Observer, H, 'missing', 'X-None');
         GetStatement(Observer, H, 'bad_name', 'Bad Name');
         GetStatement(Observer, H, 'content_name', 'Content-Type');
-        Observer.Finish();
+        Observer.Expect('missing', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('missing_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('bad_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('bad_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('content_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('content_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -456,7 +474,11 @@ codeunit 80507 "LT AY Header Add Result"
         C.GetHeaders(H);
         GetStatement(Observer, H, 'empty', '');
         GetStatement(Observer, H, 'request_name', 'Accept');
-        Observer.Finish();
+        Observer.Expect('empty', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('empty_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('request_name', 'E[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Expect('request_name_expr', 'No n=0 last=[Exception of type ''Microsoft.Dynamics.Nav.Types.Exceptions.NavNclInvalidHeaderException'' was thrown.|InvalidHeader]');
+        Observer.Verify();
     end;
 
     local procedure AddLastError(var Observer: Codeunit "Probe Observer"; var H: HttpHeaders; ObsKey: Text; N: Text; V: Text)
@@ -483,7 +505,15 @@ codeunit 80507 "LT AY Header Add Result"
         AddLastError(Observer, H, 'content_name', 'Content-Type', 'text/plain');
         AddLastError(Observer, H, 'bad_value', 'Accept', 'json');
         AddLastError(Observer, H, 'ok', 'X-Ok', 'v');
-        Observer.Finish();
+        Observer.Expect('bad_name_after_prior', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('bad_name_after_clear', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('content_name_after_prior', 'No [The requested operation cannot be performed in this context.|InvalidOperation]');
+        Observer.Expect('content_name_after_clear', 'No [The requested operation cannot be performed in this context.|InvalidOperation]');
+        Observer.Expect('bad_value_after_prior', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('bad_value_after_clear', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('ok_after_prior', 'Yes [prior error|Dialog]');
+        Observer.Expect('ok_after_clear', 'Yes [|]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -503,6 +533,14 @@ codeunit 80507 "LT AY Header Add Result"
         H2 := R.Headers();
         AddLastError(Observer, H2, 'response_content_name', 'Content-Type', 'text/plain');
         AddLastError(Observer, H2, 'response_line_break', 'X-A', 'a' + Format(Lf) + 'b');
-        Observer.Finish();
+        Observer.Expect('content_request_name_after_prior', 'No [The requested operation cannot be performed in this context.|InvalidOperation]');
+        Observer.Expect('content_request_name_after_clear', 'No [The requested operation cannot be performed in this context.|InvalidOperation]');
+        Observer.Expect('content_bad_value_after_prior', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('content_bad_value_after_clear', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('response_content_name_after_prior', 'No [The requested operation cannot be performed in this context.|InvalidOperation]');
+        Observer.Expect('response_content_name_after_clear', 'No [The requested operation cannot be performed in this context.|InvalidOperation]');
+        Observer.Expect('response_line_break_after_prior', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Expect('response_line_break_after_clear', 'No [Invalid HTTP header. Please, make sure the format of the header is correct.|InvalidHeader:Format]');
+        Observer.Verify();
     end;
 }

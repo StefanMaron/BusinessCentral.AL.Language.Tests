@@ -148,7 +148,10 @@ codeunit 80508 "LT AY Content Length"
         Observer.Observe('rewritten', Len(C));
         C.ReadAs(T);
         Observer.Observe('second_read', Len(C) + ' read=' + T);
-        Observer.Finish();
+        Observer.Expect('first_read', 'Yes[5]');
+        Observer.Expect('rewritten', 'Yes[5]');
+        Observer.Expect('second_read', 'Yes[5] read=a longer text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -168,7 +171,11 @@ codeunit 80508 "LT AY Content Length"
         Observer.Observe('third_write', Len(C));
         C.ReadAs(T);
         Observer.Observe('third_read', Len(C) + ' read=' + T);
-        Observer.Finish();
+        Observer.Expect('rewritten', 'Yes[5]');
+        Observer.Expect('second_read', 'Yes[5] read=hi');
+        Observer.Expect('third_write', 'Yes[5]');
+        Observer.Expect('third_read', 'Yes[5] read=a much longer text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -192,7 +199,9 @@ codeunit 80508 "LT AY Content Length"
                 Out += '[' + V + ']';
         Observer.Observe('old_handle', Out);
         Observer.Observe('new_handle', Len(C));
-        Observer.Finish();
+        Observer.Expect('old_handle', 'Yes[5]');
+        Observer.Expect('new_handle', 'Yes[5]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -214,6 +223,8 @@ codeunit 80508 "LT AY Content Length"
         Observer.Observe('stream', Len(C));
         C.ReadAs(T);
         Observer.Observe('stream_read', Len(C) + ' read=' + T);
-        Observer.Finish();
+        Observer.Expect('stream', 'Yes[5]');
+        Observer.Expect('stream_read', 'Yes[5] read=hello world');
+        Observer.Verify();
     end;
 }

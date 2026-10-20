@@ -331,33 +331,105 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
+#if BC29PLUS
     [HandlerFunctions('ModeHandler,MenuHandler')]
+#else
+    [HandlerFunctions('ModeHandler')]
+#endif
     procedure PY_HandlerTrue_StrMenuAllowOnce()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Menu(Observer, 2, 'http://localhost:1/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+#else
+        Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+#else
+        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', 'HttpRequest:Security');
+#else
+        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#else
+        Observer.Expect('calls', '0 menu=0 ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
+#if BC29PLUS
     [HandlerFunctions('ModeHandler,MenuHandler')]
+#else
+    [HandlerFunctions('ModeHandler')]
+#endif
     procedure PY_HandlerTrue_StrMenuBlockOnce()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Menu(Observer, 4, 'http://localhost:1/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+#else
+        Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', '');
+#else
+        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', '');
+#else
+        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#else
+        Observer.Expect('calls', '0 menu=0 ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
+#if BC29PLUS
     [HandlerFunctions('ModeHandler,MenuHandler')]
+#else
+    [HandlerFunctions('ModeHandler')]
+#endif
     procedure PY_HandlerTrue_StrMenuCancel()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Menu(Observer, 0, 'http://localhost:1/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+#else
+        Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', '');
+#else
+        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', '');
+#else
+        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#else
+        Observer.Expect('calls', '0 menu=0 ');
+#endif
+        Observer.Verify();
     end;
 
     local procedure Unused(var Observer: Codeunit "Probe Observer"; ObsKey: Text; NewMode: Text; Url: Text)
@@ -377,25 +449,43 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
+#if BC29PLUS
     [HandlerFunctions('ModeHandler,MenuHandler')]
+#else
+    [HandlerFunctions('ModeHandler')]
+#endif
     procedure PY_UnusedResult_BlockOnce()
     var
         Observer: Codeunit "Probe Observer";
     begin
         MenuChoice := 4;
         Unused(Observer, 'block_once', 'true', 'http://localhost:1/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('block_once', 'E[The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=1 menu=1');
+#else
+        Observer.Expect('block_once', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
+#if BC29PLUS
     [HandlerFunctions('ModeHandler,MenuHandler')]
+#else
+    [HandlerFunctions('ModeHandler')]
+#endif
     procedure PY_UnusedResult_AllowOnceRefused()
     var
         Observer: Codeunit "Probe Observer";
     begin
         MenuChoice := 2;
         Unused(Observer, 'allow_once', 'true', 'http://localhost:1/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('allow_once', 'E[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=1');
+#else
+        Observer.Expect('allow_once', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -407,11 +497,30 @@ codeunit 98550 "LT AY Http Handler"
         Unused(Observer, 'mocked_404', 'status', 'https://example.invalid/x');
         Unused(Observer, 'handler_error', 'error', 'https://example.invalid/x');
         Unused(Observer, 'no_base_a_b', 'status', 'a/b');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('mocked_404', 'ok status=404 reason=[Not Found] success=No blocked=No calls=1 menu=0');
+#else
+        Observer.Expect('mocked_404', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
+#endif
+#if BC29PLUS
+        Observer.Expect('handler_error', 'E[mode handler failed|Dialog] status=200 reason=[OK] success=Yes blocked=No calls=1 menu=0');
+#else
+        Observer.Expect('handler_error', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
+#endif
+#if BC29PLUS
+        Observer.Expect('no_base_a_b', 'E[Invalid URI: The URI is empty.|AL:UriFormat] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
+#else
+        Observer.Expect('no_base_a_b', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
+#if BC29PLUS
     [HandlerFunctions('ModeHandler,MenuHandler')]
+#else
+    [HandlerFunctions('ModeHandler')]
+#endif
     procedure PY_FailedCall_IntoFilledResponse()
     var
         Observer: Codeunit "Probe Observer";
@@ -430,7 +539,27 @@ codeunit 98550 "LT AY Http Handler"
         Mode := 'error';
         ClearLastError();
         Observer.Observe('third', Format(TryGet(Client, 'https://example.invalid/three', Resp, Ret)) + ' ret=' + Format(Ret) + ' ' + Describe(Resp));
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('first', 'Yes ret=Yes status=201 reason=[Created] success=Yes blocked=No');
+#else
+        Observer.Expect('first', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('second', 'Yes ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+#else
+        Observer.Expect('second', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('second_error', '|');
+#else
+        Observer.Expect('second_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest');
+#endif
+#if BC29PLUS
+        Observer.Expect('third', 'No ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+#else
+        Observer.Expect('third', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
+#endif
+        Observer.Verify();
     end;
 
     local procedure Reason(var Observer: Codeunit "Probe Observer"; Status: Integer)
@@ -445,7 +574,7 @@ codeunit 98550 "LT AY Http Handler"
         if TryGet(Client, 'https://example.invalid/s', Resp, Ret) then
             Observer.Observe(Format(Status), 'ret=' + Format(Ret) + ' ' + Describe(Resp))
         else
-            Observer.Observe(Format(Status), 'E[' + GetLastErrorText() + '|' + GetLastErrorCode() + ']');
+            Observer.Observe(Format(Status), 'E[' + CopyStr(GetLastErrorText(), 1, 60) + '|' + GetLastErrorCode() + ']');
     end;
 
     [Test]
@@ -521,7 +650,32 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'host_only_plain', 'https://example.invalid', 'orders');
         Join(Observer, 'dot_slash', 'https://example.invalid/api/v1/', './x');
         Join(Observer, 'empty', 'https://example.invalid/api/v1/', '');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('noslash_plain', 'Yes [https://example.invalid/api/orders]');
+#else
+        Observer.Expect('noslash_plain', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('noslash_rooted', 'Yes [https://example.invalid/orders]');
+#else
+        Observer.Expect('noslash_rooted', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('host_only_plain', 'Yes [https://example.invalid/orders]');
+#else
+        Observer.Expect('host_only_plain', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('dot_slash', 'Yes [https://example.invalid/api/v1/x]');
+#else
+        Observer.Expect('dot_slash', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('empty', 'Yes [https://example.invalid/api/v1/]');
+#else
+        Observer.Expect('empty', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -535,7 +689,32 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'dot_dot_middle', 'https://example.invalid/api/v1/', 'a/../b');
         Join(Observer, 'two_up', 'https://example.invalid/api/v1/', '../../../x');
         Join(Observer, 'fragment', 'https://example.invalid/api/v1/', 'orders?x=1#f');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('absolute', 'Yes [https://other.invalid/abs]');
+#else
+        Observer.Expect('absolute', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('scheme_relative', 'Yes [https://other.invalid/x]');
+#else
+        Observer.Expect('scheme_relative', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('dot_dot_middle', 'Yes [https://example.invalid/api/v1/b]');
+#else
+        Observer.Expect('dot_dot_middle', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('two_up', 'Yes [https://example.invalid/x]');
+#else
+        Observer.Expect('two_up', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('fragment', 'Yes [https://example.invalid/api/v1/orders]');
+#else
+        Observer.Expect('fragment', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -548,7 +727,27 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'space', 'https://example.invalid/api/v1/', 'a b');
         Join(Observer, 'trailing_slash', 'https://example.invalid/api/v1/', 'orders/');
         Join(Observer, 'query_on_noslash', 'https://example.invalid/api/v1', '?q=1');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('base_query', 'Yes [https://example.invalid/api/v1/orders]');
+#else
+        Observer.Expect('base_query', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('space', 'Yes [https://example.invalid/api/v1/a%20b]');
+#else
+        Observer.Expect('space', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('trailing_slash', 'Yes [https://example.invalid/api/v1/orders/]');
+#else
+        Observer.Expect('trailing_slash', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('query_on_noslash', 'Yes [https://example.invalid/api/v1]');
+#else
+        Observer.Expect('query_on_noslash', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -561,7 +760,27 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'rooted', '', '/orders');
         Join(Observer, 'x_y', '', 'x/y');
         Join(Observer, 'a_b_c', '', 'a/b/c');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('orders', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('orders', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('rooted', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('rooted', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('x_y', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('x_y', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('a_b_c', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('a_b_c', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -574,6 +793,26 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'query_x', '', '?x=2');
         Join(Observer, 'empty', '', '');
         Join(Observer, 'host_no_scheme', '', 'example.invalid/x');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('ab_cd', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('ab_cd', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('query_x', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('query_x', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('empty', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('empty', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+#if BC29PLUS
+        Observer.Expect('host_no_scheme', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
+#else
+        Observer.Expect('host_no_scheme', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
+#endif
+        Observer.Verify();
     end;
 }

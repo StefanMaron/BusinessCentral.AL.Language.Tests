@@ -87,7 +87,11 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, '', 0, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('calls', '0 menu=0 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -97,7 +101,11 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, '', 2, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
+        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Verify();
     end;
 
     [Test]
@@ -107,7 +115,27 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'false', 0, 'https://example.invalid/mocked');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=Yes status=201 reason=[Mocked] success=Yes blocked=No');
+#else
+        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', '');
+#else
+        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', '');
+#else
+        Observer.Expect('last_code', 'MissingUIHandler');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=0 ');
+#else
+        Observer.Expect('calls', '0 menu=0 ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -117,7 +145,15 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 0, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+        Observer.Expect('last_code', 'MissingUIHandler');
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=0 ');
+#else
+        Observer.Expect('calls', '0 menu=0 ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -127,7 +163,15 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 2, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#else
+        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -137,7 +181,15 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 4, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+        Observer.Expect('last_error', '');
+        Observer.Expect('last_code', '');
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#else
+        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,9 +201,16 @@ codeunit 98700 "LT PY Http Default Policy"
     begin
         Mode := 'true';
         MenuChoice := 4;
+        Calls := 0;
+        MenuCalls := 0;
         ClearLastError();
         Observer.Observe('statement', Format(TryGetStatement('http://localhost:1/x', Resp)) + ' [' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(Resp) + ' calls=' + Format(Calls) + ' menu=' + Format(MenuCalls));
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('statement', 'No [The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=1 menu=1');
+#else
+        Observer.Expect('statement', 'No [The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=0 menu=1');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -234,7 +293,11 @@ codeunit 98701 "LT PY Http Allow All"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, '', 0, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('calls', '0 menu=0 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -244,7 +307,11 @@ codeunit 98701 "LT PY Http Allow All"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, '', 2, 'http://localhost:1/x');
-        Observer.Finish();
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
+        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +321,27 @@ codeunit 98701 "LT PY Http Allow All"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'false', 0, 'https://example.invalid/mocked');
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('result', 'ret=Yes status=201 reason=[Mocked] success=Yes blocked=No');
+#else
+        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_error', '');
+#else
+        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+#endif
+#if BC29PLUS
+        Observer.Expect('last_code', '');
+#else
+        Observer.Expect('last_code', 'MissingUIHandler');
+#endif
+#if BC29PLUS
+        Observer.Expect('calls', '1 menu=0 ');
+#else
+        Observer.Expect('calls', '0 menu=0 ');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -296,6 +383,8 @@ codeunit 98701 "LT PY Http Allow All"
     begin
         Mode := 'true';
         MenuChoice := 4;
+        Calls := 0;
+        MenuCalls := 0;
         ClearLastError();
         Observer.Observe('statement', Format(TryGetStatement('http://localhost:1/x', Resp)) + ' [' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(Resp) + ' calls=' + Format(Calls) + ' menu=' + Format(MenuCalls));
         Observer.Finish();
