@@ -268,7 +268,9 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('pic mediaid null', Format(IsNullGuid(Other.Pic.MediaId())));
         OutBlob.CreateOutStream(O);
         Observer.Observe('pic exportstream', Format(Other.Pic.ExportStream(O)));
+#if not BC29PLUS or LT_HELD_BCLINUX_135
         Observer.Observe('pic exported length', Format(OutBlob.Length()));
+#endif
         Other.CalcFields(Data);
         Observer.Observe('data hasvalue', Format(Other.Data.HasValue()));
         Other.Data.CreateInStream(I);
@@ -282,10 +284,10 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Expect('pic hasvalue', 'Yes');
         Observer.Expect('pic mediaid null', 'No');
         Observer.Expect('pic exportstream', 'Yes');
-        // BC 29 exports the 1x1 png as 70 bytes, BC 27.5 and 28.5 as 99 bytes
-#if BC29PLUS
-        Observer.Expect('pic exported length', '70');
-#else
+        // BC 27.5 and 28.5 export the 1x1 png as 99 bytes (re-encoded). Linux BC 29.0 gives 70 (keeps the imported bytes);
+        // Windows 29.0 re-encodes media (bc-linux #135, see BcXmlBlob.al), so 70 is likely a Linux value: the BC 29 length
+        // is held until the Windows check (windows-queue.md, DD item 63) or bc-linux #135 lands. 99 on 29 is not measured yet.
+#if not BC29PLUS or LT_HELD_BCLINUX_135
         Observer.Expect('pic exported length', '99');
 #endif
         Observer.Expect('data hasvalue', 'Yes');
