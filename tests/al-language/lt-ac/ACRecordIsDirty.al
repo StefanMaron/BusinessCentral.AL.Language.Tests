@@ -172,7 +172,19 @@ codeunit 77504 "LT AC Record Is Dirty"
         Row.Name := 'x';
         Row.Delete();
         Observer.Observe('after_delete_changed', Format(Row.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('fresh', 'No');
+        Observer.Expect('after_init', 'No');
+        Observer.Expect('after_assign_before_insert', 'Yes');
+        Observer.Expect('after_insert', 'No');
+        Observer.Expect('after_get', 'No');
+        Observer.Expect('after_assign', 'Yes');
+        Observer.Expect('after_modify', 'No');
+        Observer.Expect('after_value_restored', 'No');
+        Observer.Expect('after_validate', 'Yes');
+        Observer.Expect('copy_dirty', 'Yes');
+        Observer.Expect('after_findfirst', 'No');
+        Observer.Expect('after_delete_changed', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -203,7 +215,17 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Name := 'w';
         T.Next(-1);
         Observer.Observe('after_next_back', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_findset', 'No');
+        Observer.Expect('changed', 'Yes');
+        Observer.Expect('after_next', 'No');
+        Observer.Expect('next_changed', 'Yes');
+        Observer.Expect('next_at_end', '0');
+        Observer.Expect('after_next_end', 'Yes');
+        Observer.Expect('after_find_minus', 'No');
+        Observer.Expect('after_find_eq', 'No');
+        Observer.Expect('after_find_plus', 'No');
+        Observer.Expect('after_next_back', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -227,7 +249,12 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Delete(true);
         Observer.Observe('after_delete_true', Format(T.IsDirty()) + ' stamp=' + T.Stamp);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('after_insert_true', 'No stamp=ins');
+        Observer.Expect('after_modify_true', 'No stamp=mod');
+        Observer.Expect('after_rename', 'No stamp=ren');
+        Observer.Expect('after_delete_true', 'Yes stamp=del');
+        Observer.Expect('log', '[OnInsert dirty=Yes][OnInsert after stamp dirty=Yes][OnModify dirty=Yes xRec dirty=Yes xRec.Name=m][OnRename dirty=Yes xRec dirty=No][OnDelete dirty=Yes]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -250,7 +277,10 @@ codeunit 77504 "LT AC Record Is Dirty"
         Observer.Observe('after_modify_true_sub', Format(T.IsDirty()) + ' big=' + T.Big + ' stamp=' + T.Stamp);
         UnbindSubscription(Sub);
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('after_modify_sub', 'No big=sub');
+        Observer.Expect('after_modify_true_sub', 'No big=sub stamp=mod');
+        Observer.Expect('log', '[sub OnBeforeModify dirty=Yes][sub OnBeforeModify dirty=Yes][OnModify dirty=Yes xRec dirty=Yes xRec.Name=s2]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -278,7 +308,12 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Name := 'x';
         T.CalcFields(Cnt);
         Observer.Observe('changed_then_calcfields', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('copy_of_dirty', 'Yes');
+        Observer.Expect('copy_of_clean_into_dirty', 'No');
+        Observer.Expect('after_clear', 'No');
+        Observer.Expect('after_calcfields', 'No');
+        Observer.Expect('changed_then_calcfields', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +340,11 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Name := 'x';
         T.ChangeCompany(CompanyName());
         Observer.Observe('changed_then_changecompany', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_getbysystemid', 'No');
+        Observer.Expect('after_setposition', 'Yes id=2 name=a');
+        Observer.Expect('after_changecompany', 'No');
+        Observer.Expect('changed_then_changecompany', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -337,7 +376,17 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Name := 'x';
         Observer.Observe('modify_missing', Format(T.Modify()));
         Observer.Observe('after_false_modify', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('get_missing', 'No');
+        Observer.Expect('after_failed_get', 'Yes id=1 name=x');
+        Observer.Expect('get_missing_clean', 'No');
+        Observer.Expect('after_failed_get_clean', 'No');
+        Observer.Expect('find_none', 'No');
+        Observer.Expect('after_failed_find', 'Yes');
+        Observer.Expect('insert_dup', 'No');
+        Observer.Expect('after_false_insert', 'Yes');
+        Observer.Expect('modify_missing', 'No');
+        Observer.Expect('after_false_modify', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure PydByValue(T: Record "LT PYD Dirty Trg"): Text
@@ -377,7 +426,14 @@ codeunit 77504 "LT AC Record Is Dirty"
         U.Get(2);
         RecRef.SetTable(U);
         Observer.Observe('settable_into_read', Format(U.IsDirty()) + ' id=' + Format(U.Id));
-        Observer.Finish();
+        Observer.Expect('byvalue_clean', 'No');
+        Observer.Expect('byvalue_dirty', 'Yes');
+        Observer.Expect('byvar_dirty', 'Yes');
+        Observer.Expect('modify_log', '[OnModify dirty=Yes xRec dirty=Yes xRec.Name=x]');
+        Observer.Expect('settable_after_find', 'No');
+        Observer.Expect('settable_after_change', 'Yes');
+        Observer.Expect('settable_into_read', 'Yes id=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -392,7 +448,8 @@ codeunit 77504 "LT AC Record Is Dirty"
         List.First();
         List.Close();
         Observer.Observe('log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('log', '[page OnAfterGetRecord 1 dirty=No][page OnAfterGetRecord 2 dirty=No][page OnAfterGetRecord 1 dirty=No]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -433,7 +490,13 @@ codeunit 77504 "LT AC Record Is Dirty"
         Observer.Observe('delete_changed', Format(T.IsDirty()) + ' name=' + T.Name);
         T.Name := 'again';
         Observer.Observe('after_delete_assign', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_init_of_read', 'Yes');
+        Observer.Expect('fields_set_back', 'No sysid_blank=Yes');
+        Observer.Expect('transferfields_other_row', 'Yes id=2 name=b');
+        Observer.Expect('transferfields_no_key', 'Yes id=1 name=b');
+        Observer.Expect('delete_changed', 'Yes name=changed');
+        Observer.Expect('after_delete_assign', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -466,7 +529,15 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Pic.CreateOutStream(OutS);
         OutS.WriteText('blob');
         Observer.Observe('blob_written', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('fresh_initvalue', 'No initval=5');
+        Observer.Expect('fresh_init', 'No initval=5');
+        Observer.Expect('fresh_initval_zero', 'Yes');
+        Observer.Expect('partial', 'No');
+        Observer.Expect('partial_changed_loaded', 'Yes');
+        Observer.Expect('partial_changed_unloaded', 'Yes');
+        Observer.Expect('flowfield_assigned', 'No');
+        Observer.Expect('blob_written', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -486,7 +557,10 @@ codeunit 77504 "LT AC Record Is Dirty"
         T.Get(1);
         T.DeleteAll();
         Observer.Observe('after_deleteall', Format(T.IsDirty()));
-        Observer.Finish();
+        Observer.Expect('after_modifyall', 'No name=a');
+        Observer.Expect('changed_then_modifyall', 'Yes stamp=');
+        Observer.Expect('after_deleteall', 'No');
+        Observer.Verify();
     end;
 }
 

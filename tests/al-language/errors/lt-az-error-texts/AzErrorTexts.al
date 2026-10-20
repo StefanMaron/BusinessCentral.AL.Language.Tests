@@ -477,7 +477,13 @@ codeunit 80606 "LT AZ Error Texts"
         asserterror Card.FieldErr.Invoke();
         Observer.ObserveError('fielderror');
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('relation|text', 'The field Ref of table LT PYD Act Row contains a value (999) that cannot be found in the related table (LT PYD Act Row).');
+        Observer.Expect('relation|code', 'TestWrapped:CSideValidateTableRelation');
+        Observer.Expect('onvalidate|text', 'pyd validate');
+        Observer.Expect('onvalidate|code', 'TestWrapped:Dialog');
+        Observer.Expect('fielderror|text', 'You must specify Name in LT PYD Act Row Id=''1''.');
+        Observer.Expect('fielderror|code', 'TestWrapped:CSide');
+        Observer.Verify();
     end;
 
     [Test]
@@ -497,7 +503,10 @@ codeunit 80606 "LT AZ Error Texts"
         Observer.ObserveError('unique');
         Observer.Observe('rows', Format(Row.Count()));
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('unique|text', 'There is already a record in table LT PYD Act Row that has the same values in a unique index for the following fields: Uniq=''7''');
+        Observer.Expect('unique|code', 'TestWrapped:CSideDuplicateKey');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -521,7 +530,15 @@ codeunit 80606 "LT AZ Error Texts"
         asserterror Card.ModifyMissing.Invoke();
         Observer.ObserveError('modify_missing');
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('divzero|text', 'Attempted to divide by zero.');
+        Observer.Expect('divzero|code', 'TestWrapped:AL');
+        Observer.Expect('decdivzero|text', 'Attempted to divide by zero.');
+        Observer.Expect('decdivzero|code', 'TestWrapped:AL');
+        Observer.Expect('strlen|text', 'The length of the string is 16, but it must be less than or equal to 5 characters. Value: longer than five');
+        Observer.Expect('strlen|code', 'TestWrapped:StringLengthExceeded');
+        Observer.Expect('modify_missing|text', 'The LT PYD Act Row does not exist. Identification fields and values: Id=''555''');
+        Observer.Expect('modify_missing|code', 'TestWrapped:CSideRecordNotFound');
+        Observer.Verify();
     end;
 
     local procedure PydRunMissingCodeunit()
@@ -534,7 +551,9 @@ codeunit 80606 "LT AZ Error Texts"
     begin
         asserterror PydRunMissingCodeunit();
         Observer.ObserveError('local');
-        Observer.Finish();
+        Observer.Expect('local|text', 'You tried to invoke the CodeUnit object with the ID 80748 from the object LT AZ Error Texts. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('local|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -542,7 +561,9 @@ codeunit 80606 "LT AZ Error Texts"
     begin
         asserterror Report.Run(80748);
         Observer.ObserveError('report');
-        Observer.Finish();
+        Observer.Expect('report|text', 'You tried to invoke the Report object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('report|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -550,7 +571,9 @@ codeunit 80606 "LT AZ Error Texts"
     begin
         asserterror XmlPort.Run(80748);
         Observer.ObserveError('xmlport');
-        Observer.Finish();
+        Observer.Expect('xmlport|text', 'You tried to invoke the XmlPort object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('xmlport|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -558,7 +581,9 @@ codeunit 80606 "LT AZ Error Texts"
     begin
         asserterror Page.Run(80748);
         Observer.ObserveError('page');
-        Observer.Finish();
+        Observer.Expect('page|text', 'You tried to invoke the Page object with the ID 80748 from the object Test Runner - Mgt. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('page|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -568,7 +593,9 @@ codeunit 80606 "LT AZ Error Texts"
     begin
         asserterror Outer.ViaHelper();
         Observer.ObserveError('two_deep');
-        Observer.Finish();
+        Observer.Expect('two_deep|text', 'You tried to invoke the CodeUnit object with the ID 80748 from the object LT PYD Missing Outer. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('two_deep|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -576,7 +603,9 @@ codeunit 80606 "LT AZ Error Texts"
     begin
         asserterror Codeunit.Run(Codeunit::"LT PYD Missing Outer");
         Observer.ObserveError('onrun');
-        Observer.Finish();
+        Observer.Expect('onrun|text', 'You tried to invoke the CodeUnit object with the ID 80748 from the object LT AZ Error Texts. An object with that ID does not exist in the current application compiled with emit version n.');
+        Observer.Expect('onrun|code', 'AL:MetadataNotFound');
+        Observer.Verify();
     end;
 }
 

@@ -353,7 +353,20 @@ codeunit 60827 "Test TableExt Field Relation"
     begin
         PydAll(Observer, 'mix_', 3, 1);
         PydRelNo(Observer, 3);
-        Observer.Finish();
+        Observer.Expect('mix_x_a', 'Yes');
+        Observer.Expect('mix_x_a|text', '');
+        Observer.Expect('mix_x_a|code', '');
+        Observer.Expect('mix_x_b', 'No');
+        Observer.Expect('mix_x_b|text', 'The field MixCond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('mix_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('mix_y_a', 'No');
+        Observer.Expect('mix_y_a|text', 'The field MixCond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('mix_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('mix_y_b', 'Yes');
+        Observer.Expect('mix_y_b|text', '');
+        Observer.Expect('mix_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -362,7 +375,16 @@ codeunit 60827 "Test TableExt Field Relation"
         Observer: Codeunit "Probe Observer";
     begin
         PydAll(Observer, 'mix_', 3, 2);
-        Observer.Finish();
+        Observer.Expect('mix_z_a', 'No');
+        Observer.Expect('mix_z_a|text', 'The field MixCond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('mix_z_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('mix_z_b', 'Yes');
+        Observer.Expect('mix_z_b|text', '');
+        Observer.Expect('mix_z_b|code', '');
+        Observer.Expect('mix_z_none', 'No');
+        Observer.Expect('mix_z_none|text', 'The field MixCond of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('mix_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -372,7 +394,20 @@ codeunit 60827 "Test TableExt Field Relation"
     begin
         PydAll(Observer, 'else_', 4, 1);
         PydRelNo(Observer, 4);
-        Observer.Finish();
+        Observer.Expect('else_x_a', 'Yes');
+        Observer.Expect('else_x_a|text', '');
+        Observer.Expect('else_x_a|code', '');
+        Observer.Expect('else_x_b', 'No');
+        Observer.Expect('else_x_b|text', 'The field ElseArm of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('else_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('else_y_a', 'No');
+        Observer.Expect('else_y_a|text', 'The field ElseArm of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('else_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('else_y_b', 'Yes');
+        Observer.Expect('else_y_b|text', '');
+        Observer.Expect('else_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -381,7 +416,16 @@ codeunit 60827 "Test TableExt Field Relation"
         Observer: Codeunit "Probe Observer";
     begin
         PydAll(Observer, 'else_', 4, 2);
-        Observer.Finish();
+        Observer.Expect('else_z_a', 'No');
+        Observer.Expect('else_z_a|text', 'The field ElseArm of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('else_z_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('else_z_b', 'Yes');
+        Observer.Expect('else_z_b|text', '');
+        Observer.Expect('else_z_b|code', '');
+        Observer.Expect('else_z_none', 'No');
+        Observer.Expect('else_z_none|text', 'The field ElseArm of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('else_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -391,7 +435,20 @@ codeunit 60827 "Test TableExt Field Relation"
     begin
         PydAll(Observer, 'two_', 5, 1);
         PydRelNo(Observer, 5);
-        Observer.Finish();
+        Observer.Expect('two_x_a', 'Yes');
+        Observer.Expect('two_x_a|text', '');
+        Observer.Expect('two_x_a|code', '');
+        Observer.Expect('two_x_b', 'No');
+        Observer.Expect('two_x_b|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('two_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('two_y_a', 'No');
+        Observer.Expect('two_y_a|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('two_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('two_y_b', 'Yes');
+        Observer.Expect('two_y_b|text', '');
+        Observer.Expect('two_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -400,7 +457,16 @@ codeunit 60827 "Test TableExt Field Relation"
         Observer: Codeunit "Probe Observer";
     begin
         PydAll(Observer, 'two_', 5, 2);
-        Observer.Finish();
+        Observer.Expect('two_z_a', 'Yes');
+        Observer.Expect('two_z_a|text', '');
+        Observer.Expect('two_z_a|code', '');
+        Observer.Expect('two_z_b', 'No');
+        Observer.Expect('two_z_b|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('two_z_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('two_z_none', 'No');
+        Observer.Expect('two_z_none|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('two_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -410,7 +476,20 @@ codeunit 60827 "Test TableExt Field Relation"
     begin
         PydAll(Observer, 'twou_', 6, 1);
         PydRelNo(Observer, 6);
-        Observer.Finish();
+        Observer.Expect('twou_x_a', 'Yes');
+        Observer.Expect('twou_x_a|text', '');
+        Observer.Expect('twou_x_a|code', '');
+        Observer.Expect('twou_x_b', 'No');
+        Observer.Expect('twou_x_b|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('twou_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('twou_y_a', 'No');
+        Observer.Expect('twou_y_a|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('twou_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('twou_y_b', 'Yes');
+        Observer.Expect('twou_y_b|text', '');
+        Observer.Expect('twou_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -419,7 +498,16 @@ codeunit 60827 "Test TableExt Field Relation"
         Observer: Codeunit "Probe Observer";
     begin
         PydAll(Observer, 'twou_', 6, 2);
-        Observer.Finish();
+        Observer.Expect('twou_z_a', 'No');
+        Observer.Expect('twou_z_a|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('twou_z_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('twou_z_b', 'Yes');
+        Observer.Expect('twou_z_b|text', '');
+        Observer.Expect('twou_z_b|code', '');
+        Observer.Expect('twou_z_none', 'No');
+        Observer.Expect('twou_z_none|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('twou_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -429,7 +517,20 @@ codeunit 60827 "Test TableExt Field Relation"
     begin
         PydAll(Observer, 'ue_', 7, 1);
         PydRelNo(Observer, 7);
-        Observer.Finish();
+        Observer.Expect('ue_x_a', 'Yes');
+        Observer.Expect('ue_x_a|text', '');
+        Observer.Expect('ue_x_a|code', '');
+        Observer.Expect('ue_x_b', 'No');
+        Observer.Expect('ue_x_b|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ue_y_a', 'Yes');
+        Observer.Expect('ue_y_a|text', '');
+        Observer.Expect('ue_y_a|code', '');
+        Observer.Expect('ue_y_b', 'No');
+        Observer.Expect('ue_y_b|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_y_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('relation_table_no', '83151');
+        Observer.Verify();
     end;
 
     [Test]
@@ -438,6 +539,15 @@ codeunit 60827 "Test TableExt Field Relation"
         Observer: Codeunit "Probe Observer";
     begin
         PydAll(Observer, 'ue_', 7, 2);
-        Observer.Finish();
+        Observer.Expect('ue_z_a', 'Yes');
+        Observer.Expect('ue_z_a|text', '');
+        Observer.Expect('ue_z_a|code', '');
+        Observer.Expect('ue_z_b', 'No');
+        Observer.Expect('ue_z_b|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_z_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ue_z_none', 'No');
+        Observer.Expect('ue_z_none|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
     end;
 }

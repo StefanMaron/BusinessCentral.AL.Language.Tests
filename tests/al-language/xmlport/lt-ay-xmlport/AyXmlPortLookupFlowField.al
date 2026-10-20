@@ -366,7 +366,11 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>false</HasMaster><MinAmt>1.5</MinAmt><MaxAmt>99</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>42</CntD><Note>n</Note></Row></Root>');
-        Observer.Finish();
+        Observer.Expect('seen', 'assign Note=n;before-insert=9/A/No/0/0/0//0/n;');
+        Observer.Expect('rows', '1');
+        Observer.Expect('stored', '9/A/No/0/0/0//0/n');
+        Observer.Expect('stored_calc', '9/A/Yes/4/10/7/Alpha/2/n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -374,7 +378,12 @@ codeunit 80514 "LT AY Lk FlowField Tests"
     var
         Observer: Codeunit "Probe Observer";
     begin
-        PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>maybe</HasMaster><MinAmt>abc</MinAmt><MaxAmt>x</MaxAmt><AvgAmt>y</AvgAmt><LkName>Typed</LkName><CntD>many</CntD><Note>n</Note></Row></Root>');
+        asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>many</CntD><Note>n</Note></Row></Root>');
+        Observer.ObserveError('int');
+        asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>abc</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
+        Observer.ObserveError('decimal');
+        asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>maybe</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
+        Observer.ObserveError('boolean');
         Observer.Finish();
     end;
 
@@ -395,7 +404,11 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Xp.Import();
         Observer.Observe('seen', Xp.GetSeen());
         PydStored(Observer);
-        Observer.Finish();
+        Observer.Expect('seen', 'assign Note=n;before-insert=9/A/No/0/0/0//0/n;');
+        Observer.Expect('rows', '1');
+        Observer.Expect('stored', '9/A/No/0/0/0//0/n');
+        Observer.Expect('stored_calc', '9/A/Yes/4/10/7/Alpha/2/n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -415,6 +428,10 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Xp.Import();
         Observer.Observe('seen', Xp.GetSeen());
         PydStored(Observer);
-        Observer.Finish();
+        Observer.Expect('seen', 'assign Note=nn;before-insert=9/A/No/0/0/0//0/nn;');
+        Observer.Expect('rows', '1');
+        Observer.Expect('stored', '9/A/No/0/0/0//0/nn');
+        Observer.Expect('stored_calc', '9/A/Yes/4/10/7/Alpha/2/nn');
+        Observer.Verify();
     end;
 }
