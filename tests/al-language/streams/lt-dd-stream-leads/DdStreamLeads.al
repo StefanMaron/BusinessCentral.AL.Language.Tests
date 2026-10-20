@@ -712,6 +712,9 @@ codeunit 85841 "LT DD Stream Leads"
         Observer.Observe('read byte at end with return', StrSubstNo('%1 %2', N, B));
 
         I.ResetPosition();
+        // A successful TryFunction leaves the last error as it was: clear it first, so an error of an earlier test does not show here
+        // (Windows BC 27.5/28.5/29.0 check 2026-10-20 saw the Base64 error of Item72 here).
+        ClearLastError();
         Observer.Observe('read 5 without return ok', Format(TryRead(I, 5)));
         Observer.ObserveError('read 5 without return');
 
