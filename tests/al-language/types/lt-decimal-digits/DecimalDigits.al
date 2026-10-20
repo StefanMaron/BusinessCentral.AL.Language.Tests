@@ -494,14 +494,14 @@ codeunit 73232 "LT P163 Decimal Digits"
         Observer.Observe('1e-10*1e-9 = 0', Format(D('0.0000000001') * D('0.000000001') = 0));
         P := D('0.123456789') * D('0.000000000123456789');
         Observer.Observe('small product', F(P));
-        Observer.Observe('small product scaled up', F(P * 10000000000));
+        Observer.Observe('small product scaled up', F(P * 10000000000.0));
         P := D('-0.123456789') * D('0.000000000123456789');
-        Observer.Observe('neg small product scaled up', F(P * 10000000000));
-        Observer.Observe('small product inline scaled up', F(D('-0.123456789') * D('0.000000000123456789') * 10000000000));
+        Observer.Observe('neg small product scaled up', F(P * 10000000000.0));
+        Observer.Observe('small product inline scaled up', F(D('-0.123456789') * D('0.000000000123456789') * 10000000000.0));
         P := D('1') / D('30000000000');
-        Observer.Observe('small quotient scaled up', F(P * 10000000000));
+        Observer.Observe('small quotient scaled up', F(P * 10000000000.0));
         P := D('-1') / D('30000000000');
-        Observer.Observe('neg small quotient scaled up', F(P * 10000000000));
+        Observer.Observe('neg small quotient scaled up', F(P * 10000000000.0));
         Observer.Finish();
     end;
 }
