@@ -121,4 +121,33 @@ codeunit 98251 "LT AK Fts Test Op"
         F.FindFirst();
         Assert.IsFalse(F.OptimizeForTextSearch, 'Plain is not optimized');
     end;
+
+
+    // Corpus issue 668 item 12 (writer BQ): a filter starting with '&&' on the field with OptimizeForTextSearch and on the plain field
+    // (microsoft/AL issue 7899: the runtime generated wrong SQL, "The argument type nvarchar(max) is invalid for argument 2 of CONTAINS").
+    // Each filter is a test of its own: its error, if any, is the result.
+    [Test]
+    procedure DoubleAmpersandFilterOnOptimizedField_BQ()
+    var
+        R: Record "LT AK Fts Row Op";
+    begin
+        Seed();
+        R.SetFilter(Txt, '&&hello*');
+        // BC 27.5, 28.5, 29.0: no SQL error, the filter text is kept as given. The row count (0 in CI) is not asserted: the full-text
+        // index fills asynchronously, so a count right after the inserts may depend on timing (queued for the Windows nightly).
+        Assert.AreEqual('&&hello*', R.GetFilter(Txt), '&& filter text on the optimized field');
+        Assert.IsTrue(R.Count() >= 0, 'the && filter runs without a SQL error');
+    end;
+
+    [Test]
+    procedure DoubleAmpersandFilterOnPlainField_BQ()
+    var
+        R: Record "LT AK Fts Row Op";
+    begin
+        Seed();
+        R.SetFilter(Plain, '&&hello*');
+        // BC 27.5, 28.5, 29.0: on a field without OptimizeForTextSearch the && form becomes a case-insensitive contains filter.
+        Assert.AreEqual('@*hello**', R.GetFilter(Plain), '&& filter text on the plain field');
+        Assert.AreEqual(4, R.Count(), '&&hello* on the plain field');
+    end;
 }
