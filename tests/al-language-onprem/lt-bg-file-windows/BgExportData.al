@@ -47,22 +47,14 @@ codeunit 98993 "LT BG ExportData"
     begin
         ExportCase(Observer, 'export no company', TemporaryPath() + 'lt-bg-export-a.navdata', false);
         ExportCase(Observer, 'export current company', TemporaryPath() + 'lt-bg-export-b.navdata', true);
-#if LT_HELD_BCLINUX_138
-        // Windows returns Yes on 27.5/28.5/29.0 (runs 39216765049 / 39216768276); the Linux image on BC 28.5 and 29.0 returns No
-        // (corpus batch run 39220885767). Enable when bc-linux #138 lands.
+        // Windows returns Yes on 27.5/28.5/29.0 (runs 39216765049 / 39216768276); before the bc-linux #138 fix the Linux image
+        // on BC 28.5 and 29.0 returned No (corpus batch run 39220885767).
         Observer.Expect('export no company', 'ok ret=Yes');
-#else
-        Observer.Ignore('export no company');
-#endif
         Observer.Expect('export no company|filename unchanged', 'Yes');
         Observer.Expect('export no company|file exists', 'No');
-#if LT_HELD_BCLINUX_138
-        // Windows returns Yes on 27.5/28.5/29.0 (runs 39216765049 / 39216768276); the Linux image on BC 28.5 and 29.0 returns No
-        // (corpus batch run 39220885767). Enable when bc-linux #138 lands.
+        // Windows returns Yes on 27.5/28.5/29.0 (runs 39216765049 / 39216768276); before the bc-linux #138 fix the Linux image
+        // on BC 28.5 and 29.0 returned No (corpus batch run 39220885767).
         Observer.Expect('export current company', 'ok ret=Yes');
-#else
-        Observer.Ignore('export current company');
-#endif
         Observer.Expect('export current company|filename unchanged', 'Yes');
         Observer.Expect('export current company|file exists', 'No');
         Observer.Verify();
