@@ -10,6 +10,10 @@
 // Results: the callee gets a temporary record over an EMPTY table (Count 0, Get and FindFirst fail) that holds the caller's current field
 //   values but not its filters; Insert and Modify in the callee write only that temporary table; the caller's record, filters and the stored
 //   table are unchanged. Modify of the handed current row fails (it is not in the temporary table). Same as for a temporary subscriber parameter.
+// Writer QF: own table 86646 (secondary key on Name), callee codeunit 86645, tests QF_* in 86508. Results: a stored record with
+//   SetCurrentKey(Name) + Ascending(false), or with marks and MarkedOnly(true), handed by value to a `temporary` parameter: the callee sees the
+//   primary key ascending (GetView 'VERSION(1) SORTING(Field1)'), MarkedOnly No, Mark No, and its own rows sort by the primary key and are
+//   all unmarked; the caller keeps its key, order, marks and MarkedOnly.
 // BC versions: 27, 28, 29
 
 table 86506 "LT QD TP Row"
@@ -158,7 +162,20 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.view', Stored.GetView(false));
         Observer.Observe('caller.current', Format(Stored.Id) + '=' + Stored.Name);
         Observer.Observe('caller.order', QfOrder(Stored));
-        Observer.Finish();
+        Observer.Expect('callee.isTemporary', 'Yes');
+        Observer.Expect('callee.key', 'Id');
+        Observer.Expect('callee.ascending', 'Yes');
+        Observer.Expect('callee.view', 'VERSION(1) SORTING(Field1)');
+        Observer.Expect('callee.current', '1=c');
+        Observer.Expect('callee.order', '1,2,3,');
+        Observer.Expect('callee.keyAfter', 'Id');
+        Observer.Expect('callee.ascendingAfter', 'Yes');
+        Observer.Expect('caller.key', 'Name');
+        Observer.Expect('caller.ascending', 'No');
+        Observer.Expect('caller.view', 'VERSION(1) SORTING(Field2) ORDER(1)');
+        Observer.Expect('caller.current', '1=c');
+        Observer.Expect('caller.order', '1,3,2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -179,7 +196,19 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.count', Format(Stored.Count()));
         Observer.Observe('caller.mark', Format(Stored.Mark()));
         Observer.Observe('caller.order', QfOrder(Stored));
-        Observer.Finish();
+        Observer.Expect('callee.markedOnly', 'No');
+        Observer.Expect('callee.mark', 'No');
+        Observer.Expect('callee.current', '3=b');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.countFilled', '3');
+        Observer.Expect('callee.orderFilled', '1,2,3,');
+        Observer.Expect('callee.countAll', '3');
+        Observer.Expect('callee.marks', '1=No,2=No,3=No,');
+        Observer.Expect('caller.markedOnly', 'Yes');
+        Observer.Expect('caller.count', '2');
+        Observer.Expect('caller.mark', 'Yes');
+        Observer.Expect('caller.order', '1,3,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -195,7 +224,17 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Callee.Marks(Stored, Observer);
         Observer.Observe('caller.markedOnly', Format(Stored.MarkedOnly()));
         Observer.Observe('caller.mark', Format(Stored.Mark()));
-        Observer.Finish();
+        Observer.Expect('callee.markedOnly', 'No');
+        Observer.Expect('callee.mark', 'No');
+        Observer.Expect('callee.current', '2=a');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.countFilled', '3');
+        Observer.Expect('callee.orderFilled', '1,2,3,');
+        Observer.Expect('callee.countAll', '3');
+        Observer.Expect('callee.marks', '1=No,2=No,3=No,');
+        Observer.Expect('caller.markedOnly', 'No');
+        Observer.Expect('caller.mark', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure QfSeed()
