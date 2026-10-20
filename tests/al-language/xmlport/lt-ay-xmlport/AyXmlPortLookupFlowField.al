@@ -380,7 +380,9 @@ codeunit 80514 "LT AY Lk FlowField Tests"
     begin
         asserterror PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>many</CntD><Note>n</Note></Row></Root>');
         Observer.ObserveError('int');
-        Observer.Finish();
+        Observer.Expect('int|text', 'Imported XML cannot validate with the schema: The ''CntD'' element is invalid - The value ''many'' is invalid according to its datatype ''http://www.w3.org/2001/XMLSchema:int'' - The string ''many'' is not a valid Int32 value.');
+        Observer.Expect('int|code', 'XmlPortInvalidXml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -389,7 +391,11 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>true</HasMaster><MinAmt>abc</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
-        Observer.Finish();
+        Observer.Expect('seen', 'assign Note=n;before-insert=9/A/No/0/0/0//0/n;');
+        Observer.Expect('rows', '1');
+        Observer.Expect('stored', '9/A/No/0/0/0//0/n');
+        Observer.Expect('stored_calc', '9/A/Yes/4/10/7/Alpha/2/n');
+        Observer.Verify();
     end;
 
     [Test]
@@ -398,7 +404,11 @@ codeunit 80514 "LT AY Lk FlowField Tests"
         Observer: Codeunit "Probe Observer";
     begin
         PydImportXml(Observer, '<Root><Row><Id>9</Id><MasterCode>A</MasterCode><HasMaster>maybe</HasMaster><MinAmt>1</MinAmt><MaxAmt>2</MaxAmt><AvgAmt>3</AvgAmt><LkName>Typed</LkName><CntD>1</CntD><Note>n</Note></Row></Root>');
-        Observer.Finish();
+        Observer.Expect('seen', 'assign Note=n;before-insert=9/A/No/0/0/0//0/n;');
+        Observer.Expect('rows', '1');
+        Observer.Expect('stored', '9/A/No/0/0/0//0/n');
+        Observer.Expect('stored_calc', '9/A/Yes/4/10/7/Alpha/2/n');
+        Observer.Verify();
     end;
 
     [Test]
