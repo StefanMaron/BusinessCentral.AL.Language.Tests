@@ -439,3 +439,85 @@ codeunit 84893 "LT CN SetEncrypted Len"
         Observer.Verify();
     end;
 }
+
+// Writer QB (corpus issue #669 item 55, the Get of a key the caller wrote): the caller writes the key in its test transaction, then the worker
+// of a page background task reads it. One codeunit without and one with a Commit() in the caller, each its own transaction.
+codeunit 86382 "LT QB BgTask Iso GetLocked"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure BgTask_IsolatedStorageGet_KeyWrittenByCaller_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT CN BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        K: Text;
+    begin
+        Observer.Observe('caller set', Format(IsolatedStorage.Set('LTCNbg', 'fromcaller', DataScope::Module), 0, 9));
+        Params.Add('Op', 'get');
+        Card.OpenView();
+        ClearLastError();
+        if TryRun(Card, Params, Results) then
+            Observer.Observe('get', 'ok')
+        else
+            Observer.ObserveError('get');
+        foreach K in Results.Keys() do
+            Observer.Observe(K, Results.Get(K));
+        Card.Close();
+        Observer.Expect('caller set', 'true');
+        Observer.Expect('get', 'ok');
+        Observer.Expect('InWriteTx', 'false');
+        Observer.Expect('Ret', 'false');
+        Observer.Expect('Value', '');
+        Observer.Expect('InWriteTxAfter', 'false');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryRun(var Card: TestPage "LT CN BgTask Card"; Params: Dictionary of [Text, Text]; var Results: Dictionary of [Text, Text])
+    begin
+        Results := Card.RunPageBackgroundTask(Codeunit::"LT CN BgTask Iso Worker", Params, false);
+    end;
+}
+
+codeunit 86383 "LT QB BgTask Iso GetCommitted"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure BgTask_IsolatedStorageGet_KeyWrittenByCallerThenCommit_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT CN BgTask Card";
+        Params: Dictionary of [Text, Text];
+        Results: Dictionary of [Text, Text];
+        K: Text;
+    begin
+        Observer.Observe('caller set', Format(IsolatedStorage.Set('LTCNbg', 'fromcaller', DataScope::Module), 0, 9));
+        Commit();
+        Params.Add('Op', 'get');
+        Card.OpenView();
+        ClearLastError();
+        if TryRun(Card, Params, Results) then
+            Observer.Observe('get', 'ok')
+        else
+            Observer.ObserveError('get');
+        foreach K in Results.Keys() do
+            Observer.Observe(K, Results.Get(K));
+        Card.Close();
+        Observer.Expect('caller set', 'true');
+        Observer.Expect('get|text', 'We can''t save your changes right now, because a record in table ''Isolated Storage'' is being updated in a transaction done by another session.\\You''ll have to wait until the other transaction has completed, which may take a while. Please try again later.');
+        Observer.Expect('get|code', 'NDBCS:LockTimeout');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryRun(var Card: TestPage "LT CN BgTask Card"; Params: Dictionary of [Text, Text]; var Results: Dictionary of [Text, Text])
+    begin
+        Results := Card.RunPageBackgroundTask(Codeunit::"LT CN BgTask Iso Worker", Params, false);
+    end;
+}

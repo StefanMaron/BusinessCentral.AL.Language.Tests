@@ -494,4 +494,28 @@ codeunit 60331 "TableExt Keys And InitValue"
         Observer.Expect('key_list', '1:1:F1,;2:17:F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,;3:19:F20,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,F19,F2,;4:1:$systemId,;');
         Observer.Verify();
     end;
+
+    // Writer QB (corpus issue #664 item 97): a tableextension that runs addlast(Brick; ...) on a table without a Brick field group
+    // (QbFieldGroupBrick.al) compiles and publishes. Field groups have no AL API, so the test reads the row and the field list only.
+    [Test]
+    procedure TableExt_FieldGroups_AddLastBrickWithoutBaseBrick_Publishes_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QB Fg Base";
+        RecRef: RecordRef;
+    begin
+        Row.DeleteAll();
+        Row."No." := 'QB1';
+        Row.Description := 'Desc';
+        Row."QB Extra" := 'Extra';
+        Row.Insert();
+        Row.Get('QB1');
+        Observer.Observe('row', Row."No." + '|' + Row.Description + '|' + Row."QB Extra");
+        RecRef.Open(Database::"LT QB Fg Base");
+        Observer.Observe('field 86393', RecRef.Field(86393).Name());
+        RecRef.Close();
+        Observer.Expect('row', 'QB1|Desc|Extra');
+        Observer.Expect('field 86393', 'QB Extra');
+        Observer.Verify();
+    end;
 }

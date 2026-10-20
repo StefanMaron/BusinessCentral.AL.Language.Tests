@@ -108,3 +108,117 @@ codeunit 60060 "Test Record Lock"
         Cleanup.Initialize();
     end;
 }
+
+// Writer QB (corpus issue #668 item 27): does FindSet(true) take locks like LockTable() followed by FindSet()? Read from the platform table
+// Database Locks, filtered on this session, after a plain FindSet, after FindSet(true), and after LockTable() + FindSet(). The rows read
+// are those of the Company table (committed rows; a row written in the test transaction would already hold an exclusive lock).
+// Each form runs in a test codeunit of its own, so no lock of an earlier form is still held (one transaction per test codeunit).
+codeunit 86387 "LT QB Lock Snapshot"
+{
+    procedure Locks(): Text
+    var
+        DbLocks: Record "Database Locks";
+        Rows: List of [Text];
+        Row: Text;
+        Result: Text;
+    begin
+        DbLocks.SetRange("Session ID", SessionId());
+        if DbLocks.FindSet() then
+            repeat
+                Row := DbLocks."Object Name" + '|' + Format(DbLocks."Resource Type") + '|' + Format(DbLocks."Request Mode") + '|' + Format(DbLocks."Request Status");
+                if not Rows.Contains(Row) then
+                    Rows.Add(Row);
+            until DbLocks.Next() = 0;
+        Sort(Rows);
+        foreach Row in Rows do
+            Result += Row + ';';
+        exit('n=' + Format(Rows.Count()) + ';' + Result);
+    end;
+
+    local procedure Sort(var Rows: List of [Text])
+    var
+        I: Integer;
+        J: Integer;
+        A: Text;
+        B: Text;
+    begin
+        for I := 1 to Rows.Count() do
+            for J := 1 to Rows.Count() - I do begin
+                A := Rows.Get(J);
+                B := Rows.Get(J + 1);
+                if A > B then begin
+                    Rows.Set(J, B);
+                    Rows.Set(J + 1, A);
+                end;
+            end;
+    end;
+}
+
+codeunit 86384 "LT QB Lock FindSet Plain"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure FindSet_Plain_DatabaseLocks_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Snapshot: Codeunit "LT QB Lock Snapshot";
+        Company: Record Company;
+    begin
+        Observer.Observe('before', Snapshot.Locks());
+        Observer.Observe('found', Format(Company.FindSet()));
+        Observer.Observe('after FindSet', Snapshot.Locks());
+        Observer.Expect('before', 'n=0;');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('after FindSet', 'n=0;');
+        Observer.Verify();
+    end;
+}
+
+codeunit 86385 "LT QB Lock FindSet True"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure FindSet_True_DatabaseLocks_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Snapshot: Codeunit "LT QB Lock Snapshot";
+        Company: Record Company;
+    begin
+        Observer.Observe('before', Snapshot.Locks());
+        Observer.Observe('found', Format(Company.FindSet(true)));
+        Observer.Observe('after FindSet(true)', Snapshot.Locks());
+        Observer.Expect('before', 'n=0;');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('after FindSet(true)', 'n=1;Company|KEY|Update|Granted;');
+        Observer.Verify();
+    end;
+}
+
+codeunit 86386 "LT QB Lock LockTable FindSet"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    [Test]
+    procedure LockTable_FindSet_DatabaseLocks_QB()
+    var
+        Observer: Codeunit "Probe Observer";
+        Snapshot: Codeunit "LT QB Lock Snapshot";
+        Company: Record Company;
+    begin
+        Observer.Observe('before', Snapshot.Locks());
+        Company.LockTable();
+        Observer.Observe('after LockTable', Snapshot.Locks());
+        Observer.Observe('found', Format(Company.FindSet()));
+        Observer.Observe('after LockTable+FindSet', Snapshot.Locks());
+        Observer.Expect('before', 'n=0;');
+        Observer.Expect('after LockTable', 'n=0;');
+        Observer.Expect('found', 'Yes');
+        Observer.Expect('after LockTable+FindSet', 'n=1;Company|KEY|Update|Granted;');
+        Observer.Verify();
+    end;
+}
