@@ -657,4 +657,26 @@ codeunit 84790 "LT CL Event Leads"
         O.Expect('rows', '84776 CuByValue -> OnCuByValue active=Yes error=;84776 CuByVar -> OnCuByVar active=Yes error=;84776 DelByValue -> OnAfterDeleteEvent active=Yes error=;84776 DelVar -> OnAfterDeleteEvent active=Yes error=;84776 Fin -> OnFinalize active=Yes error=;84776 InsByValue -> OnAfterInsertEvent active=Yes error=;84776 InsTemporary -> OnAfterInsertEvent active=Yes error=;84776 InsVar -> OnAfterInsertEvent active=Yes error=;84776 SiByValue -> OnSiByValue active=Yes error=;84776 TempParam -> OnTempParam active=Yes error=;84776 Umlaut -> OnUmlaut active=Yes error=;84781 AfterInsert -> OnAfterInsertEvent active=Yes error=;84781 AfterValidateQty -> OnAfterValidateEvent - Qty active=Yes error=;84781 BeforeValidateQty -> OnBeforeValidateEvent - Qty active=Yes error=;');
         O.Verify();
     end;
+
+    // Item 30, one-letter field: the Event Subscription rows of the never bound subscribers of field 'B' (codeunit 84786). Windows BC
+    // 27.5/28.5 (Windows check 2026-10-20) and Linux 29.0 agree: the Published Function is '<event> - 66' (66 = character code of B),
+    // Active = No, Error Information = ErrorFieldNotFound.
+    [Test]
+    procedure EventSubscriptionRows_OneLetterField()
+    var
+        Sub: Record "Event Subscription";
+        O: Codeunit "Probe Observer";
+    begin
+        Sub.SetRange("Subscriber Codeunit ID", Codeunit::"LT CL One Letter Subs");
+        O.Observe('count', Format(Sub.Count()));
+        if Sub.FindSet() then
+            repeat
+                O.Observe(Sub."Subscriber Function", Sub."Published Function" + ' | active=' + Format(Sub.Active) + ' | err=' + Sub."Error Information");
+            until Sub.Next() = 0;
+        O.Expect('count', '3');
+        O.Expect('AfterValidateB', 'OnAfterValidateEvent - 66 | active=No | err=ErrorFieldNotFound');
+        O.Expect('AfterValidateBNoCurrFieldNo', 'OnAfterValidateEvent - 66 | active=No | err=ErrorFieldNotFound');
+        O.Expect('BeforeValidateB', 'OnBeforeValidateEvent - 66 | active=No | err=ErrorFieldNotFound');
+        O.Verify();
+    end;
 }
