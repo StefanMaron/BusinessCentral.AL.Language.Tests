@@ -453,6 +453,33 @@ def main():
           [o.subscriptions for o in subs] == [[('codeunit', 'gen. jnl.-post', 'onx')], [('table', '18', 'onafterinsertevent')],
                                                [None]], [o.subscriptions for o in subs])
 
+    # a branch cut from an older base: only what the branch changed counts (merge base, three dots), not what the base
+    # branch changed after the branch left it; also from a shallow clone that lacks the merge base
+    repo = tempfile.mkdtemp(prefix='repo-', dir=ROOT)
+    git(repo, 'init', '-q', '-b', 'main')
+    for p_, t in BASE_FILES.items():
+        f = Path(repo, p_)
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(t)
+    git(repo, 'add', '-A')
+    git(repo, 'commit', '-q', '-m', 'base')
+    git(repo, 'checkout', '-q', '-b', 'topic')
+    Path(repo, 'tests/onprem/O2.al').write_text(BASE_FILES['tests/onprem/O2.al'].replace('begin end', 'begin Sleep(1); end'))
+    git(repo, 'commit', '-q', '-am', 'topic change')
+    git(repo, 'checkout', '-q', 'main')
+    Path(repo, 'tests/main/Probe.Table.al').write_text(BASE_FILES['tests/main/Probe.Table.al'].replace('Integer', 'Code[20]'))
+    git(repo, 'commit', '-q', '-am', 'base moved on')
+    r = st.select(st.Git(repo), 'main', 'topic')
+    check('branch behind its base: only the branch change is selected', r['mode'] == 'subset'
+          and ids(r, 'tests/onprem') == [60011] and ids(r, 'tests/main') == [], r)
+    clone = tempfile.mkdtemp(prefix='clone-', dir=ROOT)
+    git(clone, 'init', '-q')
+    git(clone, 'remote', 'add', 'origin', 'file://' + repo)
+    git(clone, 'fetch', '-q', '--depth=1', 'origin', 'topic:refs/remotes/origin/topic', 'main:refs/remotes/origin/main')
+    r = st.select(st.Git(clone), 'origin/main', 'origin/topic')
+    check('shallow clone: the merge base is fetched, only the branch change is selected', r['mode'] == 'subset'
+          and ids(r, 'tests/onprem') == [60011] and ids(r, 'tests/main') == [], r)
+
     # the real ci.yml: every job that runs BC tests reads the selection under its own test app dir
     real = st.parse_ci((HERE.parent / 'workflows' / 'ci.yml').read_text())
     check('real ci.yml has test jobs', len(real) >= 3, real)

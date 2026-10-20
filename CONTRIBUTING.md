@@ -303,12 +303,11 @@ The full run on master after the merge covers both.
 
 ### Running a selection by hand
 
-A manual run (**Actions → AL Language Test Suite → Run workflow**) takes `select_base`, a commit or a branch. The run then selects the tests affected by the diff from `select_base` to the branch it runs on. To see a selection without running CI:
+A manual run (**Actions → AL Language Test Suite → Run workflow**) takes `select_base`, a commit or a branch. The run then selects the tests affected by what the branch changed since it left `select_base`: the diff from the merge base of the two to the branch (three dots, `select_base...branch`). Later commits on `select_base` do not count, so a branch cut from master stays a subset run after master and staging move on. To see a selection without running CI:
 
 ```bash
 python3 .github/scripts/select-tests.py --base origin/master --head HEAD
-# what a branch changed since it left the base branch:
-python3 .github/scripts/select-tests.py --base origin/master --head my-branch --merge-base
+python3 .github/scripts/select-tests.py --base origin/al-runtime-rs-staging --head my-branch
 ```
 
 A manual run can also take `select_codeunits`: the test codeunits to run, as a JSON object with one entry per test app, for example `{"tests/al-language":"50010,50012..50015","tests/al-language-onprem":"60011"}`. The run then uses this list as it is and reads no diff; `select_base` is ignored. Ids are separated by `,` or `|`, and `lo..hi` is a range. The `prepare` job keeps only the runnable test codeunits of the job's `codeunit_range` (a range never adds a `Subtype = Test` codeunit without a `[Test]` procedure), lists the ids it dropped, and adds each app's sentinel. An app the input leaves out runs only its sentinel. An input that cannot be read, or that names an app no test job reads, means a full run. GitHub limits all inputs of one dispatch to 65,535 characters together; every test codeunit of the corpus written out one by one is about 20,000.
