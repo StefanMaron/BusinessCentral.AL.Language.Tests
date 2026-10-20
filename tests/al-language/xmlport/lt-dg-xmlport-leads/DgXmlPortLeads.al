@@ -294,6 +294,7 @@ codeunit 86030 "LT DG XmlPort Leads"
 
     // Linux suspect, queued for the Windows check (not a [Test]): on Linux BC 29.0 this export ends the test with an uncatchable
     // 'Unexpected CLR exception thrown.: System.NullReferenceException' in NavXmlPortXmlAdapter.GetNamespaceUriStringFromDefinedNamespaces.
+    [Test]
     procedure Item108_PrefixWithoutNamespacesProbe()
     var
         Observer: Codeunit "Probe Observer";

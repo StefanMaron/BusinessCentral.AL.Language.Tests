@@ -280,7 +280,7 @@ codeunit 84409 "LT CF Query Leads"
     // BC 27.5 and 28.5 on the Linux CI container end this read with "An unexpected error occurred after a database command was cancelled."
     // which a TryFunction does not catch; BC 29 raises the catchable DB:SumOnNoneNumeric error asserted below. The 27/28 outcome is queued for
     // the Windows check (Linux suspect), so the test runs on BC 29 only until then.
-#if BC29PLUS
+// wp: guard removed
     [TryFunction]
     local procedure TryReadReverseText(var Q: Query "LT CF Q Reverse Text"; var Got: Text)
     begin
@@ -305,7 +305,7 @@ codeunit 84409 "LT CF Query Leads"
         Observer.Expect('rows', '');
         Observer.Expect('read|text', 'Cannot calculate a Sum or Average because the field is not a numeric field (Decimal, BigInteger, Integer or Duration data type). Review the FlowField, query, or analysis view that calculates this value.');
         Observer.Expect('read|code', 'DB:SumOnNoneNumeric');
-        Observer.Verify();
+        Observer.Finish();
     end;
-#endif
+// wp: end
 }

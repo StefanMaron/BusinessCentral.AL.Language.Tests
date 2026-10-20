@@ -167,7 +167,8 @@ codeunit 84110 "LT CA TestPage Tests"
 
     // NOT a test (Linux suspect, queued for the Windows check): on the Linux BC 29.0 container, Trap() then Page.Run of a Role Center page
     // fails with an uncatchable CLR NullReferenceException in TestPageClientSession.UISession_FormToShow. The probe is kept for that check.
-    local procedure Ca03_RoleCenter_TrapThenPageRun()
+    [Test]
+    procedure Ca03_RoleCenter_TrapThenPageRun()
     var
         Observer: Codeunit "Probe Observer";
         Rc: TestPage "LT CA Role Center";

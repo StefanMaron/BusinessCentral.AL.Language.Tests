@@ -1,3 +1,4 @@
+#define LT_AM_LINUX_SUSPECT
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); self-contained report 79256 (hand-written layout LtAmRdlcText.rdlc), test codeunit 79257,

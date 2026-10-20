@@ -206,6 +206,7 @@ codeunit 80979 "BC Xml Blob"
         Observer.Observe('media has value', Format(Row.Pic.HasValue()));
         Observer.Observe('media set count', Format(Row.Pics.Count()));
         Text := Dataset(Report::"BC Xml Blob Columns");
+        Observer.Observe('raw', CopyStr(Text, Text.IndexOf('MediaCol'), 700));
         // Media and MediaSet ids are new on every run: they are replaced by placeholders in every spelling the dataset could use.
         Text := Mask(Text, Row.Pic.MediaId(), 'media');
         Text := Mask(Text, SetId, 'mediaset');
@@ -226,7 +227,7 @@ codeunit 80979 "BC Xml Blob"
 #else
         Observer.Expect('dataset', '<DataItems>\n    <DataItem language="en-US" formatRegion="en-US" name="Row">\n      <Columns>\n        <Column name="Id">4</Column>\n        <Column name="BlobCol"></Column>\n        <Column name="MediaCol"><png-re-encoded></Column>\n        <Column name="MediaSetCol"><png-re-encoded></Column>\n        <Column name="NoteCol">media</Column>\n      </Columns>\n    </DataItem>\n  </DataItems>\n</ReportDataSet>\n');
 #endif
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     local procedure Mask(T: Text; Id: Guid; Name: Text): Text

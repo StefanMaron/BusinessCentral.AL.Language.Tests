@@ -156,6 +156,18 @@ codeunit 85436 "LT CW Default Methods"
     end;
 
     [Test]
+    procedure WP_CW_LocalThroughInterface()
+    var
+        Observer: Codeunit "Probe Observer";
+        Loc: Codeunit "LT CW Impl68 Local";
+        I: Interface "LT CW I68";
+    begin
+        I := Loc;
+        Observer.Observe('local opt', I.Opt());
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure CW_Default_ThroughEnum()
     var
         Observer: Codeunit "Probe Observer";

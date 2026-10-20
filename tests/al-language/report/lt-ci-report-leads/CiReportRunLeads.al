@@ -667,6 +667,17 @@ codeunit 84592 "LT CI Report Run Leads"
         Observer.Verify();
     end;
 
+    [Test]
+    procedure WP_CI_RdlcWordExcel()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Start(0);
+        SaveAs(Observer, 'rdlc word', Report::"LT CI Rdlc Rpt", ReportFormat::Word);
+        SaveAs(Observer, 'rdlc excel', Report::"LT CI Rdlc Rpt", ReportFormat::Excel);
+        Observer.Finish();
+    end;
+
     // Item 140: CurrReport.FormatRegion set to an unknown name, to empty, and to de-DE in OnPreReport.
     [Test]
     procedure FormatRegion_Invalid_Empty_Valid()

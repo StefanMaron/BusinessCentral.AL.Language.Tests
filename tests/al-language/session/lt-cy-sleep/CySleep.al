@@ -37,7 +37,15 @@ codeunit 85546 "LT CY Sleep"
         Observer.Verify();
     end;
 
-    // Linux suspect probe, kept for the Windows check (not a [Test]): see the header.
+    [Test]
+    procedure WP_CY_NegativeSleep()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        NegativeSleepProbe(Observer);
+        Observer.Finish();
+    end;
+
     procedure NegativeSleepProbe(var Observer: Codeunit "Probe Observer")
     begin
         Observer.Observe('sleep -2', SleepResult(-2));

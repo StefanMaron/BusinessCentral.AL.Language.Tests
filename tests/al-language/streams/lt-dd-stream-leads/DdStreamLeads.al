@@ -1,3 +1,4 @@
+#define LT_HELD_BCLINUX_135
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), table 85840 (DdStreamLeadObjects.al), System Application
 // "Temp Blob", "Base64 Convert", "Data Compression", Base Application "CSV Buffer".

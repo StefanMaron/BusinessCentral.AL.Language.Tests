@@ -1,3 +1,4 @@
+#define LT_HELD_BCLINUX_TARGETEXCEPTION
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-creating-handler-methods
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); LT CB Row / Hnd Log / Hnd Card / Hnd Dialog (CbFixtures.al)

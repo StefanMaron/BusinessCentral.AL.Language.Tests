@@ -340,6 +340,7 @@ codeunit 68042 "W4 CalcFields Tests"
     // Not a [Test] (Linux suspect, queued for the Windows check): on the Linux BC container, 27.5, 28.5 and 29.0, CalcFields on a FlowField
     // without CalcFormula ends the test with the uncatchable 'Unexpected CLR exception thrown.: System.NullReferenceException: Object
     // reference not set to an instance of an object.' (the TryFunction in BrTryCalc does not catch it). Kept as the probe source.
+    [Test]
     procedure BR_FlowFieldWithoutCalcFormula()
     var
         Observer: Codeunit "Probe Observer";

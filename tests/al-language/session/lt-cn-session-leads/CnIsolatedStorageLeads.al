@@ -379,6 +379,7 @@ codeunit 84893 "LT CN SetEncrypted Len"
 
     // Not a test (Linux suspect, queued for the Windows check): on the Linux BC container 215 ASCII characters fail with 'Unknown error',
     // code UnknownEncryption:OpenSslCryptographic (an OpenSSL exception), while 216 and more fail with BC's own length check. The docs give 215 as the limit.
+    [Test]
     procedure SetEncrypted_215Ascii()
     var
         Observer: Codeunit "Probe Observer";

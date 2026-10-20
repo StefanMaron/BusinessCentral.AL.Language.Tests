@@ -12,7 +12,9 @@
 
 codeunit 80007 "LT AT Time Zone Numbering"
 {
+    Subtype = Test;
     // Raises the OBSERVE error with the values when called (see Probe Observer).
+    [Test]
     procedure AT_TimeZone_Numbering_Probe()
     var
         Observer: Codeunit "Probe Observer";

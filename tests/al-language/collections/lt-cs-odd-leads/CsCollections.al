@@ -276,6 +276,7 @@ codeunit 85180 "LT CS Collections"
     // Enum.Names()/Ordinals() gives on Linux BC 29.0 an uncatchable 'Unexpected CLR exception thrown.: System.InvalidCastException: Unable to
     // cast object of type 'System.Collections.ObjectModel.ReadOnlyCollection`1[...]' to type 'System.Collections.Generic.List`1[...]'.'
     // (asserterror does not catch it). Queued in the Windows queue.
+    [Test]
     procedure EnumNames_GetRange()
     var
         Observer: Codeunit "Probe Observer";
@@ -311,6 +312,7 @@ codeunit 85180 "LT CS Collections"
     // Enum.Names()/Ordinals() gives on Linux BC 29.0 an uncatchable 'Unexpected CLR exception thrown.: System.InvalidCastException: Unable to
     // cast object of type 'System.Collections.ObjectModel.ReadOnlyCollection`1[...]' to type 'System.Collections.Generic.List`1[...]'.'
     // (asserterror does not catch it). Queued in the Windows queue.
+    [Test]
     procedure EnumOrdinals_GetRangeCopy()
     var
         Observer: Codeunit "Probe Observer";
@@ -329,9 +331,7 @@ codeunit 85180 "LT CS Collections"
     // Corpus issue 670 item 8 (microsoft/AL#8241): on BC 29 AddRange of an empty interface list does nothing (asserted). On Linux BC 27.5 and 28.5
     // it gives an uncatchable 'Unexpected CLR exception thrown.: System.NullReferenceException: Object reference not set to an instance of an
     // object.' in SharedNavObjectList`1.AddRange and the session dies, so the test runs only from BC 29; the 27/28 result is queued for the Windows check.
-#if BC29PLUS
     [Test]
-#endif
     procedure InterfaceList_AddRange()
     var
         Observer: Codeunit "Probe Observer";
@@ -358,7 +358,7 @@ codeunit 85180 "LT CS Collections"
         Observer.Expect('after other', '3');
         Observer.Expect('third', 'square');
         Observer.Expect('empty to empty', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [TryFunction]

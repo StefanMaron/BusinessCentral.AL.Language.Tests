@@ -1,3 +1,4 @@
+#define BD_LINUX_SUSPECT
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-formatregion-property
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500, report/lt-y-report-props/YHelper.al); objects of BdRegionReports.al and BdRegionFixtures.al

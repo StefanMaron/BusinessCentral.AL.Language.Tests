@@ -6,7 +6,7 @@
 // BC versions: 29. On Linux BC 28.5 running this codeunit kills the test session twice ("hub connection closed"), and the 27.5 run gave no
 //   JUnit file at all (microsoft/AL#8247 reports a server compile error CS1503 for this code). The codeunit is compiled only from BC 29;
 //   the 27.5 and 28.5 result is queued for the Windows check.
-#if BC29PLUS
+#if BC28PLUS
 
 codeunit 85182 "LT CS Dict Interface"
 {

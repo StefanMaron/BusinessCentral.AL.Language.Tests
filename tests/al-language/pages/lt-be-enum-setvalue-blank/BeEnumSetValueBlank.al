@@ -525,7 +525,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -565,7 +565,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -595,7 +595,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -628,7 +628,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -653,7 +653,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -678,7 +678,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -710,7 +710,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -744,7 +744,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -789,7 +789,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -824,7 +824,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -861,7 +861,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -889,7 +889,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -917,7 +917,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -953,7 +953,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -983,7 +983,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1023,7 +1023,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -1053,7 +1053,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -1086,7 +1086,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1111,7 +1111,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1136,7 +1136,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1168,7 +1168,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1202,7 +1202,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1247,7 +1247,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -1282,7 +1282,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -1319,7 +1319,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1347,7 +1347,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1375,7 +1375,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1411,7 +1411,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1441,7 +1441,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1481,7 +1481,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -1511,7 +1511,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -1546,7 +1546,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1571,7 +1571,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1596,7 +1596,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1630,7 +1630,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1664,7 +1664,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1709,7 +1709,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -1744,7 +1744,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -1783,7 +1783,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1811,7 +1811,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1839,7 +1839,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1877,7 +1877,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1909,7 +1909,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -1951,7 +1951,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -1981,7 +1981,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -2016,7 +2016,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2043,7 +2043,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2070,7 +2070,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2104,7 +2104,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2140,7 +2140,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2187,7 +2187,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -2222,7 +2222,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
         Observer.Expect('member0-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -2261,7 +2261,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
         Observer.Expect('capAlpha-stored', '1');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2291,7 +2291,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
         Observer.Expect('int5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2321,7 +2321,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
         Observer.Expect('lit5-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2359,7 +2359,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
         Observer.Expect('litDigit1-stored', '0');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2385,7 +2385,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2420,7 +2420,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -2445,7 +2445,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -2474,7 +2474,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2496,7 +2496,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2518,7 +2518,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2546,7 +2546,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2576,7 +2576,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2616,7 +2616,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -2646,7 +2646,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -2679,7 +2679,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2704,7 +2704,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2729,7 +2729,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2761,7 +2761,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2787,7 +2787,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2822,7 +2822,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -2847,7 +2847,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -2876,7 +2876,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2898,7 +2898,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2920,7 +2920,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2948,7 +2948,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -2978,7 +2978,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3018,7 +3018,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -3048,7 +3048,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -3081,7 +3081,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3106,7 +3106,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3131,7 +3131,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3163,7 +3163,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3189,7 +3189,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3224,7 +3224,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -3249,7 +3249,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -3280,7 +3280,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3302,7 +3302,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3324,7 +3324,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3354,7 +3354,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3384,7 +3384,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3424,7 +3424,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -3454,7 +3454,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[Zero]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -3489,7 +3489,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3514,7 +3514,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3539,7 +3539,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3573,7 +3573,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3601,7 +3601,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3638,7 +3638,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -3663,7 +3663,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -3694,7 +3694,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3718,7 +3718,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[0]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3742,7 +3742,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[0]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3772,7 +3772,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[0]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3804,7 +3804,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3846,7 +3846,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #else
         // BC 27.5 answers 'The type NavOption is unknown.' (code NotSupportedType) for these texts; 28.5 and 29.0 give the
         // Evaluate error asserted above. Linux suspect, not asserted until the Windows run (windows-queue.md).
@@ -3876,7 +3876,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('member0', 'Yes');
         Observer.Expect('member0-value', '[ ]');
         Observer.Expect('member0-log', '[0]');
-        Observer.Verify();
+        Observer.Finish();
 #endif
     end;
 
@@ -3911,7 +3911,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('capAlpha', 'Yes');
         Observer.Expect('capAlpha-value', '[Alpha]');
         Observer.Expect('capAlpha-log', '[1]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3938,7 +3938,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('int5-err|code', 'TestValidation');
         Observer.Expect('int5-value', '[2]');
         Observer.Expect('int5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3965,7 +3965,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('lit5-err|code', 'TestValidation');
         Observer.Expect('lit5-value', '[2]');
         Observer.Expect('lit5-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]
@@ -3999,6 +3999,6 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Expect('litDigit1-err|code', 'TestValidation');
         Observer.Expect('litDigit1-value', '[2]');
         Observer.Expect('litDigit1-log', '[]');
-        Observer.Verify();
+        Observer.Finish();
     end;
 }

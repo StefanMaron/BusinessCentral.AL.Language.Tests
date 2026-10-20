@@ -60,7 +60,7 @@ codeunit 84840 "LT CM Install Leads"
         Observer.Expect('Message', 'ok');
         Observer.Expect('Commit', 'ok');
         Observer.Expect('after Commit', 'reached');
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     [Test]

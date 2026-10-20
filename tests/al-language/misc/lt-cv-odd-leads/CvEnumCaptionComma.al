@@ -138,6 +138,25 @@ codeunit 85365 "LT CV Enum Caption Comma Tests"
     end;
 
     [Test]
+    procedure WP_CV_GetValidationErrorNonePending()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT CV Tier Row";
+        Card: TestPage "LT CV Tier Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Tier := Row.Tier::Silver;
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        Observer.Observe('setvalue ok', Format(TrySetValue(Card, 'Plain')));
+        Observer.ObserveError('setvalue');
+        Observer.Observe('getvalidationerror', Card.Tier.GetValidationError());
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure TestPageSetValueByCaption()
     var
         Observer: Codeunit "Probe Observer";

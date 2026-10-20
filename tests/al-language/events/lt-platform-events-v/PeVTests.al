@@ -599,6 +599,30 @@ codeunit 69852 "LT V Platform Event Tests"
                     ProcOnly.UseRequestPage(false);
                     ProcOnly.RunModal();
                 end;
+            'run static nopage':
+                Report.Run(Report::"LT V Report A", false);
+            'runmodal static nopage':
+                Report.RunModal(Report::"LT V Report A", false);
+            'run var nopage':
+                begin
+                    Rep.UseRequestPage(false);
+                    Rep.Run();
+                end;
+            'runmodal var nopage':
+                begin
+                    Rep.UseRequestPage(false);
+                    Rep.RunModal();
+                end;
+            'execute static':
+                Report.Execute(Report::"LT V Report A", Parameters);
+            'execute var':
+                Rep.Execute(Parameters);
+            'saveas static pdf':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Pdf, OutStr);
+            'saveas static word':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Word, OutStr);
+            'saveas static excel':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Excel, OutStr);
             'procOnly saveas xml':
                 Report.SaveAs(Report::"LT PW V ProcOnly", '', ReportFormat::Xml, OutStr);
         end;
@@ -632,6 +656,37 @@ codeunit 69852 "LT V Platform Event Tests"
         PwCall(Observer, 'requestpage static', Parameters);
         Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
         Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure WP_PW_RaisedEvents_RunRunModalExecute()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'run static nopage', Parameters);
+        PwCall(Observer, 'runmodal static nopage', Parameters);
+        PwCall(Observer, 'run var nopage', Parameters);
+        PwCall(Observer, 'runmodal var nopage', Parameters);
+        PwCall(Observer, 'requestpage static', Parameters);
+        PwCall(Observer, 'execute static', Parameters);
+        PwCall(Observer, 'execute var', Parameters);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure WP_PW_RaisedEvents_OtherFormats()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'saveas static pdf', Parameters);
+        PwCall(Observer, 'saveas static word', Parameters);
+        PwCall(Observer, 'saveas static excel', Parameters);
+        Observer.Finish();
     end;
 
     [Test]

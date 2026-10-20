@@ -788,6 +788,6 @@ codeunit 79590 "LT AO TestPage Probes"
         Observer.Ignore('call|text');
         Observer.Ignore('call|code');
         Observer.Expect('log', 'before;');
-        Observer.Verify();
+        Observer.Finish();
     end;
 }

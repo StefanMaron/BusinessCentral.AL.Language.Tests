@@ -983,6 +983,7 @@ codeunit 86200 "LT PX Nav Tests"
     // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
     // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
     // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
+    [Test]
     procedure PX_Lookup_LkCond_KindB()
     var
         Observer: Codeunit "Probe Observer";
@@ -1032,6 +1033,7 @@ codeunit 86200 "LT PX Nav Tests"
     // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
     // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
     // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
+    [Test]
     procedure PX_Lookup_LkOnlyDd()
     var
         Observer: Codeunit "Probe Observer";
@@ -1043,6 +1045,7 @@ codeunit 86200 "LT PX Nav Tests"
     // Linux suspect (not asserted, queued for the Windows check): this lookup ends with 'Unexpected CLR exception thrown.:
     // System.NullReferenceException: Object reference not set to an instance of an object.' on the local BC 29.0 Linux container.
     // The control relation names a table without a LookupPageId (only a DrillDownPageId, or no page). Kept as source, not a [Test].
+    [Test]
     procedure PX_Lookup_LkNone()
     var
         Observer: Codeunit "Probe Observer";
@@ -1128,7 +1131,7 @@ codeunit 86200 "LT PX Nav Tests"
 #if BC28PLUS
         Observer.Expect('on_set_plain', 'ok | off=12/30/2025 on=12/30/2025 | stored=12/30/25 closing=No');
 #endif
-        Observer.Verify();
+        Observer.Finish();
     end;
 
     local procedure TrySet(Ctl: Integer; NewValue: Text): Text
