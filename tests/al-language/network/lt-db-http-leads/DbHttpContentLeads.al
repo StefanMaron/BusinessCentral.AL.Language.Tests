@@ -336,4 +336,267 @@ codeunit 85721 "LT DB Http Content Leads"
         Observer.Expect('text_after', '');
         Observer.Verify();
     end;
+
+    // Writer QG (runtime PR 380, lane-old-fails): ReadAs(Text) after a ReadAs(InStream) stream that was read only partly (2 of 6 characters),
+    // or not at all, for the response's own content (Resp.Content() each time), a copy (C := Resp.Content()), a variable written from text
+    // and a variable written from an InStream. After the text read: what is left in the first stream, and a fresh ReadAs(InStream).
+    [TryFunction]
+    local procedure QGTryRespText(var Resp: HttpResponseMessage; var Txt: Text)
+    begin
+        Resp.Content().ReadAs(Txt);
+    end;
+
+    [TryFunction]
+    local procedure QGTryContentText(var Content: HttpContent; var Txt: Text)
+    begin
+        Content.ReadAs(Txt);
+    end;
+
+    local procedure QGRead2(var InS: InStream): Text
+    var
+        T: Text;
+    begin
+        InS.ReadText(T, 2);
+        exit(T);
+    end;
+
+    local procedure QGObserveRespText(var Observer: Codeunit "Probe Observer"; Name: Text; var Resp: HttpResponseMessage)
+    var
+        Txt: Text;
+    begin
+        if QGTryRespText(Resp, Txt) then
+            Observer.Observe(Name, Txt)
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    local procedure QGObserveContentText(var Observer: Codeunit "Probe Observer"; Name: Text; var Content: HttpContent)
+    var
+        Txt: Text;
+    begin
+        if QGTryContentText(Content, Txt) then
+            Observer.Observe(Name, Txt)
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    [Test]
+    procedure QG_RespContent_StreamPartlyRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Resp: HttpResponseMessage;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        Resp.Content().WriteFrom('abcdef');
+        Resp.Content().ReadAs(InS);
+        Observer.Observe('part', QGRead2(InS));
+        QGObserveRespText(Observer, 'text', Resp);
+        Observer.Observe('rest_of_first', ReadAll(InS));
+        QGObserveRespText(Observer, 'text_again', Resp);
+        Resp.Content().ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_RespContent_StreamNotRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Resp: HttpResponseMessage;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        Resp.Content().WriteFrom('abcdef');
+        Resp.Content().ReadAs(InS);
+        QGObserveRespText(Observer, 'text', Resp);
+        Observer.Observe('first_stream', ReadAll(InS));
+        QGObserveRespText(Observer, 'text_again', Resp);
+        Resp.Content().ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_RespContentCopy_StreamPartlyRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Resp: HttpResponseMessage;
+        Content: HttpContent;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        Resp.Content().WriteFrom('abcdef');
+        Content := Resp.Content();
+        Content.ReadAs(InS);
+        Observer.Observe('part', QGRead2(InS));
+        QGObserveContentText(Observer, 'text', Content);
+        Observer.Observe('rest_of_first', ReadAll(InS));
+        QGObserveContentText(Observer, 'text_again', Content);
+        QGObserveRespText(Observer, 'resp_text', Resp);
+        Content.ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', '');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('resp_text', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_RespContentCopy_StreamNotRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Resp: HttpResponseMessage;
+        Content: HttpContent;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        Resp.Content().WriteFrom('abcdef');
+        Content := Resp.Content();
+        Content.ReadAs(InS);
+        QGObserveContentText(Observer, 'text', Content);
+        Observer.Observe('first_stream', ReadAll(InS));
+        QGObserveContentText(Observer, 'text_again', Content);
+        QGObserveRespText(Observer, 'resp_text', Resp);
+        Content.ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('text', '');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('resp_text', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_RespContentCopy_RespStreamPartlyRead_ThenCopyText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Resp: HttpResponseMessage;
+        Content: HttpContent;
+        InS: InStream;
+    begin
+        Resp.Content().WriteFrom('abcdef');
+        Content := Resp.Content();
+        Resp.Content().ReadAs(InS);
+        Observer.Observe('part', QGRead2(InS));
+        QGObserveContentText(Observer, 'copy_text', Content);
+        QGObserveRespText(Observer, 'resp_text', Resp);
+        Observer.Observe('rest_of_first', ReadAll(InS));
+        Observer.Expect('part', 'ab');
+        Observer.Expect('copy_text', 'abcdef');
+        Observer.Expect('resp_text', 'abcdef');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_TextContent_StreamPartlyRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Content: HttpContent;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        Content.WriteFrom('abcdef');
+        Content.ReadAs(InS);
+        Observer.Observe('part', QGRead2(InS));
+        QGObserveContentText(Observer, 'text', Content);
+        Observer.Observe('rest_of_first', ReadAll(InS));
+        QGObserveContentText(Observer, 'text_again', Content);
+        Content.ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_TextContent_StreamNotRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Content: HttpContent;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        Content.WriteFrom('abcdef');
+        Content.ReadAs(InS);
+        QGObserveContentText(Observer, 'text', Content);
+        Observer.Observe('first_stream', ReadAll(InS));
+        QGObserveContentText(Observer, 'text_again', Content);
+        Content.ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_StreamContent_StreamPartlyRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "LT DB Http Blob" temporary;
+        Content: HttpContent;
+        Source: InStream;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        FillBlob(Rec, 'abcdef', Source);
+        Content.WriteFrom(Source);
+        Content.ReadAs(InS);
+        Observer.Observe('part', QGRead2(InS));
+        QGObserveContentText(Observer, 'text', Content);
+        Observer.Observe('rest_of_first', ReadAll(InS));
+        QGObserveContentText(Observer, 'text_again', Content);
+        Content.ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', '');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_StreamContent_StreamNotRead_ThenText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "LT DB Http Blob" temporary;
+        Content: HttpContent;
+        Source: InStream;
+        InS: InStream;
+        InS2: InStream;
+    begin
+        FillBlob(Rec, 'abcdef', Source);
+        Content.WriteFrom(Source);
+        Content.ReadAs(InS);
+        QGObserveContentText(Observer, 'text', Content);
+        Observer.Observe('first_stream', ReadAll(InS));
+        QGObserveContentText(Observer, 'text_again', Content);
+        Content.ReadAs(InS2);
+        Observer.Observe('fresh_stream', ReadAll(InS2));
+        Observer.Expect('text', '');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
+    end;
 }
