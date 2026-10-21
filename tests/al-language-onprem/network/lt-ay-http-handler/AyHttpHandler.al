@@ -10,6 +10,11 @@
 // Writer PY (2026-10-20, tests PY_*): a handler answering true with a StrMenuHandler bound (Allow Once, Block Once, cancel), a failed call whose
 // result is not used, a failed call into a filled response, ReasonPhrase of mocked statuses, more base-address joins and paths without one.
 // BC versions: 27, 28, 29 (corpus CI)
+// No outbound-request approval prompt (StrMenu Allow Always/Allow Once/Block Always/Block Once) appears (bc-linux bcc60c1c; a Windows container
+// never shows it, bc-linux 05752c9 #165). So no test binds a StrMenuHandler: a prompt would surface as 'Unhandled UI' in last_error, and
+// menu=0 in 'calls' records that none was answered. The *_StrMenuAllowOnce/_StrMenuBlockOnce/_StrMenuCancel tests keep their names and the
+// choice they would give; they now pin that the request runs the same as without a menu. Values: corpus CI on bc-linux bcc60c1c (27.5, 28.5,
+// 29.0); earlier images showed the prompt and the old values (status 200 OK / Unhandled UI / Block Once = status 400) were Linux-only.
 
 codeunit 98550 "LT AY Http Handler"
 {
@@ -248,17 +253,17 @@ codeunit 98550 "LT AY Http Handler"
     begin
         Outcome(Observer, 'http://localhost:1/x');
 #if BC29PLUS
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #else
         Observer.Expect('result', 'error status=200');
 #endif
 #if BC29PLUS
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
 #else
         Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
 #endif
 #if BC29PLUS
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #else
         Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
 #endif
@@ -290,14 +295,6 @@ codeunit 98550 "LT AY Http Handler"
                 Error('mode handler failed');
         end;
         exit(false);
-    end;
-
-    [StrMenuHandler]
-    procedure MenuHandler(Options: Text; var Choice: Integer; Instruction: Text)
-    begin
-        MenuCalls += 1;
-        MenuSeen := Options + '|' + Instruction;
-        Choice := MenuChoice;
     end;
 
     [TryFunction]
@@ -333,11 +330,7 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
-#if BC29PLUS
-    [HandlerFunctions('ModeHandler,MenuHandler')]
-#else
     [HandlerFunctions('ModeHandler')]
-#endif
     procedure PY_HandlerTrue_StrMenuAllowOnce()
     var
         Observer: Codeunit "Probe Observer";
@@ -359,7 +352,7 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
 #endif
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
         Observer.Expect('calls', '0 menu=0 ');
 #endif
@@ -367,33 +360,29 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
-#if BC29PLUS
-    [HandlerFunctions('ModeHandler,MenuHandler')]
-#else
     [HandlerFunctions('ModeHandler')]
-#endif
     procedure PY_HandlerTrue_StrMenuBlockOnce()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Menu(Observer, 4, 'http://localhost:1/x');
 #if BC29PLUS
-        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #else
         Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
 #endif
 #if BC29PLUS
-        Observer.Expect('last_error', '');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
 #else
         Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
 #endif
 #if BC29PLUS
-        Observer.Expect('last_code', '');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #else
         Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
 #endif
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
         Observer.Expect('calls', '0 menu=0 ');
 #endif
@@ -401,33 +390,29 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
-#if BC29PLUS
-    [HandlerFunctions('ModeHandler,MenuHandler')]
-#else
     [HandlerFunctions('ModeHandler')]
-#endif
     procedure PY_HandlerTrue_StrMenuCancel()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Menu(Observer, 0, 'http://localhost:1/x');
 #if BC29PLUS
-        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #else
         Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
 #endif
 #if BC29PLUS
-        Observer.Expect('last_error', '');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
 #else
         Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
 #endif
 #if BC29PLUS
-        Observer.Expect('last_code', '');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #else
         Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
 #endif
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
         Observer.Expect('calls', '0 menu=0 ');
 #endif
@@ -451,11 +436,7 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
-#if BC29PLUS
-    [HandlerFunctions('ModeHandler,MenuHandler')]
-#else
     [HandlerFunctions('ModeHandler')]
-#endif
     procedure PY_UnusedResult_BlockOnce()
     var
         Observer: Codeunit "Probe Observer";
@@ -463,7 +444,7 @@ codeunit 98550 "LT AY Http Handler"
         MenuChoice := 4;
         Unused(Observer, 'block_once', 'true', 'http://localhost:1/x');
 #if BC29PLUS
-        Observer.Expect('block_once', 'E[The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=1 menu=1');
+        Observer.Expect('block_once', 'E[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=0');
 #else
         Observer.Expect('block_once', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
 #endif
@@ -471,11 +452,7 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
-#if BC29PLUS
-    [HandlerFunctions('ModeHandler,MenuHandler')]
-#else
     [HandlerFunctions('ModeHandler')]
-#endif
     procedure PY_UnusedResult_AllowOnceRefused()
     var
         Observer: Codeunit "Probe Observer";
@@ -483,7 +460,7 @@ codeunit 98550 "LT AY Http Handler"
         MenuChoice := 2;
         Unused(Observer, 'allow_once', 'true', 'http://localhost:1/x');
 #if BC29PLUS
-        Observer.Expect('allow_once', 'E[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=1');
+        Observer.Expect('allow_once', 'E[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=0');
 #else
         Observer.Expect('allow_once', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
 #endif
@@ -518,11 +495,7 @@ codeunit 98550 "LT AY Http Handler"
     end;
 
     [Test]
-#if BC29PLUS
-    [HandlerFunctions('ModeHandler,MenuHandler')]
-#else
     [HandlerFunctions('ModeHandler')]
-#endif
     procedure PY_FailedCall_IntoFilledResponse()
     var
         Observer: Codeunit "Probe Observer";
@@ -547,17 +520,17 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('first', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
 #endif
 #if BC29PLUS
-        Observer.Expect('second', 'Yes ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+        Observer.Expect('second', 'Yes ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #else
         Observer.Expect('second', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
 #endif
 #if BC29PLUS
-        Observer.Expect('second_error', '|');
+        Observer.Expect('second_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security');
 #else
         Observer.Expect('second_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest');
 #endif
 #if BC29PLUS
-        Observer.Expect('third', 'No ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
+        Observer.Expect('third', 'No ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #else
         Observer.Expect('third', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
 #endif
