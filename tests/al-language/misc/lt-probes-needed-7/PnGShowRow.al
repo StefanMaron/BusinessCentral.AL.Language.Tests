@@ -169,4 +169,260 @@ codeunit 70176 "LT PnG Show Row"
         Observer.Expect('log', 'List.OnInit;List.OnOpenPage;List.AGR(S1,Seed);List.AGR(S1,Seed);List.AGCR(S1,);List.AGR(S1,Seed);List.AGR(NEW1,Created);List.AGR(NEW1,Created);List.AGR(S1,Seed);List.AGR(NEW1,Created);List.AGR(NEW1,Created);List.AGCR(NEW1,NEW1);List.AGR(S1,Seed);List.AGR(S1,Seed);List.AGCR(S1,NEW1)');
         Observer.Verify();
     end;
+
+    // Writer QG (runtime PR 380, lane-old-fails): the tests above dump the trigger log once at the end. These split it by step (open, the
+    // action, a field read, First, Next, Close) for a list opened on an empty table, so each call's own triggers are pinned.
+    [Test]
+    procedure QG_EmptyList_InsertViaRec_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        Log.Reset();
+        List.OpenEdit();
+        Observer.Observe('open_log', Log.Dump());
+        Log.Reset();
+        List.InsertViaRec.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('stored', Format(Item.Count()));
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('next_no', List.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        Log.Reset();
+        List.Close();
+        Observer.Observe('close_log', Log.Dump());
+        Observer.Observe('stored_after_close', Format(Item.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_EmptyList_InsertViaOtherVariable_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        Log.Reset();
+        List.OpenEdit();
+        Observer.Observe('open_log', Log.Dump());
+        Log.Reset();
+        List.InsertViaOtherVar.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('stored', Format(Item.Count()));
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('next_no', List.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        Log.Reset();
+        List.Close();
+        Observer.Observe('close_log', Log.Dump());
+        Observer.Observe('stored_after_close', Format(Item.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_EmptyList_InsertViaRecAndUpdate_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        Log.Reset();
+        List.OpenEdit();
+        Observer.Observe('open_log', Log.Dump());
+        Log.Reset();
+        List.InsertViaRecAndUpdate.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('stored', Format(Item.Count()));
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('next_no', List.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        Log.Reset();
+        List.Close();
+        Observer.Observe('close_log', Log.Dump());
+        Observer.Observe('stored_after_close', Format(Item.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_EmptyList_ActionStoresNothing_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        Log.Reset();
+        List.OpenEdit();
+        Observer.Observe('open_log', Log.Dump());
+        Log.Reset();
+        List.ReadTableRow.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('stored', Format(Item.Count()));
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('next_no', List.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        Log.Reset();
+        List.Close();
+        Observer.Observe('close_log', Log.Dump());
+        Observer.Observe('stored_after_close', Format(Item.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_ViewEmptyList_InsertViaRec_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        Log.Reset();
+        List.OpenView();
+        Observer.Observe('open_log', Log.Dump());
+        Log.Reset();
+        List.InsertViaRec.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('stored', Format(Item.Count()));
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('next_no', List.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        Log.Reset();
+        List.Close();
+        Observer.Observe('close_log', Log.Dump());
+        Observer.Observe('stored_after_close', Format(Item.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_ViewEmptyList_InsertViaOtherVariable_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        Log.Reset();
+        List.OpenView();
+        Observer.Observe('open_log', Log.Dump());
+        Log.Reset();
+        List.InsertViaOtherVar.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('stored', Format(Item.Count()));
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        Log.Reset();
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('next_no', List.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        Log.Reset();
+        List.Close();
+        Observer.Observe('close_log', Log.Dump());
+        Observer.Observe('stored_after_close', Format(Item.Count()));
+        Observer.Finish();
+    end;
+
+    // A row stored by the test itself (not by page code) while the empty list is open: is it shown by a field read, First, or only after an action?
+    [Test]
+    procedure QG_ViewEmptyList_RowStoredByTest_ThenReads()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        List.OpenView();
+        Item."No." := 'T1';
+        Item.Name := 'ByTest';
+        Item.Insert();
+        Log.Reset();
+        Observer.Observe('no', List.NoCtl.Value());
+        Observer.Observe('no_log', Log.Dump());
+        Log.Reset();
+        List.ReadTableRow.Invoke();
+        Observer.Observe('action_log', Log.Dump());
+        Observer.Observe('no_after_action', List.NoCtl.Value());
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        List.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_ViewEmptyList_RowStoredByTest_ThenFirst()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT PnG Item";
+        Log: Codeunit "LT PnG Log";
+        List: TestPage "LT PnG List";
+    begin
+        Item.DeleteAll();
+        List.OpenView();
+        Item."No." := 'T1';
+        Item.Name := 'ByTest';
+        Item.Insert();
+        Log.Reset();
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('first_no', List.NoCtl.Value());
+        Observer.Observe('first_log', Log.Dump());
+        List.Close();
+        Observer.Finish();
+    end;
 }

@@ -390,4 +390,182 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         Observer.Expect('log total', 'nosource aftergetcurrrecord;');
         Observer.Verify();
     end;
+
+    // Writer QG (runtime PR 380, lane-old-fails): P146_NoSourceTable_SetValue_And_Action shows OnAfterGetCurrRecord after each action on a
+    // card without a source table. These pin, per step, which of OnAfterGetRecord, OnAfterGetCurrRecord and OnNewRecord such a page runs on
+    // open (edit, view, new), after an action that does nothing, after an action with CurrPage.Update(false), after SetValue and at Close.
+    local procedure QGNoSourceSteps(var Observer: Codeunit "Probe Observer"; var P: TestPage "LT QG NoSource Card")
+    var
+        Log: Codeunit "LT P146 Page Log";
+    begin
+        Observer.Observe('log after open', Log.GetEntries());
+        Log.Clear();
+        Observer.Observe('txt', P.Txt.Value());
+        Observer.Observe('log after read', Log.GetEntries());
+        Log.Clear();
+        P.Noop.Invoke();
+        Observer.Observe('log after noop', Log.GetEntries());
+        Log.Clear();
+        P.Noop.Invoke();
+        Observer.Observe('log after second noop', Log.GetEntries());
+        Log.Clear();
+        P.UpdFalse.Invoke();
+        Observer.Observe('log after update action', Log.GetEntries());
+        Log.Clear();
+        P.Close();
+        Observer.Observe('log after close', Log.GetEntries());
+    end;
+
+    [Test]
+    procedure QG_NoSource_OpenEdit_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT P146 Page Log";
+        P: TestPage "LT QG NoSource Card";
+    begin
+        Log.Clear();
+        P.OpenEdit();
+        QGNoSourceSteps(Observer, P);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_NoSource_OpenView_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT P146 Page Log";
+        P: TestPage "LT QG NoSource Card";
+    begin
+        Log.Clear();
+        P.OpenView();
+        QGNoSourceSteps(Observer, P);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_NoSource_OpenNew_StepLog()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT P146 Page Log";
+        P: TestPage "LT QG NoSource Card";
+    begin
+        Log.Clear();
+        P.OpenNew();
+        QGNoSourceSteps(Observer, P);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QG_NoSource_SetValue_ThenAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT P146 Page Log";
+        P: TestPage "LT QG NoSource Card";
+    begin
+        Log.Clear();
+        P.OpenEdit();
+        Log.Clear();
+        P.Txt.SetValue('typed');
+        Observer.Observe('log after setvalue', Log.GetEntries());
+        Log.Clear();
+        P.Noop.Invoke();
+        Observer.Observe('log after noop', Log.GetEntries());
+        Observer.Observe('txt', P.Txt.Value());
+        Log.Clear();
+        P.Close();
+        Observer.Observe('log after close', Log.GetEntries());
+        Observer.Finish();
+    end;
+}
+
+page 86704 "LT QG NoSource Card"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Txt; TxtVar)
+            {
+                ApplicationArea = All;
+                trigger OnValidate()
+                var
+                    Log: Codeunit "LT P146 Page Log";
+                begin
+                    Log.Add('qg validate=' + TxtVar);
+                end;
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(Noop)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    Log: Codeunit "LT P146 Page Log";
+                begin
+                    Log.Add('qg action');
+                end;
+            }
+            action(UpdFalse)
+            {
+                ApplicationArea = All;
+                trigger OnAction()
+                var
+                    Log: Codeunit "LT P146 Page Log";
+                begin
+                    Log.Add('qg update');
+                    CurrPage.Update(false);
+                    Log.Add('qg update done');
+                end;
+            }
+        }
+    }
+
+    var
+        TxtVar: Text;
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT P146 Page Log";
+    begin
+        TxtVar := 'start';
+        Log.Add('qg open');
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT P146 Page Log";
+    begin
+        Log.Add('qg agr');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT P146 Page Log";
+    begin
+        Log.Add('qg agcr');
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT P146 Page Log";
+    begin
+        Log.Add('qg new');
+    end;
+
+    trigger OnClosePage()
+    var
+        Log: Codeunit "LT P146 Page Log";
+    begin
+        Log.Add('qg close');
+    end;
 }
