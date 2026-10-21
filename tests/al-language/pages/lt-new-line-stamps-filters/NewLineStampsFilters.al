@@ -8,6 +8,10 @@
 //   header (OpenEdit) and a new header (OpenNew). A second part without SourceTableView is the contrast.
 //   Not pinned: New() on a part whose host header has Type B (HB) aborts the page with FormAbortException (the Document No. relation is validated
 //   before Type is stamped: "cannot be found in the related table"); the exception is not catchable, so no test can assert it.
+// Writer QO (al-runtime-rs assumption new-line-stamps-all-before-validating, Microsoft's shape: Service Order / Service Order Subform):
+//   a host Card with SourceTableView where(Type = const(B)) (page 87101) holding the B part above and a copy of it with DelayedInsert = true
+//   (page 87100), for a header of type B (OpenEdit) and a new header (OpenNew): the blank line the part shows before New(), the line after
+//   New(), what the OnValidate of "Document No." saw, the stored rows. QO_ tests in codeunit 74141.
 // BC versions: 27, 28, 29 by CI
 
 enum 74135 "LT NL Type"
@@ -474,4 +478,184 @@ codeunit 74141 "LT New Line Stamps Filters"
         Obs.Verify();
     end;
 
+    // Writer QO: host page 87101 (header view Type = B) with the part LinesB (74138) and LinesBD (87100, DelayedInsert).
+    [TryFunction]
+    local procedure QoRead(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean; var Result: Text)
+    begin
+        if Delayed then
+            Result := Host.LinesBD."Document No.".Value() + '|' + Host.LinesBD.Type.Value() + '|' + Host.LinesBD.Seen.Value()
+        else
+            Result := Host.LinesB."Document No.".Value() + '|' + Host.LinesB.Type.Value() + '|' + Host.LinesB.Seen.Value();
+    end;
+
+    [TryFunction]
+    local procedure QoNew(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
+    begin
+        if Delayed then
+            Host.LinesBD.New()
+        else
+            Host.LinesB.New();
+    end;
+
+    [TryFunction]
+    local procedure QoType(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
+    begin
+        if Delayed then
+            Host.LinesBD.Descr.SetValue('x')
+        else
+            Host.LinesB.Descr.SetValue('x');
+    end;
+
+    [TryFunction]
+    local procedure QoClose(var Host: TestPage "LT QO NL Host B")
+    begin
+        Host.Close();
+    end;
+
+    [TryFunction]
+    local procedure QoHostNo(var Host: TestPage "LT QO NL Host B"; Value: Text)
+    begin
+        Host."No.".SetValue(Value);
+    end;
+
+    local procedure QoDraft(Name: Text; var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
+    var
+        Result: Text;
+    begin
+        if QoRead(Host, Delayed, Result) then
+            Obs.Observe(Name, Result)
+        else
+            Obs.ObserveError(Name);
+    end;
+
+    local procedure QoExisting(Delayed: Boolean; WithNew: Boolean)
+    var
+        Host: TestPage "LT QO NL Host B";
+    begin
+        Seed('HB', "LT NL Type"::B);
+        Host.OpenEdit();
+        Obs.Observe('card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        QoDraft('blank', Host, Delayed);
+        if WithNew then begin
+            Step('new', QoNew(Host, Delayed));
+            QoDraft('draft', Host, Delayed);
+        end;
+        Step('type', QoType(Host, Delayed));
+        QoDraft('typed', Host, Delayed);
+        Step('close', QoClose(Host));
+        ObserveLines('db');
+    end;
+
+    [Test]
+    procedure QO_HostB_HeaderB_DelayedPart_TypeOnBlankLine()
+    begin
+        QoExisting(true, false);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QO_HostB_HeaderB_DelayedPart_NewThenType()
+    begin
+        QoExisting(true, true);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QO_HostB_HeaderB_PartB_TypeOnBlankLine()
+    begin
+        QoExisting(false, false);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QO_HostB_OpenNew_DelayedPart_NoThenType()
+    var
+        Host: TestPage "LT QO NL Host B";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Obs.Observe('card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        QoDraft('blank', Host, true);
+        Step('set_no', QoHostNo(Host, 'HN'));
+        Obs.Observe('after_no.headers', Headers());
+        QoDraft('after_no.blank', Host, true);
+        Step('type', QoType(Host, true));
+        QoDraft('typed', Host, true);
+        Step('close', QoClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        ObserveLines('db');
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QO_HostB_OpenNew_PartB_NoThenType()
+    var
+        Host: TestPage "LT QO NL Host B";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Obs.Observe('card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        QoDraft('blank', Host, false);
+        Step('set_no', QoHostNo(Host, 'HN'));
+        Obs.Observe('after_no.headers', Headers());
+        QoDraft('after_no.blank', Host, false);
+        Step('type', QoType(Host, false));
+        QoDraft('typed', Host, false);
+        Step('close', QoClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        ObserveLines('db');
+        Obs.Finish();
+    end;
+}
+
+page 87100 "LT QO NL Lines BD"
+{
+    PageType = ListPart;
+    SourceTable = "LT NL Line";
+    SourceTableView = where(Type = const(B));
+    AutoSplitKey = true;
+    DelayedInsert = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Document No."; Rec."Document No.") { ApplicationArea = All; }
+                field(Type; Rec.Type) { ApplicationArea = All; }
+                field(Seen; Rec.Seen) { ApplicationArea = All; }
+                field(Descr; Rec.Descr) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 87101 "LT QO NL Host B"
+{
+    PageType = Card;
+    SourceTable = "LT NL Header";
+    SourceTableView = where(Type = const(B));
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("No."; Rec."No.") { ApplicationArea = All; }
+            field(Type; Rec.Type) { ApplicationArea = All; }
+            part(LinesB; "LT NL Lines B")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+            part(LinesBD; "LT QO NL Lines BD")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
 }

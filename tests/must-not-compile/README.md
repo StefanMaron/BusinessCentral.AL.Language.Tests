@@ -577,6 +577,8 @@ is only a reference.
 | 1856 | AL0107 | An XmlPort Namespaces entry with the empty prefix written as `''` (the quoted identifier `""` compiles). |
 | 1857 | AL0107 | An XmlPort Namespaces property written as one string `'soap=http://...'`. |
 | 1960, 1961 | AL0501 | An event subscriber in a test codeunit without `EventSubscriberInstance = Manual` (the default, and StaticAutomatic written out). |
+| 1992 | AL0193 | `Validate` of an Enum field with a Variant (writer QO). |
+| 1993 | AL0122 | A Variant assigned to an Enum field of a record (writer QO; 0263 is the Enum variable). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
