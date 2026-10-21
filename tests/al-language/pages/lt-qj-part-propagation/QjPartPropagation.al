@@ -609,6 +609,558 @@ page 86973 "LT QL Note Host Default"
     end;
 }
 
+// ---- Writer QN additions (2026-10-21): hosts that are not Document pages for the LT QL Note Lines part; parts with other trigger and
+// insert shapes (AutoSplitKey, DelayedInsert, OnAfterGetRecord, OnAfterGetCurrRecord) and a plain Document host for each ----
+
+page 87020 "LT QN Note Host Card"
+{
+    PageType = Card;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(TotalF; Rec.Total) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QL Note Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('H.AGR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('H.AGCR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        Log.Add('H.MODR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+}
+
+page 87021 "LT QN Note Host Card Both"
+{
+    PageType = Card;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(TotalF; Rec.Total) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QL Note Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+                UpdatePropagation = Both;
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('H.AGR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('H.AGCR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        Log.Add('H.MODR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+}
+
+page 87022 "LT QN Note Host ListPlus"
+{
+    PageType = ListPlus;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(TotalF; Rec.Total) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QL Note Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('H.AGR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('H.AGCR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        Log.Add('H.MODR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+}
+
+page 87023 "LT QN Note Host ListPlus Both"
+{
+    PageType = ListPlus;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(TotalF; Rec.Total) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QL Note Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+                UpdatePropagation = Both;
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('H.AGR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('H.AGCR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        Log.Add('H.MODR(t=' + Format(Rec.Total) + ' x.t=' + Format(xRec.Total) + ')');
+    end;
+}
+
+page 87024 "LT QN Lines NoAGCR"
+{
+    PageType = ListPart;
+    SourceTable = "LT QJ Line";
+    ApplicationArea = All;
+    AutoSplitKey = true;
+    DelayedInsert = true;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(LineNoF; Rec."Line No.") { ApplicationArea = All; }
+                field(AmtF; Rec.Amt) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Log.Add('A.NEW(x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ' b=' + Format(BelowxRec) + ')');
+    end;
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('A.AGR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('A.INSR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+}
+
+page 87025 "LT QN Lines AGR"
+{
+    PageType = ListPart;
+    SourceTable = "LT QJ Line";
+    ApplicationArea = All;
+    AutoSplitKey = true;
+    DelayedInsert = true;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(LineNoF; Rec."Line No.") { ApplicationArea = All; }
+                field(AmtF; Rec.Amt) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Log.Add('B.NEW(x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ' b=' + Format(BelowxRec) + ')');
+    end;
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('B.AGR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('B.AGCR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('B.INSR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+}
+
+page 87026 "LT QN Lines NewOnly"
+{
+    PageType = ListPart;
+    SourceTable = "LT QJ Line";
+    ApplicationArea = All;
+    AutoSplitKey = true;
+    DelayedInsert = true;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(LineNoF; Rec."Line No.") { ApplicationArea = All; }
+                field(AmtF; Rec.Amt) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Log.Add('C.NEW(x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ' b=' + Format(BelowxRec) + ')');
+    end;
+}
+
+page 87027 "LT QN Lines DelayedOnly"
+{
+    PageType = ListPart;
+    SourceTable = "LT QJ Line";
+    ApplicationArea = All;
+    DelayedInsert = true;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(LineNoF; Rec."Line No.") { ApplicationArea = All; }
+                field(AmtF; Rec.Amt) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Log.Add('D.NEW(x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ' b=' + Format(BelowxRec) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('D.AGCR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('D.INSR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+}
+
+page 87028 "LT QN Lines SplitOnly"
+{
+    PageType = ListPart;
+    SourceTable = "LT QJ Line";
+    ApplicationArea = All;
+    AutoSplitKey = true;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(LineNoF; Rec."Line No.") { ApplicationArea = All; }
+                field(AmtF; Rec.Amt) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Log.Add('E.NEW(x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ' b=' + Format(BelowxRec) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('E.AGCR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('E.INSR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+}
+
+page 87029 "LT QN Lines Plain"
+{
+    PageType = ListPart;
+    SourceTable = "LT QJ Line";
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(LineNoF; Rec."Line No.") { ApplicationArea = All; }
+                field(AmtF; Rec.Amt) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT QJ Log";
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        Log.Add('F.NEW(x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ' b=' + Format(BelowxRec) + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('F.AGCR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('F.INSR(' + Format(Rec."Line No.") + ' a=' + Format(Rec.Amt) + ' x=' + Format(xRec.Amt) + ' x.ln=' + Format(xRec."Line No.") + ')');
+    end;
+}
+
+page 87030 "LT QN Host NoAGCR"
+{
+    PageType = Document;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(DescrF; Rec.Descr) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QN Lines NoAGCR")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+}
+
+page 87031 "LT QN Host AGR"
+{
+    PageType = Document;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(DescrF; Rec.Descr) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QN Lines AGR")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+}
+
+page 87032 "LT QN Host NewOnly"
+{
+    PageType = Document;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(DescrF; Rec.Descr) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QN Lines NewOnly")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+}
+
+page 87033 "LT QN Host DelayedOnly"
+{
+    PageType = Document;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(DescrF; Rec.Descr) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QN Lines DelayedOnly")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+}
+
+page 87034 "LT QN Host SplitOnly"
+{
+    PageType = Document;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(DescrF; Rec.Descr) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QN Lines SplitOnly")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+}
+
+page 87035 "LT QN Host Plain"
+{
+    PageType = Document;
+    SourceTable = "LT QJ Head";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(DescrF; Rec.Descr) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QN Lines Plain")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+}
+
 codeunit 86889 "LT QJ Part Propagation Tests"
 {
     Subtype = Test;
@@ -1414,5 +1966,1134 @@ codeunit 86889 "LT QJ Part Propagation Tests"
                 Result += Format(Line."Line No.") + ':q=' + Format(Line.Qty) + ',a=' + Format(Line.Amt);
             until Line.Next() = 0;
         exit(Result);
+    end;
+
+    // ---- Writer QN (2026-10-21), al-runtime-rs PR 5595 refusals: (2) a part's CurrPage.Update(false) when the host row did not change, on a
+    // new part row, on Card and ListPlus hosts and while the host holds an unsaved edit; (3) the xRec an empty part's OnNewRecord sees after
+    // host moves other than GoToKey (Next, Previous, First, Last, OpenNew, OpenEdit); (4) Last() and First() on parts without
+    // OnAfterGetCurrRecord or with OnAfterGetRecord; (5) New() on parts that are not AutoSplitKey + DelayedInsert or have OnAfterGetRecord. ----
+
+    local procedure SeedQn(WithEmptyFirst: Boolean; WithLastLines: Boolean)
+    var
+        Head: Record "LT QJ Head";
+        Line: Record "LT QJ Line";
+    begin
+        SeedQl();
+        if WithEmptyFirst then begin
+            Head."No." := 'H0';
+            Head.Total := 0;
+            Head.Descr := 'zero';
+            Head.Note := 'zero';
+            Head.Insert();
+        end;
+        if WithLastLines then begin
+            Head."No." := 'H4';
+            Head.Total := 4;
+            Head.Descr := 'four';
+            Head.Note := 'four';
+            Head.Insert();
+            Line."Doc No." := 'H4';
+            Line."Line No." := 50000;
+            Line.Qty := 5;
+            Line.Amt := 5;
+            Line.Insert();
+        end;
+        Log.Reset();
+    end;
+
+    local procedure StoredHeads(): Text
+    var
+        Head: Record "LT QJ Head";
+        Result: Text;
+    begin
+        if Head.FindSet() then
+            repeat
+                if Result <> '' then
+                    Result += ' ';
+                Result += '[' + Head."No." + ']';
+            until Head.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QN_Both_NewPartRow_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QL Note Host Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.Lines.Last();
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-line-after-part', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_SubPart_NewPartRow_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QL Note Host SubPart";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.Lines.Last();
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-line-after-part', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_Default_NewPartRow_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QL Note Host Default";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.Lines.Last();
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-line-after-part', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_Card_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host Card";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CardBoth_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host Card Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_ListPlus_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host ListPlus";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_ListPlusBoth_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host ListPlus Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_Card_NewPartRow_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host Card";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.Lines.Last();
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-line-after-part', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_ListPlusBoth_NewPartRow_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host ListPlus Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.Lines.Last();
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-line-after-part', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_Both_HostEdited_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QL Note Host Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.TotalF.SetValue(9);
+        Observer.Observe('log-host-edit', Log.Take());
+        Observer.Observe('stored-after-host-edit', Stored());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('stored-after-part', Stored());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('stored-after-close', Stored());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_SubPart_HostEdited_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QL Note Host SubPart";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.TotalF.SetValue(9);
+        Observer.Observe('log-host-edit', Log.Take());
+        Observer.Observe('stored-after-host-edit', Stored());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('stored-after-part', Stored());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('stored-after-close', Stored());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_Default_HostEdited_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QL Note Host Default";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.TotalF.SetValue(9);
+        Observer.Observe('log-host-edit', Log.Take());
+        Observer.Observe('stored-after-host-edit', Stored());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('stored-after-part', Stored());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('stored-after-close', Stored());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_Card_HostEdited_PartUpdate_HostRowUnchanged()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Note Host Card";
+    begin
+        Seed();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.TotalF.SetValue(9);
+        Observer.Observe('log-host-edit', Log.Take());
+        Observer.Observe('stored-after-host-edit', Stored());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('stored-after-part', Stored());
+        Observer.Observe('lines-after-part', StoredLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('stored-after-close', Stored());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_OpenEdit_FirstHostEmpty()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(true, false);
+        TP.OpenEdit();
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_HostNext()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenEdit();
+        TP.Next();
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Next()));
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-move', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_HostPrevious()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, true);
+        TP.OpenEdit();
+        TP.Last();
+        Log.Take();
+        Observer.Observe('previous-result', Format(TP.Previous()));
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-move', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_HostFirst()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(true, false);
+        TP.OpenEdit();
+        TP.Next();
+        Log.Take();
+        Observer.Observe('first-result', Format(TP.First()));
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-move', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_HostLast()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenEdit();
+        Log.Take();
+        Observer.Observe('last-host-result', Format(TP.Last()));
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-move', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_HostOpenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenNew();
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('heads-after-close', StoredHeads());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_EmptyPart_HostNext_ThenNextAgain()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, true);
+        TP.OpenEdit();
+        TP.Next();
+        TP.Next();
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Next()));
+        Observer.Observe('host-no', TP.NoF.Value());
+        Observer.Observe('log-move', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_Last_TwoLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line-after-new', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_Last_OneLine()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line-after-new', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H1'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_Last_NoLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H3');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line-after-new', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H3'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNewOnly_Last_TwoLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NewOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line-after-new', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNewOnly_Last_OneLine()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NewOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line-after-new', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H1'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNewOnly_Last_NoLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NewOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H3');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line-after-new', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H3'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartAGR_First_OnFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host AGR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('first-result', Format(TP.Lines.First()));
+        Observer.Observe('log-first', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        Observer.Observe('first-again-result', Format(TP.Lines.First()));
+        Observer.Observe('log-first-again', Log.Take());
+        Observer.Observe('part-line-after-first-again', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_First_OnFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('first-result', Format(TP.Lines.First()));
+        Observer.Observe('log-first', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        Observer.Observe('first-again-result', Format(TP.Lines.First()));
+        Observer.Observe('log-first-again', Log.Take());
+        Observer.Observe('part-line-after-first-again', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartAGR_Last_TwoLines()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host AGR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartDelayedOnly_New_FromFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host DelayedOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartDelayedOnly_NextNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host DelayedOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartDelayedOnly_LastNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host DelayedOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartDelayedOnly_NewTyped_ThenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host DelayedOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        TP.Lines.New();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-new-typed', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        Observer.Observe('lines-after-second-new', StoredLinesOf('H2'));
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartSplitOnly_New_FromFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host SplitOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartSplitOnly_NextNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host SplitOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartSplitOnly_LastNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host SplitOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartSplitOnly_NewTyped_ThenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host SplitOnly";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        TP.Lines.New();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-new-typed', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        Observer.Observe('lines-after-second-new', StoredLinesOf('H2'));
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartPlain_New_FromFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host Plain";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartPlain_NextNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host Plain";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartPlain_LastNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host Plain";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartPlain_NewTyped_ThenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host Plain";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        TP.Lines.New();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-new-typed', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        Observer.Observe('lines-after-second-new', StoredLinesOf('H2'));
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartAGR_New_FromFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host AGR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartAGR_NextNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host AGR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartAGR_LastNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host AGR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartAGR_NewTyped_ThenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host AGR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        TP.Lines.New();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-new-typed', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        Observer.Observe('lines-after-second-new', StoredLinesOf('H2'));
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_New_FromFirstRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Observer.Observe('log-open', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_NextNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('next-result', Format(TP.Lines.Next()));
+        Observer.Observe('log-next', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_LastNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_PartNoAGCR_NewTyped_ThenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QN Host NoAGCR";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        TP.GoToKey('H2');
+        Log.Take();
+        TP.Lines.New();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-new-typed', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new-again', Log.Take());
+        Observer.Observe('lines-after-second-new', StoredLinesOf('H2'));
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLinesOf('H2'));
+        Observer.Finish();
     end;
 }

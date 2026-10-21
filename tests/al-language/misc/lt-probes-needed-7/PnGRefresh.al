@@ -810,4 +810,272 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
         Observer.Verify();
     end;
+
+    // ---- Writer QN (2026-10-21), al-runtime-rs PR 5594: CurrPage.Close() in a list action after `Rec := Other` on pages with OnQueryClosePage
+    // and OnClosePage (Worksheet LT QN Close Sheet, List LT QN Close List; fixtures in PnGQlFixtures.al): the order of the close triggers and
+    // the shown-row read back, Rec and xRec in each; also opened with Page.RunModal and closed from the action inside a ModalPageHandler. ----
+
+    [Test]
+    procedure QN_CloseQ_WarmUp()
+    var
+        Sheet: TestPage "LT QN Close Sheet";
+        List: TestPage "LT QN Close List";
+    begin
+        SeedQlRows();
+        if TryOpenQnSheet(Sheet) then
+            if TryCloseQnSheet(Sheet) then;
+        if TryOpenQnList(List) then
+            if TryCloseQnList(List) then;
+        ClearLastError();
+    end;
+
+    // Opens and closes each new page once before the asserted tests (see QL_RecAssign_WarmUp: a first Close of a freshly published page once
+    // failed on BC 28.5 with 'The page definition has changed'). The close triggers log, which fails inside a TryFunction; nothing is asserted.
+    [TryFunction]
+    local procedure TryOpenQnSheet(var Sheet: TestPage "LT QN Close Sheet")
+    begin
+        Sheet.OpenView();
+    end;
+
+    [TryFunction]
+    local procedure TryCloseQnSheet(var Sheet: TestPage "LT QN Close Sheet")
+    begin
+        Sheet.Close();
+    end;
+
+    [TryFunction]
+    local procedure TryOpenQnList(var List: TestPage "LT QN Close List")
+    begin
+        List.OpenView();
+    end;
+
+    [TryFunction]
+    local procedure TryCloseQnList(var List: TestPage "LT QN Close List")
+    begin
+        List.Close();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_Sheet_OtherChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close Sheet";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeOtherChangedClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_Sheet_OtherUnchanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close Sheet";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeOtherUnchangedClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_Sheet_TempChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close Sheet";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeTempChangedClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_Sheet_OwnRowChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close Sheet";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.ChangeOwnRowClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_Sheet_NoChange_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close Sheet";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.CloseOnly.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_Sheet_OtherChanged_ThenTestPageClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close Sheet";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        QlTake();
+        List.TakeOtherChanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        List.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QnCloseSheetOtherChangedHandler')]
+    procedure QN_CloseQ_Sheet_RunModal_OtherChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QL Act Row";
+        Result: Action;
+    begin
+        SeedQlRows();
+        Result := Page.RunModal(Page::"LT QN Close Sheet", Row);
+        Observer.Observe('run-modal-result', Format(Result));
+        Observer.Observe('row-after', Row."No." + ',' + Row.Name);
+        Observer.Observe('log', QlTake());
+        Observer.Observe('stored-after', QlRows());
+        Observer.Finish();
+    end;
+
+    [ModalPageHandler]
+    procedure QnCloseSheetOtherChangedHandler(var List: TestPage "LT QN Close Sheet")
+    var
+        Log: Codeunit "LT PnG Log";
+    begin
+        Log.Add('MPH.in');
+        List.TakeOtherChangedClose.Invoke();
+        Log.Add('MPH.out');
+    end;
+
+    [Test]
+    procedure QN_CloseQ_List_OtherChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeOtherChangedClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_List_OwnRowChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.ChangeOwnRowClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_List_NoChange_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.CloseOnly.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        asserterror List.Close();
+        Observer.ObserveError('close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QN_CloseQ_List_OtherChanged_ThenTestPageClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QN Close List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        QlTake();
+        List.TakeOtherChanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        List.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QnCloseListOtherChangedHandler')]
+    procedure QN_CloseQ_List_RunModal_OtherChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QL Act Row";
+        Result: Action;
+    begin
+        SeedQlRows();
+        Result := Page.RunModal(Page::"LT QN Close List", Row);
+        Observer.Observe('run-modal-result', Format(Result));
+        Observer.Observe('row-after', Row."No." + ',' + Row.Name);
+        Observer.Observe('log', QlTake());
+        Observer.Observe('stored-after', QlRows());
+        Observer.Finish();
+    end;
+
+    [ModalPageHandler]
+    procedure QnCloseListOtherChangedHandler(var List: TestPage "LT QN Close List")
+    var
+        Log: Codeunit "LT PnG Log";
+    begin
+        Log.Add('MPH.in');
+        List.TakeOtherChangedClose.Invoke();
+        Log.Add('MPH.out');
+    end;
 }
