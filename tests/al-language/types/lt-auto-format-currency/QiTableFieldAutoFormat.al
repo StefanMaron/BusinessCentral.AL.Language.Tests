@@ -281,7 +281,19 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         ReadCard(Observer, 'nocur', 'C');
         DropCurrency();
         RestoreSetup();
-        Observer.Finish();
+        Observer.Expect('cur_t1', '1,234.568');
+        Observer.Expect('cur_t2', '1,234.5679');
+        Observer.Expect('cur_t4', '1,234.568');
+        Observer.Expect('cur_t5', '1,234.5679');
+        Observer.Expect('blank_t1', '1,234.57');
+        Observer.Expect('blank_t2', '1,234.56789');
+        Observer.Expect('blank_t4', '1,234.57');
+        Observer.Expect('blank_t5', '1,234.56789');
+        Observer.Expect('nocur_t1', '1,234.57');
+        Observer.Expect('nocur_t2', '1,234.56789');
+        Observer.Expect('nocur_t4', '1,234.57');
+        Observer.Expect('nocur_t5', '1,234.56789');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +317,31 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         List.Close();
         DropCurrency();
         RestoreSetup();
-        Observer.Finish();
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('row1_no', 'A');
+        Observer.Expect('row1_t1', '1,234.568');
+        Observer.Expect('row1_t2', '1,234.5679');
+        Observer.Expect('row1_t4', '1,234.568');
+        Observer.Expect('row1_t5', '1,234.5679');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('row2_no', 'B');
+        Observer.Expect('row2_t1', '1,234.57');
+        Observer.Expect('row2_t2', '1,234.56789');
+        Observer.Expect('row2_t4', '1,234.57');
+        Observer.Expect('row2_t5', '1,234.56789');
+        Observer.Expect('next2', 'Yes');
+        Observer.Expect('row3_no', 'C');
+        Observer.Expect('row3_t1', '1,234.57');
+        Observer.Expect('row3_t2', '1,234.56789');
+        Observer.Expect('row3_t4', '1,234.57');
+        Observer.Expect('row3_t5', '1,234.56789');
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('back2_no', 'B');
+        Observer.Expect('back2_t1', '1,234.57');
+        Observer.Expect('back2_t2', '1,234.56789');
+        Observer.Expect('back2_t4', '1,234.57');
+        Observer.Expect('back2_t5', '1,234.56789');
+        Observer.Verify();
     end;
 
     [Test]
@@ -321,7 +357,19 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         ReadCard(Observer, 'nocur', 'C');
         DropCurrency();
         RestoreSetup();
-        Observer.Finish();
+        Observer.Expect('cur_t1', '1,234.568');
+        Observer.Expect('cur_t2', '1,234.5679');
+        Observer.Expect('cur_t4', '1,234.568');
+        Observer.Expect('cur_t5', '1,234.5679');
+        Observer.Expect('blank_t1', '1,234.57');
+        Observer.Expect('blank_t2', '1,234.56789');
+        Observer.Expect('blank_t4', '1,234.57');
+        Observer.Expect('blank_t5', '1,234.56789');
+        Observer.Expect('nocur_t1', '1,234.57');
+        Observer.Expect('nocur_t2', '1,234.56789');
+        Observer.Expect('nocur_t4', '1,234.57');
+        Observer.Expect('nocur_t5', '1,234.56789');
+        Observer.Verify();
     end;
 
     [Test]
@@ -336,7 +384,15 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         ReadCard(Observer, 'blank', 'B');
         DropCurrency();
         RestoreSetup();
-        Observer.Finish();
+        Observer.Expect('cur_t1', '1,234.568');
+        Observer.Expect('cur_t2', '1,234.5679');
+        Observer.Expect('cur_t4', '1,234.568');
+        Observer.Expect('cur_t5', '1,234.5679');
+        Observer.Expect('blank_t1', '1,234.57');
+        Observer.Expect('blank_t2', '1,234.56789');
+        Observer.Expect('blank_t4', '1,234.57');
+        Observer.Expect('blank_t5', '1,234.56789');
+        Observer.Verify();
     end;
 
     // Format() in code does not go through a page control: does it use the table field's AutoFormat?
@@ -355,7 +411,10 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         Observer.Observe('format_amt10', Format(Row.Amt10));
         DropCurrency();
         RestoreSetup();
-        Observer.Finish();
+        Observer.Expect('format_amt1', '1,234.568');
+        Observer.Expect('format_amt2', '1,234.5679');
+        Observer.Expect('format_amt10', '1,234.568');
+        Observer.Verify();
     end;
 
     [Test]
@@ -387,7 +446,22 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         Observer.Observe('after-t10-row3', Log.Take());
         Card.Close();
         Observer.Observe('after-close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('after-open', 'fmt();fmt(A);');
+        Observer.Expect('no', 'A');
+        Observer.Expect('after-no-read', '');
+        Observer.Expect('t10', '1,234.568');
+        Observer.Expect('after-t10-read', '');
+        Observer.Expect('t10-again', '1,234.568');
+        Observer.Expect('after-t10-again', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('after-next', 'fmt(B);');
+        Observer.Expect('t10-row2', '1,234.568');
+        Observer.Expect('after-t10-row2', '');
+        Observer.Expect('after-gotorecord', 'fmt(A);fmt(B);fmt(C);');
+        Observer.Expect('t10-row3', '1,234.568');
+        Observer.Expect('after-t10-row3', '');
+        Observer.Expect('after-close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -415,7 +489,18 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         Observer.Observe('after-t10-row3', Log.Take());
         List.Close();
         Observer.Observe('after-close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('after-open', 'fmt();fmt(A);fmt(B);fmt(C);');
+        Observer.Expect('t10', '1,234.568');
+        Observer.Expect('after-t10-read', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('after-next', '');
+        Observer.Expect('t10-row2', '1,234.568');
+        Observer.Expect('after-t10-row2', '');
+        Observer.Expect('after-gotorecord', '');
+        Observer.Expect('t10-row3', '1,234.568');
+        Observer.Expect('after-t10-row3', '');
+        Observer.Expect('after-close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -433,7 +518,10 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         asserterror Card.OpenView();
         Observer.ObserveError('open');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open|text', 'LT QI format failed for A');
+        Observer.Expect('open|code', 'Dialog');
+        Observer.Expect('log', 'fmt();fmt(A);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -455,7 +543,12 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         asserterror Card.Next();
         Observer.ObserveError('next');
         Observer.Observe('log-next', Log.Take());
-        Observer.Finish();
+        Observer.Expect('t10-row1', '1.500');
+        Observer.Expect('log-open', 'fmt();fmt(A);');
+        Observer.Expect('next|text', 'LT QI format failed for B');
+        Observer.Expect('next|code', 'Dialog');
+        Observer.Expect('log-next', 'fmt(B);');
+        Observer.Verify();
     end;
 
     [Test]
@@ -474,6 +567,9 @@ codeunit 86826 "LT QI Table Field AutoFormat"
         asserterror List.OpenView();
         Observer.ObserveError('open');
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open|text', 'LT QI format failed for B');
+        Observer.Expect('open|code', 'Dialog');
+        Observer.Expect('log', 'fmt();fmt(A);fmt(B);');
+        Observer.Verify();
     end;
 }

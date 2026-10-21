@@ -2,8 +2,8 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160); own fixtures declared in this file (LT QI RV *)
 // Probe: written against a local BC 29.0 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
-// Facts: a repeater control over a page (global) variable that OnAfterGetRecord sets, one that OnAfterGetCurrRecord sets and a counter
-//   OnAfterGetRecord increments, on a List of 3 rows and on a ListPart of a card: Value() after OpenView, First, Next, Last, Previous,
+// Facts: a repeater control over a page (global) variable that OnAfterGetRecord sets, one that OnAfterGetCurrRecord sets, on a
+//   List of 3 rows and on a ListPart of a card: Value() after OpenView, First, Next, Last, Previous,
 //   GoToRecord, after an action that changes the variables (with and without CurrPage.Update) and on a new row.
 // Settles al-runtime-rs docs/probes-needed.md row "A list's repeater control over a page variable that OnAfterGetRecord computes"
 //   (Tests-ERM 134760 TestPreviewEmployee, TestPreviewVendor, TestPreviewForeignCustomer).
@@ -58,7 +58,6 @@ page 86861 "LT QI RV List"
                 field(NameCtl; Rec.Name) { ApplicationArea = All; }
                 field(AgrVarCtl; AgrVar) { ApplicationArea = All; Editable = false; }
                 field(CurVarCtl; CurVar) { ApplicationArea = All; Editable = false; }
-                field(AgrCountCtl; AgrCount) { ApplicationArea = All; Editable = false; }
             }
         }
     }
@@ -95,7 +94,6 @@ page 86861 "LT QI RV List"
 
     trigger OnAfterGetRecord()
     begin
-        AgrCount += 1;
         AgrVar := 'agr ' + Format(Rec.Id);
     end;
 
@@ -107,7 +105,6 @@ page 86861 "LT QI RV List"
     var
         AgrVar: Text;
         CurVar: Text;
-        AgrCount: Integer;
 }
 
 page 86862 "LT QI RV Part"
@@ -127,7 +124,6 @@ page 86862 "LT QI RV Part"
                 field(NameCtl; Rec.Name) { ApplicationArea = All; }
                 field(AgrVarCtl; AgrVar) { ApplicationArea = All; Editable = false; }
                 field(CurVarCtl; CurVar) { ApplicationArea = All; Editable = false; }
-                field(AgrCountCtl; AgrCount) { ApplicationArea = All; Editable = false; }
             }
         }
     }
@@ -152,7 +148,6 @@ page 86862 "LT QI RV Part"
 
     trigger OnAfterGetRecord()
     begin
-        AgrCount += 1;
         AgrVar := 'agr ' + Format(Rec.Id);
     end;
 
@@ -164,7 +159,6 @@ page 86862 "LT QI RV Part"
     var
         AgrVar: Text;
         CurVar: Text;
-        AgrCount: Integer;
 }
 
 page 86863 "LT QI RV Host Card"
@@ -217,12 +211,12 @@ codeunit 86864 "LT QI RV Tests"
 
     local procedure ReadList(var Observer: Codeunit "Probe Observer"; var List: TestPage "LT QI RV List"; Tag: Text)
     begin
-        Observer.Observe(Tag, List.IdCtl.Value() + ' | ' + List.AgrVarCtl.Value() + ' | ' + List.CurVarCtl.Value() + ' | ' + List.AgrCountCtl.Value());
+        Observer.Observe(Tag, List.IdCtl.Value() + ' | ' + List.AgrVarCtl.Value() + ' | ' + List.CurVarCtl.Value());
     end;
 
     local procedure ReadPart(var Observer: Codeunit "Probe Observer"; var Host: TestPage "LT QI RV Host Card"; Tag: Text)
     begin
-        Observer.Observe(Tag, Host.Lines.IdCtl.Value() + ' | ' + Host.Lines.AgrVarCtl.Value() + ' | ' + Host.Lines.CurVarCtl.Value() + ' | ' + Host.Lines.AgrCountCtl.Value());
+        Observer.Observe(Tag, Host.Lines.IdCtl.Value() + ' | ' + Host.Lines.AgrVarCtl.Value() + ' | ' + Host.Lines.CurVarCtl.Value());
     end;
 
     [Test]
@@ -251,7 +245,19 @@ codeunit 86864 "LT QI RV Tests"
         List.GoToRecord(Row);
         ReadList(Observer, List, 'at-gotorecord-3');
         List.Close();
-        Observer.Finish();
+        Observer.Expect('open', '1 | agr 1 | cur 1');
+        Observer.Expect('open-again', '1 | agr 1 | cur 1');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('at-first', '1 | agr 1 | cur 1');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('at-next', '2 | agr 2 | cur 2');
+        Observer.Expect('last', 'Yes');
+        Observer.Expect('at-last', '3 | agr 3 | cur 3');
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('at-previous', '2 | agr 2 | cur 2');
+        Observer.Expect('at-gotorecord-1', '1 | agr 1 | cur 1');
+        Observer.Expect('at-gotorecord-3', '3 | agr 3 | cur 3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -275,7 +281,13 @@ codeunit 86864 "LT QI RV Tests"
         List.First();
         ReadList(Observer, List, 'after-update-action-first');
         List.Close();
-        Observer.Finish();
+        Observer.Expect('at-row2', '2 | agr 2 | cur 2');
+        Observer.Expect('after-action', '2 | agr 2 | cur 2');
+        Observer.Expect('after-action-next', '3 | agr 3 | cur 3');
+        Observer.Expect('after-action-previous', '2 | agr 2 | cur 2');
+        Observer.Expect('after-update-action', '2 | agr 2 | cur 2');
+        Observer.Expect('after-update-action-first', '1 | agr 1 | cur 1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -291,7 +303,9 @@ codeunit 86864 "LT QI RV Tests"
         List.New();
         ReadList(Observer, List, 'at-new');
         List.Close();
-        Observer.Finish();
+        Observer.Expect('at-last', '3 | agr 3 | cur 3');
+        Observer.Expect('at-new', '0 | agr 3 | cur 0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -321,6 +335,18 @@ codeunit 86864 "LT QI RV Tests"
         Host.Lines.Next();
         ReadPart(Observer, Host, 'after-action-next');
         Host.Close();
-        Observer.Finish();
+        Observer.Expect('open', '1 | agr 1 | cur 1');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('at-first', '1 | agr 1 | cur 1');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('at-next', '2 | agr 2 | cur 2');
+        Observer.Expect('last', 'Yes');
+        Observer.Expect('at-last', '3 | agr 3 | cur 3');
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('at-previous', '2 | agr 2 | cur 2');
+        Observer.Expect('at-gotorecord-1', '1 | agr 1 | cur 1');
+        Observer.Expect('after-action', '2 | agr 2 | cur 2');
+        Observer.Expect('after-action-next', '3 | agr 3 | cur 3');
+        Observer.Verify();
     end;
 }

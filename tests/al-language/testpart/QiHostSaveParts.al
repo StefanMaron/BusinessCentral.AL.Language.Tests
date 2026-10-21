@@ -358,7 +358,14 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', HeadValues());
-        Observer.Finish();
+        Observer.Expect('open', 'H.AGR(D1 x=);H.AGCR(D1 x=);L.AGR(D1/10000|d1 l1 x=/0);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/0);U.AGR(D1/10000 x=/0);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=/0);');
+        Observer.Expect('setvalue', 'H.V(save b x=a);H.MOD(D1);T.HeadModify(D1);H.V(save done);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/10000);U.AGR(D1/10000 x=D1/10000);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=D1/10000);');
+        Observer.Expect('stored', 'b|a|a|');
+        Observer.Expect('part-descr', 'd1 l1');
+        Observer.Expect('after-part-read', '');
+        Observer.Expect('close', '');
+        Observer.Expect('stored-after-close', 'b|a|a|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -375,7 +382,10 @@ codeunit 86836 "LT QI SP Tests"
         Observer.Observe('setvalue', Log.Take());
         Doc.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open', 'H.AGR(D1 x=);H.AGCR(D1 x=);L.AGR(D1/10000|d1 l1 x=/0);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/0);U.AGR(D1/10000 x=/0);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=/0);');
+        Observer.Expect('setvalue', 'H.V(save a x=a);H.V(save done);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/10000);U.AGR(D1/10000 x=D1/10000);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=D1/10000);');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -396,7 +406,14 @@ codeunit 86836 "LT QI SP Tests"
         Observer.Observe('after-part-read', Log.Take());
         Doc.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('part-next', 'Yes');
+        Observer.Expect('part-row', '20000');
+        Observer.Expect('open-and-next', 'H.AGR(D1 x=);H.AGCR(D1 x=);L.AGR(D1/10000|d1 l1 x=/0);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/0);U.AGR(D1/10000 x=/0);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=/0);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/20000|d1 l2 x=D1/20000);L.AGCR(D1/20000|d1 l2 x=D1/10000);');
+        Observer.Expect('setvalue', 'H.V(save b x=a);H.MOD(D1);T.HeadModify(D1);H.V(save done);L.AGR(D1/20000|d1 l2 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/20000|d1 l2 x=D1/20000);L.AGCR(D1/20000|d1 l2 x=D1/20000);U.AGR(D1/10000 x=D1/10000);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=D1/10000);');
+        Observer.Expect('part-row-after', '20000');
+        Observer.Expect('after-part-read', '');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -417,7 +434,14 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', HeadValues());
-        Observer.Finish();
+        Observer.Expect('open', 'H.AGR(D1 x=);H.AGCR(D1 x=);L.AGR(D1/10000|d1 l1 x=/0);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/0);U.AGR(D1/10000 x=/0);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=/0);');
+        Observer.Expect('setvalue', 'H.V(mod b x=a);H.V(mod done);');
+        Observer.Expect('stored', 'a|b|a|');
+        Observer.Expect('part-descr', 'd1 l1');
+        Observer.Expect('after-part-read', 'H.MOD(D1);T.HeadModify(D1);');
+        Observer.Expect('close', '');
+        Observer.Expect('stored-after-close', 'a|b|a|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -438,7 +462,14 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', HeadValues());
-        Observer.Finish();
+        Observer.Expect('open', 'H.AGR(D1 x=);H.AGCR(D1 x=);L.AGR(D1/10000|d1 l1 x=/0);L.AGR(D1/20000|d1 l2 x=D1/10000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/10000|d1 l1 x=D1/10000);L.AGCR(D1/10000|d1 l1 x=D1/0);U.AGR(D1/10000 x=/0);U.AGR(D1/20000 x=D1/10000);U.AGR(D2/10000 x=D1/20000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=/0);');
+        Observer.Expect('setvalue', 'H.V(plain b x=a);');
+        Observer.Expect('stored', 'a|a|a|');
+        Observer.Expect('part-descr', 'd1 l1');
+        Observer.Expect('after-part-read', 'H.MOD(D1);T.HeadModify(D1);');
+        Observer.Expect('close', '');
+        Observer.Expect('stored-after-close', 'a|a|b|');
+        Observer.Verify();
     end;
 
     // ---- (2) a pending part row, then SetValue on a host control ----
@@ -465,7 +496,14 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', Stored('D1'));
-        Observer.Finish();
+        Observer.Expect('stored-before', '2 10000=d1 l1 20000=d1 l2');
+        Observer.Expect('setvalue', 'L.INS(D1/30000|typed);T.LineInsert(D1/30000|typed);U.AGR(D1/30000 x=D1/10000);U.AGR(D1/30000 x=D1/30000);U.AGCR(D1/30000 x=/0);H.V(count 3 10000=d1 l1 20000=d1 l2 30000=typed);');
+        Observer.Expect('stored-after', '3 10000=d1 l1 20000=d1 l2 30000=typed');
+        Observer.Expect('part-descr', 'typed');
+        Observer.Expect('after-part-read', '');
+        Observer.Expect('close', 'H.MOD(D1);T.HeadModify(D1);U.AGR(D1/10000 x=D1/30000);');
+        Observer.Expect('stored-after-close', '3 10000=d1 l1 20000=d1 l2 30000=typed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -486,7 +524,11 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', Stored('D1'));
-        Observer.Finish();
+        Observer.Expect('setvalue', 'H.V(count 2 10000=d1 l1 20000=d1 l2);');
+        Observer.Expect('stored-after', '2 10000=d1 l1 20000=d1 l2');
+        Observer.Expect('close', 'H.MOD(D1);T.HeadModify(D1);');
+        Observer.Expect('stored-after-close', '2 10000=d1 l1 20000=d1 l2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -508,7 +550,12 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', Stored('D1'));
-        Observer.Finish();
+        Observer.Expect('stored-before', '2 10000=d1 l1 20000=d1 l2');
+        Observer.Expect('setvalue', 'L.MOD(D1/10000|edited x=d1 l1);T.LineModify(D1/10000|edited);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=/0);H.V(count 2 10000=edited 20000=d1 l2);');
+        Observer.Expect('stored-after', '2 10000=edited 20000=d1 l2');
+        Observer.Expect('close', 'H.MOD(D1);T.HeadModify(D1);');
+        Observer.Expect('stored-after-close', '2 10000=edited 20000=d1 l2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -530,6 +577,10 @@ codeunit 86836 "LT QI SP Tests"
         Doc.Close();
         Observer.Observe('close', Log.Take());
         Observer.Observe('stored-after-close', Stored('D1'));
-        Observer.Finish();
+        Observer.Expect('setvalue', 'L.INS(D1/30000|typed);T.LineInsert(D1/30000|typed);U.AGR(D1/30000 x=D1/10000);U.AGR(D1/30000 x=D1/30000);U.AGCR(D1/30000 x=/0);H.V(save b x=a);H.MOD(D1);T.HeadModify(D1);H.V(save done);L.AGR(D1/30000|typed x=D1/20000);L.AGR(D1/20000|d1 l2 x=D1/30000);L.AGR(D1/10000|d1 l1 x=D1/20000);L.AGR(D1/30000|typed x=D1/10000);L.AGR(D1/30000|typed x=D1/30000);L.AGCR(D1/30000|typed x=D1/30000);U.AGR(D1/10000 x=D1/30000);U.AGR(D1/10000 x=D1/10000);U.AGR(D1/20000 x=D1/10000);U.AGR(D1/30000 x=D1/20000);U.AGR(D2/10000 x=D1/30000);U.AGR(D1/10000 x=D2/10000);U.AGR(D1/10000 x=D1/10000);U.AGCR(D1/10000 x=D1/10000);');
+        Observer.Expect('stored-after', '3 10000=d1 l1 20000=d1 l2 30000=typed');
+        Observer.Expect('close', '');
+        Observer.Expect('stored-after-close', '3 10000=d1 l1 20000=d1 l2 30000=typed');
+        Observer.Verify();
     end;
 }

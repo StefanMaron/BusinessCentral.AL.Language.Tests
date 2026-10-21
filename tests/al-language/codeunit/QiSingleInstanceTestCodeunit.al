@@ -75,7 +75,19 @@ codeunit 86841 "LT QI SI Manual Test"
         Publisher.Ping('after unbind');
         Observer.Observe('own-after-unbind-ping', Marker);
         Marker := 'left by test 1';
-        Observer.Finish();
+        Observer.Expect('start-marker', '');
+        Observer.Expect('start-calls', '0');
+        Observer.Expect('other-get', 'm1');
+        Observer.Expect('own-after-other-set', 'm2');
+        Observer.Expect('own-after-unbound-ping', 'm2');
+        Observer.Expect('calls-after-unbound-ping', '0');
+        Observer.Expect('bind', 'Yes');
+        Observer.Expect('own-after-bound-ping', 'sub saw [m2] got bound');
+        Observer.Expect('other-after-bound-ping', 'sub saw [m2] got bound');
+        Observer.Expect('calls-after-bound-ping', '1');
+        Observer.Expect('unbind', 'Yes');
+        Observer.Expect('own-after-unbind-ping', 'sub saw [m2] got bound');
+        Observer.Verify();
     end;
 
     [Test]
@@ -86,6 +98,9 @@ codeunit 86841 "LT QI SI Manual Test"
         Observer.Observe('start-marker', Marker);
         Observer.Observe('start-calls', Format(SubscriberCalls));
         Observer.Observe('other-get', Other.GetMarker());
-        Observer.Finish();
+        Observer.Expect('start-marker', 'left by test 1');
+        Observer.Expect('start-calls', '1');
+        Observer.Expect('other-get', 'left by test 1');
+        Observer.Verify();
     end;
 }

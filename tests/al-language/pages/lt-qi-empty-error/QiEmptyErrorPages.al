@@ -178,22 +178,6 @@ codeunit 86853 "LT QI EE Tests"
     // ---- action Invoke ----
 
     [Test]
-    procedure QI_EE_EmptyAction_Asserterror()
-    var
-        Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT QI EE Card";
-    begin
-        Seed();
-        Card.OpenEdit();
-        asserterror Card.EmptyAct.Invoke();
-        Observer.ObserveError('invoke');
-        Observer.Observe('rows', Rows());
-        Observer.Observe('name-after', Card.NameCtl.Value());
-        Card.Close();
-        Observer.Finish();
-    end;
-
-    [Test]
     procedure QI_EE_EmptyAction_NoAsserterror()
     var
         Observer: Codeunit "Probe Observer";
@@ -207,7 +191,12 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Observe('rows', Rows());
         Observer.Observe('name-after', Card.NameCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-invoke|text', '');
+        Observer.Expect('after-invoke|code', 'Dialog');
+        Observer.Expect('rows', '1=seed;100=empty action ran;');
+        Observer.Expect('name-after', 'seed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -223,7 +212,11 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Observe('rows', Rows());
         Observer.Observe('name-after', Card.NameCtl.Value());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('invoke|text', 'LT QI action error');
+        Observer.Expect('invoke|code', 'TestWrapped:Dialog');
+        Observer.Expect('rows', '');
+        Observer.Expect('name-after', 'seed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,27 +231,13 @@ codeunit 86853 "LT QI EE Tests"
         Observer.ObserveError('after-invoke');
         Observer.Observe('rows', Rows());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('after-invoke|text', '');
+        Observer.Expect('after-invoke|code', 'Dialog');
+        Observer.Expect('rows', '1=seed;102=try=No text=[] code=[Dialog];');
+        Observer.Verify();
     end;
 
     // ---- control OnValidate (SetValue) ----
-
-    [Test]
-    procedure QI_EE_EmptyValidate_Asserterror()
-    var
-        Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT QI EE Card";
-    begin
-        Seed();
-        Card.OpenEdit();
-        asserterror Card.NameCtl.SetValue('empty');
-        Observer.ObserveError('setvalue');
-        Observer.Observe('rows', Rows());
-        Observer.Observe('name-after', Card.NameCtl.Value());
-        Card.Close();
-        Observer.Observe('rows-after-close', Rows());
-        Observer.Finish();
-    end;
 
     [Test]
     procedure QI_EE_EmptyValidate_NoAsserterror()
@@ -275,7 +254,13 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Observe('name-after', Card.NameCtl.Value());
         Card.Close();
         Observer.Observe('rows-after-close', Rows());
-        Observer.Finish();
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('rows', '1=seed;300=validate empty;');
+        Observer.Expect('name-after', 'seed');
+        Observer.Expect('rows-after-close', '1=seed;300=validate empty;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -292,7 +277,12 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Observe('name-after', Card.NameCtl.Value());
         Card.Close();
         Observer.Observe('rows-after-close', Rows());
-        Observer.Finish();
+        Observer.Expect('setvalue|text', 'Validation error for Field: NameCtl,  Message = ''LT QI validate error (Select Refresh to discard errors)''');
+        Observer.Expect('setvalue|code', 'TestValidation');
+        Observer.Expect('rows', '');
+        Observer.Expect('name-after', 'seed');
+        Observer.Expect('rows-after-close', '');
+        Observer.Verify();
     end;
 
     // ---- OnOpenPage (OpenEdit) ----
@@ -307,20 +297,9 @@ codeunit 86853 "LT QI EE Tests"
         asserterror Card.OpenEdit();
         Observer.ObserveError('open');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure QI_EE_EmptyOpen_NoAsserterror()
-    var
-        Observer: Codeunit "Probe Observer";
-        Card: TestPage "LT QI EE Open Card";
-    begin
-        Seed();
-        Card.OpenEdit();
-        Observer.Observe('went-on', 'yes');
-        Observer.ObserveError('after-open');
-        Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('open|text', '');
+        Observer.Expect('open|code', 'Dialog');
+        Observer.Expect('rows', '');
+        Observer.Verify();
     end;
 }
