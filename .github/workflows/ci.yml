@@ -265,10 +265,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dbee80228b5c002d0fe22a6fab082ea6dd718c1a
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier honours #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
-      bc_linux_ref:         "dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
       runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
@@ -347,10 +348,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dbee80228b5c002d0fe22a6fab082ea6dd718c1a
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier honours #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
-      bc_linux_ref:         "dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
       runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
@@ -388,10 +390,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dbee80228b5c002d0fe22a6fab082ea6dd718c1a
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier honours #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
-      bc_linux_ref:         "dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
       runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
