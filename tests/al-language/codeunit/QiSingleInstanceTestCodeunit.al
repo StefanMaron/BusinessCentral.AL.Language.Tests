@@ -3,8 +3,9 @@
 // Fixtures used: Probe Observer (codeunit 69160); own fixtures declared in this file (LT QI SI *)
 // Probe: written against a local BC 29.0 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Facts: a test codeunit with SingleInstance = true: does a variable of its own type (a procedure called through it, a manual
-//   BindSubscription of it) and its own event subscriber (EventSubscriberInstance = Manual, and StaticAutomatic in a second codeunit)
-//   see and set the globals the test method uses; does the second test method of the codeunit see what the first one left.
+//   BindSubscription of it) and its own event subscriber (EventSubscriberInstance = Manual) see and set the globals the test method
+//   uses; does the second test method of the codeunit see what the first one left. A subscriber in a test codeunit must be Manual
+//   (StaticAutomatic is AL0501 at compile: tests/must-not-compile/cases/1960, 1961).
 // Settles al-runtime-rs docs/probes-needed.md row "A test codeunit with SingleInstance = true" (Tests-ERM 139844 Cost Adj. Sch. Notif. Tests).
 // BC versions: 29 (27 and 28 by CI)
 
@@ -15,18 +16,8 @@ codeunit 86840 "LT QI SI Publisher"
         OnPing(Value);
     end;
 
-    procedure Pong(Value: Text)
-    begin
-        OnPong(Value);
-    end;
-
     [IntegrationEvent(false, false)]
     local procedure OnPing(Value: Text)
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnPong(Value: Text)
     begin
     end;
 }
@@ -95,55 +86,6 @@ codeunit 86841 "LT QI SI Manual Test"
         Observer.Observe('start-marker', Marker);
         Observer.Observe('start-calls', Format(SubscriberCalls));
         Observer.Observe('other-get', Other.GetMarker());
-        Observer.Finish();
-    end;
-}
-
-codeunit 86842 "LT QI SI Auto Test"
-{
-    Subtype = Test;
-    TestPermissions = Disabled;
-    SingleInstance = true;
-
-    var
-        Marker: Text;
-        SubscriberCalls: Integer;
-        Observer: Codeunit "Probe Observer";
-
-    procedure GetMarker(): Text
-    begin
-        exit(Marker);
-    end;
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"LT QI SI Publisher", 'OnPong', '', false, false)]
-    local procedure HandlePong(Value: Text)
-    begin
-        SubscriberCalls += 1;
-        Marker := 'sub saw [' + Marker + '] got ' + Value;
-    end;
-
-    [Test]
-    procedure QI_SIAuto_1_SubscriberSeesTheTestGlobals()
-    var
-        Other: Codeunit "LT QI SI Auto Test";
-        Publisher: Codeunit "LT QI SI Publisher";
-    begin
-        Observer.Observe('start-marker', Marker);
-        Observer.Observe('start-calls', Format(SubscriberCalls));
-        Marker := 'a1';
-        Publisher.Pong('auto');
-        Observer.Observe('own-after-pong', Marker);
-        Observer.Observe('calls-after-pong', Format(SubscriberCalls));
-        Observer.Observe('other-get', Other.GetMarker());
-        Marker := 'left by auto test 1';
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure QI_SIAuto_2_SecondTestSeesTheFirst()
-    begin
-        Observer.Observe('start-marker', Marker);
-        Observer.Observe('start-calls', Format(SubscriberCalls));
         Observer.Finish();
     end;
 }
