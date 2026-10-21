@@ -1,0 +1,224 @@
+// BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-sqltimestamp-property
+// Scope: in-scope
+// Fixtures used: Probe Observer (69160); own table 87270, test codeunit 87271 (writer QR)
+// Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
+// Facts: a TEMPORARY record of a table with a BigInteger field that has SQLTimestamp = true: the field and SystemRowVersion after Init,
+//   Insert, Modify, Get, Rename, an assignment to the field, a copy of a database row (Copy and TransferFields), ModifyAll and a filter on
+//   the field; Format of both. Values that are not a fixed number are written as zero, positive or negative, or as a relation to the
+//   database row (same, other).
+// BC versions: 27, 28, 29
+
+table 87270 "LT QR Stamp Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Note; Text[30]) { }
+        field(3; Stamp; BigInteger) { SQLTimestamp = true; }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+codeunit 87271 "LT QR Temp Timestamp"
+{
+    Subtype = Test;
+    TestPermissions = Disabled;
+
+    local procedure Sign(Value: BigInteger): Text
+    begin
+        if Value = 0 then
+            exit('zero');
+        if Value > 0 then
+            exit('positive');
+        exit('negative');
+    end;
+
+    local procedure State(var Row: Record "LT QR Stamp Row"): Text
+    begin
+        exit('stamp ' + Sign(Row.Stamp) + ', rowversion ' + Sign(Row.SystemRowVersion));
+    end;
+
+    [Test]
+    procedure QR_Temp_InsertModifyGet()
+    var
+        Observer: Codeunit "Probe Observer";
+        Temp: Record "LT QR Stamp Row" temporary;
+    begin
+        Temp.Init();
+        Temp.Id := 1;
+        Temp.Note := 'a';
+        Observer.Observe('after init', State(Temp));
+        Temp.Insert();
+        Observer.Observe('after insert', State(Temp));
+        Observer.Observe('format stamp', Format(Temp.Stamp));
+        Observer.Observe('format rowversion', Format(Temp.SystemRowVersion));
+        Temp.Note := 'b';
+        Temp.Modify();
+        Observer.Observe('after modify', State(Temp));
+        Temp.Init();
+        Temp.Id := 2;
+        Temp.Insert(true);
+        Observer.Observe('after insert(true)', State(Temp));
+        Temp.Get(1);
+        Observer.Observe('after get', State(Temp));
+        Observer.Observe('get format stamp', Format(Temp.Stamp, 0, 9));
+        Temp.Rename(3);
+        Observer.Observe('after rename', State(Temp));
+        Temp.Get(3);
+        Observer.Observe('get renamed', State(Temp) + ' note ' + Temp.Note);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QR_Temp_AssignStamp()
+    var
+        Observer: Codeunit "Probe Observer";
+        Temp: Record "LT QR Stamp Row" temporary;
+    begin
+        Temp.Init();
+        Temp.Id := 1;
+        Temp.Stamp := 5;
+        Observer.Observe('assigned', Format(Temp.Stamp));
+        Temp.Insert();
+        Observer.Observe('after insert', Format(Temp.Stamp));
+        Temp.Get(1);
+        Observer.Observe('after get', Format(Temp.Stamp));
+        Temp.Stamp := 7;
+        Temp.Modify();
+        Observer.Observe('after modify', Format(Temp.Stamp));
+        Temp.Get(1);
+        Observer.Observe('get after modify', Format(Temp.Stamp));
+        Temp.Reset();
+        Temp.SetRange(Stamp, 7);
+        Observer.Observe('filter on 7 finds', Format(Temp.FindFirst()));
+        Temp.SetRange(Stamp, 5);
+        Observer.Observe('filter on 5 finds', Format(Temp.FindFirst()));
+        Temp.SetFilter(Stamp, '>%1', 0);
+        Observer.Observe('filter above zero count', Format(Temp.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QR_Temp_CopyOfDatabaseRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Db: Record "LT QR Stamp Row";
+        Temp: Record "LT QR Stamp Row" temporary;
+        DbStamp: BigInteger;
+        DbVersion: BigInteger;
+    begin
+        Db.DeleteAll();
+        Db.Init();
+        Db.Id := 1;
+        Db.Note := 'db';
+        Db.Insert();
+        Db.Get(1);
+        DbStamp := Db.Stamp;
+        DbVersion := Db.SystemRowVersion;
+        Observer.Observe('db', State(Db));
+        Observer.Observe('db stamp = db rowversion', Format(DbStamp = DbVersion));
+        Temp := Db;
+        Observer.Observe('assigned: stamp', Format(Temp.Stamp = DbStamp));
+        Observer.Observe('assigned: rowversion', Format(Temp.SystemRowVersion = DbVersion));
+        Temp.Insert();
+        Observer.Observe('inserted: stamp same', Format(Temp.Stamp = DbStamp));
+        Observer.Observe('inserted: rowversion same', Format(Temp.SystemRowVersion = DbVersion));
+        Observer.Observe('inserted', State(Temp));
+        Temp.Get(1);
+        Observer.Observe('get: stamp same', Format(Temp.Stamp = DbStamp));
+        Observer.Observe('get: rowversion same', Format(Temp.SystemRowVersion = DbVersion));
+        Temp.Note := 'changed';
+        Temp.Modify();
+        Temp.Get(1);
+        Observer.Observe('modified: stamp same', Format(Temp.Stamp = DbStamp));
+        Observer.Observe('modified: rowversion same', Format(Temp.SystemRowVersion = DbVersion));
+        Db.Get(1);
+        Observer.Observe('db unchanged', Format((Db.Stamp = DbStamp) and (Db.Note = 'db')));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QR_Temp_TransferFieldsAndCopy()
+    var
+        Observer: Codeunit "Probe Observer";
+        Db: Record "LT QR Stamp Row";
+        Temp: Record "LT QR Stamp Row" temporary;
+        Temp2: Record "LT QR Stamp Row" temporary;
+        DbStamp: BigInteger;
+    begin
+        Db.DeleteAll();
+        Db.Init();
+        Db.Id := 1;
+        Db.Note := 'db';
+        Db.Insert();
+        Db.Get(1);
+        DbStamp := Db.Stamp;
+        Temp.Init();
+        Temp.TransferFields(Db);
+        Observer.Observe('transferfields: stamp', Format(Temp.Stamp = DbStamp) + ' ' + Sign(Temp.Stamp));
+        Observer.Observe('transferfields: rowversion', Sign(Temp.SystemRowVersion));
+        Temp.Insert();
+        Temp.Get(1);
+        Observer.Observe('transferfields inserted: stamp', Format(Temp.Stamp = DbStamp) + ' ' + Sign(Temp.Stamp));
+        Temp2.Copy(Temp, true);
+        Temp2.Get(1);
+        Observer.Observe('shared copy: stamp', Format(Temp2.Stamp = Temp.Stamp));
+        Temp2.Init();
+        Temp2.Id := 2;
+        Temp2.Insert();
+        Observer.Observe('shared copy insert', State(Temp2));
+        Temp.Reset();
+        Observer.Observe('count', Format(Temp.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QR_Temp_ModifyAllStamp()
+    var
+        Observer: Codeunit "Probe Observer";
+        Temp: Record "LT QR Stamp Row" temporary;
+    begin
+        Temp.Init();
+        Temp.Id := 1;
+        Temp.Insert();
+        Temp.Id := 2;
+        Temp.Insert();
+        Temp.ModifyAll(Stamp, 9);
+        Temp.Get(1);
+        Observer.Observe('row 1', Format(Temp.Stamp));
+        Temp.Get(2);
+        Observer.Observe('row 2', Format(Temp.Stamp));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QR_Temp_CompareTwoRows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Temp: Record "LT QR Stamp Row" temporary;
+        First: BigInteger;
+    begin
+        Temp.Init();
+        Temp.Id := 1;
+        Temp.Insert();
+        First := Temp.Stamp;
+        Temp.Init();
+        Temp.Id := 2;
+        Temp.Insert();
+        Observer.Observe('second = first', Format(Temp.Stamp = First));
+        Observer.Observe('second > first', Format(Temp.Stamp > First));
+        Temp.Get(1);
+        Temp.Note := 'x';
+        Temp.Modify();
+        Observer.Observe('modified = first', Format(Temp.Stamp = First));
+        Temp.SetCurrentKey(Stamp);
+        Observer.Observe('sorted by stamp first id', Format(Temp.FindFirst()) + ' ' + Format(Temp.Id));
+        Observer.Finish();
+    end;
+}
