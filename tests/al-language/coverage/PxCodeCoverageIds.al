@@ -449,7 +449,7 @@ codeunit 86163 "LT PX Code Coverage Ids"
         CodeCoverage.SetRange("Line Type", CodeCoverage."Line Type"::"Trigger/Function");
         if CodeCoverage.FindSet() then
             repeat
-                Result += StrSubstNo('L%1=%2 ', CodeCoverage."Line No.", CodeCoverage."Method Id");
+                Result += StrSubstNo('L%1=%2/h%3 ', CodeCoverage."Line No.", CodeCoverage."Method Id", CodeCoverage."No. of Hits");
             until CodeCoverage.Next() = 0;
         exit(Result);
     end;
@@ -503,6 +503,48 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Initialize();
         Row.DeleteAll();
         Row2.DeleteAll();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_MethodIds_EmptyBodies_CalledFromTheTest()
+    var
+        Observer: Codeunit "Probe Observer";
+        CodeCoverage: Record "Code Coverage";
+        R: Record "LT QH CC Row";
+        R2: Record "LT QH CC Row2";
+        Ovl: Codeunit "LT QH CC Ovl";
+        Twin: Codeunit "LT QH CC Twin";
+        Third: Codeunit "LT QH CC Third";
+        L: List of [Integer];
+        LT: List of [Text];
+        X: Integer;
+    begin
+        Initialize();
+        CodeCoverageLog(true, false);
+        Ovl.Ovl();
+        Ovl.Ovl(1);
+        Ovl.Ovl('a');
+        Ovl.Ovl(1, 2);
+        Ovl.Ovl(R);
+        Ovl.CodeParam('A');
+        Ovl.TextLenParam('A');
+        Ovl.ListParam(L);
+        Ovl.ListParamText(LT);
+        Ovl.InternalProc();
+        Ovl.OnQhEvent(R);
+        Twin.OVL();
+        Twin.Ovl(1);
+        Twin.Ovl(R);
+        Third.Ovl(X);
+        Third.Ovl(R2);
+        Third.CodeParam('A');
+        Third.TextLenParam('A');
+        CodeCoverageLog(false, false);
+        Observer.Observe('ovl', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Ovl"));
+        Observer.Observe('twin', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Twin"));
+        Observer.Observe('third', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Third"));
+        Initialize();
         Observer.Finish();
     end;
 }
