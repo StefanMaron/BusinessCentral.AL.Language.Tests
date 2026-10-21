@@ -704,28 +704,55 @@ codeunit 74141 "LT New Line Stamps Filters"
     procedure QP_TwoKeyLink_TypeFirst_NewLine()
     begin
         QP_Run(1, true);
-        Obs.Finish();
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|20000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_TwoKeyLink_TypeFirst_BlankLine()
     begin
         QP_Run(1, false);
-        Obs.Finish();
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|10000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_TwoKeyLink_NoFirst_NewLine()
     begin
         QP_Run(2, true);
-        Obs.Finish();
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|20000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_TwoKeyLink_WithRelation_NewLine()
     begin
         QP_Run(3, true);
-        Obs.Finish();
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|20000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
     end;
 }
 

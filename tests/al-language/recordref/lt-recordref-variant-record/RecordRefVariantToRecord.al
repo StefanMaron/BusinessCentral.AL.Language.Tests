@@ -34,7 +34,8 @@ table 70654 "LT RRVar Other"
 // Writer QP (al-runtime-rs "Codeunit.Run with a RecordRef in a Variant", Microsoft's Batch Processing Mgt. InvokeProcessing shape):
 //   a Variant holding a RecordRef positioned on a row is passed to Codeunit.Run of a codeunit with TableNo = "LT RRVar Row" (87142).
 //   OnRun logs Rec's key, Name and filters, changes Name and calls Modify. After the call: the RecordRef's Name field and the stored row,
-//   for the plain call and the guarded `if Codeunit.Run(...)` form (after Commit), a filtered RecordRef, and a RecordRef of another table.
+//   for the plain call and the guarded `if Codeunit.Run(...)` form (after Commit), a filtered RecordRef, and a RecordRef of another table
+//   (error 'Record(70654) is not compatible with Codeunit.Run(Record(70653)).', raised even by the guarded form, which does not catch it).
 //   QP_ tests in codeunit 70655; SingleInstance log 87143 is used only by it.
 codeunit 87143 "LT QP RRVar Run Log"
 {
@@ -257,7 +258,12 @@ codeunit 70655 "LT RRVar To Record"
         Observer.Observe('recref_no', Format(RR.Field(1).Value));
         Observer.Observe('stored_2', QP_RowName(2));
         Observer.Observe('stored_1', QP_RowName(1));
-        Observer.Finish();
+        Observer.Expect('log', 'onrun no=2 name=second filters=[];modified;');
+        Observer.Expect('recref_name', 'changed');
+        Observer.Expect('recref_no', '2');
+        Observer.Expect('stored_2', 'changed');
+        Observer.Expect('stored_1', 'first');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +291,13 @@ codeunit 70655 "LT RRVar To Record"
         Observer.Observe('recref_name', Format(RR.Field(2).Value));
         Observer.Observe('stored_2', QP_RowName(2));
         Observer.Observe('stored_1', QP_RowName(1));
-        Observer.Finish();
+        Observer.Expect('result', 'Yes');
+        Observer.Expect('last_error', '');
+        Observer.Expect('log', 'onrun no=2 name=second filters=[];modified;');
+        Observer.Expect('recref_name', 'changed');
+        Observer.Expect('stored_2', 'changed');
+        Observer.Expect('stored_1', 'first');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,7 +319,11 @@ codeunit 70655 "LT RRVar To Record"
         Observer.Observe('recref_name', Format(RR.Field(2).Value));
         Observer.Observe('recref_filters', RR.GetFilters());
         Observer.Observe('stored_2', QP_RowName(2));
-        Observer.Finish();
+        Observer.Expect('log', 'onrun no=2 name=second filters=[Name: first|second];modified;');
+        Observer.Expect('recref_name', 'changed');
+        Observer.Expect('recref_filters', 'Name: first|second');
+        Observer.Expect('stored_2', 'changed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -324,11 +340,12 @@ codeunit 70655 "LT RRVar To Record"
         RR.Open(Database::"LT RRVar Other");
         RR.FindFirst();
         V := RR;
-        ClearLastError();
-        Observer.Observe('other_table_result', Format(Codeunit.Run(Codeunit::"LT QP RRVar Run Target", V)));
+        // Observed on 27.5, 28.5 and 29.0: the guarded form does NOT catch this error; it ends the test (run af0fb0d1).
+        asserterror if Codeunit.Run(Codeunit::"LT QP RRVar Run Target", V) then;
         Observer.Observe('other_table_error', GetLastErrorText());
-        Observer.Observe('other_table_code', GetLastErrorCode());
         Observer.Observe('log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('other_table_error', 'Record(70654) is not compatible with Codeunit.Run(Record(70653)).');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 }

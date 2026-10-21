@@ -684,7 +684,8 @@ codeunit 73838 "LT RpT Filters"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('log', QP_RunFlowFilterLink('', false));
-        Observer.Finish();
+        Observer.Expect('log', 'head 1 ff=[] value=[];line pre filter=[];line 1 ;line 2 EUR;line 3 USD;line 4 GBP;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -693,7 +694,8 @@ codeunit 73838 "LT RpT Filters"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('log', QP_RunFlowFilterLink('EUR', true));
-        Observer.Finish();
+        Observer.Expect('log', 'head 1 ff=[EUR] value=[];line pre filter=[];line 2 EUR;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -702,7 +704,8 @@ codeunit 73838 "LT RpT Filters"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('log', QP_RunFlowFilterLink('E..G', true));
-        Observer.Finish();
+        Observer.Expect('log', 'head 1 ff=[E..G] value=[];line pre filter=[];line 2 EUR;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -711,7 +714,8 @@ codeunit 73838 "LT RpT Filters"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('log', QP_RunFlowFilterLink('EUR|USD', true));
-        Observer.Finish();
+        Observer.Expect('log', 'head 1 ff=[EUR|USD] value=[];line pre filter=[];line 2 EUR;line 3 USD;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -722,6 +726,7 @@ codeunit 73838 "LT RpT Filters"
         QP_SeedFlowFilterLink();
         Report.Run(Report::"LT QP RpT FF Link");
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('log', 'head 1 ff=[] value=[];line pre filter=[];line 1 ;line 2 EUR;line 3 USD;line 4 GBP;');
+        Observer.Verify();
     end;
 }

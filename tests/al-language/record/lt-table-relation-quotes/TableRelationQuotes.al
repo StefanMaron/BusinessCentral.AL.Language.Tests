@@ -497,55 +497,101 @@ codeunit 74068 "LT Table Relation Quotes"
     procedure QP_Arms_TypeBlank()
     begin
         QpProbeArms(3, 0);
-        Obs.Finish();
+        Obs.Expect('v_X1|text', 'The field Arms of table LT QP TQ Arm Src contains a value (X1) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_X1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_Y1', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Arms of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_Arms_TypeA()
     begin
         QpProbeArms(3, 1);
-        Obs.Finish();
+        Obs.Expect('v_X1|text', 'The field Arms of table LT QP TQ Arm Src contains a value (X1) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_X1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_Y1', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Arms of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_Arms_TypeBC()
     begin
         QpProbeArms(3, 2);
-        Obs.Finish();
+        Obs.Expect('v_X1', 'ok');
+        Obs.Expect('v_Y1|text', 'The field Arms of table LT QP TQ Arm Src contains a value (Y1) that cannot be found in the related table (LT QP TQ T1).');
+        Obs.Expect('v_Y1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Arms of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T1).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_Arms_TypeD()
     begin
         QpProbeArms(3, 3);
-        Obs.Finish();
+        Obs.Expect('v_X1', 'ok');
+        Obs.Expect('v_Y1', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE', 'ok');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_BlankOr_TypeBlank()
     begin
         QpProbeArms(4, 0);
-        Obs.Finish();
+        Obs.Expect('v_X1', 'ok');
+        Obs.Expect('v_Y1|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (Y1) that cannot be found in the related table (LT QP TQ T1).');
+        Obs.Expect('v_Y1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T1).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_BlankOr_TypeA()
     begin
         QpProbeArms(4, 1);
-        Obs.Finish();
+        Obs.Expect('v_X1', 'ok');
+        Obs.Expect('v_Y1|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (Y1) that cannot be found in the related table (LT QP TQ T1).');
+        Obs.Expect('v_Y1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T1).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_BlankOr_TypeBC()
     begin
         QpProbeArms(4, 2);
-        Obs.Finish();
+        Obs.Expect('v_X1|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (X1) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_X1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_Y1', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QP_BlankOr_TypeD()
     begin
         QpProbeArms(4, 3);
-        Obs.Finish();
+        Obs.Expect('v_X1|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (X1) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_X1|code', 'DB:PrimRecordNotFound');
+        Obs.Expect('v_Y1', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field BlankOr of table LT QP TQ Arm Src contains a value (NOPE) that cannot be found in the related table (LT QP TQ T2).');
+        Obs.Expect('v_NOPE|code', 'DB:PrimRecordNotFound');
+        Obs.Verify();
     end;
 }

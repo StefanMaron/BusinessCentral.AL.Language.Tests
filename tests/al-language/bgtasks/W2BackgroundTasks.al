@@ -740,6 +740,8 @@ codeunit 68703 "W2 Bg Tests"
         Pg.GoToKey('N2');
         Observer.Observe('second_row_log', Log.Take());
         Pg.Close();
-        Observer.Finish();
+        Observer.Expect('open_log', 'done(tag=A-N1,current=N1,arg_nonzero=Yes,arg_equals=TaskA);done(tag=B-N1,current=N1,arg_nonzero=Yes,arg_equals=none+TaskB);enqueued(N1,a_nonzero=Yes,b_nonzero=Yes,a_eq_b=No);');
+        Observer.Expect('second_row_log', 'done(tag=A-N1,current=N1,arg_nonzero=Yes,arg_equals=TaskA);done(tag=B-N1,current=N1,arg_nonzero=Yes,arg_equals=none+TaskB);enqueued(N1,a_nonzero=Yes,b_nonzero=Yes,a_eq_b=No);done(tag=A-N2,current=N2,arg_nonzero=Yes,arg_equals=TaskA);done(tag=B-N2,current=N2,arg_nonzero=Yes,arg_equals=none+TaskB);enqueued(N2,a_nonzero=Yes,b_nonzero=Yes,a_eq_b=No);');
+        Observer.Verify();
     end;
 }

@@ -429,7 +429,14 @@ codeunit 73024 "LT RfT Values"
         QP_BlobFacts(Observer, 'before', Fld);
         Observer.Observe('calcfield', Format(Fld.CalcField()));
         QP_BlobFacts(Observer, 'after', Fld);
-        Observer.Finish();
+        Observer.Expect('before_hasvalue', 'No');
+        Observer.Expect('before_length', '0');
+        Observer.Expect('before_text', '');
+        Observer.Expect('calcfield', 'Yes');
+        Observer.Expect('after_hasvalue', 'Yes');
+        Observer.Expect('after_length', '9');
+        Observer.Expect('after_text', 'blob text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -446,7 +453,13 @@ codeunit 73024 "LT RfT Values"
         QP_BlobFacts(Observer, 'before', Fld);
         Fld.CalcField();
         QP_BlobFacts(Observer, 'after', Fld);
-        Observer.Finish();
+        Observer.Expect('before_hasvalue', 'No');
+        Observer.Expect('before_length', '0');
+        Observer.Expect('before_text', '');
+        Observer.Expect('after_hasvalue', 'Yes');
+        Observer.Expect('after_length', '9');
+        Observer.Expect('after_text', 'blob text');
+        Observer.Verify();
     end;
 
     [Test]
@@ -469,7 +482,13 @@ codeunit 73024 "LT RfT Values"
         QP_BlobFacts(Observer, 'before', Fld);
         Fld.CalcField();
         QP_BlobFacts(Observer, 'after', Fld);
-        Observer.Finish();
+        Observer.Expect('before_hasvalue', 'No');
+        Observer.Expect('before_length', '0');
+        Observer.Expect('before_text', '');
+        Observer.Expect('after_hasvalue', 'No');
+        Observer.Expect('after_length', '0');
+        Observer.Expect('after_text', '');
+        Observer.Verify();
     end;
 
     local procedure QP_DateFormulaFacts(var Observer: Codeunit "Probe Observer"; Name: Text; Formula: Text)
@@ -506,7 +525,16 @@ codeunit 73024 "LT RfT Values"
         Observer: Codeunit "Probe Observer";
     begin
         QP_DateFormulaFacts(Observer, 'm', '<1M+CM>');
-        Observer.Finish();
+        Observer.Expect('m_evaluate', 'Yes');
+        Observer.Expect('m_format', '1M+CM');
+        Observer.Expect('m_format9', '1M+CM');
+        Observer.Expect('m_fieldref', '1M+CM');
+        Observer.Expect('m_get_format', '1M+CM');
+        Observer.Expect('m_get_format9', '1M+CM');
+        Observer.Expect('m_get_calcdate', '2024-02-29');
+        Observer.Expect('m_open_fieldref', '1M+CM');
+        Observer.Expect('m_open_fieldref9', '1M+CM');
+        Observer.Verify();
     end;
 
     [Test]
@@ -515,7 +543,16 @@ codeunit 73024 "LT RfT Values"
         Observer: Codeunit "Probe Observer";
     begin
         QP_DateFormulaFacts(Observer, 'd', '10D');
-        Observer.Finish();
+        Observer.Expect('d_evaluate', 'Yes');
+        Observer.Expect('d_format', '10D');
+        Observer.Expect('d_format9', '10D');
+        Observer.Expect('d_fieldref', '10D');
+        Observer.Expect('d_get_format', '10D');
+        Observer.Expect('d_get_format9', '10D');
+        Observer.Expect('d_get_calcdate', '2024-01-25');
+        Observer.Expect('d_open_fieldref', '10D');
+        Observer.Expect('d_open_fieldref9', '10D');
+        Observer.Verify();
     end;
 
     [Test]
@@ -524,7 +561,16 @@ codeunit 73024 "LT RfT Values"
         Observer: Codeunit "Probe Observer";
     begin
         QP_DateFormulaFacts(Observer, 'y', '<-1Y>');
-        Observer.Finish();
+        Observer.Expect('y_evaluate', 'Yes');
+        Observer.Expect('y_format', '-1Y');
+        Observer.Expect('y_format9', '-1Y');
+        Observer.Expect('y_fieldref', '-1Y');
+        Observer.Expect('y_get_format', '-1Y');
+        Observer.Expect('y_get_format9', '-1Y');
+        Observer.Expect('y_get_calcdate', '2023-01-15');
+        Observer.Expect('y_open_fieldref', '-1Y');
+        Observer.Expect('y_open_fieldref9', '-1Y');
+        Observer.Verify();
     end;
 
     [Test]
@@ -533,6 +579,15 @@ codeunit 73024 "LT RfT Values"
         Observer: Codeunit "Probe Observer";
     begin
         QP_DateFormulaFacts(Observer, 'cw', 'CW');
-        Observer.Finish();
+        Observer.Expect('cw_evaluate', 'Yes');
+        Observer.Expect('cw_format', 'CW');
+        Observer.Expect('cw_format9', 'CW');
+        Observer.Expect('cw_fieldref', 'CW');
+        Observer.Expect('cw_get_format', 'CW');
+        Observer.Expect('cw_get_format9', 'CW');
+        Observer.Expect('cw_get_calcdate', '2024-01-21');
+        Observer.Expect('cw_open_fieldref', 'CW');
+        Observer.Expect('cw_open_fieldref9', 'CW');
+        Observer.Verify();
     end;
 }

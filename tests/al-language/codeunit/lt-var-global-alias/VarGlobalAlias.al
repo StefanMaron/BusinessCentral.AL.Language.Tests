@@ -129,7 +129,8 @@ codeunit 87141 "LT QP Var Global Alias"
         Host: Codeunit "LT QP Alias Host";
     begin
         Observer.Observe('trace', Host.GlobalChangedByName());
-        Observer.Finish();
+        Observer.Expect('trace', 'p_in:1/g1;p_after_q:20/q20;after:20/q20');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +140,8 @@ codeunit 87141 "LT QP Var Global Alias"
         Host: Codeunit "LT QP Alias Host";
     begin
         Observer.Observe('trace', Host.ParamChanged());
-        Observer.Finish();
+        Observer.Expect('trace', 'p_set;q_sees:30/p30;after:30/p30');
+        Observer.Verify();
     end;
 
     [Test]
@@ -149,7 +151,8 @@ codeunit 87141 "LT QP Var Global Alias"
         Host: Codeunit "LT QP Alias Host";
     begin
         Observer.Observe('trace', Host.BothChanged());
-        Observer.Finish();
+        Observer.Expect('trace', 'p_after_add:120/q20+p;q_sees:120/q20+p;p_end:7/q7;after:7/q7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -160,6 +163,8 @@ codeunit 87141 "LT QP Var Global Alias"
     begin
         Observer.Observe('int', Host.IntegerOnly());
         Observer.Observe('text', Host.TextOnly());
-        Observer.Finish();
+        Observer.Expect('int', 'p_after_global_inc:6;p_global_after_param_inc:16;after:16');
+        Observer.Expect('text', 'p_after_global_append:xG;p_global_after_param_append:xGP;after:xGP');
+        Observer.Verify();
     end;
 }
