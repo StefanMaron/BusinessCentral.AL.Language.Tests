@@ -1,9 +1,10 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own report 78602, codeunit 78603
+// Fixtures used: Probe Observer (69160); own report 78602, codeunit 78603; LT QK Setup Rows (86940)
 // Probe: the CompanyAddressLine1..8 elements of the report dataset header (SaveAs Xml, BC 29 and later) for several fillings of the
 // Company Information address fields (Address, Address 2, City, Post Code, County, Country/Region Code). Only line 1 (= Name) was pinned before
-// (corpus issue 636, item 3). The test restores the Company Information row it changed.
+// (corpus issue 636, item 3). The test restores the Company Information row it changed. Header_AddressLines_AsInCorpusDatabase writes its
+// own row through codeunit 86940 "LT QK Setup Rows" (writer QK, 2026-10-21); the name is kept so the corpus case id stays.
 // BC versions: 29+ (BC 27 and 28 write no company block in the header)
 
 #if BC29PLUS
@@ -90,13 +91,17 @@ codeunit 78603 "LT AH Dataset Header"
     procedure Header_AddressLines_AsInCorpusDatabase()
     var
         Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
         Info: Record "Company Information";
     begin
+        // Writer QK (owner 2026-10-21): the test writes its own Company Information row (QkSetupRows.al) instead of reading the demo row.
+        QkRows.WriteCompanyInformation();
         Info.Get();
         Observer.Observe('db', Info.Name + '|' + Info.Address + '|' + Info."Address 2" + '|' + Info.City + '|' + Info."Post Code" + '|' + Info.County + '|' + Info."Country/Region Code");
         Observer.Observe('as_is', AddressLines());
-        Observer.Expect('db', '<Company>|5 The Ring|Westminster|London|W2 8HG||GB');
-        Observer.Expect('as_is', '1=[<Company>] 2=[5 The Ring] 3=[Westminster] 4=[London, W2 8HG] 5=[Great Britain] 6=[] 7=[] 8=[] ');
+        QkRows.RestoreCompanyInformation();
+        Observer.Expect('db', 'LT QK Company|QK Street 1|QK Floor 2|QK Town|QK-1234||LTQK');
+        Observer.Expect('as_is', '1=[LT QK Company] 2=[QK Street 1] 3=[QK Floor 2] 4=[QK Town, QK-1234] 5=[LT QK Land] 6=[] 7=[] 8=[] ');
         Observer.Verify();
     end;
 
