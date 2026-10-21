@@ -3,6 +3,11 @@
 // Fixtures used: tables 73000, 73001, enum 73000 (RfTObjects.al), codeunit 73010 (RfTHelpers.al), Probe Observer
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // FieldRef Value get and set for every field type, unassigned FieldRef, wrong types and truncation.
+// Writer QP (al-runtime-rs asks): QP_Blob_* read a Blob field (13) of a stored row without CalcFields (Get + RecordRef.GetTable, and
+//   RecordRef.Open + FindFirst), assign FieldRef.Value to the Blob field of a temporary record and read HasValue, Length and the text;
+//   then FieldRef.CalcField and the same again. QP_DateFormula_* Evaluate the formulas <1M+CM>, 10D, <-1Y> and CW into the DateFormula
+//   field (15) of a stored row, Modify, and read it back with Format(Field), Format(Field, 0, 9), FieldRef.Value and after Get on a new
+//   record variable (the stored form of a DateFormula as AL code sees it).
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 73024 "LT RfT Values"
@@ -378,5 +383,156 @@ codeunit 73024 "LT RfT Values"
         Observer.Expect('reassigned', 'Int');
         Observer.Expect('first_unchanged', 'Txt');
         Observer.Verify();
+    end;
+
+    local procedure QP_StoreBlob(Content: Text)
+    var
+        Helper: Codeunit "LT RfT Helper";
+        Row: Record "LT RfT Data";
+        Out: OutStream;
+    begin
+        Helper.Reset();
+        Row.Init();
+        Row.Code := 'B1';
+        Row.Insert();
+        Row.Bl.CreateOutStream(Out);
+        Out.WriteText(Content);
+        Row.Modify();
+    end;
+
+    local procedure QP_BlobFacts(var Observer: Codeunit "Probe Observer"; Prefix: Text; var Fld: FieldRef)
+    var
+        Tmp: Record "LT RfT Data" temporary;
+        Ins: InStream;
+        T: Text;
+    begin
+        Tmp.Bl := Fld.Value;
+        Observer.Observe(Prefix + '_hasvalue', Format(Tmp.Bl.HasValue()));
+        Observer.Observe(Prefix + '_length', Format(Tmp.Bl.Length()));
+        Tmp.Bl.CreateInStream(Ins);
+        Ins.ReadText(T);
+        Observer.Observe(Prefix + '_text', T);
+    end;
+
+    [Test]
+    procedure QP_Blob_GetTable_ValueWithoutCalcFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT RfT Data";
+        RecRef: RecordRef;
+        Fld: FieldRef;
+    begin
+        QP_StoreBlob('blob text');
+        Row.Get('B1');
+        RecRef.GetTable(Row);
+        Fld := RecRef.Field(13);
+        QP_BlobFacts(Observer, 'before', Fld);
+        Observer.Observe('calcfield', Format(Fld.CalcField()));
+        QP_BlobFacts(Observer, 'after', Fld);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_Blob_OpenFind_ValueWithoutCalcFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+        Fld: FieldRef;
+    begin
+        QP_StoreBlob('blob text');
+        RecRef.Open(Database::"LT RfT Data");
+        RecRef.FindFirst();
+        Fld := RecRef.Field(13);
+        QP_BlobFacts(Observer, 'before', Fld);
+        Fld.CalcField();
+        QP_BlobFacts(Observer, 'after', Fld);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_Blob_GetTable_EmptyBlob()
+    var
+        Observer: Codeunit "Probe Observer";
+        Helper: Codeunit "LT RfT Helper";
+        Row: Record "LT RfT Data";
+        RecRef: RecordRef;
+        Fld: FieldRef;
+    begin
+        Helper.Reset();
+        Row.Init();
+        Row.Code := 'B1';
+        Row.Insert();
+        Clear(Row);
+        Row.Get('B1');
+        RecRef.GetTable(Row);
+        Fld := RecRef.Field(13);
+        QP_BlobFacts(Observer, 'before', Fld);
+        Fld.CalcField();
+        QP_BlobFacts(Observer, 'after', Fld);
+        Observer.Finish();
+    end;
+
+    local procedure QP_DateFormulaFacts(var Observer: Codeunit "Probe Observer"; Name: Text; Formula: Text)
+    var
+        Helper: Codeunit "LT RfT Helper";
+        Row: Record "LT RfT Data";
+        Back: Record "LT RfT Data";
+        RecRef: RecordRef;
+    begin
+        Helper.Reset();
+        Row.Init();
+        Row.Code := 'D1';
+        Row.Insert();
+        Observer.Observe(Name + '_evaluate', Format(Evaluate(Row.DF, Formula)));
+        Row.Modify();
+        Observer.Observe(Name + '_format', Format(Row.DF));
+        Observer.Observe(Name + '_format9', Format(Row.DF, 0, 9));
+        RecRef.GetTable(Row);
+        Observer.Observe(Name + '_fieldref', Format(RecRef.Field(15).Value));
+        Back.Get('D1');
+        Observer.Observe(Name + '_get_format', Format(Back.DF));
+        Observer.Observe(Name + '_get_format9', Format(Back.DF, 0, 9));
+        Observer.Observe(Name + '_get_calcdate', Format(CalcDate(Back.DF, 20240115D), 0, 9));
+        RecRef.Close();
+        RecRef.Open(Database::"LT RfT Data");
+        RecRef.FindFirst();
+        Observer.Observe(Name + '_open_fieldref', Format(RecRef.Field(15).Value));
+        Observer.Observe(Name + '_open_fieldref9', Format(RecRef.Field(15).Value, 0, 9));
+    end;
+
+    [Test]
+    procedure QP_DateFormula_MonthPlusCurrentMonth()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QP_DateFormulaFacts(Observer, 'm', '<1M+CM>');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DateFormula_TenDaysNoBrackets()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QP_DateFormulaFacts(Observer, 'd', '10D');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DateFormula_MinusOneYear()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QP_DateFormulaFacts(Observer, 'y', '<-1Y>');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DateFormula_CurrentWeekNoBrackets()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QP_DateFormulaFacts(Observer, 'cw', 'CW');
+        Observer.Finish();
     end;
 }

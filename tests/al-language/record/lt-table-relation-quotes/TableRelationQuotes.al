@@ -10,6 +10,10 @@
 //   filter("B C"..D), filter("B C"..), filter(<> A & <> "B C") on the enum field and filter(A.."B C"), filter("B C"..D),
 //   filter(<> "B C" & <> D) on the option field (own table 87082, QO_ tests in codeunit 74068). Validate with each seeded code, an empty
 //   code and a missing one: accepted, or the error text and code.
+// Writer QP (al-runtime-rs ask): quoted members in the CONDITIONS of TableRelation arms (own tables 87155-87157, QP_ tests in codeunit
+//   74068). Field Arms: if (Type = const("B C")) T1 else if (Type = filter(<> "B C" & <> D)) T2; field BlankOr: if (Type = filter(" " | A))
+//   T1 else T2. Type is an Option " ",A,"B C",D. Validate with a code of T1, a code of T2, an empty code and a missing code for every Type:
+//   accepted, or the error text and code.
 // BC versions: 27, 28, 29 by CI
 
 enum 74065 "LT TQ Kind"
@@ -67,6 +71,53 @@ table 87082 "LT QO TQ Src"
         field(6; "Opt Range BD"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Opt = filter("B C" .. D)); }
         field(7; "Opt And"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Opt = filter(<> "B C" & <> D)); }
         field(8; "Kind Open"; Code[10]) { TableRelation = "LT TQ Ref"."Code" where (Kind = filter("B C" ..)); }
+    }
+
+    keys { key(PK; "No.") { Clustered = true; } }
+}
+
+table 87155 "LT QP TQ T1"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
+}
+
+table 87156 "LT QP TQ T2"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Code"; Code[10]) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
+}
+
+table 87157 "LT QP TQ Arm Src"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "No."; Code[10]) { }
+        field(2; Type; Option) { OptionMembers = " ",A,"B C",D; }
+        field(3; Arms; Code[10])
+        {
+            TableRelation = if (Type = const("B C")) "LT QP TQ T1"."Code"
+            else if (Type = filter(<> "B C" & <> D)) "LT QP TQ T2"."Code";
+        }
+        field(4; BlankOr; Code[10])
+        {
+            TableRelation = if (Type = filter(" " | A)) "LT QP TQ T1"."Code"
+            else "LT QP TQ T2"."Code";
+        }
     }
 
     keys { key(PK; "No.") { Clustered = true; } }
@@ -394,5 +445,107 @@ codeunit 74068 "LT Table Relation Quotes"
         Obs.Expect('v_NOPE|text', 'The field Kind Open of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
         Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
         Obs.Verify();
+    end;
+
+    local procedure QpSeedArms()
+    var
+        A: Record "LT QP TQ T1";
+        B: Record "LT QP TQ T2";
+    begin
+        A.DeleteAll();
+        B.DeleteAll();
+        A.Code := 'X1';
+        A.Insert();
+        B.Code := 'Y1';
+        B.Insert();
+    end;
+
+    [TryFunction]
+    local procedure QpTryValidateArm(FieldNo: Integer; TypeValue: Integer; Value: Text)
+    var
+        S: Record "LT QP TQ Arm Src";
+    begin
+        S.Type := TypeValue;
+        case FieldNo of
+            3:
+                S.Validate(Arms, CopyStr(Value, 1, 10));
+            4:
+                S.Validate(BlankOr, CopyStr(Value, 1, 10));
+        end;
+    end;
+
+    local procedure QpProbeArms(FieldNo: Integer; TypeValue: Integer)
+    var
+        Codes: List of [Text];
+        C: Text;
+    begin
+        QpSeedArms();
+        Codes.Add('X1');
+        Codes.Add('Y1');
+        Codes.Add('');
+        Codes.Add('NOPE');
+        foreach C in Codes do begin
+            ClearLastError();
+            if QpTryValidateArm(FieldNo, TypeValue, C) then
+                Obs.Observe('v_' + C, 'ok')
+            else
+                Obs.ObserveError('v_' + C);
+        end;
+    end;
+
+    [Test]
+    procedure QP_Arms_TypeBlank()
+    begin
+        QpProbeArms(3, 0);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_Arms_TypeA()
+    begin
+        QpProbeArms(3, 1);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_Arms_TypeBC()
+    begin
+        QpProbeArms(3, 2);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_Arms_TypeD()
+    begin
+        QpProbeArms(3, 3);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_BlankOr_TypeBlank()
+    begin
+        QpProbeArms(4, 0);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_BlankOr_TypeA()
+    begin
+        QpProbeArms(4, 1);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_BlankOr_TypeBC()
+    begin
+        QpProbeArms(4, 2);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure QP_BlankOr_TypeD()
+    begin
+        QpProbeArms(4, 3);
+        Obs.Finish();
     end;
 }

@@ -31,6 +31,48 @@ table 70654 "LT RRVar Other"
     }
 }
 
+// Writer QP (al-runtime-rs "Codeunit.Run with a RecordRef in a Variant", Microsoft's Batch Processing Mgt. InvokeProcessing shape):
+//   a Variant holding a RecordRef positioned on a row is passed to Codeunit.Run of a codeunit with TableNo = "LT RRVar Row" (87142).
+//   OnRun logs Rec's key, Name and filters, changes Name and calls Modify. After the call: the RecordRef's Name field and the stored row,
+//   for the plain call and the guarded `if Codeunit.Run(...)` form (after Commit), a filtered RecordRef, and a RecordRef of another table.
+//   QP_ tests in codeunit 70655; SingleInstance log 87143 is used only by it.
+codeunit 87143 "LT QP RRVar Run Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
+}
+
+codeunit 87142 "LT QP RRVar Run Target"
+{
+    TableNo = "LT RRVar Row";
+
+    trigger OnRun()
+    var
+        Log: Codeunit "LT QP RRVar Run Log";
+    begin
+        Log.Add('onrun no=' + Format(Rec."No.") + ' name=' + Rec.Name + ' filters=[' + Rec.GetFilters() + ']');
+        Rec.Name := 'changed';
+        Rec.Modify();
+        Log.Add('modified');
+    end;
+}
+
 codeunit 70655 "LT RRVar To Record"
 {
     Subtype = Test;
@@ -183,5 +225,110 @@ codeunit 70655 "LT RRVar To Record"
         Observer.Expect('opened_not_positioned', 'ok');
         Observer.Expect('row_no_after', '0');
         Observer.Verify();
+    end;
+
+    local procedure QP_RowName(No: Integer): Text
+    var
+        Row: Record "LT RRVar Row";
+    begin
+        if not Row.Get(No) then
+            exit('<no row>');
+        exit(Row.Name);
+    end;
+
+    [Test]
+    procedure QP_CodeunitRun_VariantRecordRef_Plain()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QP RRVar Run Log";
+        RR: RecordRef;
+        V: Variant;
+    begin
+        Seed();
+        Log.Take();
+        RR.Open(Database::"LT RRVar Row");
+        RR.Field(1).SetRange(2);
+        RR.FindFirst();
+        RR.Field(1).SetRange();
+        V := RR;
+        Codeunit.Run(Codeunit::"LT QP RRVar Run Target", V);
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('recref_name', Format(RR.Field(2).Value));
+        Observer.Observe('recref_no', Format(RR.Field(1).Value));
+        Observer.Observe('stored_2', QP_RowName(2));
+        Observer.Observe('stored_1', QP_RowName(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_CodeunitRun_VariantRecordRef_Guarded()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QP RRVar Run Log";
+        RR: RecordRef;
+        V: Variant;
+        Ok: Boolean;
+    begin
+        Seed();
+        Commit();
+        Log.Take();
+        RR.Open(Database::"LT RRVar Row");
+        RR.Field(1).SetRange(2);
+        RR.FindFirst();
+        RR.Field(1).SetRange();
+        V := RR;
+        ClearLastError();
+        Ok := Codeunit.Run(Codeunit::"LT QP RRVar Run Target", V);
+        Observer.Observe('result', Format(Ok));
+        Observer.Observe('last_error', GetLastErrorText());
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('recref_name', Format(RR.Field(2).Value));
+        Observer.Observe('stored_2', QP_RowName(2));
+        Observer.Observe('stored_1', QP_RowName(1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_CodeunitRun_VariantRecordRef_Filtered()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QP RRVar Run Log";
+        RR: RecordRef;
+        V: Variant;
+    begin
+        Seed();
+        Log.Take();
+        RR.Open(Database::"LT RRVar Row");
+        RR.Field(2).SetFilter('first|second');
+        RR.FindLast();
+        V := RR;
+        Codeunit.Run(Codeunit::"LT QP RRVar Run Target", V);
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('recref_name', Format(RR.Field(2).Value));
+        Observer.Observe('recref_filters', RR.GetFilters());
+        Observer.Observe('stored_2', QP_RowName(2));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_CodeunitRun_VariantRecordRef_OtherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QP RRVar Run Log";
+        RR: RecordRef;
+        V: Variant;
+    begin
+        Seed();
+        Commit();
+        Log.Take();
+        RR.Open(Database::"LT RRVar Other");
+        RR.FindFirst();
+        V := RR;
+        ClearLastError();
+        Observer.Observe('other_table_result', Format(Codeunit.Run(Codeunit::"LT QP RRVar Run Target", V)));
+        Observer.Observe('other_table_error', GetLastErrorText());
+        Observer.Observe('other_table_code', GetLastErrorCode());
+        Observer.Observe('log', Log.Take());
+        Observer.Finish();
     end;
 }

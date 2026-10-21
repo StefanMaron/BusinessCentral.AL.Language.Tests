@@ -4,6 +4,10 @@
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Data item filters: DataItemTableView (where, sorting), SetTableView, RequestFilterFields on the request page, DataItemLink,
 // ReqFilterFields observed through GetFilter and the parameters text, PrintOnlyIfDetail seen in the dataset of SaveAs Xml.
+// Writer QP (al-runtime-rs ask, Microsoft's Customer "Currency Filter" shape): report 87147 links its child to a FlowFilter field of the
+//   parent, DataItemLink = "Currency Code" = field("Currency Filter") (tables 87145, 87146). The parent has no filter on the FlowFilter,
+//   a single value, a range and an or-filter (set through SetTableView); the log shows the child's filter in OnPreDataItem and the child rows
+//   read in OnAfterGetRecord. QP_ tests in codeunit 73838.
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 73830 "LT RpT Filter Log"
@@ -217,6 +221,73 @@ report 84655 "LT CJ RpT Leaf Child PrintOnly"
             }
         }
     }
+}
+
+table 87145 "LT QP RpT FF Head"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; "Currency Filter"; Code[10]) { FieldClass = FlowFilter; }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+table 87146 "LT QP RpT FF Line"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; "Currency Code"; Code[10]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+report 87147 "LT QP RpT FF Link"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Head; "LT QP RpT FF Head")
+        {
+            dataitem(Line; "LT QP RpT FF Line")
+            {
+                DataItemLink = "Currency Code" = field("Currency Filter");
+
+                trigger OnPreDataItem()
+                begin
+                    L.Add('line pre filter=[' + Line.GetFilter("Currency Code") + ']');
+                end;
+
+                trigger OnAfterGetRecord()
+                begin
+                    L.Add('line ' + Format(Line.Id) + ' ' + Line."Currency Code");
+                end;
+            }
+
+            trigger OnAfterGetRecord()
+            begin
+                L.Add('head ' + Format(Head.Id) + ' ff=[' + Head.GetFilter("Currency Filter") + '] value=[' + Head."Currency Filter" + ']');
+            end;
+        }
+    }
+
+    var
+        L: Codeunit "LT RpT Filter Log";
 }
 
 codeunit 73838 "LT RpT Filters"
@@ -567,5 +638,90 @@ codeunit 73838 "LT RpT Filters"
         Observer.Expect('RowId', '1,2,3,4,');
         Observer.Expect('ChildId', '');
         Observer.Verify();
+    end;
+
+    local procedure QP_SeedFlowFilterLink()
+    var
+        Head: Record "LT QP RpT FF Head";
+        Line: Record "LT QP RpT FF Line";
+    begin
+        Head.DeleteAll();
+        Line.DeleteAll();
+        L.Take();
+        Head.Id := 1;
+        Head.Insert();
+        Line.Id := 1;
+        Line."Currency Code" := '';
+        Line.Insert();
+        Line.Id := 2;
+        Line."Currency Code" := 'EUR';
+        Line.Insert();
+        Line.Id := 3;
+        Line."Currency Code" := 'USD';
+        Line.Insert();
+        Line.Id := 4;
+        Line."Currency Code" := 'GBP';
+        Line.Insert();
+        Commit();
+    end;
+
+    local procedure QP_RunFlowFilterLink(FilterText: Text; SetIt: Boolean): Text
+    var
+        Head: Record "LT QP RpT FF Head";
+        Rpt: Report "LT QP RpT FF Link";
+    begin
+        QP_SeedFlowFilterLink();
+        if SetIt then
+            Head.SetFilter("Currency Filter", FilterText);
+        Rpt.SetTableView(Head);
+        Rpt.Run();
+        exit(L.Take());
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_NoFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('', false));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_SingleValue()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('EUR', true));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_Range()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('E..G', true));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_OrFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('EUR|USD', true));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_ReportRunPlain()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QP_SeedFlowFilterLink();
+        Report.Run(Report::"LT QP RpT FF Link");
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
     end;
 }
