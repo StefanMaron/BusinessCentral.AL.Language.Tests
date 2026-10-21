@@ -1420,7 +1420,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('after_close_headers', '1');
         Observer.Expect('after_close_header_rows', '[Q1|]');
         Observer.Expect('after_close_lines', '0');
-        Observer.Expect('after_close_line_rows =', '');
+        Observer.Expect('after_close_line_rows', '');
         Observer.Verify();
     end;
 
@@ -1520,9 +1520,9 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('read_log', '[]');
         Observer.Expect('close', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '0');
-        Observer.Expect('after_close_line_rows =', '');
+        Observer.Expect('after_close_line_rows', '');
         Observer.Verify();
     end;
 
@@ -1592,7 +1592,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('part_description', '[]');
         Observer.Expect('close', '[TH.OnQueryClosePage | TH.OnClosePage]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1638,9 +1638,9 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('open_new_error|code', 'TestWrapped');
         Observer.Expect('open_new_log', '[CP.OnOpenPage | CP.OnNewRecord:D9 below=Yes | CP.OnAfterGetCurrRecord:D9/0]');
         Observer.Expect('after_headers', '0');
-        Observer.Expect('after_header_rows =', '');
+        Observer.Expect('after_header_rows', '');
         Observer.Expect('after_lines', '0');
-        Observer.Expect('after_line_rows =', '');
+        Observer.Expect('after_line_rows', '');
         Observer.Verify();
     end;
 
@@ -1738,7 +1738,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '2');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0][|20000|seeded|0]');
         Observer.Verify();
@@ -1787,7 +1787,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('open_new', '[]');
         Observer.Expect('close', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1810,7 +1810,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[TH.OnQueryClosePage | TH.OnClosePage]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '2');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0][|20000|seeded|0]');
         Observer.Verify();
@@ -1832,7 +1832,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('open_new', '[]');
         Observer.Expect('close', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1854,7 +1854,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('open_new', '[]');
         Observer.Expect('close', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1876,7 +1876,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('open_new', '[]');
         Observer.Expect('close', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1923,13 +1923,13 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('host_new', 'Yes');
         Observer.Expect('host_new_log', '[HP.OnNewRecord]');
         Observer.Expect('after_new_headers', '0');
-        Observer.Expect('after_new_header_rows =', '');
+        Observer.Expect('after_new_header_rows', '');
         Observer.Expect('after_new_lines', '1');
         Observer.Expect('after_new_line_rows', '[|10000|seeded|0]');
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1951,7 +1951,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('ok', 'Yes');
         Observer.Expect('ok_log', '[]');
         Observer.Expect('after_ok_headers', '0');
-        Observer.Expect('after_ok_header_rows =', '');
+        Observer.Expect('after_ok_header_rows', '');
         Observer.Expect('after_ok_lines', '1');
         Observer.Expect('after_ok_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1973,7 +1973,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
@@ -1994,9 +1994,9 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '0');
-        Observer.Expect('after_close_line_rows =', '');
+        Observer.Expect('after_close_line_rows', '');
         Observer.Verify();
     end;
 
@@ -2016,7 +2016,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[X1|10000|seeded|0]');
         Observer.Verify();
@@ -2049,7 +2049,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('after_close_headers', '1');
         Observer.Expect('after_close_header_rows', '[|]');
         Observer.Expect('after_close_lines', '0');
-        Observer.Expect('after_close_line_rows =', '');
+        Observer.Expect('after_close_line_rows', '');
         Observer.Verify();
     end;
 
@@ -2132,7 +2132,7 @@ codeunit 67582 "LT DL Tests"
         Observer.Expect('close', 'Yes');
         Observer.Expect('close_log', '[]');
         Observer.Expect('after_close_headers', '0');
-        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_header_rows', '');
         Observer.Expect('after_close_lines', '1');
         Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
         Observer.Verify();
