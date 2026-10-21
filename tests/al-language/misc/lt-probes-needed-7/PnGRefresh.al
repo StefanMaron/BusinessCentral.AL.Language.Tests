@@ -302,6 +302,13 @@ codeunit 70177 "LT PnG Refresh"
     // ---- Writer QL (2026-10-21), al-runtime-rs PR 387: a list action that puts another row into Rec (Rec := Other with changed fields),
     // then Close or the page stays open; a list filtered in filter group 2 to one template and batch that loses its only row to an action.
     // Fixtures: misc/lt-probes-needed-7/PnGQlFixtures.al. ----
+    // Probed by corpus CI on BC 27.5, 28.5 and 29.0 (batch runs 39559542435, 39559572012, 39559599293; the same values on all three).
+    // Results: after `Rec := Other` (another stored row, changed or not, or a temporary copy with changes) the list reads its rows again and
+    // shows the other row with its STORED values; no OnModifyRecord or OnModify runs, at once, on Next or on Close, and nothing is stored.
+    // With CurrPage.Close() in the action, Rec is the shown row again after the Close call. A list filtered to one template and batch (filter
+    // group 2 or 0, Worksheet or List) that loses its only row to an action (with or without CurrPage.Update) shows its blank line three
+    // times: each time the client validates Template and Batch with the filter values, then runs OnNewRecord (Rec stamped, xRec stamped
+    // too) and OnAfterGetCurrRecord; a value typed there is inserted at Close with Line No. 10000.
 
     local procedure SeedQlRows()
     var
@@ -365,7 +372,16 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -385,7 +401,16 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -405,7 +430,16 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,temp B x=A,orig A);P.AGR(B,temp B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -425,7 +459,16 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,orig B x=A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -445,7 +488,16 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(A,own changed x=A,orig A);P.AGR(A,own changed);P.MODR(A,own changed x=A,orig A);T.MOD(A,own changed x=A,orig A);P.AGR(A,own changed);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,own changed);P.AGR(A,own changed);P.AGCR(A,own changed x=A,own changed)');
+        Observer.Expect('shown-after-action', 'A,own changed');
+        Observer.Expect('stored-after-action', 'A:own changed,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:own changed,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -470,7 +522,20 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log-next', 'P.AGR(C,orig C);P.AGR(C,orig C);P.AGCR(C,orig C x=B,orig B)');
+        Observer.Expect('shown-after-next', 'C,orig C');
+        Observer.Expect('stored-after-next', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('log-first', 'P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=C,orig C)');
+        Observer.Expect('shown-after-first', 'A,orig A');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -495,7 +560,20 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,temp B x=A,orig A);P.AGR(B,temp B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log-next', 'P.AGR(C,orig C);P.AGR(C,orig C);P.AGCR(C,orig C x=B,orig B)');
+        Observer.Expect('shown-after-next', 'C,orig C');
+        Observer.Expect('stored-after-next', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('log-first', 'P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=C,orig C)');
+        Observer.Expect('shown-after-first', 'A,orig A');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -514,7 +592,14 @@ codeunit 70177 "LT PnG Refresh"
         Observer.ObserveError('close');
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.AGR(A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'No');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -582,7 +667,15 @@ codeunit 70177 "LT PnG Refresh"
         Jnl.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlJournal());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
     end;
 
     [Test]
@@ -604,7 +697,15 @@ codeunit 70177 "LT PnG Refresh"
         Jnl.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlJournal());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
     end;
 
     [Test]
@@ -626,7 +727,15 @@ codeunit 70177 "LT PnG Refresh"
         Jnl.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlJournal());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
     end;
 
     [Test]
@@ -648,7 +757,15 @@ codeunit 70177 "LT PnG Refresh"
         Jnl.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlJournal());
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
     end;
 
     [Test]
@@ -666,6 +783,11 @@ codeunit 70177 "LT PnG Refresh"
         Jnl.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlJournal());
-        Observer.Finish();
+        Observer.Expect('log-open', 'T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=//0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=//0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-open', 'T1/B1/0:');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
     end;
 }
