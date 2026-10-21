@@ -576,6 +576,7 @@ is only a reference.
 | 1691 | AL0132, AL0161 | A table event subscriber reads `Rec.CurrFieldNo` (a table of another app, a table of the same app). |
 | 1856 | AL0107 | An XmlPort Namespaces entry with the empty prefix written as `''` (the quoted identifier `""` compiles). |
 | 1857 | AL0107 | An XmlPort Namespaces property written as one string `'soap=http://...'`. |
+| 1960, 1961 | AL0501 | An event subscriber in a test codeunit without `EventSubscriberInstance = Manual` (the default, and StaticAutomatic written out). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
