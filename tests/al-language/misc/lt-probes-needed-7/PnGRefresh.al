@@ -355,6 +355,26 @@ codeunit 70177 "LT PnG Refresh"
         exit(Result);
     end;
 
+    // Opens and closes the list once before the asserted tests: on BC 28.5 the first Close of the freshly published page once failed with
+    // 'The page definition has changed while opening the page, please try to re-open the page.' (batch run 39560986109; a tier metadata
+    // flake, not page behavior). Nothing is asserted here.
+    [Test]
+    procedure QL_RecAssign_WarmUp()
+    var
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        if TryOpenQlList(List) then
+            if TryCloseQlList(List) then;
+        ClearLastError();
+    end;
+
+    [TryFunction]
+    local procedure TryOpenQlList(var List: TestPage "LT QL Act List")
+    begin
+        List.OpenEdit();
+    end;
+
     [Test]
     procedure QL_RecAssign_OtherChanged_ThenClose()
     var
