@@ -47,7 +47,6 @@ codeunit 87266 "LT QR Moved Tests"
             P.OpenView();
         ReadCard(P);
         P.Close();
-        Observer.Finish();
     end;
 
     [PageHandler]
@@ -83,7 +82,6 @@ codeunit 87266 "LT QR Moved Tests"
             P.OpenView();
         ReadList(P);
         P.Close();
-        Observer.Finish();
     end;
 
     [PageHandler]
@@ -119,7 +117,6 @@ codeunit 87266 "LT QR Moved Tests"
             P.OpenView();
         ReadTempCard(P);
         P.Close();
-        Observer.Finish();
     end;
 
     [PageHandler]
@@ -155,7 +152,6 @@ codeunit 87266 "LT QR Moved Tests"
             P.OpenView();
         ReadTempList(P);
         P.Close();
-        Observer.Finish();
     end;
 
     [PageHandler]
@@ -174,168 +170,364 @@ codeunit 87266 "LT QR Moved Tests"
     procedure QR_Card_OpenView_Get()
     begin
         ViewCard(1, false);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_FindLast()
     begin
         ViewCard(2, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_FindFirstNext()
     begin
         ViewCard(3, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_SetRangeFindLast()
     begin
         ViewCard(4, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_SetCurrentKeyGet()
     begin
         ViewCard(5, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_KeyAssigned()
     begin
         ViewCard(6, false);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_GetThenFilterExcludes()
     begin
         ViewCard(7, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:C;R:B;C:B;');
+        Observer.Expect('next', 'No|B');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenView_SetRangeFindFirst()
     begin
         ViewCard(8, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_Card_OpenEdit_Get()
     begin
         ViewCard(1, true);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_Get()
     begin
         ViewList(1, false);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_FindLast()
     begin
         ViewList(2, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_FindFirstNext()
     begin
         ViewList(3, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_SetRangeFindLast()
     begin
         ViewList(4, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_SetCurrentKeyGet()
     begin
         ViewList(5, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:B;R:A;R:B;R:C;R:D;R:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;R:A;R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_KeyAssigned()
     begin
         ViewList(6, false);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_GetThenFilterExcludes()
     begin
         ViewList(7, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:C;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'No|B');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenView_SetRangeFindFirst()
     begin
         ViewList(8, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_List_OpenEdit_Get()
     begin
         ViewList(1, true);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempCard_OpenView_NoMove()
     begin
         ViewTempCard(0, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempCard_OpenView_Get()
     begin
         ViewTempCard(1, false);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempCard_OpenView_FindLast()
     begin
         ViewTempCard(2, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempCard_OpenView_FindFirstNext()
     begin
         ViewTempCard(3, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempCard_OpenView_SetRangeFindLast()
     begin
         ViewTempCard(4, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempList_OpenView_NoMove()
     begin
         ViewTempList(0, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempList_OpenView_Get()
     begin
         ViewTempList(1, false);
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempList_OpenView_FindLast()
     begin
         ViewTempList(2, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempList_OpenView_FindFirstNext()
     begin
         ViewTempList(3, false);
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QR_TempList_OpenView_SetRangeFindLast()
     begin
         ViewTempList(4, false);
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -344,7 +536,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(1);
         Page.Run(Page::"LT QR Moved Card");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -353,7 +551,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(1);
         Page.Run(Page::"LT QR Moved List");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -362,7 +566,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(1);
         Page.Run(Page::"LT QR Moved Temp Card");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -371,7 +581,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(0);
         Page.Run(Page::"LT QR Moved Temp List");
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|');
+        Observer.Expect('next log', 'C:;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -380,7 +596,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(1);
         Page.RunModal(Page::"LT QR Moved Card");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -389,7 +611,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(2);
         Page.RunModal(Page::"LT QR Moved List");
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|');
+        Observer.Expect('next log', 'C:;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -398,6 +626,12 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         Seed(1);
         Page.RunModal(Page::"LT QR Moved Temp List");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 }

@@ -463,7 +463,31 @@ codeunit 79000 "LT AJ Scalars"
         ObserveTimeNn('13:00:00~PM');
         ObserveTimeNn('0:30:00~AM');
         ObserveTimeNn('12:00:00~PM~');
-        Observer.Finish();
+        Observer.Expect('[12:00:00~PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00~PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00~AM]', 'Yes|00:00:00');
+        Observer.Expect('[12:00:00~AM] 9', 'No|08:00:00');
+        Observer.Expect('[1:05:09~PM]', 'Yes|13:05:09');
+        Observer.Expect('[1:05:09~PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00~PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00~PM] 9', 'No|08:00:00');
+        Observer.Expect('[11:59:59~PM]', 'Yes|23:59:59');
+        Observer.Expect('[11:59:59~PM] 9', 'No|08:00:00');
+        Observer.Expect('[ 1:45:06~PM]', 'Yes|13:45:06');
+        Observer.Expect('[ 1:45:06~PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00~pm]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00~pm] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00 PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00 PM] 9', 'No|08:00:00');
+        Observer.Expect('[13:00:00~PM]', 'No|08:00:00');
+        Observer.Expect('[13:00:00~PM] 9', 'No|08:00:00');
+        Observer.Expect('[0:30:00~AM]', 'Yes|00:30:00');
+        Observer.Expect('[0:30:00~AM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00~PM~]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00~PM~] 9', 'No|08:00:00');
+        Observer.Verify();
     end;
 
     [Test]
@@ -491,6 +515,14 @@ codeunit 79000 "LT AJ Scalars"
         Observer.Observe('noon round trip 9', Format(Ok) + '|' + Format(Back, 0, 9));
         Ok := Evaluate(Back, Format(Tm, 0, 9), 9);
         Observer.Observe('noon xml round trip 9', Format(Ok) + '|' + Format(Back, 0, 9));
-        Observer.Finish();
+        Observer.Expect('format has nnbsp', 'No');
+        Observer.Expect('format with ~', ' 1:45:06 PM');
+        Observer.Expect('round trip', 'Yes|13:45:06');
+        Observer.Expect('midnight with ~', '12:00:00 AM');
+        Observer.Expect('midnight round trip', 'Yes|00:00:00');
+        Observer.Expect('noon round trip', 'Yes|12:00:00');
+        Observer.Expect('noon round trip 9', 'No|12:00:00');
+        Observer.Expect('noon xml round trip 9', 'Yes|12:00:00');
+        Observer.Verify();
     end;
 }

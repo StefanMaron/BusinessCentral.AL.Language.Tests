@@ -72,7 +72,17 @@ codeunit 87271 "LT QR Temp Timestamp"
         Observer.Observe('after rename', State(Temp));
         Temp.Get(3);
         Observer.Observe('get renamed', State(Temp) + ' note ' + Temp.Note);
-        Observer.Finish();
+        Observer.Expect('after init', 'stamp zero, rowversion zero');
+        Observer.Expect('after insert', 'stamp zero, rowversion zero');
+        Observer.Expect('format stamp', '0');
+        Observer.Expect('format rowversion', '0');
+        Observer.Expect('after modify', 'stamp zero, rowversion zero');
+        Observer.Expect('after insert(true)', 'stamp zero, rowversion zero');
+        Observer.Expect('after get', 'stamp zero, rowversion zero');
+        Observer.Expect('get format stamp', '0');
+        Observer.Expect('after rename', 'stamp zero, rowversion zero');
+        Observer.Expect('get renamed', 'stamp zero, rowversion zero note b');
+        Observer.Verify();
     end;
 
     [Test]
@@ -101,7 +111,15 @@ codeunit 87271 "LT QR Temp Timestamp"
         Observer.Observe('filter on 5 finds', Format(Temp.FindFirst()));
         Temp.SetFilter(Stamp, '>%1', 0);
         Observer.Observe('filter above zero count', Format(Temp.Count()));
-        Observer.Finish();
+        Observer.Expect('assigned', '5');
+        Observer.Expect('after insert', '5');
+        Observer.Expect('after get', '5');
+        Observer.Expect('after modify', '7');
+        Observer.Expect('get after modify', '7');
+        Observer.Expect('filter on 7 finds', 'Yes');
+        Observer.Expect('filter on 5 finds', 'No');
+        Observer.Expect('filter above zero count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -140,7 +158,19 @@ codeunit 87271 "LT QR Temp Timestamp"
         Observer.Observe('modified: rowversion same', Format(Temp.SystemRowVersion = DbVersion));
         Db.Get(1);
         Observer.Observe('db unchanged', Format((Db.Stamp = DbStamp) and (Db.Note = 'db')));
-        Observer.Finish();
+        Observer.Expect('db', 'stamp positive, rowversion positive');
+        Observer.Expect('db stamp = db rowversion', 'Yes');
+        Observer.Expect('assigned: stamp', 'Yes');
+        Observer.Expect('assigned: rowversion', 'Yes');
+        Observer.Expect('inserted: stamp same', 'Yes');
+        Observer.Expect('inserted: rowversion same', 'Yes');
+        Observer.Expect('inserted', 'stamp positive, rowversion positive');
+        Observer.Expect('get: stamp same', 'Yes');
+        Observer.Expect('get: rowversion same', 'Yes');
+        Observer.Expect('modified: stamp same', 'Yes');
+        Observer.Expect('modified: rowversion same', 'Yes');
+        Observer.Expect('db unchanged', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +205,13 @@ codeunit 87271 "LT QR Temp Timestamp"
         Observer.Observe('shared copy insert', State(Temp2));
         Temp.Reset();
         Observer.Observe('count', Format(Temp.Count()));
-        Observer.Finish();
+        Observer.Expect('transferfields: stamp', 'Yes positive');
+        Observer.Expect('transferfields: rowversion', 'positive');
+        Observer.Expect('transferfields inserted: stamp', 'Yes positive');
+        Observer.Expect('shared copy: stamp', 'Yes');
+        Observer.Expect('shared copy insert', 'stamp positive, rowversion positive');
+        Observer.Expect('count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -194,7 +230,9 @@ codeunit 87271 "LT QR Temp Timestamp"
         Observer.Observe('row 1', Format(Temp.Stamp));
         Temp.Get(2);
         Observer.Observe('row 2', Format(Temp.Stamp));
-        Observer.Finish();
+        Observer.Expect('row 1', '9');
+        Observer.Expect('row 2', '9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -219,6 +257,10 @@ codeunit 87271 "LT QR Temp Timestamp"
         Observer.Observe('modified = first', Format(Temp.Stamp = First));
         Temp.SetCurrentKey(Stamp);
         Observer.Observe('sorted by stamp first id', Format(Temp.FindFirst()) + ' ' + Format(Temp.Id));
-        Observer.Finish();
+        Observer.Expect('second = first', 'Yes');
+        Observer.Expect('second > first', 'No');
+        Observer.Expect('modified = first', 'Yes');
+        Observer.Expect('sorted by stamp first id', 'Yes 1');
+        Observer.Verify();
     end;
 }

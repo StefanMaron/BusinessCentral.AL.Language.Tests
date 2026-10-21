@@ -308,7 +308,35 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQrNoNumber(Observer, '5--', '5--');
         TryQrNoNumber(Observer, 'ä', 'ä');
         TryQrNoNumber(Observer, 'Ä1', 'Ä1');
-        Observer.Finish();
+        Observer.Expect('New/Updated', 'No -1');
+        Observer.Expect('a/b', 'No -1');
+        Observer.Expect('1/2', 'No -1');
+        Observer.Expect('12:30', 'No -1');
+        Observer.Expect('#1', 'No -1');
+        Observer.Expect('1#', 'No -1');
+        Observer.Expect('A&B', 'No -1');
+        Observer.Expect('1=1', 'No -1');
+        Observer.Expect('''1''', 'No -1');
+        Observer.Expect('"1"', 'No -1');
+        Observer.Expect('1;2', 'No -1');
+        Observer.Expect('[1]', 'No -1');
+        Observer.Expect('{1}', 'No -1');
+        Observer.Expect('*1', 'No -1');
+        Observer.Expect('1*', 'No -1');
+        Observer.Expect('@1', 'No -1');
+        Observer.Expect('1_000', 'No -1');
+        Observer.Expect('1''000', 'No -1');
+        Observer.Expect('€5', 'No -1');
+        Observer.Expect('£5', 'No -1');
+        Observer.Expect('5$', 'Yes 5');
+        Observer.Expect('$-5', 'Yes -5');
+        Observer.Expect('-$5', 'Yes -5');
+        Observer.Expect('+-5', 'No -1');
+        Observer.Expect('--5', 'No -1');
+        Observer.Expect('5--', 'No -1');
+        Observer.Expect('ä', 'No -1');
+        Observer.Expect('Ä1', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -344,7 +372,35 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQr0(Observer, '5--', '5--');
         TryQr0(Observer, 'ä', 'ä');
         TryQr0(Observer, 'Ä1', 'Ä1');
-        Observer.Finish();
+        Observer.Expect('New/Updated', 'No -1');
+        Observer.Expect('a/b', 'No -1');
+        Observer.Expect('1/2', 'No -1');
+        Observer.Expect('12:30', 'No -1');
+        Observer.Expect('#1', 'No -1');
+        Observer.Expect('1#', 'No -1');
+        Observer.Expect('A&B', 'No -1');
+        Observer.Expect('1=1', 'No -1');
+        Observer.Expect('''1''', 'No -1');
+        Observer.Expect('"1"', 'No -1');
+        Observer.Expect('1;2', 'No -1');
+        Observer.Expect('[1]', 'No -1');
+        Observer.Expect('{1}', 'No -1');
+        Observer.Expect('*1', 'No -1');
+        Observer.Expect('1*', 'No -1');
+        Observer.Expect('@1', 'No -1');
+        Observer.Expect('1_000', 'No -1');
+        Observer.Expect('1''000', 'No -1');
+        Observer.Expect('€5', 'No -1');
+        Observer.Expect('£5', 'No -1');
+        Observer.Expect('5$', 'Yes 5');
+        Observer.Expect('$-5', 'Yes -5');
+        Observer.Expect('-$5', 'Yes -5');
+        Observer.Expect('+-5', 'No -1');
+        Observer.Expect('--5', 'No -1');
+        Observer.Expect('5--', 'No -1');
+        Observer.Expect('ä', 'No -1');
+        Observer.Expect('Ä1', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -380,7 +436,35 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQr9(Observer, '5--', '5--');
         TryQr9(Observer, 'ä', 'ä');
         TryQr9(Observer, 'Ä1', 'Ä1');
-        Observer.Finish();
+        Observer.Expect('New/Updated', 'No -1');
+        Observer.Expect('a/b', 'No -1');
+        Observer.Expect('1/2', 'No -1');
+        Observer.Expect('12:30', 'No -1');
+        Observer.Expect('#1', 'No -1');
+        Observer.Expect('1#', 'No -1');
+        Observer.Expect('A&B', 'No -1');
+        Observer.Expect('1=1', 'No -1');
+        Observer.Expect('''1''', 'No -1');
+        Observer.Expect('"1"', 'No -1');
+        Observer.Expect('1;2', 'No -1');
+        Observer.Expect('[1]', 'No -1');
+        Observer.Expect('{1}', 'No -1');
+        Observer.Expect('*1', 'No -1');
+        Observer.Expect('1*', 'No -1');
+        Observer.Expect('@1', 'No -1');
+        Observer.Expect('1_000', 'No -1');
+        Observer.Expect('1''000', 'No -1');
+        Observer.Expect('€5', 'No -1');
+        Observer.Expect('£5', 'No -1');
+        Observer.Expect('5$', 'No -1');
+        Observer.Expect('$-5', 'No -1');
+        Observer.Expect('-$5', 'No -1');
+        Observer.Expect('+-5', 'No -1');
+        Observer.Expect('--5', 'No -1');
+        Observer.Expect('5--', 'No -1');
+        Observer.Expect('ä', 'No -1');
+        Observer.Expect('Ä1', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -404,7 +488,23 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQr0(Observer, '100 -', '100 -');
         TryQr0(Observer, '- 100', '- 100');
         TryQr0(Observer, '+ 100', '+ 100');
-        Observer.Finish();
+        Observer.Expect('+100', 'Yes 100');
+        Observer.Expect('-100', 'Yes -100');
+        Observer.Expect('100-', 'Yes -100');
+        Observer.Expect('(100)', 'Yes -100');
+        Observer.Expect('(-100)', 'No -1');
+        Observer.Expect('+100-', 'No -1');
+        Observer.Expect('$5', 'Yes 5');
+        Observer.Expect('1E-2', 'Yes 0.01');
+        Observer.Expect('1e+2', 'Yes 100');
+        Observer.Expect('1E', 'No -1');
+        Observer.Expect('+.5', 'Yes 0.5');
+        Observer.Expect('-.5', 'Yes -0.5');
+        Observer.Expect('  -100  ', 'Yes -100');
+        Observer.Expect('100 -', 'Yes -100');
+        Observer.Expect('- 100', 'No -1');
+        Observer.Expect('+ 100', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -428,7 +528,23 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQr9(Observer, '100 -', '100 -');
         TryQr9(Observer, '- 100', '- 100');
         TryQr9(Observer, '+ 100', '+ 100');
-        Observer.Finish();
+        Observer.Expect('+100', 'Yes 100');
+        Observer.Expect('-100', 'Yes -100');
+        Observer.Expect('100-', 'No -1');
+        Observer.Expect('(100)', 'No -1');
+        Observer.Expect('(-100)', 'No -1');
+        Observer.Expect('+100-', 'No -1');
+        Observer.Expect('$5', 'No -1');
+        Observer.Expect('1E-2', 'Yes 0.01');
+        Observer.Expect('1e+2', 'Yes 100');
+        Observer.Expect('1E', 'No -1');
+        Observer.Expect('+.5', 'Yes 0.5');
+        Observer.Expect('-.5', 'Yes -0.5');
+        Observer.Expect('  -100  ', 'Yes -100');
+        Observer.Expect('100 -', 'No -1');
+        Observer.Expect('- 100', 'No -1');
+        Observer.Expect('+ 100', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -447,7 +563,18 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQr0(Observer, '1{NNBSP}000', '1{NNBSP}000');
         TryQr0(Observer, '{FW1}{FW2}', '{FW1}{FW2}');
         TryQr0(Observer, '{AR1}', '{AR1}');
-        Observer.Finish();
+        Observer.Expect('{TAB}100', 'Yes 100');
+        Observer.Expect('100{TAB}', 'Yes 100');
+        Observer.Expect('{LF}100', 'Yes 100');
+        Observer.Expect('100{CR}{LF}', 'Yes 100');
+        Observer.Expect('{NBSP}100', 'No -1');
+        Observer.Expect('100{NBSP}', 'No -1');
+        Observer.Expect('1{NBSP}000', 'No -1');
+        Observer.Expect('{NNBSP}100', 'No -1');
+        Observer.Expect('1{NNBSP}000', 'No -1');
+        Observer.Expect('{FW1}{FW2}', 'No -1');
+        Observer.Expect('{AR1}', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -466,7 +593,18 @@ codeunit 67522 "LT Evaluate Decimal"
         TryQr9(Observer, '1{NNBSP}000', '1{NNBSP}000');
         TryQr9(Observer, '{FW1}{FW2}', '{FW1}{FW2}');
         TryQr9(Observer, '{AR1}', '{AR1}');
-        Observer.Finish();
+        Observer.Expect('{TAB}100', 'Yes 100');
+        Observer.Expect('100{TAB}', 'Yes 100');
+        Observer.Expect('{LF}100', 'Yes 100');
+        Observer.Expect('100{CR}{LF}', 'Yes 100');
+        Observer.Expect('{NBSP}100', 'No -1');
+        Observer.Expect('100{NBSP}', 'No -1');
+        Observer.Expect('1{NBSP}000', 'No -1');
+        Observer.Expect('{NNBSP}100', 'No -1');
+        Observer.Expect('1{NNBSP}000', 'No -1');
+        Observer.Expect('{FW1}{FW2}', 'No -1');
+        Observer.Expect('{AR1}', 'No -1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -483,8 +621,8 @@ codeunit 67522 "LT Evaluate Decimal"
         Observer.ObserveError('slash 9');
         asserterror Evaluate(D, QrText('1{NNBSP}000'));
         Observer.ObserveError('nnbsp');
-        asserterror Evaluate(D, QrText('{TAB}100'), 9);
-        Observer.ObserveError('tab 9');
+        asserterror Evaluate(D, QrText('1{NNBSP}000'), 9);
+        Observer.ObserveError('nnbsp 9');
         asserterror Evaluate(D, '(100)', 9);
         Observer.ObserveError('parentheses 9');
         Observer.Observe('value after', Format(D, 0, 9));
@@ -526,6 +664,16 @@ codeunit 67522 "LT Evaluate Decimal"
         Observer.Observe('big slash', Format(Ok) + ' ' + Format(B));
         Ok := Evaluate(B, '100-');
         Observer.Observe('big trailing minus', Format(Ok) + ' ' + Format(B));
-        Observer.Finish();
+        Observer.Expect('int slash', 'No -1');
+        Observer.Expect('int slash 9', 'No -1');
+        Observer.Expect('int trailing minus', 'Yes -100');
+        Observer.Expect('int trailing minus 9', 'No -1');
+        Observer.Expect('int parentheses', 'Yes -100');
+        Observer.Expect('int plus 9', 'Yes 100');
+        Observer.Expect('int tab', 'Yes 100');
+        Observer.Expect('int nbsp', 'No -1');
+        Observer.Expect('big slash', 'No -1');
+        Observer.Expect('big trailing minus', 'Yes -100');
+        Observer.Verify();
     end;
 }

@@ -259,7 +259,8 @@ codeunit 87280 "LT QR XP Container Tests"
         Port: XmlPort "LT QR XP Containers";
     begin
         Observer.Observe('xml', Exported(Port));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope>|  <request />|  <status />|</envelope>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -270,7 +271,8 @@ codeunit 87280 "LT QR XP Container Tests"
     begin
         Port.SetStatus('ok');
         Observer.Observe('xml', Exported(Port));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope>|  <request />|  <status>ok</status>|</envelope>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -281,7 +283,8 @@ codeunit 87280 "LT QR XP Container Tests"
     begin
         Port.AddHead('H1', 'one');
         Observer.Observe('xml', Exported(Port));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope>|  <request>|    <head no="H1">|      <name>one</name>|      <lines />|    </head>|  </request>|  <status />|</envelope>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,7 +297,8 @@ codeunit 87280 "LT QR XP Container Tests"
         Port.AddLine('H1', 10, 5);
         Port.AddLine('H1', 20, 7);
         Observer.Observe('xml', Exported(Port));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope>|  <request>|    <head no="H1">|      <name>one</name>|      <lines>|        <line n="10">|          <qty>5</qty>|        </line>|        <line n="20">|          <qty>7</qty>|        </line>|      </lines>|    </head>|  </request>|  <status />|</envelope>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -309,7 +313,8 @@ codeunit 87280 "LT QR XP Container Tests"
         Port.AddLine('H9', 10, 9);
         Port.SetStatus('done');
         Observer.Observe('xml', Exported(Port));
-        Observer.Finish();
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope>|  <request>|    <head no="H1">|      <name />|      <lines />|    </head>|    <head no="H2">|      <name>two</name>|      <lines>|        <line n="10">|          <qty>1</qty>|        </line>|      </lines>|    </head>|  </request>|  <status>done</status>|</envelope>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -323,7 +328,13 @@ codeunit 87280 "LT QR XP Container Tests"
         Import(Observer, 'one head no name', '<envelope><request><head no="H1"/></request></envelope>');
         Import(Observer, 'one head empty lines', '<envelope><request><head no="H1"><lines/></head></request></envelope>');
         Import(Observer, 'two heads with lines', '<envelope><request><head no="H1"><name>one</name><lines><line n="10"><qty>5</qty></line><line n="20"><qty>7</qty></line></lines></head><head no="H2"><lines><line n="10"><qty>1</qty></line></lines></head></request></envelope>');
-        Observer.Finish();
+        Observer.Expect('empty request', 'ok heads= lines= status=');
+        Observer.Expect('empty request with status', 'ok heads= lines= status=s');
+        Observer.Expect('one head no lines', 'ok heads=H1:one; lines= status=');
+        Observer.Expect('one head no name', 'ok heads=H1:; lines= status=');
+        Observer.Expect('one head empty lines', 'ok heads=H1:; lines= status=');
+        Observer.Expect('two heads with lines', 'ok heads=H1:one;H2:; lines=H1/10=5;H1/20=7;H2/10=1; status=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -334,7 +345,13 @@ codeunit 87280 "LT QR XP Container Tests"
         Import(Observer, 'no request', '<envelope></envelope>');
         Import(Observer, 'no request but status', '<envelope><status>s</status></envelope>');
         Import(Observer, 'two requests', '<envelope><request/><request/></envelope>');
-        Observer.Finish();
+        Observer.Expect('no request|text', 'Imported XML cannot validate with the schema: The element ''envelope'' has incomplete content. List of possible elements expected: ''request''.');
+        Observer.Expect('no request|code', 'XmlPortInvalidXml');
+        Observer.Expect('no request but status|text', 'Imported XML cannot validate with the schema: The element ''envelope'' has invalid child element ''status''. List of possible elements expected: ''request''.');
+        Observer.Expect('no request but status|code', 'XmlPortInvalidXml');
+        Observer.Expect('two requests|text', 'Imported XML cannot validate with the schema: The element ''envelope'' has invalid child element ''request''. List of possible elements expected: ''status''.');
+        Observer.Expect('two requests|code', 'XmlPortInvalidXml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -345,7 +362,13 @@ codeunit 87280 "LT QR XP Container Tests"
         Import(Observer, 'two lines containers', '<envelope><request><head no="H1"><lines/><lines/></head></request></envelope>');
         Import(Observer, 'two names', '<envelope><request><head no="H1"><name>a</name><name>b</name></head></request></envelope>');
         Import(Observer, 'two statuses', '<envelope><request/><status>a</status><status>b</status></envelope>');
-        Observer.Finish();
+        Observer.Expect('two lines containers|text', 'Imported XML cannot validate with the schema: The element ''head'' has invalid child element ''lines''.');
+        Observer.Expect('two lines containers|code', 'XmlPortInvalidXml');
+        Observer.Expect('two names|text', 'Imported XML cannot validate with the schema: The element ''head'' has invalid child element ''name''. List of possible elements expected: ''lines''.');
+        Observer.Expect('two names|code', 'XmlPortInvalidXml');
+        Observer.Expect('two statuses|text', 'Imported XML cannot validate with the schema: The element ''envelope'' has invalid child element ''status''.');
+        Observer.Expect('two statuses|code', 'XmlPortInvalidXml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -356,7 +379,13 @@ codeunit 87280 "LT QR XP Container Tests"
         Import(Observer, 'other root', '<other><request/></other>');
         Import(Observer, 'status before request', '<envelope><status>s</status><request/></envelope>');
         Import(Observer, 'lines before name', '<envelope><request><head no="H1"><lines/><name>a</name></head></request></envelope>');
-        Observer.Finish();
+        Observer.Expect('other root|text', 'Imported XML cannot validate with the schema: The ''other'' element is not declared.');
+        Observer.Expect('other root|code', 'XmlPortInvalidXml');
+        Observer.Expect('status before request|text', 'Imported XML cannot validate with the schema: The element ''envelope'' has invalid child element ''status''. List of possible elements expected: ''request''.');
+        Observer.Expect('status before request|code', 'XmlPortInvalidXml');
+        Observer.Expect('lines before name|text', 'Imported XML cannot validate with the schema: The element ''head'' has invalid child element ''name''.');
+        Observer.Expect('lines before name|code', 'XmlPortInvalidXml');
+        Observer.Verify();
     end;
 
     [Test]
@@ -365,6 +394,8 @@ codeunit 87280 "LT QR XP Container Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Import(Observer, 'unknown child', '<envelope><request><extra/></request></envelope>');
-        Observer.Finish();
+        Observer.Expect('unknown child|text', 'Imported XML cannot validate with the schema: The element ''request'' has invalid child element ''extra''. List of possible elements expected: ''head''.');
+        Observer.Expect('unknown child|code', 'XmlPortInvalidXml');
+        Observer.Verify();
     end;
 }

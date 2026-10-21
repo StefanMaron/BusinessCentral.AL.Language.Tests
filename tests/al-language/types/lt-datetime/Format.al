@@ -593,7 +593,23 @@ codeunit 73804 "LT DtT Format"
         Observer.Observe('m14', FmtStr(DT, '<Thousands>'));
         Observer.Observe('m15', FmtStr(DT, '<Second dec>'));
         Observer.Observe('m16', FmtStr(DT, '<Seconds,2><Second dec>'));
-        Observer.Finish();
+        Observer.Expect('m1', '[2024-03-05T09:07:02]');
+        Observer.Expect('m2', '[20240305090702]');
+        Observer.Expect('m3', '[2024-03-05;09:07:02]');
+        Observer.Expect('m4', '[2024-03-05T09:07:02]');
+        Observer.Expect('m5', '[20240305090702]');
+        Observer.Expect('m6', '[240305090702]');
+        Observer.Expect('m7', '[05/03/24;09:07:02]');
+        Observer.Expect('m8', '[9]');
+        Observer.Expect('m9', '[9:07:02]');
+        Observer.Expect('m10', '[09-07-02]');
+        Observer.Expect('m11', '[09:07:02]');
+        Observer.Expect('m12', '[907]');
+        Observer.Expect('m13', '[07]');
+        Observer.Expect('m14', '[123]');
+        Observer.Expect('m15', '[.123]');
+        Observer.Expect('m16', '[02.123]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -619,7 +635,23 @@ codeunit 73804 "LT DtT Format"
         Observer.Observe('a14', FmtStr(DT, '<Thousands>'));
         Observer.Observe('a15', FmtStr(DT, '<Second dec>'));
         Observer.Observe('a16', FmtStr(DT, '<Seconds,2><Second dec>'));
-        Observer.Finish();
+        Observer.Expect('a1', '[2024-12-31T13:45:06]');
+        Observer.Expect('a2', '[20241231134506]');
+        Observer.Expect('a3', '[2024-12-31;13:45:06]');
+        Observer.Expect('a4', '[2024-12-31T13:45:06]');
+        Observer.Expect('a5', '[20241231134506]');
+        Observer.Expect('a6', '[241231134506]');
+        Observer.Expect('a7', '[31/12/24;13:45:06]');
+        Observer.Expect('a8', '[13]');
+        Observer.Expect('a9', '[13:45:06]');
+        Observer.Expect('a10', '[13-45-06]');
+        Observer.Expect('a11', '[13:45:06]');
+        Observer.Expect('a12', '[1345]');
+        Observer.Expect('a13', '[45]');
+        Observer.Expect('a14', '[0]');
+        Observer.Expect('a15', '[]');
+        Observer.Expect('a16', '[06]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -637,7 +669,15 @@ codeunit 73804 "LT DtT Format"
         Observer.Observe('u6', FmtStr(DT, '<Year,2><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
         Observer.Observe('u7', FmtStr(DT, '<Day,2>/<Month,2>/<Year,2>;<Hours24,2>:<Minutes,2>:<Seconds,2>'));
         Observer.Observe('u8', FmtStr(DT, '<Hours24>'));
-        Observer.Finish();
+        Observer.Expect('u1', '[]');
+        Observer.Expect('u2', '[]');
+        Observer.Expect('u3', '[]');
+        Observer.Expect('u4', '[]');
+        Observer.Expect('u5', '[]');
+        Observer.Expect('u6', '[]');
+        Observer.Expect('u7', '[]');
+        Observer.Expect('u8', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -658,7 +698,17 @@ codeunit 73804 "LT DtT Format"
         Observer.Observe('z3', FmtStr(T, '<Hours24>:<Minutes,2>:<Seconds,2>'));
         Observer.Observe('z4', FmtStr(T, '<Hours24,2><Filler Character,0><Minutes,2>'));
         Observer.Observe('z5', FmtStr(T, '<Hours12,2><Filler Character,0>:<Minutes,2> <AM/PM>'));
-        Observer.Finish();
+        Observer.Expect('t1', '[09:07:02]');
+        Observer.Expect('t2', '[ 9-07-02]');
+        Observer.Expect('t3', '[9:07:02]');
+        Observer.Expect('t4', '[0907]');
+        Observer.Expect('t5', '[09:07 AM]');
+        Observer.Expect('z1', '[00:00:00]');
+        Observer.Expect('z2', '[ 0-00-00]');
+        Observer.Expect('z3', '[0:00:00]');
+        Observer.Expect('z4', '[0000]');
+        Observer.Expect('z5', '[12:00 AM]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -687,6 +737,24 @@ codeunit 73804 "LT DtT Format"
         Observer.Observe('z7', FmtStr(D, '<DAY>. <MONTH text> <YEAR4>'));
         Observer.Observe('z8', FmtStr(D, '<Weekday Text>'));
         Observer.Observe('z9', FmtStr(D, '<Week>'));
-        Observer.Finish();
+        Observer.Expect('d1', '[2024-03-05]');
+        Observer.Expect('d2', '[05.03.2024]');
+        Observer.Expect('d3', '[05/03/2024]');
+        Observer.Expect('d4', '[2024.03.05]');
+        Observer.Expect('d5', '[05032024]');
+        Observer.Expect('d6', '[050324]');
+        Observer.Expect('d7', '[5. March 2024]');
+        Observer.Expect('d8', '[Tuesday]');
+        Observer.Expect('d9', '[10]');
+        Observer.Expect('z1', '[]');
+        Observer.Expect('z2', '[]');
+        Observer.Expect('z3', '[]');
+        Observer.Expect('z4', '[]');
+        Observer.Expect('z5', '[]');
+        Observer.Expect('z6', '[]');
+        Observer.Expect('z7', '[]');
+        Observer.Expect('z8', '[]');
+        Observer.Expect('z9', '[]');
+        Observer.Verify();
     end;
 }
