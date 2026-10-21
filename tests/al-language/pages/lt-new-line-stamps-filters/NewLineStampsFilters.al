@@ -8,6 +8,16 @@
 //   header (OpenEdit) and a new header (OpenNew). A second part without SourceTableView is the contrast.
 //   Not pinned: New() on a part whose host header has Type B (HB) aborts the page with FormAbortException (the Document No. relation is validated
 //   before Type is stamped: "cannot be found in the related table"); the exception is not catchable, so no test can assert it.
+// Writer QO (al-runtime-rs assumption new-line-stamps-all-before-validating, Microsoft's shape: Service Order / Service Order Subform):
+//   a host Card with SourceTableView where(Type = const(B)) (page 87101) holding the B part above and a copy of it with DelayedInsert = true
+//   (page 87100), for a new header (OpenNew): the blank line the part shows, the line after the header No. is set, what the OnValidate
+//   of "Document No." saw, the stored rows. QO_ tests in codeunit 74141.
+//   Not pinned (uncatchable, same on 27.5, 28.5 and 29.0): on that host opened OpenEdit on a header of type B (HB), typing into the blank
+//   line of either part (DelayedInsert or not, with or without New() first) ends the test with "Unexpected CLR exception thrown.:
+//   Microsoft.Dynamics.Framework.UI.FormAbortException: Page LT QO NL Host B - HB has to close." caused by
+//   NavCSideValidateTableRelationException "The field Document No. of table LT NL Line contains a value (HB) that cannot be found in the
+//   related table (LT NL Header)." So the blank line validates Document No. while its Type is still A, even with DelayedInsert and a host
+//   view of Type = B; no test can assert it.
 // BC versions: 27, 28, 29 by CI
 
 enum 74135 "LT NL Type"
@@ -474,4 +484,158 @@ codeunit 74141 "LT New Line Stamps Filters"
         Obs.Verify();
     end;
 
+    // Writer QO: host page 87101 (header view Type = B) with the part LinesB (74138) and LinesBD (87100, DelayedInsert).
+    [TryFunction]
+    local procedure QoRead(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean; var Result: Text)
+    begin
+        if Delayed then
+            Result := Host.LinesBD."Document No.".Value() + '|' + Host.LinesBD.Type.Value() + '|' + Host.LinesBD.Seen.Value()
+        else
+            Result := Host.LinesB."Document No.".Value() + '|' + Host.LinesB.Type.Value() + '|' + Host.LinesB.Seen.Value();
+    end;
+
+    [TryFunction]
+    local procedure QoType(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
+    begin
+        if Delayed then
+            Host.LinesBD.Descr.SetValue('x')
+        else
+            Host.LinesB.Descr.SetValue('x');
+    end;
+
+    [TryFunction]
+    local procedure QoClose(var Host: TestPage "LT QO NL Host B")
+    begin
+        Host.Close();
+    end;
+
+    [TryFunction]
+    local procedure QoHostNo(var Host: TestPage "LT QO NL Host B"; Value: Text)
+    begin
+        Host."No.".SetValue(Value);
+    end;
+
+    local procedure QoDraft(Name: Text; var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
+    var
+        Result: Text;
+    begin
+        if QoRead(Host, Delayed, Result) then
+            Obs.Observe(Name, Result)
+        else
+            Obs.ObserveError(Name);
+    end;
+
+    [Test]
+    procedure QO_HostB_OpenNew_DelayedPart_NoThenType()
+    var
+        Host: TestPage "LT QO NL Host B";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Obs.Observe('card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        QoDraft('blank', Host, true);
+        Step('set_no', QoHostNo(Host, 'HN'));
+        Obs.Observe('after_no.headers', Headers());
+        QoDraft('after_no.blank', Host, true);
+        Step('type', QoType(Host, true));
+        QoDraft('typed', Host, true);
+        Step('close', QoClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        ObserveLines('db');
+        Obs.Expect('card', '[|A]');
+        Obs.Expect('blank', '|A|A');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '1 [|A]');
+        Obs.Expect('after_no.blank', '|A|A');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', '|A|A');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|A]');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', '|A|A|x');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_HostB_OpenNew_PartB_NoThenType()
+    var
+        Host: TestPage "LT QO NL Host B";
+    begin
+        Seed('', "LT NL Type"::A);
+        Host.OpenNew();
+        Obs.Observe('card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
+        QoDraft('blank', Host, false);
+        Step('set_no', QoHostNo(Host, 'HN'));
+        Obs.Observe('after_no.headers', Headers());
+        QoDraft('after_no.blank', Host, false);
+        Step('type', QoType(Host, false));
+        QoDraft('typed', Host, false);
+        Step('close', QoClose(Host));
+        Obs.Observe('after_close.headers', Headers());
+        ObserveLines('db');
+        Obs.Expect('card', '[|A]');
+        Obs.Expect('blank', '|A|A');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '1 [|A]');
+        Obs.Expect('after_no.blank', '|A|A');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', '|A|A');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|A]');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', '|A|A|x');
+        Obs.Verify();
+    end;
+}
+
+page 87100 "LT QO NL Lines BD"
+{
+    PageType = ListPart;
+    SourceTable = "LT NL Line";
+    SourceTableView = where(Type = const(B));
+    AutoSplitKey = true;
+    DelayedInsert = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Document No."; Rec."Document No.") { ApplicationArea = All; }
+                field(Type; Rec.Type) { ApplicationArea = All; }
+                field(Seen; Rec.Seen) { ApplicationArea = All; }
+                field(Descr; Rec.Descr) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 87101 "LT QO NL Host B"
+{
+    PageType = Card;
+    SourceTable = "LT NL Header";
+    SourceTableView = where(Type = const(B));
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("No."; Rec."No.") { ApplicationArea = All; }
+            field(Type; Rec.Type) { ApplicationArea = All; }
+            part(LinesB; "LT NL Lines B")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+            part(LinesBD; "LT QO NL Lines BD")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
 }

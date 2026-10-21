@@ -3,6 +3,10 @@
 // Fixtures used: Probe Observer (69160); own enum 74063 (BC 29 only), test codeunit 74064
 // Facts: a BigInteger assigned to an Option variable (Opt := Big): in range, an ordinal the Option lacks, negative, beyond the Integer range.
 //   Whether the assignment raises, and what the variable holds afterwards. An Enum variable gets the same values on BC 29 only (E := Big does not compile on AL 16 and 17: must-not-compile/cases/0451).
+// Writer QO (al-runtime-rs assumption enum-option-integer-ordinal): an Integer and a BigInteger held in a Variant, assigned to an Option
+//   variable, assigned to and validated into an Option field, and set through FieldRef.Value and FieldRef.Validate of an Option and an Enum field:
+//   a member ordinal, an ordinal the Option or Enum lacks, a negative one and one beyond Integer. Own enum 87080 and table 87081 (its
+//   OnValidate triggers note the ordinal they saw in Seen). QO_ tests in codeunit 74064.
 // BC versions: 27, 28, 29 by CI
 
 #if BC29PLUS
@@ -16,6 +20,45 @@ enum 74063 "LT BE Enum"
     value(7; Seven) { }
 }
 #endif
+
+enum 87080 "LT QO Ord Enum"
+{
+    Extensible = false;
+
+    value(0; Zero) { }
+    value(1; One) { }
+    value(2; Two) { }
+    value(7; Seven) { }
+}
+
+table 87081 "LT QO Ord Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Opt; Option)
+        {
+            OptionMembers = Zero,One,Two;
+
+            trigger OnValidate()
+            begin
+                Seen := 'opt ' + Format(Opt, 0, 2);
+            end;
+        }
+        field(3; E; Enum "LT QO Ord Enum")
+        {
+            trigger OnValidate()
+            begin
+                Seen := 'enum ' + Format(E.AsInteger());
+            end;
+        }
+        field(4; Seen; Text[30]) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
 
 codeunit 74064 "LT BigInt To Option"
 {
@@ -194,4 +237,227 @@ codeunit 74064 "LT BigInt To Option"
         Obs.Verify();
     end;
 #endif
+
+    // Writer QO: Variant into Option variables and fields, and into Option and Enum fields through a FieldRef. Kind 1 Option variable,
+    // 3 Option field assign, 4 Option field Validate, 7 FieldRef.Value of the Option field, 8 FieldRef.Validate of the Option field,
+    // 9 FieldRef.Value of the Enum field, 10 FieldRef.Validate of the Enum field. A Variant into an Enum variable, an Enum field and
+    // Validate of an Enum field do not compile (must-not-compile 0263, 1992, 1993).
+    [TryFunction]
+    local procedure QoTry(Kind: Integer; V: Variant; var Result: Text)
+    var
+        R: Record "LT QO Ord Row";
+        O: Option Zero,One,Two;
+        RecRef: RecordRef;
+        FR: FieldRef;
+    begin
+        case Kind of
+            1:
+                begin
+                    O := V;
+                    Result := Format(O) + '|' + Format(O, 0, 2);
+                    exit;
+                end;
+            3:
+                R.Opt := V;
+            4:
+                R.Validate(Opt, V);
+            7, 8, 9, 10:
+                begin
+                    RecRef.GetTable(R);
+                    if Kind in [7, 8] then
+                        FR := RecRef.Field(2)
+                    else
+                        FR := RecRef.Field(3);
+                    if Kind in [7, 9] then
+                        FR.Value := V
+                    else
+                        FR.Validate(V);
+                    RecRef.SetTable(R);
+                end;
+        end;
+        if Kind in [3, 4, 7, 8] then
+            Result := Format(R.Opt) + '|' + Format(R.Opt, 0, 2) + '|' + R.Seen
+        else
+            Result := Format(R.E) + '|' + Format(R.E.AsInteger()) + '|' + R.Seen;
+    end;
+
+    local procedure QoProbe(Kind: Integer)
+    var
+        V: Variant;
+        I: Integer;
+        Big: BigInteger;
+        Name: Text;
+        Result: Text;
+        Step: Integer;
+    begin
+        for Step := 1 to 8 do begin
+            case Step of
+                1:
+                    begin
+                        I := 1;
+                        V := I;
+                        Name := 'int1';
+                    end;
+                2:
+                    begin
+                        I := 3;
+                        V := I;
+                        Name := 'int3';
+                    end;
+                3:
+                    begin
+                        I := 7;
+                        V := I;
+                        Name := 'int7';
+                    end;
+                4:
+                    begin
+                        I := -1;
+                        V := I;
+                        Name := 'intm1';
+                    end;
+                5:
+                    begin
+                        Big := 2;
+                        V := Big;
+                        Name := 'big2';
+                    end;
+                6:
+                    begin
+                        Big := 7;
+                        V := Big;
+                        Name := 'big7';
+                    end;
+                7:
+                    begin
+                        Big := -1;
+                        V := Big;
+                        Name := 'bigm1';
+                    end;
+                8:
+                    begin
+                        Evaluate(Big, '2147483648');
+                        V := Big;
+                        Name := 'bigover';
+                    end;
+            end;
+            Result := '';
+            if QoTry(Kind, V, Result) then
+                Obs.Observe(Name, Result)
+            else
+                Obs.ObserveError(Name);
+        end;
+    end;
+
+    [Test]
+    procedure QO_Variant_ToOptionVariable()
+    begin
+        QoProbe(1);
+        Obs.Expect('int1', 'One|1');
+        Obs.Expect('int3', '3|3');
+        Obs.Expect('int7', '7|7');
+        Obs.Expect('intm1', '-1|-1');
+        Obs.Expect('big2', 'Two|2');
+        Obs.Expect('big7', '7|7');
+        Obs.Expect('bigm1', '-1|-1');
+        Obs.Expect('bigover|text', 'The expression Variant cannot be type-converted to a Integer value.');
+        Obs.Expect('bigover|code', 'TypeConversion:Overflow');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_Variant_ToOptionField_Assign()
+    begin
+        QoProbe(3);
+        Obs.Expect('int1', 'One|1|');
+        Obs.Expect('int3', '3|3|');
+        Obs.Expect('int7', '7|7|');
+        Obs.Expect('intm1', '-1|-1|');
+        Obs.Expect('big2', 'Two|2|');
+        Obs.Expect('big7', '7|7|');
+        Obs.Expect('bigm1', '-1|-1|');
+        Obs.Expect('bigover|text', 'The expression Variant cannot be type-converted to a Integer value.');
+        Obs.Expect('bigover|code', 'TypeConversion:Overflow');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_Variant_ToOptionField_Validate()
+    begin
+        QoProbe(4);
+        Obs.Expect('int1', 'One|1|opt 1');
+        Obs.Expect('int3', '3|3|opt 3');
+        Obs.Expect('int7', '7|7|opt 7');
+        Obs.Expect('intm1', '-1|-1|opt -1');
+        Obs.Expect('big2', 'Two|2|opt 2');
+        Obs.Expect('big7', '7|7|opt 7');
+        Obs.Expect('bigm1', '-1|-1|opt -1');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_Variant_ToOptionFieldRef_Value()
+    begin
+        QoProbe(7);
+        Obs.Expect('int1', 'One|1|');
+        Obs.Expect('int3', '3|3|');
+        Obs.Expect('int7', '7|7|');
+        Obs.Expect('intm1', '-1|-1|');
+        Obs.Expect('big2', 'Two|2|');
+        Obs.Expect('big7', '7|7|');
+        Obs.Expect('bigm1', '-1|-1|');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_Variant_ToOptionFieldRef_Validate()
+    begin
+        QoProbe(8);
+        Obs.Expect('int1', 'One|1|opt 1');
+        Obs.Expect('int3', '3|3|opt 3');
+        Obs.Expect('int7', '7|7|opt 7');
+        Obs.Expect('intm1', '-1|-1|opt -1');
+        Obs.Expect('big2', 'Two|2|opt 2');
+        Obs.Expect('big7', '7|7|opt 7');
+        Obs.Expect('bigm1', '-1|-1|opt -1');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_Variant_ToEnumFieldRef_Value()
+    begin
+        QoProbe(9);
+        Obs.Expect('int1', 'One|1|');
+        Obs.Expect('int3', '3|3|');
+        Obs.Expect('int7', 'Seven|7|');
+        Obs.Expect('intm1', '-1|-1|');
+        Obs.Expect('big2', 'Two|2|');
+        Obs.Expect('big7', 'Seven|7|');
+        Obs.Expect('bigm1', '-1|-1|');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QO_Variant_ToEnumFieldRef_Validate()
+    begin
+        QoProbe(10);
+        Obs.Expect('int1', 'One|1|enum 1');
+        Obs.Expect('int3', '3|3|enum 3');
+        Obs.Expect('int7', 'Seven|7|enum 7');
+        Obs.Expect('intm1', '-1|-1|enum -1');
+        Obs.Expect('big2', 'Two|2|enum 2');
+        Obs.Expect('big7', 'Seven|7|enum 7');
+        Obs.Expect('bigm1', '-1|-1|enum -1');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
+    end;
 }

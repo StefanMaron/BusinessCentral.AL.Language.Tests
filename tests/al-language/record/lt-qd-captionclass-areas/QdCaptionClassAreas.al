@@ -25,6 +25,12 @@
 //   asserted: the same card open counted 240 and 492 in two BC 29 runs); then once per expression control on the first row only. Next (List, ListPart and Card) runs no expression, and Caption() after Next still reads the value of the open (first row).
 //   The corpus database's General Ledger Setup: LCY Code GBP, Global Dimension 1 DEPARTMENT ('Department Code'), Global Dimension 2
 //   CUSTOMERGROUP ('Customergroup Code'), Additional Reporting Currency EUR from BC 28 ('' on BC 27.5).
+// Writer QO (al-runtime-rs assumptions page-open-caption-class-expressions and page-open-caption-class-empty-record-count): own tables
+//   87090 (document header, expression field 60 logs its Seq) and 87091 (lines, expression fields 70 and 71 log their Line No.), a Document
+//   page 87092 with the ListPart 87093 (SubPageLink "Doc No." = field("No.")); QO_ tests in 86504. Which expressions run, and with which
+//   row, on OpenEdit and OpenNew of the Document page, on OpenEdit of the QD card, and after a part SetValue, a part Next, a host SetValue,
+//   an action with CurrPage.Update() and a host Next that refills the part. The empty-record counts of repeated opens are observed to find
+//   a stable form.
 // BC versions: 27, 28, 29
 
 table 86500 "LT QD Cap Row"
@@ -161,6 +167,55 @@ page 86502 "LT QD Cap Sales Lines"
             }
         }
     }
+}
+
+table 87090 "LT QO Cap Doc"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "No."; Code[10]) { }
+        field(2; Seq; Integer) { }
+        field(3; Descr; Text[30]) { }
+        field(60; "Head Expr"; Decimal) { Caption = 'Cap Head Expr'; CaptionClass = QoHc(); }
+    }
+
+    keys { key(PK; "No.") { Clustered = true; } }
+
+    procedure QoHc(): Text[80]
+    var
+        Log: Codeunit "LT QD Cap Log";
+    begin
+        Log.Hit(60, Seq);
+        exit('3,Head ' + Format(Seq));
+    end;
+}
+
+table 87091 "LT QO Cap Line"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Doc No."; Code[10]) { }
+        field(2; "Line No."; Integer) { }
+        field(3; Amount; Decimal) { }
+        field(70; "Expr A"; Decimal) { Caption = 'Cap Expr A'; CaptionClass = QoLc(70); }
+        field(71; "Expr B"; Decimal) { Caption = 'Cap Expr B'; CaptionClass = QoLc(71); }
+    }
+
+    keys { key(PK; "Doc No.", "Line No.") { Clustered = true; } }
+
+    procedure QoLc(FieldNumber: Integer): Text[80]
+    var
+        Log: Codeunit "LT QD Cap Log";
+    begin
+        Log.Hit(FieldNumber, "Line No.");
+        if FieldNumber = 70 then
+            exit('3,Line ' + Format("Line No."));
+        exit('2,0,Amount');
+    end;
 }
 
 codeunit 86503 "LT QD Cap Log"
@@ -829,6 +884,339 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Observer.Expect('dim2_codeCaption', 'Customergroup Code');
         Observer.Verify();
     end;
+
+    // Writer QO. The per-field count of empty-record calls is not asserted: it was 20 per card field and 10 per Document page field
+    // in the QO runs, but other BC runs counted 240 and 492 for the same card open, so only the stable form below is an oracle.
+    // The stable part: whether any empty-record call ran, every field that had one, each field the same number of times, and the rest.
+    local procedure QoStable(Calls: Text): Text
+    var
+        Part: Text;
+        FieldText: Text;
+        Fields0: List of [Text];
+        Counts0: Dictionary of [Text, Integer];
+        FieldsText: Text;
+        Rest: Text;
+        First: Integer;
+        Same: Boolean;
+    begin
+        foreach Part in Calls.Split(';') do
+            if Part <> '' then
+                if Part.EndsWith('@0') then begin
+                    FieldText := Part.Substring(1, Part.IndexOf('@') - 1);
+                    if not Fields0.Contains(FieldText) then begin
+                        Fields0.Add(FieldText);
+                        Counts0.Add(FieldText, 0);
+                    end;
+                    Counts0.Set(FieldText, Counts0.Get(FieldText) + 1);
+                end else
+                    Rest += Part + ';';
+        Same := true;
+        foreach FieldText in Fields0 do begin
+            FieldsText += FieldText + ',';
+            if First = 0 then
+                First := Counts0.Get(FieldText);
+            if Counts0.Get(FieldText) <> First then
+                Same := false;
+        end;
+        exit('empty>0=' + Format(Fields0.Count() > 0) + ' fields0=' + FieldsText + ' same=' + Format(Same) + ' rest=' + Rest);
+    end;
+
+    local procedure QoStep(var Observer: Codeunit "Probe Observer"; Name: Text)
+    var
+        Calls: Text;
+    begin
+        Calls := Log.Take();
+        Observer.Observe(Name, QoStable(Calls));
+    end;
+
+    local procedure QoSeedDocs()
+    var
+        D: Record "LT QO Cap Doc";
+        L: Record "LT QO Cap Line";
+    begin
+        L.DeleteAll();
+        D.DeleteAll();
+        D."No." := 'D1';
+        D.Seq := 1;
+        D.Insert();
+        D."No." := 'D2';
+        D.Seq := 2;
+        D.Insert();
+        L."Doc No." := 'D1';
+        L."Line No." := 1;
+        L.Insert();
+        L."Line No." := 2;
+        L.Insert();
+        L."Doc No." := 'D2';
+        L."Line No." := 3;
+        L.Insert();
+        L."Line No." := 4;
+        L.Insert();
+        Log.Reset();
+    end;
+
+    [Test]
+    procedure QO_Doc_OpenEdit_Open()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: TestPage "LT QO Cap Doc";
+    begin
+        QoSeedDocs();
+        H.OpenEdit();
+        QoStep(Observer, 'open');
+        Cap(Observer, 'head', H.HeadExpr.Caption());
+        Cap(Observer, 'row', H.Lines."Line No.".Value());
+        Cap(Observer, 'exprA', H.Lines.ExprA.Caption());
+        Cap(Observer, 'exprB', H.Lines.ExprB.Caption());
+        H.Close();
+        QoStep(Observer, 'close');
+        Observer.Expect('open', 'empty>0=Yes fields0=60,70,71, same=Yes rest=60@1;70@1;71@1;');
+        Observer.Expect('head', 'Head 1');
+        Observer.Expect('head_calls', '');
+        Observer.Expect('row', '1');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprA', 'Line 1');
+        Observer.Expect('exprA_calls', '');
+        Observer.Expect('exprB', 'Amount Excl. VAT');
+        Observer.Expect('exprB_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QO_Doc_OpenEdit_PartSteps()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: TestPage "LT QO Cap Doc";
+    begin
+        QoSeedDocs();
+        H.OpenEdit();
+        Log.Take();
+        H.Lines.Amount.SetValue(5);
+        QoStep(Observer, 'part_setvalue');
+        Observer.Observe('part_next', Format(H.Lines.Next()));
+        QoStep(Observer, 'part_next');
+        Cap(Observer, 'next_row', H.Lines."Line No.".Value());
+        Cap(Observer, 'next_exprA', H.Lines.ExprA.Caption());
+        H.Close();
+        QoStep(Observer, 'close');
+        Observer.Expect('part_setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('part_next', 'Yes');
+        Observer.Expect('part_next', 'empty>0=No fields0= same=Yes rest=70@1;71@1;');
+        Observer.Expect('next_row', '2');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprA', 'Line 1');
+        Observer.Expect('next_exprA_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QO_Doc_OpenEdit_HostSteps()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: TestPage "LT QO Cap Doc";
+    begin
+        QoSeedDocs();
+        H.OpenEdit();
+        Log.Take();
+        H.Descr.SetValue('x');
+        QoStep(Observer, 'host_setvalue');
+        H.Refresh.Invoke();
+        QoStep(Observer, 'update');
+        Cap(Observer, 'update_exprA', H.Lines.ExprA.Caption());
+        Observer.Observe('host_next', Format(H.Next()));
+        QoStep(Observer, 'host_next');
+        Cap(Observer, 'host_next_head', H.HeadExpr.Caption());
+        Cap(Observer, 'host_next_row', H.Lines."Line No.".Value());
+        Cap(Observer, 'host_next_exprA', H.Lines.ExprA.Caption());
+        H.Close();
+        QoStep(Observer, 'close');
+        Observer.Expect('host_setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('update', 'empty>0=No fields0= same=Yes rest=60@1;60@1;60@1;70@1;71@1;');
+        Observer.Expect('update_exprA', 'Line 1');
+        Observer.Expect('update_exprA_calls', '');
+        Observer.Expect('host_next', 'Yes');
+        Observer.Expect('host_next', 'empty>0=No fields0= same=Yes rest=70@3;71@3;');
+        Observer.Expect('host_next_head', 'Head 1');
+        Observer.Expect('host_next_head_calls', '');
+        Observer.Expect('host_next_row', '3');
+        Observer.Expect('host_next_row_calls', '');
+        Observer.Expect('host_next_exprA', 'Line 3');
+        Observer.Expect('host_next_exprA_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QO_Doc_OpenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: TestPage "LT QO Cap Doc";
+    begin
+        // On OpenNew the counts differed between fields (11, 14, 14), so same= and the empty-record call list may vary: not asserted.
+        Observer.Ignore('open');
+        Observer.Ignore('exprA_calls');
+        QoSeedDocs();
+        H.OpenNew();
+        QoStep(Observer, 'open');
+        Cap(Observer, 'head', H.HeadExpr.Caption());
+        Cap(Observer, 'exprA', H.Lines.ExprA.Caption());
+        H."No.".SetValue('D9');
+        QoStep(Observer, 'no_setvalue');
+        Cap(Observer, 'no_row', H.Lines."Line No.".Value());
+        Cap(Observer, 'no_exprA', H.Lines.ExprA.Caption());
+        H.Close();
+        QoStep(Observer, 'close');
+        Observer.Expect('head', 'Head 0');
+        Observer.Expect('head_calls', '');
+        Observer.Expect('exprA', 'Line 0');
+        Observer.Expect('no_setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('no_row', '0');
+        Observer.Expect('no_row_calls', '');
+        Observer.Expect('no_exprA', 'Line 0');
+        Observer.Expect('no_exprA_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QO_Card_OpenEdit()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QD Cap Card";
+    begin
+        QfSeedTwo();
+        P.OpenEdit();
+        QoStep(Observer, 'open');
+        Cap(Observer, 'exprId', QfNoCall(P.ExprId.Caption()));
+        P.Lit20.SetValue(5);
+        QoStep(Observer, 'setvalue');
+        Cap(Observer, 'setvalue_exprId', QfNoCall(P.ExprId.Caption()));
+        Observer.Observe('next', Format(P.Next()));
+        QoStep(Observer, 'next');
+        Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
+        P.Close();
+        QoStep(Observer, 'close');
+        Observer.Expect('open', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('setvalue_exprId', 'Id 3');
+        Observer.Expect('setvalue_exprId_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next', 'empty>0=No fields0= same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
+    end;
+
+    // The empty-record counts of the same open repeated in one test.
+    [Test]
+    procedure QO_Count_CardOpenThreeTimes()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QD Cap Card";
+        Round: Integer;
+    begin
+        QfSeedTwo();
+        for Round := 1 to 3 do begin
+            P.OpenView();
+            QoStep(Observer, 'open' + Format(Round));
+            P.Close();
+            Log.Take();
+        end;
+        Observer.Expect('open1', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('open2', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('open3', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QO_Count_DocOpenTwice()
+    var
+        Observer: Codeunit "Probe Observer";
+        H: TestPage "LT QO Cap Doc";
+        Round: Integer;
+    begin
+        QoSeedDocs();
+        for Round := 1 to 2 do begin
+            H.OpenView();
+            QoStep(Observer, 'open' + Format(Round));
+            H.Close();
+            Log.Take();
+        end;
+        Observer.Expect('open1', 'empty>0=Yes fields0=60,70,71, same=Yes rest=60@1;70@1;71@1;');
+        Observer.Expect('open2', 'empty>0=Yes fields0=60,70,71, same=Yes rest=60@1;70@1;71@1;');
+        Observer.Verify();
+    end;
+}
+
+page 87092 "LT QO Cap Doc"
+{
+    PageType = Document;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QO Cap Doc";
+
+    layout
+    {
+        area(Content)
+        {
+            group(G)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Seq; Rec.Seq) { ApplicationArea = All; }
+                field(Descr; Rec.Descr) { ApplicationArea = All; }
+                field(HeadExpr; Rec."Head Expr") { ApplicationArea = All; }
+            }
+            part(Lines; "LT QO Cap Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Doc No." = field("No.");
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(Refresh)
+            {
+                ApplicationArea = All;
+                Caption = 'Refresh';
+
+                trigger OnAction()
+                begin
+                    CurrPage.Update();
+                end;
+            }
+        }
+    }
+}
+
+page 87093 "LT QO Cap Lines"
+{
+    PageType = ListPart;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QO Cap Line";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Line No."; Rec."Line No.") { ApplicationArea = All; }
+                field(Amount; Rec.Amount) { ApplicationArea = All; }
+                field(ExprA; Rec."Expr A") { ApplicationArea = All; }
+                field(ExprB; Rec."Expr B") { ApplicationArea = All; }
+            }
+        }
+    }
 }
 
 table 86643 "LT QF Cap Host Row"
