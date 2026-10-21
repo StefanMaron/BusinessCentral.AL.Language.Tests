@@ -477,4 +477,148 @@ codeunit 84886 "LT CN TF Modify"
         Observer.Expect('db', 'other/3');
         Observer.Verify();
     end;
+
+    // ── Added by writer QH (2026-10-21), al-runtime-rs PR 382 "needs probe": SystemCreatedBy and SystemModifiedBy after a TransferFields
+    // from another table, and the four audit fields when the source row was built in memory or is a temporary row.
+    local procedure QhAudit(var Observer: Codeunit "Probe Observer"; Name: Text; CreatedAt: DateTime; ModifiedAt: DateTime; CreatedBy: Guid; ModifiedBy: Guid; OwnCreatedAt: DateTime; OwnModifiedAt: DateTime)
+    begin
+        Observer.Observe(Name + ' createdat blank', Format(CreatedAt = 0DT));
+        Observer.Observe(Name + ' createdat = own', Format(CreatedAt = OwnCreatedAt));
+        Observer.Observe(Name + ' modifiedat blank', Format(ModifiedAt = 0DT));
+        Observer.Observe(Name + ' modifiedat = own', Format(ModifiedAt = OwnModifiedAt));
+        Observer.Observe(Name + ' createdby null', Format(IsNullGuid(CreatedBy)));
+        Observer.Observe(Name + ' createdby = user', Format(CreatedBy = UserSecurityId()));
+        Observer.Observe(Name + ' modifiedby null', Format(IsNullGuid(ModifiedBy)));
+        Observer.Observe(Name + ' modifiedby = user', Format(ModifiedBy = UserSecurityId()));
+        Observer.Observe(Name + ' createdby = modifiedby', Format(CreatedBy = ModifiedBy));
+    end;
+
+    [Test]
+    procedure QH_TF_Other_ByFields_SourceFromDb()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+        OwnCreatedBy: Guid;
+        OwnModifiedBy: Guid;
+    begin
+        Prep(R1);
+        QeInsertOther();
+        R1.Get(1);
+        OwnCreatedBy := R1.SystemCreatedBy;
+        OwnModifiedBy := R1.SystemModifiedBy;
+        O.Get(1);
+        QhAudit(Observer, 'source', O.SystemCreatedAt, O.SystemModifiedAt, O.SystemCreatedBy, O.SystemModifiedBy, R1.SystemCreatedAt, R1.SystemModifiedAt);
+        R1.TransferFields(O);
+        Observer.Observe('buffer createdby = own', Format(R1.SystemCreatedBy = OwnCreatedBy));
+        Observer.Observe('buffer createdby = other', Format(R1.SystemCreatedBy = O.SystemCreatedBy));
+        Observer.Observe('buffer modifiedby = own', Format(R1.SystemModifiedBy = OwnModifiedBy));
+        Observer.Observe('buffer modifiedby = other', Format(R1.SystemModifiedBy = O.SystemModifiedBy));
+        Observer.Observe('buffer createdby null', Format(IsNullGuid(R1.SystemCreatedBy)));
+        Observer.Observe('buffer modifiedby null', Format(IsNullGuid(R1.SystemModifiedBy)));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_TF_Other_SourceInMemory_AuditFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        R4: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+        OwnCreatedAt: DateTime;
+        OwnModifiedAt: DateTime;
+    begin
+        Prep(R1);
+        R1.Get(1);
+        OwnCreatedAt := R1.SystemCreatedAt;
+        OwnModifiedAt := R1.SystemModifiedAt;
+        O.Init();
+        O.Id := 1;
+        O.Name := 'mem';
+        O.Qty := 4;
+        QhAudit(Observer, 'source', O.SystemCreatedAt, O.SystemModifiedAt, O.SystemCreatedBy, O.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        R1.TransferFields(O);
+        QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        Sleep(50);
+        R1.Modify();
+        QhAudit(Observer, 'buffer after modify', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        R4.Get(1);
+        QhAudit(Observer, 'db', R4.SystemCreatedAt, R4.SystemModifiedAt, R4.SystemCreatedBy, R4.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        Observer.Observe('db modifiedat > own', Format(R4.SystemModifiedAt > OwnModifiedAt));
+        Observer.Observe('db', NameInDb());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_TF_Other_SourceTemporary_AuditFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        R4: Record "LT CN TF Row";
+        TempO: Record "LT CN TF Other" temporary;
+        OwnCreatedAt: DateTime;
+        OwnModifiedAt: DateTime;
+    begin
+        Prep(R1);
+        R1.Get(1);
+        OwnCreatedAt := R1.SystemCreatedAt;
+        OwnModifiedAt := R1.SystemModifiedAt;
+        TempO.Init();
+        TempO.Id := 1;
+        TempO.Name := 'temp';
+        TempO.Qty := 5;
+        TempO.Insert();
+        QhAudit(Observer, 'source', TempO.SystemCreatedAt, TempO.SystemModifiedAt, TempO.SystemCreatedBy, TempO.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        R1.TransferFields(TempO);
+        QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        R1.Modify();
+        R4.Get(1);
+        QhAudit(Observer, 'db', R4.SystemCreatedAt, R4.SystemModifiedAt, R4.SystemCreatedBy, R4.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        Observer.Observe('db', NameInDb());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_TF_Other_SourceTemporaryCopiedFromDb_AuditFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        R1: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+        TempO: Record "LT CN TF Other" temporary;
+        OwnCreatedAt: DateTime;
+        OwnModifiedAt: DateTime;
+    begin
+        Prep(R1);
+        QeInsertOther();
+        O.Get(1);
+        TempO := O;
+        TempO.Insert();
+        R1.Get(1);
+        OwnCreatedAt := R1.SystemCreatedAt;
+        OwnModifiedAt := R1.SystemModifiedAt;
+        Observer.Observe('temp createdat = db source', Format(TempO.SystemCreatedAt = O.SystemCreatedAt));
+        Observer.Observe('temp modifiedat = db source', Format(TempO.SystemModifiedAt = O.SystemModifiedAt));
+        QhAudit(Observer, 'source', TempO.SystemCreatedAt, TempO.SystemModifiedAt, TempO.SystemCreatedBy, TempO.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        R1.TransferFields(TempO);
+        Observer.Observe('buffer createdat = db source', Format(R1.SystemCreatedAt = O.SystemCreatedAt));
+        Observer.Observe('buffer modifiedat = db source', Format(R1.SystemModifiedAt = O.SystemModifiedAt));
+        QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_TF_Other_TargetInMemory_SourceInMemory_AuditFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        R3: Record "LT CN TF Row";
+        O: Record "LT CN TF Other";
+        Blank: DateTime;
+    begin
+        O.Init();
+        O.Id := 7;
+        R3.TransferFields(O);
+        QhAudit(Observer, 'buffer', R3.SystemCreatedAt, R3.SystemModifiedAt, R3.SystemCreatedBy, R3.SystemModifiedBy, Blank, Blank);
+        Observer.Finish();
+    end;
 }

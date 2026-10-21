@@ -42,6 +42,232 @@ codeunit 86165 "LT PX CC Target B"
     end;
 }
 
+// Writer QH (2026-10-21), al-runtime-rs PR 384 "needs probe": the Method ID of overloads, parameter kinds (var, Record subtype, List, Code
+// and Text lengths), return types, casing, parameter names, access modifiers, events and triggers. Objects 86780-86782, 86785-86786.
+table 86785 "LT QH CC Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Name; Text[30])
+        {
+            trigger OnValidate()
+            begin
+                Id := Id;
+            end;
+        }
+        field(3; "Two Words"; Integer)
+        {
+            trigger OnValidate()
+            begin
+                Id := Id;
+            end;
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+
+    trigger OnInsert()
+    begin
+        Id := Id;
+    end;
+}
+
+table 86786 "LT QH CC Row2"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Name; Text[30])
+        {
+            trigger OnValidate()
+            begin
+                Id := Id;
+            end;
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+
+    trigger OnInsert()
+    begin
+        Id := Id;
+    end;
+}
+
+codeunit 86780 "LT QH CC Ovl"
+{
+    trigger OnRun()
+    begin
+    end;
+
+    procedure Ovl()
+    begin
+    end;
+
+    procedure Ovl(X: Integer)
+    begin
+    end;
+
+    procedure Ovl(T: Text)
+    begin
+    end;
+
+    procedure Ovl(X: Integer; Y: Integer)
+    begin
+    end;
+
+    procedure Ovl(R: Record "LT QH CC Row")
+    begin
+    end;
+
+    procedure RetInt(): Integer
+    begin
+        exit(1);
+    end;
+
+    procedure RetNamed() Result: Integer
+    begin
+        Result := 1;
+    end;
+
+    procedure RetText(): Text
+    begin
+        exit('');
+    end;
+
+    local procedure LocalProc()
+    begin
+    end;
+
+    internal procedure InternalProc()
+    begin
+    end;
+
+    procedure CodeParam(C: Code[10])
+    begin
+    end;
+
+    procedure TextLenParam(T: Text[30])
+    begin
+    end;
+
+    procedure ListParam(L: List of [Integer])
+    begin
+    end;
+
+    procedure ListParamText(L: List of [Text])
+    begin
+    end;
+
+    [IntegrationEvent(false, false)]
+    procedure OnQhEvent(R: Record "LT QH CC Row")
+    begin
+    end;
+
+    procedure CallAll()
+    var
+        R: Record "LT QH CC Row";
+        L: List of [Integer];
+        LT: List of [Text];
+    begin
+        Ovl();
+        Ovl(1);
+        Ovl('a');
+        Ovl(1, 2);
+        Ovl(R);
+        if RetInt() = RetNamed() then;
+        if RetText() = '' then;
+        LocalProc();
+        InternalProc();
+        CodeParam('A');
+        TextLenParam('A');
+        ListParam(L);
+        ListParamText(LT);
+        OnQhEvent(R);
+    end;
+}
+
+codeunit 86781 "LT QH CC Twin"
+{
+    trigger OnRun()
+    begin
+    end;
+
+    procedure OVL()
+    begin
+    end;
+
+    procedure Ovl(Y: Integer)
+    begin
+    end;
+
+    procedure Ovl(R: Record "LT QH CC Row")
+    begin
+    end;
+
+    procedure RetInt(): Integer
+    begin
+        exit(2);
+    end;
+
+    procedure CallAll()
+    var
+        R: Record "LT QH CC Row";
+    begin
+        OVL();
+        Ovl(1);
+        Ovl(R);
+        if RetInt() = 0 then;
+    end;
+}
+
+codeunit 86782 "LT QH CC Third"
+{
+    procedure Ovl(var X: Integer)
+    begin
+    end;
+
+    procedure Ovl(R: Record "LT QH CC Row2")
+    begin
+    end;
+
+    procedure RetInt(): Decimal
+    begin
+        exit(1);
+    end;
+
+    procedure CodeParam(C: Code[20])
+    begin
+    end;
+
+    procedure TextLenParam(T: Text)
+    begin
+    end;
+
+    procedure CallAll()
+    var
+        R: Record "LT QH CC Row2";
+        X: Integer;
+    begin
+        Ovl(X);
+        Ovl(R);
+        if RetInt() = 0 then;
+        CodeParam('A');
+        TextLenParam('A');
+    end;
+}
+
 codeunit 86163 "LT PX Code Coverage Ids"
 {
     Subtype = Test;
@@ -210,5 +436,73 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Expect('first', '[MethodA obj=67334 methodid=915199647:] [PxRunsANoArgs obj=86163 methodid=1797822318: Codeunit 86164 1569086646] rows=2 testids_distinct=Yes');
         Observer.Expect('second_without_reset', '[PxRunsBNoArgs obj=86163 methodid=667973114: Codeunit 86165 1569086646] rows=1 testids_distinct=Yes');
         Observer.Verify();
+    end;
+
+    // Writer QH (2026-10-21): the Trigger/Function rows of the QH targets, as L<line>=<Method Id>.
+    local procedure QhFunctionRows(ObjectType: Option; ObjectId: Integer): Text
+    var
+        CodeCoverage: Record "Code Coverage";
+        Result: Text;
+    begin
+        CodeCoverage.SetRange("Object Type", ObjectType);
+        CodeCoverage.SetRange("Object ID", ObjectId);
+        CodeCoverage.SetRange("Line Type", CodeCoverage."Line Type"::"Trigger/Function");
+        if CodeCoverage.FindSet() then
+            repeat
+                Result += StrSubstNo('L%1=%2 ', CodeCoverage."Line No.", CodeCoverage."Method Id");
+            until CodeCoverage.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QH_MethodIds_Overloads_ParameterKinds_Codeunits()
+    var
+        Observer: Codeunit "Probe Observer";
+        CodeCoverage: Record "Code Coverage";
+        Ovl: Codeunit "LT QH CC Ovl";
+        Twin: Codeunit "LT QH CC Twin";
+        Third: Codeunit "LT QH CC Third";
+    begin
+        Initialize();
+        CodeCoverageLog(true, false);
+        Ovl.CallAll();
+        Twin.CallAll();
+        Third.CallAll();
+        Codeunit.Run(Codeunit::"LT QH CC Ovl");
+        Codeunit.Run(Codeunit::"LT QH CC Twin");
+        CodeCoverageLog(false, false);
+        Observer.Observe('ovl', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Ovl"));
+        Observer.Observe('twin', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Twin"));
+        Observer.Observe('third', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Third"));
+        Initialize();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_MethodIds_TableAndFieldTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
+        CodeCoverage: Record "Code Coverage";
+        Row: Record "LT QH CC Row";
+        Row2: Record "LT QH CC Row2";
+    begin
+        Initialize();
+        Row.DeleteAll();
+        Row2.DeleteAll();
+        CodeCoverageLog(true, false);
+        Row.Id := 1;
+        Row.Validate(Name, 'a');
+        Row.Validate("Two Words", 2);
+        Row.Insert(true);
+        Row2.Id := 1;
+        Row2.Validate(Name, 'a');
+        Row2.Insert(true);
+        CodeCoverageLog(false, false);
+        Observer.Observe('row', QhFunctionRows(CodeCoverage."Object Type"::Table, Database::"LT QH CC Row"));
+        Observer.Observe('row2', QhFunctionRows(CodeCoverage."Object Type"::Table, Database::"LT QH CC Row2"));
+        Initialize();
+        Row.DeleteAll();
+        Row2.DeleteAll();
+        Observer.Finish();
     end;
 }

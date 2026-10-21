@@ -429,6 +429,311 @@ page 85190 "LT PYB DL Doc Const"
     }
 }
 
+// Writer QH (2026-10-21): pages 86760-86766 and manual subscriber codeunit 86767 for the part trigger probes of al-runtime-rs PR 384
+// (OnAfterGetCurrRecord among the three OnNewRecord runs, OpenView on a host with no row, the const-link relation error, the host
+// insert at Close). All log into "LT DL Log" and are used by test codeunit 67582 only.
+page 86760 "LT QH DL Lines Cur"
+{
+    PageType = ListPart;
+    SourceTable = "LT DL Line";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Description; Rec.Description) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('CP.OnOpenPage');
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('CP.OnNewRecord:' + Rec."Document No." + ' below=' + Format(BelowxRec));
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('CP.OnAfterGetRecord:' + Rec."Document No." + '/' + Format(Rec."Line No."));
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('CP.OnAfterGetCurrRecord:' + Rec."Document No." + '/' + Format(Rec."Line No."));
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('CP.OnInsertRecord:' + Rec."Document No." + '/' + Format(Rec."Line No."));
+        exit(true);
+    end;
+}
+
+page 86761 "LT QH DL Lines CurOnly"
+{
+    PageType = ListPart;
+    SourceTable = "LT DL Line";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Description; Rec.Description) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('OP.OnAfterGetCurrRecord:' + Rec."Document No." + '/' + Format(Rec."Line No."));
+    end;
+}
+
+page 86762 "LT QH DL Doc Cur"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QH DL Lines Cur")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+page 86763 "LT QH DL Doc Trace"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+            part(Lines; "LT QH DL Lines Cur")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnOpenPage');
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnNewRecord');
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnAfterGetRecord:' + Rec."No.");
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnAfterGetCurrRecord:' + Rec."No.");
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnInsertRecord:' + Rec."No.");
+        exit(true);
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnModifyRecord:' + Rec."No.");
+        exit(true);
+    end;
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnQueryClosePage');
+        exit(true);
+    end;
+
+    trigger OnClosePage()
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('TH.OnClosePage');
+    end;
+}
+
+page 86764 "LT QH DL Doc CurOnly"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+            }
+            part(Lines; "LT QH DL Lines CurOnly")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+page 86765 "LT QH DL Doc Const"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+            }
+            part(Lines; "LT QH DL Lines Cur")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = const('D9');
+            }
+        }
+    }
+}
+
+page 86766 "LT QH DL Doc SetName"
+{
+    PageType = Document;
+    SourceTable = "LT DL Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("No."; Rec."No.") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+            part(Lines; "LT DL Lines")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Rec.Name := 'init';
+        Log.Add('SH.OnNewRecord');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('SH.OnInsertRecord:' + Rec."No." + '|' + Rec.Name);
+        exit(true);
+    end;
+}
+
+codeunit 86767 "LT QH DL Validate Events"
+{
+    EventSubscriberInstance = Manual;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT DL Line", 'OnBeforeValidateEvent', 'Document No.', false, false)]
+    local procedure OnBeforeValidateDocumentNo(var Rec: Record "LT DL Line"; var xRec: Record "LT DL Line"; CurrFieldNo: Integer)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('E.OnBeforeValidate(Document No.):' + Rec."Document No." + ' x=' + xRec."Document No." + ' curr=' + Format(CurrFieldNo));
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"LT DL Line", 'OnAfterValidateEvent', 'Document No.', false, false)]
+    local procedure OnAfterValidateDocumentNo(var Rec: Record "LT DL Line"; var xRec: Record "LT DL Line"; CurrFieldNo: Integer)
+    var
+        Log: Codeunit "LT DL Log";
+    begin
+        Log.Add('E.OnAfterValidate(Document No.):' + Rec."Document No.");
+    end;
+}
+
 codeunit 67582 "LT DL Tests"
 {
     Subtype = Test;
@@ -950,4 +1255,589 @@ codeunit 67582 "LT DL Tests"
         Observer.Verify();
     end;
 
+    // Writer QH (2026-10-21): probes for al-runtime-rs PR 384 "needs probe" (see the QH objects above). Observe-only first; Finish() is
+    // replaced by the asserted values after the CI matrix.
+    local procedure QhSeedHeader(No: Code[20])
+    var
+        Header: Record "LT DL Header";
+    begin
+        Header."No." := No;
+        Header.Insert();
+    end;
+
+    [TryFunction]
+    local procedure QhTryOpenNewConst(var Host: TestPage "LT QH DL Doc Const")
+    begin
+        Host.OpenNew();
+    end;
+
+    [TryFunction]
+    local procedure QhTryOpenEditConst(var Host: TestPage "LT QH DL Doc Const")
+    begin
+        Host.OpenEdit();
+    end;
+
+    [TryFunction]
+    local procedure QhTryKeyCur(var Host: TestPage "LT QH DL Doc Cur"; Value: Text)
+    begin
+        Host."No.".SetValue(Value);
+    end;
+
+    [TryFunction]
+    local procedure QhTryHostNew(var Host: TestPage "LT DL Document")
+    begin
+        Host.New();
+    end;
+
+    [TryFunction]
+    local procedure QhTryOk(var Host: TestPage "LT DL Document")
+    begin
+        Host.OK().Invoke();
+    end;
+
+    [TryFunction]
+    local procedure QhTryCloseTrace(var Host: TestPage "LT QH DL Doc Trace")
+    begin
+        Host.Close();
+    end;
+
+    [TryFunction]
+    local procedure QhTryCloseSetName(var Host: TestPage "LT QH DL Doc SetName")
+    begin
+        Host.Close();
+    end;
+
+    [TryFunction]
+    local procedure QhTryFilterAway(var Host: TestPage "LT QH DL Doc Trace")
+    begin
+        Host.Filter.SetFilter("No.", 'ZZ');
+    end;
+
+    local procedure QhResult(var Observer: Codeunit "Probe Observer"; Name: Text; Ok: Boolean)
+    begin
+        Observer.Observe(Name, Format(Ok));
+        if not Ok then
+            Observer.ObserveError(Name + '_error');
+        TakeLog(Observer, Name + '_log');
+    end;
+
+    // Item 1: the part's OnAfterGetCurrRecord among the three OnNewRecord runs of an empty part on an editable host.
+    [Test]
+    procedure QH_EmptyPart_OpenNew_CurrRecordOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Cur";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenNew_TraceHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenEdit_CurrRecordOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Cur";
+    begin
+        Seed();
+        QhSeedHeader('D8');
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenEdit_TraceHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        QhSeedHeader('D8');
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenNew_KeyTyped()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Cur";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'type_key', QhTryKeyCur(Host, 'Q1'));
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenNew_CurrRecordOnlyPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc CurOnly";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenEdit_CurrRecordOnlyPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc CurOnly";
+    begin
+        Seed();
+        QhSeedHeader('D8');
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_PartWithRows_OpenEdit_CurrRecordOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Cur";
+    begin
+        Seed();
+        QhSeedHeader('D8');
+        SeedLine('D8', 10000);
+        SeedLine('D8', 20000);
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_EmptyPart_OpenEdit_HostNext()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Cur";
+    begin
+        Seed();
+        QhSeedHeader('D1');
+        QhSeedHeader('D2');
+        Host.OpenEdit();
+        TakeLog(Observer, 'open_edit');
+        Observer.Observe('next', Format(Host.Next()));
+        TakeLog(Observer, 'next_log');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    // Item 2: OpenView on a host that shows no row.
+    [Test]
+    procedure QH_OpenView_NoRow_Document()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        Observer.Observe('card_no', '[' + Host."No.".Value() + ']');
+        Observer.Observe('part_description', '[' + Host.Lines.Description.Value() + ']');
+        TakeLog(Observer, 'read_log');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OpenView_NoRow_TraceHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OpenView_NoRow_CurrRecordOnlyPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc CurOnly";
+    begin
+        Seed();
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OpenView_NoRow_UnlinkedPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc Unlinked";
+    begin
+        Seed();
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OpenView_NoRow_BlankKeyLinesExist()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        Observer.Observe('part_description', '[' + Host.Lines.Description.Value() + ']');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OpenView_RowFilteredAway()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        QhSeedHeader('D6');
+        Host.OpenView();
+        TakeLog(Observer, 'open_view');
+        QhResult(Observer, 'filter_away', QhTryFilterAway(Host));
+        Observer.Observe('card_no', '[' + Host."No.".Value() + ']');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Observer.Finish();
+    end;
+
+    // Item 3: a const-linked part whose relation rejects the link value; where the error comes among the part's triggers.
+    [Test]
+    procedure QH_ConstLink_Missing_OpenNew_Trace()
+    var
+        Observer: Codeunit "Probe Observer";
+        Events: Codeunit "LT QH DL Validate Events";
+        Host: TestPage "LT QH DL Doc Const";
+    begin
+        Seed();
+        BindSubscription(Events);
+        QhResult(Observer, 'open_new', QhTryOpenNewConst(Host));
+        UnbindSubscription(Events);
+        Stored(Observer, 'after');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_ConstLink_Missing_OpenNew_Events()
+    var
+        Observer: Codeunit "Probe Observer";
+        Events: Codeunit "LT QH DL Validate Events";
+        Host: TestPage "LT PYB DL Doc Const";
+    begin
+        Seed();
+        BindSubscription(Events);
+        QhResult(Observer, 'open_new', TryOpenConst(Host));
+        UnbindSubscription(Events);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_ConstLink_Missing_OpenEdit()
+    var
+        Observer: Codeunit "Probe Observer";
+        Events: Codeunit "LT QH DL Validate Events";
+        Host: TestPage "LT QH DL Doc Const";
+    begin
+        Seed();
+        QhSeedHeader('D1');
+        BindSubscription(Events);
+        QhResult(Observer, 'open_edit', QhTryOpenEditConst(Host));
+        UnbindSubscription(Events);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_ConstLink_Exists_OpenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        Events: Codeunit "LT QH DL Validate Events";
+        Host: TestPage "LT QH DL Doc Const";
+    begin
+        Seed();
+        QhSeedHeader('D9');
+        BindSubscription(Events);
+        QhResult(Observer, 'open_new', QhTryOpenNewConst(Host));
+        Host.Close();
+        TakeLog(Observer, 'close');
+        UnbindSubscription(Events);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_FieldLink_OpenNew_Events()
+    var
+        Observer: Codeunit "Probe Observer";
+        Events: Codeunit "LT QH DL Validate Events";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        BindSubscription(Events);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        UnbindSubscription(Events);
+        Observer.Finish();
+    end;
+
+    // Item 4: a new host whose field-linked part shows rows of the blank key; what Close does and what is stored.
+    [Test]
+    procedure QH_BlankRows_OpenNew_CloseOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        SeedLine('', 20000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_ReadPart_Stored()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        SeedLine('', 20000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Observer.Observe('part_first_description', Host.Lines.Description.Value());
+        TakeLog(Observer, 'read_log');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_HostWithoutTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc NoTrigger";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_TraceHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        SeedLine('', 20000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'close', QhTryCloseTrace(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_CardHost()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Card";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_PartWithoutAutoSplitKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc NoSplit";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_UnlinkedPart()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT PYB DL Doc Unlinked";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Host.Close();
+        TakeLog(Observer, 'close');
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_BlankHeaderExists()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        QhSeedHeader('');
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_HostNew_ThenClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'host_new', QhTryHostNew(Host));
+        Stored(Observer, 'after_new');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_OkInvoke()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'ok', QhTryOk(Host));
+        Stored(Observer, 'after_ok');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_HostOnNewRecordSetsName()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc SetName";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'close', QhTryCloseSetName(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_NoRows_HostOnNewRecordSetsName()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc SetName";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'close', QhTryCloseSetName(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OtherKeyRows_OpenNew_Close()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('X1', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
 }
