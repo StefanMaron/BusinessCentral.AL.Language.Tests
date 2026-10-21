@@ -44,13 +44,6 @@ codeunit 86165 "LT PX CC Target B"
 
 // Writer QH (2026-10-21), al-runtime-rs PR 384 "needs probe": the Method ID of overloads, parameter kinds (var, Record subtype, List, Code
 // and Text lengths), return types, casing, parameter names, access modifiers, events and triggers. Objects 86780-86784, 86785-86787.
-// Measured on BC 27.5, 28.5 and 29.0 (same values; the number comes from the compiler and does not depend on the object): the id depends on
-// the name (case-insensitive: OVL() = Ovl()), the return type (RetInt(): Integer <> RetInt(): Decimal; a named return value counts as its
-// type), each parameter's position, var and type kind (Ovl(X) <> Ovl(var X); parameter names, Code[10]/Code[20] and Text[30]/Text do not
-// count), and for Record and List parameters the table id / element type (Ovl(Record A) <> Ovl(Record B)). Local, internal and global make
-// no difference. Triggers add their name: OnRun is equal in two codeunits, a field OnValidate depends on the field name, not the table.
-// A Trigger/Function row of Code Coverage shows the id only when a code line of the procedure ran, or when a test started while
-// recording entered it; otherwise -1. Calling only empty procedures logs no row of the object at all; an integration event shows -1.
 table 86785 "LT QH CC Row"
 {
     DataClassification = SystemMetadata;
@@ -497,6 +490,14 @@ codeunit 86163 "LT PX Code Coverage Ids"
     end;
 
     // Writer QH (2026-10-21): the Trigger/Function rows of the QH targets, as L<line>=<Method Id>.
+    // Measured on BC 27.5, 28.5 and 29.0 (same values; the number comes from the compiler and does not depend on the object): the id depends on
+    // the name (case-insensitive: OVL() = Ovl()), the return type (RetInt(): Integer <> RetInt(): Decimal; a named return value counts as its
+    // type), each parameter's position, var and type kind (Ovl(X) <> Ovl(var X); parameter names, Code[10]/Code[20] and Text[30]/Text do not
+    // count), and for Record and List parameters the table id / element type (Ovl(Record A) <> Ovl(Record B)). Local, internal and global make
+    // no difference. Triggers add their name: OnRun is equal in two codeunits, a field OnValidate depends on the field name, not the table.
+    // A Trigger/Function row of Code Coverage shows the id only when a code line of the procedure ran, or when a test started while
+    // recording entered it; otherwise -1. Calling only empty procedures logs no row of the object at all; an integration event shows -1.
+    // Line numbers count from the end of the previous object, so the comment above table 86785 must keep its two lines.
     local procedure QhFunctionRows(ObjectType: Option; ObjectId: Integer): Text
     var
         CodeCoverage: Record "Code Coverage";
