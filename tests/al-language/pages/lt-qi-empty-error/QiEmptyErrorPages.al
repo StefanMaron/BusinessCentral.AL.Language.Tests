@@ -45,7 +45,7 @@ page 86851 "LT QI EE Card"
 
                     trigger OnValidate()
                     begin
-                        Mark(300, 'validate ' + Rec.Name);
+                        WriteMark(300, 'validate ' + Rec.Name);
                         if Rec.Name = 'empty' then
                             Error('');
                         if Rec.Name = 'text' then
@@ -67,7 +67,7 @@ page 86851 "LT QI EE Card"
 
                 trigger OnAction()
                 begin
-                    Mark(100, 'empty action ran');
+                    WriteMark(100, 'empty action ran');
                     Error('');
                 end;
             }
@@ -78,7 +78,7 @@ page 86851 "LT QI EE Card"
 
                 trigger OnAction()
                 begin
-                    Mark(101, 'text action ran');
+                    WriteMark(101, 'text action ran');
                     Error('LT QI action error');
                 end;
             }
@@ -92,7 +92,7 @@ page 86851 "LT QI EE Card"
                     Ok: Boolean;
                 begin
                     Ok := TryEmpty();
-                    Mark(102, 'try=' + Format(Ok) + ' text=[' + GetLastErrorText() + '] code=[' + GetLastErrorCode() + ']');
+                    WriteMark(102, 'try=' + Format(Ok) + ' text=[' + GetLastErrorText() + '] code=[' + GetLastErrorCode() + ']');
                 end;
             }
         }
@@ -104,13 +104,13 @@ page 86851 "LT QI EE Card"
         Error('');
     end;
 
-    local procedure Mark(MarkId: Integer; MarkName: Text)
+    local procedure WriteMark(WriteId: Integer; WriteName: Text)
     var
         Row: Record "LT QI EE Row";
     begin
         Row.Init();
-        Row.Id := MarkId;
-        Row.Name := CopyStr(MarkName, 1, MaxStrLen(Row.Name));
+        Row.Id := WriteId;
+        Row.Name := CopyStr(WriteName, 1, MaxStrLen(Row.Name));
         if not Row.Insert() then
             Row.Modify();
     end;
