@@ -3,6 +3,7 @@
 // Fixtures used: Probe Observer (69160); LT AI Row / Log Mgt / List pages (AiFixtures.al)
 // Probe: trigger order of list pages: Update with the current row kept, Update on an unchanged view, with and without OnAfterGetCurrRecord,
 //        Update after the view dropped the current row (no OnNextRecord, no row after), Next past the last row, cursor not on the first row, 20+ rows.
+//        Writer QP: QP_EmptyView_* (pages in QpUpdateEmptyList.al): Update(false) on a list that showed no row, after the filter changed so rows exist.
 // Object ids 78860 - 78862.
 
 codeunit 78860 "LT AI List Update Order"
@@ -1165,6 +1166,130 @@ codeunit 78862 "LT AI List Paging Order"
         Observer.Expect('next', 'Yes');
         Observer.Expect('next_log', '');
         Observer.Expect('current2', 'R1031');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_EmptyView_UpdateFalse_ShowAll_Nav()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT QP AI Empty Nav";
+    begin
+        Log.Seed(6);
+        Log.Clear();
+        P.OpenView();
+        Observer.Observe('open', Log.Dump());
+        Observer.Observe('open_current', P.NoCtl.Value());
+        Log.Clear();
+        P.ShowAll.Invoke();
+        Observer.Observe('update', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_no', P.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        P.Close();
+        Observer.Expect('open', 'O;F:=><=No');
+        Observer.Expect('open_current', '');
+        Observer.Expect('update', 'A:filter;A:done;F:=><=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;F:==Yes;R:R1001;C:R1001');
+        Observer.Expect('current', 'R1001');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', 'R1002');
+        Observer.Expect('next_log', 'R:R1002;F:==Yes;R:R1002;C:R1002');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_EmptyView_UpdateFalse_ShowFromThree_Nav()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT QP AI Empty Nav";
+    begin
+        Log.Seed(6);
+        Log.Clear();
+        P.OpenView();
+        Observer.Observe('open', Log.Dump());
+        Observer.Observe('open_current', P.NoCtl.Value());
+        Log.Clear();
+        P.ShowFromThree.Invoke();
+        Observer.Observe('update', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_no', P.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        P.Close();
+        Observer.Expect('open', 'O;F:=><=No');
+        Observer.Expect('open_current', '');
+        Observer.Expect('update', 'A:filter;A:done;F:=><=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=0;F:==Yes;R:R1003;C:R1003');
+        Observer.Expect('current', 'R1003');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', 'R1004');
+        Observer.Expect('next_log', 'R:R1004;F:==Yes;R:R1004;C:R1004');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_EmptyView_UpdateFalse_ShowAll_Plain()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT QP AI Empty Plain";
+    begin
+        Log.Seed(6);
+        Log.Clear();
+        P.OpenView();
+        Observer.Observe('open', Log.Dump());
+        Observer.Observe('open_current', P.NoCtl.Value());
+        Log.Clear();
+        P.ShowAll.Invoke();
+        Observer.Observe('update', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_no', P.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        P.Close();
+        Observer.Expect('open', 'O');
+        Observer.Expect('open_current', '');
+        Observer.Expect('update', 'A:filter;A:done;R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001;R:R1001;C:R1001');
+        Observer.Expect('current', 'R1001');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', 'R1002');
+        Observer.Expect('next_log', 'R:R1002;R:R1002;C:R1002');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_EmptyView_UpdateFalse_ShowFromThree_Plain()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT AI Log Mgt";
+        P: TestPage "LT QP AI Empty Plain";
+    begin
+        Log.Seed(6);
+        Log.Clear();
+        P.OpenView();
+        Observer.Observe('open', Log.Dump());
+        Observer.Observe('open_current', P.NoCtl.Value());
+        Log.Clear();
+        P.ShowFromThree.Invoke();
+        Observer.Observe('update', Log.Dump());
+        Observer.Observe('current', P.NoCtl.Value());
+        Log.Clear();
+        Observer.Observe('next', Format(P.Next()));
+        Observer.Observe('next_no', P.NoCtl.Value());
+        Observer.Observe('next_log', Log.Dump());
+        P.Close();
+        Observer.Expect('open', 'O');
+        Observer.Expect('open_current', '');
+        Observer.Expect('update', 'A:filter;A:done;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1003;C:R1003');
+        Observer.Expect('current', 'R1003');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', 'R1004');
+        Observer.Expect('next_log', 'R:R1004;R:R1004;C:R1004');
         Observer.Verify();
     end;
 }

@@ -18,6 +18,12 @@
 //   NavCSideValidateTableRelationException "The field Document No. of table LT NL Line contains a value (HB) that cannot be found in the
 //   related table (LT NL Header)." So the blank line validates Document No. while its Type is still A, even with DelayedInsert and a host
 //   view of Type = B; no test can assert it.
+// Writer QP (al-runtime-rs ask, Microsoft's Service Line shape): a header keyed on "Document Type" (Option Quote,Order) and "No." (87148)
+//   and lines keyed on "Document Type", "Document No.", "Line No." whose two key fields each have an OnValidate that appends the OTHER
+//   field's value to Seen (87149 without TableRelation; 87150 with Service Line's relation on "Document No."). A host Card (87154) holds
+//   three parts: SubPageLink "Document Type" = field("Document Type"), "Document No." = field("No.") (87151, table 87149), the same link
+//   written in the other order (87152), and the first link over the table with the relation (87153). QP_ tests in codeunit 74141: the
+//   blank line after New(), the stored line after a field is typed, and Seen (which value the record held when each key field validated).
 // BC versions: 27, 28, 29 by CI
 
 enum 74135 "LT NL Type"
@@ -586,6 +592,168 @@ codeunit 74141 "LT New Line Stamps Filters"
         Obs.Expect('db.first', '|A|A|x');
         Obs.Verify();
     end;
+
+    local procedure QP_Seed()
+    var
+        H: Record "LT QP TK Header";
+        L: Record "LT QP TK Line";
+        LR: Record "LT QP TK Line Rel";
+    begin
+        L.DeleteAll();
+        LR.DeleteAll();
+        H.DeleteAll();
+        H."Document Type" := H."Document Type"::Quote;
+        H."No." := 'H1';
+        H.Insert();
+        H."Document Type" := H."Document Type"::Order;
+        H."No." := 'H1';
+        H.Insert();
+    end;
+
+    local procedure QP_ObserveLines(Prefix: Text)
+    var
+        L: Record "LT QP TK Line";
+    begin
+        Obs.Observe(Prefix + '.count', Format(L.Count()));
+        if L.FindFirst() then
+            Obs.Observe(Prefix + '.first', Format(L."Document Type") + '|' + L."Document No." + '|' + Format(L."Line No.") + '|' + L.Seen + '|' + L.Descr);
+    end;
+
+    local procedure QP_ObserveRelLines(Prefix: Text)
+    var
+        L: Record "LT QP TK Line Rel";
+    begin
+        Obs.Observe(Prefix + '.count', Format(L.Count()));
+        if L.FindFirst() then
+            Obs.Observe(Prefix + '.first', Format(L."Document Type") + '|' + L."Document No." + '|' + Format(L."Line No.") + '|' + L.Seen + '|' + L.Descr);
+    end;
+
+    [TryFunction]
+    local procedure QP_TryNew(var Host: TestPage "LT QP TK Host"; Which: Integer)
+    begin
+        case Which of
+            1:
+                Host.LinesTypeFirst.New();
+            2:
+                Host.LinesNoFirst.New();
+            3:
+                Host.LinesRel.New();
+        end;
+    end;
+
+    [TryFunction]
+    local procedure QP_TryRead(var Host: TestPage "LT QP TK Host"; Which: Integer; var Result: Text)
+    begin
+        case Which of
+            1:
+                Result := Host.LinesTypeFirst."Document Type".Value() + '|' + Host.LinesTypeFirst."Document No.".Value() + '|' + Host.LinesTypeFirst.Seen.Value();
+            2:
+                Result := Host.LinesNoFirst."Document Type".Value() + '|' + Host.LinesNoFirst."Document No.".Value() + '|' + Host.LinesNoFirst.Seen.Value();
+            3:
+                Result := Host.LinesRel."Document Type".Value() + '|' + Host.LinesRel."Document No.".Value() + '|' + Host.LinesRel.Seen.Value();
+        end;
+    end;
+
+    [TryFunction]
+    local procedure QP_TryType(var Host: TestPage "LT QP TK Host"; Which: Integer)
+    begin
+        case Which of
+            1:
+                Host.LinesTypeFirst.Descr.SetValue('x');
+            2:
+                Host.LinesNoFirst.Descr.SetValue('x');
+            3:
+                Host.LinesRel.Descr.SetValue('x');
+        end;
+    end;
+
+    [TryFunction]
+    local procedure QP_TryClose(var Host: TestPage "LT QP TK Host")
+    begin
+        Host.Close();
+    end;
+
+    local procedure QP_Run(Which: Integer; WithNew: Boolean)
+    var
+        H: Record "LT QP TK Header";
+        Host: TestPage "LT QP TK Host";
+        Result: Text;
+    begin
+        QP_Seed();
+        Host.OpenEdit();
+        Host.GoToKey(H."Document Type"::Order, 'H1');
+        if WithNew then
+            Step('new', QP_TryNew(Host, Which));
+        if QP_TryRead(Host, Which, Result) then
+            Obs.Observe('draft', Result)
+        else
+            Step('read', false);
+        Step('type', QP_TryType(Host, Which));
+        if QP_TryRead(Host, Which, Result) then
+            Obs.Observe('typed', Result)
+        else
+            Step('read_typed', false);
+        Step('close', QP_TryClose(Host));
+        if Which = 3 then
+            QP_ObserveRelLines('db')
+        else
+            QP_ObserveLines('db');
+    end;
+
+    [Test]
+    procedure QP_TwoKeyLink_TypeFirst_NewLine()
+    begin
+        QP_Run(1, true);
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|20000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QP_TwoKeyLink_TypeFirst_BlankLine()
+    begin
+        QP_Run(1, false);
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|10000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QP_TwoKeyLink_NoFirst_NewLine()
+    begin
+        QP_Run(2, true);
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|20000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure QP_TwoKeyLink_WithRelation_NewLine()
+    begin
+        QP_Run(3, true);
+        Obs.Expect('new', 'ok');
+        Obs.Expect('draft', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', 'Order|H1|type:no=[H1];no:type=[Order];');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', 'Order|H1|20000|type:no=[H1];no:type=[Order];|x');
+        Obs.Verify();
+    end;
 }
 
 page 87100 "LT QO NL Lines BD"
@@ -635,6 +803,180 @@ page 87101 "LT QO NL Host B"
             {
                 ApplicationArea = All;
                 SubPageLink = "Document No." = field("No.");
+            }
+        }
+    }
+}
+
+table 87148 "LT QP TK Header"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Document Type"; Option) { OptionMembers = Quote,Order; }
+        field(2; "No."; Code[10]) { }
+    }
+
+    keys { key(PK; "Document Type", "No.") { Clustered = true; } }
+}
+
+table 87149 "LT QP TK Line"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Document Type"; Option)
+        {
+            OptionMembers = Quote,Order;
+
+            trigger OnValidate()
+            begin
+                Seen += 'type:no=[' + "Document No." + '];';
+            end;
+        }
+        field(3; "Document No."; Code[10])
+        {
+
+            trigger OnValidate()
+            begin
+                Seen += 'no:type=[' + Format("Document Type") + '];';
+            end;
+        }
+        field(4; "Line No."; Integer) { }
+        field(5; Seen; Text[100]) { }
+        field(6; Descr; Text[30]) { }
+    }
+
+    keys { key(PK; "Document Type", "Document No.", "Line No.") { Clustered = true; } }
+}
+
+table 87150 "LT QP TK Line Rel"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Document Type"; Option)
+        {
+            OptionMembers = Quote,Order;
+
+            trigger OnValidate()
+            begin
+                Seen += 'type:no=[' + "Document No." + '];';
+            end;
+        }
+        field(3; "Document No."; Code[10])
+        {
+            TableRelation = "LT QP TK Header"."No." where("Document Type" = field("Document Type"));
+
+            trigger OnValidate()
+            begin
+                Seen += 'no:type=[' + Format("Document Type") + '];';
+            end;
+        }
+        field(4; "Line No."; Integer) { }
+        field(5; Seen; Text[100]) { }
+        field(6; Descr; Text[30]) { }
+    }
+
+    keys { key(PK; "Document Type", "Document No.", "Line No.") { Clustered = true; } }
+}
+
+page 87151 "LT QP TK Lines TypeFirst"
+{
+    PageType = ListPart;
+    SourceTable = "LT QP TK Line";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Document Type"; Rec."Document Type") { ApplicationArea = All; }
+                field("Document No."; Rec."Document No.") { ApplicationArea = All; }
+                field(Seen; Rec.Seen) { ApplicationArea = All; }
+                field(Descr; Rec.Descr) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 87152 "LT QP TK Lines NoFirst"
+{
+    PageType = ListPart;
+    SourceTable = "LT QP TK Line";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Document Type"; Rec."Document Type") { ApplicationArea = All; }
+                field("Document No."; Rec."Document No.") { ApplicationArea = All; }
+                field(Seen; Rec.Seen) { ApplicationArea = All; }
+                field(Descr; Rec.Descr) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 87153 "LT QP TK Lines Rel"
+{
+    PageType = ListPart;
+    SourceTable = "LT QP TK Line Rel";
+    AutoSplitKey = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Document Type"; Rec."Document Type") { ApplicationArea = All; }
+                field("Document No."; Rec."Document No.") { ApplicationArea = All; }
+                field(Seen; Rec.Seen) { ApplicationArea = All; }
+                field(Descr; Rec.Descr) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 87154 "LT QP TK Host"
+{
+    PageType = Card;
+    SourceTable = "LT QP TK Header";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("Document Type"; Rec."Document Type") { ApplicationArea = All; }
+            field("No."; Rec."No.") { ApplicationArea = All; }
+            part(LinesTypeFirst; "LT QP TK Lines TypeFirst")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document Type" = field("Document Type"), "Document No." = field("No.");
+            }
+            part(LinesNoFirst; "LT QP TK Lines NoFirst")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document No." = field("No."), "Document Type" = field("Document Type");
+            }
+            part(LinesRel; "LT QP TK Lines Rel")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Document Type" = field("Document Type"), "Document No." = field("No.");
             }
         }
     }
