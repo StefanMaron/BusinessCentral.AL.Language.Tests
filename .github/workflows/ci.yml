@@ -265,11 +265,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dbee80228b5c002d0fe22a6fab082ea6dd718c1a
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier respects #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
-      bc_linux_ref:         "dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
-      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
@@ -297,7 +298,7 @@ jobs:
       # (MsDyn365Bc.On.Linux issue #20, KNOWN-LIMITATIONS.md). Opt-in there because it
       # adds ~550 MB to the SQL pull. Only this job runs Company-insert tests (67947);
       # test-onprem does not, so it keeps the default image.
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
       # The default job timeout is 45 minutes. With about 2500 test codeunits the BC 27.5 "Run AL tests" step takes 37 to
       # 40 minutes on a loaded runner, so the 27.5 job was cancelled at 45 minutes twice (run 39269527543, both attempts).
       timeout_minutes:      70
@@ -347,11 +348,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dbee80228b5c002d0fe22a6fab082ea6dd718c1a
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier respects #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
-      bc_linux_ref:         "dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
-      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:rdlc-dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is a production app HERE only in the sense that it has to be
@@ -372,7 +374,7 @@ jobs:
       # debugger 9.0.
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
       # RDLC rendering for the OnPrem SaveAs* file forms: see the test job above.
       rdlc_renderer:        true
       rdlc_trust_layouts:   true
@@ -388,11 +390,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Pinned for corpus bump 30 to the bc-linux commit before PR 147 (workflow, scripts and image); moving it is a separate PR.
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dbee80228b5c002d0fe22a6fab082ea6dd718c1a
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier respects #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
-      bc_linux_ref:         "dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
-      runner_image:         "ghcr.io/stefanmaron/msdyn365bc.on.linux/bc-runner:dbee80228b5c002d0fe22a6fab082ea6dd718c1a"
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs: |
@@ -408,7 +411,7 @@ jobs:
       runtime_version:      ${{ matrix.runtime }}
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
 
     # Optional: supply a base64-encoded BC developer license.
     # Without this, BC boots with the public Cronus license (sufficient

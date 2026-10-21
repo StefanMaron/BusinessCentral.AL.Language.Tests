@@ -71,7 +71,14 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region Fr");
+#if BC29PLUS
+        // BC 29: AmtText carries the fr-FR group separator U+00A0 (as escaped here: \u2019\u00E1), the value of Windows BC 27.5 and 28.5
+        // (full corpus runs on the Windows containers, 2026-10-20) and of bc-linux bcc60c1c BC 29. The Windows BC 29.0 container gives \u00C2\u00A0
+        // for the same U+00A0 (that container has another default code page). BC 27 and 28 on Linux still give U+202F.
+        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="fr-FR" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567,891</Column>|        <Column name="DayCol">31/01/2025</Column>|        <Column name="StampCol">31/01/2025 14:30:15</Column>|        <Column name="AmtText">1\u2019\u00E1234\u2019\u00E1567,891</Column>|        <Column name="DayText">31/01/25</Column>|        <Column name="StampText">31/01/25 14:30</Column>|        <Column name="LongDayText">31 January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+#else
         Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="fr-FR" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567,891</Column>|        <Column name="DayCol">31/01/2025</Column>|        <Column name="StampCol">31/01/2025 14:30:15</Column>|        <Column name="AmtText">1\u00CB\u00C7\u00BB234\u00CB\u00C7\u00BB567,891</Column>|        <Column name="DayText">31/01/25</Column>|        <Column name="StampText">31/01/25 14:30</Column>|        <Column name="LongDayText">31 January 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+#endif
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=fr-FR;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
@@ -116,7 +123,9 @@ codeunit 75510 "LT Y Report Props Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Region(Observer, Report::"LT Y Rep Region Bad");
-        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="zz-ZZ" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567.891</Column>|        <Column name="DayCol">1/31/2025</Column>|        <Column name="StampCol">1/31/2025 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">01/31/25</Column>|        <Column name="StampText">01/31/25 02:30 PM</Column>|        <Column name="LongDayText">January 31, 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
+        // zz-ZZ (an unknown region): DayCol and StampCol are 01/31/2025, the value of Windows BC 27.5, 28.5 and 29.0 (full corpus runs on the
+        // Windows containers, 2026-10-20) and of bc-linux bcc60c1c on all three. Older bc-linux images gave 1/31/2025.
+        Observer.Expect('xml', '<DataItems>|    <DataItem language="en-US" formatRegion="zz-ZZ" name="Row">|      <Columns>|        <Column name="NumCol">1</Column>|        <Column name="AmtCol" decimalformatter="#,##0.00">1234567.891</Column>|        <Column name="DayCol">01/31/2025</Column>|        <Column name="StampCol">01/31/2025 14:30:15</Column>|        <Column name="AmtText">1,234,567.891</Column>|        <Column name="DayText">01/31/25</Column>|        <Column name="StampText">01/31/25 02:30 PM</Column>|        <Column name="LongDayText">January 31, 2025</Column>|        <Column name="IntText">1234567</Column>|      </Columns>|    </DataItem>|  </DataItems>|</ReportDataSet>|');
 #if BC29PLUS
         Observer.Expect('meta', 'UseRequestPage=No;ProcessingOnly=No;EnableExternalImages=No;EnableExternalAssemblies=No;PaperSourceFirstPage=0;PaperSourceDefaultPage=0;PaperSourceLastPage=0;DefaultLayout=RDLC;DefaultLayoutName=;FormatRegion=zz-ZZ;ExcelLayoutMultipleDataSheets=No;DefaultHeaderFooterPartName=;DefaultThemePartName=;');
 #else
