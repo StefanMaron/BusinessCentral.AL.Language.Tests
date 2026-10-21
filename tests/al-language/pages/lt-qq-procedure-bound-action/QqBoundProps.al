@@ -2,7 +2,8 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); objects in QqBoundObjects.al
 // Probe: AL Runner issue 3762. An action or an action group whose Visible or Enabled is a procedure call (warning AL0573): what the TestPage
-// action answers for Visible() and Enabled(), what Invoke() does, and whether the procedure runs. Actions bound to a Boolean variable and an
+// action answers for Visible() and Enabled(), what Invoke() does, and whether the procedure runs. On BC 27.5, 28.5 and 29.0 the property
+// reads No whatever the procedure returns and the procedure never runs; Invoke runs OnAction when Visible reads No and skips it when Enabled reads No. Actions bound to a Boolean variable and an
 // action with no property are the comparison.
 // BC versions: 27+
 
@@ -78,7 +79,9 @@ codeunit 87203 "LT QQ Bound Props"
         Observer: Codeunit "Probe Observer";
         Card: TestPage "LT QQ Bound Card";
     begin
-        // An error in asserterror closes the test page, so every Invoke has a test of its own.
+        // An error in asserterror closes the test page, so every Invoke has a test of its own. Invoke raises no error of its own on any of
+        // these actions (the error is the Error('') after it): OnAction runs on an action that reads Visible = No, and is skipped without
+        // an error on one that reads Enabled = No.
         Setup();
         Card.OpenView();
         Log.Clear();
@@ -88,7 +91,10 @@ codeunit 87203 "LT QQ Bound Props"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Read());
-        Observer.Finish();
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', 'action VisibleTrueProc');
+        Observer.Verify();
     end;
 
     [Test]
@@ -107,7 +113,10 @@ codeunit 87203 "LT QQ Bound Props"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Read());
-        Observer.Finish();
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', 'action VisibleFalseProc');
+        Observer.Verify();
     end;
 
     [Test]
@@ -126,7 +135,10 @@ codeunit 87203 "LT QQ Bound Props"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Read());
-        Observer.Finish();
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -145,7 +157,10 @@ codeunit 87203 "LT QQ Bound Props"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Read());
-        Observer.Finish();
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -164,7 +179,10 @@ codeunit 87203 "LT QQ Bound Props"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Read());
-        Observer.Finish();
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', 'action InGroupVisibleProc');
+        Observer.Verify();
     end;
 
     [Test]
@@ -183,7 +201,10 @@ codeunit 87203 "LT QQ Bound Props"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Read());
-        Observer.Finish();
+        Observer.Expect('invoke|text', '');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', 'action NoProperty');
+        Observer.Verify();
     end;
 
     [Test]
