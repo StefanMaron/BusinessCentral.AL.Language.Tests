@@ -814,6 +814,12 @@ codeunit 70177 "LT PnG Refresh"
     // ---- Writer QN (2026-10-21), al-runtime-rs PR 5594: CurrPage.Close() in a list action after `Rec := Other` on pages with OnQueryClosePage
     // and OnClosePage (Worksheet LT QN Close Sheet, List LT QN Close List; fixtures in PnGQlFixtures.al): the order of the close triggers and
     // the shown-row read back, Rec and xRec in each; also opened with Page.RunModal and closed from the action inside a ModalPageHandler. ----
+    // Probed by corpus CI on BC 29.0 (batch run 39595069689); 27.5 and 28.5 by the final check.
+    // Results: with CurrPage.Close() in the action the shown row is read back (OnAfterGetRecord) BEFORE the close triggers, so
+    // OnQueryClosePage (CloseAction OK, or LookupCancel under Page.RunModal) and then OnClosePage see the shown row as Rec and xRec; then the
+    // action goes on with Rec the shown row, and one more OnAfterGetRecord follows. Nothing is stored, also when the action changed a field of
+    // its own row before Close (no OnModifyRecord). Worksheet and List alike; Page.RunModal returns LookupCancel and leaves the record var on
+    // the first row. Without Close in the action, a later TestPage.Close() runs the close triggers on the other row with its stored values.
 
     [Test]
     procedure QN_CloseQ_WarmUp()
@@ -869,7 +875,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -886,7 +897,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -903,7 +919,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -920,7 +941,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -937,7 +963,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -954,7 +985,10 @@ codeunit 70177 "LT PnG Refresh"
         List.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('log-close', 'P.QCP(B,orig B x=B,orig B a=OK);P.CP(B,orig B x=B,orig B)');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -971,7 +1005,11 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('row-after', Row."No." + ',' + Row.Name);
         Observer.Observe('log', QlTake());
         Observer.Observe('stored-after', QlRows());
-        Observer.Finish();
+        Observer.Expect('run-modal-result', 'LookupCancel');
+        Observer.Expect('row-after', 'A,orig A');
+        Observer.Expect('log', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,);MPH.in;P.AGR(A,orig A);P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=LookupCancel);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A);MPH.out');
+        Observer.Expect('stored-after', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -998,7 +1036,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1015,7 +1058,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1032,7 +1080,12 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('stored-after-action', QlRows());
         asserterror List.Close();
         Observer.ObserveError('close');
-        Observer.Finish();
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=OK);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1049,7 +1102,10 @@ codeunit 70177 "LT PnG Refresh"
         List.Close();
         Observer.Observe('log-close', QlTake());
         Observer.Observe('stored-after-close', QlRows());
-        Observer.Finish();
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('log-close', 'P.QCP(B,orig B x=B,orig B a=OK);P.CP(B,orig B x=B,orig B)');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1066,7 +1122,11 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Observe('row-after', Row."No." + ',' + Row.Name);
         Observer.Observe('log', QlTake());
         Observer.Observe('stored-after', QlRows());
-        Observer.Finish();
+        Observer.Expect('run-modal-result', 'LookupCancel');
+        Observer.Expect('row-after', 'A,orig A');
+        Observer.Expect('log', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,);MPH.in;P.AGR(A,orig A);P.AGR(A,orig A);P.QCP(A,orig A x=A,orig A a=LookupCancel);P.CP(A,orig A x=A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A);MPH.out');
+        Observer.Expect('stored-after', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
