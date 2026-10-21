@@ -8,6 +8,11 @@
 // because they would store a setting for later tests), and a failed call whose result is not used. AyHttpHandler.al pins AllowOutboundFromHandler,
 // PZHttpBlock.al BlockOutboundRequests.
 // BC versions: 27, 28, 29 (corpus CI)
+// No outbound-request approval prompt (StrMenu Allow Always/Allow Once/Block Always/Block Once) appears (bc-linux bcc60c1c; a Windows container
+// never shows it, bc-linux 05752c9 #165). So no test binds a StrMenuHandler: a prompt would surface as 'Unhandled UI' in last_error, and
+// menu=0 in 'calls' records that none was answered. The *_StrMenuAllowOnce/_StrMenuBlockOnce/_StrMenuCancel tests keep their names and the
+// choice they would give; they now pin that the request runs the same as without a menu. Values: corpus CI on bc-linux bcc60c1c (27.5, 28.5,
+// 29.0); earlier images showed the prompt and the old values (status 200 OK / Unhandled UI / Block Once = status 400) were Linux-only.
 
 codeunit 98700 "LT PY Http Default Policy"
 {
@@ -30,14 +35,6 @@ codeunit 98700 "LT PY Http Default Policy"
         Response.HttpStatusCode := 201;
         Response.ReasonPhrase := 'Mocked';
         exit(false);
-    end;
-
-    [StrMenuHandler]
-    procedure MenuHandler(Options: Text; var Choice: Integer; Instruction: Text)
-    begin
-        MenuCalls += 1;
-        MenuSeen := Options + '|' + Instruction;
-        Choice := MenuChoice;
     end;
 
     [TryFunction]
@@ -87,15 +84,14 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, '', 0, 'http://localhost:1/x');
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
         Observer.Expect('calls', '0 menu=0 ');
         Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('MenuHandler')]
     procedure NoHandler_StrMenuAllowOnce_ConnectionRefused()
     var
         Observer: Codeunit "Probe Observer";
@@ -104,7 +100,7 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
         Observer.Expect('last_code', 'HttpRequest:Security');
-        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '0 menu=0 ');
         Observer.Verify();
     end;
 
@@ -118,17 +114,17 @@ codeunit 98700 "LT PY Http Default Policy"
 #if BC29PLUS
         Observer.Expect('result', 'ret=Yes status=201 reason=[Mocked] success=Yes blocked=No');
 #else
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #endif
 #if BC29PLUS
         Observer.Expect('last_error', '');
 #else
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
 #endif
 #if BC29PLUS
         Observer.Expect('last_code', '');
 #else
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('last_code', 'HttpRequest:Socket');
 #endif
 #if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
@@ -145,9 +141,9 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 0, 'http://localhost:1/x');
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
 #else
@@ -157,7 +153,7 @@ codeunit 98700 "LT PY Http Default Policy"
     end;
 
     [Test]
-    [HandlerFunctions('ModeHandler,MenuHandler')]
+    [HandlerFunctions('ModeHandler')]
     procedure Handler_AnswersTrue_StrMenuAllowOnce()
     var
         Observer: Codeunit "Probe Observer";
@@ -167,33 +163,33 @@ codeunit 98700 "LT PY Http Default Policy"
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
         Observer.Expect('last_code', 'HttpRequest:Security');
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
-        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '0 menu=0 ');
 #endif
         Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('ModeHandler,MenuHandler')]
+    [HandlerFunctions('ModeHandler')]
     procedure Handler_AnswersTrue_StrMenuBlockOnce()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 4, 'http://localhost:1/x');
-        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
-        Observer.Expect('last_error', '');
-        Observer.Expect('last_code', '');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
-        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '0 menu=0 ');
 #endif
         Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('ModeHandler,MenuHandler')]
+    [HandlerFunctions('ModeHandler')]
     procedure Handler_UnusedResult_BlockOnce()
     var
         Observer: Codeunit "Probe Observer";
@@ -206,9 +202,9 @@ codeunit 98700 "LT PY Http Default Policy"
         ClearLastError();
         Observer.Observe('statement', Format(TryGetStatement('http://localhost:1/x', Resp)) + ' [' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(Resp) + ' calls=' + Format(Calls) + ' menu=' + Format(MenuCalls));
 #if BC29PLUS
-        Observer.Expect('statement', 'No [The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=1 menu=1');
+        Observer.Expect('statement', 'No [There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=0');
 #else
-        Observer.Expect('statement', 'No [The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=0 menu=1');
+        Observer.Expect('statement', 'No [There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=0 menu=0');
 #endif
         Observer.Verify();
     end;
@@ -238,14 +234,6 @@ codeunit 98701 "LT PY Http Allow All"
         exit(false);
     end;
 
-    [StrMenuHandler]
-    procedure MenuHandler(Options: Text; var Choice: Integer; Instruction: Text)
-    begin
-        MenuCalls += 1;
-        MenuSeen := Options + '|' + Instruction;
-        Choice := MenuChoice;
-    end;
-
     [TryFunction]
     local procedure TryGet(Url: Text; var Resp: HttpResponseMessage; var Ret: Boolean)
     var
@@ -293,15 +281,14 @@ codeunit 98701 "LT PY Http Allow All"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, '', 0, 'http://localhost:1/x');
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
         Observer.Expect('calls', '0 menu=0 ');
         Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('MenuHandler')]
     procedure NoHandler_StrMenuAllowOnce_ConnectionRefused()
     var
         Observer: Codeunit "Probe Observer";
@@ -310,7 +297,7 @@ codeunit 98701 "LT PY Http Allow All"
         Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
         Observer.Expect('last_code', 'HttpRequest:Security');
-        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '0 menu=0 ');
         Observer.Verify();
     end;
 
@@ -324,17 +311,17 @@ codeunit 98701 "LT PY Http Allow All"
 #if BC29PLUS
         Observer.Expect('result', 'ret=Yes status=201 reason=[Mocked] success=Yes blocked=No');
 #else
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
 #endif
 #if BC29PLUS
         Observer.Expect('last_error', '');
 #else
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request. Make sure you are connecting to a valid endpoint.');
 #endif
 #if BC29PLUS
         Observer.Expect('last_code', '');
 #else
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('last_code', 'HttpRequest:Socket');
 #endif
 #if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
@@ -351,9 +338,9 @@ codeunit 98701 "LT PY Http Allow All"
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 0, 'http://localhost:1/x');
-        Observer.Expect('result', 'ret=No status=200 reason=[OK] success=Yes blocked=No');
-        Observer.Expect('last_error', 'Unhandled UI: StrMenu Allow Always,Allow Once,Block Always,Block Once');
-        Observer.Expect('last_code', 'MissingUIHandler');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
 #else
@@ -363,7 +350,7 @@ codeunit 98701 "LT PY Http Allow All"
     end;
 
     [Test]
-    [HandlerFunctions('ModeHandler,MenuHandler')]
+    [HandlerFunctions('ModeHandler')]
     procedure Handler_AnswersTrue_StrMenuAllowOnce()
     var
         Observer: Codeunit "Probe Observer";
@@ -373,33 +360,33 @@ codeunit 98701 "LT PY Http Allow All"
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
         Observer.Expect('last_code', 'HttpRequest:Security');
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
-        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '0 menu=0 ');
 #endif
         Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('ModeHandler,MenuHandler')]
+    [HandlerFunctions('ModeHandler')]
     procedure Handler_AnswersTrue_StrMenuBlockOnce()
     var
         Observer: Codeunit "Probe Observer";
     begin
         Outcome(Observer, 'true', 4, 'http://localhost:1/x');
-        Observer.Expect('result', 'ret=No status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes');
-        Observer.Expect('last_error', '');
-        Observer.Expect('last_code', '');
+        Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
+        Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
+        Observer.Expect('last_code', 'HttpRequest:Security');
 #if BC29PLUS
-        Observer.Expect('calls', '1 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '1 menu=0 ');
 #else
-        Observer.Expect('calls', '0 menu=1 Allow Always,Allow Once,Block Always,Block Once|The extension ''AL Language Coverage Tests (OnPrem) by AL Language'' is making a request to an external service. Do you want to allow this request?');
+        Observer.Expect('calls', '0 menu=0 ');
 #endif
         Observer.Verify();
     end;
 
     [Test]
-    [HandlerFunctions('ModeHandler,MenuHandler')]
+    [HandlerFunctions('ModeHandler')]
     procedure Handler_UnusedResult_BlockOnce()
     var
         Observer: Codeunit "Probe Observer";
@@ -412,9 +399,9 @@ codeunit 98701 "LT PY Http Allow All"
         ClearLastError();
         Observer.Observe('statement', Format(TryGetStatement('http://localhost:1/x', Resp)) + ' [' + GetLastErrorText() + '|' + GetLastErrorCode() + '] ' + Describe(Resp) + ' calls=' + Format(Calls) + ' menu=' + Format(MenuCalls));
 #if BC29PLUS
-        Observer.Expect('statement', 'No [The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=1 menu=1');
+        Observer.Expect('statement', 'No [There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=0');
 #else
-        Observer.Expect('statement', 'No [The request was blocked by the runtime to prevent accidental use of production services.|HttpRequest] status=400 reason=[The request was blocked by the runtime to prevent accidental use of production services.] success=No blocked=Yes calls=0 menu=1');
+        Observer.Expect('statement', 'No [There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=0 menu=0');
 #endif
         Observer.Verify();
     end;

@@ -2,7 +2,9 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 85601
 // Leads: corpus issue #671 (HTTP client, requests and responses). These tests make real outbound requests (no TestHttpRequestPolicy) to
-// example.com, badssl.com, httpbin.org and github.com. Every request first raises the platform's outbound-connection prompt (a StrMenu), answered "Allow Once".
+// example.com, badssl.com, httpbin.org and github.com. No outbound-connection approval prompt (StrMenu) appears, so no test binds a StrMenuHandler:
+// a Windows container never shows it (bc-linux 05752c9, #165; the Windows nightly ran LtDaSendFailure.al on BC 28.5 and 29.0 without a handler).
+// Earlier bc-linux images showed it and these tests bound an Allow Once handler; bc-linux bcc60c1c reports that handler as not executed.
 // Probe: measured on a local BC 29.0 service tier, then on the corpus CI legs.
 // Facts:
 //  - Internal addresses (127.x, localhost, ::1, 10.x, 172.16.x, 192.168.x, 169.254.169.254) are refused before any connection: Get answers false,
@@ -20,12 +22,6 @@ codeunit 85601 "LT CZ Http Outbound"
 {
     Subtype = Test;
     TestPermissions = Disabled;
-
-    [StrMenuHandler]
-    procedure AllowOnceHandler(Options: Text; var Choice: Integer; Instruction: Text)
-    begin
-        Choice := 2; // "Allow Once" -- the outbound-connection approval prompt
-    end;
 
     local procedure Sec(Value: Text) Result: SecretText
     begin
@@ -86,7 +82,6 @@ codeunit 85601 "LT CZ Http Outbound"
     end;
 
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
     procedure InternalAddresses()
     var
         Observer: Codeunit "Probe Observer";
@@ -121,7 +116,6 @@ codeunit 85601 "LT CZ Http Outbound"
     // replaced by something the CI owns. Define LT_HELD_EXTERNAL_HOSTS to run it.
 #if LT_HELD_EXTERNAL_HOSTS
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
 #endif
     procedure CertificateValidation()
     var
@@ -148,7 +142,6 @@ codeunit 85601 "LT CZ Http Outbound"
     end;
 
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
     procedure GetAndDeleteWithBody()
     var
         Observer: Codeunit "Probe Observer";
@@ -188,7 +181,6 @@ codeunit 85601 "LT CZ Http Outbound"
     end;
 
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
     procedure SameRequestMessageSentTwice()
     var
         Observer: Codeunit "Probe Observer";
@@ -217,7 +209,6 @@ codeunit 85601 "LT CZ Http Outbound"
     end;
 
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
     procedure ResponseFilledInCallee_ReadInCaller()
     var
         Observer: Codeunit "Probe Observer";
@@ -243,7 +234,6 @@ codeunit 85601 "LT CZ Http Outbound"
     // replaced by something the CI owns. Define LT_HELD_EXTERNAL_HOSTS to run it.
 #if LT_HELD_EXTERNAL_HOSTS
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
 #endif
     procedure EchoedRequestHeaders()
     var
@@ -290,7 +280,6 @@ codeunit 85601 "LT CZ Http Outbound"
     // replaced by something the CI owns. Define LT_HELD_EXTERNAL_HOSTS to run it.
 #if LT_HELD_EXTERNAL_HOSTS
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
 #endif
     procedure Redirects()
     var
@@ -318,7 +307,6 @@ codeunit 85601 "LT CZ Http Outbound"
     end;
 
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
     procedure SecretDefaultHeader_AfterSend()
     var
         Observer: Codeunit "Probe Observer";

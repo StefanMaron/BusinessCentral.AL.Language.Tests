@@ -8,11 +8,11 @@
 // for a reachable endpoint -- it was previously assumed (wrongly) to be out-of-scope
 // and tested as a throwing call; the real Cloud sandbox lets it through.
 //
-// The first outbound call to a host in a session raises the platform's own
-// connection-approval prompt (StrMenu: Allow Always/Allow Once/Block Always/Block
-// Once) -- observed on BC 27.5, not on BC 28.3 (already pre-approved there). A
-// [StrMenuHandler] answers it; without one, the call surfaces as "Unhandled UI"
-// instead of exercising HttpClient at all.
+// No outbound-connection approval prompt (StrMenu Allow Always/Allow Once/Block Always/Block Once) appears: a
+// Windows container never shows it (bc-linux 05752c9, #165), and the Windows nightly ran the HttpClient tests of
+// LtDaSendFailure.al on BC 28.5 and 29.0 without a StrMenuHandler. The test therefore binds no handler: a prompt
+// would surface as "Unhandled UI" and fail it. (Earlier bc-linux images showed the prompt; this test bound an
+// Allow Once handler then, which bc-linux bcc60c1c reports as "UI handlers were not executed".)
 
 codeunit 60874 "Test HttpClient"
 {
@@ -22,7 +22,6 @@ codeunit 60874 "Test HttpClient"
         Assert: Codeunit Assert;
 
     [Test]
-    [HandlerFunctions('AllowOnceHandler')]
     procedure HttpClient_Get_ValidUrl_ReturnsSuccessResponse()
     var
         Client: HttpClient;
@@ -31,11 +30,5 @@ codeunit 60874 "Test HttpClient"
         Client.Get('http://example.com', Resp);
 
         Assert.IsTrue(Resp.IsSuccessStatusCode(), 'HttpClient.Get must succeed against a reachable URL in Cloud');
-    end;
-
-    [StrMenuHandler]
-    procedure AllowOnceHandler(Options: Text; var Choice: Integer; Instruction: Text)
-    begin
-        Choice := 2; // "Allow Once" -- the outbound-connection approval prompt
     end;
 }
