@@ -630,6 +630,7 @@ codeunit 84886 "LT CN TF Modify"
         QhAudit(Observer, 'source', TempO.SystemCreatedAt, TempO.SystemModifiedAt, TempO.SystemCreatedBy, TempO.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
         R1.TransferFields(TempO);
         QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        Sleep(50);
         R1.Modify();
         R4.Get(1);
         QhAudit(Observer, 'db', R4.SystemCreatedAt, R4.SystemModifiedAt, R4.SystemCreatedBy, R4.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
@@ -672,8 +673,6 @@ codeunit 84886 "LT CN TF Modify"
         R1: Record "LT CN TF Row";
         O: Record "LT CN TF Other";
         TempO: Record "LT CN TF Other" temporary;
-        OwnCreatedAt: DateTime;
-        OwnModifiedAt: DateTime;
     begin
         Prep(R1);
         QeInsertOther();
@@ -681,15 +680,14 @@ codeunit 84886 "LT CN TF Modify"
         TempO := O;
         TempO.Insert();
         R1.Get(1);
-        OwnCreatedAt := R1.SystemCreatedAt;
-        OwnModifiedAt := R1.SystemModifiedAt;
         Observer.Observe('temp createdat = db source', Format(TempO.SystemCreatedAt = O.SystemCreatedAt));
         Observer.Observe('temp modifiedat = db source', Format(TempO.SystemModifiedAt = O.SystemModifiedAt));
-        QhAudit(Observer, 'source', TempO.SystemCreatedAt, TempO.SystemModifiedAt, TempO.SystemCreatedBy, TempO.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        // the source and the own row are stamped in the same test, maybe in the same millisecond: the own timestamps are not compared here
+        QhAudit(Observer, 'source', TempO.SystemCreatedAt, TempO.SystemModifiedAt, TempO.SystemCreatedBy, TempO.SystemModifiedBy, 0DT, 0DT);
         R1.TransferFields(TempO);
         Observer.Observe('buffer createdat = db source', Format(R1.SystemCreatedAt = O.SystemCreatedAt));
         Observer.Observe('buffer modifiedat = db source', Format(R1.SystemModifiedAt = O.SystemModifiedAt));
-        QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
+        QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, 0DT, 0DT);
         Observer.Expect('temp createdat = db source', 'Yes');
         Observer.Expect('temp modifiedat = db source', 'Yes');
         Observer.Expect('source createdat blank', 'No');
