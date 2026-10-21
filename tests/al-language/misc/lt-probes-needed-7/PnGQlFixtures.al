@@ -457,3 +457,294 @@ page 86979 "LT QL Jnl Sheet FG0"
         Log.Add('P.INSR(' + Rec.Template + '/' + Rec.Batch + '/' + Format(Rec."Line No.") + ',' + Rec.Descr + ')');
     end;
 }
+
+// ---- Writer QN (2026-10-21): the same list actions with CurrPage.Close() on pages that declare OnQueryClosePage and OnClosePage
+// (Worksheet and List), asked by al-runtime-rs PR 5594 (Apply Customer Entries page 232, Post Application). ----
+
+page 87036 "LT QN Close Sheet"
+{
+    PageType = Worksheet;
+    SourceTable = "LT QL Act Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(NameF; Rec.Name) { ApplicationArea = All; }
+                field(QtyF; Rec.Qty) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(TakeOtherChangedClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                begin
+                    Other.Get('B');
+                    Other.Name := 'changed B';
+                    Rec := Other;
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(TakeOtherUnchangedClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                begin
+                    Other.Get('B');
+                    Rec := Other;
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(TakeTempChangedClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                    TempRow: Record "LT QL Act Row" temporary;
+                begin
+                    Other.Get('B');
+                    TempRow := Other;
+                    TempRow.Name := 'temp B';
+                    TempRow.Insert();
+                    Rec := TempRow;
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(ChangeOwnRowClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    Rec.Name := 'own changed';
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(CloseOnly)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(TakeOtherChanged)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                begin
+                    Other.Get('B');
+                    Other.Name := 'changed B';
+                    Rec := Other;
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT PnG Log";
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('P.AGR(' + Rec."No." + ',' + Rec.Name + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('P.AGCR(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        Log.Add('P.MODR(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('P.INSR(' + Rec."No." + ',' + Rec.Name + ')');
+    end;
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    begin
+        Log.Add('P.QCP(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ' a=' + Format(CloseAction) + ')');
+        exit(true);
+    end;
+
+    trigger OnClosePage()
+    begin
+        Log.Add('P.CP(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+    end;
+}
+
+page 87037 "LT QN Close List"
+{
+    PageType = List;
+    SourceTable = "LT QL Act Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(NoF; Rec."No.") { ApplicationArea = All; }
+                field(NameF; Rec.Name) { ApplicationArea = All; }
+                field(QtyF; Rec.Qty) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(TakeOtherChangedClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                begin
+                    Other.Get('B');
+                    Other.Name := 'changed B';
+                    Rec := Other;
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(TakeOtherUnchangedClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                begin
+                    Other.Get('B');
+                    Rec := Other;
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(TakeTempChangedClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                    TempRow: Record "LT QL Act Row" temporary;
+                begin
+                    Other.Get('B');
+                    TempRow := Other;
+                    TempRow.Name := 'temp B';
+                    TempRow.Insert();
+                    Rec := TempRow;
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(ChangeOwnRowClose)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    Rec.Name := 'own changed';
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(CloseOnly)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    CurrPage.Close();
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+            action(TakeOtherChanged)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Other: Record "LT QL Act Row";
+                begin
+                    Other.Get('B');
+                    Other.Name := 'changed B';
+                    Rec := Other;
+                    Log.Add('ACT.end(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+                end;
+            }
+        }
+    }
+
+    var
+        Log: Codeunit "LT PnG Log";
+
+    trigger OnAfterGetRecord()
+    begin
+        Log.Add('P.AGR(' + Rec."No." + ',' + Rec.Name + ')');
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        Log.Add('P.AGCR(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        Log.Add('P.MODR(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        Log.Add('P.INSR(' + Rec."No." + ',' + Rec.Name + ')');
+    end;
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    begin
+        Log.Add('P.QCP(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ' a=' + Format(CloseAction) + ')');
+        exit(true);
+    end;
+
+    trigger OnClosePage()
+    begin
+        Log.Add('P.CP(' + Rec."No." + ',' + Rec.Name + ' x=' + xRec."No." + ',' + xRec.Name + ')');
+    end;
+}
