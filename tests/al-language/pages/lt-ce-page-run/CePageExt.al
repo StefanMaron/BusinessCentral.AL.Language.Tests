@@ -1,7 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-ext-object
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-clearall-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); objects in CeObjects.al (84340 to 84364); Base Application page 302 "Customer Entry Statistics"
+// Fixtures used: Probe Observer (69160); objects in CeObjects.al (84340 to 84364); Base Application page 302 "Customer Entry Statistics";
+//   LT QK Setup Rows (86940)
 // Corpus issue 667 (part B), writer CE: ClearAll in a base page and the globals of a page extension (microsoft/AL issue 6499) and
 // Visible of an extension action from a variable set in the extension's OnOpenPage (issue 4684).
 // Probe: written against a local BC 29.0 service tier; every literal below is what that tier produced; 27.5 and 28.5 by the CI matrix.
@@ -49,6 +50,7 @@ codeunit 84363 "LT CE Page Ext Tests"
         Stat: TestPage "Customer Entry Statistics";
         Trace: Text;
         Ok: Boolean;
+        QkRows: Codeunit "LT QK Setup Rows";
     begin
         if not Cust.Get('LTCE-C1') then begin
             Cust.Init();
@@ -57,6 +59,9 @@ codeunit 84363 "LT CE Page Ext Tests"
             Cust.Insert();
         end;
         Commit();
+        // Writer QK (owner 2026-10-21): page 302's OnAfterGetRecord reads Accounting Period around WorkDate (DateFilter-Calc); the test
+        // writes its own periods (2090 to 2092) and sets WorkDate 2091-03-15 (QkSetupRows.al) instead of reading the demo periods.
+        QkRows.WriteAccountingPeriods();
         Log.Take();
         Ok := OpenStat(Stat, Cust);
         Observer.Observe('open|ok', Format(Ok));
@@ -64,6 +69,7 @@ codeunit 84363 "LT CE Page Ext Tests"
             Observer.ObserveError('open');
         // How often the TestPage reads the record (7 times on BC 29.0) is not asserted: only the order and the flag.
         Trace := Log.Take();
+        QkRows.RestoreAccountingPeriods();
         Observer.Observe('open_start', CopyStr(Trace, 1, StrLen('ext OnOpenPage;ext AGR flag=No;')));
         Observer.Observe('flag_yes_in_any_ext_AGR', Format(StrPos(Trace, 'flag=Yes') > 0));
         Observer.Expect('open|ok', 'Yes');

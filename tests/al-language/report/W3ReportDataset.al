@@ -233,10 +233,15 @@ codeunit 67755 "W3 Dataset Probe"
         Shown: Text;
         Index: Integer;
         Indent: Integer;
+        QkRows: Codeunit "LT QK Setup Rows";
     begin
         Seed(true, false);
+        // Writer QK (owner 2026-10-21): the header's company block (and so where the first 4000 bytes end) comes from a Company
+        // Information row the test writes (QkSetupRows.al), not from the demo row.
+        QkRows.WriteCompanyInformation();
         TempBlob.CreateOutStream(OutS);
         Report.SaveAs(Report::"W3 Hdr Plain", '', ReportFormat::Xml, OutS);
+        QkRows.RestoreCompanyInformation();
         TempBlob.CreateInStream(InS);
         while (not InS.EOS()) and (Count < 4000) do begin
             InS.Read(B);
@@ -257,7 +262,7 @@ codeunit 67755 "W3 Dataset Probe"
         end;
         Observer.Observe('indent and tag of lines 2 to 9', Shown);
 #if BC29PLUS
-        Observer.Expect('CR bytes in the first 4000', '55');
+        Observer.Expect('CR bytes in the first 4000', '75');
 #else
         Observer.Expect('CR bytes in the first 4000', '46');
 #endif
@@ -468,9 +473,13 @@ codeunit 67755 "W3 Dataset Probe"
         Xml: Text;
         Lines: List of [Text];
         i: Integer;
+        QkRows: Codeunit "LT QK Setup Rows";
     begin
         Seed(true, false);
+        // Writer QK (owner 2026-10-21): the company block comes from a Company Information row the test writes (QkSetupRows.al).
+        QkRows.WriteCompanyInformation();
         Dataset.Save(Report::"W3 Hdr Plain", '', Xml);
+        QkRows.RestoreCompanyInformation();
         Lines := Xml.Split(Dataset.Lf());
         Observer.Observe('lines', Format(Lines.Count()));
         for i := First to Last do
@@ -543,22 +552,22 @@ codeunit 67755 "W3 Dataset Probe"
         Observer.Expect('lines', '88');
         Observer.Expect('l37', '      <CompanyDisplayName>x</CompanyDisplayName>');
         Observer.Expect('l38', '      <CompanyAddressLines>');
-        Observer.Expect('l39', '        <CompanyAddressLine1><Company></CompanyAddressLine1>');
-        Observer.Expect('l40', '        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2>');
-        Observer.Expect('l41', '        <CompanyAddressLine3>Westminster</CompanyAddressLine3>');
-        Observer.Expect('l42', '        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4>');
-        Observer.Expect('l43', '        <CompanyAddressLine5>Great Britain</CompanyAddressLine5>');
+        Observer.Expect('l39', '        <CompanyAddressLine1>LT QK Company</CompanyAddressLine1>');
+        Observer.Expect('l40', '        <CompanyAddressLine2>QK Street 1</CompanyAddressLine2>');
+        Observer.Expect('l41', '        <CompanyAddressLine3>QK Floor 2</CompanyAddressLine3>');
+        Observer.Expect('l42', '        <CompanyAddressLine4>QK Town, QK-1234</CompanyAddressLine4>');
+        Observer.Expect('l43', '        <CompanyAddressLine5>LT QK Land</CompanyAddressLine5>');
         Observer.Expect('l44', '        <CompanyAddressLine6></CompanyAddressLine6>');
         Observer.Expect('l45', '        <CompanyAddressLine7></CompanyAddressLine7>');
         Observer.Expect('l46', '        <CompanyAddressLine8></CompanyAddressLine8>');
         Observer.Expect('l47', '      </CompanyAddressLines>');
-        Observer.Expect('l48', '      <CompanyPhone>0666-666-6666</CompanyPhone>');
+        Observer.Expect('l48', '      <CompanyPhone>0111-222-3333</CompanyPhone>');
         Observer.Expect('l49', '      <CompanyPhoneCaption>Phone No.</CompanyPhoneCaption>');
-        Observer.Expect('l50', '      <CompanyFaxNo>0666-666-6660</CompanyFaxNo>');
+        Observer.Expect('l50', '      <CompanyFaxNo>0111-222-3334</CompanyFaxNo>');
         Observer.Expect('l51', '      <CompanyFaxNoCaption>Fax No.</CompanyFaxNoCaption>');
-        Observer.Expect('l52', '      <CompanyEmail></CompanyEmail>');
+        Observer.Expect('l52', '      <CompanyEmail>qk@example.com</CompanyEmail>');
         Observer.Expect('l53', '      <CompanyEmailCaption>Email</CompanyEmailCaption>');
-        Observer.Expect('l54', '      <CompanyHomePage></CompanyHomePage>');
+        Observer.Expect('l54', '      <CompanyHomePage>www.example.com/qk</CompanyHomePage>');
         Observer.Verify();
     end;
 
@@ -570,22 +579,22 @@ codeunit 67755 "W3 Dataset Probe"
         PwDumpPlain(55, 72, Observer);
         Observer.Expect('lines', '88');
         Observer.Expect('l55', '      <CompanyHomePageCaption>Home Page</CompanyHomePageCaption>');
-        Observer.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEU...<length 26721>');
-        Observer.Expect('l57', '      <CompanyVATRegistrationNo>777777777</CompanyVATRegistrationNo>');
+        Observer.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==</CompanyLogo>');
+        Observer.Expect('l57', '      <CompanyVATRegistrationNo>QK123456789</CompanyVATRegistrationNo>');
         Observer.Expect('l58', '      <CompanyVATRegistrationNoCaption>VAT Registration No.</CompanyVATRegistrationNoCaption>');
-        Observer.Expect('l59', '      <CompanyRegistrationNo></CompanyRegistrationNo>');
+        Observer.Expect('l59', '      <CompanyRegistrationNo>QKREG42</CompanyRegistrationNo>');
         Observer.Expect('l60', '      <CompanyRegistrationNoCaption>Registration No.</CompanyRegistrationNoCaption>');
-        Observer.Expect('l61', '      <CompanyBankName>World Wide Bank</CompanyBankName>');
+        Observer.Expect('l61', '      <CompanyBankName>LT QK Bank</CompanyBankName>');
         Observer.Expect('l62', '      <CompanyBankNameCaption>Bank Name</CompanyBankNameCaption>');
-        Observer.Expect('l63', '      <CompanyBankAccountNo>99-99-888</CompanyBankAccountNo>');
+        Observer.Expect('l63', '      <CompanyBankAccountNo>11-22-333</CompanyBankAccountNo>');
         Observer.Expect('l64', '      <CompanyBankAccountNoCaption>Bank Account No.</CompanyBankAccountNoCaption>');
-        Observer.Expect('l65', '      <CompanyBankBranchNo>BG99999</CompanyBankBranchNo>');
+        Observer.Expect('l65', '      <CompanyBankBranchNo>QKB777</CompanyBankBranchNo>');
         Observer.Expect('l66', '      <CompanyBankBranchNoCaption>Bank Branch No.</CompanyBankBranchNoCaption>');
-        Observer.Expect('l67', '      <CompanyIBAN>GB 12 CPBK 08929965044991</CompanyIBAN>');
+        Observer.Expect('l67', '      <CompanyIBAN>QK 11 BANK 22223333444455</CompanyIBAN>');
         Observer.Expect('l68', '      <CompanyIBANCaption>IBAN</CompanyIBANCaption>');
-        Observer.Expect('l69', '      <CompanyBankSWIFT></CompanyBankSWIFT>');
+        Observer.Expect('l69', '      <CompanyBankSWIFT>QKBKXX22</CompanyBankSWIFT>');
         Observer.Expect('l70', '      <CompanyBankSWIFTCaption>SWIFT Code</CompanyBankSWIFTCaption>');
-        Observer.Expect('l71', '      <CompanyGiroNo>888-9999</CompanyGiroNo>');
+        Observer.Expect('l71', '      <CompanyGiroNo>123-4567</CompanyGiroNo>');
         Observer.Expect('l72', '      <CompanyGiroNoCaption>Giro No.</CompanyGiroNoCaption>');
         Observer.Verify();
     end;

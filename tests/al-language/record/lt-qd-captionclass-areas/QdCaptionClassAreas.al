@@ -2,6 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); own table 86500, pages 86501 and 86502, log codeunit 86503 (used only by test codeunit 86504),
 //   test codeunit 86504; Base Application's Sales Header / Sales Line and its OnResolveCaptionClass subscribers (areas 1, 2, 5, 101).
+//   LT QK Setup Rows (86940) writes the General Ledger Setup / Dimension rows of Literals_FieldCaption and Expressions_FieldCaption.
 // Probe: writer QD, for the al-runtime-rs refusal "a CaptionClass expression result with another area" (the top Tests-ERM refusal) and the
 //   assumption field-caption-class-expression-per-read. Observed values; every literal asserted below is what the BC tier produced.
 // Facts: the caption FieldCaption, FieldRef.Caption and a TestPage control give for a table field whose CaptionClass is a literal or an
@@ -240,7 +241,12 @@ codeunit 86504 "LT QD CaptionClass Areas"
     var
         Observer: Codeunit "Probe Observer";
         R: Record "LT QD Cap Row";
+        QkRows: Codeunit "LT QK Setup Rows";
     begin
+        // Writer QK (owner 2026-10-21): areas 101 and 1 read General Ledger Setup and the Dimension row the test writes (QkSetupRows.al):
+        // LCY Code 'GBP', Global Dimension 1 'DEPARTMENT' with Code Caption 'Department Code' (kept at the demo values: the session keeps
+        // resolved captions, see QkSetupRows.al).
+        QkRows.WriteGLSetupCaptions();
         Log.Reset();
         R.Id := 1;
         Cap(Observer, 'lit20', R.FieldCaption("Lit 2-0"));
@@ -249,6 +255,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'lit53code', R.FieldCaption("Lit 5-3 Code"));
         Cap(Observer, 'lit101', R.FieldCaption("Lit 101-0"));
         Cap(Observer, 'lit11', R.FieldCaption("Lit 1-1"));
+        QkRows.RestoreGLSetupCaptions();
         Observer.Expect('lit20', 'Inv. Discount Amount Excl. VAT');
         Observer.Expect('lit20_calls', '');
         Observer.Expect('lit21', 'Inv. Discount Amount Incl. VAT');
@@ -269,7 +276,12 @@ codeunit 86504 "LT QD CaptionClass Areas"
     var
         Observer: Codeunit "Probe Observer";
         R: Record "LT QD Cap Row";
+        QkRows: Codeunit "LT QK Setup Rows";
     begin
+        // Writer QK (owner 2026-10-21): areas 101 and 1 read General Ledger Setup and the Dimension row the test writes (QkSetupRows.al):
+        // LCY Code 'GBP', Global Dimension 1 'DEPARTMENT' with Code Caption 'Department Code' (kept at the demo values: the session keeps
+        // resolved captions, see QkSetupRows.al).
+        QkRows.WriteGLSetupCaptions();
         Log.Reset();
         R.Id := 1;
         Cap(Observer, 'expr20', R.FieldCaption("Expr 2-0"));
@@ -281,6 +293,7 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'expr3', R.FieldCaption("Expr 3-"));
         Cap(Observer, 'expr101', R.FieldCaption("Expr 101"));
         Cap(Observer, 'expr11', R.FieldCaption("Expr 1-1"));
+        QkRows.RestoreGLSetupCaptions();
         Observer.Expect('expr20', 'Inv. Discount Amount Excl. VAT');
         Observer.Expect('expr20_calls', '20@1;');
         Observer.Expect('expr21', 'Inv. Discount Amount Incl. VAT');
