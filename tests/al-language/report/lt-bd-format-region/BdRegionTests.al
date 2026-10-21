@@ -215,7 +215,9 @@ codeunit 81070 "BD Region Tests"
         Observer.Verify();
 #else
         Observer.Expect('header', '<ReportDataSet name="BD Region Zz id:81056 language="en-US formatRegion="zz-ZZ">|<ExtensionName>AL Language Coverage Tests by AL Language</ExtensionName>|<ExtensionPublisher>AL Language</ExtensionPublisher>|<ReportName>BD Region Zz</ReportName>|<Language>en-US</Language>|<FormatRegion>zz-ZZ</FormatRegion>|');
-        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=1/31/2025;D2Col=3/5/2024;DT1Col=1/31/2025 14:30:15;DT2Col=3/5/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
+        // BC 27 and 28: the date columns are 01/31/2025 and 03/05/2024, as on BC 29: Windows BC 27.5 and 28.5 (full corpus runs on the Windows
+        // containers, 2026-10-20) and bc-linux bcc60c1c. Older bc-linux images gave 1/31/2025 and 3/5/2024.
+        Observer.Expect('columns', 'AmtCol[decimalformatter:#,##0.00=1234567.891;NegCol[decimalformatter:#,##0.00=-1234.5;D1Col=01/31/2025;D2Col=03/05/2024;DT1Col=01/31/2025 14:30:15;DT2Col=03/05/2024 09:05:07;T1Col=14:30:15;T2Col=09:05:07;IntCol=-1234567;TextsCol=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
         Observer.Expect('log', 'init=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[];pre=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];get=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567 region=[zz-ZZ];post=1,234,567.891#-1,234.5#01/31/25#03/05/24#March 5, 2024#01/31/25 02:30 PM#03/05/24 09:05 AM# 2:30:15 PM# 9:05:07 AM#-1234567;');
         Observer.Verify();
 #endif
